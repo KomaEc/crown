@@ -93,10 +93,10 @@ pub fn run() {
                     // Assume that functions are all on top-level
                     if let Some(owner_info) = owner_info {
 
-                        log::trace!("For top-level function:");
-
                         if let OwnerNode::Item(item) = owner_info.node() {
                             if let rustc_hir::ItemKind::Fn(_, _, body_id) = item.kind {
+
+                                log::trace!("For top-level function:");
                                 let expr = &tcx.hir().body(body_id).value;
                                 if let rustc_hir::ExprKind::Block(block, _) = expr.kind {
                                     if let rustc_hir::StmtKind::Local(local) = block.stmts[0].kind {
@@ -105,7 +105,7 @@ pub fn run() {
                                             let hir_id = expr.hir_id; // hir_id identifies the string "local"
                                             let def_id = tcx.hir().local_def_id(item.hir_id());
                                             let ty = tcx.typeck(def_id).node_type(hir_id);
-                                            println!("{:?}: {:?}", local.span, ty);
+                                            log::info!("{:?}: {:?}", local.span, ty);
                                         }
 
                                         let def_id = item.def_id;
@@ -115,30 +115,10 @@ pub fn run() {
 
                                         let mut w = String::new();
                                         if let Ok(_) = rustc_middle::mir::pretty::write_mir_fn(tcx, &body, &mut |_, _| Ok(()), unsafe { w.as_mut_vec() }) {
-                                            log::error!("{}\nDone!", w);
+                                            log::info!("{}\nDone!", w);
                                         } else {
                                             log::error!("Error in writing mir");
                                         }
-
-                                        /*
-                                        let mut w = std::io::stdout();
-                                        if let Ok(_) = rustc_middle::mir::pretty::write_mir_fn(tcx, &body, &mut |_, _| Ok(()), &mut w) {
-                                            println!("Done");
-                                        } else {
-                                            println!("Error in writing mir");
-                                        }
-                                        */
-
-                                        // let mir_body = mir_body.steal();
-                                        // println!("mir body:\n{:?}", mir_body);
-                                        // rustc_middle::mir::pretty::dump_mir(tcx, None, "mir", unimplemented!(), &mir_body, unimplemented!());
-                                        /*
-                                        if let Ok(()) = rustc_middle::mir::pretty::write_mir_pretty(tcx, None, &mut std::io::stdout()) {
-                                            println!("Done");
-                                        } else {
-                                            println!("Error in writing mir");
-                                        }
-                                        */
                                     }
                                 }
                             }
