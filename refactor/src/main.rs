@@ -1,3 +1,5 @@
+use playground;
+
 fn main() {
-    println!("Hello, world!");
+    playground::run();
 }
