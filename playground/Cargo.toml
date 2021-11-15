@@ -9,4 +9,4 @@ edition = "2021"
 rustc_private=true 
 
 [dependencies]
-log = "0.4.14"
+log = "0.4"
