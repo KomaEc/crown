@@ -23,6 +23,8 @@ use rustc_span::source_map;
 use std::path;
 use std::process;
 use std::str;
+
+use log;
 /*
 use rustc_middle::mir::{
     traversal, Body, ClearCrossCrate, Local, Location, Mutability, Operand, Place, PlaceElem,
@@ -82,11 +84,17 @@ pub fn run() {
             queries.global_ctxt().unwrap().take().enter(|tcx| {
                 // Every compilation contains a single crate.
                 let hir_krate = tcx.hir().krate();
+
+                log::trace!("Iterating over each crate");
+
                 // Iterate over the top-level items in the crate, looking for the main function.
                 for owner_info in hir_krate.owners.iter() /*.map(|o| o.as_ref().unwrap().node()) */ {
 
                     // Assume that functions are all on top-level
                     if let Some(owner_info) = owner_info {
+
+                        log::trace!("For top-level function:");
+
                         if let OwnerNode::Item(item) = owner_info.node() {
                             if let rustc_hir::ItemKind::Fn(_, _, body_id) = item.kind {
                                 let expr = &tcx.hir().body(body_id).value;
@@ -104,12 +112,22 @@ pub fn run() {
                                         let (body, _promoted_bodies) = tcx.mir_promoted(WithOptConstParam::unknown(def_id));
                                         let body = body.steal();
 
+
+                                        let mut w = String::new();
+                                        if let Ok(_) = rustc_middle::mir::pretty::write_mir_fn(tcx, &body, &mut |_, _| Ok(()), unsafe { w.as_mut_vec() }) {
+                                            log::error!("{}\nDone!", w);
+                                        } else {
+                                            log::error!("Error in writing mir");
+                                        }
+
+                                        /*
                                         let mut w = std::io::stdout();
                                         if let Ok(_) = rustc_middle::mir::pretty::write_mir_fn(tcx, &body, &mut |_, _| Ok(()), &mut w) {
                                             println!("Done");
                                         } else {
                                             println!("Error in writing mir");
                                         }
+                                        */
 
                                         // let mir_body = mir_body.steal();
                                         // println!("mir body:\n{:?}", mir_body);
