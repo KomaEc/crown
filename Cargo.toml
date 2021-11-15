@@ -1,0 +1,8 @@
+[workspace]
+
+members = [
+    "refactor",
+    "alias_analysis",
+    "transform",
+    "playground",
+]
