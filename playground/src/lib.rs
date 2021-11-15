@@ -19,7 +19,7 @@ use rustc_ast_pretty::pprust::item_to_string;
 use rustc_errors::registry;
 use rustc_middle::ty::WithOptConstParam;
 use rustc_session::config;
-use rustc_span::source_map;
+// use rustc_span::source_map;
 use std::path;
 use std::process;
 use std::str;
@@ -41,7 +41,7 @@ use rustc_borrowck::places_conflict::{places_conflict, PlaceConflictBias};
 use rustc_borrowck::region_infer::RegionInferenceContext;
 */
 
-pub fn run() {
+pub fn run(input_file_name: String) {
     let out = process::Command::new("rustc")
         .arg("--print=sysroot")
         .current_dir(".")
@@ -53,11 +53,14 @@ pub fn run() {
             maybe_sysroot: Some(path::PathBuf::from(sysroot)),
             ..config::Options::default()
         },
+        input: config::Input::File(input_file_name.into()),
+        /*
         input: config::Input::Str {
             name: source_map::FileName::Custom("main.rs".to_string()),
             input: "fn f<'a>() -> &'a str { let local = String::from(\"local\"); &local }"
                 .to_string(),
         },
+        */
         diagnostic_output: rustc_session::DiagnosticOutput::Default,
         crate_cfg: rustc_hash::FxHashSet::default(),
         input_path: None,
@@ -87,8 +90,38 @@ pub fn run() {
 
                 log::trace!("Iterating over each crate");
 
+                // Collect promoted mir bodies of all top-level functions
+                let _bodies = hir_krate
+                    .owners
+                    .iter()
+                    .filter_map(|owner_info| {
+                        let owner_info = owner_info.as_ref()?;
+                        if let OwnerNode::Item(item) = owner_info.node() {
+                            if let rustc_hir::ItemKind::Fn(_, _, _) = item.kind {
+
+                                log::trace!("For top-level function:");
+                                let def_id = item.def_id;
+                                let (body, _promoted_bodies) = tcx.mir_promoted(WithOptConstParam::unknown(def_id));
+                                let body = body.steal();
+
+                                // let mut w = String::new();
+                                let mut w = std::io::stdout();
+                                if let Ok(_) = rustc_middle::mir::pretty::write_mir_fn(tcx, &body, &mut |_, _| Ok(()), &mut w) {
+                                    log::trace!("Done!");
+                                } else {
+                                    log::error!("Error in writing mir");
+                                }
+                                return Some(body)
+                            }
+                        }
+                        None
+                    })
+                    .collect::<Vec<_>>();
+
+
+                /*
                 // Iterate over the top-level items in the crate, looking for the main function.
-                for owner_info in hir_krate.owners.iter() /*.map(|o| o.as_ref().unwrap().node()) */ {
+                for owner_info in hir_krate.owners.iter() {
 
                     // Assume that functions are all on top-level
                     if let Some(owner_info) = owner_info {
@@ -107,25 +140,26 @@ pub fn run() {
                                             let ty = tcx.typeck(def_id).node_type(hir_id);
                                             log::info!("{:?}: {:?}", local.span, ty);
                                         }
-
-                                        let def_id = item.def_id;
-                                        let (body, _promoted_bodies) = tcx.mir_promoted(WithOptConstParam::unknown(def_id));
-                                        let body = body.steal();
-
-
-                                        let mut w = String::new();
-                                        if let Ok(_) = rustc_middle::mir::pretty::write_mir_fn(tcx, &body, &mut |_, _| Ok(()), unsafe { w.as_mut_vec() }) {
-                                            log::info!("{}\nDone!", w);
-                                        } else {
-                                            log::error!("Error in writing mir");
-                                        }
                                     }
+                                }
+                                let def_id = item.def_id;
+                                let (body, _promoted_bodies) = tcx.mir_promoted(WithOptConstParam::unknown(def_id));
+                                let body = body.steal();
+
+
+                                let mut w = String::new();
+                                if let Ok(_) = rustc_middle::mir::pretty::write_mir_fn(tcx, &body, &mut |_, _| Ok(()), unsafe { w.as_mut_vec() }) {
+                                    log::info!("{}\nDone!", w);
+                                } else {
+                                    log::error!("Error in writing mir");
                                 }
                             }
                         }
                     }
 
                 }
+
+                */
             })
         });
     });
