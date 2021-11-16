@@ -11,7 +11,7 @@ extern crate rustc_span;
 extern crate rustc_middle;
 extern crate rustc_infer;
 extern crate rustc_index;
-extern crate rustc_borrowck;
+// extern crate rustc_borrowck;
 
 
 use rustc_hir::OwnerNode;
@@ -19,6 +19,7 @@ use rustc_ast_pretty::pprust::item_to_string;
 use rustc_errors::registry;
 use rustc_middle::ty::WithOptConstParam;
 use rustc_session::config;
+use std::borrow::Borrow;
 // use rustc_span::source_map;
 use std::path;
 use std::process;
@@ -91,7 +92,7 @@ pub fn run(input_file_name: String) {
                 log::trace!("Iterating over each crate");
 
                 // Collect promoted mir bodies of all top-level functions
-                let _bodies = hir_krate
+                let _body_def_ids = hir_krate
                     .owners
                     .iter()
                     .filter_map(|owner_info| {
@@ -102,16 +103,19 @@ pub fn run(input_file_name: String) {
                                 log::trace!("For top-level function:");
                                 let def_id = item.def_id;
                                 let (body, _promoted_bodies) = tcx.mir_promoted(WithOptConstParam::unknown(def_id));
-                                let body = body.steal();
+                                // let body = body.steal();
 
                                 // let mut w = String::new();
                                 let mut w = std::io::stdout();
-                                if let Ok(_) = rustc_middle::mir::pretty::write_mir_fn(tcx, &body, &mut |_, _| Ok(()), &mut w) {
+                                if let Ok(_) = rustc_middle::mir::pretty::write_mir_fn(tcx, body.borrow().borrow(), &mut |_, _| Ok(()), &mut w) {
                                     log::trace!("Done!");
                                 } else {
                                     log::error!("Error in writing mir");
                                 }
-                                return Some(body)
+
+                                // should not panic!
+                                // let _ = tcx.optimized_mir(def_id);
+                                return Some(def_id)
                             }
                         }
                         None
