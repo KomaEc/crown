@@ -1,9 +1,8 @@
 [workspace]
 
 members = [
-    "refactor",
-    "alias_analysis",
-    "transform",
-    "playground",
-    "instrumented_rustc_borrowck",
+    "src/refactor",
+    "refactorer/alias_analysis",
+    "refactorer/transform",
+    "refactorer/playground",
 ]
