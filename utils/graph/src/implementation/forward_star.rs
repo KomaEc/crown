@@ -1,4 +1,4 @@
-use std::ops::{AddAssign, Range};
+use std::ops::AddAssign;
 
 pub struct Graph<N, E> {
     pub nodes: Vec<Node<N>>,
@@ -108,6 +108,10 @@ impl<N, E> Graph<N, E> {
         &self.nodes[idx.0]
     }
 
+    pub fn node_indices(&self) -> impl Iterator<Item = NodeIndex> + '_ {
+        self.nodes_enumerated().map(|(node_id, __)| node_id)
+    }
+
     pub fn next_edge_index(&self) -> EdgeIndex {
         EdgeIndex(self.edges.len())
     }
@@ -196,8 +200,8 @@ impl<N, E> Graph<N, E> {
         DepthFirstTraversal::with_start_node(self, start, direction)
     }
 
-    pub fn compute_scc(&self) {
-        SCCsConstruction::construct(self)
+    pub fn compute_scc(&self) -> SCCs {
+        TarjanSCC::construct(self)
     }
 }
 
@@ -279,69 +283,6 @@ impl<'g, N, E> Iterator for DepthFirstTraversal<'g, N, E> {
     }
 }
 
-/*
-
-/// Visiting order: LIFO
-
-pub struct DepthFirstTraversal<'g, N, E> {
-    graph: &'g Graph<N, E>,
-    direction: Direction,
-    visited: Vec<bool>,
-    next_node: Option<NodeIndex>,
-    stack: Vec<AdjacentEdges<'g, N, E>>
-}
-
-impl<'g, N, E> DepthFirstTraversal<'g, N, E> {
-    pub fn with_start_node(
-        graph: &'g Graph<N, E>,
-        start: NodeIndex,
-        direction: Direction
-    ) -> Self {
-        let mut visited = vec![false; graph.len_nodes()];
-        visited[start.0] = true;
-        DepthFirstTraversal {
-            graph,
-            direction,
-            visited,
-            next_node: Some(start),
-            stack: vec![graph.adjacent_edges(start, direction)],
-        }
-    }
-}
-
-impl<'g, N, E> Iterator for DepthFirstTraversal<'g, N, E> {
-    type Item = NodeIndex;
-
-    fn next(&mut self) -> Option<Self::Item> {
-
-        self.next_node.map(
-            |next_node| {
-                self.next_node = None;
-                while let Some(adjacent_edges) = self.stack.last_mut() {
-                    match adjacent_edges.next() {
-                        None => {
-                            self.stack.pop();
-                        },
-                        Some((_, next_edge)) => {
-                            let next_node = next_edge.target_of_direction(self.direction);
-
-                            if !self.visited[next_node.0] {
-                                self.visited[next_node.0] = true;
-                                self.next_node = Some(next_node);
-                                self.stack.push(self.graph.adjacent_edges(next_node, self.direction));
-                                break
-                            }
-                        }
-                    }
-                }
-                next_node
-            }
-        )
-    }
-}
-
-*/
-
 impl<E> Edge<E> {
     pub fn target_of_direction(&self, direction: Direction) -> NodeIndex {
         match direction {
@@ -356,12 +297,27 @@ impl<E> Edge<E> {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct SCCIndex(pub usize);
 
+const INVALID_SCC_INDEX: SCCIndex = SCCIndex(usize::MAX);
+
 pub struct SCCs {
     scc_indices: Vec<SCCIndex>,
+    num_component: usize,
+}
+
+impl SCCs {
+    pub fn components(&self) -> Vec<Vec<NodeIndex>> {
+        let mut res = vec![Vec::new(); self.num_component];
+        for (i, &s) in self.scc_indices.iter().enumerate() {
+            res[s.0].push(NodeIndex(i))
+        }
+        res
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Time(usize);
+
+const INVALID_TIME: Time = Time(usize::MAX);
 
 impl AddAssign<usize> for Time {
     fn add_assign(&mut self, rhs: usize) {
@@ -369,76 +325,99 @@ impl AddAssign<usize> for Time {
     }
 }
 
-pub struct SCCsConstruction<'g, N, E> {
+pub struct TarjanSCC<'g, N, E> {
     graph: &'g Graph<N, E>,
     low_link: Vec<Time>,
     cur_time: Time,
     discovery_time: Vec<Time>,
     stack: Vec<NodeIndex>,
-    visited: Vec<bool>,
+    // visited: Vec<bool>,
     on_stack: Vec<bool>,
+
+    component_cnt: usize,
+    scc_indices: Vec<SCCIndex>,
 }
 
-impl<'g, N, E> SCCsConstruction<'g, N, E> {
+impl<'g, N, E> TarjanSCC<'g, N, E> {
     fn new(graph: &'g Graph<N, E>) -> Self {
         let num_nodes = graph.len_nodes();
-        SCCsConstruction {
+        TarjanSCC {
             graph,
-            low_link: vec![Time(usize::MAX); num_nodes],
+            low_link: vec![INVALID_TIME; num_nodes],
             cur_time: Time(0),
-            discovery_time: vec![Time(usize::MAX); num_nodes],
+            discovery_time: vec![INVALID_TIME; num_nodes],
             stack: Vec::with_capacity(num_nodes),
-            visited: vec![false; num_nodes],
+            // visited: vec![false; num_nodes],
             on_stack: vec![false; num_nodes],
+            component_cnt: 0,
+            scc_indices: vec![INVALID_SCC_INDEX; num_nodes]
         }
     }
 
     /// Assuming `node` is not currently visited
-    fn walk_vertex(&mut self, v: NodeIndex) {
-        self.visited[v.0] = true;
+    fn dfs_vertex(&mut self, v: NodeIndex) {
+        // self.visited[v.0] = true;
         self.discovery_time[v.0] = self.cur_time;
         self.low_link[v.0] = self.cur_time;
         self.cur_time += 1;
         self.stack.push(v);
         self.on_stack[v.0] = true;
 
+
+        // @Loop invariant:
+        // Let V be the set of vertices that have been visited, let V' be the set of vertices that
+        // are on stack. Then we have V' ⊂ V.
+        // Let E be the set of edges that have been visited (note that, as long as target vertex is 
+        // touched, we count the corresponding edge as visited),
+        // let E' be the set of edges in the current DFS tree. Then we have E' ⊂ E.
+        // 
+        // At anytime, the loop invariant is represented by the following mutually dependent predicates:
+        // 1. `low_link[v]` points to a vertex in V' (on stack), which is also the vertex of lowest preorder
+        // in the current DFS tree (V, E'), that is reachable from `v` in the graph (V, E) by at most one
+        // back edge or cross edge (note that, following tree edge will only increase preorder, thereby
+        // the back edge or cross edge must occur at the last).
+        // 2. A vertex `u` is on stack, if following `low_link[..low_link[u]]` until converges, getting `v`,
+        // and `v` has not done visiting its adjacent nodes.
         for u in self.graph.successor_nodes(v) {
-            if !self.visited[u.0] {
-                self.walk_vertex(u);
+            if self.discovery_time[u.0] == INVALID_TIME {
+                self.dfs_vertex(u);
                 // self.stack
                 self.low_link[v.0] = std::cmp::min(self.low_link[v.0], self.low_link[u.0]);
             } else if self.on_stack[u.0] {
-                // it's a back edge
-                // it's a back edge
+                // it's a back edge or a cross edge
                 self.low_link[v.0] = std::cmp::min(self.low_link[v.0], self.discovery_time[u.0]);
             }
         }
 
+        // SCC found
         if self.discovery_time[v.0] == self.low_link[v.0] {
-            // SCC found
             while let Some(u) = self.stack.pop() {
-                print!("{} ", u.0);
-
+                self.scc_indices[u.0] = SCCIndex(self.component_cnt);
                 self.on_stack[u.0] = false;
                 if u == v {
                     break;
                 }
             }
-            println!()
+            self.component_cnt += 1;
         }
     }
 
     fn run(&mut self) {
         for i in 0..self.graph.len_nodes() {
             let v = NodeIndex(i);
-            if !self.visited[i] {
-                self.walk_vertex(v);
+            if self.discovery_time[i] == INVALID_TIME {
+                self.dfs_vertex(v);
             }
         }
     }
 
-    pub fn construct(graph: &'g Graph<N, E>) {
-        SCCsConstruction::new(graph).run()
+    pub fn construct(graph: &'g Graph<N, E>) -> SCCs {
+        let mut tarjan_scc = TarjanSCC::new(graph);
+        tarjan_scc.run();
+        SCCs {
+            scc_indices: tarjan_scc.scc_indices,
+            num_component: tarjan_scc.component_cnt
+        }
     }
 }
 
@@ -481,6 +460,7 @@ mod tests {
         );
     }
 
+
     #[test]
     fn test_scc() {
         let mut g1: Graph<(), ()> = Graph::new();
@@ -492,9 +472,11 @@ mod tests {
         g1.add_edge(NodeIndex(2), NodeIndex(1), ());
         g1.add_edge(NodeIndex(0), NodeIndex(3), ());
         g1.add_edge(NodeIndex(3), NodeIndex(4), ());
-        println!("SCCs in graph one:");
-        g1.compute_scc();
+        let g1_result = g1.compute_scc().components();
+        assert_eq!(g1_result, [vec![4], vec![3], vec![0, 1, 2]].map(|v| v.into_iter().map(|i| NodeIndex(i)).collect::<Vec<_>>()));
+        
 
+        /* 
         let mut g2: Graph<(), ()> = Graph::new();
         for _ in 0..4 {
             g2.add_node(());
@@ -502,7 +484,6 @@ mod tests {
         g2.add_edge(NodeIndex(0), NodeIndex(1), ());
         g2.add_edge(NodeIndex(1), NodeIndex(2), ());
         g2.add_edge(NodeIndex(2), NodeIndex(3), ());
-        println!("SCCs in graph two:");
         g2.compute_scc();
 
         let mut g3: Graph<(), ()> = Graph::new();
@@ -517,7 +498,6 @@ mod tests {
         g3.add_edge(NodeIndex(1), NodeIndex(6), ());
         g3.add_edge(NodeIndex(3), NodeIndex(5), ());
         g3.add_edge(NodeIndex(4), NodeIndex(5), ());
-        println!("SCCs in graph three:");
         g3.compute_scc();
 
         let mut g4: Graph<(), ()> = Graph::new();
@@ -541,7 +521,6 @@ mod tests {
         g4.add_edge(NodeIndex(7), NodeIndex(9), ());
         g4.add_edge(NodeIndex(8), NodeIndex(9), ());
         g4.add_edge(NodeIndex(9), NodeIndex(8), ());
-        println!("SCCs in graph four:");
         g4.compute_scc();
 
         let mut g5: Graph<(), ()> = Graph::new();
@@ -554,7 +533,7 @@ mod tests {
         g5.add_edge(NodeIndex(2), NodeIndex(4), ());
         g5.add_edge(NodeIndex(3), NodeIndex(0), ());
         g5.add_edge(NodeIndex(4), NodeIndex(2), ());
-        println!("SCCs in graph five:");
         g5.compute_scc();
+        */
     }
 }
