@@ -1,5 +1,3 @@
-
-
 use rustc_data_structures::fx::FxHashSet;
 use rustc_middle::mir::visit::{PlaceContext, Visitor};
 use rustc_middle::mir::{

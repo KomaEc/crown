@@ -8,7 +8,7 @@ fn main() -> std::io::Result<()> {
     if args.len() != 2 {
         panic!("Expect appropriate arguments");
     }
-    let input_file_name : &str = &args[1];
+    let input_file_name: &str = &args[1];
     playground::run(input_file_name.to_string());
     Ok(())
 }

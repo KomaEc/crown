@@ -1,4 +1,5 @@
 //! This query borrow-checks the MIR to (further) ensure it is not broken.
+
 #![feature(rustc_private)]
 #![feature(bool_to_option)]
 #![feature(box_patterns)]
@@ -17,8 +18,8 @@
 extern crate rustc_middle;
 #[macro_use]
 extern crate tracing;
-extern crate rustc_index;
 
+extern crate rustc_index;
 extern crate rustc_data_structures;
 extern crate rustc_errors;
 extern crate rustc_ast_pretty;
@@ -29,7 +30,6 @@ extern crate rustc_interface;
 extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_infer;
-// extern crate rustc_index;
 extern crate rustc_mir_dataflow;
 extern crate rustc_serialize;
 extern crate rustc_trait_selection;
@@ -55,7 +55,7 @@ use rustc_middle::mir::{
 use rustc_middle::mir::{AggregateKind, BasicBlock, BorrowCheckResult, BorrowKind};
 use rustc_middle::mir::{Field, ProjectionElem, Promoted, Rvalue, Statement, StatementKind};
 use rustc_middle::mir::{InlineAsmOperand, Terminator, TerminatorKind};
-use rustc_middle::ty::query::Providers;
+// use rustc_middle::ty::query::Providers;
 use rustc_middle::ty::{self, CapturedPlace, ParamEnv, RegionVid, TyCtxt};
 use rustc_session::lint::builtin::{MUTABLE_BORROW_RESERVATION_CONFLICT, UNUSED_MUT};
 use rustc_span::{Span, Symbol, DUMMY_SP};
@@ -127,8 +127,8 @@ struct Upvar<'tcx> {
 
 const DEREF_PROJECTION: &[PlaceElem<'_>; 1] = &[ProjectionElem::Deref];
 
-pub fn provide(providers: &mut Providers) {
-    *providers = Providers {
+pub fn provide(providers: &mut rustc_middle::ty::query::Providers) {
+    *providers = rustc_middle::ty::query::Providers {
         mir_borrowck: |tcx, did| {
             if let Some(def) = ty::WithOptConstParam::try_lookup(did, tcx) {
                 tcx.mir_borrowck_const_arg(def)

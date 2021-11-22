@@ -5,4 +5,5 @@ members = [
     "refactorer/alias_analysis",
     "refactorer/transform",
     "refactorer/playground",
+    "utils/graph",
 ]

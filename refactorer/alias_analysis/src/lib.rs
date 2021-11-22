@@ -4,10 +4,10 @@
 #[macro_use]
 extern crate rustc_index;
 
-extern crate rustc_serialize;
 extern crate rustc_middle;
+extern crate rustc_serialize;
 
-mod andersen;
+pub mod andersen;
 
 #[cfg(test)]
 mod tests {
