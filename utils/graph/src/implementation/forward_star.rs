@@ -13,6 +13,19 @@ pub struct Node<N> {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct NodeIndex(pub usize);
 
+impl NodeIndex {
+    #[inline]
+    pub fn index(self) -> usize {
+        self.0
+    }
+}
+
+impl From<usize> for NodeIndex {
+    fn from(i: usize) -> Self {
+        NodeIndex(i)
+    }
+}
+
 pub struct Edge<E> {
     pub next_edges: [EdgeIndex; 2],
     pub source: NodeIndex,
@@ -350,7 +363,7 @@ impl<'g, N, E> TarjanSCC<'g, N, E> {
             // visited: vec![false; num_nodes],
             on_stack: vec![false; num_nodes],
             component_cnt: 0,
-            scc_indices: vec![INVALID_SCC_INDEX; num_nodes]
+            scc_indices: vec![INVALID_SCC_INDEX; num_nodes],
         }
     }
 
@@ -363,14 +376,13 @@ impl<'g, N, E> TarjanSCC<'g, N, E> {
         self.stack.push(v);
         self.on_stack[v.0] = true;
 
-
         // @Loop invariant:
         // Let V be the set of vertices that have been visited, let V' be the set of vertices that
         // are on stack. Then we have V' ⊂ V.
-        // Let E be the set of edges that have been visited (note that, as long as target vertex is 
+        // Let E be the set of edges that have been visited (note that, as long as target vertex is
         // touched, we count the corresponding edge as visited),
         // let E' be the set of edges in the current DFS tree. Then we have E' ⊂ E.
-        // 
+        //
         // At anytime, the loop invariant is represented by the following mutually dependent predicates:
         // 1. `low_link[v]` points to a vertex in V' (on stack), which is also the vertex of lowest preorder
         // in the current DFS tree (V, E'), that is reachable from `v` in the graph (V, E) by at most one
@@ -416,7 +428,7 @@ impl<'g, N, E> TarjanSCC<'g, N, E> {
         tarjan_scc.run();
         SCCs {
             scc_indices: tarjan_scc.scc_indices,
-            num_component: tarjan_scc.component_cnt
+            num_component: tarjan_scc.component_cnt,
         }
     }
 }
@@ -460,7 +472,6 @@ mod tests {
         );
     }
 
-
     #[test]
     fn test_scc() {
         let mut g1: Graph<(), ()> = Graph::new();
@@ -473,10 +484,13 @@ mod tests {
         g1.add_edge(NodeIndex(0), NodeIndex(3), ());
         g1.add_edge(NodeIndex(3), NodeIndex(4), ());
         let g1_result = g1.compute_scc().components();
-        assert_eq!(g1_result, [vec![4], vec![3], vec![0, 1, 2]].map(|v| v.into_iter().map(|i| NodeIndex(i)).collect::<Vec<_>>()));
-        
+        assert_eq!(
+            g1_result,
+            [vec![4], vec![3], vec![0, 1, 2]]
+                .map(|v| v.into_iter().map(|i| i.into()).collect::<Vec<_>>())
+        );
 
-        /* 
+        /*
         let mut g2: Graph<(), ()> = Graph::new();
         for _ in 0..4 {
             g2.add_node(());
