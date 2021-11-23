@@ -27,7 +27,7 @@ use std::str;
 
 use log;
 use transform::place_tracer::PlaceTracer;
-use transform::place_simplifier::ComplexPlaceReporter;
+use transform::complex_place_reporter::ComplexPlaceReporter;
 /*
 use rustc_middle::mir::{
     traversal, Body, ClearCrossCrate, Local, Location, Mutability, Operand, Place, PlaceElem,
