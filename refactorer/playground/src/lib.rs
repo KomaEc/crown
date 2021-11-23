@@ -16,6 +16,7 @@ extern crate rustc_span;
 use rustc_ast_pretty::pprust::item_to_string;
 use rustc_errors::registry;
 use rustc_hir::OwnerNode;
+use rustc_middle::mir::visit::Visitor;
 use rustc_middle::ty::WithOptConstParam;
 use rustc_session::config;
 use std::borrow::Borrow;
@@ -25,6 +26,8 @@ use std::process;
 use std::str;
 
 use log;
+use transform::place_tracer::PlaceTracer;
+use transform::place_simplifier::ComplexPlaceReporter;
 /*
 use rustc_middle::mir::{
     traversal, Body, ClearCrossCrate, Local, Location, Mutability, Operand, Place, PlaceElem,
@@ -116,6 +119,12 @@ pub fn run(input_file_name: String) {
                                 } else {
                                     log::error!("Error in writing mir");
                                 }
+
+                                let mut tracer = PlaceTracer;
+                                tracer.visit_body(body.borrow().borrow());
+
+                                let mut reporter = ComplexPlaceReporter { tcx };
+                                reporter.visit_body(body.borrow().borrow());
 
                                 // should not panic!
                                 // let _ = tcx.optimized_mir(def_id);

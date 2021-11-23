@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "src/refactor",
+    "src/curr",
     "refactorer/alias_analysis",
     "refactorer/transform",
     "refactorer/playground",

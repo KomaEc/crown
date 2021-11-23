@@ -1,5 +1,8 @@
 mod constraint_generation;
 mod constraint_solving;
+mod node_generation;
+
+use std::ops::Index;
 
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{
@@ -9,8 +12,16 @@ use rustc_middle::mir::{
 
 // use graph::implementation;
 
-pub struct ConstraintSet<'tcx> {
-    constraints: IndexVec<ConstraintIndex, Constraint<'tcx>>,
+pub struct ConstraintSet {
+    constraints: IndexVec<ConstraintIndex, Constraint>,
+}
+
+impl Index<ConstraintIndex> for ConstraintSet {
+    type Output = Constraint;
+
+    fn index(&self, i: ConstraintIndex) -> &Self::Output {
+        &self.constraints[i]
+    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -25,18 +36,26 @@ pub enum ConstraintKind {
     Store,
 }
 
-pub struct Constraint<'tcx> {
+pub struct Constraint {
     pub constraint_kind: ConstraintKind,
-    pub left: &'tcx Place<'tcx>,
-    pub right: &'tcx Place<'tcx>,
+    pub left: AndersenNode,
+    pub right: AndersenNode,
 }
 
-#[derive(Clone, Copy)]
-pub struct Node {
-    pub idx: i32,
+/*
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct AndersenNode {
+    pub idx: usize,
+}
+*/
+
+rustc_index::newtype_index! {
+    pub struct AndersenNode {
+        DEBUG_FORMAT = "AndersenNode({})"
+    }
 }
 
-pub struct NodeData<'tcx> {
+pub struct AndersenNodeData<'tcx> {
     pub data: &'tcx Place<'tcx>,
 }
 
