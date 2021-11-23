@@ -55,28 +55,30 @@ impl<'tcx> Visitor<'tcx> for ComplexPlaceReporter<'tcx> {
     fn visit_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
         let Statement { source_info, kind } = statement;
 
-        if let StatementKind::Assign(box (_, rvalue)) = kind {
+        if let StatementKind::Assign(box (place, rvalue)) = kind {
             if ComplexPlaceReporter::rvalue_is_complex(rvalue) {
                 let mut err = struct_span_err!(
                     self,
                     source_info.span,
-                    test,
+                    ComplexRvalue,
                     "rvalue {:?} is complex!",
                     rvalue
                 );
                 err.emit();
             }
-        }
 
-        /*
-        let mut err = struct_span_err!(
-            self,
-            _,
-            _,
-            "",
-            _
-        );
-        */
+            if ComplexPlaceReporter::place_nested_level(place) >= 2 {
+                // let local = place.local_or_deref_local();
+                let mut err = struct_span_err!(
+                    self,
+                    source_info.span,
+                    ComplexPlace,
+                    "place {:?} is complex!",
+                    place
+                );
+                err.emit();
+            }
+        }
 
         self.super_statement(statement, location);
     }
