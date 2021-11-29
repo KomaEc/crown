@@ -6,4 +6,5 @@ members = [
     "refactorer/transform",
     "refactorer/playground",
     "utils/graph",
+    "utils/index",
 ]
