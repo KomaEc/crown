@@ -7,4 +7,5 @@ members = [
     "refactorer/playground",
     "utils/graph",
     "utils/index",
+    "rustfix",
 ]
