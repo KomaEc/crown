@@ -4,7 +4,7 @@ mod node_generation;
 
 use std::ops::Index;
 
-use rustc_index::vec::IndexVec;
+use index::vec::IndexVec;
 use rustc_middle::mir::{
     traversal, Body, ClearCrossCrate, Local, Location, Mutability, Operand, Place, PlaceElem,
     PlaceRef, VarDebugInfoContents,
@@ -48,8 +48,7 @@ pub struct AndersenNode {
     pub idx: usize,
 }
 */
-
-rustc_index::newtype_index! {
+index::newtype_index! {
     pub struct AndersenNode {
         DEBUG_FORMAT = "AndersenNode({})"
     }
@@ -59,7 +58,7 @@ pub struct AndersenNodeData<'tcx> {
     pub data: &'tcx Place<'tcx>,
 }
 
-rustc_index::newtype_index! {
+index::newtype_index! {
     pub struct ConstraintIndex {
         DEBUG_FORMAT = "AndersenConstraintIndex({})"
     }

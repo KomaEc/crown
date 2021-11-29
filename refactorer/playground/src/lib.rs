@@ -26,8 +26,8 @@ use std::process;
 use std::str;
 
 use log;
-use transform::place_tracer::PlaceTracer;
 use transform::complex_place_reporter::ComplexPlaceReporter;
+use transform::place_tracer::PlaceTracer;
 /*
 use rustc_middle::mir::{
     traversal, Body, ClearCrossCrate, Local, Location, Mutability, Operand, Place, PlaceElem,
@@ -120,11 +120,13 @@ pub fn run(input_file_name: String) {
                                     log::error!("Error in writing mir");
                                 }
 
+                                let body_ref = body.borrow();
                                 let mut tracer = PlaceTracer;
-                                tracer.visit_body(body.borrow().borrow());
+                                tracer.visit_body(body_ref.borrow());
 
-                                let mut reporter = ComplexPlaceReporter { tcx };
-                                reporter.visit_body(body.borrow().borrow());
+                                let mut reporter =
+                                    ComplexPlaceReporter::new(tcx, body_ref.borrow());
+                                reporter.visit_body(body_ref.borrow());
 
                                 // should not panic!
                                 // let _ = tcx.optimized_mir(def_id);
