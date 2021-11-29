@@ -1,5 +1,3 @@
-
-
 use index::vec::Idx;
 
 pub mod implementation;

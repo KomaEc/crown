@@ -7,11 +7,10 @@
 
 // use crate::fx::FxHashSet;
 // use crate::graph::vec_graph::VecGraph;
-use std::collections::HashSet;
 use crate::{DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors};
 use index::vec::{Idx, IndexVec};
+use std::collections::HashSet;
 use std::ops::Range;
-
 
 /// Strongly connected components (SCC) of a graph. The type `N` is
 /// the index type for the graph nodes and `S` is the index type for
@@ -228,7 +227,10 @@ where
             node_states: IndexVec::from_elem_n(NodeState::NotVisited, num_nodes),
             node_stack: Vec::with_capacity(num_nodes),
             successors_stack: Vec::new(),
-            scc_data: SccData { ranges: IndexVec::new(), all_successors: Vec::new() },
+            scc_data: SccData {
+                ranges: IndexVec::new(),
+                all_successors: Vec::new(),
+            },
             duplicate_set: HashSet::default(),
         };
 
@@ -243,7 +245,10 @@ where
             })
             .collect();
 
-        Sccs { scc_indices, scc_data: this.scc_data }
+        Sccs {
+            scc_indices,
+            scc_data: this.scc_data,
+        }
     }
 
     fn start_walk_from(&mut self, node: G::Node) -> WalkReturn<S> {
@@ -316,7 +321,9 @@ where
                     // reverse iteration loop.
                     assert!(node != parent, "Node can not be in cycle with itself");
                     // Store the previous node as an inverted list link
-                    self.node_states[node] = NodeState::InCycleWith { parent: previous_node };
+                    self.node_states[node] = NodeState::InCycleWith {
+                        parent: previous_node,
+                    };
                     // Update to parent node.
                     previous_node = node;
                     node = parent;
@@ -389,8 +396,9 @@ where
                 // Still visiting nodes, compress to cycle to the node
                 // at that depth.
                 NodeState::BeingVisited { depth } => {
-                    self.node_states[node] =
-                        NodeState::InCycleWith { parent: self.node_stack[depth] };
+                    self.node_states[node] = NodeState::InCycleWith {
+                        parent: self.node_stack[depth],
+                    };
                 }
                 // These are never allowed as parent nodes. InCycleWith
                 // should have been followed to a real parent and
@@ -478,8 +486,10 @@ where
             // Construct iterators for the nodes and walk results. There are two cases:
             // * The walk of a successor node returned.
             // * The remaining successor nodes.
-            let returned_walk =
-                return_value.take().into_iter().map(|walk| (*successor_node, Some(walk)));
+            let returned_walk = return_value
+                .take()
+                .into_iter()
+                .map(|walk| (*successor_node, Some(walk)));
 
             let successor_walk = successors.by_ref().map(|successor_node| {
                 // debug!(?node, ?successor_node);
@@ -488,7 +498,9 @@ where
 
             for (successor_node, walk) in returned_walk.chain(successor_walk) {
                 match walk {
-                    Some(WalkReturn::Cycle { min_depth: successor_min_depth }) => {
+                    Some(WalkReturn::Cycle {
+                        min_depth: successor_min_depth,
+                    }) => {
                         // Track the minimum depth we can reach.
                         assert!(successor_min_depth <= depth);
                         if successor_min_depth < *min_depth {
@@ -498,7 +510,9 @@ where
                         }
                     }
 
-                    Some(WalkReturn::Complete { scc_index: successor_scc_index }) => {
+                    Some(WalkReturn::Complete {
+                        scc_index: successor_scc_index,
+                    }) => {
                         // Push the completed SCC indices onto
                         // the `successors_stack` for later.
                         // debug!(?node, ?successor_scc_index);
@@ -555,8 +569,12 @@ where
                 // We are not the head of the cycle. Return back to our
                 // caller. They will take ownership of the
                 // `self.successors` data that we pushed.
-                self.node_states[node] = NodeState::InCycleWith { parent: frame.min_cycle_root };
-                WalkReturn::Cycle { min_depth: frame.min_depth }
+                self.node_states[node] = NodeState::InCycleWith {
+                    parent: frame.min_cycle_root,
+                };
+                WalkReturn::Cycle {
+                    min_depth: frame.min_depth,
+                }
             });
         }
 

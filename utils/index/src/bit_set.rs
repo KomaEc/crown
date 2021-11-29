@@ -7,7 +7,6 @@ use std::mem;
 use std::ops::{BitAnd, BitAndAssign, BitOrAssign, Not, Range, Shl};
 use std::slice;
 
-
 #[cfg(test)]
 mod tests;
 
@@ -82,14 +81,22 @@ impl<T: Idx> BitSet<T> {
     #[inline]
     pub fn new_empty(domain_size: usize) -> BitSet<T> {
         let num_words = num_words(domain_size);
-        BitSet { domain_size, words: vec![0; num_words], marker: PhantomData }
+        BitSet {
+            domain_size,
+            words: vec![0; num_words],
+            marker: PhantomData,
+        }
     }
 
     /// Creates a new, filled bitset with a given `domain_size`.
     #[inline]
     pub fn new_filled(domain_size: usize) -> BitSet<T> {
         let num_words = num_words(domain_size);
-        let mut result = BitSet { domain_size, words: vec![!0; num_words], marker: PhantomData };
+        let mut result = BitSet {
+            domain_size,
+            words: vec![!0; num_words],
+            marker: PhantomData,
+        };
         result.clear_excess_bits();
         result
     }
@@ -129,7 +136,10 @@ impl<T: Idx> BitSet<T> {
     #[inline]
     pub fn superset(&self, other: &BitSet<T>) -> bool {
         assert_eq!(self.domain_size, other.domain_size);
-        self.words.iter().zip(&other.words).all(|(a, b)| (a & b) == *b)
+        self.words
+            .iter()
+            .zip(&other.words)
+            .all(|(a, b)| (a & b) == *b)
     }
 
     /// Is the set empty?
@@ -207,7 +217,9 @@ impl<T: Idx> BitSet<T> {
                 // Were there any bits in the old word that did not occur in the sparse set?
                 not_already |= (self.words[current_index] ^ new_bit_mask) != 0;
                 // Check all words we skipped for any set bit.
-                not_already |= self.words[current_index + 1..word_index].iter().any(|&x| x != 0);
+                not_already |= self.words[current_index + 1..word_index]
+                    .iter()
+                    .any(|&x| x != 0);
                 // Update next word.
                 current_index = word_index;
                 // Reset bit mask, no bits have been merged yet.
@@ -432,7 +444,11 @@ impl<T: Idx> BitRelations<HybridBitSet<T>> for HybridBitSet<T> {
 
 impl<T> Clone for BitSet<T> {
     fn clone(&self) -> Self {
-        BitSet { domain_size: self.domain_size, words: self.words.clone(), marker: PhantomData }
+        BitSet {
+            domain_size: self.domain_size,
+            words: self.words.clone(),
+            marker: PhantomData,
+        }
     }
 
     fn clone_from(&mut self, from: &Self) {
@@ -576,7 +592,10 @@ pub struct SparseBitSet<T> {
 
 impl<T: Idx> SparseBitSet<T> {
     fn new_empty(domain_size: usize) -> Self {
-        SparseBitSet { domain_size, elems: ArrayVec::new() }
+        SparseBitSet {
+            domain_size,
+            elems: ArrayVec::new(),
+        }
     }
 
     fn len(&self) -> usize {
@@ -811,11 +830,15 @@ impl<T: Idx> GrowableBitSet<T> {
     }
 
     pub fn new_empty() -> GrowableBitSet<T> {
-        GrowableBitSet { bit_set: BitSet::new_empty(0) }
+        GrowableBitSet {
+            bit_set: BitSet::new_empty(0),
+        }
     }
 
     pub fn with_capacity(capacity: usize) -> GrowableBitSet<T> {
-        GrowableBitSet { bit_set: BitSet::new_empty(capacity) }
+        GrowableBitSet {
+            bit_set: BitSet::new_empty(capacity),
+        }
     }
 
     /// Returns `true` if the set has changed.
@@ -840,7 +863,10 @@ impl<T: Idx> GrowableBitSet<T> {
     #[inline]
     pub fn contains(&self, elem: T) -> bool {
         let (word_index, mask) = word_index_and_mask(elem);
-        self.bit_set.words.get(word_index).map_or(false, |word| (word & mask) != 0)
+        self.bit_set
+            .words
+            .get(word_index)
+            .map_or(false, |word| (word & mask) != 0)
     }
 }
 
@@ -881,7 +907,11 @@ impl<R: Idx, C: Idx> BitMatrix<R, C> {
         BitMatrix {
             num_rows,
             num_columns,
-            words: iter::repeat(row.words()).take(num_rows).flatten().cloned().collect(),
+            words: iter::repeat(row.words())
+                .take(num_rows)
+                .flatten()
+                .cloned()
+                .collect(),
             marker: PhantomData,
         }
     }
@@ -1023,7 +1053,10 @@ impl<R: Idx, C: Idx> BitMatrix<R, C> {
     /// Returns the number of elements in `row`.
     pub fn count(&self, row: R) -> usize {
         let (start, end) = self.range(row);
-        self.words[start..end].iter().map(|e| e.count_ones() as usize).sum()
+        self.words[start..end]
+            .iter()
+            .map(|e| e.count_ones() as usize)
+            .sum()
     }
 }
 
@@ -1067,13 +1100,17 @@ where
 impl<R: Idx, C: Idx> SparseBitMatrix<R, C> {
     /// Creates a new empty sparse bit matrix with no rows or columns.
     pub fn new(num_columns: usize) -> Self {
-        Self { num_columns, rows: IndexVec::new() }
+        Self {
+            num_columns,
+            rows: IndexVec::new(),
+        }
     }
 
     fn ensure_row(&mut self, row: R) -> &mut HybridBitSet<C> {
         // Instantiate any missing rows up to and including row `row` with an empty HybridBitSet.
         // Then replace row `row` with a full HybridBitSet if necessary.
-        self.rows.get_or_insert_with(row, || HybridBitSet::new_empty(self.num_columns))
+        self.rows
+            .get_or_insert_with(row, || HybridBitSet::new_empty(self.num_columns))
     }
 
     /// Sets the cell at `(row, column)` to true. Put another way, insert
@@ -1148,7 +1185,11 @@ impl<R: Idx, C: Idx> SparseBitMatrix<R, C> {
     }
 
     pub fn row(&self, row: R) -> Option<&HybridBitSet<C>> {
-        if let Some(Some(row)) = self.rows.get(row) { Some(row) } else { None }
+        if let Some(Some(row)) = self.rows.get(row) {
+            Some(row)
+        } else {
+            None
+        }
     }
 
     /// Interescts `row` with `set`. `set` can be either `BitSet` or

@@ -1,8 +1,11 @@
 use crate::{DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors};
-use index::{bit_set::{HybridBitSet, HybridIter}, vec::{Idx, IndexVec}};
+use index::{
+    bit_set::{HybridBitSet, HybridIter},
+    vec::{Idx, IndexVec},
+};
 
 pub struct SparseBitVectorGraph<N: Idx> {
-    edges: IndexVec<N, HybridBitSet<N>>
+    edges: IndexVec<N, HybridBitSet<N>>,
 }
 
 impl<N: Idx> DirectedGraph for SparseBitVectorGraph<N> {
@@ -17,7 +20,7 @@ impl<N: Idx> WithNumNodes for SparseBitVectorGraph<N> {
 
 impl<N: Idx> WithNumEdges for SparseBitVectorGraph<N> {
     fn num_edges(&self) -> usize {
-        self.edges.iter().map(|bs| bs.iter().count()).sum()     
+        self.edges.iter().map(|bs| bs.iter().count()).sum()
     }
 }
 

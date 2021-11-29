@@ -1,4 +1,3 @@
-
 use std::fmt;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -540,17 +539,26 @@ impl<I: Idx, T: fmt::Debug> fmt::Debug for IndexVec<I, T> {
 impl<I: Idx, T> IndexVec<I, T> {
     #[inline]
     pub fn new() -> Self {
-        IndexVec { raw: Vec::new(), _marker: PhantomData }
+        IndexVec {
+            raw: Vec::new(),
+            _marker: PhantomData,
+        }
     }
 
     #[inline]
     pub fn from_raw(raw: Vec<T>) -> Self {
-        IndexVec { raw, _marker: PhantomData }
+        IndexVec {
+            raw,
+            _marker: PhantomData,
+        }
     }
 
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
-        IndexVec { raw: Vec::with_capacity(capacity), _marker: PhantomData }
+        IndexVec {
+            raw: Vec::with_capacity(capacity),
+            _marker: PhantomData,
+        }
     }
 
     #[inline]
@@ -558,7 +566,10 @@ impl<I: Idx, T> IndexVec<I, T> {
     where
         T: Clone,
     {
-        IndexVec { raw: vec![elem; universe.len()], _marker: PhantomData }
+        IndexVec {
+            raw: vec![elem; universe.len()],
+            _marker: PhantomData,
+        }
     }
 
     #[inline]
@@ -566,7 +577,10 @@ impl<I: Idx, T> IndexVec<I, T> {
     where
         T: Clone,
     {
-        IndexVec { raw: vec![elem; n], _marker: PhantomData }
+        IndexVec {
+            raw: vec![elem; n],
+            _marker: PhantomData,
+        }
     }
 
     /// Create an `IndexVec` with `n` elements, where the value of each
@@ -616,7 +630,10 @@ impl<I: Idx, T> IndexVec<I, T> {
     pub fn into_iter_enumerated(
         self,
     ) -> impl DoubleEndedIterator<Item = (I, T)> + ExactSizeIterator {
-        self.raw.into_iter().enumerate().map(|(n, t)| (I::new(n), t))
+        self.raw
+            .into_iter()
+            .enumerate()
+            .map(|(n, t)| (I::new(n), t))
     }
 
     #[inline]
@@ -661,7 +678,10 @@ impl<I: Idx, T> IndexVec<I, T> {
         &'a mut self,
         range: R,
     ) -> impl Iterator<Item = (I, T)> + 'a {
-        self.raw.drain(range).enumerate().map(|(n, t)| (I::new(n), t))
+        self.raw
+            .drain(range)
+            .enumerate()
+            .map(|(n, t)| (I::new(n), t))
     }
 
     #[inline]
@@ -721,7 +741,10 @@ impl<I: Idx, T> IndexVec<I, T> {
     }
 
     pub fn convert_index_type<Ix: Idx>(self) -> IndexVec<Ix, T> {
-        IndexVec { raw: self.raw, _marker: PhantomData }
+        IndexVec {
+            raw: self.raw,
+            _marker: PhantomData,
+        }
     }
 
     /// Grows the index vector so that it contains an entry for
@@ -827,7 +850,10 @@ impl<I: Idx, T> FromIterator<T> for IndexVec<I, T> {
     where
         J: IntoIterator<Item = T>,
     {
-        IndexVec { raw: FromIterator::from_iter(iter), _marker: PhantomData }
+        IndexVec {
+            raw: FromIterator::from_iter(iter),
+            _marker: PhantomData,
+        }
     }
 }
 
