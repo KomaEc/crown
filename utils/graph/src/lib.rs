@@ -1,6 +1,6 @@
 pub mod implementation;
 
-/*
+
 pub trait DirectedGraph {
     type Node;
 }
@@ -25,4 +25,3 @@ pub trait GraphSuccessors<'graph> {
     type Item;
     type Iter: Iterator<Item = Self::Item>;
 }
-*/
