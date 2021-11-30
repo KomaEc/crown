@@ -26,7 +26,7 @@ impl<'cg, 'tcx> Visitor<'tcx> for ConstraintGeneration<'cg, 'tcx> {
     /// Default visitor will visit basic blocks before local declarations,
     /// so we overwrite here.
     fn visit_body(&mut self, body: &Body<'tcx>) {
-        log::trace!("constraint generation: visiting body");
+        log::trace!("visiting body");
         for (local, decl) in body.local_decls.iter_enumerated() {
             self.visit_local_decl(local, decl)
         }
@@ -38,8 +38,9 @@ impl<'cg, 'tcx> Visitor<'tcx> for ConstraintGeneration<'cg, 'tcx> {
 
     fn visit_local_decl(&mut self, local: Local, local_decl: &LocalDecl<'tcx>) {
         log::trace!(
-            "constraint generation: visiting local declaration {:?}",
-            local_decl
+            "visiting local declaration {:?} : {}",
+            local,
+            local_decl.ty
         );
         let LocalDecl {
             mutability: _,
@@ -66,7 +67,7 @@ impl<'cg, 'tcx> Visitor<'tcx> for ConstraintGeneration<'cg, 'tcx> {
 
     fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
         log::trace!(
-            "constraint generation: visiting assignment statment {:?} = {:?} at location: {:?}",
+            "visiting assignment statment {:?} = {:?} at location: {:?}",
             place,
             rvalue,
             location
@@ -109,7 +110,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
         // we only consider place at the LHS of an assignment
         if let PlaceContext::MutatingUse(MutatingUseContext::Store) = context {
             log::trace!(
-                "constraint generation: visiting place {:?} at location {:?}",
+                "visiting place {:?} at location {:?}",
                 place,
                 location
             );

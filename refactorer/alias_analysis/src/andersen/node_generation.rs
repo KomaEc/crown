@@ -23,7 +23,7 @@ impl<'tcx> NodeGeneration<'tcx> {
         self.value_node_map.insert(data, node);
 
         log::trace!(
-            "node generation: generating node {:?} for place {:?}",
+            "generating node {:?} for place {:?}",
             node,
             data.as_place_ref()
         );
