@@ -2,9 +2,7 @@ use rustc_errors::{struct_span_err, DiagnosticBuilder, DiagnosticId};
 use rustc_hir::Node::*;
 use rustc_hir_pretty::id_to_string;
 use rustc_middle::{
-    mir::{
-        visit::Visitor, Body, Location, Operand, Place, Rvalue, Statement, StatementKind,
-    },
+    mir::{visit::Visitor, Body, Location, Operand, Place, Rvalue, Statement, StatementKind},
     ty::TyCtxt,
 };
 use rustc_span::MultiSpan;

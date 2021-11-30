@@ -1,7 +1,5 @@
 use rustc_middle::mir::visit::Visitor;
-use rustc_middle::mir::{
-    Location, Place, Rvalue,
-};
+use rustc_middle::mir::{Location, Place, Rvalue};
 
 use log;
 

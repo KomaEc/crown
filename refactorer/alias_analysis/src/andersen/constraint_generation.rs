@@ -1,8 +1,9 @@
 use rustc_middle::mir::visit::{
     MutatingUseContext, NonMutatingUseContext, PlaceContext, TyContext, Visitor,
 };
+use rustc_middle::mir::ProjectionElem;
 use rustc_middle::mir::{
-    Body, BorrowKind, Local, LocalDecl, Location, Mutability, NullOp, Place, Rvalue,
+    Body, BorrowKind, Local, LocalDecl, Location, Mutability, NullOp, Place, PlaceRef, Rvalue,
 };
 use rustc_middle::ty::TyCtxt;
 
@@ -37,11 +38,7 @@ impl<'cg, 'tcx> Visitor<'tcx> for ConstraintGeneration<'cg, 'tcx> {
     }
 
     fn visit_local_decl(&mut self, local: Local, local_decl: &LocalDecl<'tcx>) {
-        log::trace!(
-            "visiting local declaration {:?} : {}",
-            local,
-            local_decl.ty
-        );
+        log::trace!("visiting local declaration {:?} : {}", local, local_decl.ty);
         let LocalDecl {
             mutability: _,
             ty,
@@ -59,7 +56,9 @@ impl<'cg, 'tcx> Visitor<'tcx> for ConstraintGeneration<'cg, 'tcx> {
             }
             // generate andersen node for this local
             let place_ref = Place::from(local).as_ref();
-            let _ = self.node_generation.generate(place_ref.into());
+            let _ = self
+                .node_generation
+                .generate_from_place_ref(place_ref.into());
         }
 
         self.super_local_decl(local, local_decl)
@@ -101,23 +100,53 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
         }
     }
 
+    /// Process place of pointer type, return an Andersen node representing this place.
+    ///
+    /// If `place` is nested, for instance, `*(*(*p).0).1`, introduce temporary variables implicitly.
+    /// In the above example, temp vars are introduced as:
+    /// ```mir
+    /// tmp1 = *p;
+    /// tmp2 = *tmp2;
+    /// tmp3 = *tmp2;
+    /// tmp3 = ... // or ... = tmp3
+    /// ```
+    /// , and `andersen_repr(tmp3)` is returned
+    /// Note that, the current analysis is flow insensitive, meaning that assignment to `x.f` is treated
+    /// the same as assignment to `x`.
     fn process_place_of_ptr_ty(
         &mut self,
         place: &Place<'tcx>,
-        context: PlaceContext,
+        _context: PlaceContext,
         location: Location,
-    ) {
-        // we only consider place at the LHS of an assignment
-        if let PlaceContext::MutatingUse(MutatingUseContext::Store) = context {
-            log::trace!(
-                "visiting place {:?} at location {:?}",
-                place,
-                location
-            );
-            for (place_ref, _) in place.iter_projections() {
-                let _ = self.node_generation.generate(place_ref.into());
+    ) -> AndersenNode {
+        log::trace!("processing place {:?} at location {:?}", place, location);
+
+        //for (place_ref, _) in place.iter_projections() {
+        //    let _ = self.node_generation.generate(place_ref.into());
+        //}
+
+        let mut repr = self.node_generation.generate_from_place_ref(place.as_ref());
+
+        /// FIXME: wrong logic. should return `p` if `*p` is the place, and generate a [`Load`] or [`Store`]
+        /// constraint. Otherwise [`Copy`] or [`AddressOf`] constraints. 
+        if let Some(_local) = place.local_or_deref_local() {
+        } else {
+            /// FIXME: introduce temporary variable!!!!
+            for (place_ref, proj_elem) in place.iter_projections() {
+                log::trace!(
+                    "--> processing place {:?} with elem {:?}",
+                    place_ref,
+                    proj_elem
+                );
+                match proj_elem {
+                    ProjectionElem::Deref => {
+                        unimplemented!()
+                    }
+                    _ => continue,
+                }
             }
         }
+        repr
     }
 
     fn process_rvalue_of_ptr_ty(&mut self, rvalue: &Rvalue<'tcx>, location: Location)

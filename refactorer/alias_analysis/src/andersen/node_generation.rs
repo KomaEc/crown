@@ -1,5 +1,6 @@
 use crate::andersen::AndersenNode;
 use index::vec::IndexVec;
+use rustc_middle::mir::PlaceRef;
 use std::collections::{hash_map::Entry, HashMap};
 
 use super::AndersenNodeData;
@@ -39,7 +40,7 @@ impl<'tcx> NodeGeneration<'tcx> {
     }
 
     #[inline(always)]
-    pub fn generate(&mut self, data: AndersenNodeData<'tcx>) -> AndersenNode {
-        self.get_or_create(data)
+    pub fn generate_from_place_ref(&mut self, place_ref: PlaceRef<'tcx>) -> AndersenNode {
+        self.get_or_create(place_ref.into())
     }
 }
