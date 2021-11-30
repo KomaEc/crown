@@ -100,7 +100,8 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
         }
     }
 
-    /// Process place of pointer type, return an Andersen node representing this place.
+    /// Process place of pointer type, return an Andersen node representing this place. Return true
+    /// if this place is indirect
     ///
     /// If `place` is nested, for instance, `*(*(*p).0).1`, introduce temporary variables implicitly.
     /// In the above example, temp vars are introduced as:
@@ -118,7 +119,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
         place: &Place<'tcx>,
         _context: PlaceContext,
         location: Location,
-    ) -> AndersenNode {
+    ) -> (AndersenNode, bool) {
         log::trace!("processing place {:?} at location {:?}", place, location);
 
         //for (place_ref, _) in place.iter_projections() {
@@ -146,7 +147,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
                 }
             }
         }
-        repr
+        (repr, unimplemented!())
     }
 
     fn process_rvalue_of_ptr_ty(&mut self, rvalue: &Rvalue<'tcx>, location: Location)
