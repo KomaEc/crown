@@ -1,3 +1,5 @@
+#![feature(min_specialization)]
+
 use index::vec::Idx;
 
 pub mod implementation;

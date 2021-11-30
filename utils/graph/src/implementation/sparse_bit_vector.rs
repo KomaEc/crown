@@ -35,3 +35,7 @@ impl<N: Idx> WithSuccessors for SparseBitVectorGraph<N> {
         self.edges[node].iter()
     }
 }
+
+impl<N: Idx> SparseBitVectorGraph<N> {
+    
+}
