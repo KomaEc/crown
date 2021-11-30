@@ -1,19 +1,22 @@
-mod constraint_generation;
+pub mod constraint_generation;
 mod constraint_solving;
 mod node_generation;
 
 use std::ops::Index;
 
 use index::vec::IndexVec;
-use rustc_middle::mir::{
-    traversal, Body, ClearCrossCrate, Local, Location, Mutability, Operand, Place, PlaceElem,
-    PlaceRef, VarDebugInfoContents,
-};
-
-// use graph::implementation;
+use rustc_middle::mir::{Place, PlaceRef};
 
 pub struct ConstraintSet {
     constraints: IndexVec<ConstraintIndex, Constraint>,
+}
+
+impl ConstraintSet {
+    pub fn new() -> ConstraintSet {
+        ConstraintSet {
+            constraints: IndexVec::new(),
+        }
+    }
 }
 
 impl Index<ConstraintIndex> for ConstraintSet {
@@ -42,21 +45,38 @@ pub struct Constraint {
     pub right: AndersenNode,
 }
 
-/*
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct AndersenNode {
-    pub idx: usize,
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct AndersenNodeData<'tcx> {
+    data: PlaceRef<'tcx>,
 }
-*/
+
+impl<'tcx> AndersenNodeData<'tcx> {
+    pub fn as_place_ref(self) -> PlaceRef<'tcx> {
+        self.data
+    }
+}
+
+impl<'tcx> From<PlaceRef<'tcx>> for AndersenNodeData<'tcx> {
+    fn from(place_ref: PlaceRef<'tcx>) -> Self {
+        AndersenNodeData { data: place_ref }
+    }
+}
+
+impl<'tcx> From<&'tcx Place<'tcx>> for AndersenNodeData<'tcx> {
+    fn from(place: &'tcx Place<'tcx>) -> Self {
+        AndersenNodeData {
+            data: place.as_ref(),
+        }
+    }
+}
+
 index::newtype_index! {
     pub struct AndersenNode {
         DEBUG_FORMAT = "AndersenNode({})"
     }
 }
 
-pub struct AndersenNodeData<'tcx> {
-    pub data: &'tcx Place<'tcx>,
-}
+pub const INVALID_ANDERSEN_NODE: AndersenNode = AndersenNode::MAX;
 
 index::newtype_index! {
     pub struct ConstraintIndex {

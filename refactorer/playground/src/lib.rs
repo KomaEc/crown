@@ -13,6 +13,7 @@ extern crate rustc_session;
 extern crate rustc_span;
 // extern crate rustc_borrowck;
 
+use alias_analysis::andersen::constraint_generation::ConstraintGeneration;
 use rustc_ast_pretty::pprust::item_to_string;
 use rustc_errors::registry;
 use rustc_hir::OwnerNode;
@@ -26,7 +27,7 @@ use std::process;
 use std::str;
 
 use log;
-use transform::complex_place_reporter::ComplexPlaceReporter;
+// use transform::complex_place_reporter::ComplexPlaceReporter;
 use transform::place_tracer::PlaceTracer;
 /*
 use rustc_middle::mir::{
@@ -124,9 +125,13 @@ pub fn run(input_file_name: String) {
                                 let mut tracer = PlaceTracer;
                                 tracer.visit_body(body_ref.borrow());
 
-                                let mut reporter =
-                                    ComplexPlaceReporter::new(tcx, body_ref.borrow());
-                                reporter.visit_body(body_ref.borrow());
+                                //let mut reporter =
+                                //    ComplexPlaceReporter::new(tcx, body_ref.borrow());
+                                //reporter.visit_body(body_ref.borrow());
+
+                                let mut analysis =
+                                    ConstraintGeneration::new(body_ref.borrow(), tcx);
+                                analysis.visit_body(body_ref.borrow());
 
                                 // should not panic!
                                 // let _ = tcx.optimized_mir(def_id);

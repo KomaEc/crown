@@ -1,5 +1,6 @@
 #![feature(rustc_private)]
 #![feature(min_specialization)]
+#![feature(box_patterns)]
 
 #[macro_use]
 extern crate index;

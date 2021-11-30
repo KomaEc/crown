@@ -36,6 +36,4 @@ impl<N: Idx> WithSuccessors for SparseBitVectorGraph<N> {
     }
 }
 
-impl<N: Idx> SparseBitVectorGraph<N> {
-    
-}
+impl<N: Idx> SparseBitVectorGraph<N> {}
