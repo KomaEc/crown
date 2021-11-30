@@ -341,7 +341,7 @@ impl AddAssign<usize> for Time {
 pub struct TarjanSCC<'g, N, E> {
     graph: &'g Graph<N, E>,
     low_link: Vec<Time>,
-    cur_time: Time,
+    timestamp: Time,
     discovery_time: Vec<Time>,
     stack: Vec<NodeIndex>,
     // visited: Vec<bool>,
@@ -357,7 +357,7 @@ impl<'g, N, E> TarjanSCC<'g, N, E> {
         TarjanSCC {
             graph,
             low_link: vec![INVALID_TIME; num_nodes],
-            cur_time: Time(0),
+            timestamp: Time(0),
             discovery_time: vec![INVALID_TIME; num_nodes],
             stack: Vec::with_capacity(num_nodes),
             // visited: vec![false; num_nodes],
@@ -370,9 +370,9 @@ impl<'g, N, E> TarjanSCC<'g, N, E> {
     /// Assuming `node` is not currently visited
     fn dfs_vertex(&mut self, v: NodeIndex) {
         // self.visited[v.0] = true;
-        self.discovery_time[v.0] = self.cur_time;
-        self.low_link[v.0] = self.cur_time;
-        self.cur_time += 1;
+        self.discovery_time[v.0] = self.timestamp;
+        self.low_link[v.0] = self.timestamp;
+        self.timestamp += 1;
         self.stack.push(v);
         self.on_stack[v.0] = true;
 
