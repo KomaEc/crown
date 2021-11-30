@@ -3,9 +3,7 @@ use rustc_hir::Node::*;
 use rustc_hir_pretty::id_to_string;
 use rustc_middle::{
     mir::{
-        visit::Visitor, BasicBlock, BasicBlockData, Body, Local, Location, Operand, Place,
-        PlaceRef, ProjectionElem, Rvalue, SourceInfo, Statement, StatementKind, Terminator,
-        TerminatorKind, UserTypeProjection,
+        visit::Visitor, Body, Location, Operand, Place, Rvalue, Statement, StatementKind,
     },
     ty::TyCtxt,
 };

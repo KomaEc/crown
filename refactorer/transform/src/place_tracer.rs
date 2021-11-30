@@ -1,7 +1,6 @@
-use rustc_middle::mir::visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor};
+use rustc_middle::mir::visit::Visitor;
 use rustc_middle::mir::{
-    BasicBlock, BasicBlockData, Body, Local, Location, Place, PlaceRef, ProjectionElem, Rvalue,
-    SourceInfo, Statement, StatementKind, Terminator, TerminatorKind, UserTypeProjection,
+    Location, Place, Rvalue,
 };
 
 use log;

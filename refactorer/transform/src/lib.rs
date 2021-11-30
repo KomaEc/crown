@@ -2,7 +2,6 @@
 #![feature(box_patterns)]
 
 pub mod complex_place_reporter;
-pub mod place_simplifier;
 pub mod place_tracer;
 
 extern crate rustc_ast_pretty;
