@@ -21,6 +21,10 @@ impl ConstraintSet {
     pub fn push(&mut self, c: Constraint) -> ConstraintIndex {
         self.constraints.push(c)
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Constraint> {
+        self.constraints.iter()
+    }
 }
 
 impl Index<ConstraintIndex> for ConstraintSet {
@@ -52,11 +56,7 @@ pub struct Constraint {
 
 impl Constraint {
     pub fn new(ck: ConstraintKind, l: AndersenNode, r: AndersenNode) -> Self {
-        Constraint {
-            constraint_kind: ck,
-            left: l,
-            right: r,
-        }
+        Constraint { constraint_kind: ck, left: l, right: r }
     }
 }
 

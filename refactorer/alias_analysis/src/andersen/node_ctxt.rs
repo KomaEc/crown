@@ -44,4 +44,16 @@ impl<'tcx> NodeCtxt<'tcx> {
         log::trace!("generating temporary node");
         self.node_set.push(AndersenNodeData::Temporary)
     }
+
+    pub fn find(&self, node: AndersenNode) -> AndersenNodeData<'_> {
+        self.node_set[node]
+    }
+
+    pub fn to_string(&self, node: AndersenNode) -> String {
+        match self.find(node) {
+            /// FIXME: assume that all place_refs are locals
+            AndersenNodeData::Mir(place_ref) => format!("mir_{}", place_ref.local.index()),
+            AndersenNodeData::Temporary => format!("tmp_{}", node.index()),
+        }
+    }
 }

@@ -34,6 +34,8 @@ impl<'cg, 'tcx> Visitor<'tcx> for ConstraintGeneration<'cg, 'tcx> {
         for (bb, data) in body.basic_blocks().iter_enumerated() {
             self.visit_basic_block_data(bb, data)
         }
+
+        self.log_info_constraints();
     }
 
     fn visit_local_decl(&mut self, local: Local, local_decl: &LocalDecl<'tcx>) {
@@ -89,6 +91,20 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
             node_ctxt: NodeCtxt::new(),
             body,
             tcx,
+        }
+    }
+
+    fn log_info_constraints(&self) {
+        log::info!("Dumping constraints:");
+        for (i, constraint) in self.constraints.iter().enumerate() {
+            let lhs = self.node_ctxt.to_string(constraint.left);
+            let rhs = self.node_ctxt.to_string(constraint.right);
+            match constraint.constraint_kind {
+                ConstraintKind::AddressOf => log::info!("{} = &{}", lhs, rhs),
+                ConstraintKind::Copy => log::info!("{} = {}", lhs, rhs),
+                ConstraintKind::Load => log::info!("{} = *{}", lhs, rhs),
+                ConstraintKind::Store => log::info!("*{} = {}", lhs, rhs),
+            }
         }
     }
 
