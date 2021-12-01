@@ -1,5 +1,5 @@
 use crate::andersen::{
-    node_ctxt::NodeCtxt, AndersenNode, ConstraintIndex, ConstraintKind, ConstraintSet,
+    node_ctxt::NodeCtxt, AndersenNode, ConstraintIndex, ConstraintKind, ConstraintSet, AndersenResult
 };
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, WithSuccessors};
 use index::{bit_set::BitSet, vec::IndexVec};
@@ -107,5 +107,9 @@ impl<'tcx> ConstraintSolving<'tcx> {
                 }
             }
         }
+    }
+
+    pub fn finish(self) -> AndersenResult<'tcx> {
+        AndersenResult::new(self.pts_sets, self.node_ctxt)
     }
 }

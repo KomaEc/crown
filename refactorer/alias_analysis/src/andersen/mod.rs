@@ -2,10 +2,22 @@ pub mod constraint_generation;
 mod constraint_solving;
 mod node_ctxt;
 
-use std::ops::Index;
 
-use index::vec::IndexVec;
+use std::ops::Index;
+use crate::andersen::node_ctxt::NodeCtxt;
+use index::{vec::IndexVec, bit_set::BitSet};
 use rustc_middle::mir::{Local, Place, PlaceRef};
+
+pub struct AndersenResult<'tcx> {
+    pub pts_sets: IndexVec<AndersenNode, BitSet<AndersenNode>>,
+    pub node_ctxt: NodeCtxt<'tcx>
+}
+
+impl<'tcx> AndersenResult<'tcx> {
+    pub fn new(pts_sets: IndexVec<AndersenNode, BitSet<AndersenNode>>, node_ctxt: NodeCtxt<'tcx>) -> Self {
+        AndersenResult { pts_sets, node_ctxt }
+    }
+}
 
 pub struct ConstraintSet {
     constraints: IndexVec<ConstraintIndex, Constraint>,
@@ -105,22 +117,6 @@ impl<'tcx> From<Local> for AndersenNodeData<'tcx> {
         AndersenNodeData::Mir(place.as_ref())
     }
 }
-
-/*
-impl<'tcx> From<PlaceRef<'tcx>> for AndersenNodeData<'tcx> {
-    fn from(place_ref: PlaceRef<'tcx>) -> Self {
-        AndersenNodeData { data: place_ref }
-    }
-}
-
-impl<'tcx> From<&'tcx Place<'tcx>> for AndersenNodeData<'tcx> {
-    fn from(place: &'tcx Place<'tcx>) -> Self {
-        AndersenNodeData {
-            data: place.as_ref(),
-        }
-    }
-}
-*/
 
 index::newtype_index! {
     pub struct AndersenNode {
