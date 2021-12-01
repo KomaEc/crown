@@ -272,11 +272,12 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
         }
     }
 
-    pub fn generate(&mut self) {
-        unimplemented!()
+    pub fn generate_constraints(mut self) -> Self {
+        self.visit_body(self.body);
+        self
     }
 
-    pub fn finish(self) -> ConstraintSolving<'tcx> {
+    pub fn proceed_to_solving(self) -> ConstraintSolving<'tcx> {
         ConstraintSolving::new(self.constraints, self.node_ctxt)
     }
 }

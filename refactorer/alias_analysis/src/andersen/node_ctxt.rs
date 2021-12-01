@@ -7,25 +7,30 @@ use super::AndersenNodeData;
 
 /// Data structure for the node factory
 pub struct NodeCtxt<'tcx> {
-    node_set: IndexVec<AndersenNode, AndersenNodeData<'tcx>>,
+    universe: IndexVec<AndersenNode, AndersenNodeData<'tcx>>,
     value_node_map: HashMap<PlaceRef<'tcx>, AndersenNode>,
 }
 
 impl<'tcx> NodeCtxt<'tcx> {
     pub fn new() -> NodeCtxt<'tcx> {
         NodeCtxt {
-            node_set: IndexVec::new(),
+            universe: IndexVec::new(),
             value_node_map: HashMap::new(),
         }
     }
 
     #[inline]
     pub fn num_nodes(&self) -> usize {
-        self.node_set.len()
+        self.universe.len()
+    }
+
+    #[inline]
+    pub fn universe(&self) -> &IndexVec<AndersenNode, AndersenNodeData<'tcx>> {
+        &self.universe
     }
 
     fn create_node_from_mir_data(&mut self, data: PlaceRef<'tcx>) -> AndersenNode {
-        let node = self.node_set.push(AndersenNodeData::Mir(data));
+        let node = self.universe.push(AndersenNodeData::Mir(data));
         self.value_node_map.insert(data, node);
 
         log::trace!("generating node {:?} for place {:?}", node, data);
@@ -47,11 +52,11 @@ impl<'tcx> NodeCtxt<'tcx> {
 
     pub fn generate_temporary(&mut self) -> AndersenNode {
         log::trace!("generating temporary node");
-        self.node_set.push(AndersenNodeData::Temporary)
+        self.universe.push(AndersenNodeData::Temporary)
     }
 
     pub fn find(&self, node: AndersenNode) -> AndersenNodeData<'_> {
-        self.node_set[node]
+        self.universe[node]
     }
 
     pub fn to_string(&self, node: AndersenNode) -> String {

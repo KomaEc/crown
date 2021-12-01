@@ -18,12 +18,29 @@ impl ConstraintSet {
         }
     }
 
+    #[inline]
+    pub fn num_constraints(&self) -> usize {
+        self.constraints.len()
+    }
+
+    #[inline]
     pub fn push(&mut self, c: Constraint) -> ConstraintIndex {
         self.constraints.push(c)
     }
 
+    #[inline]
     pub fn iter(&self) -> impl Iterator<Item = &Constraint> {
         self.constraints.iter()
+    }
+
+    #[inline]
+    pub fn iter_enumerated(&self) -> impl Iterator<Item = (ConstraintIndex, &Constraint)> {
+        self.constraints.iter_enumerated()
+    }
+
+    #[inline]
+    pub fn universe(&self) -> &IndexVec<ConstraintIndex, Constraint> {
+        &self.constraints
     }
 }
 
@@ -60,6 +77,16 @@ impl Constraint {
             constraint_kind: ck,
             left: l,
             right: r,
+        }
+    }
+
+    /// Test if a constraint mentions deref of [`node`].
+    pub fn mention_deref(self, node: AndersenNode) -> bool {
+        match self.constraint_kind {
+            ConstraintKind::AddressOf => false,
+            ConstraintKind::Copy => false,
+            ConstraintKind::Load => node == self.right,
+            ConstraintKind::Store => node == self.left,
         }
     }
 }
