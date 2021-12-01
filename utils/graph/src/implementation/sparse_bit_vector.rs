@@ -36,4 +36,18 @@ impl<N: Idx> WithSuccessors for SparseBitVectorGraph<N> {
     }
 }
 
-impl<N: Idx> SparseBitVectorGraph<N> {}
+impl<N: Idx> SparseBitVectorGraph<N> {
+    pub fn new(num_nodes: usize, edge_pairs: impl Iterator<Item = (N, N)>) -> Self {
+        let mut edges: IndexVec<N, HybridBitSet<N>> = IndexVec::with_capacity(num_nodes);
+        for (src, dst) in edge_pairs {
+            edges[src].insert(dst);
+        }
+        SparseBitVectorGraph { edges }
+    }
+
+    /// Return [`true`] if changed
+    /// #[inline]
+    pub fn add_edge(&mut self, src: N, dst: N) -> bool {
+        self.edges[src].insert(dst)
+    }
+}
