@@ -1,17 +1,13 @@
 use rustc_middle::mir::visit::Visitor;
-use rustc_middle::mir::{
-    Body, Local, LocalDecl, Location, NullOp, Place, Rvalue,
-};
+use rustc_middle::mir::{Body, Local, LocalDecl, Location, NullOp, Place, Rvalue};
 use rustc_middle::mir::{CastKind, Operand, ProjectionElem};
 use rustc_middle::ty::TyCtxt;
 
-use crate::andersen::{Constraint, ConstraintKind};
 use crate::{
+    andersen::constraint_solving::ConstraintSolving,
     andersen::node_ctxt::NodeCtxt,
-    andersen::{AndersenNode, ConstraintSet},
+    andersen::{AndersenNode, Constraint, ConstraintKind, ConstraintSet},
 };
-
-// pub type PtsGraph = Graph<AndersenNode, ()>;
 
 /// Data structure for constraint generation.
 /// 'cg = the duration of the constraint generation
@@ -274,5 +270,13 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
                 unimplemented!()
             }
         }
+    }
+
+    pub fn generate(&mut self) {
+        unimplemented!()
+    }
+
+    pub fn finish(self) -> ConstraintSolving<'tcx> {
+        ConstraintSolving::new(self.constraints, self.node_ctxt)
     }
 }

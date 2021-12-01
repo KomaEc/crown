@@ -19,6 +19,11 @@ impl<'tcx> NodeCtxt<'tcx> {
         }
     }
 
+    #[inline]
+    pub fn num_nodes(&self) -> usize {
+        self.node_set.len()
+    }
+
     fn create_node_from_mir_data(&mut self, data: PlaceRef<'tcx>) -> AndersenNode {
         let node = self.node_set.push(AndersenNodeData::Mir(data));
         self.value_node_map.insert(data, node);

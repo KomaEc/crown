@@ -56,7 +56,11 @@ pub struct Constraint {
 
 impl Constraint {
     pub fn new(ck: ConstraintKind, l: AndersenNode, r: AndersenNode) -> Self {
-        Constraint { constraint_kind: ck, left: l, right: r }
+        Constraint {
+            constraint_kind: ck,
+            left: l,
+            right: r,
+        }
     }
 }
 
