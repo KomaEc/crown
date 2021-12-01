@@ -1,14 +1,13 @@
-use rustc_middle::mir::visit::{
-    MutatingUseContext, NonMutatingUseContext, PlaceContext, TyContext, Visitor,
-};
-use rustc_middle::mir::ProjectionElem;
+use rustc_middle::mir::visit::Visitor;
 use rustc_middle::mir::{
-    Body, BorrowKind, Local, LocalDecl, Location, Mutability, NullOp, Place, PlaceRef, Rvalue,
+    Body, Local, LocalDecl, Location, NullOp, Place, Rvalue,
 };
+use rustc_middle::mir::{CastKind, Operand, ProjectionElem};
 use rustc_middle::ty::TyCtxt;
 
+use crate::andersen::{Constraint, ConstraintKind};
 use crate::{
-    andersen::node_generation::NodeGeneration,
+    andersen::node_ctxt::NodeCtxt,
     andersen::{AndersenNode, ConstraintSet},
 };
 
@@ -18,7 +17,7 @@ use crate::{
 /// 'cg = the duration of the constraint generation
 pub struct ConstraintGeneration<'cg, 'tcx> {
     constraints: ConstraintSet,
-    node_generation: NodeGeneration<'tcx>,
+    node_ctxt: NodeCtxt<'tcx>,
     body: &'cg Body<'tcx>,
     tcx: TyCtxt<'tcx>,
 }
@@ -55,10 +54,7 @@ impl<'cg, 'tcx> Visitor<'tcx> for ConstraintGeneration<'cg, 'tcx> {
                 unimplemented!()
             }
             // generate andersen node for this local
-            let place_ref = Place::from(local).as_ref();
-            let _ = self
-                .node_generation
-                .generate_from_place_ref(place_ref.into());
+            let _ = self.node_ctxt.generate_from_local(local);
         }
 
         self.super_local_decl(local, local_decl)
@@ -78,12 +74,8 @@ impl<'cg, 'tcx> Visitor<'tcx> for ConstraintGeneration<'cg, 'tcx> {
                 log::error!("Function pointer: {} is not supported!", place_ty.ty);
                 unimplemented!()
             }
-            self.process_rvalue_of_ptr_ty(rvalue, location);
-            self.process_place_of_ptr_ty(
-                place,
-                PlaceContext::MutatingUse(MutatingUseContext::Store),
-                location,
-            );
+            self.process_assign_of_ptr_ty(place, rvalue, location);
+            // self.process_place_of_ptr_ty(place, location);
         }
 
         self.super_assign(place, rvalue, location)
@@ -94,7 +86,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
     pub fn new(body: &'cg Body<'tcx>, tcx: TyCtxt<'tcx>) -> ConstraintGeneration<'cg, 'tcx> {
         ConstraintGeneration {
             constraints: ConstraintSet::new(),
-            node_generation: NodeGeneration::new(),
+            node_ctxt: NodeCtxt::new(),
             body,
             tcx,
         }
@@ -107,17 +99,15 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
     /// In the above example, temp vars are introduced as:
     /// ```mir
     /// tmp1 = *p;
-    /// tmp2 = *tmp2;
-    /// tmp3 = *tmp2;
-    /// tmp3 = ... // or ... = tmp3
+    /// tmp2 = *tmp1;
+    /// *tmp2 = ... // or ... = *tmp2
     /// ```
-    /// , and `andersen_repr(tmp3)` is returned
-    /// Note that, the current analysis is flow insensitive, meaning that assignment to `x.f` is treated
+    /// , and `(andersen_repr(tmp2), true)` is returned
+    /// Note that, the current analysis is field insensitive, meaning that assignment to `x.f` is treated
     /// the same as assignment to `x`.
     fn process_place_of_ptr_ty(
         &mut self,
         place: &Place<'tcx>,
-        _context: PlaceContext,
         location: Location,
     ) -> (AndersenNode, bool) {
         log::trace!("processing place {:?} at location {:?}", place, location);
@@ -126,87 +116,139 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
         //    let _ = self.node_generation.generate(place_ref.into());
         //}
 
-        let mut repr = self.node_generation.generate_from_place_ref(place.as_ref());
+        let mut repr = self.node_ctxt.generate_from_local(place.local);
+        let mut is_nested = false;
+        let mut is_indirect = false;
 
-        /// FIXME: wrong logic. should return `p` if `*p` is the place, and generate a [`Load`] or [`Store`]
-        /// constraint. Otherwise [`Copy`] or [`AddressOf`] constraints. 
-        if let Some(_local) = place.local_or_deref_local() {
-        } else {
-            /// FIXME: introduce temporary variable!!!!
-            for (place_ref, proj_elem) in place.iter_projections() {
-                log::trace!(
-                    "--> processing place {:?} with elem {:?}",
-                    place_ref,
-                    proj_elem
-                );
-                match proj_elem {
-                    ProjectionElem::Deref => {
-                        unimplemented!()
+        for (_place_ref, proj_elem) in place.iter_projections() {
+            match proj_elem {
+                ProjectionElem::Deref => {
+                    is_indirect = true;
+                    if is_nested {
+                        let tmp = self.node_ctxt.generate_temporary();
+                        // generate constraint: p = *tmp
+                        self.constraints
+                            .push(Constraint::new(ConstraintKind::Load, repr, tmp));
+                        repr = tmp;
+                    } else {
+                        is_nested = true;
                     }
-                    _ => continue,
                 }
+                ProjectionElem::Field(f, _) => {
+                    log::warn!("field {:?} ignored!", f);
+                }
+                ProjectionElem::Index(_) => unimplemented!("projection: index"),
+                ProjectionElem::ConstantIndex {
+                    offset: _,
+                    min_length: _,
+                    from_end: _,
+                } => unimplemented!("projection: const index"),
+                ProjectionElem::Subslice {
+                    from: _,
+                    to: _,
+                    from_end: _,
+                } => unimplemented!("projection: subslice"),
+                ProjectionElem::Downcast(_, _) => unimplemented!("projection: downcast"),
             }
         }
-        (repr, unimplemented!())
+        (repr, is_indirect)
     }
 
-    fn process_rvalue_of_ptr_ty(&mut self, rvalue: &Rvalue<'tcx>, location: Location)
-    /* -> AndersenNode */
-    {
+    fn process_assign_of_ptr_ty(
+        &mut self,
+        place: &Place<'tcx>,
+        rvalue: &Rvalue<'tcx>,
+        location: Location,
+    ) {
+        let (lhs_repr, lhs_is_indirect) = self.process_place_of_ptr_ty(place, location);
         match rvalue {
-            Rvalue::Use(operand) => {
-                self.visit_operand(operand, location);
-            }
-
-            Rvalue::Ref(r, bk, path) => {
-                self.visit_region(r, location);
-                let ctx = match bk {
-                    BorrowKind::Shared => {
-                        PlaceContext::NonMutatingUse(NonMutatingUseContext::SharedBorrow)
+            Rvalue::Use(Operand::Copy(place))
+            | Rvalue::Use(Operand::Move(place))
+            | Rvalue::Cast(CastKind::Pointer(_), Operand::Copy(place), _)
+            | Rvalue::Cast(CastKind::Pointer(_), Operand::Move(place), _) => {
+                let (rhs_repr, rhs_is_indirect) = self.process_place_of_ptr_ty(place, location);
+                match (lhs_is_indirect, rhs_is_indirect) {
+                    // *p = *q, introduce a temporary
+                    // tmp = *q
+                    // *p = tmp
+                    (true, true) => {
+                        let tmp = self.node_ctxt.generate_temporary();
+                        self.constraints
+                            .push(Constraint::new(ConstraintKind::Load, tmp, rhs_repr));
+                        self.constraints.push(Constraint::new(
+                            ConstraintKind::Store,
+                            lhs_repr,
+                            tmp,
+                        ));
                     }
-                    BorrowKind::Shallow => {
-                        PlaceContext::NonMutatingUse(NonMutatingUseContext::ShallowBorrow)
+                    // *p = q
+                    (true, false) => {
+                        self.constraints.push(Constraint::new(
+                            ConstraintKind::Store,
+                            lhs_repr,
+                            rhs_repr,
+                        ));
                     }
-                    BorrowKind::Unique => {
-                        PlaceContext::NonMutatingUse(NonMutatingUseContext::UniqueBorrow)
+                    // p = *q
+                    (false, true) => {
+                        self.constraints.push(Constraint::new(
+                            ConstraintKind::Load,
+                            lhs_repr,
+                            rhs_repr,
+                        ));
                     }
-                    BorrowKind::Mut { .. } => PlaceContext::MutatingUse(MutatingUseContext::Borrow),
-                };
-                self.visit_place(path, ctx, location);
-            }
-
-            Rvalue::AddressOf(m, path) => {
-                let ctx = match m {
-                    Mutability::Mut => PlaceContext::MutatingUse(MutatingUseContext::AddressOf),
-                    Mutability::Not => {
-                        PlaceContext::NonMutatingUse(NonMutatingUseContext::AddressOf)
+                    // p = q
+                    (false, false) => {
+                        self.constraints.push(Constraint::new(
+                            ConstraintKind::Copy,
+                            lhs_repr,
+                            rhs_repr,
+                        ));
                     }
-                };
-                self.visit_place(path, ctx, location);
+                }
             }
 
-            Rvalue::Cast(_cast_kind, operand, ty) => {
-                self.visit_operand(operand, location);
-                self.visit_ty(ty, TyContext::Location(location));
+            Rvalue::Ref(_, _, place) | Rvalue::AddressOf(_, place) => {
+                let (mut rhs_repr, rhs_is_indirect) = self.process_place_of_ptr_ty(place, location);
+                // ... = &*q, introduce a temporary
+                // tmp = *q
+                // ... = &tmp
+                if rhs_is_indirect {
+                    let tmp = self.node_ctxt.generate_temporary();
+                    self.constraints
+                        .push(Constraint::new(ConstraintKind::Load, tmp, rhs_repr));
+                    rhs_repr = tmp;
+                }
+
+                match lhs_is_indirect {
+                    // *p = &q, introduce a temporary
+                    // tmp = &q
+                    // *p = tmp
+                    true => {
+                        let tmp = self.node_ctxt.generate_temporary();
+                        self.constraints.push(Constraint::new(
+                            ConstraintKind::AddressOf,
+                            tmp,
+                            rhs_repr,
+                        ));
+                        self.constraints.push(Constraint::new(
+                            ConstraintKind::Store,
+                            lhs_repr,
+                            tmp,
+                        ));
+                    }
+                    // p = &q
+                    false => {
+                        self.constraints.push(Constraint::new(
+                            ConstraintKind::AddressOf,
+                            lhs_repr,
+                            rhs_repr,
+                        ));
+                    }
+                }
             }
 
-            Rvalue::BinaryOp(_bin_op, box (lhs, rhs))
-            | Rvalue::CheckedBinaryOp(_bin_op, box (lhs, rhs)) => {
-                self.visit_operand(lhs, location);
-                self.visit_operand(rhs, location);
-            }
-
-            /*
-            Rvalue::Discriminant(place) => {
-                self.visit_place(
-                    place,
-                    PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect),
-                    location,
-                );
-            }
-            */
             Rvalue::NullaryOp(NullOp::Box, _ty) => {
-                // self.visit_ty(ty, TyContext::Location(location));
                 log::error!("Box::new() is not supported!");
                 unimplemented!()
             }
