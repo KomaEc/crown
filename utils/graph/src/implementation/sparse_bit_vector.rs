@@ -1,4 +1,3 @@
-
 use crate::{DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors};
 use index::{
     bit_set::{HybridBitSet, HybridIter},

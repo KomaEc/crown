@@ -4,10 +4,7 @@ mod node_ctxt;
 
 use crate::andersen::node_ctxt::NodeCtxt;
 use graph::implementation::sparse_bit_vector::SparseBitVectorGraph;
-use index::{
-    bit_set::HybridBitSet,
-    vec::IndexVec,
-};
+use index::{bit_set::HybridBitSet, vec::IndexVec};
 use rustc_middle::mir::{Local, Place, PlaceRef};
 use std::ops::Index;
 
@@ -17,10 +14,7 @@ pub struct AndersenResult<'tcx> {
 }
 
 impl<'tcx> AndersenResult<'tcx> {
-    pub fn new(
-        pts_graph: PtsGraph,
-        node_ctxt: NodeCtxt<'tcx>,
-    ) -> Self {
+    pub fn new(pts_graph: PtsGraph, node_ctxt: NodeCtxt<'tcx>) -> Self {
         AndersenResult {
             pts_graph,
             node_ctxt,

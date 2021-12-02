@@ -1,11 +1,10 @@
 use crate::andersen::{
     node_ctxt::NodeCtxt, AndersenNode, AndersenResult, ConstraintIndex, ConstraintKind,
-    ConstraintSet, PtsGraph
+    ConstraintSet, PtsGraph,
 };
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, WithSuccessors};
 use index::vec::IndexVec;
 use std::collections::VecDeque;
-
 
 /// Data structure for solving the constraints.
 pub struct ConstraintSolving<'tcx> {
@@ -29,10 +28,8 @@ impl<'tcx> ConstraintSolving<'tcx> {
         let num_nodes = node_ctxt.num_nodes();
 
         let mut pts_graph = PtsGraph::new(num_nodes);
-        let mut associated_complex_constraints = IndexVec::from_elem(
-            Vec::new(),
-            node_ctxt.universe(),
-        );
+        let mut associated_complex_constraints =
+            IndexVec::from_elem(Vec::new(), node_ctxt.universe());
         let mut constraint_graph: SparseBitVectorGraph<AndersenNode> =
             SparseBitVectorGraph::new(num_nodes, [].into_iter());
         for (cid, constraint) in all_constraints.iter_enumerated() {
@@ -69,38 +66,35 @@ impl<'tcx> ConstraintSolving<'tcx> {
         // insert all nodes into work list.
         let mut work_list = VecDeque::from_iter(self.node_ctxt.universe().indices());
         while let Some(p) = work_list.pop_front() {
-            for constraint in self.associated_complex_constraints[p]
-                .iter()
-                .map(|&cid| self.all_constraints[cid])
-            {
-                match constraint.constraint_kind {
-                    // propagate constraint of the form: *p = q
-                    // for all r ∈ p, deduce r ⊃ q
-                    ConstraintKind::Load => {
-                        let p = constraint.left;
-                        let q = constraint.right;
-                        for r in self.pts_graph.pts(p).iter() {
+            // for all r ∈ p
+            for r in self.pts_graph.pts(p).iter() {
+                for constraint in self.associated_complex_constraints[p]
+                    .iter()
+                    .map(|&cid| self.all_constraints[cid])
+                {
+                    match constraint.constraint_kind {
+                        // propagate subset constraint q ⊃ *p, deduce q ⊃ r
+                        ConstraintKind::Load => {
+                            assert_eq!(p, constraint.right);
+                            let q = constraint.left;
+                            if self.constraint_graph.add_edge(r, q) {
+                                work_list.push_back(r);
+                            }
+                        }
+                        // propagate subset constraint *p ⊃ q, deduce r ⊃ q
+                        ConstraintKind::Store => {
+                            assert_eq!(p, constraint.left);
+                            let q = constraint.right;
                             if self.constraint_graph.add_edge(q, r) {
                                 work_list.push_back(q);
                             }
                         }
+                        _ => panic!("impossible"),
                     }
-                    // propagate constraint of the form: q = *p
-                    // forall r ∈ p, deduce q ⊃ r
-                    ConstraintKind::Store => {
-                        let p = constraint.right;
-                        let q = constraint.left;
-                        for r in self.pts_graph.pts(p).iter() {
-                            if self.constraint_graph.add_edge(r, q) {
-                                work_list.push_back(r)
-                            }
-                        }
-                    }
-                    _ => panic!("impossible"),
                 }
             }
 
-            // propagate constraint along graph edges
+            // propagate along graph edges
             for q in self.constraint_graph.successors(p) {
                 let (pts_q, pts_p) = self.pts_graph.pick2_pts_mut(q, p);
                 if pts_q.union(pts_p) {
