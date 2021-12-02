@@ -2,20 +2,71 @@ pub mod constraint_generation;
 mod constraint_solving;
 mod node_ctxt;
 
-
-use std::ops::Index;
 use crate::andersen::node_ctxt::NodeCtxt;
-use index::{vec::IndexVec, bit_set::BitSet};
+use graph::implementation::sparse_bit_vector::SparseBitVectorGraph;
+use index::{
+    bit_set::{BitSet, HybridBitSet},
+    vec::IndexVec,
+};
 use rustc_middle::mir::{Local, Place, PlaceRef};
+use std::ops::Index;
 
 pub struct AndersenResult<'tcx> {
-    pub pts_sets: IndexVec<AndersenNode, BitSet<AndersenNode>>,
-    pub node_ctxt: NodeCtxt<'tcx>
+    pub pts_graph: PtsGraph,
+    pub node_ctxt: NodeCtxt<'tcx>,
 }
 
 impl<'tcx> AndersenResult<'tcx> {
-    pub fn new(pts_sets: IndexVec<AndersenNode, BitSet<AndersenNode>>, node_ctxt: NodeCtxt<'tcx>) -> Self {
-        AndersenResult { pts_sets, node_ctxt }
+    pub fn new(
+        pts_graph: PtsGraph,
+        node_ctxt: NodeCtxt<'tcx>,
+    ) -> Self {
+        AndersenResult {
+            pts_graph,
+            node_ctxt,
+        }
+    }
+}
+
+pub struct PtsGraph {
+    pub graph: SparseBitVectorGraph<AndersenNode>,
+    /// runtime flag. remove later
+    finished: bool,
+}
+
+impl PtsGraph {
+    pub fn new(num_nodes: usize) -> Self {
+        PtsGraph {
+            graph: SparseBitVectorGraph::new(num_nodes, [].into_iter()),
+            finished: false,
+        }
+    }
+
+    #[inline]
+    pub fn pts(&self, p: AndersenNode) -> &HybridBitSet<AndersenNode> {
+        self.graph.successor_nodes(p)
+    }
+
+    #[inline]
+    pub fn pts_mut(&mut self, p: AndersenNode) -> &mut HybridBitSet<AndersenNode> {
+        self.graph.successor_nodes_mut(p)
+    }
+
+    #[inline]
+    pub fn pick2_pts_mut(
+        &mut self,
+        p: AndersenNode,
+        q: AndersenNode,
+    ) -> (
+        &mut HybridBitSet<AndersenNode>,
+        &mut HybridBitSet<AndersenNode>,
+    ) {
+        self.graph.pick2_successor_nodes_mut(p, q)
+    }
+
+    pub fn finish(&mut self) {
+        self.finished = true;
+        todo!()
     }
 }
 

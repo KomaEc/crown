@@ -1,14 +1,16 @@
 use crate::andersen::{
-    node_ctxt::NodeCtxt, AndersenNode, ConstraintIndex, ConstraintKind, ConstraintSet, AndersenResult
+    node_ctxt::NodeCtxt, AndersenNode, AndersenResult, ConstraintIndex, ConstraintKind,
+    ConstraintSet, PtsGraph
 };
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, WithSuccessors};
 use index::{bit_set::BitSet, vec::IndexVec};
 use std::collections::VecDeque;
 
+
 /// Data structure for solving the constraints.
 pub struct ConstraintSolving<'tcx> {
     /// Each node is associated with a points-to set.
-    pts_sets: IndexVec<AndersenNode, BitSet<AndersenNode>>,
+    pts_graph: PtsGraph,// IndexVec<AndersenNode, BitSet<AndersenNode>>,
     /// Each node is associated with a set of complex constraints.
     /// For a node `p`, constraints of the forms `*p = q`, `q = *p` are
     /// considered associated complex constraints.
@@ -26,7 +28,7 @@ impl<'tcx> ConstraintSolving<'tcx> {
     pub fn new(all_constraints: ConstraintSet, node_ctxt: NodeCtxt<'tcx>) -> Self {
         let num_nodes = node_ctxt.num_nodes();
 
-        let mut pts_sets = IndexVec::from_elem(BitSet::new_empty(num_nodes), node_ctxt.universe());
+        let mut pts_graph = PtsGraph::new(num_nodes); // IndexVec::from_elem(BitSet::new_empty(num_nodes), node_ctxt.universe());
         let mut associated_complex_constraints = IndexVec::from_elem(
             BitSet::new_empty(all_constraints.num_constraints()),
             node_ctxt.universe(),
@@ -37,7 +39,7 @@ impl<'tcx> ConstraintSolving<'tcx> {
             match constraint.constraint_kind {
                 // p = &q, then q ∈ pts(p).
                 ConstraintKind::AddressOf => {
-                    pts_sets[constraint.left].insert(constraint.right);
+                    pts_graph.pts_mut(constraint.left).insert(constraint.right);
                 }
                 // p = q, add a graph edge fropm q to p.
                 ConstraintKind::Copy => {
@@ -55,7 +57,7 @@ impl<'tcx> ConstraintSolving<'tcx> {
             }
         }
         ConstraintSolving {
-            pts_sets,
+            pts_graph,
             associated_complex_constraints,
             constraint_graph,
             all_constraints,
@@ -78,7 +80,7 @@ impl<'tcx> ConstraintSolving<'tcx> {
                     ConstraintKind::Load => {
                         let p = constraint.left;
                         let q = constraint.right;
-                        for r in self.pts_sets[p].iter() {
+                        for r in self.pts_graph.pts(p).iter() {
                             if self.constraint_graph.add_edge(q, r) {
                                 work_list.push_back(q);
                             }
@@ -89,7 +91,7 @@ impl<'tcx> ConstraintSolving<'tcx> {
                     ConstraintKind::Store => {
                         let p = constraint.right;
                         let q = constraint.left;
-                        for r in self.pts_sets[p].iter() {
+                        for r in self.pts_graph.pts(p).iter() {
                             if self.constraint_graph.add_edge(r, q) {
                                 work_list.push_back(r)
                             }
@@ -101,7 +103,7 @@ impl<'tcx> ConstraintSolving<'tcx> {
 
             // propagate constraint along graph edges
             for q in self.constraint_graph.successors(p) {
-                let (pts_q, pts_p) = self.pts_sets.pick2_mut(q, p);
+                let (pts_q, pts_p) = self.pts_graph.pick2_pts_mut(q, p);
                 if pts_q.union(pts_p) {
                     work_list.push_back(q);
                 }
@@ -110,6 +112,6 @@ impl<'tcx> ConstraintSolving<'tcx> {
     }
 
     pub fn finish(self) -> AndersenResult<'tcx> {
-        AndersenResult::new(self.pts_sets, self.node_ctxt)
+        AndersenResult::new(self.pts_graph, self.node_ctxt)
     }
 }
