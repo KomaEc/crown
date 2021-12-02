@@ -12,6 +12,9 @@ use index::vec::{Idx, IndexVec};
 use std::collections::HashSet;
 use std::ops::Range;
 
+#[cfg(test)]
+mod tests;
+
 /// Strongly connected components (SCC) of a graph. The type `N` is
 /// the index type for the graph nodes and `S` is the index type for
 /// the SCCs. We can map from each node to the SCC that it
