@@ -5,7 +5,7 @@ mod node_ctxt;
 use crate::andersen::node_ctxt::NodeCtxt;
 use graph::implementation::sparse_bit_vector::SparseBitVectorGraph;
 use index::{
-    bit_set::{BitSet, HybridBitSet},
+    bit_set::HybridBitSet,
     vec::IndexVec,
 };
 use rustc_middle::mir::{Local, Place, PlaceRef};
@@ -29,7 +29,7 @@ impl<'tcx> AndersenResult<'tcx> {
 }
 
 pub struct PtsGraph {
-    pub graph: SparseBitVectorGraph<AndersenNode>,
+    graph: SparseBitVectorGraph<AndersenNode>,
     /// runtime flag. remove later
     finished: bool,
 }

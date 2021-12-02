@@ -3,14 +3,14 @@ use crate::andersen::{
     ConstraintSet, PtsGraph
 };
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, WithSuccessors};
-use index::{bit_set::BitSet, vec::IndexVec};
+use index::vec::IndexVec;
 use std::collections::VecDeque;
 
 
 /// Data structure for solving the constraints.
 pub struct ConstraintSolving<'tcx> {
     /// Each node is associated with a points-to set.
-    pts_graph: PtsGraph,// IndexVec<AndersenNode, BitSet<AndersenNode>>,
+    pts_graph: PtsGraph,
     /// Each node is associated with a set of complex constraints.
     /// For a node `p`, constraints of the forms `*p = q`, `q = *p` are
     /// considered associated complex constraints.
@@ -28,7 +28,7 @@ impl<'tcx> ConstraintSolving<'tcx> {
     pub fn new(all_constraints: ConstraintSet, node_ctxt: NodeCtxt<'tcx>) -> Self {
         let num_nodes = node_ctxt.num_nodes();
 
-        let mut pts_graph = PtsGraph::new(num_nodes); // IndexVec::from_elem(BitSet::new_empty(num_nodes), node_ctxt.universe());
+        let mut pts_graph = PtsGraph::new(num_nodes);
         let mut associated_complex_constraints = IndexVec::from_elem(
             Vec::new(),
             node_ctxt.universe(),
