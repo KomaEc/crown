@@ -1,3 +1,5 @@
+use std::ops::Index;
+
 use crate::{DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors};
 use index::{
     bit_set::{HybridBitSet, HybridIter},
@@ -49,5 +51,24 @@ impl<N: Idx> SparseBitVectorGraph<N> {
     /// #[inline]
     pub fn add_edge(&mut self, src: N, dst: N) -> bool {
         self.edges[src].insert(dst)
+    }
+
+    #[inline]
+    pub fn successor_nodes(&self, src: N) -> &HybridBitSet<N> {
+        &self.edges[src]
+    }
+
+    #[inline]
+    pub fn successor_nodes_mut(&mut self, src: N) -> &mut HybridBitSet<N> {
+        &mut self.edges[src]
+    }
+
+    #[inline]
+    pub fn pick2_successor_nodes_mut(
+        &mut self,
+        n1: N,
+        n2: N,
+    ) -> (&mut HybridBitSet<N>, &mut HybridBitSet<N>) {
+        self.edges.pick2_mut(n1, n2)
     }
 }
