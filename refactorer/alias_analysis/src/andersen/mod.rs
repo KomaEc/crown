@@ -5,8 +5,33 @@ mod node_ctxt;
 use crate::andersen::node_ctxt::NodeCtxt;
 use graph::implementation::sparse_bit_vector::SparseBitVectorGraph;
 use index::{bit_set::HybridBitSet, vec::IndexVec};
-use rustc_middle::mir::{Local, Place, PlaceRef};
+use rustc_middle::{
+    mir::{Body, Local, Place, PlaceRef},
+    ty::TyCtxt,
+};
 use std::ops::Index;
+
+use self::constraint_generation::ConstraintGeneration;
+
+/// Currently intraprocedural, subject to changes.
+pub struct AndersenAnalysis<'aa, 'tcx> {
+    body: &'aa Body<'tcx>,
+    tcx: TyCtxt<'tcx>,
+}
+
+impl<'aa, 'tcx> AndersenAnalysis<'aa, 'tcx> {
+    pub fn new(body: &'aa Body<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
+        AndersenAnalysis { body, tcx }
+    }
+
+    pub fn run(&mut self) -> AndersenResult<'tcx> {
+        let mut solver = ConstraintGeneration::new(self.body, self.tcx)
+            .generate_constraints()
+            .proceed_to_solving();
+        solver.solve_by_dynamic_transitive_closure();
+        solver.finish()
+    }
+}
 
 pub struct AndersenResult<'tcx> {
     pub pts_graph: PtsGraph,
@@ -18,6 +43,22 @@ impl<'tcx> AndersenResult<'tcx> {
         AndersenResult {
             pts_graph,
             node_ctxt,
+        }
+    }
+
+    pub fn log_debug(&self) {
+        log::debug!("Dumping andersen analysis results:");
+        for p in self.node_ctxt.universe().indices() {
+            log::debug!(
+                "pts({}) = {{{}}}",
+                self.node_ctxt.to_string(p),
+                self.pts_graph
+                    .pts(p)
+                    .iter()
+                    .map(|q| self.node_ctxt.to_string(q))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
         }
     }
 }

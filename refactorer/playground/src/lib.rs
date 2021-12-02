@@ -13,7 +13,7 @@ extern crate rustc_session;
 extern crate rustc_span;
 // extern crate rustc_borrowck;
 
-use alias_analysis::andersen::constraint_generation::ConstraintGeneration;
+use alias_analysis::andersen::{AndersenAnalysis, AndersenResult};
 use rustc_ast_pretty::pprust::item_to_string;
 use rustc_errors::registry;
 use rustc_hir::OwnerNode;
@@ -29,21 +29,6 @@ use std::str;
 use log;
 // use transform::complex_place_reporter::ComplexPlaceReporter;
 use transform::place_tracer::PlaceTracer;
-/*
-use rustc_middle::mir::{
-    traversal, Body, ClearCrossCrate, Local, Location, Mutability, Operand, Place, PlaceElem,
-    PlaceRef, VarDebugInfoContents,
-};
-*/
-
-/*
-use rustc_borrowck::borrow_set::{BorrowData, BorrowSet};
-use rustc_borrowck::dataflow::{BorrowIndex, BorrowckFlowState as Flows, BorrowckResults, Borrows};
-use rustc_borrowck::nll::{PoloniusOutput, ToRegionVid};
-use rustc_borrowck::place_ext::PlaceExt;
-use rustc_borrowck::places_conflict::{places_conflict, PlaceConflictBias};
-use rustc_borrowck::region_infer::RegionInferenceContext;
-*/
 
 pub fn run(input_file_name: String) {
     let out = process::Command::new("rustc")
@@ -129,9 +114,9 @@ pub fn run(input_file_name: String) {
                                 //    ComplexPlaceReporter::new(tcx, body_ref.borrow());
                                 //reporter.visit_body(body_ref.borrow());
 
-                                let mut analysis =
-                                    ConstraintGeneration::new(body_ref.borrow(), tcx);
-                                analysis.visit_body(body_ref.borrow());
+                                let alias_analysis_result =
+                                    AndersenAnalysis::new(body_ref.borrow(), tcx).run();
+                                alias_analysis_result.log_debug();
 
                                 // should not panic!
                                 // let _ = tcx.optimized_mir(def_id);
