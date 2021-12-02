@@ -14,7 +14,7 @@ pub struct ConstraintSolving<'tcx> {
     /// Each node is associated with a set of complex constraints.
     /// For a node `p`, constraints of the forms `*p = q`, `q = *p` are
     /// considered associated complex constraints.
-    associated_complex_constraints: IndexVec<AndersenNode, BitSet<ConstraintIndex>>,
+    associated_complex_constraints: IndexVec<AndersenNode, Vec<ConstraintIndex>>,
     /// The constraint graph. A directed edge from node `q` to `p` means
     /// `p` ⊃ `q`, or `p = q`.
     constraint_graph: SparseBitVectorGraph<AndersenNode>,
@@ -30,7 +30,7 @@ impl<'tcx> ConstraintSolving<'tcx> {
 
         let mut pts_graph = PtsGraph::new(num_nodes); // IndexVec::from_elem(BitSet::new_empty(num_nodes), node_ctxt.universe());
         let mut associated_complex_constraints = IndexVec::from_elem(
-            BitSet::new_empty(all_constraints.num_constraints()),
+            Vec::new(),
             node_ctxt.universe(),
         );
         let mut constraint_graph: SparseBitVectorGraph<AndersenNode> =
@@ -47,12 +47,11 @@ impl<'tcx> ConstraintSolving<'tcx> {
                 }
                 // p = *q, associate complex constraint to q
                 ConstraintKind::Load => {
-                    // each constraint is associated once
-                    assert!(!associated_complex_constraints[constraint.right].insert(cid));
+                    associated_complex_constraints[constraint.right].push(cid);
                 }
                 // *p = q, associate complex constraint to p
                 ConstraintKind::Store => {
-                    assert!(!associated_complex_constraints[constraint.left].insert(cid));
+                    associated_complex_constraints[constraint.left].push(cid);
                 }
             }
         }
@@ -72,7 +71,7 @@ impl<'tcx> ConstraintSolving<'tcx> {
         while let Some(p) = work_list.pop_front() {
             for constraint in self.associated_complex_constraints[p]
                 .iter()
-                .map(|cid| self.all_constraints[cid])
+                .map(|&cid| self.all_constraints[cid])
             {
                 match constraint.constraint_kind {
                     // propagate constraint of the form: *p = q
