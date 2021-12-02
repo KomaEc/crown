@@ -1,4 +1,3 @@
-use std::ops::Index;
 
 use crate::{DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors};
 use index::{
