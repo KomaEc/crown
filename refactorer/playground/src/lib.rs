@@ -13,7 +13,7 @@ extern crate rustc_session;
 extern crate rustc_span;
 // extern crate rustc_borrowck;
 
-use alias_analysis::andersen::{AndersenAnalysis, AndersenResult};
+use pointer_analysis::andersen::{AndersenAnalysis, AndersenResult};
 use rustc_ast_pretty::pprust::item_to_string;
 use rustc_errors::registry;
 use rustc_hir::OwnerNode;

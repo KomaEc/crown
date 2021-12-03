@@ -2,7 +2,7 @@
 
 members = [
     "src/curr",
-    "refactorer/alias_analysis",
+    "refactorer/pointer_analysis",
     "refactorer/transform",
     "refactorer/playground",
     "utils/graph",

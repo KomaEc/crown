@@ -11,4 +11,4 @@ rustc_private=true
 [dependencies]
 log = "0.4"
 transform = { path = "../transform" }
-alias_analysis = { path = "../alias_analysis" }
+pointer_analysis = { path = "../pointer_analysis" }
