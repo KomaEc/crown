@@ -24,7 +24,7 @@ impl<'aa, 'tcx> AndersenAnalysis<'aa, 'tcx> {
         AndersenAnalysis { body, tcx }
     }
 
-    pub fn run(&mut self) -> AndersenResult<'tcx> {
+    pub fn run(self) -> AndersenResult<'tcx> {
         let mut solver = ConstraintGeneration::new(self.body, self.tcx)
             .generate_constraints()
             .proceed_to_solving();

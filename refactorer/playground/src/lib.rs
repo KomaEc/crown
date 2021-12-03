@@ -114,9 +114,9 @@ pub fn run(input_file_name: String) {
                                 //    ComplexPlaceReporter::new(tcx, body_ref.borrow());
                                 //reporter.visit_body(body_ref.borrow());
 
-                                let alias_analysis_result =
-                                    AndersenAnalysis::new(body_ref.borrow(), tcx).run();
-                                alias_analysis_result.log_debug();
+                                AndersenAnalysis::new(body_ref.borrow(), tcx)
+                                    .run()
+                                    .log_debug();
 
                                 // should not panic!
                                 // let _ = tcx.optimized_mir(def_id);
