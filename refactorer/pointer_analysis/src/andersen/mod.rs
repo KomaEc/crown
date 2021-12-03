@@ -50,14 +50,14 @@ impl<'tcx> AndersenResult<'tcx> {
         log::debug!("Dumping andersen analysis results:");
         for p in self.node_ctxt.universe().indices() {
             log::debug!(
-                "pts({}) = {{{}}}",
+                "pts({}) = {}",
                 self.node_ctxt.to_string(p),
                 self.pts_graph
                     .pts(p)
                     .iter()
                     .map(|q| self.node_ctxt.to_string(q))
-                    .collect::<Vec<_>>()
-                    .join(", ")
+                    .reduce(|acc, item| acc + ", " + &item)
+                    .map_or("∅".to_owned(), |s| format!("{{ {} }}", s))
             );
         }
     }
