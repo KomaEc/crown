@@ -1,43 +1,64 @@
-use rustc_middle::mir::visit::Visitor;
-use rustc_middle::mir::{Location, Place, Rvalue};
+use rustc_hir::def_id::LocalDefId;
+use rustc_middle::mir::visit::{PlaceContext, Visitor};
+use rustc_middle::mir::{Location, Place, PlaceRef, Terminator, TerminatorKind};
 
 use log;
+use rustc_middle::ty::TyKind::FnDef;
+use std::collections::HashSet;
 
-pub struct PlaceTracer;
+pub struct PlaceTracer<'pt, 'tcx> {
+    body_ids: &'pt Vec<LocalDefId>,
+    traced: HashSet<PlaceRef<'tcx>>,
+}
 
-impl PlaceTracer {
-    pub fn new() -> Self {
-        PlaceTracer
+impl<'pt, 'tcx> PlaceTracer<'pt, 'tcx> {
+    pub fn new(body_ids: &'pt Vec<LocalDefId>) -> Self {
+        PlaceTracer {
+            body_ids,
+            traced: HashSet::new(),
+        }
     }
 }
 
-impl<'tcx> Visitor<'tcx> for PlaceTracer {
-    fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
-        log::trace!("{:?}", place);
-        self.super_assign(place, rvalue, location)
-    }
-
-    /*
+impl<'pt, 'tcx> Visitor<'tcx> for PlaceTracer<'pt, 'tcx> {
     fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
-        let mut context = context;
-
-        if !place.projection.is_empty() {
-            if context.is_use() {
-                // ^ Only change the context if it is a real use, not a "use" in debuginfo.
-                context = if context.is_mutating_use() {
-                    PlaceContext::MutatingUse(MutatingUseContext::Projection)
-                } else {
-                    PlaceContext::NonMutatingUse(NonMutatingUseContext::Projection)
-                };
-            }
+        if !self.traced.contains(&place.as_ref()) {
+            log::trace!("Found new place: {:?}", place);
+            self.traced.insert(place.as_ref());
         }
-
-        // println!("{:?}", place);
-        log::trace!("{:?}", place);
-
-        self.visit_local(&place.local, context, location);
-
-        self.visit_projection(place.as_ref(), context, location);
+        self.super_place(place, context, location)
     }
-    */
+
+    fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
+        match terminator.kind {
+            TerminatorKind::Call {
+                ref func,
+                args: _,
+                destination: _,
+                cleanup: _,
+                from_hir_call,
+                fn_span: _,
+            } => {
+                assert!(from_hir_call, "Inner functions are not supported");
+
+                if let FnDef(def_id, _) = func.constant().unwrap().ty().kind() {
+                    log::trace!(
+                        "... found {} function call {:?} with def id {:?}",
+                        if let Some(local_def_id) = def_id.as_local() {
+                            assert!(self.body_ids.contains(&local_def_id));
+                            "local"
+                        } else {
+                            "library"
+                        },
+                        func.constant().unwrap(),
+                        def_id
+                    );
+                } else {
+                    unreachable!("Should be a function definition")
+                }
+            }
+            _ => {}
+        }
+        self.super_terminator(terminator, location)
+    }
 }

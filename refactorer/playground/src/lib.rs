@@ -13,7 +13,7 @@ extern crate rustc_session;
 extern crate rustc_span;
 // extern crate rustc_borrowck;
 
-use pointer_analysis::andersen::{AndersenAnalysis, AndersenResult};
+use pointer_analysis::andersen::AndersenAnalysis;
 use rustc_ast_pretty::pprust::item_to_string;
 use rustc_errors::registry;
 use rustc_hir::OwnerNode;
@@ -77,49 +77,37 @@ pub fn run(input_file_name: String) {
                 // Every compilation contains a single crate.
                 let hir_krate = tcx.hir().krate();
 
-                log::trace!("Iterating over each crate");
+                log::info!("... logging mir bodies for top-level functions");
 
                 // Collect promoted mir bodies of all top-level functions
-                let _body_def_ids = hir_krate
+                let top_level_function_def_ids = hir_krate
                     .owners
                     .iter()
                     .filter_map(|owner_info| {
                         let owner_info = owner_info.as_ref()?;
                         if let OwnerNode::Item(item) = owner_info.node() {
                             if let rustc_hir::ItemKind::Fn(_, _, _) = item.kind {
-                                log::trace!("For top-level function:");
                                 let def_id = item.def_id;
-                                let (body, _promoted_bodies) =
+                                // calculate mir bodies in advance
+                                let (body, promoted_bodies) =
                                     tcx.mir_promoted(WithOptConstParam::unknown(def_id));
+                                assert!(
+                                    promoted_bodies.borrow().borrow().is_empty(),
+                                    "Promoted bodies are not handled"
+                                );
                                 // let body = body.steal();
 
-                                // let mut w = String::new();
-                                let mut w = std::io::stdout();
+                                let mut w = String::new();
                                 if let Ok(_) = rustc_middle::mir::pretty::write_mir_fn(
                                     tcx,
                                     body.borrow().borrow(),
                                     &mut |_, _| Ok(()),
-                                    &mut w,
+                                    unsafe { &mut w.as_mut_vec() },
                                 ) {
-                                    log::trace!("Done!");
+                                    log::info!("... logging body:\n{}", &w);
                                 } else {
-                                    log::error!("Error in writing mir");
+                                    panic!("Error in writing mir");
                                 }
-
-                                let body_ref = body.borrow();
-                                let mut tracer = PlaceTracer;
-                                tracer.visit_body(body_ref.borrow());
-
-                                //let mut reporter =
-                                //    ComplexPlaceReporter::new(tcx, body_ref.borrow());
-                                //reporter.visit_body(body_ref.borrow());
-
-                                AndersenAnalysis::new(body_ref.borrow(), tcx)
-                                    .run()
-                                    .log_debug();
-
-                                // should not panic!
-                                // let _ = tcx.optimized_mir(def_id);
                                 return Some(def_id);
                             }
                         }
@@ -127,47 +115,28 @@ pub fn run(input_file_name: String) {
                     })
                     .collect::<Vec<_>>();
 
-                /*
-                // Iterate over the top-level items in the crate, looking for the main function.
-                for owner_info in hir_krate.owners.iter() {
+                log::info!("Start tracing places ...");
+                for &local_def_id in top_level_function_def_ids.iter() {
+                    let (body, _) = tcx.mir_promoted(WithOptConstParam::unknown(local_def_id));
+                    let body_ref = body.borrow();
 
-                    // Assume that functions are all on top-level
-                    if let Some(owner_info) = owner_info {
-
-                        if let OwnerNode::Item(item) = owner_info.node() {
-                            if let rustc_hir::ItemKind::Fn(_, _, body_id) = item.kind {
-
-                                log::trace!("For top-level function:");
-                                let expr = &tcx.hir().body(body_id).value;
-                                if let rustc_hir::ExprKind::Block(block, _) = expr.kind {
-                                    if let rustc_hir::StmtKind::Local(local) = block.stmts[0].kind {
-
-                                        if let Some(expr) = local.init {
-                                            let hir_id = expr.hir_id; // hir_id identifies the string "local"
-                                            let def_id = tcx.hir().local_def_id(item.hir_id());
-                                            let ty = tcx.typeck(def_id).node_type(hir_id);
-                                            log::info!("{:?}: {:?}", local.span, ty);
-                                        }
-                                    }
-                                }
-                                let def_id = item.def_id;
-                                let (body, _promoted_bodies) = tcx.mir_promoted(WithOptConstParam::unknown(def_id));
-                                let body = body.steal();
-
-
-                                let mut w = String::new();
-                                if let Ok(_) = rustc_middle::mir::pretty::write_mir_fn(tcx, &body, &mut |_, _| Ok(()), unsafe { w.as_mut_vec() }) {
-                                    log::info!("{}\nDone!", w);
-                                } else {
-                                    log::error!("Error in writing mir");
-                                }
-                            }
-                        }
-                    }
-
+                    log::info!("... tracing places for {:?}", local_def_id);
+                    let mut tracer = PlaceTracer::new(&top_level_function_def_ids);
+                    tracer.visit_body(body_ref.borrow());
                 }
+                log::info!("Done\n");
 
-                */
+                log::info!("Start pointer analysis ...");
+                for &local_def_id in top_level_function_def_ids.iter() {
+                    let (body, _) = tcx.mir_promoted(WithOptConstParam::unknown(local_def_id));
+                    let body_ref = body.borrow();
+
+                    log::info!("... analyzing pointers for {:?}", local_def_id);
+                    AndersenAnalysis::new(body_ref.borrow(), tcx)
+                        .run()
+                        .log_debug();
+                }
+                log::info!("Done\n");
             })
         });
     });
