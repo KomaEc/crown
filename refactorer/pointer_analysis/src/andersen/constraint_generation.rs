@@ -1,3 +1,4 @@
+use rustc_hir::def_id::LocalDefId;
 use rustc_middle::mir::visit::Visitor;
 use rustc_middle::mir::{Body, Local, LocalDecl, Location, NullOp, Place, Rvalue};
 use rustc_middle::mir::{CastKind, Operand, ProjectionElem};
@@ -13,12 +14,68 @@ use crate::{
 /// 'cg = the duration of the constraint generation
 pub struct ConstraintGeneration<'cg, 'tcx> {
     constraints: ConstraintSet,
-    node_ctxt: AndersenAnalysisCtxt<'tcx>,
-    body: &'cg Body<'tcx>,
-    tcx: TyCtxt<'tcx>,
+    aa_ctxt: AndersenAnalysisCtxt<'cg, 'tcx>,
 }
 
-impl<'cg, 'tcx> Visitor<'tcx> for ConstraintGeneration<'cg, 'tcx> {
+impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
+    pub fn new(
+        all_functions: &'cg [LocalDefId],
+        tcx: TyCtxt<'tcx>,
+    ) -> ConstraintGeneration<'cg, 'tcx> {
+        ConstraintGeneration {
+            constraints: ConstraintSet::new(),
+            aa_ctxt: AndersenAnalysisCtxt::new(all_functions, tcx),
+        }
+    }
+
+    #[inline]
+    pub fn tcx(&self) -> TyCtxt<'tcx> {
+        self.aa_ctxt.tcx()
+    }
+
+    fn log_debug_constraints(&self) {
+        log::debug!("Dumping constraints:");
+        for constraint in self.constraints.iter() {
+            let lhs = self.aa_ctxt.to_string(constraint.left);
+            let rhs = self.aa_ctxt.to_string(constraint.right);
+            match constraint.constraint_kind {
+                ConstraintKind::AddressOf => log::debug!("{} = &{}", lhs, rhs),
+                ConstraintKind::Copy => log::debug!("{} = {}", lhs, rhs),
+                ConstraintKind::Load => log::debug!("{} = *{}", lhs, rhs),
+                ConstraintKind::Store => log::debug!("*{} = {}", lhs, rhs),
+            }
+        }
+    }
+
+    pub fn generate_constraints(mut self) -> Self {
+        for &did in self.aa_ctxt.all_functions {
+            let (body, _) = self.tcx().mir_promoted(rustc_middle::ty::WithOptConstParam::unknown(did));
+            let body_ref = body.borrow();
+            ConstraintGenerationForBody {
+                func_cx: did,
+                body: &*body_ref,
+                aa_ctxt: &mut self.aa_ctxt,
+                constraints: &mut self.constraints,
+            }.visit_body(&*body_ref);
+        }
+        self.log_debug_constraints();
+        self
+    }
+
+    pub fn proceed_to_solving(self) -> ConstraintSolving<'cg, 'tcx> {
+        ConstraintSolving::new(self.constraints, self.aa_ctxt)
+    }
+}
+
+
+struct ConstraintGenerationForBody<'me, 'cg, 'tcx> {
+    func_cx: LocalDefId,
+    body: &'me Body<'tcx>,
+    aa_ctxt: &'me mut AndersenAnalysisCtxt<'cg, 'tcx>,
+    constraints: &'me mut ConstraintSet,
+}
+
+impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tcx> {
     /// Default visitor will visit basic blocks before local declarations,
     /// so we overwrite here.
     fn visit_body(&mut self, body: &Body<'tcx>) {
@@ -30,8 +87,6 @@ impl<'cg, 'tcx> Visitor<'tcx> for ConstraintGeneration<'cg, 'tcx> {
         for (bb, data) in body.basic_blocks().iter_enumerated() {
             self.visit_basic_block_data(bb, data)
         }
-
-        self.log_debug_constraints();
     }
 
     fn visit_local_decl(&mut self, local: Local, local_decl: &LocalDecl<'tcx>) {
@@ -52,7 +107,9 @@ impl<'cg, 'tcx> Visitor<'tcx> for ConstraintGeneration<'cg, 'tcx> {
                 unimplemented!()
             }
             // generate andersen node for this local
-            let _ = self.node_ctxt.generate_from_local(local);
+            let _ = self
+                .aa_ctxt
+                .generate_from_local(self.func_cx, local);
         }
 
         self.super_local_decl(local, local_decl)
@@ -66,7 +123,7 @@ impl<'cg, 'tcx> Visitor<'tcx> for ConstraintGeneration<'cg, 'tcx> {
             location
         );
 
-        let place_ty = place.ty(self.body, self.tcx);
+        let place_ty = place.ty(self.body, self.aa_ctxt.tcx());
         if place_ty.ty.is_any_ptr() {
             if place_ty.ty.is_fn_ptr() {
                 log::error!("Function pointer: {} is not supported!", place_ty.ty);
@@ -80,33 +137,8 @@ impl<'cg, 'tcx> Visitor<'tcx> for ConstraintGeneration<'cg, 'tcx> {
     }
 }
 
-impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
-    pub fn new(body: &'cg Body<'tcx>, tcx: TyCtxt<'tcx>) -> ConstraintGeneration<'cg, 'tcx> {
-        ConstraintGeneration {
-            constraints: ConstraintSet::new(),
-            node_ctxt: AndersenAnalysisCtxt::new(),
-            body,
-            tcx,
-        }
-    }
+impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
 
-    fn log_debug_constraints(&self) {
-        log::debug!("Dumping constraints:");
-        for constraint in self.constraints.iter() {
-            let lhs = self.node_ctxt.to_string(constraint.left);
-            let rhs = self.node_ctxt.to_string(constraint.right);
-            match constraint.constraint_kind {
-                ConstraintKind::AddressOf => log::debug!("{} = &{}", lhs, rhs),
-                ConstraintKind::Copy => log::debug!("{} = {}", lhs, rhs),
-                ConstraintKind::Load => log::debug!("{} = *{}", lhs, rhs),
-                ConstraintKind::Store => log::debug!("*{} = {}", lhs, rhs),
-            }
-        }
-    }
-
-    /// FIXME: Do not generate node for `x` when `x` is not a pointer!
-    /// See `test1.rs`
-    ///
     /// Process place of pointer type, return an Andersen node representing this place. Return true
     /// if this place is indirect
     ///
@@ -131,7 +163,9 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
         //    let _ = self.node_generation.generate(place_ref.into());
         //}
 
-        let mut repr = self.node_ctxt.generate_from_local(place.local);
+        let mut repr = self
+            .aa_ctxt
+            .generate_from_local(self.func_cx, place.local);
         let mut is_nested = false;
         let mut is_indirect = false;
 
@@ -140,7 +174,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
                 ProjectionElem::Deref => {
                     is_indirect = true;
                     if is_nested {
-                        let tmp = self.node_ctxt.generate_temporary();
+                        let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
                         // generate constraint: p = *tmp
                         self.constraints
                             .push(Constraint::new(ConstraintKind::Load, repr, tmp));
@@ -187,7 +221,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
                     // tmp = *q
                     // *p = tmp
                     (true, true) => {
-                        let tmp = self.node_ctxt.generate_temporary();
+                        let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
                         self.constraints
                             .push(Constraint::new(ConstraintKind::Load, tmp, rhs_repr));
                         self.constraints.push(Constraint::new(
@@ -229,7 +263,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
                 // tmp = *q
                 // ... = &tmp
                 if rhs_is_indirect {
-                    let tmp = self.node_ctxt.generate_temporary();
+                    let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
                     self.constraints
                         .push(Constraint::new(ConstraintKind::Load, tmp, rhs_repr));
                     rhs_repr = tmp;
@@ -240,7 +274,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
                     // tmp = &q
                     // *p = tmp
                     true => {
-                        let tmp = self.node_ctxt.generate_temporary();
+                        let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
                         self.constraints.push(Constraint::new(
                             ConstraintKind::AddressOf,
                             tmp,
@@ -273,14 +307,5 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
                 unimplemented!()
             }
         }
-    }
-
-    pub fn generate_constraints(mut self) -> Self {
-        self.visit_body(self.body);
-        self
-    }
-
-    pub fn proceed_to_solving(self) -> ConstraintSolving<'tcx> {
-        ConstraintSolving::new(self.constraints, self.node_ctxt)
     }
 }

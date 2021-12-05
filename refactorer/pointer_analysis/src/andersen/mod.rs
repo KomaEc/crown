@@ -5,8 +5,9 @@ mod ctxt;
 use crate::andersen::ctxt::AndersenAnalysisCtxt;
 use graph::implementation::sparse_bit_vector::SparseBitVectorGraph;
 use index::{bit_set::HybridBitSet, vec::IndexVec};
+use rustc_hir::def_id::LocalDefId;
 use rustc_middle::{
-    mir::{Body, Local, Place, PlaceRef},
+    mir::PlaceRef,
     ty::TyCtxt,
 };
 use std::ops::Index;
@@ -15,47 +16,46 @@ use self::constraint_generation::ConstraintGeneration;
 
 /// Currently intraprocedural, subject to changes.
 pub struct AndersenAnalysis<'aa, 'tcx> {
-    body: &'aa Body<'tcx>,
+    all_functions: &'aa [LocalDefId],
     tcx: TyCtxt<'tcx>,
 }
 
 impl<'aa, 'tcx> AndersenAnalysis<'aa, 'tcx> {
-    pub fn new(body: &'aa Body<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
-        AndersenAnalysis { body, tcx }
+    pub fn new(
+        all_functions: &'aa [LocalDefId],
+        tcx: TyCtxt<'tcx>,
+    ) -> Self {
+        AndersenAnalysis { all_functions, tcx }
     }
 
-    pub fn run(self) -> AndersenResult<'tcx> {
-        let mut solver = ConstraintGeneration::new(self.body, self.tcx)
-            .generate_constraints()
-            .proceed_to_solving();
-        solver.solve_by_dynamic_transitive_closure();
-        solver.finish()
+    pub fn proceed_to_generation(self) -> ConstraintGeneration<'aa, 'tcx> {
+        ConstraintGeneration::new(self.all_functions, self.tcx)
     }
 }
 
-pub struct AndersenResult<'tcx> {
+pub struct AndersenResult<'ar, 'tcx> {
     pub pts_graph: PtsGraph,
-    pub node_ctxt: AndersenAnalysisCtxt<'tcx>,
+    pub aa_ctxt: AndersenAnalysisCtxt<'ar, 'tcx>,
 }
 
-impl<'tcx> AndersenResult<'tcx> {
-    pub fn new(pts_graph: PtsGraph, node_ctxt: AndersenAnalysisCtxt<'tcx>) -> Self {
+impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
+    pub fn new(pts_graph: PtsGraph, node_ctxt: AndersenAnalysisCtxt<'ar, 'tcx>) -> Self {
         AndersenResult {
             pts_graph,
-            node_ctxt,
+            aa_ctxt: node_ctxt,
         }
     }
 
     pub fn log_debug(&self) {
         log::debug!("Dumping andersen analysis results:");
-        for p in self.node_ctxt.universe().indices() {
+        for p in self.aa_ctxt.nodes().indices() {
             log::debug!(
                 "pts({}) = {}",
-                self.node_ctxt.to_string(p),
+                self.aa_ctxt.to_string(p),
                 self.pts_graph
                     .pts(p)
                     .iter()
-                    .map(|q| self.node_ctxt.to_string(q))
+                    .map(|q| self.aa_ctxt.to_string(q))
                     .reduce(|acc, item| acc + ", " + &item)
                     .map_or("∅".to_owned(), |s| format!("{{ {} }}", s))
             );
@@ -191,16 +191,19 @@ impl Constraint {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum AndersenNodeData<'tcx> {
-    Mir(PlaceRef<'tcx>),
-    Temporary,
+    Mir(LocalDefId, PlaceRef<'tcx>),
+    Temporary(LocalDefId),
 }
 
-impl<'tcx> AndersenNodeData<'tcx> {}
+impl<'tcx> From<(LocalDefId, PlaceRef<'tcx>)> for AndersenNodeData<'tcx> {
+    fn from(data: (LocalDefId, PlaceRef<'tcx>)) -> Self {
+        AndersenNodeData::Mir(data.0, data.1)
+    }
+}
 
-impl<'tcx> From<Local> for AndersenNodeData<'tcx> {
-    fn from(local: Local) -> Self {
-        let place = Place::from(local);
-        AndersenNodeData::Mir(place.as_ref())
+impl<'tcx> From<LocalDefId> for AndersenNodeData<'tcx> {
+    fn from(did: LocalDefId) -> Self {
+        AndersenNodeData::Temporary(did)
     }
 }
 

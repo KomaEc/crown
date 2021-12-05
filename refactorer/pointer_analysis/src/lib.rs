@@ -5,6 +5,7 @@
 #[macro_use]
 extern crate index;
 
+extern crate rustc_hir;
 extern crate rustc_middle;
 extern crate rustc_serialize;
 

@@ -127,15 +127,13 @@ pub fn run(input_file_name: String) {
                 log::info!("Done\n");
 
                 log::info!("Start pointer analysis ...");
-                for &local_def_id in top_level_function_def_ids.iter() {
-                    let (body, _) = tcx.mir_promoted(WithOptConstParam::unknown(local_def_id));
-                    let body_ref = body.borrow();
-
-                    log::info!("... analyzing pointers for {:?}", local_def_id);
-                    AndersenAnalysis::new(body_ref.borrow(), tcx)
-                        .run()
-                        .log_debug();
-                }
+                AndersenAnalysis::new(&top_level_function_def_ids, tcx)
+                    .proceed_to_generation()
+                    .generate_constraints()
+                    .proceed_to_solving()
+                    .solve()
+                    .finish()
+                    .log_debug();
                 log::info!("Done\n");
             })
         });

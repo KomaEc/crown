@@ -7,7 +7,7 @@ use index::vec::IndexVec;
 use std::collections::VecDeque;
 
 /// Data structure for solving the constraints.
-pub struct ConstraintSolving<'tcx> {
+pub struct ConstraintSolving<'cs, 'tcx> {
     /// Each node is associated with a points-to set.
     pts_graph: PtsGraph,
     /// Each node is associated with a set of complex constraints.
@@ -20,16 +20,15 @@ pub struct ConstraintSolving<'tcx> {
     all_constraints: ConstraintSet,
     /// Node context, which says how nodes in the constraint graph
     /// are related to original program variables.
-    node_ctxt: AndersenAnalysisCtxt<'tcx>,
+    aa_ctxt: AndersenAnalysisCtxt<'cs, 'tcx>,
 }
 
-impl<'tcx> ConstraintSolving<'tcx> {
-    pub fn new(all_constraints: ConstraintSet, node_ctxt: AndersenAnalysisCtxt<'tcx>) -> Self {
+impl<'cs, 'tcx> ConstraintSolving<'cs, 'tcx> {
+    pub fn new(all_constraints: ConstraintSet, node_ctxt: AndersenAnalysisCtxt<'cs, 'tcx>) -> Self {
         let num_nodes = node_ctxt.num_nodes();
 
         let mut pts_graph = PtsGraph::new(num_nodes);
-        let mut associated_complex_constraints =
-            IndexVec::from_elem(Vec::new(), node_ctxt.universe());
+        let mut associated_complex_constraints = IndexVec::from_elem(Vec::new(), node_ctxt.nodes());
         let mut constraint_graph: SparseBitVectorGraph<AndersenNode> =
             SparseBitVectorGraph::new(num_nodes, [].into_iter());
         for (cid, constraint) in all_constraints.iter_enumerated() {
@@ -57,14 +56,14 @@ impl<'tcx> ConstraintSolving<'tcx> {
             associated_complex_constraints,
             constraint_graph,
             all_constraints,
-            node_ctxt,
+            aa_ctxt: node_ctxt,
         }
     }
 
     /// Dynamic transitive closure algorithm
     pub fn solve_by_dynamic_transitive_closure(&mut self) {
         // insert all nodes into work list.
-        let mut work_list = VecDeque::from_iter(self.node_ctxt.universe().indices());
+        let mut work_list = VecDeque::from_iter(self.aa_ctxt.nodes().indices());
         while let Some(p) = work_list.pop_front() {
             // for all r ∈ p
             for r in self.pts_graph.pts(p).iter() {
@@ -104,7 +103,12 @@ impl<'tcx> ConstraintSolving<'tcx> {
         }
     }
 
-    pub fn finish(self) -> AndersenResult<'tcx> {
-        AndersenResult::new(self.pts_graph, self.node_ctxt)
+    pub fn solve(mut self) -> Self {
+        self.solve_by_dynamic_transitive_closure();
+        self
+    }
+
+    pub fn finish(self) -> AndersenResult<'cs, 'tcx> {
+        AndersenResult::new(self.pts_graph, self.aa_ctxt)
     }
 }

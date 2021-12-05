@@ -1,36 +1,55 @@
-use crate::andersen::AndersenNode;
+use crate::andersen::{AndersenNode, AndersenNodeData};
 use index::vec::IndexVec;
-use rustc_middle::mir::{Local, Place, PlaceRef};
+use rustc_hir::def_id::LocalDefId;
+use rustc_middle::{
+    mir::{Local, Place, PlaceRef},
+    ty::TyCtxt,
+};
 use std::collections::{hash_map::Entry, HashMap};
 
-use super::AndersenNodeData;
-
 /// Data structure for the node factory
-pub struct AndersenAnalysisCtxt<'tcx> {
-    universe: IndexVec<AndersenNode, AndersenNodeData<'tcx>>,
-    value_node_map: HashMap<PlaceRef<'tcx>, AndersenNode>,
+pub struct AndersenAnalysisCtxt<'aacx, 'tcx> {
+    pub all_functions: &'aacx [LocalDefId],
+    tcx: TyCtxt<'tcx>,
+    nodes: IndexVec<AndersenNode, AndersenNodeData<'tcx>>,
+    value_node_map: HashMap<(LocalDefId, PlaceRef<'tcx>), AndersenNode>,
 }
 
-impl<'tcx> AndersenAnalysisCtxt<'tcx> {
-    pub fn new() -> AndersenAnalysisCtxt<'tcx> {
+impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
+    pub fn new(
+        all_functions: &'aacx [LocalDefId],
+        tcx: TyCtxt<'tcx>,
+    ) -> AndersenAnalysisCtxt<'aacx, 'tcx> {
         AndersenAnalysisCtxt {
-            universe: IndexVec::new(),
+            all_functions,
+            tcx,
+            nodes: IndexVec::new(),
             value_node_map: HashMap::new(),
         }
     }
 
     #[inline]
-    pub fn num_nodes(&self) -> usize {
-        self.universe.len()
+    pub fn tcx(&self) -> TyCtxt<'tcx> {
+        self.tcx
     }
 
     #[inline]
-    pub fn universe(&self) -> &IndexVec<AndersenNode, AndersenNodeData<'tcx>> {
-        &self.universe
+    pub fn all_functions(&self) -> impl Iterator<Item = LocalDefId> + '_ {
+        self.all_functions.iter().map(|&v| v)
     }
 
-    fn create_node_from_mir_data(&mut self, data: PlaceRef<'tcx>) -> AndersenNode {
-        let node = self.universe.push(AndersenNodeData::Mir(data));
+    #[inline]
+    pub fn num_nodes(&self) -> usize {
+        self.nodes.len()
+    }
+
+    #[inline]
+    pub fn nodes(&self) -> &IndexVec<AndersenNode, AndersenNodeData<'tcx>> {
+        &self.nodes
+    }
+
+    fn create_node_from_mir_data(&mut self, data: (LocalDefId, PlaceRef<'tcx>)) -> AndersenNode {
+        let node = self.nodes.push(data.into());
         self.value_node_map.insert(data, node);
 
         log::trace!("generating node {:?} for place {:?}", node, data);
@@ -38,7 +57,7 @@ impl<'tcx> AndersenAnalysisCtxt<'tcx> {
         node
     }
 
-    fn get_or_create_from_mir_data(&mut self, data: PlaceRef<'tcx>) -> AndersenNode {
+    fn get_or_create_from_mir_data(&mut self, data: (LocalDefId, PlaceRef<'tcx>)) -> AndersenNode {
         match self.value_node_map.entry(data) {
             Entry::Occupied(entry) => *entry.get(),
             Entry::Vacant(_) => self.create_node_from_mir_data(data),
@@ -46,24 +65,24 @@ impl<'tcx> AndersenAnalysisCtxt<'tcx> {
     }
 
     #[inline(always)]
-    pub fn generate_from_local(&mut self, local: Local) -> AndersenNode {
-        self.get_or_create_from_mir_data(Place::from(local).as_ref())
+    pub fn generate_from_local(&mut self, context: LocalDefId, local: Local) -> AndersenNode {
+        self.get_or_create_from_mir_data((context, Place::from(local).as_ref()))
     }
 
-    pub fn generate_temporary(&mut self) -> AndersenNode {
+    pub fn generate_temporary(&mut self, context: LocalDefId) -> AndersenNode {
         log::trace!("generating temporary node");
-        self.universe.push(AndersenNodeData::Temporary)
+        self.nodes.push(context.into())
     }
 
     pub fn find(&self, node: AndersenNode) -> AndersenNodeData<'_> {
-        self.universe[node]
+        self.nodes[node]
     }
 
+    /// FIXME: assume that all place_refs are locals
     pub fn to_string(&self, node: AndersenNode) -> String {
         match self.find(node) {
-            /// FIXME: assume that all place_refs are locals
-            AndersenNodeData::Mir(place_ref) => format!("mir_{}", place_ref.local.index()),
-            AndersenNodeData::Temporary => format!("tmp_{}", node.index()),
+            AndersenNodeData::Mir(did, place_ref) => format!("[{:?}]::mir_{}", did, place_ref.local.index()),
+            AndersenNodeData::Temporary(did) => format!("[{:?}]::tmp_{}", did, node.index()),
         }
     }
 }
