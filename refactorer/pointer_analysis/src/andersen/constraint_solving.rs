@@ -1,5 +1,5 @@
 use crate::andersen::{
-    node_ctxt::NodeCtxt, AndersenNode, AndersenResult, ConstraintIndex, ConstraintKind,
+    ctxt::AndersenAnalysisCtxt, AndersenNode, AndersenResult, ConstraintIndex, ConstraintKind,
     ConstraintSet, PtsGraph,
 };
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, WithSuccessors};
@@ -20,11 +20,11 @@ pub struct ConstraintSolving<'tcx> {
     all_constraints: ConstraintSet,
     /// Node context, which says how nodes in the constraint graph
     /// are related to original program variables.
-    node_ctxt: NodeCtxt<'tcx>,
+    node_ctxt: AndersenAnalysisCtxt<'tcx>,
 }
 
 impl<'tcx> ConstraintSolving<'tcx> {
-    pub fn new(all_constraints: ConstraintSet, node_ctxt: NodeCtxt<'tcx>) -> Self {
+    pub fn new(all_constraints: ConstraintSet, node_ctxt: AndersenAnalysisCtxt<'tcx>) -> Self {
         let num_nodes = node_ctxt.num_nodes();
 
         let mut pts_graph = PtsGraph::new(num_nodes);

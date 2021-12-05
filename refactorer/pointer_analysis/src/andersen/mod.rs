@@ -1,8 +1,8 @@
 pub mod constraint_generation;
 mod constraint_solving;
-mod node_ctxt;
+mod ctxt;
 
-use crate::andersen::node_ctxt::NodeCtxt;
+use crate::andersen::ctxt::AndersenAnalysisCtxt;
 use graph::implementation::sparse_bit_vector::SparseBitVectorGraph;
 use index::{bit_set::HybridBitSet, vec::IndexVec};
 use rustc_middle::{
@@ -35,11 +35,11 @@ impl<'aa, 'tcx> AndersenAnalysis<'aa, 'tcx> {
 
 pub struct AndersenResult<'tcx> {
     pub pts_graph: PtsGraph,
-    pub node_ctxt: NodeCtxt<'tcx>,
+    pub node_ctxt: AndersenAnalysisCtxt<'tcx>,
 }
 
 impl<'tcx> AndersenResult<'tcx> {
-    pub fn new(pts_graph: PtsGraph, node_ctxt: NodeCtxt<'tcx>) -> Self {
+    pub fn new(pts_graph: PtsGraph, node_ctxt: AndersenAnalysisCtxt<'tcx>) -> Self {
         AndersenResult {
             pts_graph,
             node_ctxt,

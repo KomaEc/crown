@@ -5,7 +5,7 @@ use rustc_middle::ty::TyCtxt;
 
 use crate::{
     andersen::constraint_solving::ConstraintSolving,
-    andersen::node_ctxt::NodeCtxt,
+    andersen::ctxt::AndersenAnalysisCtxt,
     andersen::{AndersenNode, Constraint, ConstraintKind, ConstraintSet},
 };
 
@@ -13,7 +13,7 @@ use crate::{
 /// 'cg = the duration of the constraint generation
 pub struct ConstraintGeneration<'cg, 'tcx> {
     constraints: ConstraintSet,
-    node_ctxt: NodeCtxt<'tcx>,
+    node_ctxt: AndersenAnalysisCtxt<'tcx>,
     body: &'cg Body<'tcx>,
     tcx: TyCtxt<'tcx>,
 }
@@ -84,7 +84,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
     pub fn new(body: &'cg Body<'tcx>, tcx: TyCtxt<'tcx>) -> ConstraintGeneration<'cg, 'tcx> {
         ConstraintGeneration {
             constraints: ConstraintSet::new(),
-            node_ctxt: NodeCtxt::new(),
+            node_ctxt: AndersenAnalysisCtxt::new(),
             body,
             tcx,
         }

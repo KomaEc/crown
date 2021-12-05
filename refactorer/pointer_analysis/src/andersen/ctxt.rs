@@ -6,14 +6,14 @@ use std::collections::{hash_map::Entry, HashMap};
 use super::AndersenNodeData;
 
 /// Data structure for the node factory
-pub struct NodeCtxt<'tcx> {
+pub struct AndersenAnalysisCtxt<'tcx> {
     universe: IndexVec<AndersenNode, AndersenNodeData<'tcx>>,
     value_node_map: HashMap<PlaceRef<'tcx>, AndersenNode>,
 }
 
-impl<'tcx> NodeCtxt<'tcx> {
-    pub fn new() -> NodeCtxt<'tcx> {
-        NodeCtxt {
+impl<'tcx> AndersenAnalysisCtxt<'tcx> {
+    pub fn new() -> AndersenAnalysisCtxt<'tcx> {
+        AndersenAnalysisCtxt {
             universe: IndexVec::new(),
             value_node_map: HashMap::new(),
         }
