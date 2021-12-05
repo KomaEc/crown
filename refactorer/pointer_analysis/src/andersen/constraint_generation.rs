@@ -106,7 +106,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
 
     /// FIXME: Do not generate node for `x` when `x` is not a pointer!
     /// See `test1.rs`
-    /// 
+    ///
     /// Process place of pointer type, return an Andersen node representing this place. Return true
     /// if this place is indirect
     ///
