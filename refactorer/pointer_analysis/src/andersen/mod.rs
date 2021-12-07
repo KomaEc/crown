@@ -6,10 +6,7 @@ use crate::andersen::ctxt::AndersenAnalysisCtxt;
 use graph::implementation::sparse_bit_vector::SparseBitVectorGraph;
 use index::{bit_set::HybridBitSet, vec::IndexVec};
 use rustc_hir::def_id::LocalDefId;
-use rustc_middle::{
-    mir::PlaceRef,
-    ty::TyCtxt,
-};
+use rustc_middle::{mir::PlaceRef, ty::TyCtxt};
 use std::ops::Index;
 
 use self::constraint_generation::ConstraintGeneration;
@@ -21,10 +18,7 @@ pub struct AndersenAnalysis<'aa, 'tcx> {
 }
 
 impl<'aa, 'tcx> AndersenAnalysis<'aa, 'tcx> {
-    pub fn new(
-        all_functions: &'aa [LocalDefId],
-        tcx: TyCtxt<'tcx>,
-    ) -> Self {
+    pub fn new(all_functions: &'aa [LocalDefId], tcx: TyCtxt<'tcx>) -> Self {
         AndersenAnalysis { all_functions, tcx }
     }
 

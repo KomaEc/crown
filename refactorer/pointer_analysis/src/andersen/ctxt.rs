@@ -69,6 +69,16 @@ impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
         self.get_or_create_from_mir_data((context, Place::from(local).as_ref()))
     }
 
+    pub fn lookup_local(&mut self, context: LocalDefId, local: Local) -> Option<AndersenNode> {
+        match self
+            .value_node_map
+            .entry((context, Place::from(local).as_ref()))
+        {
+            Entry::Occupied(entry) => Some(*entry.get()),
+            Entry::Vacant(_) => None,
+        }
+    }
+
     pub fn generate_temporary(&mut self, context: LocalDefId) -> AndersenNode {
         log::trace!("generating temporary node");
         self.nodes.push(context.into())
@@ -81,7 +91,9 @@ impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
     /// FIXME: assume that all place_refs are locals
     pub fn to_string(&self, node: AndersenNode) -> String {
         match self.find(node) {
-            AndersenNodeData::Mir(did, place_ref) => format!("[{:?}]::mir_{}", did, place_ref.local.index()),
+            AndersenNodeData::Mir(did, place_ref) => {
+                format!("[{:?}]::mir_{}", did, place_ref.local.index())
+            }
             AndersenNodeData::Temporary(did) => format!("[{:?}]::tmp_{}", did, node.index()),
         }
     }
