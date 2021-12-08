@@ -45,11 +45,11 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
         for p in self.aa_ctxt.nodes().indices() {
             log::debug!(
                 "pts({}) = {}",
-                self.aa_ctxt.to_string(p),
+                self.aa_ctxt.node_to_str(p),
                 self.pts_graph
                     .pts(p)
                     .iter()
-                    .map(|q| self.aa_ctxt.to_string(q))
+                    .map(|q| self.aa_ctxt.node_to_str(q))
                     .reduce(|acc, item| acc + ", " + &item)
                     .map_or("∅".to_owned(), |s| format!("{{ {} }}", s))
             );
@@ -204,6 +204,24 @@ impl<'tcx> From<LocalDefId> for AndersenNodeData<'tcx> {
 index::newtype_index! {
     pub struct AndersenNode {
         DEBUG_FORMAT = "AndersenNode({})"
+    }
+}
+
+impl AndersenNode {
+    pub fn kopy(self, other: AndersenNode) -> Constraint {
+        Constraint::new(ConstraintKind::Copy, self, other)
+    }
+
+    pub fn load(self, other: AndersenNode) -> Constraint {
+        Constraint::new(ConstraintKind::Load, self, other)
+    }
+
+    pub fn store(self, other: AndersenNode) -> Constraint {
+        Constraint::new(ConstraintKind::Store, self, other)
+    }
+
+    pub fn get_address_of(self, other: AndersenNode) -> Constraint {
+        Constraint::new(ConstraintKind::AddressOf, self, other)
     }
 }
 

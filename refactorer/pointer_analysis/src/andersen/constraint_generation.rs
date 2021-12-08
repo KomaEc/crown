@@ -62,8 +62,8 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
     fn log_debug_constraints(&self) {
         log::debug!("Dumping constraints:");
         for constraint in self.constraints.iter() {
-            let lhs = self.aa_ctxt.to_string(constraint.left);
-            let rhs = self.aa_ctxt.to_string(constraint.right);
+            let lhs = self.aa_ctxt.node_to_str(constraint.left);
+            let rhs = self.aa_ctxt.node_to_str(constraint.right);
             match constraint.constraint_kind {
                 ConstraintKind::AddressOf => log::debug!("{} = &{}", lhs, rhs),
                 ConstraintKind::Copy => log::debug!("{} = {}", lhs, rhs),
@@ -149,6 +149,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                         // *p = tmp
                         (true, true) => {
                             let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
+                            /// TODO: tmp.load(rhs_repr);
                             self.constraints.push(Constraint::new(
                                 ConstraintKind::Load,
                                 tmp,

@@ -89,12 +89,12 @@ impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
     }
 
     /// FIXME: assume that all place_refs are locals
-    pub fn to_string(&self, node: AndersenNode) -> String {
+    pub fn node_to_str(&self, node: AndersenNode) -> String {
         match self.find(node) {
             AndersenNodeData::Mir(did, place_ref) => {
-                format!("[{:?}]::mir_{}", did, place_ref.local.index())
+                format!("{}::mir_{}", self.tcx.def_path_str(did.to_def_id()), place_ref.local.index())
             }
-            AndersenNodeData::Temporary(did) => format!("[{:?}]::tmp_{}", did, node.index()),
+            AndersenNodeData::Temporary(did) => format!("{}::tmp_{}", self.tcx.def_path_str(did.to_def_id()), node.index()),
         }
     }
 }
