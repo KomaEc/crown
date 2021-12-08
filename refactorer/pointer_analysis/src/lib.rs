@@ -12,4 +12,3 @@ extern crate rustc_span;
 extern crate rustc_target;
 
 pub mod andersen;
-pub mod diagnostics;

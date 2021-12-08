@@ -3,6 +3,7 @@
 mod constraint_generation;
 mod constraint_solving;
 mod ctxt;
+mod diagnostics;
 
 use crate::andersen::ctxt::AndersenAnalysisCtxt;
 use graph::implementation::sparse_bit_vector::SparseBitVectorGraph;

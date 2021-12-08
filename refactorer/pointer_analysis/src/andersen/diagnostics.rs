@@ -1,4 +1,4 @@
-//! Pointer analyzer diagnostics.
+//! Andersen's pointer analysis diagnostics.
 
 use rustc_errors::DiagnosticBuilder;
 use rustc_hir as hir;
@@ -14,3 +14,10 @@ use rustc_middle::ty::print::Print;
 use rustc_middle::ty::{self, DefIdTree, Instance, Ty, TyCtxt};
 use rustc_span::{hygiene::DesugaringKind, symbol::sym, Span};
 use rustc_target::abi::VariantIdx;
+
+use crate::andersen::AndersenResult;
+
+impl <'ar, 'tcx> AndersenResult<'ar, 'tcx> {
+    
+    
+}
