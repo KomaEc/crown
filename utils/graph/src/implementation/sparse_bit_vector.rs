@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod tests;
+
 use crate::{DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors};
 use index::{
     bit_set::{HybridBitSet, HybridIter},
@@ -69,5 +72,17 @@ impl<N: Idx> SparseBitVectorGraph<N> {
         n2: N,
     ) -> (&mut HybridBitSet<N>, &mut HybridBitSet<N>) {
         self.edges.pick2_mut(n1, n2)
+    }
+
+    pub fn collect_edges(&self) -> Vec<(N, N)> {
+        self.edges.clone().into_iter_enumerated()
+            .flat_map(|(src, dests)| {
+                dests.iter().map(|dest| (src, dest)).collect::<Vec<_>>()
+            }).collect()
+    }
+
+    pub fn reverse(&self) -> Self {
+        Self::new(self.num_nodes(), 
+                  self.collect_edges().into_iter().map(|(src, dest)| (dest, src)))
     }
 }
