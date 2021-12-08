@@ -1,4 +1,6 @@
-pub mod constraint_generation;
+//! Andersen's pointer analysis algorithm.
+
+mod constraint_generation;
 mod constraint_solving;
 mod ctxt;
 

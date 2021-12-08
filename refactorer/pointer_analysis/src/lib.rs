@@ -7,6 +7,9 @@ extern crate index;
 
 extern crate rustc_hir;
 extern crate rustc_middle;
-extern crate rustc_serialize;
+extern crate rustc_errors;
+extern crate rustc_span;
+extern crate rustc_target;
 
 pub mod andersen;
+pub mod diagnostics;
