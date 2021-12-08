@@ -64,7 +64,7 @@ impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn generate_from_local(&mut self, context: LocalDefId, local: Local) -> AndersenNode {
         self.get_or_create_from_mir_data((context, Place::from(local).as_ref()))
     }
