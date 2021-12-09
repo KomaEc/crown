@@ -149,7 +149,7 @@ impl<S> PtsGraph<S> {
     }
 
     pub fn alias(&self, p: AndersenNode, q: AndersenNode) -> bool {
-        self.pts(p).clone().intersect(self.pts(q))
+        self.pts(p).clone().subtract(self.pts(q)) | self.pts(q).clone().subtract(self.pts(p))
     }
 }
 

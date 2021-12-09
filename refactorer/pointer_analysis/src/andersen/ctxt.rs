@@ -1,5 +1,6 @@
 use crate::andersen::{
-    constraint_generation::ConstraintGeneration, AndersenNode, AndersenNodeData, ConstraintSet,
+    constraint_generation::ConstraintGeneration, AndersenNode, AndersenNodeData, Constraint,
+    ConstraintKind, ConstraintSet,
 };
 use index::vec::IndexVec;
 use rustc_hir::def_id::LocalDefId;
@@ -59,7 +60,11 @@ impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
         let node = self.nodes.push(data.into());
         self.value_node_map.insert(data, node);
 
-        log::trace!("generating node {:?} for place {:?}", node, data);
+        log::trace!(
+            "generating node {:?} for place {}",
+            node,
+            self.node_to_str(node)
+        );
 
         node
     }
@@ -104,8 +109,19 @@ impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
             AndersenNodeData::Temporary(did) => format!(
                 "{}::tmp_{}",
                 self.tcx.def_path_str(did.to_def_id()),
-                node.index()
+                node.index() + 100000
             ),
+        }
+    }
+
+    pub fn constraint_to_str(&self, constraint: Constraint) -> String {
+        let lhs = self.node_to_str(constraint.left);
+        let rhs = self.node_to_str(constraint.right);
+        match constraint.constraint_kind {
+            ConstraintKind::AddressOf => format!("{} = &{}", lhs, rhs),
+            ConstraintKind::Copy => format!("{} = {}", lhs, rhs),
+            ConstraintKind::Load => format!("{} = *{}", lhs, rhs),
+            ConstraintKind::Store => format!("*{} = {}", lhs, rhs),
         }
     }
 }

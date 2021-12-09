@@ -54,7 +54,7 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
                             .unwrap();
 
                         if self.pts_graph.alias(node_p, node_q) {
-                            // log::debug!("Found alias! {} and {}", var_p.name, var_q.name);
+                            // log::debug!("Found alias! {} and {} [ {:?} and {:?} ]", var_p.name, var_q.name, p, q);
 
                             let mut err = self
                                 .aa_ctxt

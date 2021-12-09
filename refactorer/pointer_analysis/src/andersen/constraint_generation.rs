@@ -141,12 +141,12 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                         (true, true) => {
                             let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
                             /// TODO: tmp.load(rhs_repr);
-                            self.constraints.push(Constraint::new(
+                            self.add_constraint(Constraint::new(
                                 ConstraintKind::Load,
                                 tmp,
                                 rhs_repr,
                             ));
-                            self.constraints.push(Constraint::new(
+                            self.add_constraint(Constraint::new(
                                 ConstraintKind::Store,
                                 lhs_repr,
                                 tmp,
@@ -154,7 +154,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                         }
                         // *p = q
                         (true, false) => {
-                            self.constraints.push(Constraint::new(
+                            self.add_constraint(Constraint::new(
                                 ConstraintKind::Store,
                                 lhs_repr,
                                 rhs_repr,
@@ -162,7 +162,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                         }
                         // p = *q
                         (false, true) => {
-                            self.constraints.push(Constraint::new(
+                            self.add_constraint(Constraint::new(
                                 ConstraintKind::Load,
                                 lhs_repr,
                                 rhs_repr,
@@ -170,7 +170,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                         }
                         // p = q
                         (false, false) => {
-                            self.constraints.push(Constraint::new(
+                            self.add_constraint(Constraint::new(
                                 ConstraintKind::Copy,
                                 lhs_repr,
                                 rhs_repr,
@@ -185,12 +185,12 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                         // *p = tmp
                         true => {
                             let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
-                            self.constraints.push(Constraint::new(
+                            self.add_constraint(Constraint::new(
                                 ConstraintKind::AddressOf,
                                 tmp,
                                 rhs_repr,
                             ));
-                            self.constraints.push(Constraint::new(
+                            self.add_constraint(Constraint::new(
                                 ConstraintKind::Store,
                                 lhs_repr,
                                 tmp,
@@ -198,7 +198,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                         }
                         // p = &q
                         false => {
-                            self.constraints.push(Constraint::new(
+                            self.add_constraint(Constraint::new(
                                 ConstraintKind::AddressOf,
                                 lhs_repr,
                                 rhs_repr,
@@ -257,7 +257,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                                 .aa_ctxt
                                 .lookup_local(callee, RETURN_PLACE)
                                 .expect("the return place must have been generated.");
-                            self.constraints.push(Constraint::new(
+                            self.add_constraint(Constraint::new(
                                 if p_is_indirect {
                                     ConstraintKind::Store
                                 } else {
@@ -288,13 +288,13 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                                             );
 
                                         if rhs_is_indirect {
-                                            self.constraints.push(Constraint::new(
+                                            self.add_constraint(Constraint::new(
                                                 ConstraintKind::Load,
                                                 lhs_repr,
                                                 rhs_repr,
                                             ));
                                         } else {
-                                            self.constraints.push(Constraint::new(
+                                            self.add_constraint(Constraint::new(
                                                 ConstraintKind::Copy,
                                                 lhs_repr,
                                                 rhs_repr,
@@ -314,6 +314,15 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
 }
 
 impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
+    #[inline]
+    fn add_constraint(&mut self, constraint: Constraint) {
+        log::trace!(
+            "Adding constraint: {}",
+            self.aa_ctxt.constraint_to_str(constraint)
+        );
+        self.constraints.push(constraint);
+    }
+
     /// Process place of pointer type, return an Andersen node representing this place. Return true
     /// if this place is indirect
     ///
@@ -349,8 +358,7 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
                     if is_nested {
                         let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
                         // generate constraint: p = *tmp
-                        self.constraints
-                            .push(Constraint::new(ConstraintKind::Load, repr, tmp));
+                        self.add_constraint(Constraint::new(ConstraintKind::Load, repr, tmp));
                         repr = tmp;
                     } else {
                         is_nested = true;
@@ -403,119 +411,11 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
                 // ... = &tmp
                 if rhs_is_indirect {
                     let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
-                    self.constraints
-                        .push(Constraint::new(ConstraintKind::Load, tmp, rhs_repr));
+                    self.add_constraint(Constraint::new(ConstraintKind::Load, tmp, rhs_repr));
                     rhs_repr = tmp;
                 }
 
                 (rhs_repr, RhsPtrKind::AddressOf)
-            }
-
-            Rvalue::NullaryOp(NullOp::Box, _ty) => {
-                log::error!("Box::new() is not supported!");
-                unimplemented!()
-            }
-
-            _ => {
-                log::error!("rvalue of this kind: {:?} is not supported!", rvalue);
-                unimplemented!()
-            }
-        }
-    }
-
-    #[allow(dead_code)]
-    fn process_assign_of_ptr_ty(
-        &mut self,
-        place: &Place<'tcx>,
-        rvalue: &Rvalue<'tcx>,
-        location: Location,
-    ) {
-        let (lhs_repr, lhs_is_indirect) = self.process_place_of_ptr_ty(place, location);
-        match rvalue {
-            Rvalue::Use(Operand::Copy(place))
-            | Rvalue::Use(Operand::Move(place))
-            | Rvalue::Cast(CastKind::Pointer(_), Operand::Copy(place), _)
-            | Rvalue::Cast(CastKind::Pointer(_), Operand::Move(place), _) => {
-                let (rhs_repr, rhs_is_indirect) = self.process_place_of_ptr_ty(place, location);
-                match (lhs_is_indirect, rhs_is_indirect) {
-                    // *p = *q, introduce a temporary
-                    // tmp = *q
-                    // *p = tmp
-                    (true, true) => {
-                        let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
-                        self.constraints
-                            .push(Constraint::new(ConstraintKind::Load, tmp, rhs_repr));
-                        self.constraints.push(Constraint::new(
-                            ConstraintKind::Store,
-                            lhs_repr,
-                            tmp,
-                        ));
-                    }
-                    // *p = q
-                    (true, false) => {
-                        self.constraints.push(Constraint::new(
-                            ConstraintKind::Store,
-                            lhs_repr,
-                            rhs_repr,
-                        ));
-                    }
-                    // p = *q
-                    (false, true) => {
-                        self.constraints.push(Constraint::new(
-                            ConstraintKind::Load,
-                            lhs_repr,
-                            rhs_repr,
-                        ));
-                    }
-                    // p = q
-                    (false, false) => {
-                        self.constraints.push(Constraint::new(
-                            ConstraintKind::Copy,
-                            lhs_repr,
-                            rhs_repr,
-                        ));
-                    }
-                }
-            }
-
-            Rvalue::Ref(_, _, place) | Rvalue::AddressOf(_, place) => {
-                let (mut rhs_repr, rhs_is_indirect) = self.process_place_of_ptr_ty(place, location);
-                // ... = &*q, introduce a temporary
-                // tmp = *q
-                // ... = &tmp
-                if rhs_is_indirect {
-                    let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
-                    self.constraints
-                        .push(Constraint::new(ConstraintKind::Load, tmp, rhs_repr));
-                    rhs_repr = tmp;
-                }
-
-                match lhs_is_indirect {
-                    // *p = &q, introduce a temporary
-                    // tmp = &q
-                    // *p = tmp
-                    true => {
-                        let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
-                        self.constraints.push(Constraint::new(
-                            ConstraintKind::AddressOf,
-                            tmp,
-                            rhs_repr,
-                        ));
-                        self.constraints.push(Constraint::new(
-                            ConstraintKind::Store,
-                            lhs_repr,
-                            tmp,
-                        ));
-                    }
-                    // p = &q
-                    false => {
-                        self.constraints.push(Constraint::new(
-                            ConstraintKind::AddressOf,
-                            lhs_repr,
-                            rhs_repr,
-                        ));
-                    }
-                }
             }
 
             Rvalue::NullaryOp(NullOp::Box, _ty) => {
