@@ -75,14 +75,19 @@ impl<N: Idx> SparseBitVectorGraph<N> {
     }
 
     pub fn collect_edges(&self) -> Vec<(N, N)> {
-        self.edges.clone().into_iter_enumerated()
-            .flat_map(|(src, dests)| {
-                dests.iter().map(|dest| (src, dest)).collect::<Vec<_>>()
-            }).collect()
+        self.edges
+            .clone()
+            .into_iter_enumerated()
+            .flat_map(|(src, dests)| dests.iter().map(|dest| (src, dest)).collect::<Vec<_>>())
+            .collect()
     }
 
     pub fn reverse(&self) -> Self {
-        Self::new(self.num_nodes(), 
-                  self.collect_edges().into_iter().map(|(src, dest)| (dest, src)))
+        Self::new(
+            self.num_nodes(),
+            self.collect_edges()
+                .into_iter()
+                .map(|(src, dest)| (dest, src)),
+        )
     }
 }
