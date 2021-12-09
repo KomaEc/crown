@@ -1,6 +1,6 @@
 use crate::andersen::{
     ctxt::AndersenAnalysisCtxt, AndersenNode, AndersenResult, ConstraintIndex, ConstraintKind,
-    ConstraintSet, PtsGraph,
+    ConstraintSet, InConstruction, PtsGraph,
 };
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, WithSuccessors};
 use index::vec::IndexVec;
@@ -9,7 +9,7 @@ use std::collections::VecDeque;
 /// Data structure for solving the constraints.
 pub struct ConstraintSolving<'cs, 'tcx> {
     /// Each node is associated with a points-to set.
-    pts_graph: PtsGraph,
+    pts_graph: PtsGraph<InConstruction>,
     /// Each node is associated with a set of complex constraints.
     /// For a node `p`, constraints of the forms `*p = q`, `q = *p` are
     /// considered associated complex constraints.

@@ -127,13 +127,25 @@ pub fn run(input_file_name: String) {
                 log::info!("Done\n");
 
                 log::info!("Start pointer analysis ...");
-                AndersenAnalysis::new(&top_level_function_def_ids, tcx)
-                    .proceed_to_generation()
-                    .generate_constraints()
-                    .proceed_to_solving()
-                    .solve()
-                    .finish()
-                    .log_debug();
+                AndersenAnalysis::new_analysis(
+                    &top_level_function_def_ids
+                        .into_iter()
+                        .map(|did| {
+                            let (body, _) = tcx.mir_promoted(WithOptConstParam::unknown(did));
+                            body.borrow()
+                        })
+                        .collect::<Vec<_>>(),
+                    tcx,
+                )
+                .into_constraint_generation()
+                .generate_constraints()
+                .proceed_to_solving()
+                .solve()
+                .finish()
+                .enter(|res| {
+                    res.log_debug();
+                    res.report_ptr_alias();
+                });
                 log::info!("Done\n");
             })
         });

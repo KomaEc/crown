@@ -6,41 +6,47 @@ mod ctxt;
 mod diagnostics;
 
 use crate::andersen::ctxt::AndersenAnalysisCtxt;
-use graph::implementation::sparse_bit_vector::SparseBitVectorGraph;
+use core::marker::PhantomData;
+use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, scc::Sccs};
 use index::{bit_set::HybridBitSet, vec::IndexVec};
 use rustc_hir::def_id::LocalDefId;
-use rustc_middle::{mir::PlaceRef, ty::TyCtxt};
+use rustc_middle::{
+    mir::{Body, PlaceRef},
+    ty::TyCtxt,
+};
+use std::cell::Ref;
 use std::ops::Index;
 
-use self::constraint_generation::ConstraintGeneration;
-
 /// Currently intraprocedural, subject to changes.
-pub struct AndersenAnalysis<'aa, 'tcx> {
-    all_functions: &'aa [LocalDefId],
-    tcx: TyCtxt<'tcx>,
-}
+pub struct AndersenAnalysis;
 
-impl<'aa, 'tcx> AndersenAnalysis<'aa, 'tcx> {
-    pub fn new(all_functions: &'aa [LocalDefId], tcx: TyCtxt<'tcx>) -> Self {
-        AndersenAnalysis { all_functions, tcx }
-    }
-
-    pub fn proceed_to_generation(self) -> ConstraintGeneration<'aa, 'tcx> {
-        ConstraintGeneration::new(self.all_functions, self.tcx)
+impl<'aa, 'tcx> AndersenAnalysis {
+    pub fn new_analysis(
+        all_functions: &'aa [Ref<'aa, Body<'tcx>>],
+        tcx: TyCtxt<'tcx>,
+    ) -> AndersenAnalysisCtxt<'aa, 'tcx> {
+        AndersenAnalysisCtxt::new(all_functions, tcx)
     }
 }
 
 pub struct AndersenResult<'ar, 'tcx> {
-    pub pts_graph: PtsGraph,
+    pub pts_graph: PtsGraph<Finished>,
     pub aa_ctxt: AndersenAnalysisCtxt<'ar, 'tcx>,
 }
 
 impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
-    pub fn new(pts_graph: PtsGraph, node_ctxt: AndersenAnalysisCtxt<'ar, 'tcx>) -> Self {
+    pub fn new(
+        pts_graph: PtsGraph<InConstruction>,
+        node_ctxt: AndersenAnalysisCtxt<'ar, 'tcx>,
+    ) -> Self {
         AndersenResult {
-            pts_graph,
+            pts_graph: pts_graph.finish(),
             aa_ctxt: node_ctxt,
         }
+    }
+
+    pub fn enter<R>(self, f: impl FnOnce(Self) -> R) -> R {
+        f(self)
     }
 
     pub fn log_debug(&self) {
@@ -60,20 +66,66 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
     }
 }
 
-pub struct PtsGraph {
-    graph: SparseBitVectorGraph<AndersenNode>,
-    /// runtime flag. remove later
-    finished: bool,
+index::newtype_index! {
+    pub struct PtsGraphSccIndex {
+        DEBUG_FORMAT = "PtsGraphSccIndex({})"
+    }
 }
 
-impl PtsGraph {
+crate struct PtsGraphAuxData {
+    // crate reverse_graph: SparseBitVectorGraph<AndersenNode>,
+    crate sccs: Sccs<AndersenNode, PtsGraphSccIndex>,
+}
+
+impl PtsGraphAuxData {
+    crate fn new(graph: &SparseBitVectorGraph<AndersenNode>) -> Self {
+        PtsGraphAuxData {
+            // reverse_graph: graph.reverse(),
+            sccs: Sccs::new(graph),
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct InConstruction;
+#[derive(Debug)]
+pub struct Finished;
+
+pub struct PtsGraph<State> {
+    graph: SparseBitVectorGraph<AndersenNode>,
+    aux_data_cache: Option<PtsGraphAuxData>,
+    _state: PhantomData<State>,
+}
+
+impl PtsGraph<InConstruction> {
     pub fn new(num_nodes: usize) -> Self {
         PtsGraph {
             graph: SparseBitVectorGraph::new(num_nodes, [].into_iter()),
-            finished: false,
+            aux_data_cache: None,
+            _state: PhantomData,
         }
     }
 
+    pub fn finish(self) -> PtsGraph<Finished> {
+        let aux_data = PtsGraphAuxData::new(&self.graph);
+        PtsGraph {
+            graph: self.graph,
+            aux_data_cache: Some(aux_data),
+            _state: PhantomData,
+        }
+    }
+}
+
+impl PtsGraph<Finished> {
+    pub fn all_cyclic_reference_group_indices(&self) -> impl Iterator<Item = PtsGraphSccIndex> {
+        self.aux_data_cache
+            .as_ref()
+            .map(|aux_data| aux_data.sccs.all_sccs())
+            .expect("Pts graph construction finished")
+    }
+}
+
+impl<S> PtsGraph<S> {
     #[inline]
     pub fn pts(&self, p: AndersenNode) -> &HybridBitSet<AndersenNode> {
         self.graph.successor_nodes(p)
@@ -96,9 +148,8 @@ impl PtsGraph {
         self.graph.pick2_successor_nodes_mut(p, q)
     }
 
-    pub fn finish(&mut self) {
-        self.finished = true;
-        todo!()
+    pub fn alias(&self, p: AndersenNode, q: AndersenNode) -> bool {
+        self.pts(p).clone().intersect(self.pts(q))
     }
 }
 

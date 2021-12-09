@@ -17,39 +17,30 @@ use crate::{
 /// Data structure for constraint generation.
 /// 'cg = the duration of the constraint generation
 pub struct ConstraintGeneration<'cg, 'tcx> {
-    constraints: ConstraintSet,
-    aa_ctxt: AndersenAnalysisCtxt<'cg, 'tcx>,
+    crate constraints: ConstraintSet,
+    crate aa_ctxt: AndersenAnalysisCtxt<'cg, 'tcx>,
 }
 
 impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
-    pub fn new(
-        all_functions: &'cg [LocalDefId],
-        tcx: TyCtxt<'tcx>,
-    ) -> ConstraintGeneration<'cg, 'tcx> {
-        ConstraintGeneration {
-            constraints: ConstraintSet::new(),
-            aa_ctxt: AndersenAnalysisCtxt::new(all_functions, tcx),
-        }
-    }
-
     #[inline]
     pub fn tcx(&self) -> TyCtxt<'tcx> {
         self.aa_ctxt.tcx()
     }
 
     pub fn generate_constraints(mut self) -> Self {
-        for &did in self.aa_ctxt.all_functions {
-            let (body, _) = self
-                .tcx()
-                .mir_promoted(rustc_middle::ty::WithOptConstParam::unknown(did));
-            let body_ref = body.borrow();
+        for body in self.aa_ctxt.all_functions {
+            let did = body
+                .source
+                .def_id()
+                .as_local()
+                .expect("top level functions are, of course, user defined functions");
             ConstraintGenerationForBody {
                 func_cx: did,
-                body: &*body_ref,
+                body: &*body,
                 aa_ctxt: &mut self.aa_ctxt,
                 constraints: &mut self.constraints,
             }
-            .visit_body(&*body_ref);
+            .visit_body(&*body);
         }
         self.log_debug_constraints();
         self
@@ -253,7 +244,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                                 "Generic functions are not supported"
                             );
                             assert!(from_hir_call, "Inner functions are not supported");
-                            assert!(self.aa_ctxt.all_functions.contains(&callee));
+                            // assert!(self.aa_ctxt.all_functions.contains(&callee));
 
                             // The purpose of getting the callee body is to obtain the argument local list of the callee.
                             // However, if we can cheat if we know the calling convention of mir.
