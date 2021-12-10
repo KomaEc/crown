@@ -19,6 +19,8 @@ pub struct AndersenAnalysisCtxt<'aacx, 'tcx> {
     value_node_map: HashMap<(LocalDefId, PlaceRef<'tcx>), AndersenNode>,
 }
 
+const ANDERSEN_TEMP_NODE_BASE: usize = 1000000;
+
 impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
     pub fn into_constraint_generation(self) -> ConstraintGeneration<'aacx, 'tcx> {
         ConstraintGeneration {
@@ -109,7 +111,7 @@ impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
             AndersenNodeData::Temporary(did) => format!(
                 "{}::tmp_{}",
                 self.tcx.def_path_str(did.to_def_id()),
-                node.index() + 100000
+                node.index() + ANDERSEN_TEMP_NODE_BASE
             ),
         }
     }
