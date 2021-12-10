@@ -15,6 +15,8 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use std::cell::Ref;
+use std::convert::AsRef;
+use std::mem::MaybeUninit;
 use std::ops::Index;
 
 /// Currently intraprocedural, subject to changes.
@@ -86,26 +88,60 @@ impl PtsGraphAuxData {
     }
 }
 
+crate struct PtsGraphAuxDataCache<State> {
+    cache: MaybeUninit<PtsGraphAuxData>,
+    _state: PhantomData<State>,
+}
+
+impl PtsGraphAuxDataCache<InConstruction> {
+    pub fn new() -> Self {
+        PtsGraphAuxDataCache {
+            cache: MaybeUninit::uninit(),
+            _state: PhantomData,
+        }
+    }
+
+    #[inline]
+    pub fn finish(data: PtsGraphAuxData) -> PtsGraphAuxDataCache<Finished> {
+        PtsGraphAuxDataCache {
+            cache: MaybeUninit::new(data),
+            _state: PhantomData,
+        }
+    }
+}
+
+impl AsRef<PtsGraphAuxData> for PtsGraphAuxDataCache<Finished> {
+    fn as_ref(&self) -> &PtsGraphAuxData {
+        unsafe { self.cache.assume_init_ref() }
+    }
+}
+
+impl<S> Drop for PtsGraphAuxDataCache<S> {
+    /// default drop does nothing
+    default fn drop(&mut self) {}
+}
+
+impl Drop for PtsGraphAuxDataCache<Finished> {
+    fn drop(&mut self) {
+        unsafe { self.cache.assume_init_drop() }
+    }
+}
+
 #[derive(Debug)]
 pub struct InConstruction;
 #[derive(Debug)]
 pub struct Finished;
 
-/// TODO: Replace [`aux_data_cache`] with real 'cache'.
-/// For example, [`std::mem::MaybeUninit<PtsGraphAuxData>`],
-/// and do the memory management manually
 pub struct PtsGraph<State> {
     graph: SparseBitVectorGraph<AndersenNode>,
-    aux_data_cache: Option<PtsGraphAuxData>,
-    _state: PhantomData<State>,
+    aux_data_cache: PtsGraphAuxDataCache<State>,
 }
 
 impl PtsGraph<InConstruction> {
     pub fn new(num_nodes: usize) -> Self {
         PtsGraph {
             graph: SparseBitVectorGraph::new(num_nodes, [].into_iter()),
-            aux_data_cache: None,
-            _state: PhantomData,
+            aux_data_cache: PtsGraphAuxDataCache::new(),
         }
     }
 
@@ -113,18 +149,14 @@ impl PtsGraph<InConstruction> {
         let aux_data = PtsGraphAuxData::new(&self.graph);
         PtsGraph {
             graph: self.graph,
-            aux_data_cache: Some(aux_data),
-            _state: PhantomData,
+            aux_data_cache: PtsGraphAuxDataCache::finish(aux_data),
         }
     }
 }
 
 impl PtsGraph<Finished> {
     pub fn all_cyclic_reference_group_indices(&self) -> impl Iterator<Item = PtsGraphSccIndex> {
-        self.aux_data_cache
-            .as_ref()
-            .map(|aux_data| aux_data.sccs.all_sccs())
-            .expect("Pts graph construction finished")
+        self.aux_data_cache.as_ref().sccs.all_sccs()
     }
 }
 
