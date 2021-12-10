@@ -91,6 +91,9 @@ pub struct InConstruction;
 #[derive(Debug)]
 pub struct Finished;
 
+/// TODO: Replace [`aux_data_cache`] with real 'cache'.
+/// For example, [`std::mem::MaybeUninit<PtsGraphAuxData>`],
+/// and do the memory management manually
 pub struct PtsGraph<State> {
     graph: SparseBitVectorGraph<AndersenNode>,
     aux_data_cache: Option<PtsGraphAuxData>,
