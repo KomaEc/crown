@@ -143,7 +143,7 @@ pub fn run(input_file_name: String) {
                 .solve()
                 .finish()
                 .enter(|res| {
-                    res.log_debug();
+                    res.dump_pts_sets_to_log();
                     res.report_ptr_alias();
                 });
                 log::info!("Done\n");

@@ -19,7 +19,6 @@ use std::convert::AsRef;
 use std::mem::MaybeUninit;
 use std::ops::Index;
 
-/// Currently intraprocedural, subject to changes.
 pub struct AndersenAnalysis;
 
 impl<'aa, 'tcx> AndersenAnalysis {
@@ -51,7 +50,7 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
         f(self)
     }
 
-    pub fn log_debug(&self) {
+    pub fn dump_pts_sets_to_log(&self) {
         log::debug!("Dumping andersen analysis results:");
         for p in self.aa_ctxt.nodes().indices() {
             log::debug!(
@@ -260,16 +259,6 @@ impl Constraint {
             right: r,
         }
     }
-
-    /// Test if a constraint mentions deref of [`node`].
-    pub fn mention_deref(self, node: AndersenNode) -> bool {
-        match self.constraint_kind {
-            ConstraintKind::AddressOf => false,
-            ConstraintKind::Copy => false,
-            ConstraintKind::Load => node == self.right,
-            ConstraintKind::Store => node == self.left,
-        }
-    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -313,8 +302,6 @@ impl AndersenNode {
         Constraint::new(ConstraintKind::AddressOf, self, other)
     }
 }
-
-pub const INVALID_ANDERSEN_NODE: AndersenNode = AndersenNode::MAX;
 
 index::newtype_index! {
     pub struct ConstraintIndex {

@@ -19,16 +19,6 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
             })
             .collect::<Vec<_>>();
 
-        /*
-        for &(ref var, did) in all_user_vars.iter() {
-            log::trace!(
-                "{:?} with def_id {}",
-                var,
-                self.aa_ctxt.tcx().def_path_str(did)
-            );
-        }
-        */
-
         let mut iter = all_user_vars.iter();
         loop {
             match iter.next() {
