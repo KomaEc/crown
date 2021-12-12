@@ -87,6 +87,8 @@ impl PtsGraphAuxData {
     }
 }
 
+/// transparent layout to enable safe transmute
+#[repr(transparent)]
 crate struct PtsGraphAuxDataCache<State> {
     cache: MaybeUninit<PtsGraphAuxData>,
     _state: PhantomData<State>,
@@ -99,13 +101,11 @@ impl PtsGraphAuxDataCache<InConstruction> {
             _state: PhantomData,
         }
     }
-
+    
     #[inline]
-    pub fn finish(data: PtsGraphAuxData) -> PtsGraphAuxDataCache<Finished> {
-        PtsGraphAuxDataCache {
-            cache: MaybeUninit::new(data),
-            _state: PhantomData,
-        }
+    pub fn finish(mut self, data: PtsGraphAuxData) -> PtsGraphAuxDataCache<Finished> {
+        self.cache.write(data);
+        unsafe { std::mem::transmute(self) }
     }
 }
 
@@ -148,7 +148,7 @@ impl PtsGraph<InConstruction> {
         let aux_data = PtsGraphAuxData::new(&self.graph);
         PtsGraph {
             graph: self.graph,
-            aux_data_cache: PtsGraphAuxDataCache::finish(aux_data),
+            aux_data_cache: self.aux_data_cache.finish(aux_data),
         }
     }
 }
