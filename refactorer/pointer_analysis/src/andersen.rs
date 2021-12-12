@@ -101,7 +101,7 @@ impl PtsGraphAuxDataCache<InConstruction> {
             _state: PhantomData,
         }
     }
-    
+
     #[inline]
     pub fn finish(mut self, data: PtsGraphAuxData) -> PtsGraphAuxDataCache<Finished> {
         self.cache.write(data);
@@ -151,19 +151,6 @@ impl PtsGraph<InConstruction> {
             aux_data_cache: self.aux_data_cache.finish(aux_data),
         }
     }
-}
-
-impl PtsGraph<Finished> {
-    pub fn all_cyclic_reference_group_indices(&self) -> impl Iterator<Item = PtsGraphSccIndex> {
-        self.aux_data_cache.as_ref().sccs.all_sccs()
-    }
-}
-
-impl<S> PtsGraph<S> {
-    #[inline]
-    pub fn pts(&self, p: AndersenNode) -> &HybridBitSet<AndersenNode> {
-        self.graph.successor_nodes(p)
-    }
 
     #[inline]
     pub fn pts_mut(&mut self, p: AndersenNode) -> &mut HybridBitSet<AndersenNode> {
@@ -180,6 +167,19 @@ impl<S> PtsGraph<S> {
         &mut HybridBitSet<AndersenNode>,
     ) {
         self.graph.pick2_successor_nodes_mut(p, q)
+    }
+}
+
+impl PtsGraph<Finished> {
+    pub fn all_cyclic_reference_group_indices(&self) -> impl Iterator<Item = PtsGraphSccIndex> {
+        self.aux_data_cache.as_ref().sccs.all_sccs()
+    }
+}
+
+impl<S> PtsGraph<S> {
+    #[inline]
+    pub fn pts(&self, p: AndersenNode) -> &HybridBitSet<AndersenNode> {
+        self.graph.successor_nodes(p)
     }
 
     pub fn alias(&self, p: AndersenNode, q: AndersenNode) -> bool {
