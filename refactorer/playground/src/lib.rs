@@ -13,7 +13,7 @@ extern crate rustc_session;
 extern crate rustc_span;
 // extern crate rustc_borrowck;
 
-use pointer_analysis::andersen::AndersenAnalysis;
+use pointer_analysis::PointerAnalysis;
 use rustc_ast_pretty::pprust::item_to_string;
 use rustc_errors::registry;
 use rustc_hir::OwnerNode;
@@ -121,13 +121,13 @@ pub fn run(input_file_name: String) {
                     let body_ref = body.borrow();
 
                     log::info!("... tracing places for {:?}", local_def_id);
-                    let mut tracer = PlaceTracer::new(&top_level_function_def_ids);
+                    let mut tracer = PlaceTracer::new(&top_level_function_def_ids, tcx);
                     tracer.visit_body(body_ref.borrow());
                 }
                 log::info!("Done\n");
 
                 log::info!("Start pointer analysis ...");
-                AndersenAnalysis::new_analysis(
+                PointerAnalysis::new_analysis(
                     &top_level_function_def_ids
                         .into_iter()
                         .map(|did| {
@@ -139,7 +139,7 @@ pub fn run(input_file_name: String) {
                 )
                 .into_constraint_generation()
                 .generate_constraints()
-                .proceed_to_solving()
+                .proceed_to_solving_by_andersen()
                 .solve()
                 .finish()
                 .enter(|res| {

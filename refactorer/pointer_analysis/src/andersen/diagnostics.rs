@@ -8,14 +8,21 @@ use crate::andersen::AndersenResult;
 impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
     pub fn report_ptr_alias(&self) {
         let all_user_vars = self
-            .aa_ctxt
+            .ptr_ctxt
             .all_functions
             .iter()
             .flat_map(|body| {
-                body.var_debug_info
-                    .clone()
-                    .into_iter()
-                    .map(|var| (var, body.source.def_id()))
+                body.var_debug_info.clone().into_iter().filter_map(|var| {
+                    if let VarDebugInfoContents::Place(place) = var.value {
+                        let ty = place.ty(&body.local_decls, self.ptr_ctxt.tcx()).ty;
+                        if ty.is_any_ptr() && !ty.is_fn_ptr() {
+                            return Some((var, body.source.def_id()));
+                        }
+                    } else {
+                        log::warn!("Andersen resultck: ignoring constant!");
+                    }
+                    None
+                })
             })
             .collect::<Vec<_>>();
 
@@ -35,26 +42,32 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
                         };
 
                         let node_p = self
-                            .aa_ctxt
+                            .ptr_ctxt
                             .lookup_local(did_p.as_local().unwrap(), p.local)
-                            .unwrap();
+                            .expect(&format!(
+                                "var {} at {:?} must have been generated for Andersen",
+                                var_p.name, var_p.source_info
+                            ));
                         let node_q = self
-                            .aa_ctxt
+                            .ptr_ctxt
                             .lookup_local(did_q.as_local().unwrap(), q.local)
-                            .unwrap();
+                            .expect(&format!(
+                                "var {} at {:?} must have been generated for Andersen",
+                                var_q.name, var_q.source_info
+                            ));
 
                         if self.pts_graph.alias(node_p, node_q) {
                             // log::debug!("Found alias! {} and {} [ {:?} and {:?} ]", var_p.name, var_q.name, p, q);
 
                             let mut err = self
-                                .aa_ctxt
+                                .ptr_ctxt
                                 .tcx()
                                 .sess
                                 .struct_span_err(var_p.source_info.span, "Alias found!");
                             err.span_label(var_p.source_info.span, "First pointer found here");
                             err.span_label(var_q.source_info.span, "Second pointer found here");
                             if let Ok(snippet) = self
-                                .aa_ctxt
+                                .ptr_ctxt
                                 .tcx()
                                 .sess
                                 .source_map()

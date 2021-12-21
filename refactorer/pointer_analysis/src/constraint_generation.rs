@@ -9,16 +9,15 @@ use rustc_middle::ty::TyCtxt;
 use rustc_middle::ty::TyKind::FnDef;
 
 use crate::{
-    andersen::constraint_solving::ConstraintSolving,
-    andersen::ctxt::AndersenAnalysisCtxt,
-    andersen::{AndersenNode, Constraint, ConstraintKind, ConstraintSet},
+    andersen::constraint_solving::ConstraintSolving, ctxt::PointerAnalysisCtxt, Constraint,
+    ConstraintKind, ConstraintSet, PointerAnalysisNode,
 };
 
 /// Data structure for constraint generation.
 /// 'cg = the duration of the constraint generation
 pub struct ConstraintGeneration<'cg, 'tcx> {
     crate constraints: ConstraintSet,
-    crate aa_ctxt: AndersenAnalysisCtxt<'cg, 'tcx>,
+    crate aa_ctxt: PointerAnalysisCtxt<'cg, 'tcx>,
 }
 
 impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
@@ -46,7 +45,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
         self
     }
 
-    pub fn proceed_to_solving(self) -> ConstraintSolving<'cg, 'tcx> {
+    pub fn proceed_to_solving_by_andersen(self) -> ConstraintSolving<'cg, 'tcx> {
         ConstraintSolving::new(self.constraints, self.aa_ctxt)
     }
 
@@ -68,7 +67,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
 struct ConstraintGenerationForBody<'me, 'cg, 'tcx> {
     func_cx: LocalDefId,
     body: &'me Body<'tcx>,
-    aa_ctxt: &'me mut AndersenAnalysisCtxt<'cg, 'tcx>,
+    aa_ctxt: &'me mut PointerAnalysisCtxt<'cg, 'tcx>,
     constraints: &'me mut ConstraintSet,
 }
 
@@ -127,82 +126,83 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
 
             // self.process_assign_of_ptr_ty(place, rvalue, location);
 
-            let (rhs_repr, rhs_ptr_kind) = self.process_rvalue_of_ptr_ty(rvalue, location);
-            let (lhs_repr, lhs_is_indirect) = self.process_place_of_ptr_ty(place, location);
+            if let Some((rhs_repr, rhs_ptr_kind)) = self.process_rvalue_of_ptr_ty(rvalue, location)
+            {
+                let (lhs_repr, lhs_is_indirect) = self.process_place_of_ptr_ty(place, location);
 
-            match rhs_ptr_kind {
-                RhsPtrKind::Use {
-                    indirect: rhs_is_indirect,
-                } => {
-                    match (lhs_is_indirect, rhs_is_indirect) {
-                        // *p = *q, introduce a temporary
-                        // tmp = *q
-                        // *p = tmp
-                        (true, true) => {
-                            let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
-                            /// TODO: tmp.load(rhs_repr);
-                            self.add_constraint(Constraint::new(
-                                ConstraintKind::Load,
-                                tmp,
-                                rhs_repr,
-                            ));
-                            self.add_constraint(Constraint::new(
-                                ConstraintKind::Store,
-                                lhs_repr,
-                                tmp,
-                            ));
-                        }
-                        // *p = q
-                        (true, false) => {
-                            self.add_constraint(Constraint::new(
-                                ConstraintKind::Store,
-                                lhs_repr,
-                                rhs_repr,
-                            ));
-                        }
-                        // p = *q
-                        (false, true) => {
-                            self.add_constraint(Constraint::new(
-                                ConstraintKind::Load,
-                                lhs_repr,
-                                rhs_repr,
-                            ));
-                        }
-                        // p = q
-                        (false, false) => {
-                            self.add_constraint(Constraint::new(
-                                ConstraintKind::Copy,
-                                lhs_repr,
-                                rhs_repr,
-                            ));
+                match rhs_ptr_kind {
+                    RhsPtrKind::Use {
+                        indirect: rhs_is_indirect,
+                    } => {
+                        match (lhs_is_indirect, rhs_is_indirect) {
+                            // *p = *q, introduce a temporary
+                            // tmp = *q
+                            // *p = tmp
+                            (true, true) => {
+                                let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
+                                self.add_constraint(Constraint::new(
+                                    ConstraintKind::Load,
+                                    tmp,
+                                    rhs_repr,
+                                ));
+                                self.add_constraint(Constraint::new(
+                                    ConstraintKind::Store,
+                                    lhs_repr,
+                                    tmp,
+                                ));
+                            }
+                            // *p = q
+                            (true, false) => {
+                                self.add_constraint(Constraint::new(
+                                    ConstraintKind::Store,
+                                    lhs_repr,
+                                    rhs_repr,
+                                ));
+                            }
+                            // p = *q
+                            (false, true) => {
+                                self.add_constraint(Constraint::new(
+                                    ConstraintKind::Load,
+                                    lhs_repr,
+                                    rhs_repr,
+                                ));
+                            }
+                            // p = q
+                            (false, false) => {
+                                self.add_constraint(Constraint::new(
+                                    ConstraintKind::Copy,
+                                    lhs_repr,
+                                    rhs_repr,
+                                ));
+                            }
                         }
                     }
-                }
-                RhsPtrKind::AddressOf => {
-                    match lhs_is_indirect {
-                        // *p = &q, introduce a temporary
-                        // tmp = &q
-                        // *p = tmp
-                        true => {
-                            let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
-                            self.add_constraint(Constraint::new(
-                                ConstraintKind::AddressOf,
-                                tmp,
-                                rhs_repr,
-                            ));
-                            self.add_constraint(Constraint::new(
-                                ConstraintKind::Store,
-                                lhs_repr,
-                                tmp,
-                            ));
-                        }
-                        // p = &q
-                        false => {
-                            self.add_constraint(Constraint::new(
-                                ConstraintKind::AddressOf,
-                                lhs_repr,
-                                rhs_repr,
-                            ));
+                    RhsPtrKind::AddressOf => {
+                        match lhs_is_indirect {
+                            // *p = &q, introduce a temporary
+                            // tmp = &q
+                            // *p = tmp
+                            true => {
+                                let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
+                                self.add_constraint(Constraint::new(
+                                    ConstraintKind::AddressOf,
+                                    tmp,
+                                    rhs_repr,
+                                ));
+                                self.add_constraint(Constraint::new(
+                                    ConstraintKind::Store,
+                                    lhs_repr,
+                                    tmp,
+                                ));
+                            }
+                            // p = &q
+                            false => {
+                                self.add_constraint(Constraint::new(
+                                    ConstraintKind::AddressOf,
+                                    lhs_repr,
+                                    rhs_repr,
+                                ));
+                            }
                         }
                     }
                 }
@@ -239,6 +239,10 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                             self.process_place_of_ptr_ty(place, location);
 
                         if let Some(callee) = def_id.as_local() {
+                            if !self.aa_ctxt.all_function_def_ids.contains(&def_id) {
+                                log::error!("UNIMPLEMENTED: model linked C functions");
+                                return;
+                            }
                             assert!(
                                 generic_args.is_empty(),
                                 "Generic functions are not supported"
@@ -252,11 +256,9 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                             log::warn!("Calling convention of MIR");
 
                             // generate constraint: `p = f.RETURN_PLACE`
-                            /// FIXME: really??? we have to generate return place before analysis!
-                            let ret_repr = self
-                                .aa_ctxt
-                                .lookup_local(callee, RETURN_PLACE)
-                                .expect("the return place must have been generated.");
+                            let ret_repr = self.aa_ctxt.generate_from_local(callee, RETURN_PLACE);
+                            // .lookup_local(callee, RETURN_PLACE)
+                            // .expect("the return place must have been generated.");
                             self.add_constraint(Constraint::new(
                                 if p_is_indirect {
                                     ConstraintKind::Store
@@ -277,10 +279,10 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                                         if place_ty.ty.is_fn_ptr() {
                                             unimplemented!("Function pointer")
                                         }
-                                        let lhs_repr = self
-                                            .aa_ctxt
-                                            .lookup_local(callee, local)
-                                            .expect("argument places must have been generated");
+                                        let lhs_repr =
+                                            self.aa_ctxt.generate_from_local(callee, local);
+                                        // .lookup_local(callee, local)
+                                        // .expect("argument places must have been generated");
                                         let (rhs_repr, rhs_is_indirect) = self
                                             .process_place_of_ptr_ty(
                                                 &operand.place().unwrap(),
@@ -340,7 +342,7 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
         &mut self,
         place: &Place<'tcx>,
         location: Location,
-    ) -> (AndersenNode, bool) {
+    ) -> (PointerAnalysisNode, bool) {
         log::trace!("processing place {:?} at location {:?}", place, location);
 
         //for (place_ref, _) in place.iter_projections() {
@@ -365,7 +367,7 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
                     }
                 }
                 ProjectionElem::Field(f, _) => {
-                    log::warn!("field {:?} ignored!", f);
+                    log::info!("field {:?} ignored!", f);
                 }
                 ProjectionElem::Index(_) => unimplemented!("projection: index"),
                 ProjectionElem::ConstantIndex {
@@ -388,20 +390,26 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
         &mut self,
         rvalue: &Rvalue<'tcx>,
         location: Location,
-    ) -> (AndersenNode, RhsPtrKind) {
+    ) -> Option<(PointerAnalysisNode, RhsPtrKind)> {
         match rvalue {
+            Rvalue::Use(Operand::Constant(_)) => {
+                // panic!()
+                log::error!("ignoring constant pointer: {:?}", rvalue);
+                None
+            }
+
             Rvalue::Use(Operand::Copy(place))
             | Rvalue::Use(Operand::Move(place))
-            | Rvalue::Cast(CastKind::Pointer(_), Operand::Copy(place), _)
-            | Rvalue::Cast(CastKind::Pointer(_), Operand::Move(place), _) => {
+            | Rvalue::Cast(_, Operand::Copy(place), _)
+            | Rvalue::Cast(_, Operand::Move(place), _) => {
                 let (rhs_repr, rhs_is_indirect) = self.process_place_of_ptr_ty(place, location);
 
-                (
+                Some((
                     rhs_repr,
                     RhsPtrKind::Use {
                         indirect: rhs_is_indirect,
                     },
-                )
+                ))
             }
 
             Rvalue::Ref(_, _, place) | Rvalue::AddressOf(_, place) => {
@@ -415,12 +423,18 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
                     rhs_repr = tmp;
                 }
 
-                (rhs_repr, RhsPtrKind::AddressOf)
+                Some((rhs_repr, RhsPtrKind::AddressOf))
             }
 
             Rvalue::NullaryOp(NullOp::Box, _ty) => {
                 log::error!("Box::new() is not supported!");
                 unimplemented!()
+            }
+
+            // explicit address cast: ignore!
+            Rvalue::Cast(CastKind::Misc, op @ Operand::Constant(_), _ty) => {
+                log::warn!("ignoring explicit address -> ptr cast: {:?}", op);
+                None
             }
 
             _ => {

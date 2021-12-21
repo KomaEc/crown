@@ -12,3 +12,4 @@ rustc_private=true
 log = "0.4"
 graph = { path = "../../utils/graph" }
 index = { path = "../../utils/index" }
+union-find = "0.3.3"

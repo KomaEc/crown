@@ -1,27 +1,28 @@
-use crate::andersen::{
-    constraint_generation::ConstraintGeneration, AndersenNode, AndersenNodeData, Constraint,
-    ConstraintKind, ConstraintSet,
+use crate::{
+    constraint_generation::ConstraintGeneration, Constraint, ConstraintKind, ConstraintSet,
+    PointerAnalysisNode, PointerAnalysisNodeData,
 };
 use index::vec::IndexVec;
-use rustc_hir::def_id::LocalDefId;
+use rustc_hir::def_id::{DefId, LocalDefId};
 use rustc_middle::{
     mir::{Body, Local, Place, PlaceRef},
     ty::TyCtxt,
 };
 use std::cell::Ref;
-use std::collections::{hash_map::Entry, HashMap};
+use std::collections::{hash_map::Entry, HashMap, HashSet};
 
 /// Data structure for the node factory
-pub struct AndersenAnalysisCtxt<'aacx, 'tcx> {
+pub struct PointerAnalysisCtxt<'aacx, 'tcx> {
     crate all_functions: &'aacx [Ref<'aacx, Body<'tcx>>],
+    crate all_function_def_ids: HashSet<DefId>,
     tcx: TyCtxt<'tcx>,
-    nodes: IndexVec<AndersenNode, AndersenNodeData<'tcx>>,
-    value_node_map: HashMap<(LocalDefId, PlaceRef<'tcx>), AndersenNode>,
+    nodes: IndexVec<PointerAnalysisNode, PointerAnalysisNodeData<'tcx>>,
+    value_node_map: HashMap<(LocalDefId, PlaceRef<'tcx>), PointerAnalysisNode>,
 }
 
-const ANDERSEN_TEMP_NODE_BASE: usize = 1000000;
+const TEMP_NODE_BASE: usize = 1000000;
 
-impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
+impl<'aacx, 'tcx> PointerAnalysisCtxt<'aacx, 'tcx> {
     pub fn into_constraint_generation(self) -> ConstraintGeneration<'aacx, 'tcx> {
         ConstraintGeneration {
             constraints: ConstraintSet::new(),
@@ -30,13 +31,18 @@ impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
     }
 }
 
-impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
+impl<'aacx, 'tcx> PointerAnalysisCtxt<'aacx, 'tcx> {
     pub fn new(
         all_functions: &'aacx [Ref<'aacx, Body<'tcx>>],
         tcx: TyCtxt<'tcx>,
-    ) -> AndersenAnalysisCtxt<'aacx, 'tcx> {
-        AndersenAnalysisCtxt {
+    ) -> PointerAnalysisCtxt<'aacx, 'tcx> {
+        let mut all_function_def_ids = HashSet::new();
+        for body in all_functions {
+            all_function_def_ids.insert(body.source.instance.def_id());
+        }
+        PointerAnalysisCtxt {
             all_functions,
+            all_function_def_ids,
             tcx,
             nodes: IndexVec::new(),
             value_node_map: HashMap::new(),
@@ -54,11 +60,14 @@ impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
     }
 
     #[inline]
-    pub fn nodes(&self) -> &IndexVec<AndersenNode, AndersenNodeData<'tcx>> {
+    pub fn nodes(&self) -> &IndexVec<PointerAnalysisNode, PointerAnalysisNodeData<'tcx>> {
         &self.nodes
     }
 
-    fn create_node_from_mir_data(&mut self, data: (LocalDefId, PlaceRef<'tcx>)) -> AndersenNode {
+    fn create_node_from_mir_data(
+        &mut self,
+        data: (LocalDefId, PlaceRef<'tcx>),
+    ) -> PointerAnalysisNode {
         let node = self.nodes.push(data.into());
         self.value_node_map.insert(data, node);
 
@@ -71,7 +80,10 @@ impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
         node
     }
 
-    fn get_or_create_from_mir_data(&mut self, data: (LocalDefId, PlaceRef<'tcx>)) -> AndersenNode {
+    fn get_or_create_from_mir_data(
+        &mut self,
+        data: (LocalDefId, PlaceRef<'tcx>),
+    ) -> PointerAnalysisNode {
         match self.value_node_map.entry(data) {
             Entry::Occupied(entry) => *entry.get(),
             Entry::Vacant(_) => self.create_node_from_mir_data(data),
@@ -79,39 +91,43 @@ impl<'aacx, 'tcx> AndersenAnalysisCtxt<'aacx, 'tcx> {
     }
 
     #[inline]
-    pub fn generate_from_local(&mut self, context: LocalDefId, local: Local) -> AndersenNode {
+    pub fn generate_from_local(
+        &mut self,
+        context: LocalDefId,
+        local: Local,
+    ) -> PointerAnalysisNode {
         self.get_or_create_from_mir_data((context, Place::from(local).as_ref()))
     }
 
-    pub fn lookup_local(&self, context: LocalDefId, local: Local) -> Option<AndersenNode> {
+    pub fn lookup_local(&self, context: LocalDefId, local: Local) -> Option<PointerAnalysisNode> {
         self.value_node_map
             .get(&(context, Place::from(local).as_ref()))
             .map(|&p| p)
     }
 
-    pub fn generate_temporary(&mut self, context: LocalDefId) -> AndersenNode {
+    pub fn generate_temporary(&mut self, context: LocalDefId) -> PointerAnalysisNode {
         log::trace!("generating temporary node");
         self.nodes.push(context.into())
     }
 
-    pub fn find(&self, node: AndersenNode) -> AndersenNodeData<'_> {
+    pub fn find(&self, node: PointerAnalysisNode) -> PointerAnalysisNodeData<'_> {
         self.nodes[node]
     }
 
     /// FIXME: assume that all place_refs are locals
-    pub fn node_to_str(&self, node: AndersenNode) -> String {
+    pub fn node_to_str(&self, node: PointerAnalysisNode) -> String {
         match self.find(node) {
-            AndersenNodeData::Mir(did, place_ref) => {
+            PointerAnalysisNodeData::Mir(did, place_ref) => {
                 format!(
                     "{}::mir_{}",
                     self.tcx.def_path_str(did.to_def_id()),
                     place_ref.local.index()
                 )
             }
-            AndersenNodeData::Temporary(did) => format!(
+            PointerAnalysisNodeData::Temporary(did) => format!(
                 "{}::tmp_{}",
                 self.tcx.def_path_str(did.to_def_id()),
-                node.index() + ANDERSEN_TEMP_NODE_BASE
+                node.index() + TEMP_NODE_BASE
             ),
         }
     }

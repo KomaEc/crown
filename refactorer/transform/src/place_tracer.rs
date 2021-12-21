@@ -3,18 +3,21 @@ use rustc_middle::mir::visit::{PlaceContext, Visitor};
 use rustc_middle::mir::{Location, Place, PlaceRef, Terminator, TerminatorKind};
 
 use log;
+use rustc_middle::ty::TyCtxt;
 use rustc_middle::ty::TyKind::FnDef;
 use std::collections::HashSet;
 
 pub struct PlaceTracer<'pt, 'tcx> {
-    body_ids: &'pt Vec<LocalDefId>,
+    body_ids: &'pt [LocalDefId],
+    tcx: TyCtxt<'tcx>,
     traced: HashSet<PlaceRef<'tcx>>,
 }
 
 impl<'pt, 'tcx> PlaceTracer<'pt, 'tcx> {
-    pub fn new(body_ids: &'pt Vec<LocalDefId>) -> Self {
+    pub fn new(body_ids: &'pt [LocalDefId], tcx: TyCtxt<'tcx>) -> Self {
         PlaceTracer {
             body_ids,
+            tcx,
             traced: HashSet::new(),
         }
     }
@@ -45,8 +48,16 @@ impl<'pt, 'tcx> Visitor<'tcx> for PlaceTracer<'pt, 'tcx> {
                     log::trace!(
                         "... found {} function call {:?} with def id {:?}",
                         if let Some(local_def_id) = def_id.as_local() {
-                            assert!(self.body_ids.contains(&local_def_id));
-                            "local"
+                            if self.body_ids.contains(&local_def_id) {
+                                assert!(
+                                    self.body_ids.contains(&local_def_id),
+                                    "expect {}",
+                                    self.tcx.def_path_str(*def_id)
+                                );
+                                "local"
+                            } else {
+                                "linked C"
+                            }
                         } else {
                             "library"
                         },

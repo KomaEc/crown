@@ -1,6 +1,7 @@
-use crate::andersen::{
-    ctxt::AndersenAnalysisCtxt, AndersenNode, AndersenResult, ConstraintIndex, ConstraintKind,
-    ConstraintSet, InConstruction, PtsGraph,
+use crate::{
+    andersen::{AndersenResult, InConstruction, PtsGraph},
+    ctxt::PointerAnalysisCtxt,
+    ConstraintIndex, ConstraintKind, ConstraintSet, PointerAnalysisNode,
 };
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, WithSuccessors};
 use index::vec::IndexVec;
@@ -13,23 +14,23 @@ pub struct ConstraintSolving<'cs, 'tcx> {
     /// Each node is associated with a set of complex constraints.
     /// For a node `p`, constraints of the forms `*p = q`, `q = *p` are
     /// considered associated complex constraints.
-    associated_complex_constraints: IndexVec<AndersenNode, Vec<ConstraintIndex>>,
+    associated_complex_constraints: IndexVec<PointerAnalysisNode, Vec<ConstraintIndex>>,
     /// The constraint graph. A directed edge from node `q` to `p` means
     /// `p` ⊃ `q`, or `p = q`.
-    constraint_graph: SparseBitVectorGraph<AndersenNode>,
+    constraint_graph: SparseBitVectorGraph<PointerAnalysisNode>,
     all_constraints: ConstraintSet,
     /// Node context, which says how nodes in the constraint graph
     /// are related to original program variables.
-    aa_ctxt: AndersenAnalysisCtxt<'cs, 'tcx>,
+    ptr_ctxt: PointerAnalysisCtxt<'cs, 'tcx>,
 }
 
 impl<'cs, 'tcx> ConstraintSolving<'cs, 'tcx> {
-    pub fn new(all_constraints: ConstraintSet, node_ctxt: AndersenAnalysisCtxt<'cs, 'tcx>) -> Self {
-        let num_nodes = node_ctxt.num_nodes();
+    pub fn new(all_constraints: ConstraintSet, ptr_ctxt: PointerAnalysisCtxt<'cs, 'tcx>) -> Self {
+        let num_nodes = ptr_ctxt.num_nodes();
 
         let mut pts_graph = PtsGraph::new(num_nodes);
-        let mut associated_complex_constraints = IndexVec::from_elem(Vec::new(), node_ctxt.nodes());
-        let mut constraint_graph: SparseBitVectorGraph<AndersenNode> =
+        let mut associated_complex_constraints = IndexVec::from_elem(Vec::new(), ptr_ctxt.nodes());
+        let mut constraint_graph: SparseBitVectorGraph<PointerAnalysisNode> =
             SparseBitVectorGraph::new(num_nodes, [].into_iter());
         for (cid, constraint) in all_constraints.iter_enumerated() {
             match constraint.constraint_kind {
@@ -56,14 +57,14 @@ impl<'cs, 'tcx> ConstraintSolving<'cs, 'tcx> {
             associated_complex_constraints,
             constraint_graph,
             all_constraints,
-            aa_ctxt: node_ctxt,
+            ptr_ctxt,
         }
     }
 
     /// Dynamic transitive closure algorithm
     pub fn solve_by_dynamic_transitive_closure(&mut self) {
         // insert all nodes into work list.
-        let mut work_list = VecDeque::from_iter(self.aa_ctxt.nodes().indices());
+        let mut work_list = VecDeque::from_iter(self.ptr_ctxt.nodes().indices());
         while let Some(p) = work_list.pop_front() {
             // for all r ∈ p
             for r in self.pts_graph.pts(p).iter() {
@@ -109,6 +110,6 @@ impl<'cs, 'tcx> ConstraintSolving<'cs, 'tcx> {
     }
 
     pub fn finish(self) -> AndersenResult<'cs, 'tcx> {
-        AndersenResult::new(self.pts_graph, self.aa_ctxt)
+        AndersenResult::new(self.pts_graph, self.ptr_ctxt)
     }
 }
