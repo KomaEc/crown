@@ -5,8 +5,10 @@ mod diagnostics;
 
 use crate::{ctxt::PointerAnalysisCtxt, PointerAnalysisNode};
 use core::marker::PhantomData;
+use std::collections::HashSet;
+use graph::WithNumNodes;
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, scc::Sccs};
-use index::bit_set::HybridBitSet;
+use index::{bit_set::HybridBitSet, vec::Idx};
 use std::convert::AsRef;
 use std::mem::MaybeUninit;
 
@@ -53,16 +55,29 @@ index::newtype_index! {
     }
 }
 
-crate struct PtsGraphAuxData {
+pub struct PtsGraphAuxData {
     // crate reverse_graph: SparseBitVectorGraph<AndersenNode>,
     crate sccs: Sccs<PointerAnalysisNode, PtsGraphSccIndex>,
+    pub alias: HashSet<(PointerAnalysisNode, PointerAnalysisNode)>
 }
 
 impl PtsGraphAuxData {
-    crate fn new(graph: &SparseBitVectorGraph<PointerAnalysisNode>) -> Self {
+    fn new(graph: &SparseBitVectorGraph<PointerAnalysisNode>) -> Self {
+
+        let reverse_graph = graph.reverse();
+        let mut alias = HashSet::new();
+        for p in (0..reverse_graph.num_nodes()).map(|n| PointerAnalysisNode::new(n)) {
+            let qs = reverse_graph.successor_nodes(p).iter().collect::<Vec<_>>();
+            for (i, &q) in qs.iter().enumerate() {
+                for &r in &qs[i+1..] {
+                    alias.insert(if q <= r { (q, r) } else { (r, q) });
+                }
+            }
+        }
         PtsGraphAuxData {
             // reverse_graph: graph.reverse(),
             sccs: Sccs::new(graph),
+            alias
         }
     }
 }
@@ -113,14 +128,14 @@ pub struct Finished;
 
 pub struct PtsGraph<State> {
     graph: SparseBitVectorGraph<PointerAnalysisNode>,
-    aux_data_cache: PtsGraphAuxDataCache<State>,
+    aux_data: PtsGraphAuxDataCache<State>,
 }
 
 impl PtsGraph<InConstruction> {
     pub fn new(num_nodes: usize) -> Self {
         PtsGraph {
             graph: SparseBitVectorGraph::new(num_nodes, [].into_iter()),
-            aux_data_cache: PtsGraphAuxDataCache::new(),
+            aux_data: PtsGraphAuxDataCache::new(),
         }
     }
 
@@ -128,7 +143,7 @@ impl PtsGraph<InConstruction> {
         let aux_data = PtsGraphAuxData::new(&self.graph);
         PtsGraph {
             graph: self.graph,
-            aux_data_cache: self.aux_data_cache.finish(aux_data),
+            aux_data: self.aux_data.finish(aux_data),
         }
     }
 
@@ -152,7 +167,11 @@ impl PtsGraph<InConstruction> {
 
 impl PtsGraph<Finished> {
     pub fn all_cyclic_reference_group_indices(&self) -> impl Iterator<Item = PtsGraphSccIndex> {
-        self.aux_data_cache.as_ref().sccs.all_sccs()
+        self.aux_data.as_ref().sccs.all_sccs()
+    }
+
+    pub fn alias(&self, p: PointerAnalysisNode, q: PointerAnalysisNode) -> bool {
+        self.aux_data.as_ref().alias.contains(&(if p <= q { (p, q) } else { (q, p) }))
     }
 }
 
@@ -162,7 +181,7 @@ impl<S> PtsGraph<S> {
         self.graph.successor_nodes(p)
     }
 
-    pub fn alias(&self, p: PointerAnalysisNode, q: PointerAnalysisNode) -> bool {
-        self.pts(p).clone().subtract(self.pts(q)) | self.pts(q).clone().subtract(self.pts(p))
-    }
+    //pub fn alias(&self, p: PointerAnalysisNode, q: PointerAnalysisNode) -> bool {
+    //    self.pts(p).clone().subtract(self.pts(q)) | self.pts(q).clone().subtract(self.pts(p))
+    //}
 }

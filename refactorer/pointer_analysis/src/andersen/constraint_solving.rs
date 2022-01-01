@@ -1,7 +1,7 @@
 use crate::{
     andersen::{AndersenResult, InConstruction, PtsGraph},
     ctxt::PointerAnalysisCtxt,
-    ConstraintIndex, ConstraintKind, ConstraintSet, PointerAnalysisNode,
+    ConstraintIndex, ConstraintKind, ConstraintSet, PointerAnalysisNode, Constraint,
 };
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, WithSuccessors};
 use index::vec::IndexVec;
@@ -25,7 +25,14 @@ pub struct ConstraintSolving<'cs, 'tcx> {
 }
 
 impl<'cs, 'tcx> ConstraintSolving<'cs, 'tcx> {
-    pub fn new(all_constraints: ConstraintSet, ptr_ctxt: PointerAnalysisCtxt<'cs, 'tcx>) -> Self {
+    pub fn new(mut all_constraints: ConstraintSet, mut ptr_ctxt: PointerAnalysisCtxt<'cs, 'tcx>) -> Self {
+        /// FIXME: initialise all ptr!
+        for p in ptr_ctxt.nodes.clone().indices() {
+            let deref_p = ptr_ctxt.generate_temporary((*ptr_ctxt.all_function_def_ids.iter().next().unwrap()).as_local().unwrap());
+            all_constraints.push(p.get_address_of(deref_p));
+        }
+
+
         let num_nodes = ptr_ctxt.num_nodes();
 
         let mut pts_graph = PtsGraph::new(num_nodes);
@@ -60,6 +67,19 @@ impl<'cs, 'tcx> ConstraintSolving<'cs, 'tcx> {
             ptr_ctxt,
         }
     }
+
+    /*
+    pub fn initialise_all_node(mut self) -> Self {
+        for (p, _) in self.ptr_ctxt.nodes.clone().iter_enumerated() {
+            let pts = self.pts_graph.pts_mut(p);
+            if pts.is_empty() {
+                let deref_p = self.ptr_ctxt.generate_temporary((*self.ptr_ctxt.all_function_def_ids.iter().next().unwrap()).as_local().unwrap());
+                pts.insert(deref_p);
+            }
+        }
+        self
+    }
+    */
 
     /// Dynamic transitive closure algorithm
     pub fn solve_by_dynamic_transitive_closure(&mut self) {

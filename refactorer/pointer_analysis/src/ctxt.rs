@@ -16,7 +16,7 @@ pub struct PointerAnalysisCtxt<'aacx, 'tcx> {
     crate all_functions: &'aacx [Ref<'aacx, Body<'tcx>>],
     crate all_function_def_ids: HashSet<DefId>,
     tcx: TyCtxt<'tcx>,
-    nodes: IndexVec<PointerAnalysisNode, PointerAnalysisNodeData<'tcx>>,
+    crate nodes: IndexVec<PointerAnalysisNode, PointerAnalysisNodeData<'tcx>>,
     value_node_map: HashMap<(LocalDefId, PlaceRef<'tcx>), PointerAnalysisNode>,
 }
 

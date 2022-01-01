@@ -3,6 +3,7 @@
 
 pub mod complex_place_reporter;
 pub mod place_tracer;
+pub mod unused_ptr_decl;
 
 extern crate rustc_ast_pretty;
 extern crate rustc_error_codes;
