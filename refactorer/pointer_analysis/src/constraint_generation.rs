@@ -17,17 +17,17 @@ use crate::{
 /// 'cg = the duration of the constraint generation
 pub struct ConstraintGeneration<'cg, 'tcx> {
     crate constraints: ConstraintSet,
-    crate aa_ctxt: PointerAnalysisCtxt<'cg, 'tcx>,
+    crate ptr_ctxt: PointerAnalysisCtxt<'cg, 'tcx>,
 }
 
 impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
     #[inline]
     pub fn tcx(&self) -> TyCtxt<'tcx> {
-        self.aa_ctxt.tcx()
+        self.ptr_ctxt.tcx()
     }
 
     pub fn generate_constraints(mut self) -> Self {
-        for body in self.aa_ctxt.all_functions {
+        for body in self.ptr_ctxt.bodies {
             let did = body
                 .source
                 .def_id()
@@ -36,7 +36,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
             ConstraintGenerationForBody {
                 func_cx: did,
                 body: &*body,
-                aa_ctxt: &mut self.aa_ctxt,
+                ptr_ctxt: &mut self.ptr_ctxt,
                 constraints: &mut self.constraints,
             }
             .visit_body(&*body);
@@ -46,14 +46,14 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
     }
 
     pub fn proceed_to_solving_by_andersen(self) -> ConstraintSolving<'cg, 'tcx> {
-        ConstraintSolving::new(self.constraints, self.aa_ctxt)
+        ConstraintSolving::new(self.constraints, self.ptr_ctxt)
     }
 
     fn log_debug_constraints(&self) {
         log::debug!("Dumping constraints:");
         for constraint in self.constraints.iter() {
-            let lhs = self.aa_ctxt.node_to_str(constraint.left);
-            let rhs = self.aa_ctxt.node_to_str(constraint.right);
+            let lhs = self.ptr_ctxt.node_to_str(constraint.left);
+            let rhs = self.ptr_ctxt.node_to_str(constraint.right);
             match constraint.constraint_kind {
                 ConstraintKind::AddressOf => log::debug!("{} = &{}", lhs, rhs),
                 ConstraintKind::Copy => log::debug!("{} = {}", lhs, rhs),
@@ -67,7 +67,7 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
 struct ConstraintGenerationForBody<'me, 'cg, 'tcx> {
     func_cx: LocalDefId,
     body: &'me Body<'tcx>,
-    aa_ctxt: &'me mut PointerAnalysisCtxt<'cg, 'tcx>,
+    ptr_ctxt: &'me mut PointerAnalysisCtxt<'cg, 'tcx>,
     constraints: &'me mut ConstraintSet,
 }
 
@@ -103,7 +103,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                 unimplemented!()
             }
             // generate andersen node for this local
-            let _ = self.aa_ctxt.generate_from_local(self.func_cx, local);
+            let _ = self.ptr_ctxt.generate_from_local(self.func_cx, local);
         }
 
         // self.super_local_decl(local, local_decl)
@@ -117,7 +117,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
             location
         );
 
-        let place_ty = place.ty(self.body, self.aa_ctxt.tcx());
+        let place_ty = place.ty(self.body, self.ptr_ctxt.tcx());
         if place_ty.ty.is_any_ptr() {
             if place_ty.ty.is_fn_ptr() {
                 log::error!("Function pointer: {} is not supported!", place_ty.ty);
@@ -139,7 +139,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                             // tmp = *q
                             // *p = tmp
                             (true, true) => {
-                                let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
+                                let tmp = self.ptr_ctxt.generate_temporary(self.func_cx);
                                 self.add_constraint(Constraint::new(
                                     ConstraintKind::Load,
                                     tmp,
@@ -183,7 +183,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                             // tmp = &q
                             // *p = tmp
                             true => {
-                                let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
+                                let tmp = self.ptr_ctxt.generate_temporary(self.func_cx);
                                 self.add_constraint(Constraint::new(
                                     ConstraintKind::AddressOf,
                                     tmp,
@@ -227,7 +227,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
         } = kind
         {
             if let Some((place, _)) = destination {
-                let place_ty = place.ty(self.body, self.aa_ctxt.tcx());
+                let place_ty = place.ty(self.body, self.ptr_ctxt.tcx());
                 if place_ty.ty.is_any_ptr() {
                     if place_ty.ty.is_fn_ptr() {
                         unimplemented!("Function pointer")
@@ -239,7 +239,8 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                             self.process_place_of_ptr_ty(place, location);
 
                         if let Some(callee) = def_id.as_local() {
-                            if !self.aa_ctxt.all_function_def_ids.contains(&def_id) {
+                            // if !self.aa_ctxt.all_function_def_ids.contains(&def_id) {
+                            if let Ok(_) = self.ptr_ctxt.bodies.binary_search_by_key(def_id, |body| body.source.instance.def_id()) {
                                 log::error!("UNIMPLEMENTED: model linked C functions");
                                 return;
                             }
@@ -256,7 +257,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                             log::warn!("Calling convention of MIR");
 
                             // generate constraint: `p = f.RETURN_PLACE`
-                            let ret_repr = self.aa_ctxt.generate_from_local(callee, RETURN_PLACE);
+                            let ret_repr = self.ptr_ctxt.generate_from_local(callee, RETURN_PLACE);
                             // .lookup_local(callee, RETURN_PLACE)
                             // .expect("the return place must have been generated.");
                             self.add_constraint(Constraint::new(
@@ -274,13 +275,13 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                             for (i, operand) in args.iter().enumerate() {
                                 let local = Local::from_usize(i + 1);
                                 if let Some(place) = operand.place() {
-                                    let place_ty = place.ty(self.body, self.aa_ctxt.tcx());
+                                    let place_ty = place.ty(self.body, self.ptr_ctxt.tcx());
                                     if place_ty.ty.is_any_ptr() {
                                         if place_ty.ty.is_fn_ptr() {
                                             unimplemented!("Function pointer")
                                         }
                                         let lhs_repr =
-                                            self.aa_ctxt.generate_from_local(callee, local);
+                                            self.ptr_ctxt.generate_from_local(callee, local);
                                         // .lookup_local(callee, local)
                                         // .expect("argument places must have been generated");
                                         let (rhs_repr, rhs_is_indirect) = self
@@ -320,7 +321,7 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
     fn add_constraint(&mut self, constraint: Constraint) {
         log::trace!(
             "Adding constraint: {}",
-            self.aa_ctxt.constraint_to_str(constraint)
+            self.ptr_ctxt.constraint_to_str(constraint)
         );
         self.constraints.push(constraint);
     }
@@ -349,7 +350,7 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
         //    let _ = self.node_generation.generate(place_ref.into());
         //}
 
-        let mut repr = self.aa_ctxt.generate_from_local(self.func_cx, place.local);
+        let mut repr = self.ptr_ctxt.generate_from_local(self.func_cx, place.local);
         let mut is_nested = false;
         let mut is_indirect = false;
 
@@ -358,7 +359,7 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
                 ProjectionElem::Deref => {
                     is_indirect = true;
                     if is_nested {
-                        let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
+                        let tmp = self.ptr_ctxt.generate_temporary(self.func_cx);
                         // generate constraint: p = *tmp
                         self.add_constraint(Constraint::new(ConstraintKind::Load, repr, tmp));
                         repr = tmp;
@@ -418,7 +419,7 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
                 // tmp = *q
                 // ... = &tmp
                 if rhs_is_indirect {
-                    let tmp = self.aa_ctxt.generate_temporary(self.func_cx);
+                    let tmp = self.ptr_ctxt.generate_temporary(self.func_cx);
                     self.add_constraint(Constraint::new(ConstraintKind::Load, tmp, rhs_repr));
                     rhs_repr = tmp;
                 }

@@ -9,7 +9,7 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
     pub fn report_ptr_alias(&self) {
         let all_user_vars = self
             .ptr_ctxt
-            .all_functions
+            .bodies
             .iter()
             .flat_map(|body| {
                 body.var_debug_info.clone().into_iter().filter_map(|var| {

@@ -5,9 +5,9 @@ mod diagnostics;
 
 use crate::{ctxt::PointerAnalysisCtxt, PointerAnalysisNode};
 use core::marker::PhantomData;
-use std::collections::HashSet;
 use graph::WithNumNodes;
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, scc::Sccs};
+use index::vec::IndexVec;
 use index::{bit_set::HybridBitSet, vec::Idx};
 use std::convert::AsRef;
 use std::mem::MaybeUninit;
@@ -58,26 +58,27 @@ index::newtype_index! {
 pub struct PtsGraphAuxData {
     // crate reverse_graph: SparseBitVectorGraph<AndersenNode>,
     crate sccs: Sccs<PointerAnalysisNode, PtsGraphSccIndex>,
-    pub alias: HashSet<(PointerAnalysisNode, PointerAnalysisNode)>
+    pub aliases: IndexVec<PointerAnalysisNode, Vec<PointerAnalysisNode>>, //: HashSet<(PointerAnalysisNode, PointerAnalysisNode)>,
 }
 
 impl PtsGraphAuxData {
     fn new(graph: &SparseBitVectorGraph<PointerAnalysisNode>) -> Self {
-
         let reverse_graph = graph.reverse();
-        let mut alias = HashSet::new();
+        let mut aliases: IndexVec<PointerAnalysisNode, Vec<PointerAnalysisNode>> =
+            IndexVec::from_elem_n(Vec::new(), reverse_graph.num_nodes());
         for p in (0..reverse_graph.num_nodes()).map(|n| PointerAnalysisNode::new(n)) {
             let qs = reverse_graph.successor_nodes(p).iter().collect::<Vec<_>>();
             for (i, &q) in qs.iter().enumerate() {
-                for &r in &qs[i+1..] {
-                    alias.insert(if q <= r { (q, r) } else { (r, q) });
+                for &r in &qs[i + 1..] {
+                    aliases[q].push(r);
+                    aliases[r].push(q);
                 }
             }
         }
         PtsGraphAuxData {
             // reverse_graph: graph.reverse(),
             sccs: Sccs::new(graph),
-            alias
+            aliases,
         }
     }
 }
@@ -171,7 +172,16 @@ impl PtsGraph<Finished> {
     }
 
     pub fn alias(&self, p: PointerAnalysisNode, q: PointerAnalysisNode) -> bool {
-        self.aux_data.as_ref().alias.contains(&(if p <= q { (p, q) } else { (q, p) }))
+        self.aux_data.as_ref().aliases[p].contains(&q)
+        //.alias
+        //.contains(&(if p <= q { (p, q) } else { (q, p) }))
+    }
+
+    pub fn aliases_for(
+        &self,
+        p: PointerAnalysisNode,
+    ) -> impl Iterator<Item = PointerAnalysisNode> + '_ {
+        self.aux_data.as_ref().aliases[p].iter().map(|&q| q)
     }
 }
 

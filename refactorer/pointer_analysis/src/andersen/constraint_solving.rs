@@ -1,7 +1,7 @@
 use crate::{
     andersen::{AndersenResult, InConstruction, PtsGraph},
     ctxt::PointerAnalysisCtxt,
-    ConstraintIndex, ConstraintKind, ConstraintSet, PointerAnalysisNode, Constraint,
+    Constraint, ConstraintIndex, ConstraintKind, ConstraintSet, PointerAnalysisNode,
 };
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, WithSuccessors};
 use index::vec::IndexVec;
@@ -25,13 +25,20 @@ pub struct ConstraintSolving<'cs, 'tcx> {
 }
 
 impl<'cs, 'tcx> ConstraintSolving<'cs, 'tcx> {
-    pub fn new(mut all_constraints: ConstraintSet, mut ptr_ctxt: PointerAnalysisCtxt<'cs, 'tcx>) -> Self {
+    pub fn new(
+        mut all_constraints: ConstraintSet,
+        mut ptr_ctxt: PointerAnalysisCtxt<'cs, 'tcx>,
+    ) -> Self {
         /// FIXME: initialise all ptr!
         for p in ptr_ctxt.nodes.clone().indices() {
-            let deref_p = ptr_ctxt.generate_temporary((*ptr_ctxt.all_function_def_ids.iter().next().unwrap()).as_local().unwrap());
+            let deref_p = ptr_ctxt.generate_temporary(
+                // (*ptr_ctxt.all_function_def_ids.iter().next().unwrap())
+                    ptr_ctxt.bodies[0].source.instance.def_id()
+                    .as_local()
+                    .unwrap(),
+            );
             all_constraints.push(p.get_address_of(deref_p));
         }
-
 
         let num_nodes = ptr_ctxt.num_nodes();
 

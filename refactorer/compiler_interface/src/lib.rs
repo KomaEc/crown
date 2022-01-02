@@ -126,15 +126,21 @@ pub fn run(input_file_name: String) {
                 }
                 log::info!("Done\n");
 
+                log::info!("Collecting body refs ...");
+                let body_refs = top_level_function_def_ids
+                    .into_iter()
+                    .map(|did| {
+                        let (body, _) = tcx.mir_promoted(WithOptConstParam::unknown(did));
+                        body.borrow()
+                    })
+                    .collect::<Vec<_>>();
+                    // .iter().map(|body: &std::cell::Ref<_>| &**body).collect::<Vec<_>>();
+
+                let mut bodies = body_refs.iter().map(|body: &std::cell::Ref<_>| &**body).collect::<Vec<_>>();
+                
                 log::info!("Start pointer analysis ...");
                 PointerAnalysis::new_analysis(
-                    &top_level_function_def_ids
-                        .into_iter()
-                        .map(|did| {
-                            let (body, _) = tcx.mir_promoted(WithOptConstParam::unknown(did));
-                            body.borrow()
-                        })
-                        .collect::<Vec<_>>(),
+                    bodies.as_mut_slice(),
                     tcx,
                 )
                 .into_constraint_generation()

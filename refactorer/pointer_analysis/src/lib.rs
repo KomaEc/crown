@@ -20,7 +20,6 @@ use rustc_middle::{
     mir::{Body, PlaceRef},
     ty::TyCtxt,
 };
-use std::cell::Ref;
 use std::ops::Index;
 
 pub mod andersen;
@@ -32,10 +31,11 @@ pub struct PointerAnalysis;
 
 impl<'aa, 'tcx> PointerAnalysis {
     pub fn new_analysis(
-        all_functions: &'aa [Ref<'aa, Body<'tcx>>],
+        bodies: &'aa mut [&'aa Body<'tcx>],
         tcx: TyCtxt<'tcx>,
     ) -> PointerAnalysisCtxt<'aa, 'tcx> {
-        PointerAnalysisCtxt::new(all_functions, tcx)
+        bodies.sort_by_key(|body| body.source.instance.def_id());
+        PointerAnalysisCtxt::new(bodies, tcx)
     }
 }
 

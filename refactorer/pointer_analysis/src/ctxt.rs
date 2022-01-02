@@ -3,18 +3,18 @@ use crate::{
     PointerAnalysisNode, PointerAnalysisNodeData,
 };
 use index::vec::IndexVec;
-use rustc_hir::def_id::{DefId, LocalDefId};
+use rustc_hir::def_id::LocalDefId;
 use rustc_middle::{
     mir::{Body, Local, Place, PlaceRef},
     ty::TyCtxt,
 };
-use std::cell::Ref;
 use std::collections::{hash_map::Entry, HashMap, HashSet};
 
 /// Data structure for the node factory
 pub struct PointerAnalysisCtxt<'aacx, 'tcx> {
-    crate all_functions: &'aacx [Ref<'aacx, Body<'tcx>>],
-    crate all_function_def_ids: HashSet<DefId>,
+    /// Invariant: [`bodies`] are sorted by def_ids
+    crate bodies: &'aacx [&'aacx Body<'tcx>],
+    // crate all_function_def_ids: HashSet<DefId>,
     tcx: TyCtxt<'tcx>,
     crate nodes: IndexVec<PointerAnalysisNode, PointerAnalysisNodeData<'tcx>>,
     value_node_map: HashMap<(LocalDefId, PlaceRef<'tcx>), PointerAnalysisNode>,
@@ -26,14 +26,14 @@ impl<'aacx, 'tcx> PointerAnalysisCtxt<'aacx, 'tcx> {
     pub fn into_constraint_generation(self) -> ConstraintGeneration<'aacx, 'tcx> {
         ConstraintGeneration {
             constraints: ConstraintSet::new(),
-            aa_ctxt: self,
+            ptr_ctxt: self,
         }
     }
 }
 
 impl<'aacx, 'tcx> PointerAnalysisCtxt<'aacx, 'tcx> {
     pub fn new(
-        all_functions: &'aacx [Ref<'aacx, Body<'tcx>>],
+        all_functions: &'aacx [&'aacx Body<'tcx>],
         tcx: TyCtxt<'tcx>,
     ) -> PointerAnalysisCtxt<'aacx, 'tcx> {
         let mut all_function_def_ids = HashSet::new();
@@ -41,8 +41,8 @@ impl<'aacx, 'tcx> PointerAnalysisCtxt<'aacx, 'tcx> {
             all_function_def_ids.insert(body.source.instance.def_id());
         }
         PointerAnalysisCtxt {
-            all_functions,
-            all_function_def_ids,
+            bodies: all_functions,
+            // all_function_def_ids,
             tcx,
             nodes: IndexVec::new(),
             value_node_map: HashMap::new(),
