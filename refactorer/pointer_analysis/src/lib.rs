@@ -25,7 +25,6 @@ use std::ops::Index;
 pub mod andersen;
 mod constraint_generation;
 mod ctxt;
-pub mod steensgaard;
 
 pub struct PointerAnalysis;
 
