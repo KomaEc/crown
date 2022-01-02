@@ -30,10 +30,10 @@ pub struct PointerAnalysis;
 
 impl<'aa, 'tcx> PointerAnalysis {
     pub fn new_analysis(
-        bodies: &'aa mut [&'aa Body<'tcx>],
+        bodies: &'aa [&'aa Body<'tcx>],
         tcx: TyCtxt<'tcx>,
     ) -> PointerAnalysisCtxt<'aa, 'tcx> {
-        bodies.sort_by_key(|body| body.source.instance.def_id());
+        // bodies.sort_by_key(|body| body.source.instance.def_id());
         PointerAnalysisCtxt::new(bodies, tcx)
     }
 }

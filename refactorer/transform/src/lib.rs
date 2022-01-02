@@ -1,5 +1,6 @@
 #![feature(rustc_private)]
 #![feature(box_patterns)]
+#![feature(let_chains)]
 
 pub mod complex_place_reporter;
 pub mod place_tracer;
@@ -15,5 +16,6 @@ extern crate rustc_index;
 extern crate rustc_infer;
 extern crate rustc_interface;
 extern crate rustc_middle;
+extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 extern crate rustc_span;

@@ -29,6 +29,7 @@ use std::str;
 use log;
 // use transform::complex_place_reporter::ComplexPlaceReporter;
 use transform::place_tracer::PlaceTracer;
+use transform::unused_ptr_decl::UnusedPointerDecl;
 
 pub fn run(input_file_name: String) {
     let out = process::Command::new("rustc")
@@ -140,18 +141,21 @@ pub fn run(input_file_name: String) {
                     .iter()
                     .map(|body: &std::cell::Ref<_>| &**body)
                     .collect::<Vec<_>>();
+                bodies.sort_by_key(|body| body.source.instance.def_id());
 
                 log::info!("Start pointer analysis ...");
-                PointerAnalysis::new_analysis(bodies.as_mut_slice(), tcx)
+                let andersen_result = PointerAnalysis::new_analysis(bodies.as_slice(), tcx)
                     .into_constraint_generation()
                     .generate_constraints()
                     .proceed_to_solving_by_andersen()
                     .solve()
-                    .finish()
-                    .enter(|res| {
-                        res.dump_pts_sets_to_log();
-                        res.report_ptr_alias();
-                    });
+                    .finish();
+                andersen_result.dump_pts_sets_to_log();
+                // andersen_result.report_ptr_alias();
+
+                log::info!("Start unused pointer decl analysis ...");
+                UnusedPointerDecl::new(&bodies, tcx, andersen_result).analyze();
+
                 log::info!("Done\n");
             })
         });

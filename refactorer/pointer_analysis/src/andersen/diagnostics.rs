@@ -29,13 +29,13 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
         let mut iter = all_user_vars.iter();
         loop {
             match iter.next() {
-                Some(&(ref var_p, did_p)) => {
+                Some(&(ref var_p, body_def_id_of_p)) => {
                     let p = match var_p.value {
                         VarDebugInfoContents::Place(place) => place,
                         VarDebugInfoContents::Const(_) => continue,
                     };
                     // log::trace!("Checking alias for variable {}", var_p.name);
-                    for &(ref var_q, did_q) in iter.clone() {
+                    for &(ref var_q, body_def_id_of_q) in iter.clone() {
                         let q = match var_q.value {
                             VarDebugInfoContents::Place(place) => place,
                             VarDebugInfoContents::Const(_) => continue,
@@ -43,14 +43,14 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
 
                         let node_p = self
                             .ptr_ctxt
-                            .lookup_local(did_p.as_local().unwrap(), p.local)
+                            .lookup_local(body_def_id_of_p.as_local().unwrap(), p.local)
                             .expect(&format!(
                                 "var {} at {:?} must have been generated for Andersen",
                                 var_p.name, var_p.source_info
                             ));
                         let node_q = self
                             .ptr_ctxt
-                            .lookup_local(did_q.as_local().unwrap(), q.local)
+                            .lookup_local(body_def_id_of_q.as_local().unwrap(), q.local)
                             .expect(&format!(
                                 "var {} at {:?} must have been generated for Andersen",
                                 var_q.name, var_q.source_info

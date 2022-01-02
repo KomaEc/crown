@@ -4,8 +4,9 @@ members = [
     "src/curr",
     "refactorer/pointer_analysis",
     "refactorer/transform",
-    "refactorer/playground",
+    "refactorer/compiler_interface",
     "utils/graph",
     "utils/index",
     "rustfix",
+    "destructive_readable",
 ]
