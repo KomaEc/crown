@@ -134,24 +134,24 @@ pub fn run(input_file_name: String) {
                         body.borrow()
                     })
                     .collect::<Vec<_>>();
-                    // .iter().map(|body: &std::cell::Ref<_>| &**body).collect::<Vec<_>>();
+                // .iter().map(|body: &std::cell::Ref<_>| &**body).collect::<Vec<_>>();
 
-                let mut bodies = body_refs.iter().map(|body: &std::cell::Ref<_>| &**body).collect::<Vec<_>>();
-                
+                let mut bodies = body_refs
+                    .iter()
+                    .map(|body: &std::cell::Ref<_>| &**body)
+                    .collect::<Vec<_>>();
+
                 log::info!("Start pointer analysis ...");
-                PointerAnalysis::new_analysis(
-                    bodies.as_mut_slice(),
-                    tcx,
-                )
-                .into_constraint_generation()
-                .generate_constraints()
-                .proceed_to_solving_by_andersen()
-                .solve()
-                .finish()
-                .enter(|res| {
-                    res.dump_pts_sets_to_log();
-                    res.report_ptr_alias();
-                });
+                PointerAnalysis::new_analysis(bodies.as_mut_slice(), tcx)
+                    .into_constraint_generation()
+                    .generate_constraints()
+                    .proceed_to_solving_by_andersen()
+                    .solve()
+                    .finish()
+                    .enter(|res| {
+                        res.dump_pts_sets_to_log();
+                        res.report_ptr_alias();
+                    });
                 log::info!("Done\n");
             })
         });

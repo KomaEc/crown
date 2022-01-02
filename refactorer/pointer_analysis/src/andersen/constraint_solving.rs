@@ -33,7 +33,10 @@ impl<'cs, 'tcx> ConstraintSolving<'cs, 'tcx> {
         for p in ptr_ctxt.nodes.clone().indices() {
             let deref_p = ptr_ctxt.generate_temporary(
                 // (*ptr_ctxt.all_function_def_ids.iter().next().unwrap())
-                    ptr_ctxt.bodies[0].source.instance.def_id()
+                ptr_ctxt.bodies[0]
+                    .source
+                    .instance
+                    .def_id()
                     .as_local()
                     .unwrap(),
             );

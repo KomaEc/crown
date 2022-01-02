@@ -240,7 +240,11 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
 
                         if let Some(callee) = def_id.as_local() {
                             // if !self.aa_ctxt.all_function_def_ids.contains(&def_id) {
-                            if let Ok(_) = self.ptr_ctxt.bodies.binary_search_by_key(def_id, |body| body.source.instance.def_id()) {
+                            if let Ok(_) = self
+                                .ptr_ctxt
+                                .bodies
+                                .binary_search_by_key(def_id, |body| body.source.instance.def_id())
+                            {
                                 log::error!("UNIMPLEMENTED: model linked C functions");
                                 return;
                             }
