@@ -1,5 +1,5 @@
 [package]
-name = "compiler_interface"
+name = "crustr_rustc_interface"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,5 +10,5 @@ rustc_private=true
 
 [dependencies]
 log = "0.4"
-transform = { path = "../transform" }
+crustr_mir_passes = { path = "../crustr_mir_passes" }
 pointer_analysis = { path = "../pointer_analysis" }

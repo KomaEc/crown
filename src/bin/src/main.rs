@@ -1,4 +1,4 @@
-use compiler_interface;
+use crustr_rustc_interface;
 use std::env;
 
 fn main() -> std::io::Result<()> {
@@ -9,6 +9,6 @@ fn main() -> std::io::Result<()> {
         panic!("Expect appropriate arguments");
     }
     let input_file_name: &str = &args[1];
-    compiler_interface::run(input_file_name.to_string());
+    crustr_rustc_interface::run(input_file_name.to_string());
     Ok(())
 }

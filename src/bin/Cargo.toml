@@ -1,11 +1,11 @@
 [package]
-name = "curr"
+name = "crustr"
 version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-compiler_interface = { path = "../../refactorer/compiler_interface" }
+crustr_rustc_interface = { path = "../../refactorer/crustr_rustc_interface" }
 log = "0.4"
 env_logger = "0.9"

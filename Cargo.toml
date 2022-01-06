@@ -1,12 +1,11 @@
 [workspace]
 
 members = [
-    "src/curr",
+    "src/bin",
     "refactorer/pointer_analysis",
-    "refactorer/transform",
-    "refactorer/compiler_interface",
+    "refactorer/crustr_mir_passes",
+    "refactorer/crustr_rustc_interface",
     "utils/graph",
     "utils/index",
     "rustfix",
-    "destructive_readable",
 ]
