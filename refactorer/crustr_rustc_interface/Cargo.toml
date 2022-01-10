@@ -10,5 +10,5 @@ rustc_private=true
 
 [dependencies]
 log = "0.4"
-crustr_mir_passes = { path = "../crustr_mir_passes" }
+crustr_analysis = { path = "../crustr_analysis" }
 pointer_analysis = { path = "../pointer_analysis" }

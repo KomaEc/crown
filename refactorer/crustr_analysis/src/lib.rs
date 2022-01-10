@@ -4,6 +4,8 @@
 pub mod complex_place_reporter;
 pub mod place_tracer;
 pub mod unused_ptr_decl;
+pub mod slice_analysis;
+pub mod labeled;
 
 extern crate rustc_ast_pretty;
 extern crate rustc_error_codes;
@@ -18,6 +20,9 @@ extern crate rustc_middle;
 extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 extern crate rustc_span;
+
+
+
 
 
 pub trait MirPass {

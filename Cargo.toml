@@ -3,8 +3,9 @@
 members = [
     "src/bin",
     "refactorer/pointer_analysis",
-    "refactorer/crustr_mir_passes",
+    "refactorer/crustr_analysis",
     "refactorer/crustr_rustc_interface",
+    "refactorer/crustr_rewrite",
     "utils/graph",
     "utils/index",
     "rustfix",

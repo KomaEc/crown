@@ -1,5 +1,5 @@
 [package]
-name = "crustr_mir_passes"
+name = "crustr_analysis"
 version = "0.1.0"
 edition = "2021"
 

@@ -28,8 +28,8 @@ use std::str;
 
 use log;
 // use transform::complex_place_reporter::ComplexPlaceReporter;
-use crustr_mir_passes::place_tracer::PlaceTracer;
-use crustr_mir_passes::unused_ptr_decl::UnusedPointerDecl;
+use crustr_analysis::place_tracer::PlaceTracer;
+use crustr_analysis::unused_ptr_decl::UnusedPointerDecl;
 
 pub fn run(input_file_name: String) {
     let out = process::Command::new("rustc")
