@@ -5,7 +5,7 @@ use pointer_analysis::{andersen::AndersenResult, PointerAnalysisNodeData};
 use rustc_middle::{
     mir::{
         visit::{PlaceContext, Visitor},
-        Body, Location, Place, PlaceRef, VarDebugInfo, SourceInfo, Statement,
+        Body, Location, Place, PlaceRef, SourceInfo, Statement, VarDebugInfo,
     },
     ty::TyCtxt,
 };
@@ -66,7 +66,7 @@ impl<'upd, 'tcx> UnusedPointerDecl<'upd, 'tcx> {
                 liveness: &mut liveness,
                 maybe_borrowed: &mut maybe_borrowed,
                 user_vars: Vec::new(),
-                current_stmt: None
+                current_stmt: None,
             }
             .initiate_tracked()
             .visit_body(body);
@@ -85,8 +85,7 @@ pub struct UnusedPointerDeclForBody<'updb, 'upd, 'tcx> {
 }
 
 impl<'updb, 'upd, 'tcx> Visitor<'tcx> for UnusedPointerDeclForBody<'updb, 'upd, 'tcx> {
-
-    fn visit_statement(&mut self, statement: &Statement< 'tcx>, location: Location) {
+    fn visit_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
         let Statement { source_info, .. } = statement;
 
         self.current_stmt = Some(source_info.clone());
@@ -140,7 +139,7 @@ impl<'updb, 'upd, 'tcx> Visitor<'tcx> for UnusedPointerDeclForBody<'updb, 'upd, 
                                     .binary_search_by_key(&q_place_ref, |(place_ref, _)| *place_ref)
                                 {
                                     if liveness.contains(q_place_ref.local)
-                                        // || maybe_borrowed.contains(q_place_ref.local)
+                                    // || maybe_borrowed.contains(q_place_ref.local)
                                     {
                                         let (_, p_var_debug) = self.user_vars[p_idx];
                                         let (_, q_var_debug) = self.user_vars[q_idx];
@@ -157,8 +156,14 @@ impl<'updb, 'upd, 'tcx> Visitor<'tcx> for UnusedPointerDeclForBody<'updb, 'upd, 
                                             err.span_label(source_info.span, "The assignment statement that causes the invalidation");
                                         }
 
-                                        err.span_label(p_var_debug.source_info.span, "First pointer defined here");
-                                        err.span_label(q_var_debug.source_info.span, "Second pointer defined here");
+                                        err.span_label(
+                                            p_var_debug.source_info.span,
+                                            "First pointer defined here",
+                                        );
+                                        err.span_label(
+                                            q_var_debug.source_info.span,
+                                            "Second pointer defined here",
+                                        );
 
                                         err.emit()
                                     }

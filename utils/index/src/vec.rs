@@ -804,6 +804,20 @@ impl<I: Idx, T: Ord> IndexVec<I, T> {
     }
 }
 
+impl<I: Idx, T> IndexVec<I, T> {
+    #[inline]
+    pub fn binary_search_by_key<'a, B, F>(&'a self, b: &B, f: F) -> Result<I, I>
+    where
+        F: FnMut(&'a T) -> B,
+        B: Ord,
+    {
+        match self.raw.binary_search_by_key(b, f) {
+            Ok(i) => Ok(Idx::new(i)),
+            Err(i) => Err(Idx::new(i)),
+        }
+    }
+}
+
 impl<I: Idx, T> Index<I> for IndexVec<I, T> {
     type Output = T;
 

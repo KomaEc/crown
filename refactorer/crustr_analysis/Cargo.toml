@@ -12,3 +12,5 @@ rustc_private=true
 [dependencies]
 log = "0.4"
 pointer_analysis = { path = "../pointer_analysis" }
+index = { path = "../../utils/index" }
+graph = { path = "../../utils/graph" }
