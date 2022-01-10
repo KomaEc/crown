@@ -8,5 +8,4 @@ members = [
     "refactorer/crustr_rewrite",
     "utils/graph",
     "utils/index",
-    "rustfix",
 ]

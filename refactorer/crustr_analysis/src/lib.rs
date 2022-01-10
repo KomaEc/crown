@@ -10,6 +10,7 @@ pub mod labeled;
 pub mod place_tracer;
 pub mod slice_analysis;
 pub mod unused_ptr_decl;
+pub mod interprocedural;
 
 extern crate rustc_ast_pretty;
 extern crate rustc_error_codes;

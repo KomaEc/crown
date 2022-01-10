@@ -1,1 +1,1 @@
-use rustfix::{Replacement, Snippet, Solution, Suggestion};
+// use rustfix::{Replacement, Snippet, Solution, Suggestion};
