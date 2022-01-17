@@ -8,4 +8,5 @@ members = [
     "refactorer/crustr_rewrite",
     "utils/graph",
     "utils/index",
+    #"instrumented_rustc_borrowck"
 ]
