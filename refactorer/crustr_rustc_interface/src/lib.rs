@@ -1,11 +1,11 @@
 #![feature(rustc_private)]
 
-use std::path::PathBuf;
-use std::process;
-use std::str;
 use rustc_errors::registry;
 use rustc_interface::Config;
 use rustc_session::config;
+use std::path::PathBuf;
+use std::process;
+use std::str;
 
 extern crate rustc_ast_pretty;
 extern crate rustc_error_codes;
@@ -22,10 +22,7 @@ extern crate rustc_span;
 
 pub mod toy_run;
 
-
-pub fn config_setup(
-    input_path: PathBuf,
-) -> Config {
+pub fn config_setup(input_path: PathBuf) -> Config {
     let out = process::Command::new("rustc")
         .arg("--print=sysroot")
         .current_dir(".")

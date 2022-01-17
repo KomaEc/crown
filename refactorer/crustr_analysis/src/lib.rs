@@ -1,28 +1,35 @@
 #![feature(rustc_private)]
 #![feature(box_patterns)]
 #![feature(min_specialization)]
+#![feature(iter_zip)]
 
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{TyCtxt, TyKind::FnDef};
 
 pub mod complex_place_reporter;
+pub mod interprocedural;
 pub mod labeled;
 pub mod place_tracer;
 pub mod slice_analysis;
 pub mod unused_ptr_decl;
-pub mod interprocedural;
 
+#[macro_use]
+extern crate tracing;
+#[macro_use]
+extern crate rustc_middle;
+
+extern crate rustc_ast;
 extern crate rustc_ast_pretty;
+extern crate rustc_data_structures;
 extern crate rustc_error_codes;
 extern crate rustc_errors;
 extern crate rustc_hash;
 extern crate rustc_hir;
 extern crate rustc_hir_pretty;
-extern crate rustc_index;
 extern crate rustc_infer;
 extern crate rustc_interface;
-extern crate rustc_middle;
 extern crate rustc_mir_dataflow;
+extern crate rustc_serialize;
 extern crate rustc_session;
 extern crate rustc_span;
 

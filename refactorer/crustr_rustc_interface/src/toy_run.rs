@@ -1,3 +1,4 @@
+use log;
 use pointer_analysis::PointerAnalysis;
 use rustc_ast_pretty::pprust::item_to_string;
 use rustc_hir::OwnerNode;
@@ -5,7 +6,6 @@ use rustc_interface::interface::Compiler;
 use rustc_middle::mir::visit::Visitor;
 use rustc_middle::ty::WithOptConstParam;
 use std::borrow::Borrow;
-use log;
 // use transform::complex_place_reporter::ComplexPlaceReporter;
 use crustr_analysis::place_tracer::PlaceTracer;
 use crustr_analysis::unused_ptr_decl::UnusedPointerDecl;

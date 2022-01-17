@@ -1,6 +1,7 @@
 use crate::{
     andersen::{AndersenResult, InConstruction, PtsGraph},
-    ctxt::PointerAnalysisCtxt, ConstraintIndex, ConstraintKind, ConstraintSet, PointerAnalysisNode,
+    ctxt::PointerAnalysisCtxt,
+    ConstraintIndex, ConstraintKind, ConstraintSet, PointerAnalysisNode,
 };
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, WithSuccessors};
 use index::vec::IndexVec;

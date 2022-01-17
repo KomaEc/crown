@@ -1,6 +1,5 @@
 #![feature(rustc_private)]
 
-
 extern crate rustc_interface;
 
 use crustr_rustc_interface::{config_setup, toy_run};

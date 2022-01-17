@@ -10,4 +10,5 @@ rustc_private=true
 
 
 [dependencies]
+crustr_analysis = { path = "../crustr_analysis" }
 rustfix = "0.6.0"
