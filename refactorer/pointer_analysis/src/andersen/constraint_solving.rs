@@ -1,7 +1,6 @@
 use crate::{
     andersen::{AndersenResult, InConstruction, PtsGraph},
-    ctxt::PointerAnalysisCtxt,
-    Constraint, ConstraintIndex, ConstraintKind, ConstraintSet, PointerAnalysisNode,
+    ctxt::PointerAnalysisCtxt, ConstraintIndex, ConstraintKind, ConstraintSet, PointerAnalysisNode,
 };
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, WithSuccessors};
 use index::vec::IndexVec;
@@ -29,7 +28,7 @@ impl<'cs, 'tcx> ConstraintSolving<'cs, 'tcx> {
         mut all_constraints: ConstraintSet,
         mut ptr_ctxt: PointerAnalysisCtxt<'cs, 'tcx>,
     ) -> Self {
-        /// FIXME: initialise all ptr!
+        // FIXME: initialise all ptr!
         for p in ptr_ctxt.nodes.clone().indices() {
             let deref_p = ptr_ctxt.generate_temporary(
                 // (*ptr_ctxt.all_function_def_ids.iter().next().unwrap())

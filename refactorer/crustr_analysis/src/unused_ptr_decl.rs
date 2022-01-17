@@ -1,6 +1,5 @@
 mod diagnostics;
 
-use log;
 use pointer_analysis::{andersen::AndersenResult, PointerAnalysisNodeData};
 use rustc_middle::{
     mir::{

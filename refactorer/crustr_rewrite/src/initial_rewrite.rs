@@ -1,4 +1,4 @@
-use rustc_lint::{LateContext, LateLintPass, LintContext, LintPass};
+use rustc_lint::{LateContext, LateLintPass, LintPass};
 use rustc_hir::{Mod, HirId};
 use rustc_span::Span;
 
