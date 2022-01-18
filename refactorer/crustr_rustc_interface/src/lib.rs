@@ -1,7 +1,7 @@
 #![feature(rustc_private)]
 
 use rustc_errors::registry;
-use rustc_interface::Config;
+use rustc_interface::{Config, interface::Compiler};
 use rustc_session::config;
 use std::path::PathBuf;
 use std::process;
@@ -56,4 +56,7 @@ pub fn config_setup(input_path: PathBuf) -> Config {
         make_codegen_backend: None,
         registry: registry::Registry::new(&rustc_error_codes::DIAGNOSTICS),
     }
+}
+pub trait CanRunCompiler {
+    fn run_compiler(compiler: &Compiler);
 }

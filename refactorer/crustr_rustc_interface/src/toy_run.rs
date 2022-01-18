@@ -1,14 +1,14 @@
+
 use log;
-use pointer_analysis::PointerAnalysis;
+use crustr_analysis::pointer_analysis::PointerAnalysis;
 use rustc_ast_pretty::pprust::item_to_string;
 use rustc_hir::OwnerNode;
 use rustc_interface::interface::Compiler;
-use rustc_middle::mir::visit::Visitor;
-use rustc_middle::ty::WithOptConstParam;
+use rustc_middle::{ty::WithOptConstParam, mir::visit::Visitor};
 use std::borrow::Borrow;
 // use transform::complex_place_reporter::ComplexPlaceReporter;
-use crustr_analysis::place_tracer::PlaceTracer;
-use crustr_analysis::unused_ptr_decl::UnusedPointerDecl;
+use crustr_analysis::toy_analysis::place_tracer::PlaceTracer;
+use crustr_analysis::toy_analysis::unused_ptr_decl::UnusedPointerDecl;
 
 pub fn run(compiler: &Compiler) {
     compiler.enter(|queries| {

@@ -1,6 +1,4 @@
-use crate::unused_ptr_decl::UnusedPointerDecl;
-use rustc_errors::Applicability;
-use rustc_middle::mir::{VarDebugInfo, VarDebugInfoContents};
+use rustc_middle::mir::VarDebugInfoContents;
 
 use super::UnusedPointerDeclForBody;
 

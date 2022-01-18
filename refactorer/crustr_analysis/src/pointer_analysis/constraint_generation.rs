@@ -8,7 +8,7 @@ use rustc_middle::mir::{CastKind, Operand, ProjectionElem};
 use rustc_middle::ty::TyCtxt;
 use rustc_middle::ty::TyKind::FnDef;
 
-use crate::{
+use crate::pointer_analysis::{
     andersen::constraint_solving::ConstraintSolving, ctxt::PointerAnalysisCtxt, Constraint,
     ConstraintKind, ConstraintSet, PointerAnalysisNode,
 };

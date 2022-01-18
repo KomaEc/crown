@@ -2,16 +2,17 @@
 #![feature(box_patterns)]
 #![feature(min_specialization)]
 #![feature(iter_zip)]
+#![feature(crate_visibility_modifier)]
+#![feature(maybe_uninit_extra)]
 
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{TyCtxt, TyKind::FnDef};
 
-pub mod complex_place_reporter;
 pub mod interprocedural;
 pub mod labeled;
-pub mod place_tracer;
-pub mod slice_analysis;
-pub mod unused_ptr_decl;
+pub mod ownership_analysis;
+pub mod toy_analysis;
+pub mod pointer_analysis;
 
 #[macro_use]
 extern crate tracing;

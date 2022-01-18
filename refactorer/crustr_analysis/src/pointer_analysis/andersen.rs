@@ -3,7 +3,7 @@
 pub mod constraint_solving;
 mod diagnostics;
 
-use crate::{ctxt::PointerAnalysisCtxt, PointerAnalysisNode};
+use crate::pointer_analysis::{ctxt::PointerAnalysisCtxt, PointerAnalysisNode};
 use core::marker::PhantomData;
 use graph::WithNumNodes;
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, scc::Sccs};

@@ -3,7 +3,7 @@
 use rustc_errors::Applicability;
 use rustc_middle::mir::VarDebugInfoContents;
 
-use crate::andersen::AndersenResult;
+use crate::pointer_analysis::andersen::AndersenResult;
 
 impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
     pub fn report_ptr_alias(&self) {

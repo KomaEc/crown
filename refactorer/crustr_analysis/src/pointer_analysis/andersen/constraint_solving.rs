@@ -1,4 +1,4 @@
-use crate::{
+use crate::pointer_analysis::{
     andersen::{AndersenResult, InConstruction, PtsGraph},
     ctxt::PointerAnalysisCtxt,
     ConstraintIndex, ConstraintKind, ConstraintSet, PointerAnalysisNode,

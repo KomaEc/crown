@@ -1,4 +1,4 @@
-use crate::{
+use crate::pointer_analysis::{
     constraint_generation::ConstraintGeneration, Constraint, ConstraintKind, ConstraintSet,
     PointerAnalysisNode, PointerAnalysisNodeData,
 };

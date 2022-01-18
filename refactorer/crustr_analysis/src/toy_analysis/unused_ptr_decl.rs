@@ -1,6 +1,6 @@
 mod diagnostics;
 
-use pointer_analysis::{andersen::AndersenResult, PointerAnalysisNodeData};
+use crate::pointer_analysis::{andersen::AndersenResult, PointerAnalysisNodeData};
 use rustc_middle::{
     mir::{
         visit::{PlaceContext, Visitor},
