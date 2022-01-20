@@ -128,7 +128,7 @@ impl<'updb, 'upd, 'tcx> Visitor<'tcx> for UnusedPointerDeclForBody<'updb, 'upd, 
                         self.liveness.seek_after_primary_effect(location);
                         self.maybe_borrowed.seek_after_primary_effect(location);
                         let liveness = self.liveness.get();
-                        let maybe_borrowed = self.maybe_borrowed.get();
+                        // let maybe_borrowed = self.maybe_borrowed.get();
 
                         for q in self.andersen_result.pts_graph.aliases_for(p) {
                             let q_data = self.andersen_result.ptr_ctxt.find(q);

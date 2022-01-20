@@ -14,11 +14,7 @@ pub mod ownership_analysis;
 pub mod toy_analysis;
 pub mod pointer_analysis;
 
-#[macro_use]
-extern crate tracing;
-#[macro_use]
 extern crate rustc_middle;
-
 extern crate rustc_ast;
 extern crate rustc_ast_pretty;
 extern crate rustc_data_structures;
@@ -33,6 +29,7 @@ extern crate rustc_mir_dataflow;
 extern crate rustc_serialize;
 extern crate rustc_session;
 extern crate rustc_span;
+extern crate rustc_arena;
 
 use graph::{
     implementation::sparse_bit_vector::SparseBitVectorGraph, DirectedGraph, GraphSuccessors,
