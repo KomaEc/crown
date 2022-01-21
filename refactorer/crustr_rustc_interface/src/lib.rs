@@ -1,7 +1,7 @@
 #![feature(rustc_private)]
 
 use rustc_errors::registry;
-use rustc_interface::{Config, interface::Compiler};
+use rustc_interface::{interface::Compiler, Config};
 use rustc_session::config;
 use std::path::PathBuf;
 use std::process;
@@ -20,6 +20,7 @@ extern crate rustc_session;
 extern crate rustc_span;
 // extern crate rustc_borrowck;
 
+pub mod collect_structs;
 pub mod toy_run;
 
 pub fn config_setup(input_path: PathBuf) -> Config {
@@ -57,6 +58,15 @@ pub fn config_setup(input_path: PathBuf) -> Config {
         registry: registry::Registry::new(&rustc_error_codes::DIAGNOSTICS),
     }
 }
-pub trait CanRunCompiler {
-    fn run_compiler(compiler: &Compiler);
+pub trait CompilerRunnable {
+    type Output: Send;
+    fn run(compiler: &Compiler) -> Self::Output;
+}
+
+#[inline]
+pub fn run_compiler_with_config<Runnable>(config: Config) -> <Runnable as CompilerRunnable>::Output
+where
+    Runnable: CompilerRunnable,
+{
+    rustc_interface::run_compiler(config, Runnable::run)
 }

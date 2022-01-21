@@ -1,5 +1,4 @@
-
-index::newtype_index!{
+index::newtype_index! {
     pub struct OwnershipVar {
         DEBUG_FORMAT = "ρ_({})"
     }
