@@ -11,7 +11,7 @@ struct Cli {
     #[clap(parse(from_os_str))]
     path: PathBuf,
 
-    /// Test on a single rust file
+    /// Test on a single rust file, assuming preprocessing is done
     #[clap(short, long)]
     single_file: bool,
 }
