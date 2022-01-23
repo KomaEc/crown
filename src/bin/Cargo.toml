@@ -12,5 +12,5 @@ rustc_private=true
 crustr_rustc_interface = { path = "../../refactorer/crustr_rustc_interface" }
 log = "0.4"
 env_logger = "0.9"
-toml = "0.5.8"
+toml_edit = "0.13.0"
 clap = { version = "3.0.10", features = ["derive"] }

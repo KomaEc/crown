@@ -1,5 +1,5 @@
 [package]
-name = "destructive_readable"
+name = "crustr_ptr"
 version = "0.1.0"
 edition = "2021"
 

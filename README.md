@@ -316,3 +316,16 @@ However, it is not a very precise model.
 1. __Prophecy variable__? It seems that recent verification systems on Rust tends to have constraints that _have access to the future_. For example in ESOP2019, a mutable reference is modelled by a pair $(m_0, m_1)$, where $m_0$ is the current target value, $m_1$ is the future target value. For example, prophecy variable in Iris.
 Shall we apply the same idea here, that use a prophecy variable $\psi_p$ to indicate that the access right of $p$ must be returned in the future?
 2. __Level-labelled__ The access right of a variable is labelled with a level $\ell_p \in \mathbb{Z}$. A resource (for instance, an object that is explicitly allocated) is labelled with a level as well. Creating mutable reference $\Rightarrow$ increasing level
+
+
+### Ownership Analysis
+1. Types
+2. Assignment statements
+   ```rust
+   p = q;
+   // ==> p = move q; // if ownership transfer happens
+   // ==> p = &mut *q; // otherwise
+   ```
+3. Unsatisfiable core ==>
+   1. Some pointers are inherently unsafe
+   2. A set of transformation

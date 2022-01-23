@@ -1,7 +1,39 @@
-use rustc_hir::{ItemKind, OwnerNode};
+use rustc_hir::{
+    intravisit::{self, NestedVisitorMap, Visitor},
+    FieldDef, Item, ItemKind, OwnerNode,
+};
 use rustc_interface::interface::Compiler;
+use rustc_middle::{hir::map::Map, ty::TyCtxt};
 
 use crate::CompilerRunnable;
+
+pub struct StructRewriteVisitor<'tcx> {
+    pub tcx: TyCtxt<'tcx>,
+}
+
+impl<'tcx> Visitor<'tcx> for StructRewriteVisitor<'tcx> {
+    type Map = Map<'tcx>;
+
+    fn nested_visit_map(&mut self) -> NestedVisitorMap<Self::Map> {
+        return NestedVisitorMap::OnlyBodies(self.tcx.hir());
+    }
+
+    fn visit_item(&mut self, item: &'tcx Item<'tcx>) {
+        match item.kind {
+            ItemKind::Struct(ref variant_data, ref generics) => {
+                todo!()
+            }
+            ItemKind::Enum(ref enum_def, ref generics) => {
+                todo!()
+            }
+            _ => {}
+        }
+
+        intravisit::walk_item(self, item)
+    }
+
+    fn visit_field_def(&mut self, field_def: &'tcx FieldDef<'tcx>) {}
+}
 
 pub struct CollectStructInfo;
 
@@ -18,7 +50,7 @@ impl CompilerRunnable for CollectStructInfo {
                 for (did, owner) in hir_krate.owners.iter_enumerated() {
                     if let Some(owner_info) = owner {
                         if let OwnerNode::Item(item) = owner_info.node() {
-                            if let ItemKind::Struct(variant_data, generics) = &item.kind {
+                            if let ItemKind::Struct(variant_data, _generics) = &item.kind {
                                 let def_id = item.def_id;
                                 assert_eq!(def_id, did);
 

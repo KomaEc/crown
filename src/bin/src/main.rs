@@ -1,9 +1,8 @@
 use clap::Parser;
 use crustr_rustc_interface::{config_setup, run_compiler_with_config};
 use std::path::PathBuf;
-use std::{fs, process};
-
-mod common_defs;
+use std::{env, fs, process};
+use toml_edit::{value, Document};
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -22,7 +21,7 @@ fn main() {
 
     let cli = Cli::parse();
 
-    if cli.single_file {
+    if !cli.single_file {
         let dir_path = cli.path;
         if !dir_path.is_dir() {
             eprintln!(
@@ -32,33 +31,46 @@ fn main() {
             process::exit(1);
         }
 
-        let mut lib_entry = None;
+        let working_dir_path =
+            env::current_dir().expect("current working directory value is invalid");
+
+        let mut relative_lib_entry = None;
         for entry in dir_path.read_dir().expect("read_dir call failed") {
             if let Ok(entry) = entry {
                 if let Some(extension) = entry.path().extension() {
                     if extension == "toml" {
                         assert!(entry.path().is_file());
-                        if let Ok(cargo_toml) = fs::read_to_string(entry.path()) {
-                            if let Ok(cargo_toml) = cargo_toml.parse::<toml::Value>() {
-                                if let Some(path) = cargo_toml["lib"]["path"].as_str() {
-                                    lib_entry = Some(PathBuf::from(path));
-                                }
-                            }
+
+                        let mut cargo_toml = fs::read_to_string(entry.path())
+                            .expect("failed to read Cargo.toml")
+                            .parse::<Document>()
+                            .expect("invalid doc");
+
+                        if let Some(path) = cargo_toml["lib"]["path"].as_str() {
+                            relative_lib_entry = Some(PathBuf::from(path));
                         }
+
+                        cargo_toml["dependencies"]["crustr_ptr"] = format!(
+                            "{{ path = \"{}\" }}",
+                            working_dir_path.join("crustr_ptr").as_path().display()
+                        )
+                        .parse::<toml_edit::Item>()
+                        .unwrap();
+
+                        fs::write(entry.path(), cargo_toml.to_string())
+                            .expect("failed to write dependency into Cargo.toml");
                     }
                 }
             }
         }
 
-        let lib_entry = match lib_entry {
+        let lib_entry = match relative_lib_entry {
             None => {
                 eprintln!("Cannot find lib entry");
                 process::exit(1);
             }
-            Some(lib_entry) => lib_entry,
+            Some(lib_entry) => dir_path.join(lib_entry),
         };
-
-        common_defs::add_defs_to_dir(dir_path.as_path());
 
         let config = config_setup(lib_entry.into());
         run_compiler_with_config::<crustr_rustc_interface::collect_structs::CollectStructInfo>(
