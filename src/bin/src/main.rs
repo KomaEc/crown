@@ -2,7 +2,7 @@ use clap::Parser;
 use crustr_rustc_interface::{config_setup, run_compiler_with_config};
 use std::path::PathBuf;
 use std::{env, fs, process};
-use toml_edit::{value, Document};
+use toml_edit::Document;
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
