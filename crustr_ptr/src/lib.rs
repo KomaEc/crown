@@ -5,6 +5,17 @@ pub struct NonNullRawMut<T> {
 }
 
 impl<T> NonNullRawMut<T> {
+    pub fn new(ptr: *mut T) -> Option<NonNullRawMut<T>> {
+        if !ptr.is_null() {
+            Some(NonNullRawMut {
+                ptr,
+                _marker: PhantomData
+            })
+        } else {
+            None
+        }
+    }
+
     pub fn as_mut_ptr(self) -> *mut T {
         self.ptr
     }
