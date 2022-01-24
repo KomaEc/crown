@@ -2,7 +2,7 @@ use clap::Parser;
 use crustr_rustc_interface::{config_setup, run_compiler_with_config};
 use std::path::PathBuf;
 use std::{env, fs, process};
-use toml_edit::Document;
+use toml_edit::{Document, Item};
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -12,7 +12,7 @@ struct Cli {
     path: PathBuf,
 
     /// Test on a single rust file, assuming preprocessing is done
-    #[clap(short, long)]
+    #[clap(long)]
     single_file: bool,
 }
 
@@ -54,7 +54,7 @@ fn main() {
                             "{{ path = \"{}\" }}",
                             working_dir_path.join("crustr_ptr").as_path().display()
                         )
-                        .parse::<toml_edit::Item>()
+                        .parse::<Item>()
                         .unwrap();
 
                         fs::write(entry.path(), cargo_toml.to_string())

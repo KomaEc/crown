@@ -9,7 +9,7 @@ impl<T> NonNullRawMut<T> {
         if !ptr.is_null() {
             Some(NonNullRawMut {
                 ptr,
-                _marker: PhantomData
+                _marker: core::marker::PhantomData
             })
         } else {
             None

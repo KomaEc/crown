@@ -1,6 +1,6 @@
 use rustc_hir::{
     intravisit::{self, NestedVisitorMap, Visitor},
-    FieldDef, Item, ItemKind, OwnerNode,
+    FieldDef, ItemKind, OwnerNode,
 };
 use rustc_interface::interface::Compiler;
 use rustc_middle::{hir::map::Map, ty::TyCtxt};
@@ -18,21 +18,9 @@ impl<'tcx> Visitor<'tcx> for StructRewriteVisitor<'tcx> {
         return NestedVisitorMap::OnlyBodies(self.tcx.hir());
     }
 
-    fn visit_item(&mut self, item: &'tcx Item<'tcx>) {
-        match item.kind {
-            ItemKind::Struct(ref variant_data, ref generics) => {
-                todo!()
-            }
-            ItemKind::Enum(ref enum_def, ref generics) => {
-                todo!()
-            }
-            _ => {}
-        }
-
-        intravisit::walk_item(self, item)
+    fn visit_field_def(&mut self, field_def: &'tcx FieldDef<'tcx>) {
+        intravisit::walk_field_def(self, field_def)
     }
-
-    fn visit_field_def(&mut self, field_def: &'tcx FieldDef<'tcx>) {}
 }
 
 pub struct CollectStructInfo;
