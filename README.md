@@ -1,5 +1,13 @@
 # Ownership and Lifetime guided C to Rust Refactoring
 
+## Usage
+Currently, this tool will do some meaningless stuff: given a path to a Cargo project (which is required to have a `Cargo.toml` file, with a 'lib' section indicating the path to the main lib entry), it will add to dependencies the 'crustr_ptr' library (which is a customised pointer wrapper type), and then it will rewrite `*mut T` in all struct definition into `Option<NonNullRawMut<T>>`.
+To run:
+```shell
+cp -r benchmark/ezxml workspace
+cargo run -- workspace/ezxml
+```
+
 ## Motivating Examples
 We show several refactoring examples guided by the ownership and lifetime _principles_ of Rust. I use the word _principle_, because Rust currently does not have a clear definition of lifetime. The borrow checker currently implemented in Rust view lifetimes as lifetimes of references. For example, for a reference of type `&'a T`, the lifetime `'a` refers to the set of program points where this reference is valid. However, there is a currently merging new formulation, called [polonius](http://smallcultfollowing.com/babysteps/blog/2018/04/27/an-alias-based-formulation-of-the-borrow-checker/), where such lifetime variable `'a` is treated as _a set of loans_. The new analysis is based on alias analysis and is more powerful.
 
