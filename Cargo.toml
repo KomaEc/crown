@@ -5,6 +5,7 @@ members = [
     "refactorer/crustr_analysis",
     "refactorer/crustr_rustc_interface",
     "refactorer/crustr_rewrite",
+    "refactorer/crustr_passes",
     "utils/graph",
     "utils/index",
     "utils/work_list",

@@ -1,27 +1,9 @@
-use rustc_hir::{
-    intravisit::{self, NestedVisitorMap, Visitor},
-    FieldDef, ItemKind, OwnerNode,
-};
+use rustc_hir::{intravisit::{Visitor, self}, ItemKind, OwnerNode};
 use rustc_interface::interface::Compiler;
-use rustc_middle::{hir::map::Map, ty::TyCtxt};
+
+use crustr_rewrite::Rewriter;
 
 use crate::CompilerRunnable;
-
-pub struct StructRewriteVisitor<'tcx> {
-    pub tcx: TyCtxt<'tcx>,
-}
-
-impl<'tcx> Visitor<'tcx> for StructRewriteVisitor<'tcx> {
-    type Map = Map<'tcx>;
-
-    fn nested_visit_map(&mut self) -> NestedVisitorMap<Self::Map> {
-        return NestedVisitorMap::OnlyBodies(self.tcx.hir());
-    }
-
-    fn visit_field_def(&mut self, field_def: &'tcx FieldDef<'tcx>) {
-        intravisit::walk_field_def(self, field_def)
-    }
-}
 
 pub struct CollectStructInfo;
 
@@ -32,6 +14,11 @@ impl CompilerRunnable for CollectStructInfo {
         compiler.enter(|queries| {
             // let ast_krate = queries.parse().unwrap().take();
             queries.global_ctxt().unwrap().take().enter(|tcx| {
+                let mut vis = crustr_passes::initial_rewrite::StructRewriteVisitor {
+                    tcx,
+                    rewriter: Rewriter::default(),
+                };
+
                 // Every compilation contains a single crate.
                 let hir_krate = tcx.hir().krate();
                 let mut structs = Vec::new();
@@ -42,13 +29,20 @@ impl CompilerRunnable for CollectStructInfo {
                                 let def_id = item.def_id;
                                 assert_eq!(def_id, did);
 
-                                println!("{:?}", variant_data);
+                                // println!("{:?}", variant_data);
+
+                                println!("{}", item.ident);
+
+                                // vis.visit_item(item);
+                                intravisit::walk_struct_def(&mut vis, variant_data);
 
                                 structs.push(did)
                             }
                         }
                     }
                 }
+
+                vis.rewriter.over_rewrite();
             })
         })
     }

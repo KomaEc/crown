@@ -18,7 +18,6 @@ crate-type = ["staticlib", "rlib"]
 
 [dependencies]
 libc = "0.2"
-crustr_ptr = { path = "/Users/pd21541/Research/crustr/crustr_ptr" }
 
 
 

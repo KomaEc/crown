@@ -40,9 +40,16 @@ impl<'pt, 'tcx> Visitor<'tcx> for PlaceTracer<'pt, 'tcx> {
                 destination: _,
                 cleanup: _,
                 from_hir_call,
-                fn_span: _,
+                fn_span,
             } => {
-                assert!(from_hir_call, "Inner functions are not supported");
+                if !from_hir_call {
+                    eprintln!(
+                        "Inner function {:?} at {:?} is not supported",
+                        func, fn_span
+                    );
+                    panic!();
+                }
+                // assert!(from_hir_call, "Inner functions are not supported");
 
                 if let FnDef(def_id, _) = func.constant().unwrap().ty().kind() {
                     log::trace!(

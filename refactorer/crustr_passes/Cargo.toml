@@ -1,5 +1,5 @@
 [package]
-name = "crustr_rustc_interface"
+name = "crustr_passes"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,6 +10,4 @@ rustc_private=true
 
 [dependencies]
 log = "0.4"
-crustr_analysis = { path = "../crustr_analysis" }
-crustr_passes = { path = "../crustr_passes" }
 crustr_rewrite = { path = "../crustr_rewrite" }

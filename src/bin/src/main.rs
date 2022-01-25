@@ -73,12 +73,12 @@ fn main() {
         };
 
         let config = config_setup(lib_entry.into());
-        run_compiler_with_config::<crustr_rustc_interface::collect_structs::CollectStructInfo>(
+        run_compiler_with_config::<crustr_rustc_interface::test_rewrite_struct::CollectStructInfo>(
             config,
         )
     } else {
         let config = config_setup(cli.path);
-        run_compiler_with_config::<crustr_rustc_interface::collect_structs::CollectStructInfo>(
+        run_compiler_with_config::<crustr_rustc_interface::test_rewrite_struct::CollectStructInfo>(
             config,
         )
     }

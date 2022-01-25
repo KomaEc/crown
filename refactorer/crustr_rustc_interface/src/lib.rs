@@ -20,7 +20,7 @@ extern crate rustc_session;
 extern crate rustc_span;
 // extern crate rustc_borrowck;
 
-pub mod collect_structs;
+pub mod test_rewrite_struct;
 pub mod toy_run;
 
 pub fn config_setup(input_path: PathBuf) -> Config {
