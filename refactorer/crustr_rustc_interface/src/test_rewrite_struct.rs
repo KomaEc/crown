@@ -1,4 +1,4 @@
-use rustc_hir::{intravisit::{Visitor, self}, ItemKind, OwnerNode};
+use rustc_hir::{intravisit, ItemKind, OwnerNode};
 use rustc_interface::interface::Compiler;
 
 use crustr_rewrite::Rewriter;

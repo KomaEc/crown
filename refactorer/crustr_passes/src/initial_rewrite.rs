@@ -5,8 +5,6 @@ use rustc_hir::{
 };
 use rustc_middle::{hir::map::Map, ty::TyCtxt};
 
-// use std::collections::HashMap;
-
 const OPTION_NON_NULL_RAW_MUT_PREFIX: &'static str = "Option<crustr_ptr::NonNullRawMut<";
 const OPTION_NON_NULL_RAW_MUT_SUFFIX: &'static str = ">";
 
@@ -23,8 +21,7 @@ impl<'trv, 'tcx> Visitor<'tcx> for TypeRewriteVisitor<'trv, 'tcx> {
     }
 
     fn visit_ty(&mut self, typ: &'tcx Ty<'tcx>) {
-
-        log::debug!("visiting {} at {:?}", rustc_hir_pretty::ty_to_string(typ), typ.span);
+        // log::debug!("visiting {} at {:?}", rustc_hir_pretty::ty_to_string(typ), typ.span);
 
         match typ.kind {
             TyKind::Ptr(ref mutable_type) => {
@@ -70,7 +67,7 @@ impl<'tcx> Visitor<'tcx> for StructRewriteVisitor<'tcx> {
     }
 
     fn visit_field_def(&mut self, field_def: &'tcx FieldDef<'tcx>) {
-        log::debug!("visiting field def {} : {} at {:?}", field_def.ident, rustc_hir_pretty::ty_to_string(field_def.ty), field_def.span);
+        // log::debug!("visiting field def {} : {} at {:?}", field_def.ident, rustc_hir_pretty::ty_to_string(field_def.ty), field_def.span);
 
         let mut ty_vis = TypeRewriteVisitor {
             tcx: self.tcx,
