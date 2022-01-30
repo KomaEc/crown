@@ -11,5 +11,6 @@ rustc_private=true
 
 [dependencies]
 log = "0.4"
-index = { path = "../../utils/index" }
+#index = { path = "../../utils/index" }
 graph = { path = "../../utils/graph" }
+smallvec = "1.8.0"

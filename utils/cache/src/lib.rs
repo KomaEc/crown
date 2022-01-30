@@ -7,23 +7,22 @@ use std::mem::MaybeUninit;
 pub struct Cached;
 pub struct Vacant;
 
-
 pub struct Cache<Data, State> {
     cache: MaybeUninit<Data>,
-    _state: PhantomData<State>
+    _state: PhantomData<State>,
 }
 
 impl<Data> Cache<Data, Vacant> {
     pub fn new() -> Self {
         Cache {
             cache: MaybeUninit::uninit(),
-            _state: PhantomData
+            _state: PhantomData,
         }
     }
 
     pub fn cache(mut self, data: Data) -> Cache<Data, Cached> {
         self.cache.write(data);
-        todo!()// unsafe { std::mem::transmute(self) }
+        todo!() // unsafe { std::mem::transmute(self) }
     }
 }
 

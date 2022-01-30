@@ -1,4 +1,4 @@
-use index::vec::{Idx, IndexVec};
+use rustc_index::vec::{Idx, IndexVec};
 
 use crate::{DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors};
 
@@ -12,7 +12,7 @@ pub struct Node<N> {
     pub data: N,
 }
 
-index::newtype_index! {
+rustc_index::newtype_index! {
     pub struct NodeIndex {
         DEBUG_FORMAT = "v_({})"
     }
@@ -25,7 +25,7 @@ pub struct Edge<E> {
     pub data: E,
 }
 
-index::newtype_index! {
+rustc_index::newtype_index! {
     pub struct EdgeIndex {
         DEBUG_FORMAT = "v_({})"
     }

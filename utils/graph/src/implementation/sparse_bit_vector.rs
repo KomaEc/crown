@@ -2,7 +2,7 @@
 mod tests;
 
 use crate::{DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors};
-use index::{
+use rustc_index::{
     bit_set::{HybridBitSet, HybridIter},
     vec::{Idx, IndexVec},
 };

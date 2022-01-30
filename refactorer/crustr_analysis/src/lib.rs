@@ -5,12 +5,17 @@
 #![feature(crate_visibility_modifier)]
 #![feature(maybe_uninit_extra)]
 
+use std::ops::{Index, IndexMut};
+
 use rustc_hir::def_id::DefId;
-use rustc_middle::ty::{TyCtxt, TyKind::FnDef};
+use rustc_middle::{
+    mir::{BasicBlock, Body, Location},
+    ty::{TyCtxt, TyKind::FnDef},
+};
 
 pub mod interprocedural;
 pub mod ownership_analysis;
-pub mod pointer_analysis;
+// pub mod pointer_analysis;
 pub mod toy_analysis;
 
 extern crate rustc_arena;
@@ -22,6 +27,7 @@ extern crate rustc_errors;
 extern crate rustc_hash;
 extern crate rustc_hir;
 extern crate rustc_hir_pretty;
+extern crate rustc_index;
 extern crate rustc_infer;
 extern crate rustc_interface;
 extern crate rustc_middle;
@@ -29,20 +35,22 @@ extern crate rustc_mir_dataflow;
 extern crate rustc_serialize;
 extern crate rustc_session;
 extern crate rustc_span;
+extern crate rustc_target;
 
 use graph::{
     implementation::sparse_bit_vector::SparseBitVectorGraph, DirectedGraph, GraphSuccessors,
     WithNumNodes, WithSuccessors,
 };
-use index::{bit_set::HybridIter, vec::IndexVec};
+use rustc_index::{bit_set::HybridIter, vec::IndexVec};
 use rustc_middle::mir::TerminatorKind;
 
-index::newtype_index! {
+rustc_index::newtype_index! {
     pub struct Function {
         DEBUG_FORMAT = "Function({})"
     }
 }
 
+/*
 pub struct FunctionData {
     pub def_id: DefId,
 }
@@ -162,7 +170,39 @@ impl<'tcx> CallGraphConstruction<'tcx> {
         }
     }
 }
+*/
 
-pub trait MirPass {
-    type Output;
+#[derive(Debug)]
+pub struct LocationMap<T> {
+    /// Location-indexed (BasicBlock for outer index, index within BB
+    /// for inner index) map.
+    pub(crate) map: IndexVec<BasicBlock, Vec<T>>,
+}
+
+impl<T> Index<Location> for LocationMap<T> {
+    type Output = T;
+    fn index(&self, index: Location) -> &Self::Output {
+        &self.map[index.block][index.statement_index]
+    }
+}
+
+impl<T> IndexMut<Location> for LocationMap<T> {
+    fn index_mut(&mut self, index: Location) -> &mut Self::Output {
+        &mut self.map[index.block][index.statement_index]
+    }
+}
+
+impl<T> LocationMap<T>
+where
+    T: Default + Clone,
+{
+    crate fn new(body: &Body<'_>) -> Self {
+        LocationMap {
+            map: body
+                .basic_blocks()
+                .iter()
+                .map(|block| vec![T::default(); block.statements.len() + 1])
+                .collect(),
+        }
+    }
 }

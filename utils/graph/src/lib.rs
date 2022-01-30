@@ -1,6 +1,10 @@
 #![feature(min_specialization)]
+#![feature(rustc_private)]
 
-use index::vec::Idx;
+extern crate rustc_index;
+extern crate rustc_serialize;
+
+use rustc_index::vec::Idx;
 
 pub mod implementation;
 pub mod scc;

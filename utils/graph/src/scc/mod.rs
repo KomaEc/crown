@@ -8,7 +8,7 @@
 // use crate::fx::FxHashSet;
 // use crate::graph::vec_graph::VecGraph;
 use crate::{DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors};
-use index::vec::{Idx, IndexVec};
+use rustc_index::vec::{Idx, IndexVec};
 use std::collections::HashSet;
 use std::ops::Range;
 
