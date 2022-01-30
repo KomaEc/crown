@@ -36,7 +36,7 @@ where
     */
 }
 
-#[allow(unused_lifetimes)]
+// #[allow(unused_lifetimes)]
 pub trait GraphSuccessors<'graph> {
     type Item;
     type Iter: Iterator<Item = Self::Item>;
@@ -49,7 +49,7 @@ where
     fn predecessors(&self, node: Self::Node) -> <Self as GraphPredecessors<'_>>::Iter;
 }
 
-#[allow(unused_lifetimes)]
+// #[allow(unused_lifetimes)]
 pub trait GraphPredecessors<'graph> {
     type Item;
     type Iter: Iterator<Item = Self::Item>;
