@@ -1,16 +1,26 @@
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::bit_set::HybridBitSet;
 use rustc_index::vec::IndexVec;
-use rustc_middle::mir::{BasicBlock, Body};
+use rustc_middle::mir::{BasicBlock, Body, Local};
 use smallvec::SmallVec;
+use std::collections::VecDeque;
 
-pub const DOMINATOR_FRONTIER_ON_STACK_SIZE: usize = 3;
+use crate::{ownership_analysis::def_use::DefSites, LocationMap};
 
-pub type DominatorFrontier = IndexVec<BasicBlock, SmallVec<[BasicBlock; DOMINATOR_FRONTIER_ON_STACK_SIZE]>>;
+const DOMINATOR_FRONTIER_ON_STACK_SIZE: usize = 3;
+const PHI_NODE_INSERTED_ON_STACK_SIZE: usize = 3;
+
+pub type DominatorFrontier =
+    IndexVec<BasicBlock, SmallVec<[BasicBlock; DOMINATOR_FRONTIER_ON_STACK_SIZE]>>;
+pub type PhiNodeInsertionPoint =
+    IndexVec<BasicBlock, SmallVec<[Local; PHI_NODE_INSERTED_ON_STACK_SIZE]>>;
 
 /// Extension methods for Body<'tcx>
 pub trait BodyExt<'tcx> {
     fn dominator_frontier(&self) -> DominatorFrontier;
+
+    /// Compute points of insertion for phi nodes, extend def_sites if upon insertion
+    fn compute_phi_node(&self, def_sites: &mut DefSites) -> PhiNodeInsertionPoint;
 }
 
 impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
@@ -50,5 +60,44 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
             }
         }
         IndexVec::from_iter(df.iter().map(|set| set.iter().collect::<SmallVec<_>>()))
+    }
+
+    fn compute_phi_node(&self, def_sites: &mut DefSites) -> PhiNodeInsertionPoint {
+        ComputePhiNode::new(self, def_sites, self.dominator_frontier()).run()
+    }
+}
+
+struct ComputePhiNode<'cpn, 'tcx> {
+    body: &'cpn Body<'tcx>,
+    def_sites: &'cpn mut DefSites,
+    dominator_frontier: DominatorFrontier,
+}
+
+impl<'cpn, 'tcx> ComputePhiNode<'cpn, 'tcx> {
+    fn new(
+        body: &'cpn Body<'tcx>,
+        def_sites: &'cpn mut DefSites,
+        dominator_frontier: DominatorFrontier,
+    ) -> Self {
+        ComputePhiNode {
+            body,
+            def_sites,
+            dominator_frontier,
+        }
+    }
+
+    fn run(self) -> PhiNodeInsertionPoint {
+        for a in self.body.local_decls.indices() {
+            let def_sites = std::mem::take(&mut self.def_sites[a]).into_iter();
+            let mut newly_added: LocationMap<bool> = LocationMap::new(self.body);
+            let mut work_list = VecDeque::from_iter(def_sites);
+            while let Some(location) = work_list.pop_front() {
+                let bb = location.block;
+                for bb_f in &self.dominator_frontier[bb] {
+                    
+                }
+            }
+        }
+        todo!()
     }
 }
