@@ -1,7 +1,11 @@
-use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::bit_set::{BitSet, HybridBitSet};
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Local};
+use rustc_middle::ty::TyCtxt;
+use rustc_mir_dataflow::{
+    impls::MaybeLiveLocals,
+    Analysis, ResultsCursor,
+};
 use smallvec::SmallVec;
 use std::collections::VecDeque;
 
@@ -10,60 +14,46 @@ use crate::ownership_analysis::def_use::{DefSites, DefSitesGatherer};
 const DOMINATOR_FRONTIER_ON_STACK_SIZE: usize = 3;
 const PHI_NODE_INSERTED_ON_STACK_SIZE: usize = 3;
 
-pub type DominatorFrontier =
+pub type DominanceFrontier =
     IndexVec<BasicBlock, SmallVec<[BasicBlock; DOMINATOR_FRONTIER_ON_STACK_SIZE]>>;
 pub type PhiNodeInserted = IndexVec<BasicBlock, SmallVec<[Local; PHI_NODE_INSERTED_ON_STACK_SIZE]>>;
 
 /// Extension methods for Body<'tcx>
 pub trait BodyExt<'tcx> {
-    fn dominator_frontier(&self) -> DominatorFrontier;
-    fn compute_phi_node(&self) -> PhiNodeInserted;
+    fn dominance_frontier(&self) -> DominanceFrontier;
+    fn compute_phi_node(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted;
 }
 
 impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
-    fn dominator_frontier(&self) -> DominatorFrontier {
-        use core::cmp::Ordering;
-
+    fn dominance_frontier(&self) -> DominanceFrontier {
         let dominators = self.dominators();
         let mut df = IndexVec::from_elem(
             HybridBitSet::new_empty(self.basic_blocks().len()),
             self.basic_blocks(),
         );
-        // compute df_local
+
         for bb in self.basic_blocks().indices() {
-            for succ in self.successors(bb) {
-                if dominators.immediate_dominator(succ) != bb {
-                    df[bb].insert(succ);
+            let preds = self.predecessors()[bb].clone();
+            if preds.len() >= 2 {
+                // if `bb` is a join point
+                for bb_p in preds {
+                    let mut runner = bb_p;
+                    while runner != dominators.immediate_dominator(bb) {
+                        df[runner].insert(bb);
+                        runner = dominators.immediate_dominator(runner)
+                    }
                 }
-            }
-        }
-        // union df_up
-        let bbs_in_reverse_post_order = {
-            let mut bbs = self.basic_blocks().indices().collect::<Vec<_>>();
-            bbs.sort_by(|&lhs, &rhs| {
-                dominators
-                    .rank_partial_cmp(lhs, rhs)
-                    .map(Ordering::reverse)
-                    .unwrap_or_else(|| Ordering::Equal)
-            });
-            bbs
-        };
-        for bb in bbs_in_reverse_post_order {
-            assert!(dominators.is_reachable(bb), "block is unreachable!");
-            let pred = dominators.immediate_dominator(bb);
-            if bb != pred {
-                let (df_bb, df_pred) = df.pick2_mut(bb, pred);
-                df_pred.union(df_bb);
             }
         }
         IndexVec::from_iter(df.iter().map(|set| set.iter().collect::<SmallVec<_>>()))
     }
 
-    fn compute_phi_node(&self) -> PhiNodeInserted {
+    fn compute_phi_node(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted {
         ComputePhiNode {
             body: self,
             def_sites: DefSitesGatherer::new(self).gather(),
-            dominator_frontier: self.dominator_frontier(),
+            dominance_frontier: self.dominance_frontier(),
+            liveness: liveness_result(tcx, self)
         }
         .run()
     }
@@ -72,7 +62,8 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
 struct ComputePhiNode<'cpn, 'tcx> {
     pub body: &'cpn Body<'tcx>,
     pub def_sites: DefSites,
-    pub dominator_frontier: DominatorFrontier,
+    pub dominance_frontier: DominanceFrontier,
+    pub liveness: ResultsCursor<'cpn, 'tcx, MaybeLiveLocals>
 }
 
 impl<'cpn, 'tcx> ComputePhiNode<'cpn, 'tcx> {
@@ -96,9 +87,9 @@ impl<'cpn, 'tcx> ComputePhiNode<'cpn, 'tcx> {
             let mut already_added = BitSet::new_empty(self.body.basic_blocks().len());
             let mut work_list = VecDeque::from_iter(def_sites[a].iter().map(|&bb| bb));
             while let Some(bb) = work_list.pop_front() {
-                for &bb_f in &self.dominator_frontier[bb] {
-                    // wrong! new visited
-                    if !already_added.contains(bb_f) {
+                for &bb_f in &self.dominance_frontier[bb] {
+                    self.liveness.seek_to_block_start(bb_f);
+                    if !already_added.contains(bb_f) && self.liveness.get().contains(a) {
                         inserted[bb_f].push(a);
                         assert!(already_added.insert(bb_f));
                         if !def_sites[a].contains(&bb_f) {
@@ -110,4 +101,15 @@ impl<'cpn, 'tcx> ComputePhiNode<'cpn, 'tcx> {
         }
         inserted
     }
+}
+
+fn liveness_result<'a, 'tcx>(
+    tcx: TyCtxt<'tcx>,
+    body: &'a Body<'tcx>,
+) -> ResultsCursor<'a, 'tcx, MaybeLiveLocals> {
+    let liveness = MaybeLiveLocals
+        .into_engine(tcx, body)
+        .iterate_to_fixpoint()
+        .into_results_cursor(body);
+    liveness
 }
