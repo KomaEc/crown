@@ -1,4 +1,3 @@
-use smallvec::SmallVec;
 use std::fmt::Display;
 
 use rustc_hir::def_id::DefId;
@@ -44,8 +43,7 @@ pub enum Constraint {
     /// rho_p = 0
     AssertTransient(OwnershipVar),
 
-    /// pairwise equality
-    AssertEqual(SmallVec<[OwnershipVar; 2]>),
+    AssertEqual(OwnershipVar, OwnershipVar),
 }
 
 impl Display for Constraint {
@@ -61,15 +59,7 @@ impl Display for Constraint {
             )),
             Self::AssertOwned(o) => f.write_fmt(format_args!("{:?} = 1", o)),
             Self::AssertTransient(o) => f.write_fmt(format_args!("{:?} = 0", o)),
-            Self::AssertEqual(os) => {
-                if os.len() == 2 {
-                    f.write_fmt(format_args!("{:?} = {:?}", os[0], os[1]))
-                } else {
-                    f.write_str("PairwiseEqual(")?;
-                    f.debug_list().entries(os).finish()?;
-                    f.write_str(")")
-                }
-            }
+            Self::AssertEqual(o1, o2) => f.write_fmt(format_args!("{:?} = {:?}", o1, o2)),
         }
     }
 }
