@@ -86,10 +86,15 @@ fn test_phi_node_insertion_point() {
                 );
                 assert!(dominance_frontier[BasicBlock::from_u32(8)].is_empty());
 
-
                 let insertion_points = body.compute_phi_node(tcx);
-                assert_eq!(insertion_points[BasicBlock::from_u32(1)].as_slice(), &[Local::from_u32(0), Local::from_u32(2)]);
-                assert_eq!(insertion_points[BasicBlock::from_u32(7)].as_slice(), &[Local::from_u32(0), Local::from_u32(2)]);
+                assert_eq!(
+                    insertion_points[BasicBlock::from_u32(1)].as_slice(),
+                    &[Local::from_u32(0), Local::from_u32(2)]
+                );
+                assert_eq!(
+                    insertion_points[BasicBlock::from_u32(7)].as_slice(),
+                    &[Local::from_u32(0), Local::from_u32(2)]
+                );
                 // bb that is not a join point must not have phi nodes inserted
                 assert!(insertion_points[BasicBlock::from_u32(0)].is_empty());
                 assert!(insertion_points[BasicBlock::from_u32(2)].is_empty());

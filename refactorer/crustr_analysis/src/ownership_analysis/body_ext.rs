@@ -2,10 +2,7 @@ use rustc_index::bit_set::{BitSet, HybridBitSet};
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Local};
 use rustc_middle::ty::TyCtxt;
-use rustc_mir_dataflow::{
-    impls::MaybeLiveLocals,
-    Analysis, ResultsCursor,
-};
+use rustc_mir_dataflow::{impls::MaybeLiveLocals, Analysis, ResultsCursor};
 use smallvec::SmallVec;
 use std::collections::VecDeque;
 
@@ -53,7 +50,7 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
             body: self,
             def_sites: DefSitesGatherer::new(self).gather(),
             dominance_frontier: self.dominance_frontier(),
-            liveness: liveness_result(tcx, self)
+            liveness: liveness_result(tcx, self),
         }
         .run()
     }
@@ -63,7 +60,7 @@ struct ComputePhiNode<'cpn, 'tcx> {
     pub body: &'cpn Body<'tcx>,
     pub def_sites: DefSites,
     pub dominance_frontier: DominanceFrontier,
-    pub liveness: ResultsCursor<'cpn, 'tcx, MaybeLiveLocals>
+    pub liveness: ResultsCursor<'cpn, 'tcx, MaybeLiveLocals>,
 }
 
 impl<'cpn, 'tcx> ComputePhiNode<'cpn, 'tcx> {
