@@ -1,26 +1,25 @@
 use rustc_data_structures::graph::WithSuccessors;
-use rustc_index::bit_set::HybridBitSet;
+use rustc_index::bit_set::{BitSet, HybridBitSet};
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Local};
 use smallvec::SmallVec;
 use std::collections::VecDeque;
 
-use crate::{ownership_analysis::def_use::DefSites, LocationMap};
+use crate::ownership_analysis::def_use::{DefSites, DefSitesGatherer};
 
 const DOMINATOR_FRONTIER_ON_STACK_SIZE: usize = 3;
 const PHI_NODE_INSERTED_ON_STACK_SIZE: usize = 3;
 
 pub type DominatorFrontier =
     IndexVec<BasicBlock, SmallVec<[BasicBlock; DOMINATOR_FRONTIER_ON_STACK_SIZE]>>;
-pub type PhiNodeInsertionPoint =
-    IndexVec<BasicBlock, SmallVec<[Local; PHI_NODE_INSERTED_ON_STACK_SIZE]>>;
+pub type PhiNodeInserted = IndexVec<BasicBlock, SmallVec<[Local; PHI_NODE_INSERTED_ON_STACK_SIZE]>>;
 
 /// Extension methods for Body<'tcx>
 pub trait BodyExt<'tcx> {
     fn dominator_frontier(&self) -> DominatorFrontier;
 
     /// Compute points of insertion for phi nodes, extend def_sites if upon insertion
-    fn compute_phi_node(&self, def_sites: &mut DefSites) -> PhiNodeInsertionPoint;
+    fn compute_phi_node(&self) -> PhiNodeInserted;
 }
 
 impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
@@ -62,21 +61,26 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
         IndexVec::from_iter(df.iter().map(|set| set.iter().collect::<SmallVec<_>>()))
     }
 
-    fn compute_phi_node(&self, def_sites: &mut DefSites) -> PhiNodeInsertionPoint {
-        ComputePhiNode::new(self, def_sites, self.dominator_frontier()).run()
+    fn compute_phi_node(&self) -> PhiNodeInserted {
+        ComputePhiNode::new(
+            self,
+            DefSitesGatherer::new(self).gather(),
+            self.dominator_frontier(),
+        )
+        .run()
     }
 }
 
 struct ComputePhiNode<'cpn, 'tcx> {
     body: &'cpn Body<'tcx>,
-    def_sites: &'cpn mut DefSites,
+    def_sites: DefSites,
     dominator_frontier: DominatorFrontier,
 }
 
 impl<'cpn, 'tcx> ComputePhiNode<'cpn, 'tcx> {
     fn new(
         body: &'cpn Body<'tcx>,
-        def_sites: &'cpn mut DefSites,
+        def_sites: DefSites,
         dominator_frontier: DominatorFrontier,
     ) -> Self {
         ComputePhiNode {
@@ -86,18 +90,38 @@ impl<'cpn, 'tcx> ComputePhiNode<'cpn, 'tcx> {
         }
     }
 
-    fn run(self) -> PhiNodeInsertionPoint {
+    fn run(mut self) -> PhiNodeInserted {
+        let mut inserted: PhiNodeInserted =
+            IndexVec::from_elem(SmallVec::new(), self.body.basic_blocks());
+        let def_sites = self
+            .def_sites
+            .iter_mut()
+            .map(|sites| {
+                let mut sites = sites
+                    .iter_mut()
+                    .map(|location| location.block)
+                    .collect::<Vec<_>>();
+                sites.sort();
+                sites.dedup();
+                sites
+            })
+            .collect::<IndexVec<Local, _>>();
         for a in self.body.local_decls.indices() {
-            let def_sites = std::mem::take(&mut self.def_sites[a]).into_iter();
-            let mut newly_added: LocationMap<bool> = LocationMap::new(self.body);
-            let mut work_list = VecDeque::from_iter(def_sites);
-            while let Some(location) = work_list.pop_front() {
-                let bb = location.block;
-                for bb_f in &self.dominator_frontier[bb] {
-                    
+            let mut already_added = BitSet::new_empty(self.body.basic_blocks().len());
+            let mut work_list = VecDeque::from_iter(def_sites[a].iter().map(|&bb| bb));
+            while let Some(bb) = work_list.pop_front() {
+                for &bb_f in &self.dominator_frontier[bb] {
+                    // wrong! new visited
+                    if !already_added.contains(bb_f) {
+                        inserted[bb_f].push(a);
+                        assert!(already_added.insert(bb_f));
+                        if !def_sites[a].contains(&bb_f) {
+                            work_list.push_back(bb_f);
+                        }
+                    }
                 }
             }
         }
-        todo!()
+        inserted
     }
 }
