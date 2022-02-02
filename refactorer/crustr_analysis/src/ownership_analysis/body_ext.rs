@@ -17,8 +17,6 @@ pub type PhiNodeInserted = IndexVec<BasicBlock, SmallVec<[Local; PHI_NODE_INSERT
 /// Extension methods for Body<'tcx>
 pub trait BodyExt<'tcx> {
     fn dominator_frontier(&self) -> DominatorFrontier;
-
-    /// Compute points of insertion for phi nodes, extend def_sites if upon insertion
     fn compute_phi_node(&self) -> PhiNodeInserted;
 }
 
@@ -62,34 +60,22 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
     }
 
     fn compute_phi_node(&self) -> PhiNodeInserted {
-        ComputePhiNode::new(
-            self,
-            DefSitesGatherer::new(self).gather(),
-            self.dominator_frontier(),
-        )
+        ComputePhiNode {
+            body: self,
+            def_sites: DefSitesGatherer::new(self).gather(),
+            dominator_frontier: self.dominator_frontier(),
+        }
         .run()
     }
 }
 
 struct ComputePhiNode<'cpn, 'tcx> {
-    body: &'cpn Body<'tcx>,
-    def_sites: DefSites,
-    dominator_frontier: DominatorFrontier,
+    pub body: &'cpn Body<'tcx>,
+    pub def_sites: DefSites,
+    pub dominator_frontier: DominatorFrontier,
 }
 
 impl<'cpn, 'tcx> ComputePhiNode<'cpn, 'tcx> {
-    fn new(
-        body: &'cpn Body<'tcx>,
-        def_sites: DefSites,
-        dominator_frontier: DominatorFrontier,
-    ) -> Self {
-        ComputePhiNode {
-            body,
-            def_sites,
-            dominator_frontier,
-        }
-    }
-
     fn run(mut self) -> PhiNodeInserted {
         let mut inserted: PhiNodeInserted =
             IndexVec::from_elem(SmallVec::new(), self.body.basic_blocks());
