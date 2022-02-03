@@ -33,9 +33,9 @@ impl DefUseCategorisable for BorrowckDefUse {
     #[inline]
     fn categorize(context: PlaceContext) -> Self::DefUse {
         match context {
-    
+
             PlaceContext::MutatingUse(MutatingUseContext::Store) |
-    
+
             // We let Call define the result in both the success and
             // unwind cases. This is not really correct, however it
             // does not seem to be observable due to the way that we
@@ -45,19 +45,19 @@ impl DefUseCategorisable for BorrowckDefUse {
             PlaceContext::MutatingUse(MutatingUseContext::Call) |
             PlaceContext::MutatingUse(MutatingUseContext::AsmOutput) |
             PlaceContext::MutatingUse(MutatingUseContext::Yield) |
-    
+
             // Storage live and storage dead aren't proper defines, but we can ignore
             // values that come before them.
             PlaceContext::NonUse(NonUseContext::StorageLive) |
             PlaceContext::NonUse(NonUseContext::StorageDead) => Some(BorrowckDefUse::Def),
-    
+
             // These are uses that occur *outside* of a drop. For the
             // purposes of NLL, these are special in that **all** the
             // lifetimes appearing in the variable must be live for each regular use.
-    
+
             PlaceContext::NonMutatingUse(NonMutatingUseContext::Projection) |
             PlaceContext::MutatingUse(MutatingUseContext::Projection) |
-    
+
             // Borrows only consider their local used at the point of the borrow.
             // This won't affect the results since we use this analysis for generators
             // and we only care about the result at suspension points. Borrows cannot
@@ -66,7 +66,7 @@ impl DefUseCategorisable for BorrowckDefUse {
             PlaceContext::NonMutatingUse(NonMutatingUseContext::SharedBorrow) |
             PlaceContext::NonMutatingUse(NonMutatingUseContext::ShallowBorrow) |
             PlaceContext::NonMutatingUse(NonMutatingUseContext::UniqueBorrow) |
-    
+
             PlaceContext::MutatingUse(MutatingUseContext::AddressOf) |
             PlaceContext::NonMutatingUse(NonMutatingUseContext::AddressOf) |
             PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect) |
@@ -75,16 +75,16 @@ impl DefUseCategorisable for BorrowckDefUse {
             PlaceContext::NonUse(NonUseContext::AscribeUserTy) |
             PlaceContext::MutatingUse(MutatingUseContext::Retag) =>
                 Some(BorrowckDefUse::Use),
-    
+
 
             // These are uses that occur in a DROP (a MIR drop, not a
             // call to `std::mem::drop()`). For the purposes of NLL,
             // uses in drop are special because `#[may_dangle]`
             // attributes can affect whether lifetimes must be live.
-    
+
             PlaceContext::MutatingUse(MutatingUseContext::Drop) =>
                 Some(BorrowckDefUse::Drop),
-    
+
             // Debug info is neither def nor use.
             PlaceContext::NonUse(NonUseContext::VarDebugInfo) => None,
             _ => panic!("WTF?")
