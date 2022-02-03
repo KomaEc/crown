@@ -1,3 +1,5 @@
+//! Extension methods for Body<'tcx>
+
 use rustc_index::bit_set::{BitSet, HybridBitSet};
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Local};
@@ -15,7 +17,8 @@ pub type DominanceFrontier =
     IndexVec<BasicBlock, SmallVec<[BasicBlock; DOMINATOR_FRONTIER_ON_STACK_SIZE]>>;
 pub type PhiNodeInserted = IndexVec<BasicBlock, SmallVec<[Local; PHI_NODE_INSERTED_ON_STACK_SIZE]>>;
 
-/// Extension methods for Body<'tcx>
+
+
 pub trait BodyExt<'tcx> {
     fn dominance_frontier(&self) -> DominanceFrontier;
     fn compute_phi_node(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted;

@@ -1,3 +1,5 @@
+//! Distinguish def/use in MIR
+
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::visit::{
     MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor,

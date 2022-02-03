@@ -1,3 +1,6 @@
+//! Constraint Generation
+
+
 use rustc_middle::mir::{visit::Visitor, Body};
 
 /// Generate ownership constraints for a function body, perform
