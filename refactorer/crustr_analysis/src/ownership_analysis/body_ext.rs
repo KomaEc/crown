@@ -49,7 +49,7 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
     }
 
     fn compute_phi_node(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted {
-        compute_phi_node(
+        minimal_ssa_form(
             self,
             DefSitesGatherer::new(self).gather(),
             self.dominance_frontier(),
@@ -58,7 +58,10 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
     }
 }
 
-pub fn compute_phi_node<'tcx>(
+/// Compute phi node insertion points for minimal SSA form.
+/// Along with normal construction, check for liveness on entry
+/// before inserting phi node to avoid redundant nodes.
+pub fn minimal_ssa_form<'tcx>(
     body: &Body<'tcx>,
     mut def_sites: DefSites,
     dominance_frontier: DominanceFrontier,
