@@ -13,7 +13,6 @@ use rustc_middle::{
     ty::{TyCtxt, TyKind::FnDef},
 };
 
-pub mod interprocedural;
 pub mod ownership_analysis;
 // pub mod pointer_analysis;
 pub mod toy_analysis;
