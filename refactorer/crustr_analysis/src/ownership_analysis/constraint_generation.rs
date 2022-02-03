@@ -1,4 +1,4 @@
-use rustc_middle::mir::{Body, visit::Visitor};
+use rustc_middle::mir::{visit::Visitor, Body};
 
 /// Generate ownership constraints for a function body, perform
 /// SSA renaming in the meantime

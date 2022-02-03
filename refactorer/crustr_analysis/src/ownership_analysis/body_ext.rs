@@ -46,59 +46,53 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
     }
 
     fn compute_phi_node(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted {
-        ComputePhiNode {
-            body: self,
-            def_sites: DefSitesGatherer::new(self).gather(),
-            dominance_frontier: self.dominance_frontier(),
-            liveness: liveness_result(tcx, self),
-        }
-        .run()
+        compute_phi_node(
+            self,
+            DefSitesGatherer::new(self).gather(),
+            self.dominance_frontier(),
+            liveness_result(tcx, self),
+        )
     }
 }
 
-struct ComputePhiNode<'cpn, 'tcx> {
-    pub body: &'cpn Body<'tcx>,
-    pub def_sites: DefSites,
-    pub dominance_frontier: DominanceFrontier,
-    pub liveness: ResultsCursor<'cpn, 'tcx, MaybeLiveLocals>,
-}
-
-impl<'cpn, 'tcx> ComputePhiNode<'cpn, 'tcx> {
-    fn run(mut self) -> PhiNodeInserted {
-        let mut inserted: PhiNodeInserted =
-            IndexVec::from_elem(SmallVec::new(), self.body.basic_blocks());
-        let def_sites = self
-            .def_sites
-            .iter_mut()
-            .map(|sites| {
-                let mut sites = sites
-                    .iter_mut()
-                    .map(|location| location.block)
-                    .collect::<Vec<_>>();
-                sites.sort();
-                sites.dedup();
-                sites
-            })
-            .collect::<IndexVec<Local, _>>();
-        for a in self.body.local_decls.indices() {
-            let mut already_added = BitSet::new_empty(self.body.basic_blocks().len());
-            let mut work_list = VecDeque::from_iter(def_sites[a].iter().map(|&bb| bb));
-            while let Some(bb) = work_list.pop_front() {
-                for &bb_f in &self.dominance_frontier[bb] {
-                    self.liveness.seek_to_block_start(bb_f);
-                    if !already_added.contains(bb_f) && self.liveness.get().contains(a) {
-                        inserted[bb_f].push(a);
-                        assert!(already_added.insert(bb_f));
-                        if !def_sites[a].contains(&bb_f) {
-                            work_list.push_back(bb_f);
-                        }
+pub fn compute_phi_node<'tcx>(
+    body: &Body<'tcx>,
+    mut def_sites: DefSites,
+    dominance_frontier: DominanceFrontier,
+    mut liveness: ResultsCursor<'_, 'tcx, MaybeLiveLocals>,
+) -> PhiNodeInserted {
+    let mut inserted: PhiNodeInserted = IndexVec::from_elem(SmallVec::new(), body.basic_blocks());
+    let def_sites = def_sites
+        .iter_mut()
+        .map(|sites| {
+            let mut sites = sites
+                .iter_mut()
+                .map(|location| location.block)
+                .collect::<Vec<_>>();
+            sites.sort();
+            sites.dedup();
+            sites
+        })
+        .collect::<IndexVec<Local, _>>();
+    for a in body.local_decls.indices() {
+        let mut already_added = BitSet::new_empty(body.basic_blocks().len());
+        let mut work_list = VecDeque::from_iter(def_sites[a].iter().map(|&bb| bb));
+        while let Some(bb) = work_list.pop_front() {
+            for &bb_f in &dominance_frontier[bb] {
+                liveness.seek_to_block_start(bb_f);
+                if !already_added.contains(bb_f) && liveness.get().contains(a) {
+                    inserted[bb_f].push(a);
+                    assert!(already_added.insert(bb_f));
+                    if !def_sites[a].contains(&bb_f) {
+                        work_list.push_back(bb_f);
                     }
                 }
             }
         }
-        inserted
     }
+    inserted
 }
+
 
 fn liveness_result<'a, 'tcx>(
     tcx: TyCtxt<'tcx>,
