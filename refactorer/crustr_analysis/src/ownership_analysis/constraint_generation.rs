@@ -1,6 +1,5 @@
 //! Constraint Generation
 
-
 use rustc_middle::mir::{visit::Visitor, Body};
 
 /// Generate ownership constraints for a function body, perform
@@ -14,3 +13,5 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'tcx> {
         self.super_body(body)
     }
 }
+
+pub trait BodySummarisable<'tcx>: Visitor<'tcx> {}

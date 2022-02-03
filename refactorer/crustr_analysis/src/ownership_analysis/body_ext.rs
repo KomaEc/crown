@@ -8,7 +8,7 @@ use rustc_mir_dataflow::{impls::MaybeLiveLocals, Analysis, ResultsCursor};
 use smallvec::SmallVec;
 use std::collections::VecDeque;
 
-use crate::ownership_analysis::def_use::{DefSites, DefSitesGatherer};
+use crate::ownership_analysis::def_use::{DefSites, DefSitesGatherer, DefUseCategorisable};
 
 const DOMINATOR_FRONTIER_ON_STACK_SIZE: usize = 3;
 const PHI_NODE_INSERTED_ON_STACK_SIZE: usize = 3;
@@ -17,11 +17,9 @@ pub type DominanceFrontier =
     IndexVec<BasicBlock, SmallVec<[BasicBlock; DOMINATOR_FRONTIER_ON_STACK_SIZE]>>;
 pub type PhiNodeInserted = IndexVec<BasicBlock, SmallVec<[Local; PHI_NODE_INSERTED_ON_STACK_SIZE]>>;
 
-
-
 pub trait BodyExt<'tcx> {
     fn dominance_frontier(&self) -> DominanceFrontier;
-    fn compute_phi_node(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted;
+    fn compute_phi_node<DefUse: DefUseCategorisable>(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted;
 }
 
 impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
@@ -48,10 +46,10 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
         IndexVec::from_iter(df.iter().map(|set| set.iter().collect::<SmallVec<_>>()))
     }
 
-    fn compute_phi_node(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted {
+    fn compute_phi_node<DefUse: DefUseCategorisable>(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted {
         minimal_ssa_form(
             self,
-            DefSitesGatherer::new(self).gather(),
+            DefSitesGatherer::<DefUse>::new(self).gather(),
             self.dominance_frontier(),
             liveness_result(tcx, self),
         )
@@ -98,7 +96,6 @@ pub fn minimal_ssa_form<'tcx>(
     }
     inserted
 }
-
 
 fn liveness_result<'a, 'tcx>(
     tcx: TyCtxt<'tcx>,
