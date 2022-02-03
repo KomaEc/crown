@@ -48,12 +48,6 @@ fn test_phi_node_insertion_point() {
                     panic!("Error in writing mir");
                 }
 
-                let dominators = body.dominators();
-                for bb in body.basic_blocks().indices() {
-                    let idom = dominators.immediate_dominator(bb);
-                    println!("{:?} idom {:?}", idom, bb);
-                }
-
                 let dominance_frontier = body.dominance_frontier();
                 assert_eq!(dominance_frontier[BasicBlock::from_u32(0)].as_slice(), &[]);
                 assert_eq!(
