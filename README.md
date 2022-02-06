@@ -337,3 +337,28 @@ Shall we apply the same idea here, that use a prophecy variable $\psi_p$ to indi
 3. Unsatisfiable core ==>
    1. Some pointers are inherently unsafe
    2. A set of transformation
+
+### Feb 4
+1. Ownership analysis
+   1. SSA (ok)
+   2. Constraint generation (partially ok)
+   3. Z3
+2. Array pointers are particularly annoying! (refactor `T` into `[T]`)
+   1. occurs too frequently in C projects, introduces a lot of unsafe
+   2. `offset()` complicates the MIR, making simple analysis hard to implement. Replacing `offset()` by array indexing also improves readability
+   3. Design space for interesting transformation/refactoring patterns.
+      1. thin pointer => fat pointer
+      2. zero-terminated pointer (a la Cyclone)
+
+    ==> `T` -> `[T]`; Lightweight loop summary (pattern detection?)
+
+    Detection: `p` is an array pointer if
+        1. `p.offset()`;
+        2. `p = calloc()`;
+        3. `_ = realloc(p)` occurs 
+
+arr[i].f
+
+*arr.offset(i).f
+ptr = arr.offset(i)
+*ptr = f

@@ -32,3 +32,9 @@ impl<T> NonNullRawMut<T> {
         &*self.ptr
     }
 }
+
+pub struct ZeroTerminated<T>
+where T: ?Sized
+{
+    data: T
+}
