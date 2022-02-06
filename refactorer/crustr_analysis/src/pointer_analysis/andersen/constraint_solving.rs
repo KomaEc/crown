@@ -4,7 +4,7 @@ use crate::pointer_analysis::{
     ConstraintIndex, ConstraintKind, ConstraintSet, PointerAnalysisNode,
 };
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, WithSuccessors};
-use index::vec::IndexVec;
+use rustc_index::vec::IndexVec;
 use std::collections::VecDeque;
 
 /// Data structure for solving the constraints.

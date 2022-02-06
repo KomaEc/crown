@@ -1,5 +1,5 @@
 use crate::pointer_analysis::ctxt::PointerAnalysisCtxt;
-use index::vec::IndexVec;
+use rustc_index::vec::IndexVec;
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::{
     mir::{Body, PlaceRef},
@@ -115,7 +115,7 @@ impl<'tcx> From<LocalDefId> for PointerAnalysisNodeData<'tcx> {
     }
 }
 
-index::newtype_index! {
+rustc_index::newtype_index! {
     pub struct PointerAnalysisNode {
         DEBUG_FORMAT = "AndersenNode({})"
     }
@@ -139,7 +139,7 @@ impl PointerAnalysisNode {
     }
 }
 
-index::newtype_index! {
+rustc_index::newtype_index! {
     pub struct ConstraintIndex {
         DEBUG_FORMAT = "AndersenConstraintIndex({})"
     }

@@ -7,8 +7,8 @@ use crate::pointer_analysis::{ctxt::PointerAnalysisCtxt, PointerAnalysisNode};
 use core::marker::PhantomData;
 use graph::WithNumNodes;
 use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, scc::Sccs};
-use index::vec::IndexVec;
-use index::{bit_set::HybridBitSet, vec::Idx};
+use rustc_index::vec::IndexVec;
+use rustc_index::{bit_set::HybridBitSet, vec::Idx};
 use std::convert::AsRef;
 use std::mem::MaybeUninit;
 
@@ -49,7 +49,7 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
     }
 }
 
-index::newtype_index! {
+rustc_index::newtype_index! {
     pub struct PtsGraphSccIndex {
         DEBUG_FORMAT = "PtsGraphSccIndex({})"
     }

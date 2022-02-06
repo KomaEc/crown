@@ -14,8 +14,9 @@ use rustc_middle::{
 };
 
 pub mod ownership_analysis;
-// pub mod pointer_analysis;
+pub mod pointer_analysis;
 pub mod toy_analysis;
+pub mod slice_analysis;
 
 extern crate rustc_arena;
 extern crate rustc_ast;

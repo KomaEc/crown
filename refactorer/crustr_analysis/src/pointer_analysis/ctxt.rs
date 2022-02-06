@@ -2,7 +2,7 @@ use crate::pointer_analysis::{
     constraint_generation::ConstraintGeneration, Constraint, ConstraintKind, ConstraintSet,
     PointerAnalysisNode, PointerAnalysisNodeData,
 };
-use index::vec::IndexVec;
+use rustc_index::vec::IndexVec;
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::{
     mir::{Body, Local, Place, PlaceRef},
