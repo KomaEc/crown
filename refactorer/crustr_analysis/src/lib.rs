@@ -7,16 +7,13 @@
 
 use std::ops::{Index, IndexMut};
 
-use rustc_hir::def_id::DefId;
-use rustc_middle::{
-    mir::{BasicBlock, Body, Location},
-    ty::{TyCtxt, TyKind::FnDef},
-};
+use rustc_middle::mir::{BasicBlock, Body, Location};
 
+pub mod call_graph;
 pub mod ownership_analysis;
 pub mod pointer_analysis;
-pub mod toy_analysis;
 pub mod slice_analysis;
+pub mod toy_analysis;
 
 extern crate rustc_arena;
 extern crate rustc_ast;
@@ -37,12 +34,7 @@ extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_target;
 
-use graph::{
-    implementation::sparse_bit_vector::SparseBitVectorGraph, DirectedGraph, GraphSuccessors,
-    WithNumNodes, WithSuccessors,
-};
-use rustc_index::{bit_set::HybridIter, vec::IndexVec};
-use rustc_middle::mir::TerminatorKind;
+use rustc_index::vec::IndexVec;
 
 rustc_index::newtype_index! {
     pub struct Function {

@@ -1,6 +1,6 @@
 use crate::pointer_analysis::ctxt::PointerAnalysisCtxt;
-use rustc_index::vec::IndexVec;
 use rustc_hir::def_id::LocalDefId;
+use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{Body, PlaceRef},
     ty::TyCtxt,

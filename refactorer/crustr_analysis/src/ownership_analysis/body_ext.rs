@@ -8,7 +8,7 @@ use rustc_mir_dataflow::{impls::MaybeLiveLocals, Analysis, ResultsCursor};
 use smallvec::SmallVec;
 use std::collections::VecDeque;
 
-use crate::ownership_analysis::def_use::{DefUseCategorisable, DefSites, DefSitesGatherer};
+use crate::ownership_analysis::def_use::{DefSites, DefSitesGatherer, DefUseCategorisable};
 
 const DOMINATOR_FRONTIER_ON_STACK_SIZE: usize = 3;
 const PHI_NODE_INSERTED_ON_STACK_SIZE: usize = 3;

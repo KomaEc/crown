@@ -7,6 +7,4 @@ members = [
     "refactorer/crustr_rewrite",
     "refactorer/crustr_passes",
     "utils/graph",
-    "utils/cache",
-    "utils/work_list",
 ]
