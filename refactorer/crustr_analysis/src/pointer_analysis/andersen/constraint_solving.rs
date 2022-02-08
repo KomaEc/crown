@@ -3,7 +3,8 @@ use crate::pointer_analysis::{
     ctxt::PointerAnalysisCtxt,
     ConstraintIndex, ConstraintKind, ConstraintSet, PointerAnalysisNode,
 };
-use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, WithSuccessors};
+use graph::implementation::sparse_bit_vector::SparseBitVectorGraph;
+use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
 use std::collections::VecDeque;
 

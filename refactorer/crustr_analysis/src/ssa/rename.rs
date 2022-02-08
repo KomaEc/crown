@@ -1,5 +1,5 @@
 use rustc_middle::{
-    mir::{visit::Visitor, Body, BasicBlock, BasicBlockData},
+    mir::{visit::Visitor, BasicBlock, BasicBlockData, Body},
     ty::TyCtxt,
 };
 
@@ -25,7 +25,5 @@ pub trait Renamer<'tcx>: Visitor<'tcx> {
         }
     }
 
-    fn visit_basic_block_data(&mut self, bb: BasicBlock, data: BasicBlockData) {
-
-    }
+    fn visit_basic_block_data(&mut self, bb: BasicBlock, data: BasicBlockData) {}
 }

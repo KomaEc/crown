@@ -10,3 +10,4 @@ rustc_private=true
 
 [dependencies]
 #index = { path = "../index" }
+rand = "0.8.4"

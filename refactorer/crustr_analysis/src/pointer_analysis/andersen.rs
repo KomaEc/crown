@@ -3,10 +3,11 @@
 pub mod constraint_solving;
 mod diagnostics;
 
+use rustc_data_structures::graph::scc::Sccs;
 use crate::pointer_analysis::{ctxt::PointerAnalysisCtxt, PointerAnalysisNode};
 use core::marker::PhantomData;
-use graph::WithNumNodes;
-use graph::{implementation::sparse_bit_vector::SparseBitVectorGraph, scc::Sccs};
+use rustc_data_structures::graph::WithNumNodes;
+use graph::implementation::sparse_bit_vector::SparseBitVectorGraph;
 use rustc_index::vec::IndexVec;
 use rustc_index::{bit_set::HybridBitSet, vec::Idx};
 use std::convert::AsRef;

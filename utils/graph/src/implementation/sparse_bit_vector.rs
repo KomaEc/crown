@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests;
 
-use crate::{DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors};
+use rustc_data_structures::graph::{DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors};
 use rustc_index::{
     bit_set::{HybridBitSet, HybridIter},
     vec::{Idx, IndexVec},
