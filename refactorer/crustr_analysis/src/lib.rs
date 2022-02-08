@@ -6,13 +6,13 @@
 #![feature(maybe_uninit_extra)]
 
 pub mod call_graph;
+pub mod def_use;
+pub mod liveness_analysis;
 pub mod ownership_analysis;
 pub mod pointer_analysis;
 pub mod slice_analysis;
-pub mod toy_analysis;
 pub mod ssa;
-pub mod liveness_analysis;
-pub mod def_use;
+pub mod toy_analysis;
 
 extern crate rustc_arena;
 extern crate rustc_ast;
@@ -34,12 +34,15 @@ extern crate rustc_span;
 extern crate rustc_target;
 
 use rustc_index::vec::IndexVec;
+use rustc_middle::{
+    mir::{BasicBlock, Body, Location},
+    ty::FieldDef,
+};
 use std::ops::{Index, IndexMut};
-use rustc_middle::{mir::{BasicBlock, Body, Location}, ty::FieldDef};
 
 pub struct FieldDefSumm<'fds, Summ> {
     pub field_def: &'fds FieldDef,
-    pub summary: Summ
+    pub summary: Summ,
 }
 
 /*

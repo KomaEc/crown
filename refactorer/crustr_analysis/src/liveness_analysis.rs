@@ -80,7 +80,8 @@ impl<'tcx> GenKillAnalysis<'tcx> for MaybeLiveLocals {
         statement: &mir::Statement<'tcx>,
         location: Location,
     ) {
-        self.transfer_function(trans).visit_statement(statement, location);
+        self.transfer_function(trans)
+            .visit_statement(statement, location);
     }
 
     fn terminator_effect(
@@ -89,7 +90,8 @@ impl<'tcx> GenKillAnalysis<'tcx> for MaybeLiveLocals {
         terminator: &mir::Terminator<'tcx>,
         location: Location,
     ) {
-        self.transfer_function(trans).visit_terminator(terminator, location);
+        self.transfer_function(trans)
+            .visit_terminator(terminator, location);
     }
 
     fn call_return_effect(
@@ -197,7 +199,9 @@ impl RustcLivenessDefUse {
                 unreachable!("A projection could be a def or a use and must be handled separately")
             }
 
-            _ => { panic!("wtf") }
+            _ => {
+                panic!("wtf")
+            }
         }
     }
 }

@@ -1,7 +1,7 @@
 use graph::*;
+use rustc_data_structures::binary_search_util::binary_search_slice;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
-use rustc_data_structures::binary_search_util::binary_search_slice;
 
 #[derive(derivative::Derivative)]
 #[derivative(Default)]
@@ -10,7 +10,7 @@ pub struct CallGraph {
     pub functions: IndexVec<Function, DefId>,
 }
 
-rustc_index::newtype_index!{
+rustc_index::newtype_index! {
     pub struct Function {
         DEBUG_FORMAT = "Function_({})"
     }

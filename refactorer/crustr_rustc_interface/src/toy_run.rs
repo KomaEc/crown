@@ -69,48 +69,48 @@ impl CompilerRunnable for ToyRun {
                     })
                     .collect::<Vec<_>>();
 
-                    /*
-                log::info!("Start tracing places ...");
-                for &local_def_id in top_level_function_def_ids.iter() {
-                    let (body, _) = tcx.mir_promoted(WithOptConstParam::unknown(local_def_id));
-                    let body_ref = body.borrow();
+                /*
+                                log::info!("Start tracing places ...");
+                                for &local_def_id in top_level_function_def_ids.iter() {
+                                    let (body, _) = tcx.mir_promoted(WithOptConstParam::unknown(local_def_id));
+                                    let body_ref = body.borrow();
 
-                    log::info!("... tracing places for {:?}", local_def_id);
-                    let mut tracer = PlaceTracer::new(&top_level_function_def_ids, tcx);
-                    tracer.visit_body(body_ref.borrow());
-                }
-                log::info!("Done\n");
+                                    log::info!("... tracing places for {:?}", local_def_id);
+                                    let mut tracer = PlaceTracer::new(&top_level_function_def_ids, tcx);
+                                    tracer.visit_body(body_ref.borrow());
+                                }
+                                log::info!("Done\n");
 
-                log::info!("Collecting body refs ...");
-                let body_refs = top_level_function_def_ids
-                    .into_iter()
-                    .map(|did| {
-                        let (body, _) = tcx.mir_promoted(WithOptConstParam::unknown(did));
-                        body.borrow()
-                    })
-                    .collect::<Vec<_>>();
-                // .iter().map(|body: &std::cell::Ref<_>| &**body).collect::<Vec<_>>();
+                                log::info!("Collecting body refs ...");
+                                let body_refs = top_level_function_def_ids
+                                    .into_iter()
+                                    .map(|did| {
+                                        let (body, _) = tcx.mir_promoted(WithOptConstParam::unknown(did));
+                                        body.borrow()
+                                    })
+                                    .collect::<Vec<_>>();
+                                // .iter().map(|body: &std::cell::Ref<_>| &**body).collect::<Vec<_>>();
 
-                let mut bodies = body_refs
-                    .iter()
-                    .map(|body: &std::cell::Ref<_>| &**body)
-                    .collect::<Vec<_>>();
-                bodies.sort_by_key(|body| body.source.instance.def_id());
+                                let mut bodies = body_refs
+                                    .iter()
+                                    .map(|body: &std::cell::Ref<_>| &**body)
+                                    .collect::<Vec<_>>();
+                                bodies.sort_by_key(|body| body.source.instance.def_id());
 
-                log::info!("Start pointer analysis ...");
-                let andersen_result = PointerAnalysis::new_analysis(bodies.as_slice(), tcx)
-                    .into_constraint_generation()
-                    .generate_constraints()
-                    .proceed_to_solving_by_andersen()
-                    .solve()
-                    .finish();
-                andersen_result.dump_pts_sets_to_log();
-                // andersen_result.report_ptr_alias();
+                                log::info!("Start pointer analysis ...");
+                                let andersen_result = PointerAnalysis::new_analysis(bodies.as_slice(), tcx)
+                                    .into_constraint_generation()
+                                    .generate_constraints()
+                                    .proceed_to_solving_by_andersen()
+                                    .solve()
+                                    .finish();
+                                andersen_result.dump_pts_sets_to_log();
+                                // andersen_result.report_ptr_alias();
 
-                log::info!("Start unused pointer decl analysis ...");
-                UnusedPointerDecl::new(&bodies, tcx, andersen_result).analyze();
+                                log::info!("Start unused pointer decl analysis ...");
+                                UnusedPointerDecl::new(&bodies, tcx, andersen_result).analyze();
 
-*/
+                */
                 log::info!("Done\n");
             })
         })
