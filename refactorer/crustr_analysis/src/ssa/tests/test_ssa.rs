@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use std::process;
 use std::str;
 
-use crate::ownership_analysis::body_ext::BodyExt;
+use crate::ssa::body_ext::BodyExt;
 
 #[test]
 fn test_phi_node_insertion_point() {
@@ -81,7 +81,7 @@ fn test_phi_node_insertion_point() {
                 assert!(dominance_frontier[BasicBlock::from_u32(8)].is_empty());
 
                 let insertion_points = body
-                    .compute_phi_node::<crate::ownership_analysis::def_use::BorrowckDefUse>(tcx);
+                    .compute_phi_node::<crate::def_use::BorrowckDefUse>(tcx);
                 assert_eq!(
                     insertion_points[BasicBlock::from_u32(1)].as_slice(),
                     &[Local::from_u32(0), Local::from_u32(2)]

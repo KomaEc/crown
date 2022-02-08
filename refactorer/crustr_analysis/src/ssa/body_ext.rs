@@ -4,11 +4,12 @@ use rustc_index::bit_set::{BitSet, HybridBitSet};
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Local};
 use rustc_middle::ty::TyCtxt;
-use rustc_mir_dataflow::{impls::MaybeLiveLocals, Analysis, ResultsCursor};
+use rustc_mir_dataflow::{Analysis, ResultsCursor};
 use smallvec::SmallVec;
 use std::collections::VecDeque;
 
-use crate::ownership_analysis::def_use::{DefSites, DefSitesGatherer, DefUseCategorisable};
+use crate::liveness_analysis::MaybeLiveLocals;
+use crate::def_use::{DefSites, DefSitesGatherer, DefUseCategorisable};
 
 const DOMINATOR_FRONTIER_ON_STACK_SIZE: usize = 3;
 const PHI_NODE_INSERTED_ON_STACK_SIZE: usize = 3;

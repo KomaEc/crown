@@ -14,24 +14,24 @@ pub trait DefUseCategorisable {
 
     fn using(def_use: Self::DefUse) -> bool;
 
-    fn categorize(context: PlaceContext) -> Self::DefUse;
+    fn categorize(context: PlaceContext) -> Option<Self::DefUse>;
 }
 
 impl DefUseCategorisable for BorrowckDefUse {
-    type DefUse = Option<Self>;
+    type DefUse = Self;
 
     #[inline]
     fn defining(def_use: Self::DefUse) -> bool {
-        matches!(def_use, Some(BorrowckDefUse::Def))
+        matches!(def_use, BorrowckDefUse::Def)
     }
 
     #[inline]
     fn using(def_use: Self::DefUse) -> bool {
-        matches!(def_use, Some(BorrowckDefUse::Use))
+        matches!(def_use, BorrowckDefUse::Use)
     }
 
     #[inline]
-    fn categorize(context: PlaceContext) -> Self::DefUse {
+    fn categorize(context: PlaceContext) -> Option<Self::DefUse> {
         match context {
 
             PlaceContext::MutatingUse(MutatingUseContext::Store) |
@@ -134,7 +134,7 @@ macro_rules! make_sites_gatherer(
                 context: PlaceContext,
                 location: Location
             ) {
-                if DefUse::$def_or_use(DefUse::categorize(context)) {
+                if DefUse::categorize(context).map_or(false, |def_use| DefUse::$def_or_use(def_use)) {
                     self.sites[place.local].push(location)
                 }
             }

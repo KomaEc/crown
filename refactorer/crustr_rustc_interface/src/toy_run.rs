@@ -40,12 +40,15 @@ impl CompilerRunnable for ToyRun {
                             if let rustc_hir::ItemKind::Fn(_, _, _) = item.kind {
                                 let def_id = item.def_id;
                                 // calculate mir bodies in advance
+                                /*
                                 let (body, promoted_bodies) =
                                     tcx.mir_promoted(WithOptConstParam::unknown(def_id));
                                 assert!(
                                     promoted_bodies.borrow().borrow().is_empty(),
                                     "Promoted bodies are not handled"
                                 );
+                                */
+                                let body = tcx.optimized_mir(def_id);
                                 // let body = body.steal();
 
                                 let mut w = String::new();
@@ -66,6 +69,7 @@ impl CompilerRunnable for ToyRun {
                     })
                     .collect::<Vec<_>>();
 
+                    /*
                 log::info!("Start tracing places ...");
                 for &local_def_id in top_level_function_def_ids.iter() {
                     let (body, _) = tcx.mir_promoted(WithOptConstParam::unknown(local_def_id));
@@ -106,6 +110,7 @@ impl CompilerRunnable for ToyRun {
                 log::info!("Start unused pointer decl analysis ...");
                 UnusedPointerDecl::new(&bodies, tcx, andersen_result).analyze();
 
+*/
                 log::info!("Done\n");
             })
         })

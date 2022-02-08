@@ -21,7 +21,7 @@ extern crate rustc_span;
 // extern crate rustc_borrowck;
 
 pub mod rewrite_struct;
-// pub mod toy_run;
+pub mod toy_run;
 
 pub fn config_setup(input_path: PathBuf) -> Config {
     let out = process::Command::new("rustc")

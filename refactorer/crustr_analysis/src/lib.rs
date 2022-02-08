@@ -5,15 +5,14 @@
 #![feature(crate_visibility_modifier)]
 #![feature(maybe_uninit_extra)]
 
-use std::ops::{Index, IndexMut};
-
-use rustc_middle::mir::{BasicBlock, Body, Location};
-
 pub mod call_graph;
 pub mod ownership_analysis;
 pub mod pointer_analysis;
 pub mod slice_analysis;
 pub mod toy_analysis;
+pub mod ssa;
+pub mod liveness_analysis;
+pub mod def_use;
 
 extern crate rustc_arena;
 extern crate rustc_ast;
@@ -35,14 +34,21 @@ extern crate rustc_span;
 extern crate rustc_target;
 
 use rustc_index::vec::IndexVec;
+use std::ops::{Index, IndexMut};
+use rustc_middle::{mir::{BasicBlock, Body, Location}, ty::FieldDef};
 
+pub struct FieldDefSumm<'fds, Summ> {
+    pub field_def: &'fds FieldDef,
+    pub summary: Summ
+}
+
+/*
 rustc_index::newtype_index! {
     pub struct Function {
         DEBUG_FORMAT = "Function({})"
     }
 }
 
-/*
 pub struct FunctionData {
     pub def_id: DefId,
 }

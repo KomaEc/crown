@@ -14,3 +14,4 @@ log = "0.4"
 #index = { path = "../../utils/index" }
 graph = { path = "../../utils/graph" }
 smallvec = "1.8.0"
+derivative = "2.2.0"
