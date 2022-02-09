@@ -1,6 +1,7 @@
 #![feature(rustc_private)]
 
 use rustc_errors::registry;
+use rustc_feature::UnstableFeatures;
 use rustc_interface::{interface::Compiler, Config};
 use rustc_session::config;
 use std::path::PathBuf;
@@ -10,6 +11,7 @@ use std::str;
 extern crate rustc_ast_pretty;
 extern crate rustc_error_codes;
 extern crate rustc_errors;
+extern crate rustc_feature;
 extern crate rustc_hash;
 extern crate rustc_hir;
 extern crate rustc_index;
@@ -33,6 +35,7 @@ pub fn config_setup(input_path: PathBuf) -> Config {
     Config {
         opts: config::Options {
             maybe_sysroot: Some(PathBuf::from(sysroot)),
+            unstable_features: UnstableFeatures::from_environment(None),
             ..config::Options::default()
         },
         input: config::Input::File(input_path),
