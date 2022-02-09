@@ -32,10 +32,10 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
         );
 
         for bb in self.basic_blocks().indices() {
-            let preds = self.predecessors()[bb].clone();
+            let preds = &self.predecessors()[bb];
             if preds.len() >= 2 {
                 // if `bb` is a join point
-                for bb_p in preds {
+                for &bb_p in preds {
                     let mut runner = bb_p;
                     while runner != dominators.immediate_dominator(bb) {
                         df[runner].insert(bb);
