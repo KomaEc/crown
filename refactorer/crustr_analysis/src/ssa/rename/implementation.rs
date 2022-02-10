@@ -1,9 +1,9 @@
 use rustc_middle::mir::{BasicBlock, Local, Location};
 
-use crate::ssa::rename::Rename;
+use crate::ssa::rename::RenameHandler;
 use log::debug;
 
-impl<R1: Rename, R2: Rename> Rename for (R1, R2) {
+impl<R1: RenameHandler, R2: RenameHandler> RenameHandler for (R1, R2) {
     fn rename_def(&mut self, local: Local, idx: usize, location: Location) {
         self.0.rename_def(local, idx, location);
         self.1.rename_def(local, idx, location);
@@ -29,7 +29,7 @@ macro_rules! make_rename_debug (
     ($Rename: ident, $macro: ident) => {
         pub struct $Rename;
 
-        impl Rename for $Rename {
+        impl RenameHandler for $Rename {
             fn rename_def(&mut self, local: Local, idx: usize, location: Location) {
                 $macro!(
                     "rename definition of {:?} with {} at {:?}",

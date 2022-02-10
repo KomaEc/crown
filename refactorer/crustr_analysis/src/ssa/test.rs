@@ -4,7 +4,7 @@ use std::str;
 
 use crate::def_use::BorrowckDefUse;
 use crate::ssa::body_ext::BodyExt;
-use crate::ssa::rename::{implementation::PrintStdRename, Rename, Renamer};
+use crate::ssa::rename::{implementation::PrintStdRename, RenameHandler, Renamer};
 
 #[test]
 fn test_phi_node_insertion_point() {
@@ -57,7 +57,7 @@ fn test_phi_node_insertion_point() {
             );
             assert!(dominance_frontier[BasicBlock::from_u32(8)].is_empty());
 
-            let insertion_points = body.compute_phi_node::<crate::def_use::BorrowckDefUse>(tcx);
+            let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
             assert_eq!(
                 insertion_points[BasicBlock::from_u32(1)].as_slice(),
                 &[Local::from_u32(0), Local::from_u32(2)]
@@ -85,7 +85,7 @@ fn test_rename() {
         let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
 
         struct TestProgramSpec;
-        impl Rename for TestProgramSpec {
+        impl RenameHandler for TestProgramSpec {
             fn rename_def(&mut self, local: Local, idx: usize, location: Location) {
                 if local == Local::from_usize(1) {
                     // regular definitions for i, which occur only at entry block

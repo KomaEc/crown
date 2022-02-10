@@ -11,14 +11,14 @@ use crate::{def_use::DefUseCategorisable, ssa::body_ext::PhiNodeInserted};
 
 use std::marker::PhantomData;
 
-pub trait Rename {
+pub trait RenameHandler {
     fn rename_def(&mut self, local: Local, idx: usize, location: Location);
     fn rename_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock);
     fn rename_use(&mut self, local: Local, idx: usize, location: Location);
     fn rename_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize);
 }
 
-pub struct Renamer<'me, 'tcx, DefUse: DefUseCategorisable, R: Rename> {
+pub struct Renamer<'me, 'tcx, DefUse: DefUseCategorisable, R: RenameHandler> {
     body: &'me Body<'tcx>,
     insertion_points: &'me PhiNodeInserted,
     pub count: IndexVec<Local, usize>,
@@ -27,7 +27,7 @@ pub struct Renamer<'me, 'tcx, DefUse: DefUseCategorisable, R: Rename> {
     _marker: PhantomData<*const DefUse>,
 }
 
-impl<'me, 'tcx, DefUse: DefUseCategorisable, R: Rename> Renamer<'me, 'tcx, DefUse, R> {
+impl<'me, 'tcx, DefUse: DefUseCategorisable, R: RenameHandler> Renamer<'me, 'tcx, DefUse, R> {
     pub fn new(body: &'me Body<'tcx>, insertion_points: &'me PhiNodeInserted, rename: R) -> Self {
         Renamer {
             body,
@@ -41,7 +41,7 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, R: Rename> Renamer<'me, 'tcx, DefUs
     }
 }
 
-impl<'me, 'tcx, DefUse: DefUseCategorisable, R: Rename> Visitor<'tcx>
+impl<'me, 'tcx, DefUse: DefUseCategorisable, R: RenameHandler> Visitor<'tcx>
     for Renamer<'me, 'tcx, DefUse, R>
 {
     fn visit_body(&mut self, body: &Body<'tcx>) {
@@ -87,9 +87,7 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, R: Rename> Visitor<'tcx>
             } else {
                 self.visit_basic_block_data(bb, &body.basic_blocks()[bb]);
                 visitor_stack.push((bb, true));
-                for &child in children[bb].iter().rev() {
-                    visitor_stack.push((child, false))
-                }
+                visitor_stack.extend(children[bb].iter().rev().map(|&bb| (bb, false)));
             }
         }
     }
