@@ -48,9 +48,12 @@ pub const INVALID_EDGE_INDEX: u32 = 0xFFFF_FF00;
 
 impl<Node: Idx, Edge: Idx> Graph<Node, Edge> {
     pub fn new(num_nodes: usize, edge_pairs: impl Iterator<Item = (Node, Node)>) -> Self {
-        let nodes = IndexVec::from_elem_n(NodeData {
-            first_edges: [Edge::new(INVALID_EDGE_INDEX as usize); 2],
-        }, num_nodes);
+        let nodes = IndexVec::from_elem_n(
+            NodeData {
+                first_edges: [Edge::new(INVALID_EDGE_INDEX as usize); 2],
+            },
+            num_nodes,
+        );
         let mut g = Graph {
             nodes,
             edges: IndexVec::new(),
