@@ -154,7 +154,7 @@ where
     }
 }
 
-#[derive(Eq, PartialEq, Clone)]
+#[derive(Eq, PartialEq, Clone, Copy)]
 enum RustcLivenessDefUse {
     Def,
     Use,

@@ -8,7 +8,7 @@ use rustc_middle::mir::{Body, Local, Location, Place};
 use smallvec::{smallvec, SmallVec};
 
 pub trait DefUseCategorisable {
-    type DefUse: PartialEq + Eq + Clone;
+    type DefUse: PartialEq + Eq + Clone + Copy;
 
     fn defining(def_use: Self::DefUse) -> bool;
 
@@ -92,7 +92,7 @@ impl DefUseCategorisable for BorrowckDefUse {
     }
 }
 
-#[derive(Eq, PartialEq, Clone)]
+#[derive(Eq, PartialEq, Clone, Copy)]
 pub enum BorrowckDefUse {
     Def,
     Use,

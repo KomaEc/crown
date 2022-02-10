@@ -173,7 +173,7 @@ impl<'tcx> CallGraphConstruction<'tcx> {
 }
 */
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct LocationMap<T> {
     /// Location-indexed (BasicBlock for outer index, index within BB
     /// for inner index) map.

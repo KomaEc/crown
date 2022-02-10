@@ -1,29 +1,159 @@
-use rustc_middle::{
-    mir::{visit::Visitor, BasicBlock, BasicBlockData, Body},
-    ty::TyCtxt,
+pub mod implementation;
+
+use rustc_data_structures::graph::WithSuccessors;
+use rustc_index::vec::IndexVec;
+use rustc_middle::mir::{
+    visit::{PlaceContext, Visitor},
+    BasicBlock, BasicBlockData, Body, Local, Location, Place,
 };
 
-/// A `Renamer` will not really rename variables in a body (and
-/// hence it's a subtrait of `Visitor` rather than `MutVisitor`),
-/// but emit side effects (such as constraint variables generation
-/// in some analysis) when rename happens.
-pub trait Renamer<'tcx>: Visitor<'tcx> {
-    fn tcx(&self) -> TyCtxt<'tcx>;
+use crate::{def_use::DefUseCategorisable, ssa::body_ext::PhiNodeInserted};
 
+use std::marker::PhantomData;
+
+pub trait Rename {
+    fn rename_def(&mut self, local: Local, idx: usize, location: Location);
+    fn rename_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock);
+    fn rename_use(&mut self, local: Local, idx: usize, location: Location);
+    fn rename_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize);
+}
+
+pub struct Renamer<'me, 'tcx, DefUse: DefUseCategorisable, R: Rename> {
+    body: &'me Body<'tcx>,
+    insertion_points: &'me PhiNodeInserted,
+    pub count: IndexVec<Local, usize>,
+    stack: IndexVec<Local, Vec<usize>>,
+    pub rename: R,
+    _marker: PhantomData<*const DefUse>,
+}
+
+impl<'me, 'tcx, DefUse: DefUseCategorisable, R: Rename> Renamer<'me, 'tcx, DefUse, R> {
+    pub fn new(body: &'me Body<'tcx>, insertion_points: &'me PhiNodeInserted, rename: R) -> Self {
+        Renamer {
+            body,
+            insertion_points,
+            count: IndexVec::from_elem(0, &body.local_decls),
+            // Every variable is assumed to be defined at the entry point
+            stack: IndexVec::from_elem(vec![0], &body.local_decls),
+            rename,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<'me, 'tcx, DefUse: DefUseCategorisable, R: Rename> Visitor<'tcx>
+    for Renamer<'me, 'tcx, DefUse, R>
+{
     fn visit_body(&mut self, body: &Body<'tcx>) {
-        use std::cmp::Ordering;
         let dominators = body.dominators();
-        let mut bb_in_dominance_order = body.basic_blocks().indices().collect::<Vec<_>>();
-        bb_in_dominance_order.sort_by(|&bb1, &bb2| {
-            dominators
-                .rank_partial_cmp(bb1, bb2)
-                .map(Ordering::reverse)
-                .unwrap_or(Ordering::Equal)
+        let mut children = IndexVec::from_elem(vec![], body.basic_blocks());
+        let mut root = BasicBlock::from_u32(0);
+        body.basic_blocks().indices().for_each(|bb| {
+            let dom = dominators.immediate_dominator(bb);
+            if dom != bb {
+                children[dom].push(bb)
+            } else {
+                root = bb;
+            }
         });
-        for bb in bb_in_dominance_order {
-            self.super_basic_block_data(bb, &body.basic_blocks()[bb])
+        // mir convention?
+        assert_eq!(root, BasicBlock::from_u32(0));
+        let mut visitor_stack = vec![(root, false)];
+
+        while let Some((bb, to_pop_stack)) = visitor_stack.pop() {
+            if to_pop_stack {
+                struct StackPopper<'me, DefUse: DefUseCategorisable>(
+                    &'me mut IndexVec<Local, Vec<usize>>,
+                    PhantomData<*const DefUse>,
+                );
+
+                impl<'me, 'tcx, DefUse: DefUseCategorisable> Visitor<'tcx> for StackPopper<'tcx, DefUse> {
+                    fn visit_place(
+                        &mut self,
+                        place: &Place<'tcx>,
+                        context: PlaceContext,
+                        _location: Location,
+                    ) {
+                        if DefUse::categorize(context)
+                            .map_or(false, |def_use| DefUse::defining(def_use))
+                        {
+                            self.0[place.local].pop();
+                        }
+                    }
+                }
+
+                StackPopper::<DefUse>(&mut self.stack, PhantomData)
+                    .visit_basic_block_data(bb, &body.basic_blocks()[bb]);
+            } else {
+                self.visit_basic_block_data(bb, &body.basic_blocks()[bb]);
+                visitor_stack.push((bb, true));
+                for &child in children[bb].iter().rev() {
+                    visitor_stack.push((child, false))
+                }
+            }
         }
     }
 
-    fn visit_basic_block_data(&mut self, bb: BasicBlock, data: BasicBlockData) {}
+    fn visit_basic_block_data(&mut self, block: BasicBlock, data: &BasicBlockData<'tcx>) {
+        let BasicBlockData {
+            statements,
+            terminator,
+            is_cleanup: _,
+        } = data;
+
+        for &local in &self.insertion_points[block] {
+            // next available numbering
+            self.count[local] += 1;
+            let i = self.count[local];
+            self.stack[local].push(i);
+            self.rename.rename_def_at_phi_node(local, i, block)
+        }
+
+        let mut index = 0;
+        for statement in statements {
+            let location = Location {
+                block,
+                statement_index: index,
+            };
+            self.visit_statement(statement, location);
+            index += 1;
+        }
+
+        if let Some(terminator) = terminator {
+            let location = Location {
+                block,
+                statement_index: index,
+            };
+            self.visit_terminator(terminator, location);
+        }
+
+        for succ in self.body.successors(block) {
+            let pos = self.body.predecessors()[succ]
+                .iter()
+                .position(|&pred| pred == block)
+                .unwrap();
+            for &local in &self.insertion_points[succ] {
+                let &i = self.stack[local]
+                    .last()
+                    .expect(&format!("{:?} should be defined", local));
+                self.rename.rename_use_at_phi_node(local, i, succ, pos);
+            }
+        }
+    }
+
+    fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
+        if let Some(def_use) = DefUse::categorize(context) {
+            if DefUse::defining(def_use) {
+                self.count[place.local] += 1;
+                let i = self.count[place.local];
+                self.stack[place.local].push(i);
+                self.rename.rename_def(place.local, i, location);
+            } else if DefUse::using(def_use) {
+                let &i = self.stack[place.local]
+                    .last()
+                    .expect(&format!("{:?} should be defined", place.local));
+                self.rename.rename_use(place.local, i, location);
+            }
+        }
+    }
 }
