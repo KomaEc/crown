@@ -2,6 +2,7 @@
 
 members = [
     "src/bin",
+    "refactorer/compiler_interface",
     "refactorer/crustr_analysis",
     "refactorer/crustr_rustc_interface",
     "refactorer/crustr_rewrite",
