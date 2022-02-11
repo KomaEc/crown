@@ -362,3 +362,41 @@ arr[i].f
 *arr.offset(i).f
 ptr = arr.offset(i)
 *ptr = f
+
+
+### Feb 11
+1. SSA ~~> insert phi nodes, rename
+2. slice analysis (value flow analysis)
+Purpose of this analysis: 
+   1. systematically remove `realloc` and `calloc`; 
+   2. systematically remove `offset()`
+    
+    `L(p) = 1` ==> `p` is fat (with runtime length information)
+    ```
+        p = q
+    ------------------
+        L(p) <= L(q)
+
+
+        p = offset(whatever, _)
+    --------------------------------
+        L(p) = 0
+
+
+        p = calloc(..)
+    --------------------------------
+        L(p) = 1
+
+
+        p = realloc(q, ...)
+    --------------------------------
+        L(q) = 1, L(p) <= L(q)
+    ```
+    Rewrite from solution: if `L(p) = 1`,
+    1.  `p: *mut T` ==> `p: *mut [T]`, 
+    2.  `p = calloc(..)` ==> `p = Box::leak(Vec::new(..))`
+    3.  `free(p)` ==> `let _ = Box::from_raw(p) // runtime info is stored with p`
+    4.  `p.offset(i)` ==> `let mut slice = p.as_mut().unwrap(); slice[i]`
+
+    If there is no solution ==> a set of fixes
+1. ownership analysis
