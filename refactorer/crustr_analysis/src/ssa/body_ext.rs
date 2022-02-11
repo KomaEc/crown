@@ -16,6 +16,7 @@ const PHI_NODE_INSERTED_ON_STACK_SIZE: usize = 3;
 
 pub type DominanceFrontier =
     IndexVec<BasicBlock, SmallVec<[BasicBlock; DOMINATOR_FRONTIER_ON_STACK_SIZE]>>;
+// TODO: turn PhiNodeInserted into PhiNodeInserted<DefUse>
 pub type PhiNodeInserted = IndexVec<BasicBlock, SmallVec<[Local; PHI_NODE_INSERTED_ON_STACK_SIZE]>>;
 
 pub trait BodyExt<'tcx> {

@@ -8,21 +8,3 @@
 //! only!!!!
 
 pub mod ptr_type;
-
-pub enum Reason {
-    FatReason,
-    ThinReason,
-}
-
-pub enum FatReason {
-    ArgumentsForCalloc,
-    ArgumentsForRealloc,
-    /// p = q, p fat ==> q fat
-    Propagated,
-}
-
-pub enum ThinReason {
-    ReturnOfOffset,
-    /// p = q, q thin ==> p thin
-    Propagated,
-}

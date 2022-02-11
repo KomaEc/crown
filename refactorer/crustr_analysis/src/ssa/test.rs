@@ -4,7 +4,8 @@ use std::str;
 
 use crate::def_use::BorrowckDefUse;
 use crate::ssa::body_ext::BodyExt;
-use crate::ssa::rename::{implementation::PrintStdRename, RenameHandler, Renamer};
+use crate::ssa::rename::impls::RenameMap;
+use crate::ssa::rename::{impls::PrintStdRename, RenameHandler, Renamer};
 
 #[test]
 fn test_phi_node_insertion_point() {
@@ -86,7 +87,7 @@ fn test_rename() {
 
         struct TestProgramSpec;
         impl RenameHandler for TestProgramSpec {
-            fn rename_def(&mut self, local: Local, idx: usize, location: Location) {
+            fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
                 if local == Local::from_usize(1) {
                     // regular definitions for i, which occur only at entry block
                     assert_eq!(location.block, BasicBlock::from_usize(0));
@@ -116,7 +117,7 @@ fn test_rename() {
                 }
             }
 
-            fn rename_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
+            fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
                 if local == Local::from_usize(0) {
                     if block == BasicBlock::from_usize(1) {
                         assert_eq!(idx, 2)
@@ -136,7 +137,7 @@ fn test_rename() {
                 }
             }
 
-            fn rename_use(&mut self, local: Local, idx: usize, location: Location) {
+            fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
                 if local == Local::from_usize(1) {
                     // regular uses for i
                     assert_eq!(location.block, BasicBlock::from_usize(3));
@@ -164,7 +165,7 @@ fn test_rename() {
                 }
             }
 
-            fn rename_use_at_phi_node(
+            fn handle_use_at_phi_node(
                 &mut self,
                 local: Local,
                 idx: usize,
@@ -215,11 +216,16 @@ fn test_rename() {
             }
         }
 
-        let mut renamer = Renamer::<BorrowckDefUse, (PrintStdRename, TestProgramSpec)>::new(
-            body,
-            &insertion_points,
-            (PrintStdRename, TestProgramSpec),
-        );
+        let mut renamer =
+            Renamer::<BorrowckDefUse, (PrintStdRename, TestProgramSpec, RenameMap)>::new(
+                body,
+                &insertion_points,
+                (
+                    PrintStdRename,
+                    TestProgramSpec,
+                    RenameMap::new(body, &insertion_points),
+                ),
+            );
         renamer.visit_body(body);
     })
 }

@@ -1,4 +1,4 @@
-pub mod implementation;
+pub mod impls;
 
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
@@ -12,18 +12,18 @@ use crate::{def_use::DefUseCategorisable, ssa::body_ext::PhiNodeInserted};
 use std::marker::PhantomData;
 
 pub trait RenameHandler {
-    fn rename_def(&mut self, local: Local, idx: usize, location: Location);
-    fn rename_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock);
-    fn rename_use(&mut self, local: Local, idx: usize, location: Location);
-    fn rename_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize);
+    fn handle_def(&mut self, local: Local, idx: usize, location: Location);
+    fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock);
+    fn handle_use(&mut self, local: Local, idx: usize, location: Location);
+    fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize);
 }
 
 pub struct Renamer<'me, 'tcx, DefUse: DefUseCategorisable, R: RenameHandler> {
     body: &'me Body<'tcx>,
     insertion_points: &'me PhiNodeInserted,
-    pub count: IndexVec<Local, usize>,
+    count: IndexVec<Local, usize>,
     stack: IndexVec<Local, Vec<usize>>,
-    pub rename: R,
+    pub rename_handler: R,
     _marker: PhantomData<*const DefUse>,
 }
 
@@ -33,9 +33,8 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, R: RenameHandler> Renamer<'me, 'tcx
             body,
             insertion_points,
             count: IndexVec::from_elem(0, &body.local_decls),
-            // Every variable is assumed to be defined at the entry point
             stack: IndexVec::from_elem(vec![0], &body.local_decls),
-            rename,
+            rename_handler: rename,
             _marker: PhantomData,
         }
     }
@@ -104,7 +103,7 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, R: RenameHandler> Visitor<'tcx>
             self.count[local] += 1;
             let i = self.count[local];
             self.stack[local].push(i);
-            self.rename.rename_def_at_phi_node(local, i, block)
+            self.rename_handler.handle_def_at_phi_node(local, i, block)
         }
 
         let mut index = 0;
@@ -134,7 +133,8 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, R: RenameHandler> Visitor<'tcx>
                 let &i = self.stack[local]
                     .last()
                     .expect(&format!("{:?} should be defined", local));
-                self.rename.rename_use_at_phi_node(local, i, succ, pos);
+                self.rename_handler
+                    .handle_use_at_phi_node(local, i, succ, pos);
             }
         }
     }
@@ -145,12 +145,12 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, R: RenameHandler> Visitor<'tcx>
                 self.count[place.local] += 1;
                 let i = self.count[place.local];
                 self.stack[place.local].push(i);
-                self.rename.rename_def(place.local, i, location);
+                self.rename_handler.handle_def(place.local, i, location);
             } else if DefUse::using(def_use) {
                 let &i = self.stack[place.local]
                     .last()
                     .expect(&format!("{:?} should be defined", place.local));
-                self.rename.rename_use(place.local, i, location);
+                self.rename_handler.handle_use(place.local, i, location);
             }
         }
     }
