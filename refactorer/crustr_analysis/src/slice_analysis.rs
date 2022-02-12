@@ -7,4 +7,18 @@
 //! Or if we must treat it as directional value flow? Flow from fat to thin
 //! only!!!!
 
-pub mod ptr_type;
+use rustc_middle::mir::Local;
+
+pub mod intra;
+
+
+pub type ConstraintVar = (Local, usize);
+
+pub enum Constraint {
+    /// l = 1
+    AssertFat(ConstraintVar),
+    /// l = 0
+    AssertThin(ConstraintVar),
+    /// l1 <= l2
+    ThinerThan(ConstraintVar, ConstraintVar)
+}

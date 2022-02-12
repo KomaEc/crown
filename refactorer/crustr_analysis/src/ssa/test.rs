@@ -4,8 +4,8 @@ use std::str;
 
 use crate::def_use::BorrowckDefUse;
 use crate::ssa::body_ext::BodyExt;
-use crate::ssa::rename::impls::RenameMap;
-use crate::ssa::rename::{impls::PrintStdRename, RenameHandler, Renamer};
+use crate::ssa::rename::impls::SSANameMap;
+use crate::ssa::rename::{impls::PrintStdNewName, NewNameHandler, Renamer};
 
 #[test]
 fn test_phi_node_insertion_point() {
@@ -86,7 +86,7 @@ fn test_rename() {
         let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
 
         struct TestProgramSpec;
-        impl RenameHandler for TestProgramSpec {
+        impl NewNameHandler for TestProgramSpec {
             fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
                 if local == Local::from_usize(1) {
                     // regular definitions for i, which occur only at entry block
@@ -217,13 +217,13 @@ fn test_rename() {
         }
 
         let mut renamer =
-            Renamer::<BorrowckDefUse, (PrintStdRename, TestProgramSpec, RenameMap)>::new(
+            Renamer::<BorrowckDefUse, (PrintStdNewName, TestProgramSpec, SSANameMap)>::new(
                 body,
                 &insertion_points,
                 (
-                    PrintStdRename,
+                    PrintStdNewName,
                     TestProgramSpec,
-                    RenameMap::new(body, &insertion_points),
+                    SSANameMap::new(body, &insertion_points),
                 ),
             );
         renamer.visit_body(body);
