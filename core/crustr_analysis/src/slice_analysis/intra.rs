@@ -1,6 +1,9 @@
-use rustc_index::vec::IndexVec;
-use rustc_middle::{ty::TyCtxt, mir::{Body, Local, visit::Visitor, Place, Rvalue, Location}};
 use crate::slice_analysis::{Constraint, ConstraintVar};
+use rustc_index::vec::IndexVec;
+use rustc_middle::{
+    mir::{visit::Visitor, Body, Local, Location, Place, Rvalue},
+    ty::TyCtxt,
+};
 
 pub struct IntraContext<'intracx, 'tcx> {
     pub tcx: TyCtxt<'tcx>,
@@ -9,7 +12,5 @@ pub struct IntraContext<'intracx, 'tcx> {
 }
 
 impl<'intracx, 'tcx> Visitor<'tcx> for IntraContext<'intracx, 'tcx> {
-    fn visit_assign(&mut self, place: &Place< 'tcx>, rvalue: &Rvalue< 'tcx>, location: Location) {
-        
-    }
+    fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {}
 }

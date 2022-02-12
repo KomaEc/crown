@@ -11,37 +11,37 @@ use crate::{def_use::DefUseCategorisable, ssa::body_ext::PhiNodeInserted};
 
 use std::marker::PhantomData;
 
-pub trait NewNameHandler {
-    fn handle_def(&mut self, local: Local, idx: usize, location: Location);
-    fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock);
-    fn handle_use(&mut self, local: Local, idx: usize, location: Location);
-    fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize);
+#[allow(unused_variables)]
+pub trait SSANameHandler {
+    fn handle_def(&mut self, local: Local, idx: usize, location: Location) {}
+    fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {}
+    fn handle_use(&mut self, local: Local, idx: usize, location: Location) {}
+    fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize) {}
 }
 
-// What about HasRenameState + HasRenameHandler + HasBody + ... ==> macro created Visitor?
-pub struct Renamer<'me, 'tcx, DefUse: DefUseCategorisable, R: NewNameHandler> {
+pub struct Renamer<'me, 'tcx, DefUse: DefUseCategorisable, R: SSANameHandler> {
     body: &'me Body<'tcx>,
     insertion_points: &'me PhiNodeInserted,
     count: IndexVec<Local, usize>,
     stack: IndexVec<Local, Vec<usize>>,
-    pub new_name_handler: R,
+    pub ssa_name_handler: R,
     _marker: PhantomData<*const DefUse>,
 }
 
-impl<'me, 'tcx, DefUse: DefUseCategorisable, R: NewNameHandler> Renamer<'me, 'tcx, DefUse, R> {
+impl<'me, 'tcx, DefUse: DefUseCategorisable, R: SSANameHandler> Renamer<'me, 'tcx, DefUse, R> {
     pub fn new(body: &'me Body<'tcx>, insertion_points: &'me PhiNodeInserted, rename: R) -> Self {
         Renamer {
             body,
             insertion_points,
             count: IndexVec::from_elem(0, &body.local_decls),
             stack: IndexVec::from_elem(vec![0], &body.local_decls),
-            new_name_handler: rename,
+            ssa_name_handler: rename,
             _marker: PhantomData,
         }
     }
 }
 
-impl<'me, 'tcx, DefUse: DefUseCategorisable, R: NewNameHandler> Visitor<'tcx>
+impl<'me, 'tcx, DefUse: DefUseCategorisable, R: SSANameHandler> Visitor<'tcx>
     for Renamer<'me, 'tcx, DefUse, R>
 {
     fn visit_body(&mut self, body: &Body<'tcx>) {
@@ -104,7 +104,8 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, R: NewNameHandler> Visitor<'tcx>
             self.count[local] += 1;
             let i = self.count[local];
             self.stack[local].push(i);
-            self.new_name_handler.handle_def_at_phi_node(local, i, block)
+            self.ssa_name_handler
+                .handle_def_at_phi_node(local, i, block)
         }
 
         let mut index = 0;
@@ -134,7 +135,7 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, R: NewNameHandler> Visitor<'tcx>
                 let &i = self.stack[local]
                     .last()
                     .expect(&format!("{:?} should be defined", local));
-                self.new_name_handler
+                self.ssa_name_handler
                     .handle_use_at_phi_node(local, i, succ, pos);
             }
         }
@@ -146,12 +147,12 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, R: NewNameHandler> Visitor<'tcx>
                 self.count[place.local] += 1;
                 let i = self.count[place.local];
                 self.stack[place.local].push(i);
-                self.new_name_handler.handle_def(place.local, i, location);
+                self.ssa_name_handler.handle_def(place.local, i, location);
             } else if DefUse::using(def_use) {
                 let &i = self.stack[place.local]
                     .last()
                     .expect(&format!("{:?} should be defined", place.local));
-                self.new_name_handler.handle_use(place.local, i, location);
+                self.ssa_name_handler.handle_use(place.local, i, location);
             }
         }
     }

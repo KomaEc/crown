@@ -4,6 +4,7 @@
 #![feature(iter_zip)]
 #![feature(crate_visibility_modifier)]
 #![feature(maybe_uninit_extra)]
+#![feature(bool_to_option)]
 
 pub mod call_graph;
 pub mod def_use;

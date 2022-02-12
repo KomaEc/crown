@@ -11,7 +11,6 @@ use rustc_middle::mir::Local;
 
 pub mod intra;
 
-
 pub type ConstraintVar = (Local, usize);
 
 pub enum Constraint {
@@ -20,5 +19,5 @@ pub enum Constraint {
     /// l = 0
     AssertThin(ConstraintVar),
     /// l1 <= l2
-    ThinerThan(ConstraintVar, ConstraintVar)
+    ThinerThan(ConstraintVar, ConstraintVar),
 }
