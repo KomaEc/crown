@@ -1,1 +1,0 @@
-This directory contains the entrance routine of the refactoring tool.

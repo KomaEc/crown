@@ -1,7 +1,7 @@
 [workspace]
 
 members = [
-    "src/bin",
+    "bin",
     "refactorer/compiler_interface",
     "refactorer/crustr_analysis",
     "refactorer/crustr_rustc_interface",
