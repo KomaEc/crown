@@ -11,8 +11,7 @@ rustc_private=true
 
 [dependencies]
 log = "0.4"
-#index = { path = "../../utils/index" }
-graph = { path = "../../utils/graph" }
+graph = { path = "../utils/graph" }
 compiler_interface = { path = "../compiler_interface" }
 smallvec = "1.8.0"
 derivative = "2.2.0"

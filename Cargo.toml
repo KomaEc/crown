@@ -7,5 +7,5 @@ members = [
     "refactorer/crustr_rustc_interface",
     "refactorer/crustr_rewrite",
     "refactorer/crustr_passes",
-    "utils/graph",
+    "refactorer/utils/graph",
 ]
