@@ -1,4 +1,4 @@
-use crate::slice_analysis::{Constraint, Lambda};
+use crate::array_analysis::{Constraint, Lambda};
 use rustc_middle::{
     mir::{visit::Visitor, Body, Local, Location, Place, Rvalue},
     ty::TyCtxt,
