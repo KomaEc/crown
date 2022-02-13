@@ -7,13 +7,25 @@
 //! Or if we must treat it as directional value flow? Flow from fat to thin
 //! only!!!!
 
-pub mod intra;
+use rustc_middle::mir::Place;
 
+pub mod intra;
 
 rustc_index::newtype_index! {
     /// Constraint variables for array analysis
     pub struct Lambda {
         DEBUG_FORMAT = "λ_({})"
+    }
+}
+
+pub struct LambdaData<'tcx> {
+    pub place: Place<'tcx>,
+    pub idx: usize,
+}
+
+impl<'tcx> From<(Place<'tcx>, usize)> for LambdaData<'tcx> {
+    fn from((place, idx): (Place<'tcx>, usize)) -> Self {
+        LambdaData { place, idx }
     }
 }
 

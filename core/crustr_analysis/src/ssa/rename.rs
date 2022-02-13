@@ -4,7 +4,7 @@ use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{
     visit::{PlaceContext, Visitor},
-    BasicBlock, BasicBlockData, Body, Local, Location, Place,
+    BasicBlock, BasicBlockData, Body, Local, Location,
 };
 
 use crate::{def_use::DefUseCategorisable, ssa::body_ext::PhiNodeInserted};
@@ -68,6 +68,7 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, R: SSANameHandler> Visitor<'tcx>
                 );
 
                 impl<'me, 'tcx, DefUse: DefUseCategorisable> Visitor<'tcx> for StackPopper<'tcx, DefUse> {
+                    /*
                     fn visit_place(
                         &mut self,
                         place: &Place<'tcx>,
@@ -78,6 +79,20 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, R: SSANameHandler> Visitor<'tcx>
                             .map_or(false, |def_use| DefUse::defining(def_use))
                         {
                             self.0[place.local].pop();
+                        }
+                    }
+                    */
+
+                    fn visit_local(
+                        &mut self,
+                        &local: &Local,
+                        context: PlaceContext,
+                        _location: Location,
+                    ) {
+                        if DefUse::categorize(context)
+                            .map_or(false, |def_use| DefUse::defining(def_use))
+                        {
+                            self.0[local].pop();
                         }
                     }
                 }
@@ -141,6 +156,7 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, R: SSANameHandler> Visitor<'tcx>
         }
     }
 
+    /*
     fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
         if let Some(def_use) = DefUse::categorize(context) {
             if DefUse::defining(def_use) {
@@ -153,6 +169,23 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, R: SSANameHandler> Visitor<'tcx>
                     .last()
                     .expect(&format!("{:?} should be defined", place.local));
                 self.ssa_name_handler.handle_use(place.local, i, location);
+            }
+        }
+    }
+    */
+
+    fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
+        if let Some(def_use) = DefUse::categorize(context) {
+            if DefUse::defining(def_use) {
+                self.count[local] += 1;
+                let i = self.count[local];
+                self.stack[local].push(i);
+                self.ssa_name_handler.handle_def(local, i, location);
+            } else if DefUse::using(def_use) {
+                let &i = self.stack[local]
+                    .last()
+                    .expect(&format!("{:?} should be defined", local));
+                self.ssa_name_handler.handle_use(local, i, location);
             }
         }
     }

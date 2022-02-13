@@ -4,7 +4,7 @@ use std::str;
 
 use crate::def_use::BorrowckDefUse;
 use crate::ssa::body_ext::BodyExt;
-use crate::ssa::rename::impls::{SSANameMap, PointerCVMap};
+use crate::ssa::rename::impls::{PointerCVMap, SSANameMap};
 use crate::ssa::rename::{impls::PrintStdSSAName, Renamer, SSANameHandler};
 
 #[test]
@@ -148,8 +148,10 @@ fn test_rename() {
                         assert_eq!(idx, 2)
                     } else if location.block == BasicBlock::from_usize(3) {
                         assert_eq!(idx, 2)
+                    } else if location.block == BasicBlock::from_usize(8) {
+                        assert_eq!(idx, 5)
                     } else {
-                        assert!(false)
+                        assert!(false, "local {:?} of idx {} at {:?}", local, idx, location)
                     }
                 } else if local == Local::from_usize(2) {
                     // regular uses for k
@@ -216,17 +218,24 @@ fn test_rename() {
             }
         }
 
-        let mut renamer =
-            Renamer::<BorrowckDefUse, (PrintStdSSAName, TestProgramSpec, SSANameMap, PointerCVMap<usize>)>::new(
-                body,
-                &insertion_points,
-                (
-                    PrintStdSSAName,
-                    TestProgramSpec,
-                    SSANameMap::new(body, &insertion_points),
-                    PointerCVMap::new(body)
-                ),
-            );
+        let mut renamer = Renamer::<
+            BorrowckDefUse,
+            (
+                PrintStdSSAName,
+                TestProgramSpec,
+                SSANameMap,
+                PointerCVMap<usize>,
+            ),
+        >::new(
+            body,
+            &insertion_points,
+            (
+                PrintStdSSAName,
+                TestProgramSpec,
+                SSANameMap::new(body, &insertion_points),
+                PointerCVMap::new(body),
+            ),
+        );
         renamer.visit_body(body);
     })
 }

@@ -6,12 +6,12 @@
 #![feature(maybe_uninit_extra)]
 #![feature(bool_to_option)]
 
+pub mod array_analysis;
 pub mod call_graph;
 pub mod def_use;
 pub mod liveness_analysis;
 pub mod ownership_analysis;
 pub mod pointer_analysis;
-pub mod array_analysis;
 pub mod ssa;
 pub mod toy_analysis;
 
