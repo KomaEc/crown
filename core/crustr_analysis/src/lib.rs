@@ -11,7 +11,7 @@ pub mod def_use;
 pub mod liveness_analysis;
 pub mod ownership_analysis;
 pub mod pointer_analysis;
-pub mod slice_analysis;
+pub mod array_analysis;
 pub mod ssa;
 pub mod toy_analysis;
 

@@ -1,5 +1,4 @@
-use crate::slice_analysis::{Constraint, ConstraintVar};
-use rustc_index::vec::IndexVec;
+use crate::slice_analysis::{Constraint, Lambda};
 use rustc_middle::{
     mir::{visit::Visitor, Body, Local, Location, Place, Rvalue},
     ty::TyCtxt,

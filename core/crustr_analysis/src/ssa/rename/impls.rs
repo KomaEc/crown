@@ -157,6 +157,7 @@ pub struct PointerCVMap<'me, 'tcx, CV: Idx> {
     pub rev_map: IndexVec<CV, (Local, usize)>,
 }
 
+/// FIXME: note that all locals are implicitly defined at entry point with idx 0!
 impl<'me, 'tcx, CV: Idx> PointerCVMap<'me, 'tcx, CV> {
     pub fn new(body: &'me Body<'tcx>) -> Self {
         PointerCVMap {
@@ -171,7 +172,7 @@ impl<'me, 'tcx, CV: Idx> PointerCVMap<'me, 'tcx, CV> {
         let ty = self.body.local_decls[local].ty;
         if ty.is_any_ptr() && !ty.is_fn_ptr() {
             let cv = self.rev_map.push((local, idx));
-            debug_assert!(self.map[local].len() == idx);
+            // debug_assert!(self.map[local].len() == idx);
             self.map[local].push(cv);
         }
     }

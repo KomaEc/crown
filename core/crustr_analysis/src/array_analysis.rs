@@ -7,17 +7,21 @@
 //! Or if we must treat it as directional value flow? Flow from fat to thin
 //! only!!!!
 
-use rustc_middle::mir::Local;
-
 pub mod intra;
 
-pub type ConstraintVar = (Local, usize);
+
+rustc_index::newtype_index! {
+    /// Constraint variables for array analysis
+    pub struct Lambda {
+        DEBUG_FORMAT = "λ_({})"
+    }
+}
 
 pub enum Constraint {
     /// l = 1
-    AssertFat(ConstraintVar),
+    AssertFat(Lambda),
     /// l = 0
-    AssertThin(ConstraintVar),
+    AssertThin(Lambda),
     /// l1 <= l2
-    ThinerThan(ConstraintVar, ConstraintVar),
+    ThinerThan(Lambda, Lambda),
 }
