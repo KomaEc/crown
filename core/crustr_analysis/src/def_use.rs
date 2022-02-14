@@ -15,10 +15,6 @@ pub trait DefUseCategorisable: PartialEq + Eq + Clone + Copy {
     fn using(def_use: Self::DefUse) -> bool;
 
     fn categorize(context: PlaceContext) -> Option<Self::DefUse>;
-
-    fn categorize_by_self(self, context: PlaceContext) -> Option<Self::DefUse> {
-        Self::categorize(context)
-    }
 }
 
 impl DefUseCategorisable for BorrowckDefUse {
