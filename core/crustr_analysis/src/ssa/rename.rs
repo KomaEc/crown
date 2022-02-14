@@ -67,11 +67,12 @@ pub trait SSANameHandler {
     fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize) {}
 }
 
-pub trait HasSSANameHandler<R: SSANameHandler> {
-    fn ssa_name_handler(&mut self) -> &mut R;
+pub trait HasSSANameHandler {
+    type Handler: SSANameHandler;
+    fn ssa_name_handler(&mut self) -> &mut Self::Handler;
 }
 
-pub trait SSARename<'tcx, H: SSANameHandler>: HasSSARenameState<Local> + HasSSANameHandler<H> {
+pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
     type DefUse: DefUseCategorisable;
 
     fn rename_body(&mut self, body: &Body<'tcx>, insertion_points: &PhiNodeInserted) {

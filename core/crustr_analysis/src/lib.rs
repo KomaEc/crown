@@ -5,6 +5,7 @@
 #![feature(crate_visibility_modifier)]
 #![feature(maybe_uninit_extra)]
 #![feature(bool_to_option)]
+#![feature(generic_associated_types)]
 
 pub mod array_analysis;
 pub mod call_graph;

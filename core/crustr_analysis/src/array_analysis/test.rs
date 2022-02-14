@@ -3,7 +3,7 @@ use std::env;
 use compiler_interface::run_compiler_with_file_with_single_func;
 use rustc_middle::mir::visit::Visitor;
 
-use crate::array_analysis::intra::IntraContext;
+use crate::array_analysis::intra::IntraCtxt;
 
 #[test]
 fn test_print_mir() {
@@ -20,8 +20,8 @@ fn test_print_mir() {
             .unwrap();
             println!("{}", w);
 
-            let mut intra = IntraContext::new(tcx, body);
-            intra.visit_body(body);
+            // let mut intra = IntraContext::new(tcx, body);
+            // intra.visit_body(body);
         },
     )
 }

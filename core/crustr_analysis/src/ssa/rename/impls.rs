@@ -28,14 +28,15 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> HasSSARenameStat
     }
 }
 
-impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> HasSSANameHandler<H> for PlainRenamer<'me, 'tcx, DefUse, H> {
+impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> HasSSANameHandler for PlainRenamer<'me, 'tcx, DefUse, H> {
+    type Handler = H;
     #[inline]
     fn ssa_name_handler(&mut self) -> &mut H {
         &mut self.ssa_name_handler
     }
 }
 
-impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> SSARename<'tcx, H>
+impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> SSARename<'tcx>
     for PlainRenamer<'me, 'tcx, DefUse, H>
 {
     type DefUse = DefUse;
