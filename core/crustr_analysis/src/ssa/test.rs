@@ -5,8 +5,10 @@ use std::str;
 
 use crate::def_use::BorrowckDefUse;
 use crate::ssa::body_ext::BodyExt;
-use crate::ssa::rename::impls::{PointerCVMap, SSANameMap};
+use crate::ssa::rename::impls::{LocalSimplePtrCVMap, SSANameMap};
 use crate::ssa::rename::{impls::PrintStdSSAName, Renamer, SSANameHandler};
+
+use super::pretty::write_ssa_mir_fn;
 
 #[test]
 fn test_phi_node_insertion_point() {
@@ -299,7 +301,7 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
             PrintStdSSAName,
             TestProgramSpec,
             SSANameMap,
-            PointerCVMap<usize>,
+            LocalSimplePtrCVMap<usize>,
         ),
     >::new(
         body,
@@ -308,15 +310,35 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
             PrintStdSSAName,
             TestProgramSpec,
             SSANameMap::new(body, &insertion_points),
-            PointerCVMap::new(body),
+            LocalSimplePtrCVMap::new(body),
         ),
     );
     renamer.visit_body(body);
+    let mut w = String::new();
+    write_ssa_mir_fn(tcx, body, &renamer.ssa_name_handler.2, unsafe {
+        &mut w.as_mut_vec()
+    })
+    .unwrap();
+    println!("{}", w)
 }
 
 fn spec1<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
     let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
     let mut renamer =
-        Renamer::<BorrowckDefUse, PrintStdSSAName>::new(body, &insertion_points, PrintStdSSAName);
+        Renamer::<BorrowckDefUse, (PrintStdSSAName, SSANameMap, LocalSimplePtrCVMap<usize>)>::new(
+            body,
+            &insertion_points,
+            (
+                PrintStdSSAName,
+                SSANameMap::new(body, &insertion_points),
+                LocalSimplePtrCVMap::new(body),
+            ),
+        );
     renamer.visit_body(body);
+    let mut w = String::new();
+    write_ssa_mir_fn(tcx, body, &renamer.ssa_name_handler.1, unsafe {
+        &mut w.as_mut_vec()
+    })
+    .unwrap();
+    println!("{}", w)
 }

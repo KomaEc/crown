@@ -10,12 +10,13 @@ use smallvec::{smallvec, SmallVec};
 /// A map that associated each local with its renames
 pub struct SSANameMap {
     /// Location -> Local -> usize
-    names: LocationMap<(
+    pub names: LocationMap<(
         /* defs */ Option<(Local, usize)>,
         /* uses */ SmallVec<[(Local, usize); 2]>,
     )>,
     /// BasicBlock -> Local -> (usize, [usize])
-    names_for_phi_nodes: IndexVec<BasicBlock, SmallVec<[(Local, usize, SmallVec<[usize; 2]>); 2]>>,
+    pub names_for_phi_nodes:
+        IndexVec<BasicBlock, SmallVec<[(Local, usize, SmallVec<[usize; 2]>); 2]>>,
 }
 
 impl SSANameMap {
@@ -151,20 +152,31 @@ make_new_name_debug_handler!(PrintStdSSAName, println);
 /// the `map` field supports linear lookup.
 /// During renaming, all uses are processed before defs, therefore
 /// it does not handle renames at uses.
-pub struct PointerCVMap<'me, 'tcx, CV: Idx> {
+pub struct LocalSimplePtrCVMap<'me, 'tcx, CV: Idx> {
     body: &'me Body<'tcx>,
     pub map: IndexVec<Local, Vec<CV>>,
     pub rev_map: IndexVec<CV, (Local, usize)>,
 }
 
-/// FIXME: note that all locals are implicitly defined at entry point with idx 0!
-impl<'me, 'tcx, CV: Idx> PointerCVMap<'me, 'tcx, CV> {
+/// Assume all locals are defined at entry (this is not right for
+/// locals that are not function arguments)
+impl<'me, 'tcx, CV: Idx> LocalSimplePtrCVMap<'me, 'tcx, CV> {
     pub fn new(body: &'me Body<'tcx>) -> Self {
-        PointerCVMap {
-            body,
-            map: IndexVec::from_elem(vec![], &body.local_decls),
-            rev_map: IndexVec::new(),
-        }
+        let mut rev_map = IndexVec::new();
+        let map = body
+            .local_decls
+            .iter_enumerated()
+            .map(|(local, local_decl)| {
+                // if it is local simple pointer type
+                if local_decl.ty.is_any_ptr() && !local_decl.ty.is_fn_ptr() {
+                    let idx = rev_map.push((local, 0));
+                    vec![idx]
+                } else {
+                    vec![]
+                }
+            })
+            .collect::<IndexVec<_, _>>();
+        LocalSimplePtrCVMap { body, map, rev_map }
     }
 
     #[inline]
@@ -172,13 +184,13 @@ impl<'me, 'tcx, CV: Idx> PointerCVMap<'me, 'tcx, CV> {
         let ty = self.body.local_decls[local].ty;
         if ty.is_any_ptr() && !ty.is_fn_ptr() {
             let cv = self.rev_map.push((local, idx));
-            // debug_assert!(self.map[local].len() == idx);
+            assert_eq!(self.map[local].len(), idx);
             self.map[local].push(cv);
         }
     }
 }
 
-impl<'me, 'tcx, CV: Idx> SSANameHandler for PointerCVMap<'me, 'tcx, CV> {
+impl<'me, 'tcx, CV: Idx> SSANameHandler for LocalSimplePtrCVMap<'me, 'tcx, CV> {
     fn handle_def(&mut self, local: Local, idx: usize, _location: Location) {
         self.gen_def(local, idx)
     }
