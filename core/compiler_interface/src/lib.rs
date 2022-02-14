@@ -59,3 +59,36 @@ where
         })
     })
 }
+
+pub fn run_compiler_with_file_with_single_func<F>(input: PathBuf, f: F)
+where
+    F: FnOnce(TyCtxt, LocalDefId) + Send,
+{
+    rustc_interface::run_compiler(Config::with_input_file(input), |compiler| {
+        compiler.enter(|queries| {
+            queries.global_ctxt().unwrap().take().enter(|tcx| {
+                let hir_krate = tcx.hir().krate();
+                let fn_dids = hir_krate
+                    .owners
+                    .iter_enumerated()
+                    .filter_map(|(did, owner_info)| {
+                        if let Some(owner_info) = owner_info {
+                            if let OwnerNode::Item(item) = owner_info.node() {
+                                if let rustc_hir::ItemKind::Fn(_, _, _) = item.kind {
+                                    assert_eq!(item.def_id, did);
+
+                                    return Some(did);
+                                }
+                            }
+                        }
+                        None
+                    })
+                    .collect::<Vec<_>>();
+                assert_eq!(fn_dids.len(), 1);
+                let fn_did = fn_dids[0];
+
+                f(tcx, fn_did)
+            })
+        })
+    })
+}

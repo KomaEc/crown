@@ -1,12 +1,12 @@
-use rustc_middle::mir::visit::Visitor;
+
 use rustc_middle::mir::{BasicBlock, Body, Local, Location};
 use rustc_middle::ty::TyCtxt;
 use std::str;
 
 use crate::def_use::BorrowckDefUse;
 use crate::ssa::body_ext::BodyExt;
-use crate::ssa::rename::impls::{LocalSimplePtrCVMap, SSANameMap};
-use crate::ssa::rename::{impls::PrintStdSSAName, Renamer, SSANameHandler};
+use crate::ssa::rename::handler::{LocalSimplePtrCVMap, SSANameMap};
+use crate::ssa::rename::{handler::PrintStdSSAName, impls::PlainRenamer, SSANameHandler};
 
 use super::pretty::write_ssa_mir_fn;
 
@@ -295,7 +295,7 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
         }
     }
 
-    let mut renamer = Renamer::<
+    let mut renamer = PlainRenamer::<
         BorrowckDefUse,
         (
             PrintStdSSAName,
@@ -304,8 +304,8 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
             LocalSimplePtrCVMap<usize>,
         ),
     >::new(
+        tcx,
         body,
-        &insertion_points,
         (
             PrintStdSSAName,
             TestProgramSpec,
@@ -313,7 +313,7 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
             LocalSimplePtrCVMap::new(body),
         ),
     );
-    renamer.visit_body(body);
+    renamer.rename();
     let mut w = String::new();
     write_ssa_mir_fn(tcx, body, &renamer.ssa_name_handler.2, unsafe {
         &mut w.as_mut_vec()
@@ -325,16 +325,16 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
 fn spec1<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
     let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
     let mut renamer =
-        Renamer::<BorrowckDefUse, (PrintStdSSAName, SSANameMap, LocalSimplePtrCVMap<usize>)>::new(
+        PlainRenamer::<BorrowckDefUse, (PrintStdSSAName, SSANameMap, LocalSimplePtrCVMap<usize>)>::new(
+            tcx,
             body,
-            &insertion_points,
             (
                 PrintStdSSAName,
                 SSANameMap::new(body, &insertion_points),
                 LocalSimplePtrCVMap::new(body),
             ),
         );
-    renamer.visit_body(body);
+    renamer.rename();
     let mut w = String::new();
     write_ssa_mir_fn(tcx, body, &renamer.ssa_name_handler.1, unsafe {
         &mut w.as_mut_vec()

@@ -10,6 +10,12 @@
 use rustc_middle::mir::Place;
 
 pub mod intra;
+#[cfg(test)]
+mod test;
+
+/// This structure should hold info about all struct definitions
+/// and local nested pointers in the crate
+pub struct CrateSummary;
 
 rustc_index::newtype_index! {
     /// Constraint variables for array analysis

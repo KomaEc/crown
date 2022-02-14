@@ -5,7 +5,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 
-use super::rename::impls::SSANameMap;
+use super::rename::handler::SSANameMap;
 
 const INDENT: &str = "    ";
 
