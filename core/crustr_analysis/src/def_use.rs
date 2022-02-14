@@ -7,7 +7,7 @@ use rustc_middle::mir::visit::{
 use rustc_middle::mir::{Body, Local, Location, Place};
 use smallvec::{smallvec, SmallVec};
 
-pub trait DefUseCategorisable {
+pub trait DefUseCategorisable: PartialEq + Eq + Clone + Copy {
     type DefUse: PartialEq + Eq + Clone + Copy;
 
     fn defining(def_use: Self::DefUse) -> bool;
@@ -15,6 +15,10 @@ pub trait DefUseCategorisable {
     fn using(def_use: Self::DefUse) -> bool;
 
     fn categorize(context: PlaceContext) -> Option<Self::DefUse>;
+
+    fn categorize_by_self(self, context: PlaceContext) -> Option<Self::DefUse> {
+        Self::categorize(context)
+    }
 }
 
 impl DefUseCategorisable for BorrowckDefUse {
