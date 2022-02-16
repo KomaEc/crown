@@ -1,5 +1,5 @@
 use rustc_errors::registry;
-use rustc_interface::{interface::Compiler, Config};
+use rustc_interface::Config;
 use rustc_session::config;
 use std::path::PathBuf;
 use std::process;

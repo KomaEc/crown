@@ -1,18 +1,17 @@
 #![feature(rustc_private)]
 #![feature(box_patterns)]
 #![feature(min_specialization)]
-#![feature(iter_zip)]
 #![feature(crate_visibility_modifier)]
-#![feature(maybe_uninit_extra)]
 #![feature(bool_to_option)]
 #![feature(generic_associated_types)]
+#![feature(associated_type_defaults)]
 
 pub mod array_analysis;
 pub mod call_graph;
 pub mod def_use;
 pub mod liveness_analysis;
 pub mod ownership_analysis;
-pub mod pointer_analysis;
+// pub mod pointer_analysis;
 pub mod ssa;
 pub mod toy_analysis;
 
@@ -207,5 +206,11 @@ where
                 .map(|block| vec![T::default(); block.statements.len() + 1])
                 .collect(),
         }
+    }
+}
+
+rustc_index::newtype_index! {
+    pub struct FieldDefIdx {
+        DEBUG_FORMAT = "field_def ({})"
     }
 }

@@ -12,7 +12,6 @@ use crate::{def_use::DefUseCategorisable, ssa::body_ext::PhiNodeInserted};
 
 use std::marker::PhantomData;
 
-
 pub struct SSARenameState<ProgramVar: Idx> {
     count: IndexVec<ProgramVar, usize>,
     stack: IndexVec<ProgramVar, Vec<usize>>,
@@ -61,9 +60,10 @@ impl<ProgramVar: Idx> HasSSARenameState<ProgramVar> for SSARenameState<ProgramVa
 
 #[allow(unused_variables)]
 pub trait SSANameHandler {
-    fn handle_def(&mut self, local: Local, idx: usize, location: Location) {}
+    type Output: Clone + Copy + PartialEq + Eq;
+    fn handle_def(&mut self, local: Local, idx: usize, location: Location) -> Self::Output;
     fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {}
-    fn handle_use(&mut self, local: Local, idx: usize, location: Location) {}
+    fn handle_use(&mut self, local: Local, idx: usize, location: Location) -> Self::Output;
     fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize) {}
 }
 
@@ -103,7 +103,13 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
         }
     }
 
-    fn rename_basic_block_data(&mut self, body: &Body<'tcx>, block: BasicBlock, data: &BasicBlockData<'tcx>, insertion_points: &PhiNodeInserted) {
+    fn rename_basic_block_data(
+        &mut self,
+        body: &Body<'tcx>,
+        block: BasicBlock,
+        data: &BasicBlockData<'tcx>,
+        insertion_points: &PhiNodeInserted,
+    ) {
         let BasicBlockData {
             statements,
             terminator,
@@ -113,7 +119,7 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
         for &local in &insertion_points[block] {
             let i = self.define(local);
             self.ssa_name_handler()
-                .handle_def_at_phi_node(local, i, block)
+                .handle_def_at_phi_node(local, i, block);
         }
 
         let mut index = 0;

@@ -1,4 +1,3 @@
-
 use rustc_middle::mir::{BasicBlock, Body, Local, Location};
 use rustc_middle::ty::TyCtxt;
 use std::str;
@@ -164,6 +163,7 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
 
     struct TestProgramSpec;
     impl SSANameHandler for TestProgramSpec {
+        type Output = ();
         fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
             if local == Local::from_usize(1) {
                 // regular definitions for i, which occur only at entry block
@@ -324,16 +324,18 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
 
 fn spec1<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
     let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
-    let mut renamer =
-        PlainRenamer::<BorrowckDefUse, (PrintStdSSAName, SSANameMap, LocalSimplePtrCVMap<usize>)>::new(
-            tcx,
-            body,
-            (
-                PrintStdSSAName,
-                SSANameMap::new(body, &insertion_points),
-                LocalSimplePtrCVMap::new(body),
-            ),
-        );
+    let mut renamer = PlainRenamer::<
+        BorrowckDefUse,
+        (PrintStdSSAName, SSANameMap, LocalSimplePtrCVMap<usize>),
+    >::new(
+        tcx,
+        body,
+        (
+            PrintStdSSAName,
+            SSANameMap::new(body, &insertion_points),
+            LocalSimplePtrCVMap::new(body),
+        ),
+    );
     renamer.rename();
     let mut w = String::new();
     write_ssa_mir_fn(tcx, body, &renamer.ssa_name_handler.1, unsafe {

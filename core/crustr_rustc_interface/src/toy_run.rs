@@ -35,7 +35,7 @@ impl CompilerRunnable for ToyRun {
                     .owners
                     .iter()
                     .filter_map(|owner_info| {
-                        let owner_info = owner_info.as_ref()?;
+                        let owner_info = owner_info.as_owner().as_ref()?;
                         if let OwnerNode::Item(item) = owner_info.node() {
                             if let rustc_hir::ItemKind::Fn(_, _, _) = item.kind {
                                 let def_id = item.def_id;

@@ -1,59 +1,113 @@
+use std::{collections::HashMap, marker::PhantomData};
+
 use crate::{
-    array_analysis::{Constraint, Lambda},
-    def_use::BorrowckDefUse,
+    array_analysis::{Constraint, ConstraintIdx, Lambda},
+    def_use::{BorrowckDefUse, DefUseCategorisable},
     ssa::{
         body_ext::BodyExt,
         rename::{
             handler::{LocalSimplePtrCVMap, SSANameMap},
-            impls::PlainRenamer, SSARenameState, HasSSARenameState, HasSSANameHandler, SSARename,
+            impls::PlainRenamer,
+            HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename, SSARenameState,
         },
     },
 };
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{visit::Visitor, Body, Local, Location, Place, Rvalue, Terminator, TerminatorKind, Statement},
+    mir::{
+        visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
+        BasicBlock, Body, Local, Location, Operand, Place, Rvalue, Statement, Terminator,
+        TerminatorKind,
+    },
     ty::{TyCtxt, TyKind::FnDef},
 };
+use smallvec::SmallVec;
 
 pub struct BodySummary<'body, 'tcx> {
     pub body: &'body Body<'tcx>,
     pub assumptions: IndexVec<Lambda, Option<bool>>,
-    pub constraint_set: Vec<Constraint>,
-}
-
-rustc_index::newtype_index! {
-    pub struct ConstraintId {
-        DEBUG_FORMAT = "constraint {}"
-    }
+    pub constraint_set: IndexVec<ConstraintIdx, Constraint>,
 }
 
 /// Assume no crate struct definintion and local nested pointer type
-pub struct IntraCtxt<'intracx, 'tcx> {
+pub struct IntraCtxt<
+    'intracx,
+    'tcx,
+    DefUse: DefUseCategorisable,
+    Handler: SSANameHandler<Output = ()>,
+> {
     pub tcx: TyCtxt<'tcx>,
     pub body: &'intracx Body<'tcx>,
     pub ssa_state: SSARenameState<Local>,
     pub assumptions: IndexVec<Lambda, Option<bool>>,
-    pub constraint_set: IndexVec<ConstraintId, Constraint>,
-    pub extra_handlers: (SSANameMap, LocalSimplePtrCVMap<'intracx, 'tcx, Lambda>),
+    pub constraint_set: IndexVec<ConstraintIdx, Constraint>,
+    pub phi_node_equality_group: IndexVec<BasicBlock, SmallVec<[(Local, Vec<Lambda>); 3]>>,
+    pub extra_handlers: Handler, //(SSANameMap, LocalSimplePtrCVMap<'intracx, 'tcx, Lambda>),
+    pub _marker: PhantomData<*const DefUse>,
 }
 
-impl<'intracx, 'tcx> HasSSARenameState<Local> for IntraCtxt<'intracx, 'tcx> {
+impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+    HasSSARenameState<Local> for IntraCtxt<'intracx, 'tcx, DefUse, Handler>
+{
     #[inline]
     fn state(&mut self) -> &mut SSARenameState<Local> {
         &mut self.ssa_state
     }
 }
 
-impl<'intracx, 'tcx> HasSSANameHandler for IntraCtxt<'intracx, 'tcx> {
-    type Handler = (SSANameMap, LocalSimplePtrCVMap<'intracx, 'tcx, Lambda>);
-    #[inline]
-    fn ssa_name_handler(&mut self) -> &mut Self::Handler {
-        &mut self.extra_handlers
+impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+    SSANameHandler for IntraCtxt<'intracx, 'tcx, DefUse, Handler>
+{
+    type Output = Lambda;
+
+    fn handle_def(&mut self, local: Local, idx: usize, location: Location) -> Self::Output {
+        self.extra_handlers.handle_def(local, idx, location);
+        todo!()
+    }
+
+    fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
+        self.extra_handlers
+            .handle_def_at_phi_node(local, idx, block);
+        self.phi_node_equality_group[block]
+            .iter_mut()
+            .find(|x| x.0 == local)
+            .unwrap()
+            .1
+            .push(todo!());
+    }
+
+    fn handle_use(&mut self, local: Local, idx: usize, location: Location) -> Self::Output {
+        self.extra_handlers.handle_use(local, idx, location);
+        todo!()
+    }
+
+    fn handle_use_at_phi_node(
+        &mut self,
+        local: Local,
+        idx: usize,
+        block: rustc_middle::mir::BasicBlock,
+        pos: usize,
+    ) {
+        self.extra_handlers
+            .handle_use_at_phi_node(local, idx, block, pos);
+        todo!()
     }
 }
 
-impl<'intracx, 'tcx> SSARename<'tcx> for IntraCtxt<'intracx, 'tcx> {
-    type DefUse = BorrowckDefUse;
+impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+    HasSSANameHandler for IntraCtxt<'intracx, 'tcx, DefUse, Handler>
+{
+    type Handler = Self;
+    #[inline]
+    fn ssa_name_handler(&mut self) -> &mut Self::Handler {
+        self
+    }
+}
+
+impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+    SSARename<'tcx> for IntraCtxt<'intracx, 'tcx, DefUse, Handler>
+{
+    type DefUse = DefUse;
 
     #[inline]
     fn rename_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
@@ -66,4 +120,59 @@ impl<'intracx, 'tcx> SSARename<'tcx> for IntraCtxt<'intracx, 'tcx> {
     }
 }
 
-impl<'intracx, 'tcx> Visitor<'tcx> for IntraCtxt<'intracx, 'tcx> {}
+impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+    IntraCtxt<'intracx, 'tcx, DefUse, Handler>
+{
+    /// TODO: assume no nested types
+    fn process_lhs(&mut self, local: Local, location: Location) -> (Local, usize) {
+        let def = self.define(local);
+        self.ssa_name_handler().handle_def(local, def, location);
+        (local, def)
+    }
+
+    fn process_rhs(&mut self, local: Local, location: Location) -> (Local, usize) {
+        let r#use = self.r#use(local);
+        self.ssa_name_handler().handle_use(local, r#use, location);
+        (local, r#use)
+    }
+}
+
+impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+    Visitor<'tcx> for IntraCtxt<'intracx, 'tcx, DefUse, Handler>
+{
+    fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
+        if let Some(def_use) = DefUse::categorize(context) {
+            if DefUse::defining(def_use) {
+                let i = self.define(local);
+                self.ssa_name_handler().handle_def(local, i, location);
+            } else if DefUse::using(def_use) {
+                let i = self.r#use(local);
+                self.ssa_name_handler().handle_use(local, i, location);
+            }
+        }
+    }
+
+    fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
+        let ty = place.ty(self.body, self.tcx).ty;
+        if ty.is_any_ptr() && !ty.is_fn_ptr() {
+            if let Some(lhs) = place.as_local() {
+                let (lhs, def) = self.process_lhs(lhs, location);
+                match rvalue {
+                    Rvalue::Use(Operand::Move(place)) | Rvalue::Use(Operand::Copy(place)) => {
+                        if let Some(rhs) = place.as_local() {
+                            let (rhs, r#use) = self.process_rhs(rhs, location);
+
+                            return;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        self.super_assign(place, rvalue, location)
+    }
+
+    fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
+        self.super_terminator(terminator, location)
+    }
+}

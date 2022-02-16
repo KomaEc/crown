@@ -11,3 +11,4 @@ rustc_private=true
 [dependencies]
 log = "0.4"
 crustr_rewrite = { path = "../crustr_rewrite" }
+compiler_interface = { path = "../compiler_interface" }

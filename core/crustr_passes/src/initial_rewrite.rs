@@ -1,6 +1,6 @@
 use crustr_rewrite::Rewriter;
 use rustc_hir::{
-    intravisit::{self, NestedVisitorMap, Visitor},
+    intravisit::{self, Visitor, nested_filter},
     FieldDef, Mutability, Ty, TyKind,
 };
 use rustc_middle::{hir::map::Map, ty::TyCtxt};
@@ -16,9 +16,13 @@ struct TypeRewriteVisitor<'trv, 'tcx> {
 impl<'trv, 'tcx> Visitor<'tcx> for TypeRewriteVisitor<'trv, 'tcx> {
     type Map = Map<'tcx>;
 
-    fn nested_visit_map(&mut self) -> NestedVisitorMap<Self::Map> {
+    type NestedFilter = nested_filter::None;
+
+    /*
+    fn nested_visit_map(&mut self) -> Self::Map {
         return NestedVisitorMap::OnlyBodies(self.tcx.hir());
     }
+    */
 
     fn visit_ty(&mut self, typ: &'tcx Ty<'tcx>) {
         // log::debug!("visiting {} at {:?}", rustc_hir_pretty::ty_to_string(typ), typ.span);
@@ -62,9 +66,13 @@ pub struct StructRewriteVisitor<'tcx> {
 impl<'tcx> Visitor<'tcx> for StructRewriteVisitor<'tcx> {
     type Map = Map<'tcx>;
 
+    type NestedFilter = nested_filter::None;
+
+    /*
     fn nested_visit_map(&mut self) -> NestedVisitorMap<Self::Map> {
         return NestedVisitorMap::OnlyBodies(self.tcx.hir());
     }
+    */
 
     fn visit_field_def(&mut self, field_def: &'tcx FieldDef<'tcx>) {
         // log::debug!("visiting field def {} : {} at {:?}", field_def.ident, rustc_hir_pretty::ty_to_string(field_def.ty), field_def.span);

@@ -15,6 +15,9 @@ extern crate rustc_session;
 extern crate rustc_span;
 
 pub mod initial_rewrite;
+pub mod print_struct;
+#[cfg(test)]
+mod test;
 
 use rustc_middle::ty::TyCtxt;
 

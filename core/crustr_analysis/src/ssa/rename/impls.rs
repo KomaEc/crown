@@ -1,8 +1,13 @@
-use std::marker::PhantomData;
-use rustc_middle::{ty::TyCtxt, mir::{Body, Local, Statement, Location, Terminator, visit::{PlaceContext, Visitor}}};
+use super::{HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename, SSARenameState};
 use crate::{def_use::DefUseCategorisable, ssa::body_ext::BodyExt};
-use super::{SSANameHandler, SSARenameState, HasSSARenameState, HasSSANameHandler, SSARename};
-
+use rustc_middle::{
+    mir::{
+        visit::{PlaceContext, Visitor},
+        Body, Local, Location, Statement, Terminator,
+    },
+    ty::TyCtxt,
+};
+use std::marker::PhantomData;
 
 pub struct PlainRenamer<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> {
     tcx: TyCtxt<'tcx>,
@@ -28,7 +33,9 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> HasSSARenameStat
     }
 }
 
-impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> HasSSANameHandler for PlainRenamer<'me, 'tcx, DefUse, H> {
+impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> HasSSANameHandler
+    for PlainRenamer<'me, 'tcx, DefUse, H>
+{
     type Handler = H;
     #[inline]
     fn ssa_name_handler(&mut self) -> &mut H {
@@ -64,6 +71,10 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> PlainRenamer<'me
     }
 }
 
+/// FIXME: should it visit rvalue before place? For statements like `x = x.f`, if
+/// place is visited first, then the use on RHS will get a wrong rename!
+/// However this is rare, if not impossible, in MIR. I tried several artificial
+/// examples, such statements are decomposed by inserting temp varaibles.
 impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> Visitor<'tcx>
     for PlainRenamer<'me, 'tcx, DefUse, H>
 {

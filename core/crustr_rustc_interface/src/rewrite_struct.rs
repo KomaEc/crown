@@ -23,7 +23,7 @@ impl CompilerRunnable for CollectStructInfo {
                 let hir_krate = tcx.hir().krate();
                 let mut structs = Vec::new();
                 for (did, owner) in hir_krate.owners.iter_enumerated() {
-                    if let Some(owner_info) = owner {
+                    if let Some(owner_info) = owner.as_owner() {
                         if let OwnerNode::Item(item) = owner_info.node() {
                             if let ItemKind::Struct(variant_data, _generics) = &item.kind {
                                 let def_id = item.def_id;
