@@ -1,6 +1,6 @@
 use crustr_rewrite::Rewriter;
 use rustc_hir::{
-    intravisit::{self, Visitor, nested_filter},
+    intravisit::{self, nested_filter, Visitor},
     FieldDef, Mutability, Ty, TyKind,
 };
 use rustc_middle::{hir::map::Map, ty::TyCtxt};

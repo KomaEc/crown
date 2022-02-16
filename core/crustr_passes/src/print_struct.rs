@@ -1,5 +1,5 @@
 use rustc_hir::{
-    intravisit::{Visitor, nested_filter},
+    intravisit::{nested_filter, Visitor},
     FieldDef,
 };
 use rustc_middle::{hir::map::Map, ty::TyCtxt};
@@ -24,11 +24,13 @@ impl<'tcx> Visitor<'tcx> for PrintStruct<'tcx> {
         let ty = self.tcx.type_of(did);
         println!(
             "visiting field def {} : {} at {:?}",
-            field_def.ident,
-            ty,
-            field_def.span
+            field_def.ident, ty, field_def.span
         );
-        let walk = ty.walk().map(|ty| format!("{}", ty)).collect::<Vec<_>>().join(", ");
+        let walk = ty
+            .walk()
+            .map(|ty| format!("{}", ty))
+            .collect::<Vec<_>>()
+            .join(", ");
         println!("... with type decomposed as {}", walk);
     }
 }
