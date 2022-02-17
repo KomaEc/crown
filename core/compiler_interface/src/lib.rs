@@ -18,7 +18,6 @@ use config_ext::ConfigExt;
 use rustc_hir::def_id::LocalDefId;
 use rustc_hir::ItemKind;
 use rustc_hir::OwnerNode;
-use rustc_hir::VariantData;
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use std::path::PathBuf;
@@ -106,7 +105,7 @@ where
                 for (did, owner) in hir_krate.owners.iter_enumerated() {
                     if let Some(owner_info) = owner.as_owner() {
                         if let OwnerNode::Item(item) = owner_info.node() {
-                            if let ItemKind::Struct(variant_data, _generics) = &item.kind {
+                            if let ItemKind::Struct(_variant_data, _generics) = &item.kind {
                                 let def_id = item.def_id;
                                 assert_eq!(def_id, did);
 
