@@ -1,9 +1,6 @@
 use std::env;
 
 use compiler_interface::run_compiler_with_file_with_single_func;
-use rustc_middle::mir::visit::Visitor;
-
-use crate::array_analysis::intra::InferCtxt;
 
 #[test]
 fn test_print_mir() {

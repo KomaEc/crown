@@ -114,12 +114,12 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     fn process_lhs(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
         match place.as_ref().last_projection() {
             Some((place, proj)) => {
-
                 todo!()
-            },
+            }
             None => {
                 let ssa_idx = self.define(place.local);
-                self.ssa_name_handler().handle_use(place.local, ssa_idx, location)
+                self.ssa_name_handler()
+                    .handle_use(place.local, ssa_idx, location)
             }
         }
     }
