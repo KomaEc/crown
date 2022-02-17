@@ -12,7 +12,6 @@ pub trait ConfigExt {
 }
 
 impl ConfigExt for Config {
-
     fn with_input(input: config::Input) -> Config {
         let out = process::Command::new("rustc")
             .arg("--print=sysroot")
