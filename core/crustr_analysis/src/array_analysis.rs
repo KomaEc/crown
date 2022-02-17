@@ -1,5 +1,7 @@
 use rustc_middle::mir::Local;
 
+use crate::FieldDefIdx;
+
 pub mod intra;
 #[cfg(test)]
 mod test;
@@ -20,7 +22,11 @@ pub enum LambdaData {
     /// A SSA scalar variable
     Local { base: Local, ssa_idx: usize },
     /// field definition
-    FieldDef,
+    FieldDef {
+        def: FieldDefIdx,
+        /// a index into the iterator of `ty.walk()`
+        idx: usize,
+    },
     /// A local nested pointer type.
     /// For example, if a local `_1` has type `*mut *mut *mut i32`, then
     /// we should have entries for `*_1` and `**_1`

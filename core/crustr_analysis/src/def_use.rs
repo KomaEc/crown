@@ -87,7 +87,6 @@ impl DefUseCategorisable for BorrowckDefUse {
 
             // Debug info is neither def nor use.
             PlaceContext::NonUse(NonUseContext::VarDebugInfo) => None,
-            _ => panic!("WTF?")
         }
     }
 }

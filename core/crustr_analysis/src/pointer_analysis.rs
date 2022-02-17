@@ -97,7 +97,7 @@ impl Constraint {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum PointerAnalysisNodeData<'tcx> {
     Mir(LocalDefId, PlaceRef<'tcx>),
     Temporary(LocalDefId),

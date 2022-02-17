@@ -1,8 +1,7 @@
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::mir::visit::Visitor;
 use rustc_middle::mir::{
-    Body, Local, LocalDecl, Location, NullOp, Place, Rvalue, Terminator, TerminatorKind,
-    RETURN_PLACE,
+    Body, Local, LocalDecl, Location, Place, Rvalue, Terminator, TerminatorKind, RETURN_PLACE,
 };
 use rustc_middle::mir::{CastKind, Operand, ProjectionElem};
 use rustc_middle::ty::TyCtxt;
@@ -429,11 +428,6 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
                 }
 
                 Some((rhs_repr, RhsPtrKind::AddressOf))
-            }
-
-            Rvalue::NullaryOp(NullOp::Box, _ty) => {
-                log::error!("Box::new() is not supported!");
-                unimplemented!()
             }
 
             // explicit address cast: ignore!

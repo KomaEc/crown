@@ -156,10 +156,6 @@ impl RustcLivenessDefUse {
             | PlaceContext::NonMutatingUse(NonMutatingUseContext::Projection) => {
                 unreachable!("A projection could be a def or a use and must be handled separately")
             }
-
-            _ => {
-                panic!("wtf")
-            }
         }
     }
 }
