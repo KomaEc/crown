@@ -23,31 +23,24 @@ use rustc_middle::{
 };
 use smallvec::SmallVec;
 
-pub struct BodySummary<'body, 'tcx> {
-    pub body: &'body Body<'tcx>,
-    pub assumptions: IndexVec<Lambda, Option<bool>>,
-    pub constraint_set: IndexVec<ConstraintIdx, Constraint>,
-}
-
-/// Assume no crate struct definintion and local nested pointer type
-pub struct IntraCtxt<
-    'intracx,
+pub struct InferCtxt<
+    'infercx,
     'tcx,
     DefUse: DefUseCategorisable,
     Handler: SSANameHandler<Output = ()>,
 > {
     pub tcx: TyCtxt<'tcx>,
-    pub body: &'intracx Body<'tcx>,
+    pub body: &'infercx Body<'tcx>,
     pub ssa_state: SSARenameState<Local>,
     pub assumptions: IndexVec<Lambda, Option<bool>>,
     pub constraint_set: IndexVec<ConstraintIdx, Constraint>,
     pub phi_node_equality_group: IndexVec<BasicBlock, SmallVec<[(Local, Vec<Lambda>); 3]>>,
-    pub extra_handlers: Handler, //(SSANameMap, LocalSimplePtrCVMap<'intracx, 'tcx, Lambda>),
+    pub extra_handlers: Handler, //(SSANameMap, LocalSimplePtrCVMap<'infercx, 'tcx, Lambda>),
     pub _marker: PhantomData<*const DefUse>,
 }
 
-impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
-    HasSSARenameState<Local> for IntraCtxt<'intracx, 'tcx, DefUse, Handler>
+impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+    HasSSARenameState<Local> for InferCtxt<'infercx, 'tcx, DefUse, Handler>
 {
     #[inline]
     fn state(&mut self) -> &mut SSARenameState<Local> {
@@ -55,8 +48,8 @@ impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 }
 
-impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
-    SSANameHandler for IntraCtxt<'intracx, 'tcx, DefUse, Handler>
+impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+    SSANameHandler for InferCtxt<'infercx, 'tcx, DefUse, Handler>
 {
     type Output = Lambda;
 
@@ -94,8 +87,8 @@ impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 }
 
-impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
-    HasSSANameHandler for IntraCtxt<'intracx, 'tcx, DefUse, Handler>
+impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+    HasSSANameHandler for InferCtxt<'infercx, 'tcx, DefUse, Handler>
 {
     type Handler = Self;
     #[inline]
@@ -104,8 +97,8 @@ impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 }
 
-impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
-    SSARename<'tcx> for IntraCtxt<'intracx, 'tcx, DefUse, Handler>
+impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+    SSARename<'tcx> for InferCtxt<'infercx, 'tcx, DefUse, Handler>
 {
     type DefUse = DefUse;
 
@@ -120,8 +113,8 @@ impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 }
 
-impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
-    IntraCtxt<'intracx, 'tcx, DefUse, Handler>
+impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+    InferCtxt<'infercx, 'tcx, DefUse, Handler>
 {
     /// TODO: assume no nested types
     fn process_lhs(&mut self, local: Local, location: Location) -> (Local, usize) {
@@ -137,8 +130,8 @@ impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 }
 
-impl<'intracx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
-    Visitor<'tcx> for IntraCtxt<'intracx, 'tcx, DefUse, Handler>
+impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+    Visitor<'tcx> for InferCtxt<'infercx, 'tcx, DefUse, Handler>
 {
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
         if let Some(def_use) = DefUse::categorize(context) {

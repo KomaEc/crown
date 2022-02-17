@@ -94,7 +94,7 @@ where
 
 pub fn run_compiler_with_input_str_with_all_structs<F>(input: &'static str, f: F)
 where
-    F: for<'a, 'tcx> FnOnce(TyCtxt<'tcx>, Vec<&'tcx VariantData<'tcx>>) + Send,
+    F: for<'tcx> FnOnce(TyCtxt<'tcx>, Vec<LocalDefId>) + Send,
 {
     rustc_interface::run_compiler(Config::with_input_str(input), |compiler| {
         compiler.enter(|queries| {
@@ -110,7 +110,7 @@ where
                                 let def_id = item.def_id;
                                 assert_eq!(def_id, did);
 
-                                struct_defs.push(variant_data)
+                                struct_defs.push(def_id)
                             }
                         }
                     }

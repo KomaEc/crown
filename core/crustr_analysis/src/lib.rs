@@ -35,9 +35,7 @@ extern crate rustc_span;
 extern crate rustc_target;
 
 use rustc_index::vec::IndexVec;
-use rustc_middle::{
-    mir::{BasicBlock, Body, Location},
-};
+use rustc_middle::mir::{BasicBlock, Body, Location};
 use std::ops::{Index, IndexMut};
 
 /*
