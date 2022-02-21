@@ -48,16 +48,14 @@ impl SSANameMap {
     pub fn lookup_def_in_phi_node(&self, local: Local, block: BasicBlock) -> Option<usize> {
         self.names_for_phi_nodes[block]
             .iter()
-            .find(|&&(this_local, _, _)| this_local == local)
-            .map(|&(_, idx, _)| idx)
+            .find_map(|&(this_local, idx, _)| (this_local == local).then_some(idx))
     }
 
     pub fn lookup_use(&self, local: Local, location: Location) -> Option<usize> {
         self.names[location]
             .1
             .iter()
-            .find(|&&(this_local, _)| this_local == local)
-            .map(|&(_, idx)| idx)
+            .find_map(|&(this_local, idx)| (this_local == local).then_some(idx))
     }
 
     pub fn lookup_use_at_phi_node(
@@ -67,10 +65,18 @@ impl SSANameMap {
     ) -> impl Iterator<Item = usize> + '_ {
         self.names_for_phi_nodes[block]
             .iter()
+            .find_map(|&(this_local, _, ref vec)| {
+                (this_local == local).then_some(vec.iter())
+            })
+            .unwrap_or_else(|| (&[]).iter())
+            .map(|&idx| idx)
+
+            /*
             .find(|&&(this_local, _, _)| this_local == local)
             .map(|x| x.2.iter())
-            .unwrap_or((&[]).iter())
+            .unwrap_or_else(|| (&[]).iter())
             .map(|&idx| idx)
+            */
     }
 }
 
