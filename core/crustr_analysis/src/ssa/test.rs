@@ -11,8 +11,8 @@ use super::pretty::write_ssa_mir_fn;
 
 #[test]
 fn test_phi_node_insertion_point() {
-    compiler_interface::run_compiler_with_input_str_with_single_func(
-        TEST_PROGRAMS[0],
+    compiler_interface::run_compiler_with_single_func(
+        TEST_PROGRAMS[0].into(),
         |tcx, fn_did| {
             let body = tcx.optimized_mir(fn_did);
 
@@ -84,7 +84,7 @@ fn test_phi_node_insertion_point() {
 #[test]
 fn test_all() {
     for (&program, &spec) in std::iter::zip(TEST_PROGRAMS.iter(), TEST_PROGRAMS_SPECS.iter()) {
-        compiler_interface::run_compiler_with_input_str_with_single_func(program, |tcx, fn_did| {
+        compiler_interface::run_compiler_with_single_func(program.into(), |tcx, fn_did| {
             let body = tcx.optimized_mir(fn_did);
 
             let mut w = String::new();

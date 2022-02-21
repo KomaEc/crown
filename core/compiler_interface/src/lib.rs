@@ -23,13 +23,43 @@ use rustc_middle::ty::TyCtxt;
 use std::path::PathBuf;
 use std::str;
 
+/// A simpler input type than `rustc_session::config::Input`
+pub enum Input {
+    File(PathBuf),
+    Str(&'static str)
+}
+
+impl From<PathBuf> for Input {
+    fn from(path: PathBuf) -> Self {
+        Input::File(path)
+    }
+}
+
+impl From<&'static str> for Input {
+    fn from(str: &'static str) -> Self {
+        Input::Str(str)
+    }
+}
+
+impl Into<rustc_session::config::Input> for Input {
+    fn into(self) -> rustc_session::config::Input {
+        match self {
+            Input::File(path) => rustc_session::config::Input::File(path),
+            Input::Str(str) => rustc_session::config::Input::Str {
+                name: rustc_span::FileName::Custom("main.rs".to_string()),
+                input: str.to_string(),
+            },
+        }
+    }
+}
+
 /// Run compiler with input source string that consists of a single function.
 /// This is mainly used for testing
-pub fn run_compiler_with_input_str_with_single_func<F>(input: &'static str, f: F)
+pub fn run_compiler_with_single_func<F>(input: Input, f: F)
 where
     F: FnOnce(TyCtxt, LocalDefId) + Send,
 {
-    rustc_interface::run_compiler(Config::with_input_str(input), |compiler| {
+    rustc_interface::run_compiler(Config::with_input(input.into()), |compiler| {
         compiler.enter(|queries| {
             queries.global_ctxt().unwrap().take().enter(|tcx| {
                 let hir_krate = tcx.hir().krate();
@@ -58,6 +88,7 @@ where
     })
 }
 
+/*
 pub fn run_compiler_with_file_with_single_func<F>(input: PathBuf, f: F)
 where
     F: FnOnce(TyCtxt, LocalDefId) + Send,
@@ -90,12 +121,13 @@ where
         })
     })
 }
+*/
 
-pub fn run_compiler_with_input_str_with_all_structs<F>(input: &'static str, f: F)
+pub fn run_compiler_with_all_structs<F>(input: Input, f: F)
 where
     F: for<'tcx> FnOnce(TyCtxt<'tcx>, Vec<LocalDefId>) + Send,
 {
-    rustc_interface::run_compiler(Config::with_input_str(input), |compiler| {
+    rustc_interface::run_compiler(Config::with_input(input.into()), |compiler| {
         compiler.enter(|queries| {
             queries.global_ctxt().unwrap().take().enter(|tcx| {
                 let hir_krate = tcx.hir().krate();
@@ -121,11 +153,11 @@ where
     })
 }
 
-pub fn run_compiler_with_input_str_with_struct_defs_and_single_func<F>(input: &'static str, f: F)
+pub fn run_compiler_with_struct_defs_and_single_func<F>(input: Input, f: F)
 where
     F: for<'tcx> FnOnce(TyCtxt<'tcx>, Vec<LocalDefId>, LocalDefId) + Send,
 {
-    rustc_interface::run_compiler(Config::with_input_str(input), |compiler| {
+    rustc_interface::run_compiler(Config::with_input(input.into()), |compiler| {
         compiler.enter(|queries| {
             queries.global_ctxt().unwrap().take().enter(|tcx| {
                 let hir_krate = tcx.hir().krate();
@@ -158,11 +190,11 @@ where
     })
 }
 
-pub fn run_compiler_with_input_str_with_struct_defs_and_funcs<F>(input: &'static str, f: F)
+pub fn run_compiler_with_struct_defs_and_funcs<F>(input: Input, f: F)
 where
     F: for<'tcx> FnOnce(TyCtxt<'tcx>, Vec<LocalDefId>, Vec<LocalDefId>) + Send,
 {
-    rustc_interface::run_compiler(Config::with_input_str(input), |compiler| {
+    rustc_interface::run_compiler(Config::with_input(input.into()), |compiler| {
         compiler.enter(|queries| {
             queries.global_ctxt().unwrap().take().enter(|tcx| {
                 let hir_krate = tcx.hir().krate();

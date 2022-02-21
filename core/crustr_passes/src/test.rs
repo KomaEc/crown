@@ -4,8 +4,8 @@ use crate::print_struct::PrintStruct;
 
 #[test]
 fn test_print_all_struct() {
-    compiler_interface::run_compiler_with_input_str_with_all_structs(
-        TEST_PROGRAM,
+    compiler_interface::run_compiler_with_all_structs(
+        TEST_PROGRAM.into(),
         |tcx, struct_defs| {
             let mut vis = PrintStruct { tcx };
             for did in struct_defs {
@@ -29,8 +29,8 @@ fn test_print_all_struct_mir() {
         vis.visit_body(body)
     })
     */
-    compiler_interface::run_compiler_with_input_str_with_all_structs(
-        TEST_PROGRAM,
+    compiler_interface::run_compiler_with_all_structs(
+        TEST_PROGRAM.into(),
         |tcx, struct_dids| {
             for did in struct_dids {
                 let adt_def = tcx.adt_def(did);

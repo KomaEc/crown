@@ -1,6 +1,6 @@
 use std::env;
 
-use compiler_interface::run_compiler_with_file_with_single_func;
+use compiler_interface::Input;
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
@@ -11,8 +11,8 @@ use super::CrateSummary;
 #[test]
 fn test_print_mir() {
     let working_dir_path = env::current_dir().expect("current working directory value is invalid");
-    run_compiler_with_file_with_single_func(
-        working_dir_path.join("src/array_analysis/test/resource/simple/lib.rs"),
+    compiler_interface::run_compiler_with_single_func(
+        Input::File(working_dir_path.join("src/array_analysis/test/resource/simple/lib.rs")),
         |tcx, fn_did| {
             let body = tcx.optimized_mir(fn_did);
 
@@ -33,8 +33,14 @@ fn test_print_mir() {
 fn test_all() {
     env_logger::init();
     for (prog, spec) in TEST_PROGRAMS {
-        compiler_interface::run_compiler_with_input_str_with_struct_defs_and_funcs(prog, spec)
+        compiler_interface::run_compiler_with_struct_defs_and_funcs(Into::into(*prog), spec)
     }
+}
+
+#[test]
+fn test_file_with_extern_call() {
+    env_logger::init();
+
 }
 
 const TEST_PROGRAMS: &'static [(

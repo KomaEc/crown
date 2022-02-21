@@ -282,6 +282,7 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
         self.super_statement(statement, location)
     }
 
+    /// TODO: handle cases where `rvalue` is an `AddressOf`
     fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
         if place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr() {
             if let Rvalue::Use(Operand::Move(rhs)) | Rvalue::Use(Operand::Copy(rhs)) = rvalue {
