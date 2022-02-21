@@ -16,10 +16,10 @@ use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
         visit::{PlaceContext, Visitor},
-        BasicBlock, Body, Local, Location, Operand, Place, PlaceElem, PlaceRef, ProjectionElem,
-        Rvalue, Statement, Terminator, TerminatorKind, CastKind,
+        BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
+        ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind,
     },
-    ty::{subst::GenericArgKind, TyCtxt},
+    ty::{subst::GenericArgKind, TyCtxt, TyKind::FnDef},
 };
 use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
@@ -303,21 +303,142 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
                 return;
             }
         }
+        use colored::*;
+        log::warn!(
+            "{}",
+            "this statement is not processed by the intra inferencer"
+                .bold()
+                .red()
+        );
         self.super_assign(place, rvalue, location)
     }
 
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
-        // log::debug!("visiting terminator {:?}", terminator);
+        use colored::*;
+        log::debug!(
+            "{}",
+            &format!("visiting terminator {:?}", terminator.kind).bold()
+        );
         if let TerminatorKind::Call {
             ref func,
-            args: _,
-            destination: _,
+            ref args,
+            destination,
             cleanup: _,
             from_hir_call: _,
             fn_span: _,
         } = terminator.kind
         {
-            log::debug!("calling function {:?}", func);
+            let ty = func
+                .constant()
+                .expect("closures or function pointers are not supported!")
+                .ty();
+            if let &FnDef(callee_did, _generic_args) = ty.kind() {
+                // let func_name = self.ctxt.tcx.def_path_str(callee_did);
+                // log::debug!("{}", ("calling function ".to_owned() + &func_name).bold());
+
+                // local defined functions: libc externs or user functions
+                match callee_did.as_local() {
+                    Some(did) => {
+                        // let hir_id = self.ctxt.tcx.hir().local_def_id_to_hir_id(did);
+                        if matches!(
+                            self.ctxt.tcx.hir().find_by_def_id(did),
+                            Some(rustc_hir::Node::ForeignItem(_))
+                        ) {
+                            let foreign_item = self
+                                .ctxt
+                                .tcx
+                                .hir()
+                                .expect_foreign_item(callee_did.expect_local());
+                            log::debug!(
+                                "{}",
+                                &format!("which is a foreign function! {}", foreign_item.ident)
+                                    .red()
+                                    .bold()
+                            );
+                            match foreign_item.ident {
+                                s if s.as_str() == "calloc" => {
+                                    for arg in args {
+                                        self.visit_operand(arg, location);
+                                    }
+                                    let (lhs, _) = destination.unwrap();
+                                    let lambda = self.process_lhs(&lhs, location);
+                                    log::error!(
+                                        "{}: generate constraint {:?} = 1",
+                                        "TODO".red().bold(),
+                                        lambda
+                                    );
+                                    return;
+                                }
+                                s if s.as_str() == "realloc" => {
+                                    assert_eq!(args.len(), 2);
+                                    let rhs = args[0].place().unwrap();
+                                    let rhs = self.process_rhs(&rhs, location);
+                                    for arg in &args[1..] {
+                                        self.visit_operand(arg, location);
+                                    }
+                                    let (lhs, _) = destination.unwrap();
+                                    let lhs = self.process_lhs(&lhs, location);
+                                    log::error!(
+                                        "{}: generate constraint {:?} = 1",
+                                        "TODO".red().bold(),
+                                        rhs
+                                    );
+                                    let constraint = Constraint(lhs, rhs);
+                                    log::debug!("generate constraint {}", constraint);
+                                    self.ctxt.constraints.push(constraint);
+                                    return;
+                                }
+                                _ => unimplemented!(),
+                            }
+                        } else {
+                        }
+                    }
+                    // library functions
+                    None => {
+                        let def_path = self.ctxt.tcx.def_path(callee_did);
+                        // ::ptr ...
+                        let is_ptr = def_path
+                            .data
+                            .get(0)
+                            .map(|d| match d.data {
+                                rustc_hir::definitions::DefPathData::TypeNs(s)
+                                    if s.as_str() == "ptr" =>
+                                {
+                                    true
+                                }
+                                _ => false,
+                            })
+                            .unwrap_or(false);
+                        // ::offset
+                        let is_offset = def_path
+                            .data
+                            .get(3)
+                            .map(|d| match d.data {
+                                rustc_hir::definitions::DefPathData::ValueNs(s)
+                                    if s.as_str() == "offset" =>
+                                {
+                                    true
+                                }
+                                _ => false,
+                            })
+                            .unwrap_or(false);
+                        // is `_::ptr::offset()`
+                        if is_ptr && is_offset {
+                            for arg in args {
+                                self.visit_operand(arg, location);
+                            }
+                            let (lhs, _) = destination.unwrap();
+                            let lhs = self.process_lhs(&lhs, location);
+                            log::error!(
+                                "{}: generate constraint {:?} = 0",
+                                "TODO".red().bold(),
+                                lhs
+                            );
+                            return;
+                        }
+                    }
+                }
+            }
         }
         self.super_terminator(terminator, location)
     }

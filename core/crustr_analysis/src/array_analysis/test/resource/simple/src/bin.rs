@@ -1,5 +1,6 @@
 use ::libc;
 
+
 extern "C" {
     #[no_mangle]
     fn malloc(_: u64) -> *mut libc::c_void;
@@ -10,6 +11,7 @@ extern "C" {
     #[no_mangle]
     fn free(__ptr: *mut libc::c_void);
 }
+
 
 
 pub unsafe fn f(mut r: *mut i32) {

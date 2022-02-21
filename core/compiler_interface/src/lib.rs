@@ -224,3 +224,46 @@ where
         })
     })
 }
+
+/*
+pub fn run_compiler_with_struct_defs_and_funcs_and_libc_externs<F>(input: Input, f: F)
+where
+    F: for<'tcx> FnOnce(TyCtxt<'tcx>, Vec<LocalDefId>, Vec<LocalDefId>) + Send,
+{
+    rustc_interface::run_compiler(Config::with_input(input.into()), |compiler| {
+        compiler.enter(|queries| {
+            queries.global_ctxt().unwrap().take().enter(|tcx| {
+                let hir_krate = tcx.hir().krate();
+
+                let mut struct_defs = vec![];
+                let mut fn_dids = vec![];
+                let mut libc_externs = vec![];
+
+                for (did, owner) in hir_krate.owners.iter_enumerated() {
+                    if let Some(owner_info) = owner.as_owner() {
+                        if let OwnerNode::Item(item) = owner_info.node() {
+                            if let ItemKind::Struct(_variant_data, _generics) = &item.kind {
+                                let def_id = item.def_id;
+                                assert_eq!(def_id, did);
+
+                                struct_defs.push(def_id)
+                            } else if let ItemKind::Fn(_, _, _) = item.kind {
+                                assert_eq!(item.def_id, did);
+
+                                fn_dids.push(did);
+                            }
+                        } else if let OwnerNode::ForeignItem(foreign_item) = owner_info.node() {
+                            if foreign_item.ident.as_str() == "calloc" {
+                                println!("{}", tcx.def_path_str(foreign_item.def_id.to_def_id()));
+                                libc_externs.push(foreign_item.def_id)
+                            }
+                        }
+                    }
+                }
+
+                f(tcx, struct_defs, fn_dids)
+            })
+        })
+    })
+}
+*/
