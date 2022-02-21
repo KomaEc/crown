@@ -15,7 +15,7 @@ pub struct SSANameMap {
         /* uses */ SmallVec<[(Local, usize); 2]>,
     )>,
     /// BasicBlock -> Local -> (usize, [usize])
-    pub names_for_phi_nodes: //IndexVec<BasicBlock, BasicBlockInsersionPoints<(usize, SmallVec<[usize; 2]>)>>
+    pub names_for_phi_nodes:
         IndexVec<BasicBlock, SmallVec<[(Local, usize, SmallVec<[usize; 2]>); 2]>>,
 }
 

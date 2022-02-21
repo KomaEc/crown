@@ -17,8 +17,6 @@ mod test;
 /// and local nested pointers in the crate
 pub struct CrateSummary<'analysis, 'tcx> {
     pub tcx: TyCtxt<'tcx>,
-    pub adt_defs: &'analysis [DefId],
-    // field_defs: IndexVec<FieldDefIdx, (usize, VariantIdx, usize)>,
     pub bodies: &'analysis [DefId],
     lambda_ctxt: CrateLambdaCtxt,
 }
@@ -33,8 +31,6 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
         let lambda_ctxt = CrateLambdaCtxt::initiate(tcx, adt_defs, bodies);
         CrateSummary {
             tcx,
-            adt_defs,
-            // field_defs,
             bodies,
             lambda_ctxt,
         }
@@ -222,20 +218,12 @@ impl CrateLambdaCtxt {
     }
 }
 
-pub enum Constraint {
-    /// λ1 = λ2
-    Eq(Lambda, Lambda),
-    /// λ1 ≤ λ2
-    LE(Lambda, Lambda),
-}
+/// λ1 ≤ λ2
+pub struct Constraint(Lambda, Lambda);
 
 impl Display for Constraint {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        if let Self::LE(lhs, rhs) = self {
-            f.write_fmt(format_args!("{:?} ≤ {:?}", lhs, rhs))
-        } else {
-            f.write_str("not implemented")
-        }
+        f.write_fmt(format_args!("{:?} ≤ {:?}", self.0, self.1))
     }
 }
 

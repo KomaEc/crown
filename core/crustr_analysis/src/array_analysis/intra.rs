@@ -239,7 +239,7 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
             if let Rvalue::Use(Operand::Move(rhs)) | Rvalue::Use(Operand::Copy(rhs)) = rvalue {
                 let lhs = self.process_lhs(place, location);
                 let rhs = self.process_rhs(rhs, location);
-                let constraint = Constraint::LE(lhs, rhs);
+                let constraint = Constraint(lhs, rhs);
                 log::debug!("generate constraint {}", constraint);
                 self.ctxt.constraints.push(constraint);
             }
@@ -291,7 +291,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         lambda_ctxt: &'infercx mut CrateLambdaCtxt,
         insertion_points: &PhiNodeInserted,
     ) -> Self {
-        let phi_node_equality_group = insertion_points
+        let phi_joins = insertion_points
             .iter()
             .map(|vec| {
                 vec.iter()
@@ -303,7 +303,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
             tcx,
             body,
             lambda_ctxt: lambda_ctxt.intra_view(body_idx),
-            phi_joins: phi_node_equality_group,
+            phi_joins,
             constraints: IndexVec::new(),
         }
     }
@@ -312,14 +312,12 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
 impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
     type Output = Lambda;
 
-    /// TODO: def is also use in this analysis
     fn handle_def(&mut self, local: Local, idx: usize, _location: Location) -> Self::Output {
         log::debug!("IntraCtxt defining {:?}^{}", local, idx);
         debug_assert!(self.body.local_decls[local].ty.is_any_ptr());
         self.lambda_ctxt.generate_local(local, idx)
     }
 
-    /// TODO: def is also use in this analysis
     fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
         let lambda = self.lambda_ctxt.generate_local(local, idx);
         self.phi_joins[block]
