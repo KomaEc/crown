@@ -17,7 +17,62 @@ const PHI_NODE_INSERTED_ON_STACK_SIZE: usize = 3;
 pub type DominanceFrontier =
     IndexVec<BasicBlock, SmallVec<[BasicBlock; DOMINATOR_FRONTIER_ON_STACK_SIZE]>>;
 // TODO: turn PhiNodeInserted into PhiNodeInserted<DefUse>
-pub type PhiNodeInserted = IndexVec<BasicBlock, SmallVec<[Local; PHI_NODE_INSERTED_ON_STACK_SIZE]>>;
+pub type PhiNodeInserted = IndexVec<BasicBlock, SmallVec<[Local; PHI_NODE_INSERTED_ON_STACK_SIZE]>>;// IndexVec<BasicBlock, BasicBlockInsersionPoints<()>>; 
+
+
+/*
+#[derive(Clone)]
+pub struct BasicBlockInsersionPoints<T> {
+    data: SmallVec<[(Local, T); PHI_NODE_INSERTED_ON_STACK_SIZE]>,
+}
+
+impl<T> BasicBlockInsersionPoints<T> {
+    pub fn new() -> Self {
+        BasicBlockInsersionPoints { data: SmallVec::new() }
+    }
+}
+
+impl<T> std::ops::Index<Local> for BasicBlockInsersionPoints<T> {
+    type Output = T;
+
+    fn index(&self, local: Local) -> &Self::Output {
+        self.data.iter().find_map(|&(this_local, ref t)| {
+            (this_local == local).then(|| t)
+        })
+        .expect(&format!("no phi node for {:?}", local))
+    }
+}
+
+impl<T> std::ops::IndexMut<Local> for BasicBlockInsersionPoints<T> {
+    fn index_mut(&mut self, local: Local) -> &mut Self::Output {
+        self.data.iter_mut().find_map(|&mut (this_local, ref mut t)| {
+            (this_local == local).then(|| t)
+        })
+        .expect(&format!("no phi node for {:?}", local))
+    }
+}
+
+impl<T> BasicBlockInsersionPoints<T> {
+    pub fn map<F, U>(&self, f: F) -> BasicBlockInsersionPoints<U>
+    where
+        F: Fn(&T) -> U,
+    {
+        BasicBlockInsersionPoints {
+            data: self
+                .data
+                .iter()
+                .map(|&(local, ref t)| (local, f(t)))
+                .collect::<SmallVec<_>>(),
+        }
+    }
+}
+
+impl BasicBlockInsersionPoints<()> {
+    pub fn push(&mut self, local: Local) {
+        self.data.push((local, ()))
+    }
+}
+*/
 
 pub trait BodyExt<'tcx> {
     fn dominance_frontier(&self) -> DominanceFrontier;
