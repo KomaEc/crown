@@ -1,28 +1,23 @@
-use std::{collections::HashMap, marker::PhantomData};
+use std::marker::PhantomData;
 
 use crate::{
     array_analysis::{Constraint, ConstraintIdx, CrateLambdaCtxt, Lambda, LambdaData},
-    def_use::{BorrowckDefUse, DefUseCategorisable},
+    def_use::DefUseCategorisable,
     ssa::{
         body_ext::{BodyExt, PhiNodeInserted},
-        rename::{
-            handler::{LocalSimplePtrCVMap, SSANameMap},
-            impls::PlainRenamer,
-            HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename, SSARenameState,
-        },
+        rename::{HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename, SSARenameState},
     },
-    FieldDefIdx,
 };
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
-        visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
+        visit::{PlaceContext, Visitor},
         BasicBlock, Body, Local, Location, Operand, Place, PlaceElem, PlaceRef, ProjectionElem,
-        Rvalue, Statement, Terminator, TerminatorKind,
+        Rvalue, Statement, Terminator,
     },
-    ty::{AdtDef, TyCtxt, TyKind::FnDef},
+    ty::{TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
@@ -204,9 +199,6 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
 
     fn store_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
         assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
-
-        //#[cfg(debug_assertions)]
-        //println!("store place {:?}", place);
         log::debug!("store place {:?}", place);
 
         if place.projection.is_empty() {
@@ -240,8 +232,6 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 
     fn visit_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
-        // #[cfg(debug_assertions)]
-        // println!("visiting statement {:?}", statement);
         log::debug!("visiting statement {:?}", statement);
         self.super_statement(statement, location)
     }
@@ -262,8 +252,6 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
-        // #[cfg(debug_assertions)]
-        // println!("visiting terminator {:?}", terminator);
         log::debug!("visiting terminator {:?}", terminator);
         self.super_terminator(terminator, location)
     }
@@ -286,39 +274,6 @@ impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
         });
         self.local[base].push(lambda);
         log::debug!("generate {:?} for Local {:?}^{}", lambda, base, ssa_idx);
-        lambda
-    }
-
-    #[inline]
-    pub fn access_local_nested(&mut self, base: Local, nested_level: usize) -> Lambda {
-        let lambda = self.local_nested[base][nested_level];
-        // FIXME: wrong printing logic
-        log::debug!(
-            "access {:?} for LocalNested {:*<1$}{:?}",
-            lambda,
-            nested_level,
-            base
-        );
-        lambda
-    }
-
-    #[inline]
-    pub fn access_field_def(
-        &mut self,
-        adt_did: DefId,
-        adt_def: &AdtDef,
-        variant_idx: VariantIdx,
-        field_idx: usize,
-        nested_level: usize,
-    ) -> Lambda {
-        let lambda = self.field_defs[&adt_did][variant_idx][field_idx][nested_level];
-        log::debug!(
-            "access {:?} for FieldDef {:*<1$}{:?}.{}",
-            lambda,
-            nested_level,
-            adt_def,
-            adt_def.variants[variant_idx].fields[field_idx].name
-        );
         lambda
     }
 }
@@ -372,10 +327,10 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
         let lambda = self.lambda_ctxt.generate_local(local, idx);
         self.phi_joins[block]
             .iter_mut()
-            .find(|x| x.0 == local)
+            .find_map(|&mut (this_local, ref mut lambdas)| {
+                (this_local == local).then(|| lambdas.push(lambda))
+            })
             .unwrap()
-            .1
-            .push(lambda);
     }
 
     fn handle_use(&mut self, local: Local, idx: usize, _location: Location) -> Self::Output {
@@ -388,9 +343,9 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
         let lambda = self.lambda_ctxt.local[local][idx];
         self.phi_joins[block]
             .iter_mut()
-            .find(|x| x.0 == local)
+            .find_map(|&mut (this_local, ref mut lambdas)| {
+                (this_local == local).then(|| lambdas.push(lambda))
+            })
             .unwrap()
-            .1
-            .push(lambda);
     }
 }

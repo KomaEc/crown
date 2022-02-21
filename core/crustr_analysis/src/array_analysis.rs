@@ -9,8 +9,6 @@ use rustc_middle::{
 };
 use rustc_target::abi::VariantIdx;
 
-use crate::FieldDefIdx;
-
 pub mod intra;
 #[cfg(test)]
 mod test;
@@ -51,7 +49,11 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
                     let adt_def = self.tcx.adt_def(adt_did);
                     let field_def = &adt_def.variants[variant_idx].fields[field_idx];
                     let field_def_str = format!("{}.{}", self.tcx.type_of(adt_did), field_def.name);
-                    log::debug!("for field {}: {}:", field_def_str, self.tcx.type_of(field_def.did));
+                    log::debug!(
+                        "for field {}: {}:",
+                        field_def_str,
+                        self.tcx.type_of(field_def.did)
+                    );
                     for (idx, lambda) in z.iter().enumerate() {
                         log::debug!("{:*<1$}{2} ==> {3:?}", "", idx, field_def_str, lambda)
                     }
@@ -67,7 +69,14 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
             );
             for (local, x) in ctxt.local_nested.iter_enumerated() {
                 for (idx, lambda) in x.iter().enumerate() {
-                    log::debug!("{}{:*<2$}{3:?} ==> {4:?}", INDENT, "", idx+1, local, lambda)
+                    log::debug!(
+                        "{}{:*<2$}{3:?} ==> {4:?}",
+                        INDENT,
+                        "",
+                        idx + 1,
+                        local,
+                        lambda
+                    )
                 }
             }
             for (local, y) in ctxt.local.iter_enumerated() {

@@ -57,7 +57,11 @@ const TEST_PROGRAMS: &'static [(
     print_mir_and_log_debug,
 )];
 
-fn print_mir_and_log_debug<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_did: LocalDefId) {
+fn print_mir_and_log_debug<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    struct_defs: Vec<LocalDefId>,
+    fn_did: LocalDefId,
+) {
     let body = tcx.optimized_mir(fn_did);
 
     let mut w = String::new();

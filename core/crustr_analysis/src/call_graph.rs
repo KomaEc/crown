@@ -29,6 +29,6 @@ rustc_index::newtype_index! {
     }
 }
 
-pub fn construct_call_graph<'tcx>(tcx: TyCtxt<'tcx>) -> CallGraph {
+pub fn construct_call_graph<'tcx>(_tcx: TyCtxt<'tcx>) -> CallGraph {
     todo!()
 }
