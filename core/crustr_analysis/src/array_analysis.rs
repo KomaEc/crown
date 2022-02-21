@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{HasLocalDecls, Local},
+    mir::Local,
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
@@ -38,7 +38,6 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
 
     pub fn debug(&self) {
         log::debug!("Initialising crate summary");
-        const INDENT: &str = "   in f, ";
         for (&adt_did, x) in &self.lambda_ctxt.field_defs {
             for (variant_idx, y) in x.iter_enumerated() {
                 for (field_idx, z) in y.iter().enumerate() {
@@ -57,6 +56,7 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
             }
         }
 
+        /*
         for (&body_did, ctxt) in std::iter::zip(self.bodies, &self.lambda_ctxt.body_ctxt) {
             let body = self.tcx.optimized_mir(body_did);
             log::debug!(
@@ -84,6 +84,7 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
                 }
             }
         }
+        */
     }
 }
 
@@ -162,7 +163,7 @@ impl CrateLambdaCtxt {
                 )
             })
             .collect::<FxHashMap<_, _>>();
-
+        /*
         let body_ctxt = bodies
             .iter()
             .enumerate()
@@ -209,11 +210,12 @@ impl CrateLambdaCtxt {
                     .into()
             })
             .collect::<Vec<_>>();
+            */
 
         CrateLambdaCtxt {
             lambda_map,
             field_defs,
-            body_ctxt,
+            body_ctxt: Vec::with_capacity(bodies.len()),
         }
     }
 }

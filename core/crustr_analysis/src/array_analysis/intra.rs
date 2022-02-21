@@ -15,14 +15,14 @@ use rustc_middle::{
     mir::{
         visit::{PlaceContext, Visitor},
         BasicBlock, Body, Local, Location, Operand, Place, PlaceElem, PlaceRef, ProjectionElem,
-        Rvalue, Statement, Terminator,
+        Rvalue, Statement, Terminator, TerminatorKind,
     },
-    ty::TyCtxt,
+    ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
 
-use super::CrateSummary;
+use super::{CrateSummary, LambdaCtxt};
 
 impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
     pub fn infer<DefUse: DefUseCategorisable>(&mut self) {
@@ -44,19 +44,64 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
             };
 
             infer.rename_body(body, &insertion_points);
+
+            let body_ctxt = LambdaCtxt {
+                local: infer.ctxt.lambda_ctxt.local,
+                local_nested: infer.ctxt.lambda_ctxt.local_nested,
+            };
+            self.lambda_ctxt.body_ctxt.push(body_ctxt);
         }
     }
 }
 
 impl CrateLambdaCtxt {
-    pub fn intra_view(&mut self, body_idx: usize) -> CrateLambdaCtxtIntraView<'_> {
-        let lambda_ctxt = &mut self.body_ctxt[body_idx];
+    pub fn intra_view(&mut self, body: &Body, body_idx: usize) -> CrateLambdaCtxtIntraView<'_> {
+        let (local, local_nested) = body
+            .local_decls
+            .iter_enumerated()
+            .map(|(local, local_decl)| {
+                let ty = local_decl.ty;
+                (
+                    // vec![],
+                    ty.is_any_ptr()
+                        .then(|| {
+                            let lambda = self.lambda_map.push(LambdaData::Local {
+                                body: body_idx,
+                                base: local,
+                                ssa_idx: 0,
+                            });
+                            vec![lambda]
+                        })
+                        .unwrap_or_else(|| vec![]),
+                    ty.walk()
+                        .filter_map(|generic_arg| {
+                            if let GenericArgKind::Type(ty) = generic_arg.unpack() {
+                                Some(ty)
+                            } else {
+                                None
+                            }
+                        })
+                        .take_while(|ty| ty.is_any_ptr() && !ty.is_fn_ptr())
+                        .skip(1)
+                        .enumerate()
+                        .map(|(level, _)| {
+                            self.lambda_map.push(LambdaData::LocalNested {
+                                body: body_idx,
+                                base: local,
+                                nested_level: level,
+                            })
+                        })
+                        .collect::<Vec<_>>(),
+                )
+            })
+            .unzip();
+
         CrateLambdaCtxtIntraView {
             body: body_idx,
             lambda_map: &mut self.lambda_map,
             field_defs: &self.field_defs,
-            local: &mut lambda_ctxt.local,
-            local_nested: &lambda_ctxt.local_nested,
+            local,
+            local_nested,
         }
     }
 }
@@ -249,7 +294,18 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
-        log::debug!("visiting terminator {:?}", terminator);
+        // log::debug!("visiting terminator {:?}", terminator);
+        if let TerminatorKind::Call {
+            ref func,
+            args: _,
+            destination: _,
+            cleanup: _,
+            from_hir_call: _,
+            fn_span: _,
+        } = terminator.kind
+        {
+            log::debug!("calling function {:?}", func);
+        }
         self.super_terminator(terminator, location)
     }
 }
@@ -258,8 +314,8 @@ pub struct CrateLambdaCtxtIntraView<'intracx> {
     pub body: usize,
     pub lambda_map: &'intracx mut IndexVec<Lambda, LambdaData>,
     pub field_defs: &'intracx FxHashMap<DefId, IndexVec<VariantIdx, Vec<Vec<Lambda>>>>,
-    pub local: &'intracx mut IndexVec<Local, Vec<Lambda>>,
-    pub local_nested: &'intracx IndexVec<Local, Vec<Lambda>>,
+    pub local: IndexVec<Local, Vec<Lambda>>,
+    pub local_nested: IndexVec<Local, Vec<Lambda>>,
 }
 
 impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
@@ -302,10 +358,41 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         InferCtxt {
             tcx,
             body,
-            lambda_ctxt: lambda_ctxt.intra_view(body_idx),
+            lambda_ctxt: lambda_ctxt.intra_view(body, body_idx),
             phi_joins,
             constraints: IndexVec::new(),
         }
+        .debug_initialise()
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn debug_initialise(self) -> Self {
+        const INDENT: &str = "   in f, ";
+        log::debug!(
+            "for function {}:",
+            self.tcx.def_path_debug_str(self.body.source.def_id())
+        );
+        for (local, x) in self.lambda_ctxt.local_nested.iter_enumerated() {
+            for (idx, lambda) in x.iter().enumerate() {
+                log::debug!(
+                    "{}{:*<2$}{3:?} ==> {4:?}",
+                    INDENT,
+                    "",
+                    idx + 1,
+                    local,
+                    lambda
+                )
+            }
+        }
+        for (local, y) in self.lambda_ctxt.local.iter_enumerated() {
+            if self.body.local_decls[local].ty.is_any_ptr() {
+                assert_eq!(y.len(), 1);
+                log::debug!("{}{:?}^0 ==> {:?}", INDENT, local, y[0])
+            } else {
+                assert!(y.is_empty())
+            }
+        }
+        self
     }
 }
 

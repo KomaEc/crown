@@ -157,3 +157,38 @@ where
         })
     })
 }
+
+pub fn run_compiler_with_input_str_with_struct_defs_and_funcs<F>(input: &'static str, f: F)
+where
+    F: for<'tcx> FnOnce(TyCtxt<'tcx>, Vec<LocalDefId>, Vec<LocalDefId>) + Send,
+{
+    rustc_interface::run_compiler(Config::with_input_str(input), |compiler| {
+        compiler.enter(|queries| {
+            queries.global_ctxt().unwrap().take().enter(|tcx| {
+                let hir_krate = tcx.hir().krate();
+
+                let mut struct_defs = vec![];
+                let mut fn_dids = vec![];
+
+                for (did, owner) in hir_krate.owners.iter_enumerated() {
+                    if let Some(owner_info) = owner.as_owner() {
+                        if let OwnerNode::Item(item) = owner_info.node() {
+                            if let ItemKind::Struct(_variant_data, _generics) = &item.kind {
+                                let def_id = item.def_id;
+                                assert_eq!(def_id, did);
+
+                                struct_defs.push(def_id)
+                            } else if let ItemKind::Fn(_, _, _) = item.kind {
+                                assert_eq!(item.def_id, did);
+
+                                fn_dids.push(did);
+                            }
+                        }
+                    }
+                }
+
+                f(tcx, struct_defs, fn_dids)
+            })
+        })
+    })
+}

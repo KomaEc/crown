@@ -33,15 +33,16 @@ fn test_print_mir() {
 fn test_all() {
     env_logger::init();
     for (prog, spec) in TEST_PROGRAMS {
-        compiler_interface::run_compiler_with_input_str_with_struct_defs_and_single_func(prog, spec)
+        compiler_interface::run_compiler_with_input_str_with_struct_defs_and_funcs(prog, spec)
     }
 }
 
 const TEST_PROGRAMS: &'static [(
     &'static str,
-    for<'tcx> fn(TyCtxt<'tcx>, Vec<LocalDefId>, LocalDefId),
-)] = &[(
-    "
+    for<'tcx> fn(TyCtxt<'tcx>, Vec<LocalDefId>, Vec<LocalDefId>),
+)] = &[
+    (
+        "
     struct S {
         f: *mut *mut i32,
         g: *mut i32,
@@ -54,30 +55,52 @@ const TEST_PROGRAMS: &'static [(
         let w = z;
         (*y).g = w;
     }",
-    print_mir_and_log_debug,
-)];
+        print_mir_and_log_debug,
+    ),
+    (
+        "
+    unsafe fn f(x: *mut *mut i32, y: *mut i32) {
+        *x = y;
+        *y = 3;
+    }
+
+    unsafe fn g(mut x: *mut i32, y: *mut *mut i32) {
+        *x = 4;
+        f(&mut x, *y);
+    }
+    ",
+        print_mir_and_log_debug,
+    ),
+];
 
 fn print_mir_and_log_debug<'tcx>(
     tcx: TyCtxt<'tcx>,
     struct_defs: Vec<LocalDefId>,
-    fn_did: LocalDefId,
+    fn_dids: Vec<LocalDefId>,
 ) {
-    let body = tcx.optimized_mir(fn_did);
+    let bodies = fn_dids
+        .iter()
+        .map(|&fn_did| {
+            let body = tcx.optimized_mir(fn_did);
 
-    let mut w = String::new();
-    rustc_middle::mir::pretty::write_mir_fn(tcx, body, &mut |_, _| Ok(()), unsafe {
-        &mut w.as_mut_vec()
-    })
-    .unwrap();
-    println!("{}", w);
+            let mut w = String::new();
+            rustc_middle::mir::pretty::write_mir_fn(tcx, body, &mut |_, _| Ok(()), unsafe {
+                &mut w.as_mut_vec()
+            })
+            .unwrap();
+            println!("{}", w);
+            fn_did.to_def_id()
+        })
+        .collect::<Vec<_>>();
 
     let adt_defs = struct_defs
         .into_iter()
         .map(|did| did.to_def_id())
         .collect::<Vec<_>>();
-    let bodies = vec![fn_did.to_def_id()];
+    // let bodies = vec![fn_did.to_def_id()];
 
     let mut crate_summary = CrateSummary::new(tcx, &adt_defs, &bodies);
     crate_summary.debug();
     crate_summary.infer::<BorrowckDefUse>();
+    assert_eq!(crate_summary.lambda_ctxt.body_ctxt.len(), bodies.len())
 }
