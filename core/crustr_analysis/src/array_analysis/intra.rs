@@ -1,7 +1,9 @@
 use std::marker::PhantomData;
 
 use crate::{
-    array_analysis::{Constraint, ConstraintIdx, CrateLambdaCtxt, Lambda, LambdaData},
+    array_analysis::{
+        Constraint, ConstraintIdx, CrateLambdaCtxt, CrateSummary, Lambda, LambdaCtxt, LambdaData,
+    },
     def_use::DefUseCategorisable,
     ssa::{
         body_ext::{BodyExt, PhiNodeInserted},
@@ -21,8 +23,6 @@ use rustc_middle::{
 };
 use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
-
-use super::{CrateSummary, LambdaCtxt};
 
 impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
     pub fn infer<DefUse: DefUseCategorisable>(&mut self) {
@@ -45,6 +45,9 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
 
             infer.rename_body(body, &insertion_points);
 
+            #[cfg(debug_assertions)]
+            infer.ctxt.debug_result();
+
             let body_ctxt = LambdaCtxt {
                 local: infer.ctxt.lambda_ctxt.local,
                 local_nested: infer.ctxt.lambda_ctxt.local_nested,
@@ -65,7 +68,7 @@ impl CrateLambdaCtxt {
                     // vec![],
                     ty.is_any_ptr()
                         .then(|| {
-                            let lambda = self.lambda_map.push(LambdaData::Local {
+                            let lambda = self.lambda_map.push(LambdaData::LocalScalar {
                                 body: body_idx,
                                 base: local,
                                 ssa_idx: 0,
@@ -320,7 +323,7 @@ pub struct CrateLambdaCtxtIntraView<'intracx> {
 
 impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
     pub fn generate_local(&mut self, base: Local, ssa_idx: usize) -> Lambda {
-        let lambda = self.lambda_map.push(LambdaData::Local {
+        let lambda = self.lambda_map.push(LambdaData::LocalScalar {
             body: self.body,
             base,
             ssa_idx,
@@ -351,7 +354,12 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
             .iter()
             .map(|vec| {
                 vec.iter()
-                    .map(|&local| (local, vec![]))
+                    .filter_map(|&local| {
+                        body.local_decls[local]
+                            .ty
+                            .is_any_ptr()
+                            .then(|| (local, vec![]))
+                    })
                     .collect::<SmallVec<_>>()
             })
             .collect::<IndexVec<_, _>>();
@@ -394,6 +402,16 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         }
         self
     }
+
+    #[cfg(debug_assertions)]
+    pub fn debug_result(&self) {
+        log::debug!("Phi nodes joins:");
+        for (bb, locals) in self.phi_joins.iter_enumerated() {
+            for (local, lambdas) in locals {
+                log::debug!("for {:?} at {:?}, {:?}", local, bb, lambdas)
+            }
+        }
+    }
 }
 
 impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
@@ -406,6 +424,7 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
     }
 
     fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
+        log::debug!("IntraCtxt phi node defining {:?}^{}", local, idx);
         let lambda = self.lambda_ctxt.generate_local(local, idx);
         self.phi_joins[block]
             .iter_mut()

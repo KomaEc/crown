@@ -71,6 +71,41 @@ const TEST_PROGRAMS: &'static [(
     ",
         print_mir_and_log_debug,
     ),
+    (
+        "
+    unsafe fn f(q: *mut i32, r: *mut i32, cond: bool) -> *mut i32 {
+        let mut local = 0;
+        let mut p: *mut i32 = &mut local;
+        if cond {
+            p = q;
+        } else {
+            p = r;
+        }
+        return p;
+    }
+        ",
+        print_mir_and_log_debug,
+    ),
+    (
+        "
+    fn f() -> *mut i32 {
+        let i = 0 as *mut i32;
+        let mut j = 1 as *mut i32;
+        let mut k = 0 as *mut i32;
+        while (k as usize) < 100 {
+            if (j as usize) < 20 {
+                j = i;
+                k = ((*k)+1) as *mut i32;
+            } else {
+                j = k;
+                k = ((*k)+2) as *mut i32;
+            }
+            assert!(true, \"Introduce a new block, this assertion is optimised away\")
+        }
+        return j
+    }",
+        print_mir_and_log_debug,
+    ),
 ];
 
 fn print_mir_and_log_debug<'tcx>(

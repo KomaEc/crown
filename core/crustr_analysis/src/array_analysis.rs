@@ -55,36 +55,6 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
                 }
             }
         }
-
-        /*
-        for (&body_did, ctxt) in std::iter::zip(self.bodies, &self.lambda_ctxt.body_ctxt) {
-            let body = self.tcx.optimized_mir(body_did);
-            log::debug!(
-                "for function {}:",
-                self.tcx.def_path_debug_str(body.source.def_id())
-            );
-            for (local, x) in ctxt.local_nested.iter_enumerated() {
-                for (idx, lambda) in x.iter().enumerate() {
-                    log::debug!(
-                        "{}{:*<2$}{3:?} ==> {4:?}",
-                        INDENT,
-                        "",
-                        idx + 1,
-                        local,
-                        lambda
-                    )
-                }
-            }
-            for (local, y) in ctxt.local.iter_enumerated() {
-                if body.local_decls()[local].ty.is_any_ptr() {
-                    assert_eq!(y.len(), 1);
-                    log::debug!("{}{:?}^0 ==> {:?}", INDENT, local, y[0])
-                } else {
-                    assert!(y.is_empty())
-                }
-            }
-        }
-        */
     }
 }
 
@@ -163,54 +133,6 @@ impl CrateLambdaCtxt {
                 )
             })
             .collect::<FxHashMap<_, _>>();
-        /*
-        let body_ctxt = bodies
-            .iter()
-            .enumerate()
-            .map(|(body_idx, &did)| {
-                let body = tcx.optimized_mir(did);
-                body.local_decls()
-                    .iter_enumerated()
-                    .map(|(local, local_decl)| {
-                        let ty = local_decl.ty;
-                        (
-                            // vec![],
-                            ty.is_any_ptr()
-                                .then(|| {
-                                    let lambda = lambda_map.push(LambdaData::Local {
-                                        body: body_idx,
-                                        base: local,
-                                        ssa_idx: 0,
-                                    });
-                                    vec![lambda]
-                                })
-                                .unwrap_or_else(|| vec![]),
-                            ty.walk()
-                                .filter_map(|generic_arg| {
-                                    if let GenericArgKind::Type(ty) = generic_arg.unpack() {
-                                        Some(ty)
-                                    } else {
-                                        None
-                                    }
-                                })
-                                .take_while(|ty| ty.is_any_ptr() && !ty.is_fn_ptr())
-                                .skip(1)
-                                .enumerate()
-                                .map(|(level, _)| {
-                                    lambda_map.push(LambdaData::LocalNested {
-                                        body: body_idx,
-                                        base: local,
-                                        nested_level: level,
-                                    })
-                                })
-                                .collect::<Vec<_>>(),
-                        )
-                    })
-                    .unzip()
-                    .into()
-            })
-            .collect::<Vec<_>>();
-            */
 
         CrateLambdaCtxt {
             lambda_map,
@@ -232,7 +154,7 @@ impl Display for Constraint {
 /// The language constructs that a constraint variable λ corresponds to
 pub enum LambdaData {
     /// A SSA scalar variable
-    Local {
+    LocalScalar {
         body: usize,
         base: Local,
         ssa_idx: usize,
