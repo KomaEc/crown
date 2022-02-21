@@ -187,7 +187,7 @@ impl CrateLambdaCtxt {
                                     });
                                     vec![lambda]
                                 })
-                                .unwrap_or(vec![]),
+                                .unwrap_or_else(|| vec![]),
                             ty.walk()
                                 .filter_map(|generic_arg| {
                                     if let GenericArgKind::Type(ty) = generic_arg.unpack() {

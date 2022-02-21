@@ -123,17 +123,16 @@ const TEST_PROGRAMS: &'static [&'static str] = &[
     "
     fn f() -> u32 {
         let i = 1;
-        let mut j_1 = 1;
+        let mut j = 1;
         let mut k = 0;
         while k < 100 {
             if j < 20 {
-                j_2 = i;
+                j = i;
                 k += 1;
             } else {
-                j_3 = k;
+                j = k;
                 k += 2;
             }
-            // j_4 = phi(j_2, j_3)
             assert!(true, \"Introduce a new block, this assertion is optimised away\")
         }
         return j

@@ -17,7 +17,7 @@ use rustc_middle::{
         BasicBlock, Body, Local, Location, Operand, Place, PlaceElem, PlaceRef, ProjectionElem,
         Rvalue, Statement, Terminator,
     },
-    ty::{TyCtxt},
+    ty::TyCtxt,
 };
 use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
@@ -175,10 +175,8 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 
     fn use_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
-        assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
+        debug_assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
 
-        // #[cfg(debug_assertions)]
-        // println!("use place {:?}", place);
         log::debug!("use place {:?}", place);
 
         let ssa_idx = self.r#use(place.local);
@@ -198,7 +196,7 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 
     fn store_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
-        assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
+        debug_assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
         log::debug!("store place {:?}", place);
 
         if place.projection.is_empty() {
@@ -237,7 +235,6 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 
     fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
-        // let lhs = self.process_lhs(place, location);
         if place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr() {
             if let Rvalue::Use(Operand::Move(rhs)) | Rvalue::Use(Operand::Copy(rhs)) = rvalue {
                 let lhs = self.store_ptr_place(place, location);
