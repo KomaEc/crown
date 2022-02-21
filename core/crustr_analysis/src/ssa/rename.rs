@@ -12,6 +12,9 @@ use crate::{def_use::DefUseCategorisable, ssa::body_ext::PhiNodeInserted};
 
 use std::marker::PhantomData;
 
+// Local -> Local, usize
+// Location -> Local -> usize
+
 pub struct SSARenameState<ProgramVar: Idx> {
     count: IndexVec<ProgramVar, usize>,
     stack: IndexVec<ProgramVar, Vec<usize>>,

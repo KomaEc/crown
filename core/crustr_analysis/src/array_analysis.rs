@@ -1,3 +1,6 @@
+use std::fmt::Display;
+
+use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
@@ -12,28 +15,12 @@ pub mod intra;
 #[cfg(test)]
 mod test;
 
-fn gather_field_defs(
-    tcx: TyCtxt,
-    adt_defs: &[DefId],
-) -> IndexVec<FieldDefIdx, (usize, VariantIdx, usize)> {
-    let mut field_defs = IndexVec::new();
-    for (adt_def_idx, &did) in adt_defs.iter().enumerate() {
-        let adt_def = tcx.adt_def(did);
-        for (variant_idx, variant) in adt_def.variants.iter_enumerated() {
-            for (field_idx, _) in variant.fields.iter().enumerate() {
-                field_defs.push((adt_def_idx, variant_idx, field_idx));
-            }
-        }
-    }
-    field_defs
-}
-
 /// This structure should hold info about all struct definitions
 /// and local nested pointers in the crate
 pub struct CrateSummary<'analysis, 'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub adt_defs: &'analysis [DefId],
-    field_defs: IndexVec<FieldDefIdx, (usize, VariantIdx, usize)>,
+    // field_defs: IndexVec<FieldDefIdx, (usize, VariantIdx, usize)>,
     pub bodies: &'analysis [DefId],
     lambda_ctxt: CrateLambdaCtxt,
 }
@@ -44,14 +31,53 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
         adt_defs: &'analysis [DefId],
         bodies: &'analysis [DefId],
     ) -> Self {
-        let field_defs = gather_field_defs(tcx, adt_defs);
-        let lambda_ctxt = CrateLambdaCtxt::initiate(tcx, &field_defs, adt_defs, bodies);
+        // let field_defs = gather_field_defs(tcx, adt_defs);
+        let lambda_ctxt = CrateLambdaCtxt::initiate(tcx, adt_defs, bodies);
         CrateSummary {
             tcx,
             adt_defs,
-            field_defs,
+            // field_defs,
             bodies,
             lambda_ctxt,
+        }
+    }
+
+    pub fn debug(&self) {
+        log::debug!("Initialising crate summary");
+        const INDENT: &str = "   in f, ";
+        for (&adt_did, x) in &self.lambda_ctxt.field_defs {
+            for (variant_idx, y) in x.iter_enumerated() {
+                for (field_idx, z) in y.iter().enumerate() {
+                    let adt_def = self.tcx.adt_def(adt_did);
+                    let field_def = &adt_def.variants[variant_idx].fields[field_idx];
+                    let field_def_str = format!("{}.{}", self.tcx.type_of(adt_did), field_def.name);
+                    log::debug!("for field {}: {}:", field_def_str, self.tcx.type_of(field_def.did));
+                    for (idx, lambda) in z.iter().enumerate() {
+                        log::debug!("{:*<1$}{2} ==> {3:?}", "", idx, field_def_str, lambda)
+                    }
+                }
+            }
+        }
+
+        for (&body_did, ctxt) in std::iter::zip(self.bodies, &self.lambda_ctxt.body_ctxt) {
+            let body = self.tcx.optimized_mir(body_did);
+            log::debug!(
+                "for function {}:",
+                self.tcx.def_path_debug_str(body.source.def_id())
+            );
+            for (local, x) in ctxt.local_nested.iter_enumerated() {
+                for (idx, lambda) in x.iter().enumerate() {
+                    log::debug!("{}{:*<2$}{3:?} ==> {4:?}", INDENT, "", idx+1, local, lambda)
+                }
+            }
+            for (local, y) in ctxt.local.iter_enumerated() {
+                if body.local_decls()[local].ty.is_any_ptr() {
+                    assert_eq!(y.len(), 1);
+                    log::debug!("{}{:?}^0 ==> {:?}", INDENT, local, y[0])
+                } else {
+                    assert!(y.is_empty())
+                }
+            }
         }
     }
 }
@@ -60,7 +86,8 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
 /// we care about
 pub struct CrateLambdaCtxt {
     pub lambda_map: IndexVec<Lambda, LambdaData>,
-    pub field_def: IndexVec<FieldDefIdx, Vec<Lambda>>,
+    /// did of adt_def -> variant_idx -> field_idx -> nested_level -> lambda
+    pub field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<Vec<Lambda>>>>,
     pub body_ctxt: Vec<LambdaCtxt>,
 }
 
@@ -83,37 +110,53 @@ impl From<(IndexVec<Local, Vec<Lambda>>, IndexVec<Local, Vec<Lambda>>)> for Lamb
 impl CrateLambdaCtxt {
     pub fn initiate(
         tcx: TyCtxt,
-        field_defs: &IndexVec<FieldDefIdx, (usize, VariantIdx, usize)>,
+        // field_defs: &IndexVec<FieldDefIdx, (usize, VariantIdx, usize)>,
         adt_defs: &[DefId],
         bodies: &[DefId],
     ) -> Self {
         let mut lambda_map = IndexVec::new();
 
-        let field_def = field_defs
-            .iter_enumerated()
-            .map(|(idx, &(adt_def_idx, variant_idx, field_idx))| {
-                let field =
-                    &tcx.adt_def(adt_defs[adt_def_idx]).variants[variant_idx].fields[field_idx];
-                let ty = tcx.type_of(field.did);
-                ty.walk()
-                    .filter_map(|generic_arg| {
-                        if let GenericArgKind::Type(ty) = generic_arg.unpack() {
-                            Some(ty)
-                        } else {
-                            None
-                        }
-                    })
-                    .take_while(|ty| ty.is_any_ptr() && !ty.is_fn_ptr())
-                    .enumerate()
-                    .map(|(level, _)| {
-                        lambda_map.push(LambdaData::FieldDef {
-                            field_def: idx,
-                            nested_level: level,
+        let field_defs = adt_defs
+            .iter()
+            .map(|&did| {
+                (
+                    did,
+                    tcx.adt_def(did)
+                        .variants
+                        .iter_enumerated()
+                        .map(|(variant_idx, variant_def)| {
+                            variant_def
+                                .fields
+                                .iter()
+                                .enumerate()
+                                .map(|(field_idx, field_def)| {
+                                    let ty = tcx.type_of(field_def.did);
+                                    ty.walk()
+                                        .filter_map(|generic_arg| {
+                                            if let GenericArgKind::Type(ty) = generic_arg.unpack() {
+                                                Some(ty)
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                        .take_while(|ty| ty.is_any_ptr() && !ty.is_fn_ptr())
+                                        .enumerate()
+                                        .map(|(nested_level, _)| {
+                                            lambda_map.push(LambdaData::FieldDef {
+                                                adt_def: did,
+                                                variant_idx,
+                                                field_idx,
+                                                nested_level,
+                                            })
+                                        })
+                                        .collect::<Vec<_>>()
+                                })
+                                .collect::<Vec<_>>()
                         })
-                    })
-                    .collect::<Vec<_>>()
+                        .collect::<IndexVec<_, _>>(),
+                )
             })
-            .collect::<IndexVec<_, _>>();
+            .collect::<FxHashMap<_, _>>();
 
         let body_ctxt = bodies
             .iter()
@@ -125,7 +168,17 @@ impl CrateLambdaCtxt {
                     .map(|(local, local_decl)| {
                         let ty = local_decl.ty;
                         (
-                            vec![],
+                            // vec![],
+                            ty.is_any_ptr()
+                                .then(|| {
+                                    let lambda = lambda_map.push(LambdaData::Local {
+                                        body: body_idx,
+                                        base: local,
+                                        ssa_idx: 0,
+                                    });
+                                    vec![lambda]
+                                })
+                                .unwrap_or(vec![]),
                             ty.walk()
                                 .filter_map(|generic_arg| {
                                     if let GenericArgKind::Type(ty) = generic_arg.unpack() {
@@ -154,7 +207,7 @@ impl CrateLambdaCtxt {
 
         CrateLambdaCtxt {
             lambda_map,
-            field_def,
+            field_defs,
             body_ctxt,
         }
     }
@@ -167,6 +220,16 @@ pub enum Constraint {
     LE(Lambda, Lambda),
 }
 
+impl Display for Constraint {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Self::LE(lhs, rhs) = self {
+            f.write_fmt(format_args!("{:?} ≤ {:?}", lhs, rhs))
+        } else {
+            f.write_str("not implemented")
+        }
+    }
+}
+
 /// The language constructs that a constraint variable λ corresponds to
 pub enum LambdaData {
     /// A SSA scalar variable
@@ -177,7 +240,9 @@ pub enum LambdaData {
     },
     /// field definition
     FieldDef {
-        field_def: FieldDefIdx,
+        adt_def: DefId,
+        variant_idx: VariantIdx,
+        field_idx: usize,
         nested_level: usize,
     },
     /// A local nested pointer type.

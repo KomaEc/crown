@@ -4,7 +4,7 @@ use crate::{
     array_analysis::{Constraint, ConstraintIdx, CrateLambdaCtxt, Lambda, LambdaData},
     def_use::{BorrowckDefUse, DefUseCategorisable},
     ssa::{
-        body_ext::BodyExt,
+        body_ext::{BodyExt, PhiNodeInserted},
         rename::{
             handler::{LocalSimplePtrCVMap, SSANameMap},
             impls::PlainRenamer,
@@ -13,16 +13,45 @@ use crate::{
     },
     FieldDefIdx,
 };
-use rustc_index::vec::IndexVec;
+use rustc_hash::FxHashMap;
+use rustc_hir::def_id::DefId;
+use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-        BasicBlock, Body, Local, Location, Operand, Place, Rvalue, Statement, Terminator,
-        TerminatorKind,
+        BasicBlock, Body, Local, Location, Operand, Place, PlaceElem, PlaceRef, ProjectionElem,
+        Rvalue, Statement, Terminator, TerminatorKind,
     },
-    ty::{TyCtxt, TyKind::FnDef},
+    ty::{AdtDef, TyCtxt, TyKind::FnDef},
 };
+use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
+
+use super::CrateSummary;
+
+impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
+    pub fn infer<DefUse: DefUseCategorisable>(&mut self) {
+        for (body_idx, &did) in self.bodies.iter().enumerate() {
+            let body = self.tcx.optimized_mir(did);
+            let insertion_points = body.compute_phi_node::<DefUse>(self.tcx);
+
+            let mut infer: Infer<DefUse, ()> = Infer {
+                ctxt: InferCtxt::new(
+                    self.tcx,
+                    body_idx,
+                    body,
+                    &mut self.lambda_ctxt,
+                    &insertion_points,
+                ),
+                ssa_state: SSARenameState::new(&body.local_decls),
+                extra_handlers: (),
+                _marker: PhantomData,
+            };
+
+            infer.rename_body(body, &insertion_points);
+        }
+    }
+}
 
 impl CrateLambdaCtxt {
     pub fn intra_view(&mut self, body_idx: usize) -> CrateLambdaCtxtIntraView<'_> {
@@ -30,7 +59,7 @@ impl CrateLambdaCtxt {
         CrateLambdaCtxtIntraView {
             body: body_idx,
             lambda_map: &mut self.lambda_map,
-            field_def: &self.field_def,
+            field_defs: &self.field_defs,
             local: &mut lambda_ctxt.local,
             local_nested: &lambda_ctxt.local_nested,
         }
@@ -57,28 +86,40 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
 impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
     SSANameHandler for Infer<'infercx, 'tcx, DefUse, Handler>
 {
-    type Output = Lambda;
+    type Output = Option<Lambda>;
 
     fn handle_def(&mut self, local: Local, idx: usize, location: Location) -> Self::Output {
         self.extra_handlers.handle_def(local, idx, location);
-        self.ctxt.handle_def(local, idx, location)
+        self.ctxt.body.local_decls[local]
+            .ty
+            .is_any_ptr()
+            .then(|| self.ctxt.handle_def(local, idx, location))
     }
 
     fn handle_use(&mut self, local: Local, idx: usize, location: Location) -> Self::Output {
         self.extra_handlers.handle_use(local, idx, location);
-        self.ctxt.handle_use(local, idx, location)
+        self.ctxt.body.local_decls[local]
+            .ty
+            .is_any_ptr()
+            .then(|| self.ctxt.handle_use(local, idx, location))
     }
 
     fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
         self.extra_handlers
             .handle_def_at_phi_node(local, idx, block);
-        self.ctxt.handle_def_at_phi_node(local, idx, block)
+        self.ctxt.body.local_decls[local]
+            .ty
+            .is_any_ptr()
+            .then(|| self.ctxt.handle_def_at_phi_node(local, idx, block));
     }
 
     fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize) {
         self.extra_handlers
             .handle_use_at_phi_node(local, idx, block, pos);
-        self.ctxt.handle_use_at_phi_node(local, idx, block, pos)
+        self.ctxt.body.local_decls[local]
+            .ty
+            .is_any_ptr()
+            .then(|| self.ctxt.handle_use_at_phi_node(local, idx, block, pos));
     }
 }
 
@@ -111,16 +152,74 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
 impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
     Infer<'infercx, 'tcx, DefUse, Handler>
 {
-    fn process_lhs(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
-        match place.as_ref().last_projection() {
-            Some((place, proj)) => {
-                todo!()
-            }
-            None => {
-                let ssa_idx = self.define(place.local);
-                self.ssa_name_handler()
-                    .handle_use(place.local, ssa_idx, location)
-            }
+    fn process_projections(
+        &mut self,
+        base: Local,
+        length: usize,
+        projections: impl Iterator<Item = (PlaceRef<'tcx>, PlaceElem<'tcx>)> + DoubleEndedIterator,
+    ) -> Lambda {
+        projections
+            .rev()
+            .enumerate()
+            .find_map(|(nested_level, (base, proj))| {
+                log::debug!("visiting projection {:?}", proj);
+                if let ProjectionElem::Field(field, _) = proj {
+                    let place_ty = base.ty(self.ctxt.body, self.ctxt.tcx);
+                    let ty = place_ty.ty;
+                    let variant_idx = place_ty.variant_index.unwrap_or(VariantIdx::new(0));
+                    let adt_def = ty.ty_adt_def().unwrap();
+                    Some(
+                        self.ctxt.lambda_ctxt.field_defs[&adt_def.did][variant_idx][field.index()]
+                            [nested_level],
+                    )
+                } else {
+                    None
+                }
+            })
+            .unwrap_or_else(|| self.ctxt.lambda_ctxt.local_nested[base][length - 1])
+    }
+
+    fn use_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
+        assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
+
+        // #[cfg(debug_assertions)]
+        // println!("use place {:?}", place);
+        log::debug!("use place {:?}", place);
+
+        let ssa_idx = self.r#use(place.local);
+        let lambda = self
+            .ssa_name_handler()
+            .handle_use(place.local, ssa_idx, location);
+
+        if place.projection.is_empty() {
+            return lambda.unwrap();
+        }
+
+        self.process_projections(
+            place.local,
+            place.projection.len(),
+            place.iter_projections(),
+        )
+    }
+
+    fn store_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
+        assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
+
+        //#[cfg(debug_assertions)]
+        //println!("store place {:?}", place);
+        log::debug!("store place {:?}", place);
+
+        if place.projection.is_empty() {
+            let ssa_idx = self.define(place.local);
+            self.ssa_name_handler()
+                .handle_def(place.local, ssa_idx, location)
+                .unwrap()
+        } else {
+            self.process_projections(
+                place.local,
+                place.projection.len(),
+                place.iter_projections(),
+            )
         }
     }
 }
@@ -140,13 +239,32 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
         }
     }
 
+    fn visit_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
+        // #[cfg(debug_assertions)]
+        // println!("visiting statement {:?}", statement);
+        log::debug!("visiting statement {:?}", statement);
+        self.super_statement(statement, location)
+    }
+
     fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
-        let lhs = self.process_lhs(place, location);
-        todo!();
-        self.super_assign(place, rvalue, location)
+        // let lhs = self.process_lhs(place, location);
+        if place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr() {
+            if let Rvalue::Use(Operand::Move(rhs)) | Rvalue::Use(Operand::Copy(rhs)) = rvalue {
+                let lhs = self.store_ptr_place(place, location);
+                let rhs = self.use_ptr_place(rhs, location);
+                let constraint = Constraint::LE(lhs, rhs);
+                log::debug!("generate constraint {}", constraint);
+                self.ctxt.constraints.push(constraint);
+            }
+        } else {
+            self.super_assign(place, rvalue, location)
+        }
     }
 
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
+        // #[cfg(debug_assertions)]
+        // println!("visiting terminator {:?}", terminator);
+        log::debug!("visiting terminator {:?}", terminator);
         self.super_terminator(terminator, location)
     }
 }
@@ -154,19 +272,53 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
 pub struct CrateLambdaCtxtIntraView<'intracx> {
     pub body: usize,
     pub lambda_map: &'intracx mut IndexVec<Lambda, LambdaData>,
-    pub field_def: &'intracx IndexVec<FieldDefIdx, Vec<Lambda>>,
+    pub field_defs: &'intracx FxHashMap<DefId, IndexVec<VariantIdx, Vec<Vec<Lambda>>>>,
     pub local: &'intracx mut IndexVec<Local, Vec<Lambda>>,
     pub local_nested: &'intracx IndexVec<Local, Vec<Lambda>>,
 }
 
 impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
-    pub fn define(&mut self, base: Local, ssa_idx: usize) -> Lambda {
+    pub fn generate_local(&mut self, base: Local, ssa_idx: usize) -> Lambda {
         let lambda = self.lambda_map.push(LambdaData::Local {
             body: self.body,
             base,
             ssa_idx,
         });
         self.local[base].push(lambda);
+        log::debug!("generate {:?} for Local {:?}^{}", lambda, base, ssa_idx);
+        lambda
+    }
+
+    #[inline]
+    pub fn access_local_nested(&mut self, base: Local, nested_level: usize) -> Lambda {
+        let lambda = self.local_nested[base][nested_level];
+        // FIXME: wrong printing logic
+        log::debug!(
+            "access {:?} for LocalNested {:*<1$}{:?}",
+            lambda,
+            nested_level,
+            base
+        );
+        lambda
+    }
+
+    #[inline]
+    pub fn access_field_def(
+        &mut self,
+        adt_did: DefId,
+        adt_def: &AdtDef,
+        variant_idx: VariantIdx,
+        field_idx: usize,
+        nested_level: usize,
+    ) -> Lambda {
+        let lambda = self.field_defs[&adt_did][variant_idx][field_idx][nested_level];
+        log::debug!(
+            "access {:?} for FieldDef {:*<1$}{:?}.{}",
+            lambda,
+            nested_level,
+            adt_def,
+            adt_def.variants[variant_idx].fields[field_idx].name
+        );
         lambda
     }
 }
@@ -175,7 +327,34 @@ pub struct InferCtxt<'infercx, 'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub body: &'infercx Body<'tcx>,
     lambda_ctxt: CrateLambdaCtxtIntraView<'infercx>,
-    phi_node_equality_group: IndexVec<BasicBlock, SmallVec<[(Local, Vec<Lambda>); 3]>>,
+    phi_joins: IndexVec<BasicBlock, SmallVec<[(Local, Vec<Lambda>); 3]>>,
+    constraints: IndexVec<ConstraintIdx, Constraint>,
+}
+
+impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
+    pub fn new(
+        tcx: TyCtxt<'tcx>,
+        body_idx: usize,
+        body: &'infercx Body<'tcx>,
+        lambda_ctxt: &'infercx mut CrateLambdaCtxt,
+        insertion_points: &PhiNodeInserted,
+    ) -> Self {
+        let phi_node_equality_group = insertion_points
+            .iter()
+            .map(|vec| {
+                vec.iter()
+                    .map(|&local| (local, vec![]))
+                    .collect::<SmallVec<_>>()
+            })
+            .collect::<IndexVec<_, _>>();
+        InferCtxt {
+            tcx,
+            body,
+            lambda_ctxt: lambda_ctxt.intra_view(body_idx),
+            phi_joins: phi_node_equality_group,
+            constraints: IndexVec::new(),
+        }
+    }
 }
 
 impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
@@ -183,13 +362,15 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
 
     /// TODO: def is also use in this analysis
     fn handle_def(&mut self, local: Local, idx: usize, _location: Location) -> Self::Output {
-        self.lambda_ctxt.define(local, idx)
+        log::debug!("IntraCtxt defining {:?}^{}", local, idx);
+        debug_assert!(self.body.local_decls[local].ty.is_any_ptr());
+        self.lambda_ctxt.generate_local(local, idx)
     }
 
     /// TODO: def is also use in this analysis
     fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
-        let lambda = self.lambda_ctxt.define(local, idx);
-        self.phi_node_equality_group[block]
+        let lambda = self.lambda_ctxt.generate_local(local, idx);
+        self.phi_joins[block]
             .iter_mut()
             .find(|x| x.0 == local)
             .unwrap()
@@ -198,12 +379,14 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
     }
 
     fn handle_use(&mut self, local: Local, idx: usize, _location: Location) -> Self::Output {
+        log::debug!("IntraCtxt using {:?}^{}", local, idx);
+        debug_assert!(self.body.local_decls[local].ty.is_any_ptr());
         self.lambda_ctxt.local[local][idx]
     }
 
     fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, _pos: usize) {
         let lambda = self.lambda_ctxt.local[local][idx];
-        self.phi_node_equality_group[block]
+        self.phi_joins[block]
             .iter_mut()
             .find(|x| x.0 == local)
             .unwrap()

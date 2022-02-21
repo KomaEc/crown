@@ -15,3 +15,7 @@ graph = { path = "../utils/graph" }
 compiler_interface = { path = "../compiler_interface" }
 smallvec = "1.8.0"
 derivative = "2.2.0"
+env_logger = "0.9"
+
+[env]
+RUST_LOG = "debug"

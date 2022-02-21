@@ -373,9 +373,9 @@ Purpose of this analysis:
     
     `L(p) = 1` ==> `p` is fat (with runtime length information)
     ```
-        p = q
-    ------------------
-        L(p) <= L(q)
+        Γ |- q: L(q)
+    ------------------------------------------------
+        p = q ~~> L(p') <= L(q), Γ |- p': L(p')
 
 
         p = offset(whatever, _)
