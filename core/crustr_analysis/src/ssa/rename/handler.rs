@@ -103,6 +103,7 @@ impl SSANameHandler for SSANameMap {
 
 macro_rules! make_new_name_debug_handler (
     ($Type: ident, $macro: ident) => {
+        #[derive(Clone)]
         pub struct $Type;
 
         impl SSANameHandler for $Type {

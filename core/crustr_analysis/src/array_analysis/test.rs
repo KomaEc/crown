@@ -4,30 +4,9 @@ use compiler_interface::Input;
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
-use crate::def_use::BorrowckDefUse;
+use crate::{def_use::BorrowckDefUse, ssa::rename::handler::LogSSAName};
 
 use super::CrateSummary;
-
-#[test]
-fn test_print_mir() {
-    let working_dir_path = env::current_dir().expect("current working directory value is invalid");
-    compiler_interface::run_compiler_with_single_func(
-        Input::File(working_dir_path.join("src/array_analysis/test/resource/simple/lib.rs")),
-        |tcx, fn_did| {
-            let body = tcx.optimized_mir(fn_did);
-
-            let mut w = String::new();
-            rustc_middle::mir::pretty::write_mir_fn(tcx, body, &mut |_, _| Ok(()), unsafe {
-                &mut w.as_mut_vec()
-            })
-            .unwrap();
-            println!("{}", w);
-
-            // let mut intra = IntraContext::new(tcx, body);
-            // intra.visit_body(body);
-        },
-    )
-}
 
 #[test]
 fn test_all() {
@@ -40,7 +19,13 @@ fn test_all() {
 #[test]
 fn test_file_with_extern_call() {
     env_logger::init();
-
+    let file = env::current_dir()
+        .expect("current working directory value is invalid")
+        .join("src/array_analysis/test/resource/simple/lib.rs");
+    compiler_interface::run_compiler_with_struct_defs_and_funcs(
+        file.into(),
+        print_mir_and_log_debug,
+    )
 }
 
 const TEST_PROGRAMS: &'static [(
@@ -142,6 +127,6 @@ fn print_mir_and_log_debug<'tcx>(
 
     let mut crate_summary = CrateSummary::new(tcx, &adt_defs, &bodies);
     crate_summary.debug();
-    crate_summary.infer::<BorrowckDefUse>();
+    crate_summary.infer::<BorrowckDefUse, LogSSAName>(LogSSAName);
     assert_eq!(crate_summary.lambda_ctxt.body_ctxt.len(), bodies.len())
 }

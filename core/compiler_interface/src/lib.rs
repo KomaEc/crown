@@ -26,7 +26,7 @@ use std::str;
 /// A simpler input type than `rustc_session::config::Input`
 pub enum Input {
     File(PathBuf),
-    Str(&'static str)
+    Str(&'static str),
 }
 
 impl From<PathBuf> for Input {

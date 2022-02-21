@@ -16,6 +16,7 @@ compiler_interface = { path = "../compiler_interface" }
 smallvec = "1.8.0"
 derivative = "2.2.0"
 env_logger = "0.9"
+colored = "2"
 
 [env]
 RUST_LOG = "debug"

@@ -17,7 +17,7 @@ use rustc_middle::{
     mir::{
         visit::{PlaceContext, Visitor},
         BasicBlock, Body, Local, Location, Operand, Place, PlaceElem, PlaceRef, ProjectionElem,
-        Rvalue, Statement, Terminator, TerminatorKind,
+        Rvalue, Statement, Terminator, TerminatorKind, CastKind,
     },
     ty::{subst::GenericArgKind, TyCtxt},
 };
@@ -25,12 +25,15 @@ use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
 
 impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
-    pub fn infer<DefUse: DefUseCategorisable>(&mut self) {
+    pub fn infer<DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()> + Clone>(
+        &mut self,
+        handler: Handler,
+    ) {
         for (body_idx, &did) in self.bodies.iter().enumerate() {
             let body = self.tcx.optimized_mir(did);
             let insertion_points = body.compute_phi_node::<DefUse>(self.tcx);
 
-            let mut infer: Infer<DefUse, ()> = Infer {
+            let mut infer: Infer<DefUse, Handler> = Infer {
                 ctxt: InferCtxt::new(
                     self.tcx,
                     body_idx,
@@ -39,7 +42,7 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
                     &insertion_points,
                 ),
                 ssa_state: SSARenameState::new(&body.local_decls),
-                extra_handlers: (),
+                extra_handlers: handler.clone(),
                 _marker: PhantomData,
             };
 
@@ -278,23 +281,29 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 
     fn visit_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
-        log::debug!("visiting statement {:?}", statement);
+        use colored::*;
+        log::debug!("{}", &format!("visiting statement {:?}", statement).bold()); //statement);
         self.super_statement(statement, location)
     }
 
     /// TODO: handle cases where `rvalue` is an `AddressOf`
+    /// TODO: handle `CastKind::Pointer`? (this includes casting fat pointers to thin pointers)
     fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
         if place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr() {
-            if let Rvalue::Use(Operand::Move(rhs)) | Rvalue::Use(Operand::Copy(rhs)) = rvalue {
+            if let Rvalue::Use(Operand::Move(rhs))
+            | Rvalue::Use(Operand::Copy(rhs))
+            | Rvalue::Cast(CastKind::Misc, Operand::Move(rhs), _)
+            | Rvalue::Cast(CastKind::Misc, Operand::Copy(rhs), _) = rvalue
+            {
                 let lhs = self.process_lhs(place, location);
                 let rhs = self.process_rhs(rhs, location);
                 let constraint = Constraint(lhs, rhs);
                 log::debug!("generate constraint {}", constraint);
                 self.ctxt.constraints.push(constraint);
+                return;
             }
-        } else {
-            self.super_assign(place, rvalue, location)
         }
+        self.super_assign(place, rvalue, location)
     }
 
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {

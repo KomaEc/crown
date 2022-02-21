@@ -11,74 +11,71 @@ use super::pretty::write_ssa_mir_fn;
 
 #[test]
 fn test_phi_node_insertion_point() {
-    compiler_interface::run_compiler_with_single_func(
-        TEST_PROGRAMS[0].into(),
-        |tcx, fn_did| {
-            let body = tcx.optimized_mir(fn_did);
+    compiler_interface::run_compiler_with_single_func(TEST_PROGRAMS[0].into(), |tcx, fn_did| {
+        let body = tcx.optimized_mir(fn_did);
 
-            let mut w = String::new();
-            if let Ok(_) =
-                rustc_middle::mir::pretty::write_mir_fn(tcx, body, &mut |_, _| Ok(()), unsafe {
-                    &mut w.as_mut_vec()
-                })
-            {
-                // assert_eq!(w, "");
-                println!("{}", w);
-            } else {
-                panic!("Error in writing mir");
-            }
+        let mut w = String::new();
+        if let Ok(_) =
+            rustc_middle::mir::pretty::write_mir_fn(tcx, body, &mut |_, _| Ok(()), unsafe {
+                &mut w.as_mut_vec()
+            })
+        {
+            // assert_eq!(w, "");
+            println!("{}", w);
+        } else {
+            panic!("Error in writing mir");
+        }
 
-            let dominance_frontier = body.dominance_frontier();
-            assert_eq!(dominance_frontier[BasicBlock::from_u32(0)].as_slice(), &[]);
-            assert_eq!(
-                dominance_frontier[BasicBlock::from_u32(1)].as_slice(),
-                &[BasicBlock::from_u32(1)]
-            );
-            assert_eq!(
-                dominance_frontier[BasicBlock::from_u32(2)].as_slice(),
-                &[BasicBlock::from_u32(1)]
-            );
-            assert_eq!(
-                dominance_frontier[BasicBlock::from_u32(3)].as_slice(),
-                &[BasicBlock::from_u32(7)]
-            );
-            assert_eq!(
-                dominance_frontier[BasicBlock::from_u32(4)].as_slice(),
-                &[BasicBlock::from_u32(7)]
-            );
-            assert_eq!(
-                dominance_frontier[BasicBlock::from_u32(5)].as_slice(),
-                &[BasicBlock::from_u32(7)]
-            );
-            assert_eq!(
-                dominance_frontier[BasicBlock::from_u32(6)].as_slice(),
-                &[BasicBlock::from_u32(7)]
-            );
-            assert_eq!(
-                dominance_frontier[BasicBlock::from_u32(7)].as_slice(),
-                &[BasicBlock::from_u32(1)]
-            );
-            assert!(dominance_frontier[BasicBlock::from_u32(8)].is_empty());
+        let dominance_frontier = body.dominance_frontier();
+        assert_eq!(dominance_frontier[BasicBlock::from_u32(0)].as_slice(), &[]);
+        assert_eq!(
+            dominance_frontier[BasicBlock::from_u32(1)].as_slice(),
+            &[BasicBlock::from_u32(1)]
+        );
+        assert_eq!(
+            dominance_frontier[BasicBlock::from_u32(2)].as_slice(),
+            &[BasicBlock::from_u32(1)]
+        );
+        assert_eq!(
+            dominance_frontier[BasicBlock::from_u32(3)].as_slice(),
+            &[BasicBlock::from_u32(7)]
+        );
+        assert_eq!(
+            dominance_frontier[BasicBlock::from_u32(4)].as_slice(),
+            &[BasicBlock::from_u32(7)]
+        );
+        assert_eq!(
+            dominance_frontier[BasicBlock::from_u32(5)].as_slice(),
+            &[BasicBlock::from_u32(7)]
+        );
+        assert_eq!(
+            dominance_frontier[BasicBlock::from_u32(6)].as_slice(),
+            &[BasicBlock::from_u32(7)]
+        );
+        assert_eq!(
+            dominance_frontier[BasicBlock::from_u32(7)].as_slice(),
+            &[BasicBlock::from_u32(1)]
+        );
+        assert!(dominance_frontier[BasicBlock::from_u32(8)].is_empty());
 
-            let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
-            assert_eq!(
-                insertion_points[BasicBlock::from_u32(1)].as_slice(),
-                &[Local::from_u32(0), Local::from_u32(2)]
-            );
-            assert_eq!(
-                insertion_points[BasicBlock::from_u32(7)].as_slice(),
-                &[Local::from_u32(0), Local::from_u32(2)]
-            );
-            // bb that is not a join point must not have phi nodes inserted
-            assert!(insertion_points[BasicBlock::from_u32(0)].is_empty());
-            assert!(insertion_points[BasicBlock::from_u32(2)].is_empty());
-            assert!(insertion_points[BasicBlock::from_u32(3)].is_empty());
-            assert!(insertion_points[BasicBlock::from_u32(4)].is_empty());
-            assert!(insertion_points[BasicBlock::from_u32(5)].is_empty());
-            assert!(insertion_points[BasicBlock::from_u32(6)].is_empty());
-            assert!(insertion_points[BasicBlock::from_u32(8)].is_empty());
-        },
-    );
+        let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
+        assert_eq!(
+            insertion_points[BasicBlock::from_u32(1)].as_slice(),
+            &[Local::from_u32(0), Local::from_u32(2)]
+        );
+        assert_eq!(
+            insertion_points[BasicBlock::from_u32(7)].as_slice(),
+            &[Local::from_u32(0), Local::from_u32(2)]
+        );
+        // bb that is not a join point must not have phi nodes inserted
+        assert!(insertion_points[BasicBlock::from_u32(0)].is_empty());
+        assert!(insertion_points[BasicBlock::from_u32(2)].is_empty());
+        assert!(insertion_points[BasicBlock::from_u32(3)].is_empty());
+        assert!(insertion_points[BasicBlock::from_u32(4)].is_empty());
+        assert!(insertion_points[BasicBlock::from_u32(5)].is_empty());
+        assert!(insertion_points[BasicBlock::from_u32(6)].is_empty());
+        assert!(insertion_points[BasicBlock::from_u32(8)].is_empty());
+    });
 }
 
 #[test]
