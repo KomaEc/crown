@@ -174,10 +174,10 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
             .unwrap_or_else(|| self.ctxt.lambda_ctxt.local_nested[base][length - 1])
     }
 
-    fn use_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
+    fn process_rhs(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
         debug_assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
 
-        log::debug!("use place {:?}", place);
+        log::debug!("processing rhs {:?}", place);
 
         let ssa_idx = self.r#use(place.local);
         let lambda = self
@@ -195,9 +195,9 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
         )
     }
 
-    fn store_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
+    fn process_lhs(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
         debug_assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
-        log::debug!("store place {:?}", place);
+        log::debug!("processing lhs {:?}", place);
 
         if place.projection.is_empty() {
             let ssa_idx = self.define(place.local);
@@ -237,8 +237,8 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
         if place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr() {
             if let Rvalue::Use(Operand::Move(rhs)) | Rvalue::Use(Operand::Copy(rhs)) = rvalue {
-                let lhs = self.store_ptr_place(place, location);
-                let rhs = self.use_ptr_place(rhs, location);
+                let lhs = self.process_lhs(place, location);
+                let rhs = self.process_rhs(rhs, location);
                 let constraint = Constraint::LE(lhs, rhs);
                 log::debug!("generate constraint {}", constraint);
                 self.ctxt.constraints.push(constraint);
