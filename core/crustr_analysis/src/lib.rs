@@ -9,6 +9,7 @@ pub mod array_analysis;
 pub mod call_graph;
 pub mod def_use;
 pub mod liveness_analysis;
+pub mod null_analysis;
 pub mod ownership_analysis;
 pub mod pointer_analysis;
 pub mod ssa;
@@ -35,6 +36,7 @@ extern crate rustc_serialize;
 extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_target;
+extern crate tracing;
 
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Location};
