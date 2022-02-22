@@ -3,8 +3,6 @@
 #![feature(min_specialization)]
 #![feature(crate_visibility_modifier)]
 #![feature(bool_to_option)]
-#![feature(generic_associated_types)]
-#![feature(associated_type_defaults)]
 
 pub mod array_analysis;
 pub mod call_graph;

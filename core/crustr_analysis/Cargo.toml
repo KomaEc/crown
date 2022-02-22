@@ -17,6 +17,7 @@ smallvec = "1.8.0"
 derivative = "2.2.0"
 env_logger = "0.9"
 colored = "2"
+petgraph = "0.6.0"
 
 [env]
 RUST_LOG = "debug"

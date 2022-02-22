@@ -3,7 +3,9 @@ use std::env;
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
-use crate::{def_use::BorrowckDefUse, ssa::rename::handler::LogSSAName};
+use crate::{
+    array_analysis::solve::solve, def_use::BorrowckDefUse, ssa::rename::handler::LogSSAName,
+};
 
 use super::CrateSummary;
 
@@ -21,10 +23,7 @@ fn test_file_with_extern_call() {
     let file = env::current_dir()
         .expect("current working directory value is invalid")
         .join("src/array_analysis/test/resource/simple/lib.rs");
-    compiler_interface::run_compiler_with_struct_defs_and_funcs(
-        file.into(),
-        print_mir_and_log_debug,
-    )
+    compiler_interface::run_compiler_with_struct_defs_and_funcs(file.into(), solve_for_sinlge_func)
 }
 
 const TEST_PROGRAMS: &'static [(
@@ -61,6 +60,7 @@ const TEST_PROGRAMS: &'static [(
     ",
         print_mir_and_log_debug,
     ),
+    /*
     (
         "
     unsafe fn f(q: *mut i32, r: *mut i32, cond: bool) -> *mut i32 {
@@ -96,7 +96,56 @@ const TEST_PROGRAMS: &'static [(
     }",
         print_mir_and_log_debug,
     ),
+    */
 ];
+
+fn solve_for_sinlge_func<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    struct_defs: Vec<LocalDefId>,
+    fn_dids: Vec<LocalDefId>,
+) {
+    let bodies = fn_dids
+        .iter()
+        .map(|&fn_did| {
+            let body = tcx.optimized_mir(fn_did);
+
+            let mut w = String::new();
+            rustc_middle::mir::pretty::write_mir_fn(tcx, body, &mut |_, _| Ok(()), unsafe {
+                &mut w.as_mut_vec()
+            })
+            .unwrap();
+            println!("{}", w);
+            fn_did.to_def_id()
+        })
+        .collect::<Vec<_>>();
+
+    let adt_defs = struct_defs
+        .into_iter()
+        .map(|did| did.to_def_id())
+        .collect::<Vec<_>>();
+
+    let mut crate_summary = CrateSummary::new(tcx, &adt_defs, &bodies);
+    crate_summary.debug();
+    crate_summary.infer::<BorrowckDefUse, LogSSAName>(LogSSAName);
+
+    assert_eq!(crate_summary.bodies.len(), 1);
+
+    let solutions = solve(
+        crate_summary.lambda_ctxt.lambda_map.assumptions,
+        crate_summary.equalities,
+        &crate_summary.constraints.raw,
+    );
+
+    for (lambda, solution) in solutions.into_iter_enumerated() {
+        log::debug!(
+            "{:?} = {}",
+            lambda,
+            solution
+                .map(|fat| { fat.then_some("1").unwrap_or("0") })
+                .unwrap_or("whatever")
+        )
+    }
+}
 
 fn print_mir_and_log_debug<'tcx>(
     tcx: TyCtxt<'tcx>,

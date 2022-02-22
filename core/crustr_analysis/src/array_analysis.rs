@@ -10,6 +10,7 @@ use rustc_middle::{
 use rustc_target::abi::VariantIdx;
 
 pub mod intra;
+pub mod solve;
 #[cfg(test)]
 mod test;
 
@@ -19,6 +20,8 @@ pub struct CrateSummary<'analysis, 'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub bodies: &'analysis [DefId],
     lambda_ctxt: CrateLambdaCtxt,
+    constraints: IndexVec<ConstraintIdx, Constraint>,
+    equalities: Vec<Vec<Lambda>>,
 }
 
 impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
@@ -33,6 +36,8 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
             tcx,
             bodies,
             lambda_ctxt,
+            constraints: IndexVec::new(),
+            equalities: vec![],
         }
     }
 

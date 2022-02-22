@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use crate::{
     array_analysis::{
         assert_fat, assert_thin, Constraint, ConstraintIdx, CrateLambdaCtxt, CrateSummary, Lambda,
-        LambdaCtxt, LambdaSourceData, LambdaMap
+        LambdaCtxt, LambdaMap, LambdaSourceData,
     },
     def_use::DefUseCategorisable,
     ssa::{
@@ -25,7 +25,6 @@ use rustc_middle::{
 use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
 
-
 impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
     pub fn infer<DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()> + Clone>(
         &mut self,
@@ -41,6 +40,7 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
                     body_idx,
                     body,
                     &mut self.lambda_ctxt,
+                    &mut self.constraints,
                     &insertion_points,
                 ),
                 ssa_state: SSARenameState::new(&body.local_decls),
@@ -52,6 +52,12 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
 
             #[cfg(debug_assertions)]
             infer.ctxt.debug_result();
+
+            for equalities in infer.ctxt.phi_joins {
+                for (_, equality) in equalities {
+                    self.equalities.push(equality)
+                }
+            }
 
             let body_ctxt = LambdaCtxt {
                 local: infer.ctxt.lambda_ctxt.local,
@@ -234,9 +240,9 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 
     fn process_rhs(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
-        debug_assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
-
         log::debug!("processing rhs {:?}", place);
+
+        debug_assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
 
         let ssa_idx = self.r#use(place.local);
         let lambda = self
@@ -255,8 +261,9 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 
     fn process_lhs(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
-        debug_assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
         log::debug!("processing lhs {:?}", place);
+
+        debug_assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
 
         if place.projection.is_empty() {
             let ssa_idx = self.define(place.local);
@@ -374,15 +381,23 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
                                 }
                                 s if s.as_str() == "realloc" => {
                                     assert_eq!(args.len(), 2);
+                                    let (rhs, args) = args.split_first().unwrap();
+                                    let rhs = rhs.place().unwrap();
+                                    let rhs = self.process_rhs(&rhs, location);
+                                    assert_fat(self.ctxt.lambda_ctxt.lambda_map, rhs);
+                                    log::debug!("generate constraint {:?} = 1", rhs);
+                                    for arg in args {
+                                        self.visit_operand(arg, location);
+                                    }
+                                    /*
                                     let rhs = args[0].place().unwrap();
                                     let rhs = self.process_rhs(&rhs, location);
                                     for arg in &args[1..] {
                                         self.visit_operand(arg, location);
                                     }
+                                    */
                                     let (lhs, _) = destination.unwrap();
                                     let lhs = self.process_lhs(&lhs, location);
-                                    assert_fat(self.ctxt.lambda_ctxt.lambda_map, rhs);
-                                    log::debug!("generate constraint {:?} = 1", rhs);
                                     let constraint = Constraint(lhs, rhs);
                                     log::debug!("generate constraint {}", constraint);
                                     self.ctxt.constraints.push(constraint);
@@ -424,6 +439,12 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
                             .unwrap_or(false);
                         // is `_::ptr::offset()`
                         if is_ptr && is_offset {
+                            assert!(args.len() == 2);
+                            let (rhs, args) = args.split_first().unwrap();
+                            let rhs = rhs.place().unwrap();
+                            let rhs = self.process_rhs(&rhs, location);
+                            assert_fat(self.ctxt.lambda_ctxt.lambda_map, rhs);
+                            log::debug!("generate constraint {:?} = 1", rhs);
                             for arg in args {
                                 self.visit_operand(arg, location);
                             }
@@ -470,7 +491,7 @@ pub struct InferCtxt<'infercx, 'tcx> {
     pub body: &'infercx Body<'tcx>,
     lambda_ctxt: CrateLambdaCtxtIntraView<'infercx>,
     phi_joins: IndexVec<BasicBlock, SmallVec<[(Local, Vec<Lambda>); 3]>>,
-    constraints: IndexVec<ConstraintIdx, Constraint>,
+    constraints: &'infercx mut IndexVec<ConstraintIdx, Constraint>,
 }
 
 impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
@@ -479,6 +500,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         body_idx: usize,
         body: &'infercx Body<'tcx>,
         lambda_ctxt: &'infercx mut CrateLambdaCtxt,
+        constraints: &'infercx mut IndexVec<ConstraintIdx, Constraint>,
         insertion_points: &PhiNodeInserted,
     ) -> Self {
         let phi_joins = insertion_points
@@ -499,7 +521,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
             body,
             lambda_ctxt: lambda_ctxt.intra_view(body, body_idx),
             phi_joins,
-            constraints: IndexVec::new(),
+            constraints, // : IndexVec::new(),
         }
         .debug_initialise()
     }
