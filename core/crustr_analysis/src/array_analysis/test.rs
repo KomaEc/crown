@@ -1,6 +1,5 @@
 use std::env;
 
-use compiler_interface::Input;
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 

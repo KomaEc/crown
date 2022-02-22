@@ -61,7 +61,7 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
 /// A bidirectional map between constraint variables lambdas and the language constructs
 /// we care about
 pub struct CrateLambdaCtxt {
-    pub lambda_map: IndexVec<Lambda, LambdaData>,
+    pub lambda_map: LambdaMap<Option<bool>>, //IndexVec<Lambda, LambdaData>,
     /// did of adt_def -> variant_idx -> field_idx -> nested_level -> lambda
     pub field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<Vec<Lambda>>>>,
     pub body_ctxt: Vec<LambdaCtxt>,
@@ -90,7 +90,7 @@ impl CrateLambdaCtxt {
         adt_defs: &[DefId],
         bodies: &[DefId],
     ) -> Self {
-        let mut lambda_map = IndexVec::new();
+        let mut lambda_map = LambdaMap::new();
 
         let field_defs = adt_defs
             .iter()
@@ -118,12 +118,15 @@ impl CrateLambdaCtxt {
                                         .take_while(|ty| ty.is_any_ptr() && !ty.is_fn_ptr())
                                         .enumerate()
                                         .map(|(nested_level, _)| {
-                                            lambda_map.push(LambdaData::FieldDef {
-                                                adt_def: did,
-                                                variant_idx,
-                                                field_idx,
-                                                nested_level,
-                                            })
+                                            lambda_map.push(
+                                                None,
+                                                LambdaSourceData::FieldDef {
+                                                    adt_def: did,
+                                                    variant_idx,
+                                                    field_idx,
+                                                    nested_level,
+                                                },
+                                            )
                                         })
                                         .collect::<Vec<_>>()
                                 })
@@ -151,8 +154,24 @@ impl Display for Constraint {
     }
 }
 
+/*
+/// A lambda data that is generic over constraint domain
+pub struct LambdaDataG<Domain: Clone + Copy> {
+    pub assumption: Domain,
+    pub source: LambdaSourceData,
+}
+
+impl<Domain: Clone + Copy> From<(Domain, LambdaSourceData)> for LambdaDataG<Domain> {
+    fn from((assumption, source): (Domain, LambdaSourceData)) -> Self {
+        LambdaDataG { assumption, source }
+    }
+}
+pub type LambdaData = LambdaDataG<Option<bool>>;
+*/
+
 /// The language constructs that a constraint variable λ corresponds to
-pub enum LambdaData {
+#[derive(Clone, Debug)]
+pub enum LambdaSourceData {
     /// A SSA scalar variable
     LocalScalar {
         body: usize,
@@ -174,6 +193,48 @@ pub enum LambdaData {
         base: Local,
         nested_level: usize,
     },
+}
+
+#[derive(Debug, Clone)]
+pub struct LambdaMap<Domain: Clone + Copy> {
+    pub assumptions: IndexVec<Lambda, Domain>,
+    pub data_map: IndexVec<Lambda, LambdaSourceData>,
+}
+
+impl<Domain: Clone + Copy> LambdaMap<Domain> {
+    pub fn new() -> Self {
+        LambdaMap {
+            assumptions: IndexVec::new(),
+            data_map: IndexVec::new(),
+        }
+    }
+
+    pub fn push(&mut self, domain: Domain, data: LambdaSourceData) -> Lambda {
+        let _lambda = self.assumptions.push(domain);
+        let lambda = self.data_map.push(data);
+        debug_assert!(_lambda == lambda);
+        lambda
+    }
+}
+
+pub fn assert_fat(lambda_map: &mut LambdaMap<Option<bool>>, lambda: Lambda) {
+    log::debug!("assert that {:?} is fat", lambda);
+    let assumption = &mut lambda_map.assumptions[lambda];
+    if matches!(assumption, Some(false)) {
+        panic!("conflict in constraint!")
+    } else {
+        *assumption = Some(true)
+    }
+}
+
+pub fn assert_thin(lambda_map: &mut LambdaMap<Option<bool>>, lambda: Lambda) {
+    log::debug!("assert that {:?} is thin", lambda);
+    let assumption = &mut lambda_map.assumptions[lambda];
+    if matches!(assumption, Some(true)) {
+        panic!("conflict in constraint!")
+    } else {
+        *assumption = Some(false)
+    }
 }
 
 rustc_index::newtype_index! {

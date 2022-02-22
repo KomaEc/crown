@@ -2,7 +2,8 @@ use std::marker::PhantomData;
 
 use crate::{
     array_analysis::{
-        Constraint, ConstraintIdx, CrateLambdaCtxt, CrateSummary, Lambda, LambdaCtxt, LambdaData,
+        assert_fat, assert_thin, Constraint, ConstraintIdx, CrateLambdaCtxt, CrateSummary, Lambda,
+        LambdaCtxt, LambdaSourceData, LambdaMap
     },
     def_use::DefUseCategorisable,
     ssa::{
@@ -23,6 +24,7 @@ use rustc_middle::{
 };
 use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
+
 
 impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
     pub fn infer<DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()> + Clone>(
@@ -71,11 +73,14 @@ impl CrateLambdaCtxt {
                     // vec![],
                     ty.is_any_ptr()
                         .then(|| {
-                            let lambda = self.lambda_map.push(LambdaData::LocalScalar {
-                                body: body_idx,
-                                base: local,
-                                ssa_idx: 0,
-                            });
+                            let lambda = self.lambda_map.push(
+                                None,
+                                LambdaSourceData::LocalScalar {
+                                    body: body_idx,
+                                    base: local,
+                                    ssa_idx: 0,
+                                },
+                            );
                             vec![lambda]
                         })
                         .unwrap_or_else(|| vec![]),
@@ -91,11 +96,14 @@ impl CrateLambdaCtxt {
                         .skip(1)
                         .enumerate()
                         .map(|(level, _)| {
-                            self.lambda_map.push(LambdaData::LocalNested {
-                                body: body_idx,
-                                base: local,
-                                nested_level: level,
-                            })
+                            self.lambda_map.push(
+                                None,
+                                LambdaSourceData::LocalNested {
+                                    body: body_idx,
+                                    base: local,
+                                    nested_level: level,
+                                },
+                            )
                         })
                         .collect::<Vec<_>>(),
                 )
@@ -313,6 +321,7 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
         self.super_assign(place, rvalue, location)
     }
 
+    /// TODO: extract initial summary from global context!
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
         use colored::*;
         log::debug!(
@@ -333,9 +342,6 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
                 .expect("closures or function pointers are not supported!")
                 .ty();
             if let &FnDef(callee_did, _generic_args) = ty.kind() {
-                // let func_name = self.ctxt.tcx.def_path_str(callee_did);
-                // log::debug!("{}", ("calling function ".to_owned() + &func_name).bold());
-
                 // local defined functions: libc externs or user functions
                 match callee_did.as_local() {
                     Some(did) => {
@@ -362,11 +368,8 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
                                     }
                                     let (lhs, _) = destination.unwrap();
                                     let lambda = self.process_lhs(&lhs, location);
-                                    log::error!(
-                                        "{}: generate constraint {:?} = 1",
-                                        "TODO".red().bold(),
-                                        lambda
-                                    );
+                                    assert_fat(self.ctxt.lambda_ctxt.lambda_map, lambda);
+                                    log::debug!("generate constraint {:?} = 1", lambda);
                                     return;
                                 }
                                 s if s.as_str() == "realloc" => {
@@ -378,11 +381,8 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
                                     }
                                     let (lhs, _) = destination.unwrap();
                                     let lhs = self.process_lhs(&lhs, location);
-                                    log::error!(
-                                        "{}: generate constraint {:?} = 1",
-                                        "TODO".red().bold(),
-                                        rhs
-                                    );
+                                    assert_fat(self.ctxt.lambda_ctxt.lambda_map, rhs);
+                                    log::debug!("generate constraint {:?} = 1", rhs);
                                     let constraint = Constraint(lhs, rhs);
                                     log::debug!("generate constraint {}", constraint);
                                     self.ctxt.constraints.push(constraint);
@@ -429,11 +429,8 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
                             }
                             let (lhs, _) = destination.unwrap();
                             let lhs = self.process_lhs(&lhs, location);
-                            log::error!(
-                                "{}: generate constraint {:?} = 0",
-                                "TODO".red().bold(),
-                                lhs
-                            );
+                            assert_thin(self.ctxt.lambda_ctxt.lambda_map, lhs);
+                            log::debug!("generate constraint {:?} = 0", lhs);
                             return;
                         }
                     }
@@ -446,7 +443,7 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
 
 pub struct CrateLambdaCtxtIntraView<'intracx> {
     pub body: usize,
-    pub lambda_map: &'intracx mut IndexVec<Lambda, LambdaData>,
+    pub lambda_map: &'intracx mut LambdaMap<Option<bool>>, //IndexVec<Lambda, LambdaData>,
     pub field_defs: &'intracx FxHashMap<DefId, IndexVec<VariantIdx, Vec<Vec<Lambda>>>>,
     pub local: IndexVec<Local, Vec<Lambda>>,
     pub local_nested: IndexVec<Local, Vec<Lambda>>,
@@ -454,11 +451,14 @@ pub struct CrateLambdaCtxtIntraView<'intracx> {
 
 impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
     pub fn generate_local(&mut self, base: Local, ssa_idx: usize) -> Lambda {
-        let lambda = self.lambda_map.push(LambdaData::LocalScalar {
-            body: self.body,
-            base,
-            ssa_idx,
-        });
+        let lambda = self.lambda_map.push(
+            None,
+            LambdaSourceData::LocalScalar {
+                body: self.body,
+                base,
+                ssa_idx,
+            },
+        );
         self.local[base].push(lambda);
         log::debug!("generate {:?} for Local {:?}^{}", lambda, base, ssa_idx);
         lambda
