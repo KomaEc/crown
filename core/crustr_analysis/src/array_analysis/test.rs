@@ -4,14 +4,14 @@ use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
 use crate::{
-    array_analysis::solve::solve, def_use::BorrowckDefUse, ssa::rename::handler::LogSSAName,
+    array_analysis::{CrateSummary, solve::solve}, def_use::BorrowckDefUse, ssa::rename::handler::LogSSAName,
+    test::init_logger,
 };
 
-use super::CrateSummary;
 
 #[test]
 fn test_all() {
-    env_logger::init();
+    init_logger();
     for (prog, spec) in TEST_PROGRAMS {
         compiler_interface::run_compiler_with_struct_defs_and_funcs(Into::into(*prog), spec)
     }
@@ -19,7 +19,7 @@ fn test_all() {
 
 #[test]
 fn test_file_with_extern_call() {
-    env_logger::init();
+    init_logger();
     let file = env::current_dir()
         .expect("current working directory value is invalid")
         .join("src/array_analysis/test/resource/simple/lib.rs");
@@ -136,13 +136,20 @@ fn solve_for_sinlge_func<'tcx>(
         &crate_summary.constraints.raw,
     );
 
+
+    log::debug!("All constraints:");
+    for constraint in crate_summary.constraints {
+        log::debug!("{}", constraint)
+    }
+
     for (lambda, solution) in solutions.into_iter_enumerated() {
         log::debug!(
-            "{:?} = {}",
-            lambda,
+            "{: <7} = {: <2}, with source data {}",
+            &format!("{:?}", lambda),
             solution
                 .map(|fat| { fat.then_some("1").unwrap_or("0") })
-                .unwrap_or("whatever")
+                .unwrap_or("?"),
+            crate_summary.lambda_ctxt.lambda_map.data_map[lambda]
         )
     }
 }

@@ -110,7 +110,6 @@ pub fn transitive_closure(mut facts: Box<[bool]>, len: usize) -> Box<[bool]> {
 mod tests {
     use super::*;
 
-
     #[rustfmt::skip]
     #[test]
     fn test_floyd_warshall() {

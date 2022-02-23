@@ -200,6 +200,30 @@ pub enum LambdaSourceData {
     },
 }
 
+impl Display for LambdaSourceData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        use colored::*;
+        match *self {
+            LambdaSourceData::LocalScalar {
+                body,
+                base,
+                ssa_idx,
+            } => f.write_str(&format!("({}, {:?}^{})", body, base, ssa_idx).bold()),
+            LambdaSourceData::FieldDef {
+                adt_def,
+                variant_idx,
+                field_idx,
+                nested_level,
+            } => f.write_fmt(format_args!("{:?}", self)),
+            LambdaSourceData::LocalNested {
+                body,
+                base,
+                nested_level,
+            } => f.write_str(&format!("({}, {:*<2$}{3:?})", body, "", nested_level, base)),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct LambdaMap<Domain: Clone + Copy> {
     pub assumptions: IndexVec<Lambda, Domain>,
