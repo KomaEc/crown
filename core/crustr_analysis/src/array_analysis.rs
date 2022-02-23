@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::fmt::{Debug, Display};
 
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -156,6 +156,12 @@ pub struct Constraint(Lambda, Lambda);
 impl Display for Constraint {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?} ≤ {:?}", self.0, self.1))
+    }
+}
+
+impl Debug for Constraint {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        Display::fmt(&self, f)
     }
 }
 

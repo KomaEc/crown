@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc d10f09cb2e431ab5a8734b1a1c436c7f4b1ea8df27966cdec98cb9465b617de3 # shrinks to (assumptions, equalities, constraints) = ([None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None], [], [λ_(0) ≤ λ_(0), λ_(0) ≤ λ_(0), λ_(0) ≤ λ_(0), λ_(0) ≤ λ_(0), λ_(0) ≤ λ_(0), λ_(0) ≤ λ_(0), λ_(0) ≤ λ_(0), λ_(0) ≤ λ_(15), λ_(2) ≤ λ_(9), λ_(12) ≤ λ_(4), λ_(23) ≤ λ_(16), λ_(23) ≤ λ_(5), λ_(13) ≤ λ_(3), λ_(19) ≤ λ_(11), λ_(11) ≤ λ_(20), λ_(15) ≤ λ_(22), λ_(13) ≤ λ_(9), λ_(12) ≤ λ_(13), λ_(14) ≤ λ_(7), λ_(4) ≤ λ_(3), λ_(8) ≤ λ_(14), λ_(22) ≤ λ_(10), λ_(11) ≤ λ_(15), λ_(9) ≤ λ_(19), λ_(7) ≤ λ_(7), λ_(22) ≤ λ_(22), λ_(2) ≤ λ_(13), λ_(8) ≤ λ_(14), λ_(5) ≤ λ_(19), λ_(21) ≤ λ_(24), λ_(7) ≤ λ_(24), λ_(20) ≤ λ_(17), λ_(14) ≤ λ_(9), λ_(6) ≤ λ_(16), λ_(8) ≤ λ_(22), λ_(4) ≤ λ_(0), λ_(5) ≤ λ_(18), λ_(20) ≤ λ_(15), λ_(4) ≤ λ_(2)])

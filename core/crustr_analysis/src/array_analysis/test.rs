@@ -4,10 +4,11 @@ use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
 use crate::{
-    array_analysis::{CrateSummary, solve::solve}, def_use::BorrowckDefUse, ssa::rename::handler::LogSSAName,
+    array_analysis::{solve::solve, CrateSummary},
+    def_use::BorrowckDefUse,
+    ssa::rename::handler::LogSSAName,
     test::init_logger,
 };
-
 
 #[test]
 fn test_all() {
@@ -134,8 +135,8 @@ fn solve_for_sinlge_func<'tcx>(
         crate_summary.lambda_ctxt.lambda_map.assumptions,
         crate_summary.equalities,
         &crate_summary.constraints.raw,
-    );
-
+    )
+    .unwrap();
 
     log::debug!("All constraints:");
     for constraint in crate_summary.constraints {

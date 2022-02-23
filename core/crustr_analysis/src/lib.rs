@@ -11,9 +11,9 @@ pub mod liveness_analysis;
 pub mod ownership_analysis;
 pub mod pointer_analysis;
 pub mod ssa;
-pub mod toy_analysis;
 #[cfg(test)]
 pub mod test;
+pub mod toy_analysis;
 
 extern crate rustc_arena;
 extern crate rustc_ast;
