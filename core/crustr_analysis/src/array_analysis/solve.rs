@@ -5,10 +5,9 @@ use graph::implementation::forward_star::Graph;
 use rustc_data_structures::graph::scc::Sccs;
 
 macro_rules! array_index {
-    ($row: expr, $col: expr; $len: expr) => {{
-        log::debug!("Indexing [{}][{}]", $row, $col);
+    ($row: expr, $col: expr; $len: expr) => {
         $row * $len + $col
-    }};
+    };
 }
 
 pub fn solve(

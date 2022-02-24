@@ -216,10 +216,10 @@ impl Display for LambdaSourceData {
                 ssa_idx,
             } => f.write_str(&format!("({}, {:?}^{})", body, base, ssa_idx).bold()),
             LambdaSourceData::FieldDef {
-                adt_def,
-                variant_idx,
-                field_idx,
-                nested_level,
+                adt_def: _,
+                variant_idx: _,
+                field_idx: _,
+                nested_level: _,
             } => f.write_fmt(format_args!("{:?}", self)),
             LambdaSourceData::LocalNested {
                 body,
