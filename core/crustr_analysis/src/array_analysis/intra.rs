@@ -1,9 +1,9 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, ops::Range};
 
 use crate::{
     array_analysis::{
-        assert_fat, assert_thin, Constraint, ConstraintIdx, CrateLambdaCtxt, CrateSummary, Lambda,
-        LambdaCtxt, LambdaMap, LambdaSourceData,
+        assert_fat, assert_thin, Constraint, ConstraintIdx, CrateLambdaCtxt, CrateSummary,
+        FuncLambdaCtxt, Lambda, LambdaMap, LambdaSourceData,
     },
     def_use::DefUseCategorisable,
     ssa::{
@@ -24,6 +24,12 @@ use rustc_middle::{
 };
 use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
+
+pub struct FuncSummary {
+    /// A range into crate lambda context, indicating the constraint variables
+    /// introduced by this function
+    pub lambdas: Range<u32>,
+}
 
 impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
     pub fn infer<DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()> + Clone>(
@@ -59,7 +65,7 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
                 }
             }
 
-            let body_ctxt = LambdaCtxt {
+            let body_ctxt = FuncLambdaCtxt {
                 local: infer.ctxt.lambda_ctxt.local,
                 local_nested: infer.ctxt.lambda_ctxt.local_nested,
             };

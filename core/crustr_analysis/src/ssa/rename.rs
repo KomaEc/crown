@@ -1,5 +1,5 @@
 pub mod handler;
-pub mod impls;
+pub mod implementations;
 
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::{Idx, IndexVec};

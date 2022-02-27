@@ -5,7 +5,7 @@ use std::str;
 use crate::def_use::BorrowckDefUse;
 use crate::ssa::body_ext::BodyExt;
 use crate::ssa::rename::handler::{LocalSimplePtrCVMap, SSANameMap};
-use crate::ssa::rename::{handler::PrintStdSSAName, impls::PlainRenamer, SSANameHandler};
+use crate::ssa::rename::{handler::PrintStdSSAName, implementations::PlainRenamer, SSANameHandler};
 
 use super::pretty::write_ssa_mir_fn;
 

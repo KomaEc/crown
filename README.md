@@ -400,3 +400,8 @@ Purpose of this analysis:
 
     If there is no solution ==> a set of fixes
 1. ownership analysis
+
+
+
+### Q
+1. Is it possible that in a free statement `free(p);`, `p` has lambda value `?` ? If so, then there must be interactions between array analysis and ownership analysis

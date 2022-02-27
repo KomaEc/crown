@@ -24,4 +24,5 @@ pub unsafe fn f(mut r: *mut i32) {
         q = realloc(r as *mut libc::c_void, 4) as *mut i32;
     }
     p = q;
+    let _ = p.offset(2);
 }

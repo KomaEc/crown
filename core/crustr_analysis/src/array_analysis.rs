@@ -69,19 +69,19 @@ pub struct CrateLambdaCtxt {
     pub lambda_map: LambdaMap<Option<bool>>, //IndexVec<Lambda, LambdaData>,
     /// did of adt_def -> variant_idx -> field_idx -> nested_level -> lambda
     pub field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<Vec<Lambda>>>>,
-    pub body_ctxt: Vec<LambdaCtxt>,
+    pub body_ctxt: Vec<FuncLambdaCtxt>,
 }
 
-pub struct LambdaCtxt {
+pub struct FuncLambdaCtxt {
     pub local: IndexVec<Local, Vec<Lambda>>,
     pub local_nested: IndexVec<Local, Vec<Lambda>>,
 }
 
-impl From<(IndexVec<Local, Vec<Lambda>>, IndexVec<Local, Vec<Lambda>>)> for LambdaCtxt {
+impl From<(IndexVec<Local, Vec<Lambda>>, IndexVec<Local, Vec<Lambda>>)> for FuncLambdaCtxt {
     fn from(
         (local, local_nested): (IndexVec<Local, Vec<Lambda>>, IndexVec<Local, Vec<Lambda>>),
     ) -> Self {
-        LambdaCtxt {
+        FuncLambdaCtxt {
             local,
             local_nested,
         }
@@ -208,24 +208,29 @@ pub enum LambdaSourceData {
 
 impl Display for LambdaSourceData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        use colored::*;
         match *self {
             LambdaSourceData::LocalScalar {
                 body,
                 base,
                 ssa_idx,
-            } => f.write_str(&format!("({}, {:?}^{})", body, base, ssa_idx).bold()),
+            } => f.write_fmt(format_args!("({}, {:?}^{})", body, base, ssa_idx)),
             LambdaSourceData::FieldDef {
-                adt_def: _,
+                adt_def,
                 variant_idx: _,
-                field_idx: _,
-                nested_level: _,
-            } => f.write_fmt(format_args!("{:?}", self)),
+                field_idx,
+                nested_level,
+            } => f.write_fmt(format_args!(
+                "{:*<1$}{2:?}.{3}",
+                "", nested_level, adt_def, field_idx
+            )),
             LambdaSourceData::LocalNested {
                 body,
                 base,
                 nested_level,
-            } => f.write_str(&format!("({}, {:*<2$}{3:?})", body, "", nested_level, base)),
+            } => f.write_fmt(format_args!(
+                "({}, {:*<2$}{3:?})",
+                body, "", nested_level, base
+            )),
         }
     }
 }

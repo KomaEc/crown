@@ -23,7 +23,7 @@ fn test_file_with_extern_call() {
     init_logger();
     let file = env::current_dir()
         .expect("current working directory value is invalid")
-        .join("src/array_analysis/test/resource/simple/lib.rs");
+        .join("src/array_analysis/test/resource/simple_struct/lib.rs");
     compiler_interface::run_compiler_with_struct_defs_and_funcs(file.into(), solve_for_sinlge_func)
 }
 
