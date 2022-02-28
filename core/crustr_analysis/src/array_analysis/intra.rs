@@ -96,14 +96,16 @@ impl<'tcx> CrateSummary<'tcx> {
                     match bc {
                         // callee = caller
                         BoundaryConstraint::Argument { caller, callee } => {
-                            let callee = self.lambda_ctxt.func_ctxt[edge_data.target].local[callee][0];
+                            let callee =
+                                self.lambda_ctxt.func_ctxt[edge_data.target].local[callee][0];
                             res.push(Constraint(callee, caller))
-                        },
+                        }
                         // caller = callee
                         BoundaryConstraint::Return { caller, callee } => {
-                            let callee = self.lambda_ctxt.func_ctxt[edge_data.target].local[callee][0];
+                            let callee =
+                                self.lambda_ctxt.func_ctxt[edge_data.target].local[callee][0];
                             res.push(Constraint(caller, callee))
-                        },
+                        }
                     }
                 }
                 res
