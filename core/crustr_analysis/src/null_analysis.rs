@@ -12,12 +12,53 @@
 //! - If `core::ptr::is_null` is called on a pointer, then it is nullable, and has been since its
 //! last assignment.
 
-use rustc_hash::FxHashSet;
-use rustc_hir::definitions::DefPathData;
+use std::fmt::Display;
+
+use rustc_hir::{definitions::DefPathData, def_id::LocalDefId};
 use rustc_index::vec::IndexVec;
-use rustc_middle::{mir::{Local, TerminatorKind, ConstantKind, StatementKind, Rvalue, Place, PlaceRef, ProjectionElem}, ty::{TyKind, TyCtxt}};
-use rustc_mir_dataflow::{AnalysisDomain, Analysis, JoinSemiLattice, fmt::DebugWithContext, ResultsCursor};
+use rustc_middle::{mir::{Local, TerminatorKind, ConstantKind, StatementKind, Rvalue, Place, PlaceRef, ProjectionElem, START_BLOCK}, ty::{TyKind, TyCtxt}};
+use rustc_mir_dataflow::{AnalysisDomain, Analysis, JoinSemiLattice, fmt::DebugWithContext, Engine, Results, ResultsRefCursor};
 use tracing::debug;
+
+pub struct NullAnalysisResults<'tcx> {
+    tcx: TyCtxt<'tcx>,
+    def_id: LocalDefId,
+    results: Results<'tcx, NullAnalysis<'tcx>>,
+}
+
+impl<'tcx> NullAnalysisResults<'tcx> {
+    pub fn collect(tcx: TyCtxt<'tcx>, def_id: LocalDefId) -> Self {
+        let body = tcx.optimized_mir(def_id);
+        let engine = Engine::new_generic(tcx, &body, NullAnalysis::new(tcx));
+        let results = engine.iterate_to_fixpoint();
+        NullAnalysisResults { tcx, def_id, results }
+    }
+}
+
+impl Display for NullAnalysisResults<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let fn_name = self.tcx.def_path_str(self.def_id.to_def_id());
+        let body = self.tcx.optimized_mir(self.def_id);
+        if body.arg_count == 0 {
+            write!(f, "fn {fn_name} has no arguments")?;
+            return Ok(());
+        }
+        let mut cursor = ResultsRefCursor::new(body, &self.results);
+        cursor.seek_to_block_start(START_BLOCK);
+        let results = cursor.get();
+        let arg_results = body
+            .args_iter()
+            .filter(|local| body.local_decls[*local].ty.is_unsafe_ptr())
+            .map(|local| {
+                let span = body.local_decls[local].source_info.span;
+                let binding_name = self.tcx.sess.source_map().span_to_snippet(span).unwrap();
+                (binding_name, results[local])
+            })
+            .collect::<Vec<_>>();
+        write!(f, "fn {fn_name} has: {arg_results:?}")?;
+        Ok(())
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Nullability {

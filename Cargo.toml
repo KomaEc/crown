@@ -1,10 +1,20 @@
 [workspace]
-
 members = [
-    "bin",
     "core/compiler_interface",
     "core/crustr_analysis",
     "core/crustr_rewrite",
     "core/crustr_passes",
     "core/utils/graph",
 ]
+
+[package]
+name = "crustr"
+version = "0.0.1"
+edition = "2021"
+
+[package.metadata.rust-analyzer]
+rustc_private = true
+
+[dependencies]
+clap = { version = "3.1.2", features = ["derive"] }
+crustr_analysis = { path = "core/crustr_analysis" }
