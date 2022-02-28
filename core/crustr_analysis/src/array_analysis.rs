@@ -11,7 +11,7 @@ use rustc_middle::{
 use rustc_target::abi::VariantIdx;
 
 use crate::{
-    call_graph::{CallGraph, Func},
+    call_graph::{CallGraph, CallSite, Func},
     ty_ext::TyExt,
 };
 
@@ -27,6 +27,7 @@ pub struct CrateSummary<'tcx> {
     pub call_graph: CallGraph,
     lambda_ctxt: CrateLambdaCtxt,
     constraints: IndexVec<ConstraintIdx, Constraint>,
+    boundary_constraints: IndexVec<CallSite, Vec<Constraint>>,
     equalities: Vec<Vec<Lambda>>,
 }
 
@@ -38,6 +39,7 @@ impl<'tcx> CrateSummary<'tcx> {
             call_graph,
             lambda_ctxt,
             constraints: IndexVec::new(),
+            boundary_constraints: IndexVec::new(),
             equalities: vec![],
         }
     }

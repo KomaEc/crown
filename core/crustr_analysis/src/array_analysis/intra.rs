@@ -78,6 +78,37 @@ impl<'tcx> CrateSummary<'tcx> {
             };
             self.lambda_ctxt.func_ctxt.push(body_ctxt);
         }
+
+        self.setup_boundary_constraints(boundary_constraints);
+    }
+
+    pub fn setup_boundary_constraints(
+        &mut self,
+        boundary_constraints: IndexVec<CallSite, Vec<BoundaryConstraint>>,
+    ) {
+        self.boundary_constraints = boundary_constraints
+            .into_iter_enumerated()
+            .map(|(call_site, bcs)| {
+                let mut res = vec![];
+                let edge_data = &self.call_graph.graph.edges[call_site];
+                log::error!("The processing of boundary constraints is incomplete as this moment");
+                for bc in bcs {
+                    match bc {
+                        // callee = caller
+                        BoundaryConstraint::Argument { caller, callee } => {
+                            let callee = self.lambda_ctxt.func_ctxt[edge_data.target].local[callee][0];
+                            res.push(Constraint(callee, caller))
+                        },
+                        // caller = callee
+                        BoundaryConstraint::Return { caller, callee } => {
+                            let callee = self.lambda_ctxt.func_ctxt[edge_data.target].local[callee][0];
+                            res.push(Constraint(caller, callee))
+                        },
+                    }
+                }
+                res
+            })
+            .collect::<IndexVec<_, _>>();
     }
 }
 
@@ -445,7 +476,6 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                                     self.ctxt.call_graph.call_sites[call_site] == location
                                 })
                                 .unwrap();
-                            // let (call_site, edge_data) = self.call_sites_iter.next().unwrap();
                             debug_assert_eq!(edge_data.source, self.ctxt.lambda_ctxt.func);
                             debug_assert_eq!(
                                 edge_data.target,
@@ -453,7 +483,9 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                             );
                             for (idx, arg) in args.iter().enumerate() {
                                 if arg.ty(self.ctxt.body, self.ctxt.tcx).is_ptr_of_concerned() {
-                                    let place = arg.place().unwrap();
+                                    let place = arg
+                                        .place()
+                                        .expect("constant in call arguments is not supported");
                                     let lambda = self.process_rhs(&place, location);
                                     self.ctxt.boundary_constraints[call_site].push(
                                         BoundaryConstraint::Argument {
