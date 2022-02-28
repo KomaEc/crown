@@ -1,5 +1,6 @@
 use std::env;
 
+use rustc_data_structures::graph::WithNumNodes;
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
@@ -7,7 +8,7 @@ use crate::{
     array_analysis::{solve::solve, CrateSummary},
     def_use::BorrowckDefUse,
     ssa::rename::handler::LogSSAName,
-    test::init_logger,
+    test::init_logger, call_graph::CallGraph,
 };
 
 #[test]
@@ -125,11 +126,12 @@ fn solve_for_sinlge_func<'tcx>(
         .map(|did| did.to_def_id())
         .collect::<Vec<_>>();
 
-    let mut crate_summary = CrateSummary::new(tcx, &adt_defs, &bodies);
+    let call_graph = CallGraph::new(tcx, bodies.into_iter());
+    let mut crate_summary = CrateSummary::new(tcx, &adt_defs, call_graph);
     crate_summary.debug();
     crate_summary.infer::<BorrowckDefUse, LogSSAName>(LogSSAName);
 
-    assert_eq!(crate_summary.bodies.len(), 1);
+    assert_eq!(crate_summary.call_graph.num_nodes(), 1);
 
     let solutions = solve(
         crate_summary.lambda_ctxt.lambda_map.assumptions,
@@ -181,8 +183,10 @@ fn print_mir_and_log_debug<'tcx>(
         .collect::<Vec<_>>();
     // let bodies = vec![fn_did.to_def_id()];
 
-    let mut crate_summary = CrateSummary::new(tcx, &adt_defs, &bodies);
+    let num_funcs = bodies.len();
+    let call_graph = CallGraph::new(tcx, bodies.into_iter());
+    let mut crate_summary = CrateSummary::new(tcx, &adt_defs, call_graph);
     crate_summary.debug();
     crate_summary.infer::<BorrowckDefUse, LogSSAName>(LogSSAName);
-    assert_eq!(crate_summary.lambda_ctxt.body_ctxt.len(), bodies.len())
+    assert_eq!(crate_summary.lambda_ctxt.func_ctxt.len(), num_funcs)
 }

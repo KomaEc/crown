@@ -1,7 +1,7 @@
 use rustc_index::vec::{Idx, IndexVec};
 
 use rustc_data_structures::graph::{
-    DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors,
+    DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors, WithPredecessors, GraphPredecessors,
 };
 
 pub struct Graph<Node: Idx, Edge: Idx> {
@@ -304,6 +304,17 @@ impl<Node: Idx, Edge: Idx> WithSuccessors for Graph<Node, Edge> {
 impl<'graph, Node: Idx, Edge: Idx> GraphSuccessors<'graph> for Graph<Node, Edge> {
     type Item = Node;
     type Iter = SuccessorNodes<'graph, Node, Edge>;
+}
+
+impl<Node: Idx, Edge: Idx> WithPredecessors for Graph<Node, Edge> {
+    fn predecessors(&self, node: Self::Node) -> <Self as GraphPredecessors<'_>>::Iter {
+        self.predecessor_nodes(node)
+    }
+}
+
+impl<'graph, Node: Idx, Edge: Idx> GraphPredecessors<'graph> for Graph<Node, Edge> {
+    type Item = Node;
+    type Iter = PredecessorNodes<'graph, Node, Edge>;
 }
 
 /*

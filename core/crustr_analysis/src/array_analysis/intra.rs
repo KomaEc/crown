@@ -9,7 +9,7 @@ use crate::{
     ssa::{
         body_ext::{BodyExt, PhiNodeInserted},
         rename::{HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename, SSARenameState},
-    },
+    }, call_graph::Func,
 };
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -32,19 +32,19 @@ pub struct FuncSummary {
     pub constraints: Range<usize>,
 }
 
-impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
+impl<'tcx> CrateSummary<'tcx> {
     pub fn infer<DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()> + Clone>(
         &mut self,
         handler: Handler,
     ) {
-        for (body_idx, &did) in self.bodies.iter().enumerate() {
+        for (func, &did) in self.call_graph.functions.iter_enumerated() {
             let body = self.tcx.optimized_mir(did);
             let insertion_points = body.compute_phi_node::<DefUse>(self.tcx);
 
             let mut infer: Infer<DefUse, Handler> = Infer {
                 ctxt: InferCtxt::new(
                     self.tcx,
-                    body_idx,
+                    func,
                     body,
                     &mut self.lambda_ctxt,
                     &mut self.constraints,
@@ -70,13 +70,13 @@ impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
                 local: infer.ctxt.lambda_ctxt.local,
                 local_nested: infer.ctxt.lambda_ctxt.local_nested,
             };
-            self.lambda_ctxt.body_ctxt.push(body_ctxt);
+            self.lambda_ctxt.func_ctxt.push(body_ctxt);
         }
     }
 }
 
 impl CrateLambdaCtxt {
-    pub fn intra_view(&mut self, body: &Body, body_idx: usize) -> CrateLambdaCtxtIntraView<'_> {
+    pub fn intra_view(&mut self, body: &Body, func: Func) -> CrateLambdaCtxtIntraView<'_> {
         let (local, local_nested) = body
             .local_decls
             .iter_enumerated()
@@ -89,7 +89,7 @@ impl CrateLambdaCtxt {
                             let lambda = self.lambda_map.push(
                                 None,
                                 LambdaSourceData::LocalScalar {
-                                    body: body_idx,
+                                    func,
                                     base: local,
                                     ssa_idx: 0,
                                 },
@@ -112,7 +112,7 @@ impl CrateLambdaCtxt {
                             self.lambda_map.push(
                                 None,
                                 LambdaSourceData::LocalNested {
-                                    body: body_idx,
+                                    func,
                                     base: local,
                                     nested_level: level,
                                 },
@@ -124,7 +124,7 @@ impl CrateLambdaCtxt {
             .unzip();
 
         CrateLambdaCtxtIntraView {
-            body: body_idx,
+            func,
             lambda_map: &mut self.lambda_map,
             field_defs: &self.field_defs,
             local,
@@ -470,7 +470,7 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
 }
 
 pub struct CrateLambdaCtxtIntraView<'intracx> {
-    pub body: usize,
+    pub func: Func,
     pub lambda_map: &'intracx mut LambdaMap<Option<bool>>, //IndexVec<Lambda, LambdaData>,
     pub field_defs: &'intracx FxHashMap<DefId, IndexVec<VariantIdx, Vec<Vec<Lambda>>>>,
     pub local: IndexVec<Local, Vec<Lambda>>,
@@ -482,7 +482,7 @@ impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
         let lambda = self.lambda_map.push(
             None,
             LambdaSourceData::LocalScalar {
-                body: self.body,
+                func: self.func,
                 base,
                 ssa_idx,
             },
@@ -504,7 +504,7 @@ pub struct InferCtxt<'infercx, 'tcx> {
 impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
     pub fn new(
         tcx: TyCtxt<'tcx>,
-        body_idx: usize,
+        func: Func,
         body: &'infercx Body<'tcx>,
         lambda_ctxt: &'infercx mut CrateLambdaCtxt,
         constraints: &'infercx mut IndexVec<ConstraintIdx, Constraint>,
@@ -526,7 +526,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         InferCtxt {
             tcx,
             body,
-            lambda_ctxt: lambda_ctxt.intra_view(body, body_idx),
+            lambda_ctxt: lambda_ctxt.intra_view(body, func),
             phi_joins,
             constraints, // : IndexVec::new(),
         }

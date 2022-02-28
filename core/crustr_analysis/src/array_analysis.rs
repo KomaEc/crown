@@ -8,6 +8,9 @@ use rustc_middle::{
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
+use rustc_data_structures::graph::WithNumNodes;
+
+use crate::call_graph::{Func, CallGraph};
 
 pub mod intra;
 pub mod solve;
@@ -16,25 +19,26 @@ mod test;
 
 /// This structure should hold info about all struct definitions
 /// and local nested pointers in the crate
-pub struct CrateSummary<'analysis, 'tcx> {
+pub struct CrateSummary<'tcx> {
     pub tcx: TyCtxt<'tcx>,
-    pub bodies: &'analysis [DefId],
+    // pub bodies: &'analysis [DefId],
+    pub call_graph: CallGraph,
     lambda_ctxt: CrateLambdaCtxt,
     constraints: IndexVec<ConstraintIdx, Constraint>,
     equalities: Vec<Vec<Lambda>>,
 }
 
-impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {
+impl<'tcx> CrateSummary<'tcx> {
     pub fn new(
         tcx: TyCtxt<'tcx>,
-        adt_defs: &'analysis [DefId],
-        bodies: &'analysis [DefId],
+        adt_defs: &[DefId],
+        call_graph: CallGraph,
     ) -> Self {
         // let field_defs = gather_field_defs(tcx, adt_defs);
-        let lambda_ctxt = CrateLambdaCtxt::initiate(tcx, adt_defs, bodies);
+        let lambda_ctxt = CrateLambdaCtxt::initiate(tcx, adt_defs, &call_graph);
         CrateSummary {
             tcx,
-            bodies,
+            call_graph,
             lambda_ctxt,
             constraints: IndexVec::new(),
             equalities: vec![],
@@ -69,7 +73,7 @@ pub struct CrateLambdaCtxt {
     pub lambda_map: LambdaMap<Option<bool>>, //IndexVec<Lambda, LambdaData>,
     /// did of adt_def -> variant_idx -> field_idx -> nested_level -> lambda
     pub field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<Vec<Lambda>>>>,
-    pub body_ctxt: Vec<FuncLambdaCtxt>,
+    pub func_ctxt: IndexVec<Func, FuncLambdaCtxt>,
 }
 
 pub struct FuncLambdaCtxt {
@@ -93,7 +97,8 @@ impl CrateLambdaCtxt {
         tcx: TyCtxt,
         // field_defs: &IndexVec<FieldDefIdx, (usize, VariantIdx, usize)>,
         adt_defs: &[DefId],
-        bodies: &[DefId],
+        // bodies: &[DefId],
+        call_graph: &CallGraph,
     ) -> Self {
         let mut lambda_map = LambdaMap::new();
 
@@ -145,7 +150,7 @@ impl CrateLambdaCtxt {
         CrateLambdaCtxt {
             lambda_map,
             field_defs,
-            body_ctxt: Vec::with_capacity(bodies.len()),
+            func_ctxt: IndexVec::with_capacity(call_graph.num_nodes()),
         }
     }
 }
@@ -160,6 +165,7 @@ impl Display for Constraint {
     }
 }
 
+/*
 pub struct BoundaryConstraint {
     /// body_idx, local
     pub parameter: (usize, Local),
@@ -174,13 +180,14 @@ impl Display for BoundaryConstraint {
         ))
     }
 }
+*/
 
 /// The language constructs that a constraint variable λ corresponds to
 #[derive(Clone, Debug)]
 pub enum LambdaSourceData {
     /// A SSA scalar variable
     LocalScalar {
-        body: usize,
+        func: Func,
         base: Local,
         ssa_idx: usize,
     },
@@ -195,7 +202,7 @@ pub enum LambdaSourceData {
     /// For example, if a local `_1` has type `*mut *mut *mut i32`, then
     /// we should have entries for `*_1` and `**_1`
     LocalNested {
-        body: usize,
+        func: Func,
         base: Local,
         nested_level: usize,
     },
@@ -205,10 +212,10 @@ impl Display for LambdaSourceData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
             LambdaSourceData::LocalScalar {
-                body,
+                func: body,
                 base,
                 ssa_idx,
-            } => f.write_fmt(format_args!("({}, {:?}^{})", body, base, ssa_idx)),
+            } => f.write_fmt(format_args!("({:?}, {:?}^{})", body, base, ssa_idx)),
             LambdaSourceData::FieldDef {
                 adt_def,
                 variant_idx: _,
@@ -219,11 +226,11 @@ impl Display for LambdaSourceData {
                 "", nested_level, adt_def, field_idx
             )),
             LambdaSourceData::LocalNested {
-                body,
+                func: body,
                 base,
                 nested_level,
             } => f.write_fmt(format_args!(
-                "({}, {:*<2$}{3:?})",
+                "({:?}, {:*<2$}{3:?})",
                 body, "", nested_level, base
             )),
         }
