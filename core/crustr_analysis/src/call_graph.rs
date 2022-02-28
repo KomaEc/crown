@@ -1,4 +1,4 @@
-use graph::{implementation::forward_star::{self, PredecessorNodes, SuccessorNodes}, derive_graph_via};
+use graph::{implementation::forward_star, derive_graph_via};
 use rustc_data_structures::graph::{
     DirectedGraph, GraphPredecessors, GraphSuccessors, WithNumEdges, WithNumNodes,
     WithPredecessors, WithSuccessors,
