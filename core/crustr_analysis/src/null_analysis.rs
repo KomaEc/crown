@@ -14,11 +14,15 @@
 
 use std::fmt::Display;
 
-use rustc_hir::{def_id::LocalDefId, definitions::DefPathData};
+use rustc_hash::FxHashSet;
+use rustc_hir::{
+    def_id::{DefId, LocalDefId, LOCAL_CRATE},
+    definitions::DefPathData,
+};
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
-        ConstantKind, Local, Place, PlaceRef, ProjectionElem, Rvalue, StatementKind,
+        Constant, ConstantKind, Local, Place, PlaceRef, ProjectionElem, Rvalue, StatementKind,
         TerminatorKind, START_BLOCK,
     },
     ty::{TyCtxt, TyKind},
@@ -65,7 +69,7 @@ impl Display for NullAnalysisResults<'_> {
             .map(|local| {
                 let span = body.local_decls[local].source_info.span;
                 let binding_name = self.tcx.sess.source_map().span_to_snippet(span).unwrap();
-                (binding_name, results[local])
+                (binding_name, &results[local])
             })
             .collect::<Vec<_>>();
         write!(f, "fn {fn_name} has: {arg_results:?}")?;
@@ -73,10 +77,11 @@ impl Display for NullAnalysisResults<'_> {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Nullability {
     Nullable,
     NonNullable,
+    DependsOn(FxHashSet<(DefId, usize)>),
     Unknown,
 }
 
@@ -90,9 +95,23 @@ impl JoinSemiLattice for Nullability {
                 return true;
             }
             (NonNullable, _) => return false,
+            (DependsOn(left), DependsOn(right)) => {
+                let union = left.union(&right).cloned().collect();
+                if &union != left {
+                    *self = DependsOn(union);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            (DependsOn(_), Unknown) => return false,
+            (DependsOn(_), other) => {
+                *self = other.clone();
+                return true;
+            }
             (Unknown, Unknown) => return false,
             (Unknown, other) => {
-                *self = *other;
+                *self = other.clone();
                 return true;
             }
         }
@@ -139,13 +158,14 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
         statement: &rustc_middle::mir::Statement<'tcx>,
         _location: rustc_middle::mir::Location,
     ) {
+        // TODO(rose): figure out pointer casts - buffer::buffer_free
         match &statement.kind {
             StatementKind::Assign(box (place, Rvalue::Use(operand)))
                 if place.projection.is_empty() && operand.place().is_some() =>
             {
                 let lhs = place.as_local().expect("projections aren't supported yet");
                 if let Some(rhs) = operand.place().as_ref().map(Place::as_local).flatten() {
-                    state[rhs] = state[lhs];
+                    state[rhs] = state[lhs].clone();
                 }
             }
             StatementKind::Assign(box (place, Rvalue::Use(operand))) => {
@@ -186,9 +206,11 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
         _location: rustc_middle::mir::Location,
     ) {
         if let TerminatorKind::Call { func, args, .. } = &terminator.kind {
-            let constant = func.constant().unwrap();
-            let constant = match constant.literal {
-                ConstantKind::Ty(v) => v,
+            let constant = match func.constant() {
+                Some(Constant {
+                    literal: ConstantKind::Ty(v),
+                    ..
+                }) => v,
                 _ => return,
             };
             let def_id = match constant.ty.kind() {
@@ -221,6 +243,47 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
                 let place = args[0].place().expect("null check on constant");
                 let local = place.as_local().expect("projections aren't supported yet");
                 state[local] = Nullability::Nullable;
+                return;
+            }
+
+            if def_path.krate != LOCAL_CRATE {
+                return;
+            }
+
+            if let DefPathData::ValueNs(name) = def_path.data[0].data {
+                match name.as_str() {
+                    "strlen" | "free" => {
+                        if let Some(local) = args[0].place().unwrap().as_local() {
+                            state[local] = Nullability::NonNullable;
+                        }
+                        return;
+                    }
+                    _ => {}
+                }
+            }
+
+            for (idx, place) in args
+                .iter()
+                .enumerate()
+                .filter_map(|(idx, op)| op.place().map(|place| (idx, place)))
+            {
+                match place.as_ref() {
+                    PlaceRef {
+                        local,
+                        projection: [],
+                    } => {
+                        // TODO(rose): if the function is recursive, don't do this
+                        state[local] =
+                            Nullability::DependsOn([(*def_id, idx)].into_iter().collect());
+                    }
+                    PlaceRef {
+                        local,
+                        projection: [ProjectionElem::Deref, ..],
+                    } => {
+                        state[local] = Nullability::NonNullable;
+                    }
+                    _ => {}
+                }
             }
         }
     }
