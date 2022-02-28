@@ -14,10 +14,19 @@
 
 use std::fmt::Display;
 
-use rustc_hir::{definitions::DefPathData, def_id::LocalDefId};
+use rustc_hir::{def_id::LocalDefId, definitions::DefPathData};
 use rustc_index::vec::IndexVec;
-use rustc_middle::{mir::{Local, TerminatorKind, ConstantKind, StatementKind, Rvalue, Place, PlaceRef, ProjectionElem, START_BLOCK}, ty::{TyKind, TyCtxt}};
-use rustc_mir_dataflow::{AnalysisDomain, Analysis, JoinSemiLattice, fmt::DebugWithContext, Engine, Results, ResultsRefCursor};
+use rustc_middle::{
+    mir::{
+        ConstantKind, Local, Place, PlaceRef, ProjectionElem, Rvalue, StatementKind,
+        TerminatorKind, START_BLOCK,
+    },
+    ty::{TyCtxt, TyKind},
+};
+use rustc_mir_dataflow::{
+    fmt::DebugWithContext, Analysis, AnalysisDomain, Engine, JoinSemiLattice, Results,
+    ResultsRefCursor,
+};
 use tracing::debug;
 
 pub struct NullAnalysisResults<'tcx> {
@@ -31,7 +40,11 @@ impl<'tcx> NullAnalysisResults<'tcx> {
         let body = tcx.optimized_mir(def_id);
         let engine = Engine::new_generic(tcx, &body, NullAnalysis::new(tcx));
         let results = engine.iterate_to_fixpoint();
-        NullAnalysisResults { tcx, def_id, results }
+        NullAnalysisResults {
+            tcx,
+            def_id,
+            results,
+        }
     }
 }
 
@@ -75,13 +88,13 @@ impl JoinSemiLattice for Nullability {
             (NonNullable, Nullable) => {
                 *self = Nullable;
                 return true;
-            },
+            }
             (NonNullable, _) => return false,
             (Unknown, Unknown) => return false,
             (Unknown, other) => {
                 *self = *other;
                 return true;
-            },
+            }
         }
     }
 }
@@ -111,7 +124,12 @@ impl<'tcx> AnalysisDomain<'tcx> for NullAnalysis<'tcx> {
         IndexVec::from_iter(std::iter::repeat(Nullability::Unknown).take(locals))
     }
 
-    fn initialize_start_block(&self, _body: &rustc_middle::mir::Body<'tcx>, _state: &mut Self::Domain) {}
+    fn initialize_start_block(
+        &self,
+        _body: &rustc_middle::mir::Body<'tcx>,
+        _state: &mut Self::Domain,
+    ) {
+    }
 }
 
 impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
@@ -122,30 +140,42 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
         _location: rustc_middle::mir::Location,
     ) {
         match &statement.kind {
-            StatementKind::Assign(box (place, Rvalue::Use(operand))) if place.projection.is_empty() && operand.place().is_some() => {
+            StatementKind::Assign(box (place, Rvalue::Use(operand)))
+                if place.projection.is_empty() && operand.place().is_some() =>
+            {
                 let lhs = place.as_local().expect("projections aren't supported yet");
                 if let Some(rhs) = operand.place().as_ref().map(Place::as_local).flatten() {
                     state[rhs] = state[lhs];
                 }
-            },
+            }
             StatementKind::Assign(box (place, Rvalue::Use(operand))) => {
                 match place.as_ref() {
-                    PlaceRef { local, projection: [ProjectionElem::Deref, ..] } => {
+                    PlaceRef {
+                        local,
+                        projection: [ProjectionElem::Deref, ..],
+                    } => {
                         debug!(?local, "lhs deref");
                         state[local] = Nullability::NonNullable;
-                    },
-                    PlaceRef { local, projection: [] } => {
+                    }
+                    PlaceRef {
+                        local,
+                        projection: [],
+                    } => {
                         debug!(?local, "lhs assign");
                         state[local] = Nullability::Unknown;
-                    },
+                    }
                     _ => (),
                 }
-                if let Some(PlaceRef { local, projection: [ProjectionElem::Deref, ..] }) = operand.place().as_ref().map(Place::as_ref) {
+                if let Some(PlaceRef {
+                    local,
+                    projection: [ProjectionElem::Deref, ..],
+                }) = operand.place().as_ref().map(Place::as_ref)
+                {
                     debug!(?local, "rhs deref");
                     state[local] = Nullability::NonNullable;
                 }
-            },
-            _ => {},
+            }
+            _ => {}
         }
     }
 
@@ -155,9 +185,7 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
         terminator: &rustc_middle::mir::Terminator<'tcx>,
         _location: rustc_middle::mir::Location,
     ) {
-        if let TerminatorKind::Call {
-            func, args, ..
-        } = &terminator.kind {
+        if let TerminatorKind::Call { func, args, .. } = &terminator.kind {
             let constant = func.constant().unwrap();
             let constant = match constant.literal {
                 ConstantKind::Ty(v) => v,
@@ -171,20 +199,24 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
             // ::core ...
             let in_core = self.tcx.crate_name(def_path.krate).as_str() == "core";
             // ::ptr ...
-            let in_ptr = def_path.data.get(0).map(|d| {
-                match d.data {
+            let in_ptr = def_path
+                .data
+                .get(0)
+                .map(|d| match d.data {
                     DefPathData::TypeNs(s) if s.as_str() == "ptr" => true,
                     _ => false,
-                }
-            }).unwrap_or(false);
+                })
+                .unwrap_or(false);
             // ::{const_ptr, mut_ptr}::{impl} ...
             // ::is_null
-            let is_is_null = def_path.data.get(3).map(|d| {
-                match d.data {
+            let is_is_null = def_path
+                .data
+                .get(3)
+                .map(|d| match d.data {
                     DefPathData::ValueNs(s) if s.as_str() == "is_null" => true,
                     _ => false,
-                }
-            }).unwrap_or(false);
+                })
+                .unwrap_or(false);
             if in_core && in_ptr && is_is_null {
                 let place = args[0].place().expect("null check on constant");
                 let local = place.as_local().expect("projections aren't supported yet");
@@ -198,5 +230,6 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
         _state: &mut Self::Domain,
         _block: rustc_middle::mir::BasicBlock,
         _return_places: rustc_mir_dataflow::CallReturnPlaces<'_, 'tcx>,
-    ) {}
+    ) {
+    }
 }
