@@ -1,4 +1,4 @@
-use graph::implementation::forward_star::{self, PredecessorNodes, SuccessorNodes};
+use graph::{implementation::forward_star::{self, PredecessorNodes, SuccessorNodes}, derive_graph_via};
 use rustc_data_structures::graph::{
     DirectedGraph, GraphPredecessors, GraphSuccessors, WithNumEdges, WithNumNodes,
     WithPredecessors, WithSuccessors,
@@ -20,44 +20,7 @@ pub struct CallGraph {
     pub call_graph: forward_star::Graph<Func, CallSite>,
 }
 
-impl DirectedGraph for CallGraph {
-    type Node = Func;
-}
-
-impl WithNumNodes for CallGraph {
-    fn num_nodes(&self) -> usize {
-        debug_assert!(self.functions.len() == self.call_graph.num_nodes());
-        self.call_graph.num_nodes()
-    }
-}
-
-impl WithNumEdges for CallGraph {
-    fn num_edges(&self) -> usize {
-        self.call_graph.num_edges()
-    }
-}
-
-impl WithSuccessors for CallGraph {
-    fn successors(&self, node: Self::Node) -> <Self as GraphSuccessors<'_>>::Iter {
-        self.call_graph.successors(node)
-    }
-}
-
-impl<'graph> GraphSuccessors<'graph> for CallGraph {
-    type Item = Func;
-    type Iter = SuccessorNodes<'graph, Func, CallSite>;
-}
-
-impl WithPredecessors for CallGraph {
-    fn predecessors(&self, node: Self::Node) -> <Self as GraphPredecessors<'_>>::Iter {
-        self.call_graph.predecessors(node)
-    }
-}
-
-impl<'graph> GraphPredecessors<'graph> for CallGraph {
-    type Item = Func;
-    type Iter = PredecessorNodes<'graph, Func, CallSite>;
-}
+derive_graph_via!(CallGraph.call_graph: forward_star::Graph<Func, CallSite>);
 
 impl CallGraph {
     pub fn new(tcx: TyCtxt, bodies: impl Iterator<Item = DefId>) -> Self {
