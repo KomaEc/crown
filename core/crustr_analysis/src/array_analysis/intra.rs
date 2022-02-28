@@ -28,7 +28,8 @@ use smallvec::SmallVec;
 pub struct FuncSummary {
     /// A range into crate lambda context, indicating the constraint variables
     /// introduced by this function
-    pub lambdas: Range<u32>,
+    pub lambda_ctxt: Range<usize>,
+    pub constraints: Range<usize>,
 }
 
 impl<'analysis, 'tcx> CrateSummary<'analysis, 'tcx> {

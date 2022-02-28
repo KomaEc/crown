@@ -151,6 +151,7 @@ impl CrateLambdaCtxt {
 }
 
 /// λ1 ≤ λ2
+#[derive(Clone, Debug)]
 pub struct Constraint(Lambda, Lambda);
 
 impl Display for Constraint {
@@ -159,26 +160,20 @@ impl Display for Constraint {
     }
 }
 
-impl Debug for Constraint {
+pub struct BoundaryConstraint {
+    /// body_idx, local
+    pub parameter: (usize, Local),
+    pub argument: Lambda,
+}
+
+impl Display for BoundaryConstraint {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        Display::fmt(&self, f)
+        f.write_fmt(format_args!(
+            "({}, {:?}) ≤ {:?}",
+            self.parameter.0, self.parameter.1, self.argument
+        ))
     }
 }
-
-/*
-/// A lambda data that is generic over constraint domain
-pub struct LambdaDataG<Domain: Clone + Copy> {
-    pub assumption: Domain,
-    pub source: LambdaSourceData,
-}
-
-impl<Domain: Clone + Copy> From<(Domain, LambdaSourceData)> for LambdaDataG<Domain> {
-    fn from((assumption, source): (Domain, LambdaSourceData)) -> Self {
-        LambdaDataG { assumption, source }
-    }
-}
-pub type LambdaData = LambdaDataG<Option<bool>>;
-*/
 
 /// The language constructs that a constraint variable λ corresponds to
 #[derive(Clone, Debug)]
