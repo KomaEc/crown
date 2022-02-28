@@ -1,4 +1,4 @@
-use graph::{implementation::forward_star, derive_graph_via};
+use graph::{derive_graph_via, implementation::forward_star};
 use rustc_data_structures::graph::{
     DirectedGraph, GraphPredecessors, GraphSuccessors, WithNumEdges, WithNumNodes,
     WithPredecessors, WithSuccessors,
@@ -114,6 +114,8 @@ impl<'me, 'tcx> Visitor<'tcx> for CallGraphNodeVis<'me, 'tcx> {
                         self.call_graph.add_edge(self.this, other);
                     }
                 }
+            } else {
+                panic!("what could it be? {}", ty)
             }
         }
     }

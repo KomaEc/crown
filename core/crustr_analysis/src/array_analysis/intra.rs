@@ -34,15 +34,15 @@ pub struct FuncSummary {
 }
 
 impl<'tcx> CrateSummary<'tcx> {
-    pub fn infer<DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()> + Clone>(
+    pub fn infer<DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>(
         &mut self,
-        handler: Handler,
+        mut extra_handler: Handler,
     ) {
         for (func, &did) in self.call_graph.functions.iter_enumerated() {
             let body = self.tcx.optimized_mir(did);
             let insertion_points = body.compute_phi_node::<DefUse>(self.tcx);
 
-            let mut infer: Infer<DefUse, Handler> = Infer {
+            let mut infer: Infer<DefUse, &mut Handler> = Infer {
                 ctxt: InferCtxt::new(
                     self.tcx,
                     func,
@@ -52,7 +52,7 @@ impl<'tcx> CrateSummary<'tcx> {
                     &insertion_points,
                 ),
                 ssa_state: SSARenameState::new(&body.local_decls),
-                extra_handlers: handler.clone(),
+                extra_handlers: &mut extra_handler,
                 _marker: PhantomData,
             };
 
@@ -413,7 +413,11 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
                                 }
                                 _ => unimplemented!(),
                             }
-                        } else {
+                        } else if matches!(
+                            self.ctxt.tcx.hir().find_by_def_id(did),
+                            Some(rustc_hir::Node::Item(_))
+                        ) {
+                            // todo!()
                         }
                     }
                     // library functions
@@ -464,6 +468,8 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
                         }
                     }
                 }
+            } else {
+                panic!("what could it be? {}", ty)
             }
         }
         self.super_terminator(terminator, location)

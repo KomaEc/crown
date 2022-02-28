@@ -212,6 +212,26 @@ impl SSANameHandler for () {
     fn handle_use(&mut self, _local: Local, _idx: usize, _location: Location) {}
 }
 
+impl<H: SSANameHandler> SSANameHandler for &mut H {
+    type Output = H::Output;
+
+    fn handle_def(&mut self, local: Local, idx: usize, location: Location) -> Self::Output {
+        (*self).handle_def(local, idx, location)
+    }
+
+    fn handle_use(&mut self, local: Local, idx: usize, location: Location) -> Self::Output {
+        (*self).handle_use(local, idx, location)
+    }
+
+    fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
+        (*self).handle_def_at_phi_node(local, idx, block)
+    }
+
+    fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize) {
+        (*self).handle_use_at_phi_node(local, idx, block, pos)
+    }
+}
+
 impl<H1: SSANameHandler, H2: SSANameHandler> SSANameHandler for (H1, H2) {
     type Output = H2::Output;
 

@@ -187,7 +187,6 @@ impl<'g, Node: Idx, Edge: Idx> Iterator for PredecessorNodes<'g, Node, Edge> {
     }
 }
 
-/// Iterator design pattern: laziness
 pub struct AdjacentEdges<'g, Node: Idx, Edge: Idx> {
     graph: &'g Graph<Node, Edge>,
     direction: Direction,
@@ -196,12 +195,10 @@ pub struct AdjacentEdges<'g, Node: Idx, Edge: Idx> {
 
 impl<'g, Node: Idx, Edge: Idx> AdjacentEdges<'g, Node, Edge> {
     pub fn sources(self) -> PredecessorNodes<'g, Node, Edge> {
-        // self.map(|(_, e)| e.source)
         PredecessorNodes(self)
     }
 
     pub fn targets(self) -> SuccessorNodes<'g, Node, Edge> {
-        // self.map(|(_, e)| e.target)
         SuccessorNodes(self)
     }
 }
