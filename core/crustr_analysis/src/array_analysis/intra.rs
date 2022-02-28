@@ -5,13 +5,15 @@ use crate::{
         assert_fat, assert_thin, Constraint, ConstraintIdx, CrateLambdaCtxt, CrateSummary,
         FuncLambdaCtxt, Lambda, LambdaMap, LambdaSourceData,
     },
-    call_graph::Func,
+    call_graph::{CallGraph, CallSite, Func},
     def_use::DefUseCategorisable,
     ssa::{
         body_ext::{BodyExt, PhiNodeInserted},
         rename::{HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename, SSARenameState},
     },
+    ty_ext::TyExt,
 };
+use graph::implementation::forward_star::{AdjacentEdges, Direction};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::{Idx, IndexVec};
@@ -47,10 +49,15 @@ impl<'tcx> CrateSummary<'tcx> {
                     self.tcx,
                     func,
                     body,
+                    &self.call_graph,
                     &mut self.lambda_ctxt,
                     &mut self.constraints,
                     &insertion_points,
                 ),
+                call_sites_iter: self
+                    .call_graph
+                    .call_graph
+                    .adjacent_edges(func, Direction::Outgoing),
                 ssa_state: SSARenameState::new(&body.local_decls),
                 extra_handlers: &mut extra_handler,
                 _marker: PhantomData,
@@ -85,7 +92,7 @@ impl CrateLambdaCtxt {
                 let ty = local_decl.ty;
                 (
                     // vec![],
-                    ty.is_any_ptr()
+                    ty.is_ptr_of_concerned()
                         .then(|| {
                             let lambda = self.lambda_map.push(
                                 None,
@@ -106,7 +113,7 @@ impl CrateLambdaCtxt {
                                 None
                             }
                         })
-                        .take_while(|ty| ty.is_any_ptr() && !ty.is_fn_ptr())
+                        .take_while(|ty| ty.is_ptr_of_concerned() && !ty.is_fn_ptr())
                         .skip(1)
                         .enumerate()
                         .map(|(level, _)| {
@@ -137,6 +144,7 @@ impl CrateLambdaCtxt {
 pub struct Infer<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
 {
     pub ctxt: InferCtxt<'infercx, 'tcx>,
+    pub call_sites_iter: AdjacentEdges<'infercx, Func, CallSite>,
     pub ssa_state: SSARenameState<Local>,
     pub extra_handlers: Handler,
     pub _marker: PhantomData<*const DefUse>,
@@ -160,7 +168,7 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
         self.extra_handlers.handle_def(local, idx, location);
         self.ctxt.body.local_decls[local]
             .ty
-            .is_any_ptr()
+            .is_ptr_of_concerned()
             .then(|| self.ctxt.handle_def(local, idx, location))
     }
 
@@ -168,7 +176,7 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
         self.extra_handlers.handle_use(local, idx, location);
         self.ctxt.body.local_decls[local]
             .ty
-            .is_any_ptr()
+            .is_ptr_of_concerned()
             .then(|| self.ctxt.handle_use(local, idx, location))
     }
 
@@ -177,7 +185,7 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
             .handle_def_at_phi_node(local, idx, block);
         self.ctxt.body.local_decls[local]
             .ty
-            .is_any_ptr()
+            .is_ptr_of_concerned()
             .then(|| self.ctxt.handle_def_at_phi_node(local, idx, block));
     }
 
@@ -186,7 +194,7 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
             .handle_use_at_phi_node(local, idx, block, pos);
         self.ctxt.body.local_decls[local]
             .ty
-            .is_any_ptr()
+            .is_ptr_of_concerned()
             .then(|| self.ctxt.handle_use_at_phi_node(local, idx, block, pos));
     }
 }
@@ -250,7 +258,10 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     fn process_rhs(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
         log::debug!("processing rhs {:?}", place);
 
-        debug_assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
+        debug_assert!(place
+            .ty(self.ctxt.body, self.ctxt.tcx)
+            .ty
+            .is_ptr_of_concerned());
 
         let ssa_idx = self.r#use(place.local);
         let lambda = self
@@ -271,7 +282,10 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     fn process_lhs(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
         log::debug!("processing lhs {:?}", place);
 
-        debug_assert!(place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr());
+        debug_assert!(place
+            .ty(self.ctxt.body, self.ctxt.tcx)
+            .ty
+            .is_ptr_of_concerned());
 
         if place.projection.is_empty() {
             let ssa_idx = self.define(place.local);
@@ -312,7 +326,11 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     /// TODO: handle cases where `rvalue` is an `AddressOf`
     /// TODO: handle `CastKind::Pointer`? (this includes casting fat pointers to thin pointers)
     fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
-        if place.ty(self.ctxt.body, self.ctxt.tcx).ty.is_any_ptr() {
+        if place
+            .ty(self.ctxt.body, self.ctxt.tcx)
+            .ty
+            .is_ptr_of_concerned()
+        {
             if let Rvalue::Use(Operand::Move(rhs))
             | Rvalue::Use(Operand::Copy(rhs))
             | Rvalue::Cast(CastKind::Misc, Operand::Move(rhs), _)
@@ -417,6 +435,13 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
                             self.ctxt.tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::Item(_))
                         ) {
+                            let (call_site, edge_data) = self.call_sites_iter.next().unwrap();
+                            debug_assert_eq!(edge_data.source, self.ctxt.lambda_ctxt.func);
+                            debug_assert_eq!(
+                                edge_data.target,
+                                self.ctxt.call_graph.lookup_function(&callee_did).unwrap()
+                            );
+
                             // todo!()
                         }
                     }
@@ -503,6 +528,7 @@ impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
 pub struct InferCtxt<'infercx, 'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub body: &'infercx Body<'tcx>,
+    pub call_graph: &'infercx CallGraph,
     lambda_ctxt: CrateLambdaCtxtIntraView<'infercx>,
     phi_joins: IndexVec<BasicBlock, SmallVec<[(Local, Vec<Lambda>); 3]>>,
     constraints: &'infercx mut IndexVec<ConstraintIdx, Constraint>,
@@ -513,6 +539,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         tcx: TyCtxt<'tcx>,
         func: Func,
         body: &'infercx Body<'tcx>,
+        call_graph: &'infercx CallGraph,
         lambda_ctxt: &'infercx mut CrateLambdaCtxt,
         constraints: &'infercx mut IndexVec<ConstraintIdx, Constraint>,
         insertion_points: &PhiNodeInserted,
@@ -524,7 +551,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
                     .filter_map(|&local| {
                         body.local_decls[local]
                             .ty
-                            .is_any_ptr()
+                            .is_ptr_of_concerned()
                             .then(|| (local, vec![]))
                     })
                     .collect::<SmallVec<_>>()
@@ -533,6 +560,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         InferCtxt {
             tcx,
             body,
+            call_graph,
             lambda_ctxt: lambda_ctxt.intra_view(body, func),
             phi_joins,
             constraints, // : IndexVec::new(),
@@ -560,7 +588,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
             }
         }
         for (local, y) in self.lambda_ctxt.local.iter_enumerated() {
-            if self.body.local_decls[local].ty.is_any_ptr() {
+            if self.body.local_decls[local].ty.is_ptr_of_concerned() {
                 assert_eq!(y.len(), 1);
                 log::debug!("{}{:?}^0 ==> {:?}", INDENT, local, y[0])
             } else {
@@ -586,7 +614,7 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
 
     fn handle_def(&mut self, local: Local, idx: usize, _location: Location) -> Self::Output {
         log::debug!("IntraCtxt defining {:?}^{}", local, idx);
-        debug_assert!(self.body.local_decls[local].ty.is_any_ptr());
+        debug_assert!(self.body.local_decls[local].ty.is_ptr_of_concerned());
         self.lambda_ctxt.generate_local(local, idx)
     }
 
@@ -603,7 +631,7 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
 
     fn handle_use(&mut self, local: Local, idx: usize, _location: Location) -> Self::Output {
         log::debug!("IntraCtxt using {:?}^{}", local, idx);
-        debug_assert!(self.body.local_decls[local].ty.is_any_ptr());
+        debug_assert!(self.body.local_decls[local].ty.is_ptr_of_concerned());
         self.lambda_ctxt.local[local][idx]
     }
 

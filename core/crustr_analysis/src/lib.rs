@@ -14,6 +14,7 @@ pub mod ssa;
 #[cfg(test)]
 pub mod test;
 pub mod toy_analysis;
+pub mod ty_ext;
 
 extern crate rustc_arena;
 extern crate rustc_ast;

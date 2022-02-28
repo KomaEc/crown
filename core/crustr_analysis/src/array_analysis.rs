@@ -10,7 +10,10 @@ use rustc_middle::{
 };
 use rustc_target::abi::VariantIdx;
 
-use crate::call_graph::{CallGraph, Func};
+use crate::{
+    call_graph::{CallGraph, Func},
+    ty_ext::TyExt,
+};
 
 pub mod intra;
 pub mod solve;
@@ -113,7 +116,9 @@ impl CrateLambdaCtxt {
                                                 None
                                             }
                                         })
-                                        .take_while(|ty| ty.is_any_ptr() && !ty.is_fn_ptr())
+                                        .take_while(|ty| {
+                                            ty.is_ptr_of_concerned() && !ty.is_fn_ptr()
+                                        })
                                         .enumerate()
                                         .map(|(nested_level, _)| {
                                             lambda_map.push(

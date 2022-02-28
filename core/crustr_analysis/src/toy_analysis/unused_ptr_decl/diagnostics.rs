@@ -7,7 +7,7 @@ impl<'updb, 'upd, 'tcx> UnusedPointerDeclForBody<'updb, 'upd, 'tcx> {
         let all_user_vars = self.body.var_debug_info.iter().filter_map(|var| {
             if let VarDebugInfoContents::Place(place) = var.value {
                 let ty = place.ty(&self.body.local_decls, self.tcx).ty;
-                if ty.is_any_ptr() && !ty.is_fn_ptr() {
+                if ty.is_ptr_of_concerned()  {
                     return Some(var);
                 }
             } else {

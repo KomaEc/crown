@@ -1,5 +1,6 @@
 use crate::{
     ssa::{body_ext::PhiNodeInserted, rename::SSANameHandler},
+    ty_ext::TyExt,
     LocationMap,
 };
 use log::debug;
@@ -169,7 +170,7 @@ impl<'me, 'tcx, CV: Idx> LocalSimplePtrCVMap<'me, 'tcx, CV> {
             .iter_enumerated()
             .map(|(local, local_decl)| {
                 // if it is local simple pointer type
-                if local_decl.ty.is_any_ptr() && !local_decl.ty.is_fn_ptr() {
+                if local_decl.ty.is_ptr_of_concerned() {
                     let idx = rev_map.push((local, 0));
                     vec![idx]
                 } else {
@@ -183,7 +184,7 @@ impl<'me, 'tcx, CV: Idx> LocalSimplePtrCVMap<'me, 'tcx, CV> {
     #[inline]
     fn gen_def(&mut self, local: Local, idx: usize) {
         let ty = self.body.local_decls[local].ty;
-        if ty.is_any_ptr() && !ty.is_fn_ptr() {
+        if ty.is_ptr_of_concerned() {
             let cv = self.rev_map.push((local, idx));
             assert_eq!(self.map[local].len(), idx);
             self.map[local].push(cv);

@@ -3,7 +3,7 @@
 use rustc_errors::Applicability;
 use rustc_middle::mir::VarDebugInfoContents;
 
-use crate::pointer_analysis::andersen::AndersenResult;
+use crate::{pointer_analysis::andersen::AndersenResult, ty_ext::TyExt};
 
 impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
     pub fn report_ptr_alias(&self) {
@@ -15,7 +15,7 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
                 body.var_debug_info.clone().into_iter().filter_map(|var| {
                     if let VarDebugInfoContents::Place(place) = var.value {
                         let ty = place.ty(&body.local_decls, self.ptr_ctxt.tcx()).ty;
-                        if ty.is_any_ptr() && !ty.is_fn_ptr() {
+                        if ty.is_ptr_of_concerned() {
                             return Some((var, body.source.def_id()));
                         }
                     } else {

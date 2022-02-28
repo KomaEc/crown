@@ -98,8 +98,7 @@ impl<'updb, 'upd, 'tcx> Visitor<'tcx> for UnusedPointerDeclForBody<'updb, 'upd, 
             self.user_vars
                 .binary_search_by_key(&place.as_ref(), |(place_ref, _)| *place_ref),
             Ok(_)
-        ) && place_ty.is_any_ptr()
-            && !place_ty.is_fn_ptr()
+        ) && place_ty.is_ptr_of_concerned()
         {
             match context {
                 PlaceContext::MutatingUse(_mut_context) => {

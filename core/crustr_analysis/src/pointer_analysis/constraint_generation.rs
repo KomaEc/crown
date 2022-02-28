@@ -11,6 +11,7 @@ use crate::pointer_analysis::{
     andersen::constraint_solving::ConstraintSolving, ctxt::PointerAnalysisCtxt, Constraint,
     ConstraintKind, ConstraintSet, PointerAnalysisNode,
 };
+use crate::ty_ext::TyExt;
 
 /// Data structure for constraint generation.
 /// 'cg = the duration of the constraint generation
@@ -96,11 +97,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
             is_block_tail: _,
         } = local_decl;
 
-        if ty.is_any_ptr() {
-            if ty.is_fn_ptr() {
-                log::error!("Function pointer: {} is not supported!", ty);
-                unimplemented!()
-            }
+        if ty.is_ptr_of_concerned() {
             // generate andersen node for this local
             let _ = self.ptr_ctxt.generate_from_local(self.func_cx, local);
         }
@@ -117,12 +114,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
         );
 
         let place_ty = place.ty(self.body, self.ptr_ctxt.tcx());
-        if place_ty.ty.is_any_ptr() {
-            if place_ty.ty.is_fn_ptr() {
-                log::error!("Function pointer: {} is not supported!", place_ty.ty);
-                unimplemented!()
-            }
-
+        if place_ty.ty.is_ptr_of_concerned() {
             // self.process_assign_of_ptr_ty(place, rvalue, location);
 
             if let Some((rhs_repr, rhs_ptr_kind)) = self.process_rvalue_of_ptr_ty(rvalue, location)
@@ -227,10 +219,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
         {
             if let Some((place, _)) = destination {
                 let place_ty = place.ty(self.body, self.ptr_ctxt.tcx());
-                if place_ty.ty.is_any_ptr() {
-                    if place_ty.ty.is_fn_ptr() {
-                        unimplemented!("Function pointer")
-                    }
+                if place_ty.ty.is_ptr_of_concerned() {
                     // processing terminator `p = f(q1, q2, ..)`
                     if let FnDef(def_id, generic_args) = func.constant().unwrap().ty().kind() {
                         // process lhs
@@ -279,10 +268,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                                 let local = Local::from_usize(i + 1);
                                 if let Some(place) = operand.place() {
                                     let place_ty = place.ty(self.body, self.ptr_ctxt.tcx());
-                                    if place_ty.ty.is_any_ptr() {
-                                        if place_ty.ty.is_fn_ptr() {
-                                            unimplemented!("Function pointer")
-                                        }
+                                    if place_ty.ty.is_ptr_of_concerned() {
                                         let lhs_repr =
                                             self.ptr_ctxt.generate_from_local(callee, local);
                                         // .lookup_local(callee, local)
