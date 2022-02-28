@@ -8,7 +8,7 @@ use rustc_mir_dataflow::{Analysis, ResultsCursor};
 use smallvec::SmallVec;
 use std::collections::VecDeque;
 
-use crate::def_use::{DefSites, DefSitesGatherer, DefUseCategorisable};
+use crate::def_use::{DefSites, DefSitesGatherer, IsDefUse};
 use crate::liveness_analysis::MaybeLiveLocals;
 
 const DOMINATOR_FRONTIER_ON_STACK_SIZE: usize = 3;
@@ -75,7 +75,7 @@ impl BasicBlockInsersionPoints<()> {
 
 pub trait BodyExt<'tcx> {
     fn dominance_frontier(&self) -> DominanceFrontier;
-    fn compute_phi_node<DefUse: DefUseCategorisable>(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted;
+    fn compute_phi_node<DefUse: IsDefUse>(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted;
 }
 
 impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
@@ -102,7 +102,7 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
         IndexVec::from_iter(df.iter().map(|set| set.iter().collect::<SmallVec<_>>()))
     }
 
-    fn compute_phi_node<DefUse: DefUseCategorisable>(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted {
+    fn compute_phi_node<DefUse: IsDefUse>(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted {
         minimal_ssa_form(
             self,
             DefSitesGatherer::<DefUse>::new(self).gather(),
@@ -115,6 +115,9 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
 /// Compute phi node insertion points for minimal SSA form.
 /// Along with normal construction, check for liveness on entry
 /// before inserting phi node to avoid redundant nodes.
+/// FIXME: this is not a full scale dead code elimination, as adding
+/// phi node will make more locals to be dead. So this needs to be a
+/// worklist algorithm!
 pub fn minimal_ssa_form<'tcx>(
     body: &Body<'tcx>,
     mut def_sites: DefSites,

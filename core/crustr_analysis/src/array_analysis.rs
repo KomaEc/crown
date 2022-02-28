@@ -158,19 +158,23 @@ impl Display for Constraint {
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum BoundaryConstraint {
+    Argument { caller: Lambda, callee: Local },
+    Return { caller: Lambda, callee: Local },
+}
+
 /*
+#[derive(Clone, Debug)]
 pub struct BoundaryConstraint {
-    /// body_idx, local
-    pub parameter: (usize, Local),
-    pub argument: Lambda,
+    pub parameter: Local,
+    /// Local and ssa_idx
+    pub argument: (Local, usize),
 }
 
 impl Display for BoundaryConstraint {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!(
-            "({}, {:?}) ≤ {:?}",
-            self.parameter.0, self.parameter.1, self.argument
-        ))
+        f.write_fmt(format_args!("{:?} ≤ {:?}", self.parameter, self.argument))
     }
 }
 */

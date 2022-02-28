@@ -8,7 +8,7 @@ use rustc_middle::mir::{
     BasicBlock, BasicBlockData, Body, Local, Location, Statement, Terminator,
 };
 
-use crate::{def_use::DefUseCategorisable, ssa::body_ext::PhiNodeInserted};
+use crate::{def_use::IsDefUse, ssa::body_ext::PhiNodeInserted};
 
 use std::marker::PhantomData;
 
@@ -76,7 +76,7 @@ pub trait HasSSANameHandler {
 }
 
 pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
-    type DefUse: DefUseCategorisable;
+    type DefUse: IsDefUse;
 
     fn rename_body(&mut self, body: &Body<'tcx>, insertion_points: &PhiNodeInserted) {
         let dominators = body.dominators();
@@ -161,14 +161,14 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
     fn rename_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location);
 }
 
-struct StackPopper<'me, DefUse: DefUseCategorisable>(
+struct StackPopper<'me, DefUse: IsDefUse>(
     &'me mut IndexVec<Local, Vec<usize>>,
     PhantomData<*const DefUse>,
 );
 
-impl<'me, 'tcx, DefUse: DefUseCategorisable> Visitor<'tcx> for StackPopper<'tcx, DefUse> {
+impl<'me, 'tcx, DefUse: IsDefUse> Visitor<'tcx> for StackPopper<'tcx, DefUse> {
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, _location: Location) {
-        if DefUse::categorize(context).map_or(false, |def_use| DefUse::defining(def_use)) {
+        if DefUse::categorize(context).map_or(false, |def_use| IsDefUse::defining(def_use)) {
             self.0[local].pop();
         }
     }

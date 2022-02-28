@@ -7,31 +7,27 @@ use rustc_middle::mir::visit::{
 use rustc_middle::mir::{Body, Local, Location, Place};
 use smallvec::{smallvec, SmallVec};
 
-pub trait DefUseCategorisable: PartialEq + Eq + Clone + Copy {
-    type DefUse: PartialEq + Eq + Clone + Copy;
+pub trait IsDefUse: PartialEq + Eq + Clone + Copy {
+    fn defining(def_use: Self) -> bool;
 
-    fn defining(def_use: Self::DefUse) -> bool;
+    fn using(def_use: Self) -> bool;
 
-    fn using(def_use: Self::DefUse) -> bool;
-
-    fn categorize(context: PlaceContext) -> Option<Self::DefUse>;
+    fn categorize(context: PlaceContext) -> Option<Self>;
 }
 
-impl DefUseCategorisable for BorrowckDefUse {
-    type DefUse = Self;
-
+impl IsDefUse for BorrowckDefUse {
     #[inline]
-    fn defining(def_use: Self::DefUse) -> bool {
+    fn defining(def_use: Self) -> bool {
         matches!(def_use, BorrowckDefUse::Def)
     }
 
     #[inline]
-    fn using(def_use: Self::DefUse) -> bool {
+    fn using(def_use: Self) -> bool {
         matches!(def_use, BorrowckDefUse::Use)
     }
 
     #[inline]
-    fn categorize(context: PlaceContext) -> Option<Self::DefUse> {
+    fn categorize(context: PlaceContext) -> Option<Self> {
         match context {
 
             PlaceContext::MutatingUse(MutatingUseContext::Store) |
@@ -101,7 +97,7 @@ pub enum BorrowckDefUse {
 macro_rules! make_sites_gatherer(
     ($Gatherer:ident, $def_or_use:ident) => {
         pub struct $Gatherer<'gatherer, 'tcx, DefUse>
-        where DefUse: DefUseCategorisable
+        where DefUse: IsDefUse
         {
             body: &'gatherer Body<'tcx>,
             sites: IndexVec<Local, SmallVec<[Location; 2]>>,
@@ -109,7 +105,7 @@ macro_rules! make_sites_gatherer(
         }
 
         impl<'gatherer, 'tcx, DefUse> $Gatherer<'gatherer, 'tcx, DefUse>
-        where DefUse: DefUseCategorisable
+        where DefUse: IsDefUse
         {
             pub fn new(body: &'gatherer Body<'tcx>) -> Self {
                 $Gatherer {
@@ -125,7 +121,7 @@ macro_rules! make_sites_gatherer(
         }
 
         impl<'gatherer, 'tcx, DefUse> Visitor<'tcx> for $Gatherer<'gatherer, 'tcx, DefUse>
-        where DefUse: DefUseCategorisable
+        where DefUse: IsDefUse
         {
             fn visit_place(
                 &mut self,

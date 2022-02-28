@@ -1,5 +1,5 @@
 use super::{HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename, SSARenameState};
-use crate::{def_use::DefUseCategorisable, ssa::body_ext::BodyExt};
+use crate::{def_use::IsDefUse, ssa::body_ext::BodyExt};
 use rustc_middle::{
     mir::{
         visit::{PlaceContext, Visitor},
@@ -9,7 +9,7 @@ use rustc_middle::{
 };
 use std::marker::PhantomData;
 
-pub struct PlainRenamer<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> {
+pub struct PlainRenamer<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> {
     tcx: TyCtxt<'tcx>,
     body: &'me Body<'tcx>,
     state: SSARenameState<Local>,
@@ -17,14 +17,14 @@ pub struct PlainRenamer<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandle
     _marker: PhantomData<*const DefUse>,
 }
 
-impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> PlainRenamer<'me, 'tcx, DefUse, H> {
+impl<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> PlainRenamer<'me, 'tcx, DefUse, H> {
     #[inline]
     pub fn rename(&mut self) {
         self.visit_body(self.body)
     }
 }
 
-impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> HasSSARenameState<Local>
+impl<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> HasSSARenameState<Local>
     for PlainRenamer<'me, 'tcx, DefUse, H>
 {
     #[inline(always)]
@@ -33,7 +33,7 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> HasSSARenameStat
     }
 }
 
-impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> HasSSANameHandler
+impl<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> HasSSANameHandler
     for PlainRenamer<'me, 'tcx, DefUse, H>
 {
     type Handler = H;
@@ -43,7 +43,7 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> HasSSANameHandle
     }
 }
 
-impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> SSARename<'tcx>
+impl<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> SSARename<'tcx>
     for PlainRenamer<'me, 'tcx, DefUse, H>
 {
     type DefUse = DefUse;
@@ -59,7 +59,7 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> SSARename<'tcx>
     }
 }
 
-impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> PlainRenamer<'me, 'tcx, DefUse, H> {
+impl<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> PlainRenamer<'me, 'tcx, DefUse, H> {
     pub fn new(tcx: TyCtxt<'tcx>, body: &'me Body<'tcx>, rename: H) -> Self {
         PlainRenamer {
             tcx,
@@ -75,7 +75,7 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> PlainRenamer<'me
 /// place is visited first, then the use on RHS will get a wrong rename!
 /// However this is rare, if not impossible, in MIR. I tried several artificial
 /// examples, such statements are decomposed by inserting temp varaibles.
-impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> Visitor<'tcx>
+impl<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> Visitor<'tcx>
     for PlainRenamer<'me, 'tcx, DefUse, H>
 {
     fn visit_body(&mut self, body: &Body<'tcx>) {
@@ -84,10 +84,10 @@ impl<'me, 'tcx, DefUse: DefUseCategorisable, H: SSANameHandler> Visitor<'tcx>
 
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
         if let Some(def_use) = DefUse::categorize(context) {
-            if DefUse::defining(def_use) {
+            if IsDefUse::defining(def_use) {
                 let i = self.define(local);
                 self.ssa_name_handler.handle_def(local, i, location);
-            } else if DefUse::using(def_use) {
+            } else if IsDefUse::using(def_use) {
                 let i = self.r#use(local);
                 self.ssa_name_handler.handle_use(local, i, location);
             }

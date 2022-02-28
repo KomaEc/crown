@@ -14,13 +14,11 @@ pub struct CallGraph {
     /// Invariant: the set of functions are sorted by `DefId` to facilitate
     /// reverse lookup
     pub functions: IndexVec<Func, DefId>,
-    /// `call_graph.edges` contains the universe of all call sites.
-    /// Note that the order is fixed as long as a visitor traverse
-    /// the MIR in the default way.
-    pub call_graph: forward_star::Graph<Func, CallSite>,
+    pub call_sites: IndexVec<CallSite, Location>,
+    pub graph: forward_star::Graph<Func, CallSite>,
 }
 
-derive_graph_via!(CallGraph.call_graph: forward_star::Graph<Func, CallSite>);
+derive_graph_via!(CallGraph.graph: forward_star::Graph<Func, CallSite>);
 
 impl CallGraph {
     pub fn new(tcx: TyCtxt, bodies: impl Iterator<Item = DefId>) -> Self {
@@ -30,6 +28,7 @@ impl CallGraph {
         CallGraphConstruction {
             tcx,
             functions: IndexVec::from_raw(bodies),
+            call_sites: IndexVec::new(),
             call_graph: forward_star::Graph::new(num_nodes, std::iter::empty()),
         }
         .construct()
@@ -58,6 +57,7 @@ rustc_index::newtype_index! {
 struct CallGraphConstruction<'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub functions: IndexVec<Func, DefId>,
+    pub call_sites: IndexVec<CallSite, Location>,
     pub call_graph: forward_star::Graph<Func, CallSite>,
 }
 
@@ -69,13 +69,15 @@ impl<'tcx> CallGraphConstruction<'tcx> {
                 tcx: self.tcx,
                 this: self.functions.binary_search(&did).unwrap(),
                 functions: &self.functions,
+                call_sites: &mut self.call_sites,
                 call_graph: &mut self.call_graph,
             }
             .visit_body(body);
         }
         CallGraph {
             functions: self.functions,
-            call_graph: self.call_graph,
+            call_sites: self.call_sites,
+            graph: self.call_graph,
         }
     }
 }
@@ -84,11 +86,12 @@ struct CallGraphNodeVis<'me, 'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub this: Func,
     pub functions: &'me IndexVec<Func, DefId>,
+    pub call_sites: &'me mut IndexVec<CallSite, Location>,
     pub call_graph: &'me mut forward_star::Graph<Func, CallSite>,
 }
 
 impl<'me, 'tcx> Visitor<'tcx> for CallGraphNodeVis<'me, 'tcx> {
-    fn visit_terminator(&mut self, terminator: &Terminator, _location: Location) {
+    fn visit_terminator(&mut self, terminator: &Terminator, location: Location) {
         if let TerminatorKind::Call {
             func,
             args: _,
@@ -111,7 +114,10 @@ impl<'me, 'tcx> Visitor<'tcx> for CallGraphNodeVis<'me, 'tcx> {
                         Some(rustc_hir::Node::Item(_))
                     ) {
                         let other = self.functions.binary_search(&callee_did).unwrap();
-                        self.call_graph.add_edge(self.this, other);
+                        assert_eq!(
+                            self.call_graph.add_edge(self.this, other),
+                            self.call_sites.push(location)
+                        );
                     }
                 }
             } else {

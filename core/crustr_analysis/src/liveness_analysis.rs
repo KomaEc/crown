@@ -4,7 +4,7 @@ use rustc_middle::mir::{self, Local, Location};
 
 use rustc_mir_dataflow::{AnalysisDomain, Backward, CallReturnPlaces, GenKill, GenKillAnalysis};
 
-use crate::def_use::DefUseCategorisable;
+use crate::def_use::IsDefUse;
 pub struct MaybeLiveLocals;
 
 impl MaybeLiveLocals {
@@ -160,18 +160,16 @@ impl RustcLivenessDefUse {
     }
 }
 
-impl DefUseCategorisable for RustcLivenessDefUse {
-    type DefUse = Self;
-
-    fn defining(def_use: Self::DefUse) -> bool {
+impl IsDefUse for RustcLivenessDefUse {
+    fn defining(def_use: Self) -> bool {
         matches!(def_use, RustcLivenessDefUse::Def)
     }
 
-    fn using(def_use: Self::DefUse) -> bool {
+    fn using(def_use: Self) -> bool {
         matches!(def_use, RustcLivenessDefUse::Use)
     }
 
-    fn categorize(context: PlaceContext) -> Option<Self::DefUse> {
+    fn categorize(context: PlaceContext) -> Option<Self> {
         RustcLivenessDefUse::for_place(context)
     }
 }

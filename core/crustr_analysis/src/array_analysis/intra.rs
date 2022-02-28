@@ -2,24 +2,24 @@ use std::{marker::PhantomData, ops::Range};
 
 use crate::{
     array_analysis::{
-        assert_fat, assert_thin, Constraint, ConstraintIdx, CrateLambdaCtxt, CrateSummary,
-        FuncLambdaCtxt, Lambda, LambdaMap, LambdaSourceData,
+        assert_fat, assert_thin, BoundaryConstraint, Constraint, ConstraintIdx, CrateLambdaCtxt,
+        CrateSummary, FuncLambdaCtxt, Lambda, LambdaMap, LambdaSourceData,
     },
     call_graph::{CallGraph, CallSite, Func},
-    def_use::DefUseCategorisable,
+    def_use::IsDefUse,
     ssa::{
         body_ext::{BodyExt, PhiNodeInserted},
         rename::{HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename, SSARenameState},
     },
     ty_ext::TyExt,
 };
-use graph::implementation::forward_star::{AdjacentEdges, Direction};
+use graph::implementation::forward_star::Direction;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
-        visit::{PlaceContext, Visitor},
+        visit::{MutatingUseContext, PlaceContext, Visitor},
         BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
         ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind,
     },
@@ -36,10 +36,11 @@ pub struct FuncSummary {
 }
 
 impl<'tcx> CrateSummary<'tcx> {
-    pub fn infer<DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>(
+    pub fn infer<DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>(
         &mut self,
         mut extra_handler: Handler,
     ) {
+        let mut boundary_constraints = IndexVec::from_elem(vec![], &self.call_graph.graph.edges);
         for (func, &did) in self.call_graph.functions.iter_enumerated() {
             let body = self.tcx.optimized_mir(did);
             let insertion_points = body.compute_phi_node::<DefUse>(self.tcx);
@@ -52,12 +53,9 @@ impl<'tcx> CrateSummary<'tcx> {
                     &self.call_graph,
                     &mut self.lambda_ctxt,
                     &mut self.constraints,
+                    &mut boundary_constraints,
                     &insertion_points,
                 ),
-                call_sites_iter: self
-                    .call_graph
-                    .call_graph
-                    .adjacent_edges(func, Direction::Outgoing),
                 ssa_state: SSARenameState::new(&body.local_decls),
                 extra_handlers: &mut extra_handler,
                 _marker: PhantomData,
@@ -141,16 +139,14 @@ impl CrateLambdaCtxt {
     }
 }
 
-pub struct Infer<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
-{
+pub struct Infer<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> {
     pub ctxt: InferCtxt<'infercx, 'tcx>,
-    pub call_sites_iter: AdjacentEdges<'infercx, Func, CallSite>,
     pub ssa_state: SSARenameState<Local>,
     pub extra_handlers: Handler,
     pub _marker: PhantomData<*const DefUse>,
 }
 
-impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
     HasSSARenameState<Local> for Infer<'infercx, 'tcx, DefUse, Handler>
 {
     #[inline]
@@ -159,8 +155,8 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 }
 
-impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
-    SSANameHandler for Infer<'infercx, 'tcx, DefUse, Handler>
+impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> SSANameHandler
+    for Infer<'infercx, 'tcx, DefUse, Handler>
 {
     type Output = Option<Lambda>;
 
@@ -199,8 +195,8 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 }
 
-impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
-    HasSSANameHandler for Infer<'infercx, 'tcx, DefUse, Handler>
+impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> HasSSANameHandler
+    for Infer<'infercx, 'tcx, DefUse, Handler>
 {
     type Handler = Self;
     #[inline]
@@ -209,8 +205,8 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 }
 
-impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
-    SSARename<'tcx> for Infer<'infercx, 'tcx, DefUse, Handler>
+impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> SSARename<'tcx>
+    for Infer<'infercx, 'tcx, DefUse, Handler>
 {
     type DefUse = DefUse;
 
@@ -225,7 +221,7 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 }
 
-impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
+impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
     Infer<'infercx, 'tcx, DefUse, Handler>
 {
     fn process_projections(
@@ -302,12 +298,12 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
     }
 }
 
-impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output = ()>>
-    Visitor<'tcx> for Infer<'infercx, 'tcx, DefUse, Handler>
+impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Visitor<'tcx>
+    for Infer<'infercx, 'tcx, DefUse, Handler>
 {
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
         if let Some(def_use) = DefUse::categorize(context) {
-            if DefUse::defining(def_use) {
+            if IsDefUse::defining(def_use) {
                 let i = self.define(local);
                 self.ssa_name_handler().handle_def(local, i, location);
             } else if DefUse::using(def_use) {
@@ -435,14 +431,62 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
                             self.ctxt.tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::Item(_))
                         ) {
-                            let (call_site, edge_data) = self.call_sites_iter.next().unwrap();
+                            // Does it help the compiler with bound check elimination?
+                            assert_eq!(
+                                self.ctxt.call_graph.call_sites.len(),
+                                self.ctxt.call_graph.graph.edges.len()
+                            );
+                            let (call_site, edge_data) = self
+                                .ctxt
+                                .call_graph
+                                .graph
+                                .adjacent_edges(self.ctxt.lambda_ctxt.func, Direction::Outgoing)
+                                .find(|&(call_site, _)| {
+                                    self.ctxt.call_graph.call_sites[call_site] == location
+                                })
+                                .unwrap();
+                            // let (call_site, edge_data) = self.call_sites_iter.next().unwrap();
                             debug_assert_eq!(edge_data.source, self.ctxt.lambda_ctxt.func);
                             debug_assert_eq!(
                                 edge_data.target,
                                 self.ctxt.call_graph.lookup_function(&callee_did).unwrap()
                             );
-
-                            // todo!()
+                            for (idx, arg) in args.iter().enumerate() {
+                                if arg.ty(self.ctxt.body, self.ctxt.tcx).is_ptr_of_concerned() {
+                                    let place = arg.place().unwrap();
+                                    let lambda = self.process_rhs(&place, location);
+                                    self.ctxt.boundary_constraints[call_site].push(
+                                        BoundaryConstraint::Argument {
+                                            caller: lambda,
+                                            callee: Local::from_usize(idx + 1),
+                                        },
+                                    );
+                                } else {
+                                    self.visit_operand(arg, location)
+                                }
+                            }
+                            if let Some((destination, _)) = destination {
+                                if destination
+                                    .ty(self.ctxt.body, self.ctxt.tcx)
+                                    .ty
+                                    .is_ptr_of_concerned()
+                                {
+                                    let lambda = self.process_lhs(&destination, location);
+                                    self.ctxt.boundary_constraints[call_site].push(
+                                        BoundaryConstraint::Return {
+                                            caller: lambda,
+                                            callee: Place::return_place().local,
+                                        },
+                                    )
+                                } else {
+                                    self.visit_place(
+                                        &destination,
+                                        PlaceContext::MutatingUse(MutatingUseContext::Call),
+                                        location,
+                                    )
+                                }
+                            }
+                            return;
                         }
                     }
                     // library functions
@@ -532,6 +576,7 @@ pub struct InferCtxt<'infercx, 'tcx> {
     lambda_ctxt: CrateLambdaCtxtIntraView<'infercx>,
     phi_joins: IndexVec<BasicBlock, SmallVec<[(Local, Vec<Lambda>); 3]>>,
     constraints: &'infercx mut IndexVec<ConstraintIdx, Constraint>,
+    boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint>>,
 }
 
 impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
@@ -542,6 +587,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         call_graph: &'infercx CallGraph,
         lambda_ctxt: &'infercx mut CrateLambdaCtxt,
         constraints: &'infercx mut IndexVec<ConstraintIdx, Constraint>,
+        boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint>>,
         insertion_points: &PhiNodeInserted,
     ) -> Self {
         let phi_joins = insertion_points
@@ -564,6 +610,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
             lambda_ctxt: lambda_ctxt.intra_view(body, func),
             phi_joins,
             constraints, // : IndexVec::new(),
+            boundary_constraints,
         }
         .debug_initialise()
     }
