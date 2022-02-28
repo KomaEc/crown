@@ -1,5 +1,6 @@
 use std::fmt::{Debug, Display};
 
+use rustc_data_structures::graph::WithNumNodes;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
@@ -8,9 +9,8 @@ use rustc_middle::{
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
-use rustc_data_structures::graph::WithNumNodes;
 
-use crate::call_graph::{Func, CallGraph};
+use crate::call_graph::{CallGraph, Func};
 
 pub mod intra;
 pub mod solve;
@@ -21,7 +21,6 @@ mod test;
 /// and local nested pointers in the crate
 pub struct CrateSummary<'tcx> {
     pub tcx: TyCtxt<'tcx>,
-    // pub bodies: &'analysis [DefId],
     pub call_graph: CallGraph,
     lambda_ctxt: CrateLambdaCtxt,
     constraints: IndexVec<ConstraintIdx, Constraint>,
@@ -29,12 +28,7 @@ pub struct CrateSummary<'tcx> {
 }
 
 impl<'tcx> CrateSummary<'tcx> {
-    pub fn new(
-        tcx: TyCtxt<'tcx>,
-        adt_defs: &[DefId],
-        call_graph: CallGraph,
-    ) -> Self {
-        // let field_defs = gather_field_defs(tcx, adt_defs);
+    pub fn new(tcx: TyCtxt<'tcx>, adt_defs: &[DefId], call_graph: CallGraph) -> Self {
         let lambda_ctxt = CrateLambdaCtxt::initiate(tcx, adt_defs, &call_graph);
         CrateSummary {
             tcx,
@@ -93,13 +87,7 @@ impl From<(IndexVec<Local, Vec<Lambda>>, IndexVec<Local, Vec<Lambda>>)> for Func
 }
 
 impl CrateLambdaCtxt {
-    pub fn initiate(
-        tcx: TyCtxt,
-        // field_defs: &IndexVec<FieldDefIdx, (usize, VariantIdx, usize)>,
-        adt_defs: &[DefId],
-        // bodies: &[DefId],
-        call_graph: &CallGraph,
-    ) -> Self {
+    pub fn initiate(tcx: TyCtxt, adt_defs: &[DefId], call_graph: &CallGraph) -> Self {
         let mut lambda_map = LambdaMap::new();
 
         let field_defs = adt_defs

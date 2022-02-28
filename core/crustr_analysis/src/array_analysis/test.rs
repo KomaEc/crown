@@ -6,9 +6,10 @@ use rustc_middle::ty::TyCtxt;
 
 use crate::{
     array_analysis::{solve::solve, CrateSummary},
+    call_graph::CallGraph,
     def_use::BorrowckDefUse,
     ssa::rename::handler::LogSSAName,
-    test::init_logger, call_graph::CallGraph,
+    test::init_logger,
 };
 
 #[test]

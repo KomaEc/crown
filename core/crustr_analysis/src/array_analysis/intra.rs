@@ -5,11 +5,12 @@ use crate::{
         assert_fat, assert_thin, Constraint, ConstraintIdx, CrateLambdaCtxt, CrateSummary,
         FuncLambdaCtxt, Lambda, LambdaMap, LambdaSourceData,
     },
+    call_graph::Func,
     def_use::DefUseCategorisable,
     ssa::{
         body_ext::{BodyExt, PhiNodeInserted},
         rename::{HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename, SSARenameState},
-    }, call_graph::Func,
+    },
 };
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -471,7 +472,7 @@ impl<'infercx, 'tcx, DefUse: DefUseCategorisable, Handler: SSANameHandler<Output
 
 pub struct CrateLambdaCtxtIntraView<'intracx> {
     pub func: Func,
-    pub lambda_map: &'intracx mut LambdaMap<Option<bool>>, //IndexVec<Lambda, LambdaData>,
+    pub lambda_map: &'intracx mut LambdaMap<Option<bool>>,
     pub field_defs: &'intracx FxHashMap<DefId, IndexVec<VariantIdx, Vec<Vec<Lambda>>>>,
     pub local: IndexVec<Local, Vec<Lambda>>,
     pub local_nested: IndexVec<Local, Vec<Lambda>>,

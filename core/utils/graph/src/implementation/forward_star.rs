@@ -1,7 +1,8 @@
 use rustc_index::vec::{Idx, IndexVec};
 
 use rustc_data_structures::graph::{
-    DirectedGraph, GraphSuccessors, WithNumEdges, WithNumNodes, WithSuccessors, WithPredecessors, GraphPredecessors,
+    DirectedGraph, GraphPredecessors, GraphSuccessors, WithNumEdges, WithNumNodes,
+    WithPredecessors, WithSuccessors,
 };
 
 pub struct Graph<Node: Idx, Edge: Idx> {
@@ -35,11 +36,9 @@ impl Direction {
         }
     }
 
+    #[inline(always)]
     pub fn index(self) -> usize {
-        match self {
-            Direction::Outgoing => 0,
-            Direction::Incoming => 1,
-        }
+        self as usize
     }
 }
 

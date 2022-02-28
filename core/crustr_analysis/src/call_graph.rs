@@ -1,5 +1,8 @@
-use graph::implementation::forward_star::{self, SuccessorNodes, PredecessorNodes};
-use rustc_data_structures::graph::{DirectedGraph, WithNumEdges, WithNumNodes, WithSuccessors, WithPredecessors, GraphSuccessors, GraphPredecessors};
+use graph::implementation::forward_star::{self, PredecessorNodes, SuccessorNodes};
+use rustc_data_structures::graph::{
+    DirectedGraph, GraphPredecessors, GraphSuccessors, WithNumEdges, WithNumNodes,
+    WithPredecessors, WithSuccessors,
+};
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
@@ -30,7 +33,7 @@ impl WithNumNodes for CallGraph {
 
 impl WithNumEdges for CallGraph {
     fn num_edges(&self) -> usize {
-        self.num_edges()
+        self.call_graph.num_edges()
     }
 }
 
@@ -55,7 +58,6 @@ impl<'graph> GraphPredecessors<'graph> for CallGraph {
     type Item = Func;
     type Iter = PredecessorNodes<'graph, Func, CallSite>;
 }
-
 
 impl CallGraph {
     pub fn new(tcx: TyCtxt, bodies: impl Iterator<Item = DefId>) -> Self {

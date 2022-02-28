@@ -5,9 +5,11 @@ use graph::implementation::forward_star::Graph;
 use rustc_data_structures::graph::scc::Sccs;
 
 macro_rules! array_index {
-    ($row: expr, $col: expr; $len: expr) => {
-        $row * $len + $col
-    };
+    ($row: expr, $col: expr; $len: expr) => {{
+        let row: usize = $row.into();
+        let col: usize = $col.into();
+        row * $len + col
+    }};
 }
 
 pub fn solve(
@@ -26,25 +28,25 @@ pub fn solve(
         relation[array_index!(zero_idx, idx; num_nodes)] = true;
     }
     constraints.iter().for_each(|c| {
-        relation[array_index!(c.0.index(), c.1.index(); num_nodes)] = true;
+        relation[array_index!(c.0, c.1; num_nodes)] = true;
     });
 
     for equality in equalities {
         assert!(equality.len() >= 2);
         let (&head, tail) = equality.split_first().unwrap();
         for &other in tail {
-            relation[array_index!(head.index(), other.index(); num_nodes)] = true;
-            relation[array_index!(other.index(), head.index(); num_nodes)] = true;
+            relation[array_index!(head, other; num_nodes)] = true;
+            relation[array_index!(other, head; num_nodes)] = true;
         }
     }
 
     for (lambda, &assumption) in assumptions.iter_enumerated() {
         match assumption {
             Some(true) => {
-                relation[array_index!(one_idx, lambda.index(); num_nodes)] = true;
+                relation[array_index!(one_idx, lambda; num_nodes)] = true;
             }
             Some(false) => {
-                relation[array_index!(lambda.index(), zero_idx; num_nodes)] = true;
+                relation[array_index!(lambda, zero_idx; num_nodes)] = true;
             }
             None => {}
         }
