@@ -5,7 +5,7 @@ use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
 use crate::{
-    array_analysis::{solve::solve_simple, CrateSummary},
+    array_analysis::{solve::solve, CrateSummary, FuncSummary},
     call_graph::CallGraph,
     def_use::BorrowckDefUse,
     ssa::rename::handler::LogSSAName,
@@ -134,9 +134,39 @@ fn solve_for_sinlge_func<'tcx>(
 
     assert_eq!(crate_summary.call_graph.num_nodes(), 1);
 
-    let solutions = solve_simple(
+    let mut solutions = crate_summary.lambda_ctxt.lambda_map.assumptions.clone();
+
+    /*
+    let solutions_simple = solve_simple(
         crate_summary.lambda_ctxt.lambda_map.assumptions,
         &crate_summary.constraints,
+    )
+    .unwrap();
+    */
+
+    let func_summary = crate_summary.func_summaries[0u32.into()].clone();
+    let FuncSummary {
+        lambda_ctxt: locals,
+        constraints: constraints_range,
+    } = func_summary;
+    solve(
+        &mut solutions,
+        crate_summary.globals,
+        locals,
+        &crate_summary.constraints[constraints_range],
+        crate_summary
+            .call_graph
+            .graph
+            .adjacent_edges(
+                0u32.into(),
+                graph::implementation::forward_star::Direction::Outgoing,
+            )
+            .map(|(call_site, _)| {
+                crate_summary.boundary_constraints[call_site]
+                    .iter()
+                    .map(|&c| c)
+            })
+            .flatten(),
     )
     .unwrap();
 
@@ -144,6 +174,8 @@ fn solve_for_sinlge_func<'tcx>(
     for constraint in crate_summary.constraints {
         log::debug!("{}", constraint)
     }
+
+    // assert_eq!(Iterator::cmp(solutions.iter().map(|&s| s), solutions_simple.into_iter()), std::cmp::Ordering::Equal);
 
     for (lambda, solution) in solutions.into_iter_enumerated() {
         log::debug!(

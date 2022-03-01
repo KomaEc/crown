@@ -37,6 +37,7 @@ pub struct CrateSummary<'tcx> {
 
 /// Pairs of start/end pointers into lambda context and constraints
 /// for a given function
+#[derive(Clone)]
 pub struct FuncSummary {
     pub lambda_ctxt: Range<usize>,
     pub constraints: Range<usize>,

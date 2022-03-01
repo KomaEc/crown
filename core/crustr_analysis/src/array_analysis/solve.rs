@@ -6,9 +6,7 @@ use std::ops::Range;
 
 macro_rules! array_index {
     ($row: expr, $col: expr; $len: expr) => {{
-        let row: usize = $row.into();
-        let col: usize = $col.into();
-        row * $len + col
+        $row * $len + $col
     }};
 }
 
@@ -44,6 +42,26 @@ pub fn solve(
             .unwrap_or(c.1.index());
         relation[array_index!(lhs, rhs; num_nodes)] = true;
     });
+
+    // FIXME: do we require that on boundary constraint, assignment means equality instead?
+    for Constraint(lhs, rhs) in boundary_constraints {
+        if locals.contains(&lhs.as_usize()) {
+            // return position
+            if matches!(assumptions[rhs], Some(false)) {
+                let idx = lhs.as_usize() - locals.start + globals_barrier;
+                relation[array_index!(idx, zero_idx; num_nodes)] = true;
+                relation[array_index!(zero_idx, idx; num_nodes)] = true;
+            }
+        } else {
+            // argument position
+            assert!(locals.contains(&rhs.as_usize()));
+            if matches!(assumptions[lhs], Some(true)) {
+                let idx = rhs.as_usize() - locals.start + globals_barrier;
+                relation[array_index!(idx, one_idx; num_nodes)] = true;
+                relation[array_index!(one_idx, idx; num_nodes)] = true;
+            }
+        }
+    }
 
     for (idx, assumption) in assumptions.raw[globals.clone()]
         .iter()
@@ -100,6 +118,7 @@ pub fn solve(
     Ok(())
 }
 
+/*
 pub fn solve_simple(
     mut assumptions: IndexVec<Lambda, Option<bool>>,
     constraints: &[Constraint],
@@ -160,6 +179,7 @@ pub fn solve_simple(
 
     Ok(assumptions)
 }
+*/
 
 /// calculate the transitive closure of the constraint graph using Floyd-Warshall algorithm
 pub fn transitive_closure(mut facts: Box<[bool]>, len: usize) -> Box<[bool]> {
@@ -202,23 +222,6 @@ mod tests {
                           false, false, false, true])
     }
 
-    macro_rules! le {
-        ($lhs: expr, $rhs: expr) => {
-            Constraint(Lambda::from($lhs), Lambda::from($rhs))
-        };
-    }
-
-    #[test]
-    fn soundness_regression1() {
-        crate::test::init_logger();
-        let assumptions = vec![Some(true), None, None]
-            .into_iter()
-            .collect::<IndexVec<_, _>>();
-        let constraints = vec![le!(0u32, 2u32)];
-        let solutions = solve_simple(assumptions, &constraints).unwrap();
-        assert_eq!(solutions[Lambda::from(2u32)], Some(true))
-    }
-
     fn assert_soundness(
         assumptions: IndexVec<Lambda, Option<bool>>,
         solutions: IndexVec<Lambda, Option<bool>>,
@@ -253,7 +256,7 @@ mod tests {
     }
 
     #[test]
-    fn soundness_regression2() {
+    fn soundness_regression1() {
         crate::test::init_logger();
         let (globals, locals, assumptions, constraints) = (
             0..1,
@@ -281,6 +284,7 @@ mod tests {
 
         assert_soundness(assumptions, solutions, &constraints)
     }
+
 
     use proptest::collection::vec;
     use proptest::prelude::*;

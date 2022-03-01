@@ -68,11 +68,11 @@ impl<'tcx> CrateSummary<'tcx> {
                 ..
             } = infer.ctxt;
 
-            let body_ctxt = FuncLambdaCtxt {
+            let func_ctxt = FuncLambdaCtxt {
                 local: lambda_ctxt.local,
                 local_nested: lambda_ctxt.local_nested,
             };
-            self.lambda_ctxt.func_ctxt.push(body_ctxt);
+            self.lambda_ctxt.func_ctxt.push(func_ctxt);
 
             for equalities in phi_joins {
                 for (_, equality) in equalities {
@@ -88,7 +88,7 @@ impl<'tcx> CrateSummary<'tcx> {
             let lambda_ctxt_end = self.lambda_ctxt.lambda_map.len();
             let constraints_end = self.constraints.len();
 
-            debug_assert_eq!(
+            assert_eq!(
                 func,
                 self.func_summaries.push(FuncSummary {
                     lambda_ctxt: Range {
