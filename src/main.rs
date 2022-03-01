@@ -12,13 +12,11 @@ extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 
 use clap::Parser;
-use crustr_analysis::null_analysis::{NullAnalysis, NullAnalysisResults};
+use crustr_analysis::null_analysis::NullAnalysisResults;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
 use rustc_hir::{OwnerNode, ItemKind};
 use rustc_interface::Config;
-use rustc_middle::mir::START_BLOCK;
-use rustc_mir_dataflow::Engine;
 use rustc_session::config;
 use std::{path::PathBuf, borrow::BorrowMut};
 
