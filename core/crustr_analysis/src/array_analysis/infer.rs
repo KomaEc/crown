@@ -519,6 +519,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                                             callee: Local::from_usize(idx + 1),
                                         },
                                     );
+                                    log::debug!(
+                                        "generate boundary constraint ({:?}, {:?}) ≤ {:?}",
+                                        edge_data.target,
+                                        Local::from_usize(idx + 1),
+                                        lambda
+                                    )
                                 } else {
                                     self.visit_operand(arg, location)
                                 }
@@ -535,6 +541,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                                             caller: lambda,
                                             callee: Place::return_place().local,
                                         },
+                                    );
+                                    log::debug!(
+                                        "generate boundary constraint {:?} ≤ ({:?}, {:?})",
+                                        lambda,
+                                        edge_data.target,
+                                        Place::return_place().local,
                                     )
                                 } else {
                                     self.visit_place(

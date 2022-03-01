@@ -10,13 +10,20 @@ macro_rules! array_index {
     }};
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum SolveSuccess {
+    Unchanged,
+    LocallyChanged,
+    GloballyChanged,
+}
+
 pub fn solve(
     assumptions: &mut IndexVec<Lambda, Option<bool>>,
     globals: Range<usize>,
     locals: Range<usize>,
     constraints: &[Constraint],
     boundary_constraints: impl Iterator<Item = Constraint>,
-) -> Result<(), ()> {
+) -> Result<SolveSuccess, ()> {
     assert_eq!(globals.start, 0);
     assert!(globals.end <= locals.start);
     assert!(locals.end <= assumptions.len());
@@ -99,87 +106,35 @@ pub fn solve(
         // panic!("Constraints are not satisfied!")
     }
 
-    let (global_assumptions, rest_assumptions) = assumptions.raw.split_at_mut(globals.end);
-    assert_eq!(global_assumptions.len(), globals_barrier);
-    let local_assumptions =
-        &mut rest_assumptions[locals.start - globals_barrier..locals.end - globals_barrier];
-
-    for (idx, assumption) in global_assumptions
-        .iter_mut()
-        .chain(local_assumptions.iter_mut())
-        .enumerate()
-    {
-        if sccs.scc(idx) == sccs.scc(one_idx) {
-            *assumption = Some(true);
-        } else if sccs.scc(idx) == sccs.scc(zero_idx) {
-            *assumption = Some(false)
-        }
-    }
-    Ok(())
-}
-
-/*
-pub fn solve_simple(
-    mut assumptions: IndexVec<Lambda, Option<bool>>,
-    constraints: &[Constraint],
-) -> Result<IndexVec<Lambda, Option<bool>>, ()> {
-    // nodes: [λ_0, λ_1, ..., 0, 1]
-    let num_nodes = assumptions.len() + 2;
-    let zero_idx = num_nodes - 2;
-    let one_idx = num_nodes - 1;
-    let mut relation = vec![false; num_nodes * num_nodes].into_boxed_slice();
-    for idx in 0..num_nodes {
-        relation[array_index!(idx, idx; num_nodes)] = true;
-        relation[array_index!(idx, one_idx; num_nodes)] = true;
-        relation[array_index!(zero_idx, idx; num_nodes)] = true;
-    }
-    constraints.iter().for_each(|c| {
-        relation[array_index!(c.0, c.1; num_nodes)] = true;
-    });
-
-    for (lambda, &assumption) in assumptions.iter_enumerated() {
-        match assumption {
-            Some(true) => {
-                relation[array_index!(one_idx, lambda; num_nodes)] = true;
+    let mut solve_success = SolveSuccess::Unchanged;
+    let mut idx = 0;
+    for assumption in &mut assumptions.raw[globals] {
+        if matches!(assumption, None) {
+            if sccs.scc(idx) == sccs.scc(one_idx) {
+                *assumption = Some(true);
+                solve_success = std::cmp::max(solve_success, SolveSuccess::GloballyChanged)
+            } else if sccs.scc(idx) == sccs.scc(zero_idx) {
+                *assumption = Some(false);
+                solve_success = std::cmp::max(solve_success, SolveSuccess::GloballyChanged)
             }
-            Some(false) => {
-                relation[array_index!(lambda, zero_idx; num_nodes)] = true;
+        }
+        idx += 1;
+    }
+    for assumption in &mut assumptions.raw[locals] {
+        if matches!(assumption, None) {
+            if sccs.scc(idx) == sccs.scc(one_idx) {
+                *assumption = Some(true);
+                solve_success = std::cmp::max(solve_success, SolveSuccess::LocallyChanged)
+            } else if sccs.scc(idx) == sccs.scc(zero_idx) {
+                *assumption = Some(false);
+                solve_success = std::cmp::max(solve_success, SolveSuccess::LocallyChanged)
             }
-            None => {}
         }
+        idx += 1;
     }
 
-    relation = transitive_closure(relation, num_nodes);
-
-    let constraint_graph = Graph::<usize, usize>::new(
-        num_nodes,
-        relation.iter().enumerate().filter_map(|(idx, &related)| {
-            related.then(|| {
-                let row = idx / num_nodes;
-                let col = idx % num_nodes;
-                (row, col)
-            })
-        }),
-    );
-    let sccs = Sccs::<usize, usize>::new(&constraint_graph);
-
-    // if 0 and 1 are unified
-    if sccs.scc(one_idx) == sccs.scc(zero_idx) {
-        return Err(());
-        // panic!("Constraints are not satisfied!")
-    }
-
-    for (lambda, assumption) in assumptions.iter_enumerated_mut() {
-        if sccs.scc(lambda.index()) == sccs.scc(one_idx) {
-            *assumption = Some(true);
-        } else if sccs.scc(lambda.index()) == sccs.scc(zero_idx) {
-            *assumption = Some(false)
-        }
-    }
-
-    Ok(assumptions)
+    Ok(solve_success)
 }
-*/
 
 /// calculate the transitive closure of the constraint graph using Floyd-Warshall algorithm
 pub fn transitive_closure(mut facts: Box<[bool]>, len: usize) -> Box<[bool]> {
@@ -220,6 +175,13 @@ mod tests {
                           true , true , true , true ,
                           true , true , true , true ,
                           false, false, false, true])
+    }
+
+    // static assertion?
+    #[test]
+    fn test_solve_success() {
+        assert!(SolveSuccess::Unchanged < SolveSuccess::LocallyChanged);
+        assert!(SolveSuccess::LocallyChanged < SolveSuccess::GloballyChanged);
     }
 
     fn assert_soundness(
@@ -284,7 +246,6 @@ mod tests {
 
         assert_soundness(assumptions, solutions, &constraints)
     }
-
 
     use proptest::collection::vec;
     use proptest::prelude::*;

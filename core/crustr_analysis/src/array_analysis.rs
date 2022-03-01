@@ -3,7 +3,8 @@ use std::{
     ops::Range,
 };
 
-use rustc_data_structures::graph::WithNumNodes;
+use graph::implementation::forward_star;
+use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
@@ -14,11 +15,12 @@ use rustc_middle::{
 use rustc_target::abi::VariantIdx;
 
 use crate::{
+    array_analysis::solve::{solve, SolveSuccess},
     call_graph::{CallGraph, CallSite, Func},
     ty_ext::TyExt,
 };
 
-pub mod intra;
+pub mod infer;
 pub mod solve;
 #[cfg(test)]
 mod test;
@@ -59,6 +61,55 @@ impl<'tcx> CrateSummary<'tcx> {
             constraints: Vec::new(),
             boundary_constraints: IndexVec::new(),
         }
+    }
+
+    pub fn iterate_to_fixpoint(&mut self) -> Result<(), ()> {
+        let call_graph_sccs = Sccs::<Func, usize>::new(&self.call_graph);
+        // it seems that the scc algorithm will rank sccs in post order, namely if there
+        // is a dependency S1 -> S2, then S2 < S1 (well it is natural to be this case,
+        // from the Tarjan's algorithm's perspective). Here we follow this assumption.
+        let mut nodes = vec![Vec::new(); call_graph_sccs.num_sccs()];
+        for func in self.call_graph.graph.nodes() {
+            nodes[call_graph_sccs.scc(func)].push(func)
+        }
+
+        'globally_changed: loop {
+            for node in &nodes {
+                // TODO: use worklist algorithm for inner loop
+                'locally_changed: loop {
+                    let mut locally_changed = false;
+                    for &func in node {
+                        let FuncSummary {
+                            lambda_ctxt: locals,
+                            constraints: constraints_range,
+                        } = self.func_summaries[func].clone();
+                        match solve(
+                            &mut self.lambda_ctxt.lambda_map.assumptions,
+                            self.globals.clone(),
+                            locals,
+                            &self.constraints[constraints_range],
+                            self.call_graph
+                                .graph
+                                .adjacent_edges(func, forward_star::Direction::Outgoing)
+                                .map(|(call_site, _)| {
+                                    self.boundary_constraints[call_site].iter().map(|&c| c)
+                                })
+                                .flatten(),
+                        )? {
+                            SolveSuccess::Unchanged => {},
+                            SolveSuccess::LocallyChanged => locally_changed = true,
+                            SolveSuccess::GloballyChanged => break 'globally_changed,
+                        }
+                    }
+                    if locally_changed {
+                        break 'locally_changed
+                    } else {
+                        break
+                    }
+                }
+            }
+        }
+        Ok(())
     }
 
     pub fn debug(&self) {

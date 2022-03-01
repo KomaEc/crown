@@ -136,14 +136,6 @@ fn solve_for_sinlge_func<'tcx>(
 
     let mut solutions = crate_summary.lambda_ctxt.lambda_map.assumptions.clone();
 
-    /*
-    let solutions_simple = solve_simple(
-        crate_summary.lambda_ctxt.lambda_map.assumptions,
-        &crate_summary.constraints,
-    )
-    .unwrap();
-    */
-
     let func_summary = crate_summary.func_summaries[0u32.into()].clone();
     let FuncSummary {
         lambda_ctxt: locals,
@@ -174,8 +166,6 @@ fn solve_for_sinlge_func<'tcx>(
     for constraint in crate_summary.constraints {
         log::debug!("{}", constraint)
     }
-
-    // assert_eq!(Iterator::cmp(solutions.iter().map(|&s| s), solutions_simple.into_iter()), std::cmp::Ordering::Equal);
 
     for (lambda, solution) in solutions.into_iter_enumerated() {
         log::debug!(
