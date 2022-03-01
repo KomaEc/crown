@@ -117,6 +117,12 @@ pub fn solve(
                 *assumption = Some(false);
                 solve_success = std::cmp::max(solve_success, SolveSuccess::GloballyChanged)
             }
+        } else {
+            #[cfg(debug_assertions)]
+            assumption
+                .unwrap()
+                .then(|| assert_eq!(sccs.scc(idx), sccs.scc(one_idx)))
+                .unwrap_or_else(|| assert_eq!(sccs.scc(idx), sccs.scc(zero_idx)))
         }
         idx += 1;
     }
@@ -129,6 +135,12 @@ pub fn solve(
                 *assumption = Some(false);
                 solve_success = std::cmp::max(solve_success, SolveSuccess::LocallyChanged)
             }
+        } else {
+            #[cfg(debug_assertions)]
+            assumption
+                .unwrap()
+                .then(|| assert_eq!(sccs.scc(idx), sccs.scc(one_idx)))
+                .unwrap_or_else(|| assert_eq!(sccs.scc(idx), sccs.scc(zero_idx)))
         }
         idx += 1;
     }

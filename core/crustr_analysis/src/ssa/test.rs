@@ -13,18 +13,13 @@ use super::pretty::write_ssa_mir_fn;
 fn test_phi_node_insertion_point() {
     compiler_interface::run_compiler_with_single_func(TEST_PROGRAMS[0].into(), |tcx, fn_did| {
         let body = tcx.optimized_mir(fn_did);
-
-        let mut w = String::new();
-        if let Ok(_) =
-            rustc_middle::mir::pretty::write_mir_fn(tcx, body, &mut |_, _| Ok(()), unsafe {
-                &mut w.as_mut_vec()
-            })
-        {
-            // assert_eq!(w, "");
-            println!("{}", w);
-        } else {
-            panic!("Error in writing mir");
-        }
+        rustc_middle::mir::pretty::write_mir_fn(
+            tcx,
+            body,
+            &mut |_, _| Ok(()),
+            &mut std::io::stdout(),
+        )
+        .unwrap();
 
         let dominance_frontier = body.dominance_frontier();
         assert_eq!(dominance_frontier[BasicBlock::from_u32(0)].as_slice(), &[]);
@@ -83,18 +78,13 @@ fn test_all() {
     for (&program, &spec) in std::iter::zip(TEST_PROGRAMS.iter(), TEST_PROGRAMS_SPECS.iter()) {
         compiler_interface::run_compiler_with_single_func(program.into(), |tcx, fn_did| {
             let body = tcx.optimized_mir(fn_did);
-
-            let mut w = String::new();
-            if let Ok(_) =
-                rustc_middle::mir::pretty::write_mir_fn(tcx, body, &mut |_, _| Ok(()), unsafe {
-                    &mut w.as_mut_vec()
-                })
-            {
-                // assert_eq!(w, "");
-                println!("{}", w);
-            } else {
-                panic!("Error in writing mir");
-            }
+            rustc_middle::mir::pretty::write_mir_fn(
+                tcx,
+                body,
+                &mut |_, _| Ok(()),
+                &mut std::io::stdout(),
+            )
+            .unwrap();
 
             spec(tcx, body);
         })
@@ -311,12 +301,13 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
         ),
     );
     renamer.rename();
-    let mut w = String::new();
-    write_ssa_mir_fn(tcx, body, &renamer.ssa_name_handler.2, unsafe {
-        &mut w.as_mut_vec()
-    })
+    write_ssa_mir_fn(
+        tcx,
+        body,
+        &renamer.ssa_name_handler.2,
+        &mut std::io::stdout(),
+    )
     .unwrap();
-    println!("{}", w)
 }
 
 fn spec1<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
@@ -334,10 +325,11 @@ fn spec1<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
         ),
     );
     renamer.rename();
-    let mut w = String::new();
-    write_ssa_mir_fn(tcx, body, &renamer.ssa_name_handler.1, unsafe {
-        &mut w.as_mut_vec()
-    })
+    write_ssa_mir_fn(
+        tcx,
+        body,
+        &renamer.ssa_name_handler.1,
+        &mut std::io::stdout(),
+    )
     .unwrap();
-    println!("{}", w)
 }

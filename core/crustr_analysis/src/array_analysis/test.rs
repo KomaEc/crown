@@ -26,7 +26,7 @@ fn test_file_with_extern_call() {
     let file = env::current_dir()
         .expect("current working directory value is invalid")
         .join("src/array_analysis/test/resource/simple_struct/lib.rs");
-    compiler_interface::run_compiler_with_struct_defs_and_funcs(file.into(), solve_for_sinlge_func)
+    compiler_interface::run_compiler_with_struct_defs_and_funcs(file.into(), run_solve)
 }
 
 const TEST_PROGRAMS: &'static [(
@@ -47,7 +47,7 @@ const TEST_PROGRAMS: &'static [(
         let w = z;
         (*y).g = w;
     }",
-        print_mir_and_log_debug,
+        run_infer,
     ),
     (
         "
@@ -61,7 +61,7 @@ const TEST_PROGRAMS: &'static [(
         f(&mut x, *y);
     }
     ",
-        print_mir_and_log_debug,
+        run_infer,
     ),
     /*
     (
@@ -102,22 +102,19 @@ const TEST_PROGRAMS: &'static [(
     */
 ];
 
-fn solve_for_sinlge_func<'tcx>(
-    tcx: TyCtxt<'tcx>,
-    struct_defs: Vec<LocalDefId>,
-    fn_dids: Vec<LocalDefId>,
-) {
+fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec<LocalDefId>) {
     let bodies = fn_dids
         .iter()
         .map(|&fn_did| {
             let body = tcx.optimized_mir(fn_did);
 
-            let mut w = String::new();
-            rustc_middle::mir::pretty::write_mir_fn(tcx, body, &mut |_, _| Ok(()), unsafe {
-                &mut w.as_mut_vec()
-            })
+            rustc_middle::mir::pretty::write_mir_fn(
+                tcx,
+                body,
+                &mut |_, _| Ok(()),
+                &mut std::io::stdout(),
+            )
             .unwrap();
-            println!("{}", w);
             fn_did.to_def_id()
         })
         .collect::<Vec<_>>();
@@ -179,22 +176,19 @@ fn solve_for_sinlge_func<'tcx>(
     }
 }
 
-fn print_mir_and_log_debug<'tcx>(
-    tcx: TyCtxt<'tcx>,
-    struct_defs: Vec<LocalDefId>,
-    fn_dids: Vec<LocalDefId>,
-) {
+fn run_infer<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec<LocalDefId>) {
     let bodies = fn_dids
         .iter()
         .map(|&fn_did| {
             let body = tcx.optimized_mir(fn_did);
 
-            let mut w = String::new();
-            rustc_middle::mir::pretty::write_mir_fn(tcx, body, &mut |_, _| Ok(()), unsafe {
-                &mut w.as_mut_vec()
-            })
+            rustc_middle::mir::pretty::write_mir_fn(
+                tcx,
+                body,
+                &mut |_, _| Ok(()),
+                &mut std::io::stdout(),
+            )
             .unwrap();
-            println!("{}", w);
             fn_did.to_def_id()
         })
         .collect::<Vec<_>>();

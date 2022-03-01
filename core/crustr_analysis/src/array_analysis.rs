@@ -96,19 +96,19 @@ impl<'tcx> CrateSummary<'tcx> {
                                 })
                                 .flatten(),
                         )? {
-                            SolveSuccess::Unchanged => {},
+                            SolveSuccess::Unchanged => {}
                             SolveSuccess::LocallyChanged => locally_changed = true,
                             SolveSuccess::GloballyChanged => continue 'globally_changed,
                         }
                     }
                     if locally_changed {
-                        continue 'locally_changed
+                        continue 'locally_changed;
                     } else {
-                        break
+                        break;
                     }
                 }
             }
-            break
+            break;
         }
         Ok(())
     }
