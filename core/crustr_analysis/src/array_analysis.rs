@@ -1,4 +1,7 @@
-use std::fmt::{Debug, Display};
+use std::{
+    fmt::{Debug, Display},
+    ops::Range,
+};
 
 use rustc_data_structures::graph::WithNumNodes;
 use rustc_hash::FxHashMap;
@@ -26,21 +29,34 @@ pub struct CrateSummary<'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub call_graph: CallGraph,
     lambda_ctxt: CrateLambdaCtxt,
-    constraints: IndexVec<ConstraintIdx, Constraint>,
+    globals: Range<usize>,
+    func_summaries: IndexVec<Func, FuncSummary>,
+    constraints: Vec<Constraint>,
     boundary_constraints: IndexVec<CallSite, Vec<Constraint>>,
-    equalities: Vec<Vec<Lambda>>,
+}
+
+/// Pairs of start/end pointers into lambda context and constraints
+/// for a given function
+pub struct FuncSummary {
+    pub lambda_ctxt: Range<usize>,
+    pub constraints: Range<usize>,
 }
 
 impl<'tcx> CrateSummary<'tcx> {
     pub fn new(tcx: TyCtxt<'tcx>, adt_defs: &[DefId], call_graph: CallGraph) -> Self {
+        let num_funcs = call_graph.num_nodes();
         let lambda_ctxt = CrateLambdaCtxt::initiate(tcx, adt_defs, &call_graph);
         CrateSummary {
             tcx,
             call_graph,
+            globals: Range {
+                start: 0,
+                end: lambda_ctxt.lambda_map.len(),
+            },
             lambda_ctxt,
-            constraints: IndexVec::new(),
+            func_summaries: IndexVec::with_capacity(num_funcs),
+            constraints: Vec::new(),
             boundary_constraints: IndexVec::new(),
-            equalities: vec![],
         }
     }
 
@@ -149,7 +165,7 @@ impl CrateLambdaCtxt {
 }
 
 /// λ1 ≤ λ2
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Constraint(Lambda, Lambda);
 
 impl Display for Constraint {
@@ -163,21 +179,6 @@ pub enum BoundaryConstraint {
     Argument { caller: Lambda, callee: Local },
     Return { caller: Lambda, callee: Local },
 }
-
-/*
-#[derive(Clone, Debug)]
-pub struct BoundaryConstraint {
-    pub parameter: Local,
-    /// Local and ssa_idx
-    pub argument: (Local, usize),
-}
-
-impl Display for BoundaryConstraint {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("{:?} ≤ {:?}", self.parameter, self.argument))
-    }
-}
-*/
 
 /// The language constructs that a constraint variable λ corresponds to
 #[derive(Clone, Debug)]
@@ -254,6 +255,18 @@ impl<Domain: Clone + Copy> LambdaMap<Domain> {
         debug_assert!(_lambda == lambda);
         lambda
     }
+
+    pub fn len(&self) -> usize {
+        let res = self.assumptions.len();
+        debug_assert_eq!(res, self.data_map.len());
+        res
+    }
+
+    pub fn next_index(&self) -> Lambda {
+        let res = self.assumptions.next_index();
+        debug_assert_eq!(res, self.data_map.next_index());
+        res
+    }
 }
 
 pub fn assert_fat(lambda_map: &mut LambdaMap<Option<bool>>, lambda: Lambda) {
@@ -273,12 +286,6 @@ pub fn assert_thin(lambda_map: &mut LambdaMap<Option<bool>>, lambda: Lambda) {
         panic!("conflict in constraint!")
     } else {
         *assumption = Some(false)
-    }
-}
-
-rustc_index::newtype_index! {
-    pub struct ConstraintIdx {
-        DEBUG_FORMAT = "constraint ({})"
     }
 }
 

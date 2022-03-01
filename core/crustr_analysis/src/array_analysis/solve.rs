@@ -1,8 +1,8 @@
-use rustc_index::vec::IndexVec;
-
 use crate::array_analysis::{Constraint, Lambda};
 use graph::implementation::forward_star::Graph;
 use rustc_data_structures::graph::scc::Sccs;
+use rustc_index::vec::IndexVec;
+use std::ops::Range;
 
 macro_rules! array_index {
     ($row: expr, $col: expr; $len: expr) => {{
@@ -13,8 +13,95 @@ macro_rules! array_index {
 }
 
 pub fn solve(
+    assumptions: &mut IndexVec<Lambda, Option<bool>>,
+    globals: Range<usize>,
+    locals: Range<usize>,
+    constraints: &[Constraint],
+    boundary_constraints: impl Iterator<Item = Constraint>,
+) -> Result<(), ()> {
+    assert_eq!(globals.start, 0);
+    assert!(globals.end <= locals.start);
+    assert!(locals.end <= assumptions.len());
+
+    let globals_barrier = globals.end - globals.start;
+    let num_nodes = globals_barrier + locals.end - locals.start + 2;
+    let zero_idx = num_nodes - 2;
+    let one_idx = num_nodes - 1;
+    let mut relation = vec![false; num_nodes * num_nodes].into_boxed_slice();
+    for idx in 0..num_nodes {
+        relation[array_index!(idx, idx; num_nodes)] = true;
+        relation[array_index!(idx, one_idx; num_nodes)] = true;
+        relation[array_index!(zero_idx, idx; num_nodes)] = true;
+    }
+    constraints.iter().for_each(|c| {
+        let lhs = locals
+            .contains(&c.0.index())
+            .then(|| c.0.index() - locals.start + globals_barrier)
+            .unwrap_or(c.0.index());
+        let rhs = locals
+            .contains(&c.1.index())
+            .then(|| c.1.index() - locals.start + globals_barrier)
+            .unwrap_or(c.1.index());
+        relation[array_index!(lhs, rhs; num_nodes)] = true;
+    });
+
+    for (idx, assumption) in assumptions.raw[globals.clone()]
+        .iter()
+        .chain(assumptions.raw[locals.clone()].iter())
+        .enumerate()
+    {
+        match assumption {
+            Some(true) => {
+                relation[array_index!(one_idx, idx; num_nodes)] = true;
+            }
+            Some(false) => {
+                relation[array_index!(idx, zero_idx; num_nodes)] = true;
+            }
+            None => {}
+        }
+    }
+
+    relation = transitive_closure(relation, num_nodes);
+
+    let constraint_graph = Graph::<usize, usize>::new(
+        num_nodes,
+        relation.iter().enumerate().filter_map(|(idx, &related)| {
+            related.then(|| {
+                let row = idx / num_nodes;
+                let col = idx % num_nodes;
+                (row, col)
+            })
+        }),
+    );
+    let sccs = Sccs::<usize, usize>::new(&constraint_graph);
+
+    // if 0 and 1 are unified
+    if sccs.scc(one_idx) == sccs.scc(zero_idx) {
+        return Err(());
+        // panic!("Constraints are not satisfied!")
+    }
+
+    let (global_assumptions, rest_assumptions) = assumptions.raw.split_at_mut(globals.end);
+    assert_eq!(global_assumptions.len(), globals_barrier);
+    let local_assumptions =
+        &mut rest_assumptions[locals.start - globals_barrier..locals.end - globals_barrier];
+
+    for (idx, assumption) in global_assumptions
+        .iter_mut()
+        .chain(local_assumptions.iter_mut())
+        .enumerate()
+    {
+        if sccs.scc(idx) == sccs.scc(one_idx) {
+            *assumption = Some(true);
+        } else if sccs.scc(idx) == sccs.scc(zero_idx) {
+            *assumption = Some(false)
+        }
+    }
+    Ok(())
+}
+
+pub fn solve_simple(
     mut assumptions: IndexVec<Lambda, Option<bool>>,
-    equalities: Vec<Vec<Lambda>>,
     constraints: &[Constraint],
 ) -> Result<IndexVec<Lambda, Option<bool>>, ()> {
     // nodes: [λ_0, λ_1, ..., 0, 1]
@@ -30,15 +117,6 @@ pub fn solve(
     constraints.iter().for_each(|c| {
         relation[array_index!(c.0, c.1; num_nodes)] = true;
     });
-
-    for equality in equalities {
-        assert!(equality.len() >= 2);
-        let (&head, tail) = equality.split_first().unwrap();
-        for &other in tail {
-            relation[array_index!(head, other; num_nodes)] = true;
-            relation[array_index!(other, head; num_nodes)] = true;
-        }
-    }
 
     for (lambda, &assumption) in assumptions.iter_enumerated() {
         match assumption {
@@ -137,8 +215,71 @@ mod tests {
             .into_iter()
             .collect::<IndexVec<_, _>>();
         let constraints = vec![le!(0u32, 2u32)];
-        let solutions = solve(assumptions, [].to_vec(), &constraints).unwrap();
+        let solutions = solve_simple(assumptions, &constraints).unwrap();
         assert_eq!(solutions[Lambda::from(2u32)], Some(true))
+    }
+
+    fn assert_soundness(
+        assumptions: IndexVec<Lambda, Option<bool>>,
+        solutions: IndexVec<Lambda, Option<bool>>,
+        constraints: &[Constraint],
+    ) {
+        // solutions must subsume assumptions
+        for (&assumption, &solution) in std::iter::zip(assumptions.iter(), solutions.iter()) {
+            if let Some(value) = assumption {
+                assert!(solution.is_some() && solution.unwrap() == value)
+            }
+        }
+
+        fn domain_le(lhs: Option<bool>, rhs: Option<bool>) -> bool {
+            match lhs {
+                Some(true) => rhs == Some(true),
+                Some(false) => true,
+                None => rhs == None || rhs == Some(true),
+            }
+        }
+
+        // solutions must conform to constraints
+        for &Constraint(lhs, rhs) in constraints {
+            assert!(
+                domain_le(solutions[lhs], solutions[rhs]),
+                "{:?}: {:?}, {:?}: {:?}",
+                lhs,
+                solutions[lhs],
+                rhs,
+                solutions[rhs]
+            )
+        }
+    }
+
+    #[test]
+    fn soundness_regression2() {
+        crate::test::init_logger();
+        let (globals, locals, assumptions, constraints) = (
+            0..1,
+            1..5,
+            [None, None, Some(false), None, None]
+                .into_iter()
+                .collect::<IndexVec<_, _>>(),
+            [
+                Constraint(0u32.into(), 0u32.into()),
+                Constraint(0u32.into(), 0u32.into()),
+                Constraint(0u32.into(), 0u32.into()),
+                Constraint(0u32.into(), 0u32.into()),
+                Constraint(3u32.into(), 2u32.into()),
+            ],
+        );
+        let mut solutions = assumptions.clone();
+        assert!(solve(
+            &mut solutions,
+            globals,
+            locals,
+            &constraints,
+            std::iter::empty()
+        )
+        .is_ok());
+
+        assert_soundness(assumptions, solutions, &constraints)
     }
 
     use proptest::collection::vec;
@@ -165,24 +306,6 @@ mod tests {
     }
 
     prop_compose! {
-        fn equality(n_lambdas: usize)
-                   (length in 3usize..5)
-                   (v in vec(0..n_lambdas, length))
-        -> Vec<Lambda>
-        {
-            v.into_iter().map(Lambda::from).collect()
-        }
-    }
-
-    prop_compose! {
-        fn equalities(n_lambdas: usize)
-                     (length in 0usize..5)
-                     (v in vec(equality(n_lambdas), length))
-        -> Vec<Vec<Lambda>>
-        { v }
-    }
-
-    prop_compose! {
         fn constraints(n_lambdas: usize)
                       (n_constraints in 5..2*n_lambdas)
                       (v in vec((0..n_lambdas, 0..n_lambdas), n_constraints))
@@ -193,46 +316,19 @@ mod tests {
     prop_compose! {
         fn instance()
                    (n_lambdas in 5usize..100)
-                   (instance in (assumptions(n_lambdas), equalities(n_lambdas), constraints(n_lambdas)))
-        -> (IndexVec<Lambda, Option<bool>>, Vec<Vec<Lambda>>, Vec<Constraint>)
-        { instance }
+                   ((assumptions, constraints, glob) in (assumptions(n_lambdas), constraints(n_lambdas), 0..n_lambdas))
+        -> (Range<usize>, Range<usize>, IndexVec<Lambda, Option<bool>>, Vec<Constraint>)
+        { (Range { start: 0, end: glob }, Range { start: glob, end: assumptions.len() }, assumptions, constraints) }
     }
 
     proptest! {
         #[test]
-        fn test_soundness((assumptions, equalities, constraints) in instance()) {
-            let solutions = solve(assumptions.clone(), equalities.clone(), &constraints);
-            prop_assume!(solutions.is_ok());
-            let solutions = solutions.unwrap();
+        fn test_soundness((globals, locals, assumptions, constraints) in instance()) {
 
-            // solutions must subsume assumptions
-            for (&assumption, &solution) in std::iter::zip(assumptions.iter(), solutions.iter()) {
-                if let Some(value) = assumption {
-                    assert!(solution.is_some() && solution.unwrap() == value)
-                }
-            }
+            let mut solutions = assumptions.clone();
+            prop_assume!(solve(&mut solutions, globals, locals, &constraints, std::iter::empty()).is_ok());
 
-            // solutions must conform to equalities
-            for equality in equalities {
-                assert!(equality.len() >= 2);
-                let (&head, tail) = equality.split_first().unwrap();
-                for &other in tail {
-                    assert_eq!(solutions[head], solutions[other])
-                }
-            }
-
-            fn domain_le(lhs: Option<bool>, rhs: Option<bool>) -> bool {
-                match lhs {
-                    Some(true) => rhs == Some(true),
-                    Some(false) => true,
-                    None => rhs == None || rhs == Some(true)
-                }
-            }
-
-            // solutions must conform to constraints
-            for Constraint(lhs, rhs) in constraints {
-                assert!(domain_le(solutions[lhs], solutions[rhs]), "{:?}: {:?}, {:?}: {:?}", lhs, solutions[lhs], rhs, solutions[rhs])
-            }
+            assert_soundness(assumptions, solutions, &constraints)
         }
     }
 }

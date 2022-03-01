@@ -5,7 +5,7 @@ use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
 use crate::{
-    array_analysis::{solve::solve, CrateSummary},
+    array_analysis::{solve::solve_simple, CrateSummary},
     call_graph::CallGraph,
     def_use::BorrowckDefUse,
     ssa::rename::handler::LogSSAName,
@@ -134,10 +134,9 @@ fn solve_for_sinlge_func<'tcx>(
 
     assert_eq!(crate_summary.call_graph.num_nodes(), 1);
 
-    let solutions = solve(
+    let solutions = solve_simple(
         crate_summary.lambda_ctxt.lambda_map.assumptions,
-        crate_summary.equalities,
-        &crate_summary.constraints.raw,
+        &crate_summary.constraints,
     )
     .unwrap();
 

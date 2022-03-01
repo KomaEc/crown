@@ -2,8 +2,8 @@ use std::{marker::PhantomData, ops::Range};
 
 use crate::{
     array_analysis::{
-        assert_fat, assert_thin, BoundaryConstraint, Constraint, ConstraintIdx, CrateLambdaCtxt,
-        CrateSummary, FuncLambdaCtxt, Lambda, LambdaMap, LambdaSourceData,
+        assert_fat, assert_thin, BoundaryConstraint, Constraint, CrateLambdaCtxt, CrateSummary,
+        FuncLambdaCtxt, FuncSummary, Lambda, LambdaMap, LambdaSourceData,
     },
     call_graph::{CallGraph, CallSite, Func},
     def_use::IsDefUse,
@@ -28,13 +28,6 @@ use rustc_middle::{
 use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
 
-pub struct FuncSummary {
-    /// A range into crate lambda context, indicating the constraint variables
-    /// introduced by this function
-    pub lambda_ctxt: Range<usize>,
-    pub constraints: Range<usize>,
-}
-
 impl<'tcx> CrateSummary<'tcx> {
     pub fn infer<DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>(
         &mut self,
@@ -44,6 +37,9 @@ impl<'tcx> CrateSummary<'tcx> {
         for (func, &did) in self.call_graph.functions.iter_enumerated() {
             let body = self.tcx.optimized_mir(did);
             let insertion_points = body.compute_phi_node::<DefUse>(self.tcx);
+
+            let lambda_ctxt_start = self.lambda_ctxt.lambda_map.len();
+            let constraints_start = self.constraints.len();
 
             let mut infer: Infer<DefUse, &mut Handler> = Infer {
                 ctxt: InferCtxt::new(
@@ -66,17 +62,45 @@ impl<'tcx> CrateSummary<'tcx> {
             #[cfg(debug_assertions)]
             infer.ctxt.debug_result();
 
-            for equalities in infer.ctxt.phi_joins {
+            let InferCtxt {
+                lambda_ctxt,
+                phi_joins,
+                ..
+            } = infer.ctxt;
+
+            let body_ctxt = FuncLambdaCtxt {
+                local: lambda_ctxt.local,
+                local_nested: lambda_ctxt.local_nested,
+            };
+            self.lambda_ctxt.func_ctxt.push(body_ctxt);
+
+            for equalities in phi_joins {
                 for (_, equality) in equalities {
-                    self.equalities.push(equality)
+                    assert!(equality.len() >= 2);
+                    let (&this, tail) = equality.split_first().unwrap();
+                    for &other in tail {
+                        self.constraints.push(Constraint(this, other));
+                        self.constraints.push(Constraint(other, this));
+                    }
                 }
             }
 
-            let body_ctxt = FuncLambdaCtxt {
-                local: infer.ctxt.lambda_ctxt.local,
-                local_nested: infer.ctxt.lambda_ctxt.local_nested,
-            };
-            self.lambda_ctxt.func_ctxt.push(body_ctxt);
+            let lambda_ctxt_end = self.lambda_ctxt.lambda_map.len();
+            let constraints_end = self.constraints.len();
+
+            debug_assert_eq!(
+                func,
+                self.func_summaries.push(FuncSummary {
+                    lambda_ctxt: Range {
+                        start: lambda_ctxt_start,
+                        end: lambda_ctxt_end
+                    },
+                    constraints: Range {
+                        start: constraints_start,
+                        end: constraints_end
+                    }
+                })
+            )
         }
 
         self.setup_boundary_constraints(boundary_constraints);
@@ -609,7 +633,7 @@ pub struct InferCtxt<'infercx, 'tcx> {
     pub call_graph: &'infercx CallGraph,
     lambda_ctxt: CrateLambdaCtxtIntraView<'infercx>,
     phi_joins: IndexVec<BasicBlock, SmallVec<[(Local, Vec<Lambda>); 3]>>,
-    constraints: &'infercx mut IndexVec<ConstraintIdx, Constraint>,
+    constraints: &'infercx mut Vec<Constraint>,
     boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint>>,
 }
 
@@ -620,7 +644,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         body: &'infercx Body<'tcx>,
         call_graph: &'infercx CallGraph,
         lambda_ctxt: &'infercx mut CrateLambdaCtxt,
-        constraints: &'infercx mut IndexVec<ConstraintIdx, Constraint>,
+        constraints: &'infercx mut Vec<Constraint>,
         boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint>>,
         insertion_points: &PhiNodeInserted,
     ) -> Self {
