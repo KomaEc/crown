@@ -68,17 +68,17 @@ impl<'tcx> CrateSummary<'tcx> {
         // it seems that the scc algorithm will rank sccs in post order, namely if there
         // is a dependency S1 -> S2, then S2 < S1 (well it is natural to be this case,
         // from the Tarjan's algorithm's perspective). Here we follow this assumption.
-        let mut nodes = vec![Vec::new(); call_graph_sccs.num_sccs()];
+        let mut scc_nodes = vec![Vec::new(); call_graph_sccs.num_sccs()];
         for func in self.call_graph.graph.nodes() {
-            nodes[call_graph_sccs.scc(func)].push(func)
+            scc_nodes[call_graph_sccs.scc(func)].push(func)
         }
 
         'globally_changed: loop {
-            for node in &nodes {
+            for scc_node in &scc_nodes {
                 // TODO: use worklist algorithm for inner loop
                 'locally_changed: loop {
                     let mut locally_changed = false;
-                    for &func in node {
+                    for &func in scc_node {
                         let FuncSummary {
                             lambda_ctxt: locals,
                             constraints: constraints_range,

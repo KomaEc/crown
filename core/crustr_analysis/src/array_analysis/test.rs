@@ -5,7 +5,7 @@ use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
 use crate::{
-    array_analysis::{solve::solve, CrateSummary, FuncSummary},
+    array_analysis::CrateSummary,
     call_graph::CallGraph,
     def_use::BorrowckDefUse,
     ssa::rename::handler::LogSSAName,
@@ -13,7 +13,7 @@ use crate::{
 };
 
 #[test]
-fn test_all() {
+fn test_all_programs() {
     init_logger();
     for (prog, spec) in TEST_PROGRAMS {
         compiler_interface::run_compiler_with_struct_defs_and_funcs(Into::into(*prog), spec)
@@ -21,7 +21,7 @@ fn test_all() {
 }
 
 #[test]
-fn test_file_with_extern_call() {
+fn test_all_files() {
     init_logger();
     let file = env::current_dir()
         .expect("current working directory value is invalid")
@@ -29,85 +29,11 @@ fn test_file_with_extern_call() {
     compiler_interface::run_compiler_with_struct_defs_and_funcs(file.into(), run_solve)
 }
 
-const TEST_PROGRAMS: &'static [(
-    &'static str,
-    for<'tcx> fn(TyCtxt<'tcx>, Vec<LocalDefId>, Vec<LocalDefId>),
-)] = &[
-    (
-        "
-    struct S {
-        f: *mut *mut i32,
-        g: *mut i32,
-        h: usize
-    }
-    
-    unsafe fn f(mut x: *mut *mut i32, y: *mut S) {
-        *(*y).f = *x;
-        let z = *x;
-        let w = z;
-        (*y).g = w;
-    }",
-        run_infer,
-    ),
-    (
-        "
-    unsafe fn f(x: *mut *mut i32, y: *mut i32) {
-        *x = y;
-        *y = 3;
-    }
-
-    unsafe fn g(mut x: *mut i32, y: *mut *mut i32) {
-        *x = 4;
-        f(&mut x, *y);
-    }
-    ",
-        run_infer,
-    ),
-    /*
-    (
-        "
-    unsafe fn f(q: *mut i32, r: *mut i32, cond: bool) -> *mut i32 {
-        let mut local = 0;
-        let mut p: *mut i32 = &mut local;
-        if cond {
-            p = q;
-        } else {
-            p = r;
-        }
-        return p;
-    }
-        ",
-        print_mir_and_log_debug,
-    ),
-    (
-        "
-    fn f() -> *mut i32 {
-        let i = 0 as *mut i32;
-        let mut j = 1 as *mut i32;
-        let mut k = 0 as *mut i32;
-        while (k as usize) < 100 {
-            if (j as usize) < 20 {
-                j = i;
-                k = ((*k)+1) as *mut i32;
-            } else {
-                j = k;
-                k = ((*k)+2) as *mut i32;
-            }
-            assert!(true, \"Introduce a new block, this assertion is optimised away\")
-        }
-        return j
-    }",
-        print_mir_and_log_debug,
-    ),
-    */
-];
-
 fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec<LocalDefId>) {
     let bodies = fn_dids
         .iter()
         .map(|&fn_did| {
             let body = tcx.optimized_mir(fn_did);
-
             rustc_middle::mir::pretty::write_mir_fn(
                 tcx,
                 body,
@@ -128,36 +54,10 @@ fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
     let mut crate_summary = CrateSummary::new(tcx, &adt_defs, call_graph);
     crate_summary.debug();
     crate_summary.infer::<BorrowckDefUse, LogSSAName>(LogSSAName);
-
     assert_eq!(crate_summary.call_graph.num_nodes(), 1);
-
-    let mut solutions = crate_summary.lambda_ctxt.lambda_map.assumptions.clone();
-
-    let func_summary = crate_summary.func_summaries[0u32.into()].clone();
-    let FuncSummary {
-        lambda_ctxt: locals,
-        constraints: constraints_range,
-    } = func_summary;
-    solve(
-        &mut solutions,
-        crate_summary.globals,
-        locals,
-        &crate_summary.constraints[constraints_range],
-        crate_summary
-            .call_graph
-            .graph
-            .adjacent_edges(
-                0u32.into(),
-                graph::implementation::forward_star::Direction::Outgoing,
-            )
-            .map(|(call_site, _)| {
-                crate_summary.boundary_constraints[call_site]
-                    .iter()
-                    .map(|&c| c)
-            })
-            .flatten(),
-    )
-    .unwrap();
+    
+    crate_summary.iterate_to_fixpoint().unwrap();
+    let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
 
     log::debug!("All constraints:");
     for constraint in crate_summary.constraints {
@@ -206,3 +106,39 @@ fn run_infer<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
     crate_summary.infer::<BorrowckDefUse, LogSSAName>(LogSSAName);
     assert_eq!(crate_summary.lambda_ctxt.func_ctxt.len(), num_funcs)
 }
+
+const TEST_PROGRAMS: &'static [(
+    &'static str,
+    for<'tcx> fn(TyCtxt<'tcx>, Vec<LocalDefId>, Vec<LocalDefId>),
+)] = &[
+    (
+        "
+    struct S {
+        f: *mut *mut i32,
+        g: *mut i32,
+        h: usize
+    }
+    
+    unsafe fn f(mut x: *mut *mut i32, y: *mut S) {
+        *(*y).f = *x;
+        let z = *x;
+        let w = z;
+        (*y).g = w;
+    }",
+        run_infer,
+    ),
+    (
+        "
+    unsafe fn f(x: *mut *mut i32, y: *mut i32) {
+        *x = y;
+        *y = 3;
+    }
+
+    unsafe fn g(mut x: *mut i32, y: *mut *mut i32) {
+        *x = 4;
+        f(&mut x, *y);
+    }
+    ",
+        run_infer,
+    ),
+];
