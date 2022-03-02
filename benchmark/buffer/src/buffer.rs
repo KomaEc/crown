@@ -24,8 +24,6 @@ extern "C" {
     fn realloc(_: *mut libc::c_void, _: u64) -> *mut libc::c_void;
     #[no_mangle]
     fn free(__ptr: *mut libc::c_void);
-    #[no_mangle]
-    fn __ctype_b_loc() -> *mut *const libc::c_ushort;
 }
 pub type size_t = u64;
 pub type __ssize_t = libc::c_long;
@@ -346,9 +344,11 @@ pub unsafe extern "C" fn buffer_trim_left(mut self_0: *mut buffer_t) {
     loop {
         c = *(*self_0).data as i32;
         if !(c != 0
-            && *(*__ctype_b_loc()).offset(c as isize) as i32
+            && char::from_u32(c as u32).unwrap().is_whitespace())
+            /* *(*__ctype_b_loc()).offset(c as isize) as i32
                 & _ISspace as i32 as libc::c_ushort as i32
                 != 0)
+                */
         {
             break;
         }
@@ -365,9 +365,7 @@ pub unsafe extern "C" fn buffer_trim_right(mut self_0: *mut buffer_t) {
     loop {
         c = *(*self_0).data.offset(i as isize) as i32;
         if !(c != 0
-            && *(*__ctype_b_loc()).offset(c as isize) as i32
-                & _ISspace as i32 as libc::c_ushort as i32
-                != 0)
+            && char::from_u32(c as u32).unwrap().is_whitespace())
         {
             break;
         }

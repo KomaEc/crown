@@ -109,7 +109,8 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         }
 
         // catch all other library calls that is not modelled
-        unimplemented!("this library call is not supported")
+        log::debug!("modelling {}", self.ctxt.tcx.def_path_str(callee));
+        self.default_model_call(args, destination, location)
     }
     pub fn model_ptr_offset(
         &mut self,
