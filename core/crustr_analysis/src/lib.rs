@@ -3,6 +3,7 @@
 #![feature(min_specialization)]
 #![feature(crate_visibility_modifier)]
 #![feature(bool_to_option)]
+#![feature(split_array)]
 
 pub mod array_analysis;
 pub mod call_graph;

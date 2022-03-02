@@ -326,26 +326,6 @@ impl<Domain: Clone + Copy> LambdaMap<Domain> {
     }
 }
 
-pub fn assert_fat(lambda_map: &mut LambdaMap<Option<bool>>, lambda: Lambda) {
-    log::debug!("assert that {:?} is fat", lambda);
-    let assumption = &mut lambda_map.assumptions[lambda];
-    if matches!(assumption, Some(false)) {
-        panic!("conflict in constraint!")
-    } else {
-        *assumption = Some(true)
-    }
-}
-
-pub fn assert_thin(lambda_map: &mut LambdaMap<Option<bool>>, lambda: Lambda) {
-    log::debug!("assert that {:?} is thin", lambda);
-    let assumption = &mut lambda_map.assumptions[lambda];
-    if matches!(assumption, Some(true)) {
-        panic!("conflict in constraint!")
-    } else {
-        *assumption = Some(false)
-    }
-}
-
 rustc_index::newtype_index! {
     /// Constraint variables for array analysis
     pub struct Lambda {
