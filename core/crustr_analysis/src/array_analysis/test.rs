@@ -1,6 +1,5 @@
 use std::env;
 
-use rustc_data_structures::graph::WithNumNodes;
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 

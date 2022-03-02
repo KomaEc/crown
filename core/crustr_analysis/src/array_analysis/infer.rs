@@ -468,13 +468,6 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                                     for arg in args {
                                         self.visit_operand(arg, location);
                                     }
-                                    /*
-                                    let rhs = args[0].place().unwrap();
-                                    let rhs = self.process_rhs(&rhs, location);
-                                    for arg in &args[1..] {
-                                        self.visit_operand(arg, location);
-                                    }
-                                    */
                                     let (lhs, _) = destination.unwrap();
                                     let lhs = self.process_lhs(&lhs, location);
                                     let constraint = Constraint(lhs, rhs);
@@ -590,12 +583,14 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                             .unwrap_or(false);
                         // is `_::ptr::offset()`
                         if is_ptr && is_offset {
+                            /*
                             assert!(args.len() == 2);
                             let (rhs, args) = args.split_first().unwrap();
                             let rhs = rhs.place().unwrap();
                             let rhs = self.process_rhs(&rhs, location);
                             assert_fat(self.ctxt.lambda_ctxt.lambda_map, rhs);
                             log::debug!("generate constraint {:?} = 1", rhs);
+                            */
                             for arg in args {
                                 self.visit_operand(arg, location);
                             }
