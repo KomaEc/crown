@@ -1,9 +1,11 @@
+pub mod model_call;
+
 use std::{marker::PhantomData, ops::Range};
 
 use crate::{
     array_analysis::{
-        assert_fat, assert_thin, BoundaryConstraint, Constraint, CrateLambdaCtxt, CrateSummary,
-        FuncLambdaCtxt, FuncSummary, Lambda, LambdaMap, LambdaSourceData,
+        BoundaryConstraint, Constraint, CrateLambdaCtxt, CrateSummary, FuncLambdaCtxt, FuncSummary,
+        Lambda, LambdaMap, LambdaSourceData,
     },
     call_graph::{CallGraph, CallSite, Func},
     def_use::IsDefUse,
@@ -197,10 +199,10 @@ impl CrateLambdaCtxt {
 }
 
 pub struct Infer<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> {
-    pub ctxt: InferCtxt<'infercx, 'tcx>,
-    pub ssa_state: SSARenameState<Local>,
-    pub extra_handlers: Handler,
-    pub _marker: PhantomData<*const DefUse>,
+    ctxt: InferCtxt<'infercx, 'tcx>,
+    ssa_state: SSARenameState<Local>,
+    extra_handlers: Handler,
+    _marker: PhantomData<*const DefUse>,
 }
 
 impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
@@ -436,47 +438,8 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                             self.ctxt.tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::ForeignItem(_))
                         ) {
-                            let foreign_item = self
-                                .ctxt
-                                .tcx
-                                .hir()
-                                .expect_foreign_item(callee_did.expect_local());
-                            log::debug!(
-                                "{}",
-                                &format!("which is a foreign function! {}", foreign_item.ident)
-                                    .red()
-                                    .bold()
-                            );
-                            match foreign_item.ident {
-                                s if s.as_str() == "calloc" => {
-                                    for arg in args {
-                                        self.visit_operand(arg, location);
-                                    }
-                                    let (lhs, _) = destination.unwrap();
-                                    let lambda = self.process_lhs(&lhs, location);
-                                    assert_fat(self.ctxt.lambda_ctxt.lambda_map, lambda);
-                                    log::debug!("generate constraint {:?} = 1", lambda);
-                                    return;
-                                }
-                                s if s.as_str() == "realloc" => {
-                                    assert_eq!(args.len(), 2);
-                                    let (rhs, args) = args.split_first().unwrap();
-                                    let rhs = rhs.place().unwrap();
-                                    let rhs = self.process_rhs(&rhs, location);
-                                    assert_fat(self.ctxt.lambda_ctxt.lambda_map, rhs);
-                                    log::debug!("generate constraint {:?} = 1", rhs);
-                                    for arg in args {
-                                        self.visit_operand(arg, location);
-                                    }
-                                    let (lhs, _) = destination.unwrap();
-                                    let lhs = self.process_lhs(&lhs, location);
-                                    let constraint = Constraint(lhs, rhs);
-                                    log::debug!("generate constraint {}", constraint);
-                                    self.ctxt.constraints.push(constraint);
-                                    return;
-                                }
-                                _ => unimplemented!(),
-                            }
+                            self.model_libc_call(callee_did, args, destination, location);
+                            return;
                         } else if matches!(
                             self.ctxt.tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::Item(_))
@@ -554,56 +517,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                     }
                     // library functions
                     None => {
-                        let def_path = self.ctxt.tcx.def_path(callee_did);
-                        // ::ptr ...
-                        let is_ptr = def_path
-                            .data
-                            .get(0)
-                            .map(|d| match d.data {
-                                rustc_hir::definitions::DefPathData::TypeNs(s)
-                                    if s.as_str() == "ptr" =>
-                                {
-                                    true
-                                }
-                                _ => false,
-                            })
-                            .unwrap_or(false);
-                        // ::offset
-                        let is_offset = def_path
-                            .data
-                            .get(3)
-                            .map(|d| match d.data {
-                                rustc_hir::definitions::DefPathData::ValueNs(s)
-                                    if s.as_str() == "offset" =>
-                                {
-                                    true
-                                }
-                                _ => false,
-                            })
-                            .unwrap_or(false);
-                        // is `_::ptr::offset()`
-                        if is_ptr && is_offset {
-                            /*
-                            assert!(args.len() == 2);
-                            let (rhs, args) = args.split_first().unwrap();
-                            let rhs = rhs.place().unwrap();
-                            let rhs = self.process_rhs(&rhs, location);
-                            assert_fat(self.ctxt.lambda_ctxt.lambda_map, rhs);
-                            log::debug!("generate constraint {:?} = 1", rhs);
-                            */
-                            for arg in args {
-                                self.visit_operand(arg, location);
-                            }
-                            let (lhs, _) = destination.unwrap();
-                            let lhs = self.process_lhs(&lhs, location);
-                            assert_thin(self.ctxt.lambda_ctxt.lambda_map, lhs);
-                            log::debug!("generate constraint {:?} = 0", lhs);
-                            return;
-                        }
+                        self.model_library_call(callee_did, args, destination, location);
+                        return;
                     }
                 }
             } else {
-                panic!("what could it be? {}", ty)
+                unreachable!("what could it be? {}", ty)
             }
         }
         self.super_terminator(terminator, location)
@@ -635,9 +554,9 @@ impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
 }
 
 pub struct InferCtxt<'infercx, 'tcx> {
-    pub tcx: TyCtxt<'tcx>,
-    pub body: &'infercx Body<'tcx>,
-    pub call_graph: &'infercx CallGraph,
+    tcx: TyCtxt<'tcx>,
+    body: &'infercx Body<'tcx>,
+    call_graph: &'infercx CallGraph,
     lambda_ctxt: CrateLambdaCtxtIntraView<'infercx>,
     phi_joins: IndexVec<BasicBlock, SmallVec<[(Local, Vec<Lambda>); 3]>>,
     constraints: &'infercx mut Vec<Constraint>,

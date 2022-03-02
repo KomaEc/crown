@@ -30,7 +30,7 @@ fn test_solve_not_crash_with_input_file() {
 /// i
 /// ^
 /// |
-/// g ----> 
+/// g ---->
 ///   <---- h
 /// ^
 /// |

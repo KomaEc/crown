@@ -79,7 +79,8 @@ impl<'tcx> CrateSummary<'tcx> {
                 'locally_changed: loop {
                     let mut locally_changed = false;
                     for &func in scc_node {
-                        #[cfg(debug_assertions)] {
+                        #[cfg(debug_assertions)]
+                        {
                             log::debug!("processing {:?}", self.call_graph.functions[func])
                         }
                         let FuncSummary {
