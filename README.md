@@ -4,7 +4,7 @@
 This tool is now able to infer an approximate fat/thin signature for struct and function definitions. To test it on the 'buffer' benchmark, do
 ```shell
 cp -r benchmark/buffer_good workspace/
-cargo run -- workspace/buffer_good --single-file
+RUST_LOG=debug cargo run -- workspace/buffer_good/lib.rs --single-file
 ```
 the solution will be printed (I've also make a copy of this solution into `buffer.out`). There're a lot of constraint variables, but for now, the most important ones are the first two constraint variables λ0 and λ1. They correspond to the fields `alloc` and `data` of `buffer_t`. The inferred signatures are that `alloc` is fat and `data` is thin, which is exactly what we want.
 
