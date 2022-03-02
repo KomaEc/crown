@@ -16,7 +16,7 @@ extern crate rustc_session;
 extern crate rustc_span;
 
 use crustr_analysis::{
-    array_analysis::CrateSummary, call_graph::CallGraph, def_use::BorrowckDefUse,
+    array_analysis::{CrateSummary, Lambda}, call_graph::CallGraph, def_use::BorrowckDefUse,
     ssa::rename::handler::LogSSAName,
 };
 use rustc_hir::def_id::LocalDefId;
@@ -49,22 +49,41 @@ pub fn array_analysis<'tcx>(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: 
     crate_summary.infer::<BorrowckDefUse, LogSSAName>(LogSSAName);
     // assert_eq!(crate_summary.call_graph.num_nodes(), 1);
 
-    crate_summary.iterate_to_fixpoint().unwrap();
-    let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
+    match crate_summary.iterate_to_fixpoint() {
+        Ok(()) => {
+            let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
 
-    log::debug!("All constraints:");
-    for constraint in crate_summary.constraints {
-        log::debug!("{}", constraint)
-    }
+            log::debug!("All constraints:");
+            for constraint in crate_summary.constraints {
+                log::debug!("{}", constraint)
+            }
 
-    for (lambda, solution) in solutions.into_iter_enumerated() {
-        log::debug!(
-            "{: <7} = {: <2}, with source data {}",
-            &format!("{:?}", lambda),
-            solution
-                .map(|fat| { fat.then_some("1").unwrap_or("0") })
-                .unwrap_or("?"),
-            crate_summary.lambda_ctxt.lambda_map.data_map[lambda]
-        )
+            for (lambda, solution) in solutions.into_iter_enumerated() {
+                log::debug!(
+                    "{: <7} = {: <2}, with source data {}",
+                    &format!("{:?}", lambda),
+                    solution
+                        .map(|fat| { fat.then_some("1").unwrap_or("0") })
+                        .unwrap_or("?"),
+                    crate_summary.lambda_ctxt.lambda_map.data_map[lambda]
+                )
+            }
+        }
+        Err(_) => {
+            log::debug!("Solve failed!");
+            log::debug!("Global context:");
+            let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
+            for (lambda, solution) in solutions.raw[crate_summary.globals.clone()].iter().enumerate() {
+                let lambda = Lambda::from(lambda);
+                log::debug!(
+                    "{: <7} = {: <2}, with source data {}",
+                    &format!("{:?}", lambda),
+                    solution
+                        .map(|fat| { fat.then_some("1").unwrap_or("0") })
+                        .unwrap_or("?"),
+                    crate_summary.lambda_ctxt.lambda_map.data_map[lambda]
+                )
+            }
+        }
     }
 }

@@ -599,31 +599,33 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         .debug_initialise()
     }
 
-    #[cfg(debug_assertions)]
     pub fn debug_initialise(self) -> Self {
-        const INDENT: &str = "   in f, ";
-        log::debug!(
-            "for function {}:",
-            self.tcx.def_path_debug_str(self.body.source.def_id())
-        );
-        for (local, x) in self.lambda_ctxt.local_nested.iter_enumerated() {
-            for (idx, lambda) in x.iter().enumerate() {
-                log::debug!(
-                    "{}{:*<2$}{3:?} ==> {4:?}",
-                    INDENT,
-                    "",
-                    idx + 1,
-                    local,
-                    lambda
-                )
+        #[cfg(debug_assertions)]
+        {
+            const INDENT: &str = "   in f, ";
+            log::debug!(
+                "for function {}:",
+                self.tcx.def_path_debug_str(self.body.source.def_id())
+            );
+            for (local, x) in self.lambda_ctxt.local_nested.iter_enumerated() {
+                for (idx, lambda) in x.iter().enumerate() {
+                    log::debug!(
+                        "{}{:*<2$}{3:?} ==> {4:?}",
+                        INDENT,
+                        "",
+                        idx + 1,
+                        local,
+                        lambda
+                    )
+                }
             }
-        }
-        for (local, y) in self.lambda_ctxt.local.iter_enumerated() {
-            if self.body.local_decls[local].ty.is_ptr_of_concerned() {
-                assert_eq!(y.len(), 1);
-                log::debug!("{}{:?}^0 ==> {:?}", INDENT, local, y[0])
-            } else {
-                assert!(y.is_empty())
+            for (local, y) in self.lambda_ctxt.local.iter_enumerated() {
+                if self.body.local_decls[local].ty.is_ptr_of_concerned() {
+                    assert_eq!(y.len(), 1);
+                    log::debug!("{}{:?}^0 ==> {:?}", INDENT, local, y[0])
+                } else {
+                    assert!(y.is_empty())
+                }
             }
         }
         self

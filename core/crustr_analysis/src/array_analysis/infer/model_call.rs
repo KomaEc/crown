@@ -54,7 +54,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        log::debug!("... default modelling: doing nothing");
+        log::debug!("... default modelling: introducing no constraint");
         for arg in args {
             self.visit_operand(arg, location);
         }
@@ -237,7 +237,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
     /// Spec: `void * memmove ( void * destination, const void * source, size_t num );`
     /// where `destination` is returned.
     ///
-    /// Modelling: `destination`, `source`, and return value should all be fat.
+    /// Modelling: default
     fn model_memmove(
         &mut self,
         args: &Vec<Operand<'tcx>>,
@@ -245,6 +245,9 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) {
         log::debug!("modelling memmove");
+        self.default_model_call(args, destination, location)
+        /*
+        // Modelling: `destination`, `source`, and return value should all be fat.
         assert_eq!(args.len(), 3);
         let ([dest, src, num], _) = args.split_array_ref::<3>();
         let _ = self.assume_call_argument(dest, true, location);
@@ -252,6 +255,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         self.visit_operand(num, location);
         let (dest, _) = destination.unwrap();
         self.assume_call_return(&dest, true, location);
+        */
     }
 
     /// Spec: `void * memcpy ( void * destination, const void * source, size_t num );`
@@ -265,6 +269,8 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) {
         log::debug!("modelling memcpy");
+        self.default_model_call(args, destination, location)
+        /*
         assert_eq!(args.len(), 3);
         let ([dest, src, num], _) = args.split_array_ref::<3>();
         let _ = self.assume_call_argument(dest, true, location);
@@ -272,12 +278,13 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         self.visit_operand(num, location);
         let (dest, _) = destination.unwrap();
         self.assume_call_return(&dest, true, location);
+        */
     }
 
     /// Spec: `void * memset ( void * ptr, int value, size_t num );`
     /// where `ptr` is returned.
     ///
-    /// Modelling: `ptr` and return value should both be fat.
+    /// Modelling: default.
     fn model_memset(
         &mut self,
         args: &Vec<Operand<'tcx>>,
@@ -285,6 +292,9 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) {
         log::debug!("modelling memset");
+        self.default_model_call(args, destination, location)
+        /*
+        // Modelling: `ptr` and return value should both be fat.
         assert_eq!(args.len(), 3);
         let (ptr, args) = args.split_first().unwrap();
         let _ = self.assume_call_argument(ptr, true, location);
@@ -293,12 +303,13 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         }
         let (dest, _) = destination.unwrap();
         self.assume_call_return(&dest, true, location);
+        */
     }
 
     /// Spec: `char * strncat ( char * destination, const char * source, size_t num );`
     /// where destination is returned.
     ///
-    /// Modelling: identical to `memmove`.
+    /// Modelling: default.
     fn model_strncat(
         &mut self,
         args: &Vec<Operand<'tcx>>,
@@ -306,6 +317,9 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) {
         log::debug!("modelling strncat");
+        self.default_model_call(args, destination, location)
+        /* 
+        // Modelling: identical to `memmove`.
         assert_eq!(args.len(), 3);
         let ([dest, src, num], _) = args.split_array_ref::<3>();
         let _ = self.assume_call_argument(dest, true, location);
@@ -313,11 +327,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         self.visit_operand(num, location);
         let (dest, _) = destination.unwrap();
         self.assume_call_return(&dest, true, location);
+        */
     }
 
     /// Spec: `int strcmp ( const char * str1, const char * str2 );`
     ///
-    /// Modelling: `str1`, `str2` should both be fat.
+    /// Modelling: default.
     fn model_strcmp(
         &mut self,
         args: &Vec<Operand<'tcx>>,
@@ -325,6 +340,9 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) {
         log::debug!("modelling strcmp");
+        self.default_model_call(args, destination, location)
+        /* 
+        // Modelling: `str1`, `str2` should both be fat.
         assert_eq!(args.len(), 2);
         let ([str1, str2], _) = args.split_array_ref::<2>();
         let _ = self.assume_call_argument(str1, true, location);
@@ -335,12 +353,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
             PlaceContext::MutatingUse(MutatingUseContext::Call),
             location,
         )
+        */
     }
 
     /// Spec: `const char * strstr ( const char * str1, const char * str2 );`
     ///
-    /// Modelling: `str1`, `str2` should both be fat, return value should be unknown.
-    /// TODO: is this appropriate? Should the return value be thin instead?
+    /// Modelling: default.
     fn model_strstr(
         &mut self,
         args: &Vec<Operand<'tcx>>,
@@ -348,6 +366,10 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) {
         log::debug!("modelling strstr");
+        self.default_model_call(args, destination, location)
+        /* 
+        // Modelling: `str1`, `str2` should both be fat, return value should be unknown.
+        // TODO: is this appropriate? Should the return value be thin instead?
         assert_eq!(args.len(), 2);
         let ([str1, str2], _) = args.split_array_ref::<2>();
         let _ = self.assume_call_argument(str1, true, location);
@@ -359,11 +381,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
             PlaceContext::MutatingUse(MutatingUseContext::Call),
             location,
         )
+        */
     }
 
     /// Spec: `size_t strlen ( const char * str );`
     ///
-    /// Modelling: `str` should be fat.
+    /// Modelling: default.
     fn model_strlen(
         &mut self,
         args: &Vec<Operand<'tcx>>,
@@ -371,6 +394,9 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) {
         log::debug!("modelling strlen");
+        self.default_model_call(args, destination, location)
+        /* 
+        // Modelling: `str` should be fat.
         assert_eq!(args.len(), 1);
         let str = args.first().unwrap();
         let _ = self.assume_call_argument(str, true, location);
@@ -380,5 +406,6 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
             PlaceContext::MutatingUse(MutatingUseContext::Call),
             location,
         )
+        */
     }
 }

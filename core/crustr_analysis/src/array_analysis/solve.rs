@@ -17,6 +17,11 @@ pub enum SolveSuccess {
     GloballyChanged,
 }
 
+/// TODO
+pub struct SolveFailure {
+    pub trace: Vec<()>,
+}
+
 pub fn solve(
     assumptions: &mut IndexVec<Lambda, Option<bool>>,
     globals: Range<usize>,
