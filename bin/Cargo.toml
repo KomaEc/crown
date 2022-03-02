@@ -9,7 +9,8 @@ edition = "2021"
 rustc_private=true 
 
 [dependencies]
-crustr_rustc_interface = { path = "../core/crustr_rustc_interface" }
+crustr_passes = { path = "../core/crustr_passes" }
+compiler_interface = { path = "../core/compiler_interface" }
 log = "0.4"
 env_logger = "0.9"
 toml_edit = "0.13.0"

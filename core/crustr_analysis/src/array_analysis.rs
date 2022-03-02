@@ -30,10 +30,10 @@ mod test;
 pub struct CrateSummary<'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub call_graph: CallGraph,
-    lambda_ctxt: CrateLambdaCtxt,
+    pub lambda_ctxt: CrateLambdaCtxt,
     globals: Range<usize>,
     func_summaries: IndexVec<Func, FuncSummary>,
-    constraints: Vec<Constraint>,
+    pub constraints: Vec<Constraint>,
     boundary_constraints: IndexVec<CallSite, Vec<Constraint>>,
 }
 

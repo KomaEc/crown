@@ -1,8 +1,7 @@
 use clap::Parser;
-use crustr_rustc_interface::{config_setup, run_compiler_with_config};
 use std::path::PathBuf;
-use std::{env, fs, process};
-use toml_edit::{Document, Item};
+// use std::{env, fs, process};
+// use toml_edit::{Document, Item};
 
 #[derive(Parser)]
 #[clap(author, version, about, long_about = None)]
@@ -22,6 +21,7 @@ fn main() {
     let cli = Cli::parse();
 
     if !cli.single_file {
+        /*
         let dir_path = cli.path;
         if !dir_path.is_dir() {
             eprintln!(
@@ -77,10 +77,14 @@ fn main() {
             config,
         )
         // run_compiler_with_config::<crustr_rustc_interface::toy_run::ToyRun>(config)
+        */
     } else {
+        /*
         let config = config_setup(cli.path);
         run_compiler_with_config::<crustr_rustc_interface::rewrite_struct::CollectStructInfo>(
             config,
         )
+        */
+        compiler_interface::run_compiler_with_struct_defs_and_funcs(cli.path.into(), crustr_passes::array_analysis)
     }
 }

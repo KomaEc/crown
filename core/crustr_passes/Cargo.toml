@@ -12,3 +12,4 @@ rustc_private=true
 log = "0.4"
 crustr_rewrite = { path = "../crustr_rewrite" }
 compiler_interface = { path = "../compiler_interface" }
+crustr_analysis = { path = "../crustr_analysis" }
