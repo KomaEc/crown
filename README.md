@@ -6,7 +6,7 @@ This tool is now able to infer an approximate fat/thin signature for struct and 
 cp -r benchmark/buffer_good workspace/
 cargo run -- workspace/buffer_good --single-file
 ```
-the solution will be printed. There're a lot of constraint variables, but for now, the most important are the first two constraint variables λ0 and λ1. They correspond to the fields `alloc` and `data` of `buffer_t`. The inferred signatures are that `alloc` is fat and `data` is thin, which is exactly what we want.
+the solution will be printed (I've also make a copy of this solution into `buffer.out`). There're a lot of constraint variables, but for now, the most important ones are the first two constraint variables λ0 and λ1. They correspond to the fields `alloc` and `data` of `buffer_t`. The inferred signatures are that `alloc` is fat and `data` is thin, which is exactly what we want.
 
 Note that the benchmark is called 'good' because I manually fix one line of code (on line 169 of `benchmark/buffer_good/src/buffer.rs`). Originally in C, this is
 ```c
@@ -20,10 +20,10 @@ The original code snippet says that a reallocated slice of data is first assigne
 
 
 __TODO__:
-[ ] Debug. I've identified several major bugs by only looking at the printed results, but I'm still not sure if the analysis is close to be correct. It's better to have more test cases.
-[ ] The analysis engine generates many useless constraint variables. Figure out why.
-[ ] In the main `iterate_to_fixpoint` procedure, the inner loop that processes one component of the SCC of the call graph uses chaotic iteration. Turn it into a worklist algorithm.
-[ ] The analysis can be improved. Specifically, right now the inferencer treats newly defined locals as unconstrained (more concretely, in `let mut a = ...; a = ...`, in the second statement, `a` is redefined, and hence a new local will be defined in the SSA; this newly defined local is unconstrained). Since they are unconstrained, a user local variable may have different type signatures in different context. My intuition is that, if the type signature changes, we can replace assignment by a new binding, which is more flexible. However, this is too coarse: a local can only be thinner not fatter. The analysis will be more precise if we generate an additional constraint when defining a new SSA local.
+- [ ] Debug. I've identified several major bugs by only looking at the printed results, but I'm still not sure if the analysis is close to be correct. It's better to have more test cases.
+- [ ] The analysis engine generates many useless constraint variables. Figure out why.
+- [ ] In the main `iterate_to_fixpoint` procedure, the inner loop that processes one component of the SCC of the call graph uses chaotic iteration. Turn it into a worklist algorithm.
+- [ ] The analysis can be improved. Specifically, right now the inferencer treats newly defined locals as unconstrained (more concretely, in `let mut a = ...; a = ...`, in the second statement, `a` is redefined, and hence a new local will be defined in the SSA; this newly defined local is unconstrained). Since they are unconstrained, a user local variable may have different type signatures in different context. My intuition is that, if the type signature changes, we can replace assignment by a new binding, which is more flexible. However, this is too coarse: a local can only be thinner not fatter. The analysis will be more precise if we generate an additional constraint when defining a new SSA local stating that `new ≤ old`.
 
 
 ## Motivating Examples
