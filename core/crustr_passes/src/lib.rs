@@ -16,7 +16,9 @@ extern crate rustc_session;
 extern crate rustc_span;
 
 use crustr_analysis::{
-    array_analysis::{CrateSummary, Lambda}, call_graph::CallGraph, def_use::BorrowckDefUse,
+    array_analysis::{CrateSummary, Lambda},
+    call_graph::CallGraph,
+    def_use::BorrowckDefUse,
     ssa::rename::handler::LogSSAName,
 };
 use rustc_hir::def_id::LocalDefId;
@@ -73,7 +75,10 @@ pub fn array_analysis<'tcx>(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: 
             log::debug!("Solve failed!");
             log::debug!("Global context:");
             let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
-            for (lambda, solution) in solutions.raw[crate_summary.globals.clone()].iter().enumerate() {
+            for (lambda, solution) in solutions.raw[crate_summary.globals.clone()]
+                .iter()
+                .enumerate()
+            {
                 let lambda = Lambda::from(lambda);
                 log::debug!(
                     "{: <7} = {: <2}, with source data {}",

@@ -214,6 +214,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         self.ctxt.constraints.push(constraint);
     }
 
+    /// Modelling: the return value of `malloc` is definitely thin
     fn model_malloc(
         &mut self,
         args: &Vec<Operand<'tcx>>,
@@ -221,7 +222,11 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) {
         log::debug!("modelling malloc");
-        self.default_model_call(args, destination, location);
+        for arg in args {
+            self.visit_operand(arg, location);
+        }
+        let (dest, _) = destination.unwrap();
+        self.assume_call_return(&dest, false, location)
     }
 
     fn model_free(
@@ -237,7 +242,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
     /// Spec: `void * memmove ( void * destination, const void * source, size_t num );`
     /// where `destination` is returned.
     ///
-    /// Modelling: default
+    /// Modelling: return value = destination (as they should be the same thing)
     fn model_memmove(
         &mut self,
         args: &Vec<Operand<'tcx>>,
@@ -245,7 +250,21 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) {
         log::debug!("modelling memmove");
-        self.default_model_call(args, destination, location)
+        assert_eq!(args.len(), 3);
+        let (dest, args) = args.split_first().unwrap();
+        let dest = dest.place().unwrap();
+        let dest = self.process_rhs(&dest, location);
+        for arg in args {
+            self.visit_operand(arg, location)
+        }
+        let (ret, _) = destination.unwrap();
+        let ret = self.process_lhs(&ret, location);
+        let constraint = Constraint(ret, dest);
+        log::debug!("generate constraint {}", constraint);
+        self.ctxt.constraints.push(constraint);
+        let constraint = Constraint(dest, ret);
+        log::debug!("generate constraint {}", constraint);
+        self.ctxt.constraints.push(constraint);
         /*
         // Modelling: `destination`, `source`, and return value should all be fat.
         assert_eq!(args.len(), 3);
@@ -269,7 +288,21 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) {
         log::debug!("modelling memcpy");
-        self.default_model_call(args, destination, location)
+        assert_eq!(args.len(), 3);
+        let (dest, args) = args.split_first().unwrap();
+        let dest = dest.place().unwrap();
+        let dest = self.process_rhs(&dest, location);
+        for arg in args {
+            self.visit_operand(arg, location)
+        }
+        let (ret, _) = destination.unwrap();
+        let ret = self.process_lhs(&ret, location);
+        let constraint = Constraint(ret, dest);
+        log::debug!("generate constraint {}", constraint);
+        self.ctxt.constraints.push(constraint);
+        let constraint = Constraint(dest, ret);
+        log::debug!("generate constraint {}", constraint);
+        self.ctxt.constraints.push(constraint);
         /*
         assert_eq!(args.len(), 3);
         let ([dest, src, num], _) = args.split_array_ref::<3>();
@@ -309,7 +342,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
     /// Spec: `char * strncat ( char * destination, const char * source, size_t num );`
     /// where destination is returned.
     ///
-    /// Modelling: default.
+    /// Modelling: identical to `memmove`.
     fn model_strncat(
         &mut self,
         args: &Vec<Operand<'tcx>>,
@@ -317,8 +350,22 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) {
         log::debug!("modelling strncat");
-        self.default_model_call(args, destination, location)
-        /* 
+        assert_eq!(args.len(), 3);
+        let (dest, args) = args.split_first().unwrap();
+        let dest = dest.place().unwrap();
+        let dest = self.process_rhs(&dest, location);
+        for arg in args {
+            self.visit_operand(arg, location)
+        }
+        let (ret, _) = destination.unwrap();
+        let ret = self.process_lhs(&ret, location);
+        let constraint = Constraint(ret, dest);
+        log::debug!("generate constraint {}", constraint);
+        self.ctxt.constraints.push(constraint);
+        let constraint = Constraint(dest, ret);
+        log::debug!("generate constraint {}", constraint);
+        self.ctxt.constraints.push(constraint);
+        /*
         // Modelling: identical to `memmove`.
         assert_eq!(args.len(), 3);
         let ([dest, src, num], _) = args.split_array_ref::<3>();
@@ -341,7 +388,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
     ) {
         log::debug!("modelling strcmp");
         self.default_model_call(args, destination, location)
-        /* 
+        /*
         // Modelling: `str1`, `str2` should both be fat.
         assert_eq!(args.len(), 2);
         let ([str1, str2], _) = args.split_array_ref::<2>();
@@ -367,7 +414,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
     ) {
         log::debug!("modelling strstr");
         self.default_model_call(args, destination, location)
-        /* 
+        /*
         // Modelling: `str1`, `str2` should both be fat, return value should be unknown.
         // TODO: is this appropriate? Should the return value be thin instead?
         assert_eq!(args.len(), 2);
@@ -395,7 +442,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
     ) {
         log::debug!("modelling strlen");
         self.default_model_call(args, destination, location)
-        /* 
+        /*
         // Modelling: `str` should be fat.
         assert_eq!(args.len(), 1);
         let str = args.first().unwrap();
