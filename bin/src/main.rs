@@ -85,6 +85,9 @@ fn main() {
             config,
         )
         */
-        compiler_interface::run_compiler_with_struct_defs_and_funcs(cli.path.into(), crustr_passes::array_analysis)
+        compiler_interface::run_compiler_with_struct_defs_and_funcs(
+            cli.path.into(),
+            crustr_passes::array_analysis,
+        )
     }
 }
