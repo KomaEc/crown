@@ -1,12 +1,30 @@
 # Ownership and Lifetime guided C to Rust Refactoring
 
 ## Usage
-Currently, this tool will do some meaningless stuff: given a path to a Cargo project (which is required to have a `Cargo.toml` file, with a 'lib' section indicating the path to the main lib entry), it will add to dependencies the 'crustr_ptr' library (which is a customised pointer wrapper type), and then it will rewrite `*mut T` in all struct definition into `Option<NonNullRawMut<T>>`.
-To run:
+This tool is now able to infer an approximate fat/thin signature for struct and function definitions. To test it on the 'buffer' benchmark, do
 ```shell
-cp -r benchmark/ezxml workspace
-cargo run -- workspace/ezxml
+cp -r benchmark/buffer_good workspace/
+cargo run -- workspace/buffer_good --single-file
 ```
+the solution will be printed. There're a lot of constraint variables, but for now, the most important are the first two constraint variables λ0 and λ1. They correspond to the fields `alloc` and `data` of `buffer_t`. The inferred signatures are that `alloc` is fat and `data` is thin, which is exactly what we want.
+
+Note that the benchmark is called 'good' because I manually fix one line of code (on line 169 of `benchmark/buffer_good/src/buffer.rs`). Originally in C, this is
+```c
+self.alloc = self.data = realloc(self.alloc, ..)
+```
+I manually fixed as
+```c
+self.data = self.alloc = realloc(self.alloc, ..)
+```
+The original code snippet says that a reallocated slice of data is first assigned to `self.data` and then `self.alloc`. However `self.data` should be a thin pointer, a cursor into `self.alloc`. The runtime length information is lost when the reallocated slice is assigned to `self.data`. This means that if we want to make `self.data` as a slice type but don't change the order of assignment, the code will never compile (I'm not 100% sure about this). In fact, if we revert this fix (by replacing the code on line 169 to line 173 by the snippet commented on line 175), the analysis complains that it cannot solve the constraint.
+
+
+__TODO__:
+[ ] Debug. I've identified several major bugs by only looking at the printed results, but I'm still not sure if the analysis is close to be correct. It's better to have more test cases.
+[ ] The analysis engine generates many useless constraint variables. Figure out why.
+[ ] In the main `iterate_to_fixpoint` procedure, the inner loop that processes one component of the SCC of the call graph uses chaotic iteration. Turn it into a worklist algorithm.
+[ ] The analysis can be improved. Specifically, right now the inferencer treats newly defined locals as unconstrained (more concretely, in `let mut a = ...; a = ...`, in the second statement, `a` is redefined, and hence a new local will be defined in the SSA; this newly defined local is unconstrained). Since they are unconstrained, a user local variable may have different type signatures in different context. My intuition is that, if the type signature changes, we can replace assignment by a new binding, which is more flexible. However, this is too coarse: a local can only be thinner not fatter. The analysis will be more precise if we generate an additional constraint when defining a new SSA local.
+
 
 ## Motivating Examples
 We show several refactoring examples guided by the ownership and lifetime _principles_ of Rust. I use the word _principle_, because Rust currently does not have a clear definition of lifetime. The borrow checker currently implemented in Rust view lifetimes as lifetimes of references. For example, for a reference of type `&'a T`, the lifetime `'a` refers to the set of program points where this reference is valid. However, there is a currently merging new formulation, called [polonius](http://smallcultfollowing.com/babysteps/blog/2018/04/27/an-alias-based-formulation-of-the-borrow-checker/), where such lifetime variable `'a` is treated as _a set of loans_. The new analysis is based on alias analysis and is more powerful.
