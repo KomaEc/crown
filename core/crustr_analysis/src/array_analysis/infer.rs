@@ -16,6 +16,7 @@ use crate::{
     ty_ext::TyExt,
 };
 use graph::implementation::forward_star::Direction;
+use rustc_data_structures::graph::WithNumNodes;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::{Idx, IndexVec};
@@ -23,7 +24,7 @@ use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, PlaceContext, Visitor},
         BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
-        ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind,
+        ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind, RETURN_PLACE,
     },
     ty::{subst::GenericArgKind, TyCtxt, TyKind::FnDef},
 };
@@ -36,6 +37,7 @@ impl<'tcx> CrateSummary<'tcx> {
         mut extra_handler: Handler,
     ) {
         let mut boundary_constraints = IndexVec::from_elem(vec![], &self.call_graph.graph.edges);
+        let mut return_ssa_idx = IndexVec::with_capacity(self.call_graph.num_nodes());
         for (func, &did) in self.call_graph.functions.iter_enumerated() {
             let body = self.tcx.optimized_mir(did);
             let insertion_points = body.compute_phi_node::<DefUse>(self.tcx);
@@ -67,6 +69,7 @@ impl<'tcx> CrateSummary<'tcx> {
             let InferCtxt {
                 lambda_ctxt,
                 phi_joins,
+                return_ssa_idx: func_return_ssa_idx,
                 ..
             } = infer.ctxt;
 
@@ -75,6 +78,7 @@ impl<'tcx> CrateSummary<'tcx> {
                 local_nested: lambda_ctxt.local_nested,
             };
             self.lambda_ctxt.func_ctxt.push(func_ctxt);
+            assert_eq!(func, return_ssa_idx.push(func_return_ssa_idx));
 
             for equalities in phi_joins {
                 for (_, equality) in equalities {
@@ -105,12 +109,13 @@ impl<'tcx> CrateSummary<'tcx> {
             )
         }
 
-        self.setup_boundary_constraints(boundary_constraints);
+        self.setup_boundary_constraints(boundary_constraints, return_ssa_idx);
     }
 
     pub fn setup_boundary_constraints(
         &mut self,
         boundary_constraints: IndexVec<CallSite, Vec<BoundaryConstraint>>,
+        return_ssa_idx: IndexVec<Func, Vec<usize>>,
     ) {
         self.boundary_constraints = boundary_constraints
             .into_iter_enumerated()
@@ -122,15 +127,27 @@ impl<'tcx> CrateSummary<'tcx> {
                     match bc {
                         // callee = caller
                         BoundaryConstraint::Argument { caller, callee } => {
-                            let callee =
-                                self.lambda_ctxt.func_ctxt[edge_data.target].local[callee][0];
+                            assert!(
+                                !self.lambda_ctxt.func_ctxt[edge_data.target].local[callee]
+                                    .is_empty(),
+                                "Argument {:?} should be initialised.",
+                                callee
+                            );
+                            let &callee = self.lambda_ctxt.func_ctxt[edge_data.target].local
+                                [callee]
+                                .first()
+                                .unwrap();
                             res.push(Constraint(callee, caller))
                         }
                         // caller = callee
                         BoundaryConstraint::Return { caller, callee } => {
-                            let callee =
-                                self.lambda_ctxt.func_ctxt[edge_data.target].local[callee][0];
-                            res.push(Constraint(caller, callee))
+                            assert!(!return_ssa_idx[edge_data.target].is_empty());
+                            assert_eq!(callee, RETURN_PLACE);
+                            for &ssa_idx in &return_ssa_idx[edge_data.target] {
+                                let callee = self.lambda_ctxt.func_ctxt[edge_data.target].local
+                                    [RETURN_PLACE][ssa_idx];
+                                res.push(Constraint(caller, callee))
+                            }
                         }
                     }
                 }
@@ -524,6 +541,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
             } else {
                 unreachable!("what could it be? {}", ty)
             }
+        } else if let TerminatorKind::Return = terminator.kind {
+            let ssa_idx = self.r#use(RETURN_PLACE);
+            self.ssa_name_handler()
+                .handle_use(RETURN_PLACE, ssa_idx, location);
+            self.ctxt.return_ssa_idx.push(ssa_idx);
+            return;
         }
         self.super_terminator(terminator, location)
     }
@@ -561,6 +584,7 @@ pub struct InferCtxt<'infercx, 'tcx> {
     phi_joins: IndexVec<BasicBlock, SmallVec<[(Local, Vec<Lambda>); 3]>>,
     constraints: &'infercx mut Vec<Constraint>,
     boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint>>,
+    return_ssa_idx: Vec<usize>,
 }
 
 impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
@@ -595,6 +619,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
             phi_joins,
             constraints, // : IndexVec::new(),
             boundary_constraints,
+            return_ssa_idx: vec![],
         }
         .debug_initialise()
     }
