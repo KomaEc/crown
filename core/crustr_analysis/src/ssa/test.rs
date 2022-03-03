@@ -55,11 +55,17 @@ fn test_phi_node_insertion_point() {
 
         let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
         assert_eq!(
-            insertion_points[BasicBlock::from_u32(1)].as_slice(),
+            insertion_points[BasicBlock::from_u32(1)]
+                .locals()
+                .collect::<Vec<_>>()
+                .as_slice(),
             &[Local::from_u32(0), Local::from_u32(2)]
         );
         assert_eq!(
-            insertion_points[BasicBlock::from_u32(7)].as_slice(),
+            insertion_points[BasicBlock::from_u32(7)]
+                .locals()
+                .collect::<Vec<_>>()
+                .as_slice(),
             &[Local::from_u32(0), Local::from_u32(2)]
         );
         // bb that is not a join point must not have phi nodes inserted

@@ -26,7 +26,7 @@ pub fn write_ssa_mir_fn<'tcx>(
                 if has_any {
                     writeln!(w, "{0}{0}[SSA", INDENT)?;
                 }
-                for &(local, def, ref uses) in &ssa_name.names_for_phi_nodes[bb] {
+                for (local, (def, uses)) in ssa_name.names_for_phi_nodes[bb].iter_enumerated() {
                     writeln!(
                         w,
                         "{}{}{:?}^{} = ϕ({})",

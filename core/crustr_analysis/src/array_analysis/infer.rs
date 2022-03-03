@@ -10,7 +10,7 @@ use crate::{
     call_graph::{CallGraph, CallSite, Func},
     def_use::IsDefUse,
     ssa::{
-        body_ext::{BodyExt, PhiNodeInserted},
+        body_ext::{BodyExt, PhiNodeInsertionPoints},
         rename::{HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename, SSARenameState},
     },
     ty_ext::TyExt,
@@ -29,7 +29,6 @@ use rustc_middle::{
     ty::{subst::GenericArgKind, TyCtxt, TyKind::FnDef},
 };
 use rustc_target::abi::VariantIdx;
-use smallvec::SmallVec;
 
 impl<'tcx> CrateSummary<'tcx> {
     pub fn infer_all<DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>(
@@ -80,8 +79,8 @@ impl<'tcx> CrateSummary<'tcx> {
             self.lambda_ctxt.func_ctxt.push(func_ctxt);
             assert_eq!(func, return_ssa_idx.push(func_return_ssa_idx));
 
-            for equalities in phi_joins {
-                for (_, equality) in equalities {
+            for equalities in phi_joins.into_iter() {
+                for equality in equalities.into_iter() {
                     assert!(equality.len() >= 2);
                     let (&this, tail) = equality.split_first().unwrap();
                     for &other in tail {
@@ -617,14 +616,14 @@ pub struct InferCtxt<'infercx, 'tcx> {
     body: &'infercx Body<'tcx>,
     call_graph: &'infercx CallGraph,
     lambda_ctxt: CrateLambdaCtxtIntraView<'infercx>,
-    phi_joins: IndexVec<BasicBlock, SmallVec<[(Local, Vec<Lambda>); 3]>>,
+    phi_joins: PhiNodeInsertionPoints<Vec<Lambda>>, //IndexVec<BasicBlock, SmallVec<[(Local, Vec<Lambda>); 3]>>,
     constraints: &'infercx mut Vec<Constraint>,
     boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint>>,
     return_ssa_idx: Vec<usize>,
 }
 
 impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
-    pub fn new(
+    pub fn new<DefUse: IsDefUse>(
         tcx: TyCtxt<'tcx>,
         func: Func,
         body: &'infercx Body<'tcx>,
@@ -632,21 +631,14 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         lambda_ctxt: &'infercx mut CrateLambdaCtxt,
         constraints: &'infercx mut Vec<Constraint>,
         boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint>>,
-        insertion_points: &PhiNodeInserted,
+        insertion_points: &PhiNodeInsertionPoints<PhantomData<*const DefUse>>,
     ) -> Self {
-        let phi_joins = insertion_points
-            .iter()
-            .map(|vec| {
-                vec.iter()
-                    .filter_map(|&local| {
-                        body.local_decls[local]
-                            .ty
-                            .is_ptr_of_concerned()
-                            .then(|| (local, vec![]))
-                    })
-                    .collect::<SmallVec<_>>()
-            })
-            .collect::<IndexVec<_, _>>();
+        let phi_joins = insertion_points.filter_map_local(|local| {
+            body.local_decls[local]
+                .ty
+                .is_ptr_of_concerned()
+                .then(|| vec![])
+        });
         InferCtxt {
             tcx,
             body,
@@ -657,10 +649,10 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
             boundary_constraints,
             return_ssa_idx: vec![],
         }
-        .debug_initialise()
+        .log_initial_state()
     }
 
-    pub fn debug_initialise(self) -> Self {
+    fn log_initial_state(self) -> Self {
         #[cfg(debug_assertions)]
         {
             const INDENT: &str = "   in f, ";
@@ -696,7 +688,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
     pub fn debug_result(&self) {
         log::debug!("Phi nodes joins:");
         for (bb, locals) in self.phi_joins.iter_enumerated() {
-            for (local, lambdas) in locals {
+            for (local, lambdas) in locals.iter_enumerated() {
                 log::debug!("for {:?} at {:?}, {:?}", local, bb, lambdas)
             }
         }
@@ -715,12 +707,7 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
     fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
         log::debug!("InferCtxt phi node defining {:?}^{}", local, idx);
         let lambda = self.lambda_ctxt.generate_local(local, idx);
-        self.phi_joins[block]
-            .iter_mut()
-            .find_map(|&mut (this_local, ref mut lambdas)| {
-                (this_local == local).then(|| lambdas.push(lambda))
-            })
-            .unwrap()
+        self.phi_joins[block][local].push(lambda);
     }
 
     fn handle_use(&mut self, local: Local, idx: usize, _location: Location) -> Self::Output {
@@ -735,11 +722,6 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
         log::debug!("InferCtxt phi node using {:?}^{}", local, idx);
         let lambda = self.lambda_ctxt.local[local][idx];
         log::debug!("retrieve {:?} for Local {:?}^{}", lambda, local, idx);
-        self.phi_joins[block]
-            .iter_mut()
-            .find_map(|&mut (this_local, ref mut lambdas)| {
-                (this_local == local).then(|| lambdas.push(lambda))
-            })
-            .unwrap()
+        self.phi_joins[block][local].push(lambda);
     }
 }

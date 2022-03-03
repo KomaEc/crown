@@ -8,7 +8,7 @@ use rustc_middle::mir::{
     BasicBlock, BasicBlockData, Body, Local, Location, Statement, Terminator,
 };
 
-use crate::{def_use::IsDefUse, ssa::body_ext::PhiNodeInserted};
+use crate::{def_use::IsDefUse, ssa::body_ext::PhiNodeInsertionPoints};
 
 use std::marker::PhantomData;
 
@@ -89,7 +89,11 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
         self.ssa_name_handler().handle_use(local, ssa_idx, location)
     }
 
-    fn rename_body(&mut self, body: &Body<'tcx>, insertion_points: &PhiNodeInserted) {
+    fn rename_body(
+        &mut self,
+        body: &Body<'tcx>,
+        insertion_points: &PhiNodeInsertionPoints<PhantomData<*const Self::DefUse>>,
+    ) {
         let dominators = body.dominators();
         let mut children = IndexVec::from_elem(vec![], body.basic_blocks());
         let mut root = BasicBlock::from_u32(0);
@@ -122,7 +126,7 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
         body: &Body<'tcx>,
         block: BasicBlock,
         data: &BasicBlockData<'tcx>,
-        insertion_points: &PhiNodeInserted,
+        insertion_points: &PhiNodeInsertionPoints<PhantomData<*const Self::DefUse>>,
     ) {
         let BasicBlockData {
             statements,
@@ -130,7 +134,7 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
             is_cleanup: _,
         } = data;
 
-        for &local in &insertion_points[block] {
+        for local in insertion_points[block].locals() {
             let i = self.ssa_state().define(local);
             self.ssa_name_handler()
                 .handle_def_at_phi_node(local, i, block);
@@ -159,7 +163,7 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
                 .iter()
                 .position(|&pred| pred == block)
                 .unwrap();
-            for &local in &insertion_points[succ] {
+            for local in insertion_points[succ].locals() {
                 let i = self.ssa_state().r#use(local);
                 self.ssa_name_handler()
                     .handle_use_at_phi_node(local, i, succ, pos);

@@ -7,6 +7,7 @@ use rustc_middle::ty::TyCtxt;
 use rustc_mir_dataflow::{Analysis, ResultsCursor};
 use smallvec::SmallVec;
 use std::collections::VecDeque;
+use std::marker::PhantomData;
 
 use crate::def_use::{DefSites, DefSitesGatherer, IsDefUse};
 use crate::liveness_analysis::MaybeLiveLocals;
@@ -16,14 +17,50 @@ const PHI_NODE_INSERTED_ON_STACK_SIZE: usize = 3;
 
 pub type DominanceFrontier =
     IndexVec<BasicBlock, SmallVec<[BasicBlock; DOMINATOR_FRONTIER_ON_STACK_SIZE]>>;
-/// TODO: turn this into `PhiNodeInserted<Payload>`
-/// where the original `PhiNodeInserted` is now `PhiNodeInserted<PhantomData<*const DefUse>>`!!
-/// this ensures the same representation as before
-pub type PhiNodeInserted = IndexVec<BasicBlock, SmallVec<[Local; PHI_NODE_INSERTED_ON_STACK_SIZE]>>; // IndexVec<BasicBlock, BasicBlockInsersionPoints<()>>;
 
 #[derive(Clone, Debug)]
 pub struct PhiNodeInsertionPoints<Payload> {
     insertion_points: IndexVec<BasicBlock, BasicBlockInsersionPoints<Payload>>,
+}
+
+impl<Payload> PhiNodeInsertionPoints<Payload> {
+    pub fn new(raw: IndexVec<BasicBlock, BasicBlockInsersionPoints<Payload>>) -> Self {
+        PhiNodeInsertionPoints {
+            insertion_points: raw,
+        }
+    }
+
+    pub fn into_iter(self) -> impl Iterator<Item = BasicBlockInsersionPoints<Payload>> {
+        self.insertion_points.into_iter()
+    }
+
+    pub fn map_local<F, U>(&self, f: F) -> PhiNodeInsertionPoints<U>
+    where
+        F: Fn(Local) -> U,
+    {
+        self.iter()
+            .map(|bb_insertion_points| bb_insertion_points.map_local(&f))
+            .collect::<IndexVec<_, _>>()
+            .into()
+    }
+
+    pub fn filter_map_local<U, F>(&self, f: F) -> PhiNodeInsertionPoints<U>
+    where
+        F: Fn(Local) -> Option<U>,
+    {
+        self.iter()
+            .map(|bb_insertion_points| bb_insertion_points.filter_map_local(&f))
+            .collect::<IndexVec<_, _>>()
+            .into()
+    }
+}
+
+impl<Payload> From<IndexVec<BasicBlock, BasicBlockInsersionPoints<Payload>>>
+    for PhiNodeInsertionPoints<Payload>
+{
+    fn from(insertion_points: IndexVec<BasicBlock, BasicBlockInsersionPoints<Payload>>) -> Self {
+        Self { insertion_points }
+    }
 }
 
 /// `PhiNodeInsertionPoints<Payload>` should act completely the same as
@@ -43,20 +80,72 @@ impl<Payload> std::ops::DerefMut for PhiNodeInsertionPoints<Payload> {
     }
 }
 
-
 #[derive(Clone, Debug)]
 pub struct BasicBlockInsersionPoints<Payload> {
     data: SmallVec<[(Local, Payload); PHI_NODE_INSERTED_ON_STACK_SIZE]>,
 }
 
- 
+impl<Payload> FromIterator<(Local, Payload)> for BasicBlockInsersionPoints<Payload> {
+    #[inline]
+    fn from_iter<T: IntoIterator<Item = (Local, Payload)>>(iter: T) -> Self {
+        Self {
+            data: iter.into_iter().collect::<SmallVec<_>>(),
+        }
+    }
+}
+
 impl<T> BasicBlockInsersionPoints<T> {
     pub fn new() -> Self {
-        BasicBlockInsersionPoints { data: SmallVec::new() }
+        BasicBlockInsersionPoints {
+            data: SmallVec::new(),
+        }
     }
 
+    #[inline]
     pub fn push(&mut self, local: Local, payload: T) {
         self.data.push((local, payload))
+    }
+
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
+
+    #[inline]
+    pub fn locals(&self) -> impl Iterator<Item = Local> + '_ {
+        self.data.iter().map(|&(local, _)| local)
+    }
+
+    #[inline]
+    pub fn into_iter(self) -> impl Iterator<Item = T> {
+        self.data.into_iter().map(|(_, payload)| payload)
+    }
+
+    #[inline]
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.data.iter().map(|(_, payload)| payload)
+    }
+
+    #[inline]
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.data.iter_mut().map(|(_, payload)| payload)
+    }
+
+    #[inline]
+    pub fn into_iter_enumerated(self) -> impl Iterator<Item = (Local, T)> {
+        self.data.into_iter()
+    }
+
+    #[inline]
+    pub fn iter_enumerated(&self) -> impl Iterator<Item = (Local, &T)> {
+        self.data.iter().map(|(local, payload)| (*local, payload))
+    }
+
+    #[inline]
+    pub fn iter_enumerated_mut(&mut self) -> impl Iterator<Item = (Local, &mut T)> {
+        self.data
+            .iter_mut()
+            .map(|(local, payload)| (*local, payload))
     }
 }
 
@@ -64,19 +153,19 @@ impl<T> std::ops::Index<Local> for BasicBlockInsersionPoints<T> {
     type Output = T;
 
     fn index(&self, local: Local) -> &Self::Output {
-        self.data.iter().find_map(|&(this_local, ref t)| {
-            (this_local == local).then(|| t)
-        })
-        .expect(&format!("no phi node for {:?}", local))
+        self.data
+            .iter()
+            .find_map(|&(this_local, ref t)| (this_local == local).then(|| t))
+            .expect(&format!("no phi node for {:?}", local))
     }
 }
 
 impl<T> std::ops::IndexMut<Local> for BasicBlockInsersionPoints<T> {
     fn index_mut(&mut self, local: Local) -> &mut Self::Output {
-        self.data.iter_mut().find_map(|&mut (this_local, ref mut t)| {
-            (this_local == local).then(|| t)
-        })
-        .expect(&format!("no phi node for {:?}", local))
+        self.data
+            .iter_mut()
+            .find_map(|&mut (this_local, ref mut t)| (this_local == local).then(|| t))
+            .expect(&format!("no phi node for {:?}", local))
     }
 }
 
@@ -85,19 +174,39 @@ impl<T> BasicBlockInsersionPoints<T> {
     where
         F: Fn(&T) -> U,
     {
-        BasicBlockInsersionPoints {
-            data: self
-                .data
-                .iter()
-                .map(|&(local, ref t)| (local, f(t)))
-                .collect::<SmallVec<_>>(),
-        }
+        self.iter_enumerated()
+            .map(|(local, t)| (local, f(t)))
+            .collect::<BasicBlockInsersionPoints<_>>()
+    }
+
+    pub fn map_local<F, U>(&self, f: F) -> BasicBlockInsersionPoints<U>
+    where
+        F: Fn(Local) -> U,
+    {
+        self.locals()
+            .map(|local| (local, f(local)))
+            .collect::<BasicBlockInsersionPoints<_>>()
+    }
+
+    pub fn filter_map_local<U, F>(&self, f: F) -> BasicBlockInsersionPoints<U>
+    where
+        F: Fn(Local) -> Option<U>,
+    {
+        self.locals()
+            .filter_map(|local| {
+                let payload = f(local)?;
+                Some((local, payload))
+            })
+            .collect::<BasicBlockInsersionPoints<_>>()
     }
 }
 
 pub trait BodyExt<'tcx> {
     fn dominance_frontier(&self) -> DominanceFrontier;
-    fn compute_phi_node<DefUse: IsDefUse>(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted;
+    fn compute_phi_node<DefUse: IsDefUse>(
+        &self,
+        tcx: TyCtxt<'tcx>,
+    ) -> PhiNodeInsertionPoints<PhantomData<*const DefUse>>;
 }
 
 impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
@@ -124,7 +233,10 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
         IndexVec::from_iter(df.iter().map(|set| set.iter().collect::<SmallVec<_>>()))
     }
 
-    fn compute_phi_node<DefUse: IsDefUse>(&self, tcx: TyCtxt<'tcx>) -> PhiNodeInserted {
+    fn compute_phi_node<DefUse: IsDefUse>(
+        &self,
+        tcx: TyCtxt<'tcx>,
+    ) -> PhiNodeInsertionPoints<PhantomData<*const DefUse>> {
         minimal_ssa_form(
             self,
             DefSitesGatherer::<DefUse>::new(self).gather(),
@@ -140,13 +252,17 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
 /// FIXME: this is not a full scale dead code elimination, as adding
 /// phi node will make more locals to be dead. So this needs to be a
 /// worklist algorithm!
-pub fn minimal_ssa_form<'tcx>(
+pub fn minimal_ssa_form<'tcx, DefUse: IsDefUse>(
     body: &Body<'tcx>,
     mut def_sites: DefSites,
     dominance_frontier: DominanceFrontier,
     mut liveness: ResultsCursor<'_, 'tcx, MaybeLiveLocals>,
-) -> PhiNodeInserted {
-    let mut inserted: PhiNodeInserted = IndexVec::from_elem(SmallVec::new(), body.basic_blocks());
+) -> PhiNodeInsertionPoints<PhantomData<*const DefUse>> {
+    let mut inserted: PhiNodeInsertionPoints<PhantomData<*const DefUse>> =
+        PhiNodeInsertionPoints::new(IndexVec::from_elem(
+            BasicBlockInsersionPoints::new(),
+            body.basic_blocks(),
+        ));
     let def_sites = def_sites
         .iter_mut()
         .map(|sites| {
@@ -166,7 +282,7 @@ pub fn minimal_ssa_form<'tcx>(
             for &bb_f in &dominance_frontier[bb] {
                 liveness.seek_to_block_start(bb_f);
                 if !already_added.contains(bb_f) && liveness.get().contains(a) {
-                    inserted[bb_f].push(a);
+                    inserted[bb_f].push(a, PhantomData);
                     assert!(already_added.insert(bb_f));
                     if !def_sites[a].contains(&bb_f) {
                         work_list.push_back(bb_f);
