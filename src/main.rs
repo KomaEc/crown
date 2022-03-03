@@ -1,11 +1,11 @@
 #![feature(let_else)]
 #![feature(rustc_private)]
 
-extern crate rustc_errors;
 extern crate rustc_error_codes;
+extern crate rustc_errors;
+extern crate rustc_feature;
 extern crate rustc_hash;
 extern crate rustc_hir;
-extern crate rustc_feature;
 extern crate rustc_interface;
 extern crate rustc_middle;
 extern crate rustc_mir_dataflow;
@@ -15,10 +15,11 @@ use clap::Parser;
 use crustr_analysis::null_analysis::NullAnalysisResults;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
-use rustc_hir::{OwnerNode, ItemKind};
+use rustc_hir::{ItemKind, OwnerNode};
 use rustc_interface::Config;
+use rustc_middle::ty::TyCtxt;
 use rustc_session::config;
-use std::{path::PathBuf, borrow::BorrowMut};
+use std::{borrow::BorrowMut, path::PathBuf};
 
 #[derive(Parser)]
 struct Cli {
@@ -45,26 +46,14 @@ fn main() {
     let args = Cli::parse();
     rustc_interface::run_compiler(compiler_config(args.path), move |compiler| {
         compiler.enter(|queries| {
-            queries.global_ctxt().borrow_mut().unwrap().peek_mut().enter(|tcx| {
-                let top_level_fn_def_ids = tcx
-                    .hir()
-                    .krate()
-                    .owners
-                    .iter()
-                    .filter_map(|maybe_owner| {
-                        let owner = maybe_owner.as_owner();
-                        let OwnerNode::Item(item) = owner.as_ref()?.node() else { return None };
-                        if !matches!(item.kind, ItemKind::Fn(_, _, _)) {
-                            return None;
-                        }
-                        Some(item.def_id)
-                    });
-
-                for def_id in top_level_fn_def_ids {
-                    let results = NullAnalysisResults::collect(tcx, def_id);
-                    println!("{results}");
-                }
-            })
+            queries
+                .global_ctxt()
+                .borrow_mut()
+                .unwrap()
+                .peek_mut()
+                .enter(|tcx| {
+                    run(&args.cmd, tcx);
+                })
         });
     });
 }
@@ -96,5 +85,33 @@ fn compiler_config(input_path: PathBuf) -> Config {
         override_queries: None,
         make_codegen_backend: None,
         registry: registry::Registry::new(&rustc_error_codes::DIAGNOSTICS),
+    }
+}
+
+fn run(cmd: &Command, tcx: TyCtxt<'_>) {
+    let top_level_fns = tcx
+        .hir()
+        .krate()
+        .owners
+        .iter()
+        .filter_map(|maybe_owner| {
+            let owner = maybe_owner.as_owner();
+            let OwnerNode::Item(item) = owner.as_ref()?.node() else { return None };
+            if !matches!(item.kind, ItemKind::Fn(_, _, _)) {
+                return None;
+            }
+            Some(item.def_id)
+        })
+        .collect::<Vec<_>>();
+
+    match cmd {
+        Command::Analyse { null, all } => {
+            if *null || *all {
+                for &def_id in top_level_fns.iter() {
+                    let results = NullAnalysisResults::collect(tcx, def_id);
+                    println!("{results}");
+                }
+            }
+        }
     }
 }
