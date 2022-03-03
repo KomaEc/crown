@@ -321,6 +321,8 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> SSA
 impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
     Infer<'infercx, 'tcx, DefUse, Handler>
 {
+    /// FIXME: handle nested ptrs properly!
+    /// Change the return type as an iterator over lambdas
     fn process_projections(
         &mut self,
         base: Local,
@@ -406,13 +408,13 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
 {
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
         if let Some(def_use) = DefUse::categorize(context) {
-            if IsDefUse::defining(def_use) {
+            if def_use.defining() {
                 /*
                 let i = self.ssa_state().define(local);
                 self.ssa_name_handler().handle_def(local, i, location);
                 */
                 self.define(local, location);
-            } else if DefUse::using(def_use) {
+            } else if def_use.using() {
                 /*
                 let i = self.ssa_state().r#use(local);
                 self.ssa_name_handler().handle_use(local, i, location);

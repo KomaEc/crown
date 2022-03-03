@@ -61,7 +61,7 @@ pub fn array_analysis<'tcx>(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: 
 
             for (lambda, solution) in solutions.into_iter_enumerated() {
                 log::debug!(
-                    "{: <7} = {: <2}, which is {}",
+                    "{: <7} = {: <2} at {}",
                     &format!("{:?}", lambda),
                     solution
                         .map(|fat| { fat.then_some("1").unwrap_or("0") })
@@ -83,7 +83,7 @@ pub fn array_analysis<'tcx>(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: 
             {
                 let lambda = Lambda::from(lambda);
                 log::debug!(
-                    "{: <7} = {: <2}, which is {}",
+                    "{: <7} = {: <2} at {}",
                     &format!("{:?}", lambda),
                     solution
                         .map(|fat| { fat.then_some("1").unwrap_or("0") })

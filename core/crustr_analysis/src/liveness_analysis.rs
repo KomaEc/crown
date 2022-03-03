@@ -161,12 +161,12 @@ impl RustcLivenessDefUse {
 }
 
 impl IsDefUse for RustcLivenessDefUse {
-    fn defining(def_use: Self) -> bool {
-        matches!(def_use, RustcLivenessDefUse::Def)
+    fn defining(self) -> bool {
+        matches!(self, RustcLivenessDefUse::Def)
     }
 
-    fn using(def_use: Self) -> bool {
-        matches!(def_use, RustcLivenessDefUse::Use)
+    fn using(self) -> bool {
+        matches!(self, RustcLivenessDefUse::Use)
     }
 
     fn categorize(context: PlaceContext) -> Option<Self> {

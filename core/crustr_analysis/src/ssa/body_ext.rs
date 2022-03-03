@@ -16,18 +16,47 @@ const PHI_NODE_INSERTED_ON_STACK_SIZE: usize = 3;
 
 pub type DominanceFrontier =
     IndexVec<BasicBlock, SmallVec<[BasicBlock; DOMINATOR_FRONTIER_ON_STACK_SIZE]>>;
-// TODO: turn PhiNodeInserted into PhiNodeInserted<DefUse>
+/// TODO: turn this into `PhiNodeInserted<Payload>`
+/// where the original `PhiNodeInserted` is now `PhiNodeInserted<PhantomData<*const DefUse>>`!!
+/// this ensures the same representation as before
 pub type PhiNodeInserted = IndexVec<BasicBlock, SmallVec<[Local; PHI_NODE_INSERTED_ON_STACK_SIZE]>>; // IndexVec<BasicBlock, BasicBlockInsersionPoints<()>>;
 
-/*
-#[derive(Clone)]
-pub struct BasicBlockInsersionPoints<T> {
-    data: SmallVec<[(Local, T); PHI_NODE_INSERTED_ON_STACK_SIZE]>,
+#[derive(Clone, Debug)]
+pub struct PhiNodeInsertionPoints<Payload> {
+    insertion_points: IndexVec<BasicBlock, BasicBlockInsersionPoints<Payload>>,
 }
 
+/// `PhiNodeInsertionPoints<Payload>` should act completely the same as
+/// `IndexVec<BasicBlock, BasicBlockInsersionPoints<Payload>>`, so we implement
+/// `Deref`
+impl<Payload> std::ops::Deref for PhiNodeInsertionPoints<Payload> {
+    type Target = IndexVec<BasicBlock, BasicBlockInsersionPoints<Payload>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.insertion_points
+    }
+}
+
+impl<Payload> std::ops::DerefMut for PhiNodeInsertionPoints<Payload> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.insertion_points
+    }
+}
+
+
+#[derive(Clone, Debug)]
+pub struct BasicBlockInsersionPoints<Payload> {
+    data: SmallVec<[(Local, Payload); PHI_NODE_INSERTED_ON_STACK_SIZE]>,
+}
+
+ 
 impl<T> BasicBlockInsersionPoints<T> {
     pub fn new() -> Self {
         BasicBlockInsersionPoints { data: SmallVec::new() }
+    }
+
+    pub fn push(&mut self, local: Local, payload: T) {
+        self.data.push((local, payload))
     }
 }
 
@@ -65,13 +94,6 @@ impl<T> BasicBlockInsersionPoints<T> {
         }
     }
 }
-
-impl BasicBlockInsersionPoints<()> {
-    pub fn push(&mut self, local: Local) {
-        self.data.push((local, ()))
-    }
-}
-*/
 
 pub trait BodyExt<'tcx> {
     fn dominance_frontier(&self) -> DominanceFrontier;

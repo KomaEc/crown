@@ -8,22 +8,22 @@ use rustc_middle::mir::{Body, Local, Location, Place};
 use smallvec::{smallvec, SmallVec};
 
 pub trait IsDefUse: PartialEq + Eq + Clone + Copy {
-    fn defining(def_use: Self) -> bool;
+    fn defining(self) -> bool;
 
-    fn using(def_use: Self) -> bool;
+    fn using(self) -> bool;
 
     fn categorize(context: PlaceContext) -> Option<Self>;
 }
 
 impl IsDefUse for BorrowckDefUse {
     #[inline]
-    fn defining(def_use: Self) -> bool {
-        matches!(def_use, BorrowckDefUse::Def)
+    fn defining(self) -> bool {
+        matches!(self, BorrowckDefUse::Def)
     }
 
     #[inline]
-    fn using(def_use: Self) -> bool {
-        matches!(def_use, BorrowckDefUse::Use)
+    fn using(self) -> bool {
+        matches!(self, BorrowckDefUse::Use)
     }
 
     #[inline]

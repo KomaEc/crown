@@ -179,7 +179,7 @@ struct StackPopper<'me, DefUse: IsDefUse>(
 
 impl<'me, 'tcx, DefUse: IsDefUse> Visitor<'tcx> for StackPopper<'tcx, DefUse> {
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, _location: Location) {
-        if DefUse::categorize(context).map_or(false, |def_use| IsDefUse::defining(def_use)) {
+        if DefUse::categorize(context).map_or(false, IsDefUse::defining) {
             self.0[local].pop();
         }
     }
