@@ -7,5 +7,4 @@ members = [
     "core/crustr_rewrite",
     "core/crustr_passes",
     "core/utils/graph",
-    "core/utils/work_list",
 ]
