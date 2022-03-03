@@ -30,34 +30,27 @@ impl<ProgramVar: Idx> SSARenameState<ProgramVar> {
 }
 
 pub trait HasSSARenameState<ProgramVar: Idx> {
-    fn state(&mut self) -> &mut SSARenameState<ProgramVar>;
-    #[inline(always)]
-    fn define(&mut self, var: ProgramVar) -> usize {
-        self.state().define(var)
-    }
-    #[inline(always)]
-    fn r#use(&mut self, var: ProgramVar) -> usize {
-        self.state().r#use(var)
-    }
+    fn ssa_state(&mut self) -> &mut SSARenameState<ProgramVar>;
 }
 
-impl<ProgramVar: Idx> HasSSARenameState<ProgramVar> for SSARenameState<ProgramVar> {
+impl<ProgramVar: Idx> SSARenameState<ProgramVar> {
     #[inline(always)]
-    fn state(&mut self) -> &mut SSARenameState<ProgramVar> {
-        self
-    }
-
-    #[inline(always)]
-    fn define(&mut self, var: ProgramVar) -> usize {
+    pub fn define(&mut self, var: ProgramVar) -> usize {
         self.count[var] += 1;
         let idx = self.count[var];
         self.stack[var].push(idx);
         idx
     }
-
     #[inline(always)]
-    fn r#use(&mut self, var: ProgramVar) -> usize {
+    pub fn r#use(&self, var: ProgramVar) -> usize {
         *self.stack[var].last().unwrap()
+    }
+}
+
+impl<ProgramVar: Idx> HasSSARenameState<ProgramVar> for SSARenameState<ProgramVar> {
+    #[inline(always)]
+    fn ssa_state(&mut self) -> &mut SSARenameState<ProgramVar> {
+        self
     }
 }
 
@@ -78,6 +71,24 @@ pub trait HasSSANameHandler {
 pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
     type DefUse: IsDefUse;
 
+    fn define(
+        &mut self,
+        local: Local,
+        location: Location,
+    ) -> <<Self as HasSSANameHandler>::Handler as SSANameHandler>::Output {
+        let ssa_idx = self.ssa_state().define(local);
+        self.ssa_name_handler().handle_def(local, ssa_idx, location)
+    }
+
+    fn r#use(
+        &mut self,
+        local: Local,
+        location: Location,
+    ) -> <<Self as HasSSANameHandler>::Handler as SSANameHandler>::Output {
+        let ssa_idx = self.ssa_state().r#use(local);
+        self.ssa_name_handler().handle_use(local, ssa_idx, location)
+    }
+
     fn rename_body(&mut self, body: &Body<'tcx>, insertion_points: &PhiNodeInserted) {
         let dominators = body.dominators();
         let mut children = IndexVec::from_elem(vec![], body.basic_blocks());
@@ -96,7 +107,7 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
 
         while let Some((bb, to_pop_stack)) = visitor_stack.pop() {
             if to_pop_stack {
-                StackPopper::<Self::DefUse>(&mut self.state().stack, PhantomData)
+                StackPopper::<Self::DefUse>(&mut self.ssa_state().stack, PhantomData)
                     .visit_basic_block_data(bb, &body.basic_blocks()[bb]);
             } else {
                 self.rename_basic_block_data(body, bb, &body.basic_blocks()[bb], insertion_points);
@@ -120,7 +131,7 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
         } = data;
 
         for &local in &insertion_points[block] {
-            let i = self.define(local);
+            let i = self.ssa_state().define(local);
             self.ssa_name_handler()
                 .handle_def_at_phi_node(local, i, block);
         }
@@ -149,7 +160,7 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
                 .position(|&pred| pred == block)
                 .unwrap();
             for &local in &insertion_points[succ] {
-                let i = self.r#use(local);
+                let i = self.ssa_state().r#use(local);
                 self.ssa_name_handler()
                     .handle_use_at_phi_node(local, i, succ, pos);
             }

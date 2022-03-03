@@ -17,6 +17,8 @@ use rustc_target::abi::VariantIdx;
 use crate::{
     array_analysis::solve::{solve, SolveSuccess},
     call_graph::{CallGraph, CallSite, Func},
+    def_use::IsDefUse,
+    ssa::rename::SSANameHandler,
     ty_ext::TyExt,
 };
 
@@ -46,7 +48,12 @@ pub struct FuncSummary {
 }
 
 impl<'tcx> CrateSummary<'tcx> {
-    pub fn new(tcx: TyCtxt<'tcx>, adt_defs: &[DefId], call_graph: CallGraph) -> Self {
+    pub fn new<DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>(
+        tcx: TyCtxt<'tcx>,
+        adt_defs: &[DefId],
+        call_graph: CallGraph,
+        mut extra_handler: Handler,
+    ) -> Self {
         let num_funcs = call_graph.num_nodes();
         let lambda_ctxt = CrateLambdaCtxt::initiate(tcx, adt_defs, &call_graph);
         CrateSummary {
@@ -61,6 +68,8 @@ impl<'tcx> CrateSummary<'tcx> {
             constraints: Vec::new(),
             boundary_constraints: IndexVec::new(),
         }
+        .log_initial_state()
+        .infer_all::<DefUse, _>(&mut extra_handler)
     }
 
     pub fn iterate_to_fixpoint(&mut self) -> Result<(), ()> {
@@ -117,25 +126,71 @@ impl<'tcx> CrateSummary<'tcx> {
         Ok(())
     }
 
-    pub fn debug(&self) {
-        log::debug!("Initialising crate summary");
-        for (&adt_did, x) in &self.lambda_ctxt.field_defs {
-            for (variant_idx, y) in x.iter_enumerated() {
-                for (field_idx, z) in y.iter().enumerate() {
-                    let adt_def = self.tcx.adt_def(adt_did);
-                    let field_def = &adt_def.variants[variant_idx].fields[field_idx];
-                    let field_def_str = format!("{}.{}", self.tcx.type_of(adt_did), field_def.name);
-                    log::debug!(
-                        "for field {}: {}:",
-                        field_def_str,
-                        self.tcx.type_of(field_def.did)
-                    );
-                    for (idx, lambda) in z.iter().enumerate() {
-                        log::debug!("{:*<1$}{2} ==> {3:?}", "", idx, field_def_str, lambda)
+    pub fn lambda_source_data_to_str(&self, src_data: LambdaSourceData) -> String {
+        match src_data {
+            LambdaSourceData::LocalScalar {
+                func,
+                base,
+                ssa_idx,
+            } => {
+                let did = self.call_graph.functions[func];
+                format!("{:?}^{} in {}", base, ssa_idx, self.tcx.def_path_str(did))
+            }
+            LambdaSourceData::FieldDef {
+                adt_def,
+                variant_idx,
+                field_idx,
+                nested_level,
+            } => {
+                let adt_def = self.tcx.adt_def(adt_def);
+                let variant_def = &adt_def.variants[variant_idx];
+                let field_def = &variant_def.fields[field_idx];
+                format!(
+                    "{:*<1$}{2}.{3}",
+                    "", nested_level, variant_def.name, field_def.name
+                )
+            }
+            LambdaSourceData::LocalNested {
+                func,
+                base,
+                nested_level,
+            } => {
+                let did = self.call_graph.functions[func];
+                format!(
+                    "{:*<1$}{2:?} in {3}",
+                    "",
+                    nested_level,
+                    base,
+                    self.tcx.def_path_str(did)
+                )
+            }
+        }
+    }
+
+    fn log_initial_state(self) -> Self {
+        #[cfg(debug_assertions)]
+        {
+            log::debug!("Initialising crate summary");
+            for (&adt_did, x) in &self.lambda_ctxt.field_defs {
+                for (variant_idx, y) in x.iter_enumerated() {
+                    for (field_idx, z) in y.iter().enumerate() {
+                        let adt_def = self.tcx.adt_def(adt_did);
+                        let field_def = &adt_def.variants[variant_idx].fields[field_idx];
+                        let field_def_str =
+                            format!("{}.{}", self.tcx.type_of(adt_did), field_def.name);
+                        log::debug!(
+                            "for field {}: {}:",
+                            field_def_str,
+                            self.tcx.type_of(field_def.did)
+                        );
+                        for (idx, lambda) in z.iter().enumerate() {
+                            log::debug!("{:*<1$}{2} ==> {3:?}", "", idx, field_def_str, lambda)
+                        }
                     }
                 }
             }
         }
+        self
     }
 }
 

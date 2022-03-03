@@ -46,28 +46,30 @@ pub fn array_analysis<'tcx>(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: 
         .collect::<Vec<_>>();
 
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
-    let mut crate_summary = CrateSummary::new(tcx, &adt_defs, call_graph);
-    crate_summary.debug();
-    crate_summary.infer::<BorrowckDefUse, LogSSAName>(LogSSAName);
+    let mut crate_summary =
+        CrateSummary::new::<BorrowckDefUse, _>(tcx, &adt_defs, call_graph, LogSSAName);
     // assert_eq!(crate_summary.call_graph.num_nodes(), 1);
 
     match crate_summary.iterate_to_fixpoint() {
         Ok(()) => {
-            let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
+            let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions.clone();
 
             log::debug!("All constraints:");
-            for constraint in crate_summary.constraints {
+            for constraint in &crate_summary.constraints {
                 log::debug!("{}", constraint)
             }
 
             for (lambda, solution) in solutions.into_iter_enumerated() {
                 log::debug!(
-                    "{: <7} = {: <2}, with source data {}",
+                    "{: <7} = {: <2}, which is {}",
                     &format!("{:?}", lambda),
                     solution
                         .map(|fat| { fat.then_some("1").unwrap_or("0") })
                         .unwrap_or("?"),
-                    crate_summary.lambda_ctxt.lambda_map.data_map[lambda]
+                    // crate_summary.lambda_ctxt.lambda_map.data_map[lambda]
+                    crate_summary.lambda_source_data_to_str(
+                        crate_summary.lambda_ctxt.lambda_map.data_map[lambda].clone()
+                    )
                 )
             }
         }
@@ -81,7 +83,7 @@ pub fn array_analysis<'tcx>(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: 
             {
                 let lambda = Lambda::from(lambda);
                 log::debug!(
-                    "{: <7} = {: <2}, with source data {}",
+                    "{: <7} = {: <2}, which is {}",
                     &format!("{:?}", lambda),
                     solution
                         .map(|fat| { fat.then_some("1").unwrap_or("0") })

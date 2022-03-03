@@ -28,7 +28,7 @@ impl<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> HasSSARenameState<Local>
     for PlainRenamer<'me, 'tcx, DefUse, H>
 {
     #[inline(always)]
-    fn state(&mut self) -> &mut SSARenameState<Local> {
+    fn ssa_state(&mut self) -> &mut SSARenameState<Local> {
         &mut self.state
     }
 }
@@ -85,10 +85,10 @@ impl<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> Visitor<'tcx>
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
         if let Some(def_use) = DefUse::categorize(context) {
             if IsDefUse::defining(def_use) {
-                let i = self.define(local);
+                let i = self.ssa_state().define(local);
                 self.ssa_name_handler.handle_def(local, i, location);
             } else if IsDefUse::using(def_use) {
-                let i = self.r#use(local);
+                let i = self.ssa_state().r#use(local);
                 self.ssa_name_handler.handle_use(local, i, location);
             }
         }

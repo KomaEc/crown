@@ -317,7 +317,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
     /// Spec: `void * memset ( void * ptr, int value, size_t num );`
     /// where `ptr` is returned.
     ///
-    /// Modelling: default.
+    /// Modelling: identical to `memmove`.
     fn model_memset(
         &mut self,
         args: &Vec<Operand<'tcx>>,
@@ -325,7 +325,21 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) {
         log::debug!("modelling memset");
-        self.default_model_call(args, destination, location)
+        assert_eq!(args.len(), 3);
+        let (ptr, args) = args.split_first().unwrap();
+        let ptr = ptr.place().unwrap();
+        let ptr = self.process_rhs(&ptr, location);
+        for arg in args {
+            self.visit_operand(arg, location)
+        }
+        let (ret, _) = destination.unwrap();
+        let ret = self.process_lhs(&ret, location);
+        let constraint = Constraint(ret, ptr);
+        log::debug!("generate constraint {}", constraint);
+        self.ctxt.constraints.push(constraint);
+        let constraint = Constraint(ptr, ret);
+        log::debug!("generate constraint {}", constraint);
+        self.ctxt.constraints.push(constraint);
         /*
         // Modelling: `ptr` and return value should both be fat.
         assert_eq!(args.len(), 3);

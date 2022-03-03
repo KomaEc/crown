@@ -76,9 +76,8 @@ fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
     let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
 
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
-    let mut crate_summary = CrateSummary::new(tcx, &adt_defs, call_graph);
-    crate_summary.debug();
-    crate_summary.infer::<BorrowckDefUse, LogSSAName>(LogSSAName);
+    let mut crate_summary =
+        CrateSummary::new::<BorrowckDefUse, _>(tcx, &adt_defs, call_graph, LogSSAName);
     // assert_eq!(crate_summary.call_graph.num_nodes(), 1);
 
     crate_summary.iterate_to_fixpoint().unwrap();
@@ -106,9 +105,8 @@ fn run_infer<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
 
     let num_funcs = bodies.len();
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
-    let mut crate_summary = CrateSummary::new(tcx, &adt_defs, call_graph);
-    crate_summary.debug();
-    crate_summary.infer::<BorrowckDefUse, LogSSAName>(LogSSAName);
+    let crate_summary =
+        CrateSummary::new::<BorrowckDefUse, _>(tcx, &adt_defs, call_graph, LogSSAName);
     assert_eq!(crate_summary.lambda_ctxt.func_ctxt.len(), num_funcs)
 }
 

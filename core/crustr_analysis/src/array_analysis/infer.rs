@@ -32,10 +32,10 @@ use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
 
 impl<'tcx> CrateSummary<'tcx> {
-    pub fn infer<DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>(
-        &mut self,
-        mut extra_handler: Handler,
-    ) {
+    pub fn infer_all<DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>(
+        mut self,
+        extra_handler: &mut Handler,
+    ) -> Self {
         let mut boundary_constraints = IndexVec::from_elem(vec![], &self.call_graph.graph.edges);
         let mut return_ssa_idx = IndexVec::with_capacity(self.call_graph.num_nodes());
         for (func, &did) in self.call_graph.functions.iter_enumerated() {
@@ -57,7 +57,7 @@ impl<'tcx> CrateSummary<'tcx> {
                     &insertion_points,
                 ),
                 ssa_state: SSARenameState::new(&body.local_decls),
-                extra_handlers: &mut extra_handler,
+                extra_handlers: &mut *extra_handler,
                 _marker: PhantomData,
             };
 
@@ -110,6 +110,8 @@ impl<'tcx> CrateSummary<'tcx> {
         }
 
         self.setup_boundary_constraints(boundary_constraints, return_ssa_idx);
+
+        self
     }
 
     pub fn setup_boundary_constraints(
@@ -226,7 +228,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
     HasSSARenameState<Local> for Infer<'infercx, 'tcx, DefUse, Handler>
 {
     #[inline]
-    fn state(&mut self) -> &mut SSARenameState<Local> {
+    fn ssa_state(&mut self) -> &mut SSARenameState<Local> {
         &mut self.ssa_state
     }
 }
@@ -286,6 +288,25 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> SSA
 {
     type DefUse = DefUse;
 
+    /// Overide `define` so that the engine will first use a local before re-defining it
+    fn define(&mut self, local: Local, location: Location) -> Option<Lambda> {
+        // FIXME: do not call extra handlers??
+        let old = self.r#use(local, location);
+        let ssa_idx = self.ssa_state().define(local);
+        let new = self
+            .ssa_name_handler()
+            .handle_def(local, ssa_idx, location)?;
+        if let Some(old) = old {
+            let constraint = Constraint(new, old);
+            log::debug!(
+                "generate constraint {} because of re-definition",
+                constraint
+            );
+            self.ctxt.constraints.push(constraint);
+        }
+        Some(new)
+    }
+
     #[inline]
     fn rename_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
         self.visit_statement(statement, location)
@@ -335,10 +356,13 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
             .ty
             .is_ptr_of_concerned());
 
-        let ssa_idx = self.r#use(place.local);
+        /*
+        let ssa_idx = self.ssa_state().r#use(place.local);
         let lambda = self
             .ssa_name_handler()
             .handle_use(place.local, ssa_idx, location);
+        */
+        let lambda = self.r#use(place.local, location);
 
         if place.projection.is_empty() {
             return lambda.unwrap();
@@ -360,10 +384,13 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
             .is_ptr_of_concerned());
 
         if place.projection.is_empty() {
-            let ssa_idx = self.define(place.local);
+            /*
+            let ssa_idx = self.ssa_state().define(place.local);
             self.ssa_name_handler()
                 .handle_def(place.local, ssa_idx, location)
                 .unwrap()
+            */
+            self.define(place.local, location).unwrap()
         } else {
             self.process_projections(
                 place.local,
@@ -380,11 +407,17 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
         if let Some(def_use) = DefUse::categorize(context) {
             if IsDefUse::defining(def_use) {
-                let i = self.define(local);
+                /*
+                let i = self.ssa_state().define(local);
                 self.ssa_name_handler().handle_def(local, i, location);
+                */
+                self.define(local, location);
             } else if DefUse::using(def_use) {
-                let i = self.r#use(local);
+                /*
+                let i = self.ssa_state().r#use(local);
                 self.ssa_name_handler().handle_use(local, i, location);
+                */
+                self.r#use(local, location);
             }
         }
     }
@@ -542,9 +575,10 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                 unreachable!("what could it be? {}", ty)
             }
         } else if let TerminatorKind::Return = terminator.kind {
-            let ssa_idx = self.r#use(RETURN_PLACE);
+            let ssa_idx = self.ssa_state().r#use(RETURN_PLACE);
             self.ssa_name_handler()
                 .handle_use(RETURN_PLACE, ssa_idx, location);
+            // self.r#use(RETURN_PLACE, location);
             self.ctxt.return_ssa_idx.push(ssa_idx);
             return;
         }
@@ -671,13 +705,13 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
     type Output = Lambda;
 
     fn handle_def(&mut self, local: Local, idx: usize, _location: Location) -> Self::Output {
-        log::debug!("IntraCtxt defining {:?}^{}", local, idx);
+        log::debug!("InferCtxt defining {:?}^{}", local, idx);
         debug_assert!(self.body.local_decls[local].ty.is_ptr_of_concerned());
         self.lambda_ctxt.generate_local(local, idx)
     }
 
     fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
-        log::debug!("IntraCtxt phi node defining {:?}^{}", local, idx);
+        log::debug!("InferCtxt phi node defining {:?}^{}", local, idx);
         let lambda = self.lambda_ctxt.generate_local(local, idx);
         self.phi_joins[block]
             .iter_mut()
@@ -688,13 +722,17 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
     }
 
     fn handle_use(&mut self, local: Local, idx: usize, _location: Location) -> Self::Output {
-        log::debug!("IntraCtxt using {:?}^{}", local, idx);
+        log::debug!("InferCtxt using {:?}^{}", local, idx);
         debug_assert!(self.body.local_decls[local].ty.is_ptr_of_concerned());
-        self.lambda_ctxt.local[local][idx]
+        let lambda = self.lambda_ctxt.local[local][idx];
+        log::debug!("retrieve {:?} for Local {:?}^{}", lambda, local, idx);
+        lambda
     }
 
     fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, _pos: usize) {
+        log::debug!("InferCtxt phi node using {:?}^{}", local, idx);
         let lambda = self.lambda_ctxt.local[local][idx];
+        log::debug!("retrieve {:?} for Local {:?}^{}", lambda, local, idx);
         self.phi_joins[block]
             .iter_mut()
             .find_map(|&mut (this_local, ref mut lambdas)| {
