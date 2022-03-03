@@ -166,7 +166,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
             s if s.as_str() == "strcmp" => self.model_strcmp(args, destination, location),
             s if s.as_str() == "strstr" => self.model_strstr(args, destination, location),
             s if s.as_str() == "strlen" => self.model_strlen(args, destination, location),
-            _ => unimplemented!("this extern call is not supported"),
+            s => unimplemented!("extern call to {s} is not supported"),
         }
     }
 
