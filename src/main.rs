@@ -6,6 +6,7 @@ extern crate rustc_errors;
 extern crate rustc_feature;
 extern crate rustc_hash;
 extern crate rustc_hir;
+extern crate rustc_index;
 extern crate rustc_interface;
 extern crate rustc_middle;
 extern crate rustc_mir_dataflow;
@@ -18,7 +19,8 @@ use crustr_analysis::{
 };
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
-use rustc_hir::{def_id::LocalDefId, ItemKind, OwnerNode};
+use rustc_hir::{OwnerNode, ItemKind, def_id::LocalDefId};
+use rustc_index::vec::IndexVec;
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config;
@@ -128,9 +130,17 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
     match cmd {
         Command::Analyse { null, array, all } => {
             if *null || *all {
-                for &def_id in top_level_fns.iter() {
-                    let results = NullAnalysisResults::collect(tcx, def_id);
-                    println!("{results}");
+                let null_results_raw = top_level_fns
+                    .iter()
+                    .map(|def_id| (def_id, NullAnalysisResults::collect(tcx, *def_id)))
+                    .collect::<Vec<_>>();
+                let mut null_results = IndexVec::new();
+                for (def_id, result) in null_results_raw.into_iter() {
+                    null_results.insert(*def_id, result);
+                }
+                NullAnalysisResults::resolve_deps(&mut null_results);
+                for result in null_results.iter().filter_map(Option::as_ref) {
+                    println!("{result}");
                 }
             }
 

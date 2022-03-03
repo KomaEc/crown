@@ -19,7 +19,7 @@ use rustc_hir::{
     def_id::{DefId, LocalDefId, LOCAL_CRATE},
     definitions::DefPathData,
 };
-use rustc_index::vec::IndexVec;
+use rustc_index::vec::{IndexVec, Idx};
 use rustc_middle::{
     mir::{
         Constant, ConstantKind, Local, Place, PlaceRef, ProjectionElem, Rvalue, StatementKind,
@@ -31,12 +31,12 @@ use rustc_mir_dataflow::{
     fmt::DebugWithContext, Analysis, AnalysisDomain, Engine, JoinSemiLattice, Results,
     ResultsRefCursor,
 };
-use tracing::debug;
 
 pub struct NullAnalysisResults<'tcx> {
     tcx: TyCtxt<'tcx>,
     def_id: LocalDefId,
     results: Results<'tcx, NullAnalysis<'tcx>>,
+    args: Vec<Option<Nullability>>,
 }
 
 impl<'tcx> NullAnalysisResults<'tcx> {
@@ -44,10 +44,65 @@ impl<'tcx> NullAnalysisResults<'tcx> {
         let body = tcx.optimized_mir(def_id);
         let engine = Engine::new_generic(tcx, &body, NullAnalysis::new(tcx));
         let results = engine.iterate_to_fixpoint();
+
+        let mut cursor = ResultsRefCursor::new(&body, &results);
+        cursor.seek_to_block_start(START_BLOCK);
+        let start_results = cursor.get();
+        let args = body
+            .args_iter()
+            .map(|local| {
+                if body.local_decls[local].ty.is_unsafe_ptr() {
+                    Some(start_results[local].clone())
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
         NullAnalysisResults {
             tcx,
             def_id,
             results,
+            args,
+        }
+    }
+
+    // horrible graph traversal garbage
+    pub fn resolve_deps(results: &mut IndexVec<LocalDefId, Option<Self>>) {
+        fn resolve_deps_for(results: &mut IndexVec<LocalDefId, Option<NullAnalysisResults<'_>>>, id: LocalDefId) {
+            let mut args = std::mem::take(&mut results[id].as_mut().unwrap().args);
+            for arg_nullability in args.iter_mut() {
+                if let Some(Nullability::DependsOn(deps)) = arg_nullability {
+                    let mut final_nullability = Nullability::Unknown;
+                    for (other_func, other_arg_idx) in deps.iter() {
+                        let other_func = other_func.as_local()
+                            .expect("nullability depends on external crate");
+                        resolve_deps_for(results, other_func);
+                        let other_nullability = results[other_func].as_ref().unwrap().args.get(*other_arg_idx)
+                            .expect("circular dependency")
+                            .as_ref()
+                            .expect("non-pointer dependency");
+
+                        use Nullability::*;
+                        match (&final_nullability, other_nullability) {
+                            (DependsOn(_), _) => panic!("how"),
+                            (_, DependsOn(_)) => panic!("how"),
+                            (_, NonNullable) => final_nullability = NonNullable,
+                            (Unknown, Nullable) => final_nullability = Nullable,
+                            _ => {},
+                        }
+                    }
+                    *arg_nullability = Some(final_nullability);
+                }
+            }
+            results[id].as_mut().unwrap().args = args;
+        }
+        for i in 0..results.len() {
+            let def_id = LocalDefId::new(i);
+            if results[def_id].is_none() {
+                continue;
+            }
+            resolve_deps_for(results, def_id);
         }
     }
 }
@@ -56,20 +111,15 @@ impl Display for NullAnalysisResults<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let fn_name = self.tcx.def_path_str(self.def_id.to_def_id());
         let body = self.tcx.optimized_mir(self.def_id);
-        if body.arg_count == 0 {
-            write!(f, "fn {fn_name} has no arguments")?;
-            return Ok(());
-        }
-        let mut cursor = ResultsRefCursor::new(body, &self.results);
-        cursor.seek_to_block_start(START_BLOCK);
-        let results = cursor.get();
-        let arg_results = body
-            .args_iter()
-            .filter(|local| body.local_decls[*local].ty.is_unsafe_ptr())
-            .map(|local| {
-                let span = body.local_decls[local].source_info.span;
-                let binding_name = self.tcx.sess.source_map().span_to_snippet(span).unwrap();
-                (binding_name, &results[local])
+        let arg_results = self.args
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, maybe_nullability)| {
+                maybe_nullability.as_ref().map(|nullability| {
+                    let span = body.local_decls[(idx + 1).into()].source_info.span;
+                    let binding_name = self.tcx.sess.source_map().span_to_snippet(span).unwrap();
+                    (binding_name, nullability)
+                })
             })
             .collect::<Vec<_>>();
         write!(f, "fn {fn_name} has: {arg_results:?}")?;
@@ -126,6 +176,14 @@ impl<'tcx> NullAnalysis<'tcx> {
     pub fn new(tcx: TyCtxt<'tcx>) -> Self {
         NullAnalysis { tcx }
     }
+
+    /// If a `Place` contains a deref of a local, that local is non-nullable. We have to check this
+    /// pretty much everywhere, so this function is here to make the rest of the code quieter.
+    fn check_place(&self, state: &mut IndexVec<Local, Nullability>, place: PlaceRef) {
+        if let PlaceRef { local, projection: [ProjectionElem::Deref, ..] } = place {
+            state[local] = Nullability::NonNullable;
+        }
+    }
 }
 
 impl<'tcx> DebugWithContext<NullAnalysis<'tcx>> for IndexVec<Local, Nullability> {}
@@ -158,41 +216,30 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
         statement: &rustc_middle::mir::Statement<'tcx>,
         _location: rustc_middle::mir::Location,
     ) {
-        // TODO(rose): figure out pointer casts - buffer::buffer_free
         match &statement.kind {
-            StatementKind::Assign(box (place, Rvalue::Use(operand)))
+            StatementKind::Assign(box (place, Rvalue::Use(operand) | Rvalue::Cast(_, operand, _)))
                 if place.projection.is_empty() && operand.place().is_some() =>
             {
-                let lhs = place.as_local().expect("projections aren't supported yet");
+                // assigning a pointer to another -> lhs' nullability transfers to rhs (because we
+                // are analysing backwards)
+                self.check_place(state, operand.place().unwrap().as_ref());
+                let lhs = place.as_local().unwrap();
                 if let Some(rhs) = operand.place().as_ref().map(Place::as_local).flatten() {
                     state[rhs] = state[lhs].clone();
                 }
             }
-            StatementKind::Assign(box (place, Rvalue::Use(operand))) => {
-                match place.as_ref() {
-                    PlaceRef {
-                        local,
-                        projection: [ProjectionElem::Deref, ..],
-                    } => {
-                        debug!(?local, "lhs deref");
-                        state[local] = Nullability::NonNullable;
-                    }
-                    PlaceRef {
-                        local,
-                        projection: [],
-                    } => {
-                        debug!(?local, "lhs assign");
-                        state[local] = Nullability::Unknown;
-                    }
-                    _ => (),
-                }
-                if let Some(PlaceRef {
+            StatementKind::Assign(box (lhs_place, Rvalue::Use(operand))) => {
+                // assigning through a projection - don't know about nullability anymore, unless
+                // one of the projections is a deref of a local
+                if let PlaceRef {
                     local,
-                    projection: [ProjectionElem::Deref, ..],
-                }) = operand.place().as_ref().map(Place::as_ref)
-                {
-                    debug!(?local, "rhs deref");
-                    state[local] = Nullability::NonNullable;
+                    projection: [],
+                } = lhs_place.as_ref() {
+                    state[local] = Nullability::Unknown;
+                }
+                self.check_place(state, lhs_place.as_ref());
+                if let Some(rhs_place) = operand.place() {
+                    self.check_place(state, rhs_place.as_ref());
                 }
             }
             _ => {}
@@ -250,12 +297,20 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
                 return;
             }
 
-            if let DefPathData::ValueNs(name) = def_path.data[0].data {
+            if let DefPathData::ValueNs(name) = def_path.data.last().unwrap().data {
+                let mut non_nullable_arg = |n: usize| {
+                    if let Some(local) = args[n].place().unwrap().as_local() {
+                        state[local] = Nullability::NonNullable;
+                    }
+                };
                 match name.as_str() {
                     "strlen" | "free" => {
-                        if let Some(local) = args[0].place().unwrap().as_local() {
-                            state[local] = Nullability::NonNullable;
-                        }
+                        non_nullable_arg(0);
+                        return;
+                    }
+                    "strcat" | "strncat" | "strcmp" | "strncmp" | "strstr" => {
+                        non_nullable_arg(0);
+                        non_nullable_arg(1);
                         return;
                     }
                     _ => {}
@@ -267,22 +322,9 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
                 .enumerate()
                 .filter_map(|(idx, op)| op.place().map(|place| (idx, place)))
             {
-                match place.as_ref() {
-                    PlaceRef {
-                        local,
-                        projection: [],
-                    } => {
-                        // TODO(rose): if the function is recursive, don't do this
-                        state[local] =
-                            Nullability::DependsOn([(*def_id, idx)].into_iter().collect());
-                    }
-                    PlaceRef {
-                        local,
-                        projection: [ProjectionElem::Deref, ..],
-                    } => {
-                        state[local] = Nullability::NonNullable;
-                    }
-                    _ => {}
+                self.check_place(state, place.as_ref());
+                if let PlaceRef { local, projection: [] } = place.as_ref() {
+                    state[local] = Nullability::DependsOn([(*def_id, idx)].into_iter().collect());
                 }
             }
         }
