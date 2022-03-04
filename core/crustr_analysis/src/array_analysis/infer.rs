@@ -67,14 +67,11 @@ impl<'tcx> CrateSummary<'tcx> {
 
             infer.rename_body(body, &insertion_points);
 
-            #[cfg(debug_assertions)]
-            infer.ctxt.debug_result();
-
             let InferCtxt {
                 lambda_ctxt,
                 phi_joins,
                 ..
-            } = infer.ctxt;
+            } = infer.ctxt.log_phi_joins();
 
             let return_ssa_idx = infer.return_ssa_idx;
 
@@ -662,14 +659,17 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         self
     }
 
-    #[cfg(debug_assertions)]
-    pub fn debug_result(&self) {
-        log::debug!("Phi nodes joins:");
-        for (bb, locals) in self.phi_joins.iter_enumerated() {
-            for (local, lambdas) in locals.iter_enumerated() {
-                log::debug!("for {:?} at {:?}, {:?}", local, bb, lambdas)
+    fn log_phi_joins(self) -> Self {
+        #[cfg(debug_assertions)]
+        {
+            log::debug!("Phi nodes joins:");
+            for (bb, locals) in self.phi_joins.iter_enumerated() {
+                for (local, lambdas) in locals.iter_enumerated() {
+                    log::debug!("for {:?} at {:?}, {:?}", local, bb, lambdas)
+                }
             }
         }
+        self
     }
 }
 
