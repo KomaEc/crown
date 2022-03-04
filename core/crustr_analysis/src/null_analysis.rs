@@ -74,9 +74,13 @@ impl<'tcx> NullAnalysisResults<'tcx> {
             for arg_nullability in args.iter_mut() {
                 if let Some(Nullability::DependsOn(deps)) = arg_nullability {
                     let mut final_nullability = Nullability::Unknown;
-                    for (other_func, other_arg_idx) in deps.iter() {
+                    'each_dep: for (other_func, other_arg_idx) in deps.iter() {
                         let other_func = other_func.as_local()
                             .expect("nullability depends on external crate");
+                        if results[other_func].is_none() {
+                            // we don't have results for this fn. maybe it is extern
+                            continue 'each_dep;
+                        }
                         resolve_deps_for(results, other_func);
                         let other_nullability = results[other_func].as_ref().unwrap().args.get(*other_arg_idx)
                             .expect("circular dependency")
