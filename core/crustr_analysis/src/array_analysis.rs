@@ -35,7 +35,7 @@ pub struct CrateSummary<'tcx> {
     pub lambda_ctxt: CrateLambdaCtxt,
     pub globals: Range<usize>,
     func_summaries: IndexVec<Func, FuncSummary>,
-    pub constraints: Vec<Constraint>,
+    pub constraints: ConstraintSet, //Vec<Constraint>,
     boundary_constraints: IndexVec<CallSite, Vec<Constraint>>,
 }
 
@@ -65,7 +65,7 @@ impl<'tcx> CrateSummary<'tcx> {
             },
             lambda_ctxt,
             func_summaries: IndexVec::with_capacity(num_funcs),
-            constraints: Vec::new(),
+            constraints: ConstraintSet::new(),
             boundary_constraints: IndexVec::new(),
         }
         .log_initial_state()
@@ -283,6 +283,43 @@ pub struct Constraint(Lambda, Lambda);
 impl Display for Constraint {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?} ≤ {:?}", self.0, self.1))
+    }
+}
+
+pub struct ConstraintSet {
+    data: Vec<Constraint>,
+}
+
+impl std::ops::Deref for ConstraintSet {
+    type Target = Vec<Constraint>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl ConstraintSet {
+    pub fn new() -> Self {
+        Self { data: Vec::new() }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Constraint> {
+        self.data.iter()
+    }
+
+    pub fn into_iter(self) -> impl Iterator<Item = Constraint> {
+        self.data.into_iter()
+    }
+
+    pub fn push_le(&mut self, lhs: Lambda, rhs: Lambda) {
+        let constraint = Constraint(lhs, rhs);
+        log::debug!("generate constraint {}", constraint);
+        self.data.push(constraint);
+    }
+
+    pub fn push_eq(&mut self, lhs: Lambda, rhs: Lambda) {
+        self.push_le(lhs, rhs);
+        self.push_le(rhs, lhs);
     }
 }
 

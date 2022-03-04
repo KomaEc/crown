@@ -4,7 +4,7 @@ use std::{marker::PhantomData, ops::Range};
 
 use crate::{
     array_analysis::{
-        BoundaryConstraint, Constraint, CrateLambdaCtxt, CrateSummary, FuncLambdaCtxt, FuncSummary,
+        BoundaryConstraint, Constraint, ConstraintSet, CrateLambdaCtxt, CrateSummary, FuncLambdaCtxt, FuncSummary,
         Lambda, LambdaMap, LambdaSourceData,
     },
     call_graph::{CallGraph, CallSite, Func},
@@ -85,13 +85,13 @@ impl<'tcx> CrateSummary<'tcx> {
             self.lambda_ctxt.func_ctxt.push(func_ctxt);
             assert_eq!(func, all_return_ssa_idx.push(return_ssa_idx));
 
+            log::debug!("process equalities in phi nodes");
             for equalities in phi_joins.into_iter() {
                 for equality in equalities.into_iter() {
                     assert!(equality.len() >= 2);
                     let (&this, tail) = equality.split_first().unwrap();
                     for &other in tail {
-                        self.constraints.push(Constraint(this, other));
-                        self.constraints.push(Constraint(other, this));
+                        self.constraints.push_eq(this, other);
                     }
                 }
             }
@@ -114,6 +114,7 @@ impl<'tcx> CrateSummary<'tcx> {
             )
         }
 
+        log::debug!("process boundary constraints");
         self.setup_boundary_constraints(boundary_constraints, all_return_ssa_idx);
 
         self
@@ -304,12 +305,15 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> SSA
             .ssa_name_handler()
             .handle_def(local, ssa_idx, location)?;
         if let Some(old) = old {
+            /*
             let constraint = Constraint(new, old);
             log::debug!(
                 "generate constraint {} because of re-definition",
                 constraint
             );
             self.ctxt.constraints.push(constraint);
+            */
+            self.ctxt.constraints.push_le(new, old)
         }
         Some(new)
     }
@@ -432,9 +436,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
             {
                 let lhs = self.process_lhs(place, location);
                 let rhs = self.process_rhs(rhs, location);
-                let constraint = Constraint(lhs, rhs);
-                log::debug!("generate constraint {}", constraint);
-                self.ctxt.constraints.push(constraint);
+                self.ctxt.constraints.push_le(lhs, rhs);
                 return;
             }
         }
@@ -567,7 +569,6 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
             let ssa_idx = self.ssa_state().r#use(RETURN_PLACE);
             self.ssa_name_handler()
                 .handle_use(RETURN_PLACE, ssa_idx, location);
-            // self.r#use(RETURN_PLACE, location);
             self.return_ssa_idx.push(ssa_idx);
             return;
         }
@@ -605,7 +606,7 @@ pub struct InferCtxt<'infercx, 'tcx> {
     call_graph: &'infercx CallGraph,
     lambda_ctxt: CrateLambdaCtxtIntraView<'infercx>,
     phi_joins: PhiNodeInsertionPoints<Vec<Lambda>>,
-    constraints: &'infercx mut Vec<Constraint>,
+    constraints: &'infercx mut ConstraintSet, //Vec<Constraint>,
 }
 
 impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
@@ -615,7 +616,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         body: &'infercx Body<'tcx>,
         call_graph: &'infercx CallGraph,
         lambda_ctxt: &'infercx mut CrateLambdaCtxt,
-        constraints: &'infercx mut Vec<Constraint>,
+        constraints: &'infercx mut ConstraintSet, //Vec<Constraint>,
         phi_joins: PhiNodeInsertionPoints<Vec<Lambda>>,
     ) -> Self {
         InferCtxt {

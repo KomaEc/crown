@@ -157,7 +157,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                 crate_summary.iterate_to_fixpoint().unwrap();
                 let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions.clone();
                 println!("All constraints:");
-                for constraint in &crate_summary.constraints {
+                for constraint in crate_summary.constraints.iter() {
                     println!("{}", constraint)
                 }
                 for (lambda, solution) in solutions.iter_enumerated() {

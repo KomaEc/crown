@@ -55,7 +55,7 @@ pub fn array_analysis<'tcx>(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: 
             let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions.clone();
 
             log::debug!("All constraints:");
-            for constraint in &crate_summary.constraints {
+            for constraint in crate_summary.constraints.iter() {
                 log::debug!("{}", constraint)
             }
 

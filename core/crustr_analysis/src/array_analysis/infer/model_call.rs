@@ -5,7 +5,7 @@ use rustc_middle::mir::{
 };
 
 use crate::{
-    array_analysis::{infer::Infer, Constraint, Lambda},
+    array_analysis::{infer::Infer, Lambda},
     def_use::IsDefUse,
     ssa::rename::SSANameHandler,
 };
@@ -209,9 +209,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         }
         let (lhs, _) = destination.unwrap();
         let lhs = self.process_lhs(&lhs, location);
-        let constraint = Constraint(lhs, rhs);
-        log::debug!("generate constraint {}", constraint);
-        self.ctxt.constraints.push(constraint);
+        self.ctxt.constraints.push_le(lhs, rhs);
     }
 
     /// Modelling: the return value of `malloc` is definitely thin
@@ -259,12 +257,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         }
         let (ret, _) = destination.unwrap();
         let ret = self.process_lhs(&ret, location);
-        let constraint = Constraint(ret, dest);
-        log::debug!("generate constraint {}", constraint);
-        self.ctxt.constraints.push(constraint);
-        let constraint = Constraint(dest, ret);
-        log::debug!("generate constraint {}", constraint);
-        self.ctxt.constraints.push(constraint);
+        self.ctxt.constraints.push_eq(ret, dest);
         /*
         // Modelling: `destination`, `source`, and return value should all be fat.
         assert_eq!(args.len(), 3);
@@ -297,12 +290,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         }
         let (ret, _) = destination.unwrap();
         let ret = self.process_lhs(&ret, location);
-        let constraint = Constraint(ret, dest);
-        log::debug!("generate constraint {}", constraint);
-        self.ctxt.constraints.push(constraint);
-        let constraint = Constraint(dest, ret);
-        log::debug!("generate constraint {}", constraint);
-        self.ctxt.constraints.push(constraint);
+        self.ctxt.constraints.push_eq(ret, dest);
         /*
         assert_eq!(args.len(), 3);
         let ([dest, src, num], _) = args.split_array_ref::<3>();
@@ -334,12 +322,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         }
         let (ret, _) = destination.unwrap();
         let ret = self.process_lhs(&ret, location);
-        let constraint = Constraint(ret, ptr);
-        log::debug!("generate constraint {}", constraint);
-        self.ctxt.constraints.push(constraint);
-        let constraint = Constraint(ptr, ret);
-        log::debug!("generate constraint {}", constraint);
-        self.ctxt.constraints.push(constraint);
+        self.ctxt.constraints.push_eq(ret, ptr);
         /*
         // Modelling: `ptr` and return value should both be fat.
         assert_eq!(args.len(), 3);
@@ -373,12 +356,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         }
         let (ret, _) = destination.unwrap();
         let ret = self.process_lhs(&ret, location);
-        let constraint = Constraint(ret, dest);
-        log::debug!("generate constraint {}", constraint);
-        self.ctxt.constraints.push(constraint);
-        let constraint = Constraint(dest, ret);
-        log::debug!("generate constraint {}", constraint);
-        self.ctxt.constraints.push(constraint);
+        self.ctxt.constraints.push_eq(ret, dest);
         /*
         // Modelling: identical to `memmove`.
         assert_eq!(args.len(), 3);
