@@ -159,7 +159,7 @@ impl<'tcx> CrateSummary<'tcx> {
                 format!(
                     "{:*<1$}{2:?} in {3}",
                     "",
-                    nested_level,
+                    nested_level + 1,
                     base,
                     self.tcx.def_path_str(did)
                 )
@@ -378,7 +378,10 @@ impl Display for LambdaSourceData {
                 nested_level,
             } => f.write_fmt(format_args!(
                 "({:?}, {:*<2$}{3:?})",
-                body, "", nested_level, base
+                body,
+                "",
+                nested_level + 1,
+                base
             )),
         }
     }

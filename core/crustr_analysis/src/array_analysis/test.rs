@@ -25,23 +25,36 @@ fn test_solve_not_crash_with_input_file() {
     compiler_interface::run_compiler_with_struct_defs_and_funcs(file.into(), run_solve)
 }
 
-/// Testing `src/array_analysis/test/resource/2`
-/// The call graph of this program:
-/// i
-/// ^
-/// |
-/// g ---->
-///   <---- h
-/// ^
-/// |
-/// f
 #[test]
-fn test_solve() {
+fn test_solve_not_crash_with_complex_call_graph() {
     init_logger();
     let file = env::current_dir()
         .expect("current working directory value is invalid")
         .join("src/array_analysis/test/resource/2/lib.rs");
     compiler_interface::run_compiler_with_struct_defs_and_funcs(file.into(), run_solve)
+}
+
+#[test]
+#[should_panic]
+fn test_limitation_due_to_nested_pointers() {
+    init_logger();
+    let file = env::current_dir()
+        .expect("current working directory value is invalid")
+        .join("src/array_analysis/test/resource/3/lib.rs");
+    compiler_interface::run_compiler_with_struct_defs_and_funcs(
+        file.into(),
+        |tcx, struct_defs, fn_dids| {
+            let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
+
+            let call_graph = CallGraph::new(tcx, bodies.into_iter());
+            let mut crate_summary =
+                CrateSummary::new::<BorrowckDefUse, _>(tcx, &adt_defs, call_graph, LogSSAName);
+            crate_summary.iterate_to_fixpoint().unwrap();
+            let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
+            // we want to infer that p is *mut [*mut [i32]]
+            assert_eq!(Some(true), solutions[1u32.into()])
+        },
+    )
 }
 
 fn collect_bodies_and_adt_defs<'tcx>(

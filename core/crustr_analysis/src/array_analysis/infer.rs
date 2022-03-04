@@ -4,8 +4,8 @@ use std::{marker::PhantomData, ops::Range};
 
 use crate::{
     array_analysis::{
-        BoundaryConstraint, Constraint, ConstraintSet, CrateLambdaCtxt, CrateSummary, FuncLambdaCtxt, FuncSummary,
-        Lambda, LambdaMap, LambdaSourceData,
+        BoundaryConstraint, Constraint, ConstraintSet, CrateLambdaCtxt, CrateSummary,
+        FuncLambdaCtxt, FuncSummary, Lambda, LambdaMap, LambdaSourceData,
     },
     call_graph::{CallGraph, CallSite, Func},
     def_use::IsDefUse,
