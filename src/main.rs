@@ -19,7 +19,7 @@ use crustr_analysis::{
 };
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
-use rustc_hir::{OwnerNode, ItemKind, def_id::LocalDefId};
+use rustc_hir::{def_id::LocalDefId, ItemKind, OwnerNode};
 use rustc_index::vec::IndexVec;
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
@@ -156,6 +156,10 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                     CrateSummary::new::<BorrowckDefUse, _>(tcx, &adt_defs, call_graph, LogSSAName);
                 crate_summary.iterate_to_fixpoint().unwrap();
                 let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions.clone();
+                println!("All constraints:");
+                for constraint in &crate_summary.constraints {
+                    println!("{}", constraint)
+                }
                 for (lambda, solution) in solutions.iter_enumerated() {
                     println!(
                         "{: <7} = {: <2}, which is {}",

@@ -16,7 +16,6 @@ use crate::{
     ty_ext::TyExt,
 };
 use graph::implementation::forward_star::Direction;
-use rustc_data_structures::graph::WithNumNodes;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::{Idx, IndexVec};
@@ -36,7 +35,7 @@ impl<'tcx> CrateSummary<'tcx> {
         extra_handler: &mut Handler,
     ) -> Self {
         let mut boundary_constraints = IndexVec::from_elem(vec![], &self.call_graph.graph.edges);
-        let mut return_ssa_idx = IndexVec::with_capacity(self.call_graph.num_nodes());
+        let mut all_return_ssa_idx = IndexVec::with_capacity(self.call_graph.functions.len());
         for (func, &did) in self.call_graph.functions.iter_enumerated() {
             let body = self.tcx.optimized_mir(did);
             let insertion_points = body.compute_phi_node::<DefUse>(self.tcx);
@@ -52,9 +51,15 @@ impl<'tcx> CrateSummary<'tcx> {
                     &self.call_graph,
                     &mut self.lambda_ctxt,
                     &mut self.constraints,
-                    &mut boundary_constraints,
-                    &insertion_points,
+                    insertion_points.filter_map_local(|local| {
+                        body.local_decls[local]
+                            .ty
+                            .is_ptr_of_concerned()
+                            .then(|| vec![])
+                    }),
                 ),
+                boundary_constraints: &mut boundary_constraints,
+                return_ssa_idx: vec![],
                 ssa_state: SSARenameState::new(&body.local_decls),
                 extra_handlers: &mut *extra_handler,
                 _marker: PhantomData,
@@ -68,16 +73,17 @@ impl<'tcx> CrateSummary<'tcx> {
             let InferCtxt {
                 lambda_ctxt,
                 phi_joins,
-                return_ssa_idx: func_return_ssa_idx,
                 ..
             } = infer.ctxt;
+
+            let return_ssa_idx = infer.return_ssa_idx;
 
             let func_ctxt = FuncLambdaCtxt {
                 local: lambda_ctxt.local,
                 local_nested: lambda_ctxt.local_nested,
             };
             self.lambda_ctxt.func_ctxt.push(func_ctxt);
-            assert_eq!(func, return_ssa_idx.push(func_return_ssa_idx));
+            assert_eq!(func, all_return_ssa_idx.push(return_ssa_idx));
 
             for equalities in phi_joins.into_iter() {
                 for equality in equalities.into_iter() {
@@ -108,7 +114,7 @@ impl<'tcx> CrateSummary<'tcx> {
             )
         }
 
-        self.setup_boundary_constraints(boundary_constraints, return_ssa_idx);
+        self.setup_boundary_constraints(boundary_constraints, all_return_ssa_idx);
 
         self
     }
@@ -219,6 +225,8 @@ impl CrateLambdaCtxt {
 pub struct Infer<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> {
     ctxt: InferCtxt<'infercx, 'tcx>,
     ssa_state: SSARenameState<Local>,
+    boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint>>,
+    return_ssa_idx: Vec<usize>,
     extra_handlers: Handler,
     _marker: PhantomData<*const DefUse>,
 }
@@ -357,12 +365,6 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
             .ty
             .is_ptr_of_concerned());
 
-        /*
-        let ssa_idx = self.ssa_state().r#use(place.local);
-        let lambda = self
-            .ssa_name_handler()
-            .handle_use(place.local, ssa_idx, location);
-        */
         let lambda = self.r#use(place.local, location);
 
         if place.projection.is_empty() {
@@ -385,12 +387,6 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
             .is_ptr_of_concerned());
 
         if place.projection.is_empty() {
-            /*
-            let ssa_idx = self.ssa_state().define(place.local);
-            self.ssa_name_handler()
-                .handle_def(place.local, ssa_idx, location)
-                .unwrap()
-            */
             self.define(place.local, location).unwrap()
         } else {
             self.process_projections(
@@ -408,16 +404,8 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
         if let Some(def_use) = DefUse::categorize(context) {
             if def_use.defining() {
-                /*
-                let i = self.ssa_state().define(local);
-                self.ssa_name_handler().handle_def(local, i, location);
-                */
                 self.define(local, location);
             } else if def_use.using() {
-                /*
-                let i = self.ssa_state().r#use(local);
-                self.ssa_name_handler().handle_use(local, i, location);
-                */
                 self.r#use(local, location);
             }
         }
@@ -520,7 +508,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                                         .place()
                                         .expect("constant in call arguments is not supported");
                                     let lambda = self.process_rhs(&place, location);
-                                    self.ctxt.boundary_constraints[call_site].push(
+                                    self.boundary_constraints[call_site].push(
                                         BoundaryConstraint::Argument {
                                             caller: lambda,
                                             callee: Local::from_usize(idx + 1),
@@ -543,7 +531,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                                     .is_ptr_of_concerned()
                                 {
                                     let lambda = self.process_lhs(&destination, location);
-                                    self.ctxt.boundary_constraints[call_site].push(
+                                    self.boundary_constraints[call_site].push(
                                         BoundaryConstraint::Return {
                                             caller: lambda,
                                             callee: Place::return_place().local,
@@ -580,7 +568,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
             self.ssa_name_handler()
                 .handle_use(RETURN_PLACE, ssa_idx, location);
             // self.r#use(RETURN_PLACE, location);
-            self.ctxt.return_ssa_idx.push(ssa_idx);
+            self.return_ssa_idx.push(ssa_idx);
             return;
         }
         self.super_terminator(terminator, location)
@@ -616,38 +604,27 @@ pub struct InferCtxt<'infercx, 'tcx> {
     body: &'infercx Body<'tcx>,
     call_graph: &'infercx CallGraph,
     lambda_ctxt: CrateLambdaCtxtIntraView<'infercx>,
-    phi_joins: PhiNodeInsertionPoints<Vec<Lambda>>, //IndexVec<BasicBlock, SmallVec<[(Local, Vec<Lambda>); 3]>>,
+    phi_joins: PhiNodeInsertionPoints<Vec<Lambda>>,
     constraints: &'infercx mut Vec<Constraint>,
-    boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint>>,
-    return_ssa_idx: Vec<usize>,
 }
 
 impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
-    pub fn new<DefUse: IsDefUse>(
+    pub fn new(
         tcx: TyCtxt<'tcx>,
         func: Func,
         body: &'infercx Body<'tcx>,
         call_graph: &'infercx CallGraph,
         lambda_ctxt: &'infercx mut CrateLambdaCtxt,
         constraints: &'infercx mut Vec<Constraint>,
-        boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint>>,
-        insertion_points: &PhiNodeInsertionPoints<PhantomData<*const DefUse>>,
+        phi_joins: PhiNodeInsertionPoints<Vec<Lambda>>,
     ) -> Self {
-        let phi_joins = insertion_points.filter_map_local(|local| {
-            body.local_decls[local]
-                .ty
-                .is_ptr_of_concerned()
-                .then(|| vec![])
-        });
         InferCtxt {
             tcx,
             body,
             call_graph,
             lambda_ctxt: lambda_ctxt.intra_view(body, func),
             phi_joins,
-            constraints, // : IndexVec::new(),
-            boundary_constraints,
-            return_ssa_idx: vec![],
+            constraints,
         }
         .log_initial_state()
     }

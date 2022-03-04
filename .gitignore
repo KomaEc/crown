@@ -15,4 +15,5 @@ Cargo.lock
 
 proptest-regressions/
 
+ground_truth
 /workspace

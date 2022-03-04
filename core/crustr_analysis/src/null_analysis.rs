@@ -19,7 +19,7 @@ use rustc_hir::{
     def_id::{DefId, LocalDefId, LOCAL_CRATE},
     definitions::DefPathData,
 };
-use rustc_index::vec::{IndexVec, Idx};
+use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
         Constant, ConstantKind, Local, Place, PlaceRef, ProjectionElem, Rvalue, StatementKind,
@@ -69,20 +69,28 @@ impl<'tcx> NullAnalysisResults<'tcx> {
 
     // horrible graph traversal garbage
     pub fn resolve_deps(results: &mut IndexVec<LocalDefId, Option<Self>>) {
-        fn resolve_deps_for(results: &mut IndexVec<LocalDefId, Option<NullAnalysisResults<'_>>>, id: LocalDefId) {
+        fn resolve_deps_for(
+            results: &mut IndexVec<LocalDefId, Option<NullAnalysisResults<'_>>>,
+            id: LocalDefId,
+        ) {
             let mut args = std::mem::take(&mut results[id].as_mut().unwrap().args);
             for arg_nullability in args.iter_mut() {
                 if let Some(Nullability::DependsOn(deps)) = arg_nullability {
                     let mut final_nullability = Nullability::Unknown;
                     'each_dep: for (other_func, other_arg_idx) in deps.iter() {
-                        let other_func = other_func.as_local()
+                        let other_func = other_func
+                            .as_local()
                             .expect("nullability depends on external crate");
                         if results[other_func].is_none() {
                             // we don't have results for this fn. maybe it is extern
                             continue 'each_dep;
                         }
                         resolve_deps_for(results, other_func);
-                        let other_nullability = results[other_func].as_ref().unwrap().args.get(*other_arg_idx)
+                        let other_nullability = results[other_func]
+                            .as_ref()
+                            .unwrap()
+                            .args
+                            .get(*other_arg_idx)
                             .expect("circular dependency")
                             .as_ref()
                             .expect("non-pointer dependency");
@@ -93,7 +101,7 @@ impl<'tcx> NullAnalysisResults<'tcx> {
                             (_, DependsOn(_)) => panic!("how"),
                             (_, NonNullable) => final_nullability = NonNullable,
                             (Unknown, Nullable) => final_nullability = Nullable,
-                            _ => {},
+                            _ => {}
                         }
                     }
                     *arg_nullability = Some(final_nullability);
@@ -115,7 +123,8 @@ impl Display for NullAnalysisResults<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let fn_name = self.tcx.def_path_str(self.def_id.to_def_id());
         let body = self.tcx.optimized_mir(self.def_id);
-        let arg_results = self.args
+        let arg_results = self
+            .args
             .iter()
             .enumerate()
             .filter_map(|(idx, maybe_nullability)| {
@@ -184,7 +193,11 @@ impl<'tcx> NullAnalysis<'tcx> {
     /// If a `Place` contains a deref of a local, that local is non-nullable. We have to check this
     /// pretty much everywhere, so this function is here to make the rest of the code quieter.
     fn check_place(&self, state: &mut IndexVec<Local, Nullability>, place: PlaceRef) {
-        if let PlaceRef { local, projection: [ProjectionElem::Deref, ..] } = place {
+        if let PlaceRef {
+            local,
+            projection: [ProjectionElem::Deref, ..],
+        } = place
+        {
             state[local] = Nullability::NonNullable;
         }
     }
@@ -221,9 +234,10 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
         _location: rustc_middle::mir::Location,
     ) {
         match &statement.kind {
-            StatementKind::Assign(box (place, Rvalue::Use(operand) | Rvalue::Cast(_, operand, _)))
-                if place.projection.is_empty() && operand.place().is_some() =>
-            {
+            StatementKind::Assign(box (
+                place,
+                Rvalue::Use(operand) | Rvalue::Cast(_, operand, _),
+            )) if place.projection.is_empty() && operand.place().is_some() => {
                 // assigning a pointer to another -> lhs' nullability transfers to rhs (because we
                 // are analysing backwards)
                 self.check_place(state, operand.place().unwrap().as_ref());
@@ -238,7 +252,8 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
                 if let PlaceRef {
                     local,
                     projection: [],
-                } = lhs_place.as_ref() {
+                } = lhs_place.as_ref()
+                {
                     state[local] = Nullability::Unknown;
                 }
                 self.check_place(state, lhs_place.as_ref());
@@ -327,7 +342,11 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
                 .filter_map(|(idx, op)| op.place().map(|place| (idx, place)))
             {
                 self.check_place(state, place.as_ref());
-                if let PlaceRef { local, projection: [] } = place.as_ref() {
+                if let PlaceRef {
+                    local,
+                    projection: [],
+                } = place.as_ref()
+                {
                     state[local] = Nullability::DependsOn([(*def_id, idx)].into_iter().collect());
                 }
             }
