@@ -27,7 +27,8 @@ pub fn solve(
     globals: Range<usize>,
     locals: Range<usize>,
     constraints: &[Constraint],
-    boundary_constraints: impl Iterator<Item = Constraint>,
+    // boundary_constraints: impl Iterator<Item = Constraint>,
+    boundary_constraints: &[Constraint]
 ) -> Result<SolveSuccess, ()> {
     assert_eq!(globals.start, 0);
     assert!(globals.end <= locals.start);
@@ -56,7 +57,7 @@ pub fn solve(
     });
 
     // FIXME: do we require that on boundary constraint, assignment means equality instead?
-    for Constraint(lhs, rhs) in boundary_constraints {
+    for &Constraint(lhs, rhs) in boundary_constraints {
         if locals.contains(&lhs.as_usize()) {
             // return position
             if matches!(assumptions[rhs], Some(false)) {
@@ -131,7 +132,7 @@ pub fn solve(
         }
         idx += 1;
     }
-    for assumption in &mut assumptions.raw[locals] {
+    for assumption in &mut assumptions.raw[locals.clone()] {
         if matches!(assumption, None) {
             if sccs.scc(idx) == sccs.scc(one_idx) {
                 *assumption = Some(true);
@@ -148,6 +149,33 @@ pub fn solve(
                 .unwrap_or_else(|| assert_eq!(sccs.scc(idx), sccs.scc(zero_idx)))
         }
         idx += 1;
+    }
+
+    for &Constraint(lhs, rhs) in boundary_constraints {
+        if locals.contains(&lhs.as_usize()) {
+            // return position
+            if matches!(assumptions[lhs], Some(true)) {
+                match assumptions[rhs] {
+                    None => { 
+                        assumptions[rhs] = Some(true);
+                        solve_success = std::cmp::max(solve_success, SolveSuccess::GloballyChanged)
+                    },
+                    Some(value) => assert!(value),
+                }
+            }
+        } else {
+            // argument position
+            assert!(locals.contains(&rhs.as_usize()));
+            if matches!(assumptions[rhs], Some(false)) {
+                match assumptions[lhs] {
+                    None =>  {
+                        assumptions[lhs] = Some(false);
+                        solve_success = std::cmp::max(solve_success, SolveSuccess::GloballyChanged)
+                    },
+                    Some(value) => assert!(!value)
+                }
+            }
+        }
     }
 
     Ok(solve_success)
@@ -257,7 +285,8 @@ mod tests {
             globals,
             locals,
             &constraints,
-            std::iter::empty()
+            // std::iter::empty()
+            &[]
         )
         .is_ok());
 
@@ -308,7 +337,7 @@ mod tests {
         fn test_soundness((globals, locals, assumptions, constraints) in instance()) {
 
             let mut solutions = assumptions.clone();
-            prop_assume!(solve(&mut solutions, globals, locals, &constraints, std::iter::empty()).is_ok());
+            prop_assume!(solve(&mut solutions, globals, locals, &constraints, &[] /*std::iter::empty()*/).is_ok());
 
             assert_soundness(assumptions, solutions, &constraints)
         }

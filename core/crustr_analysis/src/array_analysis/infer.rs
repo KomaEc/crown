@@ -73,13 +73,28 @@ impl<'tcx> CrateSummary<'tcx> {
                 ..
             } = infer.ctxt.log_phi_joins();
 
-            let return_ssa_idx = infer.return_ssa_idx;
-
             let func_ctxt = FuncLambdaCtxt {
                 local: lambda_ctxt.local,
                 local_nested: lambda_ctxt.local_nested,
             };
+            let mut return_ssa_idx = infer.return_ssa_idx;
             self.lambda_ctxt.func_ctxt.push(func_ctxt);
+
+            return_ssa_idx.sort();
+            return_ssa_idx.dedup();
+            log::debug!("process return places");
+            // assert!(!return_ssa_idx.is_empty());
+            if let Some((&this, rest)) = return_ssa_idx.split_first() {
+                let this = self.lambda_ctxt.func_ctxt[func].local[RETURN_PLACE][this];
+                // although Return may occur multiple times (according to the docs), I'm
+                // curious to see how it may happen
+                assert!(rest.is_empty());
+                for &other in rest {
+                    let other = self.lambda_ctxt.func_ctxt[func].local[RETURN_PLACE][other];
+                    self.constraints.push_eq(this, other)
+                }
+            }
+
             assert_eq!(func, all_return_ssa_idx.push(return_ssa_idx));
 
             log::debug!("process equalities in phi nodes");
@@ -302,14 +317,6 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> SSA
             .ssa_name_handler()
             .handle_def(local, ssa_idx, location)?;
         if let Some(old) = old {
-            /*
-            let constraint = Constraint(new, old);
-            log::debug!(
-                "generate constraint {} because of re-definition",
-                constraint
-            );
-            self.ctxt.constraints.push(constraint);
-            */
             self.ctxt.constraints.push_le(new, old)
         }
         Some(new)
@@ -563,10 +570,15 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                 unreachable!("what could it be? {}", ty)
             }
         } else if let TerminatorKind::Return = terminator.kind {
-            let ssa_idx = self.ssa_state().r#use(RETURN_PLACE);
-            self.ssa_name_handler()
-                .handle_use(RETURN_PLACE, ssa_idx, location);
-            self.return_ssa_idx.push(ssa_idx);
+            if self.ctxt.body.local_decls[RETURN_PLACE]
+                .ty
+                .is_ptr_of_concerned()
+            {
+                let ssa_idx = self.ssa_state().r#use(RETURN_PLACE);
+                self.ssa_name_handler()
+                    .handle_use(RETURN_PLACE, ssa_idx, location);
+                self.return_ssa_idx.push(ssa_idx);
+            }
             return;
         }
         self.super_terminator(terminator, location)

@@ -73,6 +73,18 @@ impl<'tcx> CrateSummary<'tcx> {
     }
 
     pub fn iterate_to_fixpoint(&mut self) -> Result<(), ()> {
+
+        let boundary_constraints = IndexVec::from_fn_n(|func| {
+            self.call_graph
+                                .graph
+                                .adjacent_edges(func, forward_star::Direction::Outgoing)
+                                .map(|(call_site, _)| {
+                                    self.boundary_constraints[call_site].iter().map(|&c| c)
+                                })
+                                .flatten()
+                                .collect::<Vec<_>>()
+        }, self.call_graph.functions.len());
+
         let call_graph_sccs = Sccs::<Func, usize>::new(&self.call_graph);
         // it seems that the scc algorithm will rank sccs in post order, namely if there
         // is a dependency S1 -> S2, then S2 < S1 (well it is natural to be this case,
@@ -101,6 +113,8 @@ impl<'tcx> CrateSummary<'tcx> {
                             self.globals.clone(),
                             locals,
                             &self.constraints[constraints_range],
+                            &boundary_constraints[func]
+                            /*
                             self.call_graph
                                 .graph
                                 .adjacent_edges(func, forward_star::Direction::Outgoing)
@@ -108,6 +122,7 @@ impl<'tcx> CrateSummary<'tcx> {
                                     self.boundary_constraints[call_site].iter().map(|&c| c)
                                 })
                                 .flatten(),
+                                */
                         )? {
                             SolveSuccess::Unchanged => {}
                             SolveSuccess::LocallyChanged => locally_changed = true,

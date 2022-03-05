@@ -57,6 +57,30 @@ fn test_limitation_due_to_nested_pointers() {
     )
 }
 
+#[test]
+fn test_boundary_constraints() {
+    init_logger();
+    let file = env::current_dir()
+    .expect("current working directory value is invalid")
+    .join("src/array_analysis/test/resource/4/lib.rs");
+    compiler_interface::run_compiler_with_struct_defs_and_funcs(
+        file.into(),
+        |tcx, struct_defs, fn_dids| {
+            let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
+
+            let call_graph = CallGraph::new(tcx, bodies.into_iter());
+            let mut crate_summary =
+                CrateSummary::new::<BorrowckDefUse, _>(tcx, &adt_defs, call_graph, LogSSAName);
+            crate_summary.iterate_to_fixpoint().unwrap();
+            let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
+            // we want to infer the precise signature for f
+            assert_eq!(Some(true), solutions[0u32.into()]);
+            assert_eq!(Some(false), solutions[1u32.into()]);
+            assert_eq!(Some(true), solutions[3u32.into()]);
+        },
+    )
+}
+
 fn collect_bodies_and_adt_defs<'tcx>(
     tcx: TyCtxt<'tcx>,
     struct_defs: Vec<LocalDefId>,
