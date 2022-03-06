@@ -134,7 +134,9 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
         }
 
         log::debug!("process boundary constraints");
-        self.setup_boundary_constraints(boundary_constraints, all_return_ssa_idx);
+        self.setup_boundary_constraints(boundary_constraints, &all_return_ssa_idx);
+
+        self.return_ssa_idx = all_return_ssa_idx;
 
         self
     }
@@ -142,7 +144,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
     pub fn setup_boundary_constraints(
         &mut self,
         boundary_constraints: IndexVec<CallSite, Vec<BoundaryConstraint>>,
-        return_ssa_idx: IndexVec<Func, Vec<usize>>,
+        return_ssa_idx: &IndexVec<Func, Vec<usize>>,
     ) {
         self.boundary_constraints = boundary_constraints
             .into_iter_enumerated()

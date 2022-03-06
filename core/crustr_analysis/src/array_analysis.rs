@@ -38,6 +38,7 @@ pub struct CrateSummary<'tcx, DefUse: IsDefUse> {
     func_summaries: IndexVec<Func, FuncSummary>,
     pub constraints: ConstraintSet,
     boundary_constraints: IndexVec<CallSite, Vec<Constraint>>,
+    pub return_ssa_idx: IndexVec<Func, Vec<usize>>,
 
     pub ssa_name_source_map: IndexVec<Func, SSANameSourceMap>,
     _marker: PhantomData<*const DefUse>,
@@ -71,6 +72,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
             func_summaries: IndexVec::with_capacity(num_funcs),
             constraints: ConstraintSet::new(),
             boundary_constraints: IndexVec::new(),
+            return_ssa_idx: IndexVec::with_capacity(num_funcs),
             ssa_name_source_map: IndexVec::with_capacity(num_funcs),
             _marker: PhantomData,
         }
