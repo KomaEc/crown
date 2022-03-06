@@ -15,9 +15,6 @@
 extern crate libc;
 
 pub mod src {
-    pub mod buffer;
-    // pub mod buffer_safe;
-    // pub mod buffer_safer;
     pub mod buffer_slice;
     // pub mod test;
 } // mod src
