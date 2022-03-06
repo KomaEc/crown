@@ -12,7 +12,7 @@ use rustc_middle::mir::{BasicBlock, Body, Local, Location};
 use smallvec::{smallvec, SmallVec};
 
 /// A map that associated each local with its renames
-pub struct SSANameMap {
+pub struct SSANameSourceMap {
     /// Location -> Local -> usize
     pub names: LocationMap<(
         /* defs */ Option<(Local, usize)>,
@@ -22,7 +22,7 @@ pub struct SSANameMap {
     pub names_for_phi_nodes: PhiNodeInsertionPoints<(usize, SmallVec<[usize; 2]>)>, // IndexVec<BasicBlock, SmallVec<[(Local, usize, SmallVec<[usize; 2]>); 2]>>,
 }
 
-impl SSANameMap {
+impl SSANameSourceMap {
     pub fn new<'tcx, DefUse: IsDefUse>(
         body: &Body<'tcx>,
         insertion_points: &PhiNodeInsertionPoints<PhantomData<*const DefUse>>,
@@ -38,7 +38,7 @@ impl SSANameMap {
             .collect::<IndexVec<_, _>>()
             .into();
 
-        SSANameMap {
+        SSANameSourceMap {
             names: LocationMap::new(body),
             names_for_phi_nodes,
         }
@@ -75,7 +75,7 @@ impl SSANameMap {
     }
 }
 
-impl SSANameHandler for SSANameMap {
+impl SSANameHandler for SSANameSourceMap {
     type Output = ();
     fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
         debug_assert!(self.names[location].0.is_none());

@@ -4,7 +4,7 @@ use std::str;
 
 use crate::def_use::BorrowckDefUse;
 use crate::ssa::body_ext::BodyExt;
-use crate::ssa::rename::handler::{LocalSimplePtrCVMap, SSANameMap};
+use crate::ssa::rename::handler::{LocalSimplePtrCVMap, SSANameSourceMap};
 use crate::ssa::rename::{handler::PrintStdSSAName, implementations::PlainRenamer, SSANameHandler};
 
 #[test]
@@ -291,7 +291,7 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
         (
             PrintStdSSAName,
             TestProgramSpec,
-            SSANameMap,
+            SSANameSourceMap,
             LocalSimplePtrCVMap<usize>,
         ),
     >::new(
@@ -300,7 +300,7 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
         (
             PrintStdSSAName,
             TestProgramSpec,
-            SSANameMap::new(body, &insertion_points),
+            SSANameSourceMap::new(body, &insertion_points),
             LocalSimplePtrCVMap::new(body),
         ),
     );
@@ -320,13 +320,13 @@ fn spec1<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
     let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
     let mut renamer = PlainRenamer::<
         BorrowckDefUse,
-        (PrintStdSSAName, SSANameMap, LocalSimplePtrCVMap<usize>),
+        (PrintStdSSAName, SSANameSourceMap, LocalSimplePtrCVMap<usize>),
     >::new(
         tcx,
         body,
         (
             PrintStdSSAName,
-            SSANameMap::new(body, &insertion_points),
+            SSANameSourceMap::new(body, &insertion_points),
             LocalSimplePtrCVMap::new(body),
         ),
     );

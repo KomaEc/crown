@@ -12,7 +12,7 @@ use crate::{
     ssa::{
         body_ext::{BodyExt, PhiNodeInsertionPoints},
         rename::{
-            handler::SSANameMap, HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename,
+            handler::SSANameSourceMap, HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename,
             SSARenameState,
         },
     },
@@ -43,7 +43,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
             let body = self.tcx.optimized_mir(did);
             let insertion_points = body.compute_phi_node::<DefUse>(self.tcx);
 
-            let mut ssa_name_source_map = SSANameMap::new(body, &insertion_points);
+            let mut ssa_name_source_map = SSANameSourceMap::new(body, &insertion_points);
 
             let lambda_ctxt_start = self.lambda_ctxt.lambda_map.len();
             let constraints_start = self.constraints.len();

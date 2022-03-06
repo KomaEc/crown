@@ -19,7 +19,7 @@ use crate::{
     array_analysis::solve::{solve, SolveSuccess},
     call_graph::{CallGraph, CallSite, Func},
     def_use::IsDefUse,
-    ssa::rename::{handler::SSANameMap, SSANameHandler},
+    ssa::rename::{handler::SSANameSourceMap, SSANameHandler},
     ty_ext::TyExt,
 };
 
@@ -39,7 +39,7 @@ pub struct CrateSummary<'tcx, DefUse: IsDefUse> {
     pub constraints: ConstraintSet,
     boundary_constraints: IndexVec<CallSite, Vec<Constraint>>,
 
-    pub ssa_name_source_map: IndexVec<Func, SSANameMap>,
+    pub ssa_name_source_map: IndexVec<Func, SSANameSourceMap>,
     _marker: PhantomData<*const DefUse>,
 }
 
