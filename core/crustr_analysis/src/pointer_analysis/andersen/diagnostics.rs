@@ -15,7 +15,7 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
                 body.var_debug_info.clone().into_iter().filter_map(|var| {
                     if let VarDebugInfoContents::Place(place) = var.value {
                         let ty = place.ty(&body.local_decls, self.ptr_ctxt.tcx()).ty;
-                        if ty.is_ptr_of_concerned() {
+                        if ty.is_ptr_but_not_fn_ptr() {
                             return Some((var, body.source.def_id()));
                         }
                     } else {

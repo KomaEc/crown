@@ -284,7 +284,7 @@ impl CrateLambdaCtxt {
                                                 None
                                             }
                                         })
-                                        .take_while(|ty| ty.is_ptr_of_concerned())
+                                        .take_while(|ty| ty.is_ptr_but_not_fn_ptr())
                                         .enumerate()
                                         .map(|(nested_level, _)| {
                                             lambda_map.push(

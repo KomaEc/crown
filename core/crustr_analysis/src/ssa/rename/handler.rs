@@ -177,7 +177,7 @@ impl<'me, 'tcx, CV: Idx> LocalSimplePtrCVMap<'me, 'tcx, CV> {
             .iter_enumerated()
             .map(|(local, local_decl)| {
                 // if it is local simple pointer type
-                if local_decl.ty.is_ptr_of_concerned() {
+                if local_decl.ty.is_ptr_but_not_fn_ptr() {
                     let idx = rev_map.push((local, 0));
                     vec![idx]
                 } else {
@@ -191,7 +191,7 @@ impl<'me, 'tcx, CV: Idx> LocalSimplePtrCVMap<'me, 'tcx, CV> {
     #[inline]
     fn gen_def(&mut self, local: Local, idx: usize) {
         let ty = self.body.local_decls[local].ty;
-        if ty.is_ptr_of_concerned() {
+        if ty.is_ptr_but_not_fn_ptr() {
             let cv = self.rev_map.push((local, idx));
             assert_eq!(self.map[local].len(), idx);
             self.map[local].push(cv);

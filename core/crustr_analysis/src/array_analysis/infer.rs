@@ -59,7 +59,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                     insertion_points.filter_repack(|local, _| {
                         body.local_decls[local]
                             .ty
-                            .is_ptr_of_concerned()
+                            .is_ptr_but_not_fn_ptr()
                             .then(|| vec![])
                     }),
                 ),
@@ -134,7 +134,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                         .chain(body.args_iter().map(|local| {
                             body.local_decls[local]
                                 .ty
-                                .is_ptr_of_concerned()
+                                .is_ptr_but_not_fn_ptr()
                                 .then(|| self.lambda_ctxt.func_ctxt[func].local[local][0])
                         }))
                         .collect::<Vec<_>>(),
@@ -202,7 +202,7 @@ impl CrateLambdaCtxt {
                 let ty = local_decl.ty;
                 (
                     // vec![],
-                    ty.is_ptr_of_concerned()
+                    ty.is_ptr_but_not_fn_ptr()
                         .then(|| {
                             let lambda = self.lambda_map.push(
                                 None,
@@ -223,7 +223,7 @@ impl CrateLambdaCtxt {
                                 None
                             }
                         })
-                        .take_while(|ty| ty.is_ptr_of_concerned())
+                        .take_while(|ty| ty.is_ptr_but_not_fn_ptr())
                         .skip(1)
                         .enumerate()
                         .map(|(level, _)| {
@@ -278,7 +278,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> SSA
         self.extra_handlers.handle_def(local, idx, location);
         self.ctxt.body.local_decls[local]
             .ty
-            .is_ptr_of_concerned()
+            .is_ptr_but_not_fn_ptr()
             .then(|| self.ctxt.handle_def(local, idx, location))
     }
 
@@ -286,7 +286,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> SSA
         self.extra_handlers.handle_use(local, idx, location);
         self.ctxt.body.local_decls[local]
             .ty
-            .is_ptr_of_concerned()
+            .is_ptr_but_not_fn_ptr()
             .then(|| self.ctxt.handle_use(local, idx, location))
     }
 
@@ -295,7 +295,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> SSA
             .handle_def_at_phi_node(local, idx, block);
         self.ctxt.body.local_decls[local]
             .ty
-            .is_ptr_of_concerned()
+            .is_ptr_but_not_fn_ptr()
             .then(|| self.ctxt.handle_def_at_phi_node(local, idx, block));
     }
 
@@ -304,7 +304,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> SSA
             .handle_use_at_phi_node(local, idx, block, pos);
         self.ctxt.body.local_decls[local]
             .ty
-            .is_ptr_of_concerned()
+            .is_ptr_but_not_fn_ptr()
             .then(|| self.ctxt.handle_use_at_phi_node(local, idx, block, pos));
     }
 }
@@ -387,7 +387,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         debug_assert!(place
             .ty(self.ctxt.body, self.ctxt.tcx)
             .ty
-            .is_ptr_of_concerned());
+            .is_ptr_but_not_fn_ptr());
 
         let lambda = self.r#use(place.local, location);
 
@@ -408,7 +408,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         debug_assert!(place
             .ty(self.ctxt.body, self.ctxt.tcx)
             .ty
-            .is_ptr_of_concerned());
+            .is_ptr_but_not_fn_ptr());
 
         if place.projection.is_empty() {
             self.define(place.local, location).unwrap()
@@ -447,7 +447,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
         if place
             .ty(self.ctxt.body, self.ctxt.tcx)
             .ty
-            .is_ptr_of_concerned()
+            .is_ptr_but_not_fn_ptr()
         {
             if let Rvalue::Use(Operand::Move(rhs))
             | Rvalue::Use(Operand::Copy(rhs))
@@ -525,7 +525,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                                 self.ctxt.call_graph.lookup_function(&callee_did).unwrap()
                             );
                             for (idx, arg) in args.iter().enumerate() {
-                                if arg.ty(self.ctxt.body, self.ctxt.tcx).is_ptr_of_concerned() {
+                                if arg.ty(self.ctxt.body, self.ctxt.tcx).is_ptr_but_not_fn_ptr() {
                                     let place = arg
                                         .place()
                                         .expect("constant in call arguments is not supported");
@@ -550,7 +550,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                                 if destination
                                     .ty(self.ctxt.body, self.ctxt.tcx)
                                     .ty
-                                    .is_ptr_of_concerned()
+                                    .is_ptr_but_not_fn_ptr()
                                 {
                                     let lambda = self.process_lhs(&destination, location);
                                     self.boundary_constraints[call_site].push(
@@ -588,7 +588,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
         } else if let TerminatorKind::Return = terminator.kind {
             if self.ctxt.body.local_decls[RETURN_PLACE]
                 .ty
-                .is_ptr_of_concerned()
+                .is_ptr_but_not_fn_ptr()
             {
                 let ssa_idx = self.ssa_state().r#use(RETURN_PLACE);
                 self.ssa_name_handler()
@@ -676,7 +676,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
                 }
             }
             for (local, y) in self.lambda_ctxt.local.iter_enumerated() {
-                if self.body.local_decls[local].ty.is_ptr_of_concerned() {
+                if self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr() {
                     assert_eq!(y.len(), 1);
                     log::debug!("{}{:?}^0 ==> {:?}", INDENT, local, y[0])
                 } else {
@@ -706,7 +706,7 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
 
     fn handle_def(&mut self, local: Local, idx: usize, _location: Location) -> Self::Output {
         log::debug!("InferCtxt defining {:?}^{}", local, idx);
-        debug_assert!(self.body.local_decls[local].ty.is_ptr_of_concerned());
+        debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
         self.lambda_ctxt.generate_local(local, idx)
     }
 
@@ -718,7 +718,7 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
 
     fn handle_use(&mut self, local: Local, idx: usize, _location: Location) -> Self::Output {
         log::debug!("InferCtxt using {:?}^{}", local, idx);
-        debug_assert!(self.body.local_decls[local].ty.is_ptr_of_concerned());
+        debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
         let lambda = self.lambda_ctxt.local[local][idx];
         log::debug!("retrieve {:?} for Local {:?}^{}", lambda, local, idx);
         lambda

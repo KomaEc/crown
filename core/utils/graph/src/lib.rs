@@ -8,7 +8,7 @@ extern crate rustc_serialize;
 pub mod implementation;
 
 #[macro_export]
-macro_rules! derive_graph_via {
+macro_rules! delegate_graph_via {
     ($S:ident.$f:ident$colon:tt $ty:ty) => {
         impl DirectedGraph for $S {
             type Node = <$ty as DirectedGraph>::Node;

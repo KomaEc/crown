@@ -97,7 +97,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
             is_block_tail: _,
         } = local_decl;
 
-        if ty.is_ptr_of_concerned() {
+        if ty.is_ptr_but_not_fn_ptr() {
             // generate andersen node for this local
             let _ = self.ptr_ctxt.generate_from_local(self.func_cx, local);
         }
@@ -114,7 +114,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
         );
 
         let place_ty = place.ty(self.body, self.ptr_ctxt.tcx());
-        if place_ty.ty.is_ptr_of_concerned() {
+        if place_ty.ty.is_ptr_but_not_fn_ptr() {
             // self.process_assign_of_ptr_ty(place, rvalue, location);
 
             if let Some((rhs_repr, rhs_ptr_kind)) = self.process_rvalue_of_ptr_ty(rvalue, location)
@@ -219,7 +219,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
         {
             if let Some((place, _)) = destination {
                 let place_ty = place.ty(self.body, self.ptr_ctxt.tcx());
-                if place_ty.ty.is_ptr_of_concerned() {
+                if place_ty.ty.is_ptr_but_not_fn_ptr() {
                     // processing terminator `p = f(q1, q2, ..)`
                     if let FnDef(def_id, generic_args) = func.constant().unwrap().ty().kind() {
                         // process lhs
@@ -268,7 +268,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                                 let local = Local::from_usize(i + 1);
                                 if let Some(place) = operand.place() {
                                     let place_ty = place.ty(self.body, self.ptr_ctxt.tcx());
-                                    if place_ty.ty.is_ptr_of_concerned() {
+                                    if place_ty.ty.is_ptr_but_not_fn_ptr() {
                                         let lhs_repr =
                                             self.ptr_ctxt.generate_from_local(callee, local);
                                         // .lookup_local(callee, local)

@@ -1,4 +1,4 @@
-use graph::{derive_graph_via, implementation::forward_star};
+use graph::{delegate_graph_via, implementation::forward_star};
 use rustc_data_structures::graph::{
     DirectedGraph, GraphPredecessors, GraphSuccessors, WithNumEdges, WithNumNodes,
     WithPredecessors, WithSuccessors,
@@ -18,7 +18,7 @@ pub struct CallGraph {
     pub graph: forward_star::Graph<Func, CallSite>,
 }
 
-derive_graph_via!(CallGraph.graph: forward_star::Graph<Func, CallSite>);
+delegate_graph_via!(CallGraph.graph: forward_star::Graph<Func, CallSite>);
 
 impl CallGraph {
     pub fn new(tcx: TyCtxt, bodies: impl Iterator<Item = DefId>) -> Self {
