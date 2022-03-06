@@ -28,7 +28,7 @@ pub fn solve(
     locals: Range<usize>,
     constraints: &[Constraint],
     // boundary_constraints: impl Iterator<Item = Constraint>,
-    boundary_constraints: &[Constraint]
+    boundary_constraints: &[Constraint],
 ) -> Result<SolveSuccess, ()> {
     assert_eq!(globals.start, 0);
     assert!(globals.end <= locals.start);
@@ -156,10 +156,10 @@ pub fn solve(
             // return position
             if matches!(assumptions[lhs], Some(true)) {
                 match assumptions[rhs] {
-                    None => { 
+                    None => {
                         assumptions[rhs] = Some(true);
                         solve_success = std::cmp::max(solve_success, SolveSuccess::GloballyChanged)
-                    },
+                    }
                     Some(value) => assert!(value),
                 }
             }
@@ -168,11 +168,11 @@ pub fn solve(
             assert!(locals.contains(&rhs.as_usize()));
             if matches!(assumptions[rhs], Some(false)) {
                 match assumptions[lhs] {
-                    None =>  {
+                    None => {
                         assumptions[lhs] = Some(false);
                         solve_success = std::cmp::max(solve_success, SolveSuccess::GloballyChanged)
-                    },
-                    Some(value) => assert!(!value)
+                    }
+                    Some(value) => assert!(!value),
                 }
             }
         }

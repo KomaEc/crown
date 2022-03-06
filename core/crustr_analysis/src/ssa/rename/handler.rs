@@ -29,7 +29,7 @@ impl SSANameMap {
     ) -> Self {
         let names_for_phi_nodes = insertion_points
             .iter_enumerated()
-            .map(|(bb,bb_insertion_points)| {
+            .map(|(bb, bb_insertion_points)| {
                 bb_insertion_points.repack(|_, _| {
                     let uses = smallvec![0; body.predecessors()[bb].len()];
                     (0, uses)

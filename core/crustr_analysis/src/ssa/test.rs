@@ -7,7 +7,6 @@ use crate::ssa::body_ext::BodyExt;
 use crate::ssa::rename::handler::{LocalSimplePtrCVMap, SSANameMap};
 use crate::ssa::rename::{handler::PrintStdSSAName, implementations::PlainRenamer, SSANameHandler};
 
-
 #[test]
 fn test_phi_node_insertion_point() {
     compiler_interface::run_compiler_with_single_func(TEST_PROGRAMS[0].into(), |tcx, fn_did| {

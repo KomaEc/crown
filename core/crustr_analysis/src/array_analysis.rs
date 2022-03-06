@@ -1,5 +1,6 @@
 use std::{
     fmt::{Debug, Display},
+    marker::PhantomData,
     ops::Range,
 };
 
@@ -18,7 +19,7 @@ use crate::{
     array_analysis::solve::{solve, SolveSuccess},
     call_graph::{CallGraph, CallSite, Func},
     def_use::IsDefUse,
-    ssa::rename::{SSANameHandler, handler::SSANameMap},
+    ssa::rename::{handler::SSANameMap, SSANameHandler},
     ty_ext::TyExt,
 };
 
@@ -29,16 +30,17 @@ mod test;
 
 /// This structure should hold info about all struct definitions
 /// and local nested pointers in the crate
-pub struct CrateSummary<'tcx> {
+pub struct CrateSummary<'tcx, DefUse: IsDefUse> {
     pub tcx: TyCtxt<'tcx>,
     pub call_graph: CallGraph,
     pub lambda_ctxt: CrateLambdaCtxt,
     pub globals: Range<usize>,
     func_summaries: IndexVec<Func, FuncSummary>,
-    pub constraints: ConstraintSet, //Vec<Constraint>,
+    pub constraints: ConstraintSet,
     boundary_constraints: IndexVec<CallSite, Vec<Constraint>>,
 
     pub ssa_name_source_map: IndexVec<Func, SSANameMap>,
+    _marker: PhantomData<*const DefUse>,
 }
 
 /// Pairs of start/end pointers into lambda context and constraints
@@ -49,8 +51,8 @@ pub struct FuncSummary {
     pub constraints: Range<usize>,
 }
 
-impl<'tcx> CrateSummary<'tcx> {
-    pub fn new<DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>(
+impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
+    pub fn new<Handler: SSANameHandler<Output = ()>>(
         tcx: TyCtxt<'tcx>,
         adt_defs: &[DefId],
         call_graph: CallGraph,
@@ -69,25 +71,26 @@ impl<'tcx> CrateSummary<'tcx> {
             func_summaries: IndexVec::with_capacity(num_funcs),
             constraints: ConstraintSet::new(),
             boundary_constraints: IndexVec::new(),
-            ssa_name_source_map: IndexVec::with_capacity(num_funcs)
+            ssa_name_source_map: IndexVec::with_capacity(num_funcs),
+            _marker: PhantomData,
         }
         .log_initial_state()
-        .infer_all::<DefUse, _>(extra_handler)
+        .infer_all::<_>(extra_handler)
         .debug_state_after_infer()
     }
 
     pub fn iterate_to_fixpoint(&mut self) -> Result<(), ()> {
-
-        let boundary_constraints = IndexVec::from_fn_n(|func| {
-            self.call_graph
-                                .graph
-                                .adjacent_edges(func, forward_star::Direction::Outgoing)
-                                .map(|(call_site, _)| {
-                                    self.boundary_constraints[call_site].iter().map(|&c| c)
-                                })
-                                .flatten()
-                                .collect::<Vec<_>>()
-        }, self.call_graph.functions.len());
+        let boundary_constraints = IndexVec::from_fn_n(
+            |func| {
+                self.call_graph
+                    .graph
+                    .adjacent_edges(func, forward_star::Direction::Outgoing)
+                    .map(|(call_site, _)| self.boundary_constraints[call_site].iter().map(|&c| c))
+                    .flatten()
+                    .collect::<Vec<_>>()
+            },
+            self.call_graph.functions.len(),
+        );
 
         let call_graph_sccs = Sccs::<Func, usize>::new(&self.call_graph);
         // it seems that the scc algorithm will rank sccs in post order, namely if there
@@ -117,16 +120,15 @@ impl<'tcx> CrateSummary<'tcx> {
                             self.globals.clone(),
                             locals,
                             &self.constraints[constraints_range],
-                            &boundary_constraints[func]
-                            /*
-                            self.call_graph
-                                .graph
-                                .adjacent_edges(func, forward_star::Direction::Outgoing)
-                                .map(|(call_site, _)| {
-                                    self.boundary_constraints[call_site].iter().map(|&c| c)
-                                })
-                                .flatten(),
-                                */
+                            &boundary_constraints[func], /*
+                                                         self.call_graph
+                                                             .graph
+                                                             .adjacent_edges(func, forward_star::Direction::Outgoing)
+                                                             .map(|(call_site, _)| {
+                                                                 self.boundary_constraints[call_site].iter().map(|&c| c)
+                                                             })
+                                                             .flatten(),
+                                                             */
                         )? {
                             SolveSuccess::Unchanged => {}
                             SolveSuccess::LocallyChanged => locally_changed = true,
@@ -213,7 +215,8 @@ impl<'tcx> CrateSummary<'tcx> {
     }
 
     fn debug_state_after_infer(self) -> Self {
-        #[cfg(debug_assertions)] {
+        #[cfg(debug_assertions)]
+        {
             assert_eq!(self.ssa_name_source_map.len(), self.call_graph.num_nodes());
             assert_eq!(self.func_summaries.len(), self.call_graph.num_nodes());
         }

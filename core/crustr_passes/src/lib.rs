@@ -19,7 +19,7 @@ use crustr_analysis::{
     array_analysis::{CrateSummary, Lambda},
     call_graph::CallGraph,
     def_use::BorrowckDefUse,
-    ssa::rename::handler::{LogSSAName, SSANameMap},
+    ssa::rename::handler::LogSSAName,
 };
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
@@ -47,8 +47,7 @@ pub fn array_analysis<'tcx>(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: 
 
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
     let mut crate_summary =
-        CrateSummary::new::<BorrowckDefUse, _>(tcx, &adt_defs, call_graph, LogSSAName);
-    // assert_eq!(crate_summary.call_graph.num_nodes(), 1);
+        CrateSummary::<BorrowckDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
 
     match crate_summary.iterate_to_fixpoint() {
         Ok(()) => {

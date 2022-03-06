@@ -11,7 +11,10 @@ use crate::{
     def_use::IsDefUse,
     ssa::{
         body_ext::{BodyExt, PhiNodeInsertionPoints},
-        rename::{HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename, SSARenameState, handler::SSANameMap},
+        rename::{
+            handler::SSANameMap, HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename,
+            SSARenameState,
+        },
     },
     ty_ext::TyExt,
 };
@@ -29,8 +32,8 @@ use rustc_middle::{
 };
 use rustc_target::abi::VariantIdx;
 
-impl<'tcx> CrateSummary<'tcx> {
-    pub fn infer_all<DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>(
+impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
+    pub fn infer_all<Handler: SSANameHandler<Output = ()>>(
         mut self,
         mut extra_handler: Handler,
     ) -> Self {
@@ -69,22 +72,19 @@ impl<'tcx> CrateSummary<'tcx> {
 
             infer.rename_body(body, &insertion_points);
 
-            
             let InferCtxt {
                 lambda_ctxt,
                 phi_joins,
                 ..
             } = infer.ctxt.log_phi_joins();
-            
-            
-            
+
             let func_ctxt = FuncLambdaCtxt {
                 local: lambda_ctxt.local,
                 local_nested: lambda_ctxt.local_nested,
             };
             let mut return_ssa_idx = infer.return_ssa_idx;
             self.lambda_ctxt.func_ctxt.push(func_ctxt);
-            
+
             return_ssa_idx.sort();
             return_ssa_idx.dedup();
             log::debug!("process return places");
@@ -99,9 +99,9 @@ impl<'tcx> CrateSummary<'tcx> {
                     self.constraints.push_eq(this, other)
                 }
             }
-            
+
             assert_eq!(func, all_return_ssa_idx.push(return_ssa_idx));
-            
+
             log::debug!("process equalities in phi nodes");
             for equalities in phi_joins.into_iter() {
                 for equality in equalities.into_iter() {
@@ -113,12 +113,11 @@ impl<'tcx> CrateSummary<'tcx> {
                 }
             }
 
-            
             self.ssa_name_source_map.push(ssa_name_source_map);
-            
+
             let lambda_ctxt_end = self.lambda_ctxt.lambda_map.len();
             let constraints_end = self.constraints.len();
-            
+
             assert_eq!(
                 func,
                 self.func_summaries.push(FuncSummary {

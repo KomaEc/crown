@@ -153,7 +153,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                 let fn_defs = top_level_fns.iter().cloned().map(LocalDefId::to_def_id);
                 let call_graph = CallGraph::new(tcx, fn_defs);
                 let mut crate_summary =
-                    CrateSummary::new::<BorrowckDefUse, _>(tcx, &adt_defs, call_graph, LogSSAName);
+                    CrateSummary::<BorrowckDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
                 crate_summary.iterate_to_fixpoint().unwrap();
                 let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions.clone();
                 println!("All constraints:");

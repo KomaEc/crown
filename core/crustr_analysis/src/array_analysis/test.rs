@@ -48,7 +48,7 @@ fn test_limitation_due_to_nested_pointers() {
 
             let call_graph = CallGraph::new(tcx, bodies.into_iter());
             let mut crate_summary =
-                CrateSummary::new::<BorrowckDefUse, _>(tcx, &adt_defs, call_graph, LogSSAName);
+                CrateSummary::<BorrowckDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
             crate_summary.iterate_to_fixpoint().unwrap();
             let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
             // we want to infer that p is *mut [*mut [i32]]
@@ -61,8 +61,8 @@ fn test_limitation_due_to_nested_pointers() {
 fn test_boundary_constraints() {
     init_logger();
     let file = env::current_dir()
-    .expect("current working directory value is invalid")
-    .join("src/array_analysis/test/resource/4/lib.rs");
+        .expect("current working directory value is invalid")
+        .join("src/array_analysis/test/resource/4/lib.rs");
     compiler_interface::run_compiler_with_struct_defs_and_funcs(
         file.into(),
         |tcx, struct_defs, fn_dids| {
@@ -70,7 +70,7 @@ fn test_boundary_constraints() {
 
             let call_graph = CallGraph::new(tcx, bodies.into_iter());
             let mut crate_summary =
-                CrateSummary::new::<BorrowckDefUse, _>(tcx, &adt_defs, call_graph, LogSSAName);
+                CrateSummary::<BorrowckDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
             crate_summary.iterate_to_fixpoint().unwrap();
             let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
             // we want to infer the precise signature for f
@@ -114,7 +114,7 @@ fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
 
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
     let mut crate_summary =
-        CrateSummary::new::<BorrowckDefUse, _>(tcx, &adt_defs, call_graph, LogSSAName);
+        CrateSummary::<BorrowckDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
     // assert_eq!(crate_summary.call_graph.num_nodes(), 1);
 
     crate_summary.iterate_to_fixpoint().unwrap();
@@ -143,7 +143,7 @@ fn run_infer<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
     let num_funcs = bodies.len();
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
     let crate_summary =
-        CrateSummary::new::<BorrowckDefUse, _>(tcx, &adt_defs, call_graph, LogSSAName);
+        CrateSummary::<BorrowckDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
     assert_eq!(crate_summary.lambda_ctxt.func_ctxt.len(), num_funcs)
 }
 

@@ -172,7 +172,7 @@ impl<T> std::ops::IndexMut<Local> for BasicBlockInsersionPoints<T> {
 impl<T> BasicBlockInsersionPoints<T> {
     pub fn repack<F, U>(&self, f: F) -> BasicBlockInsersionPoints<U>
     where
-        F: Fn(Local, &T) -> U 
+        F: Fn(Local, &T) -> U,
     {
         self.iter_enumerated()
             .map(|(local, t)| (local, f(local, t)))
