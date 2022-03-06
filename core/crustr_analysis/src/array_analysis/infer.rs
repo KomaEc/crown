@@ -11,7 +11,7 @@ use crate::{
     def_use::IsDefUse,
     ssa::{
         body_ext::{BodyExt, PhiNodeInsertionPoints},
-        rename::{HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename, SSARenameState},
+        rename::{HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename, SSARenameState, handler::SSANameMap},
     },
     ty_ext::TyExt,
 };
@@ -32,7 +32,7 @@ use rustc_target::abi::VariantIdx;
 impl<'tcx> CrateSummary<'tcx> {
     pub fn infer_all<DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>(
         mut self,
-        extra_handler: &mut Handler,
+        mut extra_handler: Handler,
     ) -> Self {
         let mut boundary_constraints = IndexVec::from_elem(vec![], &self.call_graph.graph.edges);
         let mut all_return_ssa_idx = IndexVec::with_capacity(self.call_graph.functions.len());
@@ -40,10 +40,12 @@ impl<'tcx> CrateSummary<'tcx> {
             let body = self.tcx.optimized_mir(did);
             let insertion_points = body.compute_phi_node::<DefUse>(self.tcx);
 
+            let mut ssa_name_source_map = SSANameMap::new(body, &insertion_points);
+
             let lambda_ctxt_start = self.lambda_ctxt.lambda_map.len();
             let constraints_start = self.constraints.len();
 
-            let mut infer: Infer<DefUse, &mut Handler> = Infer {
+            let mut infer: Infer<DefUse, _> = Infer {
                 ctxt: InferCtxt::new(
                     self.tcx,
                     func,
@@ -51,7 +53,7 @@ impl<'tcx> CrateSummary<'tcx> {
                     &self.call_graph,
                     &mut self.lambda_ctxt,
                     &mut self.constraints,
-                    insertion_points.filter_map_local(|local| {
+                    insertion_points.filter_repack(|local, _| {
                         body.local_decls[local]
                             .ty
                             .is_ptr_of_concerned()
@@ -61,25 +63,28 @@ impl<'tcx> CrateSummary<'tcx> {
                 boundary_constraints: &mut boundary_constraints,
                 return_ssa_idx: vec![],
                 ssa_state: SSARenameState::new(&body.local_decls),
-                extra_handlers: &mut *extra_handler,
+                extra_handlers: (&mut extra_handler, &mut ssa_name_source_map),
                 _marker: PhantomData,
             };
 
             infer.rename_body(body, &insertion_points);
 
+            
             let InferCtxt {
                 lambda_ctxt,
                 phi_joins,
                 ..
             } = infer.ctxt.log_phi_joins();
-
+            
+            
+            
             let func_ctxt = FuncLambdaCtxt {
                 local: lambda_ctxt.local,
                 local_nested: lambda_ctxt.local_nested,
             };
             let mut return_ssa_idx = infer.return_ssa_idx;
             self.lambda_ctxt.func_ctxt.push(func_ctxt);
-
+            
             return_ssa_idx.sort();
             return_ssa_idx.dedup();
             log::debug!("process return places");
@@ -94,9 +99,9 @@ impl<'tcx> CrateSummary<'tcx> {
                     self.constraints.push_eq(this, other)
                 }
             }
-
+            
             assert_eq!(func, all_return_ssa_idx.push(return_ssa_idx));
-
+            
             log::debug!("process equalities in phi nodes");
             for equalities in phi_joins.into_iter() {
                 for equality in equalities.into_iter() {
@@ -108,9 +113,12 @@ impl<'tcx> CrateSummary<'tcx> {
                 }
             }
 
+            
+            self.ssa_name_source_map.push(ssa_name_source_map);
+            
             let lambda_ctxt_end = self.lambda_ctxt.lambda_map.len();
             let constraints_end = self.constraints.len();
-
+            
             assert_eq!(
                 func,
                 self.func_summaries.push(FuncSummary {

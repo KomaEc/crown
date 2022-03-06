@@ -18,7 +18,7 @@ use crate::{
     array_analysis::solve::{solve, SolveSuccess},
     call_graph::{CallGraph, CallSite, Func},
     def_use::IsDefUse,
-    ssa::rename::SSANameHandler,
+    ssa::rename::{SSANameHandler, handler::SSANameMap},
     ty_ext::TyExt,
 };
 
@@ -37,6 +37,8 @@ pub struct CrateSummary<'tcx> {
     func_summaries: IndexVec<Func, FuncSummary>,
     pub constraints: ConstraintSet, //Vec<Constraint>,
     boundary_constraints: IndexVec<CallSite, Vec<Constraint>>,
+
+    pub ssa_name_source_map: IndexVec<Func, SSANameMap>,
 }
 
 /// Pairs of start/end pointers into lambda context and constraints
@@ -52,7 +54,7 @@ impl<'tcx> CrateSummary<'tcx> {
         tcx: TyCtxt<'tcx>,
         adt_defs: &[DefId],
         call_graph: CallGraph,
-        mut extra_handler: Handler,
+        extra_handler: Handler,
     ) -> Self {
         let num_funcs = call_graph.num_nodes();
         let lambda_ctxt = CrateLambdaCtxt::initiate(tcx, adt_defs, &call_graph);
@@ -67,9 +69,11 @@ impl<'tcx> CrateSummary<'tcx> {
             func_summaries: IndexVec::with_capacity(num_funcs),
             constraints: ConstraintSet::new(),
             boundary_constraints: IndexVec::new(),
+            ssa_name_source_map: IndexVec::with_capacity(num_funcs)
         }
         .log_initial_state()
-        .infer_all::<DefUse, _>(&mut extra_handler)
+        .infer_all::<DefUse, _>(extra_handler)
+        .debug_state_after_infer()
     }
 
     pub fn iterate_to_fixpoint(&mut self) -> Result<(), ()> {
@@ -204,6 +208,14 @@ impl<'tcx> CrateSummary<'tcx> {
                     }
                 }
             }
+        }
+        self
+    }
+
+    fn debug_state_after_infer(self) -> Self {
+        #[cfg(debug_assertions)] {
+            assert_eq!(self.ssa_name_source_map.len(), self.call_graph.num_nodes());
+            assert_eq!(self.func_summaries.len(), self.call_graph.num_nodes());
         }
         self
     }

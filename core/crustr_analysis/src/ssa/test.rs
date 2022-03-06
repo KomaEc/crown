@@ -7,7 +7,6 @@ use crate::ssa::body_ext::BodyExt;
 use crate::ssa::rename::handler::{LocalSimplePtrCVMap, SSANameMap};
 use crate::ssa::rename::{handler::PrintStdSSAName, implementations::PlainRenamer, SSANameHandler};
 
-use super::pretty::write_ssa_mir_fn;
 
 #[test]
 fn test_phi_node_insertion_point() {
@@ -307,6 +306,7 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
         ),
     );
     renamer.rename();
+    /*
     write_ssa_mir_fn(
         tcx,
         body,
@@ -314,6 +314,7 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
         &mut std::io::stdout(),
     )
     .unwrap();
+    */
 }
 
 fn spec1<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
@@ -331,6 +332,7 @@ fn spec1<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
         ),
     );
     renamer.rename();
+    /*
     write_ssa_mir_fn(
         tcx,
         body,
@@ -338,4 +340,5 @@ fn spec1<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
         &mut std::io::stdout(),
     )
     .unwrap();
+    */
 }

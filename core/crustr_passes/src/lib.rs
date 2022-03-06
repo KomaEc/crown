@@ -19,7 +19,7 @@ use crustr_analysis::{
     array_analysis::{CrateSummary, Lambda},
     call_graph::CallGraph,
     def_use::BorrowckDefUse,
-    ssa::rename::handler::LogSSAName,
+    ssa::rename::handler::{LogSSAName, SSANameMap},
 };
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;

@@ -27,19 +27,20 @@ impl SSANameMap {
         body: &Body<'tcx>,
         insertion_points: &PhiNodeInsertionPoints<PhantomData<*const DefUse>>,
     ) -> Self {
-        let names_for_phi_nodes = body
-            .basic_blocks()
-            .indices()
-            .map(|bb| {
-                insertion_points[bb].map_local(|_local| {
+        let names_for_phi_nodes = insertion_points
+            .iter_enumerated()
+            .map(|(bb,bb_insertion_points)| {
+                bb_insertion_points.repack(|_, _| {
                     let uses = smallvec![0; body.predecessors()[bb].len()];
                     (0, uses)
                 })
             })
-            .collect::<IndexVec<_, _>>();
+            .collect::<IndexVec<_, _>>()
+            .into();
+
         SSANameMap {
             names: LocationMap::new(body),
-            names_for_phi_nodes: names_for_phi_nodes.into(),
+            names_for_phi_nodes,
         }
     }
 
@@ -81,15 +82,15 @@ impl SSANameHandler for SSANameMap {
         self.names[location].0 = Some((local, idx));
     }
 
+    /*
     fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
         self.names_for_phi_nodes[block][local].0 = idx;
-        /*
         .iter_mut()
         .find(|(l, _, _)| *l == local)
         .map(|(_, def, _)| *def = idx)
         .expect("initialised")
-        */
     }
+    */
 
     fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
         if !self.names[location].1.iter().any(|&(lo, _)| lo == local) {
@@ -97,15 +98,15 @@ impl SSANameHandler for SSANameMap {
         }
     }
 
+    /*
     fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize) {
         self.names_for_phi_nodes[block][local].1[pos] = idx
-        /*
             .iter_mut()
             .find(|(l, _, _)| *l == local)
             .map(|(_, _, uses)| uses[pos] = idx)
             .expect("initialised")
-        */
     }
+    */
 }
 
 macro_rules! make_new_name_debug_handler (

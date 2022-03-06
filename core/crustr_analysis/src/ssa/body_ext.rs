@@ -34,22 +34,22 @@ impl<Payload> PhiNodeInsertionPoints<Payload> {
         self.insertion_points.into_iter()
     }
 
-    pub fn map_local<F, U>(&self, f: F) -> PhiNodeInsertionPoints<U>
+    pub fn repack<F, U>(&self, f: F) -> PhiNodeInsertionPoints<U>
     where
-        F: Fn(Local) -> U,
+        F: Fn(Local, &Payload) -> U,
     {
         self.iter()
-            .map(|bb_insertion_points| bb_insertion_points.map_local(&f))
+            .map(|bb_insertion_points| bb_insertion_points.repack(&f))
             .collect::<IndexVec<_, _>>()
             .into()
     }
 
-    pub fn filter_map_local<U, F>(&self, f: F) -> PhiNodeInsertionPoints<U>
+    pub fn filter_repack<U, F>(&self, f: F) -> PhiNodeInsertionPoints<U>
     where
-        F: Fn(Local) -> Option<U>,
+        F: Fn(Local, &Payload) -> Option<U>,
     {
         self.iter()
-            .map(|bb_insertion_points| bb_insertion_points.filter_map_local(&f))
+            .map(|bb_insertion_points| bb_insertion_points.filter_repack(&f))
             .collect::<IndexVec<_, _>>()
             .into()
     }
@@ -170,33 +170,21 @@ impl<T> std::ops::IndexMut<Local> for BasicBlockInsersionPoints<T> {
 }
 
 impl<T> BasicBlockInsersionPoints<T> {
-    pub fn map<F, U>(&self, f: F) -> BasicBlockInsersionPoints<U>
+    pub fn repack<F, U>(&self, f: F) -> BasicBlockInsersionPoints<U>
     where
-        F: Fn(&T) -> U,
+        F: Fn(Local, &T) -> U 
     {
         self.iter_enumerated()
-            .map(|(local, t)| (local, f(t)))
+            .map(|(local, t)| (local, f(local, t)))
             .collect::<BasicBlockInsersionPoints<_>>()
     }
 
-    pub fn map_local<F, U>(&self, f: F) -> BasicBlockInsersionPoints<U>
+    pub fn filter_repack<U, F>(&self, f: F) -> BasicBlockInsersionPoints<U>
     where
-        F: Fn(Local) -> U,
+        F: Fn(Local, &T) -> Option<U>,
     {
-        self.locals()
-            .map(|local| (local, f(local)))
-            .collect::<BasicBlockInsersionPoints<_>>()
-    }
-
-    pub fn filter_map_local<U, F>(&self, f: F) -> BasicBlockInsersionPoints<U>
-    where
-        F: Fn(Local) -> Option<U>,
-    {
-        self.locals()
-            .filter_map(|local| {
-                let payload = f(local)?;
-                Some((local, payload))
-            })
+        self.iter_enumerated()
+            .filter_map(|(local, t)| Some((local, f(local, t)?)))
             .collect::<BasicBlockInsersionPoints<_>>()
     }
 }
