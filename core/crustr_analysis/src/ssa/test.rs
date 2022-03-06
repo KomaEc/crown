@@ -320,7 +320,11 @@ fn spec1<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
     let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
     let mut renamer = PlainRenamer::<
         BorrowckDefUse,
-        (PrintStdSSAName, SSANameSourceMap, LocalSimplePtrCVMap<usize>),
+        (
+            PrintStdSSAName,
+            SSANameSourceMap,
+            LocalSimplePtrCVMap<usize>,
+        ),
     >::new(
         tcx,
         body,

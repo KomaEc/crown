@@ -38,18 +38,19 @@ pub struct CrateSummary<'tcx, DefUse: IsDefUse> {
     func_summaries: IndexVec<Func, FuncSummary>,
     pub constraints: ConstraintSet,
     boundary_constraints: IndexVec<CallSite, Vec<Constraint>>,
-    pub return_ssa_idx: IndexVec<Func, Vec<usize>>,
-
     pub ssa_name_source_map: IndexVec<Func, SSANameSourceMap>,
     _marker: PhantomData<*const DefUse>,
 }
 
 /// Pairs of start/end pointers into lambda context and constraints
-/// for a given function
-#[derive(Clone)]
+/// for a given function; Function signature
 pub struct FuncSummary {
     pub lambda_ctxt: Range<usize>,
     pub constraints: Range<usize>,
+    /// func_sig maps function arguments and return to constraint variables. It follows
+    /// the convention of MIR, where the first entry represents return place.
+    /// func_sig entries are `Some` if and only if its type is pointer type of concern
+    pub func_sig: Vec<Option<Lambda>>,
 }
 
 impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
@@ -72,7 +73,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
             func_summaries: IndexVec::with_capacity(num_funcs),
             constraints: ConstraintSet::new(),
             boundary_constraints: IndexVec::new(),
-            return_ssa_idx: IndexVec::with_capacity(num_funcs),
+            // return_ssa_idx: IndexVec::with_capacity(num_funcs),
             ssa_name_source_map: IndexVec::with_capacity(num_funcs),
             _marker: PhantomData,
         }
@@ -116,7 +117,12 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                         let FuncSummary {
                             lambda_ctxt: locals,
                             constraints: constraints_range,
-                        } = self.func_summaries[func].clone();
+                            ..
+                        } = &self.func_summaries[func];
+
+                        let locals = locals.clone();
+                        let constraints_range = constraints_range.clone();
+
                         match solve(
                             &mut self.lambda_ctxt.lambda_map.assumptions,
                             self.globals.clone(),

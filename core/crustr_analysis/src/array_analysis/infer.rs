@@ -12,8 +12,8 @@ use crate::{
     ssa::{
         body_ext::{BodyExt, PhiNodeInsertionPoints},
         rename::{
-            handler::SSANameSourceMap, HasSSANameHandler, HasSSARenameState, SSANameHandler, SSARename,
-            SSARenameState,
+            handler::SSANameSourceMap, HasSSANameHandler, HasSSARenameState, SSANameHandler,
+            SSARename, SSARenameState,
         },
     },
     ty_ext::TyExt,
@@ -89,7 +89,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
             return_ssa_idx.dedup();
             log::debug!("process return places");
             // assert!(!return_ssa_idx.is_empty());
-            if let Some((&this, rest)) = return_ssa_idx.split_first() {
+            let return_lambda = return_ssa_idx.split_first().map(|(&this, rest)| {
                 let this = self.lambda_ctxt.func_ctxt[func].local[RETURN_PLACE][this];
                 // although Return may occur multiple times (according to the docs), I'm
                 // curious to see how it may happen
@@ -98,7 +98,8 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                     let other = self.lambda_ctxt.func_ctxt[func].local[RETURN_PLACE][other];
                     self.constraints.push_eq(this, other)
                 }
-            }
+                this
+            });
 
             assert_eq!(func, all_return_ssa_idx.push(return_ssa_idx));
 
@@ -128,7 +129,15 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                     constraints: Range {
                         start: constraints_start,
                         end: constraints_end
-                    }
+                    },
+                    func_sig: std::iter::once(return_lambda)
+                        .chain(body.args_iter().map(|local| {
+                            body.local_decls[local]
+                                .ty
+                                .is_ptr_of_concerned()
+                                .then(|| self.lambda_ctxt.func_ctxt[func].local[local][0])
+                        }))
+                        .collect::<Vec<_>>(),
                 })
             )
         }
@@ -136,7 +145,6 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
         log::debug!("process boundary constraints");
         self.setup_boundary_constraints(boundary_constraints, &all_return_ssa_idx);
 
-        self.return_ssa_idx = all_return_ssa_idx;
 
         self
     }
