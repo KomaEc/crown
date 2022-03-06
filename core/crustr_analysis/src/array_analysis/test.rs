@@ -73,10 +73,15 @@ fn test_boundary_constraints() {
                 CrateSummary::<BorrowckDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
             crate_summary.iterate_to_fixpoint().unwrap();
             let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
-            // we want to infer the precise signature for f
-            assert_eq!(Some(true), solutions[0u32.into()]);
-            assert_eq!(Some(false), solutions[1u32.into()]);
-            assert_eq!(Some(true), solutions[3u32.into()]);
+            // we want to infer the precise signature for f(p: *mut i32, q: *mut i32) -> *mut i32
+            let f = 0u32.into();
+            let (&[ret, p, q], empty) = crate_summary.func_summaries[f]
+                .func_sig
+                .split_array_ref::<3>();
+            assert!(empty.is_empty());
+            assert_eq!(Some(true), solutions[ret.unwrap()]);
+            assert_eq!(Some(false), solutions[p.unwrap()]);
+            assert_eq!(Some(true), solutions[q.unwrap()]);
         },
     )
 }

@@ -145,7 +145,6 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
         log::debug!("process boundary constraints");
         self.setup_boundary_constraints(boundary_constraints, &all_return_ssa_idx);
 
-
         self
     }
 
