@@ -4,7 +4,7 @@ use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
 use crate::{
-    array_analysis::CrateSummary, call_graph::CallGraph, def_use::BorrowckDefUse,
+    array_analysis::CrateSummary, call_graph::CallGraph, def_use::FatThinAnalysisDefUse,
     ssa::rename::handler::LogSSAName, test::init_logger,
 };
 
@@ -48,7 +48,7 @@ fn test_limitation_due_to_nested_pointers() {
 
             let call_graph = CallGraph::new(tcx, bodies.into_iter());
             let mut crate_summary =
-                CrateSummary::<BorrowckDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+                CrateSummary::<FatThinAnalysisDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
             crate_summary.iterate_to_fixpoint().unwrap();
             let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
             // we want to infer that p is *mut [*mut [i32]]
@@ -70,7 +70,7 @@ fn test_boundary_constraints() {
 
             let call_graph = CallGraph::new(tcx, bodies.into_iter());
             let mut crate_summary =
-                CrateSummary::<BorrowckDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+                CrateSummary::<FatThinAnalysisDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
             crate_summary.iterate_to_fixpoint().unwrap();
             let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
             // we want to infer the precise signature for f(p: *mut i32, q: *mut i32) -> *mut i32
@@ -119,7 +119,7 @@ fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
 
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
     let mut crate_summary =
-        CrateSummary::<BorrowckDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+        CrateSummary::<FatThinAnalysisDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
     // assert_eq!(crate_summary.call_graph.num_nodes(), 1);
 
     crate_summary.iterate_to_fixpoint().unwrap();
@@ -148,7 +148,7 @@ fn run_infer<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
     let num_funcs = bodies.len();
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
     let crate_summary =
-        CrateSummary::<BorrowckDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+        CrateSummary::<FatThinAnalysisDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
     assert_eq!(crate_summary.lambda_ctxt.func_ctxt.len(), num_funcs)
 }
 

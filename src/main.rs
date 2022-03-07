@@ -14,7 +14,7 @@ extern crate rustc_session;
 
 use clap::Parser;
 use crustr_analysis::{
-    array_analysis::CrateSummary, call_graph::CallGraph, def_use::BorrowckDefUse,
+    array_analysis::CrateSummary, call_graph::CallGraph, def_use::FatThinAnalysisDefUse,
     null_analysis::NullAnalysisResults, ssa::rename::handler::LogSSAName,
 };
 use rustc_errors::registry;
@@ -153,7 +153,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                     .collect::<Vec<_>>();
                 let fn_defs = top_level_fns.iter().cloned().map(LocalDefId::to_def_id);
                 let call_graph = CallGraph::new(tcx, fn_defs);
-                let mut crate_summary = CrateSummary::<BorrowckDefUse>::new::<_>(
+                let mut crate_summary = CrateSummary::<FatThinAnalysisDefUse>::new::<_>(
                     tcx, &adt_defs, call_graph, LogSSAName,
                 );
                 crate_summary.iterate_to_fixpoint().unwrap();

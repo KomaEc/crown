@@ -227,7 +227,7 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
     ) -> PhiNodeInsertionPoints<PhantomData<*const DefUse>> {
         minimal_ssa_form(
             self,
-            DefSitesGatherer::<DefUse>::gather(tcx, self),
+            DefSitesGatherer::<DefUse>::gather(self),
             self.dominance_frontier(),
             liveness_result(tcx, self),
         )

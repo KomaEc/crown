@@ -2,7 +2,7 @@ use rustc_middle::mir::{BasicBlock, Body, Local, Location};
 use rustc_middle::ty::TyCtxt;
 use std::str;
 
-use crate::def_use::BorrowckDefUse;
+use crate::def_use::FatThinAnalysisDefUse;
 use crate::ssa::body_ext::BodyExt;
 use crate::ssa::rename::handler::{LocalSimplePtrCVMap, SSANameSourceMap};
 use crate::ssa::rename::{handler::PrintStdSSAName, implementations::PlainRenamer, SSANameHandler};
@@ -51,7 +51,7 @@ fn test_phi_node_insertion_point() {
         );
         assert!(dominance_frontier[BasicBlock::from_u32(8)].is_empty());
 
-        let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
+        let insertion_points = body.compute_phi_node::<FatThinAnalysisDefUse>(tcx);
         assert_eq!(
             insertion_points[BasicBlock::from_u32(1)]
                 .locals()
@@ -150,7 +150,7 @@ const TEST_PROGRAMS_SPECS: &'static [for<'a, 'tcx> fn(TyCtxt<'tcx>, &'a Body<'tc
     &[spec0, spec1];
 
 fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
-    let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
+    let insertion_points = body.compute_phi_node::<FatThinAnalysisDefUse>(tcx);
 
     struct TestProgramSpec;
     impl SSANameHandler for TestProgramSpec {
@@ -287,7 +287,7 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
     }
 
     let mut renamer = PlainRenamer::<
-        BorrowckDefUse,
+        FatThinAnalysisDefUse,
         (
             PrintStdSSAName,
             TestProgramSpec,
@@ -317,9 +317,9 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
 }
 
 fn spec1<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
-    let insertion_points = body.compute_phi_node::<BorrowckDefUse>(tcx);
+    let insertion_points = body.compute_phi_node::<FatThinAnalysisDefUse>(tcx);
     let mut renamer = PlainRenamer::<
-        BorrowckDefUse,
+        FatThinAnalysisDefUse,
         (
             PrintStdSSAName,
             SSANameSourceMap,
