@@ -15,7 +15,7 @@ extern crate rustc_middle;
 extern crate rustc_session;
 extern crate rustc_span;
 
-use crustr_analysis::{
+use analysis::{
     array_analysis::{CrateSummary, Lambda},
     call_graph::CallGraph,
     def_use::FatThinAnalysisDefUse,

@@ -13,7 +13,7 @@ extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 
 use clap::Parser;
-use crustr_analysis::{
+use analysis::{
     array_analysis::CrateSummary, call_graph::CallGraph, def_use::FatThinAnalysisDefUse,
     null_analysis::NullAnalysisResults, ssa::rename::handler::LogSSAName,
 };
@@ -146,7 +146,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             }
 
             if *array || *all {
-                crustr_passes::print_array_analysis_results(
+                refactor::print_array_analysis_results(
                     tcx,
                     top_level_struct_defs,
                     top_level_fns,

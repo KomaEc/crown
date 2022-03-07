@@ -1,9 +1,9 @@
 [workspace]
 members = [
     "core/compiler_interface",
-    "core/crustr_analysis",
-    "core/crustr_rewrite",
-    "core/crustr_passes",
+    "core/analysis",
+    "core/rewrite",
+    "core/refactor",
     "core/utils/graph",
 ]
 
@@ -18,5 +18,5 @@ rustc_private = true
 [dependencies]
 clap = { version = "3.1.2", features = ["derive"] }
 env_logger = "0.9"
-crustr_analysis = { path = "core/crustr_analysis" }
-crustr_passes = { path = "core/crustr_passes" }
+analysis = { path = "core/analysis" }
+refactor = { path = "core/refactor" }

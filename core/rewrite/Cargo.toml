@@ -1,5 +1,5 @@
 [package]
-name = "crustr_passes"
+name = "rewrite"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,8 +8,7 @@ edition = "2021"
 [package.metadata.rust-analyzer]
 rustc_private=true 
 
+
 [dependencies]
-log = "0.4"
-crustr_rewrite = { path = "../crustr_rewrite" }
-compiler_interface = { path = "../compiler_interface" }
-crustr_analysis = { path = "../crustr_analysis" }
+analysis = { path = "../analysis" }
+rustfix = "0.6.0"
