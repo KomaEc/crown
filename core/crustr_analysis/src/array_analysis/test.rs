@@ -47,8 +47,9 @@ fn test_limitation_due_to_nested_pointers() {
             let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
 
             let call_graph = CallGraph::new(tcx, bodies.into_iter());
-            let mut crate_summary =
-                CrateSummary::<FatThinAnalysisDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+            let mut crate_summary = CrateSummary::<FatThinAnalysisDefUse>::new::<_>(
+                tcx, &adt_defs, call_graph, LogSSAName,
+            );
             crate_summary.iterate_to_fixpoint().unwrap();
             let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
             // we want to infer that p is *mut [*mut [i32]]
@@ -69,8 +70,9 @@ fn test_boundary_constraints() {
             let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
 
             let call_graph = CallGraph::new(tcx, bodies.into_iter());
-            let mut crate_summary =
-                CrateSummary::<FatThinAnalysisDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+            let mut crate_summary = CrateSummary::<FatThinAnalysisDefUse>::new::<_>(
+                tcx, &adt_defs, call_graph, LogSSAName,
+            );
             crate_summary.iterate_to_fixpoint().unwrap();
             let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
             // we want to infer the precise signature for f(p: *mut i32, q: *mut i32) -> *mut i32

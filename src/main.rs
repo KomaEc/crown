@@ -146,35 +146,11 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             }
 
             if *array || *all {
-                let adt_defs = top_level_struct_defs
-                    .iter()
-                    .cloned()
-                    .map(LocalDefId::to_def_id)
-                    .collect::<Vec<_>>();
-                let fn_defs = top_level_fns.iter().cloned().map(LocalDefId::to_def_id);
-                let call_graph = CallGraph::new(tcx, fn_defs);
-                let mut crate_summary = CrateSummary::<FatThinAnalysisDefUse>::new::<_>(
-                    tcx, &adt_defs, call_graph, LogSSAName,
-                );
-                crate_summary.iterate_to_fixpoint().unwrap();
-                let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions.clone();
-                println!("All constraints:");
-                for constraint in crate_summary.constraints.iter() {
-                    println!("{}", constraint)
-                }
-                for (lambda, solution) in solutions.iter_enumerated() {
-                    println!(
-                        "{: <7} = {: <2}, which is {}",
-                        &format!("{:?}", lambda),
-                        solution
-                            .map(|fat| if fat { "1" } else { "0" })
-                            .unwrap_or("?"),
-                        // crate_summary.lambda_ctxt.lambda_map.data_map[lambda]
-                        crate_summary.lambda_source_data_to_str(
-                            crate_summary.lambda_ctxt.lambda_map.data_map[lambda].clone()
-                        )
-                    )
-                }
+                crustr_passes::print_array_analysis_results(
+                    tcx,
+                    top_level_struct_defs,
+                    top_level_fns,
+                )
             }
         }
     }

@@ -24,10 +24,15 @@ use crustr_analysis::{
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
-pub fn array_analysis<'tcx>(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: Vec<LocalDefId>) {
+pub fn print_array_analysis_results<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    structs: Vec<LocalDefId>,
+    funcs: Vec<LocalDefId>,
+) {
     let bodies = funcs
         .iter()
         .map(|&fn_did| {
+            /*
             let body = tcx.optimized_mir(fn_did);
             rustc_middle::mir::pretty::write_mir_fn(
                 tcx,
@@ -36,6 +41,7 @@ pub fn array_analysis<'tcx>(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: 
                 &mut std::io::stdout(),
             )
             .unwrap();
+            */
             fn_did.to_def_id()
         })
         .collect::<Vec<_>>();
@@ -53,13 +59,16 @@ pub fn array_analysis<'tcx>(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: 
         Ok(()) => {
             let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions.clone();
 
-            log::debug!("All constraints:");
+            // log::debug!("All constraints:");
+            println!("All constraints:");
             for constraint in crate_summary.constraints.iter() {
-                log::debug!("{}", constraint)
+                // log::debug!("{}", constraint)
+                println!("{}", constraint)
             }
 
             for (lambda, solution) in solutions.into_iter_enumerated() {
-                log::debug!(
+                // log::debug!(
+                println!(
                     "{: <7} = {: <2} at {}",
                     &format!("{:?}", lambda),
                     solution
@@ -73,15 +82,18 @@ pub fn array_analysis<'tcx>(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: 
             }
         }
         Err(_) => {
-            log::debug!("Solve failed!");
-            log::debug!("Global context:");
+            // log::debug!("Solve failed!");
+            println!("Solve failed!");
+            // log::debug!("Global context:");
+            println!("Global context:");
             let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
             for (lambda, solution) in solutions.raw[crate_summary.globals.clone()]
                 .iter()
                 .enumerate()
             {
                 let lambda = Lambda::from(lambda);
-                log::debug!(
+                // log::debug!(
+                println!(
                     "{: <7} = {: <2} at {}",
                     &format!("{:?}", lambda),
                     solution
