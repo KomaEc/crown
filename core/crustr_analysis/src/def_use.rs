@@ -156,17 +156,6 @@ macro_rules! make_sites_gatherer(
         impl<'tcx, DefUse> Visitor<'tcx> for $Gatherer<'tcx, DefUse>
         where DefUse: IsDefUse
         {
-            fn visit_place(
-                &mut self,
-                place: &Place<'tcx>,
-                context: PlaceContext,
-                location: Location
-            ) {
-                if DefUse::categorize(context).map_or(false, |def_use| DefUse::$def_or_use(def_use)) {
-                    self.sites[place.local].push(location)
-                }
-            }
-            /*
             fn visit_local(
                 &mut self,
                 &local: &Local,
@@ -177,7 +166,6 @@ macro_rules! make_sites_gatherer(
                     self.sites[local].push(location)
                 }
             }
-            */
         }
     }
 );
