@@ -5,12 +5,21 @@ use rustc_middle::mir::visit::{
     MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor,
 };
 use rustc_middle::mir::{Body, Local, Location, Place};
+use rustc_middle::ty::TyCtxt;
 use smallvec::{smallvec, SmallVec};
 
 pub trait IsDefUse: PartialEq + Eq + Clone + Copy {
     fn defining(self) -> bool;
 
     fn using(self) -> bool;
+
+    fn categorize_finely<'tcx>(
+        _local: Local,
+        _tcx: TyCtxt<'tcx>,
+        context: PlaceContext,
+    ) -> Option<Self> {
+        Self::categorize(context)
+    }
 
     fn categorize(context: PlaceContext) -> Option<Self>;
 }
@@ -87,6 +96,24 @@ impl IsDefUse for BorrowckDefUse {
     }
 }
 
+impl IsDefUse for OwnershipAnalysisDefUse {
+    fn defining(self) -> bool {
+        matches!(self, OwnershipAnalysisDefUse::Def)
+    }
+
+    fn using(self) -> bool {
+        matches!(self, OwnershipAnalysisDefUse::Use)
+    }
+
+    fn categorize_finely<'tcx>(local: Local, tcx: TyCtxt<'tcx>, context: PlaceContext) -> Option<Self> {
+        todo!()
+    }
+
+    fn categorize(context: PlaceContext) -> Option<Self> {
+        todo!()
+    }
+}
+
 #[derive(Eq, PartialEq, Clone, Copy)]
 pub enum BorrowckDefUse {
     Def,
@@ -94,33 +121,39 @@ pub enum BorrowckDefUse {
     Drop,
 }
 
+#[derive(Eq, PartialEq, Clone, Copy)]
+pub enum OwnershipAnalysisDefUse {
+    Def,
+    Use,
+    Other
+}
+
 macro_rules! make_sites_gatherer(
     ($Gatherer:ident, $def_or_use:ident) => {
-        pub struct $Gatherer<'gatherer, 'tcx, DefUse>
+        pub struct $Gatherer<'tcx, DefUse>
         where DefUse: IsDefUse
         {
-            body: &'gatherer Body<'tcx>,
+            tcx: TyCtxt<'tcx>,
             sites: IndexVec<Local, SmallVec<[Location; 2]>>,
             _marker: core::marker::PhantomData<*const DefUse>
         }
 
-        impl<'gatherer, 'tcx, DefUse> $Gatherer<'gatherer, 'tcx, DefUse>
+        impl<'tcx, DefUse> $Gatherer<'tcx, DefUse>
         where DefUse: IsDefUse
         {
-            pub fn new(body: &'gatherer Body<'tcx>) -> Self {
-                $Gatherer {
-                    body,
-                    sites: IndexVec::from_elem(smallvec![], &body.local_decls),
-                    _marker: core::marker::PhantomData
-                }
-            }
-            pub fn gather(mut self) -> IndexVec<Local, SmallVec<[Location; 2]>> {
-                self.visit_body(self.body);
-                self.sites
+            pub fn gather(tcx: TyCtxt<'tcx>, body: &Body<'tcx>) -> IndexVec<Local, SmallVec<[Location; 2]>>{
+                let mut gatherer: $Gatherer<'_, DefUse> = 
+                    $Gatherer {
+                        tcx,
+                        sites: IndexVec::from_elem(smallvec![], &body.local_decls),
+                        _marker: core::marker::PhantomData
+                    };
+                gatherer.visit_body(body);
+                gatherer.sites
             }
         }
 
-        impl<'gatherer, 'tcx, DefUse> Visitor<'tcx> for $Gatherer<'gatherer, 'tcx, DefUse>
+        impl<'tcx, DefUse> Visitor<'tcx> for $Gatherer<'tcx, DefUse>
         where DefUse: IsDefUse
         {
             fn visit_place(
@@ -133,6 +166,18 @@ macro_rules! make_sites_gatherer(
                     self.sites[place.local].push(location)
                 }
             }
+            /*
+            fn visit_local(
+                &mut self,
+                &local: &Local,
+                context: PlaceContext,
+                location: Location
+            ) {
+                if DefUse::categorize_finely(local, self.tcx, context).map_or(false, |def_use| DefUse::$def_or_use(def_use)) {
+                    self.sites[local].push(location)
+                }
+            }
+            */
         }
     }
 );

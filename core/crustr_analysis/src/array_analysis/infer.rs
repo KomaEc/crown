@@ -525,7 +525,10 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                                 self.ctxt.call_graph.lookup_function(&callee_did).unwrap()
                             );
                             for (idx, arg) in args.iter().enumerate() {
-                                if arg.ty(self.ctxt.body, self.ctxt.tcx).is_ptr_but_not_fn_ptr() {
+                                if arg
+                                    .ty(self.ctxt.body, self.ctxt.tcx)
+                                    .is_ptr_but_not_fn_ptr()
+                                {
                                     let place = arg
                                         .place()
                                         .expect("constant in call arguments is not supported");
@@ -693,6 +696,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
             log::debug!("Phi nodes joins:");
             for (bb, locals) in self.phi_joins.iter_enumerated() {
                 for (local, lambdas) in locals.iter_enumerated() {
+                    assert!(lambdas.len() >= 3);
                     log::debug!("for {:?} at {:?}, {:?}", local, bb, lambdas)
                 }
             }

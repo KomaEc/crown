@@ -17,4 +17,5 @@ rustc_private = true
 
 [dependencies]
 clap = { version = "3.1.2", features = ["derive"] }
+env_logger = "0.9"
 crustr_analysis = { path = "core/crustr_analysis" }
