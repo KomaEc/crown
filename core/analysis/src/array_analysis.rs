@@ -10,7 +10,7 @@ use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::Local,
+    mir::{Local, Operand, Place},
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
@@ -22,6 +22,8 @@ use crate::{
     ssa::rename::{handler::SSANameSourceMap, SSANameHandler},
     ty_ext::TyExt,
 };
+
+use ndarray::Array2;
 
 pub mod infer;
 pub mod solve;
@@ -50,7 +52,7 @@ pub struct FuncSummary {
     /// func_sig maps function arguments and return to constraint variables. It follows
     /// the convention of MIR, where the first entry represents return place.
     /// func_sig entries are `Some` if and only if its type is pointer type of concern
-    pub func_sig: Vec<Option<Lambda>>,
+    pub func_sig: Vec<Vec<Lambda>>,
 }
 
 impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
@@ -128,15 +130,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                             self.globals.clone(),
                             locals,
                             &self.constraints[constraints_range],
-                            &boundary_constraints[func], /*
-                                                         self.call_graph
-                                                             .graph
-                                                             .adjacent_edges(func, forward_star::Direction::Outgoing)
-                                                             .map(|(call_site, _)| {
-                                                                 self.boundary_constraints[call_site].iter().map(|&c| c)
-                                                             })
-                                                             .flatten(),
-                                                             */
+                            &boundary_constraints[func],
                         )? {
                             SolveSuccess::Unchanged => {}
                             SolveSuccess::LocallyChanged => locally_changed = true,
@@ -157,13 +151,21 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
 
     pub fn lambda_source_data_to_str(&self, src_data: LambdaSourceData) -> String {
         match src_data {
-            LambdaSourceData::LocalScalar {
+            LambdaSourceData::Local {
                 func,
                 base,
                 ssa_idx,
+                nested_level,
             } => {
                 let did = self.call_graph.functions[func];
-                format!("{:?}^{} in {}", base, ssa_idx, self.tcx.def_path_str(did))
+                format!(
+                    "{:*<1$}{2:?}^{3} in {4}",
+                    "",
+                    nested_level,
+                    base,
+                    ssa_idx,
+                    self.tcx.def_path_str(did)
+                )
             }
             LambdaSourceData::FieldDef {
                 adt_def,
@@ -177,20 +179,6 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                 format!(
                     "{:*<1$}{2}.{3}",
                     "", nested_level, variant_def.name, field_def.name
-                )
-            }
-            LambdaSourceData::LocalNested {
-                func,
-                base,
-                nested_level,
-            } => {
-                let did = self.call_graph.functions[func];
-                format!(
-                    "{:*<1$}{2:?} in {3}",
-                    "",
-                    nested_level + 1,
-                    base,
-                    self.tcx.def_path_str(did)
                 )
             }
         }
@@ -238,23 +226,13 @@ pub struct CrateLambdaCtxt {
     pub lambda_map: LambdaMap<Option<bool>>, //IndexVec<Lambda, LambdaData>,
     /// did of adt_def -> variant_idx -> field_idx -> nested_level -> lambda
     pub field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<Vec<Lambda>>>>,
-    pub func_ctxt: IndexVec<Func, FuncLambdaCtxt>,
-}
-
-pub struct FuncLambdaCtxt {
-    pub local: IndexVec<Local, Vec<Lambda>>,
-    pub local_nested: IndexVec<Local, Vec<Lambda>>,
-}
-
-impl From<(IndexVec<Local, Vec<Lambda>>, IndexVec<Local, Vec<Lambda>>)> for FuncLambdaCtxt {
-    fn from(
-        (local, local_nested): (IndexVec<Local, Vec<Lambda>>, IndexVec<Local, Vec<Lambda>>),
-    ) -> Self {
-        FuncLambdaCtxt {
-            local,
-            local_nested,
-        }
-    }
+    /// func -> local -> ssa_idx -> nested_level -> lambda
+    /// [[_1^0, *_1^0, **_1^0],
+    ///  [_1^1, *_1^1, **_1^1],
+    ///  [_1^2, *_1^2, **_1^2],
+    ///  ..]
+    pub locals: IndexVec<Func, IndexVec<Local, Array2<Lambda>>>,
+    // pub locals: IndexVec<Func, IndexVec<Local, Vec<Vec<Lambda>>>>,
 }
 
 impl CrateLambdaCtxt {
@@ -309,7 +287,7 @@ impl CrateLambdaCtxt {
         CrateLambdaCtxt {
             lambda_map,
             field_defs,
-            func_ctxt: IndexVec::with_capacity(call_graph.num_nodes()),
+            locals: IndexVec::with_capacity(call_graph.num_nodes()),
         }
     }
 }
@@ -362,19 +340,26 @@ impl ConstraintSet {
 }
 
 #[derive(Clone, Debug)]
-pub enum BoundaryConstraint {
-    Argument { caller: Lambda, callee: Local },
-    Return { caller: Lambda, callee: Local },
+pub enum BoundaryConstraint<'me, 'tcx> {
+    Argument {
+        caller: (&'me Operand<'tcx>, Option<usize>),
+        callee: Local,
+    },
+    Return {
+        caller: (Place<'tcx>, usize),
+        callee: Local,
+    },
 }
 
 /// The language constructs that a constraint variable λ corresponds to
 #[derive(Clone, Debug)]
 pub enum LambdaSourceData {
-    /// A SSA scalar variable
-    LocalScalar {
+    /// A SSA variable
+    Local {
         func: Func,
         base: Local,
         ssa_idx: usize,
+        nested_level: usize,
     },
     /// field definition
     FieldDef {
@@ -383,24 +368,20 @@ pub enum LambdaSourceData {
         field_idx: usize,
         nested_level: usize,
     },
-    /// A local nested pointer type.
-    /// For example, if a local `_1` has type `*mut *mut *mut i32`, then
-    /// we should have entries for `*_1` and `**_1`
-    LocalNested {
-        func: Func,
-        base: Local,
-        nested_level: usize,
-    },
 }
 
 impl Display for LambdaSourceData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match *self {
-            LambdaSourceData::LocalScalar {
+            LambdaSourceData::Local {
                 func: body,
                 base,
                 ssa_idx,
-            } => f.write_fmt(format_args!("({:?}, {:?}^{})", body, base, ssa_idx)),
+                nested_level,
+            } => f.write_fmt(format_args!(
+                "({:?}, {:*<2$}{3:?}^{4})",
+                body, "", nested_level, base, ssa_idx
+            )),
             LambdaSourceData::FieldDef {
                 adt_def,
                 variant_idx: _,
@@ -409,17 +390,6 @@ impl Display for LambdaSourceData {
             } => f.write_fmt(format_args!(
                 "{:*<1$}{2:?}.{3}",
                 "", nested_level, adt_def, field_idx
-            )),
-            LambdaSourceData::LocalNested {
-                func: body,
-                base,
-                nested_level,
-            } => f.write_fmt(format_args!(
-                "({:?}, {:*<2$}{3:?})",
-                body,
-                "",
-                nested_level + 1,
-                base
             )),
         }
     }

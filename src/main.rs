@@ -12,11 +12,11 @@ extern crate rustc_middle;
 extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 
-use clap::Parser;
 use analysis::{
     array_analysis::CrateSummary, call_graph::CallGraph, def_use::FatThinAnalysisDefUse,
     null_analysis::NullAnalysisResults, ssa::rename::handler::LogSSAName,
 };
+use clap::Parser;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
 use rustc_hir::{def_id::LocalDefId, ItemKind, OwnerNode};
@@ -146,11 +146,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             }
 
             if *array || *all {
-                refactor::print_array_analysis_results(
-                    tcx,
-                    top_level_struct_defs,
-                    top_level_fns,
-                )
+                refactor::print_array_analysis_results(tcx, top_level_struct_defs, top_level_fns)
             }
         }
     }

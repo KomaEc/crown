@@ -81,9 +81,9 @@ fn test_boundary_constraints() {
                 .func_sig
                 .split_array_ref::<3>();
             assert!(empty.is_empty());
-            assert_eq!(Some(true), solutions[ret.unwrap()]);
-            assert_eq!(Some(false), solutions[p.unwrap()]);
-            assert_eq!(Some(true), solutions[q.unwrap()]);
+            assert_eq!(Some(true), solutions[*ret.first().unwrap()]);
+            assert_eq!(Some(false), solutions[*p.first().unwrap()]);
+            assert_eq!(Some(true), solutions[*q.first().unwrap()]);
         },
     )
 }
@@ -151,7 +151,7 @@ fn run_infer<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
     let crate_summary =
         CrateSummary::<FatThinAnalysisDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
-    assert_eq!(crate_summary.lambda_ctxt.func_ctxt.len(), num_funcs)
+    assert_eq!(crate_summary.lambda_ctxt.locals.len(), num_funcs)
 }
 
 const TESTS: &'static [&'static str] = &[
