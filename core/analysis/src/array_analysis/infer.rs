@@ -98,7 +98,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
             return_ssa_idx.dedup();
             log::debug!("process return places");
             // assert!(!return_ssa_idx.is_empty());
-            let return_lambda = return_ssa_idx.split_first().map(|(&this, rest)| {
+            let return_lambda = return_ssa_idx.split_first().and_then(|(&this, rest)| {
                 let this = self.lambda_ctxt.locals[func][RETURN_PLACE].row(this);
                 // although Return may occur multiple times (according to the docs), I'm
                 // curious to see how it may happen
@@ -109,11 +109,9 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                         self.constraints.push_eq(this, other)
                     }
                 }
-                this.as_slice().unwrap()
-            });
-            let return_lambda = return_lambda
-                .map(|slice| slice.to_vec())
-                .unwrap_or_else(|| vec![]);
+                Some(this.to_vec())
+            }).unwrap();
+
 
             assert_eq!(func, all_return_ssa_idx.push(return_ssa_idx));
 
@@ -173,7 +171,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
 
     pub fn setup_boundary_constraints(
         &mut self,
-        boundary_constraints: IndexVec<CallSite, Vec<BoundaryConstraint<'_, 'tcx>>>,
+        boundary_constraints: IndexVec<CallSite, Vec<BoundaryConstraint<'tcx>>>,
         return_ssa_idx: &IndexVec<Func, Vec<usize>>,
     ) {
         self.boundary_constraints = boundary_constraints
@@ -200,7 +198,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                             let caller = lookup_lambdas(
                                 &self.lambda_ctxt.field_defs,
                                 &self.lambda_ctxt.locals[func],
-                                place,
+                                &place,
                                 ssa_idx,
                                 body,
                                 self.tcx,
@@ -230,6 +228,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                                 res.push(Constraint(caller, callee))
                             }
                         }
+                        _ => unimplemented!(),
                     }
                 }
                 res
@@ -281,10 +280,10 @@ impl CrateLambdaCtxt {
     }
 }
 
-pub struct Infer<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> {
+pub struct Infer<'infercx, 'tcx: 'infercx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> {
     ctxt: InferCtxt<'infercx, 'tcx>,
     ssa_state: SSARenameState<Local>,
-    boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint<'infercx, 'tcx>>>,
+    boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint<'tcx>>>,
     return_ssa_idx: Vec<usize>,
     extra_handlers: Handler,
     _marker: PhantomData<*const DefUse>,
@@ -387,47 +386,6 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> SSA
 impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
     Infer<'infercx, 'tcx, DefUse, Handler>
 {
-    /*
-    /// FIXME: handle nested ptrs properly!
-    /// Change the return type as an iterator over lambdas
-    /// TODO!!!!
-    /// !!!!!!!!!
-    /// !!!!!!!!
-    /// Move this logic into LambdaCtxt!!!
-    /// request lambdas!!!
-    fn process_projections(
-        &self,
-        // base: Local,
-        place: Place<'tcx>,
-        ssa_idx: usize,
-        // projections: impl Iterator<Item = (PlaceRef<'tcx>, PlaceElem<'tcx>)> + DoubleEndedIterator,
-    ) -> &[Lambda] {
-        let mut iter = place.iter_projections().rev();
-        let mut n_derefs = 0;
-        while let Some((base, proj)) = iter.next() {
-            match proj {
-                ProjectionElem::Deref => {
-                    n_derefs += 1;
-                }
-                ProjectionElem::Field(field, _) => {
-                    let place_ty = base.ty(self.ctxt.body, self.ctxt.tcx);
-                    let ty = place_ty.ty;
-                    let variant_idx = place_ty.variant_index.unwrap_or(VariantIdx::new(0));
-                    let adt_def = ty.ty_adt_def().unwrap();
-                    return &self.ctxt.lambda_ctxt.field_defs[&adt_def.did][variant_idx]
-                        [field.index()][n_derefs..];
-                }
-                _ => unimplemented!("projections other than deref and field are not supported!"),
-            }
-        }
-
-        &self.ctxt.lambda_ctxt.local[place.local]
-            .row(ssa_idx)
-            .as_slice()
-            .unwrap()[n_derefs..]
-    }
-    */
-
     fn pre_process_rhs(&mut self, place: &Place<'tcx>, location: Location) -> usize {
         log::debug!("processing rhs {:?}", place);
 
@@ -440,6 +398,13 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
 
         ssa_idx
         //self.process_projections(place.local, ssa_idx, place.iter_projections())
+    }
+
+    fn process_lhs_assume_simple(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
+        let ssa_idx = self.pre_process_lhs(place, location);
+        let lambdas = self.ctxt.lambda_ctxt.lookup_lambdas(place, ssa_idx, self.ctxt.body, self.ctxt.tcx);
+        assert_eq!(lambdas.len(), 1);
+        lambdas[0]
     }
 
     fn pre_process_lhs(&mut self, place: &Place<'tcx>, location: Location) -> usize {
@@ -458,6 +423,13 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
 
         ssa_idx
         // self.process_projections(place.local, ssa_idx, place.iter_projections())
+    }
+
+    fn process_rhs_assume_simple(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
+        let ssa_idx = self.pre_process_rhs(place, location);
+        let lambdas = self.ctxt.lambda_ctxt.lookup_lambdas(place, ssa_idx, self.ctxt.body, self.ctxt.tcx);
+        assert_eq!(lambdas.len(), 1);
+        lambdas[0]
     }
 }
 
@@ -588,7 +560,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
                                     let place_ssa_idx = self.pre_process_rhs(&place, location);
                                     self.boundary_constraints[call_site].push(
                                         BoundaryConstraint::Argument {
-                                            caller: (arg, Some(place_ssa_idx)),
+                                            caller: (arg.clone(), Some(place_ssa_idx)),
                                             callee: Local::from_usize(idx + 1),
                                         },
                                     );
@@ -694,7 +666,7 @@ pub fn lookup_lambdas<'a, 'tcx>(
         }
     }
 
-    &locals[place.local].row(ssa_idx).as_slice().unwrap()[n_derefs..]
+    locals[place.local].row(ssa_idx).to_slice_memory_order().unwrap()
 }
 
 impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
@@ -740,7 +712,7 @@ impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
     }
 }
 
-pub struct InferCtxt<'infercx, 'tcx> {
+pub struct InferCtxt<'infercx, 'tcx: 'infercx> {
     tcx: TyCtxt<'tcx>,
     body: &'infercx Body<'tcx>,
     call_graph: &'infercx CallGraph,

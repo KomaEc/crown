@@ -33,14 +33,14 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) -> Lambda {
         let arg = arg.place().unwrap();
-        let arg = self.pre_process_rhs(&arg, location);
-        self.assume(arg, value);
-        arg
+        let lambda = self.process_rhs_assume_simple(&arg, location);
+        self.assume(lambda, value);
+        lambda
     }
 
     pub fn assume_call_return(&mut self, dest: &Place<'tcx>, value: bool, location: Location) {
-        let dest = self.pre_process_lhs(&dest, location);
-        self.assume(dest, value)
+        let lambda = self.process_lhs_assume_simple(dest, location);
+        self.assume(lambda, value);
     }
 }
 
@@ -208,7 +208,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
             self.visit_operand(arg, location);
         }
         let (lhs, _) = destination.unwrap();
-        let lhs = self.pre_process_lhs(&lhs, location);
+        let lhs = self.process_lhs_assume_simple(&lhs, location);
         self.ctxt.constraints.push_le(lhs, rhs);
     }
 
@@ -251,12 +251,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
-        let dest = self.pre_process_rhs(&dest, location);
+        let dest = self.process_rhs_assume_simple(&dest, location);
         for arg in args {
             self.visit_operand(arg, location)
         }
         let (ret, _) = destination.unwrap();
-        let ret = self.pre_process_lhs(&ret, location);
+        let ret = self.process_lhs_assume_simple(&ret, location);
         self.ctxt.constraints.push_eq(ret, dest);
         /*
         // Modelling: `destination`, `source`, and return value should all be fat.
@@ -284,12 +284,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
-        let dest = self.pre_process_rhs(&dest, location);
+        let dest = self.process_rhs_assume_simple(&dest, location);
         for arg in args {
             self.visit_operand(arg, location)
         }
         let (ret, _) = destination.unwrap();
-        let ret = self.pre_process_lhs(&ret, location);
+        let ret = self.process_lhs_assume_simple(&ret, location);
         self.ctxt.constraints.push_eq(ret, dest);
         /*
         assert_eq!(args.len(), 3);
@@ -316,12 +316,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         assert_eq!(args.len(), 3);
         let (ptr, args) = args.split_first().unwrap();
         let ptr = ptr.place().unwrap();
-        let ptr = self.pre_process_rhs(&ptr, location);
+        let ptr = self.process_rhs_assume_simple(&ptr, location);
         for arg in args {
             self.visit_operand(arg, location)
         }
         let (ret, _) = destination.unwrap();
-        let ret = self.pre_process_lhs(&ret, location);
+        let ret = self.process_lhs_assume_simple(&ret, location);
         self.ctxt.constraints.push_eq(ret, ptr);
         /*
         // Modelling: `ptr` and return value should both be fat.
@@ -350,12 +350,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
-        let dest = self.pre_process_rhs(&dest, location);
+        let dest = self.process_rhs_assume_simple(&dest, location);
         for arg in args {
             self.visit_operand(arg, location)
         }
         let (ret, _) = destination.unwrap();
-        let ret = self.pre_process_lhs(&ret, location);
+        let ret = self.process_lhs_assume_simple(&ret, location);
         self.ctxt.constraints.push_eq(ret, dest);
         /*
         // Modelling: identical to `memmove`.

@@ -77,7 +77,7 @@ fn test_boundary_constraints() {
             let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
             // we want to infer the precise signature for f(p: *mut i32, q: *mut i32) -> *mut i32
             let f = 0u32.into();
-            let (&[ret, p, q], empty) = crate_summary.func_summaries[f]
+            let ([ret, p, q], empty) = crate_summary.func_summaries[f]
                 .func_sig
                 .split_array_ref::<3>();
             assert!(empty.is_empty());

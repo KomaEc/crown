@@ -340,9 +340,9 @@ impl ConstraintSet {
 }
 
 #[derive(Clone, Debug)]
-pub enum BoundaryConstraint<'me, 'tcx> {
+pub enum BoundaryConstraint<'tcx> {
     Argument {
-        caller: (&'me Operand<'tcx>, Option<usize>),
+        caller: (Operand<'tcx>, Option<usize>),
         callee: Local,
     },
     Return {
