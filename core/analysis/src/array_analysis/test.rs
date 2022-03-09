@@ -35,8 +35,7 @@ fn test_solve_not_crash_with_complex_call_graph() {
 }
 
 #[test]
-#[should_panic]
-fn test_limitation_due_to_nested_pointers() {
+fn test_nested_pointers() {
     init_logger();
     let file = env::current_dir()
         .expect("current working directory value is invalid")
@@ -50,10 +49,13 @@ fn test_limitation_due_to_nested_pointers() {
             let mut crate_summary = CrateSummary::<FatThinAnalysisDefUse>::new::<_>(
                 tcx, &adt_defs, call_graph, LogSSAName,
             );
-            crate_summary.iterate_to_fixpoint().unwrap();
+            crate_summary.iterate_to_fixpoint().unwrap_or_else(|()| {
+                log::debug!("Solve failed");
+                crate_summary.error_state();
+            });
             let solutions = crate_summary.lambda_ctxt.lambda_map.assumptions;
             // we want to infer that p is *mut [*mut [i32]]
-            assert_eq!(Some(true), solutions[1u32.into()])
+            assert_eq!(Some(true), solutions[1u32.into()]);
         },
     )
 }

@@ -10,11 +10,11 @@ use crate::{
     ssa::rename::SSANameHandler,
 };
 
-impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
-    Infer<'infercx, 'tcx, DefUse, Handler>
-{
+use super::CrateLambdaCtxtIntraView;
+
+impl<'tcx> CrateLambdaCtxtIntraView<'tcx> {
     pub fn assume(&mut self, lambda: Lambda, value: bool) {
-        let assumption = &mut self.ctxt.lambda_ctxt.lambda_map.assumptions[lambda];
+        let assumption = &mut self.lambda_map.assumptions[lambda];
         match assumption {
             &mut Some(val) if val ^ value => panic!("conflict in constraint!"),
             _ => *assumption = Some(value),
@@ -25,7 +25,11 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
             value.then_some(1).unwrap_or(0)
         )
     }
+}
 
+impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
+    Infer<'infercx, 'tcx, DefUse, Handler>
+{
     pub fn assume_call_argument(
         &mut self,
         arg: &Operand<'tcx>,
@@ -33,14 +37,14 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) -> Lambda {
         let arg = arg.place().unwrap();
-        let lambda = self.process_rhs_assume_simple(&arg, location);
-        self.assume(lambda, value);
+        let lambda = self.use_place_assume_simple(&arg, location);
+        self.ctxt.lambda_ctxt.assume(lambda, value);
         lambda
     }
 
     pub fn assume_call_return(&mut self, dest: &Place<'tcx>, value: bool, location: Location) {
-        let lambda = self.process_lhs_assume_simple(dest, location);
-        self.assume(lambda, value);
+        let lambda = self.define_place_assume_simple(dest, location);
+        self.ctxt.lambda_ctxt.assume(lambda, value);
     }
 }
 
@@ -119,11 +123,30 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) {
         log::debug!("modelling ptr offset");
-        for arg in args {
-            self.visit_operand(arg, location);
-        }
+        assert_eq!(args.len(), 2);
+        let ([p, n], _) = args.split_array_ref();
+        let rhs = p.place().expect("input to offset should not be a constant");
         let (lhs, _) = destination.unwrap();
-        self.assume_call_return(&lhs, false, location);
+
+        let rhs_ssa_idx = self.use_place(&rhs, location);
+        self.visit_operand(n, location);
+        let lhs_ssa_idx = self.try_define_place(&lhs, location);
+
+        let rhs_lambdas = self.ctxt.lambda_ctxt.lookup_lambdas(&rhs, rhs_ssa_idx, self.ctxt.body, self.ctxt.tcx);
+        assert!(!rhs_lambdas.is_empty());
+        let (_, rhs_inners) = rhs_lambdas.split_first().unwrap();
+        let lhs_lambdas = self.ctxt.lambda_ctxt.lookup_lambdas(&lhs, lhs_ssa_idx, self.ctxt.body, self.ctxt.tcx);
+        assert!(!lhs_lambdas.is_empty());
+        let (&outtermost, lhs_inners) = lhs_lambdas.split_first().unwrap();
+
+        assert_eq!(lhs_inners.len(), rhs_inners.len());
+        
+        for (&lhs, &rhs) in std::iter::zip(lhs_inners, rhs_inners) {
+            self.ctxt.constraints.push_le(lhs, rhs)
+        }
+        self.ctxt.lambda_ctxt.assume(outtermost, false);
+
+        
     }
 
     pub fn model_ptr_is_null(
@@ -208,7 +231,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
             self.visit_operand(arg, location);
         }
         let (lhs, _) = destination.unwrap();
-        let lhs = self.process_lhs_assume_simple(&lhs, location);
+        let lhs = self.define_place_assume_simple(&lhs, location);
         self.ctxt.constraints.push_le(lhs, rhs);
     }
 
@@ -251,12 +274,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
-        let dest = self.process_rhs_assume_simple(&dest, location);
+        let dest = self.use_place_assume_simple(&dest, location);
         for arg in args {
             self.visit_operand(arg, location)
         }
         let (ret, _) = destination.unwrap();
-        let ret = self.process_lhs_assume_simple(&ret, location);
+        let ret = self.define_place_assume_simple(&ret, location);
         self.ctxt.constraints.push_eq(ret, dest);
         /*
         // Modelling: `destination`, `source`, and return value should all be fat.
@@ -284,12 +307,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
-        let dest = self.process_rhs_assume_simple(&dest, location);
+        let dest = self.use_place_assume_simple(&dest, location);
         for arg in args {
             self.visit_operand(arg, location)
         }
         let (ret, _) = destination.unwrap();
-        let ret = self.process_lhs_assume_simple(&ret, location);
+        let ret = self.define_place_assume_simple(&ret, location);
         self.ctxt.constraints.push_eq(ret, dest);
         /*
         assert_eq!(args.len(), 3);
@@ -316,12 +339,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         assert_eq!(args.len(), 3);
         let (ptr, args) = args.split_first().unwrap();
         let ptr = ptr.place().unwrap();
-        let ptr = self.process_rhs_assume_simple(&ptr, location);
+        let ptr = self.use_place_assume_simple(&ptr, location);
         for arg in args {
             self.visit_operand(arg, location)
         }
         let (ret, _) = destination.unwrap();
-        let ret = self.process_lhs_assume_simple(&ret, location);
+        let ret = self.define_place_assume_simple(&ret, location);
         self.ctxt.constraints.push_eq(ret, ptr);
         /*
         // Modelling: `ptr` and return value should both be fat.
@@ -350,12 +373,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
-        let dest = self.process_rhs_assume_simple(&dest, location);
+        let dest = self.use_place_assume_simple(&dest, location);
         for arg in args {
             self.visit_operand(arg, location)
         }
         let (ret, _) = destination.unwrap();
-        let ret = self.process_lhs_assume_simple(&ret, location);
+        let ret = self.define_place_assume_simple(&ret, location);
         self.ctxt.constraints.push_eq(ret, dest);
         /*
         // Modelling: identical to `memmove`.

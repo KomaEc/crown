@@ -218,6 +218,30 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
         }
         self
     }
+
+    fn error_state(&self) {
+        log::error!("All constraints:");
+        for constraint in self.constraints.iter() {
+            // log::debug!("{}", constraint)
+            log::error!("{}", constraint)
+        }
+
+        for (lambda, &solution) in self.lambda_ctxt.lambda_map.assumptions.iter_enumerated() {
+            // log::debug!(
+            log::error!(
+                "{: <7} = {: <2} at {}",
+                &format!("{:?}", lambda),
+                solution
+                    .map(|fat| { fat.then_some("1").unwrap_or("0") })
+                    .unwrap_or("?"),
+                // crate_summary.lambda_ctxt.lambda_map.data_map[lambda]
+                self.lambda_source_data_to_str(
+                    self.lambda_ctxt.lambda_map.data_map[lambda].clone()
+                )
+            )
+        }
+
+    }
 }
 
 /// A bidirectional map between constraint variables lambdas and the language constructs
