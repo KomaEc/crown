@@ -219,7 +219,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
         self
     }
 
-    fn error_state(&self) {
+    pub fn error_state(&self) {
         log::error!("All constraints:");
         for constraint in self.constraints.iter() {
             // log::debug!("{}", constraint)
@@ -240,7 +240,6 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                 )
             )
         }
-
     }
 }
 

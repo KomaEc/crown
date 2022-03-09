@@ -19,7 +19,7 @@ use crate::{
     ty_ext::TyExt,
 };
 use graph::implementation::forward_star::Direction;
-use ndarray::{Array2, ArrayView};
+use ndarray::{Array2, ArrayView, Axis};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::{Idx, IndexVec};
@@ -58,21 +58,10 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                     &mut self.lambda_ctxt,
                     &mut self.constraints,
                     insertion_points.filter_repack(|local, _| {
-                        let nested_level = body.local_decls[local]
+                        body.local_decls[local]
                             .ty
-                            .walk()
-                            .filter_map(|generic_arg| {
-                                if let GenericArgKind::Type(ty) = generic_arg.unpack() {
-                                    Some(ty)
-                                } else {
-                                    None
-                                }
-                            })
-                            .take_while(|ty| ty.is_ptr_but_not_fn_ptr())
-                            .count();
-
-                        (nested_level > 0)
-                            .then(|| Array2::from_shape_vec((0, nested_level), vec![]).unwrap())
+                            .is_ptr_but_not_fn_ptr()
+                            .then(|| vec![])
                     }),
                 ),
                 boundary_constraints: &mut boundary_constraints,
@@ -119,20 +108,15 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
 
             log::debug!("process equalities in phi nodes");
             for equalities in phi_joins.into_iter() {
-                for equalities in equalities.into_iter() {
+                for (local, ssa_idxs) in equalities.into_iter_enumerated() {
+                    let equalities =
+                        self.lambda_ctxt.locals[func][local].select(Axis(0), &ssa_idxs);
                     for equality in equalities.columns() {
                         let &this = equality.first().unwrap();
                         for &other in equality.iter().skip(1) {
                             self.constraints.push_eq(this, other);
                         }
                     }
-                    /*
-                    assert!(equality.len() >= 2);
-                    let (&this, tail) = equality.split_first().unwrap();
-                    for &other in tail {
-                        self.constraints.push_eq(this, other);
-                    }
-                    */
                 }
             }
 
@@ -704,7 +688,12 @@ impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
                         nested_level,
                     },
                 );
-                log::debug!("generate {:?} for {:*<2$}{base:?}^{ssa_idx}", lambda, "", nested_level);
+                log::debug!(
+                    "generate {:?} for {:*<2$}{base:?}^{ssa_idx}",
+                    lambda,
+                    "",
+                    nested_level
+                );
                 lambda
             })
             .collect::<Vec<_>>();
@@ -733,10 +722,7 @@ pub struct InferCtxt<'infercx, 'tcx: 'infercx> {
     body: &'infercx Body<'tcx>,
     call_graph: &'infercx CallGraph,
     lambda_ctxt: CrateLambdaCtxtIntraView<'infercx>,
-    /// [[_1^0, *_1^0, **_1^0],
-    ///  [_1^3, *_1^3, **_1^3],
-    ///  [_1^7, *_1^7, **_1^7]]
-    phi_joins: PhiNodeInsertionPoints<Array2<Lambda>>,
+    phi_joins: PhiNodeInsertionPoints<Vec<usize>>,
     constraints: &'infercx mut ConstraintSet, //Vec<Constraint>,
 }
 
@@ -748,7 +734,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         call_graph: &'infercx CallGraph,
         lambda_ctxt: &'infercx mut CrateLambdaCtxt,
         constraints: &'infercx mut ConstraintSet, //Vec<Constraint>,
-        phi_joins: PhiNodeInsertionPoints<Array2<Lambda>>,
+        phi_joins: PhiNodeInsertionPoints<Vec<usize>>,
     ) -> Self {
         InferCtxt {
             tcx,
@@ -813,9 +799,10 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
 
     fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
         log::debug!("InferCtxt phi node defining {:?}^{}", local, idx);
-        let lambda = self.lambda_ctxt.generate_local(local, idx);
-        let lambdas = self.lambda_ctxt.locals[local].row(lambda);
-        self.phi_joins[block][local].push_row(lambdas).unwrap();
+        let _ = self.lambda_ctxt.generate_local(local, idx);
+        // let lambdas = self.lambda_ctxt.locals[local].row(idx);
+        // self.phi_joins[block][local].push_row(lambdas).unwrap();
+        self.phi_joins[block][local].push(idx)
     }
 
     fn handle_use(&mut self, local: Local, idx: usize, _location: Location) -> Self::Output {
@@ -829,8 +816,9 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
     fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, _pos: usize) {
         log::debug!("InferCtxt phi node using {:?}^{}", local, idx);
         // let lambda = self.lambda_ctxt.local[local][[idx, 0]];
-        let lambdas = self.lambda_ctxt.locals[local].row(idx);
+        // let lambdas = self.lambda_ctxt.locals[local].row(idx);
         // log::debug!("retrieve {:?} for Local {:?}^{}", lambda, local, idx);
-        self.phi_joins[block][local].push_row(lambdas).unwrap();
+        // self.phi_joins[block][local].push_row(lambdas).unwrap();
+        self.phi_joins[block][local].push(idx)
     }
 }

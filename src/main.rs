@@ -13,13 +13,12 @@ extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 
 use analysis::{
-    array_analysis::CrateSummary, call_graph::CallGraph, def_use::FatThinAnalysisDefUse,
-    null_analysis::NullAnalysisResults, ssa::rename::handler::LogSSAName,
+    null_analysis::NullAnalysisResults,
 };
 use clap::Parser;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
-use rustc_hir::{def_id::LocalDefId, ItemKind, OwnerNode};
+use rustc_hir::{ItemKind, OwnerNode};
 use rustc_index::vec::IndexVec;
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;

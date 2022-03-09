@@ -132,21 +132,25 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         self.visit_operand(n, location);
         let lhs_ssa_idx = self.try_define_place(&lhs, location);
 
-        let rhs_lambdas = self.ctxt.lambda_ctxt.lookup_lambdas(&rhs, rhs_ssa_idx, self.ctxt.body, self.ctxt.tcx);
+        let rhs_lambdas =
+            self.ctxt
+                .lambda_ctxt
+                .lookup_lambdas(&rhs, rhs_ssa_idx, self.ctxt.body, self.ctxt.tcx);
         assert!(!rhs_lambdas.is_empty());
         let (_, rhs_inners) = rhs_lambdas.split_first().unwrap();
-        let lhs_lambdas = self.ctxt.lambda_ctxt.lookup_lambdas(&lhs, lhs_ssa_idx, self.ctxt.body, self.ctxt.tcx);
+        let lhs_lambdas =
+            self.ctxt
+                .lambda_ctxt
+                .lookup_lambdas(&lhs, lhs_ssa_idx, self.ctxt.body, self.ctxt.tcx);
         assert!(!lhs_lambdas.is_empty());
         let (&outtermost, lhs_inners) = lhs_lambdas.split_first().unwrap();
 
         assert_eq!(lhs_inners.len(), rhs_inners.len());
-        
+
         for (&lhs, &rhs) in std::iter::zip(lhs_inners, rhs_inners) {
             self.ctxt.constraints.push_le(lhs, rhs)
         }
         self.ctxt.lambda_ctxt.assume(outtermost, false);
-
-        
     }
 
     pub fn model_ptr_is_null(
