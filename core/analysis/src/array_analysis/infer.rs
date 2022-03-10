@@ -19,7 +19,7 @@ use crate::{
     ty_ext::TyExt,
 };
 use graph::implementation::forward_star::Direction;
-use ndarray::{Array2, ArrayView, Axis};
+// use ndarray::{Array2, ArrayView, Axis};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::{Idx, IndexVec};
@@ -32,6 +32,9 @@ use rustc_middle::{
     ty::{subst::GenericArgKind, TyCtxt, TyKind::FnDef},
 };
 use rustc_target::abi::VariantIdx;
+use smallvec::{smallvec, SmallVec};
+
+use super::NESTED_LEVEL_HINT;
 
 impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
     pub fn infer_all<Handler: SSANameHandler<Output = ()>>(
@@ -90,25 +93,37 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
             let return_lambda = return_ssa_idx
                 .split_first()
                 .and_then(|(&this, rest)| {
-                    let this = self.lambda_ctxt.locals[func][RETURN_PLACE].row(this);
+                    let this = &self.lambda_ctxt.locals[func][RETURN_PLACE][this][..];// .row(this);
                     // although Return may occur multiple times (according to the docs), I'm
                     // curious to see how it may happen
-                    assert!(rest.is_empty());
+                    assert!(rest.is_empty(), "although Return may occur multiple times (according to the docs), I'm curious to see how it may happen");
                     for &other in rest {
-                        let other = self.lambda_ctxt.locals[func][RETURN_PLACE].row(other);
+                        let other = &self.lambda_ctxt.locals[func][RETURN_PLACE][other][..]; //.row(other);
                         for (&this, &other) in std::iter::zip(this, other) {
                             self.constraints.push_eq(this, other)
                         }
                     }
-                    Some(this.to_vec())
+                    Some(this.into_iter().map(|&l| l).collect::<SmallVec<_>>())
                 })
-                .unwrap_or_else(|| vec![]);
+                .unwrap_or_else(|| smallvec![]);
 
             assert_eq!(func, all_return_ssa_idx.push(return_ssa_idx));
 
             log::debug!("process equalities in phi nodes");
             for equalities in phi_joins.into_iter() {
                 for (local, ssa_idxs) in equalities.into_iter_enumerated() {
+
+                    let (&this_ssa_idx, rest_ssa_idxs) = ssa_idxs.split_first().unwrap();
+                    let this = &self.lambda_ctxt.locals[func][local][this_ssa_idx][..];
+
+                    for &other_ssa_idx in rest_ssa_idxs {
+                        let other = &self.lambda_ctxt.locals[func][local][other_ssa_idx][..];
+                        for (&this, &other) in std::iter::zip(this, other) {
+                            self.constraints.push_eq(this, other);
+                        }
+                    }
+
+                    /*
                     let equalities =
                         self.lambda_ctxt.locals[func][local].select(Axis(0), &ssa_idxs);
                     for equality in equalities.columns() {
@@ -117,6 +132,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                             self.constraints.push_eq(this, other);
                         }
                     }
+                    */
                 }
             }
 
@@ -141,8 +157,8 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                             body.local_decls[local]
                                 .ty
                                 .is_ptr_but_not_fn_ptr()
-                                .then(|| self.lambda_ctxt.locals[func][local].row(0).to_vec())
-                                .unwrap_or_else(|| vec![])
+                                .then(|| self.lambda_ctxt.locals[func][local][0].clone())// self.lambda_ctxt.locals[func][local].row(0).to_vec())
+                                .unwrap_or_else(|| smallvec![])
                         }))
                         .collect::<Vec<_>>(),
                 })
@@ -189,7 +205,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                                 body,
                                 self.tcx,
                             );
-                            let callee = self.lambda_ctxt.locals[edge_data.target][callee].row(0);
+                            let callee = &self.lambda_ctxt.locals[edge_data.target][callee][0][..]; //.row(0);
                             for (&caller, &callee) in std::iter::zip(caller.iter(), callee) {
                                 res.push(Constraint(callee, caller))
                             }
@@ -209,8 +225,8 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                                 self.tcx,
                             );
                             let &callee_ssa_idx = return_ssa_idx[edge_data.target].first().unwrap();
-                            let callee = self.lambda_ctxt.locals[edge_data.target][RETURN_PLACE]
-                                .row(callee_ssa_idx);
+                            let callee = &self.lambda_ctxt.locals[edge_data.target][RETURN_PLACE][callee_ssa_idx][..];
+                                // .row(callee_ssa_idx);
                             for (&caller, &callee) in std::iter::zip(caller.iter(), callee) {
                                 res.push(Constraint(caller, callee))
                             }
@@ -230,7 +246,7 @@ impl CrateLambdaCtxt {
             .local_decls
             .iter_enumerated()
             .map(|(local, local_decl)| {
-                let row = local_decl
+                let entry_fact = local_decl
                     .ty
                     .walk()
                     .filter_map(|generic_arg| {
@@ -253,8 +269,9 @@ impl CrateLambdaCtxt {
                             },
                         )
                     })
-                    .collect::<Vec<_>>();
-                Array2::from_shape_vec((1, row.len()), row).unwrap()
+                    .collect::<SmallVec<_>>();
+                vec![entry_fact]
+                // Array2::from_shape_vec((1, row.len()), row).unwrap()
             })
             .collect::<IndexVec<_, _>>();
 
@@ -350,8 +367,8 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> SSA
         let new = self.ssa_name_handler().handle_def(local, ssa_idx, location);
         if self.ctxt.body.local_decls[local].ty.is_ptr_but_not_fn_ptr() {
             for (&old, &new) in std::iter::zip(
-                self.ctxt.lambda_ctxt.locals[local].row(old),
-                self.ctxt.lambda_ctxt.locals[local].row(new),
+                &self.ctxt.lambda_ctxt.locals[local][old],
+                &self.ctxt.lambda_ctxt.locals[local][new],
             ) {
                 self.ctxt.constraints.push_le(new, old)
             }
@@ -629,14 +646,14 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>> Vis
 pub struct CrateLambdaCtxtIntraView<'intracx> {
     pub func: Func,
     pub lambda_map: &'intracx mut LambdaMap<Option<bool>>,
-    pub field_defs: &'intracx FxHashMap<DefId, IndexVec<VariantIdx, Vec<Vec<Lambda>>>>,
-    pub locals: IndexVec<Local, Array2<Lambda>>,
+    pub field_defs: &'intracx FxHashMap<DefId, IndexVec<VariantIdx, Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>>,
+    pub locals: IndexVec<Local, Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>,
 }
 
 #[inline]
 pub fn lookup_lambdas<'a, 'tcx>(
-    field_defs: &'a FxHashMap<DefId, IndexVec<VariantIdx, Vec<Vec<Lambda>>>>,
-    locals: &'a IndexVec<Local, Array2<Lambda>>,
+    field_defs: &'a FxHashMap<DefId, IndexVec<VariantIdx, Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>>,
+    locals: &'a IndexVec<Local, Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>,
     place: &Place<'tcx>,
     ssa_idx: usize,
     body: &Body<'tcx>,
@@ -660,16 +677,51 @@ pub fn lookup_lambdas<'a, 'tcx>(
         }
     }
 
-    locals[place.local]
+    &locals[place.local][ssa_idx][n_derefs..]
+    /*
         .row(ssa_idx)
         .to_slice_memory_order()
         .map(|slice| &slice[n_derefs..])
         .unwrap()
+        */
 }
 
 impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
     /// return the `ssa_idx`
     pub fn generate_local(&mut self, base: Local, ssa_idx: usize) -> usize {
+
+        let lambdas = &self.locals[base];
+        let entry_fact = &lambdas[0];
+        let nested_level = entry_fact.len();
+        assert!(nested_level > 0);
+
+        let n_facts = lambdas.len();
+        assert_eq!(n_facts, ssa_idx);
+        let new_fact = (0..nested_level)
+            .map(|nested_level| {
+                let lambda = self.lambda_map.push(
+                    None,
+                    LambdaSourceData::Local {
+                        func: self.func,
+                        base,
+                        ssa_idx,
+                        nested_level,
+                    },
+                );
+                log::debug!(
+                    "generate {:?} for {:*<2$}{base:?}^{ssa_idx}",
+                    lambda,
+                    "",
+                    nested_level
+                );
+                lambda
+            })
+            .collect::<SmallVec<_>>();
+        self.locals[base].push(new_fact);
+        n_facts
+
+
+        /*
         // ArrayView1<Lambda> {
         let lambda_array_view = &self.locals[base];
         let ncols = lambda_array_view.ncols();
@@ -704,6 +756,7 @@ impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
         // log::debug!("generate {:?} for Local {:?}^{}", lambda, base, ssa_idx);
         // self.local[base].row(nrow)
         nrows
+        */
     }
 
     pub fn lookup_lambdas<'tcx>(
@@ -756,8 +809,9 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
                 self.tcx.def_path_debug_str(self.body.source.def_id())
             );
             for (local, lambdas) in self.lambda_ctxt.locals.iter_enumerated() {
-                assert_eq!(lambdas.nrows(), 1);
-                let lambdas = lambdas.row(0);
+                // assert_eq!(lambdas.nrows(), 1);
+                assert_eq!(lambdas.len(), 1);
+                let lambdas = &lambdas[0]; //lambdas.row(0);
                 for (nested_level, &lambda) in lambdas.iter().enumerate() {
                     log::debug!(
                         "{}{:*<2$}{3:?}^0 ==> {4:?}",

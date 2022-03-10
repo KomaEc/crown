@@ -14,6 +14,7 @@ use rustc_middle::{
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
+use smallvec::SmallVec;
 
 use crate::{
     array_analysis::solve::{solve, SolveSuccess},
@@ -23,7 +24,7 @@ use crate::{
     ty_ext::TyExt,
 };
 
-use ndarray::Array2;
+// use ndarray::Array2;
 
 pub mod infer;
 pub mod solve;
@@ -52,7 +53,7 @@ pub struct FuncSummary {
     /// func_sig maps function arguments and return to constraint variables. It follows
     /// the convention of MIR, where the first entry represents return place.
     /// func_sig entries are `Some` if and only if its type is pointer type of concern
-    pub func_sig: Vec<Vec<Lambda>>,
+    pub func_sig: Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>,
 }
 
 impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
@@ -243,18 +244,22 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
     }
 }
 
+pub const NESTED_LEVEL_HINT: usize = 1;
+
 /// A bidirectional map between constraint variables lambdas and the language constructs
 /// we care about
 pub struct CrateLambdaCtxt {
     pub lambda_map: LambdaMap<Option<bool>>, //IndexVec<Lambda, LambdaData>,
     /// did of adt_def -> variant_idx -> field_idx -> nested_level -> lambda
-    pub field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<Vec<Lambda>>>>,
+    /// TODO: turn nested_level -> lambda into Range<Lambda>!!!
+    pub field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>>,
     /// func -> local -> ssa_idx -> nested_level -> lambda
     /// [[_1^0, *_1^0, **_1^0],
     ///  [_1^1, *_1^1, **_1^1],
     ///  [_1^2, *_1^2, **_1^2],
     ///  ..]
-    pub locals: IndexVec<Func, IndexVec<Local, Array2<Lambda>>>,
+    pub locals: IndexVec<Func, IndexVec<Local, Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>>,
+    // pub locals: IndexVec<Func, IndexVec<Local, Array2<Lambda>>>,
     // pub locals: IndexVec<Func, IndexVec<Local, Vec<Vec<Lambda>>>>,
 }
 
@@ -298,7 +303,7 @@ impl CrateLambdaCtxt {
                                                 },
                                             )
                                         })
-                                        .collect::<Vec<_>>()
+                                        .collect::<SmallVec<_>>()
                                 })
                                 .collect::<Vec<_>>()
                         })
