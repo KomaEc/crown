@@ -76,37 +76,16 @@ impl SSANameSourceMap {
 }
 
 impl SSANameHandler for SSANameSourceMap {
-    type Output = ();
     fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
         debug_assert!(self.names[location].0.is_none());
         self.names[location].0 = Some((local, idx));
     }
-
-    /*
-    fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
-        self.names_for_phi_nodes[block][local].0 = idx;
-        .iter_mut()
-        .find(|(l, _, _)| *l == local)
-        .map(|(_, def, _)| *def = idx)
-        .expect("initialised")
-    }
-    */
 
     fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
         if !self.names[location].1.iter().any(|&(lo, _)| lo == local) {
             self.names[location].1.push((local, idx))
         }
     }
-
-    /*
-    fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize) {
-        self.names_for_phi_nodes[block][local].1[pos] = idx
-            .iter_mut()
-            .find(|(l, _, _)| *l == local)
-            .map(|(_, _, uses)| uses[pos] = idx)
-            .expect("initialised")
-    }
-    */
 }
 
 macro_rules! make_new_name_debug_handler (
@@ -115,7 +94,6 @@ macro_rules! make_new_name_debug_handler (
         pub struct $Type;
 
         impl SSANameHandler for $Type {
-            type Output = ();
 
             fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
                 $macro!(
@@ -200,7 +178,6 @@ impl<'me, 'tcx, CV: Idx> LocalSimplePtrCVMap<'me, 'tcx, CV> {
 }
 
 impl<'me, 'tcx, CV: Idx> SSANameHandler for LocalSimplePtrCVMap<'me, 'tcx, CV> {
-    type Output = ();
     fn handle_def(&mut self, local: Local, idx: usize, _location: Location) {
         self.gen_def(local, idx)
     }
@@ -208,26 +185,16 @@ impl<'me, 'tcx, CV: Idx> SSANameHandler for LocalSimplePtrCVMap<'me, 'tcx, CV> {
     fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, _block: BasicBlock) {
         self.gen_def(local, idx)
     }
-
-    fn handle_use(&mut self, _local: Local, _idx: usize, _location: Location) {}
 }
 
-impl SSANameHandler for () {
-    type Output = ();
-
-    fn handle_def(&mut self, _local: Local, _idx: usize, _location: Location) {}
-
-    fn handle_use(&mut self, _local: Local, _idx: usize, _location: Location) {}
-}
+impl SSANameHandler for () {}
 
 impl<H: SSANameHandler> SSANameHandler for &mut H {
-    type Output = H::Output;
-
-    fn handle_def(&mut self, local: Local, idx: usize, location: Location) -> Self::Output {
+    fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
         (*self).handle_def(local, idx, location)
     }
 
-    fn handle_use(&mut self, local: Local, idx: usize, location: Location) -> Self::Output {
+    fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
         (*self).handle_use(local, idx, location)
     }
 
@@ -241,9 +208,7 @@ impl<H: SSANameHandler> SSANameHandler for &mut H {
 }
 
 impl<H1: SSANameHandler, H2: SSANameHandler> SSANameHandler for (H1, H2) {
-    type Output = H2::Output;
-
-    fn handle_def(&mut self, local: Local, idx: usize, location: Location) -> Self::Output {
+    fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
         self.0.handle_def(local, idx, location);
         self.1.handle_def(local, idx, location)
     }
@@ -253,7 +218,7 @@ impl<H1: SSANameHandler, H2: SSANameHandler> SSANameHandler for (H1, H2) {
         self.1.handle_def_at_phi_node(local, idx, block)
     }
 
-    fn handle_use(&mut self, local: Local, idx: usize, location: Location) -> Self::Output {
+    fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
         self.0.handle_use(local, idx, location);
         self.1.handle_use(local, idx, location)
     }
@@ -265,14 +230,7 @@ impl<H1: SSANameHandler, H2: SSANameHandler> SSANameHandler for (H1, H2) {
 }
 
 impl<H1: SSANameHandler, H2: SSANameHandler, H3: SSANameHandler> SSANameHandler for (H1, H2, H3) {
-    type Output = H3::Output;
-
-    fn handle_def(
-        &mut self,
-        local: Local,
-        idx: usize,
-        location: Location,
-    ) -> <H3 as SSANameHandler>::Output {
+    fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
         self.0.handle_def(local, idx, location);
         self.1.handle_def(local, idx, location);
         self.2.handle_def(local, idx, location)
@@ -284,12 +242,7 @@ impl<H1: SSANameHandler, H2: SSANameHandler, H3: SSANameHandler> SSANameHandler 
         self.2.handle_def_at_phi_node(local, idx, block)
     }
 
-    fn handle_use(
-        &mut self,
-        local: Local,
-        idx: usize,
-        location: Location,
-    ) -> <H3 as SSANameHandler>::Output {
+    fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
         self.0.handle_use(local, idx, location);
         self.1.handle_use(local, idx, location);
         self.2.handle_use(local, idx, location)
@@ -305,14 +258,7 @@ impl<H1: SSANameHandler, H2: SSANameHandler, H3: SSANameHandler> SSANameHandler 
 impl<H1: SSANameHandler, H2: SSANameHandler, H3: SSANameHandler, H4: SSANameHandler> SSANameHandler
     for (H1, H2, H3, H4)
 {
-    type Output = H4::Output;
-
-    fn handle_def(
-        &mut self,
-        local: Local,
-        idx: usize,
-        location: Location,
-    ) -> <H4 as SSANameHandler>::Output {
+    fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
         self.0.handle_def(local, idx, location);
         self.1.handle_def(local, idx, location);
         self.2.handle_def(local, idx, location);
@@ -326,12 +272,7 @@ impl<H1: SSANameHandler, H2: SSANameHandler, H3: SSANameHandler, H4: SSANameHand
         self.3.handle_def_at_phi_node(local, idx, block)
     }
 
-    fn handle_use(
-        &mut self,
-        local: Local,
-        idx: usize,
-        location: Location,
-    ) -> <H4 as SSANameHandler>::Output {
+    fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
         self.0.handle_use(local, idx, location);
         self.1.handle_use(local, idx, location);
         self.2.handle_use(local, idx, location);

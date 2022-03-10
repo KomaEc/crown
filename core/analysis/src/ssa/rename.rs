@@ -56,10 +56,10 @@ impl<ProgramVar: Idx> HasSSARenameState<ProgramVar> for SSARenameState<ProgramVa
 
 #[allow(unused_variables)]
 pub trait SSANameHandler {
-    type Output: Clone + Copy + PartialEq + Eq;
-    fn handle_def(&mut self, local: Local, idx: usize, location: Location) -> Self::Output;
+    // type Output: Clone + Copy + PartialEq + Eq;
+    fn handle_def(&mut self, local: Local, idx: usize, location: Location) {} // -> Self::Output;
     fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {}
-    fn handle_use(&mut self, local: Local, idx: usize, location: Location) -> Self::Output;
+    fn handle_use(&mut self, local: Local, idx: usize, location: Location) {} //-> Self::Output;
     fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize) {}
 }
 
@@ -71,22 +71,18 @@ pub trait HasSSANameHandler {
 pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
     type DefUse: IsDefUse;
 
-    fn define(
-        &mut self,
-        local: Local,
-        location: Location,
-    ) -> <<Self as HasSSANameHandler>::Handler as SSANameHandler>::Output {
+    fn define_local(&mut self, local: Local, location: Location) -> usize {
+        //<<Self as HasSSANameHandler>::Handler as SSANameHandler>::Output {
         let ssa_idx = self.ssa_state().define(local);
-        self.ssa_name_handler().handle_def(local, ssa_idx, location)
+        self.ssa_name_handler().handle_def(local, ssa_idx, location);
+        ssa_idx
     }
 
-    fn r#use(
-        &mut self,
-        local: Local,
-        location: Location,
-    ) -> <<Self as HasSSANameHandler>::Handler as SSANameHandler>::Output {
+    fn use_local(&mut self, local: Local, location: Location) -> usize {
+        // <<Self as HasSSANameHandler>::Handler as SSANameHandler>::Output {
         let ssa_idx = self.ssa_state().r#use(local);
-        self.ssa_name_handler().handle_use(local, ssa_idx, location)
+        self.ssa_name_handler().handle_use(local, ssa_idx, location);
+        ssa_idx
     }
 
     fn rename_body(

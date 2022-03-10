@@ -37,6 +37,7 @@ impl<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> HasSSANameHandler
     for PlainRenamer<'me, 'tcx, DefUse, H>
 {
     type Handler = H;
+
     #[inline]
     fn ssa_name_handler(&mut self) -> &mut H {
         &mut self.ssa_name_handler

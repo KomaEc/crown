@@ -24,8 +24,6 @@ use crate::{
     ty_ext::TyExt,
 };
 
-// use ndarray::Array2;
-
 pub mod infer;
 pub mod solve;
 #[cfg(test)]
@@ -57,7 +55,7 @@ pub struct FuncSummary {
 }
 
 impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
-    pub fn new<Handler: SSANameHandler<Output = ()>>(
+    pub fn new<Handler: SSANameHandler>(
         tcx: TyCtxt<'tcx>,
         adt_defs: &[DefId],
         call_graph: CallGraph,
@@ -70,13 +68,12 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
             call_graph,
             globals: Range {
                 start: 0,
-                end: lambda_ctxt.lambda_map.len(),
+                end: lambda_ctxt.lambda_data_map.len(),
             },
             lambda_ctxt,
             func_summaries: IndexVec::with_capacity(num_funcs),
             constraints: ConstraintSet::new(),
             boundary_constraints: IndexVec::new(),
-            // return_ssa_idx: IndexVec::with_capacity(num_funcs),
             ssa_name_source_map: IndexVec::with_capacity(num_funcs),
             _marker: PhantomData,
         }
@@ -127,7 +124,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                         let constraints_range = constraints_range.clone();
 
                         match solve(
-                            &mut self.lambda_ctxt.lambda_map.assumptions,
+                            &mut self.lambda_ctxt.lambda_data_map.assumptions,
                             self.globals.clone(),
                             locals,
                             &self.constraints[constraints_range],
@@ -227,7 +224,12 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
             log::error!("{}", constraint)
         }
 
-        for (lambda, &solution) in self.lambda_ctxt.lambda_map.assumptions.iter_enumerated() {
+        for (lambda, &solution) in self
+            .lambda_ctxt
+            .lambda_data_map
+            .assumptions
+            .iter_enumerated()
+        {
             // log::debug!(
             log::error!(
                 "{: <7} = {: <2} at {}",
@@ -237,7 +239,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                     .unwrap_or("?"),
                 // crate_summary.lambda_ctxt.lambda_map.data_map[lambda]
                 self.lambda_source_data_to_str(
-                    self.lambda_ctxt.lambda_map.data_map[lambda].clone()
+                    self.lambda_ctxt.lambda_data_map.source_map[lambda].clone()
                 )
             )
         }
@@ -249,23 +251,23 @@ pub const NESTED_LEVEL_HINT: usize = 1;
 /// A bidirectional map between constraint variables lambdas and the language constructs
 /// we care about
 pub struct CrateLambdaCtxt {
-    pub lambda_map: LambdaMap<Option<bool>>, //IndexVec<Lambda, LambdaData>,
+    pub lambda_data_map: LambdaDataMap<Option<bool>>, //IndexVec<Lambda, LambdaData>,
     /// did of adt_def -> variant_idx -> field_idx -> nested_level -> lambda
     /// TODO: turn nested_level -> lambda into Range<Lambda>!!!
-    pub field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>>,
+    pub field_defs:
+        FxHashMap<DefId, IndexVec<VariantIdx, Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>>,
     /// func -> local -> ssa_idx -> nested_level -> lambda
     /// [[_1^0, *_1^0, **_1^0],
     ///  [_1^1, *_1^1, **_1^1],
     ///  [_1^2, *_1^2, **_1^2],
     ///  ..]
     pub locals: IndexVec<Func, IndexVec<Local, Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>>,
-    // pub locals: IndexVec<Func, IndexVec<Local, Array2<Lambda>>>,
     // pub locals: IndexVec<Func, IndexVec<Local, Vec<Vec<Lambda>>>>,
 }
 
 impl CrateLambdaCtxt {
     pub fn initiate(tcx: TyCtxt, adt_defs: &[DefId], call_graph: &CallGraph) -> Self {
-        let mut lambda_map = LambdaMap::new();
+        let mut lambda_data_map = LambdaDataMap::new();
 
         let field_defs = adt_defs
             .iter()
@@ -293,7 +295,7 @@ impl CrateLambdaCtxt {
                                         .take_while(|ty| ty.is_ptr_but_not_fn_ptr())
                                         .enumerate()
                                         .map(|(nested_level, _)| {
-                                            lambda_map.push(
+                                            lambda_data_map.push(
                                                 None,
                                                 LambdaSourceData::FieldDef {
                                                     adt_def: did,
@@ -313,7 +315,7 @@ impl CrateLambdaCtxt {
             .collect::<FxHashMap<_, _>>();
 
         CrateLambdaCtxt {
-            lambda_map,
+            lambda_data_map,
             field_defs,
             locals: IndexVec::with_capacity(call_graph.num_nodes()),
         }
@@ -424,35 +426,35 @@ impl Display for LambdaSourceData {
 }
 
 #[derive(Debug, Clone)]
-pub struct LambdaMap<Domain: Clone + Copy> {
+pub struct LambdaDataMap<Domain: Clone + Copy> {
     pub assumptions: IndexVec<Lambda, Domain>,
-    pub data_map: IndexVec<Lambda, LambdaSourceData>,
+    pub source_map: IndexVec<Lambda, LambdaSourceData>,
 }
 
-impl<Domain: Clone + Copy> LambdaMap<Domain> {
+impl<Domain: Clone + Copy> LambdaDataMap<Domain> {
     pub fn new() -> Self {
-        LambdaMap {
+        LambdaDataMap {
             assumptions: IndexVec::new(),
-            data_map: IndexVec::new(),
+            source_map: IndexVec::new(),
         }
     }
 
     pub fn push(&mut self, domain: Domain, data: LambdaSourceData) -> Lambda {
         let _lambda = self.assumptions.push(domain);
-        let lambda = self.data_map.push(data);
+        let lambda = self.source_map.push(data);
         debug_assert!(_lambda == lambda);
         lambda
     }
 
     pub fn len(&self) -> usize {
         let res = self.assumptions.len();
-        debug_assert_eq!(res, self.data_map.len());
+        debug_assert_eq!(res, self.source_map.len());
         res
     }
 
     pub fn next_index(&self) -> Lambda {
         let res = self.assumptions.next_index();
-        debug_assert_eq!(res, self.data_map.next_index());
+        debug_assert_eq!(res, self.source_map.next_index());
         res
     }
 }

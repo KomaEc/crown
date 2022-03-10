@@ -12,9 +12,7 @@ extern crate rustc_middle;
 extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 
-use analysis::{
-    null_analysis::NullAnalysisResults,
-};
+use analysis::null_analysis::NullAnalysisResults;
 use clap::Parser;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;

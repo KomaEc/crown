@@ -27,7 +27,7 @@ impl<'tcx> CrateLambdaCtxtIntraView<'tcx> {
     }
 }
 
-impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
+impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
     Infer<'infercx, 'tcx, DefUse, Handler>
 {
     pub fn assume_call_argument(
@@ -37,18 +37,18 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         location: Location,
     ) -> Lambda {
         let arg = arg.place().unwrap();
-        let lambda = self.use_place_assume_simple(&arg, location);
+        let lambda = self.use_place_assume_simple_ptr(&arg, location);
         self.ctxt.lambda_ctxt.assume(lambda, value);
         lambda
     }
 
     pub fn assume_call_return(&mut self, dest: &Place<'tcx>, value: bool, location: Location) {
-        let lambda = self.define_place_assume_simple(dest, location);
+        let lambda = self.define_place_assume_simple_ptr(dest, location);
         self.ctxt.lambda_ctxt.assume(lambda, value);
     }
 }
 
-impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
+impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
     Infer<'infercx, 'tcx, DefUse, Handler>
 {
     /// Basically, this is self.super_terminator(..)
@@ -72,7 +72,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
 }
 
 /// Modelling library calls
-impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
+impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
     Infer<'infercx, 'tcx, DefUse, Handler>
 {
     pub fn model_library_call(
@@ -128,9 +128,9 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         let rhs = p.place().expect("input to offset should not be a constant");
         let (lhs, _) = destination.unwrap();
 
-        let rhs_ssa_idx = self.use_place(&rhs, location);
+        let rhs_ssa_idx = self.use_ptr_place(&rhs, location);
         self.visit_operand(n, location);
-        let lhs_ssa_idx = self.try_define_place(&lhs, location);
+        let lhs_ssa_idx = self.try_define_ptr_place(&lhs, location);
 
         let rhs_lambdas =
             self.ctxt
@@ -165,7 +165,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
 }
 
 /// Modelling extern libc calls
-impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
+impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
     Infer<'infercx, 'tcx, DefUse, Handler>
 {
     pub fn model_libc_call(
@@ -235,7 +235,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
             self.visit_operand(arg, location);
         }
         let (lhs, _) = destination.unwrap();
-        let lhs = self.define_place_assume_simple(&lhs, location);
+        let lhs = self.define_place_assume_simple_ptr(&lhs, location);
         self.ctxt.constraints.push_le(lhs, rhs);
     }
 
@@ -278,12 +278,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
-        let dest = self.use_place_assume_simple(&dest, location);
+        let dest = self.use_place_assume_simple_ptr(&dest, location);
         for arg in args {
             self.visit_operand(arg, location)
         }
         let (ret, _) = destination.unwrap();
-        let ret = self.define_place_assume_simple(&ret, location);
+        let ret = self.define_place_assume_simple_ptr(&ret, location);
         self.ctxt.constraints.push_eq(ret, dest);
         /*
         // Modelling: `destination`, `source`, and return value should all be fat.
@@ -311,12 +311,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
-        let dest = self.use_place_assume_simple(&dest, location);
+        let dest = self.use_place_assume_simple_ptr(&dest, location);
         for arg in args {
             self.visit_operand(arg, location)
         }
         let (ret, _) = destination.unwrap();
-        let ret = self.define_place_assume_simple(&ret, location);
+        let ret = self.define_place_assume_simple_ptr(&ret, location);
         self.ctxt.constraints.push_eq(ret, dest);
         /*
         assert_eq!(args.len(), 3);
@@ -343,12 +343,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         assert_eq!(args.len(), 3);
         let (ptr, args) = args.split_first().unwrap();
         let ptr = ptr.place().unwrap();
-        let ptr = self.use_place_assume_simple(&ptr, location);
+        let ptr = self.use_place_assume_simple_ptr(&ptr, location);
         for arg in args {
             self.visit_operand(arg, location)
         }
         let (ret, _) = destination.unwrap();
-        let ret = self.define_place_assume_simple(&ret, location);
+        let ret = self.define_place_assume_simple_ptr(&ret, location);
         self.ctxt.constraints.push_eq(ret, ptr);
         /*
         // Modelling: `ptr` and return value should both be fat.
@@ -377,12 +377,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler<Output = ()>>
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
-        let dest = self.use_place_assume_simple(&dest, location);
+        let dest = self.use_place_assume_simple_ptr(&dest, location);
         for arg in args {
             self.visit_operand(arg, location)
         }
         let (ret, _) = destination.unwrap();
-        let ret = self.define_place_assume_simple(&ret, location);
+        let ret = self.define_place_assume_simple_ptr(&ret, location);
         self.ctxt.constraints.push_eq(ret, dest);
         /*
         // Modelling: identical to `memmove`.

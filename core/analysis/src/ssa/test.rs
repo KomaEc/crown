@@ -154,7 +154,6 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
 
     struct TestProgramSpec;
     impl SSANameHandler for TestProgramSpec {
-        type Output = ();
         fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
             if local == Local::from_usize(1) {
                 // regular definitions for i, which occur only at entry block
