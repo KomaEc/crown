@@ -92,7 +92,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                     let this = &self.lambda_ctxt.locals[func][RETURN_PLACE][this][..];// .row(this);
                     // although Return may occur multiple times (according to the docs), I'm
                     // curious to see how it may happen
-                    assert!(rest.is_empty(), "although Return may occur multiple times (according to the docs), I'm curious to see how it may happen");
+                    debug_assert!(rest.is_empty(), "although Return may occur multiple times (according to the docs), I'm curious to see how it may happen");
                     for &other in rest {
                         let other = &self.lambda_ctxt.locals[func][RETURN_PLACE][other][..]; //.row(other);
                         for (&this, &other) in std::iter::zip(this, other) {
@@ -360,10 +360,17 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler> SSARename<'tcx>
 impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
     Infer<'infercx, 'tcx, DefUse, Handler>
 {
+    #[inline]
+    fn handle_ptr_def(&mut self, local: Local, idx: usize, location: Location) {
+        self.extra_handlers.handle_def(local, idx, location);
+        self.ctxt.handle_def(local, idx, location);
+    }
+
     fn define_ptr_local(&mut self, local: Local, location: Location) -> usize {
         let old = self.ssa_state().r#use(local);
         let new = self.ssa_state().define(local);
-        self.ssa_name_handler().handle_def(local, new, location);
+        // Explicitly call inner handlers to avoid an additional ptr type test
+        self.handle_ptr_def(local, new, location);
         for (&old, &new) in std::iter::zip(
             &self.ctxt.lambda_ctxt.locals[local][old],
             &self.ctxt.lambda_ctxt.locals[local][new],
