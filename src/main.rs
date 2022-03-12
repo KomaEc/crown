@@ -143,7 +143,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             }
 
             if *array || *all {
-                refactor::print_array_analysis_results(tcx, top_level_struct_defs, top_level_fns)
+                refactor::print_fat_thin_analysis_results(tcx, top_level_struct_defs, top_level_fns)
             }
         }
     }

@@ -4,7 +4,7 @@ use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
 use crate::{
-    array_analysis::CrateSummary, call_graph::CallGraph, def_use::FatThinAnalysisDefUse,
+    fat_thin_analysis::CrateSummary, call_graph::CallGraph, def_use::FatThinAnalysisDefUse,
     ssa::rename::handler::LogSSAName, test::init_logger,
 };
 
@@ -16,12 +16,15 @@ fn test_infer_not_crash() {
     }
 }
 
+const TEST_RESOURCES_PATH_STR : &str = "src/fat_thin_analysis/test/resource/";
+
 #[test]
 fn test_solve_not_crash_with_input_file() {
     init_logger();
     let file = env::current_dir()
         .expect("current working directory value is invalid")
-        .join("src/array_analysis/test/resource/0/lib.rs");
+        .join(TEST_RESOURCES_PATH_STR)
+        .join("0/lib.rs");
     compiler_interface::run_compiler_with_struct_defs_and_funcs(file.into(), run_solve)
 }
 
@@ -30,7 +33,8 @@ fn test_solve_not_crash_with_complex_call_graph() {
     init_logger();
     let file = env::current_dir()
         .expect("current working directory value is invalid")
-        .join("src/array_analysis/test/resource/2/lib.rs");
+        .join(TEST_RESOURCES_PATH_STR)
+        .join("2/lib.rs");
     compiler_interface::run_compiler_with_struct_defs_and_funcs(file.into(), run_solve)
 }
 
@@ -39,7 +43,8 @@ fn test_nested_pointers() {
     init_logger();
     let file = env::current_dir()
         .expect("current working directory value is invalid")
-        .join("src/array_analysis/test/resource/3/lib.rs");
+        .join(TEST_RESOURCES_PATH_STR)
+        .join("3/lib.rs");
     compiler_interface::run_compiler_with_struct_defs_and_funcs(
         file.into(),
         |tcx, struct_defs, fn_dids| {
@@ -65,7 +70,8 @@ fn test_boundary_constraints() {
     init_logger();
     let file = env::current_dir()
         .expect("current working directory value is invalid")
-        .join("src/array_analysis/test/resource/4/lib.rs");
+        .join(TEST_RESOURCES_PATH_STR)
+        .join("4/lib.rs");
     compiler_interface::run_compiler_with_struct_defs_and_funcs(
         file.into(),
         |tcx, struct_defs, fn_dids| {

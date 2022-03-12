@@ -1,9 +1,9 @@
-pub mod model_call;
+pub mod libcall_model;
 
 use std::{marker::PhantomData, ops::Range};
 
 use crate::{
-    array_analysis::{
+    fat_thin_analysis::{
         BoundaryConstraint, Constraint, ConstraintSet, CrateLambdaCtxt, CrateSummary, FuncSummary,
         Lambda, LambdaDataMap, LambdaSourceData,
     },
@@ -16,7 +16,7 @@ use crate::{
             SSANameHandler, SSARename, SSARenameState,
         },
     },
-    ty_ext::TyExt,
+    ty_ext::TyExt, libcall_model::LibCallModel,
 };
 use graph::implementation::forward_star::Direction;
 use rustc_hash::FxHashMap;

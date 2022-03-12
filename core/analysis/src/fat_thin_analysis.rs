@@ -17,7 +17,7 @@ use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
 
 use crate::{
-    array_analysis::solve::{solve, SolveSuccess},
+    fat_thin_analysis::solve::{solve, SolveSuccess},
     call_graph::{CallGraph, CallSite, Func},
     def_use::IsDefUse,
     ssa::rename::{handler::SSANameSourceMap, SSAIdx, SSANameHandler},

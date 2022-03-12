@@ -1,13 +1,12 @@
-use rustc_hir::def_id::DefId;
-use rustc_middle::mir::{
-    visit::{MutatingUseContext, PlaceContext, Visitor},
+use rustc_middle::{mir::{
+    visit::Visitor,
     BasicBlock, Location, Operand, Place,
-};
+}, ty::TyCtxt};
 
 use crate::{
-    array_analysis::{infer::Infer, Lambda},
+    fat_thin_analysis::{infer::Infer, Lambda},
     def_use::IsDefUse,
-    ssa::rename::SSANameHandler,
+    ssa::rename::SSANameHandler, libcall_model::LibCallModel,
 };
 
 use super::CrateLambdaCtxtIntraView;
@@ -48,81 +47,21 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
     }
 }
 
-impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
-    Infer<'infercx, 'tcx, DefUse, Handler>
-{
-    /// Basically, this is self.super_terminator(..)
-    pub fn default_model_call(
-        &mut self,
-        args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
-        location: Location,
-    ) {
-        log::debug!("... default modelling: introducing no constraint");
-        for arg in args {
-            self.visit_operand(arg, location);
-        }
-        let (lhs, _) = destination.unwrap();
-        self.visit_place(
-            &lhs,
-            PlaceContext::MutatingUse(MutatingUseContext::Call),
-            location,
-        );
-    }
-}
-
 /// Modelling library calls
-impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
+impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler> LibCallModel<'tcx> for
     Infer<'infercx, 'tcx, DefUse, Handler>
 {
-    pub fn model_library_call(
-        &mut self,
-        callee: DefId,
-        args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
-        location: Location,
-    ) {
-        let def_path = self.ctxt.tcx.def_path(callee);
-
-        // if it is a library call in core::ptr
-        if def_path
-            .data
-            .get(0)
-            .map(|d| match d.data {
-                rustc_hir::definitions::DefPathData::TypeNs(s) if s.as_str() == "ptr" => true,
-                _ => false,
-            })
-            .is_some()
-        {
-            // if it is core::ptr::<..>::..
-            if let Some(d) = def_path.data.get(3) {
-                match d.data {
-                    // if it is core::ptr::<..>::offset
-                    rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "offset" => {
-                        self.model_ptr_offset(args, destination, location);
-                        return;
-                    }
-                    // if it is core::ptr::<..>::is_null
-                    rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "is_null" => {
-                        self.model_ptr_is_null(args, destination, location);
-                        return;
-                    }
-                    _ => {}
-                }
-            }
-        }
-
-        // catch all other library calls that is not modelled
-        log::debug!("modelling {}", self.ctxt.tcx.def_path_str(callee));
-        self.default_model_call(args, destination, location)
+    fn tcx(&self) -> TyCtxt<'tcx> {
+        self.ctxt.tcx
     }
-    pub fn model_ptr_offset(
+
+    fn model_ptr_offset(
         &mut self,
         args: &Vec<Operand<'tcx>>,
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        log::debug!("modelling ptr offset");
+        // log::debug!("modelling ptr offset");
         assert_eq!(args.len(), 2);
         let ([p, n], _) = args.split_array_ref();
         let rhs = p.place().expect("input to offset should not be a constant");
@@ -153,67 +92,13 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
         self.ctxt.lambda_ctxt.assume(outtermost, false);
     }
 
-    pub fn model_ptr_is_null(
-        &mut self,
-        args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
-        location: Location,
-    ) {
-        log::debug!("modelling ptr is_null");
-        self.default_model_call(args, destination, location)
-    }
-}
-
-/// Modelling extern libc calls
-impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
-    Infer<'infercx, 'tcx, DefUse, Handler>
-{
-    pub fn model_libc_call(
-        &mut self,
-        callee: DefId,
-        args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
-        location: Location,
-    ) {
-        let foreign_item = self
-            .ctxt
-            .tcx
-            .hir()
-            .expect_foreign_item(callee.expect_local());
-        match foreign_item.ident {
-            s if s.as_str() == "printf" => self.model_printf(args, destination, location),
-            s if s.as_str() == "calloc" => self.model_calloc(args, destination, location),
-            s if s.as_str() == "realloc" => self.model_realloc(args, destination, location),
-            s if s.as_str() == "malloc" => self.model_malloc(args, destination, location),
-            s if s.as_str() == "free" => self.model_free(args, destination, location),
-            s if s.as_str() == "memmove" => self.model_memmove(args, destination, location),
-            s if s.as_str() == "memcpy" => self.model_memcpy(args, destination, location),
-            s if s.as_str() == "memset" => self.model_memset(args, destination, location),
-            s if s.as_str() == "strncat" => self.model_strncat(args, destination, location),
-            s if s.as_str() == "strcmp" => self.model_strcmp(args, destination, location),
-            s if s.as_str() == "strstr" => self.model_strstr(args, destination, location),
-            s if s.as_str() == "strlen" => self.model_strlen(args, destination, location),
-            s => unimplemented!("extern call to {s} is not supported"),
-        }
-    }
-
-    fn model_printf(
-        &mut self,
-        args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
-        location: Location,
-    ) {
-        log::debug!("modelling printf");
-        self.default_model_call(args, destination, location)
-    }
-
     fn model_calloc(
         &mut self,
         args: &Vec<Operand<'tcx>>,
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        log::debug!("modelling calloc");
+        // log::debug!("modelling calloc");
         for arg in args {
             self.visit_operand(arg, location);
         }
@@ -227,7 +112,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        log::debug!("modelling realloc");
+        // log::debug!("modelling realloc");
         assert_eq!(args.len(), 2);
         let (rhs, args) = args.split_first().unwrap();
         let rhs = self.assume_call_argument(rhs, true, location);
@@ -246,22 +131,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        log::debug!("modelling malloc");
+        // log::debug!("modelling malloc");
         for arg in args {
             self.visit_operand(arg, location);
         }
         let (dest, _) = destination.unwrap();
         self.assume_call_return(&dest, false, location)
-    }
-
-    fn model_free(
-        &mut self,
-        args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
-        location: Location,
-    ) {
-        log::debug!("modelling free");
-        self.default_model_call(args, destination, location)
     }
 
     /// Spec: `void * memmove ( void * destination, const void * source, size_t num );`
@@ -274,7 +149,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        log::debug!("modelling memmove");
+        // log::debug!("modelling memmove");
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
@@ -307,7 +182,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        log::debug!("modelling memcpy");
+        // log::debug!("modelling memcpy");
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
@@ -339,7 +214,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        log::debug!("modelling memset");
+        // log::debug!("modelling memset");
         assert_eq!(args.len(), 3);
         let (ptr, args) = args.split_first().unwrap();
         let ptr = ptr.place().unwrap();
@@ -373,7 +248,7 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        log::debug!("modelling strncat");
+        // log::debug!("modelling strncat");
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
@@ -393,85 +268,6 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
         self.visit_operand(num, location);
         let (dest, _) = destination.unwrap();
         self.assume_call_return(&dest, true, location);
-        */
-    }
-
-    /// Spec: `int strcmp ( const char * str1, const char * str2 );`
-    ///
-    /// Modelling: default.
-    fn model_strcmp(
-        &mut self,
-        args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
-        location: Location,
-    ) {
-        log::debug!("modelling strcmp");
-        self.default_model_call(args, destination, location)
-        /*
-        // Modelling: `str1`, `str2` should both be fat.
-        assert_eq!(args.len(), 2);
-        let ([str1, str2], _) = args.split_array_ref::<2>();
-        let _ = self.assume_call_argument(str1, true, location);
-        let _ = self.assume_call_argument(str2, true, location);
-        let (dest, _) = destination.unwrap();
-        self.visit_place(
-            &dest,
-            PlaceContext::MutatingUse(MutatingUseContext::Call),
-            location,
-        )
-        */
-    }
-
-    /// Spec: `const char * strstr ( const char * str1, const char * str2 );`
-    ///
-    /// Modelling: default.
-    fn model_strstr(
-        &mut self,
-        args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
-        location: Location,
-    ) {
-        log::debug!("modelling strstr");
-        self.default_model_call(args, destination, location)
-        /*
-        // Modelling: `str1`, `str2` should both be fat, return value should be unknown.
-        // TODO: is this appropriate? Should the return value be thin instead?
-        assert_eq!(args.len(), 2);
-        let ([str1, str2], _) = args.split_array_ref::<2>();
-        let _ = self.assume_call_argument(str1, true, location);
-        let _ = self.assume_call_argument(str2, true, location);
-        let (dest, _) = destination.unwrap();
-        log::warn!("The return ptr of strstr is unconstrained. Should it be assumed thin instead?");
-        self.visit_place(
-            &dest,
-            PlaceContext::MutatingUse(MutatingUseContext::Call),
-            location,
-        )
-        */
-    }
-
-    /// Spec: `size_t strlen ( const char * str );`
-    ///
-    /// Modelling: default.
-    fn model_strlen(
-        &mut self,
-        args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
-        location: Location,
-    ) {
-        log::debug!("modelling strlen");
-        self.default_model_call(args, destination, location)
-        /*
-        // Modelling: `str` should be fat.
-        assert_eq!(args.len(), 1);
-        let str = args.first().unwrap();
-        let _ = self.assume_call_argument(str, true, location);
-        let (dest, _) = destination.unwrap();
-        self.visit_place(
-            &dest,
-            PlaceContext::MutatingUse(MutatingUseContext::Call),
-            location,
-        )
         */
     }
 }

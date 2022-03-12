@@ -16,7 +16,7 @@ extern crate rustc_session;
 extern crate rustc_span;
 
 use analysis::{
-    array_analysis::{CrateSummary, Lambda},
+    fat_thin_analysis::{CrateSummary, Lambda},
     call_graph::CallGraph,
     def_use::FatThinAnalysisDefUse,
     ssa::rename::handler::LogSSAName,
@@ -24,7 +24,7 @@ use analysis::{
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
-pub fn print_array_analysis_results<'tcx>(
+pub fn print_fat_thin_analysis_results<'tcx>(
     tcx: TyCtxt<'tcx>,
     structs: Vec<LocalDefId>,
     funcs: Vec<LocalDefId>,

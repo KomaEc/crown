@@ -1,4 +1,4 @@
-use crate::array_analysis::{Constraint, Lambda};
+use crate::fat_thin_analysis::{Constraint, Lambda};
 use graph::implementation::forward_star::Graph;
 use rustc_data_structures::graph::scc::Sccs;
 use rustc_index::vec::IndexVec;
