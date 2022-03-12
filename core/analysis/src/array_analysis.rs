@@ -50,7 +50,7 @@ pub struct FuncSummary {
     pub constraints: Range<usize>,
     /// func_sig maps function arguments and return to constraint variables. It follows
     /// the convention of MIR, where the first entry represents return place.
-    /// func_sig entries are `Some` if and only if its type is pointer type of concern
+    /// func_sig entries are empty if and only if its type is pointer type of concern
     pub func_sig: Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>,
 }
 
@@ -96,9 +96,6 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
         );
 
         let call_graph_sccs = Sccs::<Func, usize>::new(&self.call_graph);
-        // it seems that the scc algorithm will rank sccs in post order, namely if there
-        // is a dependency S1 -> S2, then S2 < S1 (well it is natural to be this case,
-        // from the Tarjan's algorithm's perspective). Here we follow this assumption.
         let mut scc_nodes = vec![Vec::new(); call_graph_sccs.num_sccs()];
         for func in self.call_graph.graph.nodes() {
             scc_nodes[call_graph_sccs.scc(func)].push(func)
@@ -237,7 +234,6 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                 solution
                     .map(|fat| { fat.then_some("1").unwrap_or("0") })
                     .unwrap_or("?"),
-                // crate_summary.lambda_ctxt.lambda_map.data_map[lambda]
                 self.lambda_source_data_to_str(
                     self.lambda_ctxt.lambda_data_map.source_map[lambda].clone()
                 )
@@ -263,7 +259,6 @@ pub struct CrateLambdaCtxt {
     ///  ..]
     pub locals:
         IndexVec<Func, IndexVec<Local, IndexVec<SSAIdx, SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>>,
-    // pub locals: IndexVec<Func, IndexVec<Local, Vec<Vec<Lambda>>>>,
 }
 
 impl CrateLambdaCtxt {

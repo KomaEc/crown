@@ -85,7 +85,6 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
             return_ssa_idx.sort();
             return_ssa_idx.dedup();
             log::debug!("process return places");
-            // assert!(!return_ssa_idx.is_empty());
             let return_lambda = return_ssa_idx
                 .split_first()
                 .and_then(|(&this, rest)| {
@@ -759,7 +758,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
     fn log_initial_state(self) -> Self {
         #[cfg(debug_assertions)]
         {
-            const INDENT: &str = "   in f, ";
+            const INDENT: &str = "   ";
             log::debug!(
                 "for function {}:",
                 self.tcx.def_path_debug_str(self.body.source.def_id())

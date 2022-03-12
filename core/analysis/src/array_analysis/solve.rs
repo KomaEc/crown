@@ -56,7 +56,6 @@ pub fn solve(
         relation[array_index!(lhs, rhs; num_nodes)] = true;
     });
 
-    // FIXME: do we require that on boundary constraint, assignment means equality instead?
     for &Constraint(lhs, rhs) in boundary_constraints {
         if locals.contains(&lhs.as_usize()) {
             // return position

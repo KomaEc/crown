@@ -13,7 +13,6 @@ use crate::{def_use::IsDefUse, ssa::body_ext::PhiNodeInsertionPoints};
 use std::marker::PhantomData;
 
 rustc_index::newtype_index! {
-    /// Constraint variables for array analysis
     pub struct SSAIdx {
         DEBUG_FORMAT = "{}"
     }
@@ -21,7 +20,6 @@ rustc_index::newtype_index! {
 
 impl std::fmt::Display for SSAIdx {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // write!(f, "{self:?}")
         f.write_fmt(format_args!("{self:?}"))
     }
 }
@@ -83,14 +81,12 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
     type DefUse: IsDefUse;
 
     fn define_local(&mut self, local: Local, location: Location) -> SSAIdx {
-        //<<Self as HasSSANameHandler>::Handler as SSANameHandler>::Output {
         let ssa_idx = self.ssa_state().define(local);
         self.ssa_name_handler().handle_def(local, ssa_idx, location);
         ssa_idx
     }
 
     fn use_local(&mut self, local: Local, location: Location) -> SSAIdx {
-        // <<Self as HasSSANameHandler>::Handler as SSANameHandler>::Output {
         let ssa_idx = self.ssa_state().r#use(local);
         self.ssa_name_handler().handle_use(local, ssa_idx, location);
         ssa_idx
@@ -112,8 +108,7 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
                 root = bb;
             }
         });
-        // mir convention?
-        assert_eq!(root, BasicBlock::from_u32(0));
+        debug_assert_eq!(root, BasicBlock::from_u32(0));
         let mut visitor_stack = vec![(root, false)];
 
         while let Some((bb, to_pop_stack)) = visitor_stack.pop() {
