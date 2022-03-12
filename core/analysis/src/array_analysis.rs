@@ -20,7 +20,7 @@ use crate::{
     array_analysis::solve::{solve, SolveSuccess},
     call_graph::{CallGraph, CallSite, Func},
     def_use::IsDefUse,
-    ssa::rename::{handler::SSANameSourceMap, SSANameHandler},
+    ssa::rename::{handler::SSANameSourceMap, SSAIdx, SSANameHandler},
     ty_ext::TyExt,
 };
 
@@ -261,7 +261,8 @@ pub struct CrateLambdaCtxt {
     ///  [_1^1, *_1^1, **_1^1],
     ///  [_1^2, *_1^2, **_1^2],
     ///  ..]
-    pub locals: IndexVec<Func, IndexVec<Local, Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>>,
+    pub locals:
+        IndexVec<Func, IndexVec<Local, IndexVec<SSAIdx, SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>>,
     // pub locals: IndexVec<Func, IndexVec<Local, Vec<Vec<Lambda>>>>,
 }
 
@@ -372,11 +373,11 @@ impl ConstraintSet {
 #[derive(Clone, Debug)]
 pub enum BoundaryConstraint<'tcx> {
     Argument {
-        caller: (Operand<'tcx>, Option<usize>),
+        caller: (Operand<'tcx>, Option<SSAIdx>),
         callee: Local,
     },
     Return {
-        caller: (Place<'tcx>, usize),
+        caller: (Place<'tcx>, SSAIdx),
         callee: Local,
     },
 }
@@ -388,7 +389,7 @@ pub enum LambdaSourceData {
     Local {
         func: Func,
         base: Local,
-        ssa_idx: usize,
+        ssa_idx: SSAIdx,
         nested_level: usize,
     },
     /// field definition

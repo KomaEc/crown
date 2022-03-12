@@ -4,7 +4,8 @@ use std::str;
 
 use crate::def_use::FatThinAnalysisDefUse;
 use crate::ssa::body_ext::BodyExt;
-use crate::ssa::rename::handler::{LocalSimplePtrCVMap, SSANameSourceMap};
+use crate::ssa::rename::handler::SSANameSourceMap;
+use crate::ssa::rename::SSAIdx;
 use crate::ssa::rename::{handler::PrintStdSSAName, implementations::PlainRenamer, SSANameHandler};
 
 #[test]
@@ -154,7 +155,8 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
 
     struct TestProgramSpec;
     impl SSANameHandler for TestProgramSpec {
-        fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
+        fn handle_def(&mut self, local: Local, idx: SSAIdx, location: Location) {
+            let idx = idx.as_u32();
             if local == Local::from_usize(1) {
                 // regular definitions for i, which occur only at entry block
                 assert_eq!(location.block, BasicBlock::from_usize(0));
@@ -184,7 +186,8 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
             }
         }
 
-        fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
+        fn handle_def_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock) {
+            let idx = idx.as_u32();
             if local == Local::from_usize(0) {
                 if block == BasicBlock::from_usize(1) {
                     assert_eq!(idx, 2)
@@ -204,7 +207,8 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
             }
         }
 
-        fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
+        fn handle_use(&mut self, local: Local, idx: SSAIdx, location: Location) {
+            let idx = idx.as_u32();
             if local == Local::from_usize(1) {
                 // regular uses for i
                 assert_eq!(location.block, BasicBlock::from_usize(3));
@@ -237,10 +241,11 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
         fn handle_use_at_phi_node(
             &mut self,
             local: Local,
-            idx: usize,
+            idx: SSAIdx,
             block: BasicBlock,
             pos: usize,
         ) {
+            let idx = idx.as_u32();
             if local == Local::from_usize(0) {
                 if block == BasicBlock::from_usize(1) {
                     if pos == 0 {
@@ -287,12 +292,7 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
 
     let mut renamer = PlainRenamer::<
         FatThinAnalysisDefUse,
-        (
-            PrintStdSSAName,
-            TestProgramSpec,
-            SSANameSourceMap,
-            LocalSimplePtrCVMap<usize>,
-        ),
+        (PrintStdSSAName, TestProgramSpec, SSANameSourceMap),
     >::new(
         tcx,
         body,
@@ -300,7 +300,6 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
             PrintStdSSAName,
             TestProgramSpec,
             SSANameSourceMap::new(body, &insertion_points),
-            LocalSimplePtrCVMap::new(body),
         ),
     );
     renamer.rename();
@@ -317,22 +316,15 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
 
 fn spec1<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
     let insertion_points = body.compute_phi_node::<FatThinAnalysisDefUse>(tcx);
-    let mut renamer = PlainRenamer::<
-        FatThinAnalysisDefUse,
-        (
-            PrintStdSSAName,
-            SSANameSourceMap,
-            LocalSimplePtrCVMap<usize>,
-        ),
-    >::new(
-        tcx,
-        body,
-        (
-            PrintStdSSAName,
-            SSANameSourceMap::new(body, &insertion_points),
-            LocalSimplePtrCVMap::new(body),
-        ),
-    );
+    let mut renamer =
+        PlainRenamer::<FatThinAnalysisDefUse, (PrintStdSSAName, SSANameSourceMap)>::new(
+            tcx,
+            body,
+            (
+                PrintStdSSAName,
+                SSANameSourceMap::new(body, &insertion_points),
+            ),
+        );
     renamer.rename();
     /*
     write_ssa_mir_fn(

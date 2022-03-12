@@ -3,23 +3,24 @@ use std::marker::PhantomData;
 use crate::{
     def_use::IsDefUse,
     ssa::{body_ext::PhiNodeInsertionPoints, rename::SSANameHandler},
-    ty_ext::TyExt,
     LocationMap,
 };
 use log::debug;
-use rustc_index::vec::{Idx, IndexVec};
+use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Local, Location};
 use smallvec::{smallvec, SmallVec};
+
+use super::SSAIdx;
 
 /// A map that associated each local with its renames
 pub struct SSANameSourceMap {
     /// Location -> Local -> usize
     pub names: LocationMap<(
-        /* defs */ Option<(Local, usize)>,
-        /* uses */ SmallVec<[(Local, usize); 2]>,
+        /* defs */ Option<(Local, SSAIdx)>,
+        /* uses */ SmallVec<[(Local, SSAIdx); 2]>,
     )>,
     /// BasicBlock -> Local -> (usize, [usize])
-    pub names_for_phi_nodes: PhiNodeInsertionPoints<(usize, SmallVec<[usize; 2]>)>, // IndexVec<BasicBlock, SmallVec<[(Local, usize, SmallVec<[usize; 2]>); 2]>>,
+    pub names_for_phi_nodes: PhiNodeInsertionPoints<(SSAIdx, SmallVec<[SSAIdx; 2]>)>, // IndexVec<BasicBlock, SmallVec<[(Local, usize, SmallVec<[usize; 2]>); 2]>>,
 }
 
 impl SSANameSourceMap {
@@ -31,8 +32,8 @@ impl SSANameSourceMap {
             .iter_enumerated()
             .map(|(bb, bb_insertion_points)| {
                 bb_insertion_points.repack(|_, _| {
-                    let uses = smallvec![0; body.predecessors()[bb].len()];
-                    (0, uses)
+                    let uses = smallvec![SSAIdx::from_u32(0); body.predecessors()[bb].len()];
+                    (SSAIdx::from_u32(0), uses)
                 })
             })
             .collect::<IndexVec<_, _>>()
@@ -44,18 +45,18 @@ impl SSANameSourceMap {
         }
     }
 
-    pub fn lookup_def(&self, local: Local, location: Location) -> Option<usize> {
+    pub fn lookup_def(&self, local: Local, location: Location) -> Option<SSAIdx> {
         let (this_local, idx) = self.names[location].0?;
         (this_local == local).then_some(idx)
     }
 
-    pub fn lookup_def_in_phi_node(&self, local: Local, block: BasicBlock) -> Option<usize> {
+    pub fn lookup_def_in_phi_node(&self, local: Local, block: BasicBlock) -> Option<SSAIdx> {
         self.names_for_phi_nodes[block]
             .iter_enumerated()
             .find_map(|(this_local, &(idx, _))| (this_local == local).then_some(idx))
     }
 
-    pub fn lookup_use(&self, local: Local, location: Location) -> Option<usize> {
+    pub fn lookup_use(&self, local: Local, location: Location) -> Option<SSAIdx> {
         self.names[location]
             .1
             .iter()
@@ -66,7 +67,7 @@ impl SSANameSourceMap {
         &self,
         local: Local,
         block: BasicBlock,
-    ) -> impl Iterator<Item = usize> + '_ {
+    ) -> impl Iterator<Item = SSAIdx> + '_ {
         self.names_for_phi_nodes[block]
             .iter_enumerated()
             .find_map(|(this_local, (_, vec))| (this_local == local).then(|| vec.iter()))
@@ -76,12 +77,12 @@ impl SSANameSourceMap {
 }
 
 impl SSANameHandler for SSANameSourceMap {
-    fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
+    fn handle_def(&mut self, local: Local, idx: SSAIdx, location: Location) {
         debug_assert!(self.names[location].0.is_none());
         self.names[location].0 = Some((local, idx));
     }
 
-    fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
+    fn handle_use(&mut self, local: Local, idx: SSAIdx, location: Location) {
         if !self.names[location].1.iter().any(|&(lo, _)| lo == local) {
             self.names[location].1.push((local, idx))
         }
@@ -95,7 +96,7 @@ macro_rules! make_new_name_debug_handler (
 
         impl SSANameHandler for $Type {
 
-            fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
+            fn handle_def(&mut self, local: Local, idx: SSAIdx, location: Location) {
                 $macro!(
                     "rename definition of {:?} with {} at {:?}",
                     local,
@@ -104,7 +105,7 @@ macro_rules! make_new_name_debug_handler (
                 )
             }
 
-            fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
+            fn handle_def_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock) {
                 $macro!(
                     "rename definition of {:?} with {} at phi node of {:?}",
                     local,
@@ -113,11 +114,11 @@ macro_rules! make_new_name_debug_handler (
                 )
             }
 
-            fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
+            fn handle_use(&mut self, local: Local, idx: SSAIdx, location: Location) {
                 $macro!("rename use of {:?} with {} at {:?}", local, idx, location)
             }
 
-            fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize) {
+            fn handle_use_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock, pos: usize) {
                 $macro!(
                     "rename use of {:?} with {} at phi node position {} of {:?}",
                     local,
@@ -133,6 +134,7 @@ macro_rules! make_new_name_debug_handler (
 make_new_name_debug_handler!(LogSSAName, debug);
 make_new_name_debug_handler!(PrintStdSSAName, println);
 
+/*
 /// Generate constraint variables for locals of pointer type (but not
 /// function pointer).
 /// Note that all renames of a local must preserves type, therefore
@@ -186,69 +188,70 @@ impl<'me, 'tcx, CV: Idx> SSANameHandler for LocalSimplePtrCVMap<'me, 'tcx, CV> {
         self.gen_def(local, idx)
     }
 }
+*/
 
 impl SSANameHandler for () {}
 
 impl<H: SSANameHandler> SSANameHandler for &mut H {
-    fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
+    fn handle_def(&mut self, local: Local, idx: SSAIdx, location: Location) {
         (*self).handle_def(local, idx, location)
     }
 
-    fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
+    fn handle_use(&mut self, local: Local, idx: SSAIdx, location: Location) {
         (*self).handle_use(local, idx, location)
     }
 
-    fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
+    fn handle_def_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock) {
         (*self).handle_def_at_phi_node(local, idx, block)
     }
 
-    fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize) {
+    fn handle_use_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock, pos: usize) {
         (*self).handle_use_at_phi_node(local, idx, block, pos)
     }
 }
 
 impl<H1: SSANameHandler, H2: SSANameHandler> SSANameHandler for (H1, H2) {
-    fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
+    fn handle_def(&mut self, local: Local, idx: SSAIdx, location: Location) {
         self.0.handle_def(local, idx, location);
         self.1.handle_def(local, idx, location)
     }
 
-    fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
+    fn handle_def_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock) {
         self.0.handle_def_at_phi_node(local, idx, block);
         self.1.handle_def_at_phi_node(local, idx, block)
     }
 
-    fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
+    fn handle_use(&mut self, local: Local, idx: SSAIdx, location: Location) {
         self.0.handle_use(local, idx, location);
         self.1.handle_use(local, idx, location)
     }
 
-    fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize) {
+    fn handle_use_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock, pos: usize) {
         self.0.handle_use_at_phi_node(local, idx, block, pos);
         self.1.handle_use_at_phi_node(local, idx, block, pos)
     }
 }
 
 impl<H1: SSANameHandler, H2: SSANameHandler, H3: SSANameHandler> SSANameHandler for (H1, H2, H3) {
-    fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
+    fn handle_def(&mut self, local: Local, idx: SSAIdx, location: Location) {
         self.0.handle_def(local, idx, location);
         self.1.handle_def(local, idx, location);
         self.2.handle_def(local, idx, location)
     }
 
-    fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
+    fn handle_def_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock) {
         self.0.handle_def_at_phi_node(local, idx, block);
         self.1.handle_def_at_phi_node(local, idx, block);
         self.2.handle_def_at_phi_node(local, idx, block)
     }
 
-    fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
+    fn handle_use(&mut self, local: Local, idx: SSAIdx, location: Location) {
         self.0.handle_use(local, idx, location);
         self.1.handle_use(local, idx, location);
         self.2.handle_use(local, idx, location)
     }
 
-    fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize) {
+    fn handle_use_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock, pos: usize) {
         self.0.handle_use_at_phi_node(local, idx, block, pos);
         self.1.handle_use_at_phi_node(local, idx, block, pos);
         self.2.handle_use_at_phi_node(local, idx, block, pos)
@@ -258,28 +261,28 @@ impl<H1: SSANameHandler, H2: SSANameHandler, H3: SSANameHandler> SSANameHandler 
 impl<H1: SSANameHandler, H2: SSANameHandler, H3: SSANameHandler, H4: SSANameHandler> SSANameHandler
     for (H1, H2, H3, H4)
 {
-    fn handle_def(&mut self, local: Local, idx: usize, location: Location) {
+    fn handle_def(&mut self, local: Local, idx: SSAIdx, location: Location) {
         self.0.handle_def(local, idx, location);
         self.1.handle_def(local, idx, location);
         self.2.handle_def(local, idx, location);
         self.3.handle_def(local, idx, location)
     }
 
-    fn handle_def_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock) {
+    fn handle_def_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock) {
         self.0.handle_def_at_phi_node(local, idx, block);
         self.1.handle_def_at_phi_node(local, idx, block);
         self.2.handle_def_at_phi_node(local, idx, block);
         self.3.handle_def_at_phi_node(local, idx, block)
     }
 
-    fn handle_use(&mut self, local: Local, idx: usize, location: Location) {
+    fn handle_use(&mut self, local: Local, idx: SSAIdx, location: Location) {
         self.0.handle_use(local, idx, location);
         self.1.handle_use(local, idx, location);
         self.2.handle_use(local, idx, location);
         self.3.handle_use(local, idx, location)
     }
 
-    fn handle_use_at_phi_node(&mut self, local: Local, idx: usize, block: BasicBlock, pos: usize) {
+    fn handle_use_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock, pos: usize) {
         self.0.handle_use_at_phi_node(local, idx, block, pos);
         self.1.handle_use_at_phi_node(local, idx, block, pos);
         self.2.handle_use_at_phi_node(local, idx, block, pos);
