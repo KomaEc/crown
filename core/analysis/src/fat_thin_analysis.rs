@@ -1,6 +1,5 @@
 use std::{
     fmt::{Debug, Display},
-    marker::PhantomData,
     ops::Range,
 };
 
@@ -17,20 +16,33 @@ use rustc_target::abi::VariantIdx;
 
 use crate::{
     call_graph::{CallGraph, CallSite, Func},
-    def_use::IsDefUse,
+    def_use::FatThinAnalysisDefUse,
     fat_thin_analysis::solve::{solve, SolveSuccess},
     ssa::rename::{handler::SSANameSourceMap, SSAIdx, SSANameHandler},
     ty_ext::TyExt,
+    Analysis,
 };
+
+use self::infer::Infer;
 
 pub mod infer;
 pub mod solve;
 #[cfg(test)]
 mod test;
 
+impl<'tcx> Analysis<'tcx> for CrateSummary<'tcx> {
+    const NAME: &'static str = "Fat/Thin Analysis";
+    type DefUse = FatThinAnalysisDefUse;
+    type Infer<'infercx, H>
+    where
+        'tcx: 'infercx,
+        H: SSANameHandler,
+    = Infer<'infercx, 'tcx, H>;
+}
+
 /// This structure should hold info about all struct definitions
 /// and local nested pointers in the crate
-pub struct CrateSummary<'tcx, DefUse: IsDefUse> {
+pub struct CrateSummary<'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub call_graph: CallGraph,
     pub lambda_ctxt: CrateLambdaCtxt,
@@ -39,7 +51,6 @@ pub struct CrateSummary<'tcx, DefUse: IsDefUse> {
     pub constraints: ConstraintSet,
     boundary_constraints: IndexVec<CallSite, Vec<Constraint>>,
     pub ssa_name_source_map: IndexVec<Func, SSANameSourceMap>,
-    _marker: PhantomData<*const DefUse>,
 }
 
 /// Pairs of start/end pointers into lambda context and constraints
@@ -53,7 +64,7 @@ pub struct FuncSummary {
     pub func_sig: Vec<Range<Lambda>>,
 }
 
-impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
+impl<'tcx> CrateSummary<'tcx> {
     pub fn new<Handler: SSANameHandler<Output = ()>>(
         tcx: TyCtxt<'tcx>,
         adt_defs: &[DefId],
@@ -74,7 +85,6 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
             constraints: ConstraintSet::new(),
             boundary_constraints: IndexVec::new(),
             ssa_name_source_map: IndexVec::with_capacity(num_funcs),
-            _marker: PhantomData,
         }
         .log_initial_state()
         .infer_all::<_>(extra_handler)

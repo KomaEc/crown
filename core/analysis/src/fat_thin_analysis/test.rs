@@ -4,8 +4,8 @@ use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
 use crate::{
-    call_graph::CallGraph, def_use::FatThinAnalysisDefUse, fat_thin_analysis::CrateSummary,
-    ssa::rename::handler::LogSSAName, test::init_logger,
+    call_graph::CallGraph, fat_thin_analysis::CrateSummary, ssa::rename::handler::LogSSAName,
+    test::init_logger,
 };
 
 #[test]
@@ -51,9 +51,7 @@ fn test_nested_pointers() {
             let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
 
             let call_graph = CallGraph::new(tcx, bodies.into_iter());
-            let mut crate_summary = CrateSummary::<FatThinAnalysisDefUse>::new::<_>(
-                tcx, &adt_defs, call_graph, LogSSAName,
-            );
+            let mut crate_summary = CrateSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
             crate_summary.iterate_to_fixpoint().unwrap_or_else(|()| {
                 log::debug!("Solve failed");
                 crate_summary.error_state();
@@ -78,9 +76,7 @@ fn test_boundary_constraints() {
             let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
 
             let call_graph = CallGraph::new(tcx, bodies.into_iter());
-            let mut crate_summary = CrateSummary::<FatThinAnalysisDefUse>::new::<_>(
-                tcx, &adt_defs, call_graph, LogSSAName,
-            );
+            let mut crate_summary = CrateSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
             crate_summary.iterate_to_fixpoint().unwrap();
             let solutions = crate_summary.lambda_ctxt.lambda_data_map.assumptions;
             // we want to infer the precise signature for f(p: *mut i32, q: *mut i32) -> *mut i32
@@ -128,8 +124,7 @@ fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
     let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
 
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
-    let mut crate_summary =
-        CrateSummary::<FatThinAnalysisDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+    let mut crate_summary = CrateSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
     // assert_eq!(crate_summary.call_graph.num_nodes(), 1);
 
     crate_summary.iterate_to_fixpoint().unwrap();
@@ -157,8 +152,7 @@ fn run_infer<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
 
     let num_funcs = bodies.len();
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
-    let crate_summary =
-        CrateSummary::<FatThinAnalysisDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+    let crate_summary = CrateSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
     assert_eq!(crate_summary.lambda_ctxt.locals.len(), num_funcs)
 }
 

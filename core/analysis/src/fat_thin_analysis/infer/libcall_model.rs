@@ -7,7 +7,6 @@ use rustc_middle::{
 };
 
 use crate::{
-    def_use::IsDefUse,
     fat_thin_analysis::{infer::Infer, Lambda},
     libcall_model::LibCallModel,
     ssa::rename::SSANameHandler,
@@ -30,9 +29,7 @@ impl<'tcx> CrateLambdaCtxtIntraView<'tcx> {
     }
 }
 
-impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
-    Infer<'infercx, 'tcx, DefUse, Handler>
-{
+impl<'infercx, 'tcx, Handler: SSANameHandler> Infer<'infercx, 'tcx, Handler> {
     pub fn assume_call_argument(
         &mut self,
         arg: &Operand<'tcx>,
@@ -52,8 +49,8 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
 }
 
 /// Modelling library calls
-impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler> LibCallModel<'tcx>
-    for Infer<'infercx, 'tcx, DefUse, Handler>
+impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
+    for Infer<'infercx, 'tcx, Handler>
 {
     fn tcx(&self) -> TyCtxt<'tcx> {
         self.ctxt.tcx

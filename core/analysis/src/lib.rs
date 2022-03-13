@@ -41,9 +41,20 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate tracing;
 
+use def_use::IsDefUse;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Location};
+use ssa::rename::{SSANameHandler, SSARename};
 use std::ops::{Index, IndexMut};
+
+pub trait Analysis<'tcx> {
+    const NAME: &'static str;
+    type DefUse: IsDefUse;
+    type Infer<'a, E>: SSARename<'tcx, DefUse = Self::DefUse>
+    where
+        'tcx: 'a,
+        E: SSANameHandler;
+}
 
 #[derive(Debug, Clone)]
 pub struct LocationMap<T> {

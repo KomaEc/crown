@@ -6,8 +6,21 @@ use smallvec::SmallVec;
 
 use crate::{
     call_graph::{CallGraph, Func},
-    def_use::IsDefUse,
+    def_use::{IsDefUse, OwnershipAnalysisDefUse},
+    Analysis,
 };
+
+impl<'tcx> Analysis<'tcx> for CrateSummary<'tcx> {
+    const NAME: &'static str = "Ownership Analysis";
+
+    type DefUse = OwnershipAnalysisDefUse;
+
+    type Infer<'a, E>
+    where
+        'tcx: 'a,
+        E: crate::ssa::rename::SSANameHandler,
+    = crate::ssa::rename::implementations::PlainRenamer<'a, 'tcx, Self::DefUse, E>;
+}
 
 pub struct CrateSummary<'tcx> {
     pub tcx: TyCtxt<'tcx>,
@@ -21,7 +34,7 @@ pub const NESTED_LEVEL_HINT: usize = 1;
 pub struct FuncSummary {
     pub lambda_ctxt: Range<usize>,
     pub constraints: Range<usize>,
-    pub func_sig: Vec<SmallVec<[Rho; NESTED_LEVEL_HINT]>>,
+    pub func_sig: Vec<Range<Rho>>,
 }
 
 rustc_index::newtype_index! {
@@ -30,3 +43,5 @@ rustc_index::newtype_index! {
         DEBUG_FORMAT = "ρ_({})"
     }
 }
+
+impl range_ext::IsRustcIndex for Rho {}

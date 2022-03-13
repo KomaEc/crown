@@ -17,7 +17,6 @@ extern crate rustc_span;
 
 use analysis::{
     call_graph::CallGraph,
-    def_use::FatThinAnalysisDefUse,
     fat_thin_analysis::{CrateSummary, Lambda},
     ssa::rename::handler::LogSSAName,
 };
@@ -52,8 +51,7 @@ pub fn print_fat_thin_analysis_results<'tcx>(
         .collect::<Vec<_>>();
 
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
-    let mut crate_summary =
-        CrateSummary::<FatThinAnalysisDefUse>::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+    let mut crate_summary = CrateSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
 
     match crate_summary.iterate_to_fixpoint() {
         Ok(()) => {
