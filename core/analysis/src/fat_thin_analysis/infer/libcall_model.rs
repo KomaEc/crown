@@ -1,12 +1,16 @@
-use rustc_middle::{mir::{
-    visit::Visitor,
-    BasicBlock, Location, Operand, Place,
-}, ty::TyCtxt};
+use std::ops::Range;
+
+use range_ext::RangeExt;
+use rustc_middle::{
+    mir::{visit::Visitor, BasicBlock, Location, Operand, Place},
+    ty::TyCtxt,
+};
 
 use crate::{
-    fat_thin_analysis::{infer::Infer, Lambda},
     def_use::IsDefUse,
-    ssa::rename::SSANameHandler, libcall_model::LibCallModel,
+    fat_thin_analysis::{infer::Infer, Lambda},
+    libcall_model::LibCallModel,
+    ssa::rename::SSANameHandler,
 };
 
 use super::CrateLambdaCtxtIntraView;
@@ -48,8 +52,8 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
 }
 
 /// Modelling library calls
-impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler> LibCallModel<'tcx> for
-    Infer<'infercx, 'tcx, DefUse, Handler>
+impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler> LibCallModel<'tcx>
+    for Infer<'infercx, 'tcx, DefUse, Handler>
 {
     fn tcx(&self) -> TyCtxt<'tcx> {
         self.ctxt.tcx
@@ -67,29 +71,31 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler> LibCallModel<'tc
         let rhs = p.place().expect("input to offset should not be a constant");
         let (lhs, _) = destination.unwrap();
 
-        let rhs_ssa_idx = self.use_ptr_place(&rhs, location);
+        let Range {
+            start: rhs_outtermost,
+            end: rhs_end,
+        } = self.use_ptr_place(&rhs, location);
         self.visit_operand(n, location);
-        let lhs_ssa_idx = self.try_define_ptr_place(&lhs, location);
+        let Range {
+            start: lhs_outtermost,
+            end: lhs_end,
+        } = self.try_define_ptr_place(&lhs, location);
 
-        let rhs_lambdas =
-            self.ctxt
-                .lambda_ctxt
-                .lookup_lambdas(&rhs, rhs_ssa_idx, self.ctxt.body, self.ctxt.tcx);
-        assert!(!rhs_lambdas.is_empty());
-        let (_, rhs_inners) = rhs_lambdas.split_first().unwrap();
-        let lhs_lambdas =
-            self.ctxt
-                .lambda_ctxt
-                .lookup_lambdas(&lhs, lhs_ssa_idx, self.ctxt.body, self.ctxt.tcx);
-        assert!(!lhs_lambdas.is_empty());
-        let (&outtermost, lhs_inners) = lhs_lambdas.split_first().unwrap();
+        let lhs_inners = Range {
+            start: lhs_outtermost + 1,
+            end: lhs_end,
+        };
+        let rhs_inners = Range {
+            start: rhs_outtermost + 1,
+            end: rhs_end,
+        };
 
         assert_eq!(lhs_inners.len(), rhs_inners.len());
 
-        for (&lhs, &rhs) in std::iter::zip(lhs_inners, rhs_inners) {
+        for (lhs, rhs) in std::iter::zip(lhs_inners, rhs_inners) {
             self.ctxt.constraints.push_le(lhs, rhs)
         }
-        self.ctxt.lambda_ctxt.assume(outtermost, false);
+        self.ctxt.lambda_ctxt.assume(lhs_outtermost, false);
     }
 
     fn model_calloc(

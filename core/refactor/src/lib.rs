@@ -16,9 +16,9 @@ extern crate rustc_session;
 extern crate rustc_span;
 
 use analysis::{
-    fat_thin_analysis::{CrateSummary, Lambda},
     call_graph::CallGraph,
     def_use::FatThinAnalysisDefUse,
+    fat_thin_analysis::{CrateSummary, Lambda},
     ssa::rename::handler::LogSSAName,
 };
 use rustc_hir::def_id::LocalDefId;

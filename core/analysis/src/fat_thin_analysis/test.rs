@@ -4,7 +4,7 @@ use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
 use crate::{
-    fat_thin_analysis::CrateSummary, call_graph::CallGraph, def_use::FatThinAnalysisDefUse,
+    call_graph::CallGraph, def_use::FatThinAnalysisDefUse, fat_thin_analysis::CrateSummary,
     ssa::rename::handler::LogSSAName, test::init_logger,
 };
 
@@ -16,7 +16,7 @@ fn test_infer_not_crash() {
     }
 }
 
-const TEST_RESOURCES_PATH_STR : &str = "src/fat_thin_analysis/test/resource/";
+const TEST_RESOURCES_PATH_STR: &str = "src/fat_thin_analysis/test/resource/";
 
 #[test]
 fn test_solve_not_crash_with_input_file() {
@@ -89,9 +89,9 @@ fn test_boundary_constraints() {
                 .func_sig
                 .split_array_ref::<3>();
             assert!(empty.is_empty());
-            assert_eq!(Some(true), solutions[*ret.first().unwrap()]);
-            assert_eq!(Some(false), solutions[*p.first().unwrap()]);
-            assert_eq!(Some(true), solutions[*q.first().unwrap()]);
+            assert_eq!(Some(true), solutions[ret.start]);
+            assert_eq!(Some(false), solutions[p.start]);
+            assert_eq!(Some(true), solutions[q.start]);
         },
     )
 }

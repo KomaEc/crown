@@ -1,0 +1,578 @@
+All constraints:
+λ_(3) ≤ λ_(2)
+λ_(10) ≤ λ_(6)
+λ_(11) ≤ λ_(5)
+λ_(11) ≤ λ_(10)
+λ_(12) ≤ λ_(7)
+λ_(12) ≤ λ_(11)
+λ_(13) ≤ λ_(4)
+λ_(14) ≤ λ_(8)
+λ_(0) ≤ λ_(14)
+λ_(15) ≤ λ_(9)
+λ_(15) ≤ λ_(0)
+λ_(1) ≤ λ_(15)
+λ_(16) ≤ λ_(4)
+λ_(16) ≤ λ_(11)
+λ_(13) ≤ λ_(16)
+λ_(16) ≤ λ_(13)
+λ_(13) ≤ λ_(17)
+λ_(17) ≤ λ_(13)
+λ_(23) ≤ λ_(20)
+λ_(23) ≤ λ_(19)
+λ_(24) ≤ λ_(22)
+λ_(24) ≤ λ_(19)
+λ_(25) ≤ λ_(21)
+λ_(26) ≤ λ_(18)
+λ_(34) ≤ λ_(30)
+λ_(35) ≤ λ_(29)
+λ_(35) ≤ λ_(34)
+λ_(36) ≤ λ_(31)
+λ_(36) ≤ λ_(35)
+λ_(37) ≤ λ_(27)
+λ_(38) ≤ λ_(32)
+λ_(38) ≤ λ_(28)
+λ_(0) ≤ λ_(38)
+λ_(39) ≤ λ_(33)
+λ_(39) ≤ λ_(0)
+λ_(1) ≤ λ_(39)
+λ_(40) ≤ λ_(27)
+λ_(40) ≤ λ_(35)
+λ_(37) ≤ λ_(40)
+λ_(40) ≤ λ_(37)
+λ_(37) ≤ λ_(41)
+λ_(41) ≤ λ_(37)
+λ_(54) ≤ λ_(45)
+λ_(54) ≤ λ_(43)
+λ_(55) ≤ λ_(44)
+λ_(56) ≤ λ_(46)
+λ_(57) ≤ λ_(47)
+λ_(57) ≤ λ_(56)
+λ_(58) ≤ λ_(42)
+λ_(59) ≤ λ_(50)
+λ_(59) ≤ λ_(0)
+λ_(60) ≤ λ_(49)
+λ_(60) ≤ λ_(59)
+λ_(61) ≤ λ_(52)
+λ_(61) ≤ λ_(43)
+λ_(62) ≤ λ_(51)
+λ_(62) ≤ λ_(61)
+λ_(63) ≤ λ_(48)
+λ_(63) ≤ λ_(60)
+λ_(60) ≤ λ_(63)
+λ_(64) ≤ λ_(53)
+λ_(64) ≤ λ_(0)
+λ_(1) ≤ λ_(64)
+λ_(65) ≤ λ_(42)
+λ_(65) ≤ λ_(56)
+λ_(58) ≤ λ_(65)
+λ_(65) ≤ λ_(58)
+λ_(58) ≤ λ_(66)
+λ_(66) ≤ λ_(58)
+λ_(81) ≤ λ_(68)
+λ_(81) ≤ λ_(67)
+λ_(82) ≤ λ_(70)
+λ_(83) ≤ λ_(69)
+λ_(83) ≤ λ_(82)
+λ_(84) ≤ λ_(71)
+λ_(84) ≤ λ_(83)
+λ_(85) ≤ λ_(74)
+λ_(85) ≤ λ_(83)
+λ_(86) ≤ λ_(73)
+λ_(86) ≤ λ_(85)
+λ_(87) ≤ λ_(76)
+λ_(87) ≤ λ_(1)
+λ_(88) ≤ λ_(75)
+λ_(88) ≤ λ_(87)
+λ_(89) ≤ λ_(72)
+λ_(89) ≤ λ_(86)
+λ_(86) ≤ λ_(89)
+λ_(90) ≤ λ_(78)
+λ_(90) ≤ λ_(0)
+λ_(91) ≤ λ_(77)
+λ_(91) ≤ λ_(90)
+λ_(92) ≤ λ_(79)
+λ_(92) ≤ λ_(83)
+λ_(0) ≤ λ_(92)
+λ_(93) ≤ λ_(80)
+λ_(93) ≤ λ_(0)
+λ_(1) ≤ λ_(93)
+λ_(99) ≤ λ_(96)
+λ_(99) ≤ λ_(0)
+λ_(100) ≤ λ_(95)
+λ_(100) ≤ λ_(99)
+λ_(101) ≤ λ_(98)
+λ_(101) ≤ λ_(94)
+λ_(102) ≤ λ_(97)
+λ_(102) ≤ λ_(101)
+λ_(107) ≤ λ_(106)
+λ_(107) ≤ λ_(1)
+λ_(108) ≤ λ_(105)
+λ_(117) ≤ λ_(112)
+λ_(117) ≤ λ_(0)
+λ_(118) ≤ λ_(111)
+λ_(118) ≤ λ_(117)
+λ_(119) ≤ λ_(110)
+λ_(119) ≤ λ_(118)
+λ_(0) ≤ λ_(119)
+λ_(120) ≤ λ_(113)
+λ_(120) ≤ λ_(0)
+λ_(1) ≤ λ_(120)
+λ_(121) ≤ λ_(114)
+λ_(121) ≤ λ_(0)
+λ_(122) ≤ λ_(116)
+λ_(122) ≤ λ_(0)
+λ_(123) ≤ λ_(115)
+λ_(129) ≤ λ_(126)
+λ_(129) ≤ λ_(124)
+λ_(130) ≤ λ_(127)
+λ_(130) ≤ λ_(125)
+λ_(131) ≤ λ_(128)
+λ_(131) ≤ λ_(125)
+λ_(143) ≤ λ_(135)
+λ_(143) ≤ λ_(1)
+λ_(144) ≤ λ_(134)
+λ_(145) ≤ λ_(137)
+λ_(145) ≤ λ_(1)
+λ_(146) ≤ λ_(138)
+λ_(146) ≤ λ_(133)
+λ_(147) ≤ λ_(136)
+λ_(147) ≤ λ_(145)
+λ_(145) ≤ λ_(147)
+λ_(148) ≤ λ_(139)
+λ_(148) ≤ λ_(132)
+λ_(149) ≤ λ_(141)
+λ_(149) ≤ λ_(1)
+λ_(150) ≤ λ_(142)
+λ_(150) ≤ λ_(133)
+λ_(151) ≤ λ_(140)
+λ_(151) ≤ λ_(149)
+λ_(149) ≤ λ_(151)
+λ_(170) ≤ λ_(155)
+λ_(170) ≤ λ_(153)
+λ_(171) ≤ λ_(154)
+λ_(172) ≤ λ_(157)
+λ_(172) ≤ λ_(1)
+λ_(173) ≤ λ_(156)
+λ_(174) ≤ λ_(158)
+λ_(174) ≤ λ_(152)
+λ_(175) ≤ λ_(162)
+λ_(175) ≤ λ_(1)
+λ_(176) ≤ λ_(161)
+λ_(177) ≤ λ_(160)
+λ_(177) ≤ λ_(176)
+λ_(178) ≤ λ_(164)
+λ_(178) ≤ λ_(1)
+λ_(179) ≤ λ_(163)
+λ_(179) ≤ λ_(178)
+λ_(180) ≤ λ_(159)
+λ_(180) ≤ λ_(177)
+λ_(177) ≤ λ_(180)
+λ_(181) ≤ λ_(167)
+λ_(181) ≤ λ_(1)
+λ_(182) ≤ λ_(166)
+λ_(182) ≤ λ_(181)
+λ_(183) ≤ λ_(169)
+λ_(183) ≤ λ_(153)
+λ_(184) ≤ λ_(168)
+λ_(184) ≤ λ_(183)
+λ_(185) ≤ λ_(165)
+λ_(185) ≤ λ_(182)
+λ_(182) ≤ λ_(185)
+λ_(197) ≤ λ_(189)
+λ_(197) ≤ λ_(1)
+λ_(198) ≤ λ_(188)
+λ_(199) ≤ λ_(186)
+λ_(200) ≤ λ_(190)
+λ_(201) ≤ λ_(193)
+λ_(201) ≤ λ_(1)
+λ_(202) ≤ λ_(192)
+λ_(202) ≤ λ_(201)
+λ_(203) ≤ λ_(196)
+λ_(203) ≤ λ_(1)
+λ_(204) ≤ λ_(195)
+λ_(205) ≤ λ_(194)
+λ_(205) ≤ λ_(204)
+λ_(206) ≤ λ_(191)
+λ_(206) ≤ λ_(202)
+λ_(202) ≤ λ_(206)
+λ_(207) ≤ λ_(186)
+λ_(207) ≤ λ_(200)
+λ_(199) ≤ λ_(207)
+λ_(207) ≤ λ_(199)
+λ_(199) ≤ λ_(208)
+λ_(208) ≤ λ_(199)
+λ_(215) ≤ λ_(212)
+λ_(215) ≤ λ_(1)
+λ_(216) ≤ λ_(211)
+λ_(217) ≤ λ_(214)
+λ_(217) ≤ λ_(1)
+λ_(218) ≤ λ_(213)
+λ_(230) ≤ λ_(223)
+λ_(230) ≤ λ_(1)
+λ_(231) ≤ λ_(222)
+λ_(232) ≤ λ_(225)
+λ_(232) ≤ λ_(220)
+λ_(233) ≤ λ_(224)
+λ_(234) ≤ λ_(221)
+λ_(235) ≤ λ_(226)
+λ_(235) ≤ λ_(234)
+λ_(236) ≤ λ_(227)
+λ_(236) ≤ λ_(234)
+λ_(237) ≤ λ_(229)
+λ_(237) ≤ λ_(1)
+λ_(238) ≤ λ_(228)
+λ_(242) ≤ λ_(241)
+λ_(242) ≤ λ_(1)
+λ_(243) ≤ λ_(240)
+λ_(1) ≤ λ_(243)
+λ_(250) ≤ λ_(245)
+λ_(250) ≤ λ_(244)
+λ_(251) ≤ λ_(247)
+λ_(251) ≤ λ_(1)
+λ_(252) ≤ λ_(246)
+λ_(253) ≤ λ_(249)
+λ_(253) ≤ λ_(1)
+λ_(254) ≤ λ_(248)
+λ_(258) ≤ λ_(256)
+λ_(258) ≤ λ_(255)
+λ_(259) ≤ λ_(257)
+λ_(259) ≤ λ_(255)
+λ_(264) ≤ λ_(263)
+λ_(264) ≤ λ_(1)
+λ_(265) ≤ λ_(262)
+λ_(265) ≤ λ_(264)
+λ_(266) ≤ λ_(261)
+λ_(266) ≤ λ_(265)
+λ_(265) ≤ λ_(266)
+λ_(269) ≤ λ_(268)
+λ_(269) ≤ λ_(267)
+λ_(289) ≤ λ_(274)
+λ_(290) ≤ λ_(273)
+λ_(291) ≤ λ_(272)
+λ_(292) ≤ λ_(271)
+λ_(292) ≤ λ_(291)
+λ_(293) ≤ λ_(278)
+λ_(294) ≤ λ_(277)
+λ_(295) ≤ λ_(276)
+λ_(296) ≤ λ_(275)
+λ_(296) ≤ λ_(295)
+λ_(297) ≤ λ_(280)
+λ_(297) ≤ λ_(0)
+λ_(298) ≤ λ_(279)
+λ_(299) ≤ λ_(284)
+λ_(300) ≤ λ_(283)
+λ_(301) ≤ λ_(282)
+λ_(302) ≤ λ_(281)
+λ_(302) ≤ λ_(301)
+λ_(303) ≤ λ_(288)
+λ_(304) ≤ λ_(287)
+λ_(305) ≤ λ_(286)
+λ_(306) ≤ λ_(285)
+λ_(306) ≤ λ_(305)
+λ_(0)   = 1  at buffer_t.alloc
+λ_(1)   = 0  at buffer_t.data
+λ_(2)   = ?  at _0^0 in src::buffer::buffer_new
+λ_(3)   = 0  at _0^1 in src::buffer::buffer_new
+λ_(4)   = ?  at _0^0 in src::buffer::buffer_new_with_size
+λ_(5)   = ?  at _2^0 in src::buffer::buffer_new_with_size
+λ_(6)   = ?  at _3^0 in src::buffer::buffer_new_with_size
+λ_(7)   = ?  at _7^0 in src::buffer::buffer_new_with_size
+λ_(8)   = 1  at _9^0 in src::buffer::buffer_new_with_size
+λ_(9)   = ?  at _14^0 in src::buffer::buffer_new_with_size
+λ_(10)  = 0  at _3^1 in src::buffer::buffer_new_with_size
+λ_(11)  = 0  at _2^1 in src::buffer::buffer_new_with_size
+λ_(12)  = 0  at _7^1 in src::buffer::buffer_new_with_size
+λ_(13)  = 0  at _0^1 in src::buffer::buffer_new_with_size
+λ_(14)  = 1  at _9^1 in src::buffer::buffer_new_with_size
+λ_(15)  = ?  at _14^1 in src::buffer::buffer_new_with_size
+λ_(16)  = 0  at _0^2 in src::buffer::buffer_new_with_size
+λ_(17)  = 0  at _0^3 in src::buffer::buffer_new_with_size
+λ_(18)  = ?  at _0^0 in src::buffer::buffer_new_with_string
+λ_(19)  = 1  at _1^0 in src::buffer::buffer_new_with_string
+λ_(20)  = 1  at _2^0 in src::buffer::buffer_new_with_string
+λ_(21)  = ?  at _4^0 in src::buffer::buffer_new_with_string
+λ_(22)  = ?  at _5^0 in src::buffer::buffer_new_with_string
+λ_(23)  = 1  at _2^1 in src::buffer::buffer_new_with_string
+λ_(24)  = ?  at _5^1 in src::buffer::buffer_new_with_string
+λ_(25)  = ?  at _4^1 in src::buffer::buffer_new_with_string
+λ_(26)  = 0  at _0^1 in src::buffer::buffer_new_with_string
+λ_(27)  = ?  at _0^0 in src::buffer::buffer_new_with_string_length
+λ_(28)  = 1  at _1^0 in src::buffer::buffer_new_with_string_length
+λ_(29)  = ?  at _3^0 in src::buffer::buffer_new_with_string_length
+λ_(30)  = ?  at _4^0 in src::buffer::buffer_new_with_string_length
+λ_(31)  = ?  at _8^0 in src::buffer::buffer_new_with_string_length
+λ_(32)  = 1  at _10^0 in src::buffer::buffer_new_with_string_length
+λ_(33)  = ?  at _11^0 in src::buffer::buffer_new_with_string_length
+λ_(34)  = 0  at _4^1 in src::buffer::buffer_new_with_string_length
+λ_(35)  = 0  at _3^1 in src::buffer::buffer_new_with_string_length
+λ_(36)  = 0  at _8^1 in src::buffer::buffer_new_with_string_length
+λ_(37)  = 0  at _0^1 in src::buffer::buffer_new_with_string_length
+λ_(38)  = 1  at _10^1 in src::buffer::buffer_new_with_string_length
+λ_(39)  = ?  at _11^1 in src::buffer::buffer_new_with_string_length
+λ_(40)  = 0  at _0^2 in src::buffer::buffer_new_with_string_length
+λ_(41)  = 0  at _0^3 in src::buffer::buffer_new_with_string_length
+λ_(42)  = ?  at _0^0 in src::buffer::buffer_new_with_copy
+λ_(43)  = ?  at _1^0 in src::buffer::buffer_new_with_copy
+λ_(44)  = ?  at _3^0 in src::buffer::buffer_new_with_copy
+λ_(45)  = ?  at _4^0 in src::buffer::buffer_new_with_copy
+λ_(46)  = ?  at _5^0 in src::buffer::buffer_new_with_copy
+λ_(47)  = ?  at _8^0 in src::buffer::buffer_new_with_copy
+λ_(48)  = ?  at _9^0 in src::buffer::buffer_new_with_copy
+λ_(49)  = ?  at _10^0 in src::buffer::buffer_new_with_copy
+λ_(50)  = ?  at _11^0 in src::buffer::buffer_new_with_copy
+λ_(51)  = ?  at _12^0 in src::buffer::buffer_new_with_copy
+λ_(52)  = ?  at _13^0 in src::buffer::buffer_new_with_copy
+λ_(53)  = ?  at _15^0 in src::buffer::buffer_new_with_copy
+λ_(54)  = ?  at _4^1 in src::buffer::buffer_new_with_copy
+λ_(55)  = ?  at _3^1 in src::buffer::buffer_new_with_copy
+λ_(56)  = 0  at _5^1 in src::buffer::buffer_new_with_copy
+λ_(57)  = 0  at _8^1 in src::buffer::buffer_new_with_copy
+λ_(58)  = 0  at _0^1 in src::buffer::buffer_new_with_copy
+λ_(59)  = ?  at _11^1 in src::buffer::buffer_new_with_copy
+λ_(60)  = ?  at _10^1 in src::buffer::buffer_new_with_copy
+λ_(61)  = ?  at _13^1 in src::buffer::buffer_new_with_copy
+λ_(62)  = ?  at _12^1 in src::buffer::buffer_new_with_copy
+λ_(63)  = ?  at _9^1 in src::buffer::buffer_new_with_copy
+λ_(64)  = ?  at _15^1 in src::buffer::buffer_new_with_copy
+λ_(65)  = 0  at _0^2 in src::buffer::buffer_new_with_copy
+λ_(66)  = 0  at _0^3 in src::buffer::buffer_new_with_copy
+λ_(67)  = ?  at _1^0 in src::buffer::buffer_compact
+λ_(68)  = ?  at _3^0 in src::buffer::buffer_compact
+λ_(69)  = 1  at _7^0 in src::buffer::buffer_compact
+λ_(70)  = 1  at _8^0 in src::buffer::buffer_compact
+λ_(71)  = ?  at _14^0 in src::buffer::buffer_compact
+λ_(72)  = ?  at _15^0 in src::buffer::buffer_compact
+λ_(73)  = ?  at _16^0 in src::buffer::buffer_compact
+λ_(74)  = ?  at _17^0 in src::buffer::buffer_compact
+λ_(75)  = ?  at _18^0 in src::buffer::buffer_compact
+λ_(76)  = ?  at _19^0 in src::buffer::buffer_compact
+λ_(77)  = ?  at _22^0 in src::buffer::buffer_compact
+λ_(78)  = ?  at _23^0 in src::buffer::buffer_compact
+λ_(79)  = 1  at _25^0 in src::buffer::buffer_compact
+λ_(80)  = ?  at _26^0 in src::buffer::buffer_compact
+λ_(81)  = ?  at _3^1 in src::buffer::buffer_compact
+λ_(82)  = 1  at _8^1 in src::buffer::buffer_compact
+λ_(83)  = 1  at _7^1 in src::buffer::buffer_compact
+λ_(84)  = ?  at _14^1 in src::buffer::buffer_compact
+λ_(85)  = ?  at _17^1 in src::buffer::buffer_compact
+λ_(86)  = ?  at _16^1 in src::buffer::buffer_compact
+λ_(87)  = 0  at _19^1 in src::buffer::buffer_compact
+λ_(88)  = 0  at _18^1 in src::buffer::buffer_compact
+λ_(89)  = ?  at _15^1 in src::buffer::buffer_compact
+λ_(90)  = ?  at _23^1 in src::buffer::buffer_compact
+λ_(91)  = ?  at _22^1 in src::buffer::buffer_compact
+λ_(92)  = 1  at _25^1 in src::buffer::buffer_compact
+λ_(93)  = ?  at _26^1 in src::buffer::buffer_compact
+λ_(94)  = ?  at _1^0 in src::buffer::buffer_free
+λ_(95)  = ?  at _3^0 in src::buffer::buffer_free
+λ_(96)  = ?  at _4^0 in src::buffer::buffer_free
+λ_(97)  = ?  at _6^0 in src::buffer::buffer_free
+λ_(98)  = ?  at _7^0 in src::buffer::buffer_free
+λ_(99)  = ?  at _4^1 in src::buffer::buffer_free
+λ_(100) = ?  at _3^1 in src::buffer::buffer_free
+λ_(101) = ?  at _7^1 in src::buffer::buffer_free
+λ_(102) = ?  at _6^1 in src::buffer::buffer_free
+λ_(103) = ?  at _1^0 in src::buffer::buffer_size
+λ_(104) = ?  at _1^0 in src::buffer::buffer_length
+λ_(105) = ?  at _2^0 in src::buffer::buffer_length
+λ_(106) = ?  at _3^0 in src::buffer::buffer_length
+λ_(107) = 0  at _3^1 in src::buffer::buffer_length
+λ_(108) = ?  at _2^1 in src::buffer::buffer_length
+λ_(109) = ?  at _1^0 in src::buffer::buffer_resize
+λ_(110) = 1  at _8^0 in src::buffer::buffer_resize
+λ_(111) = 1  at _9^0 in src::buffer::buffer_resize
+λ_(112) = 1  at _10^0 in src::buffer::buffer_resize
+λ_(113) = ?  at _14^0 in src::buffer::buffer_resize
+λ_(114) = ?  at _16^0 in src::buffer::buffer_resize
+λ_(115) = ?  at _18^0 in src::buffer::buffer_resize
+λ_(116) = ?  at _19^0 in src::buffer::buffer_resize
+λ_(117) = 1  at _10^1 in src::buffer::buffer_resize
+λ_(118) = 1  at _9^1 in src::buffer::buffer_resize
+λ_(119) = 1  at _8^1 in src::buffer::buffer_resize
+λ_(120) = ?  at _14^1 in src::buffer::buffer_resize
+λ_(121) = ?  at _16^1 in src::buffer::buffer_resize
+λ_(122) = ?  at _19^1 in src::buffer::buffer_resize
+λ_(123) = 0  at _18^1 in src::buffer::buffer_resize
+λ_(124) = ?  at _1^0 in src::buffer::buffer_append
+λ_(125) = ?  at _2^0 in src::buffer::buffer_append
+λ_(126) = ?  at _3^0 in src::buffer::buffer_append
+λ_(127) = ?  at _4^0 in src::buffer::buffer_append
+λ_(128) = ?  at _6^0 in src::buffer::buffer_append
+λ_(129) = ?  at _3^1 in src::buffer::buffer_append
+λ_(130) = ?  at _4^1 in src::buffer::buffer_append
+λ_(131) = ?  at _6^1 in src::buffer::buffer_append
+λ_(132) = ?  at _1^0 in src::buffer::buffer_append_n
+λ_(133) = ?  at _2^0 in src::buffer::buffer_append_n
+λ_(134) = ?  at _5^0 in src::buffer::buffer_append_n
+λ_(135) = ?  at _6^0 in src::buffer::buffer_append_n
+λ_(136) = ?  at _13^0 in src::buffer::buffer_append_n
+λ_(137) = ?  at _14^0 in src::buffer::buffer_append_n
+λ_(138) = ?  at _15^0 in src::buffer::buffer_append_n
+λ_(139) = ?  at _18^0 in src::buffer::buffer_append_n
+λ_(140) = ?  at _23^0 in src::buffer::buffer_append_n
+λ_(141) = ?  at _24^0 in src::buffer::buffer_append_n
+λ_(142) = ?  at _25^0 in src::buffer::buffer_append_n
+λ_(143) = 0  at _6^1 in src::buffer::buffer_append_n
+λ_(144) = ?  at _5^1 in src::buffer::buffer_append_n
+λ_(145) = 0  at _14^1 in src::buffer::buffer_append_n
+λ_(146) = ?  at _15^1 in src::buffer::buffer_append_n
+λ_(147) = 0  at _13^1 in src::buffer::buffer_append_n
+λ_(148) = ?  at _18^1 in src::buffer::buffer_append_n
+λ_(149) = 0  at _24^1 in src::buffer::buffer_append_n
+λ_(150) = ?  at _25^1 in src::buffer::buffer_append_n
+λ_(151) = 0  at _23^1 in src::buffer::buffer_append_n
+λ_(152) = ?  at _1^0 in src::buffer::buffer_prepend
+λ_(153) = ?  at _2^0 in src::buffer::buffer_prepend
+λ_(154) = ?  at _5^0 in src::buffer::buffer_prepend
+λ_(155) = ?  at _6^0 in src::buffer::buffer_prepend
+λ_(156) = ?  at _8^0 in src::buffer::buffer_prepend
+λ_(157) = ?  at _9^0 in src::buffer::buffer_prepend
+λ_(158) = ?  at _18^0 in src::buffer::buffer_prepend
+λ_(159) = ?  at _23^0 in src::buffer::buffer_prepend
+λ_(160) = ?  at _24^0 in src::buffer::buffer_prepend
+λ_(161) = ?  at _25^0 in src::buffer::buffer_prepend
+λ_(162) = ?  at _26^0 in src::buffer::buffer_prepend
+λ_(163) = ?  at _29^0 in src::buffer::buffer_prepend
+λ_(164) = ?  at _30^0 in src::buffer::buffer_prepend
+λ_(165) = ?  at _34^0 in src::buffer::buffer_prepend
+λ_(166) = ?  at _35^0 in src::buffer::buffer_prepend
+λ_(167) = ?  at _36^0 in src::buffer::buffer_prepend
+λ_(168) = ?  at _37^0 in src::buffer::buffer_prepend
+λ_(169) = ?  at _38^0 in src::buffer::buffer_prepend
+λ_(170) = ?  at _6^1 in src::buffer::buffer_prepend
+λ_(171) = ?  at _5^1 in src::buffer::buffer_prepend
+λ_(172) = 0  at _9^1 in src::buffer::buffer_prepend
+λ_(173) = ?  at _8^1 in src::buffer::buffer_prepend
+λ_(174) = ?  at _18^1 in src::buffer::buffer_prepend
+λ_(175) = 0  at _26^1 in src::buffer::buffer_prepend
+λ_(176) = 0  at _25^1 in src::buffer::buffer_prepend
+λ_(177) = 0  at _24^1 in src::buffer::buffer_prepend
+λ_(178) = 0  at _30^1 in src::buffer::buffer_prepend
+λ_(179) = 0  at _29^1 in src::buffer::buffer_prepend
+λ_(180) = 0  at _23^1 in src::buffer::buffer_prepend
+λ_(181) = 0  at _36^1 in src::buffer::buffer_prepend
+λ_(182) = 0  at _35^1 in src::buffer::buffer_prepend
+λ_(183) = ?  at _38^1 in src::buffer::buffer_prepend
+λ_(184) = ?  at _37^1 in src::buffer::buffer_prepend
+λ_(185) = 0  at _34^1 in src::buffer::buffer_prepend
+λ_(186) = ?  at _0^0 in src::buffer::buffer_slice
+λ_(187) = ?  at _1^0 in src::buffer::buffer_slice
+λ_(188) = ?  at _5^0 in src::buffer::buffer_slice
+λ_(189) = ?  at _6^0 in src::buffer::buffer_slice
+λ_(190) = ?  at _28^0 in src::buffer::buffer_slice
+λ_(191) = ?  at _30^0 in src::buffer::buffer_slice
+λ_(192) = ?  at _31^0 in src::buffer::buffer_slice
+λ_(193) = ?  at _32^0 in src::buffer::buffer_slice
+λ_(194) = ?  at _33^0 in src::buffer::buffer_slice
+λ_(195) = ?  at _34^0 in src::buffer::buffer_slice
+λ_(196) = ?  at _35^0 in src::buffer::buffer_slice
+λ_(197) = 0  at _6^1 in src::buffer::buffer_slice
+λ_(198) = ?  at _5^1 in src::buffer::buffer_slice
+λ_(199) = 0  at _0^1 in src::buffer::buffer_slice
+λ_(200) = 0  at _28^1 in src::buffer::buffer_slice
+λ_(201) = 0  at _32^1 in src::buffer::buffer_slice
+λ_(202) = 0  at _31^1 in src::buffer::buffer_slice
+λ_(203) = 0  at _35^1 in src::buffer::buffer_slice
+λ_(204) = 0  at _34^1 in src::buffer::buffer_slice
+λ_(205) = 0  at _33^1 in src::buffer::buffer_slice
+λ_(206) = 0  at _30^1 in src::buffer::buffer_slice
+λ_(207) = 0  at _0^2 in src::buffer::buffer_slice
+λ_(208) = 0  at _0^3 in src::buffer::buffer_slice
+λ_(209) = ?  at _1^0 in src::buffer::buffer_equals
+λ_(210) = ?  at _2^0 in src::buffer::buffer_equals
+λ_(211) = ?  at _6^0 in src::buffer::buffer_equals
+λ_(212) = ?  at _7^0 in src::buffer::buffer_equals
+λ_(213) = ?  at _8^0 in src::buffer::buffer_equals
+λ_(214) = ?  at _9^0 in src::buffer::buffer_equals
+λ_(215) = 0  at _7^1 in src::buffer::buffer_equals
+λ_(216) = ?  at _6^1 in src::buffer::buffer_equals
+λ_(217) = 0  at _9^1 in src::buffer::buffer_equals
+λ_(218) = ?  at _8^1 in src::buffer::buffer_equals
+λ_(219) = ?  at _1^0 in src::buffer::buffer_indexof
+λ_(220) = ?  at _2^0 in src::buffer::buffer_indexof
+λ_(221) = ?  at _3^0 in src::buffer::buffer_indexof
+λ_(222) = ?  at _4^0 in src::buffer::buffer_indexof
+λ_(223) = ?  at _5^0 in src::buffer::buffer_indexof
+λ_(224) = ?  at _6^0 in src::buffer::buffer_indexof
+λ_(225) = ?  at _7^0 in src::buffer::buffer_indexof
+λ_(226) = ?  at _9^0 in src::buffer::buffer_indexof
+λ_(227) = ?  at _11^0 in src::buffer::buffer_indexof
+λ_(228) = ?  at _12^0 in src::buffer::buffer_indexof
+λ_(229) = ?  at _13^0 in src::buffer::buffer_indexof
+λ_(230) = 0  at _5^1 in src::buffer::buffer_indexof
+λ_(231) = ?  at _4^1 in src::buffer::buffer_indexof
+λ_(232) = ?  at _7^1 in src::buffer::buffer_indexof
+λ_(233) = ?  at _6^1 in src::buffer::buffer_indexof
+λ_(234) = ?  at _3^1 in src::buffer::buffer_indexof
+λ_(235) = ?  at _9^1 in src::buffer::buffer_indexof
+λ_(236) = ?  at _11^1 in src::buffer::buffer_indexof
+λ_(237) = 0  at _13^1 in src::buffer::buffer_indexof
+λ_(238) = ?  at _12^1 in src::buffer::buffer_indexof
+λ_(239) = ?  at _1^0 in src::buffer::buffer_trim_left
+λ_(240) = ?  at _12^0 in src::buffer::buffer_trim_left
+λ_(241) = ?  at _13^0 in src::buffer::buffer_trim_left
+λ_(242) = 0  at _13^1 in src::buffer::buffer_trim_left
+λ_(243) = 0  at _12^1 in src::buffer::buffer_trim_left
+λ_(244) = ?  at _1^0 in src::buffer::buffer_trim_right
+λ_(245) = ?  at _5^0 in src::buffer::buffer_trim_right
+λ_(246) = ?  at _8^0 in src::buffer::buffer_trim_right
+λ_(247) = ?  at _9^0 in src::buffer::buffer_trim_right
+λ_(248) = ?  at _24^0 in src::buffer::buffer_trim_right
+λ_(249) = ?  at _25^0 in src::buffer::buffer_trim_right
+λ_(250) = ?  at _5^1 in src::buffer::buffer_trim_right
+λ_(251) = 0  at _9^1 in src::buffer::buffer_trim_right
+λ_(252) = 0  at _8^1 in src::buffer::buffer_trim_right
+λ_(253) = 0  at _25^1 in src::buffer::buffer_trim_right
+λ_(254) = 0  at _24^1 in src::buffer::buffer_trim_right
+λ_(255) = ?  at _1^0 in src::buffer::buffer_trim
+λ_(256) = ?  at _3^0 in src::buffer::buffer_trim
+λ_(257) = ?  at _5^0 in src::buffer::buffer_trim
+λ_(258) = ?  at _3^1 in src::buffer::buffer_trim
+λ_(259) = ?  at _5^1 in src::buffer::buffer_trim
+λ_(260) = ?  at _1^0 in src::buffer::buffer_fill
+λ_(261) = ?  at _3^0 in src::buffer::buffer_fill
+λ_(262) = ?  at _4^0 in src::buffer::buffer_fill
+λ_(263) = ?  at _5^0 in src::buffer::buffer_fill
+λ_(264) = 0  at _5^1 in src::buffer::buffer_fill
+λ_(265) = 0  at _4^1 in src::buffer::buffer_fill
+λ_(266) = 0  at _3^1 in src::buffer::buffer_fill
+λ_(267) = ?  at _1^0 in src::buffer::buffer_clear
+λ_(268) = ?  at _3^0 in src::buffer::buffer_clear
+λ_(269) = ?  at _3^1 in src::buffer::buffer_clear
+λ_(270) = ?  at _1^0 in src::buffer::buffer_print
+λ_(271) = ?  at _5^0 in src::buffer::buffer_print
+λ_(272) = ?  at _6^0 in src::buffer::buffer_print
+λ_(273) = ?  at _7^0 in src::buffer::buffer_print
+λ_(274) = ?  at _8^0 in src::buffer::buffer_print
+λ_(275) = ?  at _14^0 in src::buffer::buffer_print
+λ_(276) = ?  at _15^0 in src::buffer::buffer_print
+λ_(277) = ?  at _16^0 in src::buffer::buffer_print
+λ_(278) = ?  at _17^0 in src::buffer::buffer_print
+λ_(279) = ?  at _20^0 in src::buffer::buffer_print
+λ_(280) = ?  at _21^0 in src::buffer::buffer_print
+λ_(281) = ?  at _36^0 in src::buffer::buffer_print
+λ_(282) = ?  at _37^0 in src::buffer::buffer_print
+λ_(283) = ?  at _38^0 in src::buffer::buffer_print
+λ_(284) = ?  at _39^0 in src::buffer::buffer_print
+λ_(285) = ?  at _42^0 in src::buffer::buffer_print
+λ_(286) = ?  at _43^0 in src::buffer::buffer_print
+λ_(287) = ?  at _44^0 in src::buffer::buffer_print
+λ_(288) = ?  at _45^0 in src::buffer::buffer_print
+λ_(289) = ?  at _8^1 in src::buffer::buffer_print
+λ_(290) = ?  at _7^1 in src::buffer::buffer_print
+λ_(291) = ?  at _6^1 in src::buffer::buffer_print
+λ_(292) = ?  at _5^1 in src::buffer::buffer_print
+λ_(293) = ?  at _17^1 in src::buffer::buffer_print
+λ_(294) = ?  at _16^1 in src::buffer::buffer_print
+λ_(295) = ?  at _15^1 in src::buffer::buffer_print
+λ_(296) = ?  at _14^1 in src::buffer::buffer_print
+λ_(297) = ?  at _21^1 in src::buffer::buffer_print
+λ_(298) = 0  at _20^1 in src::buffer::buffer_print
+λ_(299) = ?  at _39^1 in src::buffer::buffer_print
+λ_(300) = ?  at _38^1 in src::buffer::buffer_print
+λ_(301) = ?  at _37^1 in src::buffer::buffer_print
+λ_(302) = ?  at _36^1 in src::buffer::buffer_print
+λ_(303) = ?  at _45^1 in src::buffer::buffer_print
+λ_(304) = ?  at _44^1 in src::buffer::buffer_print
+λ_(305) = ?  at _43^1 in src::buffer::buffer_print
+λ_(306) = ?  at _42^1 in src::buffer::buffer_print

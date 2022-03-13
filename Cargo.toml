@@ -5,6 +5,7 @@ members = [
     "core/rewrite",
     "core/refactor",
     "core/utils/graph",
+    "core/utils/range_ext",
 ]
 
 [package]

@@ -5,10 +5,12 @@
 #![feature(bool_to_option)]
 #![feature(split_array)]
 #![feature(generic_associated_types)]
+#![feature(associated_type_defaults)]
 
-pub mod fat_thin_analysis;
 pub mod call_graph;
 pub mod def_use;
+pub mod fat_thin_analysis;
+pub mod libcall_model;
 pub mod liveness_analysis;
 pub mod null_analysis;
 pub mod ownership_analysis;
@@ -18,7 +20,6 @@ pub mod ssa;
 pub mod test;
 pub mod toy_analysis;
 pub mod ty_ext;
-pub mod libcall_model;
 
 extern crate rustc_arena;
 extern crate rustc_ast;

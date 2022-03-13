@@ -10,16 +10,15 @@ use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{Local, Operand, Place},
+    mir::Local,
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
-use smallvec::SmallVec;
 
 use crate::{
-    fat_thin_analysis::solve::{solve, SolveSuccess},
     call_graph::{CallGraph, CallSite, Func},
     def_use::IsDefUse,
+    fat_thin_analysis::solve::{solve, SolveSuccess},
     ssa::rename::{handler::SSANameSourceMap, SSAIdx, SSANameHandler},
     ty_ext::TyExt,
 };
@@ -51,11 +50,11 @@ pub struct FuncSummary {
     /// func_sig maps function arguments and return to constraint variables. It follows
     /// the convention of MIR, where the first entry represents return place.
     /// func_sig entries are empty if and only if its type is pointer type of concern
-    pub func_sig: Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>,
+    pub func_sig: Vec<Range<Lambda>>,
 }
 
 impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
-    pub fn new<Handler: SSANameHandler>(
+    pub fn new<Handler: SSANameHandler<Output = ()>>(
         tcx: TyCtxt<'tcx>,
         adt_defs: &[DefId],
         call_graph: CallGraph,
@@ -195,7 +194,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                             field_def_str,
                             self.tcx.type_of(field_def.did)
                         );
-                        for (idx, lambda) in z.iter().enumerate() {
+                        for (idx, lambda) in z.clone().enumerate() {
                             log::debug!("{:*<1$}{2} ==> {3:?}", "", idx, field_def_str, lambda)
                         }
                     }
@@ -242,23 +241,18 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
     }
 }
 
-pub const NESTED_LEVEL_HINT: usize = 1;
-
 /// A bidirectional map between constraint variables lambdas and the language constructs
 /// we care about
 pub struct CrateLambdaCtxt {
     pub lambda_data_map: LambdaDataMap<Option<bool>>, //IndexVec<Lambda, LambdaData>,
     /// did of adt_def -> variant_idx -> field_idx -> nested_level -> lambda
-    /// TODO: turn nested_level -> lambda into Range<Lambda>!!!
-    pub field_defs:
-        FxHashMap<DefId, IndexVec<VariantIdx, Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>>,
+    pub field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Lambda>>>>,
     /// func -> local -> ssa_idx -> nested_level -> lambda
     /// [[_1^0, *_1^0, **_1^0],
     ///  [_1^1, *_1^1, **_1^1],
     ///  [_1^2, *_1^2, **_1^2],
     ///  ..]
-    pub locals:
-        IndexVec<Func, IndexVec<Local, IndexVec<SSAIdx, SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>>,
+    pub locals: IndexVec<Func, IndexVec<Local, IndexVec<SSAIdx, Range<Lambda>>>>,
 }
 
 impl CrateLambdaCtxt {
@@ -280,6 +274,9 @@ impl CrateLambdaCtxt {
                                 .enumerate()
                                 .map(|(field_idx, field_def)| {
                                     let ty = tcx.type_of(field_def.did);
+
+                                    let start = lambda_data_map.next_index();
+
                                     ty.walk()
                                         .filter_map(|generic_arg| {
                                             if let GenericArgKind::Type(ty) = generic_arg.unpack() {
@@ -290,7 +287,7 @@ impl CrateLambdaCtxt {
                                         })
                                         .take_while(|ty| ty.is_ptr_but_not_fn_ptr())
                                         .enumerate()
-                                        .map(|(nested_level, _)| {
+                                        .for_each(|(nested_level, _)| {
                                             lambda_data_map.push(
                                                 None,
                                                 LambdaSourceData::FieldDef {
@@ -299,9 +296,13 @@ impl CrateLambdaCtxt {
                                                     field_idx,
                                                     nested_level,
                                                 },
-                                            )
-                                        })
-                                        .collect::<SmallVec<_>>()
+                                            );
+                                        });
+                                    // .collect::<SmallVec<_>>()
+
+                                    let end = lambda_data_map.next_index();
+
+                                    Range { start, end }
                                 })
                                 .collect::<Vec<_>>()
                         })
@@ -366,13 +367,13 @@ impl ConstraintSet {
 }
 
 #[derive(Clone, Debug)]
-pub enum BoundaryConstraint<'tcx> {
+pub enum BoundaryConstraint {
     Argument {
-        caller: (Operand<'tcx>, Option<SSAIdx>),
+        caller: Range<Lambda>,
         callee: Local,
     },
     Return {
-        caller: (Place<'tcx>, SSAIdx),
+        caller: Range<Lambda>,
         callee: Local,
     },
 }
@@ -461,3 +462,5 @@ rustc_index::newtype_index! {
         DEBUG_FORMAT = "λ_({})"
     }
 }
+
+impl range_ext::IsRustcIndex for Lambda {}

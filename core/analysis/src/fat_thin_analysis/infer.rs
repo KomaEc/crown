@@ -3,12 +3,13 @@ pub mod libcall_model;
 use std::{marker::PhantomData, ops::Range};
 
 use crate::{
+    call_graph::{CallGraph, CallSite, Func},
+    def_use::IsDefUse,
     fat_thin_analysis::{
         BoundaryConstraint, Constraint, ConstraintSet, CrateLambdaCtxt, CrateSummary, FuncSummary,
         Lambda, LambdaDataMap, LambdaSourceData,
     },
-    call_graph::{CallGraph, CallSite, Func},
-    def_use::IsDefUse,
+    libcall_model::LibCallModel,
     ssa::{
         body_ext::{BodyExt, PhiNodeInsertionPoints},
         rename::{
@@ -16,27 +17,28 @@ use crate::{
             SSANameHandler, SSARename, SSARenameState,
         },
     },
-    ty_ext::TyExt, libcall_model::LibCallModel,
+    ty_ext::TyExt,
 };
 use graph::implementation::forward_star::Direction;
+use range_ext::RangeExt;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, PlaceContext, Visitor},
-        BasicBlock, Body, CastKind, Local, Location, Operand, Place, ProjectionElem, Rvalue,
-        Statement, Terminator, TerminatorKind, RETURN_PLACE,
+        BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
+        ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind, RETURN_PLACE,
     },
     ty::{subst::GenericArgKind, TyCtxt, TyKind::FnDef},
 };
 use rustc_target::abi::VariantIdx;
-use smallvec::{smallvec, SmallVec};
-
-use super::NESTED_LEVEL_HINT;
 
 impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
-    pub fn infer_all<Handler: SSANameHandler>(mut self, mut extra_handler: Handler) -> Self {
+    pub fn infer_all<Handler: SSANameHandler<Output = ()>>(
+        mut self,
+        mut extra_handler: Handler,
+    ) -> Self {
         let mut boundary_constraints = IndexVec::from_elem(vec![], &self.call_graph.graph.edges);
         let mut all_return_ssa_idx = IndexVec::with_capacity(self.call_graph.functions.len());
         for (func, &did) in self.call_graph.functions.iter_enumerated() {
@@ -88,19 +90,19 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
             let return_lambda = return_ssa_idx
                 .split_first()
                 .and_then(|(&this, rest)| {
-                    let this = &self.lambda_ctxt.locals[func][RETURN_PLACE][this][..];// .row(this);
+                    let this = self.lambda_ctxt.locals[func][RETURN_PLACE][this].clone();// .row(this);
                     // although Return may occur multiple times (according to the docs), I'm
                     // curious to see how it may happen
                     debug_assert!(rest.is_empty(), "although Return may occur multiple times (according to the docs), I'm curious to see how it may happen");
                     for &other in rest {
-                        let other = &self.lambda_ctxt.locals[func][RETURN_PLACE][other][..]; //.row(other);
-                        for (&this, &other) in std::iter::zip(this, other) {
+                        let other = self.lambda_ctxt.locals[func][RETURN_PLACE][other].clone(); //.row(other);
+                        for (this, other) in std::iter::zip(this.clone(), other) {
                             self.constraints.push_eq(this, other)
                         }
                     }
-                    Some(this.into_iter().map(|&l| l).collect::<SmallVec<_>>())
+                    Some(this)
                 })
-                .unwrap_or_else(|| smallvec![]);
+                .unwrap_or_else(|| RangeExt::empty());
 
             assert_eq!(func, all_return_ssa_idx.push(return_ssa_idx));
 
@@ -108,11 +110,11 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
             for equalities in phi_joins.into_iter() {
                 for (local, ssa_idxs) in equalities.into_iter_enumerated() {
                     let (&this_ssa_idx, rest_ssa_idxs) = ssa_idxs.split_first().unwrap();
-                    let this = &self.lambda_ctxt.locals[func][local][this_ssa_idx][..];
+                    let this = self.lambda_ctxt.locals[func][local][this_ssa_idx].clone();
 
                     for &other_ssa_idx in rest_ssa_idxs {
-                        let other = &self.lambda_ctxt.locals[func][local][other_ssa_idx][..];
-                        for (&this, &other) in std::iter::zip(this, other) {
+                        let other = self.lambda_ctxt.locals[func][local][other_ssa_idx].clone();
+                        for (this, other) in std::iter::zip(this.clone(), other) {
                             self.constraints.push_eq(this, other);
                         }
                     }
@@ -143,7 +145,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
                                 .then(|| {
                                     self.lambda_ctxt.locals[func][local][0usize.into()].clone()
                                 }) // self.lambda_ctxt.locals[func][local].row(0).to_vec())
-                                .unwrap_or_else(|| smallvec![])
+                                .unwrap_or_else(|| RangeExt::empty())
                         }))
                         .collect::<Vec<_>>(),
                 })
@@ -158,7 +160,7 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
 
     pub fn setup_boundary_constraints(
         &mut self,
-        boundary_constraints: IndexVec<CallSite, Vec<BoundaryConstraint<'tcx>>>,
+        boundary_constraints: IndexVec<CallSite, Vec<BoundaryConstraint>>,
         return_ssa_idx: &IndexVec<Func, Vec<SSAIdx>>,
     ) {
         self.boundary_constraints = boundary_constraints
@@ -166,59 +168,30 @@ impl<'tcx, DefUse: IsDefUse> CrateSummary<'tcx, DefUse> {
             .map(|(call_site, bcs)| {
                 let mut res = vec![];
                 let edge_data = &self.call_graph.graph.edges[call_site];
-                let func = edge_data.source;
-                let body = self.call_graph.functions[func];
-                let body = self.tcx.optimized_mir(body);
                 log::debug!("Post processing boundary constraints");
                 for bc in bcs {
                     match bc {
                         // callee = caller
-                        BoundaryConstraint::Argument {
-                            caller: (Operand::Copy(place), ssa_idx),
-                            callee,
-                        }
-                        | BoundaryConstraint::Argument {
-                            caller: (Operand::Move(place), ssa_idx),
-                            callee,
-                        } => {
-                            let ssa_idx = ssa_idx.unwrap();
-                            let caller = lookup_lambdas(
-                                &self.lambda_ctxt.field_defs,
-                                &self.lambda_ctxt.locals[func],
-                                &place,
-                                ssa_idx,
-                                body,
-                                self.tcx,
-                            );
-                            let callee = &self.lambda_ctxt.locals[edge_data.target][callee]
-                                [0usize.into()][..]; //.row(0);
-                            for (&caller, &callee) in std::iter::zip(caller.iter(), callee) {
+                        BoundaryConstraint::Argument { caller, callee } => {
+                            let callee = self.lambda_ctxt.locals[edge_data.target][callee]
+                                [0usize.into()]
+                            .clone(); //.row(0);
+                            for (caller, callee) in std::iter::zip(caller, callee) {
                                 res.push(Constraint(callee, caller))
                             }
                         }
                         // caller = callee
-                        BoundaryConstraint::Return {
-                            caller: (place, ssa_idx),
-                            callee,
-                        } => {
+                        BoundaryConstraint::Return { caller, callee } => {
                             assert_eq!(callee, RETURN_PLACE);
-                            let caller = lookup_lambdas(
-                                &self.lambda_ctxt.field_defs,
-                                &self.lambda_ctxt.locals[func],
-                                &place,
-                                ssa_idx,
-                                body,
-                                self.tcx,
-                            );
                             let &callee_ssa_idx = return_ssa_idx[edge_data.target].first().unwrap();
-                            let callee = &self.lambda_ctxt.locals[edge_data.target][RETURN_PLACE]
-                                [callee_ssa_idx][..];
+                            let callee = self.lambda_ctxt.locals[edge_data.target][RETURN_PLACE]
+                                [callee_ssa_idx]
+                                .clone();
                             // .row(callee_ssa_idx);
-                            for (&caller, &callee) in std::iter::zip(caller.iter(), callee) {
+                            for (caller, callee) in std::iter::zip(caller, callee) {
                                 res.push(Constraint(caller, callee))
                             }
                         }
-                        _ => unimplemented!(),
                     }
                 }
                 res
@@ -233,7 +206,9 @@ impl CrateLambdaCtxt {
             .local_decls
             .iter_enumerated()
             .map(|(local, local_decl)| {
-                let entry_fact = local_decl
+                //let entry_fact =
+                let start = self.lambda_data_map.next_index();
+                local_decl
                     .ty
                     .walk()
                     .filter_map(|generic_arg| {
@@ -245,7 +220,7 @@ impl CrateLambdaCtxt {
                     })
                     .take_while(|ty| ty.is_ptr_but_not_fn_ptr())
                     .enumerate()
-                    .map(|(nested_level, _)| {
+                    .for_each(|(nested_level, _)| {
                         self.lambda_data_map.push(
                             None,
                             LambdaSourceData::Local {
@@ -254,10 +229,11 @@ impl CrateLambdaCtxt {
                                 ssa_idx: 0usize.into(),
                                 nested_level,
                             },
-                        )
-                    })
-                    .collect::<SmallVec<_>>();
-                IndexVec::from_raw(vec![entry_fact])
+                        );
+                    });
+                let end = self.lambda_data_map.next_index();
+                // .collect::<SmallVec<_>>();
+                IndexVec::from_raw(vec![Range { start, end }])
             })
             .collect::<IndexVec<_, _>>();
 
@@ -273,7 +249,7 @@ impl CrateLambdaCtxt {
 pub struct Infer<'infercx, 'tcx: 'infercx, DefUse: IsDefUse, Handler: SSANameHandler> {
     ctxt: InferCtxt<'infercx, 'tcx>,
     ssa_state: SSARenameState<Local>,
-    boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint<'tcx>>>,
+    boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint>>,
     return_ssa_idx: Vec<SSAIdx>,
     extra_handlers: Handler,
     _marker: PhantomData<*const DefUse>,
@@ -291,16 +267,22 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler> HasSSARenameStat
 impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler> SSANameHandler
     for Infer<'infercx, 'tcx, DefUse, Handler>
 {
-    fn handle_def(&mut self, local: Local, idx: SSAIdx, location: Location) {
+    type Output = Option<Range<Lambda>>;
+
+    fn handle_def(&mut self, local: Local, idx: SSAIdx, location: Location) -> Self::Output {
         self.extra_handlers.handle_def(local, idx, location);
         self.ctxt.body.local_decls[local]
             .ty
             .is_ptr_but_not_fn_ptr()
-            .then(|| self.ctxt.handle_def(local, idx, location));
+            .then(|| self.ctxt.handle_def(local, idx, location))
     }
 
-    fn handle_use(&mut self, local: Local, idx: SSAIdx, location: Location) {
+    fn handle_use(&mut self, local: Local, idx: SSAIdx, location: Location) -> Self::Output {
         self.extra_handlers.handle_use(local, idx, location);
+        self.ctxt.body.local_decls[local]
+            .ty
+            .is_ptr_but_not_fn_ptr()
+            .then(|| self.ctxt.handle_use(local, idx, location))
     }
 
     fn handle_def_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock) {
@@ -338,13 +320,14 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler> SSARename<'tcx>
 {
     type DefUse = DefUse;
 
-    fn define_local(&mut self, local: Local, location: Location) -> SSAIdx {
+    fn define_local(&mut self, local: Local, location: Location) -> Option<Range<Lambda>> {
         if self.ctxt.body.local_decls[local].ty.is_ptr_but_not_fn_ptr() {
-            self.define_ptr_local(local, location)
+            Some(self.define_ptr_local(local, location))
         } else {
             let ssa_idx = self.ssa_state().define(local);
-            self.ssa_name_handler().handle_def(local, ssa_idx, location);
-            ssa_idx
+            // we don't call ctxt handler here because we already know that it is not a pointer
+            self.extra_handlers.handle_def(local, ssa_idx, location);
+            None
         }
     }
 
@@ -363,26 +346,74 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
     Infer<'infercx, 'tcx, DefUse, Handler>
 {
     #[inline]
-    fn handle_ptr_def(&mut self, local: Local, idx: SSAIdx, location: Location) {
+    fn handle_ptr_def(&mut self, local: Local, idx: SSAIdx, location: Location) -> Range<Lambda> {
         self.extra_handlers.handle_def(local, idx, location);
-        self.ctxt.handle_def(local, idx, location);
+        self.ctxt.handle_def(local, idx, location)
     }
 
-    fn define_ptr_local(&mut self, local: Local, location: Location) -> SSAIdx {
-        let old = self.ssa_state().r#use(local);
+    #[inline]
+    fn handle_ptr_use(&mut self, local: Local, idx: SSAIdx, location: Location) -> Range<Lambda> {
+        self.extra_handlers.handle_use(local, idx, location);
+        self.ctxt.handle_use(local, idx, location)
+    }
+
+    fn define_ptr_local(&mut self, local: Local, location: Location) -> Range<Lambda> {
+        // let old = self.ssa_state().r#use(local);
+        // let old_range
+        let old_range = self.use_ptr_local(local, location);
         let new = self.ssa_state().define(local);
+        let new_range = self.handle_ptr_def(local, new, location);
         // Explicitly call inner handlers to avoid an additional ptr type test
-        self.handle_ptr_def(local, new, location);
-        for (&old, &new) in std::iter::zip(
-            &self.ctxt.lambda_ctxt.locals[local][old],
-            &self.ctxt.lambda_ctxt.locals[local][new],
+        // self.handle_ptr_def(local, new, location);
+        // let (&mut old_range, &mut new_range) = self.ctxt.lambda_ctxt.locals[local].pick2_mut(old, new);
+        for (old, new) in std::iter::zip(
+            old_range,         // self.ctxt.lambda_ctxt.locals[local][old],
+            new_range.clone(), // self.ctxt.lambda_ctxt.locals[local][new],
         ) {
             self.ctxt.constraints.push_le(new, old)
         }
-        new
+        new_range
     }
 
-    fn use_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> SSAIdx {
+    #[inline]
+    fn use_ptr_local(&mut self, local: Local, location: Location) -> Range<Lambda> {
+        let ssa_idx = self.ssa_state().r#use(local);
+        self.handle_ptr_use(local, ssa_idx, location)
+    }
+
+    fn proj_place_lambdas(
+        &self,
+        base: Range<Lambda>,
+        projections: impl Iterator<Item = (PlaceRef<'tcx>, PlaceElem<'tcx>)> + DoubleEndedIterator,
+    ) -> Range<Lambda> {
+        let mut n_derefs = 0;
+        for (base, proj) in projections.rev() {
+            match proj {
+                ProjectionElem::Field(field, _) => {
+                    let place_ty = base.ty(self.ctxt.body, self.ctxt.tcx);
+                    let ty = place_ty.ty;
+                    let variant_idx = place_ty.variant_index.unwrap_or(VariantIdx::new(0));
+                    let adt_def = ty.ty_adt_def().unwrap();
+                    let lambdas = self.ctxt.lambda_ctxt.field_defs[&adt_def.did][variant_idx]
+                        [field.index()]
+                    .clone();
+                    return Range {
+                        start: lambdas.start + n_derefs,
+                        end: lambdas.end,
+                    };
+                }
+                ProjectionElem::Deref => n_derefs += 1,
+                _ => unimplemented!("projections other than deref and field are not supported!"),
+            }
+        }
+        let Range { start, end } = base;
+        Range {
+            start: start + n_derefs,
+            end,
+        }
+    }
+
+    fn use_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> Range<Lambda> {
         log::debug!("use ptr place {:?}", place);
 
         debug_assert!(place
@@ -390,9 +421,9 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
             .ty
             .is_ptr_but_not_fn_ptr());
 
-        let ssa_idx = self.use_local(place.local, location);
-
-        ssa_idx
+        let ssa_idx = self.ssa_state().r#use(place.local);
+        let base = self.handle_ptr_use(place.local, ssa_idx, location);
+        self.proj_place_lambdas(base, place.iter_projections())
     }
 
     fn define_place_assume_simple_ptr(
@@ -400,16 +431,12 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
         place: &Place<'tcx>,
         location: Location,
     ) -> Lambda {
-        let ssa_idx = self.try_define_ptr_place(place, location);
-        let lambdas =
-            self.ctxt
-                .lambda_ctxt
-                .lookup_lambdas(place, ssa_idx, self.ctxt.body, self.ctxt.tcx);
-        assert_eq!(lambdas.len(), 1);
-        lambdas[0]
+        let Range { start, end } = self.try_define_ptr_place(place, location);
+        assert_eq!(start + 1, end);
+        start
     }
 
-    fn try_define_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> SSAIdx {
+    fn try_define_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> Range<Lambda> {
         log::debug!("try define ptr place {:?}", place);
 
         debug_assert!(place
@@ -417,23 +444,17 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler>
             .ty
             .is_ptr_but_not_fn_ptr());
 
-        let ssa_idx = place
+        place
             .projection
             .is_empty()
             .then(|| self.define_ptr_local(place.local, location))
-            .unwrap_or_else(|| self.use_local(place.local, location));
-
-        ssa_idx
+            .unwrap_or_else(|| self.use_ptr_place(place, location))
     }
 
     fn use_place_assume_simple_ptr(&mut self, place: &Place<'tcx>, location: Location) -> Lambda {
-        let ssa_idx = self.use_ptr_place(place, location);
-        let lambdas =
-            self.ctxt
-                .lambda_ctxt
-                .lookup_lambdas(place, ssa_idx, self.ctxt.body, self.ctxt.tcx);
-        assert_eq!(lambdas.len(), 1);
-        lambdas[0]
+        let Range { start, end } = self.use_ptr_place(place, location);
+        assert_eq!(start + 1, end);
+        start
     }
 }
 
@@ -469,22 +490,10 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler> Visitor<'tcx>
             | Rvalue::Cast(CastKind::Misc, Operand::Move(rhs), _)
             | Rvalue::Cast(CastKind::Misc, Operand::Copy(rhs), _) = rvalue
             {
-                let lhs_ssa_idx = self.try_define_ptr_place(place, location);
-                let rhs_ssa_idx = self.use_ptr_place(rhs, location);
-                let lhs = self.ctxt.lambda_ctxt.lookup_lambdas(
-                    place,
-                    lhs_ssa_idx,
-                    self.ctxt.body,
-                    self.ctxt.tcx,
-                );
-                let rhs = self.ctxt.lambda_ctxt.lookup_lambdas(
-                    rhs,
-                    rhs_ssa_idx,
-                    self.ctxt.body,
-                    self.ctxt.tcx,
-                );
+                let lhs = self.try_define_ptr_place(place, location);
+                let rhs = self.use_ptr_place(rhs, location);
                 assert_eq!(lhs.len(), rhs.len());
-                for (&lhs, &rhs) in std::iter::zip(lhs.into_iter(), rhs.into_iter()) {
+                for (lhs, rhs) in std::iter::zip(lhs, rhs) {
                     self.ctxt.constraints.push_le(lhs, rhs);
                 }
                 return;
@@ -562,10 +571,10 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler> Visitor<'tcx>
                                     let place = arg
                                         .place()
                                         .expect("constant in call arguments is not supported");
-                                    let place_ssa_idx = self.use_ptr_place(&place, location);
+                                    let lambdas = self.use_ptr_place(&place, location);
                                     self.boundary_constraints[call_site].push(
                                         BoundaryConstraint::Argument {
-                                            caller: (arg.clone(), Some(place_ssa_idx)),
+                                            caller: lambdas,
                                             callee: Local::from_usize(idx + 1),
                                         },
                                     );
@@ -586,11 +595,10 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler> Visitor<'tcx>
                                     .ty
                                     .is_ptr_but_not_fn_ptr()
                                 {
-                                    let place_ssa_idx =
-                                        self.try_define_ptr_place(&destination, location);
+                                    let lambdas = self.try_define_ptr_place(&destination, location);
                                     self.boundary_constraints[call_site].push(
                                         BoundaryConstraint::Return {
-                                            caller: (destination, place_ssa_idx),
+                                            caller: lambdas,
                                             callee: Place::return_place().local,
                                         },
                                     );
@@ -640,49 +648,13 @@ impl<'infercx, 'tcx, DefUse: IsDefUse, Handler: SSANameHandler> Visitor<'tcx>
 pub struct CrateLambdaCtxtIntraView<'intracx> {
     pub func: Func,
     pub lambda_map: &'intracx mut LambdaDataMap<Option<bool>>,
-    pub field_defs: &'intracx FxHashMap<
-        DefId,
-        IndexVec<VariantIdx, Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>,
-    >,
-    pub locals: IndexVec<Local, IndexVec<SSAIdx, SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>,
-}
-
-#[inline]
-pub fn lookup_lambdas<'a, 'tcx>(
-    field_defs: &'a FxHashMap<
-        DefId,
-        IndexVec<VariantIdx, Vec<SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>,
-    >,
-    locals: &'a IndexVec<Local, IndexVec<SSAIdx, SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>,
-    place: &Place<'tcx>,
-    ssa_idx: SSAIdx,
-    body: &Body<'tcx>,
-    tcx: TyCtxt<'tcx>,
-) -> &'a [Lambda] {
-    let mut iter = place.iter_projections().rev();
-    let mut n_derefs = 0;
-    while let Some((base, proj)) = iter.next() {
-        match proj {
-            ProjectionElem::Deref => {
-                n_derefs += 1;
-            }
-            ProjectionElem::Field(field, _) => {
-                let place_ty = base.ty(body, tcx);
-                let ty = place_ty.ty;
-                let variant_idx = place_ty.variant_index.unwrap_or(VariantIdx::new(0));
-                let adt_def = ty.ty_adt_def().unwrap();
-                return &field_defs[&adt_def.did][variant_idx][field.index()][n_derefs..];
-            }
-            _ => unimplemented!("projections other than deref and field are not supported!"),
-        }
-    }
-
-    &locals[place.local][ssa_idx][n_derefs..]
+    pub field_defs: &'intracx FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Lambda>>>>,
+    pub locals: IndexVec<Local, IndexVec<SSAIdx, Range<Lambda>>>, // IndexVec<Local, IndexVec<SSAIdx, SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>,
 }
 
 impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
     /// return the `ssa_idx`
-    pub fn generate_local(&mut self, base: Local, ssa_idx: SSAIdx) {
+    pub fn generate_local(&mut self, base: Local, ssa_idx: SSAIdx) -> Range<Lambda> {
         let lambdas = &self.locals[base];
         let entry_fact = &lambdas[0usize.into()];
         let nested_level = entry_fact.len();
@@ -690,38 +662,35 @@ impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
 
         let n_facts = lambdas.len();
         assert_eq!(n_facts, ssa_idx.index());
-        let new_fact = (0..nested_level)
-            .map(|nested_level| {
-                let lambda = self.lambda_map.push(
-                    None,
-                    LambdaSourceData::Local {
-                        func: self.func,
-                        base,
-                        ssa_idx,
-                        nested_level,
-                    },
-                );
-                log::debug!(
-                    "generate {:?} for {:*<2$}{base:?}^{ssa_idx}",
-                    lambda,
-                    "",
-                    nested_level
-                );
-                lambda
-            })
-            .collect::<SmallVec<_>>();
-        self.locals[base].push(new_fact);
-        // n_facts
-    }
+        // let new_fact = (0..nested_level)
 
-    pub fn lookup_lambdas<'tcx>(
-        &self,
-        place: &Place<'tcx>,
-        ssa_idx: SSAIdx,
-        body: &Body<'tcx>,
-        tcx: TyCtxt<'tcx>,
-    ) -> &[Lambda] {
-        lookup_lambdas(&self.field_defs, &self.locals, place, ssa_idx, body, tcx)
+        let start = self.lambda_map.next_index();
+        (0..nested_level).for_each(|nested_level| {
+            let lambda = self.lambda_map.push(
+                None,
+                LambdaSourceData::Local {
+                    func: self.func,
+                    base,
+                    ssa_idx,
+                    nested_level,
+                },
+            );
+            log::debug!(
+                "generate {:?} for {:*<2$}{base:?}^{ssa_idx}",
+                lambda,
+                "",
+                nested_level
+            );
+            // lambda
+        });
+        let end = self.lambda_map.next_index();
+
+        let lambdas = Range { start, end };
+        // .collect::<SmallVec<_>>();
+        self.locals[base].push(lambdas.clone());
+        // n_facts
+
+        lambdas
     }
 }
 
@@ -766,7 +735,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
             for (local, lambdas) in self.lambda_ctxt.locals.iter_enumerated() {
                 assert_eq!(lambdas.len(), 1);
                 let lambdas = &lambdas[0usize.into()];
-                for (nested_level, &lambda) in lambdas.iter().enumerate() {
+                for (nested_level, lambda) in lambdas.clone().enumerate() {
                     log::debug!(
                         "{}{:*<2$}{3:?}^0 ==> {4:?}",
                         INDENT,
@@ -797,14 +766,19 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
 }
 
 impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
-    fn handle_def(&mut self, local: Local, idx: SSAIdx, _location: Location) {
+    type Output = Range<Lambda>;
+
+    fn handle_def(&mut self, local: Local, idx: SSAIdx, _location: Location) -> Self::Output {
         log::debug!("InferCtxt defining {:?}^{} of ptr type", local, idx);
         debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
-        self.lambda_ctxt.generate_local(local, idx);
+        self.lambda_ctxt.generate_local(local, idx)
+    }
+
+    fn handle_use(&mut self, local: Local, idx: SSAIdx, _location: Location) -> Self::Output {
+        self.lambda_ctxt.locals[local][idx].clone()
     }
 
     fn handle_def_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock) {
-        // log::debug!("InferCtxt phi node defining {:?}^{}", local, idx);
         debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
         self.lambda_ctxt.generate_local(local, idx);
         self.phi_joins[block][local].push(idx)
@@ -817,7 +791,6 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
         block: BasicBlock,
         _pos: usize,
     ) {
-        // log::debug!("InferCtxt phi node using {:?}^{}", local, idx);
         debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
         self.phi_joins[block][local].push(idx)
     }
