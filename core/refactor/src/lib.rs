@@ -55,11 +55,7 @@ pub fn print_fat_thin_analysis_results<'tcx>(
 
     match crate_summary.iterate_to_fixpoint() {
         Ok(()) => {
-            let solutions = crate_summary
-                .lambda_ctxt
-                .lambda_data_map
-                .assumptions
-                .clone();
+            let solutions = crate_summary.lambda_ctxt.assumptions.clone();
 
             // log::debug!("All constraints:");
             println!("All constraints:");
@@ -77,9 +73,8 @@ pub fn print_fat_thin_analysis_results<'tcx>(
                         .map(|fat| { fat.then_some("1").unwrap_or("0") })
                         .unwrap_or("?"),
                     // crate_summary.lambda_ctxt.lambda_map.data_map[lambda]
-                    crate_summary.lambda_source_data_to_str(
-                        crate_summary.lambda_ctxt.lambda_data_map.source_map[lambda].clone()
-                    )
+                    crate_summary
+                        .source_data_to_str(crate_summary.lambda_ctxt.source_map[lambda].clone())
                 )
             }
         }
@@ -88,7 +83,7 @@ pub fn print_fat_thin_analysis_results<'tcx>(
             println!("Solve failed!");
             // log::debug!("Global context:");
             println!("Global context:");
-            let solutions = crate_summary.lambda_ctxt.lambda_data_map.assumptions;
+            let solutions = crate_summary.lambda_ctxt.assumptions;
             for (lambda, solution) in solutions.raw[crate_summary.globals.clone()]
                 .iter()
                 .enumerate()
@@ -101,7 +96,7 @@ pub fn print_fat_thin_analysis_results<'tcx>(
                     solution
                         .map(|fat| { fat.then_some("1").unwrap_or("0") })
                         .unwrap_or("?"),
-                    crate_summary.lambda_ctxt.lambda_data_map.source_map[lambda]
+                    crate_summary.lambda_ctxt.source_map[lambda]
                 )
             }
         }

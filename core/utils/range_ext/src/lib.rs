@@ -7,11 +7,11 @@ use rustc_index::vec::Idx;
 
 extern crate rustc_index;
 
-/// This is a marker trait to mark index data types implemented
+/// This is a marker trait to mark constraint variable data types implemented
 /// by rustc_index!
-pub trait IsRustcIndex {}
+pub trait IsConstraintVariable {}
 
-pub trait RangeExt<T: IsRustcIndex + Idx + Step> {
+pub trait RangeExt<T: IsConstraintVariable + Idx + Step> {
     fn len(&self) -> usize;
 
     fn empty() -> Self;
@@ -19,7 +19,7 @@ pub trait RangeExt<T: IsRustcIndex + Idx + Step> {
 
 impl<T> RangeExt<T> for Range<T>
 where
-    T: IsRustcIndex + Idx + Step,
+    T: IsConstraintVariable + Idx + Step,
 {
     fn len(&self) -> usize {
         let (lower, upper) = self.size_hint();

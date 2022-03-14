@@ -1,13 +1,12 @@
-use std::{marker::PhantomData, ops::Range};
+use std::ops::Range;
 
 use rustc_index::vec::IndexVec;
 use rustc_middle::ty::TyCtxt;
-use smallvec::SmallVec;
 
 use crate::{
     call_graph::{CallGraph, Func},
-    def_use::{IsDefUse, OwnershipAnalysisDefUse},
-    Analysis,
+    def_use::OwnershipAnalysisDefUse,
+    Analysis, CrateAnalysisCtxt,
 };
 
 impl<'tcx> Analysis<'tcx> for CrateSummary<'tcx> {
@@ -25,11 +24,10 @@ impl<'tcx> Analysis<'tcx> for CrateSummary<'tcx> {
 pub struct CrateSummary<'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub call_graph: CallGraph,
+    pub rho_ctxt: CrateAnalysisCtxt<Rho, Option<bool>>,
     pub globals: Range<usize>,
-    func_summaries: IndexVec<Func, FuncSummary>,
+    pub func_summaries: IndexVec<Func, FuncSummary>,
 }
-
-pub const NESTED_LEVEL_HINT: usize = 1;
 
 pub struct FuncSummary {
     pub lambda_ctxt: Range<usize>,
@@ -44,4 +42,4 @@ rustc_index::newtype_index! {
     }
 }
 
-impl range_ext::IsRustcIndex for Rho {}
+impl range_ext::IsConstraintVariable for Rho {}

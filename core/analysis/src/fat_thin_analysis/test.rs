@@ -56,7 +56,7 @@ fn test_nested_pointers() {
                 log::debug!("Solve failed");
                 crate_summary.error_state();
             });
-            let solutions = crate_summary.lambda_ctxt.lambda_data_map.assumptions;
+            let solutions = crate_summary.lambda_ctxt.assumptions;
             // we want to infer that p is *mut [*mut [i32]]
             assert_eq!(Some(true), solutions[1u32.into()]);
         },
@@ -78,7 +78,7 @@ fn test_boundary_constraints() {
             let call_graph = CallGraph::new(tcx, bodies.into_iter());
             let mut crate_summary = CrateSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
             crate_summary.iterate_to_fixpoint().unwrap();
-            let solutions = crate_summary.lambda_ctxt.lambda_data_map.assumptions;
+            let solutions = crate_summary.lambda_ctxt.assumptions;
             // we want to infer the precise signature for f(p: *mut i32, q: *mut i32) -> *mut i32
             let f = 0u32.into();
             let ([ret, p, q], empty) = crate_summary.func_summaries[f]
@@ -128,7 +128,7 @@ fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
     // assert_eq!(crate_summary.call_graph.num_nodes(), 1);
 
     crate_summary.iterate_to_fixpoint().unwrap();
-    let solutions = crate_summary.lambda_ctxt.lambda_data_map.assumptions;
+    let solutions = crate_summary.lambda_ctxt.assumptions;
 
     log::debug!("All constraints:");
     for constraint in crate_summary.constraints.into_iter() {
@@ -142,7 +142,7 @@ fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
             solution
                 .map(|fat| { fat.then_some("1").unwrap_or("0") })
                 .unwrap_or("?"),
-            crate_summary.lambda_ctxt.lambda_data_map.source_map[lambda]
+            crate_summary.lambda_ctxt.source_map[lambda]
         )
     }
 }

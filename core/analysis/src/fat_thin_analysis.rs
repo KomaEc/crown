@@ -5,22 +5,16 @@ use std::{
 
 use graph::implementation::forward_star;
 use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
-use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
-use rustc_middle::{
-    mir::Local,
-    ty::{subst::GenericArgKind, TyCtxt},
-};
-use rustc_target::abi::VariantIdx;
+use rustc_middle::{mir::Local, ty::TyCtxt};
 
 use crate::{
     call_graph::{CallGraph, CallSite, Func},
     def_use::FatThinAnalysisDefUse,
     fat_thin_analysis::solve::{solve, SolveSuccess},
-    ssa::rename::{handler::SSANameSourceMap, SSAIdx, SSANameHandler},
-    ty_ext::TyExt,
-    Analysis,
+    ssa::rename::{handler::SSANameSourceMap, SSANameHandler},
+    Analysis, CVSourceData, CrateAnalysisCtxt,
 };
 
 use self::infer::Infer;
@@ -45,7 +39,8 @@ impl<'tcx> Analysis<'tcx> for CrateSummary<'tcx> {
 pub struct CrateSummary<'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub call_graph: CallGraph,
-    pub lambda_ctxt: CrateLambdaCtxt,
+    // pub lambda_ctxt: CrateLambdaCtxt,
+    pub lambda_ctxt: CrateAnalysisCtxt<Lambda, Option<bool>>,
     pub globals: Range<usize>,
     func_summaries: IndexVec<Func, FuncSummary>,
     pub constraints: ConstraintSet,
@@ -72,13 +67,13 @@ impl<'tcx> CrateSummary<'tcx> {
         extra_handler: Handler,
     ) -> Self {
         let num_funcs = call_graph.num_nodes();
-        let lambda_ctxt = CrateLambdaCtxt::initiate(tcx, adt_defs, &call_graph);
+        let lambda_ctxt = CrateAnalysisCtxt::initiate(tcx, adt_defs, &call_graph);
         CrateSummary {
             tcx,
             call_graph,
             globals: Range {
                 start: 0,
-                end: lambda_ctxt.lambda_data_map.len(),
+                end: lambda_ctxt.assumptions.len(),
             },
             lambda_ctxt,
             func_summaries: IndexVec::with_capacity(num_funcs),
@@ -130,7 +125,7 @@ impl<'tcx> CrateSummary<'tcx> {
                         let constraints_range = constraints_range.clone();
 
                         match solve(
-                            &mut self.lambda_ctxt.lambda_data_map.assumptions,
+                            &mut self.lambda_ctxt.assumptions,
                             self.globals.clone(),
                             locals,
                             &self.constraints[constraints_range],
@@ -153,9 +148,9 @@ impl<'tcx> CrateSummary<'tcx> {
         Ok(())
     }
 
-    pub fn lambda_source_data_to_str(&self, src_data: LambdaSourceData) -> String {
+    pub fn source_data_to_str(&self, src_data: CVSourceData) -> String {
         match src_data {
-            LambdaSourceData::Local {
+            CVSourceData::Local {
                 func,
                 base,
                 ssa_idx,
@@ -171,7 +166,7 @@ impl<'tcx> CrateSummary<'tcx> {
                     self.tcx.def_path_str(did)
                 )
             }
-            LambdaSourceData::FieldDef {
+            CVSourceData::FieldDef {
                 adt_def,
                 variant_idx,
                 field_idx,
@@ -230,12 +225,7 @@ impl<'tcx> CrateSummary<'tcx> {
             log::error!("{}", constraint)
         }
 
-        for (lambda, &solution) in self
-            .lambda_ctxt
-            .lambda_data_map
-            .assumptions
-            .iter_enumerated()
-        {
+        for (lambda, &solution) in self.lambda_ctxt.assumptions.iter_enumerated() {
             // log::debug!(
             log::error!(
                 "{: <7} = {: <2} at {}",
@@ -243,88 +233,8 @@ impl<'tcx> CrateSummary<'tcx> {
                 solution
                     .map(|fat| { fat.then_some("1").unwrap_or("0") })
                     .unwrap_or("?"),
-                self.lambda_source_data_to_str(
-                    self.lambda_ctxt.lambda_data_map.source_map[lambda].clone()
-                )
+                self.source_data_to_str(self.lambda_ctxt.source_map[lambda].clone())
             )
-        }
-    }
-}
-
-/// A bidirectional map between constraint variables lambdas and the language constructs
-/// we care about
-pub struct CrateLambdaCtxt {
-    pub lambda_data_map: LambdaDataMap<Option<bool>>, //IndexVec<Lambda, LambdaData>,
-    /// did of adt_def -> variant_idx -> field_idx -> nested_level -> lambda
-    pub field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Lambda>>>>,
-    /// func -> local -> ssa_idx -> nested_level -> lambda
-    /// [[_1^0, *_1^0, **_1^0],
-    ///  [_1^1, *_1^1, **_1^1],
-    ///  [_1^2, *_1^2, **_1^2],
-    ///  ..]
-    pub locals: IndexVec<Func, IndexVec<Local, IndexVec<SSAIdx, Range<Lambda>>>>,
-}
-
-impl CrateLambdaCtxt {
-    pub fn initiate(tcx: TyCtxt, adt_defs: &[DefId], call_graph: &CallGraph) -> Self {
-        let mut lambda_data_map = LambdaDataMap::new();
-
-        let field_defs = adt_defs
-            .iter()
-            .map(|&did| {
-                (
-                    did,
-                    tcx.adt_def(did)
-                        .variants
-                        .iter_enumerated()
-                        .map(|(variant_idx, variant_def)| {
-                            variant_def
-                                .fields
-                                .iter()
-                                .enumerate()
-                                .map(|(field_idx, field_def)| {
-                                    let ty = tcx.type_of(field_def.did);
-
-                                    let start = lambda_data_map.next_index();
-
-                                    ty.walk()
-                                        .filter_map(|generic_arg| {
-                                            if let GenericArgKind::Type(ty) = generic_arg.unpack() {
-                                                Some(ty)
-                                            } else {
-                                                None
-                                            }
-                                        })
-                                        .take_while(|ty| ty.is_ptr_but_not_fn_ptr())
-                                        .enumerate()
-                                        .for_each(|(nested_level, _)| {
-                                            lambda_data_map.push(
-                                                None,
-                                                LambdaSourceData::FieldDef {
-                                                    adt_def: did,
-                                                    variant_idx,
-                                                    field_idx,
-                                                    nested_level,
-                                                },
-                                            );
-                                        });
-                                    // .collect::<SmallVec<_>>()
-
-                                    let end = lambda_data_map.next_index();
-
-                                    Range { start, end }
-                                })
-                                .collect::<Vec<_>>()
-                        })
-                        .collect::<IndexVec<_, _>>(),
-                )
-            })
-            .collect::<FxHashMap<_, _>>();
-
-        CrateLambdaCtxt {
-            lambda_data_map,
-            field_defs,
-            locals: IndexVec::with_capacity(call_graph.num_nodes()),
         }
     }
 }
@@ -388,84 +298,6 @@ pub enum BoundaryConstraint {
     },
 }
 
-/// The language constructs that a constraint variable λ corresponds to
-#[derive(Clone, Debug)]
-pub enum LambdaSourceData {
-    /// A SSA variable
-    Local {
-        func: Func,
-        base: Local,
-        ssa_idx: SSAIdx,
-        nested_level: usize,
-    },
-    /// field definition
-    FieldDef {
-        adt_def: DefId,
-        variant_idx: VariantIdx,
-        field_idx: usize,
-        nested_level: usize,
-    },
-}
-
-impl Display for LambdaSourceData {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match *self {
-            LambdaSourceData::Local {
-                func: body,
-                base,
-                ssa_idx,
-                nested_level,
-            } => f.write_fmt(format_args!(
-                "({:?}, {:*<2$}{3:?}^{4})",
-                body, "", nested_level, base, ssa_idx
-            )),
-            LambdaSourceData::FieldDef {
-                adt_def,
-                variant_idx: _,
-                field_idx,
-                nested_level,
-            } => f.write_fmt(format_args!(
-                "{:*<1$}{2:?}.{3}",
-                "", nested_level, adt_def, field_idx
-            )),
-        }
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct LambdaDataMap<Domain: Clone + Copy> {
-    pub assumptions: IndexVec<Lambda, Domain>,
-    pub source_map: IndexVec<Lambda, LambdaSourceData>,
-}
-
-impl<Domain: Clone + Copy> LambdaDataMap<Domain> {
-    pub fn new() -> Self {
-        LambdaDataMap {
-            assumptions: IndexVec::new(),
-            source_map: IndexVec::new(),
-        }
-    }
-
-    pub fn push(&mut self, domain: Domain, data: LambdaSourceData) -> Lambda {
-        let _lambda = self.assumptions.push(domain);
-        let lambda = self.source_map.push(data);
-        debug_assert!(_lambda == lambda);
-        lambda
-    }
-
-    pub fn len(&self) -> usize {
-        let res = self.assumptions.len();
-        debug_assert_eq!(res, self.source_map.len());
-        res
-    }
-
-    pub fn next_index(&self) -> Lambda {
-        let res = self.assumptions.next_index();
-        debug_assert_eq!(res, self.source_map.next_index());
-        res
-    }
-}
-
 rustc_index::newtype_index! {
     /// Constraint variables for array analysis
     pub struct Lambda {
@@ -473,4 +305,4 @@ rustc_index::newtype_index! {
     }
 }
 
-impl range_ext::IsRustcIndex for Lambda {}
+impl range_ext::IsConstraintVariable for Lambda {}

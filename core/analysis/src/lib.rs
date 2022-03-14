@@ -6,10 +6,12 @@
 #![feature(split_array)]
 #![feature(generic_associated_types)]
 #![feature(associated_type_defaults)]
+#![feature(step_trait)]
 
 pub mod call_graph;
 pub mod def_use;
 pub mod fat_thin_analysis;
+pub mod lattice;
 pub mod libcall_model;
 pub mod liveness_analysis;
 pub mod null_analysis;
@@ -41,12 +43,31 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate tracing;
 
+use call_graph::{CallGraph, Func};
 use def_use::IsDefUse;
-use rustc_index::vec::IndexVec;
-use rustc_middle::mir::{BasicBlock, Body, Location};
-use ssa::rename::{SSANameHandler, SSARename};
-use std::ops::{Index, IndexMut};
+use lattice::JoinLattice;
+use range_ext::RangeExt;
+use rustc_data_structures::graph::WithNumNodes;
+use rustc_hash::FxHashMap;
+use rustc_hir::def_id::DefId;
+use rustc_index::vec::{Idx, IndexVec};
+use rustc_middle::{
+    mir::{BasicBlock, Body, Local, Location},
+    ty::{subst::GenericArgKind, TyCtxt},
+};
+use rustc_target::abi::VariantIdx;
+use ssa::rename::{SSAIdx, SSANameHandler, SSARename};
+use std::{
+    fmt::Display,
+    iter::Step,
+    ops::{Index, IndexMut, Range},
+};
+use ty_ext::TyExt;
 
+/// This is a marker trait marking analysis that uses the same variant
+/// of the SSA rename algorithm to infer constraints. Note that the infer
+/// engine `Infer` is required to use the same `IsDefUse` as the whole
+/// analysis
 pub trait Analysis<'tcx> {
     const NAME: &'static str;
     type DefUse: IsDefUse;
@@ -54,6 +75,251 @@ pub trait Analysis<'tcx> {
     where
         'tcx: 'a,
         E: SSANameHandler;
+}
+
+pub struct CrateAnalysisCtxt<CV, Domain>
+where
+    CV: Idx + Step + range_ext::IsConstraintVariable,
+    Domain: Clone + Copy + JoinLattice,
+{
+    pub assumptions: IndexVec<CV, Domain>,
+    pub source_map: IndexVec<CV, CVSourceData>,
+    /// did of adt_def -> variant_idx -> field_idx -> nested_level -> constraint variables
+    pub field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<CV>>>>,
+    /// func -> local -> ssa_idx -> nested_level -> constraint variables
+    /// [[_1^0, *_1^0, **_1^0],
+    ///  [_1^1, *_1^1, **_1^1],
+    ///  [_1^2, *_1^2, **_1^2],
+    ///  ..]
+    pub locals: IndexVec<Func, IndexVec<Local, IndexVec<SSAIdx, Range<CV>>>>,
+}
+
+pub struct CrateAnalysisCtxtIntraView<'intra, CV, Domain>
+where
+    CV: Idx + Step + range_ext::IsConstraintVariable,
+    Domain: Clone + Copy + JoinLattice,
+{
+    func: Func,
+    assumptions: &'intra mut IndexVec<CV, Domain>,
+    source_map: &'intra mut IndexVec<CV, CVSourceData>,
+    field_defs: &'intra FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<CV>>>>,
+    locals: &'intra mut IndexVec<Local, IndexVec<SSAIdx, Range<CV>>>,
+}
+
+impl<CV, Domain> CrateAnalysisCtxt<CV, Domain>
+where
+    CV: Idx + Step + range_ext::IsConstraintVariable,
+    Domain: Clone + Copy + JoinLattice,
+{
+    pub fn initiate(tcx: TyCtxt, adt_defs: &[DefId], call_graph: &CallGraph) -> Self {
+        // let mut lambda_data_map = LambdaDataMap::new();
+        let mut assumptions = IndexVec::new();
+        let mut source_map = IndexVec::new();
+
+        let field_defs = adt_defs
+            .iter()
+            .map(|&did| {
+                (
+                    did,
+                    tcx.adt_def(did)
+                        .variants
+                        .iter_enumerated()
+                        .map(|(variant_idx, variant_def)| {
+                            variant_def
+                                .fields
+                                .iter()
+                                .enumerate()
+                                .map(|(field_idx, field_def)| {
+                                    let ty = tcx.type_of(field_def.did);
+
+                                    let start = assumptions.next_index();
+
+                                    ty.walk()
+                                        .filter_map(|generic_arg| {
+                                            if let GenericArgKind::Type(ty) = generic_arg.unpack() {
+                                                Some(ty)
+                                            } else {
+                                                None
+                                            }
+                                        })
+                                        .take_while(|ty| ty.is_ptr_but_not_fn_ptr())
+                                        .enumerate()
+                                        .for_each(|(nested_level, _)| {
+                                            assumptions.push(Domain::bottom());
+                                            source_map.push(CVSourceData::FieldDef {
+                                                adt_def: did,
+                                                variant_idx,
+                                                field_idx,
+                                                nested_level,
+                                            });
+                                        });
+
+                                    let end = assumptions.next_index();
+
+                                    Range { start, end }
+                                })
+                                .collect::<Vec<_>>()
+                        })
+                        .collect::<IndexVec<_, _>>(),
+                )
+            })
+            .collect::<FxHashMap<_, _>>();
+
+        CrateAnalysisCtxt {
+            assumptions,
+            source_map,
+            field_defs,
+            locals: IndexVec::with_capacity(call_graph.num_nodes()),
+        }
+    }
+
+    pub fn push_cv(&mut self, domain: Domain, source: CVSourceData) -> CV {
+        let cv = self.assumptions.push(domain);
+        assert_eq!(cv, self.source_map.push(source));
+        cv
+    }
+
+    pub fn next_index(&self) -> CV {
+        let cv = self.assumptions.next_index();
+        assert_eq!(cv, self.source_map.next_index());
+        cv
+    }
+
+    pub fn intra_view(
+        &mut self,
+        body: &Body,
+        func: Func,
+    ) -> CrateAnalysisCtxtIntraView<'_, CV, Domain> {
+        let locals = body
+            .local_decls
+            .iter_enumerated()
+            .map(|(local, local_decl)| {
+                let start = self.assumptions.next_index();
+                local_decl
+                    .ty
+                    .walk()
+                    .filter_map(|generic_arg| {
+                        if let GenericArgKind::Type(ty) = generic_arg.unpack() {
+                            Some(ty)
+                        } else {
+                            None
+                        }
+                    })
+                    .take_while(|ty| ty.is_ptr_but_not_fn_ptr())
+                    .enumerate()
+                    .for_each(|(nested_level, _)| {
+                        self.assumptions.push(Domain::bottom());
+                        self.source_map.push(CVSourceData::Local {
+                            func,
+                            base: local,
+                            ssa_idx: 0usize.into(),
+                            nested_level,
+                        });
+                    });
+                let end = self.assumptions.next_index();
+                IndexVec::from_raw(vec![Range { start, end }])
+            })
+            .collect::<IndexVec<_, _>>();
+
+        assert_eq!(func, self.locals.push(locals));
+
+        CrateAnalysisCtxtIntraView {
+            func,
+            assumptions: &mut self.assumptions,
+            source_map: &mut self.source_map,
+            field_defs: &self.field_defs,
+            locals: &mut self.locals[func],
+        }
+    }
+}
+
+impl<'intra, CV, Domain> CrateAnalysisCtxtIntraView<'intra, CV, Domain>
+where
+    CV: Idx + Step + range_ext::IsConstraintVariable,
+    Domain: Clone + Copy + JoinLattice,
+{
+    pub fn generate_local(&mut self, base: Local, ssa_idx: SSAIdx) -> Range<CV> {
+        let cvs = &self.locals[base];
+        let entry_fact = &cvs[0usize.into()];
+        let nested_level = entry_fact.len();
+        assert!(nested_level > 0);
+
+        let n_facts = cvs.len();
+        assert_eq!(n_facts, ssa_idx.index());
+        // let new_fact = (0..nested_level)
+
+        let start = self.assumptions.next_index();
+        (0..nested_level).for_each(|nested_level| {
+            let cv = self.assumptions.push(Domain::bottom());
+            assert_eq!(
+                cv,
+                self.source_map.push(CVSourceData::Local {
+                    func: self.func,
+                    base,
+                    ssa_idx,
+                    nested_level,
+                })
+            );
+            log::debug!(
+                "generate {:?} for {:*<2$}{base:?}^{ssa_idx}",
+                cv,
+                "",
+                nested_level
+            );
+            // lambda
+        });
+        let end = self.assumptions.next_index();
+
+        let cvs = Range { start, end };
+        // .collect::<SmallVec<_>>();
+        self.locals[base].push(cvs.clone());
+        // n_facts
+
+        cvs
+    }
+}
+
+#[derive(Clone)]
+pub enum CVSourceData {
+    /// A SSA variable
+    Local {
+        func: Func,
+        base: Local,
+        ssa_idx: SSAIdx,
+        nested_level: usize,
+    },
+    /// field definition
+    FieldDef {
+        adt_def: DefId,
+        variant_idx: VariantIdx,
+        field_idx: usize,
+        nested_level: usize,
+    },
+}
+
+impl Display for CVSourceData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            CVSourceData::Local {
+                func: body,
+                base,
+                ssa_idx,
+                nested_level,
+            } => f.write_fmt(format_args!(
+                "({:?}, {:*<2$}{3:?}^{4})",
+                body, "", nested_level, base, ssa_idx
+            )),
+            CVSourceData::FieldDef {
+                adt_def,
+                variant_idx: _,
+                field_idx,
+                nested_level,
+            } => f.write_fmt(format_args!(
+                "{:*<1$}{2:?}.{3}",
+                "", nested_level, adt_def, field_idx
+            )),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

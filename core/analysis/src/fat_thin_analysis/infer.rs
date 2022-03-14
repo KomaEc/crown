@@ -6,8 +6,7 @@ use crate::{
     call_graph::{CallGraph, CallSite, Func},
     def_use::{FatThinAnalysisDefUse, IsDefUse},
     fat_thin_analysis::{
-        BoundaryConstraint, Constraint, ConstraintSet, CrateLambdaCtxt, CrateSummary, FuncSummary,
-        Lambda, LambdaDataMap, LambdaSourceData,
+        BoundaryConstraint, Constraint, ConstraintSet, CrateSummary, FuncSummary, Lambda,
     },
     libcall_model::LibCallModel,
     ssa::{
@@ -18,12 +17,10 @@ use crate::{
         },
     },
     ty_ext::TyExt,
-    Analysis,
+    Analysis, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView,
 };
 use graph::implementation::forward_star::Direction;
 use range_ext::RangeExt;
-use rustc_hash::FxHashMap;
-use rustc_hir::def_id::DefId;
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
@@ -31,7 +28,7 @@ use rustc_middle::{
         BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
         ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind, RETURN_PLACE,
     },
-    ty::{subst::GenericArgKind, TyCtxt, TyKind::FnDef},
+    ty::{TyCtxt, TyKind::FnDef},
 };
 use rustc_target::abi::VariantIdx;
 
@@ -48,7 +45,7 @@ impl<'tcx> CrateSummary<'tcx> {
 
             let mut ssa_name_source_map = SSANameSourceMap::new(body, &insertion_points);
 
-            let lambda_ctxt_start = self.lambda_ctxt.lambda_data_map.len();
+            let lambda_ctxt_start = self.lambda_ctxt.assumptions.len();
             let constraints_start = self.constraints.len();
 
             let mut infer: Infer<_> = Infer {
@@ -74,15 +71,9 @@ impl<'tcx> CrateSummary<'tcx> {
 
             infer.rename_body(body, &insertion_points);
 
-            let InferCtxt {
-                lambda_ctxt,
-                phi_joins,
-                ..
-            } = infer.ctxt.log_phi_joins();
+            let InferCtxt { phi_joins, .. } = infer.ctxt.log_phi_joins();
 
-            let func_ctxt = lambda_ctxt.locals;
             let mut return_ssa_idx = infer.return_ssa_idx;
-            self.lambda_ctxt.locals.push(func_ctxt);
 
             return_ssa_idx.sort();
             return_ssa_idx.dedup();
@@ -123,7 +114,7 @@ impl<'tcx> CrateSummary<'tcx> {
 
             self.ssa_name_source_map.push(ssa_name_source_map);
 
-            let lambda_ctxt_end = self.lambda_ctxt.lambda_data_map.len();
+            let lambda_ctxt_end = self.lambda_ctxt.assumptions.len();
             let constraints_end = self.constraints.len();
 
             assert_eq!(
@@ -197,52 +188,6 @@ impl<'tcx> CrateSummary<'tcx> {
                 res
             })
             .collect::<IndexVec<_, _>>();
-    }
-}
-
-impl CrateLambdaCtxt {
-    pub fn intra_view(&mut self, body: &Body, func: Func) -> CrateLambdaCtxtIntraView<'_> {
-        let locals = body
-            .local_decls
-            .iter_enumerated()
-            .map(|(local, local_decl)| {
-                //let entry_fact =
-                let start = self.lambda_data_map.next_index();
-                local_decl
-                    .ty
-                    .walk()
-                    .filter_map(|generic_arg| {
-                        if let GenericArgKind::Type(ty) = generic_arg.unpack() {
-                            Some(ty)
-                        } else {
-                            None
-                        }
-                    })
-                    .take_while(|ty| ty.is_ptr_but_not_fn_ptr())
-                    .enumerate()
-                    .for_each(|(nested_level, _)| {
-                        self.lambda_data_map.push(
-                            None,
-                            LambdaSourceData::Local {
-                                func,
-                                base: local,
-                                ssa_idx: 0usize.into(),
-                                nested_level,
-                            },
-                        );
-                    });
-                let end = self.lambda_data_map.next_index();
-                // .collect::<SmallVec<_>>();
-                IndexVec::from_raw(vec![Range { start, end }])
-            })
-            .collect::<IndexVec<_, _>>();
-
-        CrateLambdaCtxtIntraView {
-            func,
-            lambda_map: &mut self.lambda_data_map,
-            field_defs: &self.field_defs,
-            locals,
-        }
     }
 }
 
@@ -634,60 +579,11 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx> for Infer<'infercx, 
     }
 }
 
-pub struct CrateLambdaCtxtIntraView<'intracx> {
-    pub func: Func,
-    pub lambda_map: &'intracx mut LambdaDataMap<Option<bool>>,
-    pub field_defs: &'intracx FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Lambda>>>>,
-    pub locals: IndexVec<Local, IndexVec<SSAIdx, Range<Lambda>>>, // IndexVec<Local, IndexVec<SSAIdx, SmallVec<[Lambda; NESTED_LEVEL_HINT]>>>,
-}
-
-impl<'intracx> CrateLambdaCtxtIntraView<'intracx> {
-    /// return the `ssa_idx`
-    pub fn generate_local(&mut self, base: Local, ssa_idx: SSAIdx) -> Range<Lambda> {
-        let lambdas = &self.locals[base];
-        let entry_fact = &lambdas[0usize.into()];
-        let nested_level = entry_fact.len();
-        assert!(nested_level > 0);
-
-        let n_facts = lambdas.len();
-        assert_eq!(n_facts, ssa_idx.index());
-        // let new_fact = (0..nested_level)
-
-        let start = self.lambda_map.next_index();
-        (0..nested_level).for_each(|nested_level| {
-            let lambda = self.lambda_map.push(
-                None,
-                LambdaSourceData::Local {
-                    func: self.func,
-                    base,
-                    ssa_idx,
-                    nested_level,
-                },
-            );
-            log::debug!(
-                "generate {:?} for {:*<2$}{base:?}^{ssa_idx}",
-                lambda,
-                "",
-                nested_level
-            );
-            // lambda
-        });
-        let end = self.lambda_map.next_index();
-
-        let lambdas = Range { start, end };
-        // .collect::<SmallVec<_>>();
-        self.locals[base].push(lambdas.clone());
-        // n_facts
-
-        lambdas
-    }
-}
-
 pub struct InferCtxt<'infercx, 'tcx: 'infercx> {
     tcx: TyCtxt<'tcx>,
     body: &'infercx Body<'tcx>,
     call_graph: &'infercx CallGraph,
-    lambda_ctxt: CrateLambdaCtxtIntraView<'infercx>,
+    lambda_ctxt: CrateAnalysisCtxtIntraView<'infercx, Lambda, Option<bool>>,
     phi_joins: PhiNodeInsertionPoints<Vec<SSAIdx>>,
     constraints: &'infercx mut ConstraintSet, //Vec<Constraint>,
 }
@@ -698,7 +594,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         func: Func,
         body: &'infercx Body<'tcx>,
         call_graph: &'infercx CallGraph,
-        lambda_ctxt: &'infercx mut CrateLambdaCtxt,
+        lambda_ctxt: &'infercx mut CrateAnalysisCtxt<Lambda, Option<bool>>,
         constraints: &'infercx mut ConstraintSet, //Vec<Constraint>,
         phi_joins: PhiNodeInsertionPoints<Vec<SSAIdx>>,
     ) -> Self {

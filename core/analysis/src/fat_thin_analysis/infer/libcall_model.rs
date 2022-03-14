@@ -10,13 +10,12 @@ use crate::{
     fat_thin_analysis::{infer::Infer, Lambda},
     libcall_model::LibCallModel,
     ssa::rename::SSANameHandler,
+    CrateAnalysisCtxtIntraView,
 };
 
-use super::CrateLambdaCtxtIntraView;
-
-impl<'tcx> CrateLambdaCtxtIntraView<'tcx> {
+impl<'intra> CrateAnalysisCtxtIntraView<'intra, Lambda, Option<bool>> {
     pub fn assume(&mut self, lambda: Lambda, value: bool) {
-        let assumption = &mut self.lambda_map.assumptions[lambda];
+        let assumption = &mut self.assumptions[lambda];
         match assumption {
             &mut Some(val) if val ^ value => panic!("conflict in constraint!"),
             _ => *assumption = Some(value),
