@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::{
     def_use::IsDefUse,
-    ssa::{body_ext::PhiNodeInsertionPoints, rename::SSANameHandler},
+    ssa::{body_ext::PhiNodeInsertionPoints, rename::SSANameHandler, RichLocation},
     LocationMap,
 };
 use log::debug;
@@ -12,28 +12,65 @@ use smallvec::{smallvec, SmallVec};
 
 use super::SSAIdx;
 
+pub struct SSADefSites<DefUse: IsDefUse> {
+    /// Invariant: SSAIdx::from_u32(0) -> RichLocation::Entry,
+    /// and other indices are mapped to non-entry rich locations.
+    pub defs: IndexVec<Local, IndexVec<SSAIdx, RichLocation>>,
+    _marker: PhantomData<*const DefUse>,
+}
+
+impl<DefUse: IsDefUse> SSADefSites<DefUse> {
+    pub fn new(body: &Body) -> Self {
+        Self {
+            defs: IndexVec::from_elem(
+                IndexVec::from_raw(vec![RichLocation::Entry]),
+                &body.local_decls,
+            ),
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<DefUse: IsDefUse> SSANameHandler for SSADefSites<DefUse> {
+    type Output = ();
+
+    fn handle_def(&mut self, local: Local, idx: SSAIdx, location: Location) -> Self::Output {
+        assert_eq!(idx, self.defs[local].push(RichLocation::Mir(location)))
+    }
+
+    fn handle_use(&mut self, _local: Local, _idx: SSAIdx, _location: Location) -> Self::Output {}
+
+    fn handle_def_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock) {
+        assert_eq!(idx, self.defs[local].push(RichLocation::Phi(block)))
+    }
+}
+
 /// A map that associated each local with its renames
-pub struct SSANameSourceMap {
-    /// Location -> Local -> usize
-    pub names: LocationMap<(
+pub struct SSANameSourceMap<DefUse: IsDefUse> {
+    /// defs: Location -> Local -> SSAIdx
+    /// uses: Location -> Local -> SSAIdx
+    names: LocationMap<(
         /* defs */ Option<(Local, SSAIdx)>,
         /* uses */ SmallVec<[(Local, SSAIdx); 2]>,
     )>,
-    /// BasicBlock -> Local -> (usize, [usize])
-    pub names_for_phi_nodes: PhiNodeInsertionPoints<(SSAIdx, SmallVec<[SSAIdx; 2]>)>, // IndexVec<BasicBlock, SmallVec<[(Local, usize, SmallVec<[usize; 2]>); 2]>>,
+    /// BasicBlock -> Local -> (SSAIdx, [SSAIdx])
+    /// For phi node x_1 <- phi(x_2, x_3),
+    /// we have an entry (1, [2, 3])
+    names_for_phi_nodes: PhiNodeInsertionPoints<(SSAIdx, SmallVec<[SSAIdx; 2]>)>, // IndexVec<BasicBlock, SmallVec<[(Local, usize, SmallVec<[usize; 2]>); 2]>>,
+    _marker: PhantomData<*const DefUse>,
 }
 
-impl SSANameSourceMap {
-    pub fn new<'tcx, DefUse: IsDefUse>(
-        body: &Body<'tcx>,
+impl<DefUse: IsDefUse> SSANameSourceMap<DefUse> {
+    pub fn new(
+        body: &Body,
         insertion_points: &PhiNodeInsertionPoints<PhantomData<*const DefUse>>,
     ) -> Self {
         let names_for_phi_nodes = insertion_points
             .iter_enumerated()
             .map(|(bb, bb_insertion_points)| {
                 bb_insertion_points.repack(|_, _| {
-                    let uses = smallvec![SSAIdx::from_u32(0); body.predecessors()[bb].len()];
-                    (SSAIdx::from_u32(0), uses)
+                    let uses = smallvec![SSAIdx::MAX; body.predecessors()[bb].len()];
+                    (SSAIdx::MAX, uses)
                 })
             })
             .collect::<IndexVec<_, _>>()
@@ -42,28 +79,55 @@ impl SSANameSourceMap {
         SSANameSourceMap {
             names: LocationMap::new(body),
             names_for_phi_nodes,
+            _marker: PhantomData,
         }
     }
 
-    pub fn lookup_def(&self, local: Local, location: Location) -> Option<SSAIdx> {
+    pub fn def(&self, location: Location) -> Option<(Local, SSAIdx)> {
+        self.names[location].0
+    }
+
+    pub fn try_def_local(&self, local: Local, location: Location) -> Option<SSAIdx> {
         let (this_local, idx) = self.names[location].0?;
         (this_local == local).then_some(idx)
     }
 
-    pub fn lookup_def_in_phi_node(&self, local: Local, block: BasicBlock) -> Option<SSAIdx> {
+    pub fn defs_at_phi_node(
+        &self,
+        block: BasicBlock,
+    ) -> impl Iterator<Item = (Local, SSAIdx)> + '_ {
+        self.names_for_phi_nodes[block]
+            .iter_enumerated()
+            .map(|(local, &(ssa_idx, _))| (local, ssa_idx))
+    }
+
+    pub fn try_def_local_at_phi_node(&self, local: Local, block: BasicBlock) -> Option<SSAIdx> {
         self.names_for_phi_nodes[block]
             .iter_enumerated()
             .find_map(|(this_local, &(idx, _))| (this_local == local).then_some(idx))
     }
 
-    pub fn lookup_use(&self, local: Local, location: Location) -> Option<SSAIdx> {
+    pub fn uses(&self, location: Location) -> impl Iterator<Item = (Local, SSAIdx)> + '_ {
+        self.names[location].1.iter().map(|&x| x)
+    }
+
+    pub fn try_use(&self, local: Local, location: Location) -> Option<SSAIdx> {
         self.names[location]
             .1
             .iter()
             .find_map(|&(this_local, idx)| (this_local == local).then_some(idx))
     }
 
-    pub fn lookup_use_at_phi_node(
+    pub fn uses_at_phi_node(
+        &self,
+        block: BasicBlock,
+    ) -> impl Iterator<Item = (Local, &[SSAIdx])> + '_ {
+        self.names_for_phi_nodes[block]
+            .iter_enumerated()
+            .map(|(local, (_, uses))| (local, &uses[..]))
+    }
+
+    pub fn try_use_at_phi_node(
         &self,
         local: Local,
         block: BasicBlock,
@@ -76,7 +140,7 @@ impl SSANameSourceMap {
     }
 }
 
-impl SSANameHandler for SSANameSourceMap {
+impl<DefUse: IsDefUse> SSANameHandler for SSANameSourceMap<DefUse> {
     fn handle_def(&mut self, local: Local, idx: SSAIdx, location: Location) {
         debug_assert!(self.names[location].0.is_none());
         self.names[location].0 = Some((local, idx));
@@ -86,6 +150,16 @@ impl SSANameHandler for SSANameSourceMap {
         if !self.names[location].1.iter().any(|&(lo, _)| lo == local) {
             self.names[location].1.push((local, idx))
         }
+    }
+
+    fn handle_def_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock) {
+        assert_eq!(self.names_for_phi_nodes[block][local].0, SSAIdx::MAX);
+        self.names_for_phi_nodes[block][local].0 = idx;
+    }
+
+    fn handle_use_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock, pos: usize) {
+        assert_eq!(self.names_for_phi_nodes[block][local].1[pos], SSAIdx::MAX);
+        self.names_for_phi_nodes[block][local].1[pos] = idx;
     }
 }
 

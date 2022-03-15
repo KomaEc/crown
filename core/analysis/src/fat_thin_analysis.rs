@@ -13,7 +13,10 @@ use crate::{
     call_graph::{CallGraph, CallSite, Func},
     def_use::FatThinAnalysisDefUse,
     fat_thin_analysis::solve::{solve, SolveSuccess},
-    ssa::rename::{handler::SSANameSourceMap, SSANameHandler},
+    ssa::rename::{
+        handler::{SSADefSites, SSANameSourceMap},
+        SSANameHandler,
+    },
     Analysis, CVSourceData, CrateAnalysisCtxt,
 };
 
@@ -45,7 +48,8 @@ pub struct CrateSummary<'tcx> {
     func_summaries: IndexVec<Func, FuncSummary>,
     pub constraints: ConstraintSet,
     boundary_constraints: IndexVec<CallSite, Vec<Constraint>>,
-    pub ssa_name_source_map: IndexVec<Func, SSANameSourceMap>,
+    pub def_sites: IndexVec<Func, SSADefSites<FatThinAnalysisDefUse>>,
+    pub ssa_name_source_map: IndexVec<Func, SSANameSourceMap<FatThinAnalysisDefUse>>,
 }
 
 /// Pairs of start/end pointers into lambda context and constraints
@@ -79,6 +83,7 @@ impl<'tcx> CrateSummary<'tcx> {
             func_summaries: IndexVec::with_capacity(num_funcs),
             constraints: ConstraintSet::new(),
             boundary_constraints: IndexVec::new(),
+            def_sites: IndexVec::with_capacity(num_funcs),
             ssa_name_source_map: IndexVec::with_capacity(num_funcs),
         }
         .log_initial_state()

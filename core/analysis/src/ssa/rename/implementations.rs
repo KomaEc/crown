@@ -38,6 +38,8 @@ impl<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> HasSSANameHandler
 {
     type Handler = H;
 
+    type DefUse = DefUse;
+
     #[inline]
     fn ssa_name_handler(&mut self) -> &mut H {
         &mut self.ssa_name_handler
@@ -47,8 +49,6 @@ impl<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> HasSSANameHandler
 impl<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> SSARename<'tcx>
     for PlainRenamer<'me, 'tcx, DefUse, H>
 {
-    type DefUse = DefUse;
-
     #[inline]
     fn rename_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
         self.visit_statement(statement, location)

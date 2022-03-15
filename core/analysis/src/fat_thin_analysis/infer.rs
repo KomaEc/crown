@@ -12,8 +12,9 @@ use crate::{
     ssa::{
         body_ext::{BodyExt, PhiNodeInsertionPoints},
         rename::{
-            handler::SSANameSourceMap, HasSSANameHandler, HasSSARenameState, SSAIdx,
-            SSANameHandler, SSARename, SSARenameState,
+            handler::{SSADefSites, SSANameSourceMap},
+            HasSSANameHandler, HasSSARenameState, SSAIdx, SSANameHandler, SSARename,
+            SSARenameState,
         },
     },
     ty_ext::TyExt,
@@ -43,6 +44,7 @@ impl<'tcx> CrateSummary<'tcx> {
             let body = self.tcx.optimized_mir(did);
             let insertion_points = body.compute_phi_node::<<Self as Analysis>::DefUse>(self.tcx);
 
+            let mut def_sites = SSADefSites::<FatThinAnalysisDefUse>::new(body);
             let mut ssa_name_source_map = SSANameSourceMap::new(body, &insertion_points);
 
             let lambda_ctxt_start = self.lambda_ctxt.assumptions.len();
@@ -66,7 +68,7 @@ impl<'tcx> CrateSummary<'tcx> {
                 boundary_constraints: &mut boundary_constraints,
                 return_ssa_idx: vec![],
                 ssa_state: SSARenameState::new(&body.local_decls),
-                extra_handlers: (&mut extra_handler, &mut ssa_name_source_map),
+                extra_handlers: (&mut extra_handler, &mut def_sites, &mut ssa_name_source_map),
             };
 
             infer.rename_body(body, &insertion_points);
@@ -112,7 +114,8 @@ impl<'tcx> CrateSummary<'tcx> {
                 }
             }
 
-            self.ssa_name_source_map.push(ssa_name_source_map);
+            assert_eq!(func, self.def_sites.push(def_sites));
+            assert_eq!(func, self.ssa_name_source_map.push(ssa_name_source_map));
 
             let lambda_ctxt_end = self.lambda_ctxt.assumptions.len();
             let constraints_end = self.constraints.len();
@@ -249,6 +252,8 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> SSANameHandler for Infer<'infercx,
 impl<'infercx, 'tcx, Handler: SSANameHandler> HasSSANameHandler for Infer<'infercx, 'tcx, Handler> {
     type Handler = Self;
 
+    type DefUse = FatThinAnalysisDefUse;
+
     #[inline]
     fn ssa_name_handler(&mut self) -> &mut Self::Handler {
         self
@@ -256,8 +261,6 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> HasSSANameHandler for Infer<'infer
 }
 
 impl<'infercx, 'tcx, Handler: SSANameHandler> SSARename<'tcx> for Infer<'infercx, 'tcx, Handler> {
-    type DefUse = FatThinAnalysisDefUse;
-
     fn define_local(&mut self, local: Local, location: Location) -> Option<Range<Lambda>> {
         if self.ctxt.body.local_decls[local].ty.is_ptr_but_not_fn_ptr() {
             Some(self.define_ptr_local(local, location))
@@ -396,7 +399,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Infer<'infercx, 'tcx, Handler> {
 
 impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx> for Infer<'infercx, 'tcx, Handler> {
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
-        if let Some(def_use) = <Self as SSARename>::DefUse::categorize(context) {
+        if let Some(def_use) = <Self as HasSSANameHandler>::DefUse::categorize(context) {
             if def_use.defining() {
                 self.define_local(local, location);
             } else if def_use.using() {

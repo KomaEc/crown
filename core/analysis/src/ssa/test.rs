@@ -4,7 +4,7 @@ use std::str;
 
 use crate::def_use::FatThinAnalysisDefUse;
 use crate::ssa::body_ext::BodyExt;
-use crate::ssa::rename::handler::SSANameSourceMap;
+use crate::ssa::rename::handler::{SSADefSites, SSANameSourceMap};
 use crate::ssa::rename::SSAIdx;
 use crate::ssa::rename::{handler::PrintStdSSAName, implementations::PlainRenamer, SSANameHandler};
 
@@ -290,16 +290,14 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
         }
     }
 
-    let mut renamer = PlainRenamer::<
-        FatThinAnalysisDefUse,
-        (PrintStdSSAName, TestProgramSpec, SSANameSourceMap),
-    >::new(
+    let mut renamer = PlainRenamer::<FatThinAnalysisDefUse, _>::new(
         tcx,
         body,
         (
             PrintStdSSAName,
             TestProgramSpec,
             SSANameSourceMap::new(body, &insertion_points),
+            SSADefSites::<FatThinAnalysisDefUse>::new(body),
         ),
     );
     renamer.rename();
@@ -316,15 +314,15 @@ fn spec0<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
 
 fn spec1<'a, 'tcx>(tcx: TyCtxt<'tcx>, body: &'a Body<'tcx>) {
     let insertion_points = body.compute_phi_node::<FatThinAnalysisDefUse>(tcx);
-    let mut renamer =
-        PlainRenamer::<FatThinAnalysisDefUse, (PrintStdSSAName, SSANameSourceMap)>::new(
-            tcx,
-            body,
-            (
-                PrintStdSSAName,
-                SSANameSourceMap::new(body, &insertion_points),
-            ),
-        );
+    let mut renamer = PlainRenamer::<FatThinAnalysisDefUse, _>::new(
+        tcx,
+        body,
+        (
+            PrintStdSSAName,
+            SSANameSourceMap::new(body, &insertion_points),
+            SSADefSites::<FatThinAnalysisDefUse>::new(body),
+        ),
+    );
     renamer.rename();
     /*
     write_ssa_mir_fn(

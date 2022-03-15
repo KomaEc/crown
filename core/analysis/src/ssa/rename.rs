@@ -63,6 +63,8 @@ impl<ProgramVar: Idx> HasSSARenameState<ProgramVar> for SSARenameState<ProgramVa
     }
 }
 
+/// Types that implement `SSANameHandler` maybe handlers that are generic to
+/// `DefUse`.
 #[allow(unused_variables)]
 pub trait SSANameHandler {
     type Output = ();
@@ -73,14 +75,15 @@ pub trait SSANameHandler {
     }
 }
 
+/// Types that implement `HasSSANameHandler` should be the inference engine
+/// with a specific `DefUse`
 pub trait HasSSANameHandler {
     type Handler: SSANameHandler;
+    type DefUse: IsDefUse;
     fn ssa_name_handler(&mut self) -> &mut Self::Handler;
 }
 
 pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
-    type DefUse: IsDefUse;
-
     #[inline]
     fn define_local(
         &mut self,
