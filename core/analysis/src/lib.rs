@@ -8,6 +8,7 @@
 #![feature(associated_type_defaults)]
 #![feature(step_trait)]
 
+pub mod boundary_model;
 pub mod call_graph;
 pub mod def_use;
 pub mod fat_thin_analysis;
@@ -43,9 +44,11 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate tracing;
 
+use boundary_model::BoundaryModel;
 use call_graph::{CallGraph, Func};
 use def_use::IsDefUse;
 use lattice::JoinLattice;
+use libcall_model::LibCallModel;
 use range_ext::{IsRustcIndexDefinedCV, RangeExt};
 use rustc_data_structures::graph::WithNumNodes;
 use rustc_hash::FxHashMap;
@@ -71,7 +74,7 @@ use ty_ext::TyExt;
 pub trait Analysis<'tcx> {
     const NAME: &'static str;
     type DefUse: IsDefUse;
-    type Infer<'a, E>: SSARename<'tcx, DefUse = Self::DefUse>
+    type Infer<'a, E>: SSARename<'tcx, DefUse = Self::DefUse> + LibCallModel<'tcx> + BoundaryModel<'tcx>
     where
         'tcx: 'a,
         E: SSANameHandler;

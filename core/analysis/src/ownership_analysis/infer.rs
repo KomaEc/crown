@@ -1,4 +1,5 @@
 pub mod libcall_model;
+pub mod boundary_model;
 
 use std::ops::Range;
 
@@ -25,7 +26,7 @@ use crate::{
         },
     },
     ty_ext::TyExt,
-    Analysis, BoundaryE, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView,
+    Analysis, BoundaryE, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView, boundary_model::BoundaryModel,
 };
 
 use super::{AnalysisEngine, ConstraintSet, Rho};
@@ -392,16 +393,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                 }
             }
         } else if let TerminatorKind::Return = terminator.kind {
-            log::error!("TODO: process return ssa indices!");
-            log::debug!("Generate constraints upon function exit");
-            for (local, local_decl) in self.ctxt.body.local_decls.iter_enumerated().skip(1) {
-                if local_decl.ty.is_ptr_but_not_fn_ptr() {
-                    let ssa_idx = self.ssa_state().r#use(local);
-                    // don't go through extra handlers since it is not an actual use
-                    let rhos = self.ctxt.handle_use(local, ssa_idx, location);
-                    self.ctxt.rho_ctxt.assume(rhos.start, false);
-                }
-            }
+            self.model_return(location);
             return;
         }
         self.super_terminator(terminator, location)
