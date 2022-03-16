@@ -50,7 +50,7 @@ impl<'tcx> CrateSummary<'tcx> {
             let lambda_ctxt_start = self.lambda_ctxt.assumptions.len();
             let constraints_start = self.constraints.len();
 
-            let mut infer: Infer<_> = Infer {
+            let mut infer: InferEngine<_> = InferEngine {
                 ctxt: InferCtxt::new(
                     self.tcx,
                     func,
@@ -194,7 +194,7 @@ impl<'tcx> CrateSummary<'tcx> {
     }
 }
 
-pub struct Infer<'infercx, 'tcx: 'infercx, Handler: SSANameHandler> {
+pub struct InferEngine<'infercx, 'tcx: 'infercx, Handler: SSANameHandler> {
     ctxt: InferCtxt<'infercx, 'tcx>,
     ssa_state: SSARenameState<Local>,
     boundary_constraints: &'infercx mut IndexVec<CallSite, Vec<BoundaryConstraint>>,
@@ -203,7 +203,7 @@ pub struct Infer<'infercx, 'tcx: 'infercx, Handler: SSANameHandler> {
 }
 
 impl<'infercx, 'tcx, Handler: SSANameHandler> HasSSARenameState<Local>
-    for Infer<'infercx, 'tcx, Handler>
+    for InferEngine<'infercx, 'tcx, Handler>
 {
     #[inline]
     fn ssa_state(&mut self) -> &mut SSARenameState<Local> {
@@ -211,7 +211,9 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> HasSSARenameState<Local>
     }
 }
 
-impl<'infercx, 'tcx, Handler: SSANameHandler> SSANameHandler for Infer<'infercx, 'tcx, Handler> {
+impl<'infercx, 'tcx, Handler: SSANameHandler> SSANameHandler
+    for InferEngine<'infercx, 'tcx, Handler>
+{
     type Output = Option<Range<Lambda>>;
 
     fn handle_def(&mut self, local: Local, idx: SSAIdx, location: Location) -> Self::Output {
@@ -249,7 +251,9 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> SSANameHandler for Infer<'infercx,
     }
 }
 
-impl<'infercx, 'tcx, Handler: SSANameHandler> HasSSANameHandler for Infer<'infercx, 'tcx, Handler> {
+impl<'infercx, 'tcx, Handler: SSANameHandler> HasSSANameHandler
+    for InferEngine<'infercx, 'tcx, Handler>
+{
     type Handler = Self;
 
     type DefUse = FatThinAnalysisDefUse;
@@ -260,7 +264,9 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> HasSSANameHandler for Infer<'infer
     }
 }
 
-impl<'infercx, 'tcx, Handler: SSANameHandler> SSARename<'tcx> for Infer<'infercx, 'tcx, Handler> {
+impl<'infercx, 'tcx, Handler: SSANameHandler> SSARename<'tcx>
+    for InferEngine<'infercx, 'tcx, Handler>
+{
     fn define_local(&mut self, local: Local, location: Location) -> Option<Range<Lambda>> {
         if self.ctxt.body.local_decls[local].ty.is_ptr_but_not_fn_ptr() {
             Some(self.define_ptr_local(local, location))
@@ -283,7 +289,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> SSARename<'tcx> for Infer<'infercx
     }
 }
 
-impl<'infercx, 'tcx, Handler: SSANameHandler> Infer<'infercx, 'tcx, Handler> {
+impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handler> {
     #[inline]
     fn handle_ptr_def(&mut self, local: Local, idx: SSAIdx, location: Location) -> Range<Lambda> {
         self.extra_handlers.handle_def(local, idx, location);
@@ -397,7 +403,9 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Infer<'infercx, 'tcx, Handler> {
     }
 }
 
-impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx> for Infer<'infercx, 'tcx, Handler> {
+impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
+    for InferEngine<'infercx, 'tcx, Handler>
+{
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
         if let Some(def_use) = <Self as HasSSANameHandler>::DefUse::categorize(context) {
             if def_use.defining() {

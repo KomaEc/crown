@@ -20,7 +20,7 @@ use crate::{
     Analysis, CVSourceData, CrateAnalysisCtxt,
 };
 
-use self::infer::Infer;
+use self::infer::InferEngine;
 
 pub mod infer;
 pub mod solve;
@@ -34,7 +34,7 @@ impl<'tcx> Analysis<'tcx> for CrateSummary<'tcx> {
     where
         'tcx: 'infercx,
         H: SSANameHandler,
-    = Infer<'infercx, 'tcx, H>;
+    = InferEngine<'infercx, 'tcx, H>;
 }
 
 /// This structure should hold info about all struct definitions

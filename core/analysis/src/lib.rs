@@ -46,7 +46,7 @@ extern crate tracing;
 use call_graph::{CallGraph, Func};
 use def_use::IsDefUse;
 use lattice::JoinLattice;
-use range_ext::RangeExt;
+use range_ext::{IsRustcIndexDefinedCV, RangeExt};
 use rustc_data_structures::graph::WithNumNodes;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -79,7 +79,7 @@ pub trait Analysis<'tcx> {
 
 pub struct CrateAnalysisCtxt<CV, Domain>
 where
-    CV: Idx + Step + range_ext::IsConstraintVariable,
+    CV: IsRustcIndexDefinedCV,
     Domain: Clone + Copy + JoinLattice,
 {
     pub assumptions: IndexVec<CV, Domain>,
@@ -96,7 +96,7 @@ where
 
 pub struct CrateAnalysisCtxtIntraView<'intra, CV, Domain>
 where
-    CV: Idx + Step + range_ext::IsConstraintVariable,
+    CV: IsRustcIndexDefinedCV,
     Domain: Clone + Copy + JoinLattice,
 {
     func: Func,
@@ -108,7 +108,7 @@ where
 
 impl<CV, Domain> CrateAnalysisCtxt<CV, Domain>
 where
-    CV: Idx + Step + range_ext::IsConstraintVariable,
+    CV: IsRustcIndexDefinedCV,
     Domain: Clone + Copy + JoinLattice,
 {
     pub fn initiate(tcx: TyCtxt, adt_defs: &[DefId], call_graph: &CallGraph) -> Self {
@@ -235,7 +235,7 @@ where
 
 impl<'intra, CV, Domain> CrateAnalysisCtxtIntraView<'intra, CV, Domain>
 where
-    CV: Idx + Step + range_ext::IsConstraintVariable,
+    CV: IsRustcIndexDefinedCV,
     Domain: Clone + Copy + JoinLattice,
 {
     pub fn generate_local(&mut self, base: Local, ssa_idx: SSAIdx) -> Range<CV> {
@@ -276,6 +276,21 @@ where
         // n_facts
 
         cvs
+    }
+}
+
+impl<'intra, CV: IsRustcIndexDefinedCV> CrateAnalysisCtxtIntraView<'intra, CV, Option<bool>> {
+    pub fn assume(&mut self, cv: CV, value: bool) {
+        let assumption = &mut self.assumptions[cv];
+        match assumption {
+            &mut Some(val) if val ^ value => panic!("conflict in constraint!"),
+            _ => *assumption = Some(value),
+        }
+        log::debug!(
+            "generate constraint {:?} = {}",
+            cv,
+            value.then_some(1).unwrap_or(0)
+        )
     }
 }
 
@@ -320,6 +335,26 @@ impl Display for CVSourceData {
             )),
         }
     }
+}
+
+pub struct Boundary<Return, Argument> {
+    r#return: Return,
+    arguments: Vec<Argument>,
+}
+
+pub type BoundaryE<T> = Boundary<T, T>;
+
+pub struct FnSigVal<Return, Parameter> {
+    r#return: Return,
+    parameters: Vec<Parameter>,
+}
+
+pub type FnSigValE<T> = FnSigVal<T, T>;
+
+pub trait BoundariesInstantiable {
+    type FnReturn;
+    type Parameter;
+    fn instantiate(&self, fn_sig: &FnSigVal<Self::FnReturn, Self::Parameter>);
 }
 
 #[derive(Debug, Clone)]

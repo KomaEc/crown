@@ -417,7 +417,61 @@ Purpose of this analysis:
     4.  `p.offset(i)` ==> `let mut slice = p.as_mut().unwrap(); slice[i]`
 
     If there is no solution ==> a set of fixes
-1. ownership analysis
+
+Ownership Analysis
+    `L(p) = 1` ==> `p` is owning pointer
+
+    
+        Γ |- q: L(q), p: L(p)
+    ---------------------------------------------  (ASSIGN-BASE)
+        p = q ~~> L(p) = 0, L(p') + L(q') = L(q),
+        L(p') <= L(q); Γ |- p': L(p'), q': L(q')
+
+
+        Γ |- p: L(p)
+    --------------------------------  (MALLOC-BASE)
+        p = malloc(..) ~~> L(p) = 0,
+        L(p') = 1; Γ |- p': L(p')
+
+
+        Γ |- p: L(p)
+    --------------------------------------  (FREE-BASE)
+        free(p) ~~> L(p) = 1, L(p') = 0
+        ; Γ |- p': L(p')
+
+
+        Γ |- f: L(f), q: L(q)
+    ---------------------------------------------  (ASSIGN-LPROJ)
+        p.f = q ~~> L(f) + L(q') = L(q);
+        Γ |- q': L(q')
+
+
+        Γ |- f: L(f), p: L(p)
+    ---------------------------------------------  (ASSIGN-RPROJ)
+        p = q.f ~~> L(p) = 0, L(p') ≤ L(f);
+        Γ |- p': L(p')
+
+
+        Γ |- f: L(f), g: L(g)
+    ---------------------------------------------  (ASSIGN-RPROJ)
+        p.f = q.g ~~> L(f) ≤ L(g); Γ
+
+
+        Γ |- f: L(f)
+    --------------------------------  (MALLOC-PROJ)
+        p.f = malloc(..) ~~> L(f) = 1; Γ
+
+
+        p = calloc(..)
+    --------------------------------
+        L(p) = 1
+
+
+        p = realloc(q, ...)
+    --------------------------------
+        L(q) = 1, L(p) = 1
+    
+(ASSIGN-LPROJ) imposes a strong requirement on struct fields: that an owning field must own an object throughout its lifetime,
 
 
 

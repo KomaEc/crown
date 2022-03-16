@@ -1,5 +1,6 @@
 #![feature(rustc_private)]
 #![feature(step_trait)]
+#![feature(trait_alias)]
 
 use std::{iter::Step, ops::Range};
 
@@ -9,17 +10,23 @@ extern crate rustc_index;
 
 /// This is a marker trait to mark constraint variable data types implemented
 /// by rustc_index!
+pub trait IsRustcIndexDefinedCV =
+    IsConstraintVariable + Idx + Step + std::ops::Add<usize, Output = Self>;
+
+/// Marker trait that marks data types for constraint variables
 pub trait IsConstraintVariable {}
 
 pub trait RangeExt<T: IsConstraintVariable + Idx + Step> {
     fn len(&self) -> usize;
 
     fn empty() -> Self;
+
+    fn split_first(&self) -> Option<(T, Range<T>)>;
 }
 
 impl<T> RangeExt<T> for Range<T>
 where
-    T: IsConstraintVariable + Idx + Step,
+    T: IsRustcIndexDefinedCV,
 {
     fn len(&self) -> usize {
         let (lower, upper) = self.size_hint();
@@ -37,5 +44,17 @@ where
             start: max,
             end: max,
         }
+    }
+
+    fn split_first(&self) -> Option<(T, Range<T>)> {
+        (!self.is_empty()).then(|| {
+            (
+                self.start,
+                Range {
+                    start: self.start + 1,
+                    end: self.end,
+                },
+            )
+        })
     }
 }

@@ -7,28 +7,12 @@ use rustc_middle::{
 };
 
 use crate::{
-    fat_thin_analysis::{infer::Infer, Lambda},
+    fat_thin_analysis::{infer::InferEngine, Lambda},
     libcall_model::LibCallModel,
     ssa::rename::SSANameHandler,
-    CrateAnalysisCtxtIntraView,
 };
 
-impl<'intra> CrateAnalysisCtxtIntraView<'intra, Lambda, Option<bool>> {
-    pub fn assume(&mut self, lambda: Lambda, value: bool) {
-        let assumption = &mut self.assumptions[lambda];
-        match assumption {
-            &mut Some(val) if val ^ value => panic!("conflict in constraint!"),
-            _ => *assumption = Some(value),
-        }
-        log::debug!(
-            "generate constraint {:?} = {}",
-            lambda,
-            value.then_some(1).unwrap_or(0)
-        )
-    }
-}
-
-impl<'infercx, 'tcx, Handler: SSANameHandler> Infer<'infercx, 'tcx, Handler> {
+impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handler> {
     pub fn assume_call_argument(
         &mut self,
         arg: &Operand<'tcx>,
@@ -49,7 +33,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Infer<'infercx, 'tcx, Handler> {
 
 /// Modelling library calls
 impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
-    for Infer<'infercx, 'tcx, Handler>
+    for InferEngine<'infercx, 'tcx, Handler>
 {
     fn tcx(&self) -> TyCtxt<'tcx> {
         self.ctxt.tcx
