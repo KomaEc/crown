@@ -11,10 +11,10 @@ use crate::{
     ssa::rename::SSANameHandler,
 };
 
-use super::InferEngine;
+use super::IntraInfer;
 
-impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
-    for InferEngine<'infercx, 'tcx, Handler>
+impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
+    for IntraInfer<'infercx, 'inter, 'tcx, Handler>
 {
     fn tcx(&self) -> TyCtxt<'tcx> {
         self.ctxt.tcx
@@ -33,10 +33,10 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         match self.process_ptr_place(&lhs, location) {
             PlaceProcessResult::Base { old, new } => {
                 /// TODO
-                self.ctxt.rho_ctxt.assume(old.start, false);
-                self.ctxt.rho_ctxt.assume(new.start, true)
+                self.ctxt.constraint_system.assume(old.start, false);
+                self.ctxt.constraint_system.assume(new.start, true)
             }
-            PlaceProcessResult::Proj(f) => self.ctxt.rho_ctxt.assume(f.start, true),
+            PlaceProcessResult::Proj(f) => self.ctxt.constraint_system.assume(f.start, true),
         }
     }
 
@@ -51,10 +51,10 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         if let Operand::Move(rhs) | Operand::Copy(rhs) = rhs {
             match self.process_ptr_place(rhs, location) {
                 PlaceProcessResult::Base { old, new } => {
-                    self.ctxt.rho_ctxt.assume(old.start, true);
-                    self.ctxt.rho_ctxt.assume(new.start, false)
+                    self.ctxt.constraint_system.assume(old.start, true);
+                    self.ctxt.constraint_system.assume(new.start, false)
                 }
-                PlaceProcessResult::Proj(f) => self.ctxt.rho_ctxt.assume(f.start, true),
+                PlaceProcessResult::Proj(f) => self.ctxt.constraint_system.assume(f.start, true),
             }
         } else {
             log::debug!("This terminator is not processed due to constant operand type!");

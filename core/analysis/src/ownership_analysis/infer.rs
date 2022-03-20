@@ -10,7 +10,7 @@ use rustc_middle::{
         BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
         ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind,
     },
-    ty::{TyCtxt, TyKind::FnDef},
+    ty::{subst::GenericArgKind, TyCtxt, TyKind::FnDef},
 };
 use rustc_target::abi::VariantIdx;
 
@@ -30,24 +30,24 @@ use crate::{
     Analysis, BoundaryE, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView,
 };
 
-use super::{AnalysisEngine, ConstraintDataBase, Rho, FuncSummary, MaybeSaturated};
+use super::{
+    AnalysisEngine, ConstraintDataBase, InterCtxt, InterCtxtView, IntraSummary, LocalSourceInfo,
+    Rho,
+};
 
-impl<'tcx> AnalysisEngine<'tcx> {
+use range_ext::RangeExt;
+
+impl<'analysis, 'tcx> AnalysisEngine<'analysis, 'tcx> {
     pub fn infer<Handler: SSANameHandler<Output = ()>>(&mut self, mut extra_handlers: Handler) {
         for (func, &did) in self.call_graph.functions.iter_enumerated() {
             let body = self.tcx.optimized_mir(did);
-            let insertion_points = body.compute_phi_node::<<Self as Analysis>::DefUse>(self.tcx);
+            let insertion_points = body.compute_phi_node::<OwnershipAnalysisDefUse>(self.tcx);
 
-            // let lambda_ctxt_start = self.rho_ctxt.assumptions.next_index();
-            // let constraints_start = self.constraints.len();
-
-            let infer_ctxt = InferCtxt::new(
+            let infer_ctxt = IntraInferCtxt::new(
                 self.tcx,
-                func,
                 body,
                 &self.call_graph,
-                &mut self.rho_ctxt,
-                self.globals.clone(),
+                &mut self.inter_ctxt,
                 insertion_points.filter_repack(|local, _| {
                     body.local_decls[local]
                         .ty
@@ -56,7 +56,7 @@ impl<'tcx> AnalysisEngine<'tcx> {
                 }),
             );
 
-            let mut infer: InferEngine<_> = InferEngine {
+            let mut infer: IntraInfer<_> = IntraInfer {
                 ctxt: infer_ctxt,
                 ssa_state: SSARenameState::new(&body.local_decls),
                 extra_handlers: &mut extra_handlers,
@@ -64,21 +64,31 @@ impl<'tcx> AnalysisEngine<'tcx> {
 
             infer.rename_body(body, &insertion_points);
 
+            // log::debug!("le constraints before solve:");
+            // infer.ctxt.constraints.le_constraints.show();
+
+            let solved = infer.ctxt.constraint_system.saturate();
+
+            // log::debug!("le constraints after solve:");
+            // solved.le_constraints.show();
+            // assert!(solved.eq_constraints.is_empty());
+            solved.show();
+
             // self.func_summaries.push(FuncSummary { constraint_db: constraint_db, func_sig: val })
         }
     }
 }
 
-pub struct InferEngine<'infercx, 'tcx: 'infercx, Handler: SSANameHandler> {
-    ctxt: InferCtxt<'infercx, 'tcx>,
+pub struct IntraInfer<'infercx, 'inter: 'infercx, 'tcx: 'infercx, Handler: SSANameHandler> {
+    ctxt: IntraInferCtxt<'infercx, 'inter, 'tcx>,
     ssa_state: SSARenameState<Local>,
     // boundary_constraints: &'infercx mut IndexVec<CallSite, BoundaryE<()>>,
     // return_ssa_idx: Vec<SSAIdx>,
     extra_handlers: Handler,
 }
 
-impl<'infercx, 'tcx, Handler: SSANameHandler> HasSSARenameState<Local>
-    for InferEngine<'infercx, 'tcx, Handler>
+impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> HasSSARenameState<Local>
+    for IntraInfer<'infercx, 'inter, 'tcx, Handler>
 {
     #[inline]
     fn ssa_state(&mut self) -> &mut SSARenameState<Local> {
@@ -86,8 +96,8 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> HasSSARenameState<Local>
     }
 }
 
-impl<'infercx, 'tcx, Handler: SSANameHandler> SSANameHandler
-    for InferEngine<'infercx, 'tcx, Handler>
+impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> SSANameHandler
+    for IntraInfer<'infercx, 'inter, 'tcx, Handler>
 {
     type Output = Option<Range<Rho>>;
 
@@ -126,8 +136,8 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> SSANameHandler
     }
 }
 
-impl<'infercx, 'tcx, Handler: SSANameHandler> HasSSANameHandler
-    for InferEngine<'infercx, 'tcx, Handler>
+impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> HasSSANameHandler
+    for IntraInfer<'infercx, 'inter, 'tcx, Handler>
 {
     type Handler = Self;
 
@@ -139,8 +149,8 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> HasSSANameHandler
     }
 }
 
-impl<'infercx, 'tcx, Handler: SSANameHandler> SSARename<'tcx>
-    for InferEngine<'infercx, 'tcx, Handler>
+impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> SSARename<'tcx>
+    for IntraInfer<'infercx, 'inter, 'tcx, Handler>
 {
     fn define_local(&mut self, local: Local, location: Location) -> Option<Range<Rho>> {
         if self.ctxt.body.local_decls[local].ty.is_ptr_but_not_fn_ptr() {
@@ -169,7 +179,7 @@ enum PlaceProcessResult {
     Proj(Range<Rho>),
 }
 
-impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handler> {
+impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'inter, 'tcx, Handler> {
     #[inline]
     fn handle_ptr_def(&mut self, local: Local, idx: SSAIdx, location: Location) -> Range<Rho> {
         self.extra_handlers.handle_def(local, idx, location);
@@ -193,9 +203,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handle
             .handle_ptr_def(local, new_ssa_idx, location);
 
         for (old_inner, new_inner) in std::iter::zip(old.clone().skip(1), new.clone().skip(1)) {
-            self.ctxt
-                .constraints
-                .push_eq(old_inner, new_inner);
+            self.ctxt.constraint_system.push_eq(old_inner, new_inner);
         }
         (old, new)
     }
@@ -228,7 +236,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handle
                     let ty = place_ty.ty;
                     let variant_idx = place_ty.variant_index.unwrap_or(VariantIdx::new(0));
                     let adt_def = ty.ty_adt_def().unwrap();
-                    let rhos = self.ctxt.rho_ctxt.field_defs[&adt_def.did][variant_idx]
+                    let rhos = self.ctxt.inter_ctxt.field_defs[&adt_def.did][variant_idx]
                         [field.index()]
                     .clone();
                     return Range {
@@ -248,8 +256,8 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handle
     }
 }
 
-impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
-    for InferEngine<'infercx, 'tcx, Handler>
+impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
+    for IntraInfer<'infercx, 'inter, 'tcx, Handler>
 {
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
         if let Some(def_use) = <Self as HasSSANameHandler>::DefUse::categorize(context) {
@@ -295,59 +303,49 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                         for (lhs_inner, rhs_inner) in
                             std::iter::zip(lhs_new.clone().skip(1), rhs_new.clone().skip(1))
                         {
-                            self.ctxt
-                                .constraints
-                                .push_eq(lhs_inner, rhs_inner);
+                            self.ctxt.constraint_system.push_eq(lhs_inner, rhs_inner);
                         }
 
-                        self.ctxt
-                            .constraints
-                            .push_transfer(rhs_old.start, lhs_new.start, rhs_new.start);
-                            // .push_eq(rhs_old.start, [lhs_new.start, rhs_new.start].into_iter());
-                        self.ctxt.rho_ctxt.assume(lhs_old.start, false)
+                        self.ctxt.constraint_system.push_transfer(
+                            rhs_old.start,
+                            lhs_new.start,
+                            rhs_new.start,
+                        );
+                        // .push_eq(rhs_old.start, [lhs_new.start, rhs_new.start].into_iter());
+                        self.ctxt.constraint_system.assume(lhs_old.start, false)
                     }
                     (PlaceProcessResult::Base { old, new }, PlaceProcessResult::Proj(f)) => {
                         for (lhs_inner, rhs_inner) in
                             std::iter::zip(new.clone().skip(1), f.clone().skip(1))
                         {
-                            self.ctxt
-                                .constraints
-                                .push_eq(lhs_inner, rhs_inner);
+                            self.ctxt.constraint_system.push_eq(lhs_inner, rhs_inner);
                         }
 
-                        self.ctxt
-                            .constraints
-                            .push_le(new.start, f.start);
-                            // .push_ge(f.start, [new.start].into_iter());
-                        self.ctxt.rho_ctxt.assume(old.start, false);
+                        self.ctxt.constraint_system.push_le(new.start, f.start);
+                        // .push_ge(f.start, [new.start].into_iter());
+                        self.ctxt.constraint_system.assume(old.start, false);
                     }
                     (PlaceProcessResult::Proj(f), PlaceProcessResult::Base { old, new }) => {
                         for (lhs_inner, rhs_inner) in
                             std::iter::zip(f.clone().skip(1), new.clone().skip(1))
                         {
-                            self.ctxt
-                                .constraints
-                                .push_eq(lhs_inner, rhs_inner);
+                            self.ctxt.constraint_system.push_eq(lhs_inner, rhs_inner);
                         }
 
                         self.ctxt
-                            .constraints
+                            .constraint_system
                             .push_transfer(old.start, f.start, new.start)
-                            // .push_eq(old.start, [f.start, new.start].into_iter());
+                        // .push_eq(old.start, [f.start, new.start].into_iter());
                     }
                     (PlaceProcessResult::Proj(f), PlaceProcessResult::Proj(g)) => {
                         for (lhs_inner, rhs_inner) in
                             std::iter::zip(f.clone().skip(1), g.clone().skip(1))
                         {
-                            self.ctxt
-                                .constraints
-                                .push_eq(lhs_inner, rhs_inner);
+                            self.ctxt.constraint_system.push_eq(lhs_inner, rhs_inner);
                         }
 
-                        self.ctxt
-                            .constraints
-                            .push_le(f.start, g.start);
-                            // .push_ge(g.start, [f.start].into_iter());
+                        self.ctxt.constraint_system.push_le(f.start, g.start);
+                        // .push_ge(g.start, [f.start].into_iter());
                     }
                 }
                 return;
@@ -409,40 +407,78 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
     }
 }
 
-pub struct InferCtxt<'infercx, 'tcx: 'infercx> {
+pub struct IntraInferCtxt<'infercx, 'inter: 'infercx, 'tcx: 'infercx> {
     tcx: TyCtxt<'tcx>,
     body: &'infercx Body<'tcx>,
     call_graph: &'infercx CallGraph,
-    rho_ctxt: CrateAnalysisCtxtIntraView<'infercx, Rho, Option<bool>>,
+    // rho_ctxt: CrateAnalysisCtxtIntraView<'infercx, Rho, Option<bool>>,
+    inter_ctxt: &'infercx mut InterCtxtView<'inter>,
     phi_joins: PhiNodeInsertionPoints<Vec<SSAIdx>>,
-    constraints: ConstraintDataBase<MaybeSaturated>, //Vec<Constraint>,
+    intra_source_map: Vec<LocalSourceInfo>,
+    locals: IndexVec<Local, IndexVec<SSAIdx, Range<Rho>>>,
+    constraint_system: ConstraintDataBase, //Vec<Constraint>,
 }
 
-impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
+impl<'infercx, 'inter, 'tcx> IntraInferCtxt<'infercx, 'inter, 'tcx> {
     pub fn new(
         tcx: TyCtxt<'tcx>,
-        func: Func,
         body: &'infercx Body<'tcx>,
         call_graph: &'infercx CallGraph,
-        rho_ctxt: &'infercx mut CrateAnalysisCtxt<Rho, Option<bool>>,
-        globals: Range<Rho>,
+        inter_ctxt: &'infercx mut InterCtxtView<'inter>,
+        // rho_ctxt: &'infercx mut CrateAnalysisCtxt<Rho, Option<bool>>,
+        // globals: Range<Rho>,
         // constraints: &'infercx mut ConstraintDataBase, //Vec<Constraint>,
         phi_joins: PhiNodeInsertionPoints<Vec<SSAIdx>>,
     ) -> Self {
+        // let initial_locals_start = rho_ctxt.assumptions.next_index();
+        // let rho_ctxt = rho_ctxt.intra_view(body, func);
+        // let initial_locals_end = rho_ctxt.assumptions.next_index();
 
-        let initial_locals_start = rho_ctxt.assumptions.next_index();
-        let rho_ctxt = rho_ctxt.intra_view(body, func);
-        let initial_locals_end = rho_ctxt.assumptions.next_index();
+        // let locals = Range { start: initial_locals_start, end: initial_locals_end };
 
-        let locals = Range { start: initial_locals_start, end: initial_locals_end };
+        let mut constraint_system = inter_ctxt.global_assumptions.clone();
+        let mut intra_source_map = Vec::new();
+        let locals = body
+            .local_decls
+            .iter_enumerated()
+            .map(|(local, local_decl)| {
+                let start = constraint_system.le_constraints.local_start + intra_source_map.len();
+                let mut end = start;
+                local_decl
+                    .ty
+                    .walk()
+                    .filter_map(|generic_arg| {
+                        if let GenericArgKind::Type(ty) = generic_arg.unpack() {
+                            Some(ty)
+                        } else {
+                            None
+                        }
+                    })
+                    .take_while(|ty| ty.is_ptr_but_not_fn_ptr())
+                    .enumerate()
+                    .for_each(|(nested_level, _)| {
+                        assert_eq!(end, constraint_system.generate_local());
+                        end = end + 1;
+                        intra_source_map.push(LocalSourceInfo {
+                            base: local,
+                            ssa_idx: 0usize.into(),
+                            nested_level,
+                        });
+                    });
+                // end = end + 1;
+                IndexVec::from_raw(vec![Range { start, end }])
+            })
+            .collect::<IndexVec<_, _>>();
 
-        InferCtxt {
+        IntraInferCtxt {
             tcx,
             body,
             call_graph,
-            rho_ctxt,
+            inter_ctxt,
             phi_joins,
-            constraints: ConstraintDataBase::new(globals, locals),
+            intra_source_map,
+            locals,
+            constraint_system, //ConstraintDataBase::new(globals, locals),
         }
         .log_initial_state()
     }
@@ -455,7 +491,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
                 "for function {}:",
                 self.tcx.def_path_debug_str(self.body.source.def_id())
             );
-            for (local, rhos) in self.rho_ctxt.locals.iter_enumerated() {
+            for (local, rhos) in self.locals.iter_enumerated() {
                 assert_eq!(rhos.len(), 1);
                 let rhos = &rhos[0usize.into()];
                 for (nested_level, rho) in rhos.clone().enumerate() {
@@ -486,32 +522,70 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         }
         self
     }
+
+    fn generate_variables_for_local(&mut self, local: Local, idx: SSAIdx) -> Range<Rho> {
+        let entry_rhos = &self.locals[local][0u32.into()];
+        let nested_level = entry_rhos.len();
+
+        assert_eq!(self.locals[local].len(), idx.index());
+
+        let start =
+            self.intra_source_map.len() + self.constraint_system.le_constraints.local_start.index();
+
+        (0..nested_level).for_each(|nested_level| {
+            let rho = self.constraint_system.generate_local();
+            self.intra_source_map.push(LocalSourceInfo {
+                base: local,
+                ssa_idx: idx,
+                nested_level,
+            });
+            debug_assert_eq!(
+                self.intra_source_map.len(),
+                rho.index() - self.constraint_system.le_constraints.local_start.index() + 1
+            )
+        });
+
+        let end = self.intra_source_map.len() + self.constraint_system.le_constraints.local_start.index();
+
+        let res = Range {
+            start: start.into(),
+            end: end.into(),
+        };
+
+        self.locals[local].push(res.clone());
+
+        res
+    }
 }
 
-impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
+impl<'infercx, 'inter, 'tcx> SSANameHandler for IntraInferCtxt<'infercx, 'inter, 'tcx> {
     type Output = Range<Rho>;
 
     fn handle_def(&mut self, local: Local, idx: SSAIdx, _location: Location) -> Self::Output {
         log::debug!("InferCtxt defining {:?}^{} of ptr type", local, idx);
         debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
+
+        self.generate_variables_for_local(local, idx)
+
+        /*
         let res = self.rho_ctxt.generate_local(local, idx);
 
         // TODO: refactor this!
         for rho in res.start..res.end {
-            self.constraints.le_constraints.add_local(rho)
+            self.constraints.le_constraints.generate_local(rho)
         }
 
-
-        res
+        */
     }
 
     fn handle_use(&mut self, local: Local, idx: SSAIdx, _location: Location) -> Self::Output {
-        self.rho_ctxt.locals[local][idx].clone()
+        self.locals[local][idx].clone()
     }
 
     fn handle_def_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock) {
         debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
-        self.rho_ctxt.generate_local(local, idx);
+        // self.rho_ctxt.generate_local(local, idx);
+        self.generate_variables_for_local(local, idx);
         self.phi_joins[block][local].push(idx)
     }
 

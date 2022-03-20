@@ -10,10 +10,10 @@ use crate::{
     ty_ext::TyExt,
 };
 
-use super::InferEngine;
+use super::IntraInfer;
 
-impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
-    for InferEngine<'infercx, 'tcx, Handler>
+impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
+    for IntraInfer<'infercx, 'inter, 'tcx, Handler>
 {
     fn model_boundary(
         &mut self,
@@ -32,7 +32,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
                 let ssa_idx = self.ssa_state().r#use(local);
                 // don't go through extra handlers since it is not an actual use
                 let rhos = self.ctxt.handle_use(local, ssa_idx, location);
-                self.ctxt.rho_ctxt.assume(rhos.start, false);
+                self.ctxt.constraint_system.assume(rhos.start, false);
             }
         }
     }

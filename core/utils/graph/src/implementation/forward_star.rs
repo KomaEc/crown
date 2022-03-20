@@ -5,6 +5,7 @@ use rustc_data_structures::graph::{
     WithPredecessors, WithSuccessors,
 };
 
+#[derive(Clone)]
 pub struct Graph<Node: Idx, Edge: Idx> {
     pub nodes: IndexVec<Node, NodeData<Edge>>,
     pub edges: IndexVec<Edge, EdgeData<Node, Edge>>,
@@ -110,6 +111,14 @@ impl<Node: Idx, Edge: Idx> Graph<Node, Edge> {
         self.nodes[target].first_edges[Direction::Incoming.index()] = idx;
         self.edges.push(edge);
         idx
+    }
+
+    pub fn add_edge_without_dup(&mut self, source: Node, target: Node) -> Option<Edge> {
+        if self.successor_nodes(source).any(|tgt| tgt == target) {
+            None
+        } else {
+            Some(self.add_edge(source, target))
+        }
     }
 
     pub fn nodes<'a>(&'a self) -> impl Iterator<Item = Node> + 'a {
