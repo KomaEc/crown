@@ -1,5 +1,5 @@
-pub mod libcall_model;
 pub mod boundary_model;
+pub mod libcall_model;
 
 use std::ops::Range;
 
@@ -15,6 +15,7 @@ use rustc_middle::{
 use rustc_target::abi::VariantIdx;
 
 use crate::{
+    boundary_model::BoundaryModel,
     call_graph::{CallGraph, CallSite, Func},
     def_use::IsDefUse,
     def_use::OwnershipAnalysisDefUse,
@@ -26,10 +27,10 @@ use crate::{
         },
     },
     ty_ext::TyExt,
-    Analysis, BoundaryE, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView, boundary_model::BoundaryModel,
+    Analysis, BoundaryE, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView,
 };
 
-use super::{AnalysisEngine, ConstraintSet, Rho};
+use super::{AnalysisEngine, ConstraintDataBase, Rho, FuncSummary, MaybeSaturated};
 
 impl<'tcx> AnalysisEngine<'tcx> {
     pub fn infer<Handler: SSANameHandler<Output = ()>>(&mut self, mut extra_handlers: Handler) {
@@ -40,26 +41,30 @@ impl<'tcx> AnalysisEngine<'tcx> {
             // let lambda_ctxt_start = self.rho_ctxt.assumptions.next_index();
             // let constraints_start = self.constraints.len();
 
+            let infer_ctxt = InferCtxt::new(
+                self.tcx,
+                func,
+                body,
+                &self.call_graph,
+                &mut self.rho_ctxt,
+                self.globals.clone(),
+                insertion_points.filter_repack(|local, _| {
+                    body.local_decls[local]
+                        .ty
+                        .is_ptr_but_not_fn_ptr()
+                        .then(|| vec![])
+                }),
+            );
+
             let mut infer: InferEngine<_> = InferEngine {
-                ctxt: InferCtxt::new(
-                    self.tcx,
-                    func,
-                    body,
-                    &self.call_graph,
-                    &mut self.rho_ctxt,
-                    &mut self.constraints,
-                    insertion_points.filter_repack(|local, _| {
-                        body.local_decls[local]
-                            .ty
-                            .is_ptr_but_not_fn_ptr()
-                            .then(|| vec![])
-                    }),
-                ),
+                ctxt: infer_ctxt,
                 ssa_state: SSARenameState::new(&body.local_decls),
                 extra_handlers: &mut extra_handlers,
             };
 
             infer.rename_body(body, &insertion_points);
+
+            // self.func_summaries.push(FuncSummary { constraint_db: constraint_db, func_sig: val })
         }
     }
 }
@@ -190,7 +195,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handle
         for (old_inner, new_inner) in std::iter::zip(old.clone().skip(1), new.clone().skip(1)) {
             self.ctxt
                 .constraints
-                .push_eq(old_inner, std::iter::once(new_inner));
+                .push_eq(old_inner, new_inner);
         }
         (old, new)
     }
@@ -292,12 +297,13 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                         {
                             self.ctxt
                                 .constraints
-                                .push_eq(lhs_inner, std::iter::once(rhs_inner));
+                                .push_eq(lhs_inner, rhs_inner);
                         }
 
                         self.ctxt
                             .constraints
-                            .push_eq(rhs_old.start, [lhs_new.start, rhs_new.start].into_iter());
+                            .push_transfer(rhs_old.start, lhs_new.start, rhs_new.start);
+                            // .push_eq(rhs_old.start, [lhs_new.start, rhs_new.start].into_iter());
                         self.ctxt.rho_ctxt.assume(lhs_old.start, false)
                     }
                     (PlaceProcessResult::Base { old, new }, PlaceProcessResult::Proj(f)) => {
@@ -306,12 +312,13 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                         {
                             self.ctxt
                                 .constraints
-                                .push_eq(lhs_inner, std::iter::once(rhs_inner));
+                                .push_eq(lhs_inner, rhs_inner);
                         }
 
                         self.ctxt
                             .constraints
-                            .push_ge(f.start, [new.start].into_iter());
+                            .push_le(new.start, f.start);
+                            // .push_ge(f.start, [new.start].into_iter());
                         self.ctxt.rho_ctxt.assume(old.start, false);
                     }
                     (PlaceProcessResult::Proj(f), PlaceProcessResult::Base { old, new }) => {
@@ -320,12 +327,13 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                         {
                             self.ctxt
                                 .constraints
-                                .push_eq(lhs_inner, std::iter::once(rhs_inner));
+                                .push_eq(lhs_inner, rhs_inner);
                         }
 
                         self.ctxt
                             .constraints
-                            .push_eq(old.start, [f.start, new.start].into_iter());
+                            .push_transfer(old.start, f.start, new.start)
+                            // .push_eq(old.start, [f.start, new.start].into_iter());
                     }
                     (PlaceProcessResult::Proj(f), PlaceProcessResult::Proj(g)) => {
                         for (lhs_inner, rhs_inner) in
@@ -333,12 +341,13 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                         {
                             self.ctxt
                                 .constraints
-                                .push_eq(lhs_inner, std::iter::once(rhs_inner));
+                                .push_eq(lhs_inner, rhs_inner);
                         }
 
                         self.ctxt
                             .constraints
-                            .push_ge(g.start, [f.start].into_iter());
+                            .push_le(f.start, g.start);
+                            // .push_ge(g.start, [f.start].into_iter());
                     }
                 }
                 return;
@@ -406,7 +415,7 @@ pub struct InferCtxt<'infercx, 'tcx: 'infercx> {
     call_graph: &'infercx CallGraph,
     rho_ctxt: CrateAnalysisCtxtIntraView<'infercx, Rho, Option<bool>>,
     phi_joins: PhiNodeInsertionPoints<Vec<SSAIdx>>,
-    constraints: &'infercx mut ConstraintSet, //Vec<Constraint>,
+    constraints: ConstraintDataBase<MaybeSaturated>, //Vec<Constraint>,
 }
 
 impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
@@ -416,16 +425,24 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         body: &'infercx Body<'tcx>,
         call_graph: &'infercx CallGraph,
         rho_ctxt: &'infercx mut CrateAnalysisCtxt<Rho, Option<bool>>,
-        constraints: &'infercx mut ConstraintSet, //Vec<Constraint>,
+        globals: Range<Rho>,
+        // constraints: &'infercx mut ConstraintDataBase, //Vec<Constraint>,
         phi_joins: PhiNodeInsertionPoints<Vec<SSAIdx>>,
     ) -> Self {
+
+        let initial_locals_start = rho_ctxt.assumptions.next_index();
+        let rho_ctxt = rho_ctxt.intra_view(body, func);
+        let initial_locals_end = rho_ctxt.assumptions.next_index();
+
+        let locals = Range { start: initial_locals_start, end: initial_locals_end };
+
         InferCtxt {
             tcx,
             body,
             call_graph,
-            rho_ctxt: rho_ctxt.intra_view(body, func),
+            rho_ctxt,
             phi_joins,
-            constraints,
+            constraints: ConstraintDataBase::new(globals, locals),
         }
         .log_initial_state()
     }
@@ -477,7 +494,15 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
     fn handle_def(&mut self, local: Local, idx: SSAIdx, _location: Location) -> Self::Output {
         log::debug!("InferCtxt defining {:?}^{} of ptr type", local, idx);
         debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
-        self.rho_ctxt.generate_local(local, idx)
+        let res = self.rho_ctxt.generate_local(local, idx);
+
+        // TODO: refactor this!
+        for rho in res.start..res.end {
+            self.constraints.le_constraints.add_local(rho)
+        }
+
+
+        res
     }
 
     fn handle_use(&mut self, local: Local, idx: SSAIdx, _location: Location) -> Self::Output {

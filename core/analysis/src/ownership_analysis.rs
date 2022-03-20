@@ -1,9 +1,11 @@
 pub mod infer;
+pub mod solve;
 #[cfg(test)]
 mod test;
 
-use std::{fmt::Display, ops::Range};
+use std::{fmt::Display, ops::Range, marker::PhantomData};
 
+use range_ext::IsRustcIndexDefinedCV;
 use rustc_data_structures::graph::WithNumNodes;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
@@ -14,7 +16,7 @@ use crate::{
     call_graph::{CallGraph, CallSite, Func},
     def_use::OwnershipAnalysisDefUse,
     ssa::rename::SSANameHandler,
-    Analysis, Boundary, BoundaryE, CrateAnalysisCtxt, FnSigVal, FnSigValE,
+    Analysis, Boundary, BoundaryE, CrateAnalysisCtxt, FnSigVal, FnSigValE, ULEConstraintGraph,
 };
 
 use self::infer::InferEngine;
@@ -55,7 +57,6 @@ impl CrateSummary {
             },
             rho_ctxt,
             func_summaries: IndexVec::with_capacity(num_funcs),
-            constraints: ConstraintSet::new(),
         }
         .log_initial_state();
         engine.infer(extra_handler);
@@ -74,7 +75,6 @@ pub struct AnalysisEngine<'tcx> {
     globals: Range<Rho>,
     // boundaries: IndexVec<CallSite, BoundaryE<()>>,
     func_summaries: IndexVec<Func, FuncSummary>,
-    constraints: ConstraintSet,
 }
 
 impl<'tcx> AnalysisEngine<'tcx> {
@@ -106,11 +106,74 @@ impl<'tcx> AnalysisEngine<'tcx> {
 }
 
 pub struct FuncSummary {
-    pub all_constraint_vars: Range<Rho>,
-    pub all_constraints: Range<usize>,
+    // pub all_constraint_vars: Range<Rho>,
+    pub constraint_db: ConstraintDataBase<Saturated>,
+    // pub all_constraints: Range<usize>,
     pub func_sig: FnSigValE<Range<Rho>>, //Vec<Range<Rho>>,
 }
 
+/// old_rhs = new_lhs + new_rhs
+pub struct OwnershipTransferConstraint {
+    old_rhs: Rho,
+    new_lhs: Rho,
+    new_rhs: Rho,
+}
+
+impl Display for OwnershipTransferConstraint {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!("{:?} = {:?} + {:?}", self.old_rhs, self.new_lhs, self.new_rhs))
+    }
+}
+
+pub struct MaybeSaturated;
+pub struct Saturated;
+
+pub struct ConstraintDataBase<State> {
+    eq_constraints: Vec<OwnershipTransferConstraint>,
+    le_constraints: ULEConstraintGraph<Rho>,
+    _marker: PhantomData<State>
+}
+
+impl ConstraintDataBase<MaybeSaturated> {
+    pub fn new(globals: Range<Rho>, locals: Range<Rho>) -> Self {
+        Self {
+            eq_constraints: Vec::new(),
+            le_constraints: ULEConstraintGraph::new(globals, locals),
+            _marker: PhantomData
+        }
+    }
+
+    pub fn push_le(&mut self, x: Rho, y: Rho) {
+        log::debug!("generate constraint {:?} ≤ {:?}", x, y);
+        self.le_constraints.add_fact(x, y)
+    }
+
+    pub fn push_eq(&mut self, x: Rho, y: Rho) {
+        self.push_le(x, y);
+        self.push_le(y, x);
+    }
+
+    pub fn push_transfer(&mut self, old_rhs: Rho, new_lhs: Rho, new_rhs: Rho) {
+        let constraint = OwnershipTransferConstraint {
+            old_rhs,
+            new_lhs,
+            new_rhs,
+        };
+        log::debug!("generate constraint {}", &constraint);
+        self.eq_constraints.push(constraint);
+
+        self.push_le(new_lhs, old_rhs);
+        self.push_le(new_rhs, old_rhs);
+    }
+
+    pub fn saturate(self) -> ConstraintDataBase<Saturated> {
+        loop {
+            todo!()
+        }
+    }
+}
+
+/*
 pub enum Constraint {
     GE(Rho, SmallVec<[Rho; 1]>),
     Eq(Rho, SmallVec<[Rho; 2]>),
@@ -182,6 +245,7 @@ impl ConstraintSet {
         idx
     }
 }
+*/
 
 rustc_index::newtype_index! {
     /// Constraint variables for array analysis

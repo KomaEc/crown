@@ -151,6 +151,20 @@ impl<Node: Idx, Edge: Idx> Graph<Node, Edge> {
     ) -> DepthFirstTraversal<'a, Node, Edge> {
         DepthFirstTraversal::with_start_node(self, start, direction)
     }
+
+    /*
+    pub fn from_another_graph_rep<G>(g: G) -> Self
+    where
+        G: DirectedGraph<Node = Node> + WithNumNodes + WithSuccessors,
+    {
+        Self::new(
+            g.num_nodes(),
+            (0..g.num_nodes())
+                .map(G::Node::new)
+                .flat_map(|src| g.successors(src).map(move |tgt| (src, tgt))),
+        )
+    }
+    */
 }
 
 // # Iterators

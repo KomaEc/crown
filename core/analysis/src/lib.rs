@@ -47,6 +47,7 @@ extern crate tracing;
 use boundary_model::BoundaryModel;
 use call_graph::{CallGraph, Func};
 use def_use::IsDefUse;
+use graph::implementation::forward_star::Graph;
 use lattice::JoinLattice;
 use libcall_model::LibCallModel;
 use range_ext::{IsRustcIndexDefinedCV, RangeExt};
@@ -74,7 +75,9 @@ use ty_ext::TyExt;
 pub trait Analysis<'tcx> {
     const NAME: &'static str;
     type DefUse: IsDefUse;
-    type Infer<'a, E>: SSARename<'tcx, DefUse = Self::DefUse> + LibCallModel<'tcx> + BoundaryModel<'tcx>
+    type Infer<'a, E>: SSARename<'tcx, DefUse = Self::DefUse>
+        + LibCallModel<'tcx>
+        + BoundaryModel<'tcx>
     where
         'tcx: 'a,
         E: SSANameHandler;
@@ -358,6 +361,66 @@ pub trait BoundariesInstantiable {
     type FnReturn;
     type Parameter;
     fn instantiate(&self, fn_sig: &FnSigVal<Self::FnReturn, Self::Parameter>);
+}
+
+/// Unit Less or Equal constraint graph per function
+/// Node indexing: `[0, 1, globals.start..globals.end, locals.start..locals.end]`
+struct ULEConstraintGraph<CV: IsRustcIndexDefinedCV> {
+    globals: Range<CV>,
+    locals: Range<CV>,
+    /// Invariant: `graph.num_nodes() == locals.len() + globals.len() + 2`
+    /// TODO!!!!!!!!!!!!!!!!!!!!!
+    /// use SparseBitVector Graph instead. forward star allows multi-graph!!!!!!
+    graph: Graph<usize, usize>,
+}
+
+impl<CV: IsRustcIndexDefinedCV> ULEConstraintGraph<CV> {
+    const ZERO_IDX: usize = 0;
+    const ONE_IDX: usize = 1;
+
+    pub fn new(globals: Range<CV>, locals: Range<CV>) -> Self {
+        let graph = graph::implementation::forward_star::Graph::new(
+            2 + globals.len() + locals.len(),
+            (globals.clone().chain(locals.clone()).enumerate()).flat_map(|(idx, _)| {
+                let idx = idx + 2;
+                [(idx, Self::ONE_IDX), (Self::ZERO_IDX, idx)].into_iter()
+            }),
+        );
+        ULEConstraintGraph {
+            globals,
+            locals,
+            graph,
+        }
+    }
+
+    pub fn add_local(&mut self, x: CV) {
+        assert_eq!(self.locals.end, x);
+        self.graph.add_node();
+        self.locals.end = self.locals.end + 1;
+    }
+
+    #[inline]
+    pub fn query_cv(&self, x: CV) -> usize {
+        self
+            .globals
+            .contains(&x)
+            .then(|| x.index() - self.globals.start.index() + 2)
+            .unwrap_or_else(|| x.index() - self.locals.start.index() + 2 + self.globals.len())
+    }
+
+    pub fn add_fact(&mut self, x: CV, y: CV) {
+        let x_idx = self.query_cv(x);
+        let y_idx = self.query_cv(y);
+        self.graph.add_edge(x_idx, y_idx);
+    }
+
+    pub fn reachable(&self, x: usize, y: usize) -> bool {
+        todo!()
+    }
+
+    pub fn is_consistent(&self) -> bool {
+        !self.reachable(Self::ONE_IDX, Self::ZERO_IDX)
+    }
 }
 
 #[derive(Debug, Clone)]

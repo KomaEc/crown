@@ -32,6 +32,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         let (lhs, _) = destination.unwrap();
         match self.process_ptr_place(&lhs, location) {
             PlaceProcessResult::Base { old, new } => {
+                /// TODO
                 self.ctxt.rho_ctxt.assume(old.start, false);
                 self.ctxt.rho_ctxt.assume(new.start, true)
             }
