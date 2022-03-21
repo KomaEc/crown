@@ -19,7 +19,7 @@ use crate::{
     call_graph::{CallGraph, Func},
     ssa::rename::{SSAIdx, SSANameHandler},
     ty_ext::TyExt,
-    Boundary, FnSig, ULEConstraintGraph, UnitAnalysisCV,
+    Boundary, FnSig, Inner, Surface, ULEConstraintGraph, UnitAnalysisCV,
 };
 
 use self::infer::PtrPlaceDefResult;
@@ -94,6 +94,7 @@ pub struct InterCtxtView<'view> {
 pub struct InterSummary {
     inter_ctxt: InterCtxt,
     call_graph: CallGraph,
+    func_sigs: IndexVec<Func, FnSig<Surface, Option<bool>>>,
     func_summaries: IndexVec<Func, IntraSummary>,
 }
 
@@ -174,17 +175,24 @@ impl InterSummary {
             call_graph: &call_graph,
             inter_ctxt: inter_ctxt.view(),
             // boundaries: &mut boundaries,
+            func_sigs: IndexVec::with_capacity(num_funcs),
             func_summaries: IndexVec::with_capacity(num_funcs),
         }
         .log_initial_state();
 
         engine.infer(extra_handler);
 
-        let func_summaries = engine.func_summaries;
+        // let func_summaries = engine.func_summaries;
+        let AnalysisEngine {
+            func_sigs,
+            func_summaries,
+            ..
+        } = engine;
 
         InterSummary {
             inter_ctxt,
             call_graph,
+            func_sigs,
             func_summaries,
         }
     }
@@ -232,11 +240,18 @@ impl InterSummary {
 
                     log::debug!("Solving {:?}", self.call_graph.functions[func]);
 
-                    let constraint_system = &mut self.func_summaries[func].constraint_system;
+                    let summary = &mut self.func_summaries[func];
+
+                    summary.instantiate(&self.func_sigs);
+
+                    
+                    let constraint_system = &mut summary.constraint_system;
                     // before solving, global facts should be joined
                     debug_assert!(
                         !constraint_system.join_global_facts(&self.inter_ctxt.global_assumptions)
                     );
+
+
                     let func_constraint_sccs = constraint_system.saturate();
 
                     if !constraint_system.consistent(&func_constraint_sccs) {
@@ -251,7 +266,9 @@ impl InterSummary {
                         continue 'outter;
                     }
 
-                    if !self.func_summaries[func].update_fn_sig(&func_constraint_sccs) {
+                    if !summary
+                        .update_surface_func_sig(&func_constraint_sccs, &mut self.func_sigs[func])
+                    {
                         continue;
                     }
 
@@ -278,6 +295,7 @@ pub struct AnalysisEngine<'analysis, 'tcx> {
     call_graph: &'analysis CallGraph,
     inter_ctxt: InterCtxtView<'analysis>,
     // boundaries: &'analysis mut IndexVec<CallSite, Vec<OwnershipAnalysisBoundary>>,
+    func_sigs: IndexVec<Func, FnSig<Surface, Option<bool>>>,
     func_summaries: IndexVec<Func, IntraSummary>,
 }
 
@@ -317,18 +335,36 @@ pub struct IntraSummary {
     locals: IndexVec<Local, IndexVec<SSAIdx, Range<Rho>>>,
     intra_source_map: Vec<LocalSourceInfo>,
     boundaries: Vec<OwnershipAnalysisBoundary>,
-    fn_sig: FnSig<Rho>,
+    fn_sig: FnSig<Inner, Rho>,
 }
 
 impl IntraSummary {
-    pub fn update_fn_sig(&mut self, constraint_graph_sccs: &Sccs<Rho, u32>) -> bool {
+    pub fn instantiate(
+        &mut self,
+        surfaces: &IndexVec<Func, FnSig<Surface, Option<bool>>>
+    ) {
+        for &Boundary {
+            callee,
+            ref dest,
+            ref arguments,
+        } in &self.boundaries
+        {
+            let surface = &surfaces[callee];
+            let (ret, parameters) = surface.sig.split_first().unwrap();
+            todo!()
+        }
+    }
+
+    pub fn update_surface_func_sig(
+        &self,
+        constraint_graph_sccs: &Sccs<Rho, u32>,
+        surface: &mut FnSig<Surface, Option<bool>>,
+    ) -> bool {
         let mut changed = false;
 
-        for (r#abstract, concrete) in
-            std::iter::zip(&self.fn_sig.r#abstract, &mut self.fn_sig.concrete)
-        {
-            assert_eq!(r#abstract.len(), concrete.len());
-            for (rho, value) in std::iter::zip(r#abstract.clone(), concrete.iter_mut()) {
+        for (inner, surface) in std::iter::zip(&self.fn_sig.sig, &mut surface.sig) {
+            assert_eq!(inner.len(), surface.len());
+            for (rho, value) in std::iter::zip(inner.clone(), surface.iter_mut()) {
                 let rho_rep = constraint_graph_sccs.scc(rho);
                 let zero_rep = constraint_graph_sccs.scc(Rho::ZERO);
                 let one_rep = constraint_graph_sccs.scc(Rho::ONE);

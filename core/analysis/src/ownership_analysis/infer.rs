@@ -31,7 +31,7 @@ use crate::{
         },
     },
     ty_ext::TyExt,
-    Analysis, Boundary, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView, FnSig,
+    Analysis, Boundary, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView, FnSig, Surface,
 };
 
 use super::{
@@ -84,7 +84,10 @@ impl<'analysis, 'tcx> AnalysisEngine<'analysis, 'tcx> {
                 .global_assumptions
                 .join_global_facts(&infer.ctxt.constraint_system);
 
-            assert_eq!(self.func_summaries.push(infer.into_intra_summary()), func);
+            let (func_sig, intra_summary) = infer.complete();
+
+            assert_eq!(self.func_summaries.push(intra_summary), func);
+            assert_eq!(self.func_sigs.push(func_sig), func);
         }
     }
 }
@@ -264,7 +267,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
         }
     }
 
-    fn into_intra_summary(self) -> IntraSummary {
+    fn complete(self) -> (FnSig<Surface, Option<bool>>, IntraSummary) {
         let IntraInfer {
             ctxt, boundaries, ..
         } = self;
@@ -291,25 +294,25 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
             RangeExt::empty()
         });
 
-        let mut concrete = vec![smallvec![None; ret_rhos.len()]];
-        let mut r#abstract = vec![ret_rhos];
+        let mut surface = vec![smallvec![None; ret_rhos.len()]];
+        let mut inner = vec![ret_rhos];
 
         for arg in locals.iter().skip(1).take(body.arg_count) {
             let rhos = arg[SSAIdx::ENTRY].clone();
-            concrete.push(smallvec![None; rhos.len()]);
-            r#abstract.push(rhos);
+            surface.push(smallvec![None; rhos.len()]);
+            inner.push(rhos);
         }
 
-        IntraSummary {
-            constraint_system,
-            locals,
-            intra_source_map,
-            boundaries,
-            fn_sig: FnSig {
-                concrete,
-                r#abstract,
+        (
+            FnSig { sig: surface },
+            IntraSummary {
+                constraint_system,
+                locals,
+                intra_source_map,
+                boundaries,
+                fn_sig: FnSig { sig: inner },
             },
-        }
+        )
     }
 }
 

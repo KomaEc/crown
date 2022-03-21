@@ -355,16 +355,39 @@ pub enum Boundary<Return: Clone, Argument: Clone> {
 */
 
 #[derive(Clone)]
-pub struct Boundary<Return: Clone, Argument: Clone> {
+pub struct Boundary<Destination: Clone, Argument: Clone> {
     callee: Func,
-    ret: Return,
+    dest: Destination,
     arguments: Vec<Argument>,
 }
 
+/*
 #[derive(Clone)]
 pub struct FnSig<X: IsRustcIndexDefinedCV> {
     concrete: Vec<SmallVec<[Option<bool>; 1]>>,
     r#abstract: Vec<Range<X>>,
+}
+*/
+
+pub trait FnSigKind {
+    type PtrKindRep<Value>;
+}
+
+pub struct FnSig<K: FnSigKind, Value> {
+    sig: Vec<K::PtrKindRep<Value>>,
+    // _marker: PhantomData<*const K>
+}
+
+pub struct Surface;
+
+impl FnSigKind for Surface {
+    type PtrKindRep<Domain> = SmallVec<[Domain; 1]>;
+}
+
+pub struct Inner;
+
+impl FnSigKind for Inner {
+    type PtrKindRep<X> = Range<X>;
 }
 
 pub trait UnitAnalysisCV {

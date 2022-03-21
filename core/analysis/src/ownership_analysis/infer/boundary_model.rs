@@ -11,7 +11,7 @@ use crate::{
     Boundary,
 };
 
-use super::IntraInfer;
+use super::{IntraInfer, PtrPlaceDefResult};
 
 impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
     for IntraInfer<'infercx, 'tcx, Handler>
@@ -26,6 +26,11 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
         // let caller = self.ctxt.func;
         let callee = self.ctxt.call_graph.lookup_function(&callee).unwrap();
 
+        // f.1 = y
+        // This should introduce a pseudo constraint rho_f.1 + rho_y' = rho_y 
+        // We introduce constraint rho_y' ≤ rho_y. Upon instantiation, if rho_f.1 = 1,
+        // then add constraints rho_y = 1 and rho_y' = 0; if rho_f.1 = 0, then add constraint
+        // rho_y ≤ rho_y'
         let arguments = args
             .iter()
             .map(|arg| {
@@ -36,8 +41,14 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
                     let place = arg
                         .place()
                         .expect("constant in call arguments is not supported");
-                    let rhos = self.process_ptr_place(&place, location);
-                    Some(rhos)
+                    let res = self.process_ptr_place(&place, location);
+                    match &res {
+                        PtrPlaceDefResult::Base { old, new } => {
+
+                        },
+                        PtrPlaceDefResult::Proj(_) => todo!(),
+                    }
+                    Some(res)
                 } else {
                     self.visit_operand(arg, location);
                     None
@@ -45,7 +56,10 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
             })
             .collect::<Vec<_>>();
 
-        let ret = destination
+        // x = f.0
+        // This should introduce the constraint rho_x = 0 && pseudo constraint rho_x' = rho_f.0
+        // We introduce rho_x = 0. Upon instantiation, assert rho_x' if rho_f.0 is known.
+        let dest = destination
             .map(|(destination, _)| {
                 if destination
                     .ty(self.ctxt.body, self.ctxt.tcx)
@@ -67,7 +81,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
 
         self.boundaries.push(Boundary {
             callee,
-            ret,
+            dest,
             arguments,
         });
     }
