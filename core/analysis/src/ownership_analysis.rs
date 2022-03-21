@@ -1,5 +1,4 @@
 pub mod infer;
-pub mod solve;
 #[cfg(test)]
 mod test;
 
@@ -7,7 +6,9 @@ use std::{fmt::Display, marker::PhantomData, ops::Range};
 
 use graph::implementation::forward_star::{Direction, Graph};
 use range_ext::IsRustcIndexDefinedCV;
-use rustc_data_structures::graph::{iterate::DepthFirstSearch, scc::Sccs, WithNumNodes};
+use rustc_data_structures::graph::{
+    iterate::DepthFirstSearch, scc::Sccs, WithNumEdges, WithNumNodes,
+};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
@@ -23,7 +24,7 @@ use crate::{
     def_use::OwnershipAnalysisDefUse,
     ssa::rename::{SSAIdx, SSANameHandler},
     ty_ext::TyExt,
-    Analysis, Boundary, BoundaryE, CrateAnalysisCtxt, FnSigVal, FnSigValE,
+    Analysis, Boundary, CrateAnalysisCtxt, ULEConstraintGraph, UnitAnalysisCV,
 };
 
 /*
@@ -85,7 +86,7 @@ impl Display for LocalSourceInfo {
 }
 
 pub struct InterCtxt {
-    global_assumptions: ConstraintDataBase,
+    global_assumptions: ConstraintDatabase,
     global_source_map: Vec<FieldDefSourceInfo>,
     field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
 }
@@ -101,16 +102,19 @@ impl InterCtxt {
 }
 
 pub struct InterCtxtView<'view> {
-    global_assumptions: &'view mut ConstraintDataBase,
+    global_assumptions: &'view mut ConstraintDatabase,
     global_source_map: &'view Vec<FieldDefSourceInfo>,
     field_defs: &'view FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
 }
+
+pub type OwnershipAnalysisBoundary = Boundary<Range<Rho>, infer::PlaceProcessResult>;
 
 pub struct InterSummary {
     // rho_ctxt: CrateAnalysisCtxt<Rho, Option<bool>>,
     // globals: Range<Rho>,
     inter_ctxt: InterCtxt,
     call_graph: CallGraph,
+    boundaries: IndexVec<CallSite, Vec<OwnershipAnalysisBoundary>>,
     func_summaries: IndexVec<Func, IntraSummary>,
 }
 
@@ -178,7 +182,7 @@ impl InterSummary {
             })
             .collect::<FxHashMap<_, _>>();
 
-        let global_assumptions = ConstraintDataBase::new(global_source_map.len(), 0);
+        let global_assumptions = ConstraintDatabase::new(global_source_map.len(), 0);
 
         let mut inter_ctxt = InterCtxt {
             global_assumptions,
@@ -186,10 +190,13 @@ impl InterSummary {
             field_defs,
         };
 
+        let mut boundaries = IndexVec::from_elem_n(Vec::new(), call_graph.num_edges());
+
         let mut engine = AnalysisEngine {
             tcx,
             call_graph: &call_graph,
             inter_ctxt: inter_ctxt.view(),
+            boundaries: &mut boundaries,
             func_summaries: IndexVec::with_capacity(num_funcs),
         }
         .log_initial_state();
@@ -201,6 +208,7 @@ impl InterSummary {
         InterSummary {
             inter_ctxt,
             call_graph,
+            boundaries,
             func_summaries,
         }
     }
@@ -209,13 +217,8 @@ impl InterSummary {
 pub struct AnalysisEngine<'analysis, 'tcx> {
     tcx: TyCtxt<'tcx>,
     call_graph: &'analysis CallGraph,
-    // rho_ctxt: CrateAnalysisCtxt<Rho, Option<bool>>,
-    // globals: Range<Rho>,
-    // global_assumptions: &'analysis mut IndexVec<Rho, Option<bool>>,
-    // global_source_map: &'analysis IndexVec<Rho, FieldDefSourceInfo>,
-    // field_defs: &'analysis FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
     inter_ctxt: InterCtxtView<'analysis>,
-    // boundaries: IndexVec<CallSite, BoundaryE<()>>,
+    boundaries: &'analysis mut IndexVec<CallSite, Vec<OwnershipAnalysisBoundary>>,
     func_summaries: IndexVec<Func, IntraSummary>,
 }
 
@@ -248,10 +251,7 @@ impl<'me, 'tcx> AnalysisEngine<'me, 'tcx> {
 }
 
 pub struct IntraSummary {
-    // pub all_constraint_vars: Range<Rho>,
-    pub constraint_db: ConstraintDataBase,
-    // pub all_constraints: Range<usize>,
-    // pub func_sig: FnSigValE<Range<Rho>>, //Vec<Range<Rho>>,
+    constraint_system: ConstraintDatabase,
 }
 
 /// old_rhs = new_lhs + new_rhs
@@ -271,68 +271,13 @@ impl Display for OwnershipTransferConstraint {
     }
 }
 
-/// Unit Less or Equal constraint graph per function
-/// Node indexing: `[0, 1, globals.start..globals.end, locals.start..locals.end]`
 #[derive(Clone)]
-struct ULEConstraintGraph {
-    local_start: Rho,
-    /// Invariant: `graph.num_nodes() == locals.len() + globals.len() + 2`
-    /// TODO!!!!!!!!!!!!!!!!!!!!!
-    /// use SparseBitVector Graph instead. forward star allows multi-graph!!!!!!
-    graph: Graph<Rho, usize>,
-}
-
-impl ULEConstraintGraph {
-    const ZERO: Rho = Rho::from_u32(0);
-    const ONE: Rho = Rho::from_u32(1);
-
-    pub fn new(n_globals: usize, n_locals: usize) -> Self {
-        let mut graph = Graph::new(
-            2 + n_globals + n_locals,
-            (2..2 + n_globals + n_locals).flat_map(|idx| {
-                let idx = Rho::new(idx);
-                [(idx, Self::ONE), (Self::ZERO, idx), (idx, idx)].into_iter()
-            }),
-        );
-        graph.add_edge(Self::ONE, Self::ONE);
-        graph.add_edge(Self::ZERO, Self::ZERO);
-        ULEConstraintGraph {
-            local_start: Rho::new(2 + n_globals),
-            graph,
-        }
-    }
-
-    pub fn generate_local(&mut self) -> Rho {
-        let new = self.graph.add_node();
-        log::debug!("new node variable generated {:?}", new);
-        self.add_fact(new, new);
-        self.add_fact(0u32.into(), new);
-        self.add_fact(new, 1u32.into());
-        new
-    }
-
-    #[inline]
-    pub fn add_fact(&mut self, x: Rho, y: Rho) -> bool {
-        log::debug!("adding fact {:?} ≤ {:?}", x, y);
-        self.graph.add_edge_without_dup(x, y).is_some()
-    }
-
-    pub fn show(&self) {
-        for x in self.graph.nodes() {
-            for y in self.graph.successor_nodes(x) {
-                log::debug!("{:?} ≤ {:?}", x, y)
-            }
-        }
-    }
-}
-
-#[derive(Clone)]
-pub struct ConstraintDataBase {
+pub struct ConstraintDatabase {
     eq_constraints: Vec<OwnershipTransferConstraint>,
-    le_constraints: ULEConstraintGraph,
+    le_constraints: ULEConstraintGraph<Rho>,
 }
 
-impl ConstraintDataBase {
+impl ConstraintDatabase {
     pub fn new(n_globals: usize, n_locals: usize) -> Self {
         Self {
             eq_constraints: Vec::new(),
@@ -340,15 +285,17 @@ impl ConstraintDataBase {
         }
     }
 
-    pub fn generate_local(&mut self) -> Rho {
-        self.le_constraints.generate_local()
+    #[inline]
+    pub fn new_var(&mut self) -> Rho {
+        self.le_constraints.add_node()
     }
 
     pub fn push_le(&mut self, x: Rho, y: Rho) {
         log::debug!("generate constraint {:?} ≤ {:?}", x, y);
-        self.le_constraints.add_fact(x, y);
+        self.le_constraints.add_relation(x, y);
     }
 
+    #[inline]
     pub fn push_eq(&mut self, x: Rho, y: Rho) {
         self.push_le(x, y);
         self.push_le(y, x);
@@ -368,15 +315,15 @@ impl ConstraintDataBase {
     }
 
     pub fn assume(&mut self, x: Rho, value: bool) {
-        assert_ne!(x, ULEConstraintGraph::ZERO);
-        assert_ne!(x, ULEConstraintGraph::ONE);
+        assert_ne!(x, Rho::ZERO);
+        assert_ne!(x, Rho::ONE);
         log::debug!("assume that {:?} = {}", x, value.then_some(1).unwrap_or(0));
         value
             .then(|| {
-                self.le_constraints.add_fact(ULEConstraintGraph::ONE, x);
+                self.le_constraints.add_relation(Rho::ONE, x);
             })
             .unwrap_or_else(|| {
-                self.le_constraints.add_fact(x, ULEConstraintGraph::ZERO);
+                self.le_constraints.add_relation(x, Rho::ZERO);
             })
     }
 
@@ -396,7 +343,15 @@ impl ConstraintDataBase {
         }
     }
 
+    /*
+    pub fn get_sccs(&mut self) -> &Sccs<Rho, u32> {
+        self.sccs_cache.get_or_insert_with(|| Sccs::<_, u32>::new(&self.le_constraints.graph))
+    }
+    */
+
     /// Assumption: eq_constraints do not involve pure global facts!!!!!
+    /// TODO: cleverer? changed only when facts can not be deduced
+    /// !!!!!!!!!!!!!Use transitive reduction on Sccs?
     pub fn join_global_facts(&mut self, other: &Self) -> bool {
         assert_eq!(
             self.le_constraints.local_start,
@@ -405,23 +360,23 @@ impl ConstraintDataBase {
         let mut changed = false;
         for x in 0u32.into()..other.le_constraints.local_start {
             for y in other.le_constraints.graph.successor_nodes(x) {
-                changed = changed || self.le_constraints.add_fact(x, y)
+                changed = changed || self.le_constraints.add_relation(x, y)
             }
         }
         changed
     }
 
-    pub fn saturate(self) -> Self {
-        let ConstraintDataBase {
+    pub fn saturate(self) -> (Self, Sccs<Rho, u32>) {
+        let ConstraintDatabase {
             eq_constraints,
             mut le_constraints,
         } = self;
 
         let mut removed = vec![false; eq_constraints.len()];
 
+        let mut sccs = Sccs::<_, u32>::new(&le_constraints.graph);
         loop {
             let mut changed = false;
-            let mut sccs = Sccs::<_, u32>::new(&le_constraints.graph);
             // x + y = z
             for (
                 &OwnershipTransferConstraint {
@@ -440,26 +395,26 @@ impl ConstraintDataBase {
                     let x_rep = sccs.scc(x);
                     let y_rep = sccs.scc(y);
                     let z_rep = sccs.scc(z);
-                    let zero_rep = sccs.scc(ULEConstraintGraph::ZERO);
+                    let zero_rep = sccs.scc(Rho::ZERO);
                     // let one_rep = sccs.scc(ULEConstraintGraph::ONE);
 
                     if x_rep == zero_rep {
-                        le_constraints.add_fact(z, y);
+                        le_constraints.add_relation(z, y);
                         *removed = true;
                     } else if y_rep == zero_rep {
-                        le_constraints.add_fact(z, x);
+                        le_constraints.add_relation(z, x);
                         *removed = true;
                     } else if DepthFirstSearch::new(&sccs)
                         .with_start_node(z_rep)
-                        .any(|idx| idx == y_rep)
+                        .any(|rep| rep == y_rep)
                     {
-                        le_constraints.add_fact(x, ULEConstraintGraph::ZERO);
+                        le_constraints.add_relation(x, Rho::ZERO);
                         *removed = true;
                     } else if DepthFirstSearch::new(&sccs)
                         .with_start_node(z_rep)
-                        .any(|idx| idx == x_rep)
+                        .any(|rep| rep == x_rep)
                     {
-                        le_constraints.add_fact(y, ULEConstraintGraph::ZERO);
+                        le_constraints.add_relation(y, Rho::ZERO);
                         *removed = true;
                     }
 
@@ -480,10 +435,13 @@ impl ConstraintDataBase {
             .filter_map(|(c, removed)| (!removed).then(|| c))
             .collect::<Vec<_>>();
 
-        ConstraintDataBase {
-            eq_constraints,
-            le_constraints,
-        }
+        (
+            ConstraintDatabase {
+                eq_constraints,
+                le_constraints,
+            },
+            sccs,
+        )
     }
 }
 
@@ -492,6 +450,11 @@ rustc_index::newtype_index! {
     pub struct Rho {
         DEBUG_FORMAT = "ρ_({})"
     }
+}
+
+impl UnitAnalysisCV for Rho {
+    const ZERO: Self = Rho::from_u32(0);
+    const ONE: Self = Rho::from_u32(1);
 }
 
 impl range_ext::IsConstraintVariable for Rho {}

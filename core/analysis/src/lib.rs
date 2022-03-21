@@ -18,6 +18,7 @@ pub mod liveness_analysis;
 pub mod null_analysis;
 pub mod ownership_analysis;
 pub mod pointer_analysis;
+pub mod rustc_index_ext;
 pub mod ssa;
 #[cfg(test)]
 pub mod test;
@@ -344,24 +345,65 @@ impl Display for CVSourceData {
     }
 }
 
-pub struct Boundary<Return, Argument> {
-    r#return: Return,
-    arguments: Vec<Argument>,
+#[derive(Clone)]
+pub enum Boundary<Return: Clone, Argument: Clone> {
+    Return(Return),
+    Parameter { caller: Argument, callee: Local },
 }
 
-pub type BoundaryE<T> = Boundary<T, T>;
-
-pub struct FnSigVal<Return, Parameter> {
-    r#return: Return,
-    parameters: Vec<Parameter>,
+pub trait UnitAnalysisCV {
+    const ZERO: Self;
+    const ONE: Self;
 }
 
-pub type FnSigValE<T> = FnSigVal<T, T>;
+/// Unit Less or Equal constraint graph per function
+/// Node indexing: `[0, 1, globals.start..globals.end, locals.start..locals.end]`
+#[derive(Clone)]
+struct ULEConstraintGraph<X: IsRustcIndexDefinedCV + UnitAnalysisCV> {
+    local_start: X,
+    /// Invariant: `graph.num_nodes() == locals.len() + globals.len() + 2`
+    graph: Graph<X, usize>,
+}
 
-pub trait BoundariesInstantiable {
-    type FnReturn;
-    type Parameter;
-    fn instantiate(&self, fn_sig: &FnSigVal<Self::FnReturn, Self::Parameter>);
+impl<X: IsRustcIndexDefinedCV + UnitAnalysisCV> ULEConstraintGraph<X> {
+    pub fn new(n_globals: usize, n_locals: usize) -> Self {
+        let mut graph = Graph::new(
+            2 + n_globals + n_locals,
+            (2..2 + n_globals + n_locals).flat_map(|idx| {
+                let idx = X::new(idx);
+                [(idx, X::ONE), (X::ZERO, idx), (idx, idx)].into_iter()
+            }),
+        );
+        graph.add_edge(X::ONE, X::ONE);
+        graph.add_edge(X::ZERO, X::ZERO);
+        ULEConstraintGraph {
+            local_start: X::new(2 + n_globals),
+            graph,
+        }
+    }
+
+    pub fn add_node(&mut self) -> X {
+        let new = self.graph.add_node();
+        log::debug!("new node variable generated {:?}", new);
+        self.add_relation(new, new);
+        self.add_relation(X::ZERO, new);
+        self.add_relation(new, X::ONE);
+        new
+    }
+
+    #[inline]
+    pub fn add_relation(&mut self, x: X, y: X) -> bool {
+        log::debug!("adding relation {:?} ≤ {:?}", x, y);
+        self.graph.add_edge_without_dup(x, y).is_some()
+    }
+
+    pub fn show(&self) {
+        for x in self.graph.nodes() {
+            for y in self.graph.successor_nodes(x) {
+                log::debug!("{:?} ≤ {:?}", x, y)
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
