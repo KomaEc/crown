@@ -2,7 +2,7 @@ pub mod infer;
 #[cfg(test)]
 mod test;
 
-use std::{fmt::Display, ops::Range};
+use std::{collections::VecDeque, fmt::Display, ops::Range};
 
 use range_ext::IsRustcIndexDefinedCV;
 use rustc_data_structures::graph::{iterate::DepthFirstSearch, scc::Sccs, WithNumNodes};
@@ -207,7 +207,70 @@ impl InterSummary {
             })
     }
 
-    pub fn resolve(&mut self) {}
+    pub fn resolve(&mut self) -> Result<(), ()> {
+        // let mut global_constraint_sccs =
+        //     Sccs::<_, u32>::new(&self.inter_ctxt.global_assumptions.le_constraints.graph);
+        'outter: loop {
+            // first propagate global assumptions to individual functions
+            for summary in self.func_summaries.iter_mut() {
+                summary
+                    .constraint_system
+                    .join_global_facts(&self.inter_ctxt.global_assumptions);
+            }
+
+            let mut in_queue = IndexVec::from_elem(true, &self.call_graph.graph.nodes);
+
+            for (group_idx, func_group) in self
+                .call_graph
+                .sccs_data
+                .ranked_by_post_order
+                .iter_enumerated()
+            {
+                let mut work_list = func_group.iter().map(|&func| func).collect::<VecDeque<_>>();
+                while let Some(func) = work_list.pop_front() {
+                    in_queue[func] = false;
+
+                    log::debug!("Solving {:?}", self.call_graph.functions[func]);
+
+                    let constraint_system = &mut self.func_summaries[func].constraint_system;
+                    // before solving, global facts should be joined
+                    debug_assert!(
+                        !constraint_system.join_global_facts(&self.inter_ctxt.global_assumptions)
+                    );
+                    let func_constraint_sccs = constraint_system.saturate();
+
+                    if !constraint_system.consistent(&func_constraint_sccs) {
+                        return Err(());
+                    }
+
+                    if self
+                        .inter_ctxt
+                        .global_assumptions
+                        .join_global_facts(&*constraint_system)
+                    {
+                        continue 'outter;
+                    }
+
+                    if !self.func_summaries[func].update_fn_sig(&func_constraint_sccs) {
+                        continue;
+                    }
+
+                    for caller in self.call_graph.graph.predecessor_nodes(func) {
+                        if self.call_graph.sccs_data.sccs.scc(caller) == group_idx
+                            && !in_queue[caller]
+                        {
+                            in_queue[caller] = true;
+                            work_list.push_back(caller)
+                        }
+                    }
+                }
+            }
+
+            break;
+        }
+
+        Ok(())
+    }
 }
 
 pub struct AnalysisEngine<'analysis, 'tcx> {
@@ -404,7 +467,6 @@ impl ConstraintDatabase {
 
     /// Assumption: eq_constraints do not involve pure global facts!!!!!
     /// TODO: cleverer? changed only when facts can not be deduced
-    /// !!!!!!!!!!!!!Use transitive reduction on Sccs?
     pub fn join_global_facts(&mut self, other: &Self) -> bool {
         assert_eq!(
             self.le_constraints.local_start,
@@ -412,7 +474,7 @@ impl ConstraintDatabase {
         );
         let local_start = self.le_constraints.local_start;
         let mut changed = false;
-        for x in 0u32.into()..other.le_constraints.local_start {
+        for x in 0u32.into()..local_start {
             if x < local_start {
                 for y in other.le_constraints.graph.successor_nodes(x) {
                     if y < local_start {
@@ -424,15 +486,15 @@ impl ConstraintDatabase {
         changed
     }
 
-    pub fn saturate(self) -> (Self, Sccs<Rho, u32>) {
-        let ConstraintDatabase {
-            eq_constraints,
-            mut le_constraints,
-        } = self;
+    #[inline]
+    pub fn consistent(&self, sccs: &Sccs<Rho, u32>) -> bool {
+        self.le_constraints.consistent(sccs)
+    }
 
-        let mut removed = vec![false; eq_constraints.len()];
+    pub fn saturate(&mut self) -> Sccs<Rho, u32> {
+        let mut removed = vec![false; self.eq_constraints.len()];
 
-        let mut sccs = Sccs::<_, u32>::new(&le_constraints.graph);
+        let mut sccs = Sccs::<_, u32>::new(&self.le_constraints.graph);
         loop {
             let mut changed = false;
             // x + y = z
@@ -443,7 +505,7 @@ impl ConstraintDatabase {
                     new_rhs: y,
                 },
                 removed,
-            ) in std::iter::zip(&eq_constraints, &mut removed)
+            ) in std::iter::zip(&self.eq_constraints, &mut removed)
             {
                 // let this_removed = &mut removed[idx];
 
@@ -457,29 +519,29 @@ impl ConstraintDatabase {
                     // let one_rep = sccs.scc(ULEConstraintGraph::ONE);
 
                     if x_rep == zero_rep {
-                        le_constraints.add_relation(z, y);
+                        self.le_constraints.add_relation(z, y);
                         *removed = true;
                     } else if y_rep == zero_rep {
-                        le_constraints.add_relation(z, x);
+                        self.le_constraints.add_relation(z, x);
                         *removed = true;
                     } else if DepthFirstSearch::new(&sccs)
                         .with_start_node(z_rep)
                         .any(|rep| rep == y_rep)
                     {
-                        le_constraints.add_relation(x, Rho::ZERO);
+                        self.le_constraints.add_relation(x, Rho::ZERO);
                         *removed = true;
                     } else if DepthFirstSearch::new(&sccs)
                         .with_start_node(z_rep)
                         .any(|rep| rep == x_rep)
                     {
-                        le_constraints.add_relation(y, Rho::ZERO);
+                        self.le_constraints.add_relation(y, Rho::ZERO);
                         *removed = true;
                     }
 
                     // change happend
                     if *removed {
                         // recompute sccs
-                        sccs = Sccs::<_, u32>::new(&le_constraints.graph);
+                        sccs = Sccs::<_, u32>::new(&self.le_constraints.graph);
                         changed = true;
                     }
                 }
@@ -489,17 +551,11 @@ impl ConstraintDatabase {
             }
         }
 
-        let eq_constraints = std::iter::zip(eq_constraints.into_iter(), removed.into_iter())
-            .filter_map(|(c, removed)| (!removed).then(|| c))
-            .collect::<Vec<_>>();
+        let mut removed = removed.into_iter();
 
-        (
-            ConstraintDatabase {
-                eq_constraints,
-                le_constraints,
-            },
-            sccs,
-        )
+        self.eq_constraints.retain(|_| !removed.next().unwrap());
+
+        sccs
     }
 }
 

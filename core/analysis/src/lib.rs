@@ -52,7 +52,7 @@ use graph::implementation::forward_star::Graph;
 use lattice::JoinLattice;
 use libcall_model::LibCallModel;
 use range_ext::{IsRustcIndexDefinedCV, RangeExt};
-use rustc_data_structures::graph::WithNumNodes;
+use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::{Idx, IndexVec};
@@ -411,6 +411,12 @@ impl<X: IsRustcIndexDefinedCV + UnitAnalysisCV> ULEConstraintGraph<X> {
     pub fn add_relation(&mut self, x: X, y: X) -> bool {
         // log::debug!("adding relation {:?} ≤ {:?}", x, y);
         self.graph.add_edge_without_dup(x, y).is_some()
+    }
+
+    pub fn consistent(&self, sccs: &Sccs<X, u32>) -> bool {
+        let one_rep = sccs.scc(X::ONE);
+        let zero_rep = sccs.scc(X::ZERO);
+        one_rep != zero_rep
     }
 
     pub fn show(&self) {

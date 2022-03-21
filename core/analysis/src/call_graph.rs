@@ -1,6 +1,6 @@
 use graph::{delegate_graph_via, implementation::forward_star};
 use rustc_data_structures::graph::{
-    DirectedGraph, GraphPredecessors, GraphSuccessors, WithNumEdges, WithNumNodes,
+    scc::Sccs, DirectedGraph, GraphPredecessors, GraphSuccessors, WithNumEdges, WithNumNodes,
     WithPredecessors, WithSuccessors,
 };
 use rustc_hir::def_id::DefId;
@@ -16,6 +16,26 @@ pub struct CallGraph {
     pub functions: IndexVec<Func, DefId>,
     pub call_sites: IndexVec<CallSite, Location>,
     pub graph: forward_star::Graph<Func, CallSite>,
+    pub sccs_data: CallGraphSccsData,
+}
+
+pub struct CallGraphSccsData {
+    pub sccs: Sccs<Func, CallGraphScc>,
+    pub ranked_by_post_order: IndexVec<CallGraphScc, Vec<Func>>,
+}
+
+impl CallGraphSccsData {
+    pub fn new(call_graph: &forward_star::Graph<Func, CallSite>) -> Self {
+        let sccs = Sccs::new(&call_graph);
+        let mut ranked_by_post_order = IndexVec::from_elem_n(Vec::new(), sccs.num_sccs());
+        for func in call_graph.nodes() {
+            ranked_by_post_order[sccs.scc(func)].push(func);
+        }
+        CallGraphSccsData {
+            sccs,
+            ranked_by_post_order,
+        }
+    }
 }
 
 delegate_graph_via!(CallGraph.graph: forward_star::Graph<Func, CallSite>);
@@ -54,6 +74,12 @@ rustc_index::newtype_index! {
     }
 }
 
+rustc_index::newtype_index! {
+    pub struct CallGraphScc {
+        DEBUG_FORMAT = "FunctionGroup_({})"
+    }
+}
+
 struct CallGraphConstruction<'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub functions: IndexVec<Func, DefId>,
@@ -77,6 +103,7 @@ impl<'tcx> CallGraphConstruction<'tcx> {
         CallGraph {
             functions: self.functions,
             call_sites: self.call_sites,
+            sccs_data: CallGraphSccsData::new(&self.call_graph),
             graph: self.call_graph,
         }
     }

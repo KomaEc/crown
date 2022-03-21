@@ -26,12 +26,39 @@ fn test_infer_not_crash() {
     }
 }
 
+#[test]
+fn test_solve_not_crash() {
+    init_logger();
+    for &folder in TEST_FOLDER_NAMES {
+        let file = env::current_dir()
+            .expect("current working directory value is invalid")
+            .join(TEST_RESOURCES_PATH_STR)
+            .join(folder)
+            .join("lib.rs");
+        compiler_interface::run_compiler_with_struct_defs_and_funcs(file.into(), run_solve)
+    }
+}
+
 fn run_infer<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec<LocalDefId>) {
     let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
 
-    let num_funcs = bodies.len();
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
     let crate_summary = InterSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+    // assert_eq!(crate_summary.rho_ctxt.locals.len(), num_funcs)
+}
+
+fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec<LocalDefId>) {
+    let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
+
+    let call_graph = CallGraph::new(tcx, bodies.into_iter());
+    let mut crate_summary = InterSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+    if let Ok(()) = crate_summary.resolve() {
+        for summary in &crate_summary.func_summaries {
+            summary.constraint_system.show()
+        }
+    } else {
+        log::debug!("Solve failed!")
+    }
     // assert_eq!(crate_summary.rho_ctxt.locals.len(), num_funcs)
 }
 
