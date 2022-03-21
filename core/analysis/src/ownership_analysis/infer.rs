@@ -3,16 +3,20 @@ pub mod libcall_model;
 
 use std::ops::Range;
 
+use rustc_hash::FxHashMap;
+use rustc_hir::def_id::DefId;
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
         visit::{PlaceContext, Visitor},
         BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
-        ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind,
+        ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind, RETURN_PLACE,
     },
     ty::{subst::GenericArgKind, TyCtxt, TyKind::FnDef},
 };
 use rustc_target::abi::VariantIdx;
+
+use smallvec::{smallvec, SmallVec};
 
 use crate::{
     boundary_model::BoundaryModel,
@@ -27,12 +31,12 @@ use crate::{
         },
     },
     ty_ext::TyExt,
-    Analysis, Boundary, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView,
+    Analysis, Boundary, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView, FnSig,
 };
 
 use super::{
     AnalysisEngine, ConstraintDatabase, InterCtxt, InterCtxtView, IntraSummary, LocalSourceInfo,
-    Rho, OwnershipAnalysisBoundary,
+    OwnershipAnalysisBoundary, Rho,
 };
 
 use range_ext::RangeExt;
@@ -45,53 +49,55 @@ impl<'analysis, 'tcx> AnalysisEngine<'analysis, 'tcx> {
 
             let infer_ctxt = IntraInferCtxt::new(
                 self.tcx,
-                func,
+                // func,
                 body,
                 &self.call_graph,
-                &mut self.inter_ctxt,
+                self.inter_ctxt.global_assumptions.clone(),
+                &self.inter_ctxt.field_defs,
                 insertion_points.filter_repack(|local, _| {
                     body.local_decls[local]
                         .ty
                         .is_ptr_but_not_fn_ptr()
-                        .then(|| vec![])
+                        .then(|| None)
                 }),
             );
 
             let mut infer: IntraInfer<_> = IntraInfer {
                 ctxt: infer_ctxt,
                 ssa_state: SSARenameState::new(&body.local_decls),
-                boundaries: &mut *self.boundaries,
+                boundaries: Vec::with_capacity(
+                    self.call_graph
+                        .graph
+                        .adjacent_edges(
+                            func,
+                            graph::implementation::forward_star::Direction::Outgoing,
+                        )
+                        .size_hint()
+                        .0,
+                ),
                 extra_handlers: &mut extra_handlers,
             };
 
             infer.rename_body(body, &insertion_points);
 
-            // log::debug!("le constraints before solve:");
-            // infer.ctxt.constraints.le_constraints.show();
+            self.inter_ctxt
+                .global_assumptions
+                .join_global_facts(&infer.ctxt.constraint_system);
 
-            let (solved, _) = infer.ctxt.constraint_system.saturate();
-
-            // log::debug!("le constraints after solve:");
-            // solved.le_constraints.show();
-            // assert!(solved.eq_constraints.is_empty());
-            solved.show();
-
-            // self.func_summaries.push(FuncSummary { constraint_db: constraint_db, func_sig: val })
+            assert_eq!(self.func_summaries.push(infer.into_intra_summary()), func);
         }
     }
 }
 
-pub struct IntraInfer<'infercx, 'inter: 'infercx, 'tcx: 'infercx, Handler: SSANameHandler> {
-    ctxt: IntraInferCtxt<'infercx, 'inter, 'tcx>,
+pub struct IntraInfer<'infercx, 'tcx: 'infercx, Handler: SSANameHandler> {
+    ctxt: IntraInferCtxt<'infercx, 'tcx>,
     ssa_state: SSARenameState<Local>,
-    boundaries: &'infercx mut IndexVec<CallSite, Vec<OwnershipAnalysisBoundary>>,
-    // boundary_constraints: &'infercx mut IndexVec<CallSite, BoundaryE<()>>,
-    // return_ssa_idx: Vec<SSAIdx>,
+    boundaries: Vec<OwnershipAnalysisBoundary>,
     extra_handlers: Handler,
 }
 
-impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> HasSSARenameState<Local>
-    for IntraInfer<'infercx, 'inter, 'tcx, Handler>
+impl<'infercx, 'tcx, Handler: SSANameHandler> HasSSARenameState<Local>
+    for IntraInfer<'infercx, 'tcx, Handler>
 {
     #[inline]
     fn ssa_state(&mut self) -> &mut SSARenameState<Local> {
@@ -99,8 +105,8 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> HasSSARenameState<Local>
     }
 }
 
-impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> SSANameHandler
-    for IntraInfer<'infercx, 'inter, 'tcx, Handler>
+impl<'infercx, 'tcx, Handler: SSANameHandler> SSANameHandler
+    for IntraInfer<'infercx, 'tcx, Handler>
 {
     type Output = Option<Range<Rho>>;
 
@@ -139,8 +145,8 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> SSANameHandler
     }
 }
 
-impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> HasSSANameHandler
-    for IntraInfer<'infercx, 'inter, 'tcx, Handler>
+impl<'infercx, 'tcx, Handler: SSANameHandler> HasSSANameHandler
+    for IntraInfer<'infercx, 'tcx, Handler>
 {
     type Handler = Self;
 
@@ -152,8 +158,8 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> HasSSANameHandler
     }
 }
 
-impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> SSARename<'tcx>
-    for IntraInfer<'infercx, 'inter, 'tcx, Handler>
+impl<'infercx, 'tcx, Handler: SSANameHandler> SSARename<'tcx>
+    for IntraInfer<'infercx, 'tcx, Handler>
 {
     fn define_local(&mut self, local: Local, location: Location) -> Option<Range<Rho>> {
         if self.ctxt.body.local_decls[local].ty.is_ptr_but_not_fn_ptr() {
@@ -178,12 +184,12 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> SSARename<'tcx>
 }
 
 #[derive(Clone)]
-pub enum PlaceProcessResult {
+pub enum PtrPlaceDefResult {
     Base { old: Range<Rho>, new: Range<Rho> },
     Proj(Range<Rho>),
 }
 
-impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'inter, 'tcx, Handler> {
+impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler> {
     #[inline]
     fn handle_ptr_def(&mut self, local: Local, idx: SSAIdx, location: Location) -> Range<Rho> {
         self.extra_handlers.handle_def(local, idx, location);
@@ -212,19 +218,19 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'inte
         (old, new)
     }
 
-    fn process_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> PlaceProcessResult {
+    fn process_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> PtrPlaceDefResult {
         // this is a define
         if place.projection.is_empty() {
             let local = place.local;
             let (old, new) = self.process_ptr_local(local, location);
 
-            return PlaceProcessResult::Base { old, new };
+            return PtrPlaceDefResult::Base { old, new };
         }
         let ssa_idx = self.ssa_state().r#use(place.local);
         let base = self
             .ssa_name_handler()
             .handle_ptr_use(place.local, ssa_idx, location);
-        PlaceProcessResult::Proj(self.proj_place_rhos(base, place.iter_projections()))
+        PtrPlaceDefResult::Proj(self.proj_place_rhos(base, place.iter_projections()))
     }
 
     fn proj_place_rhos(
@@ -240,9 +246,8 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'inte
                     let ty = place_ty.ty;
                     let variant_idx = place_ty.variant_index.unwrap_or(VariantIdx::new(0));
                     let adt_def = ty.ty_adt_def().unwrap();
-                    let rhos = self.ctxt.inter_ctxt.field_defs[&adt_def.did][variant_idx]
-                        [field.index()]
-                    .clone();
+                    let rhos =
+                        self.ctxt.field_defs[&adt_def.did][variant_idx][field.index()].clone();
                     return Range {
                         start: rhos.start + n_derefs,
                         end: rhos.end,
@@ -258,10 +263,58 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'inte
             end,
         }
     }
+
+    fn into_intra_summary(self) -> IntraSummary {
+        let IntraInfer {
+            ctxt, boundaries, ..
+        } = self;
+
+        let IntraInferCtxt {
+            body,
+            intra_source_map,
+            locals,
+            constraint_system,
+            return_vars_rep,
+            ..
+        } = ctxt;
+
+        // let mut r#abstract = Vec::new();
+
+        let ret_rhos = return_vars_rep.unwrap_or_else(|| {
+            /*
+            assert_eq!(locals[RETURN_PLACE].len(), 1);
+            let empty_range = locals[RETURN_PLACE][SSAIdx::ENTRY].clone();
+            assert_eq!(empty_range.len(), 0);
+            empty_range
+            */
+            assert!(locals[RETURN_PLACE].is_empty());
+            RangeExt::empty()
+        });
+
+        let mut concrete = vec![smallvec![None; ret_rhos.len()]];
+        let mut r#abstract = vec![ret_rhos];
+
+        for arg in locals.iter().skip(1).take(body.arg_count) {
+            let rhos = arg[SSAIdx::ENTRY].clone();
+            concrete.push(smallvec![None; rhos.len()]);
+            r#abstract.push(rhos);
+        }
+
+        IntraSummary {
+            constraint_system,
+            locals,
+            intra_source_map,
+            boundaries,
+            fn_sig: FnSig {
+                concrete,
+                r#abstract,
+            },
+        }
+    }
 }
 
-impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
-    for IntraInfer<'infercx, 'inter, 'tcx, Handler>
+impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
+    for IntraInfer<'infercx, 'tcx, Handler>
 {
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
         if let Some(def_use) = <Self as HasSSANameHandler>::DefUse::categorize(context) {
@@ -295,11 +348,11 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                     self.process_ptr_place(rhs, location),
                 ) {
                     (
-                        PlaceProcessResult::Base {
+                        PtrPlaceDefResult::Base {
                             old: lhs_old,
                             new: lhs_new,
                         },
-                        PlaceProcessResult::Base {
+                        PtrPlaceDefResult::Base {
                             old: rhs_old,
                             new: rhs_new,
                         },
@@ -318,7 +371,7 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                         // .push_eq(rhs_old.start, [lhs_new.start, rhs_new.start].into_iter());
                         self.ctxt.constraint_system.assume(lhs_old.start, false)
                     }
-                    (PlaceProcessResult::Base { old, new }, PlaceProcessResult::Proj(f)) => {
+                    (PtrPlaceDefResult::Base { old, new }, PtrPlaceDefResult::Proj(f)) => {
                         for (lhs_inner, rhs_inner) in
                             std::iter::zip(new.clone().skip(1), f.clone().skip(1))
                         {
@@ -329,7 +382,7 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                         // .push_ge(f.start, [new.start].into_iter());
                         self.ctxt.constraint_system.assume(old.start, false);
                     }
-                    (PlaceProcessResult::Proj(f), PlaceProcessResult::Base { old, new }) => {
+                    (PtrPlaceDefResult::Proj(f), PtrPlaceDefResult::Base { old, new }) => {
                         for (lhs_inner, rhs_inner) in
                             std::iter::zip(f.clone().skip(1), new.clone().skip(1))
                         {
@@ -341,7 +394,7 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                             .push_transfer(old.start, f.start, new.start)
                         // .push_eq(old.start, [f.start, new.start].into_iter());
                     }
-                    (PlaceProcessResult::Proj(f), PlaceProcessResult::Proj(g)) => {
+                    (PtrPlaceDefResult::Proj(f), PtrPlaceDefResult::Proj(g)) => {
                         for (lhs_inner, rhs_inner) in
                             std::iter::zip(f.clone().skip(1), g.clone().skip(1))
                         {
@@ -411,40 +464,35 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
     }
 }
 
-pub struct IntraInferCtxt<'infercx, 'inter: 'infercx, 'tcx: 'infercx> {
-    func: Func,
+pub struct IntraInferCtxt<'infercx, 'tcx: 'infercx> {
+    // func: Func,
     tcx: TyCtxt<'tcx>,
     body: &'infercx Body<'tcx>,
     call_graph: &'infercx CallGraph,
     // rho_ctxt: CrateAnalysisCtxtIntraView<'infercx, Rho, Option<bool>>,
-    inter_ctxt: &'infercx mut InterCtxtView<'inter>,
-    phi_joins: PhiNodeInsertionPoints<Vec<SSAIdx>>,
+    // inter_ctxt: &'infercx mut InterCtxtView<'inter>,
+    field_defs: &'infercx FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
+    phi_vars_rep: PhiNodeInsertionPoints<Option<Range<Rho>>>,
+    return_vars_rep: Option<Range<Rho>>,
     intra_source_map: Vec<LocalSourceInfo>,
     locals: IndexVec<Local, IndexVec<SSAIdx, Range<Rho>>>,
     constraint_system: ConstraintDatabase, //Vec<Constraint>,
 }
 
-impl<'infercx, 'inter, 'tcx> IntraInferCtxt<'infercx, 'inter, 'tcx> {
+impl<'infercx, 'tcx> IntraInferCtxt<'infercx, 'tcx> {
     pub fn new(
         tcx: TyCtxt<'tcx>,
-        func: Func,
+        // func: Func,
         body: &'infercx Body<'tcx>,
         call_graph: &'infercx CallGraph,
-        inter_ctxt: &'infercx mut InterCtxtView<'inter>,
-        // rho_ctxt: &'infercx mut CrateAnalysisCtxt<Rho, Option<bool>>,
-        // globals: Range<Rho>,
-        // constraints: &'infercx mut ConstraintDataBase, //Vec<Constraint>,
-        phi_joins: PhiNodeInsertionPoints<Vec<SSAIdx>>,
+        global_assumptions: ConstraintDatabase,
+        field_defs: &'infercx FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
+        // inter_ctxt: &'infercx mut InterCtxtView<'inter>,
+        phi_vars_rep: PhiNodeInsertionPoints<Option<Range<Rho>>>,
     ) -> Self {
-        // let initial_locals_start = rho_ctxt.assumptions.next_index();
-        // let rho_ctxt = rho_ctxt.intra_view(body, func);
-        // let initial_locals_end = rho_ctxt.assumptions.next_index();
-
-        // let locals = Range { start: initial_locals_start, end: initial_locals_end };
-
-        let mut constraint_system = inter_ctxt.global_assumptions.clone();
+        let mut constraint_system = global_assumptions; //inter_ctxt.global_assumptions.clone();
         let mut intra_source_map = Vec::new();
-        let locals = body
+        let locals: IndexVec<_, _> = body
             .local_decls
             .iter_enumerated()
             .map(|(local, local_decl)| {
@@ -467,22 +515,27 @@ impl<'infercx, 'inter, 'tcx> IntraInferCtxt<'infercx, 'inter, 'tcx> {
                         end = end + 1;
                         intra_source_map.push(LocalSourceInfo {
                             base: local,
-                            ssa_idx: 0usize.into(),
+                            ssa_idx: SSAIdx::ENTRY,
                             nested_level,
                         });
                     });
                 // end = end + 1;
-                IndexVec::from_raw(vec![Range { start, end }])
+                (end > start)
+                    .then(|| IndexVec::from_raw(vec![Range { start, end }]))
+                    .unwrap_or_else(|| IndexVec::new())
+                // IndexVec::from_raw(vec![Range { start, end }])
             })
-            .collect::<IndexVec<_, _>>();
+            .collect();
 
         IntraInferCtxt {
             tcx,
-            func,
+            // func,
             body,
             call_graph,
-            inter_ctxt,
-            phi_joins,
+            field_defs,
+            // inter_ctxt,
+            phi_vars_rep,
+            return_vars_rep: None,
             intra_source_map,
             locals,
             constraint_system, //ConstraintDataBase::new(globals, locals),
@@ -499,31 +552,20 @@ impl<'infercx, 'inter, 'tcx> IntraInferCtxt<'infercx, 'inter, 'tcx> {
                 self.tcx.def_path_debug_str(self.body.source.def_id())
             );
             for (local, rhos) in self.locals.iter_enumerated() {
-                assert_eq!(rhos.len(), 1);
-                let rhos = &rhos[0usize.into()];
-                for (nested_level, rho) in rhos.clone().enumerate() {
-                    log::debug!(
-                        "{}{:*<2$}{3:?}^0 ==> {4:?}",
-                        INDENT,
-                        "",
-                        nested_level,
-                        local,
-                        rho
-                    )
-                }
-            }
-        }
-        self
-    }
-
-    fn log_phi_joins(self) -> Self {
-        #[cfg(debug_assertions)]
-        {
-            log::debug!("Phi nodes joins:");
-            for (bb, locals) in self.phi_joins.iter_enumerated() {
-                for (local, rhos) in locals.iter_enumerated() {
-                    assert!(rhos.len() >= 3);
-                    log::debug!("for {:?} at {:?}, {:?}", local, bb, rhos)
+                //assert_eq!(rhos.len(), 1);
+                if !rhos.is_empty() {
+                    assert_eq!(rhos.len(), 1);
+                    let rhos = &rhos[0usize.into()];
+                    for (nested_level, rho) in rhos.clone().enumerate() {
+                        log::debug!(
+                            "{}{:*<2$}{3:?}^0 ==> {4:?}",
+                            INDENT,
+                            "",
+                            nested_level,
+                            local,
+                            rho
+                        )
+                    }
                 }
             }
         }
@@ -531,7 +573,7 @@ impl<'infercx, 'inter, 'tcx> IntraInferCtxt<'infercx, 'inter, 'tcx> {
     }
 
     fn generate_variables_for_mir_local(&mut self, local: Local, idx: SSAIdx) -> Range<Rho> {
-        let entry_rhos = &self.locals[local][0u32.into()];
+        let entry_rhos = &self.locals[local][SSAIdx::ENTRY];
         let nested_level = entry_rhos.len();
 
         assert_eq!(self.locals[local].len(), idx.index());
@@ -566,35 +608,38 @@ impl<'infercx, 'inter, 'tcx> IntraInferCtxt<'infercx, 'inter, 'tcx> {
     }
 }
 
-impl<'infercx, 'inter, 'tcx> SSANameHandler for IntraInferCtxt<'infercx, 'inter, 'tcx> {
+impl<'infercx, 'tcx> SSANameHandler for IntraInferCtxt<'infercx, 'tcx> {
     type Output = Range<Rho>;
 
     fn handle_def(&mut self, local: Local, idx: SSAIdx, _location: Location) -> Self::Output {
-        log::debug!("InferCtxt defining {:?}^{} of ptr type", local, idx);
+        log::debug!("IntraInferencer defining {:?}^{} of ptr type", local, idx);
         debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
 
         self.generate_variables_for_mir_local(local, idx)
-
-        /*
-        let res = self.rho_ctxt.generate_local(local, idx);
-
-        // TODO: refactor this!
-        for rho in res.start..res.end {
-            self.constraints.le_constraints.generate_local(rho)
-        }
-
-        */
     }
 
     fn handle_use(&mut self, local: Local, idx: SSAIdx, _location: Location) -> Self::Output {
+        log::debug!("IntraInferencer using {:?}^{} of ptr type", local, idx);
         self.locals[local][idx].clone()
     }
 
     fn handle_def_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock) {
         debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
+        log::debug!(
+            "IntraInferencer at phi node defining {:?}^{} of ptr type",
+            local,
+            idx
+        );
         // self.rho_ctxt.generate_local(local, idx);
-        self.generate_variables_for_mir_local(local, idx);
-        self.phi_joins[block][local].push(idx)
+        let rhos = self.generate_variables_for_mir_local(local, idx);
+        if let Some(rep_rhos) = &self.phi_vars_rep[block][local] {
+            for (rep_rho, rho) in std::iter::zip(rep_rhos.clone(), rhos) {
+                self.constraint_system.push_eq(rep_rho, rho)
+            }
+        } else {
+            self.phi_vars_rep[block][local] = Some(rhos)
+        }
+        // self.phi_vars_rep[block][local].push(idx)
     }
 
     fn handle_use_at_phi_node(
@@ -605,6 +650,19 @@ impl<'infercx, 'inter, 'tcx> SSANameHandler for IntraInferCtxt<'infercx, 'inter,
         _pos: usize,
     ) {
         debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
-        self.phi_joins[block][local].push(idx)
+        log::debug!(
+            "IntraInferencer at phi node using {:?}^{} of ptr type",
+            local,
+            idx
+        );
+        let rhos = self.locals[local][idx].clone();
+        if let Some(rep_rhos) = &self.phi_vars_rep[block][local] {
+            for (rep_rho, rho) in std::iter::zip(rep_rhos.clone(), rhos) {
+                self.constraint_system.push_eq(rep_rho, rho)
+            }
+        } else {
+            self.phi_vars_rep[block][local] = Some(rhos)
+        }
+        // self.phi_vars_rep[block][local].push(idx)
     }
 }

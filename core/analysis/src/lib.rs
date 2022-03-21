@@ -61,6 +61,7 @@ use rustc_middle::{
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
+use smallvec::SmallVec;
 use ssa::rename::{SSAIdx, SSANameHandler, SSARename};
 use std::{
     fmt::Display,
@@ -345,10 +346,25 @@ impl Display for CVSourceData {
     }
 }
 
+/*
 #[derive(Clone)]
 pub enum Boundary<Return: Clone, Argument: Clone> {
     Return(Return),
     Parameter { caller: Argument, callee: Local },
+}
+*/
+
+#[derive(Clone)]
+pub struct Boundary<Return: Clone, Argument: Clone> {
+    callee: Func,
+    ret: Return,
+    arguments: Vec<Argument>,
+}
+
+#[derive(Clone)]
+pub struct FnSig<X: IsRustcIndexDefinedCV> {
+    concrete: Vec<SmallVec<[Option<bool>; 1]>>,
+    r#abstract: Vec<Range<X>>,
 }
 
 pub trait UnitAnalysisCV {
@@ -393,7 +409,7 @@ impl<X: IsRustcIndexDefinedCV + UnitAnalysisCV> ULEConstraintGraph<X> {
 
     #[inline]
     pub fn add_relation(&mut self, x: X, y: X) -> bool {
-        log::debug!("adding relation {:?} ≤ {:?}", x, y);
+        // log::debug!("adding relation {:?} ≤ {:?}", x, y);
         self.graph.add_edge_without_dup(x, y).is_some()
     }
 

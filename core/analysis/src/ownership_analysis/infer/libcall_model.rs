@@ -7,14 +7,14 @@ use rustc_middle::{
 };
 
 use crate::{
-    libcall_model::LibCallModel, ownership_analysis::infer::PlaceProcessResult,
+    libcall_model::LibCallModel, ownership_analysis::infer::PtrPlaceDefResult,
     ssa::rename::SSANameHandler,
 };
 
 use super::IntraInfer;
 
-impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
-    for IntraInfer<'infercx, 'inter, 'tcx, Handler>
+impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
+    for IntraInfer<'infercx, 'tcx, Handler>
 {
     fn tcx(&self) -> TyCtxt<'tcx> {
         self.ctxt.tcx
@@ -31,12 +31,12 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         self.visit_operand(rhs, location);
         let (lhs, _) = destination.unwrap();
         match self.process_ptr_place(&lhs, location) {
-            PlaceProcessResult::Base { old, new } => {
+            PtrPlaceDefResult::Base { old, new } => {
                 /// TODO
                 self.ctxt.constraint_system.assume(old.start, false);
                 self.ctxt.constraint_system.assume(new.start, true)
             }
-            PlaceProcessResult::Proj(f) => self.ctxt.constraint_system.assume(f.start, true),
+            PtrPlaceDefResult::Proj(f) => self.ctxt.constraint_system.assume(f.start, true),
         }
     }
 
@@ -50,11 +50,11 @@ impl<'infercx, 'inter, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         let rhs = args.first().unwrap();
         if let Operand::Move(rhs) | Operand::Copy(rhs) = rhs {
             match self.process_ptr_place(rhs, location) {
-                PlaceProcessResult::Base { old, new } => {
+                PtrPlaceDefResult::Base { old, new } => {
                     self.ctxt.constraint_system.assume(old.start, true);
                     self.ctxt.constraint_system.assume(new.start, false)
                 }
-                PlaceProcessResult::Proj(f) => self.ctxt.constraint_system.assume(f.start, true),
+                PtrPlaceDefResult::Proj(f) => self.ctxt.constraint_system.assume(f.start, true),
             }
         } else {
             log::debug!("This terminator is not processed due to constant operand type!");

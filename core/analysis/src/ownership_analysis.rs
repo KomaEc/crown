@@ -2,13 +2,10 @@ pub mod infer;
 #[cfg(test)]
 mod test;
 
-use std::{fmt::Display, marker::PhantomData, ops::Range};
+use std::{fmt::Display, ops::Range};
 
-use graph::implementation::forward_star::{Direction, Graph};
 use range_ext::IsRustcIndexDefinedCV;
-use rustc_data_structures::graph::{
-    iterate::DepthFirstSearch, scc::Sccs, WithNumEdges, WithNumNodes,
-};
+use rustc_data_structures::graph::{iterate::DepthFirstSearch, scc::Sccs, WithNumNodes};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
@@ -17,43 +14,31 @@ use rustc_middle::{
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
-use smallvec::SmallVec;
 
 use crate::{
-    call_graph::{CallGraph, CallSite, Func},
-    def_use::OwnershipAnalysisDefUse,
+    call_graph::{CallGraph, Func},
     ssa::rename::{SSAIdx, SSANameHandler},
     ty_ext::TyExt,
-    Analysis, Boundary, CrateAnalysisCtxt, ULEConstraintGraph, UnitAnalysisCV,
+    Boundary, FnSig, ULEConstraintGraph, UnitAnalysisCV,
 };
 
-/*
-impl<'analysis, 'tcx> Analysis<'tcx> for AnalysisEngine<'analysis, 'tcx> {
-    const NAME: &'static str = "Ownership Analysis";
+use self::infer::PtrPlaceDefResult;
 
-    type DefUse = OwnershipAnalysisDefUse;
-
-    type Infer<'a, E>
-    where
-        'tcx: 'a,
-        E: SSANameHandler,
-    = IntraInfer<'a, 'analysis, 'tcx, E>;
-}
-*/
+use range_ext::RangeExt;
 
 #[derive(Clone)]
 pub struct FieldDefSourceInfo {
-    adt_def: DefId,
-    variant_idx: VariantIdx,
-    field_idx: usize,
-    nested_level: usize,
+    pub adt_def: DefId,
+    pub variant_idx: VariantIdx,
+    pub field_idx: usize,
+    pub nested_level: usize,
 }
 
 impl Display for FieldDefSourceInfo {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let FieldDefSourceInfo {
             adt_def,
-            variant_idx,
+            variant_idx: _,
             field_idx,
             nested_level,
         } = *self;
@@ -66,9 +51,9 @@ impl Display for FieldDefSourceInfo {
 
 #[derive(Clone)]
 pub struct LocalSourceInfo {
-    base: Local,
-    ssa_idx: SSAIdx,
-    nested_level: usize,
+    pub base: Local,
+    pub ssa_idx: SSAIdx,
+    pub nested_level: usize,
 }
 
 impl Display for LocalSourceInfo {
@@ -95,7 +80,7 @@ impl InterCtxt {
     pub fn view(&mut self) -> InterCtxtView<'_> {
         InterCtxtView {
             global_assumptions: &mut self.global_assumptions,
-            global_source_map: &self.global_source_map,
+            // global_source_map: &self.global_source_map,
             field_defs: &self.field_defs,
         }
     }
@@ -103,18 +88,12 @@ impl InterCtxt {
 
 pub struct InterCtxtView<'view> {
     global_assumptions: &'view mut ConstraintDatabase,
-    global_source_map: &'view Vec<FieldDefSourceInfo>,
     field_defs: &'view FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
 }
 
-pub type OwnershipAnalysisBoundary = Boundary<Range<Rho>, infer::PlaceProcessResult>;
-
 pub struct InterSummary {
-    // rho_ctxt: CrateAnalysisCtxt<Rho, Option<bool>>,
-    // globals: Range<Rho>,
     inter_ctxt: InterCtxt,
     call_graph: CallGraph,
-    boundaries: IndexVec<CallSite, Vec<OwnershipAnalysisBoundary>>,
     func_summaries: IndexVec<Func, IntraSummary>,
 }
 
@@ -126,9 +105,7 @@ impl InterSummary {
         extra_handler: Handler,
     ) -> Self {
         let num_funcs = call_graph.num_nodes();
-        // let rho_ctxt = CrateAnalysisCtxt::initiate(tcx, adt_defs, &call_graph);
 
-        // let mut global_assumptions = IndexVec::new();
         let mut global_source_map = Vec::new();
         let field_defs = adt_defs
             .iter()
@@ -190,13 +167,13 @@ impl InterSummary {
             field_defs,
         };
 
-        let mut boundaries = IndexVec::from_elem_n(Vec::new(), call_graph.num_edges());
+        // let mut boundaries = IndexVec::from_elem_n(Vec::new(), call_graph.num_edges());
 
         let mut engine = AnalysisEngine {
             tcx,
             call_graph: &call_graph,
             inter_ctxt: inter_ctxt.view(),
-            boundaries: &mut boundaries,
+            // boundaries: &mut boundaries,
             func_summaries: IndexVec::with_capacity(num_funcs),
         }
         .log_initial_state();
@@ -208,17 +185,36 @@ impl InterSummary {
         InterSummary {
             inter_ctxt,
             call_graph,
-            boundaries,
             func_summaries,
         }
     }
+
+    pub fn get_field_def_source(&self, x: Rho) -> &FieldDefSourceInfo {
+        let idx = x.index() - 2;
+        &self.inter_ctxt.global_source_map[idx]
+    }
+
+    pub fn field_def_source_iter_enumerated(
+        &self,
+    ) -> impl Iterator<Item = (Rho, &FieldDefSourceInfo)> {
+        self.inter_ctxt
+            .global_source_map
+            .iter()
+            .enumerate()
+            .map(|(idx, field_def)| {
+                let rho = Rho::new(idx + 2);
+                (rho, field_def)
+            })
+    }
+
+    pub fn resolve(&mut self) {}
 }
 
 pub struct AnalysisEngine<'analysis, 'tcx> {
     tcx: TyCtxt<'tcx>,
     call_graph: &'analysis CallGraph,
     inter_ctxt: InterCtxtView<'analysis>,
-    boundaries: &'analysis mut IndexVec<CallSite, Vec<OwnershipAnalysisBoundary>>,
+    // boundaries: &'analysis mut IndexVec<CallSite, Vec<OwnershipAnalysisBoundary>>,
     func_summaries: IndexVec<Func, IntraSummary>,
 }
 
@@ -250,8 +246,65 @@ impl<'me, 'tcx> AnalysisEngine<'me, 'tcx> {
     }
 }
 
+pub type OwnershipAnalysisBoundary = Boundary<Option<PtrPlaceDefResult>, Option<PtrPlaceDefResult>>;
+
 pub struct IntraSummary {
     constraint_system: ConstraintDatabase,
+    /// For non pointer locals, the length of inner vec is 0
+    locals: IndexVec<Local, IndexVec<SSAIdx, Range<Rho>>>,
+    intra_source_map: Vec<LocalSourceInfo>,
+    boundaries: Vec<OwnershipAnalysisBoundary>,
+    fn_sig: FnSig<Rho>,
+}
+
+impl IntraSummary {
+    pub fn update_fn_sig(&mut self, constraint_graph_sccs: &Sccs<Rho, u32>) -> bool {
+        let mut changed = false;
+
+        for (r#abstract, concrete) in
+            std::iter::zip(&self.fn_sig.r#abstract, &mut self.fn_sig.concrete)
+        {
+            assert_eq!(r#abstract.len(), concrete.len());
+            for (rho, value) in std::iter::zip(r#abstract.clone(), concrete.iter_mut()) {
+                let rho_rep = constraint_graph_sccs.scc(rho);
+                let zero_rep = constraint_graph_sccs.scc(Rho::ZERO);
+                let one_rep = constraint_graph_sccs.scc(Rho::ONE);
+                match value {
+                    &mut Some(value) => {
+                        let rep = value.then_some(one_rep).unwrap_or(zero_rep);
+                        assert_eq!(rho_rep, rep);
+                    }
+                    None => {
+                        if rho_rep == zero_rep {
+                            changed = true;
+                            *value = Some(false);
+                        } else if rho_rep == one_rep {
+                            changed = true;
+                            *value = Some(true);
+                        }
+                    }
+                }
+            }
+        }
+
+        changed
+    }
+
+    pub fn get_local_source(&self, x: Rho) -> &LocalSourceInfo {
+        assert!(x >= self.constraint_system.le_constraints.local_start);
+        let idx = x.index() - self.constraint_system.le_constraints.local_start.index();
+        &self.intra_source_map[idx]
+    }
+
+    pub fn local_source_iter_enumerated(&self) -> impl Iterator<Item = (Rho, &LocalSourceInfo)> {
+        self.intra_source_map
+            .iter()
+            .enumerate()
+            .map(|(idx, source)| {
+                let rho = self.constraint_system.le_constraints.local_start + idx;
+                (rho, source)
+            })
+    }
 }
 
 /// old_rhs = new_lhs + new_rhs
@@ -357,10 +410,15 @@ impl ConstraintDatabase {
             self.le_constraints.local_start,
             other.le_constraints.local_start
         );
+        let local_start = self.le_constraints.local_start;
         let mut changed = false;
         for x in 0u32.into()..other.le_constraints.local_start {
-            for y in other.le_constraints.graph.successor_nodes(x) {
-                changed = changed || self.le_constraints.add_relation(x, y)
+            if x < local_start {
+                for y in other.le_constraints.graph.successor_nodes(x) {
+                    if y < local_start {
+                        changed = changed || self.le_constraints.add_relation(x, y)
+                    }
+                }
             }
         }
         changed

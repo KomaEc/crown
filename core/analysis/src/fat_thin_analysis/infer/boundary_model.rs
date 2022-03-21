@@ -1,4 +1,5 @@
 use graph::implementation::forward_star::Direction;
+use rustc_hir::def_id::DefId;
 use rustc_middle::mir::{
     visit::{MutatingUseContext, PlaceContext, Visitor},
     BasicBlock, Local, Location, Operand, Place, RETURN_PLACE,
@@ -18,6 +19,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
 {
     fn model_boundary(
         &mut self,
+        callee: DefId,
         args: &Vec<Operand<'tcx>>,
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,

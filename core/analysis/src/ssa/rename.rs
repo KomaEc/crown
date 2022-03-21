@@ -24,6 +24,10 @@ impl std::fmt::Display for SSAIdx {
     }
 }
 
+impl SSAIdx {
+    pub const ENTRY: Self = SSAIdx::from_u32(0);
+}
+
 pub struct SSARenameState<ProgramVar: Idx> {
     count: IndexVec<ProgramVar, usize>,
     stack: IndexVec<ProgramVar, Vec<usize>>,

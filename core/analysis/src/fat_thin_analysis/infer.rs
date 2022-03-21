@@ -490,7 +490,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                             self.ctxt.tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::Item(_))
                         ) {
-                            self.model_boundary(args, destination, location);
+                            self.model_boundary(callee_did, args, destination, location);
                             return;
                         }
                     }
