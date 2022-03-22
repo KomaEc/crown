@@ -27,10 +27,12 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
         let callee = self.ctxt.call_graph.lookup_function(&callee).unwrap();
 
         // f.1 = y
-        // This should introduce a pseudo constraint rho_f.1 + rho_y' = rho_y 
+        // This should introduce a pseudo constraint rho_f.1 + rho_y' = rho_y
         // We introduce constraint rho_y' ≤ rho_y. Upon instantiation, if rho_f.1 = 1,
         // then add constraints rho_y = 1 and rho_y' = 0; if rho_f.1 = 0, then add constraint
         // rho_y ≤ rho_y'
+        // f.1 = S.f
+        // This should introduce a pseudo constraint rho_f.1 ≤ rho_S.f
         let arguments = args
             .iter()
             .map(|arg| {
@@ -44,9 +46,9 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
                     let res = self.process_ptr_place(&place, location);
                     match &res {
                         PtrPlaceDefResult::Base { old, new } => {
-
-                        },
-                        PtrPlaceDefResult::Proj(_) => todo!(),
+                            self.ctxt.constraint_system.push_le(new.start, old.start);
+                        }
+                        PtrPlaceDefResult::Proj(_) => {},
                     }
                     Some(res)
                 } else {
@@ -58,7 +60,9 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
 
         // x = f.0
         // This should introduce the constraint rho_x = 0 && pseudo constraint rho_x' = rho_f.0
-        // We introduce rho_x = 0. Upon instantiation, assert rho_x' if rho_f.0 is known.
+        // We introduce rho_x = 0. Upon instantiation, assert rho_x' if rho_f.0 is known
+        // S.f = f.0
+        // This should introduce the pseudo constraint rho_S.f = rho_f.0
         let dest = destination
             .map(|(destination, _)| {
                 if destination
@@ -66,8 +70,14 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
                     .ty
                     .is_ptr_but_not_fn_ptr()
                 {
-                    let rhos = self.process_ptr_place(&destination, location);
-                    Some(rhos)
+                    let res = self.process_ptr_place(&destination, location);
+                    match res {
+                        PtrPlaceDefResult::Base { old, new } => {
+                            self.ctxt.constraint_system.assume(old.start, false);
+                            Some(new)
+                        },
+                        PtrPlaceDefResult::Proj(rhos) => Some(rhos),
+                    }
                 } else {
                     self.visit_place(
                         &destination,

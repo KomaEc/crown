@@ -369,24 +369,24 @@ pub struct FnSig<X: IsRustcIndexDefinedCV> {
 }
 */
 
-pub trait FnSigKind {
+pub trait FuncSigKind {
     type PtrKindRep<Value>;
 }
 
-pub struct FnSig<K: FnSigKind, Value> {
+pub struct FuncSig<K: FuncSigKind, Value> {
     sig: Vec<K::PtrKindRep<Value>>,
     // _marker: PhantomData<*const K>
 }
 
 pub struct Surface;
 
-impl FnSigKind for Surface {
+impl FuncSigKind for Surface {
     type PtrKindRep<Domain> = SmallVec<[Domain; 1]>;
 }
 
 pub struct Inner;
 
-impl FnSigKind for Inner {
+impl FuncSigKind for Inner {
     type PtrKindRep<X> = Range<X>;
 }
 

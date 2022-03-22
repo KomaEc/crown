@@ -19,7 +19,7 @@ use crate::{
     call_graph::{CallGraph, Func},
     ssa::rename::{SSAIdx, SSANameHandler},
     ty_ext::TyExt,
-    Boundary, FnSig, Inner, Surface, ULEConstraintGraph, UnitAnalysisCV,
+    Boundary, FuncSig, Inner, Surface, ULEConstraintGraph, UnitAnalysisCV,
 };
 
 use self::infer::PtrPlaceDefResult;
@@ -94,7 +94,7 @@ pub struct InterCtxtView<'view> {
 pub struct InterSummary {
     inter_ctxt: InterCtxt,
     call_graph: CallGraph,
-    func_sigs: IndexVec<Func, FnSig<Surface, Option<bool>>>,
+    func_sigs: IndexVec<Func, FuncSig<Surface, Option<bool>>>,
     func_summaries: IndexVec<Func, IntraSummary>,
 }
 
@@ -176,7 +176,7 @@ impl InterSummary {
             inter_ctxt: inter_ctxt.view(),
             // boundaries: &mut boundaries,
             func_sigs: IndexVec::with_capacity(num_funcs),
-            func_summaries: IndexVec::with_capacity(num_funcs),
+            intra_summaries: IndexVec::with_capacity(num_funcs),
         }
         .log_initial_state();
 
@@ -185,7 +185,7 @@ impl InterSummary {
         // let func_summaries = engine.func_summaries;
         let AnalysisEngine {
             func_sigs,
-            func_summaries,
+            intra_summaries: func_summaries,
             ..
         } = engine;
 
@@ -244,13 +244,11 @@ impl InterSummary {
 
                     summary.instantiate(&self.func_sigs);
 
-                    
                     let constraint_system = &mut summary.constraint_system;
                     // before solving, global facts should be joined
                     debug_assert!(
                         !constraint_system.join_global_facts(&self.inter_ctxt.global_assumptions)
                     );
-
 
                     let func_constraint_sccs = constraint_system.saturate();
 
@@ -295,8 +293,8 @@ pub struct AnalysisEngine<'analysis, 'tcx> {
     call_graph: &'analysis CallGraph,
     inter_ctxt: InterCtxtView<'analysis>,
     // boundaries: &'analysis mut IndexVec<CallSite, Vec<OwnershipAnalysisBoundary>>,
-    func_sigs: IndexVec<Func, FnSig<Surface, Option<bool>>>,
-    func_summaries: IndexVec<Func, IntraSummary>,
+    func_sigs: IndexVec<Func, FuncSig<Surface, Option<bool>>>,
+    intra_summaries: IndexVec<Func, IntraSummary>,
 }
 
 impl<'me, 'tcx> AnalysisEngine<'me, 'tcx> {
@@ -327,7 +325,7 @@ impl<'me, 'tcx> AnalysisEngine<'me, 'tcx> {
     }
 }
 
-pub type OwnershipAnalysisBoundary = Boundary<Option<PtrPlaceDefResult>, Option<PtrPlaceDefResult>>;
+pub type OwnershipAnalysisBoundary = Boundary<Option<Range<Rho>>, Option<PtrPlaceDefResult>>;
 
 pub struct IntraSummary {
     constraint_system: ConstraintDatabase,
@@ -335,14 +333,13 @@ pub struct IntraSummary {
     locals: IndexVec<Local, IndexVec<SSAIdx, Range<Rho>>>,
     intra_source_map: Vec<LocalSourceInfo>,
     boundaries: Vec<OwnershipAnalysisBoundary>,
-    fn_sig: FnSig<Inner, Rho>,
+    fn_sig: FuncSig<Inner, Rho>,
 }
 
 impl IntraSummary {
-    pub fn instantiate(
-        &mut self,
-        surfaces: &IndexVec<Func, FnSig<Surface, Option<bool>>>
-    ) {
+    pub fn instantiate(&mut self, surfaces: &IndexVec<Func, FuncSig<Surface, Option<bool>>>) {
+
+        log::debug!("Instantiating boundary constraints");
         for &Boundary {
             callee,
             ref dest,
@@ -351,14 +348,61 @@ impl IntraSummary {
         {
             let surface = &surfaces[callee];
             let (ret, parameters) = surface.sig.split_first().unwrap();
-            todo!()
+            // is of ptr type
+            if !ret.is_empty() {
+                let dest = dest.as_ref().unwrap();
+                for (dest, &ret) in dest.clone().zip(ret.iter()) {
+                    if let Some(value) = ret {
+                        self.constraint_system.assume(dest, value);
+                    }
+                }
+            }
+
+            for (parameter, argument) in parameters.iter().zip(arguments) {
+                // is of ptr type
+                if !parameter.is_empty() {
+                    match argument.as_ref().unwrap() {
+                        PtrPlaceDefResult::Base { old, new } => {
+                            assert_eq!(parameter.len(), new.len());
+                            let (&parameter_outtermost, parameter_inner) = parameter.split_first().unwrap();
+                            match parameter_outtermost {
+                                Some(true) => {
+                                    self.constraint_system.assume(old.start, true);
+                                    self.constraint_system.assume(new.start, false)
+                                }
+                                Some(false) => {
+                                    self.constraint_system.push_le(old.start, new.start)
+                                }
+                                None => {}
+                            }
+                            for (argument, parameter) in new.clone().skip(1).zip(parameter_inner) {
+                                if let &Some(value) = parameter {
+                                    self.constraint_system.assume(argument, value)
+                                }
+                            }
+                        },
+                        PtrPlaceDefResult::Proj(rhos) => {
+                            let mut arg_para_pair_iter = rhos.clone().zip(parameter);
+                            let (arg_outtermost, para_outtermost) = arg_para_pair_iter.next().unwrap();
+                            if let &Some(true) = para_outtermost {
+                                self.constraint_system.assume(arg_outtermost, true)
+                            }
+                            for (arg, para) in arg_para_pair_iter {
+                                if let &Some(value) = para {
+                                    self.constraint_system.assume(arg, value)
+                                }
+                            }
+                        },
+                    }
+                }
+            }
         }
     }
 
     pub fn update_surface_func_sig(
         &self,
         constraint_graph_sccs: &Sccs<Rho, u32>,
-        surface: &mut FnSig<Surface, Option<bool>>,
+        surface: &mut FuncSig<Surface, Option<bool>>,
     ) -> bool {
         let mut changed = false;
 

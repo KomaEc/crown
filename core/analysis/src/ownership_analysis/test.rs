@@ -10,7 +10,7 @@ use crate::{
     test::init_logger,
 };
 
-const TEST_FOLDER_NAMES: &[&str] = &["0"];
+const TEST_FOLDER_NAMES: &[&str] = &["0", "1"];
 const TEST_RESOURCES_PATH_STR: &str = "src/ownership_analysis/test/resource/";
 
 #[test]

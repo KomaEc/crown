@@ -31,7 +31,7 @@ use crate::{
         },
     },
     ty_ext::TyExt,
-    Analysis, Boundary, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView, FnSig, Surface,
+    Analysis, Boundary, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView, FuncSig, Surface,
 };
 
 use super::{
@@ -86,7 +86,7 @@ impl<'analysis, 'tcx> AnalysisEngine<'analysis, 'tcx> {
 
             let (func_sig, intra_summary) = infer.complete();
 
-            assert_eq!(self.func_summaries.push(intra_summary), func);
+            assert_eq!(self.intra_summaries.push(intra_summary), func);
             assert_eq!(self.func_sigs.push(func_sig), func);
         }
     }
@@ -267,7 +267,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
         }
     }
 
-    fn complete(self) -> (FnSig<Surface, Option<bool>>, IntraSummary) {
+    fn complete(self) -> (FuncSig<Surface, Option<bool>>, IntraSummary) {
         let IntraInfer {
             ctxt, boundaries, ..
         } = self;
@@ -303,14 +303,17 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
             inner.push(rhos);
         }
 
+        log::debug!("Generating surface function signature {:?}", &surface);
+        log::debug!("Generating function signature {:?}", &inner);
+
         (
-            FnSig { sig: surface },
+            FuncSig { sig: surface },
             IntraSummary {
                 constraint_system,
                 locals,
                 intra_source_map,
                 boundaries,
-                fn_sig: FnSig { sig: inner },
+                fn_sig: FuncSig { sig: inner },
             },
         )
     }
@@ -449,9 +452,15 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                         ) {
                             self.model_libc_call(callee_did, args, destination, location);
                             return;
+                        } else if matches!(
+                            self.ctxt.tcx.hir().find_by_def_id(did),
+                            Some(rustc_hir::Node::Item(_))
+                        ) {
+                            self.model_boundary(callee_did, args, destination, location);
+                            return;
                         }
 
-                        unimplemented!("inter analysis")
+                        unreachable!()
                     }
                     None => {
                         self.model_library_call(callee_did, args, destination, location);
