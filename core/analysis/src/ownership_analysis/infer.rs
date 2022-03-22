@@ -298,9 +298,14 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
         let mut inner = vec![ret_rhos];
 
         for arg in locals.iter().skip(1).take(body.arg_count) {
-            let rhos = arg[SSAIdx::ENTRY].clone();
-            surface.push(smallvec![None; rhos.len()]);
-            inner.push(rhos);
+            if !arg.is_empty() {
+                let rhos = arg[SSAIdx::ENTRY].clone();
+                surface.push(smallvec![None; rhos.len()]);
+                inner.push(rhos);
+            } else {
+                surface.push(smallvec![]);
+                inner.push(RangeExt::empty());
+            }
         }
 
         log::debug!("Generating surface function signature {:?}", &surface);

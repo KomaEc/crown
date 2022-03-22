@@ -48,7 +48,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
                         PtrPlaceDefResult::Base { old, new } => {
                             self.ctxt.constraint_system.push_le(new.start, old.start);
                         }
-                        PtrPlaceDefResult::Proj(_) => {},
+                        PtrPlaceDefResult::Proj(_) => {}
                     }
                     Some(res)
                 } else {
@@ -75,7 +75,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
                         PtrPlaceDefResult::Base { old, new } => {
                             self.ctxt.constraint_system.assume(old.start, false);
                             Some(new)
-                        },
+                        }
                         PtrPlaceDefResult::Proj(rhos) => Some(rhos),
                     }
                 } else {

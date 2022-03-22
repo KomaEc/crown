@@ -9,8 +9,9 @@ use smallvec::SmallVec;
 use std::collections::VecDeque;
 use std::marker::PhantomData;
 
-use crate::def_use::{DefSites, DefSitesGatherer, IsDefUse};
+use crate::def_use::{DefSites, IsDefUse};
 use crate::liveness_analysis::MaybeLiveLocals;
+use crate::ty_ext::TyExt;
 
 const DOMINATOR_FRONTIER_ON_STACK_SIZE: usize = 3;
 const PHI_NODE_INSERTED_ON_STACK_SIZE: usize = 3;
@@ -227,7 +228,7 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
     ) -> PhiNodeInsertionPoints<PhantomData<*const DefUse>> {
         minimal_ssa_form(
             self,
-            DefSitesGatherer::<DefUse>::gather(self),
+            DefUse::gather_def_sites(self),
             self.dominance_frontier(),
             liveness_result(tcx, self),
         )
@@ -269,7 +270,10 @@ pub fn minimal_ssa_form<'tcx, DefUse: IsDefUse>(
         while let Some(bb) = work_list.pop_front() {
             for &bb_f in &dominance_frontier[bb] {
                 liveness.seek_to_block_start(bb_f);
-                if !already_added.contains(bb_f) && liveness.get().contains(a) {
+                if !already_added.contains(bb_f)
+                    && (body.local_decls[a].ty.is_ptr_but_not_fn_ptr()
+                        || liveness.get().contains(a))
+                {
                     inserted[bb_f].push(a, PhantomData);
                     assert!(already_added.insert(bb_f));
                     if !def_sites[a].contains(&bb_f) {

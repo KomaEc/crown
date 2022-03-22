@@ -215,7 +215,7 @@ impl InterSummary {
             })
     }
 
-    pub fn resolve(&mut self) -> Result<(), ()> {
+    pub fn resolve(&mut self) -> Result<(), Vec<Rho>> {
         // let mut global_constraint_sccs =
         //     Sccs::<_, u32>::new(&self.inter_ctxt.global_assumptions.le_constraints.graph);
         'outter: loop {
@@ -253,7 +253,10 @@ impl InterSummary {
                     let func_constraint_sccs = constraint_system.saturate();
 
                     if !constraint_system.consistent(&func_constraint_sccs) {
-                        return Err(());
+                        let reason = constraint_system
+                            .le_constraints
+                            .explain(Rho::ONE, Rho::ZERO);
+                        return Err(reason);
                     }
 
                     if self
@@ -285,6 +288,57 @@ impl InterSummary {
         }
 
         Ok(())
+    }
+
+    pub fn field_def_value_with<F>(&self, f: F)
+    where
+        F: Fn(Rho, Option<bool>),
+    {
+        let sccs = Sccs::<_, u32>::new(&self.inter_ctxt.global_assumptions.le_constraints.graph);
+        let one_rep = sccs.scc(Rho::new(1));
+        let zero_rep = sccs.scc(Rho::new(0));
+        for x in self
+            .inter_ctxt
+            .global_assumptions
+            .le_constraints
+            .graph
+            .nodes()
+            .skip(2)
+        {
+            let x_rep = sccs.scc(x);
+            if x_rep == zero_rep {
+                f(x, Some(false));
+            } else if x_rep == one_rep {
+                f(x, Some(true));
+            } else {
+                f(x, None);
+            }
+        }
+    }
+
+    pub fn show_result(&self) {
+        self.field_def_value_with(|rho, value| {
+            log::debug!(
+                "GLOBAL::{:?} = {}",
+                rho,
+                value
+                    .map(|value| value.then_some("1").unwrap_or("0"))
+                    .unwrap_or("?")
+            )
+        });
+
+        for (func, summary) in self.func_summaries.iter_enumerated() {
+            summary.local_value_with(|rho, value| {
+                log::debug!(
+                    "{:?}::{:?} = {}",
+                    self.call_graph.functions[func],
+                    rho,
+                    value
+                        .map(|value| value.then_some("1").unwrap_or("0"))
+                        .unwrap_or("?")
+                )
+            })
+        }
     }
 }
 
@@ -338,7 +392,6 @@ pub struct IntraSummary {
 
 impl IntraSummary {
     pub fn instantiate(&mut self, surfaces: &IndexVec<Func, FuncSig<Surface, Option<bool>>>) {
-
         log::debug!("Instantiating boundary constraints");
         for &Boundary {
             callee,
@@ -364,15 +417,14 @@ impl IntraSummary {
                     match argument.as_ref().unwrap() {
                         PtrPlaceDefResult::Base { old, new } => {
                             assert_eq!(parameter.len(), new.len());
-                            let (&parameter_outtermost, parameter_inner) = parameter.split_first().unwrap();
+                            let (&parameter_outtermost, parameter_inner) =
+                                parameter.split_first().unwrap();
                             match parameter_outtermost {
                                 Some(true) => {
                                     self.constraint_system.assume(old.start, true);
                                     self.constraint_system.assume(new.start, false)
                                 }
-                                Some(false) => {
-                                    self.constraint_system.push_le(old.start, new.start)
-                                }
+                                Some(false) => self.constraint_system.push_le(old.start, new.start),
                                 None => {}
                             }
                             for (argument, parameter) in new.clone().skip(1).zip(parameter_inner) {
@@ -380,10 +432,11 @@ impl IntraSummary {
                                     self.constraint_system.assume(argument, value)
                                 }
                             }
-                        },
+                        }
                         PtrPlaceDefResult::Proj(rhos) => {
                             let mut arg_para_pair_iter = rhos.clone().zip(parameter);
-                            let (arg_outtermost, para_outtermost) = arg_para_pair_iter.next().unwrap();
+                            let (arg_outtermost, para_outtermost) =
+                                arg_para_pair_iter.next().unwrap();
                             if let &Some(true) = para_outtermost {
                                 self.constraint_system.assume(arg_outtermost, true)
                             }
@@ -392,7 +445,7 @@ impl IntraSummary {
                                     self.constraint_system.assume(arg, value)
                                 }
                             }
-                        },
+                        }
                     }
                 }
             }
@@ -447,6 +500,31 @@ impl IntraSummary {
                 let rho = self.constraint_system.le_constraints.local_start + idx;
                 (rho, source)
             })
+    }
+
+    pub fn local_value_with<F>(&self, f: F)
+    where
+        F: Fn(Rho, Option<bool>),
+    {
+        let sccs = Sccs::<_, u32>::new(&self.constraint_system.le_constraints.graph);
+        let one_rep = sccs.scc(Rho::new(1));
+        let zero_rep = sccs.scc(Rho::new(0));
+        for x in self
+            .constraint_system
+            .le_constraints
+            .graph
+            .nodes()
+            .skip(self.constraint_system.le_constraints.local_start.index())
+        {
+            let x_rep = sccs.scc(x);
+            if x_rep == zero_rep {
+                f(x, Some(false));
+            } else if x_rep == one_rep {
+                f(x, Some(true));
+            } else {
+                f(x, None);
+            }
+        }
     }
 }
 

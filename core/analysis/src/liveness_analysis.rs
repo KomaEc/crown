@@ -160,6 +160,7 @@ impl RustcLivenessDefUse {
     }
 }
 
+/*
 impl IsDefUse for RustcLivenessDefUse {
     fn defining(self) -> bool {
         matches!(self, RustcLivenessDefUse::Def)
@@ -173,3 +174,4 @@ impl IsDefUse for RustcLivenessDefUse {
         RustcLivenessDefUse::for_place(context)
     }
 }
+*/

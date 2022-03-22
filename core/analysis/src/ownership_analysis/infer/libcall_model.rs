@@ -32,7 +32,55 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         let (lhs, _) = destination.unwrap();
         match self.process_ptr_place(&lhs, location) {
             PtrPlaceDefResult::Base { old, new } => {
-                /// TODO
+                self.ctxt.constraint_system.assume(old.start, false);
+                self.ctxt.constraint_system.assume(new.start, true)
+            }
+            PtrPlaceDefResult::Proj(f) => self.ctxt.constraint_system.assume(f.start, true),
+        }
+    }
+
+    fn model_calloc(
+        &mut self,
+        args: &Vec<Operand<'tcx>>,
+        destination: Option<(Place<'tcx>, rustc_middle::mir::BasicBlock)>,
+        location: Location,
+    ) {
+        for arg in args {
+            self.visit_operand(arg, location);
+        }
+        let (lhs, _) = destination.unwrap();
+        match self.process_ptr_place(&lhs, location) {
+            PtrPlaceDefResult::Base { old, new } => {
+                self.ctxt.constraint_system.assume(old.start, false);
+                self.ctxt.constraint_system.assume(new.start, true)
+            }
+            PtrPlaceDefResult::Proj(f) => self.ctxt.constraint_system.assume(f.start, true),
+        }
+    }
+
+    fn model_realloc(
+        &mut self,
+        args: &Vec<Operand<'tcx>>,
+        destination: Option<(Place<'tcx>, rustc_middle::mir::BasicBlock)>,
+        location: Location,
+    ) {
+        // assert_eq!(args.len(), 2);
+        let ([ptr, sz], empty) = args.split_array_ref();
+        assert!(empty.is_empty());
+        let ptr = ptr
+            .place()
+            .expect("The first argument of realloc should not be constant");
+        match self.process_ptr_place(&ptr, location) {
+            PtrPlaceDefResult::Base { old, new } => {
+                self.ctxt.constraint_system.assume(old.start, true);
+                self.ctxt.constraint_system.assume(new.start, false)
+            }
+            PtrPlaceDefResult::Proj(f) => self.ctxt.constraint_system.assume(f.start, true),
+        }
+        self.visit_operand(sz, location);
+        let (lhs, _) = destination.unwrap();
+        match self.process_ptr_place(&lhs, location) {
+            PtrPlaceDefResult::Base { old, new } => {
                 self.ctxt.constraint_system.assume(old.start, false);
                 self.ctxt.constraint_system.assume(new.start, true)
             }

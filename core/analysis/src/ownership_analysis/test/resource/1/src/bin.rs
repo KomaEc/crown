@@ -24,6 +24,7 @@ unsafe fn f(this: *mut S, s: *mut i32, t: *mut i32) -> *mut i32 {
     r
 }
 
+
 unsafe fn g(this: *mut S) {
     let u = malloc(4) as *mut i32;
     let v = malloc(4) as *mut i32;

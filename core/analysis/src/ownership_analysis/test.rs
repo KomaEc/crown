@@ -5,12 +5,12 @@ use rustc_middle::ty::TyCtxt;
 
 use crate::{
     call_graph::CallGraph,
-    ownership_analysis::{AnalysisEngine, InterSummary},
+    ownership_analysis::{AnalysisEngine, InterSummary, Rho},
     ssa::rename::handler::LogSSAName,
-    test::init_logger,
+    test::init_logger, UnitAnalysisCV,
 };
 
-const TEST_FOLDER_NAMES: &[&str] = &["0", "1"];
+const TEST_FOLDER_NAMES: &[&str] = &["0", "1", "2"];
 const TEST_RESOURCES_PATH_STR: &str = "src/ownership_analysis/test/resource/";
 
 #[test]
@@ -43,7 +43,7 @@ fn run_infer<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
     let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
 
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
-    let crate_summary = InterSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+    InterSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
     // assert_eq!(crate_summary.rho_ctxt.locals.len(), num_funcs)
 }
 
@@ -52,12 +52,30 @@ fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
 
     let call_graph = CallGraph::new(tcx, bodies.into_iter());
     let mut crate_summary = InterSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
-    if let Ok(()) = crate_summary.resolve() {
-        for summary in &crate_summary.func_summaries {
-            summary.constraint_system.show()
+
+    match crate_summary.resolve() {
+        Ok(()) => {
+            for summary in &crate_summary.func_summaries {
+                summary.constraint_system.show()
+            }
         }
-    } else {
-        log::debug!("Solve failed!")
+        Err(reason) => {
+            log::error!("Cannot solve ownership constraints!");
+            assert!(reason.len() >= 2);
+            assert_eq!(
+                reason[0],
+                Rho::ONE
+            );
+            assert_eq!(
+                *reason.last().unwrap(),
+                Rho::ZERO
+            );
+
+            log::debug!("A chain of inequalities that leads to this conflict:");
+            for &[x, y] in reason.array_windows() {
+                log::debug!("{:?} ≤ {:?}", x, y)
+            }
+        }
     }
     // assert_eq!(crate_summary.rho_ctxt.locals.len(), num_funcs)
 }

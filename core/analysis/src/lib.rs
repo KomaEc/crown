@@ -7,6 +7,7 @@
 #![feature(generic_associated_types)]
 #![feature(associated_type_defaults)]
 #![feature(step_trait)]
+#![feature(array_windows)]
 
 pub mod boundary_model;
 pub mod call_graph;
@@ -64,6 +65,7 @@ use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
 use ssa::rename::{SSAIdx, SSANameHandler, SSARename};
 use std::{
+    collections::VecDeque,
     fmt::Display,
     iter::Step,
     marker::PhantomData,
@@ -440,6 +442,37 @@ impl<X: IsRustcIndexDefinedCV + UnitAnalysisCV> ULEConstraintGraph<X> {
         let one_rep = sccs.scc(X::ONE);
         let zero_rep = sccs.scc(X::ZERO);
         one_rep != zero_rep
+    }
+
+    pub fn explain(&self, x: X, y: X) -> Vec<X> {
+        enum NodeStatus {
+            ToVisit,
+            ToPopStack,
+        }
+
+        let mut stack = vec![];
+        let mut visited = IndexVec::from_elem_n(false, self.graph.num_nodes());
+
+        stack.push((x, NodeStatus::ToVisit));
+
+        while let Some((z, status)) = stack.pop() {
+            if matches!(status, NodeStatus::ToPopStack) {
+                continue;
+            }
+            visited[z] = true;
+            stack.push((z, NodeStatus::ToPopStack));
+            for w in self.graph.successor_nodes(z) {
+                if !visited[w] {
+                    stack.push((w, NodeStatus::ToVisit));
+
+                    if w == y {
+                        return stack.into_iter().map(|(x, _)| x).collect::<Vec<_>>();
+                    }
+                }
+            }
+        }
+
+        vec![]
     }
 
     pub fn show(&self) {
