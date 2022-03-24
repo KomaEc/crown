@@ -42,6 +42,13 @@ fn test_null_test() {
                     for summary in &crate_summary.func_summaries {
                         summary.constraint_system.show()
                     }
+
+                    log::debug!("Explaining rho_10 ≤ 0");
+                    let intra_summary = &crate_summary.func_summaries[crate::call_graph::Func::from_u32(0)];
+                    for &[x, y] in intra_summary.constraint_system.le_constraints.explain(Rho::from_u32(10), Rho::from_u32(0)).array_windows() {
+                        log::debug!("{:?} ≤ {:?}", x, y)
+                    }
+
                 }
                 Err(reason) => {
                     log::error!("Cannot solve ownership constraints!");
@@ -54,13 +61,6 @@ fn test_null_test() {
                         log::debug!("{:?} ≤ {:?}", x, y)
                     }
 
-                    /*
-                    log::debug!("Explaining rho_11 ≤ 0");
-                    let intra_summary = &crate_summary.func_summaries[crate::call_graph::Func::from_u32(0)];
-                    for &[x, y] in intra_summary.constraint_system.le_constraints.explain(Rho::from_u32(11), Rho::from_u32(0)).array_windows() {
-                        log::debug!("{:?} ≤ {:?}", x, y)
-                    }
-                    */
                 }
             }
         },

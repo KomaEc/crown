@@ -24,7 +24,7 @@ pub trait IsDefUse: PartialEq + Eq + Clone + Copy {
 
     fn categorize(context: PlaceContext) -> Option<Self>;
 
-    fn gather_def_sites<'tcx>(body: &Body<'tcx>) -> DefSites;
+    // fn gather_def_sites<'tcx>(body: &Body<'tcx>) -> DefSites;
 }
 
 impl IsDefUse for FatThinAnalysisDefUse {
@@ -98,9 +98,11 @@ impl IsDefUse for FatThinAnalysisDefUse {
         }
     }
 
+    /*
     fn gather_def_sites<'tcx>(body: &Body<'tcx>) -> DefSites {
-        FatThinDefSitesGatherer::<Self>::gather(body)
+        DefSitesGatherer::<Self>::gather(body)
     }
+    */
 }
 
 impl IsDefUse for OwnershipAnalysisDefUse {
@@ -189,10 +191,12 @@ impl IsDefUse for OwnershipAnalysisDefUse {
         }
     }
 
+    /*
     fn gather_def_sites<'tcx>(body: &Body<'tcx>) -> DefSites {
         // DefSitesGatherer::<Self>::gather(body)
         OwnershipDefSitesGatherer::<Self>::gather(body)
     }
+    */
 }
 
 #[derive(Eq, PartialEq, Clone, Copy)]
@@ -208,7 +212,7 @@ pub enum OwnershipAnalysisDefUse {
     Use,
 }
 
-struct FatThinDefSitesGatherer<'me, 'tcx, DefUse>
+pub struct DefSitesGatherer<'me, 'tcx, DefUse>
 where
     DefUse: IsDefUse,
 {
@@ -217,12 +221,12 @@ where
     _marker: core::marker::PhantomData<*const DefUse>,
 }
 
-impl<'me, 'tcx, DefUse> FatThinDefSitesGatherer<'me, 'tcx, DefUse>
+impl<'me, 'tcx, DefUse> DefSitesGatherer<'me, 'tcx, DefUse>
 where
     DefUse: IsDefUse,
 {
     pub fn gather(body: &Body<'tcx>) -> IndexVec<Local, SmallVec<[Location; 2]>> {
-        let mut gatherer: FatThinDefSitesGatherer<DefUse> = FatThinDefSitesGatherer {
+        let mut gatherer: DefSitesGatherer<DefUse> = DefSitesGatherer {
             body: &body.local_decls,
             sites: IndexVec::from_elem(smallvec![], &body.local_decls),
             _marker: core::marker::PhantomData,
@@ -232,58 +236,10 @@ where
     }
 }
 
-impl<'me, 'tcx, DefUse> Visitor<'tcx> for FatThinDefSitesGatherer<'me, 'tcx, DefUse>
+impl<'me, 'tcx, DefUse> Visitor<'tcx> for DefSitesGatherer<'me, 'tcx, DefUse>
 where
     DefUse: IsDefUse,
 {
-    fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
-        if DefUse::categorize_finely(local, self.body, context)
-            .map_or(false, |def_use| DefUse::defining(def_use))
-        {
-            self.sites[local].push(location)
-        }
-    }
-}
-
-struct OwnershipDefSitesGatherer<'me, 'tcx, DefUse>
-where
-    DefUse: IsDefUse,
-{
-    body: &'me LocalDecls<'tcx>,
-    sites: IndexVec<Local, SmallVec<[Location; 2]>>,
-    _marker: core::marker::PhantomData<*const DefUse>,
-}
-
-impl<'me, 'tcx, DefUse> OwnershipDefSitesGatherer<'me, 'tcx, DefUse>
-where
-    DefUse: IsDefUse,
-{
-    pub fn gather(body: &Body<'tcx>) -> IndexVec<Local, SmallVec<[Location; 2]>> {
-        let mut gatherer: FatThinDefSitesGatherer<DefUse> = FatThinDefSitesGatherer {
-            body: &body.local_decls,
-            sites: IndexVec::from_elem(smallvec![], &body.local_decls),
-            _marker: core::marker::PhantomData,
-        };
-        gatherer.visit_body(body);
-        gatherer.sites
-    }
-}
-
-impl<'me, 'tcx, DefUse> Visitor<'tcx> for OwnershipDefSitesGatherer<'me, 'tcx, DefUse>
-where
-    DefUse: IsDefUse,
-{
-    fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
-        if let TerminatorKind::Return = terminator.kind {
-            for (local, local_decl) in self.body.iter_enumerated().skip(1) {
-                if local_decl.ty.is_ptr_but_not_fn_ptr() {
-                    self.sites[local].push(location)
-                }
-            }
-        }
-        self.super_terminator(terminator, location)
-    }
-
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
         if DefUse::categorize_finely(local, self.body, context)
             .map_or(false, |def_use| DefUse::defining(def_use))

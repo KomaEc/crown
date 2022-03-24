@@ -45,6 +45,9 @@ enum Command {
         #[clap(long, short = 'O')]
         ownership: bool,
 
+        #[clap(long, short = 'p')]
+        pretty_mir: bool,
+
         #[clap(long, short)]
         all: bool,
     },
@@ -133,6 +136,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             null,
             array,
             ownership,
+            pretty_mir,
             all,
         } => {
             if *null || *all {
@@ -148,6 +152,10 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                 for result in null_results.iter().filter_map(Option::as_ref) {
                     println!("{result}");
                 }
+            }
+
+            if *pretty_mir {
+                refactor::show_mir(tcx, top_level_fns.clone())
             }
 
             if *ownership {

@@ -328,7 +328,11 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
     for IntraInfer<'infercx, 'tcx, Handler>
 {
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
-        if let Some(def_use) = <Self as HasSSANameHandler>::DefUse::categorize_finely(local, &self.ctxt.body.local_decls, context) {
+        if let Some(def_use) = <Self as HasSSANameHandler>::DefUse::categorize_finely(
+            local,
+            &self.ctxt.body.local_decls,
+            context,
+        ) {
             if def_use.defining() {
                 self.define_local(local, location);
             } else if def_use.using() {

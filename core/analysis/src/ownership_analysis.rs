@@ -246,9 +246,8 @@ impl InterSummary {
 
                     let constraint_system = &mut summary.constraint_system;
                     // before solving, global facts should be joined
-                    debug_assert!(
-                        !constraint_system.join_global_facts(&self.inter_ctxt.global_assumptions, None)
-                    );
+                    debug_assert!(!constraint_system
+                        .join_global_facts(&self.inter_ctxt.global_assumptions, None));
 
                     let func_constraint_sccs = constraint_system.saturate();
 

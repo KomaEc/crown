@@ -9,7 +9,7 @@ use smallvec::SmallVec;
 use std::collections::VecDeque;
 use std::marker::PhantomData;
 
-use crate::def_use::{DefSites, IsDefUse};
+use crate::def_use::{DefSites, IsDefUse, DefSitesGatherer};
 use crate::liveness_analysis::MaybeLiveLocals;
 use crate::ty_ext::TyExt;
 
@@ -228,7 +228,7 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
     ) -> PhiNodeInsertionPoints<PhantomData<*const DefUse>> {
         minimal_ssa_form(
             self,
-            DefUse::gather_def_sites(self),
+            DefSitesGatherer::<DefUse>::gather(self),
             self.dominance_frontier(),
             liveness_result(tcx, self),
         )

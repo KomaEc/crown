@@ -122,9 +122,9 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
             );
         }
 
-
         log::debug!("Generate constraints upon function exit");
-        for (local, local_decl) in self.ctxt.body.local_decls.iter_enumerated().skip(self.ctxt.body.arg_count + 1) {//local_decls.iter_enumerated().skip(1) {
+        for (local, local_decl) in self.ctxt.body.local_decls.iter_enumerated().skip(1) {
+            //local_decls.iter_enumerated().skip(1) {
             if local_decl.ty.is_ptr_but_not_fn_ptr() {
                 let ssa_idx = self.ssa_state().r#use(local);
                 // don't go through extra handlers since it is not an actual use

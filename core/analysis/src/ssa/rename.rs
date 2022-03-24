@@ -56,7 +56,11 @@ impl<ProgramVar: Idx> SSARenameState<ProgramVar> {
     }
     #[inline(always)]
     pub fn r#use(&self, var: ProgramVar) -> SSAIdx {
-        SSAIdx::from(*self.stack[var].last().expect(&format!("can't find definition for {:?}", var)))
+        SSAIdx::from(
+            *self.stack[var]
+                .last()
+                .expect(&format!("can't find definition for {:?}", var)),
+        )
     }
 }
 
@@ -150,8 +154,6 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
         data: &BasicBlockData<'tcx>,
         insertion_points: &PhiNodeInsertionPoints<PhantomData<*const Self::DefUse>>,
     ) {
-
-
         log::debug!("Renaming {:?}", block);
 
         let BasicBlockData {
