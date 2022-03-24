@@ -223,7 +223,7 @@ impl InterSummary {
             for summary in self.func_summaries.iter_mut() {
                 summary
                     .constraint_system
-                    .join_global_facts(&self.inter_ctxt.global_assumptions);
+                    .join_global_facts(&self.inter_ctxt.global_assumptions, None);
             }
 
             let mut in_queue = IndexVec::from_elem(true, &self.call_graph.graph.nodes);
@@ -247,7 +247,7 @@ impl InterSummary {
                     let constraint_system = &mut summary.constraint_system;
                     // before solving, global facts should be joined
                     debug_assert!(
-                        !constraint_system.join_global_facts(&self.inter_ctxt.global_assumptions)
+                        !constraint_system.join_global_facts(&self.inter_ctxt.global_assumptions, None)
                     );
 
                     let func_constraint_sccs = constraint_system.saturate();
@@ -262,7 +262,7 @@ impl InterSummary {
                     if self
                         .inter_ctxt
                         .global_assumptions
-                        .join_global_facts(&*constraint_system)
+                        .join_global_facts(&*constraint_system, Some(&func_constraint_sccs))
                     {
                         continue 'outter;
                     }
@@ -625,7 +625,7 @@ impl ConstraintDatabase {
 
     /// Assumption: eq_constraints do not involve pure global facts!!!!!
     /// TODO: cleverer? changed only when facts can not be deduced
-    pub fn join_global_facts(&mut self, other: &Self) -> bool {
+    pub fn join_global_facts(&mut self, other: &Self, absolute: Option<&Sccs<Rho, u32>>) -> bool {
         assert_eq!(
             self.le_constraints.local_start,
             other.le_constraints.local_start
@@ -637,6 +637,17 @@ impl ConstraintDatabase {
                 for y in other.le_constraints.graph.successor_nodes(x) {
                     if y < local_start {
                         changed = changed || self.le_constraints.add_relation(x, y)
+                    }
+                }
+
+                if let Some(sccs) = absolute {
+                    let x_rep = sccs.scc(x);
+                    let zero_rep = sccs.scc(Rho::ZERO);
+                    let one_rep = sccs.scc(Rho::ONE);
+                    if x_rep == zero_rep {
+                        changed = changed || self.le_constraints.add_relation(x, Rho::ZERO);
+                    } else if x_rep == one_rep {
+                        changed = changed || self.le_constraints.add_relation(Rho::ONE, x);
                     }
                 }
             }
@@ -677,21 +688,33 @@ impl ConstraintDatabase {
                     // let one_rep = sccs.scc(ULEConstraintGraph::ONE);
 
                     if x_rep == zero_rep {
+                        log::debug!("     {:?} = 0, {:?} = {:?} + {:?}", x, z, x, y);
+                        log::debug!("---------------------------------------------");
+                        log::debug!("     {:?} = {:?}", z, y);
                         self.le_constraints.add_relation(z, y);
                         *removed = true;
                     } else if y_rep == zero_rep {
+                        log::debug!("     {:?} = 0, {:?} = {:?} + {:?}", y, z, x, y);
+                        log::debug!("---------------------------------------------");
+                        log::debug!("     {:?} = {:?}", z, x);
                         self.le_constraints.add_relation(z, x);
                         *removed = true;
                     } else if DepthFirstSearch::new(&sccs)
                         .with_start_node(z_rep)
                         .any(|rep| rep == y_rep)
                     {
+                        log::debug!("     {:?} ≤ {:?}, {:?} = {:?} + {:?}", z, y, z, x, y);
+                        log::debug!("---------------------------------------------");
+                        log::debug!("     {:?} = 0", x);
                         self.le_constraints.add_relation(x, Rho::ZERO);
                         *removed = true;
                     } else if DepthFirstSearch::new(&sccs)
                         .with_start_node(z_rep)
                         .any(|rep| rep == x_rep)
                     {
+                        log::debug!("     {:?} ≤ {:?}, {:?} = {:?} + {:?}", z, x, z, x, y);
+                        log::debug!("---------------------------------------------");
+                        log::debug!("     {:?} = 0", y);
                         self.le_constraints.add_relation(y, Rho::ZERO);
                         *removed = true;
                     }

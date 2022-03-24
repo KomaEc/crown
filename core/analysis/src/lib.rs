@@ -16,6 +16,7 @@ pub mod fat_thin_analysis;
 pub mod lattice;
 pub mod libcall_model;
 pub mod liveness_analysis;
+pub mod must_null_analysis;
 pub mod null_analysis;
 pub mod ownership_analysis;
 pub mod pointer_analysis;

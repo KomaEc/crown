@@ -7,11 +7,65 @@ use crate::{
     call_graph::CallGraph,
     ownership_analysis::{AnalysisEngine, InterSummary, Rho},
     ssa::rename::handler::LogSSAName,
-    test::init_logger, UnitAnalysisCV,
+    test::init_logger,
+    UnitAnalysisCV,
 };
 
-const TEST_FOLDER_NAMES: &[&str] = &["0", "1", "2"];
+const TEST_FOLDER_NAMES: &[&str] = &["0", "1", "2", "3", "4"];
 const TEST_RESOURCES_PATH_STR: &str = "src/ownership_analysis/test/resource/";
+
+#[test]
+fn test_null_test() {
+    init_logger();
+    let lib = env::current_dir()
+        .expect("current working directory value is invalid")
+        .join(TEST_RESOURCES_PATH_STR)
+        .join("2/lib.rs");
+    compiler_interface::run_compiler_with_struct_defs_and_funcs(
+        lib.into(),
+        |tcx, struct_defs, fn_dids| {
+            let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
+
+            let call_graph = CallGraph::new(tcx, bodies.into_iter());
+            let mut crate_summary = InterSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+
+            crate_summary.func_summaries[crate::call_graph::Func::from_u32(0)]
+                .constraint_system
+                .show();
+            crate_summary.func_summaries[crate::call_graph::Func::from_u32(0)]
+                .constraint_system
+                .le_constraints
+                .show();
+
+            match crate_summary.resolve() {
+                Ok(()) => {
+                    for summary in &crate_summary.func_summaries {
+                        summary.constraint_system.show()
+                    }
+                }
+                Err(reason) => {
+                    log::error!("Cannot solve ownership constraints!");
+                    assert!(reason.len() >= 2);
+                    assert_eq!(reason[0], Rho::ONE);
+                    assert_eq!(*reason.last().unwrap(), Rho::ZERO);
+
+                    log::debug!("A chain of inequalities that leads to this conflict:");
+                    for &[x, y] in reason.array_windows() {
+                        log::debug!("{:?} ≤ {:?}", x, y)
+                    }
+
+                    /*
+                    log::debug!("Explaining rho_11 ≤ 0");
+                    let intra_summary = &crate_summary.func_summaries[crate::call_graph::Func::from_u32(0)];
+                    for &[x, y] in intra_summary.constraint_system.le_constraints.explain(Rho::from_u32(11), Rho::from_u32(0)).array_windows() {
+                        log::debug!("{:?} ≤ {:?}", x, y)
+                    }
+                    */
+                }
+            }
+        },
+    )
+}
 
 #[test]
 fn test_infer_not_crash() {
@@ -62,14 +116,8 @@ fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
         Err(reason) => {
             log::error!("Cannot solve ownership constraints!");
             assert!(reason.len() >= 2);
-            assert_eq!(
-                reason[0],
-                Rho::ONE
-            );
-            assert_eq!(
-                *reason.last().unwrap(),
-                Rho::ZERO
-            );
+            assert_eq!(reason[0], Rho::ONE);
+            assert_eq!(*reason.last().unwrap(), Rho::ZERO);
 
             log::debug!("A chain of inequalities that leads to this conflict:");
             for &[x, y] in reason.array_windows() {

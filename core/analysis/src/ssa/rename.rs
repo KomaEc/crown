@@ -5,7 +5,7 @@ use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::mir::{
     visit::{PlaceContext, Visitor},
-    BasicBlock, BasicBlockData, Body, Local, Location, Statement, Terminator,
+    BasicBlock, BasicBlockData, Body, Local, LocalDecls, Location, Statement, Terminator,
 };
 
 use crate::{def_use::IsDefUse, ssa::body_ext::PhiNodeInsertionPoints};
@@ -42,7 +42,7 @@ impl<ProgramVar: Idx> SSARenameState<ProgramVar> {
     }
 }
 
-pub trait HasSSARenameState<ProgramVar: Idx> {
+pub trait HasSSARenameState<ProgramVar: Idx + std::fmt::Debug> {
     fn ssa_state(&mut self) -> &mut SSARenameState<ProgramVar>;
 }
 
@@ -56,7 +56,7 @@ impl<ProgramVar: Idx> SSARenameState<ProgramVar> {
     }
     #[inline(always)]
     pub fn r#use(&self, var: ProgramVar) -> SSAIdx {
-        SSAIdx::from(*self.stack[var].last().unwrap())
+        SSAIdx::from(*self.stack[var].last().expect(&format!("can't find definition for {:?}", var)))
     }
 }
 
@@ -129,8 +129,12 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
 
         while let Some((bb, to_pop_stack)) = visitor_stack.pop() {
             if to_pop_stack {
-                StackPopper::<Self::DefUse>(&mut self.ssa_state().stack, PhantomData)
-                    .visit_basic_block_data(bb, &body.basic_blocks()[bb]);
+                StackPopper::<Self::DefUse>(
+                    &mut self.ssa_state().stack,
+                    &body.local_decls,
+                    PhantomData,
+                )
+                .visit_basic_block_data(bb, &body.basic_blocks()[bb]);
             } else {
                 self.rename_basic_block_data(body, bb, &body.basic_blocks()[bb], insertion_points);
                 visitor_stack.push((bb, true));
@@ -146,6 +150,10 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
         data: &BasicBlockData<'tcx>,
         insertion_points: &PhiNodeInsertionPoints<PhantomData<*const Self::DefUse>>,
     ) {
+
+
+        log::debug!("Renaming {:?}", block);
+
         let BasicBlockData {
             statements,
             terminator,
@@ -194,15 +202,19 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
     fn rename_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location);
 }
 
-struct StackPopper<'me, DefUse: IsDefUse>(
+struct StackPopper<'me, 'tcx, DefUse: IsDefUse>(
     &'me mut IndexVec<Local, Vec<usize>>,
+    &'me LocalDecls<'tcx>,
     PhantomData<*const DefUse>,
 );
 
-impl<'me, 'tcx, DefUse: IsDefUse> Visitor<'tcx> for StackPopper<'tcx, DefUse> {
+impl<'me, 'tcx, DefUse: IsDefUse> Visitor<'tcx> for StackPopper<'me, 'tcx, DefUse> {
     fn visit_local(&mut self, &local: &Local, context: PlaceContext, _location: Location) {
-        if DefUse::categorize(context).map_or(false, IsDefUse::defining) {
-            self.0[local].pop();
+        if DefUse::categorize_finely(local, self.1, context).map_or(false, IsDefUse::defining) {
+            let ssa_idx = self.0[local].pop();
+            if let Some(ssa_idx) = ssa_idx {
+                log::debug!("poping {:?}^{}", local, ssa_idx);
+            }
         }
     }
 }

@@ -113,7 +113,7 @@ pub fn show_ownership_analysis_results<'tcx>(
     let bodies = funcs
         .iter()
         .map(|&fn_did| {
-            /*
+            
             let body = tcx.optimized_mir(fn_did);
             rustc_middle::mir::pretty::write_mir_fn(
                 tcx,
@@ -122,7 +122,7 @@ pub fn show_ownership_analysis_results<'tcx>(
                 &mut std::io::stdout(),
             )
             .unwrap();
-            */
+            
 
             fn_did.to_def_id()
         })
@@ -143,6 +143,7 @@ pub fn show_ownership_analysis_results<'tcx>(
         }
         Err(reason) => {
             log::error!("Cannot solve ownership constraints!");
+
             assert!(reason.len() >= 2);
             assert_eq!(
                 reason[0],

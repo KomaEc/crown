@@ -12,11 +12,19 @@ extern "C" {
     fn free(__ptr: *mut libc::c_void);
 }
 
+struct S {
+    f: *mut i32,
+    g: *mut i32
+}
 
-unsafe fn f() -> *mut i32 {
-    let mut x = malloc(4) as *mut i32;
-    if x.is_null() {
-        return x //0 as *mut i32;
-    }
-    return x
+
+unsafe fn f(s: *mut S) {
+    (*s).f = malloc(4) as *mut i32;
+    (*s).g = (*s).f
+}
+
+
+unsafe fn g(s: *mut S) {
+    free((*s).f as *mut libc::c_void);
+    free(s as *mut libc::c_void)
 }
