@@ -57,7 +57,7 @@ use range_ext::{IsRustcIndexDefinedCV, RangeExt};
 use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_index::vec::{Idx, IndexVec};
+use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{BasicBlock, Body, Local, Location},
     ty::{subst::GenericArgKind, TyCtxt},
@@ -66,10 +66,7 @@ use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
 use ssa::rename::{SSAIdx, SSANameHandler, SSARename};
 use std::{
-    collections::VecDeque,
     fmt::Display,
-    iter::Step,
-    marker::PhantomData,
     ops::{Index, IndexMut, Range},
 };
 use ty_ext::TyExt;
@@ -401,7 +398,7 @@ pub trait UnitAnalysisCV {
 /// Unit Less or Equal constraint graph per function
 /// Node indexing: `[0, 1, globals.start..globals.end, locals.start..locals.end]`
 #[derive(Clone)]
-struct ULEConstraintGraph<X: IsRustcIndexDefinedCV + UnitAnalysisCV> {
+pub struct ULEConstraintGraph<X: IsRustcIndexDefinedCV + UnitAnalysisCV> {
     local_start: X,
     /// Invariant: `graph.num_nodes() == locals.len() + globals.len() + 2`
     graph: Graph<X, usize>,
@@ -435,9 +432,6 @@ impl<X: IsRustcIndexDefinedCV + UnitAnalysisCV> ULEConstraintGraph<X> {
 
     #[inline]
     pub fn add_relation(&mut self, x: X, y: X) -> bool {
-        if self.graph.num_nodes() == 25 && x == X::from(10usize) && y == X::ZERO {
-            panic!("{:?} ≤ {:?}", x, y)
-        }
         log::debug!("adding relation {:?} ≤ {:?}", x, y);
         self.graph.add_edge_without_dup(x, y).is_some()
     }

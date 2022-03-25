@@ -4,7 +4,6 @@ use rustc_middle::mir::{self, Local, Location};
 
 use rustc_mir_dataflow::{AnalysisDomain, Backward, CallReturnPlaces, GenKill, GenKillAnalysis};
 
-use crate::def_use::IsDefUse;
 pub struct MaybeLiveLocals;
 
 impl MaybeLiveLocals {

@@ -4,7 +4,7 @@ use rustc_index::vec::IndexVec;
 use rustc_middle::mir::visit::{
     MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor,
 };
-use rustc_middle::mir::{Body, Local, LocalDecls, Location, Terminator, TerminatorKind};
+use rustc_middle::mir::{Body, Local, LocalDecls, Location};
 use smallvec::{smallvec, SmallVec};
 
 use crate::ty_ext::TyExt;

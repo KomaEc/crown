@@ -11,7 +11,6 @@ use std::marker::PhantomData;
 
 use crate::def_use::{DefSites, DefSitesGatherer, IsDefUse};
 use crate::liveness_analysis::MaybeLiveLocals;
-use crate::ty_ext::TyExt;
 
 const DOMINATOR_FRONTIER_ON_STACK_SIZE: usize = 3;
 const PHI_NODE_INSERTED_ON_STACK_SIZE: usize = 3;

@@ -19,7 +19,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
 {
     fn model_boundary(
         &mut self,
-        callee: DefId,
+        _callee: DefId,
         args: &Vec<Operand<'tcx>>,
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,

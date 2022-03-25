@@ -5,7 +5,7 @@ use rustc_middle::ty::TyCtxt;
 
 use crate::{
     call_graph::CallGraph,
-    ownership_analysis::{AnalysisEngine, InterSummary, Rho},
+    ownership_analysis::{InterSummary, Rho},
     ssa::rename::handler::LogSSAName,
     test::init_logger,
     UnitAnalysisCV,

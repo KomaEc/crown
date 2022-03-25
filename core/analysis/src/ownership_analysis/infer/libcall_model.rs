@@ -1,7 +1,7 @@
 use rustc_middle::{
     mir::{
-        visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-        BasicBlock, CastKind, Location, Operand, Place, Rvalue,
+        visit::{MutatingUseContext, PlaceContext, Visitor},
+        BasicBlock, Location, Operand, Place,
     },
     ty::TyCtxt,
 };

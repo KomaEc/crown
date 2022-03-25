@@ -16,11 +16,11 @@ use rustc_middle::{
 };
 use rustc_target::abi::VariantIdx;
 
-use smallvec::{smallvec, SmallVec};
+use smallvec::smallvec;
 
 use crate::{
     boundary_model::BoundaryModel,
-    call_graph::{CallGraph, CallSite, Func},
+    call_graph::CallGraph,
     def_use::IsDefUse,
     def_use::OwnershipAnalysisDefUse,
     libcall_model::LibCallModel,
@@ -30,12 +30,11 @@ use crate::{
             HasSSANameHandler, HasSSARenameState, SSAIdx, SSANameHandler, SSARename, SSARenameState,
         },
     },
-    ty_ext::TyExt,
-    Analysis, Boundary, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView, FuncSig, Surface,
+    ty_ext::TyExt, FuncSig, Surface,
 };
 
 use super::{
-    AnalysisEngine, ConstraintDatabase, InterCtxt, InterCtxtView, IntraSummary, LocalSourceInfo,
+    AnalysisEngine, ConstraintDatabase, IntraSummary, LocalSourceInfo,
     OwnershipAnalysisBoundary, Rho,
 };
 
