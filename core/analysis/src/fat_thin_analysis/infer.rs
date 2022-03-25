@@ -1,8 +1,10 @@
+pub mod boundary_model;
 pub mod libcall_model;
 
 use std::ops::Range;
 
 use crate::{
+    boundary_model::BoundaryModel,
     call_graph::{CallGraph, CallSite, Func},
     def_use::{FatThinAnalysisDefUse, IsDefUse},
     fat_thin_analysis::{
@@ -20,12 +22,11 @@ use crate::{
     ty_ext::TyExt,
     Analysis, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView,
 };
-use graph::implementation::forward_star::Direction;
 use range_ext::RangeExt;
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
-        visit::{MutatingUseContext, PlaceContext, Visitor},
+        visit::{PlaceContext, Visitor},
         BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
         ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind, RETURN_PLACE,
     },
@@ -489,79 +490,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                             self.ctxt.tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::Item(_))
                         ) {
-                            // Does it help the compiler with bound check elimination?
-                            assert_eq!(
-                                self.ctxt.call_graph.call_sites.len(),
-                                self.ctxt.call_graph.graph.edges.len()
-                            );
-                            let (call_site, edge_data) = self
-                                .ctxt
-                                .call_graph
-                                .graph
-                                .adjacent_edges(self.ctxt.lambda_ctxt.func, Direction::Outgoing)
-                                .find(|&(call_site, _)| {
-                                    self.ctxt.call_graph.call_sites[call_site] == location
-                                })
-                                .unwrap();
-                            debug_assert_eq!(edge_data.source, self.ctxt.lambda_ctxt.func);
-                            debug_assert_eq!(
-                                edge_data.target,
-                                self.ctxt.call_graph.lookup_function(&callee_did).unwrap()
-                            );
-                            for (idx, arg) in args.iter().enumerate() {
-                                if arg
-                                    .ty(self.ctxt.body, self.ctxt.tcx)
-                                    .is_ptr_but_not_fn_ptr()
-                                {
-                                    let place = arg
-                                        .place()
-                                        .expect("constant in call arguments is not supported");
-                                    let lambdas = self.use_ptr_place(&place, location);
-                                    self.boundary_constraints[call_site].push(
-                                        BoundaryConstraint::Argument {
-                                            caller: lambdas,
-                                            callee: Local::from_usize(idx + 1),
-                                        },
-                                    );
-                                    log::debug!(
-                                        "generate boundary constraint ({:?}, {:?}) ≤ ({:?}. {:?})",
-                                        edge_data.target,
-                                        Local::from_usize(idx + 1),
-                                        edge_data.source,
-                                        arg
-                                    )
-                                } else {
-                                    self.visit_operand(arg, location)
-                                }
-                            }
-                            if let Some((destination, _)) = destination {
-                                if destination
-                                    .ty(self.ctxt.body, self.ctxt.tcx)
-                                    .ty
-                                    .is_ptr_but_not_fn_ptr()
-                                {
-                                    let lambdas = self.try_define_ptr_place(&destination, location);
-                                    self.boundary_constraints[call_site].push(
-                                        BoundaryConstraint::Return {
-                                            caller: lambdas,
-                                            callee: Place::return_place().local,
-                                        },
-                                    );
-                                    log::debug!(
-                                        "generate boundary constraint ({:?}, {:?}) ≤ ({:?}, {:?})",
-                                        edge_data.source,
-                                        destination,
-                                        edge_data.target,
-                                        Place::return_place().local,
-                                    )
-                                } else {
-                                    self.visit_place(
-                                        &destination,
-                                        PlaceContext::MutatingUse(MutatingUseContext::Call),
-                                        location,
-                                    )
-                                }
-                            }
+                            self.model_boundary(callee_did, args, destination, location);
                             return;
                         }
                     }
@@ -575,15 +504,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                 unreachable!("what could it be? {}", ty)
             }
         } else if let TerminatorKind::Return = terminator.kind {
-            if self.ctxt.body.local_decls[RETURN_PLACE]
-                .ty
-                .is_ptr_but_not_fn_ptr()
-            {
-                let ssa_idx = self.ssa_state().r#use(RETURN_PLACE);
-                self.ssa_name_handler()
-                    .handle_use(RETURN_PLACE, ssa_idx, location);
-                self.return_ssa_idx.push(ssa_idx);
-            }
+            self.model_return(location);
             return;
         }
         self.super_terminator(terminator, location)

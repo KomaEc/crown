@@ -42,6 +42,12 @@ enum Command {
         #[clap(long, short = 'A')]
         array: bool,
 
+        #[clap(long, short = 'O')]
+        ownership: bool,
+
+        #[clap(long, short = 'p')]
+        pretty_mir: bool,
+
         #[clap(long, short)]
         all: bool,
     },
@@ -126,7 +132,13 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
         .collect::<Vec<_>>();
 
     match cmd {
-        Command::Analyse { null, array, all } => {
+        Command::Analyse {
+            null,
+            array,
+            ownership,
+            pretty_mir,
+            all,
+        } => {
             if *null || *all {
                 let null_results_raw = top_level_fns
                     .iter()
@@ -140,6 +152,18 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                 for result in null_results.iter().filter_map(Option::as_ref) {
                     println!("{result}");
                 }
+            }
+
+            if *pretty_mir {
+                refactor::show_mir(tcx, top_level_fns.clone())
+            }
+
+            if *ownership {
+                refactor::show_ownership_analysis_results(
+                    tcx,
+                    top_level_struct_defs.clone(),
+                    top_level_fns.clone(),
+                )
             }
 
             if *array || *all {

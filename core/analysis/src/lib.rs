@@ -7,16 +7,20 @@
 #![feature(generic_associated_types)]
 #![feature(associated_type_defaults)]
 #![feature(step_trait)]
+#![feature(array_windows)]
 
+pub mod boundary_model;
 pub mod call_graph;
 pub mod def_use;
 pub mod fat_thin_analysis;
 pub mod lattice;
 pub mod libcall_model;
 pub mod liveness_analysis;
+pub mod must_null_analysis;
 pub mod null_analysis;
 pub mod ownership_analysis;
 pub mod pointer_analysis;
+pub mod rustc_index_ext;
 pub mod ssa;
 #[cfg(test)]
 pub mod test;
@@ -43,23 +47,26 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate tracing;
 
+use boundary_model::BoundaryModel;
 use call_graph::{CallGraph, Func};
 use def_use::IsDefUse;
+use graph::implementation::forward_star::Graph;
 use lattice::JoinLattice;
+use libcall_model::LibCallModel;
 use range_ext::{IsRustcIndexDefinedCV, RangeExt};
-use rustc_data_structures::graph::WithNumNodes;
+use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_index::vec::{Idx, IndexVec};
+use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{BasicBlock, Body, Local, Location},
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
+use smallvec::SmallVec;
 use ssa::rename::{SSAIdx, SSANameHandler, SSARename};
 use std::{
     fmt::Display,
-    iter::Step,
     ops::{Index, IndexMut, Range},
 };
 use ty_ext::TyExt;
@@ -72,6 +79,8 @@ pub trait Analysis<'tcx> {
     const NAME: &'static str;
     type DefUse: IsDefUse;
     type Infer<'a, E>: SSARename<'tcx, DefUse = Self::DefUse>
+        + LibCallModel<'tcx>
+        + BoundaryModel<'tcx>
     where
         'tcx: 'a,
         E: SSANameHandler;
@@ -337,24 +346,140 @@ impl Display for CVSourceData {
     }
 }
 
-pub struct Boundary<Return, Argument> {
-    r#return: Return,
+/*
+#[derive(Clone)]
+pub enum Boundary<Return: Clone, Argument: Clone> {
+    Return(Return),
+    Parameter { caller: Argument, callee: Local },
+}
+*/
+
+#[derive(Clone)]
+pub struct Boundary<Destination: Clone, Argument: Clone> {
+    callee: Func,
+    dest: Destination,
     arguments: Vec<Argument>,
 }
 
-pub type BoundaryE<T> = Boundary<T, T>;
+/*
+#[derive(Clone)]
+pub struct FnSig<X: IsRustcIndexDefinedCV> {
+    concrete: Vec<SmallVec<[Option<bool>; 1]>>,
+    r#abstract: Vec<Range<X>>,
+}
+*/
 
-pub struct FnSigVal<Return, Parameter> {
-    r#return: Return,
-    parameters: Vec<Parameter>,
+pub trait FuncSigKind {
+    type PtrKindRep<Value>;
 }
 
-pub type FnSigValE<T> = FnSigVal<T, T>;
+pub struct FuncSig<K: FuncSigKind, Value> {
+    sig: Vec<K::PtrKindRep<Value>>,
+    // _marker: PhantomData<*const K>
+}
 
-pub trait BoundariesInstantiable {
-    type FnReturn;
-    type Parameter;
-    fn instantiate(&self, fn_sig: &FnSigVal<Self::FnReturn, Self::Parameter>);
+pub struct Surface;
+
+impl FuncSigKind for Surface {
+    type PtrKindRep<Domain> = SmallVec<[Domain; 1]>;
+}
+
+pub struct Inner;
+
+impl FuncSigKind for Inner {
+    type PtrKindRep<X> = Range<X>;
+}
+
+pub trait UnitAnalysisCV {
+    const ZERO: Self;
+    const ONE: Self;
+}
+
+/// Unit Less or Equal constraint graph per function
+/// Node indexing: `[0, 1, globals.start..globals.end, locals.start..locals.end]`
+#[derive(Clone)]
+pub struct ULEConstraintGraph<X: IsRustcIndexDefinedCV + UnitAnalysisCV> {
+    local_start: X,
+    /// Invariant: `graph.num_nodes() == locals.len() + globals.len() + 2`
+    graph: Graph<X, usize>,
+}
+
+impl<X: IsRustcIndexDefinedCV + UnitAnalysisCV> ULEConstraintGraph<X> {
+    pub fn new(n_globals: usize, n_locals: usize) -> Self {
+        let mut graph = Graph::new(
+            2 + n_globals + n_locals,
+            (2..2 + n_globals + n_locals).flat_map(|idx| {
+                let idx = X::new(idx);
+                [(idx, X::ONE), (X::ZERO, idx), (idx, idx)].into_iter()
+            }),
+        );
+        graph.add_edge(X::ONE, X::ONE);
+        graph.add_edge(X::ZERO, X::ZERO);
+        ULEConstraintGraph {
+            local_start: X::new(2 + n_globals),
+            graph,
+        }
+    }
+
+    pub fn add_node(&mut self) -> X {
+        let new = self.graph.add_node();
+        log::debug!("new node variable generated {:?}", new);
+        self.add_relation(new, new);
+        self.add_relation(X::ZERO, new);
+        self.add_relation(new, X::ONE);
+        new
+    }
+
+    #[inline]
+    pub fn add_relation(&mut self, x: X, y: X) -> bool {
+        log::debug!("adding relation {:?} ≤ {:?}", x, y);
+        self.graph.add_edge_without_dup(x, y).is_some()
+    }
+
+    pub fn consistent(&self, sccs: &Sccs<X, u32>) -> bool {
+        let one_rep = sccs.scc(X::ONE);
+        let zero_rep = sccs.scc(X::ZERO);
+        one_rep != zero_rep
+    }
+
+    pub fn explain(&self, x: X, y: X) -> Vec<X> {
+        enum NodeStatus {
+            ToVisit,
+            ToPopStack,
+        }
+
+        let mut stack = vec![];
+        let mut visited = IndexVec::from_elem_n(false, self.graph.num_nodes());
+
+        stack.push((x, NodeStatus::ToVisit));
+
+        while let Some((z, status)) = stack.pop() {
+            if matches!(status, NodeStatus::ToPopStack) {
+                continue;
+            }
+            visited[z] = true;
+            stack.push((z, NodeStatus::ToPopStack));
+            for w in self.graph.successor_nodes(z) {
+                if !visited[w] {
+                    stack.push((w, NodeStatus::ToVisit));
+
+                    if w == y {
+                        return stack.into_iter().map(|(x, _)| x).collect::<Vec<_>>();
+                    }
+                }
+            }
+        }
+
+        vec![]
+    }
+
+    pub fn show(&self) {
+        for x in self.graph.nodes() {
+            for y in self.graph.successor_nodes(x) {
+                log::debug!("{:?} ≤ {:?}", x, y)
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

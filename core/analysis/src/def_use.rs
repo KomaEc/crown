@@ -197,51 +197,41 @@ pub enum OwnershipAnalysisDefUse {
     Use,
 }
 
-macro_rules! make_sites_gatherer(
-    ($Gatherer:ident, $def_or_use:ident) => {
-        pub struct $Gatherer<'me, 'tcx, DefUse>
-        where DefUse: IsDefUse
-        {
-            // tcx: TyCtxt<'tcx>,
-            body: &'me LocalDecls<'tcx>,
-            sites: IndexVec<Local, SmallVec<[Location; 2]>>,
-            _marker: core::marker::PhantomData<*const DefUse>
-        }
+pub struct DefSitesGatherer<'me, 'tcx, DefUse>
+where
+    DefUse: IsDefUse,
+{
+    body: &'me LocalDecls<'tcx>,
+    sites: IndexVec<Local, SmallVec<[Location; 2]>>,
+    _marker: core::marker::PhantomData<*const DefUse>,
+}
 
-        impl<'me, 'tcx, DefUse> $Gatherer<'me, 'tcx, DefUse>
-        where DefUse: IsDefUse
-        {
-            pub fn gather(body: &Body<'tcx>) -> IndexVec<Local, SmallVec<[Location; 2]>>{
-                let mut gatherer: $Gatherer<DefUse> =
-                    $Gatherer {
-                        body: &body.local_decls,
-                        sites: IndexVec::from_elem(smallvec![], &body.local_decls),
-                        _marker: core::marker::PhantomData
-                    };
-                gatherer.visit_body(body);
-                gatherer.sites
-            }
-        }
+impl<'me, 'tcx, DefUse> DefSitesGatherer<'me, 'tcx, DefUse>
+where
+    DefUse: IsDefUse,
+{
+    pub fn gather(body: &Body<'tcx>) -> IndexVec<Local, SmallVec<[Location; 2]>> {
+        let mut gatherer: DefSitesGatherer<DefUse> = DefSitesGatherer {
+            body: &body.local_decls,
+            sites: IndexVec::from_elem(smallvec![], &body.local_decls),
+            _marker: core::marker::PhantomData,
+        };
+        gatherer.visit_body(body);
+        gatherer.sites
+    }
+}
 
-        impl<'me, 'tcx, DefUse> Visitor<'tcx> for $Gatherer<'me, 'tcx, DefUse>
-        where DefUse: IsDefUse
+impl<'me, 'tcx, DefUse> Visitor<'tcx> for DefSitesGatherer<'me, 'tcx, DefUse>
+where
+    DefUse: IsDefUse,
+{
+    fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
+        if DefUse::categorize_finely(local, self.body, context)
+            .map_or(false, |def_use| DefUse::defining(def_use))
         {
-            fn visit_local(
-                &mut self,
-                &local: &Local,
-                context: PlaceContext,
-                location: Location
-            ) {
-                if DefUse::categorize_finely(local, self.body, context).map_or(false, |def_use| DefUse::$def_or_use(def_use)) {
-                    self.sites[local].push(location)
-                }
-            }
+            self.sites[local].push(location)
         }
     }
-);
-
-make_sites_gatherer!(DefSitesGatherer, defining);
-make_sites_gatherer!(UseSitesGatherer, using);
+}
 
 pub type DefSites = IndexVec<Local, SmallVec<[Location; 2]>>;
-pub type UseSites = IndexVec<Local, SmallVec<[Location; 2]>>;

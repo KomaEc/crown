@@ -425,7 +425,7 @@ Ownership Analysis
         Γ |- q: L(q), p: L(p)
     ---------------------------------------------  (ASSIGN-BASE)
         p = q ~~> L(p) = 0, L(p') + L(q') = L(q),
-        L(p') <= L(q); Γ |- p': L(p'), q': L(q')
+        L(p) = 0; Γ |- p': L(p'), q': L(q')
 
 
         Γ |- p: L(p)
@@ -453,7 +453,7 @@ Ownership Analysis
 
 
         Γ |- f: L(f), g: L(g)
-    ---------------------------------------------  (ASSIGN-RPROJ)
+    ---------------------------------------------  (ASSIGN-BPROJ)
         p.f = q.g ~~> L(f) ≤ L(g); Γ
 
 
@@ -477,3 +477,10 @@ Ownership Analysis
 
 ### Q
 1. Is it possible that in a free statement `free(p);`, `p` has lambda value `?` ? If so, then there must be interactions between array analysis and ownership analysis
+
+
+
++ Skeleton of the paper
+  + Sections, and subsections
+  + Introduction, Overview, and Analysis, Translation, Evaluation
+  + Longer term, it's a good thing to be done to replicate Section 2 of OOPSLA

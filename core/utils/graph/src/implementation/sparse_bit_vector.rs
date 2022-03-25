@@ -9,6 +9,7 @@ use rustc_index::{
     vec::{Idx, IndexVec},
 };
 
+#[derive(Clone)]
 pub struct SparseBitVectorGraph<N: Idx> {
     edges: IndexVec<N, HybridBitSet<N>>,
 }

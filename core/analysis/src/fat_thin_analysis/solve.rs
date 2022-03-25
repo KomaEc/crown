@@ -150,6 +150,7 @@ pub fn solve(
         idx += 1;
     }
 
+    /*
     for &Constraint(lhs, rhs) in boundary_constraints {
         if locals.contains(&lhs.as_usize()) {
             // return position
@@ -176,6 +177,7 @@ pub fn solve(
             }
         }
     }
+    */
 
     Ok(solve_success)
 }

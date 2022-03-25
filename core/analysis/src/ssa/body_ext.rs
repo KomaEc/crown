@@ -269,7 +269,15 @@ pub fn minimal_ssa_form<'tcx, DefUse: IsDefUse>(
         while let Some(bb) = work_list.pop_front() {
             for &bb_f in &dominance_frontier[bb] {
                 liveness.seek_to_block_start(bb_f);
-                if !already_added.contains(bb_f) && liveness.get().contains(a) {
+                if !already_added.contains(bb_f)
+                    && (
+                        // body.local_decls[a].ty.is_ptr_but_not_fn_ptr()
+                        matches!(
+                            body.basic_blocks()[bb_f].terminator().kind,
+                            rustc_middle::mir::TerminatorKind::Return
+                        ) || liveness.get().contains(a)
+                    )
+                {
                     inserted[bb_f].push(a, PhantomData);
                     assert!(already_added.insert(bb_f));
                     if !def_sites[a].contains(&bb_f) {

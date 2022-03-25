@@ -10,8 +10,11 @@ extern crate rustc_index;
 
 /// This is a marker trait to mark constraint variable data types implemented
 /// by rustc_index!
-pub trait IsRustcIndexDefinedCV =
-    IsConstraintVariable + Idx + Step + std::ops::Add<usize, Output = Self>;
+pub trait IsRustcIndexDefinedCV = IsConstraintVariable
+    + Idx
+    + Step
+    + std::ops::Add<usize, Output = Self>
+    + std::convert::From<usize>;
 
 /// Marker trait that marks data types for constraint variables
 pub trait IsConstraintVariable {}
