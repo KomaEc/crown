@@ -23,8 +23,6 @@ pub trait IsDefUse: PartialEq + Eq + Clone + Copy {
     }
 
     fn categorize(context: PlaceContext) -> Option<Self>;
-
-    // fn gather_def_sites<'tcx>(body: &Body<'tcx>) -> DefSites;
 }
 
 impl IsDefUse for FatThinAnalysisDefUse {
@@ -97,12 +95,6 @@ impl IsDefUse for FatThinAnalysisDefUse {
             PlaceContext::NonUse(NonUseContext::VarDebugInfo) => None,
         }
     }
-
-    /*
-    fn gather_def_sites<'tcx>(body: &Body<'tcx>) -> DefSites {
-        DefSitesGatherer::<Self>::gather(body)
-    }
-    */
 }
 
 impl IsDefUse for OwnershipAnalysisDefUse {
@@ -190,13 +182,6 @@ impl IsDefUse for OwnershipAnalysisDefUse {
             PlaceContext::NonUse(NonUseContext::VarDebugInfo) => None,
         }
     }
-
-    /*
-    fn gather_def_sites<'tcx>(body: &Body<'tcx>) -> DefSites {
-        // DefSitesGatherer::<Self>::gather(body)
-        OwnershipDefSitesGatherer::<Self>::gather(body)
-    }
-    */
 }
 
 #[derive(Eq, PartialEq, Clone, Copy)]

@@ -9,7 +9,7 @@ use smallvec::SmallVec;
 use std::collections::VecDeque;
 use std::marker::PhantomData;
 
-use crate::def_use::{DefSites, IsDefUse, DefSitesGatherer};
+use crate::def_use::{DefSites, DefSitesGatherer, IsDefUse};
 use crate::liveness_analysis::MaybeLiveLocals;
 use crate::ty_ext::TyExt;
 
@@ -271,8 +271,13 @@ pub fn minimal_ssa_form<'tcx, DefUse: IsDefUse>(
             for &bb_f in &dominance_frontier[bb] {
                 liveness.seek_to_block_start(bb_f);
                 if !already_added.contains(bb_f)
-                    && (body.local_decls[a].ty.is_ptr_but_not_fn_ptr()
-                        || liveness.get().contains(a))
+                    && (
+                        // body.local_decls[a].ty.is_ptr_but_not_fn_ptr()
+                        matches!(
+                            body.basic_blocks()[bb_f].terminator().kind,
+                            rustc_middle::mir::TerminatorKind::Return
+                        ) || liveness.get().contains(a)
+                    )
                 {
                     inserted[bb_f].push(a, PhantomData);
                     assert!(already_added.insert(bb_f));

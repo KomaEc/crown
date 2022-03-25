@@ -11,16 +11,16 @@ use crate::{
     UnitAnalysisCV,
 };
 
-const TEST_FOLDER_NAMES: &[&str] = &["0", "1", "2", "3", "4"];
+const TEST_FOLDER_NAMES: &[&str] = &["0", "1", "2", "3", "4", "5"];
 const TEST_RESOURCES_PATH_STR: &str = "src/ownership_analysis/test/resource/";
 
 #[test]
-fn test_null_test() {
+fn test_specific() {
     init_logger();
     let lib = env::current_dir()
         .expect("current working directory value is invalid")
         .join(TEST_RESOURCES_PATH_STR)
-        .join("2/lib.rs");
+        .join("5/lib.rs");
     compiler_interface::run_compiler_with_struct_defs_and_funcs(
         lib.into(),
         |tcx, struct_defs, fn_dids| {
@@ -29,10 +29,12 @@ fn test_null_test() {
             let call_graph = CallGraph::new(tcx, bodies.into_iter());
             let mut crate_summary = InterSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
 
-            crate_summary.func_summaries[crate::call_graph::Func::from_u32(0)]
+            let func_we_care = crate::call_graph::Func::from_u32(1);
+
+            crate_summary.func_summaries[func_we_care]
                 .constraint_system
                 .show();
-            crate_summary.func_summaries[crate::call_graph::Func::from_u32(0)]
+            crate_summary.func_summaries[func_we_care]
                 .constraint_system
                 .le_constraints
                 .show();
@@ -42,13 +44,6 @@ fn test_null_test() {
                     for summary in &crate_summary.func_summaries {
                         summary.constraint_system.show()
                     }
-
-                    log::debug!("Explaining rho_10 ≤ 0");
-                    let intra_summary = &crate_summary.func_summaries[crate::call_graph::Func::from_u32(0)];
-                    for &[x, y] in intra_summary.constraint_system.le_constraints.explain(Rho::from_u32(10), Rho::from_u32(0)).array_windows() {
-                        log::debug!("{:?} ≤ {:?}", x, y)
-                    }
-
                 }
                 Err(reason) => {
                     log::error!("Cannot solve ownership constraints!");
@@ -61,6 +56,20 @@ fn test_null_test() {
                         log::debug!("{:?} ≤ {:?}", x, y)
                     }
 
+                    /*
+                    let src = Rho::from_u32(17);
+                    let tgt = Rho::from_u32(0);
+                    log::debug!("Explaining {:?} ≤ {:?}", src, tgt);
+                    let intra_summary = &crate_summary.func_summaries[func_we_care];
+                    for &[x, y] in intra_summary
+                        .constraint_system
+                        .le_constraints
+                        .explain(src, tgt)
+                        .array_windows()
+                    {
+                        log::debug!("{:?} ≤ {:?}", x, y)
+                    }
+                    */
                 }
             }
         },

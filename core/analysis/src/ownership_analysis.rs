@@ -249,14 +249,16 @@ impl InterSummary {
                     debug_assert!(!constraint_system
                         .join_global_facts(&self.inter_ctxt.global_assumptions, None));
 
-                    let func_constraint_sccs = constraint_system.saturate();
+                    let func_constraint_sccs = constraint_system.saturate()?;
 
+                    /*
                     if !constraint_system.consistent(&func_constraint_sccs) {
                         let reason = constraint_system
                             .le_constraints
                             .explain(Rho::ONE, Rho::ZERO);
                         return Err(reason);
                     }
+                    */
 
                     if self
                         .inter_ctxt
@@ -616,12 +618,6 @@ impl ConstraintDatabase {
         }
     }
 
-    /*
-    pub fn get_sccs(&mut self) -> &Sccs<Rho, u32> {
-        self.sccs_cache.get_or_insert_with(|| Sccs::<_, u32>::new(&self.le_constraints.graph))
-    }
-    */
-
     /// Assumption: eq_constraints do not involve pure global facts!!!!!
     /// TODO: cleverer? changed only when facts can not be deduced
     pub fn join_global_facts(&mut self, other: &Self, absolute: Option<&Sccs<Rho, u32>>) -> bool {
@@ -631,10 +627,10 @@ impl ConstraintDatabase {
         );
         let local_start = self.le_constraints.local_start;
         let mut changed = false;
-        for x in 0u32.into()..local_start {
+        for x in 1u32.into()..local_start {
             if x < local_start {
                 for y in other.le_constraints.graph.successor_nodes(x) {
-                    if y < local_start {
+                    if y > Rho::ZERO && x != y && y < local_start {
                         changed = changed || self.le_constraints.add_relation(x, y)
                     }
                 }
@@ -659,10 +655,13 @@ impl ConstraintDatabase {
         self.le_constraints.consistent(sccs)
     }
 
-    pub fn saturate(&mut self) -> Sccs<Rho, u32> {
+    pub fn saturate(&mut self) -> Result<Sccs<Rho, u32>, Vec<Rho>> {
         let mut removed = vec![false; self.eq_constraints.len()];
 
         let mut sccs = Sccs::<_, u32>::new(&self.le_constraints.graph);
+        if !self.consistent(&sccs) {
+            return Err(self.le_constraints.explain(Rho::ONE, Rho::ZERO));
+        }
         loop {
             let mut changed = false;
             // x + y = z
@@ -723,6 +722,10 @@ impl ConstraintDatabase {
                         // recompute sccs
                         sccs = Sccs::<_, u32>::new(&self.le_constraints.graph);
                         changed = true;
+
+                        if !self.consistent(&sccs) {
+                            return Err(self.le_constraints.explain(Rho::ONE, Rho::ZERO));
+                        }
                     }
                 }
             }
@@ -735,8 +738,23 @@ impl ConstraintDatabase {
 
         self.eq_constraints.retain(|_| !removed.next().unwrap());
 
-        sccs
+        Ok(sccs)
     }
+
+    /*
+    #[inline]
+    pub fn explain(&self, x: Rho, y: Rho) -> Vec<Rho> {
+        self.le_constraints.explain(x, y)
+    }
+
+    pub fn log_explain(&self, x: Rho, y: Rho) {
+        let reason = self.explain(x, y);
+        log::debug!("Explaining {:?} ≤ {:?}", x, y);
+        for &[x, y] in reason.array_windows() {
+            log::debug!("{:?} ≤ {:?}", x, y)
+        }
+    }
+    */
 }
 
 rustc_index::newtype_index! {

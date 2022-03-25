@@ -1,7 +1,7 @@
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-        CastKind, Location, Operand, Place, Rvalue, BasicBlock,
+        BasicBlock, CastKind, Location, Operand, Place, Rvalue,
     },
     ty::TyCtxt,
 };
@@ -20,15 +20,20 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         self.ctxt.tcx
     }
 
-    fn model_ptr_is_null(&mut self, args: &Vec<Operand<'tcx>>, destination: Option<(Place<'tcx>, BasicBlock)>, location: Location) {
+    fn model_ptr_is_null(
+        &mut self,
+        args: &Vec<Operand<'tcx>>,
+        destination: Option<(Place<'tcx>, BasicBlock)>,
+        location: Location,
+    ) {
         assert_eq!(args.len(), 1);
         let rhs = args.first().unwrap();
         let rhs = rhs.place().unwrap();
         match self.process_ptr_place(&rhs, location) {
             PtrPlaceDefResult::Base { old, new } => {
                 self.ctxt.constraint_system.push_eq(old.start, new.start)
-            },
-            PtrPlaceDefResult::Proj(_) => {},
+            }
+            PtrPlaceDefResult::Proj(_) => {}
         }
         let (lhs, _) = destination.unwrap();
         self.visit_place(

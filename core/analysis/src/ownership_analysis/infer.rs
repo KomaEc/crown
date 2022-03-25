@@ -44,6 +44,7 @@ use range_ext::RangeExt;
 impl<'analysis, 'tcx> AnalysisEngine<'analysis, 'tcx> {
     pub fn infer<Handler: SSANameHandler<Output = ()>>(&mut self, mut extra_handlers: Handler) {
         for (func, &did) in self.call_graph.functions.iter_enumerated() {
+            log::debug!("Inferring {:?}", did);
             let body = self.tcx.optimized_mir(did);
             let insertion_points = body.compute_phi_node::<OwnershipAnalysisDefUse>(self.tcx);
 
