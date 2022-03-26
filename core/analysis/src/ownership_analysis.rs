@@ -352,7 +352,7 @@ impl InterSummary {
                         .map(|ptr| match ptr {
                             Some(true) => "&own".to_owned(),
                             Some(false) => "&transient".to_owned(),
-                            None => "&unknown".to_owned(),
+                            None => "&polymorphic".to_owned(),
                         })
                         .collect::<Vec<_>>()
                         .join(" ")
