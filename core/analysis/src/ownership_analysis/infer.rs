@@ -12,7 +12,7 @@ use rustc_middle::{
         BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
         ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind, RETURN_PLACE,
     },
-    ty::{subst::GenericArgKind, TyCtxt, TyKind::FnDef},
+    ty::{subst::GenericArgKind, TyCtxt, TyKind::FnDef, adjustment::PointerCast},
 };
 use rustc_target::abi::VariantIdx;
 
@@ -30,12 +30,13 @@ use crate::{
             HasSSANameHandler, HasSSARenameState, SSAIdx, SSANameHandler, SSARename, SSARenameState,
         },
     },
-    ty_ext::TyExt, FuncSig, Surface,
+    ty_ext::TyExt,
+    FuncSig, Surface,
 };
 
 use super::{
-    AnalysisEngine, ConstraintDatabase, IntraSummary, LocalSourceInfo,
-    OwnershipAnalysisBoundary, Rho,
+    AnalysisEngine, ConstraintDatabase, IntraSummary, LocalSourceInfo, OwnershipAnalysisBoundary,
+    Rho,
 };
 
 use range_ext::RangeExt;
@@ -356,7 +357,9 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
             if let Rvalue::Use(Operand::Move(rhs))
             | Rvalue::Use(Operand::Copy(rhs))
             | Rvalue::Cast(CastKind::Misc, Operand::Move(rhs), _)
-            | Rvalue::Cast(CastKind::Misc, Operand::Copy(rhs), _) = rvalue
+            | Rvalue::Cast(CastKind::Misc, Operand::Copy(rhs), _)
+            | Rvalue::Cast(CastKind::Pointer(PointerCast::MutToConstPointer), Operand::Move(rhs), _)
+            | Rvalue::Cast(CastKind::Pointer(PointerCast::MutToConstPointer), Operand::Copy(rhs), _) = rvalue
             {
                 match (
                     self.process_ptr_place(place, location),

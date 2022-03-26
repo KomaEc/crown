@@ -20,7 +20,7 @@ fn test_specific() {
     let lib = env::current_dir()
         .expect("current working directory value is invalid")
         .join(TEST_RESOURCES_PATH_STR)
-        .join("5/lib.rs");
+        .join("6/lib.rs");
     compiler_interface::run_compiler_with_struct_defs_and_funcs(
         lib.into(),
         |tcx, struct_defs, fn_dids| {
@@ -29,7 +29,7 @@ fn test_specific() {
             let call_graph = CallGraph::new(tcx, bodies.into_iter());
             let mut crate_summary = InterSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
 
-            let func_we_care = crate::call_graph::Func::from_u32(1);
+            let func_we_care = crate::call_graph::Func::from_u32(0);
 
             crate_summary.func_summaries[func_we_care]
                 .constraint_system

@@ -12,6 +12,22 @@ use rustc_middle::{
 pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn tcx(&self) -> TyCtxt<'tcx>;
 
+    #[inline]
+    fn default_arg(&mut self, operand: &Operand<'tcx>, location: Location) {
+        self.visit_operand(operand, location)
+    }
+
+    #[inline]
+    fn default_dest(&mut self, destination: Option<(Place<'tcx>, BasicBlock)>, location: Location) {
+        if let Some((lhs, _)) = destination {
+            self.visit_place(
+                &lhs,
+                PlaceContext::MutatingUse(MutatingUseContext::Call),
+                location,
+            );
+        }
+    }
+
     /// Basically, this is self.super_terminator(..)
     fn default_model_lib_call(
         &mut self,
@@ -21,15 +37,9 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     ) {
         log::debug!("... default modelling: introducing no constraint");
         for arg in args {
-            self.visit_operand(arg, location);
+            self.default_arg(arg, location)
         }
-        if let Some((lhs, _)) = destination {
-            self.visit_place(
-                &lhs,
-                PlaceContext::MutatingUse(MutatingUseContext::Call),
-                location,
-            );
-        }
+        self.default_dest(destination, location)
     }
 
     fn model_library_call(

@@ -340,6 +340,29 @@ impl InterSummary {
                 )
             })
         }
+
+        for (func, func_sig) in self.func_sigs.iter_enumerated() {
+            let did = self.call_graph.functions[func];
+            // let (ret, args) = func_sig.sig.split_first().unwrap();
+            let sig_strs = func_sig
+                .sig
+                .iter()
+                .map(|arg| {
+                    arg.iter()
+                        .map(|ptr| match ptr {
+                            Some(true) => "&own".to_owned(),
+                            Some(false) => "&transient".to_owned(),
+                            None => "&unknown".to_owned(),
+                        })
+                        .collect::<Vec<_>>()
+                        .join(" ")
+                })
+                .collect::<Vec<_>>();
+
+            let (ret, args) = sig_strs.split_first().unwrap();
+
+            log::debug!("{:?}: ({}) -> {}", did, args.join(", "), ret)
+        }
     }
 }
 
