@@ -12,7 +12,7 @@ use rustc_middle::{
         BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
         ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind, RETURN_PLACE,
     },
-    ty::{subst::GenericArgKind, TyCtxt, TyKind::FnDef, adjustment::PointerCast},
+    ty::{adjustment::PointerCast, subst::GenericArgKind, TyCtxt, TyKind::FnDef},
 };
 use rustc_target::abi::VariantIdx;
 
@@ -24,6 +24,7 @@ use crate::{
     def_use::IsDefUse,
     def_use::OwnershipAnalysisDefUse,
     libcall_model::LibCallModel,
+    // null_analysis::MustNull,
     ssa::{
         body_ext::{BodyExt, PhiNodeInsertionPoints},
         rename::{
@@ -31,7 +32,8 @@ use crate::{
         },
     },
     ty_ext::TyExt,
-    FuncSig, Surface,
+    FuncSig,
+    Surface,
 };
 
 use super::{
@@ -358,8 +360,16 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
             | Rvalue::Use(Operand::Copy(rhs))
             | Rvalue::Cast(CastKind::Misc, Operand::Move(rhs), _)
             | Rvalue::Cast(CastKind::Misc, Operand::Copy(rhs), _)
-            | Rvalue::Cast(CastKind::Pointer(PointerCast::MutToConstPointer), Operand::Move(rhs), _)
-            | Rvalue::Cast(CastKind::Pointer(PointerCast::MutToConstPointer), Operand::Copy(rhs), _) = rvalue
+            | Rvalue::Cast(
+                CastKind::Pointer(PointerCast::MutToConstPointer),
+                Operand::Move(rhs),
+                _,
+            )
+            | Rvalue::Cast(
+                CastKind::Pointer(PointerCast::MutToConstPointer),
+                Operand::Copy(rhs),
+                _,
+            ) = rvalue
             {
                 match (
                     self.process_ptr_place(place, location),

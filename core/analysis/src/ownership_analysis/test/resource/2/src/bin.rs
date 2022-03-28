@@ -16,7 +16,7 @@ extern "C" {
 unsafe fn f() -> *mut i32 {
     let mut x = malloc(4) as *mut i32;
     if x.is_null() {
-        return x//0 as *mut i32;
+        return 0 as *mut i32;
     }
     return x
 }

@@ -1,5 +1,9 @@
 # Ownership and Lifetime guided C to Rust Refactoring
 
+
+## Some hard TODOs on the implementation side
+1. In ownership analysis, if we have `p = null`, then the post value of `p` should be asserted to null
+
 ## Usage
 This tool is now able to infer an approximate fat/thin signature for struct and function definitions. To test it on the 'buffer' benchmark, do
 ```shell

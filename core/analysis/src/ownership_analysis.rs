@@ -195,6 +195,39 @@ impl InterSummary {
             func_sigs,
             func_summaries,
         }
+        .debug_bidirectionality()
+    }
+
+    #[inline]
+    fn debug_bidirectionality(self) -> Self {
+        #[cfg(debug_assertions)]
+        {
+            for (rho, field_def) in self.field_def_source_iter_enumerated() {
+                let &FieldDefSourceInfo {
+                    adt_def,
+                    variant_idx,
+                    field_idx,
+                    nested_level,
+                } = field_def;
+                assert_eq!(
+                    rho,
+                    self.inter_ctxt.field_defs[&adt_def][variant_idx][field_idx].start
+                )
+            }
+
+            for summary in &self.func_summaries {
+                for (rho, local) in summary.local_source_iter_enumerated() {
+                    let &LocalSourceInfo {
+                        base,
+                        ssa_idx,
+                        nested_level,
+                    } = local;
+                    assert_eq!(rho, summary.locals[base][ssa_idx].start)
+                }
+            }
+        }
+
+        self
     }
 
     pub fn get_field_def_source(&self, x: Rho) -> &FieldDefSourceInfo {
@@ -504,6 +537,31 @@ impl IntraSummary {
                         }
                     }
                 }
+            }
+        }
+
+        #[cfg(debug_assertions)]
+        {
+            if changed {
+                // let (ret, args) = func_sig.sig.split_first().unwrap();
+                let sig_strs = surface
+                    .sig
+                    .iter()
+                    .map(|arg| {
+                        arg.iter()
+                            .map(|ptr| match ptr {
+                                Some(true) => "&own".to_owned(),
+                                Some(false) => "&transient".to_owned(),
+                                None => "&polymorphic".to_owned(),
+                            })
+                            .collect::<Vec<_>>()
+                            .join(" ")
+                    })
+                    .collect::<Vec<_>>();
+
+                let (ret, args) = sig_strs.split_first().unwrap();
+
+                log::debug!("signature updated to: ({}) -> {}", args.join(", "), ret)
             }
         }
 

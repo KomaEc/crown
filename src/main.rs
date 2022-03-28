@@ -12,7 +12,7 @@ extern crate rustc_middle;
 extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 
-use analysis::null_analysis::NullAnalysisResults;
+// use analysis::null_analysis::NullAnalysisResults;
 use clap::Parser;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
@@ -139,6 +139,8 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             pretty_mir,
             all,
         } => {
+            /*
+
             if *null || *all {
                 let null_results_raw = top_level_fns
                     .iter()
@@ -154,6 +156,8 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                 }
             }
 
+            */
+
             if *pretty_mir {
                 refactor::show_mir(tcx, top_level_fns.clone())
             }
@@ -166,7 +170,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                 )
             }
 
-            if *array || *all {
+            if *array {
                 refactor::print_fat_thin_analysis_results(tcx, top_level_struct_defs, top_level_fns)
             }
         }

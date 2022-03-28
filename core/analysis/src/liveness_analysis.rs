@@ -2,7 +2,9 @@ use rustc_index::bit_set::BitSet;
 use rustc_middle::mir::visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor};
 use rustc_middle::mir::{self, Local, Location};
 
-use rustc_mir_dataflow::{AnalysisDomain, Backward, CallReturnPlaces, GenKill, GenKillAnalysis};
+use rustc_mir_dataflow::{
+    AnalysisDomain, Backward, CallReturnPlaces, GenKill, GenKillAnalysis,
+};
 
 pub struct MaybeLiveLocals;
 

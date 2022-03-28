@@ -1,16 +1,17 @@
 //! Extension methods for Body<'tcx>
 
+use rustc_mir_dataflow::{Analysis, ResultsCursor};
 use rustc_index::bit_set::{BitSet, HybridBitSet};
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Local};
 use rustc_middle::ty::TyCtxt;
-use rustc_mir_dataflow::{Analysis, ResultsCursor};
 use smallvec::SmallVec;
 use std::collections::VecDeque;
 use std::marker::PhantomData;
 
 use crate::def_use::{DefSites, DefSitesGatherer, IsDefUse};
 use crate::liveness_analysis::MaybeLiveLocals;
+use crate::ty_ext::TyExt;
 
 const DOMINATOR_FRONTIER_ON_STACK_SIZE: usize = 3;
 const PHI_NODE_INSERTED_ON_STACK_SIZE: usize = 3;
@@ -271,11 +272,12 @@ pub fn minimal_ssa_form<'tcx, DefUse: IsDefUse>(
                 liveness.seek_to_block_start(bb_f);
                 if !already_added.contains(bb_f)
                     && (
-                        // body.local_decls[a].ty.is_ptr_but_not_fn_ptr()
-                        matches!(
-                            body.basic_blocks()[bb_f].terminator().kind,
-                            rustc_middle::mir::TerminatorKind::Return
-                        ) || liveness.get().contains(a)
+                        body.local_decls[a].ty.is_ptr_but_not_fn_ptr()
+                        // matches!(
+                        //     body.basic_blocks()[bb_f].terminator().kind,
+                        //     rustc_middle::mir::TerminatorKind::Return
+                        // ) 
+                        || liveness.get().contains(a)
                     )
                 {
                     inserted[bb_f].push(a, PhantomData);

@@ -20,7 +20,7 @@ fn test_specific() {
     let lib = env::current_dir()
         .expect("current working directory value is invalid")
         .join(TEST_RESOURCES_PATH_STR)
-        .join("6/lib.rs");
+        .join("7/lib.rs");
     compiler_interface::run_compiler_with_struct_defs_and_funcs(
         lib.into(),
         |tcx, struct_defs, fn_dids| {
@@ -44,20 +44,8 @@ fn test_specific() {
                     for summary in &crate_summary.func_summaries {
                         summary.constraint_system.show()
                     }
-                }
-                Err(reason) => {
-                    log::error!("Cannot solve ownership constraints!");
-                    assert!(reason.len() >= 2);
-                    assert_eq!(reason[0], Rho::ONE);
-                    assert_eq!(*reason.last().unwrap(), Rho::ZERO);
 
-                    log::debug!("A chain of inequalities that leads to this conflict:");
-                    for &[x, y] in reason.array_windows() {
-                        log::debug!("{:?} ≤ {:?}", x, y)
-                    }
-
-                    /*
-                    let src = Rho::from_u32(17);
+                    let src = Rho::from_u32(34);
                     let tgt = Rho::from_u32(0);
                     log::debug!("Explaining {:?} ≤ {:?}", src, tgt);
                     let intra_summary = &crate_summary.func_summaries[func_we_care];
@@ -69,7 +57,17 @@ fn test_specific() {
                     {
                         log::debug!("{:?} ≤ {:?}", x, y)
                     }
-                    */
+                }
+                Err(reason) => {
+                    log::error!("Cannot solve ownership constraints!");
+                    assert!(reason.len() >= 2);
+                    assert_eq!(reason[0], Rho::ONE);
+                    assert_eq!(*reason.last().unwrap(), Rho::ZERO);
+
+                    log::debug!("A chain of inequalities that leads to this conflict:");
+                    for &[x, y] in reason.array_windows() {
+                        log::debug!("{:?} ≤ {:?}", x, y)
+                    }
                 }
             }
         },
