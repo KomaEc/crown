@@ -17,7 +17,6 @@ use clap::Parser;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
 use rustc_hir::{ItemKind, OwnerNode};
-use rustc_index::vec::IndexVec;
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config;
@@ -133,11 +132,11 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
 
     match cmd {
         Command::Analyse {
-            null,
+            null: _,
             array,
             ownership,
             pretty_mir,
-            all,
+            all: _,
         } => {
             /*
 

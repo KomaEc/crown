@@ -433,7 +433,7 @@ impl<X: IsRustcIndexDefinedCV + UnitAnalysisCV> ULEConstraintGraph<X> {
 
     #[inline]
     pub fn add_relation(&mut self, x: X, y: X) -> bool {
-        log::debug!("adding relation {:?} ≤ {:?}", x, y);
+        // log::debug!("adding relation {:?} ≤ {:?}", x, y);
         self.graph.add_edge_without_dup(x, y).is_some()
     }
 

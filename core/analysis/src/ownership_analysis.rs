@@ -207,7 +207,7 @@ impl InterSummary {
                     adt_def,
                     variant_idx,
                     field_idx,
-                    nested_level,
+                    nested_level: _,
                 } = field_def;
                 assert_eq!(
                     rho,
@@ -220,7 +220,7 @@ impl InterSummary {
                     let &LocalSourceInfo {
                         base,
                         ssa_idx,
-                        nested_level,
+                        nested_level: _,
                     } = local;
                     assert_eq!(rho, summary.locals[base][ssa_idx].start)
                 }
