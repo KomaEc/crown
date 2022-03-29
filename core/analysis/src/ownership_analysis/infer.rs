@@ -28,7 +28,9 @@ use crate::{
     ssa::{
         body_ext::{BodyExt, PhiNodeInsertionPoints},
         rename::{
-            HasSSANameHandler, HasSSARenameState, SSAIdx, SSANameHandler, SSARename, SSARenameState,
+            handler::{SSADefSites, SSANameSourceMap},
+            HasSSANameHandler, HasSSARenameState, SSAIdx, SSANameHandler, SSARename,
+            SSARenameState,
         },
     },
     ty_ext::TyExt,
@@ -78,7 +80,11 @@ impl<'analysis, 'tcx> AnalysisEngine<'analysis, 'tcx> {
                         .size_hint()
                         .0,
                 ),
-                extra_handlers: &mut extra_handlers,
+                extra_handlers: (
+                    &mut extra_handlers,
+                    SSANameSourceMap::new(body, &insertion_points),
+                    SSADefSites::new(body),
+                ),
             };
 
             infer.rename_body(body, &insertion_points);
@@ -87,7 +93,7 @@ impl<'analysis, 'tcx> AnalysisEngine<'analysis, 'tcx> {
                 .global_assumptions
                 .join_global_facts(&infer.ctxt.constraint_system, None);
 
-            let (func_sig, intra_summary) = infer.complete();
+            let (func_sig, intra_summary) = infer.complete(|h| (h.1, h.2));
 
             assert_eq!(self.intra_summaries.push(intra_summary), func);
             assert_eq!(self.func_sigs.push(func_sig), func);
@@ -270,10 +276,23 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
         }
     }
 
-    fn complete(self) -> (FuncSig<Surface, Option<bool>>, IntraSummary) {
+    fn complete(
+        self,
+        f: impl FnOnce(
+            Handler,
+        ) -> (
+            SSANameSourceMap<OwnershipAnalysisDefUse>,
+            SSADefSites<OwnershipAnalysisDefUse>,
+        ),
+    ) -> (FuncSig<Surface, Option<bool>>, IntraSummary) {
         let IntraInfer {
-            ctxt, boundaries, ..
+            ctxt,
+            boundaries,
+            extra_handlers,
+            ..
         } = self;
+
+        let (ssa_name_source_map, ssa_def_sites) = f(extra_handlers);
 
         let IntraInferCtxt {
             body,
@@ -321,6 +340,8 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
                 locals,
                 intra_source_map,
                 boundaries,
+                ssa_def_sites,
+                ssa_name_source_map,
                 fn_sig: FuncSig { sig: inner },
             },
         )

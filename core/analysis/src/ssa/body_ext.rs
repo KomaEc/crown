@@ -1,10 +1,10 @@
 //! Extension methods for Body<'tcx>
 
-use rustc_mir_dataflow::{Analysis, ResultsCursor};
 use rustc_index::bit_set::{BitSet, HybridBitSet};
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Local};
 use rustc_middle::ty::TyCtxt;
+use rustc_mir_dataflow::{Analysis, ResultsCursor};
 use smallvec::SmallVec;
 use std::collections::VecDeque;
 use std::marker::PhantomData;
@@ -271,14 +271,12 @@ pub fn minimal_ssa_form<'tcx, DefUse: IsDefUse>(
             for &bb_f in &dominance_frontier[bb] {
                 liveness.seek_to_block_start(bb_f);
                 if !already_added.contains(bb_f)
-                    && (
-                        body.local_decls[a].ty.is_ptr_but_not_fn_ptr()
+                    && (body.local_decls[a].ty.is_ptr_but_not_fn_ptr()
                         // matches!(
                         //     body.basic_blocks()[bb_f].terminator().kind,
                         //     rustc_middle::mir::TerminatorKind::Return
                         // ) 
-                        || liveness.get().contains(a)
-                    )
+                        || liveness.get().contains(a))
                 {
                     inserted[bb_f].push(a, PhantomData);
                     assert!(already_added.insert(bb_f));

@@ -50,7 +50,7 @@ pub struct SSANameSourceMap<DefUse: IsDefUse> {
     /// defs: Location -> Local -> SSAIdx
     /// uses: Location -> Local -> SSAIdx
     names: LocationMap<(
-        /* defs */ Option<(Local, SSAIdx)>,
+        /* defs */ SmallVec<[(Local, SSAIdx); 2]>,
         /* uses */ SmallVec<[(Local, SSAIdx); 2]>,
     )>,
     /// BasicBlock -> Local -> (SSAIdx, [SSAIdx])
@@ -83,13 +83,15 @@ impl<DefUse: IsDefUse> SSANameSourceMap<DefUse> {
         }
     }
 
-    pub fn def(&self, location: Location) -> Option<(Local, SSAIdx)> {
-        self.names[location].0
+    pub fn defs(&self, location: Location) -> impl Iterator<Item = (Local, SSAIdx)> + '_ {
+        self.names[location].0.iter().map(|&x| x)
     }
 
-    pub fn try_def_local(&self, local: Local, location: Location) -> Option<SSAIdx> {
-        let (this_local, idx) = self.names[location].0?;
-        (this_local == local).then_some(idx)
+    pub fn try_def(&self, local: Local, location: Location) -> Option<SSAIdx> {
+        self.names[location]
+            .0
+            .iter()
+            .find_map(|&(this_local, idx)| (this_local == local).then_some(idx))
     }
 
     pub fn defs_at_phi_node(
@@ -101,7 +103,7 @@ impl<DefUse: IsDefUse> SSANameSourceMap<DefUse> {
             .map(|(local, &(ssa_idx, _))| (local, ssa_idx))
     }
 
-    pub fn try_def_local_at_phi_node(&self, local: Local, block: BasicBlock) -> Option<SSAIdx> {
+    pub fn try_def_at_phi_node(&self, local: Local, block: BasicBlock) -> Option<SSAIdx> {
         self.names_for_phi_nodes[block]
             .iter_enumerated()
             .find_map(|(this_local, &(idx, _))| (this_local == local).then_some(idx))
@@ -142,8 +144,11 @@ impl<DefUse: IsDefUse> SSANameSourceMap<DefUse> {
 
 impl<DefUse: IsDefUse> SSANameHandler for SSANameSourceMap<DefUse> {
     fn handle_def(&mut self, local: Local, idx: SSAIdx, location: Location) {
-        debug_assert!(self.names[location].0.is_none());
-        self.names[location].0 = Some((local, idx));
+        // debug_assert!(self.names[location].0.is_none());
+        // self.names[location].0 = Some((local, idx));
+        if !self.names[location].0.iter().any(|&(lo, _)| lo == local) {
+            self.names[location].0.push((local, idx))
+        }
     }
 
     fn handle_use(&mut self, local: Local, idx: SSAIdx, location: Location) {

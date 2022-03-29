@@ -1,7 +1,11 @@
 #![feature(rustc_private)]
 #![feature(bool_to_option)]
 #![feature(array_windows)]
+#![feature(box_patterns)]
 
+pub mod ptr_rewrite;
+
+extern crate either;
 extern crate rustc_ast;
 extern crate rustc_ast_pretty;
 extern crate rustc_error_codes;
@@ -15,6 +19,7 @@ extern crate rustc_interface;
 extern crate rustc_middle;
 extern crate rustc_session;
 extern crate rustc_span;
+extern crate rustc_target;
 
 use analysis::{
     call_graph::CallGraph,
@@ -172,20 +177,7 @@ pub fn show_ownership_analysis_results<'tcx>(
         Err(reason) => {
             log::error!("Cannot solve ownership constraints!");
 
-            assert!(reason.len() >= 2);
-            assert_eq!(
-                reason[0],
-                <ownership_analysis::Rho as analysis::UnitAnalysisCV>::ONE
-            );
-            assert_eq!(
-                *reason.last().unwrap(),
-                <ownership_analysis::Rho as analysis::UnitAnalysisCV>::ZERO
-            );
-
-            log::debug!("A chain of inequalities that leads to this conflict:");
-            for &[x, y] in reason.array_windows() {
-                log::debug!("{:?} ≤ {:?}", x, y)
-            }
+            ownership_analysis::explain_error(reason)
         }
     }
 }

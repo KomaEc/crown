@@ -17,7 +17,11 @@ use rustc_target::abi::VariantIdx;
 
 use crate::{
     call_graph::{CallGraph, Func},
-    ssa::rename::{SSAIdx, SSANameHandler},
+    def_use::OwnershipAnalysisDefUse,
+    ssa::rename::{
+        handler::{SSADefSites, SSANameSourceMap},
+        SSAIdx, SSANameHandler,
+    },
     ty_ext::TyExt,
     Boundary, FuncSig, Inner, Surface, ULEConstraintGraph, UnitAnalysisCV,
 };
@@ -207,11 +211,12 @@ impl InterSummary {
                     adt_def,
                     variant_idx,
                     field_idx,
-                    nested_level: _,
+                    nested_level,
                 } = field_def;
                 assert_eq!(
                     rho,
                     self.inter_ctxt.field_defs[&adt_def][variant_idx][field_idx].start
+                        + nested_level
                 )
             }
 
@@ -220,9 +225,9 @@ impl InterSummary {
                     let &LocalSourceInfo {
                         base,
                         ssa_idx,
-                        nested_level: _,
+                        nested_level,
                     } = local;
-                    assert_eq!(rho, summary.locals[base][ssa_idx].start)
+                    assert_eq!(rho, summary.locals[base][ssa_idx].start + nested_level)
                 }
             }
         }
@@ -249,8 +254,6 @@ impl InterSummary {
     }
 
     pub fn resolve(&mut self) -> Result<(), Vec<Rho>> {
-        // let mut global_constraint_sccs =
-        //     Sccs::<_, u32>::new(&self.inter_ctxt.global_assumptions.le_constraints.graph);
         'outter: loop {
             // first propagate global assumptions to individual functions
             for summary in self.func_summaries.iter_mut() {
@@ -283,15 +286,6 @@ impl InterSummary {
                         .join_global_facts(&self.inter_ctxt.global_assumptions, None));
 
                     let func_constraint_sccs = constraint_system.saturate()?;
-
-                    /*
-                    if !constraint_system.consistent(&func_constraint_sccs) {
-                        let reason = constraint_system
-                            .le_constraints
-                            .explain(Rho::ONE, Rho::ZERO);
-                        return Err(reason);
-                    }
-                    */
 
                     if self
                         .inter_ctxt
@@ -444,6 +438,8 @@ pub struct IntraSummary {
     locals: IndexVec<Local, IndexVec<SSAIdx, Range<Rho>>>,
     intra_source_map: Vec<LocalSourceInfo>,
     boundaries: Vec<OwnershipAnalysisBoundary>,
+    ssa_name_source_map: SSANameSourceMap<OwnershipAnalysisDefUse>,
+    ssa_def_sites: SSADefSites<OwnershipAnalysisDefUse>,
     fn_sig: FuncSig<Inner, Rho>,
 }
 
@@ -821,21 +817,17 @@ impl ConstraintDatabase {
 
         Ok(sccs)
     }
+}
 
-    /*
-    #[inline]
-    pub fn explain(&self, x: Rho, y: Rho) -> Vec<Rho> {
-        self.le_constraints.explain(x, y)
-    }
+pub fn explain_error(reason: Vec<Rho>) {
+    assert!(reason.len() >= 2);
+    assert_eq!(reason[0], Rho::ONE);
+    assert_eq!(*reason.last().unwrap(), Rho::ZERO);
 
-    pub fn log_explain(&self, x: Rho, y: Rho) {
-        let reason = self.explain(x, y);
-        log::debug!("Explaining {:?} ≤ {:?}", x, y);
-        for &[x, y] in reason.array_windows() {
-            log::debug!("{:?} ≤ {:?}", x, y)
-        }
+    log::debug!("A chain of inequalities that leads to this conflict:");
+    for &[x, y] in reason.array_windows() {
+        log::debug!("{:?} ≤ {:?}", x, y)
     }
-    */
 }
 
 rustc_index::newtype_index! {
