@@ -42,26 +42,26 @@ pub const _ISlower: C2RustUnnamed = 512;
 pub const _ISupper: C2RustUnnamed = 256;
 pub type ssize_t = __ssize_t;
 
-struct S {
-    l: *mut S,
-    r: *mut S,
+/* 
+int *f(int *a) {
+    int *t = 0;
+    if (pred()) {
+    int *c = new int;
+    t = id(c);
+    delete t;
+    };
+    return(a);
 }
+*/
 
-
-
-unsafe fn f(mut s1: *mut S, s2: *mut S) -> *mut S {
-    if s1.is_null() {
-        s1 = 0 as *mut S;
-        s2
-    } else {
-        if cond() {
-            (*s1).l = f((*s1).l, s2);
-        } else {
-            (*s1).r = f((*s1).r, s2);
-        }
-        // free(s2 as *mut libc::c_void);
-        s1
+unsafe fn id(a: *mut i32) -> *mut i32 {
+    let mut t = 0 as *mut i32;
+    if cond() {
+        let c = malloc(4) as *mut i32;
+        t = id(c);
+        free(t as *mut libc::c_void)
     }
+    a
 }
 
 #[inline(never)]
