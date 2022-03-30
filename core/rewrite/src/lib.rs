@@ -18,7 +18,7 @@ use std::path::PathBuf;
 #[derive(Default)]
 pub struct Rewriter {
     /// source_file -> a set of edit suggestions
-    pub suggestions: HashMap<PathBuf, Vec<Suggestion>>,
+    suggestions: HashMap<PathBuf, Vec<Suggestion>>,
 }
 
 impl Rewriter {

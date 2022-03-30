@@ -26,7 +26,7 @@ fn test_specific() {
         |tcx, struct_defs, fn_dids| {
             let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
 
-            let body = tcx.optimized_mir(bodies[0]);
+            // let body = tcx.optimized_mir(bodies[0]);
 
             // panic!("{:?}", body.local_decls[rustc_middle::mir::Local::from_u32(1)].ty.kind());
 

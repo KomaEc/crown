@@ -4,6 +4,7 @@
 #![feature(box_patterns)]
 
 pub mod ptr_rewrite;
+mod rewrite_program;
 
 extern crate either;
 extern crate rustc_ast;
@@ -29,6 +30,24 @@ use analysis::{
 };
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
+
+pub struct Refactorer<'tcx> {
+    tcx: TyCtxt<'tcx>,
+    rewriter: rewrite::Rewriter,
+    call_graph: CallGraph,
+    all_struct_defs: Vec<LocalDefId>,
+}
+
+impl<'tcx> Refactorer<'tcx> {
+    pub fn new(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: Vec<LocalDefId>) -> Self {
+        Self {
+            tcx,
+            rewriter: rewrite::Rewriter::default(),
+            call_graph: CallGraph::new(tcx, funcs.into_iter().map(|did| did.to_def_id())),
+            all_struct_defs: structs,
+        }
+    }
+}
 
 pub fn print_fat_thin_analysis_results<'tcx>(
     tcx: TyCtxt<'tcx>,
