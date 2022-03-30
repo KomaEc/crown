@@ -11,7 +11,7 @@ use crate::{
     UnitAnalysisCV,
 };
 
-const TEST_FOLDER_NAMES: &[&str] = &["0", "1", "2", "3", "4", "5"];
+const TEST_FOLDER_NAMES: &[&str] = &["0", "1", "2", "3", "4", "5", "6", "7", "mixed_unsafe"];
 const TEST_RESOURCES_PATH_STR: &str = "src/ownership_analysis/test/resource/";
 
 #[test]
@@ -20,11 +20,15 @@ fn test_specific() {
     let lib = env::current_dir()
         .expect("current working directory value is invalid")
         .join(TEST_RESOURCES_PATH_STR)
-        .join("7/lib.rs");
+        .join("mixed_unsafe/lib.rs");
     compiler_interface::run_compiler_with_struct_defs_and_funcs(
         lib.into(),
         |tcx, struct_defs, fn_dids| {
             let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
+
+            let body = tcx.optimized_mir(bodies[0]);
+
+            // panic!("{:?}", body.local_decls[rustc_middle::mir::Local::from_u32(1)].ty.kind());
 
             let call_graph = CallGraph::new(tcx, bodies.into_iter());
             let mut crate_summary = InterSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
