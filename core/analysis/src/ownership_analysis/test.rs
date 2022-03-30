@@ -11,7 +11,7 @@ use crate::{
     UnitAnalysisCV,
 };
 
-const TEST_FOLDER_NAMES: &[&str] = &["0", "1", "2", "3", "4", "5", "6", "7", "mixed_unsafe"];
+const TEST_FOLDER_NAMES: &[&str] = &["0", "1", "2", "3", "4", "5", "6", "7"];
 const TEST_RESOURCES_PATH_STR: &str = "src/ownership_analysis/test/resource/";
 
 #[test]
@@ -20,18 +20,12 @@ fn test_specific() {
     let lib = env::current_dir()
         .expect("current working directory value is invalid")
         .join(TEST_RESOURCES_PATH_STR)
-        .join("mixed_unsafe/lib.rs");
+        .join("7/lib.rs");
     compiler_interface::run_compiler_with_struct_defs_and_funcs(
         lib.into(),
         |tcx, struct_defs, fn_dids| {
-            let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
-
-            // let body = tcx.optimized_mir(bodies[0]);
-
-            // panic!("{:?}", body.local_decls[rustc_middle::mir::Local::from_u32(1)].ty.kind());
-
-            let call_graph = CallGraph::new(tcx, bodies.into_iter());
-            let mut crate_summary = InterSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+            let call_graph = CallGraph::new(tcx, fn_dids.into_iter().map(|did| did.to_def_id()));
+            let mut crate_summary = InterSummary::new::<_>(tcx, &struct_defs, call_graph, LogSSAName);
 
             let func_we_care = crate::call_graph::Func::from_u32(0);
 
@@ -105,18 +99,13 @@ fn test_solve_not_crash() {
 }
 
 fn run_infer<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec<LocalDefId>) {
-    let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
-
-    let call_graph = CallGraph::new(tcx, bodies.into_iter());
-    InterSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
-    // assert_eq!(crate_summary.rho_ctxt.locals.len(), num_funcs)
+    let call_graph = CallGraph::new(tcx, fn_dids.into_iter().map(|did| did.to_def_id()));
+    InterSummary::new::<_>(tcx, &struct_defs, call_graph, LogSSAName);
 }
 
 fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec<LocalDefId>) {
-    let (bodies, adt_defs) = collect_bodies_and_adt_defs(tcx, struct_defs, fn_dids);
-
-    let call_graph = CallGraph::new(tcx, bodies.into_iter());
-    let mut crate_summary = InterSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+    let call_graph = CallGraph::new(tcx, fn_dids.into_iter().map(|did| did.to_def_id()));
+    let mut crate_summary = InterSummary::new::<_>(tcx, &struct_defs, call_graph, LogSSAName);
 
     match crate_summary.resolve() {
         Ok(()) => {
@@ -137,32 +126,4 @@ fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
         }
     }
     // assert_eq!(crate_summary.rho_ctxt.locals.len(), num_funcs)
-}
-
-fn collect_bodies_and_adt_defs<'tcx>(
-    tcx: TyCtxt<'tcx>,
-    struct_defs: Vec<LocalDefId>,
-    fn_dids: Vec<LocalDefId>,
-) -> (Vec<rustc_hir::def_id::DefId>, Vec<rustc_hir::def_id::DefId>) {
-    let bodies = fn_dids
-        .iter()
-        .map(|&fn_did| {
-            let body = tcx.optimized_mir(fn_did);
-            rustc_middle::mir::pretty::write_mir_fn(
-                tcx,
-                body,
-                &mut |_, _| Ok(()),
-                &mut std::io::stdout(),
-            )
-            .unwrap();
-            fn_did.to_def_id()
-        })
-        .collect::<Vec<_>>();
-
-    let adt_defs = struct_defs
-        .into_iter()
-        .map(|did| did.to_def_id())
-        .collect::<Vec<_>>();
-
-    (bodies, adt_defs)
 }

@@ -48,16 +48,13 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate tracing;
 
-use boundary_model::BoundaryModel;
 use call_graph::{CallGraph, Func};
-use def_use::IsDefUse;
 use graph::implementation::forward_star::Graph;
 use lattice::JoinLattice;
-use libcall_model::LibCallModel;
 use range_ext::{IsRustcIndexDefinedCV, RangeExt};
 use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hash::FxHashMap;
-use rustc_hir::def_id::DefId;
+use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{BasicBlock, Body, Local, Location},
@@ -65,27 +62,13 @@ use rustc_middle::{
 };
 use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
-use ssa::rename::{SSAIdx, SSANameHandler, SSARename};
+use ssa::rename::SSAIdx;
 use std::{
     fmt::Display,
     ops::{Index, IndexMut, Range},
 };
 use ty_ext::TyExt;
 
-/// This is a marker trait marking analysis that uses the same variant
-/// of the SSA rename algorithm to infer constraints. Note that the infer
-/// engine `Infer` is required to use the same `IsDefUse` as the whole
-/// analysis
-pub trait Analysis<'tcx> {
-    const NAME: &'static str;
-    type DefUse: IsDefUse;
-    type Infer<'a, E>: SSARename<'tcx, DefUse = Self::DefUse>
-        + LibCallModel<'tcx>
-        + BoundaryModel<'tcx>
-    where
-        'tcx: 'a,
-        E: SSANameHandler;
-}
 
 pub struct CrateAnalysisCtxt<CV, Domain>
 where
@@ -95,7 +78,7 @@ where
     pub assumptions: IndexVec<CV, Domain>,
     pub source_map: IndexVec<CV, CVSourceData>,
     /// did of adt_def -> variant_idx -> field_idx -> nested_level -> constraint variables
-    pub field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<CV>>>>,
+    pub field_defs: FxHashMap<LocalDefId, IndexVec<VariantIdx, Vec<Range<CV>>>>,
     /// func -> local -> ssa_idx -> nested_level -> constraint variables
     /// [[_1^0, *_1^0, **_1^0],
     ///  [_1^1, *_1^1, **_1^1],
@@ -112,7 +95,7 @@ where
     func: Func,
     assumptions: &'intra mut IndexVec<CV, Domain>,
     source_map: &'intra mut IndexVec<CV, CVSourceData>,
-    field_defs: &'intra FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<CV>>>>,
+    field_defs: &'intra FxHashMap<LocalDefId, IndexVec<VariantIdx, Vec<Range<CV>>>>,
     locals: &'intra mut IndexVec<Local, IndexVec<SSAIdx, Range<CV>>>,
 }
 
@@ -121,7 +104,7 @@ where
     CV: IsRustcIndexDefinedCV,
     Domain: Clone + Copy + JoinLattice,
 {
-    pub fn initiate(tcx: TyCtxt, adt_defs: &[DefId], call_graph: &CallGraph) -> Self {
+    pub fn initiate(tcx: TyCtxt, adt_defs: &[LocalDefId], call_graph: &CallGraph) -> Self {
         // let mut lambda_data_map = LambdaDataMap::new();
         let mut assumptions = IndexVec::new();
         let mut source_map = IndexVec::new();
@@ -315,7 +298,7 @@ pub enum CVSourceData {
     },
     /// field definition
     FieldDef {
-        adt_def: DefId,
+        adt_def: LocalDefId,
         variant_idx: VariantIdx,
         field_idx: usize,
         nested_level: usize,
@@ -341,7 +324,7 @@ impl Display for CVSourceData {
                 nested_level,
             } => f.write_fmt(format_args!(
                 "{:*<1$}{2:?}.{3}",
-                "", nested_level, adt_def, field_idx
+                "", nested_level, adt_def.to_def_id(), field_idx
             )),
         }
     }

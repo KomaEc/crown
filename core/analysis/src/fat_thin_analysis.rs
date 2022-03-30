@@ -5,7 +5,7 @@ use std::{
 
 use graph::implementation::forward_star;
 use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
-use rustc_hir::def_id::DefId;
+use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{mir::Local, ty::TyCtxt};
 
@@ -17,25 +17,13 @@ use crate::{
         handler::{SSADefSites, SSANameSourceMap},
         SSANameHandler,
     },
-    Analysis, CVSourceData, CrateAnalysisCtxt,
+    CVSourceData, CrateAnalysisCtxt,
 };
-
-use self::infer::InferEngine;
 
 pub mod infer;
 pub mod solve;
 #[cfg(test)]
 mod test;
-
-impl<'tcx> Analysis<'tcx> for CrateSummary<'tcx> {
-    const NAME: &'static str = "Fat/Thin Analysis";
-    type DefUse = FatThinAnalysisDefUse;
-    type Infer<'infercx, H>
-    where
-        'tcx: 'infercx,
-        H: SSANameHandler,
-    = InferEngine<'infercx, 'tcx, H>;
-}
 
 /// This structure should hold info about all struct definitions
 /// and local nested pointers in the crate
@@ -66,7 +54,7 @@ pub struct FuncSummary {
 impl<'tcx> CrateSummary<'tcx> {
     pub fn new<Handler: SSANameHandler<Output = ()>>(
         tcx: TyCtxt<'tcx>,
-        adt_defs: &[DefId],
+        adt_defs: &[LocalDefId],
         call_graph: CallGraph,
         extra_handler: Handler,
     ) -> Self {

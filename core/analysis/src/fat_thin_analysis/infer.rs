@@ -20,7 +20,7 @@ use crate::{
         },
     },
     ty_ext::TyExt,
-    Analysis, CrateAnalysisCtxt, CrateAnalysisCtxtIntraView,
+    CrateAnalysisCtxt, CrateAnalysisCtxtIntraView,
 };
 use range_ext::RangeExt;
 use rustc_index::vec::{Idx, IndexVec};
@@ -43,7 +43,7 @@ impl<'tcx> CrateSummary<'tcx> {
         let mut all_return_ssa_idx = IndexVec::with_capacity(self.call_graph.functions.len());
         for (func, &did) in self.call_graph.functions.iter_enumerated() {
             let body = self.tcx.optimized_mir(did);
-            let insertion_points = body.compute_phi_node::<<Self as Analysis>::DefUse>(self.tcx);
+            let insertion_points = body.compute_phi_node::<FatThinAnalysisDefUse>(self.tcx);
 
             let mut def_sites = SSADefSites::<FatThinAnalysisDefUse>::new(body);
             let mut ssa_name_source_map = SSANameSourceMap::new(body, &insertion_points);
@@ -340,7 +340,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handle
                     let ty = place_ty.ty;
                     let variant_idx = place_ty.variant_index.unwrap_or(VariantIdx::new(0));
                     let adt_def = ty.ty_adt_def().unwrap();
-                    let lambdas = self.ctxt.lambda_ctxt.field_defs[&adt_def.did][variant_idx]
+                    let lambdas = self.ctxt.lambda_ctxt.field_defs[&adt_def.did.as_local().expect("struct definition should be in scope!")][variant_idx]
                         [field.index()]
                     .clone();
                     return Range {

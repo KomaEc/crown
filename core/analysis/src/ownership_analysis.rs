@@ -7,7 +7,7 @@ use std::{collections::VecDeque, fmt::Display, ops::Range};
 use range_ext::IsRustcIndexDefinedCV;
 use rustc_data_structures::graph::{iterate::DepthFirstSearch, scc::Sccs, WithNumNodes};
 use rustc_hash::FxHashMap;
-use rustc_hir::def_id::DefId;
+use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::Local,
@@ -32,7 +32,7 @@ use range_ext::RangeExt;
 
 #[derive(Clone)]
 pub struct FieldDefSourceInfo {
-    pub adt_def: DefId,
+    pub adt_def: LocalDefId,
     pub variant_idx: VariantIdx,
     pub field_idx: usize,
     pub nested_level: usize,
@@ -48,7 +48,7 @@ impl Display for FieldDefSourceInfo {
         } = *self;
         f.write_fmt(format_args!(
             "{:*<1$}{2:?}.{3}",
-            "", nested_level, adt_def, field_idx
+            "", nested_level, adt_def.to_def_id(), field_idx
         ))
     }
 }
@@ -77,7 +77,7 @@ impl Display for LocalSourceInfo {
 pub struct InterCtxt {
     global_assumptions: ConstraintDatabase,
     global_source_map: Vec<FieldDefSourceInfo>,
-    field_defs: FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
+    field_defs: FxHashMap<LocalDefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
 }
 
 impl InterCtxt {
@@ -89,10 +89,9 @@ impl InterCtxt {
         }
     }
 }
-
 pub struct InterCtxtView<'view> {
     global_assumptions: &'view mut ConstraintDatabase,
-    field_defs: &'view FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
+    field_defs: &'view FxHashMap<LocalDefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
 }
 
 pub struct InterSummary {
@@ -105,7 +104,7 @@ pub struct InterSummary {
 impl InterSummary {
     pub fn new<'tcx, Handler: SSANameHandler<Output = ()>>(
         tcx: TyCtxt<'tcx>,
-        adt_defs: &[DefId],
+        adt_defs: &[LocalDefId],
         call_graph: CallGraph,
         extra_handler: Handler,
     ) -> Self {

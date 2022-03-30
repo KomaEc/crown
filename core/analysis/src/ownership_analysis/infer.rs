@@ -4,7 +4,7 @@ pub mod libcall_model;
 use std::ops::Range;
 
 use rustc_hash::FxHashMap;
-use rustc_hir::def_id::DefId;
+use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
@@ -24,7 +24,6 @@ use crate::{
     def_use::IsDefUse,
     def_use::OwnershipAnalysisDefUse,
     libcall_model::LibCallModel,
-    // null_analysis::MustNull,
     ssa::{
         body_ext::{BodyExt, PhiNodeInsertionPoints},
         rename::{
@@ -259,7 +258,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
                     let variant_idx = place_ty.variant_index.unwrap_or(VariantIdx::new(0));
                     let adt_def = ty.ty_adt_def().unwrap();
                     let rhos =
-                        self.ctxt.field_defs[&adt_def.did][variant_idx][field.index()].clone();
+                        self.ctxt.field_defs[&adt_def.did.as_local().expect("struct definitions should be in scope!!!")][variant_idx][field.index()].clone();
                     return Range {
                         start: rhos.start + n_derefs,
                         end: rhos.end,
@@ -526,7 +525,7 @@ pub struct IntraInferCtxt<'infercx, 'tcx: 'infercx> {
     call_graph: &'infercx CallGraph,
     // rho_ctxt: CrateAnalysisCtxtIntraView<'infercx, Rho, Option<bool>>,
     // inter_ctxt: &'infercx mut InterCtxtView<'inter>,
-    field_defs: &'infercx FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
+    field_defs: &'infercx FxHashMap<LocalDefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
     phi_vars_rep: PhiNodeInsertionPoints<Option<Range<Rho>>>,
     return_vars_rep: Option<Range<Rho>>,
     intra_source_map: Vec<LocalSourceInfo>,
@@ -541,7 +540,7 @@ impl<'infercx, 'tcx> IntraInferCtxt<'infercx, 'tcx> {
         body: &'infercx Body<'tcx>,
         call_graph: &'infercx CallGraph,
         global_assumptions: ConstraintDatabase,
-        field_defs: &'infercx FxHashMap<DefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
+        field_defs: &'infercx FxHashMap<LocalDefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
         // inter_ctxt: &'infercx mut InterCtxtView<'inter>,
         phi_vars_rep: PhiNodeInsertionPoints<Option<Range<Rho>>>,
     ) -> Self {

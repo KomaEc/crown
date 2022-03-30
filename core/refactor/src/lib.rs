@@ -3,7 +3,7 @@
 #![feature(array_windows)]
 #![feature(box_patterns)]
 
-pub mod ptr_rewrite;
+// pub mod ptr_rewrite;
 mod rewrite_program;
 
 extern crate either;
@@ -54,30 +54,8 @@ pub fn print_fat_thin_analysis_results<'tcx>(
     structs: Vec<LocalDefId>,
     funcs: Vec<LocalDefId>,
 ) {
-    let bodies = funcs
-        .iter()
-        .map(|&fn_did| {
-            /*
-            let body = tcx.optimized_mir(fn_did);
-            rustc_middle::mir::pretty::write_mir_fn(
-                tcx,
-                body,
-                &mut |_, _| Ok(()),
-                &mut std::io::stdout(),
-            )
-            .unwrap();
-            */
-            fn_did.to_def_id()
-        })
-        .collect::<Vec<_>>();
-
-    let adt_defs = structs
-        .into_iter()
-        .map(|did| did.to_def_id())
-        .collect::<Vec<_>>();
-
-    let call_graph = CallGraph::new(tcx, bodies.into_iter());
-    let mut crate_summary = CrateSummary::new::<_>(tcx, &adt_defs, call_graph, LogSSAName);
+    let call_graph = CallGraph::new(tcx, funcs.into_iter().map(|did| did.to_def_id()));
+    let mut crate_summary = CrateSummary::new::<_>(tcx, &structs, call_graph, LogSSAName);
 
     match crate_summary.iterate_to_fixpoint() {
         Ok(()) => {
@@ -162,32 +140,9 @@ pub fn show_ownership_analysis_results<'tcx>(
     structs: Vec<LocalDefId>,
     funcs: Vec<LocalDefId>,
 ) {
-    let bodies = funcs
-        .iter()
-        .map(|&fn_did| {
-            /*
-            let body = tcx.optimized_mir(fn_did);
-            rustc_middle::mir::pretty::write_mir_fn(
-                tcx,
-                body,
-                &mut |_, _| Ok(()),
-                &mut std::io::stdout(),
-            )
-            .unwrap();
-            */
-
-            fn_did.to_def_id()
-        })
-        .collect::<Vec<_>>();
-
-    let adt_defs = structs
-        .into_iter()
-        .map(|did| did.to_def_id())
-        .collect::<Vec<_>>();
-
-    let call_graph = CallGraph::new(tcx, bodies.into_iter());
+    let call_graph = CallGraph::new(tcx, funcs.into_iter().map(|did| did.to_def_id()));
     let mut ownership_analysis =
-        ownership_analysis::InterSummary::new(tcx, &adt_defs, call_graph, LogSSAName);
+        ownership_analysis::InterSummary::new(tcx, &structs, call_graph, LogSSAName);
 
     match ownership_analysis.resolve() {
         Ok(()) => {
