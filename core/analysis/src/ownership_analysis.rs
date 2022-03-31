@@ -99,9 +99,9 @@ pub struct InterCtxtView<'view> {
 
 pub struct InterSummary {
     pub inter_ctxt: InterCtxt,
-    call_graph: CallGraph,
-    func_sigs: IndexVec<Func, FuncSig<Surface, Option<bool>>>,
-    func_summaries: IndexVec<Func, IntraSummary>,
+    pub call_graph: CallGraph,
+    pub func_sigs: IndexVec<Func, FuncSig<Surface, Option<bool>>>,
+    pub func_summaries: IndexVec<Func, IntraSummary>,
 }
 
 impl InterSummary {

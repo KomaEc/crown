@@ -4,6 +4,7 @@
 ## Some hard TODOs on the implementation side
 - [x] In ownership analysis, if we have `p = null`, then the post value of `p` should be asserted to null
 - [ ] Prevent over-generalisation in inter-analysis (see BST insertion with signature generic to ownership)
+- [ ] Call graph is constructed per-analysis. This is inefficient.
 
 ## Usage
 This tool is now able to infer an approximate fat/thin signature for struct and function definitions. To test it on the 'buffer' benchmark, do

@@ -360,7 +360,7 @@ pub trait FuncSigKind {
 }
 
 pub struct FuncSig<K: FuncSigKind, Value> {
-    sig: Vec<K::PtrKindRep<Value>>,
+    pub sig: Vec<K::PtrKindRep<Value>>,
     // _marker: PhantomData<*const K>
 }
 

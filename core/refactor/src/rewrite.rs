@@ -1,11 +1,6 @@
-use analysis::{
-    call_graph::CallGraph,
-    fat_thin_analysis::{CrateSummary, Lambda},
-    ownership_analysis,
-    ssa::rename::handler::LogSSAName,
-};
+use analysis::ownership_analysis;
 use rewriter::{RewriteMode, Rewriter};
-use rustc_hir::{def_id::LocalDefId, ItemKind};
+use rustc_hir::{def_id::LocalDefId, FnRetTy, ItemKind};
 use rustc_middle::ty::TyCtxt;
 
 pub fn rewrite(
@@ -17,8 +12,44 @@ pub fn rewrite(
 ) {
     let mut rewriter = rewriter::Rewriter::default();
     rewrite_structs(tcx, &mut rewriter, ownership_analysis, struct_defs);
+    rewrite_functions(tcx, &mut rewriter, ownership_analysis, fn_defs);
 
     rewriter.write(rewrite_mode)
+}
+
+fn rewrite_functions(
+    tcx: TyCtxt<'_>,
+    rewriter: &mut Rewriter,
+    ownership_analysis: &ownership_analysis::InterSummary,
+    dids: &[LocalDefId],
+) {
+    for &did in dids {
+        let func = ownership_analysis
+            .call_graph
+            .lookup_function(&did.to_def_id())
+            .unwrap();
+        let item = tcx.hir().expect_item(did);
+        if let ItemKind::Fn(sig, _generics, body_id) = &item.kind {
+            let mut ownership_sig_iter = ownership_analysis.func_sigs[func].sig.iter();
+            let ret_values = ownership_sig_iter.next().unwrap();
+            for (arg, values) in sig.decl.inputs.iter().zip(ownership_sig_iter) {
+                for (ty, &value) in (HirPtrTypeWalker { ty: arg }).zip(values.iter()) {
+                    if let Some(true) = value {
+                        rewrite_raw_ptr_ty(tcx, rewriter, ty, true, false);
+                    }
+                }
+            }
+            if let FnRetTy::Return(ret_ty) = sig.decl.output {
+                for (ty, &value) in (HirPtrTypeWalker { ty: ret_ty }).zip(ret_values.iter()) {
+                    if let Some(true) = value {
+                        rewrite_raw_ptr_ty(tcx, rewriter, ty, true, false);
+                    }
+                }
+            }
+        } else {
+            unreachable!()
+        }
+    }
 }
 
 fn rewrite_structs(
@@ -49,7 +80,7 @@ impl Default for {} {{
                 &owning_field_def,
                 variant_data,
                 did,
-                &mut default_impl
+                &mut default_impl,
             );
 
             writeln!(default_impl, "        }}").unwrap();
@@ -95,10 +126,20 @@ fn rewrite_struct(
             if owning_field_def.contains(&field_rhos.start) {
                 writeln!(default_impl_body, "{PREFIX}{}: None,", field.ident).unwrap();
             } else {
-                writeln!(default_impl_body, "{PREFIX}{}: std::ptr::null_mut(),", field.ident).unwrap();
+                writeln!(
+                    default_impl_body,
+                    "{PREFIX}{}: std::ptr::null_mut(),",
+                    field.ident
+                )
+                .unwrap();
             }
         } else {
-            writeln!(default_impl_body, "{PREFIX}{}: Default::default(),", field.ident).unwrap();
+            writeln!(
+                default_impl_body,
+                "{PREFIX}{}: Default::default(),",
+                field.ident
+            )
+            .unwrap();
         }
     }
 }

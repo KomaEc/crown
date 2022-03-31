@@ -29,7 +29,7 @@ use analysis::{
     ownership_analysis,
     ssa::rename::handler::LogSSAName,
 };
-use rustc_hir::{def_id::LocalDefId, ItemKind};
+use rustc_hir::def_id::LocalDefId;
 use rustc_middle::ty::TyCtxt;
 
 pub fn print_fat_thin_analysis_results<'tcx>(
