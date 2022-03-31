@@ -49,7 +49,8 @@ fn test_nested_pointers() {
         file.into(),
         |tcx, struct_defs, fn_dids| {
             let call_graph = CallGraph::new(tcx, fn_dids.into_iter().map(|did| did.to_def_id()));
-            let mut crate_summary = CrateSummary::new::<_>(tcx, &struct_defs, call_graph, LogSSAName);
+            let mut crate_summary =
+                CrateSummary::new::<_>(tcx, &struct_defs, call_graph, LogSSAName);
             crate_summary.iterate_to_fixpoint().unwrap_or_else(|()| {
                 log::debug!("Solve failed");
                 crate_summary.error_state();

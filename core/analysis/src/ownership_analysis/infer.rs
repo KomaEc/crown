@@ -33,8 +33,7 @@ use crate::{
         },
     },
     ty_ext::TyExt,
-    FuncSig,
-    Surface,
+    FuncSig, Surface,
 };
 
 use super::{
@@ -257,8 +256,12 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
                     let ty = place_ty.ty;
                     let variant_idx = place_ty.variant_index.unwrap_or(VariantIdx::new(0));
                     let adt_def = ty.ty_adt_def().unwrap();
-                    let rhos =
-                        self.ctxt.field_defs[&adt_def.did.as_local().expect("struct definitions should be in scope!!!")][variant_idx][field.index()].clone();
+                    let rhos = self.ctxt.field_defs[&adt_def
+                        .did
+                        .as_local()
+                        .expect("struct definitions should be in scope!!!")][variant_idx]
+                        [field.index()]
+                    .clone();
                     return Range {
                         start: rhos.start + n_derefs,
                         end: rhos.end,

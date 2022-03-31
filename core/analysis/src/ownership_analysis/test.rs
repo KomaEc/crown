@@ -25,7 +25,8 @@ fn test_specific() {
         lib.into(),
         |tcx, struct_defs, fn_dids| {
             let call_graph = CallGraph::new(tcx, fn_dids.into_iter().map(|did| did.to_def_id()));
-            let mut crate_summary = InterSummary::new::<_>(tcx, &struct_defs, call_graph, LogSSAName);
+            let mut crate_summary =
+                InterSummary::new::<_>(tcx, &struct_defs, call_graph, LogSSAName);
 
             let func_we_care = crate::call_graph::Func::from_u32(0);
 

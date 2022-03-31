@@ -3,8 +3,7 @@
 #![feature(array_windows)]
 #![feature(box_patterns)]
 
-// pub mod ptr_rewrite;
-mod rewrite_program;
+pub mod rewrite;
 
 extern crate either;
 extern crate rustc_ast;
@@ -22,32 +21,16 @@ extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_target;
 
+use std::process::exit;
+
 use analysis::{
     call_graph::CallGraph,
     fat_thin_analysis::{CrateSummary, Lambda},
     ownership_analysis,
     ssa::rename::handler::LogSSAName,
 };
-use rustc_hir::def_id::LocalDefId;
+use rustc_hir::{def_id::LocalDefId, ItemKind};
 use rustc_middle::ty::TyCtxt;
-
-pub struct Refactorer<'tcx> {
-    tcx: TyCtxt<'tcx>,
-    rewriter: rewrite::Rewriter,
-    call_graph: CallGraph,
-    all_struct_defs: Vec<LocalDefId>,
-}
-
-impl<'tcx> Refactorer<'tcx> {
-    pub fn new(tcx: TyCtxt<'tcx>, structs: Vec<LocalDefId>, funcs: Vec<LocalDefId>) -> Self {
-        Self {
-            tcx,
-            rewriter: rewrite::Rewriter::default(),
-            call_graph: CallGraph::new(tcx, funcs.into_iter().map(|did| did.to_def_id())),
-            all_struct_defs: structs,
-        }
-    }
-}
 
 pub fn print_fat_thin_analysis_results<'tcx>(
     tcx: TyCtxt<'tcx>,
@@ -109,19 +92,6 @@ pub fn print_fat_thin_analysis_results<'tcx>(
 
 pub fn show_mir<'tcx>(tcx: TyCtxt<'tcx>, funcs: Vec<LocalDefId>) {
     funcs.iter().for_each(|&fn_did| {
-        /*
-        let fn_did = WithOptConstParam::unknown(fn_did);
-        let fn_did = fn_did.clone().try_upgrade(tcx).unwrap_or(fn_did);
-        let body = tcx.mir_drops_elaborated_and_const_checked(fn_did);
-        rustc_middle::mir::pretty::write_mir_fn(
-            tcx,
-            &*body.borrow(),
-            &mut |_, _| Ok(()),
-            &mut std::io::stdout(),
-        )
-        .unwrap();
-        */
-
         let body = tcx.optimized_mir(fn_did);
         rustc_middle::mir::pretty::write_mir_fn(
             tcx,
@@ -130,8 +100,6 @@ pub fn show_mir<'tcx>(tcx: TyCtxt<'tcx>, funcs: Vec<LocalDefId>) {
             &mut std::io::stdout(),
         )
         .unwrap();
-
-        // fn_did.to_def_id()
     });
 }
 
@@ -152,6 +120,26 @@ pub fn show_ownership_analysis_results<'tcx>(
             log::error!("Cannot solve ownership constraints!");
 
             ownership_analysis::explain_error(reason)
+        }
+    }
+}
+
+pub fn ownership_analysis(
+    tcx: TyCtxt<'_>,
+    structs: &[LocalDefId],
+    funcs: &[LocalDefId],
+) -> ownership_analysis::InterSummary {
+    let call_graph = CallGraph::new(tcx, funcs.into_iter().map(|did| did.to_def_id()));
+    let mut ownership_analysis =
+        ownership_analysis::InterSummary::new(tcx, &structs, call_graph, LogSSAName);
+    match ownership_analysis.resolve() {
+        Ok(()) => ownership_analysis,
+        Err(reason) => {
+            log::error!("Cannot solve ownership constraints!");
+
+            ownership_analysis::explain_error(reason);
+
+            exit(0)
         }
     }
 }

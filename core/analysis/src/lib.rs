@@ -69,7 +69,6 @@ use std::{
 };
 use ty_ext::TyExt;
 
-
 pub struct CrateAnalysisCtxt<CV, Domain>
 where
     CV: IsRustcIndexDefinedCV,
@@ -324,7 +323,10 @@ impl Display for CVSourceData {
                 nested_level,
             } => f.write_fmt(format_args!(
                 "{:*<1$}{2:?}.{3}",
-                "", nested_level, adt_def.to_def_id(), field_idx
+                "",
+                nested_level,
+                adt_def.to_def_id(),
+                field_idx
             )),
         }
     }

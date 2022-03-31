@@ -8,12 +8,20 @@ extern crate rustc_middle;
 extern crate rustc_passes;
 extern crate rustc_span;
 
+use clap::ArgEnum;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::{FileName, Span};
 pub use rustfix;
 use rustfix::*;
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum)]
+pub enum RewriteMode {
+    InPlace,
+    Print,
+    Alongside,
+}
 
 #[derive(Default)]
 pub struct Rewriter {
@@ -86,13 +94,23 @@ impl Rewriter {
             .push(suggestion);
     }
 
-    pub fn over_rewrite(self) {
+    pub fn write(self, mode: RewriteMode) {
         for (file, suggestions) in self.suggestions {
             use std::fs;
+            use std::fs::File;
+            use std::io::stdout;
             let code = fs::read_to_string(file.as_path()).expect("source code read failed");
             let rewrited =
                 apply_suggestions(&code, &suggestions).expect("apply suggestions failed");
-            fs::write(file, rewrited).expect("overwrite to file failed");
+            let mut out: Box<dyn std::io::Write> = match mode {
+                RewriteMode::InPlace => Box::new(File::create(file).expect("cannot open file")),
+                RewriteMode::Print => Box::new(stdout()),
+                RewriteMode::Alongside => {
+                    todo!()
+                }
+            };
+            write!(out, "{}", rewrited).expect("write failed");
+            // fs::write(file, rewrited).expect("overwrite to file failed");
         }
     }
 }

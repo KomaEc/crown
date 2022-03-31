@@ -48,7 +48,10 @@ impl Display for FieldDefSourceInfo {
         } = *self;
         f.write_fmt(format_args!(
             "{:*<1$}{2:?}.{3}",
-            "", nested_level, adt_def.to_def_id(), field_idx
+            "",
+            nested_level,
+            adt_def.to_def_id(),
+            field_idx
         ))
     }
 }
@@ -75,9 +78,9 @@ impl Display for LocalSourceInfo {
 }
 
 pub struct InterCtxt {
-    global_assumptions: ConstraintDatabase,
+    pub global_assumptions: ConstraintDatabase,
     global_source_map: Vec<FieldDefSourceInfo>,
-    field_defs: FxHashMap<LocalDefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
+    pub field_defs: FxHashMap<LocalDefId, IndexVec<VariantIdx, Vec<Range<Rho>>>>,
 }
 
 impl InterCtxt {
@@ -95,7 +98,7 @@ pub struct InterCtxtView<'view> {
 }
 
 pub struct InterSummary {
-    inter_ctxt: InterCtxt,
+    pub inter_ctxt: InterCtxt,
     call_graph: CallGraph,
     func_sigs: IndexVec<Func, FuncSig<Surface, Option<bool>>>,
     func_summaries: IndexVec<Func, IntraSummary>,
@@ -343,6 +346,13 @@ impl InterSummary {
         }
     }
 
+    pub fn field_def_known_to_be_owning(&self) -> Vec<Rho> {
+        DepthFirstSearch::new(&self.inter_ctxt.global_assumptions.le_constraints.graph)
+            .with_start_node(Rho::ONE)
+            .filter(|&rho| rho > Rho::ONE)
+            .collect()
+    }
+
     pub fn show_result(&self) {
         self.field_def_value_with(|rho, value| {
             log::debug!(
@@ -437,8 +447,8 @@ pub struct IntraSummary {
     locals: IndexVec<Local, IndexVec<SSAIdx, Range<Rho>>>,
     intra_source_map: Vec<LocalSourceInfo>,
     boundaries: Vec<OwnershipAnalysisBoundary>,
-    ssa_name_source_map: SSANameSourceMap<OwnershipAnalysisDefUse>,
-    ssa_def_sites: SSADefSites<OwnershipAnalysisDefUse>,
+    pub ssa_name_source_map: SSANameSourceMap<OwnershipAnalysisDefUse>,
+    pub ssa_def_sites: SSADefSites<OwnershipAnalysisDefUse>,
     fn_sig: FuncSig<Inner, Rho>,
 }
 

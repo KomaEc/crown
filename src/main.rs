@@ -50,6 +50,10 @@ enum Command {
         #[clap(long, short)]
         all: bool,
     },
+    Rewrite {
+        #[clap(arg_enum, default_value_t = rewriter::RewriteMode::Print)]
+        rewrite_mode: rewriter::RewriteMode,
+    },
 }
 
 fn main() {
@@ -138,25 +142,6 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             pretty_mir,
             all: _,
         } => {
-            /*
-
-            if *null || *all {
-                let null_results_raw = top_level_fns
-                    .iter()
-                    .map(|def_id| (def_id, NullAnalysisResults::collect(tcx, *def_id)))
-                    .collect::<Vec<_>>();
-                let mut null_results = IndexVec::new();
-                for (def_id, result) in null_results_raw.into_iter() {
-                    null_results.insert(*def_id, result);
-                }
-                NullAnalysisResults::resolve_deps(&mut null_results);
-                for result in null_results.iter().filter_map(Option::as_ref) {
-                    println!("{result}");
-                }
-            }
-
-            */
-
             if *pretty_mir {
                 refactor::show_mir(tcx, top_level_fns.clone())
             }
@@ -172,6 +157,17 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             if *array {
                 refactor::print_fat_thin_analysis_results(tcx, top_level_struct_defs, top_level_fns)
             }
+        }
+        &Command::Rewrite { rewrite_mode } => {
+            let ownership_analysis =
+                refactor::ownership_analysis(tcx, &top_level_struct_defs, &top_level_fns);
+            refactor::rewrite::rewrite(
+                tcx,
+                &ownership_analysis,
+                &top_level_fns,
+                &top_level_struct_defs,
+                rewrite_mode,
+            )
         }
     }
 }

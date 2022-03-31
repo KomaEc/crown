@@ -340,7 +340,10 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handle
                     let ty = place_ty.ty;
                     let variant_idx = place_ty.variant_index.unwrap_or(VariantIdx::new(0));
                     let adt_def = ty.ty_adt_def().unwrap();
-                    let lambdas = self.ctxt.lambda_ctxt.field_defs[&adt_def.did.as_local().expect("struct definition should be in scope!")][variant_idx]
+                    let lambdas = self.ctxt.lambda_ctxt.field_defs[&adt_def
+                        .did
+                        .as_local()
+                        .expect("struct definition should be in scope!")][variant_idx]
                         [field.index()]
                     .clone();
                     return Range {

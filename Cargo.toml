@@ -2,7 +2,7 @@
 members = [
     "core/compiler_interface",
     "core/analysis",
-    "core/rewrite",
+    "core/rewriter",
     "core/refactor",
     "core/utils/graph",
     "core/utils/range_ext",
@@ -21,3 +21,4 @@ clap = { version = "3.1.2", features = ["derive"] }
 env_logger = "0.9"
 analysis = { path = "core/analysis" }
 refactor = { path = "core/refactor" }
+rewriter = { path = "core/rewriter" }
