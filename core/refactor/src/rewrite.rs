@@ -27,10 +27,21 @@ fn rewrite_structs(
     ownership_analysis: &ownership_analysis::InterSummary,
     dids: &[LocalDefId],
 ) {
+    use std::fmt::Write;
     let owning_field_def = ownership_analysis.field_def_known_to_be_owning();
     for &did in dids {
         let item = tcx.hir().expect_item(did);
         if let ItemKind::Struct(variant_data, _generics) = &item.kind {
+            let mut default_impl = format!(
+                "
+
+impl Default for {} {{
+    fn default() -> Self {{
+        Self {{
+",
+                item.ident
+            );
+
             rewrite_struct(
                 tcx,
                 rewriter,
@@ -38,7 +49,20 @@ fn rewrite_structs(
                 &owning_field_def,
                 variant_data,
                 did,
-            )
+                &mut default_impl
+            );
+
+            writeln!(default_impl, "        }}").unwrap();
+            writeln!(default_impl, "    }}").unwrap();
+            writeln!(default_impl, "}}").unwrap();
+
+            let struct_span = item.span;
+            rewriter.make_suggestion(
+                tcx,
+                struct_span.shrink_to_hi(),
+                format!("adding default impl for {}", item.ident),
+                default_impl,
+            );
         } else {
             unreachable!()
         }
@@ -52,7 +76,10 @@ fn rewrite_struct(
     owning_field_def: &[ownership_analysis::Rho],
     variant_data: &rustc_hir::VariantData,
     did: LocalDefId,
+    default_impl_body: &mut String,
 ) {
+    use std::fmt::Write;
+    const PREFIX: &str = "            ";
     for (field, field_rhos) in variant_data
         .fields()
         .iter()
@@ -62,6 +89,16 @@ fn rewrite_struct(
             if owning_field_def.contains(&rho) {
                 rewrite_raw_ptr_ty(tcx, rewriter, ty, true, false)
             }
+        }
+
+        if !field_rhos.is_empty() {
+            if owning_field_def.contains(&field_rhos.start) {
+                writeln!(default_impl_body, "{PREFIX}{}: None,", field.ident).unwrap();
+            } else {
+                writeln!(default_impl_body, "{PREFIX}{}: std::ptr::null_mut(),", field.ident).unwrap();
+            }
+        } else {
+            writeln!(default_impl_body, "{PREFIX}{}: Default::default(),", field.ident).unwrap();
         }
     }
 }
