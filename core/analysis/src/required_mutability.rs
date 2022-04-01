@@ -2,7 +2,7 @@ use rustc_hir::def_id::LocalDefId;
 use rustc_index::bit_set::BitSet;
 use rustc_middle::{
     mir::{
-        visit::{PlaceContext, Visitor},
+        visit::{MutatingUseContext, PlaceContext, Visitor},
         Body, Local, Location,
     },
     ty::TyCtxt,
@@ -11,7 +11,11 @@ use rustc_middle::{
 use crate::ty_ext::TyExt;
 
 /// compute for a mir body the locals of raw pointer type
-/// that is required to have mutability
+/// that is required to have mutability.
+/// Note that this mutability refers to the mutability of inner
+/// type, it does not care about the mutability of the whole ptr type.
+/// That is to say, for `mut ptr: &mut i32`, it cares only about the
+/// second mutability modifier
 pub fn required_mutability(tcx: TyCtxt<'_>, did: LocalDefId) -> BitSet<Local> {
     let body = tcx.optimized_mir(did);
     let required_mutability = BitSet::new_empty(body.local_decls.len());
@@ -29,7 +33,8 @@ pub fn required_mutability(tcx: TyCtxt<'_>, did: LocalDefId) -> BitSet<Local> {
             _location: Location,
         ) {
             if self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr() {
-                if let PlaceContext::MutatingUse(_) = place_context {
+                // we only account for mutation of pointer through indirection
+                if let PlaceContext::MutatingUse(MutatingUseContext::Projection) = place_context {
                     self.required_mutability.insert(local);
                 }
             }

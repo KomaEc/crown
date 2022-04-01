@@ -40,7 +40,6 @@ fn rewrite_functions(
                 &required_mutability,
                 sig,
             );
-            
         } else {
             unreachable!()
         }
