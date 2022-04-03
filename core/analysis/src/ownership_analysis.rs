@@ -801,6 +801,26 @@ impl ConstraintDatabase {
                         log::debug!("     {:?} = 0", y);
                         self.le_constraints.add_relation(y, Rho::ZERO);
                         *removed = true;
+                    } else if DepthFirstSearch::new(&sccs)
+                        .with_start_node(x_rep)
+                        .any(|rep| rep == y_rep)
+                    {
+                        log::debug!("     {:?} ≤ {:?}, {:?} = {:?} + {:?}", x, y, z, x, y);
+                        log::debug!("---------------------------------------------");
+                        log::debug!("     {:?} ≤ {:?}, {:?} = 0", z, y, x);
+                        self.le_constraints.add_relation(x, Rho::ZERO);
+                        self.le_constraints.add_relation(z, y);
+                        *removed = true;
+                    } else if DepthFirstSearch::new(&sccs)
+                        .with_start_node(y_rep)
+                        .any(|rep| rep == x_rep)
+                    {
+                        log::debug!("     {:?} ≤ {:?}, {:?} = {:?} + {:?}", y, x, z, x, y);
+                        log::debug!("---------------------------------------------");
+                        log::debug!("     {:?} ≤ {:?}, {:?} = 0", z, x, y);
+                        self.le_constraints.add_relation(y, Rho::ZERO);
+                        self.le_constraints.add_relation(z, x);
+                        *removed = true;
                     }
 
                     // change happend

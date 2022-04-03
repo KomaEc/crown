@@ -34,16 +34,17 @@ use rustc_middle::{
 };
 use rustc_target::abi::VariantIdx;
 
-impl<'tcx> CrateSummary<'tcx> {
+impl CrateSummary {
     pub fn infer_all<Handler: SSANameHandler<Output = ()>>(
         mut self,
+        tcx: TyCtxt<'_>,
         mut extra_handler: Handler,
     ) -> Self {
         let mut boundary_constraints = IndexVec::from_elem(vec![], &self.call_graph.graph.edges);
         let mut all_return_ssa_idx = IndexVec::with_capacity(self.call_graph.functions.len());
         for (func, &did) in self.call_graph.functions.iter_enumerated() {
-            let body = self.tcx.optimized_mir(did);
-            let insertion_points = body.compute_phi_node::<FatThinAnalysisDefUse>(self.tcx);
+            let body = tcx.optimized_mir(did);
+            let insertion_points = body.compute_phi_node::<FatThinAnalysisDefUse>(tcx);
 
             let mut def_sites = SSADefSites::<FatThinAnalysisDefUse>::new(body);
             let mut ssa_name_source_map = SSANameSourceMap::new(body, &insertion_points);
@@ -53,7 +54,7 @@ impl<'tcx> CrateSummary<'tcx> {
 
             let mut infer: InferEngine<_> = InferEngine {
                 ctxt: InferCtxt::new(
-                    self.tcx,
+                    tcx,
                     func,
                     body,
                     &self.call_graph,
@@ -371,8 +372,8 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handle
             .is_ptr_but_not_fn_ptr());
 
         let ssa_idx = self.ssa_state().r#use(place.local);
-        let base = self.handle_ptr_use(place.local, ssa_idx, location);
-        self.proj_place_lambdas(base, place.iter_projections())
+        let base = self.handle_use(place.local, ssa_idx, location);
+        self.proj_place_lambdas(base.unwrap_or_else(|| Range::empty()), place.iter_projections())
     }
 
     fn define_place_assume_simple_ptr(
@@ -441,7 +442,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
             {
                 let lhs = self.try_define_ptr_place(place, location);
                 let rhs = self.use_ptr_place(rhs, location);
-                assert_eq!(lhs.len(), rhs.len());
+                // assert_eq!(lhs.len(), rhs.len());
                 for (lhs, rhs) in std::iter::zip(lhs, rhs) {
                     self.ctxt.constraints.push_le(lhs, rhs);
                 }

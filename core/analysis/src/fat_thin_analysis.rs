@@ -27,8 +27,8 @@ mod test;
 
 /// This structure should hold info about all struct definitions
 /// and local nested pointers in the crate
-pub struct CrateSummary<'tcx> {
-    pub tcx: TyCtxt<'tcx>,
+pub struct CrateSummary {
+    // pub tcx: TyCtxt<'tcx>,
     pub call_graph: CallGraph,
     // pub lambda_ctxt: CrateLambdaCtxt,
     pub lambda_ctxt: CrateAnalysisCtxt<Lambda, Option<bool>>,
@@ -51,9 +51,9 @@ pub struct FuncSummary {
     pub func_sig: Vec<Range<Lambda>>,
 }
 
-impl<'tcx> CrateSummary<'tcx> {
+impl CrateSummary {
     pub fn new<Handler: SSANameHandler<Output = ()>>(
-        tcx: TyCtxt<'tcx>,
+        tcx: TyCtxt<'_>,
         adt_defs: &[LocalDefId],
         call_graph: CallGraph,
         extra_handler: Handler,
@@ -61,7 +61,7 @@ impl<'tcx> CrateSummary<'tcx> {
         let num_funcs = call_graph.num_nodes();
         let lambda_ctxt = CrateAnalysisCtxt::initiate(tcx, adt_defs, &call_graph);
         CrateSummary {
-            tcx,
+            // tcx,
             call_graph,
             globals: Range {
                 start: 0,
@@ -74,8 +74,8 @@ impl<'tcx> CrateSummary<'tcx> {
             def_sites: IndexVec::with_capacity(num_funcs),
             ssa_name_source_map: IndexVec::with_capacity(num_funcs),
         }
-        .log_initial_state()
-        .infer_all::<_>(extra_handler)
+        .log_initial_state(tcx)
+        .infer_all::<_>(tcx, extra_handler)
         .debug_state_after_infer()
     }
 
@@ -141,7 +141,7 @@ impl<'tcx> CrateSummary<'tcx> {
         Ok(())
     }
 
-    pub fn source_data_to_str(&self, src_data: CVSourceData) -> String {
+    pub fn source_data_to_str(&self, tcx: TyCtxt<'_>, src_data: CVSourceData) -> String {
         match src_data {
             CVSourceData::Local {
                 func,
@@ -156,7 +156,7 @@ impl<'tcx> CrateSummary<'tcx> {
                     nested_level,
                     base,
                     ssa_idx,
-                    self.tcx.def_path_str(did)
+                    tcx.def_path_str(did)
                 )
             }
             CVSourceData::FieldDef {
@@ -165,7 +165,7 @@ impl<'tcx> CrateSummary<'tcx> {
                 field_idx,
                 nested_level,
             } => {
-                let adt_def = self.tcx.adt_def(adt_def);
+                let adt_def = tcx.adt_def(adt_def);
                 let variant_def = &adt_def.variants[variant_idx];
                 let field_def = &variant_def.fields[field_idx];
                 format!(
@@ -176,21 +176,20 @@ impl<'tcx> CrateSummary<'tcx> {
         }
     }
 
-    fn log_initial_state(self) -> Self {
+    fn log_initial_state(self, tcx: TyCtxt<'_>) -> Self {
         #[cfg(debug_assertions)]
         {
             log::debug!("Initialising crate summary");
             for (&adt_did, x) in &self.lambda_ctxt.field_defs {
                 for (variant_idx, y) in x.iter_enumerated() {
                     for (field_idx, z) in y.iter().enumerate() {
-                        let adt_def = self.tcx.adt_def(adt_did);
+                        let adt_def = tcx.adt_def(adt_did);
                         let field_def = &adt_def.variants[variant_idx].fields[field_idx];
-                        let field_def_str =
-                            format!("{}.{}", self.tcx.type_of(adt_did), field_def.name);
+                        let field_def_str = format!("{}.{}", tcx.type_of(adt_did), field_def.name);
                         log::debug!(
                             "for field {}: {}:",
                             field_def_str,
-                            self.tcx.type_of(field_def.did)
+                            tcx.type_of(field_def.did)
                         );
                         for (idx, lambda) in z.clone().enumerate() {
                             log::debug!("{:*<1$}{2} ==> {3:?}", "", idx, field_def_str, lambda)
@@ -211,6 +210,7 @@ impl<'tcx> CrateSummary<'tcx> {
         self
     }
 
+    /*
     pub fn error_state(&self) {
         log::error!("All constraints:");
         for constraint in self.constraints.iter() {
@@ -230,6 +230,7 @@ impl<'tcx> CrateSummary<'tcx> {
             )
         }
     }
+    */
 }
 
 /// λ1 ≤ λ2

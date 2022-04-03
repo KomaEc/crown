@@ -25,7 +25,7 @@ use std::process::exit;
 
 use analysis::{
     call_graph::CallGraph,
-    fat_thin_analysis::{CrateSummary, Lambda},
+    fat_thin_analysis::{self, CrateSummary, Lambda},
     ownership_analysis,
     ssa::rename::handler::LogSSAName,
 };
@@ -60,8 +60,10 @@ pub fn print_fat_thin_analysis_results<'tcx>(
                         .map(|fat| { fat.then_some("1").unwrap_or("0") })
                         .unwrap_or("?"),
                     // crate_summary.lambda_ctxt.lambda_map.data_map[lambda]
-                    crate_summary
-                        .source_data_to_str(crate_summary.lambda_ctxt.source_map[lambda].clone())
+                    crate_summary.source_data_to_str(
+                        tcx,
+                        crate_summary.lambda_ctxt.source_map[lambda].clone()
+                    )
                 )
             }
         }
@@ -120,6 +122,23 @@ pub fn show_ownership_analysis_results<'tcx>(
             log::error!("Cannot solve ownership constraints!");
 
             ownership_analysis::explain_error(reason)
+        }
+    }
+}
+
+pub fn fatness_analysis(
+    tcx: TyCtxt<'_>,
+    structs: &[LocalDefId],
+    funcs: &[LocalDefId],
+) -> fat_thin_analysis::CrateSummary {
+    let call_graph = CallGraph::new(tcx, funcs.into_iter().map(|did| did.to_def_id()));
+    let mut fatness_analysis =
+        fat_thin_analysis::CrateSummary::new::<_>(tcx, &structs, call_graph, LogSSAName);
+    match fatness_analysis.iterate_to_fixpoint() {
+        Ok(()) => fatness_analysis,
+        Err(_) => {
+            log::error!("Cannot solve fatness constraints!");
+            exit(0)
         }
     }
 }
