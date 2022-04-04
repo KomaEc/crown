@@ -82,7 +82,7 @@ pub unsafe extern "C" fn deleteNode(mut root: *mut node, mut key: i32)
 	// to be deleted
         // node with only one child or no child
         if (*root).left.is_null() {
-            let mut temp: *mut node = (*root).right;
+            let mut temp = (*root).right;
             free(root as *mut libc::c_void);
             return temp
         } else {
