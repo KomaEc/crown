@@ -20,8 +20,20 @@ pub fn rewrite(
     rewrite_mode: RewriteMode,
 ) {
     let mut rewriter = rewriter::Rewriter::default();
-    rewrite_structs(tcx, &mut rewriter, ownership_analysis, fatness_analysis, struct_defs);
-    rewrite_functions(tcx, &mut rewriter, ownership_analysis, fatness_analysis, fn_defs);
+    rewrite_structs(
+        tcx,
+        &mut rewriter,
+        ownership_analysis,
+        fatness_analysis,
+        struct_defs,
+    );
+    rewrite_functions(
+        tcx,
+        &mut rewriter,
+        ownership_analysis,
+        fatness_analysis,
+        fn_defs,
+    );
 
     rewriter.write(rewrite_mode)
 }
@@ -45,6 +57,7 @@ fn rewrite_functions(
                 tcx,
                 rewriter,
                 ownership_analysis,
+                fatness_analysis,
                 func,
                 &required_mutability,
                 sig,
@@ -53,6 +66,7 @@ fn rewrite_functions(
                 tcx,
                 rewriter,
                 ownership_analysis,
+                fatness_analysis,
                 func,
                 &required_mutability,
                 did,
@@ -67,38 +81,58 @@ fn rewrite_fn_sig(
     tcx: TyCtxt<'_>,
     rewriter: &mut Rewriter,
     ownership_analysis: &ownership_analysis::InterSummary,
+    fatness_analysis: &fat_thin_analysis::CrateSummary,
     func: Func,
     required_mutability: &BitSet<Local>,
     sig: &FnSig,
 ) {
     let mut ownership_sig_iter = ownership_analysis.func_sigs[func].sig.iter();
+    let mut fatness_sig_iter =
+        fatness_analysis.func_summaries[func]
+            .func_sig
+            .iter()
+            .map(|lambdas| {
+                lambdas
+                    .clone()
+                    .map(|lambda| fatness_analysis.lambda_ctxt.assumptions[lambda])
+            });
     let mut idx = Local::from_u32(0);
-    let ret_values = ownership_sig_iter.next().unwrap();
+    let ret_ownings = ownership_sig_iter.next().unwrap();
+    let ret_fats = fatness_sig_iter.next().unwrap();
     if let FnRetTy::Return(ret_ty) = sig.decl.output {
-        for (ty, &value) in (HirPtrTypeWalker { ty: ret_ty }).zip(ret_values.iter()) {
-            if let Some(known) = value {
+        for (ty, (owning, fat)) in
+            (HirPtrTypeWalker { ty: ret_ty }).zip(ret_ownings.iter().zip(ret_fats))
+        {
+            if let Some(known) = owning {
                 let ownership =
                     known
                         .then(|| Ownership::Owning)
                         .unwrap_or_else(|| Ownership::Transient {
                             mutbl: required_mutability.contains(idx),
                         });
-                rewrite_raw_ptr_ty(tcx, rewriter, ty, ownership, false);
+                let fat = fat.unwrap_or(false);
+                rewrite_raw_ptr_ty(tcx, rewriter, ty, ownership, fat);
             }
         }
     }
 
     idx = idx + 1;
-    for (arg, values) in sig.decl.inputs.iter().zip(ownership_sig_iter) {
-        for (ty, &value) in (HirPtrTypeWalker { ty: arg }).zip(values.iter()) {
-            if let Some(known) = value {
+    for (arg, (ownings, fats)) in sig
+        .decl
+        .inputs
+        .iter()
+        .zip(ownership_sig_iter.zip(fatness_sig_iter))
+    {
+        for (ty, (owning, fat)) in (HirPtrTypeWalker { ty: arg }).zip(ownings.iter().zip(fats)) {
+            if let Some(known) = owning {
                 let ownership =
                     known
                         .then(|| Ownership::Owning)
                         .unwrap_or_else(|| Ownership::Transient {
                             mutbl: required_mutability.contains(idx),
                         });
-                rewrite_raw_ptr_ty(tcx, rewriter, ty, ownership, false);
+                let fat = fat.unwrap_or(false);
+                rewrite_raw_ptr_ty(tcx, rewriter, ty, ownership, fat);
             }
         }
         idx = idx + 1;
@@ -167,16 +201,23 @@ fn rewrite_struct(
 ) {
     use std::fmt::Write;
     const PREFIX: &str = "            ";
-    for (field, (field_rhos, field_lambdas)) in variant_data
-        .fields()
-        .iter()
-        .zip(ownership_analysis.inter_ctxt.field_defs[&did][0usize.into()].iter().zip(fatness_analysis.lambda_ctxt.field_defs[&did][0usize.into()].iter()))
-    {
-        for (ty, (rho, lambda)) in (HirPtrTypeWalker { ty: field.ty }).zip(field_rhos.clone().zip(field_lambdas.clone())) {
+    for (field, (field_rhos, field_lambdas)) in variant_data.fields().iter().zip(
+        ownership_analysis.inter_ctxt.field_defs[&did][0usize.into()]
+            .iter()
+            .zip(fatness_analysis.lambda_ctxt.field_defs[&did][0usize.into()].iter()),
+    ) {
+        for (ty, (rho, lambda)) in
+            (HirPtrTypeWalker { ty: field.ty }).zip(field_rhos.clone().zip(field_lambdas.clone()))
+        {
             // for structs, we only rewrite owning pointers
 
-            let ownership = owning_field_def.contains(&rho).then_some(Ownership::Owning).unwrap_or(Ownership::Raw);
-            let fatness = fatness_analysis.lambda_ctxt.assumptions[lambda].map(|value| value).unwrap_or(false);
+            let ownership = owning_field_def
+                .contains(&rho)
+                .then_some(Ownership::Owning)
+                .unwrap_or(Ownership::Raw);
+            let fatness = fatness_analysis.lambda_ctxt.assumptions[lambda]
+                .map(|value| value)
+                .unwrap_or(false);
             rewrite_raw_ptr_ty(tcx, rewriter, ty, ownership, fatness)
         }
 
@@ -216,7 +257,6 @@ fn rewrite_raw_ptr_ty(
     ownership: Ownership,
     fat: bool,
 ) {
-
     if let rustc_hir::TyKind::Ptr(inner) = &ty.kind {
         let prefix_span = ty.span.until(inner.ty.span);
 
@@ -225,16 +265,16 @@ fn rewrite_raw_ptr_ty(
         /*
         if fat {
             rewriter.make_suggestion(
-                tcx, 
-                inner.ty.span.shrink_to_lo(), 
-                "adding slice prefix".to_owned(), 
+                tcx,
+                inner.ty.span.shrink_to_lo(),
+                "adding slice prefix".to_owned(),
                 "[".to_owned()
             );
             debug_span_rewrited(prefix_span.shrink_to_hi());
             rewriter.make_suggestion(
-                tcx, 
-                inner.ty.span.shrink_to_hi(), 
-                "adding slice suffix".to_owned(), 
+                tcx,
+                inner.ty.span.shrink_to_hi(),
+                "adding slice suffix".to_owned(),
                 "]".to_owned()
             );
             debug_span_rewrited(inner.ty.span.shrink_to_hi());
@@ -276,7 +316,7 @@ fn rewrite_raw_ptr_ty(
         */
 
         if !fat && matches!(ownership, Ownership::Raw) {
-            return
+            return;
         }
 
         let mut prefix = "".to_owned();
@@ -295,15 +335,10 @@ fn rewrite_raw_ptr_ty(
                 let mutability_modifier_str = mutbl.then_some("mut ").unwrap_or("");
                 prefix = format!("&{mutability_modifier_str}{prefix}");
             }
-            Ownership::Raw => unreachable!()
+            Ownership::Raw => unreachable!(),
         }
 
-        rewriter.make_suggestion(
-            tcx,
-            prefix_span,
-            "rewriting ptr prefix".to_owned(),
-            prefix,
-        );
+        rewriter.make_suggestion(tcx, prefix_span, "rewriting ptr prefix".to_owned(), prefix);
 
         rewriter.make_suggestion(
             tcx,
@@ -311,7 +346,6 @@ fn rewrite_raw_ptr_ty(
             "adding suffix".to_owned(),
             suffix,
         );
-
     } else {
         unreachable!()
     }
@@ -325,7 +359,7 @@ fn rewrite_raw_ptr_ty(
 enum Ownership {
     Owning,
     Transient { mutbl: bool },
-    Raw
+    Raw,
 }
 
 struct HirPtrTypeWalker<'hir> {

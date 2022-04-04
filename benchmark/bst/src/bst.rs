@@ -16,8 +16,8 @@ pub struct node {
 }
 // A utility function to create a new BST node
 pub unsafe extern "C" fn newNode(mut item: i32) -> *mut node {
-    let mut temp: *mut node =
-        malloc(::std::mem::size_of::<node>() as u64) as *mut node;
+    let mut temp =
+        malloc(::std::mem::size_of::<node>() as libc::c_ulong) as *mut node;
     (*temp).key = item;
     (*temp).right = 0 as *mut node;
     (*temp).left = (*temp).right;
@@ -51,7 +51,7 @@ with minimum key value found in
 that tree. Note that the
 entire tree does not need to be searched. */
 pub unsafe extern "C" fn minValueNode(mut node: *mut node) -> *mut node {
-    let mut current: *mut node = node;
+    let mut current = node;
     /* loop down to find the leftmost leaf */
     while !current.is_null() && !(*current).left.is_null() {
         current = (*current).left
@@ -87,12 +87,12 @@ pub unsafe extern "C" fn deleteNode(mut root: *mut node, mut key: i32)
             return temp
         } else {
             if (*root).right.is_null() {
-                let mut temp_0: *mut node = (*root).left;
+                let mut temp_0 = (*root).left;
                 free(root as *mut libc::c_void);
                 return temp_0
             }
         }
-        let mut temp_1: *mut node = minValueNode((*root).right);
+        let mut temp_1 = minValueNode((*root).right);
         (*root).key = (*temp_1).key;
         (*root).right = deleteNode((*root).right, (*temp_1).key)
     }

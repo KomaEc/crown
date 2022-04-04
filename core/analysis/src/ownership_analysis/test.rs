@@ -20,7 +20,7 @@ fn test_specific() {
     let lib = env::current_dir()
         .expect("current working directory value is invalid")
         .join(TEST_RESOURCES_PATH_STR)
-        .join("7/lib.rs");
+        .join("1/lib.rs");
     compiler_interface::run_compiler_with_struct_defs_and_funcs(
         lib.into(),
         |tcx, struct_defs, fn_dids| {
@@ -44,6 +44,7 @@ fn test_specific() {
                         summary.constraint_system.show()
                     }
 
+                    /* 
                     let src = Rho::from_u32(34);
                     let tgt = Rho::from_u32(0);
                     log::debug!("Explaining {:?} ≤ {:?}", src, tgt);
@@ -56,6 +57,7 @@ fn test_specific() {
                     {
                         log::debug!("{:?} ≤ {:?}", x, y)
                     }
+                    */
                 }
                 Err(reason) => {
                     log::error!("Cannot solve ownership constraints!");

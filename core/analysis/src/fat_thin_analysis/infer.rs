@@ -373,7 +373,10 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handle
 
         let ssa_idx = self.ssa_state().r#use(place.local);
         let base = self.handle_use(place.local, ssa_idx, location);
-        self.proj_place_lambdas(base.unwrap_or_else(|| Range::empty()), place.iter_projections())
+        self.proj_place_lambdas(
+            base.unwrap_or_else(|| Range::empty()),
+            place.iter_projections(),
+        )
     }
 
     fn define_place_assume_simple_ptr(

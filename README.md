@@ -1,6 +1,10 @@
 # Ownership and Lifetime guided C to Rust Refactoring
 
 
+## C2Rust options
+To help with the rewrite process, we turn on the `--reduce-type-annotations` option
+in C2Rust.
+
 ## Some hard TODOs on the implementation side
 - [x] In ownership analysis, if we have `p = null`, then the post value of `p` should be asserted to null
 - [ ] Prevent over-generalisation in inter-analysis (see BST insertion with signature generic to ownership)

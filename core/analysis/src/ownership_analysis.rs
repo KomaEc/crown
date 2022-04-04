@@ -844,6 +844,8 @@ impl ConstraintDatabase {
 
         self.eq_constraints.retain(|_| !removed.next().unwrap());
 
+        // assert!(self.eq_constraints.is_empty());
+
         Ok(sccs)
     }
 }

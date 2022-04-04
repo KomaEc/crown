@@ -240,7 +240,10 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
         let base = self
             .ssa_name_handler()
             .handle_use(place.local, ssa_idx, location);
-        PtrPlaceDefResult::Proj(self.proj_place_rhos(base.unwrap_or_else(|| Range::empty()), place.iter_projections()))
+        PtrPlaceDefResult::Proj(self.proj_place_rhos(
+            base.unwrap_or_else(|| Range::empty()),
+            place.iter_projections(),
+        ))
     }
 
     fn proj_place_rhos(

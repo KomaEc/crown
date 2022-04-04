@@ -33,7 +33,7 @@ pub struct CrateSummary {
     // pub lambda_ctxt: CrateLambdaCtxt,
     pub lambda_ctxt: CrateAnalysisCtxt<Lambda, Option<bool>>,
     pub globals: Range<usize>,
-    func_summaries: IndexVec<Func, FuncSummary>,
+    pub func_summaries: IndexVec<Func, FuncSummary>,
     pub constraints: ConstraintSet,
     boundary_constraints: IndexVec<CallSite, Vec<Constraint>>,
     pub def_sites: IndexVec<Func, SSADefSites<FatThinAnalysisDefUse>>,
