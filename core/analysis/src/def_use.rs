@@ -25,15 +25,15 @@ pub trait IsDefUse: PartialEq + Eq + Clone + Copy {
     fn categorize(context: PlaceContext) -> Option<Self>;
 }
 
-impl IsDefUse for FatThinAnalysisDefUse {
+impl IsDefUse for DefaultDefUse {
     #[inline]
     fn defining(self) -> bool {
-        matches!(self, FatThinAnalysisDefUse::Def)
+        matches!(self, DefaultDefUse::Def)
     }
 
     #[inline]
     fn using(self) -> bool {
-        matches!(self, FatThinAnalysisDefUse::Use)
+        matches!(self, DefaultDefUse::Use)
     }
 
     #[inline]
@@ -55,7 +55,7 @@ impl IsDefUse for FatThinAnalysisDefUse {
             // Storage live and storage dead aren't proper defines, but we can ignore
             // values that come before them.
             PlaceContext::NonUse(NonUseContext::StorageLive) |
-            PlaceContext::NonUse(NonUseContext::StorageDead) => Some(FatThinAnalysisDefUse::Def),
+            PlaceContext::NonUse(NonUseContext::StorageDead) => Some(DefaultDefUse::Def),
 
             // These are uses that occur *outside* of a drop. For the
             // purposes of NLL, these are special in that **all** the
@@ -80,7 +80,7 @@ impl IsDefUse for FatThinAnalysisDefUse {
             PlaceContext::NonMutatingUse(NonMutatingUseContext::Move) |
             PlaceContext::NonUse(NonUseContext::AscribeUserTy) |
             PlaceContext::MutatingUse(MutatingUseContext::Retag) =>
-                Some(FatThinAnalysisDefUse::Use),
+                Some(DefaultDefUse::Use),
 
 
             // These are uses that occur in a DROP (a MIR drop, not a
@@ -89,7 +89,7 @@ impl IsDefUse for FatThinAnalysisDefUse {
             // attributes can affect whether lifetimes must be live.
 
             PlaceContext::MutatingUse(MutatingUseContext::Drop) =>
-                Some(FatThinAnalysisDefUse::Drop),
+                Some(DefaultDefUse::Drop),
 
             // Debug info is neither def nor use.
             PlaceContext::NonUse(NonUseContext::VarDebugInfo) => None,
@@ -185,11 +185,14 @@ impl IsDefUse for OwnershipAnalysisDefUse {
 }
 
 #[derive(Eq, PartialEq, Clone, Copy)]
-pub enum FatThinAnalysisDefUse {
+pub enum DefaultDefUse {
     Def,
     Use,
     Drop,
 }
+
+pub type FatThinAnalysisDefUse = DefaultDefUse;
+pub type MutabilityAnalysisDefUse = DefaultDefUse;
 
 #[derive(Eq, PartialEq, Clone, Copy)]
 pub enum OwnershipAnalysisDefUse {

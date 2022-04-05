@@ -44,7 +44,7 @@ fn test_specific() {
                         summary.constraint_system.show()
                     }
 
-                    /* 
+                    /*
                     let src = Rho::from_u32(34);
                     let tgt = Rho::from_u32(0);
                     log::debug!("Explaining {:?} ≤ {:?}", src, tgt);

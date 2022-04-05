@@ -1,7 +1,7 @@
-use analysis::{call_graph::Func, fat_thin_analysis, ownership_analysis};
+use analysis::{call_graph::Func, fat_thin_analysis, ownership_analysis, ty_ext::TyExt};
 use rewriter::Rewriter;
 use rustc_hir::def_id::LocalDefId;
-use rustc_index::bit_set::BitSet;
+use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
     mir::{Local, VarDebugInfoContents},
     ty::TyCtxt,
@@ -13,19 +13,12 @@ pub fn rewrite_fn_body(
     ownership_analysis: &ownership_analysis::InterSummary,
     fatness_analysis: &fat_thin_analysis::CrateSummary,
     func: Func,
-    required_mutability: &BitSet<Local>,
+    required_mutability: &IndexVec<Func, BitSet<Local>>,
     fn_did: LocalDefId,
 ) {
     let body = tcx.optimized_mir(fn_did);
 
-    rewrite_calls(
-        tcx,
-        rewriter,
-        ownership_analysis,
-        fatness_analysis,
-        required_mutability,
-        body
-    );
+    let mut user_ptrs = BitSet::new_empty(body.local_decls.len());
 
     for var_debug in &body.var_debug_info {
         match var_debug.value {
@@ -33,6 +26,9 @@ pub fn rewrite_fn_body(
                 let local = place
                     .as_local()
                     .expect("user variable should be mapped to a local");
+                if body.local_decls[local].ty.is_ptr_but_not_fn_ptr() {
+                    user_ptrs.insert(local);
+                }
             }
             VarDebugInfoContents::Const(constant) => {
                 log::warn!("user constant {:?} is not processed", constant)
@@ -41,6 +37,14 @@ pub fn rewrite_fn_body(
     }
 }
 
+/// The place context of a place after rewrite happened
+enum RewrittenPlaceContext {
+    Read,
+    Write,
+    Move,
+}
+
+/*
 fn rewrite_calls(
     tcx: TyCtxt<'_>,
     rewriter: &mut Rewriter,
@@ -87,3 +91,4 @@ fn rewrite_calls(
         }
     }
 }
+*/

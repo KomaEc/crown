@@ -20,8 +20,8 @@ use crate::{
     CVSourceData, CrateAnalysisCtxt,
 };
 
-pub mod infer;
-pub mod solve;
+mod infer;
+mod solve;
 #[cfg(test)]
 mod test;
 

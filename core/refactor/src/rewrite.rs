@@ -6,7 +6,7 @@ use analysis::{
 };
 use rewriter::{RewriteMode, Rewriter};
 use rustc_hir::{def_id::LocalDefId, FnRetTy, FnSig, ItemKind};
-use rustc_index::bit_set::BitSet;
+use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{mir::Local, ty::TyCtxt};
 
 use self::rewrite_body::rewrite_fn_body;
@@ -45,21 +45,30 @@ fn rewrite_functions(
     fatness_analysis: &fat_thin_analysis::CrateSummary,
     dids: &[LocalDefId],
 ) {
-    for &did in dids {
-        let func = ownership_analysis
-            .call_graph
-            .lookup_function(&did.to_def_id())
-            .unwrap();
+    let required_mutability = ownership_analysis
+        .call_graph
+        .functions
+        .iter()
+        .map(|&did| required_mutability(tcx, did.expect_local()))
+        .collect::<IndexVec<_, _>>();
+
+    for (func, did) in ownership_analysis
+        .call_graph
+        .graph
+        .nodes()
+        .zip(&ownership_analysis.call_graph.functions)
+    {
+        let did = did.expect_local();
         let item = tcx.hir().expect_item(did);
         if let ItemKind::Fn(sig, _generics, body_id) = &item.kind {
-            let required_mutability = required_mutability(tcx, did);
+            // let required_mutability = required_mutability(tcx, did);
             rewrite_fn_sig(
                 tcx,
                 rewriter,
                 ownership_analysis,
                 fatness_analysis,
                 func,
-                &required_mutability,
+                &required_mutability[func],
                 sig,
             );
             rewrite_fn_body(

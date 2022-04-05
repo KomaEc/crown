@@ -44,6 +44,9 @@ enum Command {
         #[clap(long, short = 'O')]
         ownership: bool,
 
+        #[clap(long, short = 'M')]
+        mutability: bool,
+
         #[clap(long, short = 'p')]
         pretty_mir: bool,
 
@@ -139,6 +142,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             null: _,
             array,
             ownership,
+            mutability,
             pretty_mir,
             all: _,
         } => {
@@ -148,6 +152,14 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
 
             if *ownership {
                 refactor::show_ownership_analysis_results(
+                    tcx,
+                    top_level_struct_defs.clone(),
+                    top_level_fns.clone(),
+                )
+            }
+
+            if *mutability {
+                refactor::show_mutability_analysis_results(
                     tcx,
                     top_level_struct_defs.clone(),
                     top_level_fns.clone(),
