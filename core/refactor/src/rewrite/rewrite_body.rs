@@ -85,7 +85,13 @@ pub fn rewrite_fn_body(
 
                         assert!(!rhs_span.contains(statement.source_info.span));
 
-                        let replacement = mutating_use_replacement(self.tcx, self.body, place, self.names[&place.local], false);
+                        let replacement = mutating_use_replacement(
+                            self.tcx,
+                            self.body,
+                            place,
+                            self.names[&place.local],
+                            true
+                        );
                         self.rewriter.make_suggestion(
                             self.tcx,
                             statement.source_info.span.shrink_to_lo().until(rhs_span),
@@ -166,14 +172,14 @@ fn rewrite_use<'tcx>(
                                                     body,
                                                     rhs,
                                                     names[&rhs.local],
-                                                    true,
+                                                    true
                                                 );
 
                                                 rewriter.make_suggestion(
                                                     tcx,
                                                     statement.source_info.span,
                                                     "rewrite rhs".to_owned(),
-                                                    format!("std::mem::take({replacement})"),
+                                                    format!("std::mem::take(&mut {replacement})"),
                                                 );
                                             }
                                             Ownership::Transient { mutbl } if mutbl => {
@@ -182,7 +188,7 @@ fn rewrite_use<'tcx>(
                                                     body,
                                                     rhs,
                                                     names[&rhs.local],
-                                                    true,
+                                                    false
                                                 );
 
                                                 rewriter.make_suggestion(
@@ -192,7 +198,33 @@ fn rewrite_use<'tcx>(
                                                     replacement,
                                                 );
                                             }
-                                            Ownership::Transient { .. } => {}
+                                            Ownership::Transient { .. } => {
+                                                let ssa_idx = mutability_analysis.func_summaries
+                                                    [func]
+                                                    .ssa_name_source_map
+                                                    .try_use(rhs.local, location)
+                                                    .unwrap();
+                                                let mu = mutability_analysis.func_summaries[func]
+                                                    .locals[rhs.local][ssa_idx];
+                                                let is_base_clonable = !mutability_analysis
+                                                    .approximate_mu_ctxt
+                                                    .get()
+                                                    .unwrap()[func][mu];
+                                                let replacement = nonmutating_use_replacement(
+                                                    tcx,
+                                                    body,
+                                                    rhs,
+                                                    names[&rhs.local],
+                                                    is_base_clonable,
+                                                );
+
+                                                rewriter.make_suggestion(
+                                                    tcx,
+                                                    statement.source_info.span,
+                                                    "rewrite rhs".to_owned(),
+                                                    replacement,
+                                                );
+                                            }
                                             Ownership::Raw => todo!(),
                                         }
 
@@ -257,27 +289,31 @@ fn rewrite_use<'tcx>(
 /// 2. s.f
 /// 3. p
 /// TODO: update ownership context when going through fields!!!!!!!!
+/// move context: 1. argument of std::mem::take; 2. LHS
 fn mutating_use_replacement<'tcx>(
     tcx: TyCtxt<'tcx>,
     body: &Body<'tcx>,
     place: &Place<'tcx>,
     var_name: Symbol,
-    is_rhs: bool,
+    is_move_ctxt: bool,
 ) -> String {
     let mut replacement = var_name.to_string();
-    let mut need_explicit_ref = false;
-    if place.projection.is_empty() {
-        need_explicit_ref = true;
-    }
+    let mut need_paren = false;
+    // logic of this loop: when there is projection, immediately reborrow parent path
     for (base, proj) in place.iter_projections() {
+        if need_paren {
+            replacement = format!("({replacement})");
+            need_paren = false;
+        }
         let base_is_ptr = base.ty(body, tcx).ty.is_ptr_but_not_fn_ptr();
         if base_is_ptr {
-            replacement += ".as_deref_mut()"; // ".as_mut().map(|mut x| &mut **x)";
+            replacement += ".as_deref_mut().unwrap()"; // ".as_mut().map(|mut x| &mut **x)";
         }
         match proj {
             ProjectionElem::Deref => {
                 assert!(base_is_ptr);
-                replacement += ".unwrap()"
+                replacement = format!("*{replacement}");
+                need_paren = true;
             }
             ProjectionElem::Field(f, _) => {
                 let place_ty = base.ty(body, tcx);
@@ -288,25 +324,67 @@ fn mutating_use_replacement<'tcx>(
                 let adt_def = ty.ty_adt_def().unwrap();
                 let field_def = &adt_def.variants[variant_idx].fields[f.index()];
                 let field_name = field_def.name.as_str();
-                if base_is_ptr {
-                    replacement += ".unwrap()";
-                }
                 replacement = replacement + "." + field_name;
-                need_explicit_ref = true;
             }
             _ => todo!(),
         }
     }
+    // if it is not under move context, reborrow the pointer
+    if !is_move_ctxt {
+        replacement += ".as_deref_mut()";
+    }
+    replacement
+}
 
-    if need_explicit_ref {
-        if is_rhs {
-            replacement = format!("&mut {replacement}");
+fn nonmutating_use_replacement<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    body: &Body<'tcx>,
+    place: &Place<'tcx>,
+    var_name: Symbol,
+    mut is_base_clonable: bool,
+) -> String {
+    let mut replacement = var_name.to_string();
+    let mut need_paren = false;
+
+    // logic of this loop: when there is projection, immediately reborrow parent path
+    for (base, proj) in place.iter_projections() {
+        if need_paren {
+            replacement = format!("({replacement})");
+            need_paren = false;
         }
-    } else {
-        if !is_rhs {
-            replacement = format!("*{replacement}");
+        let base_is_ptr = base.ty(body, tcx).ty.is_ptr_but_not_fn_ptr();
+        if base_is_ptr {
+            if is_base_clonable {
+                replacement += ".clone().unwrap()";
+
+                // we track only clonability of outtermost, so we let is_base_clonable to be false here
+                is_base_clonable = false;
+            } else {
+                // reborrow if not clonable
+                replacement += ".as_deref().unwrap()"; // ".as_mut().map(|x| &**x)";
+            }
+        }
+        match proj {
+            ProjectionElem::Deref => {
+                assert!(base_is_ptr);
+                replacement = format!("*{replacement}");
+                need_paren = true;
+            }
+            ProjectionElem::Field(f, _) => {
+                let place_ty = base.ty(body, tcx);
+                let ty = place_ty.ty;
+                let variant_idx = place_ty
+                    .variant_index
+                    .unwrap_or(rustc_target::abi::VariantIdx::new(0));
+                let adt_def = ty.ty_adt_def().unwrap();
+                let field_def = &adt_def.variants[variant_idx].fields[f.index()];
+                let field_name = field_def.name.as_str();
+                replacement = replacement + "." + field_name;
+            }
+            _ => todo!(),
         }
     }
+    replacement += ".as_deref()";
 
     replacement
 }
