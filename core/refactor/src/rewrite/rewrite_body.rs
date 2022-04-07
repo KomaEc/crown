@@ -90,7 +90,7 @@ pub fn rewrite_fn_body(
                             self.body,
                             place,
                             self.names[&place.local],
-                            true
+                            true,
                         );
                         self.rewriter.make_suggestion(
                             self.tcx,
@@ -140,6 +140,17 @@ fn rewrite_use<'tcx>(
         Either::Left(statement) => {
             match &statement.kind {
                 StatementKind::Assign(box (lhs, rhs)) => {
+                    let (ownership_ctxt, fatness_ctxt) = ptr_place_sig(
+                        tcx,
+                        body,
+                        func,
+                        ownership_analysis,
+                        mutability_analysis,
+                        fatness_analysis,
+                        lhs,
+                        location,
+                    );
+
                     match rhs {
                         Rvalue::Use(rhs) => {
                             match rhs {
@@ -152,16 +163,6 @@ fn rewrite_use<'tcx>(
                                         // so it's fine!
 
                                         // perform the rewrite
-                                        let (ownership_ctxt, _fatness_ctxt) = ptr_place_sig(
-                                            tcx,
-                                            body,
-                                            func,
-                                            ownership_analysis,
-                                            mutability_analysis,
-                                            fatness_analysis,
-                                            lhs,
-                                            location,
-                                        );
 
                                         match ownership_ctxt {
                                             Ownership::Owning => {
@@ -172,7 +173,7 @@ fn rewrite_use<'tcx>(
                                                     body,
                                                     rhs,
                                                     names[&rhs.local],
-                                                    true
+                                                    true,
                                                 );
 
                                                 rewriter.make_suggestion(
@@ -188,7 +189,7 @@ fn rewrite_use<'tcx>(
                                                     body,
                                                     rhs,
                                                     names[&rhs.local],
-                                                    false
+                                                    false,
                                                 );
 
                                                 rewriter.make_suggestion(
@@ -199,17 +200,20 @@ fn rewrite_use<'tcx>(
                                                 );
                                             }
                                             Ownership::Transient { .. } => {
-                                                let ssa_idx = mutability_analysis.func_summaries
-                                                    [func]
+                                                let is_base_clonable = mutability_analysis
+                                                    .func_summaries[func]
                                                     .ssa_name_source_map
                                                     .try_use(rhs.local, location)
-                                                    .unwrap();
-                                                let mu = mutability_analysis.func_summaries[func]
-                                                    .locals[rhs.local][ssa_idx];
-                                                let is_base_clonable = !mutability_analysis
-                                                    .approximate_mu_ctxt
-                                                    .get()
-                                                    .unwrap()[func][mu];
+                                                    .map(|ssa_idx| {
+                                                        let mu = mutability_analysis.func_summaries
+                                                            [func]
+                                                            .locals[rhs.local][ssa_idx];
+                                                        !mutability_analysis
+                                                            .approximate_mu_ctxt
+                                                            .get()
+                                                            .unwrap()[func][mu]
+                                                    })
+                                                    .unwrap_or(false);
                                                 let replacement = nonmutating_use_replacement(
                                                     tcx,
                                                     body,
@@ -267,10 +271,38 @@ fn rewrite_use<'tcx>(
                                         );
                                     }
                                 }
-                                Operand::Constant(_) => None,
+                                Operand::Constant(box constant) =>
+                                // This is definitely wrong, but we assume that only null pointer can be pointer constant
+                                {
+                                    rewrite_null_constant(
+                                        tcx,
+                                        rewriter,
+                                        body,
+                                        ownership_ctxt,
+                                        fatness_ctxt,
+                                        user_vars,
+                                        names,
+                                        lhs,
+                                        statement.source_info.span,
+                                    )
+                                }
                             }
                         }
-                        Rvalue::Cast(_, _, _) => None,
+                        Rvalue::Cast(_, Operand::Constant(box constant), _) => {
+                            rewrite_null_constant(
+                                tcx,
+                                rewriter,
+                                body,
+                                ownership_ctxt,
+                                fatness_ctxt,
+                                user_vars,
+                                names,
+                                lhs,
+                                statement.source_info.span,
+                            )
+                        }
+
+                        Rvalue::Cast(_, Operand::Copy(rhs) | Operand::Move(rhs), _) => None,
                         Rvalue::Ref(_, _, _) => todo!(),
                         Rvalue::AddressOf(_, _) => todo!(),
                         _ => todo!(),
@@ -341,12 +373,18 @@ fn nonmutating_use_replacement<'tcx>(
     body: &Body<'tcx>,
     place: &Place<'tcx>,
     var_name: Symbol,
-    mut is_base_clonable: bool,
+    is_base_clonable: bool,
 ) -> String {
     let mut replacement = var_name.to_string();
     let mut need_paren = false;
 
-    // logic of this loop: when there is projection, immediately reborrow parent path
+    if is_base_clonable {
+        replacement += ".clone()";
+    } else if body.local_decls[place.local].ty.is_ptr_but_not_fn_ptr() {
+        replacement += ".as_deref()";
+    }
+
+    // logic of this loop: parent path is reborrowed upon creation
     for (base, proj) in place.iter_projections() {
         if need_paren {
             replacement = format!("({replacement})");
@@ -354,15 +392,7 @@ fn nonmutating_use_replacement<'tcx>(
         }
         let base_is_ptr = base.ty(body, tcx).ty.is_ptr_but_not_fn_ptr();
         if base_is_ptr {
-            if is_base_clonable {
-                replacement += ".clone().unwrap()";
-
-                // we track only clonability of outtermost, so we let is_base_clonable to be false here
-                is_base_clonable = false;
-            } else {
-                // reborrow if not clonable
-                replacement += ".as_deref().unwrap()"; // ".as_mut().map(|x| &**x)";
-            }
+            replacement += ".unwrap()"; // ".as_mut().map(|x| &**x)";
         }
         match proj {
             ProjectionElem::Deref => {
@@ -379,14 +409,44 @@ fn nonmutating_use_replacement<'tcx>(
                 let adt_def = ty.ty_adt_def().unwrap();
                 let field_def = &adt_def.variants[variant_idx].fields[f.index()];
                 let field_name = field_def.name.as_str();
-                replacement = replacement + "." + field_name;
+                replacement = replacement + "." + field_name + ".as_deref()";
             }
             _ => todo!(),
         }
     }
-    replacement += ".as_deref()";
 
     replacement
+}
+
+#[inline]
+fn rewrite_null_constant<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    rewriter: &mut Rewriter,
+    body: &Body<'tcx>,
+    ownership_ctxt: Ownership,
+    fatness_ctxt: bool,
+    user_vars: &BitSet<Local>,
+    names: &FxHashMap<Local, Symbol>,
+    lhs: &Place<'tcx>,
+    span: Span,
+) -> Option<Span> {
+    let replacement = mutating_use_replacement(tcx, body, lhs, names[&lhs.local], true);
+
+    if !matches!(ownership_ctxt, Ownership::Raw) {
+        if user_vars.contains(lhs.local) {
+            rewriter.make_suggestion(
+                tcx,
+                span,
+                "remove null pointer".to_owned(),
+                format!("{replacement} = None"),
+            );
+        } else {
+            rewriter.make_suggestion(tcx, span, "remove null pointer".to_owned(), format!("None"));
+            return Some(span);
+        }
+    }
+
+    None
 }
 
 fn ptr_place_sig<'tcx>(
