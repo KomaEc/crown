@@ -2,14 +2,12 @@ mod infer;
 
 use std::collections::VecDeque;
 
+use once_cell::unsync::OnceCell;
 use range_ext::IsRustcIndexDefinedCV;
 use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
-use rustc_middle::{
-    mir::Local,
-    ty::TyCtxt,
-};
+use rustc_middle::{mir::Local, ty::TyCtxt};
 
 use crate::{
     call_graph::{CallGraph, Func},
@@ -48,6 +46,7 @@ pub struct InterSummary {
     pub call_graph: CallGraph,
     pub func_sigs: IndexVec<Func, FuncSig<Surface, Option<bool>>>,
     pub func_summaries: IndexVec<Func, IntraSummary>,
+    pub approximate_mu_ctxt: OnceCell<IndexVec<Func, IndexVec<Mu, bool>>>,
 }
 impl InterSummary {
     pub fn new<'tcx, Handler: SSANameHandler<Output = ()>>(
@@ -77,6 +76,7 @@ impl InterSummary {
             call_graph,
             func_sigs,
             func_summaries,
+            approximate_mu_ctxt: OnceCell::new(),
         }
         .debug_bidirectionality()
     }
@@ -142,11 +142,28 @@ impl InterSummary {
             }
         }
 
+        self.approximate_mu_ctxt
+            .set(
+                self.func_summaries
+                    .iter()
+                    .map(|summary| {
+                        let constraint_system = &summary.constraint_system;
+                        let sccs = Sccs::<_, u32>::new(&constraint_system.le_constraints.graph);
+                        let one_rep = sccs.scc(Mu::ONE);
+                        constraint_system
+                            .le_constraints
+                            .graph
+                            .nodes()
+                            .map(|mu| sccs.scc(mu) == one_rep)
+                            .collect()
+                    })
+                    .collect(),
+            )
+            .unwrap();
         Ok(())
     }
 
     pub fn show_result(&self) {
-
         for (func, summary) in self.func_summaries.iter_enumerated() {
             summary.local_value_with(|rho, value| {
                 log::debug!(
@@ -190,7 +207,7 @@ pub type MutabilityAnalysisBoundary = Boundary<Option<Mu>, Option<Mu>>;
 pub struct IntraSummary {
     constraint_system: ConstraintDatabase,
     /// For non pointer locals, the length of inner vec is 0
-    locals: IndexVec<Local, IndexVec<SSAIdx, Mu>>,
+    pub locals: IndexVec<Local, IndexVec<SSAIdx, Mu>>,
     intra_source_map: Vec<LocalSourceInfo>,
     boundaries: Vec<MutabilityAnalysisBoundary>,
     pub ssa_name_source_map: SSANameSourceMap<MutabilityAnalysisDefUse>,

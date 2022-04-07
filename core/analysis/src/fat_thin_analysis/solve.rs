@@ -17,7 +17,6 @@ pub enum SolveSuccess {
     GloballyChanged,
 }
 
-
 pub fn solve(
     assumptions: &mut IndexVec<Lambda, Option<bool>>,
     globals: Range<usize>,

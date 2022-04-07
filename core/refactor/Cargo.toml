@@ -13,3 +13,4 @@ log = "0.4"
 rewriter = { path = "../rewriter" }
 compiler_interface = { path = "../compiler_interface" }
 analysis = { path = "../analysis" }
+itertools = "0.10.3"

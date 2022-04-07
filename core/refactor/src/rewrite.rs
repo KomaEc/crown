@@ -1,12 +1,10 @@
 mod rewrite_body;
 
-use analysis::{
-    call_graph::Func, fat_thin_analysis, ownership_analysis,
-    required_mutability::required_mutability,
-};
+use analysis::{call_graph::Func, fat_thin_analysis, mutability_analysis, ownership_analysis};
+use itertools::izip;
 use rewriter::{RewriteMode, Rewriter};
 use rustc_hir::{def_id::LocalDefId, FnRetTy, FnSig, ItemKind};
-use rustc_index::{bit_set::BitSet, vec::IndexVec};
+use rustc_index::bit_set::BitSet;
 use rustc_middle::{mir::Local, ty::TyCtxt};
 
 use self::rewrite_body::rewrite_fn_body;
@@ -14,8 +12,8 @@ use self::rewrite_body::rewrite_fn_body;
 pub fn rewrite(
     tcx: TyCtxt<'_>,
     ownership_analysis: &ownership_analysis::InterSummary,
+    mutability_analysis: &mutability_analysis::InterSummary,
     fatness_analysis: &fat_thin_analysis::CrateSummary,
-    fn_defs: &[LocalDefId],
     struct_defs: &[LocalDefId],
     rewrite_mode: RewriteMode,
 ) {
@@ -31,8 +29,8 @@ pub fn rewrite(
         tcx,
         &mut rewriter,
         ownership_analysis,
+        mutability_analysis,
         fatness_analysis,
-        fn_defs,
     );
 
     rewriter.write(rewrite_mode)
@@ -42,16 +40,9 @@ fn rewrite_functions(
     tcx: TyCtxt<'_>,
     rewriter: &mut Rewriter,
     ownership_analysis: &ownership_analysis::InterSummary,
+    mutability_analysis: &mutability_analysis::InterSummary,
     fatness_analysis: &fat_thin_analysis::CrateSummary,
-    dids: &[LocalDefId],
 ) {
-    let required_mutability = ownership_analysis
-        .call_graph
-        .functions
-        .iter()
-        .map(|&did| required_mutability(tcx, did.expect_local()))
-        .collect::<IndexVec<_, _>>();
-
     for (func, did) in ownership_analysis
         .call_graph
         .graph
@@ -60,24 +51,26 @@ fn rewrite_functions(
     {
         let did = did.expect_local();
         let item = tcx.hir().expect_item(did);
-        if let ItemKind::Fn(sig, _generics, body_id) = &item.kind {
+        if let ItemKind::Fn(sig, _generics, _body_id) = &item.kind {
             // let required_mutability = required_mutability(tcx, did);
             rewrite_fn_sig(
                 tcx,
                 rewriter,
                 ownership_analysis,
+                mutability_analysis,
                 fatness_analysis,
                 func,
-                &required_mutability[func],
+                // &required_mutability[func],
                 sig,
             );
             rewrite_fn_body(
                 tcx,
                 rewriter,
                 ownership_analysis,
+                mutability_analysis,
                 fatness_analysis,
                 func,
-                &required_mutability,
+                // &required_mutability,
                 did,
             );
         } else {
@@ -90,9 +83,10 @@ fn rewrite_fn_sig(
     tcx: TyCtxt<'_>,
     rewriter: &mut Rewriter,
     ownership_analysis: &ownership_analysis::InterSummary,
+    mutability_analysis: &mutability_analysis::InterSummary,
     fatness_analysis: &fat_thin_analysis::CrateSummary,
     func: Func,
-    required_mutability: &BitSet<Local>,
+    // required_mutability: &BitSet<Local>,
     sig: &FnSig,
 ) {
     let mut ownership_sig_iter = ownership_analysis.func_sigs[func].sig.iter();
@@ -108,9 +102,24 @@ fn rewrite_fn_sig(
     let mut idx = Local::from_u32(0);
     let ret_ownings = ownership_sig_iter.next().unwrap();
     let ret_fats = fatness_sig_iter.next().unwrap();
+
+    let mut required_mutability = BitSet::new_empty(mutability_analysis.func_sigs[func].sig.len());
+    mutability_analysis.func_sigs[func]
+        .sig
+        .iter()
+        .enumerate()
+        .for_each(|(idx, values)| {
+            if values.is_empty() {
+                return;
+            }
+            if let Some(true) = values[0] {
+                required_mutability.insert(idx.into());
+            }
+        });
+
     if let FnRetTy::Return(ret_ty) = sig.decl.output {
         for (ty, (owning, fat)) in
-            (HirPtrTypeWalker { ty: ret_ty }).zip(ret_ownings.iter().zip(ret_fats))
+            (HirPtrTypeWalker { ty: ret_ty }).zip(izip!(ret_ownings, ret_fats))
         {
             if let Some(known) = owning {
                 let ownership =
@@ -342,7 +351,8 @@ fn rewrite_raw_ptr_ty(
             }
             Ownership::Transient { mutbl } => {
                 let mutability_modifier_str = mutbl.then_some("mut ").unwrap_or("");
-                prefix = format!("&{mutability_modifier_str}{prefix}");
+                prefix = format!("Option<&{mutability_modifier_str}{prefix}");
+                suffix.push_str(">");
             }
             Ownership::Raw => unreachable!(),
         }

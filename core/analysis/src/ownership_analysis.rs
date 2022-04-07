@@ -4,6 +4,7 @@ mod test;
 
 use std::{collections::VecDeque, fmt::Display, ops::Range};
 
+use once_cell::unsync::OnceCell;
 use range_ext::IsRustcIndexDefinedCV;
 use rustc_data_structures::graph::{iterate::DepthFirstSearch, scc::Sccs, WithNumNodes};
 use rustc_hash::FxHashMap;
@@ -102,6 +103,7 @@ pub struct InterSummary {
     pub call_graph: CallGraph,
     pub func_sigs: IndexVec<Func, FuncSig<Surface, Option<bool>>>,
     pub func_summaries: IndexVec<Func, IntraSummary>,
+    pub approximate_rho_ctxt: OnceCell<IndexVec<Func, IndexVec<Rho, Option<bool>>>>,
 }
 
 impl InterSummary {
@@ -200,6 +202,7 @@ impl InterSummary {
             call_graph,
             func_sigs,
             func_summaries,
+            approximate_rho_ctxt: OnceCell::new(),
         }
         .debug_bidirectionality()
     }
@@ -317,6 +320,32 @@ impl InterSummary {
             break;
         }
 
+        self.approximate_rho_ctxt
+            .set(
+                self.func_summaries
+                    .iter()
+                    .map(|summary| {
+                        let constraint_system = &summary.constraint_system;
+                        let sccs = Sccs::<_, u32>::new(&constraint_system.le_constraints.graph);
+                        let (zero_rep, one_rep) = (sccs.scc(Rho::ZERO), sccs.scc(Rho::ONE));
+                        constraint_system
+                            .le_constraints
+                            .graph
+                            .nodes()
+                            .map(|rho| {
+                                if sccs.scc(rho) == zero_rep {
+                                    Some(false)
+                                } else if sccs.scc(rho) == one_rep {
+                                    Some(true)
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect()
+                    })
+                    .collect(),
+            )
+            .unwrap();
         Ok(())
     }
 
@@ -444,7 +473,7 @@ pub type OwnershipAnalysisBoundary = Boundary<Option<Range<Rho>>, Option<PtrPlac
 pub struct IntraSummary {
     constraint_system: ConstraintDatabase,
     /// For non pointer locals, the length of inner vec is 0
-    locals: IndexVec<Local, IndexVec<SSAIdx, Range<Rho>>>,
+    pub locals: IndexVec<Local, IndexVec<SSAIdx, Range<Rho>>>,
     intra_source_map: Vec<LocalSourceInfo>,
     boundaries: Vec<OwnershipAnalysisBoundary>,
     pub ssa_name_source_map: SSANameSourceMap<OwnershipAnalysisDefUse>,

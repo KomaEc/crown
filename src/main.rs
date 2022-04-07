@@ -173,13 +173,15 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
         &Command::Rewrite { rewrite_mode } => {
             let ownership_analysis =
                 refactor::ownership_analysis(tcx, &top_level_struct_defs, &top_level_fns);
+            let mutability_analysis =
+                refactor::mutability_analysis(tcx, &top_level_struct_defs, &top_level_fns);
             let fatness_analysis =
                 refactor::fatness_analysis(tcx, &top_level_struct_defs, &top_level_fns);
             refactor::rewrite::rewrite(
                 tcx,
                 &ownership_analysis,
+                &mutability_analysis,
                 &fatness_analysis,
-                &top_level_fns,
                 &top_level_struct_defs,
                 rewrite_mode,
             )

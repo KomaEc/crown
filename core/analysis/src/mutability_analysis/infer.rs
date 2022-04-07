@@ -8,8 +8,8 @@ use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, PlaceContext, Visitor},
-        BasicBlock, Body, Local, Location, Operand, Place,
-        Rvalue, Statement, Terminator, TerminatorKind,
+        BasicBlock, Body, Local, Location, Operand, Place, Rvalue, Statement, Terminator,
+        TerminatorKind,
     },
     ty::{TyCtxt, TyKind::FnDef},
 };

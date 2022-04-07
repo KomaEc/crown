@@ -26,8 +26,7 @@ use std::process::exit;
 use analysis::{
     call_graph::CallGraph,
     fat_thin_analysis::{self, CrateSummary, Lambda},
-    ownership_analysis,
-    mutability_analysis,
+    mutability_analysis, ownership_analysis,
     ssa::rename::handler::LogSSAName,
 };
 use rustc_hir::def_id::LocalDefId;
@@ -192,7 +191,7 @@ pub fn mutability_analysis(
 ) -> mutability_analysis::InterSummary {
     let call_graph = CallGraph::new(tcx, funcs.into_iter().map(|did| did.to_def_id()));
     let mut mutability_analysis =
-    mutability_analysis::InterSummary::new(tcx, &structs, call_graph, LogSSAName);
+        mutability_analysis::InterSummary::new(tcx, &structs, call_graph, LogSSAName);
     match mutability_analysis.resolve() {
         Ok(()) => mutability_analysis,
         Err(reason) => {
