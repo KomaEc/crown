@@ -3,14 +3,13 @@ use analysis::{
     ssa::RichLocation, ty_ext::TyExt,
 };
 use either::Either;
-use itertools::Itertools;
 use rewriter::Rewriter;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::{bit_set::BitSet, vec::Idx};
 use rustc_middle::{
     mir::{
-        visit::Visitor, Body, Local, Location, Operand, Place, PlaceRef, ProjectionElem, Rvalue,
+        visit::Visitor, Body, Local, Location, Operand, Place, ProjectionElem, Rvalue,
         Statement, StatementKind, VarDebugInfoContents,
     },
     ty::TyCtxt,
@@ -157,11 +156,6 @@ fn rewrite_use<'tcx>(
                                 Operand::Copy(rhs) | Operand::Move(rhs) => {
                                     // end recursion right here
                                     if user_vars.contains(rhs.local) {
-                                        // the below does not hold for simple statement like _0 = _1 !!!!!
-                                        // assert!(!user_vars.contains(lhs.local), "{:?}", statement);
-                                        // however, if it is indeed the case, we don't have to rewrite lhs!!!!!!
-                                        // so it's fine!
-
                                         // perform the rewrite
 
                                         match ownership_ctxt {
@@ -232,6 +226,10 @@ fn rewrite_use<'tcx>(
                                             Ownership::Raw => todo!(),
                                         }
 
+                                        // for simple statement like _0 = _1 !!!!!
+                                        // assert!(!user_vars.contains(lhs.local), "{:?}", statement) does not hold
+                                        // however, if it is indeed the case, we don't have to rewrite lhs!!!!!!
+                                        // so it's fine?
                                         if user_vars.contains(lhs.local) {
                                             return None;
                                         } else {
@@ -302,7 +300,57 @@ fn rewrite_use<'tcx>(
                             )
                         }
 
-                        Rvalue::Cast(_, Operand::Copy(rhs) | Operand::Move(rhs), _) => None,
+                        Rvalue::Cast(_, Operand::Copy(rhs) | Operand::Move(rhs), _) => {
+                            if user_vars.contains(rhs.local) {
+                                todo!()
+                            }
+
+                            assert!(rhs.as_local().is_some());
+                            if let Some(rhs) = rhs.as_local() {
+                                // if it is under a safe pointer context
+                                if !matches!(ownership_ctxt, Ownership::Raw) {
+                                    let source_map = &fatness_analysis.ssa_name_source_map[func];
+                                    let fatness_ssa_idx =
+                                        source_map.try_use(rhs, location).unwrap();
+                                    let def_rich_location = &fatness_analysis.def_sites[func].defs
+                                        [rhs][fatness_ssa_idx];
+                                    let def_location = match def_rich_location {
+                                        &RichLocation::Mir(l) => l,
+                                        &RichLocation::Phi(_) => todo!(),
+                                        // we cannot end up in this branch, since
+                                        // rhs is not user variable and must be initialised
+                                        RichLocation::Entry => unreachable!(),
+                                    };
+                                    return rewrite_use(
+                                        tcx,
+                                        rewriter,
+                                        body,
+                                        func,
+                                        ownership_analysis,
+                                        mutability_analysis,
+                                        fatness_analysis,
+                                        user_vars,
+                                        names,
+                                        def_location,
+                                    )
+                                    .map(|inner_span| {
+                                        rewriter.make_suggestion(
+                                            tcx,
+                                            inner_span
+                                                .shrink_to_hi()
+                                                .between(statement.source_info.span.shrink_to_hi()),
+                                            "remove cast".to_owned(),
+                                            "".to_owned(),
+                                        );
+                                        statement.source_info.span
+                                    });
+                                } else {
+                                    todo!()
+                                }
+                            } else {
+                                unreachable!()
+                            }
+                        }
                         Rvalue::Ref(_, _, _) => todo!(),
                         Rvalue::AddressOf(_, _) => todo!(),
                         _ => todo!(),
@@ -368,35 +416,30 @@ fn mutating_use_replacement<'tcx>(
     replacement
 }
 
+
 fn nonmutating_use_replacement<'tcx>(
     tcx: TyCtxt<'tcx>,
     body: &Body<'tcx>,
     place: &Place<'tcx>,
     var_name: Symbol,
-    is_base_clonable: bool,
+    mut is_base_clonable: bool,
 ) -> String {
     let mut replacement = var_name.to_string();
     let mut need_paren = false;
-
-    if is_base_clonable {
-        replacement += ".clone()";
-    } else if body.local_decls[place.local].ty.is_ptr_but_not_fn_ptr() {
-        replacement += ".as_deref()";
-    }
-
-    // logic of this loop: parent path is reborrowed upon creation
+    // logic of this loop: when there is projection, immediately reborrow parent path
     for (base, proj) in place.iter_projections() {
         if need_paren {
             replacement = format!("({replacement})");
             need_paren = false;
         }
-        let base_is_ptr = base.ty(body, tcx).ty.is_ptr_but_not_fn_ptr();
-        if base_is_ptr {
-            replacement += ".unwrap()"; // ".as_mut().map(|x| &**x)";
+        if is_base_clonable {
+            replacement += ".clone().unwrap()";
+            is_base_clonable = false;
+        } else if base.ty(body, tcx).ty.is_ptr_but_not_fn_ptr() {
+            replacement += ".as_deref().unwrap()"; // ".as_mut().map(|mut x| &mut **x)";
         }
         match proj {
             ProjectionElem::Deref => {
-                assert!(base_is_ptr);
                 replacement = format!("*{replacement}");
                 need_paren = true;
             }
@@ -409,12 +452,17 @@ fn nonmutating_use_replacement<'tcx>(
                 let adt_def = ty.ty_adt_def().unwrap();
                 let field_def = &adt_def.variants[variant_idx].fields[f.index()];
                 let field_name = field_def.name.as_str();
-                replacement = replacement + "." + field_name + ".as_deref()";
+                replacement = replacement + "." + field_name;
             }
             _ => todo!(),
         }
     }
-
+    // if it is not under move context, reborrow the pointer
+    if is_base_clonable {
+        replacement += ".clone()";
+    } else {
+        replacement += ".as_deref()";
+    }
     replacement
 }
 
