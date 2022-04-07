@@ -9,8 +9,8 @@ use rustc_hir::def_id::LocalDefId;
 use rustc_index::{bit_set::BitSet, vec::Idx};
 use rustc_middle::{
     mir::{
-        visit::Visitor, Body, Local, Location, Operand, Place, ProjectionElem, Rvalue,
-        Statement, StatementKind, VarDebugInfoContents,
+        visit::Visitor, Body, Local, Location, Operand, Place, ProjectionElem, Rvalue, Statement,
+        StatementKind, VarDebugInfoContents,
     },
     ty::TyCtxt,
 };
@@ -66,7 +66,7 @@ pub fn rewrite_fn_body(
         fn visit_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
             if let StatementKind::Assign(box (place, _)) = &statement.kind {
                 if self.user_vars.contains(place.local)
-                    && place.ty(self.body, self.tcx).ty.is_ptr_but_not_fn_ptr()
+                //&& place.ty(self.body, self.tcx).ty.is_ptr_but_not_fn_ptr()
                 {
                     if let Some(rhs_span) = rewrite_use(
                         self.tcx,
@@ -84,12 +84,12 @@ pub fn rewrite_fn_body(
 
                         assert!(!rhs_span.contains(statement.source_info.span));
 
-                        let replacement = mutating_use_replacement(
+                        let replacement = mutating_ctxt_replacement(
                             self.tcx,
                             self.body,
                             place,
                             self.names[&place.local],
-                            true,
+                            false,
                         );
                         self.rewriter.make_suggestion(
                             self.tcx,
@@ -122,7 +122,6 @@ pub fn rewrite_fn_body(
 /// This is a recursive procedure that traces a chain of
 /// intermediate statements until the RHS of the statement
 /// is related to user_ptr
-/// Precondition: lhs type = ptr
 fn rewrite_use<'tcx>(
     tcx: TyCtxt<'tcx>,
     rewriter: &mut Rewriter,
@@ -139,16 +138,18 @@ fn rewrite_use<'tcx>(
         Either::Left(statement) => {
             match &statement.kind {
                 StatementKind::Assign(box (lhs, rhs)) => {
-                    let (ownership_ctxt, fatness_ctxt) = ptr_place_sig(
-                        tcx,
-                        body,
-                        func,
-                        ownership_analysis,
-                        mutability_analysis,
-                        fatness_analysis,
-                        lhs,
-                        location,
-                    );
+                    let maybe_ptr_sig = lhs.ty(body, tcx).ty.is_ptr_but_not_fn_ptr().then(|| {
+                        ptr_place_sig(
+                            tcx,
+                            body,
+                            func,
+                            ownership_analysis,
+                            mutability_analysis,
+                            fatness_analysis,
+                            lhs,
+                            location,
+                        )
+                    });
 
                     match rhs {
                         Rvalue::Use(rhs) => {
@@ -158,31 +159,31 @@ fn rewrite_use<'tcx>(
                                     if user_vars.contains(rhs.local) {
                                         // perform the rewrite
 
-                                        match ownership_ctxt {
-                                            Ownership::Owning => {
-                                                // std::mem::take this pointer
-
-                                                let replacement = mutating_use_replacement(
+                                        match maybe_ptr_sig {
+                                            None => {
+                                                let is_base_ptr_clonable = body.local_decls
+                                                    [rhs.local]
+                                                    .ty
+                                                    .is_ptr_but_not_fn_ptr()
+                                                    && mutability_analysis.func_summaries[func]
+                                                        .ssa_name_source_map
+                                                        .try_use(rhs.local, location)
+                                                        .map(|ssa_idx| {
+                                                            let mu = mutability_analysis
+                                                                .func_summaries[func]
+                                                                .locals[rhs.local][ssa_idx];
+                                                            !mutability_analysis
+                                                                .approximate_mu_ctxt
+                                                                .get()
+                                                                .unwrap()[func][mu]
+                                                        })
+                                                        .unwrap();
+                                                let replacement = nonmutating_ctxt_replacement(
                                                     tcx,
                                                     body,
                                                     rhs,
                                                     names[&rhs.local],
-                                                    true,
-                                                );
-
-                                                rewriter.make_suggestion(
-                                                    tcx,
-                                                    statement.source_info.span,
-                                                    "rewrite rhs".to_owned(),
-                                                    format!("std::mem::take(&mut {replacement})"),
-                                                );
-                                            }
-                                            Ownership::Transient { mutbl } if mutbl => {
-                                                let replacement = mutating_use_replacement(
-                                                    tcx,
-                                                    body,
-                                                    rhs,
-                                                    names[&rhs.local],
+                                                    is_base_ptr_clonable,
                                                     false,
                                                 );
 
@@ -193,37 +194,81 @@ fn rewrite_use<'tcx>(
                                                     replacement,
                                                 );
                                             }
-                                            Ownership::Transient { .. } => {
-                                                let is_base_clonable = mutability_analysis
-                                                    .func_summaries[func]
-                                                    .ssa_name_source_map
-                                                    .try_use(rhs.local, location)
-                                                    .map(|ssa_idx| {
-                                                        let mu = mutability_analysis.func_summaries
-                                                            [func]
-                                                            .locals[rhs.local][ssa_idx];
-                                                        !mutability_analysis
-                                                            .approximate_mu_ctxt
-                                                            .get()
-                                                            .unwrap()[func][mu]
-                                                    })
-                                                    .unwrap_or(false);
-                                                let replacement = nonmutating_use_replacement(
-                                                    tcx,
-                                                    body,
-                                                    rhs,
-                                                    names[&rhs.local],
-                                                    is_base_clonable,
-                                                );
+                                            Some((ownership_ctxt, fatness_ctxt)) => {
+                                                match ownership_ctxt {
+                                                    Ownership::Owning => {
+                                                        // std::mem::take this pointer
 
-                                                rewriter.make_suggestion(
-                                                    tcx,
-                                                    statement.source_info.span,
-                                                    "rewrite rhs".to_owned(),
-                                                    replacement,
-                                                );
+                                                        let replacement = mutating_ctxt_replacement(
+                                                            tcx,
+                                                            body,
+                                                            rhs,
+                                                            names[&rhs.local],
+                                                            false,
+                                                        );
+
+                                                        rewriter.make_suggestion(
+                                                            tcx,
+                                                            statement.source_info.span,
+                                                            "rewrite rhs".to_owned(),
+                                                            format!("std::mem::take(&mut {replacement})"),
+                                                        );
+                                                    }
+                                                    Ownership::Transient { mutbl } if mutbl => {
+                                                        let replacement = mutating_ctxt_replacement(
+                                                            tcx,
+                                                            body,
+                                                            rhs,
+                                                            names[&rhs.local],
+                                                            true,
+                                                        );
+
+                                                        rewriter.make_suggestion(
+                                                            tcx,
+                                                            statement.source_info.span,
+                                                            "rewrite rhs".to_owned(),
+                                                            replacement,
+                                                        );
+                                                    }
+                                                    Ownership::Transient { .. } => {
+                                                        let is_base_ptr_clonable = body.local_decls
+                                                            [rhs.local]
+                                                            .ty
+                                                            .is_ptr_but_not_fn_ptr()
+                                                            && mutability_analysis.func_summaries
+                                                                [func]
+                                                                .ssa_name_source_map
+                                                                .try_use(rhs.local, location)
+                                                                .map(|ssa_idx| {
+                                                                    let mu = mutability_analysis
+                                                                        .func_summaries[func]
+                                                                        .locals[rhs.local][ssa_idx];
+                                                                    !mutability_analysis
+                                                                        .approximate_mu_ctxt
+                                                                        .get()
+                                                                        .unwrap()[func][mu]
+                                                                })
+                                                                .unwrap();
+                                                        let replacement =
+                                                            nonmutating_ctxt_replacement(
+                                                                tcx,
+                                                                body,
+                                                                rhs,
+                                                                names[&rhs.local],
+                                                                is_base_ptr_clonable,
+                                                                true,
+                                                            );
+
+                                                        rewriter.make_suggestion(
+                                                            tcx,
+                                                            statement.source_info.span,
+                                                            "rewrite rhs".to_owned(),
+                                                            replacement,
+                                                        );
+                                                    }
+                                                    Ownership::Raw => todo!(),
+                                                }
                                             }
-                                            Ownership::Raw => todo!(),
                                         }
 
                                         // for simple statement like _0 = _1 !!!!!
@@ -272,35 +317,48 @@ fn rewrite_use<'tcx>(
                                 Operand::Constant(box constant) =>
                                 // This is definitely wrong, but we assume that only null pointer can be pointer constant
                                 {
-                                    rewrite_null_constant(
-                                        tcx,
-                                        rewriter,
-                                        body,
-                                        ownership_ctxt,
-                                        fatness_ctxt,
-                                        user_vars,
-                                        names,
-                                        lhs,
-                                        statement.source_info.span,
-                                    )
+                                    if let Some((ownership_ctxt, fatness_ctxt)) = maybe_ptr_sig {
+                                        rewrite_null_constant(
+                                            tcx,
+                                            rewriter,
+                                            body,
+                                            ownership_ctxt,
+                                            fatness_ctxt,
+                                            user_vars,
+                                            names,
+                                            lhs,
+                                            statement.source_info.span,
+                                        )
+                                    } else {
+                                        None
+                                    }
                                 }
                             }
                         }
                         Rvalue::Cast(_, Operand::Constant(box constant), _) => {
-                            rewrite_null_constant(
-                                tcx,
-                                rewriter,
-                                body,
-                                ownership_ctxt,
-                                fatness_ctxt,
-                                user_vars,
-                                names,
-                                lhs,
-                                statement.source_info.span,
-                            )
+                            if let Some((ownership_ctxt, fatness_ctxt)) = maybe_ptr_sig {
+                                rewrite_null_constant(
+                                    tcx,
+                                    rewriter,
+                                    body,
+                                    ownership_ctxt,
+                                    fatness_ctxt,
+                                    user_vars,
+                                    names,
+                                    lhs,
+                                    statement.source_info.span,
+                                )
+                            } else {
+                                None
+                            }
                         }
 
                         Rvalue::Cast(_, Operand::Copy(rhs) | Operand::Move(rhs), _) => {
+                            if maybe_ptr_sig.is_none() {
+                                return None;
+                            }
+                            let (ownership_ctxt, fatness_ctxt) = maybe_ptr_sig.unwrap();
+
                             if user_vars.contains(rhs.local) {
                                 todo!()
                             }
@@ -369,13 +427,12 @@ fn rewrite_use<'tcx>(
 /// 2. s.f
 /// 3. p
 /// TODO: update ownership context when going through fields!!!!!!!!
-/// move context: 1. argument of std::mem::take; 2. LHS
-fn mutating_use_replacement<'tcx>(
+fn mutating_ctxt_replacement<'tcx>(
     tcx: TyCtxt<'tcx>,
     body: &Body<'tcx>,
     place: &Place<'tcx>,
     var_name: Symbol,
-    is_move_ctxt: bool,
+    reborrow: bool,
 ) -> String {
     let mut replacement = var_name.to_string();
     let mut need_paren = false;
@@ -409,20 +466,19 @@ fn mutating_use_replacement<'tcx>(
             _ => todo!(),
         }
     }
-    // if it is not under move context, reborrow the pointer
-    if !is_move_ctxt {
+    if reborrow {
         replacement += ".as_deref_mut()";
     }
     replacement
 }
 
-
-fn nonmutating_use_replacement<'tcx>(
+fn nonmutating_ctxt_replacement<'tcx>(
     tcx: TyCtxt<'tcx>,
     body: &Body<'tcx>,
     place: &Place<'tcx>,
     var_name: Symbol,
-    mut is_base_clonable: bool,
+    mut is_base_ptr_clonable: bool,
+    reborrow: bool,
 ) -> String {
     let mut replacement = var_name.to_string();
     let mut need_paren = false;
@@ -432,9 +488,9 @@ fn nonmutating_use_replacement<'tcx>(
             replacement = format!("({replacement})");
             need_paren = false;
         }
-        if is_base_clonable {
+        if is_base_ptr_clonable {
             replacement += ".clone().unwrap()";
-            is_base_clonable = false;
+            is_base_ptr_clonable = false;
         } else if base.ty(body, tcx).ty.is_ptr_but_not_fn_ptr() {
             replacement += ".as_deref().unwrap()"; // ".as_mut().map(|mut x| &mut **x)";
         }
@@ -457,11 +513,12 @@ fn nonmutating_use_replacement<'tcx>(
             _ => todo!(),
         }
     }
-    // if it is not under move context, reborrow the pointer
-    if is_base_clonable {
-        replacement += ".clone()";
-    } else {
-        replacement += ".as_deref()";
+    if reborrow {
+        if is_base_ptr_clonable {
+            replacement += ".clone()";
+        } else {
+            replacement += ".as_deref()";
+        }
     }
     replacement
 }
@@ -478,7 +535,7 @@ fn rewrite_null_constant<'tcx>(
     lhs: &Place<'tcx>,
     span: Span,
 ) -> Option<Span> {
-    let replacement = mutating_use_replacement(tcx, body, lhs, names[&lhs.local], true);
+    let replacement = mutating_ctxt_replacement(tcx, body, lhs, names[&lhs.local], false);
 
     if !matches!(ownership_ctxt, Ownership::Raw) {
         if user_vars.contains(lhs.local) {
