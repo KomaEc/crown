@@ -1,6 +1,10 @@
 # Ownership and Lifetime guided C to Rust Refactoring
 
 
+p = q;
+
+p = std::mem::take(&mut q);
+let q = &mut *p;
 ## C2Rust options
 To help with the rewrite process, we turn on the `--reduce-type-annotations` option
 in C2Rust.

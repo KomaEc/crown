@@ -1,16 +1,22 @@
+mod rewrite_library_call;
+
+use crate::rewrite::rewrite_body::rewrite_library_call::rewrite_library_call;
 use analysis::{
     call_graph::Func, fat_thin_analysis, mutability_analysis, ownership_analysis,
-    ssa::RichLocation, ty_ext::TyExt,
+    ssa::RichLocation, ty_ext::TyExt, LocationMap,
 };
 use either::Either;
 use rewriter::Rewriter;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::LocalDefId;
-use rustc_index::{bit_set::BitSet, vec::Idx};
+use rustc_index::{
+    bit_set::BitSet,
+    vec::{Idx, IndexVec},
+};
 use rustc_middle::{
     mir::{
-        visit::Visitor, Body, Local, Location, Operand, Place, ProjectionElem, Rvalue, Statement,
-        StatementKind, Terminator, TerminatorKind, VarDebugInfoContents,
+        visit::Visitor, BasicBlock, Body, Local, Location, Operand, Place, ProjectionElem, Rvalue,
+        Statement, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents,
     },
     ty::TyCtxt,
 };
@@ -59,6 +65,7 @@ pub fn rewrite_fn_body(
         fatness_analysis: &'me fat_thin_analysis::CrateSummary,
         user_vars: &'me BitSet<Local>,
         names: &'me FxHashMap<Local, Symbol>,
+        editted_locations: IndexVec<BasicBlock, BitSet<usize>>,
     }
 
     impl<'me, 'tcx> Visitor<'tcx> for StatementRewriteVisitor<'me, 'tcx> {
@@ -79,6 +86,7 @@ pub fn rewrite_fn_body(
                         self.user_vars,
                         self.names,
                         location,
+                        &mut self.editted_locations,
                     ) {
                         // we need to further rewrite lhs
 
@@ -104,7 +112,7 @@ pub fn rewrite_fn_body(
         }
     }
 
-    StatementRewriteVisitor {
+    let mut statement_rewrite_phase = StatementRewriteVisitor {
         tcx,
         rewriter,
         body,
@@ -114,8 +122,105 @@ pub fn rewrite_fn_body(
         fatness_analysis,
         user_vars: &user_vars,
         names: &names,
+        editted_locations: body
+            .basic_blocks()
+            .iter()
+            .map(|bb| BitSet::new_empty(bb.statements.len() + 1))
+            .collect(),
+    };
+
+    statement_rewrite_phase.visit_body(body);
+
+    let mut editted_locations = statement_rewrite_phase.editted_locations;
+
+    for (bb, bb_data) in body.basic_blocks().iter_enumerated() {
+        let location = Location {
+            block: bb,
+            statement_index: bb_data.statements.len(),
+        };
+        if !editted_locations[location.block].contains(location.statement_index) {
+            let _ = rewrite_terminator(
+                tcx,
+                rewriter,
+                body,
+                func,
+                ownership_analysis,
+                mutability_analysis,
+                fatness_analysis,
+                &user_vars,
+                &names,
+                bb_data.terminator(),
+                location,
+                &mut editted_locations,
+            );
+        }
     }
-    .visit_body(body);
+
+    /* 
+    for (bb, bb_data) in body.basic_blocks().iter_enumerated() {
+        let mut location = Location { block: bb, statement_index: 0 };
+        for statement in &bb_data.statements {
+            if let StatementKind::Assign(box (lhs, rvalue)) = &statement.kind {
+                // we check that rvalue contains user variable
+                if match rvalue {
+                    Rvalue::Use(rhs) => {
+                        if let Some(rhs) = rhs.place() {
+                            !user_vars.contains(rhs.local)
+                        } else {
+                            true
+                        }
+                    },
+                    Rvalue::BinaryOp(binop, box (op1, op2)) => {
+                        (if let Some(rhs) = op1.place() {
+                            !user_vars.contains(rhs.local)
+                        } else {
+                            true
+                        })
+                        &&
+                        if let Some(rhs) = op2.place() {
+                            !user_vars.contains(rhs.local)
+                        } else {
+                            true
+                        }
+                    },
+                    Rvalue::CheckedBinaryOp(cbop, box (op1, op2)) => {
+                        (if let Some(rhs) = op1.place() {
+                            !user_vars.contains(rhs.local)
+                        } else {
+                            true
+                        })
+                        &&
+                        if let Some(rhs) = op2.place() {
+                            !user_vars.contains(rhs.local)
+                        } else {
+                            true
+                        }
+                    },
+                    _ => true
+                } {
+                    continue
+                }
+            }
+            else { continue }
+            if !editted_locations[location.block].contains(location.statement_index) {
+                let _ = rewrite_use(
+                    tcx,
+                    rewriter,
+                    body,
+                    func,
+                    ownership_analysis,
+                    mutability_analysis,
+                    fatness_analysis,
+                    &user_vars,
+                    &names,
+                    location,
+                    &mut editted_locations,
+                );
+            }
+            location.statement_index += 1;
+        }
+    }
+    */
 }
 
 /// rewrite the use of local `local` at location `location`
@@ -133,9 +238,12 @@ fn rewrite_use<'tcx>(
     user_vars: &BitSet<Local>,
     names: &FxHashMap<Local, Symbol>,
     location: Location,
+    editted_locations: &mut IndexVec<BasicBlock, BitSet<usize>>,
 ) -> Option<Span> {
     match body.stmt_at(location) {
         Either::Left(statement) => {
+            assert!(editted_locations[location.block].insert(location.statement_index));
+
             match &statement.kind {
                 StatementKind::Assign(box (lhs, rhs)) => {
                     let maybe_ptr_sig = lhs.ty(body, tcx).ty.is_ptr_but_not_fn_ptr().then(|| {
@@ -311,6 +419,7 @@ fn rewrite_use<'tcx>(
                                             user_vars,
                                             names,
                                             def_location,
+                                            editted_locations,
                                         );
                                     }
                                 }
@@ -390,6 +499,7 @@ fn rewrite_use<'tcx>(
                                         user_vars,
                                         names,
                                         def_location,
+                                        editted_locations,
                                     )
                                     .map(|inner_span| {
                                         rewriter.make_suggestion(
@@ -409,29 +519,26 @@ fn rewrite_use<'tcx>(
                                 unreachable!()
                             }
                         }
-                        Rvalue::Ref(_, _, _) => todo!(),
-                        Rvalue::AddressOf(_, _) => todo!(),
-                        _ => todo!(),
+                        _ => None
                     }
                 }
                 _ => todo!(),
             }
         }
-        Either::Right(terminator) => {
-            rewrite_terminator(
-                tcx,
-                rewriter,
-                body,
-                func,
-                ownership_analysis,
-                mutability_analysis,
-                fatness_analysis,
-                user_vars,
-                names,
-                terminator,
-                location,
-            )
-        }
+        Either::Right(terminator) => rewrite_terminator(
+            tcx,
+            rewriter,
+            body,
+            func,
+            ownership_analysis,
+            mutability_analysis,
+            fatness_analysis,
+            user_vars,
+            names,
+            terminator,
+            location,
+            editted_locations,
+        ),
     }
 }
 
@@ -447,9 +554,15 @@ fn rewrite_terminator<'tcx>(
     names: &FxHashMap<Local, Symbol>,
     terminator: &Terminator<'tcx>,
     location: Location,
+    editted_locations: &mut IndexVec<BasicBlock, BitSet<usize>>,
 ) -> Option<Span> {
+    assert!(editted_locations[location.block].insert(location.statement_index));
+
     match &terminator.kind {
-        TerminatorKind::Return => todo!(),
+        TerminatorKind::Return => {
+            return None;
+            todo!()
+        }
         TerminatorKind::Call {
             func: callee,
             args,
@@ -477,7 +590,7 @@ fn rewrite_terminator<'tcx>(
                             tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::Item(_))
                         ) {
-                            /* 
+                            /*
                             TODO: check raw context?
                             let (ownership_sigs, mutability_sigs) = (
                                 &ownership_analysis.func_sigs[ownership_analysis
@@ -495,13 +608,18 @@ fn rewrite_terminator<'tcx>(
 
                             for arg in args {
                                 if let Some(arg) = arg.place() {
-                                    let arg = arg.as_local().expect("arguments are assumed to be temporaries");
-                                    assert!(!user_vars.contains(arg), "arguments are assumed to be temporaries");
+                                    let arg = arg
+                                        .as_local()
+                                        .expect("arguments are assumed to be temporaries");
+                                    assert!(
+                                        !user_vars.contains(arg),
+                                        "arguments are assumed to be temporaries"
+                                    );
                                     let source_map = &fatness_analysis.ssa_name_source_map[caller];
                                     let fatness_ssa_idx =
                                         source_map.try_use(arg, location).unwrap();
-                                    let def_rich_location = &fatness_analysis.def_sites[caller].defs
-                                        [arg][fatness_ssa_idx];
+                                    let def_rich_location = &fatness_analysis.def_sites[caller]
+                                        .defs[arg][fatness_ssa_idx];
                                     let def_location = match def_rich_location {
                                         &RichLocation::Mir(l) => l,
                                         &RichLocation::Phi(_) => todo!(),
@@ -520,9 +638,9 @@ fn rewrite_terminator<'tcx>(
                                         fatness_analysis,
                                         user_vars,
                                         names,
-                                        def_location
+                                        def_location,
+                                        editted_locations,
                                     );
-
                                 } else {
                                     unreachable!("arguments are not allowed to be constants")
                                 }
@@ -531,9 +649,10 @@ fn rewrite_terminator<'tcx>(
                             if let Some((dest, _)) = *destination {
                                 // if destination place is a temporary
                                 if !user_vars.contains(dest.local) {
-                                    return Some(terminator.source_info.span)
+                                    return Some(terminator.source_info.span);
                                 } else {
-                                    assert!(false, "destination place is assumed to be a temporary")
+                                    // assert!(false, "destination place is assumed to be a temporary in {:?}", terminator.kind)
+                                    assert!(dest.projection.is_empty(), "destination place is assumed to be a local, and we need not rewrite")
                                 }
                             }
                             // self.model_boundary(callee_did, args, destination, location);
@@ -546,15 +665,31 @@ fn rewrite_terminator<'tcx>(
                     None => {
                         // self.model_library_call(callee_did, args, destination, location);
                         // return;
-                        return None;
-                        todo!()
+                        rewrite_library_call(
+                            tcx,
+                            rewriter,
+                            body,
+                            caller,
+                            ownership_analysis,
+                            mutability_analysis,
+                            fatness_analysis,
+                            user_vars,
+                            names,
+                            callee_did,
+                            args,
+                            *destination,
+                            *fn_span,
+                            location,
+                            editted_locations,
+                        );
+                        None
                     }
                 }
             } else {
                 unreachable!()
             }
         }
-        _ => unreachable!(),
+        _ => None,
     }
 }
 
