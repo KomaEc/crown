@@ -1,4 +1,5 @@
 mod rewrite_body;
+mod rewrite_libc_call;
 
 use analysis::{call_graph::Func, fat_thin_analysis, mutability_analysis, ownership_analysis};
 use itertools::izip;

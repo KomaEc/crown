@@ -35,7 +35,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        log::debug!("... default modelling: introducing no constraint");
+        tracing::debug!("... default modelling: introducing no constraint");
         for arg in args {
             self.default_arg(arg, location)
         }
@@ -66,13 +66,13 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
                 match d.data {
                     // if it is core::ptr::<..>::offset
                     rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "offset" => {
-                        log::debug!("modelling ptr offset");
+                        tracing::debug!("modelling ptr offset");
                         self.model_ptr_offset(args, destination, location);
                         return;
                     }
                     // if it is core::ptr::<..>::is_null
                     rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "is_null" => {
-                        log::debug!("modelling ptr is_null");
+                        tracing::debug!("modelling ptr is_null");
                         self.model_ptr_is_null(args, destination, location);
                         return;
                     }
@@ -82,7 +82,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
         }
 
         // catch all other library calls that is not modelled
-        log::debug!("modelling {}", self.tcx().def_path_str(callee));
+        tracing::debug!("modelling {}", self.tcx().def_path_str(callee));
         self.default_model_lib_call(args, destination, location)
     }
 
@@ -94,7 +94,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
         location: Location,
     ) {
         let foreign_item = self.tcx().hir().expect_foreign_item(callee.expect_local());
-        log::debug!("modelling {}", foreign_item.ident);
+        tracing::debug!("modelling {}", foreign_item.ident);
         match foreign_item.ident {
             s if s.as_str() == "printf" => self.model_printf(args, destination, location),
             s if s.as_str() == "calloc" => self.model_calloc(args, destination, location),

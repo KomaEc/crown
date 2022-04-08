@@ -71,7 +71,7 @@ impl<'aacx, 'tcx> PointerAnalysisCtxt<'aacx, 'tcx> {
         let node = self.nodes.push(data.into());
         self.value_node_map.insert(data, node);
 
-        log::trace!(
+        tracing::trace!(
             "generating node {:?} for place {}",
             node,
             self.node_to_str(node)
@@ -106,7 +106,7 @@ impl<'aacx, 'tcx> PointerAnalysisCtxt<'aacx, 'tcx> {
     }
 
     pub fn generate_temporary(&mut self, context: LocalDefId) -> PointerAnalysisNode {
-        log::trace!("generating temporary node");
+        tracing::trace!("generating temporary node");
         self.nodes.push(context.into())
     }
 

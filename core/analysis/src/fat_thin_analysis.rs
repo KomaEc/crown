@@ -106,7 +106,7 @@ impl CrateSummary {
                     for &func in scc_node {
                         #[cfg(debug_assertions)]
                         {
-                            log::debug!("processing {:?}", self.call_graph.functions[func])
+                            tracing::debug!("processing {:?}", self.call_graph.functions[func])
                         }
                         let FuncSummary {
                             lambda_ctxt: locals,
@@ -179,20 +179,20 @@ impl CrateSummary {
     fn log_initial_state(self, tcx: TyCtxt<'_>) -> Self {
         #[cfg(debug_assertions)]
         {
-            log::debug!("Initialising crate summary");
+            tracing::debug!("Initialising crate summary");
             for (&adt_did, x) in &self.lambda_ctxt.field_defs {
                 for (variant_idx, y) in x.iter_enumerated() {
                     for (field_idx, z) in y.iter().enumerate() {
                         let adt_def = tcx.adt_def(adt_did);
                         let field_def = &adt_def.variants[variant_idx].fields[field_idx];
                         let field_def_str = format!("{}.{}", tcx.type_of(adt_did), field_def.name);
-                        log::debug!(
+                        tracing::debug!(
                             "for field {}: {}:",
                             field_def_str,
                             tcx.type_of(field_def.did)
                         );
                         for (idx, lambda) in z.clone().enumerate() {
-                            log::debug!("{:*<1$}{2} ==> {3:?}", "", idx, field_def_str, lambda)
+                            tracing::debug!("{:*<1$}{2} ==> {3:?}", "", idx, field_def_str, lambda)
                         }
                     }
                 }
@@ -212,15 +212,15 @@ impl CrateSummary {
 
     /*
     pub fn error_state(&self) {
-        log::error!("All constraints:");
+        tracing::error!("All constraints:");
         for constraint in self.constraints.iter() {
-            // log::debug!("{}", constraint)
-            log::error!("{}", constraint)
+            // tracing::debug!("{}", constraint)
+            tracing::error!("{}", constraint)
         }
 
         for (lambda, &solution) in self.lambda_ctxt.assumptions.iter_enumerated() {
-            // log::debug!(
-            log::error!(
+            // tracing::debug!(
+            tracing::error!(
                 "{: <7} = {: <2} at {}",
                 &format!("{:?}", lambda),
                 solution
@@ -270,7 +270,7 @@ impl ConstraintSet {
 
     pub fn push_le(&mut self, lhs: Lambda, rhs: Lambda) {
         let constraint = Constraint(lhs, rhs);
-        log::debug!("generate constraint {}", constraint);
+        tracing::debug!("generate constraint {}", constraint);
         self.data.push(constraint);
     }
 

@@ -5,7 +5,7 @@ use crate::{
     ssa::{body_ext::PhiNodeInsertionPoints, rename::SSANameHandler, RichLocation},
     LocationMap,
 };
-use log::debug;
+use tracing::debug;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Local, Location};
 use smallvec::{smallvec, SmallVec};

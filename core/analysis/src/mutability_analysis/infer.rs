@@ -268,8 +268,8 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
             }
         }
 
-        log::debug!("Generating surface function signature {:?}", &surface);
-        log::debug!("Generating function signature {:?}", &inner);
+        tracing::debug!("Generating surface function signature {:?}", &surface);
+        tracing::debug!("Generating function signature {:?}", &inner);
 
         (
             FuncSig { sig: surface },
@@ -311,7 +311,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
 
     fn visit_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
         use colored::*;
-        log::debug!("{}", &format!("visiting statement {:?}", statement).bold()); //statement);
+        tracing::debug!("{}", &format!("visiting statement {:?}", statement).bold()); //statement);
         self.super_statement(statement, location)
     }
 
@@ -333,7 +333,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
             }
         }
         use colored::*;
-        log::warn!(
+        tracing::warn!(
             "{}",
             "this statement is not processed by the intra inferencer"
                 .bold()
@@ -344,7 +344,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
 
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
         use colored::*;
-        log::debug!(
+        tracing::debug!(
             "{}",
             &format!("visiting terminator {:?}", terminator.kind).bold()
         );
@@ -461,20 +461,20 @@ impl<'infercx, 'tcx> SSANameHandler for IntraInferCtxt<'infercx, 'tcx> {
     type Output = Mu;
 
     fn handle_def(&mut self, local: Local, idx: SSAIdx, _location: Location) -> Self::Output {
-        log::debug!("IntraInferencer defining {:?}^{} of ptr type", local, idx);
+        tracing::debug!("IntraInferencer defining {:?}^{} of ptr type", local, idx);
         debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
 
         self.generate_variables_for_mir_local(local, idx)
     }
 
     fn handle_use(&mut self, local: Local, idx: SSAIdx, _location: Location) -> Self::Output {
-        log::debug!("IntraInferencer using {:?}^{} of ptr type", local, idx);
+        tracing::debug!("IntraInferencer using {:?}^{} of ptr type", local, idx);
         self.locals[local][idx].clone()
     }
 
     fn handle_def_at_phi_node(&mut self, local: Local, idx: SSAIdx, block: BasicBlock) {
         debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
-        log::debug!(
+        tracing::debug!(
             "IntraInferencer at phi node defining {:?}^{} of ptr type",
             local,
             idx
@@ -497,7 +497,7 @@ impl<'infercx, 'tcx> SSANameHandler for IntraInferCtxt<'infercx, 'tcx> {
         _pos: usize,
     ) {
         debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
-        log::debug!(
+        tracing::debug!(
             "IntraInferencer at phi node using {:?}^{} of ptr type",
             local,
             idx

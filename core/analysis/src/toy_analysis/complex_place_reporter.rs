@@ -54,7 +54,7 @@ impl<'cpr, 'tcx> Visitor<'tcx> for ComplexPlaceReporter<'cpr, 'tcx> {
                 .expect("Mir source scopes should have hir_id");
             let node = self.tcx.hir().get(hir_id);
             match node {
-                Item(_) => log::trace!("Got item, hir_id: {}", hir_id),
+                Item(_) => tracing::trace!("Got item, hir_id: {}", hir_id),
                 Param(_) => todo!(),
                 ForeignItem(_) => todo!(),
                 TraitItem(_) => todo!(),
@@ -63,7 +63,7 @@ impl<'cpr, 'tcx> Visitor<'tcx> for ComplexPlaceReporter<'cpr, 'tcx> {
                 Field(_) => todo!(),
                 AnonConst(_) => todo!(),
                 Expr(_) => todo!(),
-                Stmt(stmt) => log::trace!("Yeah! Got statement: {:?}", stmt),
+                Stmt(stmt) => tracing::trace!("Yeah! Got statement: {:?}", stmt),
                 PathSegment(_) => todo!(),
                 Ty(_) => todo!(),
                 TraitRef(_) => todo!(),
@@ -97,7 +97,7 @@ impl<'cpr, 'tcx> Visitor<'tcx> for ComplexPlaceReporter<'cpr, 'tcx> {
             /*
             let node = self.tcx.hir().get(hir);
             match node {
-                Item(item) => log::trace!("Got item: {:?}", item),
+                Item(item) => tracing::trace!("Got item: {:?}", item),
                 Param(_) => todo!(),
                 ForeignItem(_) => todo!(),
                 TraitItem(_) => todo!(),
@@ -106,7 +106,7 @@ impl<'cpr, 'tcx> Visitor<'tcx> for ComplexPlaceReporter<'cpr, 'tcx> {
                 Field(_) => todo!(),
                 AnonConst(_) => todo!(),
                 Expr(_) => todo!(),
-                Stmt(stmt) => log::trace!("Yeah! Got statement: {:?}", stmt),
+                Stmt(stmt) => tracing::trace!("Yeah! Got statement: {:?}", stmt),
                 PathSegment(_) => todo!(),
                 Ty(_) => todo!(),
                 TraitRef(_) => todo!(),

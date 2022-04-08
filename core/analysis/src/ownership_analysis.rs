@@ -279,7 +279,7 @@ impl InterSummary {
                 while let Some(func) = work_list.pop_front() {
                     in_queue[func] = false;
 
-                    log::debug!("Solving {:?}", self.call_graph.functions[func]);
+                    tracing::debug!("Solving {:?}", self.call_graph.functions[func]);
 
                     let summary = &mut self.func_summaries[func];
 
@@ -384,7 +384,7 @@ impl InterSummary {
 
     pub fn show_result(&self) {
         self.field_def_value_with(|rho, value| {
-            log::debug!(
+            tracing::debug!(
                 "GLOBAL::{:?} = {}",
                 rho,
                 value
@@ -395,7 +395,7 @@ impl InterSummary {
 
         for (func, summary) in self.func_summaries.iter_enumerated() {
             summary.local_value_with(|rho, value| {
-                log::debug!(
+                tracing::debug!(
                     "{:?}::{:?} = {}",
                     self.call_graph.functions[func],
                     rho,
@@ -426,7 +426,7 @@ impl InterSummary {
 
             let (ret, args) = sig_strs.split_first().unwrap();
 
-            log::debug!("{:?}: ({}) -> {}", did, args.join(", "), ret)
+            tracing::debug!("{:?}: ({}) -> {}", did, args.join(", "), ret)
         }
     }
 }
@@ -444,7 +444,7 @@ impl<'me, 'tcx> AnalysisEngine<'me, 'tcx> {
     fn log_initial_state(self) -> Self {
         #[cfg(debug_assertions)]
         {
-            log::debug!("Initialising crate summary");
+            tracing::debug!("Initialising crate summary");
             for (&adt_did, x) in self.inter_ctxt.field_defs {
                 for (variant_idx, y) in x.iter_enumerated() {
                     for (field_idx, z) in y.iter().enumerate() {
@@ -452,13 +452,13 @@ impl<'me, 'tcx> AnalysisEngine<'me, 'tcx> {
                         let field_def = &adt_def.variants[variant_idx].fields[field_idx];
                         let field_def_str =
                             format!("{}.{}", self.tcx.type_of(adt_did), field_def.name);
-                        log::debug!(
+                        tracing::debug!(
                             "for field {}: {}:",
                             field_def_str,
                             self.tcx.type_of(field_def.did)
                         );
                         for (idx, rho) in z.clone().enumerate() {
-                            log::debug!("{:*<1$}{2} ==> GLOBAL::{3:?}", "", idx, field_def_str, rho)
+                            tracing::debug!("{:*<1$}{2} ==> GLOBAL::{3:?}", "", idx, field_def_str, rho)
                         }
                     }
                 }
@@ -483,7 +483,7 @@ pub struct IntraSummary {
 
 impl IntraSummary {
     pub fn instantiate(&mut self, surfaces: &IndexVec<Func, FuncSig<Surface, Option<bool>>>) {
-        log::debug!("Instantiating boundary constraints");
+        tracing::debug!("Instantiating boundary constraints");
         for &Boundary {
             callee,
             ref dest,
@@ -595,7 +595,7 @@ impl IntraSummary {
 
                 let (ret, args) = sig_strs.split_first().unwrap();
 
-                log::debug!("signature updated to: ({}) -> {}", args.join(", "), ret)
+                tracing::debug!("signature updated to: ({}) -> {}", args.join(", "), ret)
             }
         }
 
@@ -681,7 +681,7 @@ impl ConstraintDatabase {
     }
 
     pub fn push_le(&mut self, x: Rho, y: Rho) {
-        log::debug!("generate constraint {:?} ≤ {:?}", x, y);
+        tracing::debug!("generate constraint {:?} ≤ {:?}", x, y);
         self.le_constraints.add_relation(x, y);
     }
 
@@ -697,7 +697,7 @@ impl ConstraintDatabase {
             new_lhs,
             new_rhs,
         };
-        log::debug!("generate constraint {}", &constraint);
+        tracing::debug!("generate constraint {}", &constraint);
         self.eq_constraints.push(constraint);
 
         self.push_le(new_lhs, old_rhs);
@@ -707,7 +707,7 @@ impl ConstraintDatabase {
     pub fn assume(&mut self, x: Rho, value: bool) {
         assert_ne!(x, Rho::ZERO);
         assert_ne!(x, Rho::ONE);
-        log::debug!("assume that {:?} = {}", x, value.then_some(1).unwrap_or(0));
+        tracing::debug!("assume that {:?} = {}", x, value.then_some(1).unwrap_or(0));
         value
             .then(|| {
                 self.le_constraints.add_relation(Rho::ONE, x);
@@ -724,11 +724,11 @@ impl ConstraintDatabase {
         for x in self.le_constraints.graph.nodes().skip(2) {
             let x_rep = sccs.scc(x);
             if x_rep == zero_rep {
-                log::debug!("{:?} = 0", x)
+                tracing::debug!("{:?} = 0", x)
             } else if x_rep == one_rep {
-                log::debug!("{:?} = 1", x)
+                tracing::debug!("{:?} = 1", x)
             } else {
-                log::debug!("{:?} = ?", x)
+                tracing::debug!("{:?} = ?", x)
             }
         }
     }
@@ -792,7 +792,7 @@ impl ConstraintDatabase {
                 // let this_removed = &mut removed[idx];
 
                 if !*removed {
-                    log::debug!("solving equality constraint {:?} + {:?} = {:?}", x, y, z);
+                    tracing::debug!("solving equality constraint {:?} + {:?} = {:?}", x, y, z);
 
                     let x_rep = sccs.scc(x);
                     let y_rep = sccs.scc(y);
@@ -801,42 +801,42 @@ impl ConstraintDatabase {
                     // let one_rep = sccs.scc(ULEConstraintGraph::ONE);
 
                     if x_rep == zero_rep {
-                        log::debug!("     {:?} = 0, {:?} = {:?} + {:?}", x, z, x, y);
-                        log::debug!("---------------------------------------------");
-                        log::debug!("     {:?} = {:?}", z, y);
+                        tracing::debug!("     {:?} = 0, {:?} = {:?} + {:?}", x, z, x, y);
+                        tracing::debug!("---------------------------------------------");
+                        tracing::debug!("     {:?} = {:?}", z, y);
                         self.le_constraints.add_relation(z, y);
                         *removed = true;
                     } else if y_rep == zero_rep {
-                        log::debug!("     {:?} = 0, {:?} = {:?} + {:?}", y, z, x, y);
-                        log::debug!("---------------------------------------------");
-                        log::debug!("     {:?} = {:?}", z, x);
+                        tracing::debug!("     {:?} = 0, {:?} = {:?} + {:?}", y, z, x, y);
+                        tracing::debug!("---------------------------------------------");
+                        tracing::debug!("     {:?} = {:?}", z, x);
                         self.le_constraints.add_relation(z, x);
                         *removed = true;
                     } else if DepthFirstSearch::new(&sccs)
                         .with_start_node(z_rep)
                         .any(|rep| rep == y_rep)
                     {
-                        log::debug!("     {:?} ≤ {:?}, {:?} = {:?} + {:?}", z, y, z, x, y);
-                        log::debug!("---------------------------------------------");
-                        log::debug!("     {:?} = 0", x);
+                        tracing::debug!("     {:?} ≤ {:?}, {:?} = {:?} + {:?}", z, y, z, x, y);
+                        tracing::debug!("---------------------------------------------");
+                        tracing::debug!("     {:?} = 0", x);
                         self.le_constraints.add_relation(x, Rho::ZERO);
                         *removed = true;
                     } else if DepthFirstSearch::new(&sccs)
                         .with_start_node(z_rep)
                         .any(|rep| rep == x_rep)
                     {
-                        log::debug!("     {:?} ≤ {:?}, {:?} = {:?} + {:?}", z, x, z, x, y);
-                        log::debug!("---------------------------------------------");
-                        log::debug!("     {:?} = 0", y);
+                        tracing::debug!("     {:?} ≤ {:?}, {:?} = {:?} + {:?}", z, x, z, x, y);
+                        tracing::debug!("---------------------------------------------");
+                        tracing::debug!("     {:?} = 0", y);
                         self.le_constraints.add_relation(y, Rho::ZERO);
                         *removed = true;
                     } else if DepthFirstSearch::new(&sccs)
                         .with_start_node(x_rep)
                         .any(|rep| rep == y_rep)
                     {
-                        log::debug!("     {:?} ≤ {:?}, {:?} = {:?} + {:?}", x, y, z, x, y);
-                        log::debug!("---------------------------------------------");
-                        log::debug!("     {:?} ≤ {:?}, {:?} = 0", z, y, x);
+                        tracing::debug!("     {:?} ≤ {:?}, {:?} = {:?} + {:?}", x, y, z, x, y);
+                        tracing::debug!("---------------------------------------------");
+                        tracing::debug!("     {:?} ≤ {:?}, {:?} = 0", z, y, x);
                         self.le_constraints.add_relation(x, Rho::ZERO);
                         self.le_constraints.add_relation(z, y);
                         *removed = true;
@@ -844,9 +844,9 @@ impl ConstraintDatabase {
                         .with_start_node(y_rep)
                         .any(|rep| rep == x_rep)
                     {
-                        log::debug!("     {:?} ≤ {:?}, {:?} = {:?} + {:?}", y, x, z, x, y);
-                        log::debug!("---------------------------------------------");
-                        log::debug!("     {:?} ≤ {:?}, {:?} = 0", z, x, y);
+                        tracing::debug!("     {:?} ≤ {:?}, {:?} = {:?} + {:?}", y, x, z, x, y);
+                        tracing::debug!("---------------------------------------------");
+                        tracing::debug!("     {:?} ≤ {:?}, {:?} = 0", z, x, y);
                         self.le_constraints.add_relation(y, Rho::ZERO);
                         self.le_constraints.add_relation(z, x);
                         *removed = true;
@@ -884,9 +884,9 @@ pub fn explain_error(reason: Vec<Rho>) {
     assert_eq!(reason[0], Rho::ONE);
     assert_eq!(*reason.last().unwrap(), Rho::ZERO);
 
-    log::debug!("A chain of inequalities that leads to this conflict:");
+    tracing::debug!("A chain of inequalities that leads to this conflict:");
     for &[x, y] in reason.array_windows() {
-        log::debug!("{:?} ≤ {:?}", x, y)
+        tracing::debug!("{:?} ≤ {:?}", x, y)
     }
 }
 

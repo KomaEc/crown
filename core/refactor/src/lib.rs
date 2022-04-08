@@ -45,15 +45,15 @@ pub fn print_fat_thin_analysis_results<'tcx>(
         Ok(()) => {
             let solutions = crate_summary.lambda_ctxt.assumptions.clone();
 
-            // log::debug!("All constraints:");
+            // tracing::debug!("All constraints:");
             println!("All constraints:");
             for constraint in crate_summary.constraints.iter() {
-                // log::debug!("{}", constraint)
+                // tracing::debug!("{}", constraint)
                 println!("{}", constraint)
             }
 
             for (lambda, solution) in solutions.into_iter_enumerated() {
-                // log::debug!(
+                // tracing::debug!(
                 println!(
                     "{: <7} = {: <2} at {}",
                     &format!("{:?}", lambda),
@@ -69,9 +69,9 @@ pub fn print_fat_thin_analysis_results<'tcx>(
             }
         }
         Err(_) => {
-            // log::debug!("Solve failed!");
+            // tracing::debug!("Solve failed!");
             println!("Solve failed!");
-            // log::debug!("Global context:");
+            // tracing::debug!("Global context:");
             println!("Global context:");
             let solutions = crate_summary.lambda_ctxt.assumptions;
             for (lambda, solution) in solutions.raw[crate_summary.globals.clone()]
@@ -79,7 +79,7 @@ pub fn print_fat_thin_analysis_results<'tcx>(
                 .enumerate()
             {
                 let lambda = Lambda::from(lambda);
-                // log::debug!(
+                // tracing::debug!(
                 println!(
                     "{: <7} = {: <2} at {}",
                     &format!("{:?}", lambda),
@@ -120,7 +120,7 @@ pub fn show_ownership_analysis_results<'tcx>(
             ownership_analysis.show_result();
         }
         Err(reason) => {
-            log::error!("Cannot solve ownership constraints!");
+            tracing::error!("Cannot solve ownership constraints!");
 
             ownership_analysis::explain_error(reason)
         }
@@ -141,7 +141,7 @@ pub fn show_mutability_analysis_results<'tcx>(
             mutability_analysis.show_result();
         }
         Err(reason) => {
-            log::error!("Cannot solve ownership constraints!");
+            tracing::error!("Cannot solve ownership constraints!");
 
             mutability_analysis::explain_error(reason)
         }
@@ -159,7 +159,7 @@ pub fn fatness_analysis(
     match fatness_analysis.iterate_to_fixpoint() {
         Ok(()) => fatness_analysis,
         Err(_) => {
-            log::error!("Cannot solve fatness constraints!");
+            tracing::error!("Cannot solve fatness constraints!");
             exit(0)
         }
     }
@@ -176,7 +176,7 @@ pub fn ownership_analysis(
     match ownership_analysis.resolve() {
         Ok(()) => ownership_analysis,
         Err(reason) => {
-            log::error!("Cannot solve ownership constraints!");
+            tracing::error!("Cannot solve ownership constraints!");
 
             ownership_analysis::explain_error(reason);
 
@@ -196,7 +196,7 @@ pub fn mutability_analysis(
     match mutability_analysis.resolve() {
         Ok(()) => mutability_analysis,
         Err(reason) => {
-            log::error!("Cannot solve ownership constraints!");
+            tracing::error!("Cannot solve ownership constraints!");
 
             mutability_analysis::explain_error(reason);
 

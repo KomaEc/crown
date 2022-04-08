@@ -50,7 +50,7 @@ pub fn rewrite_fn_body(
                 //}
             }
             VarDebugInfoContents::Const(constant) => {
-                log::warn!("user constant {:?} is not processed", constant)
+                tracing::warn!("user constant {:?} is not processed", constant)
             }
         }
     }
@@ -582,10 +582,15 @@ fn rewrite_terminator<'tcx>(
                             tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::ForeignItem(_))
                         ) {
-                            // self.model_libc_call(callee_did, args, destination, location);
-                            // return;
-                            return None;
-                            todo!()
+                            super::rewrite_libc_call::rewrite_libc_call(
+                                tcx,
+                                rewriter,
+                                body,
+                                caller,
+                                fatness_analysis,
+                                terminator,
+                                location,
+                            );
                         } else if matches!(
                             tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::Item(_))
