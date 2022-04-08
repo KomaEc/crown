@@ -14,3 +14,4 @@ rewriter = { path = "../rewriter" }
 compiler_interface = { path = "../compiler_interface" }
 analysis = { path = "../analysis" }
 itertools = "0.10.3"
+smallvec = { version = "1.8.0", features = ["union", "const_generics"] }

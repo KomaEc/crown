@@ -1,5 +1,7 @@
+pub mod rewrite_libc_call;
 mod rewrite_library_call;
 
+use crate::rewrite::rewrite_body::rewrite_libc_call::rewrite_libc_call;
 use crate::rewrite::rewrite_body::rewrite_library_call::rewrite_library_call;
 use analysis::{
     call_graph::Func, fat_thin_analysis, mutability_analysis, ownership_analysis,
@@ -21,6 +23,8 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use rustc_span::{Span, Symbol};
+
+use smallvec::{smallvec, SmallVec};
 
 use super::Ownership;
 
@@ -90,21 +94,25 @@ pub fn rewrite_fn_body(
                     ) {
                         // we need to further rewrite lhs
 
-                        assert!(!rhs_span.contains(statement.source_info.span));
-
-                        let replacement = mutating_ctxt_replacement(
-                            self.tcx,
-                            self.body,
-                            place,
-                            self.names[&place.local],
-                            false,
-                        );
-                        self.rewriter.make_suggestion(
-                            self.tcx,
-                            statement.source_info.span.shrink_to_lo().until(rhs_span),
-                            "rewrite lhs".to_owned(),
-                            format!("{replacement} = "),
-                        );
+                        if rhs_span.contains(statement.source_info.span) {
+                            // this occurs upon let binding
+                            assert_eq!(rhs_span, statement.source_info.span);
+                            assert!(place.as_local().is_some());
+                        } else {
+                            let replacement = mutating_ctxt_replacement(
+                                self.tcx,
+                                self.body,
+                                place,
+                                self.names[&place.local],
+                                false,
+                            );
+                            self.rewriter.make_suggestion(
+                                self.tcx,
+                                statement.source_info.span.shrink_to_lo().until(rhs_span),
+                                "rewrite lhs".to_owned(),
+                                format!("{replacement} = "),
+                            );
+                        }
                     }
                 }
             }
@@ -156,71 +164,45 @@ pub fn rewrite_fn_body(
         }
     }
 
-    /* 
     for (bb, bb_data) in body.basic_blocks().iter_enumerated() {
-        let mut location = Location { block: bb, statement_index: 0 };
+        let mut location = Location {
+            block: bb,
+            statement_index: 0,
+        };
         for statement in &bb_data.statements {
             if let StatementKind::Assign(box (lhs, rvalue)) = &statement.kind {
-                // we check that rvalue contains user variable
-                if match rvalue {
-                    Rvalue::Use(rhs) => {
+                if !editted_locations[location.block].contains(location.statement_index) {
+                    assert!(!user_vars.contains(lhs.local));
+                    // we rewrite all the resting temporaries
+                    if let Rvalue::Use(rhs) = rvalue {
                         if let Some(rhs) = rhs.place() {
-                            !user_vars.contains(rhs.local)
-                        } else {
-                            true
+                            if !user_vars.contains(rhs.local) {
+                                continue;
+                            }
+
+                            let replacement = nonmutating_ctxt_replacement(
+                                tcx,
+                                body,
+                                &rhs,
+                                names[&rhs.local],
+                                false,
+                                false,
+                            );
+
+                            rewriter.make_suggestion(
+                                tcx,
+                                statement.source_info.span,
+                                "rewrite uses".to_string(),
+                                replacement,
+                            );
                         }
-                    },
-                    Rvalue::BinaryOp(binop, box (op1, op2)) => {
-                        (if let Some(rhs) = op1.place() {
-                            !user_vars.contains(rhs.local)
-                        } else {
-                            true
-                        })
-                        &&
-                        if let Some(rhs) = op2.place() {
-                            !user_vars.contains(rhs.local)
-                        } else {
-                            true
-                        }
-                    },
-                    Rvalue::CheckedBinaryOp(cbop, box (op1, op2)) => {
-                        (if let Some(rhs) = op1.place() {
-                            !user_vars.contains(rhs.local)
-                        } else {
-                            true
-                        })
-                        &&
-                        if let Some(rhs) = op2.place() {
-                            !user_vars.contains(rhs.local)
-                        } else {
-                            true
-                        }
-                    },
-                    _ => true
-                } {
-                    continue
+                    }
                 }
             }
-            else { continue }
-            if !editted_locations[location.block].contains(location.statement_index) {
-                let _ = rewrite_use(
-                    tcx,
-                    rewriter,
-                    body,
-                    func,
-                    ownership_analysis,
-                    mutability_analysis,
-                    fatness_analysis,
-                    &user_vars,
-                    &names,
-                    location,
-                    &mut editted_locations,
-                );
-            }
+
             location.statement_index += 1;
         }
     }
-    */
 }
 
 /// rewrite the use of local `local` at location `location`
@@ -242,7 +224,12 @@ fn rewrite_use<'tcx>(
 ) -> Option<Span> {
     match body.stmt_at(location) {
         Either::Left(statement) => {
-            assert!(editted_locations[location.block].insert(location.statement_index));
+            assert!(
+                editted_locations[location.block].insert(location.statement_index),
+                "{:?}: {:?}",
+                body.source.instance.def_id(),
+                statement
+            );
 
             match &statement.kind {
                 StatementKind::Assign(box (lhs, rhs)) => {
@@ -519,7 +506,7 @@ fn rewrite_use<'tcx>(
                                 unreachable!()
                             }
                         }
-                        _ => None
+                        _ => None,
                     }
                 }
                 _ => todo!(),
@@ -556,7 +543,12 @@ fn rewrite_terminator<'tcx>(
     location: Location,
     editted_locations: &mut IndexVec<BasicBlock, BitSet<usize>>,
 ) -> Option<Span> {
-    assert!(editted_locations[location.block].insert(location.statement_index));
+    assert!(
+        editted_locations[location.block].insert(location.statement_index),
+        "{:?}: {:?}",
+        body.source.instance.def_id(),
+        terminator.kind
+    );
 
     match &terminator.kind {
         TerminatorKind::Return => {
@@ -584,8 +576,28 @@ fn rewrite_terminator<'tcx>(
                         ) {
                             // self.model_libc_call(callee_did, args, destination, location);
                             // return;
-                            return None;
-                            todo!()
+                            return rewrite_libc_call(
+                                tcx,
+                                rewriter,
+                                body,
+                                caller,
+                                ownership_analysis,
+                                mutability_analysis,
+                                fatness_analysis,
+                                user_vars,
+                                names,
+                                callee_did,
+                                args,
+                                *destination,
+                                *fn_span,
+                                location,
+                                editted_locations,
+                            )
+                            .then(|| {
+                                // panic!("malloc span {:?}", terminator.source_info.span);
+                                Some(terminator.source_info.span)
+                            })
+                            .unwrap_or_else(|| None);
                         } else if matches!(
                             tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::Item(_))
@@ -786,6 +798,9 @@ fn nonmutating_ctxt_replacement<'tcx>(
         }
     }
     if reborrow {
+        if need_paren {
+            replacement = format!("({replacement})");
+        }
         if is_base_ptr_clonable {
             replacement += ".clone()";
         } else {
