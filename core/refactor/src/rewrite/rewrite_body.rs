@@ -18,9 +18,6 @@ use rustc_span::{Span, Symbol};
 
 use super::Ownership;
 
-mod rewrite_call;
-use crate::rewrite::rewrite_body::rewrite_call::rewrite_call;
-
 pub fn rewrite_fn_body(
     tcx: TyCtxt<'_>,
     rewriter: &mut Rewriter,
