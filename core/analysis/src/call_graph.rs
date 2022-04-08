@@ -175,7 +175,7 @@ mod test {
                     for callee in call_graph.successors(caller) {
                         let caller = call_graph.functions[caller];
                         let callee = call_graph.functions[callee];
-                        log::debug!("{:?} ---> {:?}", caller, callee)
+                        tracing::debug!("{:?} ---> {:?}", caller, callee)
                     }
                 }
                 // h calls cond twice, so there should be two edges
@@ -212,7 +212,7 @@ mod test {
                     scc_nodes[call_graph_sccs.scc(func)].push(func)
                 }
                 for scc_node in scc_nodes {
-                    log::debug!(
+                    tracing::debug!(
                         "Scc component: {:?}",
                         scc_node
                             .iter()

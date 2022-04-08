@@ -113,7 +113,7 @@ impl InterSummary {
             while let Some(func) = work_list.pop_front() {
                 in_queue[func] = false;
 
-                log::debug!("Solving {:?}", self.call_graph.functions[func]);
+                tracing::debug!("Solving {:?}", self.call_graph.functions[func]);
 
                 let summary = &mut self.func_summaries[func];
 
@@ -166,7 +166,7 @@ impl InterSummary {
     pub fn show_result(&self) {
         for (func, summary) in self.func_summaries.iter_enumerated() {
             summary.local_value_with(|rho, value| {
-                log::debug!(
+                tracing::debug!(
                     "{:?}::{:?} = {}",
                     self.call_graph.functions[func],
                     rho,
@@ -197,7 +197,7 @@ impl InterSummary {
 
             let (ret, args) = sig_strs.split_first().unwrap();
 
-            log::debug!("{:?}: ({}) -> {}", did, args.join(", "), ret)
+            tracing::debug!("{:?}: ({}) -> {}", did, args.join(", "), ret)
         }
     }
 }
@@ -344,7 +344,7 @@ impl ConstraintDatabase {
     }
 
     pub fn push_le(&mut self, x: Mu, y: Mu) {
-        log::debug!("generate constraint {:?} ≤ {:?}", x, y);
+        tracing::debug!("generate constraint {:?} ≤ {:?}", x, y);
         self.le_constraints.add_relation(x, y);
     }
 
@@ -356,7 +356,7 @@ impl ConstraintDatabase {
     pub fn assume(&mut self, x: Mu, value: bool) {
         assert_ne!(x, Mu::ZERO);
         assert_ne!(x, Mu::ONE);
-        log::debug!("assume that {:?} = {}", x, value.then_some(1).unwrap_or(0));
+        tracing::debug!("assume that {:?} = {}", x, value.then_some(1).unwrap_or(0));
         value
             .then(|| {
                 self.le_constraints.add_relation(Mu::ONE, x);
@@ -377,9 +377,9 @@ pub fn explain_error(reason: Vec<Mu>) {
     assert_eq!(reason[0], Mu::ONE);
     assert_eq!(*reason.last().unwrap(), Mu::ZERO);
 
-    log::debug!("A chain of inequalities that leads to this conflict:");
+    tracing::debug!("A chain of inequalities that leads to this conflict:");
     for &[x, y] in reason.array_windows() {
-        log::debug!("{:?} ≤ {:?}", x, y)
+        tracing::debug!("{:?} ≤ {:?}", x, y)
     }
 }
 

@@ -55,7 +55,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
                     caller: lambdas,
                     callee: Local::from_usize(idx + 1),
                 });
-                log::debug!(
+                tracing::debug!(
                     "generate boundary constraint ({:?}, {:?}) ≤ ({:?}. {:?})",
                     edge_data.target,
                     Local::from_usize(idx + 1),
@@ -77,7 +77,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
                     caller: lambdas,
                     callee: Place::return_place().local,
                 });
-                log::debug!(
+                tracing::debug!(
                     "generate boundary constraint ({:?}, {:?}) ≤ ({:?}, {:?})",
                     edge_data.source,
                     destination,

@@ -19,7 +19,7 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
                             return Some((var, body.source.def_id()));
                         }
                     } else {
-                        log::warn!("Andersen resultck: ignoring constant!");
+                        tracing::warn!("Andersen resultck: ignoring constant!");
                     }
                     None
                 })
@@ -34,7 +34,7 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
                         VarDebugInfoContents::Place(place) => place,
                         VarDebugInfoContents::Const(_) => continue,
                     };
-                    // log::trace!("Checking alias for variable {}", var_p.name);
+                    // tracing::trace!("Checking alias for variable {}", var_p.name);
                     for &(ref var_q, body_def_id_of_q) in iter.clone() {
                         let q = match var_q.value {
                             VarDebugInfoContents::Place(place) => place,
@@ -57,7 +57,7 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
                             ));
 
                         if self.pts_graph.alias(node_p, node_q) {
-                            // log::debug!("Found alias! {} and {} [ {:?} and {:?} ]", var_p.name, var_q.name, p, q);
+                            // tracing::debug!("Found alias! {} and {} [ {:?} and {:?} ]", var_p.name, var_q.name, p, q);
 
                             let mut err = self
                                 .ptr_ctxt

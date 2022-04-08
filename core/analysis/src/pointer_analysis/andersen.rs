@@ -34,9 +34,9 @@ impl<'ar, 'tcx> AndersenResult<'ar, 'tcx> {
     }
 
     pub fn dump_pts_sets_to_log(&self) {
-        log::debug!("Dumping andersen analysis results:");
+        tracing::debug!("Dumping andersen analysis results:");
         for p in self.ptr_ctxt.nodes().indices() {
-            log::debug!(
+            tracing::debug!(
                 "pts({}) = {}",
                 self.ptr_ctxt.node_to_str(p),
                 self.pts_graph

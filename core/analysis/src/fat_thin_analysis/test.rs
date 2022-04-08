@@ -52,7 +52,7 @@ fn test_nested_pointers() {
             let mut crate_summary =
                 CrateSummary::new::<_>(tcx, &struct_defs, call_graph, LogSSAName);
             crate_summary.iterate_to_fixpoint().unwrap_or_else(|()| {
-                log::debug!("Solve failed");
+                tracing::debug!("Solve failed");
                 // crate_summary.error_state();
             });
             let solutions = crate_summary.lambda_ctxt.assumptions;
@@ -70,13 +70,13 @@ fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
     crate_summary.iterate_to_fixpoint().unwrap();
     let solutions = crate_summary.lambda_ctxt.assumptions;
 
-    log::debug!("All constraints:");
+    tracing::debug!("All constraints:");
     for constraint in crate_summary.constraints.into_iter() {
-        log::debug!("{}", constraint)
+        tracing::debug!("{}", constraint)
     }
 
     for (lambda, solution) in solutions.into_iter_enumerated() {
-        log::debug!(
+        tracing::debug!(
             "{: <7} = {: <2}, with source data {}",
             &format!("{:?}", lambda),
             solution

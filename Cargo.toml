@@ -18,7 +18,7 @@ rustc_private = true
 
 [dependencies]
 clap = { version = "3.1.2", features = ["derive"] }
-env_logger = "0.9"
+tracing-subscriber = "0.3.10"
 analysis = { path = "core/analysis" }
 refactor = { path = "core/refactor" }
 rewriter = { path = "core/rewriter" }

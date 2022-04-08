@@ -26,7 +26,7 @@ impl<'pt, 'tcx> PlaceTracer<'pt, 'tcx> {
 impl<'pt, 'tcx> Visitor<'tcx> for PlaceTracer<'pt, 'tcx> {
     fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
         if !self.traced.contains(&place.as_ref()) {
-            log::trace!("Found new place: {:?}", place);
+            tracing::trace!("Found new place: {:?}", place);
             self.traced.insert(place.as_ref());
         }
         self.super_place(place, context, location)
@@ -52,7 +52,7 @@ impl<'pt, 'tcx> Visitor<'tcx> for PlaceTracer<'pt, 'tcx> {
                 // assert!(from_hir_call, "Inner functions are not supported");
 
                 if let FnDef(def_id, _) = func.constant().unwrap().ty().kind() {
-                    log::trace!(
+                    tracing::trace!(
                         "... found {} function call {:?} with def id {:?}",
                         if let Some(local_def_id) = def_id.as_local() {
                             if self.body_ids.contains(&local_def_id) {

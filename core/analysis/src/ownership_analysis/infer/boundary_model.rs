@@ -97,7 +97,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
     }
 
     fn model_return(&mut self, location: Location) {
-        // log::error!("TODO: process return ssa indices!");
+        // tracing::error!("TODO: process return ssa indices!");
 
         if self.ctxt.body.local_decls[RETURN_PLACE]
             .ty
@@ -122,7 +122,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
             );
         }
 
-        log::debug!("Generate constraints upon function exit");
+        tracing::debug!("Generate constraints upon function exit");
         for (local, local_decl) in self.ctxt.body.local_decls.iter_enumerated().skip(1) {
             if local_decl.ty.is_ptr_but_not_fn_ptr() {
                 let ssa_idx = self.ssa_state().r#use(local);
