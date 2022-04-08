@@ -20,7 +20,7 @@ use rustc_hir::{ItemKind, OwnerNode};
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config;
-use std::{borrow::BorrowMut, path::PathBuf};
+use std::{borrow::BorrowMut, path::PathBuf, time::Instant};
 
 #[derive(Parser)]
 struct Cli {
@@ -106,6 +106,13 @@ fn compiler_config(input_path: PathBuf) -> Config {
     }
 }
 
+fn time<T>(label: &str, f: impl FnOnce() -> T) -> T {
+    let start = Instant::now();
+    let ret = f();
+    tracing::info!(task=label, "task finished in {}ms", (Instant::now() - start).as_millis());
+    ret
+}
+
 fn run(cmd: &Command, tcx: TyCtxt<'_>) {
     let top_level_fns = tcx
         .hir()
@@ -171,20 +178,22 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             }
         }
         &Command::Rewrite { rewrite_mode } => {
-            let ownership_analysis =
-                refactor::ownership_analysis(tcx, &top_level_struct_defs, &top_level_fns);
-            let mutability_analysis =
-                refactor::mutability_analysis(tcx, &top_level_struct_defs, &top_level_fns);
-            let fatness_analysis =
-                refactor::fatness_analysis(tcx, &top_level_struct_defs, &top_level_fns);
-            refactor::rewrite::rewrite(
-                tcx,
-                &ownership_analysis,
-                &mutability_analysis,
-                &fatness_analysis,
-                &top_level_struct_defs,
-                rewrite_mode,
-            )
+            let ownership_analysis = time("ownership analysis", ||
+                refactor::ownership_analysis(tcx, &top_level_struct_defs, &top_level_fns));
+            let mutability_analysis = time("mutability analysis", ||
+                refactor::mutability_analysis(tcx, &top_level_struct_defs, &top_level_fns));
+            let fatness_analysis = time("fatness analysis", ||
+                refactor::fatness_analysis(tcx, &top_level_struct_defs, &top_level_fns));
+            time("rewrite", ||
+                refactor::rewrite::rewrite(
+                    tcx,
+                    &ownership_analysis,
+                    &mutability_analysis,
+                    &fatness_analysis,
+                    &top_level_struct_defs,
+                    rewrite_mode,
+                )
+            );
         }
     }
 }
