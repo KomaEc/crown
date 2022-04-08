@@ -10,13 +10,16 @@ use rustc_index::{bit_set::BitSet, vec::Idx};
 use rustc_middle::{
     mir::{
         visit::Visitor, Body, Local, Location, Operand, Place, ProjectionElem, Rvalue, Statement,
-        StatementKind, VarDebugInfoContents,
+        StatementKind, Terminator, TerminatorKind, VarDebugInfoContents,
     },
     ty::TyCtxt,
 };
 use rustc_span::{Span, Symbol};
 
 use super::Ownership;
+
+mod rewrite_call;
+use crate::rewrite::rewrite_body::rewrite_call::rewrite_call;
 
 pub fn rewrite_fn_body(
     tcx: TyCtxt<'_>,
@@ -49,7 +52,7 @@ pub fn rewrite_fn_body(
         }
     }
 
-    struct BodyRewriteVisitor<'me, 'tcx> {
+    struct StatementRewriteVisitor<'me, 'tcx> {
         tcx: TyCtxt<'tcx>,
         rewriter: &'me mut Rewriter,
         body: &'me Body<'tcx>,
@@ -61,7 +64,7 @@ pub fn rewrite_fn_body(
         names: &'me FxHashMap<Local, Symbol>,
     }
 
-    impl<'me, 'tcx> Visitor<'tcx> for BodyRewriteVisitor<'me, 'tcx> {
+    impl<'me, 'tcx> Visitor<'tcx> for StatementRewriteVisitor<'me, 'tcx> {
         // fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
         fn visit_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
             if let StatementKind::Assign(box (place, _)) = &statement.kind {
@@ -104,7 +107,7 @@ pub fn rewrite_fn_body(
         }
     }
 
-    BodyRewriteVisitor {
+    StatementRewriteVisitor {
         tcx,
         rewriter,
         body,
@@ -417,7 +420,144 @@ fn rewrite_use<'tcx>(
                 _ => todo!(),
             }
         }
-        Either::Right(terminator) => None,
+        Either::Right(terminator) => {
+            rewrite_terminator(
+                tcx,
+                rewriter,
+                body,
+                func,
+                ownership_analysis,
+                mutability_analysis,
+                fatness_analysis,
+                user_vars,
+                names,
+                terminator,
+                location,
+            )
+        }
+    }
+}
+
+fn rewrite_terminator<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    rewriter: &mut Rewriter,
+    body: &Body<'tcx>,
+    caller: Func,
+    ownership_analysis: &ownership_analysis::InterSummary,
+    mutability_analysis: &mutability_analysis::InterSummary,
+    fatness_analysis: &fat_thin_analysis::CrateSummary,
+    user_vars: &BitSet<Local>,
+    names: &FxHashMap<Local, Symbol>,
+    terminator: &Terminator<'tcx>,
+    location: Location,
+) -> Option<Span> {
+    match &terminator.kind {
+        TerminatorKind::Return => todo!(),
+        TerminatorKind::Call {
+            func: callee,
+            args,
+            destination,
+            cleanup,
+            from_hir_call,
+            fn_span,
+        } => {
+            let ty = callee
+                .constant()
+                .expect("closures or function pointers are not supported!")
+                .ty();
+            if let &rustc_middle::ty::TyKind::FnDef(callee_did, _generic_args) = ty.kind() {
+                match callee_did.as_local() {
+                    Some(did) => {
+                        if matches!(
+                            tcx.hir().find_by_def_id(did),
+                            Some(rustc_hir::Node::ForeignItem(_))
+                        ) {
+                            // self.model_libc_call(callee_did, args, destination, location);
+                            // return;
+                            return None;
+                            todo!()
+                        } else if matches!(
+                            tcx.hir().find_by_def_id(did),
+                            Some(rustc_hir::Node::Item(_))
+                        ) {
+                            /* 
+                            TODO: check raw context?
+                            let (ownership_sigs, mutability_sigs) = (
+                                &ownership_analysis.func_sigs[ownership_analysis
+                                    .call_graph
+                                    .lookup_function(&callee_did)
+                                    .unwrap()]
+                                    .sig,
+                                &mutability_analysis.func_sigs[mutability_analysis
+                                    .call_graph
+                                    .lookup_function(&callee_did)
+                                    .unwrap()]
+                                    .sig,
+                            );
+                            */
+
+                            for arg in args {
+                                if let Some(arg) = arg.place() {
+                                    let arg = arg.as_local().expect("arguments are assumed to be temporaries");
+                                    assert!(!user_vars.contains(arg), "arguments are assumed to be temporaries");
+                                    let source_map = &fatness_analysis.ssa_name_source_map[caller];
+                                    let fatness_ssa_idx =
+                                        source_map.try_use(arg, location).unwrap();
+                                    let def_rich_location = &fatness_analysis.def_sites[caller].defs
+                                        [arg][fatness_ssa_idx];
+                                    let def_location = match def_rich_location {
+                                        &RichLocation::Mir(l) => l,
+                                        &RichLocation::Phi(_) => todo!(),
+                                        // we cannot end up in this branch, since
+                                        // rhs is not user variable and must be initialised
+                                        RichLocation::Entry => unreachable!(),
+                                    };
+
+                                    let _ = rewrite_use(
+                                        tcx,
+                                        rewriter,
+                                        body,
+                                        caller,
+                                        ownership_analysis,
+                                        mutability_analysis,
+                                        fatness_analysis,
+                                        user_vars,
+                                        names,
+                                        def_location
+                                    );
+
+                                } else {
+                                    unreachable!("arguments are not allowed to be constants")
+                                }
+                            }
+
+                            if let Some((dest, _)) = *destination {
+                                // if destination place is a temporary
+                                if !user_vars.contains(dest.local) {
+                                    return Some(terminator.source_info.span)
+                                } else {
+                                    assert!(false, "destination place is assumed to be a temporary")
+                                }
+                            }
+                            // self.model_boundary(callee_did, args, destination, location);
+                            // return;
+                            return None; //todo!()
+                        }
+
+                        unreachable!()
+                    }
+                    None => {
+                        // self.model_library_call(callee_did, args, destination, location);
+                        // return;
+                        return None;
+                        todo!()
+                    }
+                }
+            } else {
+                unreachable!()
+            }
+        }
+        _ => unreachable!(),
     }
 }
 
