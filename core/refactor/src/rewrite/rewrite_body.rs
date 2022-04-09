@@ -5,7 +5,7 @@ use crate::rewrite::rewrite_body::rewrite_libc_call::rewrite_libc_call;
 use crate::rewrite::rewrite_body::rewrite_library_call::rewrite_library_call;
 use analysis::{
     call_graph::Func, fat_thin_analysis, mutability_analysis, ownership_analysis,
-    ssa::RichLocation, ty_ext::TyExt, LocationMap,
+    ssa::RichLocation, ty_ext::TyExt,
 };
 use either::Either;
 use rewriter::Rewriter;
@@ -23,8 +23,6 @@ use rustc_middle::{
     ty::{TyCtxt, TyKind},
 };
 use rustc_span::{Span, Symbol};
-
-use smallvec::{smallvec, SmallVec};
 
 use super::Ownership;
 

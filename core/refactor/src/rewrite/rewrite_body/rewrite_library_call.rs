@@ -1,20 +1,12 @@
 use analysis::{
-    call_graph::Func, fat_thin_analysis, mutability_analysis, ownership_analysis,
-    ssa::RichLocation, ty_ext::TyExt, LocationMap,
+    call_graph::Func, fat_thin_analysis, mutability_analysis, ownership_analysis, ssa::RichLocation,
 };
-use either::Either;
 use rewriter::Rewriter;
 use rustc_hash::FxHashMap;
-use rustc_hir::def_id::{DefId, LocalDefId};
-use rustc_index::{
-    bit_set::BitSet,
-    vec::{Idx, IndexVec},
-};
+use rustc_hir::def_id::DefId;
+use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
-    mir::{
-        visit::Visitor, BasicBlock, Body, Local, Location, Operand, Place, ProjectionElem, Rvalue,
-        Statement, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents,
-    },
+    mir::{BasicBlock, Body, Local, Location, Operand, Place},
     ty::TyCtxt,
 };
 use rustc_span::{Span, Symbol};
@@ -33,7 +25,7 @@ pub fn rewrite_library_call<'tcx>(
     names: &FxHashMap<Local, Symbol>,
     callee_did: DefId,
     args: &Vec<Operand<'tcx>>,
-    destination: Option<(Place<'tcx>, BasicBlock)>,
+    _destination: Option<(Place<'tcx>, BasicBlock)>,
     fn_span: Span,
     location: Location,
     editted_locations: &mut IndexVec<BasicBlock, BitSet<usize>>,
