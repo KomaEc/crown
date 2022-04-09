@@ -21,6 +21,8 @@ use rustc_span::{Span, Symbol};
 
 use crate::rewrite::rewrite_body::rewrite_use;
 
+use super::RewriteUseResult;
+
 /// return: whether it requires further rewrite of LHS
 pub fn rewrite_libc_call<'tcx>(
     tcx: TyCtxt<'tcx>,
@@ -38,10 +40,10 @@ pub fn rewrite_libc_call<'tcx>(
     fn_span: Span,
     location: Location,
     editted_locations: &mut IndexVec<BasicBlock, BitSet<usize>>,
-) -> bool {
+) -> RewriteUseResult {
     let foreign_item = tcx.hir().expect_foreign_item(callee_did.expect_local());
     match foreign_item.ident.as_str() {
-        "printf" => false,
+        "printf" => RewriteUseResult::Done,
         "calloc" => todo!(),
         "realloc" => todo!(),
         "malloc" => rewrite_malloc(
@@ -102,7 +104,7 @@ fn rewrite_malloc<'tcx>(
     fn_span: Span,
     location: Location,
     editted_locations: &mut IndexVec<BasicBlock, BitSet<usize>>,
-) -> bool {
+) -> RewriteUseResult {
     let ([arg], _) = args.split_array_ref();
     if let Some(arg) = arg.place() {
         let arg = arg
@@ -140,26 +142,29 @@ fn rewrite_malloc<'tcx>(
         unreachable!("arguments to malloc must be temporaries")
     }
 
-    rewriter.make_suggestion(
-        tcx,
-        fn_span,
-        "removing malloc".to_string(),
-        "Some(Box::new(Default::default()))".to_string(),
-    );
-
     let (dest, _) = destination.unwrap();
 
-    return !user_vars.contains(dest.local);
-    /*
+    // return !user_vars.contains(dest.local);
     if !user_vars.contains(dest.local) {
-        true
+        // the type of malloc res cannot be determined
+        RewriteUseResult::FromMalloc {
+            malloc_span: fn_span,
+        }
     } else {
         // assert!(false, "destination place is assumed to be a temporary in {:?}", terminator.kind)
-        assert!(dest.projection.is_empty(), "destination place is assumed to be a local, and we need not rewrite")
+        assert!(
+            dest.projection.is_empty(),
+            "destination place is assumed to be a local, and we need not rewrite"
+        );
+        rewriter.make_suggestion(
+            tcx,
+            fn_span,
+            "removing malloc".to_string(),
+            "Some(Box::new(Default::default()))".to_string(),
+        );
+        RewriteUseResult::Done
     }
-    */
 }
-
 
 fn rewrite_free<'tcx>(
     tcx: TyCtxt<'tcx>,
@@ -176,7 +181,7 @@ fn rewrite_free<'tcx>(
     fn_span: Span,
     location: Location,
     editted_locations: &mut IndexVec<BasicBlock, BitSet<usize>>,
-) -> bool {
+) -> RewriteUseResult {
     let ([arg], _) = args.split_array_ref();
     if let Some(arg) = arg.place() {
         let arg = arg
@@ -197,7 +202,7 @@ fn rewrite_free<'tcx>(
             RichLocation::Entry => unreachable!(),
         };
 
-        let arg_span = rewrite_use(
+        if let RewriteUseResult::LHSToBeRewritten { rhs_span: arg_span } = rewrite_use(
             tcx,
             rewriter,
             body,
@@ -209,26 +214,26 @@ fn rewrite_free<'tcx>(
             names,
             def_location,
             editted_locations,
-        ).unwrap();
+        ) {
+            rewriter.make_suggestion(
+                tcx,
+                fn_span.shrink_to_lo().until(arg_span),
+                "removing free prefix".to_string(),
+                "let _ = ".to_string(),
+            );
 
-        rewriter.make_suggestion(
-            tcx,
-            fn_span.shrink_to_lo().until(arg_span),
-            "removing free prefix".to_string(),
-            "let _ = ".to_string(),
-        );
+            rewriter.make_suggestion(
+                tcx,
+                arg_span.between(fn_span.shrink_to_hi()),
+                "removing free suffix".to_string(),
+                "".to_string(),
+            );
+        } else {
+            unimplemented!()
+        }
 
-        rewriter.make_suggestion(
-            tcx,
-            arg_span.between(fn_span.shrink_to_hi()),
-            "removing free suffix".to_string(),
-            "".to_string(),
-        );
-
-        false
+        RewriteUseResult::Done
     } else {
         unreachable!("arguments to malloc must be temporaries")
     }
-
-
 }

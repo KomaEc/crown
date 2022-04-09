@@ -20,7 +20,7 @@ use rustc_middle::{
         visit::Visitor, BasicBlock, Body, Local, Location, Operand, Place, ProjectionElem, Rvalue,
         Statement, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents,
     },
-    ty::TyCtxt,
+    ty::{TyCtxt, TyKind},
 };
 use rustc_span::{Span, Symbol};
 
@@ -79,7 +79,7 @@ pub fn rewrite_fn_body(
                 if self.user_vars.contains(place.local)
                 //&& place.ty(self.body, self.tcx).ty.is_ptr_but_not_fn_ptr()
                 {
-                    if let Some(rhs_span) = rewrite_use(
+                    if let RewriteUseResult::LHSToBeRewritten { rhs_span } = rewrite_use(
                         self.tcx,
                         &mut *self.rewriter,
                         self.body,
@@ -205,6 +205,12 @@ pub fn rewrite_fn_body(
     }
 }
 
+pub enum RewriteUseResult {
+    Done,
+    LHSToBeRewritten { rhs_span: Span },
+    FromMalloc { malloc_span: Span },
+}
+
 /// rewrite the use of local `local` at location `location`
 /// This is a recursive procedure that traces a chain of
 /// intermediate statements until the RHS of the statement
@@ -221,7 +227,7 @@ fn rewrite_use<'tcx>(
     names: &FxHashMap<Local, Symbol>,
     location: Location,
     editted_locations: &mut IndexVec<BasicBlock, BitSet<usize>>,
-) -> Option<Span> {
+) -> RewriteUseResult {
     match body.stmt_at(location) {
         Either::Left(statement) => {
             assert!(
@@ -371,9 +377,11 @@ fn rewrite_use<'tcx>(
                                         // however, if it is indeed the case, we don't have to rewrite lhs!!!!!!
                                         // so it's fine?
                                         if user_vars.contains(lhs.local) {
-                                            return None;
+                                            return RewriteUseResult::Done;
                                         } else {
-                                            return Some(statement.source_info.span);
+                                            return RewriteUseResult::LHSToBeRewritten {
+                                                rhs_span: statement.source_info.span,
+                                            };
                                         }
                                     } else {
                                         // This is the assumption we make that it is impossible
@@ -426,7 +434,7 @@ fn rewrite_use<'tcx>(
                                             statement.source_info.span,
                                         )
                                     } else {
-                                        None
+                                        RewriteUseResult::Done
                                     }
                                 }
                             }
@@ -445,13 +453,13 @@ fn rewrite_use<'tcx>(
                                     statement.source_info.span,
                                 )
                             } else {
-                                None
+                                RewriteUseResult::Done
                             }
                         }
 
                         Rvalue::Cast(_, Operand::Copy(rhs) | Operand::Move(rhs), _) => {
                             if maybe_ptr_sig.is_none() {
-                                return None;
+                                return RewriteUseResult::Done;
                             }
                             let (ownership_ctxt, fatness_ctxt) = maybe_ptr_sig.unwrap();
 
@@ -475,6 +483,72 @@ fn rewrite_use<'tcx>(
                                         // rhs is not user variable and must be initialised
                                         RichLocation::Entry => unreachable!(),
                                     };
+                                    return match rewrite_use(
+                                        tcx,
+                                        rewriter,
+                                        body,
+                                        func,
+                                        ownership_analysis,
+                                        mutability_analysis,
+                                        fatness_analysis,
+                                        user_vars,
+                                        names,
+                                        def_location,
+                                        editted_locations,
+                                    ) {
+                                        RewriteUseResult::Done => unreachable!(),
+                                        RewriteUseResult::LHSToBeRewritten { rhs_span } => {
+                                            rewriter.make_suggestion(
+                                                tcx,
+                                                rhs_span.shrink_to_hi().between(
+                                                    statement.source_info.span.shrink_to_hi(),
+                                                ),
+                                                "remove cast".to_owned(),
+                                                "".to_owned(),
+                                            );
+                                            RewriteUseResult::LHSToBeRewritten {
+                                                rhs_span: statement.source_info.span,
+                                            }
+                                        }
+                                        RewriteUseResult::FromMalloc { malloc_span } => {
+                                            rewriter.make_suggestion(
+                                                tcx,
+                                                malloc_span.shrink_to_hi().between(
+                                                    statement.source_info.span.shrink_to_hi(),
+                                                ),
+                                                "remove cast".to_owned(),
+                                                "".to_owned(),
+                                            );
+                                            // TODO: this type needs complete re-computing
+                                            let ty = lhs
+                                                .ty(body, tcx)
+                                                .projection_ty(tcx, ProjectionElem::Deref)
+                                                .ty;
+                                            let new_type_str = match ty.kind() {
+                                                TyKind::Adt(adt_def, _) => tcx
+                                                    .hir()
+                                                    .expect_item(adt_def.did.expect_local())
+                                                    .ident
+                                                    .as_str(),
+                                                _ if ty.is_primitive() => {
+                                                    todo!()
+                                                }
+                                                _ => todo!(),
+                                            };
+                                            rewriter.make_suggestion(
+                                                tcx,
+                                                malloc_span,
+                                                "removing malloc".to_string(),
+                                                format!(
+                                                    "Some(Box::new(<{new_type_str} as Default>::default()))",
+                                                ),
+                                            );
+                                            RewriteUseResult::LHSToBeRewritten {
+                                                rhs_span: statement.source_info.span,
+                                            }
+                                        }
+                                    };
+                                    /*
                                     return rewrite_use(
                                         tcx,
                                         rewriter,
@@ -499,6 +573,7 @@ fn rewrite_use<'tcx>(
                                         );
                                         statement.source_info.span
                                     });
+                                    */
                                 } else {
                                     todo!()
                                 }
@@ -506,7 +581,7 @@ fn rewrite_use<'tcx>(
                                 unreachable!()
                             }
                         }
-                        _ => None,
+                        _ => RewriteUseResult::Done,
                     }
                 }
                 _ => todo!(),
@@ -542,7 +617,7 @@ fn rewrite_terminator<'tcx>(
     terminator: &Terminator<'tcx>,
     location: Location,
     editted_locations: &mut IndexVec<BasicBlock, BitSet<usize>>,
-) -> Option<Span> {
+) -> RewriteUseResult {
     assert!(
         editted_locations[location.block].insert(location.statement_index),
         "{:?}: {:?}",
@@ -552,8 +627,7 @@ fn rewrite_terminator<'tcx>(
 
     match &terminator.kind {
         TerminatorKind::Return => {
-            return None;
-            todo!()
+            return RewriteUseResult::Done;
         }
         TerminatorKind::Call {
             func: callee,
@@ -592,12 +666,12 @@ fn rewrite_terminator<'tcx>(
                                 *fn_span,
                                 location,
                                 editted_locations,
-                            )
-                            .then(|| {
-                                // panic!("malloc span {:?}", terminator.source_info.span);
-                                Some(terminator.source_info.span)
-                            })
-                            .unwrap_or_else(|| None);
+                            );
+                            //.then(|| {
+                            // panic!("malloc span {:?}", terminator.source_info.span);
+                            //    Some(terminator.source_info.span)
+                            //})
+                            //.unwrap_or_else(|| None);
                         } else if matches!(
                             tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::Item(_))
@@ -661,7 +735,9 @@ fn rewrite_terminator<'tcx>(
                             if let Some((dest, _)) = *destination {
                                 // if destination place is a temporary
                                 if !user_vars.contains(dest.local) {
-                                    return Some(terminator.source_info.span);
+                                    return RewriteUseResult::LHSToBeRewritten {
+                                        rhs_span: terminator.source_info.span,
+                                    };
                                 } else {
                                     // assert!(false, "destination place is assumed to be a temporary in {:?}", terminator.kind)
                                     assert!(dest.projection.is_empty(), "destination place is assumed to be a local, and we need not rewrite")
@@ -669,7 +745,7 @@ fn rewrite_terminator<'tcx>(
                             }
                             // self.model_boundary(callee_did, args, destination, location);
                             // return;
-                            return None; //todo!()
+                            return RewriteUseResult::Done; //todo!()
                         }
 
                         unreachable!()
@@ -694,14 +770,14 @@ fn rewrite_terminator<'tcx>(
                             location,
                             editted_locations,
                         );
-                        None
+                        RewriteUseResult::Done
                     }
                 }
             } else {
                 unreachable!()
             }
         }
-        _ => None,
+        _ => RewriteUseResult::Done,
     }
 }
 
@@ -715,7 +791,7 @@ pub enum MutatingCtxt {
 #[derive(Clone, Copy)]
 pub enum NonMutatingCtxt {
     Copy,
-    Borrow
+    Borrow,
 }
 
 /// we don't rewrite fatness for now
@@ -765,13 +841,21 @@ fn mutating_ctxt_replacement<'tcx>(
     }
 
     match mutating_ctxt {
-        MutatingCtxt::Store => {},
-        MutatingCtxt::Move => 
+        MutatingCtxt::Store => {}
+        MutatingCtxt::Move => {
             if place.is_indirect() {
-                replacement = format!("std::mem::take(&mut {replacement})");
+                if need_paren {
+                    replacement = format!("({replacement})");
+                }
+                replacement += ".take()"; // format!("std::mem::take(&mut {replacement})");
             }
-        ,
-        MutatingCtxt::Borrow => replacement += ".as_deref_mut()",
+        }
+        MutatingCtxt::Borrow => {
+            if need_paren {
+                replacement = format!("({replacement})");
+            }
+            replacement += ".as_deref_mut()"
+        }
     }
     replacement
 }
@@ -819,7 +903,7 @@ fn nonmutating_ctxt_replacement<'tcx>(
     }
 
     match nonmutating_ctxt {
-        NonMutatingCtxt::Copy => {},
+        NonMutatingCtxt::Copy => {}
         NonMutatingCtxt::Borrow => {
             if need_paren {
                 replacement = format!("({replacement})");
@@ -829,7 +913,7 @@ fn nonmutating_ctxt_replacement<'tcx>(
             } else {
                 replacement += ".as_deref()";
             }
-        },
+        }
     }
     replacement
 }
@@ -845,8 +929,9 @@ fn rewrite_null_constant<'tcx>(
     names: &FxHashMap<Local, Symbol>,
     lhs: &Place<'tcx>,
     span: Span,
-) -> Option<Span> {
-    let replacement = mutating_ctxt_replacement(tcx, body, lhs, names[&lhs.local], MutatingCtxt::Store);
+) -> RewriteUseResult {
+    let replacement =
+        mutating_ctxt_replacement(tcx, body, lhs, names[&lhs.local], MutatingCtxt::Store);
 
     if !matches!(ownership_ctxt, Ownership::Raw) {
         if user_vars.contains(lhs.local) {
@@ -858,11 +943,11 @@ fn rewrite_null_constant<'tcx>(
             );
         } else {
             rewriter.make_suggestion(tcx, span, "remove null pointer".to_owned(), format!("None"));
-            return Some(span);
+            return RewriteUseResult::LHSToBeRewritten { rhs_span: span };
         }
     }
 
-    None
+    RewriteUseResult::Done
 }
 
 fn ptr_place_sig<'tcx>(

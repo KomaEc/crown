@@ -458,7 +458,13 @@ impl<'me, 'tcx> AnalysisEngine<'me, 'tcx> {
                             self.tcx.type_of(field_def.did)
                         );
                         for (idx, rho) in z.clone().enumerate() {
-                            tracing::debug!("{:*<1$}{2} ==> GLOBAL::{3:?}", "", idx, field_def_str, rho)
+                            tracing::debug!(
+                                "{:*<1$}{2} ==> GLOBAL::{3:?}",
+                                "",
+                                idx,
+                                field_def_str,
+                                rho
+                            )
                         }
                     }
                 }

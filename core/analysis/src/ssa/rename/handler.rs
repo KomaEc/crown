@@ -5,10 +5,10 @@ use crate::{
     ssa::{body_ext::PhiNodeInsertionPoints, rename::SSANameHandler, RichLocation},
     LocationMap,
 };
-use tracing::debug;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Local, Location};
 use smallvec::{smallvec, SmallVec};
+use tracing::debug;
 
 use super::SSAIdx;
 

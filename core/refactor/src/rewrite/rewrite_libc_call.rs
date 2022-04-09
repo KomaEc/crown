@@ -1,15 +1,18 @@
-use analysis::{fat_thin_analysis, call_graph::Func, ssa::RichLocation};
+use analysis::{call_graph::Func, fat_thin_analysis, ssa::RichLocation};
 use either::Either;
 use rewriter::Rewriter;
-use rustc_middle::{mir::{Terminator, TerminatorKind, Body, Local, Location, StatementKind, Rvalue}, ty::TyCtxt};
+use rustc_middle::{
+    mir::{Body, Local, Location, Rvalue, StatementKind, Terminator, TerminatorKind},
+    ty::TyCtxt,
+};
 
 pub fn rewrite_libc_call<'tcx>(
-    tcx: TyCtxt<'tcx>, 
-    rewriter: &mut Rewriter, 
-    body: &Body, 
-    caller: Func, 
-    fatness_analysis: &fat_thin_analysis::CrateSummary, 
-    terminator: &Terminator<'tcx>, 
+    tcx: TyCtxt<'tcx>,
+    rewriter: &mut Rewriter,
+    body: &Body,
+    caller: Func,
+    fatness_analysis: &fat_thin_analysis::CrateSummary,
+    terminator: &Terminator<'tcx>,
     location: Location,
 ) {
     let callee = match &terminator.kind {
@@ -24,7 +27,13 @@ pub fn rewrite_libc_call<'tcx>(
     let name = tcx.def_path_debug_str(*callee_def_id);
     match name {
         x if x.ends_with("::printf") => rewrite_printf(
-            tcx, rewriter, fatness_analysis, caller, body, location, terminator
+            tcx,
+            rewriter,
+            fatness_analysis,
+            caller,
+            body,
+            location,
+            terminator,
         ),
         _ => tracing::debug!("not handling foreign function {name}"),
     }
@@ -49,8 +58,9 @@ pub fn rewrite_printf<'tcx>(
         func,
         body,
         loc,
-        args[0].place().unwrap().as_local().unwrap()
-    ).unwrap();
+        args[0].place().unwrap().as_local().unwrap(),
+    )
+    .unwrap();
     let format_string = format_string_literal
         .trim_start_matches(r#"b""#)
         .trim_end_matches('"');
@@ -59,20 +69,23 @@ pub fn rewrite_printf<'tcx>(
     if format_string.contains('%') {
         panic!("unsupported c formatter in {}", format_string);
     }
-    
+
     let mut args_string = String::new();
     for (i, arg) in args.iter().enumerate() {
-        args_string.push_str(&source(
-            tcx,
-            fatness_analysis,
-            func,
-            body,
-            loc,
-            arg.place().unwrap().as_local().unwrap(),
-        ).unwrap());
+        args_string.push_str(
+            &source(
+                tcx,
+                fatness_analysis,
+                func,
+                body,
+                loc,
+                arg.place().unwrap().as_local().unwrap(),
+            )
+            .unwrap(),
+        );
         args_string.push_str(", ");
     }
-    
+
     rewriter.make_suggestion(
         tcx,
         terminator.source_info.span,
