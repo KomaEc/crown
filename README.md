@@ -1,4 +1,4 @@
-# Ownership and Lifetime guided C to Rust Refactoring
+# ORC: Ownership-guided generation of Rust code from C code
 
 
 p = q;
