@@ -104,7 +104,7 @@ pub fn rewrite_fn_body(
                                 self.body,
                                 place,
                                 self.names[&place.local],
-                                false,
+                                MutatingCtxt::Store,
                             );
                             self.rewriter.make_suggestion(
                                 self.tcx,
@@ -186,7 +186,7 @@ pub fn rewrite_fn_body(
                                 &rhs,
                                 names[&rhs.local],
                                 false,
-                                false,
+                                NonMutatingCtxt::Copy,
                             );
 
                             rewriter.make_suggestion(
@@ -279,7 +279,7 @@ fn rewrite_use<'tcx>(
                                                     rhs,
                                                     names[&rhs.local],
                                                     is_base_ptr_clonable,
-                                                    false,
+                                                    NonMutatingCtxt::Copy,
                                                 );
 
                                                 rewriter.make_suggestion(
@@ -299,14 +299,14 @@ fn rewrite_use<'tcx>(
                                                             body,
                                                             rhs,
                                                             names[&rhs.local],
-                                                            false,
+                                                            MutatingCtxt::Move,
                                                         );
 
                                                         rewriter.make_suggestion(
                                                             tcx,
                                                             statement.source_info.span,
                                                             "rewrite rhs".to_owned(),
-                                                            format!("std::mem::take(&mut {replacement})"),
+                                                            replacement,
                                                         );
                                                     }
                                                     Ownership::Transient { mutbl } if mutbl => {
@@ -315,7 +315,7 @@ fn rewrite_use<'tcx>(
                                                             body,
                                                             rhs,
                                                             names[&rhs.local],
-                                                            true,
+                                                            MutatingCtxt::Borrow,
                                                         );
 
                                                         rewriter.make_suggestion(
@@ -351,7 +351,7 @@ fn rewrite_use<'tcx>(
                                                                 rhs,
                                                                 names[&rhs.local],
                                                                 is_base_ptr_clonable,
-                                                                true,
+                                                                NonMutatingCtxt::Borrow,
                                                             );
 
                                                         rewriter.make_suggestion(
@@ -705,6 +705,19 @@ fn rewrite_terminator<'tcx>(
     }
 }
 
+#[derive(Clone, Copy)]
+pub enum MutatingCtxt {
+    Store,
+    Move,
+    Borrow,
+}
+
+#[derive(Clone, Copy)]
+pub enum NonMutatingCtxt {
+    Copy,
+    Borrow
+}
+
 /// we don't rewrite fatness for now
 /// this logic only works for places of the following form:
 /// 1. (*..*s).f
@@ -716,7 +729,7 @@ fn mutating_ctxt_replacement<'tcx>(
     body: &Body<'tcx>,
     place: &Place<'tcx>,
     var_name: Symbol,
-    reborrow: bool,
+    mutating_ctxt: MutatingCtxt,
 ) -> String {
     let mut replacement = var_name.to_string();
     let mut need_paren = false;
@@ -750,8 +763,15 @@ fn mutating_ctxt_replacement<'tcx>(
             _ => todo!(),
         }
     }
-    if reborrow {
-        replacement += ".as_deref_mut()";
+
+    match mutating_ctxt {
+        MutatingCtxt::Store => {},
+        MutatingCtxt::Move => 
+            if place.is_indirect() {
+                replacement = format!("std::mem::take(&mut {replacement})");
+            }
+        ,
+        MutatingCtxt::Borrow => replacement += ".as_deref_mut()",
     }
     replacement
 }
@@ -762,7 +782,7 @@ fn nonmutating_ctxt_replacement<'tcx>(
     place: &Place<'tcx>,
     var_name: Symbol,
     mut is_base_ptr_clonable: bool,
-    reborrow: bool,
+    nonmutating_ctxt: NonMutatingCtxt,
 ) -> String {
     let mut replacement = var_name.to_string();
     let mut need_paren = false;
@@ -797,15 +817,19 @@ fn nonmutating_ctxt_replacement<'tcx>(
             _ => todo!(),
         }
     }
-    if reborrow {
-        if need_paren {
-            replacement = format!("({replacement})");
-        }
-        if is_base_ptr_clonable {
-            replacement += ".clone()";
-        } else {
-            replacement += ".as_deref()";
-        }
+
+    match nonmutating_ctxt {
+        NonMutatingCtxt::Copy => {},
+        NonMutatingCtxt::Borrow => {
+            if need_paren {
+                replacement = format!("({replacement})");
+            }
+            if is_base_ptr_clonable {
+                replacement += ".clone()";
+            } else {
+                replacement += ".as_deref()";
+            }
+        },
     }
     replacement
 }
@@ -822,7 +846,7 @@ fn rewrite_null_constant<'tcx>(
     lhs: &Place<'tcx>,
     span: Span,
 ) -> Option<Span> {
-    let replacement = mutating_ctxt_replacement(tcx, body, lhs, names[&lhs.local], false);
+    let replacement = mutating_ctxt_replacement(tcx, body, lhs, names[&lhs.local], MutatingCtxt::Store);
 
     if !matches!(ownership_ctxt, Ownership::Raw) {
         if user_vars.contains(lhs.local) {

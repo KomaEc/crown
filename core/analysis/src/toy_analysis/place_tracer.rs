@@ -2,7 +2,6 @@ use rustc_hir::def_id::LocalDefId;
 use rustc_middle::mir::visit::{PlaceContext, Visitor};
 use rustc_middle::mir::{Location, Place, PlaceRef, Terminator, TerminatorKind};
 
-use log;
 use rustc_middle::ty::TyCtxt;
 use rustc_middle::ty::TyKind::FnDef;
 use std::collections::HashSet;
