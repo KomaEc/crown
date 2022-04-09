@@ -47,7 +47,7 @@ fn test_specific() {
                     /*
                     let src = Rho::from_u32(34);
                     let tgt = Rho::from_u32(0);
-                    log::debug!("Explaining {:?} ≤ {:?}", src, tgt);
+                    tracing::debug!("Explaining {:?} ≤ {:?}", src, tgt);
                     let intra_summary = &crate_summary.func_summaries[func_we_care];
                     for &[x, y] in intra_summary
                         .constraint_system
@@ -55,19 +55,19 @@ fn test_specific() {
                         .explain(src, tgt)
                         .array_windows()
                     {
-                        log::debug!("{:?} ≤ {:?}", x, y)
+                        tracing::debug!("{:?} ≤ {:?}", x, y)
                     }
                     */
                 }
                 Err(reason) => {
-                    log::error!("Cannot solve ownership constraints!");
+                    tracing::error!("Cannot solve ownership constraints!");
                     assert!(reason.len() >= 2);
                     assert_eq!(reason[0], Rho::ONE);
                     assert_eq!(*reason.last().unwrap(), Rho::ZERO);
 
-                    log::debug!("A chain of inequalities that leads to this conflict:");
+                    tracing::debug!("A chain of inequalities that leads to this conflict:");
                     for &[x, y] in reason.array_windows() {
-                        log::debug!("{:?} ≤ {:?}", x, y)
+                        tracing::debug!("{:?} ≤ {:?}", x, y)
                     }
                 }
             }
@@ -117,14 +117,14 @@ fn run_solve<'tcx>(tcx: TyCtxt<'tcx>, struct_defs: Vec<LocalDefId>, fn_dids: Vec
             }
         }
         Err(reason) => {
-            log::error!("Cannot solve ownership constraints!");
+            tracing::error!("Cannot solve ownership constraints!");
             assert!(reason.len() >= 2);
             assert_eq!(reason[0], Rho::ONE);
             assert_eq!(*reason.last().unwrap(), Rho::ZERO);
 
-            log::debug!("A chain of inequalities that leads to this conflict:");
+            tracing::debug!("A chain of inequalities that leads to this conflict:");
             for &[x, y] in reason.array_windows() {
-                log::debug!("{:?} ≤ {:?}", x, y)
+                tracing::debug!("{:?} ≤ {:?}", x, y)
             }
         }
     }

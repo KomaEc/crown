@@ -54,7 +54,7 @@ pub fn rewrite_fn_body(
                 //}
             }
             VarDebugInfoContents::Const(constant) => {
-                log::warn!("user constant {:?} is not processed", constant)
+                tracing::warn!("user constant {:?} is not processed", constant)
             }
         }
     }

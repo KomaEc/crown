@@ -11,7 +11,7 @@ impl<'updb, 'upd, 'tcx> UnusedPointerDeclForBody<'updb, 'upd, 'tcx> {
                     return Some(var);
                 }
             } else {
-                log::warn!("Unused pointer decl: ignoring constant!");
+                tracing::warn!("Unused pointer decl: ignoring constant!");
             }
             None
         });

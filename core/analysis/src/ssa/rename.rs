@@ -154,7 +154,7 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
         data: &BasicBlockData<'tcx>,
         insertion_points: &PhiNodeInsertionPoints<PhantomData<*const Self::DefUse>>,
     ) {
-        log::debug!("Renaming {:?}", block);
+        tracing::debug!("Renaming {:?}", block);
 
         let BasicBlockData {
             statements,
@@ -215,7 +215,7 @@ impl<'me, 'tcx, DefUse: IsDefUse> Visitor<'tcx> for StackPopper<'me, 'tcx, DefUs
         if DefUse::categorize_finely(local, self.1, context).map_or(false, IsDefUse::defining) {
             let ssa_idx = self.0[local].pop();
             if let Some(ssa_idx) = ssa_idx {
-                log::debug!("poping {:?}^{}", local, ssa_idx);
+                tracing::debug!("poping {:?}^{}", local, ssa_idx);
             }
         }
     }

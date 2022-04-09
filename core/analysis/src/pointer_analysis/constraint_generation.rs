@@ -50,15 +50,15 @@ impl<'cg, 'tcx> ConstraintGeneration<'cg, 'tcx> {
     }
 
     fn log_debug_constraints(&self) {
-        log::debug!("Dumping constraints:");
+        tracing::debug!("Dumping constraints:");
         for constraint in self.constraints.iter() {
             let lhs = self.ptr_ctxt.node_to_str(constraint.left);
             let rhs = self.ptr_ctxt.node_to_str(constraint.right);
             match constraint.constraint_kind {
-                ConstraintKind::AddressOf => log::debug!("{} = &{}", lhs, rhs),
-                ConstraintKind::Copy => log::debug!("{} = {}", lhs, rhs),
-                ConstraintKind::Load => log::debug!("{} = *{}", lhs, rhs),
-                ConstraintKind::Store => log::debug!("*{} = {}", lhs, rhs),
+                ConstraintKind::AddressOf => tracing::debug!("{} = &{}", lhs, rhs),
+                ConstraintKind::Copy => tracing::debug!("{} = {}", lhs, rhs),
+                ConstraintKind::Load => tracing::debug!("{} = *{}", lhs, rhs),
+                ConstraintKind::Store => tracing::debug!("*{} = {}", lhs, rhs),
             }
         }
     }
@@ -75,7 +75,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
     /// Default visitor will visit basic blocks before local declarations,
     /// so we overwrite here.
     fn visit_body(&mut self, body: &Body<'tcx>) {
-        log::trace!("visiting body");
+        tracing::trace!("visiting body");
         for (local, decl) in body.local_decls.iter_enumerated() {
             self.visit_local_decl(local, decl)
         }
@@ -86,7 +86,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
     }
 
     fn visit_local_decl(&mut self, local: Local, local_decl: &LocalDecl<'tcx>) {
-        log::trace!("visiting local declaration {:?} : {}", local, local_decl.ty);
+        tracing::trace!("visiting local declaration {:?} : {}", local, local_decl.ty);
         let LocalDecl {
             mutability: _,
             ty,
@@ -106,7 +106,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
     }
 
     fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
-        log::trace!(
+        tracing::trace!(
             "visiting assignment statment {:?} = {:?} at location: {:?}",
             place,
             rvalue,
@@ -233,7 +233,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                                 .bodies
                                 .binary_search_by_key(def_id, |body| body.source.instance.def_id())
                             {
-                                log::error!("UNIMPLEMENTED: model linked C functions");
+                                tracing::error!("UNIMPLEMENTED: model linked C functions");
                                 return;
                             }
                             assert!(
@@ -246,7 +246,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                             // The purpose of getting the callee body is to obtain the argument local list of the callee.
                             // However, if we can cheat if we know the calling convention of mir.
                             // From the doc, we know that the arguments starts from local 1.
-                            log::warn!("Calling convention of MIR");
+                            tracing::warn!("Calling convention of MIR");
 
                             // generate constraint: `p = f.RETURN_PLACE`
                             let ret_repr = self.ptr_ctxt.generate_from_local(callee, RETURN_PLACE);
@@ -296,7 +296,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
                                 }
                             }
                         } else {
-                            log::error!("UNIMPLEMENTED: model library functions")
+                            tracing::error!("UNIMPLEMENTED: model library functions")
                         }
                     }
                 }
@@ -308,7 +308,7 @@ impl<'me, 'cg, 'tcx> Visitor<'tcx> for ConstraintGenerationForBody<'me, 'cg, 'tc
 impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
     #[inline]
     fn add_constraint(&mut self, constraint: Constraint) {
-        log::trace!(
+        tracing::trace!(
             "Adding constraint: {}",
             self.ptr_ctxt.constraint_to_str(constraint)
         );
@@ -333,7 +333,7 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
         place: &Place<'tcx>,
         location: Location,
     ) -> (PointerAnalysisNode, bool) {
-        log::trace!("processing place {:?} at location {:?}", place, location);
+        tracing::trace!("processing place {:?} at location {:?}", place, location);
 
         //for (place_ref, _) in place.iter_projections() {
         //    let _ = self.node_generation.generate(place_ref.into());
@@ -357,7 +357,7 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
                     }
                 }
                 ProjectionElem::Field(f, _) => {
-                    log::info!("field {:?} ignored!", f);
+                    tracing::info!("field {:?} ignored!", f);
                 }
                 ProjectionElem::Index(_) => unimplemented!("projection: index"),
                 ProjectionElem::ConstantIndex {
@@ -384,7 +384,7 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
         match rvalue {
             Rvalue::Use(Operand::Constant(_)) => {
                 // panic!()
-                log::error!("ignoring constant pointer: {:?}", rvalue);
+                tracing::error!("ignoring constant pointer: {:?}", rvalue);
                 None
             }
 
@@ -418,12 +418,12 @@ impl<'me, 'cg, 'tcx> ConstraintGenerationForBody<'me, 'cg, 'tcx> {
 
             // explicit address cast: ignore!
             Rvalue::Cast(CastKind::Misc, op @ Operand::Constant(_), _ty) => {
-                log::warn!("ignoring explicit address -> ptr cast: {:?}", op);
+                tracing::warn!("ignoring explicit address -> ptr cast: {:?}", op);
                 None
             }
 
             _ => {
-                log::error!("rvalue of this kind: {:?} is not supported!", rvalue);
+                tracing::error!("rvalue of this kind: {:?} is not supported!", rvalue);
                 unimplemented!()
             }
         }

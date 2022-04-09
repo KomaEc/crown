@@ -81,7 +81,7 @@ impl CrateSummary {
 
             return_ssa_idx.sort();
             return_ssa_idx.dedup();
-            log::debug!("process return places");
+            tracing::debug!("process return places");
             let return_lambda = return_ssa_idx
                 .split_first()
                 .and_then(|(&this, rest)| {
@@ -101,7 +101,7 @@ impl CrateSummary {
 
             assert_eq!(func, all_return_ssa_idx.push(return_ssa_idx));
 
-            log::debug!("process equalities in phi nodes");
+            tracing::debug!("process equalities in phi nodes");
             for equalities in phi_joins.into_iter() {
                 for (local, ssa_idxs) in equalities.into_iter_enumerated() {
                     let (&this_ssa_idx, rest_ssa_idxs) = ssa_idxs.split_first().unwrap();
@@ -148,7 +148,7 @@ impl CrateSummary {
             )
         }
 
-        log::debug!("process boundary constraints");
+        tracing::debug!("process boundary constraints");
         self.setup_boundary_constraints(boundary_constraints, &all_return_ssa_idx);
 
         self
@@ -164,7 +164,7 @@ impl CrateSummary {
             .map(|(call_site, bcs)| {
                 let mut res = vec![];
                 let edge_data = &self.call_graph.graph.edges[call_site];
-                log::debug!("Post processing boundary constraints");
+                tracing::debug!("Post processing boundary constraints");
                 for bc in bcs {
                     match bc {
                         // callee = caller
@@ -364,7 +364,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handle
     }
 
     fn use_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> Range<Lambda> {
-        log::debug!("use ptr place {:?}", place);
+        tracing::debug!("use ptr place {:?}", place);
 
         debug_assert!(place
             .ty(self.ctxt.body, self.ctxt.tcx)
@@ -390,7 +390,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handle
     }
 
     fn try_define_ptr_place(&mut self, place: &Place<'tcx>, location: Location) -> Range<Lambda> {
-        log::debug!("try define ptr place {:?}", place);
+        tracing::debug!("try define ptr place {:?}", place);
 
         debug_assert!(place
             .ty(self.ctxt.body, self.ctxt.tcx)
@@ -426,7 +426,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
 
     fn visit_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
         use colored::*;
-        log::debug!("{}", &format!("visiting statement {:?}", statement).bold()); //statement);
+        tracing::debug!("{}", &format!("visiting statement {:?}", statement).bold()); //statement);
         self.super_statement(statement, location)
     }
 
@@ -453,7 +453,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
             }
         }
         use colored::*;
-        log::warn!(
+        tracing::warn!(
             "{}",
             "this statement is not processed by the intra inferencer"
                 .bold()
@@ -465,7 +465,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
     /// TODO: extract initial summary from global context!
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
         use colored::*;
-        log::debug!(
+        tracing::debug!(
             "{}",
             &format!("visiting terminator {:?}", terminator.kind).bold()
         );
@@ -552,7 +552,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
         #[cfg(debug_assertions)]
         {
             const INDENT: &str = "   ";
-            log::debug!(
+            tracing::debug!(
                 "for function {}:",
                 self.tcx.def_path_debug_str(self.body.source.def_id())
             );
@@ -560,7 +560,7 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
                 assert_eq!(lambdas.len(), 1);
                 let lambdas = &lambdas[0usize.into()];
                 for (nested_level, lambda) in lambdas.clone().enumerate() {
-                    log::debug!(
+                    tracing::debug!(
                         "{}{:*<2$}{3:?}^0 ==> {4:?}",
                         INDENT,
                         "",
@@ -577,11 +577,11 @@ impl<'infercx, 'tcx> InferCtxt<'infercx, 'tcx> {
     fn log_phi_joins(self) -> Self {
         #[cfg(debug_assertions)]
         {
-            log::debug!("Phi nodes joins:");
+            tracing::debug!("Phi nodes joins:");
             for (bb, locals) in self.phi_joins.iter_enumerated() {
                 for (local, lambdas) in locals.iter_enumerated() {
                     assert!(lambdas.len() >= 3);
-                    log::debug!("for {:?} at {:?}, {:?}", local, bb, lambdas)
+                    tracing::debug!("for {:?} at {:?}, {:?}", local, bb, lambdas)
                 }
             }
         }
@@ -593,7 +593,7 @@ impl<'infercx, 'tcx> SSANameHandler for InferCtxt<'infercx, 'tcx> {
     type Output = Range<Lambda>;
 
     fn handle_def(&mut self, local: Local, idx: SSAIdx, _location: Location) -> Self::Output {
-        log::debug!("InferCtxt defining {:?}^{} of ptr type", local, idx);
+        tracing::debug!("InferCtxt defining {:?}^{} of ptr type", local, idx);
         debug_assert!(self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr());
         self.lambda_ctxt.generate_local(local, idx)
     }

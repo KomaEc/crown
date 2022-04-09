@@ -45,7 +45,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        // log::debug!("modelling ptr offset");
+        // tracing::debug!("modelling ptr offset");
         assert_eq!(args.len(), 2);
         let ([p, n], _) = args.split_array_ref();
         let rhs = p.place().expect("input to offset should not be a constant");
@@ -84,7 +84,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        // log::debug!("modelling calloc");
+        // tracing::debug!("modelling calloc");
         for arg in args {
             self.visit_operand(arg, location);
         }
@@ -98,7 +98,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        // log::debug!("modelling realloc");
+        // tracing::debug!("modelling realloc");
         assert_eq!(args.len(), 2);
         let (rhs, args) = args.split_first().unwrap();
         let rhs = self.assume_call_argument(rhs, true, location);
@@ -117,7 +117,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        // log::debug!("modelling malloc");
+        // tracing::debug!("modelling malloc");
         for arg in args {
             self.visit_operand(arg, location);
         }
@@ -135,7 +135,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        // log::debug!("modelling memmove");
+        // tracing::debug!("modelling memmove");
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
@@ -168,7 +168,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        // log::debug!("modelling memcpy");
+        // tracing::debug!("modelling memcpy");
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();
@@ -200,7 +200,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        // log::debug!("modelling memset");
+        // tracing::debug!("modelling memset");
         assert_eq!(args.len(), 3);
         let (ptr, args) = args.split_first().unwrap();
         let ptr = ptr.place().unwrap();
@@ -234,7 +234,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> LibCallModel<'tcx>
         destination: Option<(Place<'tcx>, BasicBlock)>,
         location: Location,
     ) {
-        // log::debug!("modelling strncat");
+        // tracing::debug!("modelling strncat");
         assert_eq!(args.len(), 3);
         let (dest, args) = args.split_first().unwrap();
         let dest = dest.place().unwrap();

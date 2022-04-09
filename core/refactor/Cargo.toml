@@ -9,9 +9,9 @@ edition = "2021"
 rustc_private=true 
 
 [dependencies]
-log = "0.4"
 rewriter = { path = "../rewriter" }
 compiler_interface = { path = "../compiler_interface" }
 analysis = { path = "../analysis" }
 itertools = "0.10.3"
 smallvec = { version = "1.8.0", features = ["union", "const_generics"] }
+tracing = "0.1.32"

@@ -253,7 +253,7 @@ where
                     nested_level,
                 })
             );
-            log::debug!(
+            tracing::debug!(
                 "generate {:?} for {:*<2$}{base:?}^{ssa_idx}",
                 cv,
                 "",
@@ -279,7 +279,7 @@ impl<'intra, CV: IsRustcIndexDefinedCV> CrateAnalysisCtxtIntraView<'intra, CV, O
             &mut Some(val) if val ^ value => panic!("conflict in constraint!"),
             _ => *assumption = Some(value),
         }
-        log::debug!(
+        tracing::debug!(
             "generate constraint {:?} = {}",
             cv,
             value.then_some(1).unwrap_or(0)
@@ -410,7 +410,7 @@ impl<X: IsRustcIndexDefinedCV + UnitAnalysisCV> ULEConstraintGraph<X> {
 
     pub fn add_node(&mut self) -> X {
         let new = self.graph.add_node();
-        log::debug!("new node variable generated {:?}", new);
+        tracing::debug!("new node variable generated {:?}", new);
         self.add_relation(new, new);
         self.add_relation(X::ZERO, new);
         self.add_relation(new, X::ONE);
@@ -419,7 +419,7 @@ impl<X: IsRustcIndexDefinedCV + UnitAnalysisCV> ULEConstraintGraph<X> {
 
     #[inline]
     pub fn add_relation(&mut self, x: X, y: X) -> bool {
-        // log::debug!("adding relation {:?} ≤ {:?}", x, y);
+        // tracing::debug!("adding relation {:?} ≤ {:?}", x, y);
         self.graph.add_edge_without_dup(x, y).is_some()
     }
 
@@ -463,7 +463,7 @@ impl<X: IsRustcIndexDefinedCV + UnitAnalysisCV> ULEConstraintGraph<X> {
     pub fn show(&self) {
         for x in self.graph.nodes() {
             for y in self.graph.successor_nodes(x) {
-                log::debug!("{:?} ≤ {:?}", x, y)
+                tracing::debug!("{:?} ≤ {:?}", x, y)
             }
         }
     }
