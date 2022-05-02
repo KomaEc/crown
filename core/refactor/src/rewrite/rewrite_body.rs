@@ -18,7 +18,7 @@ use rustc_index::{
 use rustc_middle::{
     mir::{
         visit::Visitor, BasicBlock, Body, Local, Location, Operand, Place, ProjectionElem, Rvalue,
-        Statement, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents,
+        Statement, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents, RETURN_PLACE,
     },
     ty::{TyCtxt, TyKind},
 };
@@ -77,7 +77,7 @@ pub fn rewrite_fn_body(
                 if self.user_vars.contains(place.local)
                 //&& place.ty(self.body, self.tcx).ty.is_ptr_but_not_fn_ptr()
                 {
-                    if let RewriteUseResult::LHSToBeRewritten { rhs_span } = rewrite_use(
+                    if let RewriteUseResult::LHSToBeRewritten { rhs_span } = rewrite_mir_statement(
                         self.tcx,
                         &mut *self.rewriter,
                         self.body,
@@ -95,7 +95,7 @@ pub fn rewrite_fn_body(
                         if rhs_span.contains(statement.source_info.span) {
                             // this occurs upon let binding
                             assert_eq!(rhs_span, statement.source_info.span);
-                            assert!(place.as_local().is_some());
+                            assert!(place.as_local().is_some(), "{:?}", statement);
                         } else {
                             let replacement = mutating_ctxt_replacement(
                                 self.tcx,
@@ -193,8 +193,33 @@ pub fn rewrite_fn_body(
                                 "rewrite uses".to_string(),
                                 replacement,
                             );
+                        } else {
+                            let _ = rhs.constant().unwrap();
+                            if lhs.ty(body, tcx).ty.is_ptr_but_not_fn_ptr() {
+                                let (ownership_ctxt, fatness_ctxt) = ptr_place_sig(
+                                    tcx,
+                                    body,
+                                    func,
+                                    ownership_analysis,
+                                    mutability_analysis,
+                                    fatness_analysis,
+                                    lhs,
+                                    location,
+                                );
+                                let _ = rewrite_ptr_constant(
+                                    tcx,
+                                    rewriter,
+                                    body,
+                                    ownership_ctxt,
+                                    fatness_ctxt,
+                                    &user_vars,
+                                    &names,
+                                    lhs,
+                                    statement.source_info.span,
+                                );
+                            }
                         }
-                    }
+                    } 
                 }
             }
 
@@ -207,13 +232,66 @@ pub enum RewriteUseResult {
     Done,
     LHSToBeRewritten { rhs_span: Span },
     FromMalloc { malloc_span: Span },
+    FromCalloc { num_span: Span, calloc_span: Span },
+}
+
+impl RewriteUseResult {
+    pub fn expect_rhs_span(self) -> Span {
+        match self {
+            Self::LHSToBeRewritten { rhs_span } => rhs_span,
+            _ => {
+                panic!("expect rhs span")
+            }
+        }
+    }
+}
+
+fn rewrite_non_user_local_use<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    rewriter: &mut Rewriter,
+    body: &Body<'tcx>,
+    func: Func,
+    ownership_analysis: &ownership_analysis::InterSummary,
+    mutability_analysis: &mutability_analysis::InterSummary,
+    fatness_analysis: &fat_thin_analysis::CrateSummary,
+    user_vars: &BitSet<Local>,
+    names: &FxHashMap<Local, Symbol>,
+    rhs: &Place<'tcx>,
+    location: Location,
+    editted_locations: &mut IndexVec<BasicBlock, BitSet<usize>>,
+) -> RewriteUseResult {
+    let rhs = rhs.as_local().unwrap();
+    // we consult the def-use chain of fatness analysis
+    let source_map = &fatness_analysis.ssa_name_source_map[func];
+    let fatness_ssa_idx = source_map.try_use(rhs, location).unwrap();
+    let def_rich_location = &fatness_analysis.def_sites[func].defs[rhs][fatness_ssa_idx];
+    let def_location = match def_rich_location {
+        &RichLocation::Mir(l) => l,
+        &RichLocation::Phi(_) => todo!(),
+        // we cannot end up in this branch, since
+        // rhs is not user variable and must be initialised
+        RichLocation::Entry => unreachable!(),
+    };
+    return rewrite_mir_statement(
+        tcx,
+        rewriter,
+        body,
+        func,
+        ownership_analysis,
+        mutability_analysis,
+        fatness_analysis,
+        user_vars,
+        names,
+        def_location,
+        editted_locations,
+    );
 }
 
 /// rewrite the use of local `local` at location `location`
 /// This is a recursive procedure that traces a chain of
 /// intermediate statements until the RHS of the statement
 /// is related to user_ptr
-fn rewrite_use<'tcx>(
+fn rewrite_mir_statement<'tcx>(
     tcx: TyCtxt<'tcx>,
     rewriter: &mut Rewriter,
     body: &Body<'tcx>,
@@ -386,22 +464,7 @@ fn rewrite_use<'tcx>(
                                         // to have something like (*_1).2 = (*_3).4
                                         assert!(user_vars.contains(lhs.local));
                                         assert!(rhs.projection.is_empty());
-                                        let rhs = rhs.local;
-                                        // we consult the def-use chain of fatness analysis
-                                        let source_map =
-                                            &fatness_analysis.ssa_name_source_map[func];
-                                        let fatness_ssa_idx =
-                                            source_map.try_use(rhs, location).unwrap();
-                                        let def_rich_location = &fatness_analysis.def_sites[func]
-                                            .defs[rhs][fatness_ssa_idx];
-                                        let def_location = match def_rich_location {
-                                            &RichLocation::Mir(l) => l,
-                                            &RichLocation::Phi(_) => todo!(),
-                                            // we cannot end up in this branch, since
-                                            // rhs is not user variable and must be initialised
-                                            RichLocation::Entry => unreachable!(),
-                                        };
-                                        return rewrite_use(
+                                        rewrite_non_user_local_use(
                                             tcx,
                                             rewriter,
                                             body,
@@ -411,16 +474,17 @@ fn rewrite_use<'tcx>(
                                             fatness_analysis,
                                             user_vars,
                                             names,
-                                            def_location,
+                                            rhs,
+                                            location,
                                             editted_locations,
-                                        );
+                                        )
                                     }
                                 }
                                 Operand::Constant(box constant) =>
                                 // This is definitely wrong, but we assume that only null pointer can be pointer constant
                                 {
                                     if let Some((ownership_ctxt, fatness_ctxt)) = maybe_ptr_sig {
-                                        rewrite_null_constant(
+                                        rewrite_ptr_constant(
                                             tcx,
                                             rewriter,
                                             body,
@@ -432,14 +496,14 @@ fn rewrite_use<'tcx>(
                                             statement.source_info.span,
                                         )
                                     } else {
-                                        RewriteUseResult::Done
+                                        RewriteUseResult::LHSToBeRewritten { rhs_span: statement.source_info.span }
                                     }
                                 }
                             }
                         }
                         Rvalue::Cast(_, Operand::Constant(box constant), _) => {
                             if let Some((ownership_ctxt, fatness_ctxt)) = maybe_ptr_sig {
-                                rewrite_null_constant(
+                                rewrite_ptr_constant(
                                     tcx,
                                     rewriter,
                                     body,
@@ -451,37 +515,25 @@ fn rewrite_use<'tcx>(
                                     statement.source_info.span,
                                 )
                             } else {
-                                RewriteUseResult::Done
+                                RewriteUseResult::LHSToBeRewritten { rhs_span: statement.source_info.span }
                             }
                         }
 
-                        Rvalue::Cast(_, Operand::Copy(rhs) | Operand::Move(rhs), _) => {
+                        Rvalue::Cast(_, Operand::Copy(place) | Operand::Move(place), _) => {
                             if maybe_ptr_sig.is_none() {
                                 return RewriteUseResult::Done;
                             }
                             let (ownership_ctxt, fatness_ctxt) = maybe_ptr_sig.unwrap();
 
-                            if user_vars.contains(rhs.local) {
+                            if user_vars.contains(place.local) {
                                 todo!()
                             }
 
-                            assert!(rhs.as_local().is_some());
-                            if let Some(rhs) = rhs.as_local() {
+                            assert!(place.as_local().is_some());
+                            if let Some(rhs) = place.as_local() {
                                 // if it is under a safe pointer context
                                 if !matches!(ownership_ctxt, Ownership::Raw) {
-                                    let source_map = &fatness_analysis.ssa_name_source_map[func];
-                                    let fatness_ssa_idx =
-                                        source_map.try_use(rhs, location).unwrap();
-                                    let def_rich_location = &fatness_analysis.def_sites[func].defs
-                                        [rhs][fatness_ssa_idx];
-                                    let def_location = match def_rich_location {
-                                        &RichLocation::Mir(l) => l,
-                                        &RichLocation::Phi(_) => todo!(),
-                                        // we cannot end up in this branch, since
-                                        // rhs is not user variable and must be initialised
-                                        RichLocation::Entry => unreachable!(),
-                                    };
-                                    return match rewrite_use(
+                                    return match rewrite_non_user_local_use(
                                         tcx,
                                         rewriter,
                                         body,
@@ -491,10 +543,11 @@ fn rewrite_use<'tcx>(
                                         fatness_analysis,
                                         user_vars,
                                         names,
-                                        def_location,
+                                        place,
+                                        location,
                                         editted_locations,
                                     ) {
-                                        RewriteUseResult::Done => unreachable!(),
+                                        RewriteUseResult::Done => unreachable!("{:?}", statement),
                                         RewriteUseResult::LHSToBeRewritten { rhs_span } => {
                                             rewriter.make_suggestion(
                                                 tcx,
@@ -527,9 +580,9 @@ fn rewrite_use<'tcx>(
                                                     .hir()
                                                     .expect_item(adt_def.did.expect_local())
                                                     .ident
-                                                    .as_str(),
+                                                    .to_string(),
                                                 _ if ty.is_primitive() => {
-                                                    todo!()
+                                                    format!("{ty}")
                                                 }
                                                 _ => todo!(),
                                             };
@@ -545,38 +598,73 @@ fn rewrite_use<'tcx>(
                                                 rhs_span: statement.source_info.span,
                                             }
                                         }
+                                        RewriteUseResult::FromCalloc {
+                                            num_span,
+                                            calloc_span,
+                                        } => {
+                                            rewriter.make_suggestion(
+                                                tcx,
+                                                calloc_span.shrink_to_hi().between(
+                                                    statement.source_info.span.shrink_to_hi(),
+                                                ),
+                                                "remove cast".to_owned(),
+                                                "".to_owned(),
+                                            );
+
+                                            // here we use the assumption that the input program comes from c2rust,
+                                            // where the result is cast to a raw pointer to some scalar type.
+                                            let ty = lhs
+                                                .ty(body, tcx)
+                                                .projection_ty(tcx, ProjectionElem::Deref)
+                                                .ty;
+                                            let new_type_str = match ty.kind() {
+                                                TyKind::Adt(adt_def, _) => tcx
+                                                    .hir()
+                                                    .expect_item(adt_def.did.expect_local())
+                                                    .ident
+                                                    .to_string(),
+                                                _ if ty.is_primitive() => {
+                                                    format!("{ty}")
+                                                }
+                                                _ => todo!(),
+                                            };
+
+                                            rewriter.make_suggestion(
+                                                tcx, 
+                                                calloc_span.shrink_to_lo().until(num_span), 
+                                                "calloc prefix".to_string(), 
+                                                format!("Some(vec![<{new_type_str} as Default>::default(); ")
+                                            );
+
+                                            rewriter.make_suggestion(
+                                                tcx, 
+                                                num_span.shrink_to_hi().until(calloc_span.shrink_to_hi()), 
+                                                "calloc prefix".to_string(), 
+                                                " as usize])".to_string()
+                                            );
+
+                                            RewriteUseResult::LHSToBeRewritten {
+                                                rhs_span: calloc_span.until(statement.source_info.span.shrink_to_hi()),
+                                            }
+                                        }
                                     };
-                                    /*
-                                    return rewrite_use(
-                                        tcx,
-                                        rewriter,
-                                        body,
-                                        func,
-                                        ownership_analysis,
-                                        mutability_analysis,
-                                        fatness_analysis,
-                                        user_vars,
-                                        names,
-                                        def_location,
-                                        editted_locations,
-                                    )
-                                    .map(|inner_span| {
-                                        rewriter.make_suggestion(
-                                            tcx,
-                                            inner_span
-                                                .shrink_to_hi()
-                                                .between(statement.source_info.span.shrink_to_hi()),
-                                            "remove cast".to_owned(),
-                                            "".to_owned(),
-                                        );
-                                        statement.source_info.span
-                                    });
-                                    */
                                 } else {
                                     todo!()
                                 }
                             } else {
                                 unreachable!()
+                            }
+                        }
+                        Rvalue::BinaryOp(_, box (op1, op2)) | Rvalue::CheckedBinaryOp(_, box (op1, op2)) => {
+                            for op in [op1, op2] {
+                                if let Some(op) = op.place() {
+                                    todo!()
+                                } 
+                            }
+                            if !user_vars.contains(lhs.local) {
+                                RewriteUseResult::LHSToBeRewritten { rhs_span: statement.source_info.span }
+                            } else {
+                                RewriteUseResult::Done
                             }
                         }
                         _ => RewriteUseResult::Done,
@@ -692,27 +780,14 @@ fn rewrite_terminator<'tcx>(
 
                             for arg in args {
                                 if let Some(arg) = arg.place() {
-                                    let arg = arg
+                                    let _ = arg
                                         .as_local()
                                         .expect("arguments are assumed to be temporaries");
                                     assert!(
-                                        !user_vars.contains(arg),
+                                        !user_vars.contains(arg.local),
                                         "arguments are assumed to be temporaries"
                                     );
-                                    let source_map = &fatness_analysis.ssa_name_source_map[caller];
-                                    let fatness_ssa_idx =
-                                        source_map.try_use(arg, location).unwrap();
-                                    let def_rich_location = &fatness_analysis.def_sites[caller]
-                                        .defs[arg][fatness_ssa_idx];
-                                    let def_location = match def_rich_location {
-                                        &RichLocation::Mir(l) => l,
-                                        &RichLocation::Phi(_) => todo!(),
-                                        // we cannot end up in this branch, since
-                                        // rhs is not user variable and must be initialised
-                                        RichLocation::Entry => unreachable!(),
-                                    };
-
-                                    let _ = rewrite_use(
+                                    let _ = rewrite_non_user_local_use(
                                         tcx,
                                         rewriter,
                                         body,
@@ -722,7 +797,8 @@ fn rewrite_terminator<'tcx>(
                                         fatness_analysis,
                                         user_vars,
                                         names,
-                                        def_location,
+                                        &arg,
+                                        location,
                                         editted_locations,
                                     );
                                 } else {
@@ -768,6 +844,17 @@ fn rewrite_terminator<'tcx>(
                             location,
                             editted_locations,
                         );
+                        if let Some((dest, _)) = *destination {
+                            // if destination place is a temporary
+                            if !user_vars.contains(dest.local) {
+                                return RewriteUseResult::LHSToBeRewritten {
+                                    rhs_span: terminator.source_info.span,
+                                };
+                            } else {
+                                // assert!(false, "destination place is assumed to be a temporary in {:?}", terminator.kind)
+                                assert!(dest.projection.is_empty(), "destination place is assumed to be a local, and we need not rewrite")
+                            }
+                        }
                         RewriteUseResult::Done
                     }
                 }
@@ -916,8 +1003,9 @@ fn nonmutating_ctxt_replacement<'tcx>(
     replacement
 }
 
+/// We assume the only possible pointer constants are null
 #[inline]
-fn rewrite_null_constant<'tcx>(
+fn rewrite_ptr_constant<'tcx>(
     tcx: TyCtxt<'tcx>,
     rewriter: &mut Rewriter,
     body: &Body<'tcx>,
@@ -928,11 +1016,11 @@ fn rewrite_null_constant<'tcx>(
     lhs: &Place<'tcx>,
     span: Span,
 ) -> RewriteUseResult {
-    let replacement =
-        mutating_ctxt_replacement(tcx, body, lhs, names[&lhs.local], MutatingCtxt::Store);
 
     if !matches!(ownership_ctxt, Ownership::Raw) {
-        if user_vars.contains(lhs.local) {
+        if user_vars.contains(lhs.local) && lhs.local != RETURN_PLACE {
+            let replacement =
+                mutating_ctxt_replacement(tcx, body, lhs, names[&lhs.local], MutatingCtxt::Store);
             rewriter.make_suggestion(
                 tcx,
                 span,

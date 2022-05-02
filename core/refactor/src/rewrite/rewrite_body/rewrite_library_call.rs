@@ -11,7 +11,7 @@ use rustc_middle::{
 };
 use rustc_span::{Span, Symbol};
 
-use crate::rewrite::rewrite_body::rewrite_use;
+use crate::rewrite::rewrite_body::rewrite_mir_statement;
 
 pub fn rewrite_library_call<'tcx>(
     tcx: TyCtxt<'tcx>,
@@ -72,7 +72,7 @@ pub fn rewrite_library_call<'tcx>(
                         // rhs is not user variable and must be initialised
                         RichLocation::Entry => unreachable!(),
                     };
-                    let _ = rewrite_use(
+                    let _ = rewrite_mir_statement(
                         tcx,
                         rewriter,
                         body,

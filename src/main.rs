@@ -60,7 +60,7 @@ enum Command {
 }
 
 fn main() {
-    tracing_subscriber::fmt().init();
+    tracing_subscriber::fmt::init();
     let args = Cli::parse();
     rustc_interface::run_compiler(compiler_config(args.path), move |compiler| {
         compiler.enter(|queries| {
