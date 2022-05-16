@@ -28,6 +28,7 @@ pub mod ssa;
 pub mod test;
 pub mod toy_analysis;
 pub mod ty_ext;
+pub mod ownership;
 
 extern crate rustc_arena;
 extern crate rustc_ast;
