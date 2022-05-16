@@ -19,7 +19,7 @@ rustc_private = true
 [dependencies]
 clap = { version = "3.1.2", features = ["derive"] }
 tracing = "0.1.32"
-tracing-subscriber = { version = "0.3.10", features = ["fmt"] }
+tracing-subscriber = "0.3.10"
 analysis = { path = "core/analysis" }
 refactor = { path = "core/refactor" }
 rewriter = { path = "core/rewriter" }

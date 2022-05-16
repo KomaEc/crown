@@ -11,7 +11,7 @@ use rustc_middle::{
 };
 use rustc_span::{Span, Symbol};
 
-use crate::rewrite::rewrite_body::{rewrite_mir_statement, rewrite_non_user_local_use};
+use crate::rewrite::rewrite_body::rewrite_use;
 
 use super::RewriteUseResult;
 
@@ -36,23 +36,8 @@ pub fn rewrite_libc_call<'tcx>(
     let foreign_item = tcx.hir().expect_foreign_item(callee_did.expect_local());
     match foreign_item.ident.as_str() {
         "printf" => RewriteUseResult::Done,
-        "calloc" => rewrite_calloc(
-            tcx,
-            rewriter,
-            body,
-            caller,
-            ownership_analysis,
-            mutability_analysis,
-            fatness_analysis,
-            user_vars,
-            names,
-            args,
-            destination,
-            fn_span,
-            location,
-            editted_locations,
-        ),
-        "realloc" => RewriteUseResult::Done, //todo!(),
+        "calloc" => todo!(),
+        "realloc" => todo!(),
         "malloc" => rewrite_malloc(
             tcx,
             rewriter,
@@ -114,14 +99,25 @@ fn rewrite_malloc<'tcx>(
 ) -> RewriteUseResult {
     let ([arg], _) = args.split_array_ref();
     if let Some(arg) = arg.place() {
-        let _ = arg
+        let arg = arg
             .as_local()
             .expect("arguments are assumed to be temporaries");
         assert!(
-            !user_vars.contains(arg.local),
+            !user_vars.contains(arg),
             "arguments are assumed to be temporaries"
         );
-        let _ = rewrite_non_user_local_use(
+        let source_map = &fatness_analysis.ssa_name_source_map[caller];
+        let fatness_ssa_idx = source_map.try_use(arg, location).unwrap();
+        let def_rich_location = &fatness_analysis.def_sites[caller].defs[arg][fatness_ssa_idx];
+        let def_location = match def_rich_location {
+            &RichLocation::Mir(l) => l,
+            &RichLocation::Phi(_) => todo!(),
+            // we cannot end up in this branch, since
+            // rhs is not user variable and must be initialised
+            RichLocation::Entry => unreachable!(),
+        };
+
+        let _ = rewrite_use(
             tcx,
             rewriter,
             body,
@@ -131,8 +127,7 @@ fn rewrite_malloc<'tcx>(
             fatness_analysis,
             user_vars,
             names,
-            &arg,
-            location,
+            def_location,
             editted_locations,
         );
     } else {
@@ -144,9 +139,6 @@ fn rewrite_malloc<'tcx>(
     // return !user_vars.contains(dest.local);
     if !user_vars.contains(dest.local) {
         // the type of malloc res cannot be determined
-        // return the span of the whole malloc call
-        // for instance, malloc(4 as u64)
-        //               ^^^^^^^^^^^^^^^^
         RewriteUseResult::FromMalloc {
             malloc_span: fn_span,
         }
@@ -156,103 +148,11 @@ fn rewrite_malloc<'tcx>(
             dest.projection.is_empty(),
             "destination place is assumed to be a local, and we need not rewrite"
         );
-        /*
         rewriter.make_suggestion(
             tcx,
             fn_span,
             "removing malloc".to_string(),
             "Some(Box::new(Default::default()))".to_string(),
-        );
-        */
-        RewriteUseResult::Done
-    }
-}
-
-fn rewrite_calloc<'tcx>(
-    tcx: TyCtxt<'tcx>,
-    rewriter: &mut Rewriter,
-    body: &Body<'tcx>,
-    caller: Func,
-    ownership_analysis: &ownership_analysis::InterSummary,
-    mutability_analysis: &mutability_analysis::InterSummary,
-    fatness_analysis: &fat_thin_analysis::CrateSummary,
-    user_vars: &BitSet<Local>,
-    names: &FxHashMap<Local, Symbol>,
-    args: &Vec<Operand<'tcx>>,
-    destination: Option<(Place<'tcx>, BasicBlock)>,
-    fn_span: Span,
-    location: Location,
-    editted_locations: &mut IndexVec<BasicBlock, BitSet<usize>>,
-) -> RewriteUseResult {
-    let ([num, size], _) = args.split_array_ref();
-
-    let num = num
-        .place()
-        .expect("arguments are assumed to be temporaries");
-    assert!(!user_vars.contains(num.local));
-    let num_span = rewrite_non_user_local_use(
-        tcx,
-        rewriter,
-        body,
-        caller,
-        ownership_analysis,
-        mutability_analysis,
-        fatness_analysis,
-        user_vars,
-        names,
-        &num,
-        location,
-        editted_locations,
-    )
-    .expect_rhs_span();
-
-    let size = size
-        .place()
-        .expect("arguments are assumed to be temporaries");
-    assert!(!user_vars.contains(size.local));
-    let size_span = rewrite_non_user_local_use(
-        tcx,
-        rewriter,
-        body,
-        caller,
-        ownership_analysis,
-        mutability_analysis,
-        fatness_analysis,
-        user_vars,
-        names,
-        &size,
-        location,
-        editted_locations,
-    )
-    .expect_rhs_span();
-
-    let (dest, _) = destination.unwrap();
-
-    // return !user_vars.contains(dest.local);
-    if !user_vars.contains(dest.local) {
-
-        /* 
-        rewriter.make_suggestion(
-            tcx,
-            num_span.shrink_to_hi().between(size_span.shrink_to_hi()),
-            "remove size of type argument".to_string(),
-            "".to_string(),
-        );
-        */
-
-        // the type of malloc res cannot be determined
-        // return the call prefix
-        // for instance, calloc(12 as u64, 4 as u64)
-        //               ^^^^^^^
-        RewriteUseResult::FromCalloc {
-            num_span,
-            calloc_span: fn_span,
-        }
-    } else {
-        // assert!(false, "destination place is assumed to be a temporary in {:?}", terminator.kind)
-        assert!(
-            dest.projection.is_empty(),
-            "destination place is assumed to be a local, and we need not rewrite"
         );
         RewriteUseResult::Done
     }
@@ -276,30 +176,37 @@ fn rewrite_free<'tcx>(
 ) -> RewriteUseResult {
     let ([arg], _) = args.split_array_ref();
     if let Some(arg) = arg.place() {
-        let _ = arg
+        let arg = arg
             .as_local()
             .expect("arguments are assumed to be temporaries");
         assert!(
-            !user_vars.contains(arg.local),
+            !user_vars.contains(arg),
             "arguments are assumed to be temporaries"
         );
+        let source_map = &fatness_analysis.ssa_name_source_map[caller];
+        let fatness_ssa_idx = source_map.try_use(arg, location).unwrap();
+        let def_rich_location = &fatness_analysis.def_sites[caller].defs[arg][fatness_ssa_idx];
+        let def_location = match def_rich_location {
+            &RichLocation::Mir(l) => l,
+            &RichLocation::Phi(_) => todo!(),
+            // we cannot end up in this branch, since
+            // rhs is not user variable and must be initialised
+            RichLocation::Entry => unreachable!(),
+        };
 
-        if let RewriteUseResult::LHSToBeRewritten { rhs_span: arg_span } =
-            rewrite_non_user_local_use(
-                tcx,
-                rewriter,
-                body,
-                caller,
-                ownership_analysis,
-                mutability_analysis,
-                fatness_analysis,
-                user_vars,
-                names,
-                &arg,
-                location,
-                editted_locations,
-            )
-        {
+        if let RewriteUseResult::LHSToBeRewritten { rhs_span: arg_span } = rewrite_use(
+            tcx,
+            rewriter,
+            body,
+            caller,
+            ownership_analysis,
+            mutability_analysis,
+            fatness_analysis,
+            user_vars,
+            names,
+            def_location,
+            editted_locations,
+        ) {
             rewriter.make_suggestion(
                 tcx,
                 fn_span.shrink_to_lo().until(arg_span),
