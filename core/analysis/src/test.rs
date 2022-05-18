@@ -1,7 +1,7 @@
 use once_cell::sync::OnceCell;
 
-static ENV_LOG_SET: OnceCell<()> = OnceCell::new();
+static TRACING_SUB_FMT_SET: OnceCell<()> = OnceCell::new();
 
 pub fn init_logger() {
-    ENV_LOG_SET.get_or_init(|| env_logger::init());
+    TRACING_SUB_FMT_SET.get_or_init(|| tracing_subscriber::fmt::init());
 }
