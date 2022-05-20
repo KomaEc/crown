@@ -1,6 +1,13 @@
 # ORC: Ownership-guided generation of Rust code from C code
 
 
+## Usage
+To perform rewrite
+```shell
+cargo run -- PATH/TO/FILE rewrite
+```
+
+
 p = q;
 
 p = std::mem::take(&mut q);
