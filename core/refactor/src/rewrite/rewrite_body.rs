@@ -177,26 +177,55 @@ fn rewrite_offset(
     let bb = &body.basic_blocks()[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = body.terminator_loc(bb_id);
-    let (args, destination) = match &terminator.kind {
+    let (args, (dest_place, dest_bb)) = match &terminator.kind {
         TerminatorKind::Call {
             args, destination, ..
         } => (args, destination.unwrap()),
         _ => panic!(),
     };
+    let dest_local = dest_place.as_local().unwrap();
+    
     let ptr_place = args[0].place().unwrap().as_ref();
     if place_fatness(fatness, func, ptr_place, terminator_loc) != Some(true) {
         return;
     }
 
+    let ptr = args[0].place().unwrap().as_local().unwrap();
+    // ptr
+    let ptr_expr = uncast(tcx, fatness, func, body, terminator_loc, ptr).unwrap();
     let offset = args[1].place().unwrap().as_local().unwrap();
+    // ptr.offset(_)
     let offset_expr = uncast(tcx, fatness, func, body, terminator_loc, offset).unwrap();
 
-    let deref_stmt = match body.stmt_at(destination.1.start_location()) {
+    // write case:
+    // *(ptr.offset(_)) = ...
+    // read case:
+    // unknown yet
+
+    // we have a problem! buffer_good has an offset call at line 282 that *doesn't* terminate into
+    // a using statement at all. there's a whole other basic block before the use. maybe look into
+    // source map to find the use?
+    let deref_stmt = match body.stmt_at(dest_bb.start_location()) {
         Either::Left(s) => s,
         Either::Right(_) => return,
     };
-
-    todo!();
+    
+    match &deref_stmt.kind {
+        StatementKind::Assign(box (place, rvalue)) => {
+            if let PlaceRef { local, projection: [ProjectionElem::Deref] } = place.as_ref() {
+                if local == dest_local {
+                    // writing into the slice
+                    todo!()
+                }
+            } else if let Rvalue::Use(operand) = rvalue {
+                if operand.place() == Some(dest_place) {
+                    // reading from the slice into a local
+                    todo!()
+                }
+            }
+        }
+        _ => {},
+    }
 }
 
 fn place_fatness(
