@@ -1,6 +1,3 @@
-pub mod rewrite_libc_call;
-mod rewrite_library_call;
-
 use analysis::{call_graph::Func, fat_thin_analysis, mutability_analysis, ownership_analysis};
 use rewriter::Rewriter;
 use rustc_hir::def_id::LocalDefId;
