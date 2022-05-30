@@ -3,6 +3,7 @@
 #![feature(array_windows)]
 #![feature(box_patterns)]
 #![feature(split_array)]
+#![feature(let_else)]
 
 pub mod rewrite;
 
