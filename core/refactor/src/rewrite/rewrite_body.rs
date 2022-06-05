@@ -153,12 +153,6 @@ pub fn rewrite_reassignment<'tcx>(
     loc: Location,
     stmt: &Statement<'tcx>,
 ) {
-    // on lhs we have a bunch of projections, some of which need to be turned into other things -
-    // *x into *(x.unwrap()) for example.
-    // rewrite lhs: (*x).f -> x.unwrap().f
-    // x is *mut S -> Option<Box<S>>
-    // if f is not raw, then need to wrap rhs in Some
-    // rewrite rhs: happens according to type of lhs
     // TODO: convert everything else to let-else too. it's just better
     let StatementKind::Assign(box (l_place, rvalue)) = &stmt.kind else { panic!() };
     let span = stmt.source_info.span;
