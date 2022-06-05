@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use analysis::{
     call_graph::Func,
     fat_thin_analysis,
@@ -12,6 +14,7 @@ use rustc_middle::{
     },
     ty::{TyCtxt, Const, ScalarInt},
 };
+use rustc_span::BytePos;
 use rustc_target::abi::VariantIdx;
 
 pub fn rewrite_body(
@@ -24,35 +27,10 @@ pub fn rewrite_body(
     def_id: LocalDefId,
 ) {
     let body = tcx.optimized_mir(def_id);
+    // some terminators also cause statement rewrites, so we track which ones have been rewritten
+    // and don't try to rewrite them twice
+    let mut rewritten_stmts = HashSet::new();
     for (bb_id, bb) in body.basic_blocks().iter_enumerated() {
-        for (idx, stmt) in bb.statements.iter().enumerate() {
-            let loc = Location {
-                block: bb_id,
-                statement_index: idx,
-            };
-            println!("{:?}", stmt.source_info.span);
-            match &stmt.kind {
-                StatementKind::Assign(box (place, rvalue)) => {
-                    let var_debug_matches_place = |v: &VarDebugInfo| match v.value {
-                        VarDebugInfoContents::Place(p) => p.as_local() == place.as_local(),
-                        VarDebugInfoContents::Const(_) => false,
-                    };
-                    let source = tcx.sess.source_map().span_to_snippet(stmt.source_info.span).unwrap();
-
-                    if source.contains(" = ") {
-                        rewrite_reassignment(tcx, rewriter, ownership, mutability, fatness, func, body, loc, stmt);
-                    } else if body.var_debug_info.iter().any(var_debug_matches_place) {
-                        println!("binding");
-                        // binding
-                    } else {
-                        println!("temporary");
-                        // temporary
-                    }
-                }
-                _ => {},
-            }
-        }
-
         let terminator = bb.terminator();
         match &terminator.kind {
             TerminatorKind::Call { func: callee, .. } => {
@@ -64,28 +42,103 @@ pub fn rewrite_body(
                 let callee_name = tcx.def_path_str(*callee_def_id);
                 match callee_name.as_str() {
                     x if x.ends_with("::malloc") => {
-                        rewrite_malloc(tcx, rewriter, ownership, mutability, fatness, func, body, bb_id);
+                        rewrite_malloc(tcx, rewriter, ownership, func, body, bb_id, &mut rewritten_stmts);
                     }
                     x if x.ends_with("::realloc") => {
-                        rewrite_realloc(tcx, rewriter, ownership, mutability, fatness, func, body, bb_id);
+                        rewrite_realloc(tcx, rewriter, ownership, fatness, func, body, bb_id, &mut rewritten_stmts);
                     }
                     x if x.ends_with("::calloc") => {
-                        rewrite_calloc(tcx, rewriter, ownership, mutability, fatness, func, body, bb_id);
+                        rewrite_calloc(tcx, rewriter, ownership, fatness, func, body, bb_id, &mut rewritten_stmts);
                     }
                     "std::ptr::mut_ptr::<impl *mut T>::offset" | "std::ptr::const_ptr::<impl *const T>::offset" => {
                         rewrite_offset(tcx, rewriter, ownership, mutability, fatness, func, body, bb_id);
                     }
                     "std::ptr::mut_ptr::<impl *mut T>::is_null" | "std::ptr::const_ptr::<impl *const T>::is_null" => {
                         let span = terminator.source_info.span;
-                        let source = tcx.sess.source_map().span_to_snippet(span).unwrap();
-                        let replacement = format!("{}.is_none()", source.trim_end_matches(".is_null()"));
-                        rewriter.make_suggestion(tcx, span, String::new(), replacement);
+                        let call_span = span.with_lo(BytePos(span.hi().0 - ".is_null()".len() as u32));
+                        rewriter.make_suggestion(tcx, call_span, String::new(), String::from(".is_none()"));
                     }
                     _ => {}
                 }
             }
             _ => {}
         }
+
+        let stmts = bb.statements
+            .iter()
+            .enumerate()
+            .map(|(idx, stmt)| (Location { block: bb_id, statement_index: idx }, stmt))
+            .filter(|(loc, _)| !rewritten_stmts.contains(loc));
+        for (loc, stmt) in stmts {
+            match &stmt.kind {
+                StatementKind::Assign(box (place, rvalue)) => {
+                    let var_debug_matches_place = |v: &VarDebugInfo| match v.value {
+                        VarDebugInfoContents::Place(p) => p.as_local() == place.as_local(),
+                        VarDebugInfoContents::Const(_) => false,
+                    };
+                    let source = tcx.sess.source_map().span_to_snippet(stmt.source_info.span).unwrap();
+
+                    if source.contains(" = ") {
+                        rewrite_reassignment(tcx, rewriter, ownership, mutability, fatness, func, body, loc, stmt);
+                    } else if body.var_debug_info.iter().any(var_debug_matches_place) {
+                        // binding
+                        let new_source = rewrite_rvalue(tcx, ownership, func, body, loc, rvalue, &source);
+                        if new_source != source {
+                            rewriter.make_suggestion(tcx, stmt.source_info.span, String::new(), new_source);
+                        }
+                    } else {
+                        // temporary
+                        let new_source = rewrite_rvalue(tcx, ownership, func, body, loc, rvalue, &source);
+                        if new_source != source {
+                            rewriter.make_suggestion(tcx, stmt.source_info.span, String::new(), new_source);
+                        }
+                    }
+                }
+                _ => {},
+            }
+        }
+    }
+}
+
+pub fn rewrite_rvalue<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    ownership: &ownership_analysis::InterSummary,
+    func: Func,
+    body: &Body<'tcx>,
+    loc: Location,
+    rvalue: &Rvalue<'tcx>,
+    source: &str,
+) -> String {
+    match rvalue {
+        // rvalue is just a place
+        Rvalue::Use(Operand::Copy(r_place) | Operand::Move(r_place)) => {
+            if r_place.projection.len() == 0 {
+                return source.to_owned();
+            }
+            rewrite_place_expr(
+                tcx,
+                ownership,
+                func,
+                body,
+                r_place.clone(),
+                loc,
+                source,
+            )
+        },
+        // extremely cursed matcher - rvalue is null pointer literal
+        Rvalue::Use(
+            Operand::Constant(box Constant { literal: ConstantKind::Ty(Const { ty, val }), ..})
+        ) | Rvalue::Cast(
+            CastKind::Misc,
+            Operand::Constant(box Constant { literal: ConstantKind::Ty(Const { val, .. }), ..}),
+            ty
+        ) if ty.is_unsafe_ptr() && val.try_to_scalar_int().map(ScalarInt::is_null) == Some(true) => {
+            return String::from("None");
+        },
+        rvalue => {
+            tracing::warn!(?rvalue, "not rewriting unsupported rvalue");
+            return source.to_owned();
+        },
     }
 }
 
@@ -107,39 +160,57 @@ pub fn rewrite_reassignment<'tcx>(
     // if f is not raw, then need to wrap rhs in Some
     // rewrite rhs: happens according to type of lhs
     // TODO: convert everything else to let-else too. it's just better
-    println!("  {:?}", stmt.source_info.span);
     let StatementKind::Assign(box (l_place, rvalue)) = &stmt.kind else { panic!() };
-    let stmt_source = tcx.sess.source_map().span_to_snippet(stmt.source_info.span).unwrap();
+    let span = stmt.source_info.span;
+    let stmt_source = tcx.sess.source_map().span_to_snippet(span).unwrap();
     // TODO: there can be a newline instead of a space here, which will cause it to panic, but we
     // probably need to have the whitespace, so we don't catch "=="
     let (lhs_source, rhs_source) = stmt_source.split_once(" = ").unwrap();
 
-    let r_place = match rvalue {
-        Rvalue::Use(Operand::Copy(r_place) | Operand::Move(r_place)) => r_place,
-        // extremely cursed null pointer literal matcher
-        Rvalue::Use(
-            Operand::Constant(box Constant { literal: ConstantKind::Ty(Const { ty, val }), ..})
-        ) | Rvalue::Cast(
-            CastKind::Misc,
-            Operand::Constant(box Constant { literal: ConstantKind::Ty(Const { val, .. }), ..}),
-            ty
-        ) if ty.is_unsafe_ptr() && val.try_to_scalar_int().map(ScalarInt::is_null) == Some(true) => {
-            if place_ownership(tcx, ownership, func, body, l_place.clone(), loc).is_some() {
-                rewriter.make_suggestion(
-                    tcx,
-                    stmt.source_info.span,
-                    String::from("transform pointer assignment to use Option"),
-                    format!("{lhs_source} = None"),
-                );               
-            }
-            return;
-        },
-        x => unimplemented!("{x:?}"),
-    };
+    let lhs_span = span.with_hi(BytePos(span.lo().0 + lhs_source.len() as u32));
+    let rhs_span = span.with_lo(BytePos(span.hi().0 - rhs_source.len() as u32));
 
-    let mut source_stack = Vec::with_capacity(l_place.projection.len());
-    source_stack.push(lhs_source);
-    for (i, (_place, proj)) in l_place.iter_projections().rev().enumerate() {
+    let lhs_new = rewrite_place_expr(
+        tcx,
+        ownership,
+        func,
+        body,
+        l_place.clone(),
+        loc,
+        lhs_source,
+    );
+    let rhs_new = rewrite_rvalue(tcx, ownership, func, body, loc, rvalue, rhs_source);
+    if lhs_new != lhs_source {
+        rewriter.make_suggestion(
+            tcx,
+            lhs_span,
+            String::new(),
+            format!("{lhs_new}"),
+        )
+    }
+    if rhs_new != rhs_source {
+        rewriter.make_suggestion(
+            tcx,
+            rhs_span,
+            String::new(),
+            format!("{rhs_new}"),
+        );
+    }
+}
+
+pub fn rewrite_place_expr<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    ownership: &ownership_analysis::InterSummary,
+    func: Func,
+    body: &Body<'tcx>,
+    place: Place<'tcx>,
+    loc: Location,
+    source: &str,
+) -> String {
+    dbg!(&place);
+    let mut source_stack = Vec::with_capacity(place.projection.len());
+    source_stack.push(source);
+    for (i, (_place, proj)) in place.iter_projections().rev().enumerate() {
         match proj {
             ProjectionElem::Deref => source_stack.push(source_stack[i]
                 .trim_start_matches('(')
@@ -151,18 +222,40 @@ pub fn rewrite_reassignment<'tcx>(
             x => unimplemented!("{x:?}"),
         }
     }
-    println!("      source stack: {source_stack:?}");
+
+    let mut new_source = (*source_stack.last().unwrap()).to_owned();
+    for (i, (base_place, proj)) in place.iter_projections().enumerate() {
+        let i = place.projection.len() - i - 1;
+        match proj {
+            ProjectionElem::Deref => {
+                let is_optional = dbg!(place_ownership(tcx, ownership, func, body, base_place, loc)).is_some();
+                if is_optional {
+                    new_source = format!("(*{new_source}.unwrap())");
+                } else {
+                    new_source = format!("(*{new_source})");
+                }
+            }
+            ProjectionElem::Field(_, _) => {
+                let field_name = source_stack[i].rsplit_once('.').unwrap().1;
+                new_source = format!("{new_source}.{field_name}");
+            }
+            x => unimplemented!("{x:?}"),
+        }
+    }
+
+    dbg!();
+
+    new_source
 }
 
 fn rewrite_malloc<'tcx>(
     tcx: TyCtxt<'tcx>,
     rewriter: &mut rewriter::Rewriter,
     ownership: &ownership_analysis::InterSummary,
-    _mutability: &mutability_analysis::InterSummary,
-    _fatness: &fat_thin_analysis::CrateSummary,
     func: Func,
     body: &Body<'tcx>,
     bb_id: BasicBlock,
+    rewritten_stmts: &mut HashSet<Location>,
 ) {
     let bb = &body.basic_blocks()[bb_id];
     let terminator = bb.terminator();
@@ -173,11 +266,12 @@ fn rewrite_malloc<'tcx>(
         } => (args, destination.unwrap()),
         _ => panic!(),
     };
-    if place_ownership(tcx, ownership, func, body, dest_place, terminator_loc) != Some(true) {
+    if place_ownership(tcx, ownership, func, body, dest_place.as_ref(), terminator_loc) != Some(true) {
         return;
     }
 
-    let cast_statement = match body.stmt_at(dest_bb.start_location()) {
+    let cast_loc = dest_bb.start_location();
+    let cast_statement = match body.stmt_at(cast_loc) {
         Either::Left(s) => s,
         Either::Right(_) => todo!("malloc dest isn't statement"),
     };
@@ -193,6 +287,7 @@ fn rewrite_malloc<'tcx>(
     // malloc(_) as *mut Foo
     let malloc_span = cast_span.with_lo(terminator.source_info.span.lo());
 
+    rewritten_stmts.insert(cast_loc);
     rewriter.make_suggestion(
         tcx,
         malloc_span,
@@ -205,22 +300,22 @@ fn rewrite_realloc(
     tcx: TyCtxt<'_>,
     rewriter: &mut rewriter::Rewriter,
     _ownership: &ownership_analysis::InterSummary,
-    _mutability: &mutability_analysis::InterSummary,
     fatness: &fat_thin_analysis::CrateSummary,
     func: Func,
     body: &Body,
     bb_id: BasicBlock,
+    rewritten_stmts: &mut HashSet<Location>,
 ) {
     let bb = &body.basic_blocks()[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = body.terminator_loc(bb_id);
-    let (args, destination) = match &terminator.kind {
+    let (args, (dest_place, dest_bb)) = match &terminator.kind {
         TerminatorKind::Call {
             args, destination, ..
         } => (args, destination.unwrap()),
         _ => panic!(),
     };
-    if place_fatness(fatness, func, destination.0.as_ref(), terminator_loc) != Some(true) {
+    if place_fatness(fatness, func, dest_place.as_ref(), terminator_loc) != Some(true) {
         return;
     }
 
@@ -229,14 +324,15 @@ fn rewrite_realloc(
     let ptr_expr = uncast(tcx, fatness, func, body, terminator_loc, ptr).unwrap();
     let size_expr = uncast(tcx, fatness, func, body, terminator_loc, size).unwrap();
 
-    let cast_statement = match body.stmt_at(destination.1.start_location()) {
+    let cast_loc = dest_bb.start_location();
+    let cast_statement = match body.stmt_at(cast_loc) {
         Either::Left(s) => s,
         Either::Right(_) => todo!("realloc dest isn't statement"),
     };
     // let x = realloc(_, _) as *mut Foo
     let cast_span = match &cast_statement.kind {
         StatementKind::Assign(box (_, Rvalue::Cast(_, op, _)))
-            if op.place() == Some(destination.0) =>
+            if op.place() == Some(dest_place) =>
         {
             cast_statement.source_info.span
         }
@@ -245,6 +341,7 @@ fn rewrite_realloc(
     // realloc(_, _) as *mut Foo
     let realloc_span = cast_span.with_lo(terminator.source_info.span.lo());
 
+    rewritten_stmts.insert(cast_loc);
     rewriter.make_suggestion(
         tcx,
         realloc_span,
@@ -264,36 +361,37 @@ fn rewrite_calloc(
     tcx: TyCtxt<'_>,
     rewriter: &mut rewriter::Rewriter,
     _ownership: &ownership_analysis::InterSummary,
-    _mutability: &mutability_analysis::InterSummary,
     fatness: &fat_thin_analysis::CrateSummary,
     func: Func,
     body: &Body,
     bb_id: BasicBlock,
+    rewritten_stmts: &mut HashSet<Location>,
 ) {
     let bb = &body.basic_blocks()[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = body.terminator_loc(bb_id);
-    let (args, destination) = match &terminator.kind {
+    let (args, (dest_place, dest_bb)) = match &terminator.kind {
         TerminatorKind::Call {
             args, destination, ..
         } => (args, destination.unwrap()),
         _ => panic!(),
     };
-    if place_fatness(fatness, func, destination.0.as_ref(), terminator_loc) != Some(true) {
+    if place_fatness(fatness, func, dest_place.as_ref(), terminator_loc) != Some(true) {
         return;
     }
 
     let nmemb = args[0].place().unwrap().as_local().unwrap();
     let nmemb_expr = uncast(tcx, fatness, func, body, terminator_loc, nmemb).unwrap();
 
-    let cast_statement = match body.stmt_at(destination.1.start_location()) {
+    let cast_loc = dest_bb.start_location();
+    let cast_statement = match body.stmt_at(cast_loc) {
         Either::Left(s) => s,
         Either::Right(_) => todo!("calloc dest isn't statement"),
     };
     // let x = calloc(_) as *mut Foo
     let cast_span = match &cast_statement.kind {
         StatementKind::Assign(box (_, Rvalue::Cast(_, op, _)))
-            if op.place() == Some(destination.0) =>
+            if op.place() == Some(dest_place) =>
         {
             cast_statement.source_info.span
         }
@@ -302,6 +400,7 @@ fn rewrite_calloc(
     // calloc(_, _) as *mut Foo
     let calloc_span = cast_span.with_lo(terminator.source_info.span.lo());
 
+    rewritten_stmts.insert(cast_loc);
     rewriter.make_suggestion(
         tcx,
         calloc_span,
@@ -420,16 +519,22 @@ fn place_ownership<'tcx>(
     ownership: &ownership_analysis::InterSummary,
     func: Func,
     body: &Body<'tcx>,
-    place: Place<'tcx>,
+    place: PlaceRef<'tcx>,
     loc: Location,
 ) -> Option<bool> {
     assert!(place.projection.iter().all(|e| matches!(e, ProjectionElem::Field(_, _) | ProjectionElem::Deref)));
     let field_idx = place
-        .iter_projections()
+        .projection
+        .iter()
         .rev()
         .enumerate()
-        .find(|(_i, (_place, elem))| matches!(elem, ProjectionElem::Field(_, _)));
-    if let Some((idx, (place, ProjectionElem::Field(field, _ty)))) = field_idx {
+        .find(|(_i, elem)| matches!(elem, ProjectionElem::Field(_, _)));
+    if let Some((idx, ProjectionElem::Field(field, _ty))) = field_idx {
+        // place of the adt
+        let place = PlaceRef {
+            local: place.local,
+            projection: &place.projection[..place.projection.len() - 1],
+        };
         // TODO: is it?
         let n_derefs = idx;
         let struct_def_id = place.ty(body, tcx).ty.ty_adt_def().unwrap().did.as_local().unwrap();
@@ -444,6 +549,11 @@ fn place_ownership<'tcx>(
             .func_summaries[func]
             .ssa_name_source_map
             .try_def(place.local, loc)
+            .or_else(|| ownership
+                .func_summaries[func]
+                .ssa_name_source_map
+                .try_use(place.local, loc)
+            )
             .unwrap();
         let mut rho_range = ownership.func_summaries[func].locals[place.local][ssa_idx].clone();
         let rho = rho_range.nth(n_derefs).unwrap();
