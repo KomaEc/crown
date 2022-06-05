@@ -8,7 +8,7 @@ extern "C" {
 // delete operation in binary
 // search tree
 
-#[repr(C)]#[derive(Copy, Clone)]
+#[repr(C)]#[derive(Clone)]
 pub struct node {
     pub key: i32,
     pub left: *mut node,
