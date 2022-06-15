@@ -7,7 +7,7 @@ use rustc_hir::{def_id::LocalDefId, FnRetTy, FnSig, ItemKind};
 use rustc_index::bit_set::BitSet;
 use rustc_middle::{mir::Local, ty::TyCtxt};
 
-use rewrite_body::rewrite_body;
+use rewrite_body::{BodyRewriteCtxt, rewrite_body};
 
 pub fn rewrite(
     tcx: TyCtxt<'_>,
@@ -36,8 +36,8 @@ pub fn rewrite(
     rewriter.write(rewrite_mode)
 }
 
-fn rewrite_functions(
-    tcx: TyCtxt<'_>,
+fn rewrite_functions<'tcx>(
+    tcx: TyCtxt<'tcx>,
     rewriter: &mut Rewriter,
     ownership_analysis: &ownership_analysis::InterSummary,
     mutability_analysis: &mutability_analysis::InterSummary,
@@ -63,16 +63,17 @@ fn rewrite_functions(
                 // &required_mutability[func],
                 sig,
             );
-            rewrite_body(
+            let mut body_rewrite_cx = BodyRewriteCtxt {
                 tcx,
                 rewriter,
-                ownership_analysis,
-                mutability_analysis,
-                fatness_analysis,
+                ownership: ownership_analysis,
+                mutability: mutability_analysis,
+                fatness: fatness_analysis,
                 func,
-                // &required_mutability,
-                did,
-            );
+                def_id: did,
+                body: tcx.optimized_mir(did),
+            };
+            rewrite_body(&mut body_rewrite_cx);
         } else {
             unreachable!()
         }
