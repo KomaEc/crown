@@ -85,13 +85,13 @@ pub fn rewrite_body(
                         rewrite_reassignment(tcx, rewriter, ownership, mutability, fatness, func, body, loc, stmt);
                     } else if body.var_debug_info.iter().any(var_debug_matches_place) {
                         // binding
-                        let new_source = rewrite_rvalue(tcx, ownership, func, body, loc, rvalue, &source);
+                        let new_source = rewrite_rvalue(tcx, ownership, mutability, func, body, loc, rvalue, &source);
                         if new_source != source {
                             rewriter.make_suggestion(tcx, stmt.source_info.span, String::new(), new_source);
                         }
                     } else {
                         // temporary
-                        let new_source = rewrite_rvalue(tcx, ownership, func, body, loc, rvalue, &source);
+                        let new_source = rewrite_rvalue(tcx, ownership, mutability, func, body, loc, rvalue, &source);
                         if new_source != source {
                             rewriter.make_suggestion(tcx, stmt.source_info.span, String::new(), new_source);
                         }
@@ -122,6 +122,7 @@ pub fn rewrite_body(
 pub fn rewrite_rvalue<'tcx>(
     tcx: TyCtxt<'tcx>,
     ownership: &ownership_analysis::InterSummary,
+    mutability: &mutability_analysis::InterSummary,
     func: Func,
     body: &Body<'tcx>,
     loc: Location,
@@ -137,10 +138,12 @@ pub fn rewrite_rvalue<'tcx>(
             rewrite_place_expr(
                 tcx,
                 ownership,
+                mutability,
                 func,
                 body,
                 r_place.clone(),
                 loc,
+                true,
                 source,
             )
         },
@@ -186,13 +189,15 @@ pub fn rewrite_reassignment<'tcx>(
     let lhs_new = rewrite_place_expr(
         tcx,
         ownership,
+        mutability,
         func,
         body,
         l_place.clone(),
         loc,
+        false,
         lhs_source,
     );
-    let rhs_new = rewrite_rvalue(tcx, ownership, func, body, loc, rvalue, rhs_source);
+    let rhs_new = rewrite_rvalue(tcx, ownership, mutability, func, body, loc, rvalue, rhs_source);
     if lhs_new != lhs_source {
         rewriter.make_suggestion(
             tcx,
@@ -214,10 +219,12 @@ pub fn rewrite_reassignment<'tcx>(
 pub fn rewrite_place_expr<'tcx>(
     tcx: TyCtxt<'tcx>,
     ownership: &ownership_analysis::InterSummary,
+    mutability: &mutability_analysis::InterSummary,
     func: Func,
     body: &Body<'tcx>,
     place: Place<'tcx>,
     loc: Location,
+    is_rvalue: bool,
     source: &str,
 ) -> String {
     dbg!(&place);
@@ -242,10 +249,17 @@ pub fn rewrite_place_expr<'tcx>(
         match proj {
             ProjectionElem::Deref => {
                 let ownership = place_ownership(tcx, ownership, func, body, base_place, loc);
+                let mutability = place_mutability(tcx, mutability, func, body, base_place, loc);
                 if ownership == Some(true) {
                     new_source = format!("(*{new_source}.as_mut().unwrap())");
                 } else if ownership == Some(false) {
-                    new_source = format!("(*{new_source}.unwrap())");
+                    let maybe_as = match (is_rvalue, mutability) {
+                        (false, _) => "",
+                        (true, Some(true)) => ".as_mut()",
+                        (true, Some(false)) => ".as_ref()",
+                        (true, None) => panic!(),
+                    };
+                    new_source = format!("(*{new_source}{maybe_as}.unwrap())");
                 } else {
                     new_source = format!("(*{new_source})");
                 }
