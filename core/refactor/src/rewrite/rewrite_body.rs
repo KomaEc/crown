@@ -40,6 +40,7 @@ pub fn rewrite_body(
                     _ => panic!(),
                 };
                 let callee_name = tcx.def_path_str(*callee_def_id);
+                let span = terminator.source_info.span;
                 match callee_name.as_str() {
                     x if x.ends_with("::malloc") => {
                         rewrite_malloc(tcx, rewriter, ownership, func, body, bb_id, &mut rewritten_stmts);
@@ -50,11 +51,13 @@ pub fn rewrite_body(
                     x if x.ends_with("::calloc") => {
                         rewrite_calloc(tcx, rewriter, ownership, fatness, func, body, bb_id, &mut rewritten_stmts);
                     }
+                    x if x.ends_with("::free") => {
+                        rewriter.make_suggestion(tcx, span, String::from("delete explicit free() call"), String::new());
+                    }
                     "std::ptr::mut_ptr::<impl *mut T>::offset" | "std::ptr::const_ptr::<impl *const T>::offset" => {
                         rewrite_offset(tcx, rewriter, ownership, mutability, fatness, func, body, bb_id);
                     }
                     "std::ptr::mut_ptr::<impl *mut T>::is_null" | "std::ptr::const_ptr::<impl *const T>::is_null" => {
-                        let span = terminator.source_info.span;
                         let call_span = span.with_lo(BytePos(span.hi().0 - ".is_null()".len() as u32));
                         rewriter.make_suggestion(tcx, call_span, String::new(), String::from(".is_none()"));
                     }
@@ -91,6 +94,22 @@ pub fn rewrite_body(
                         let new_source = rewrite_rvalue(tcx, ownership, func, body, loc, rvalue, &source);
                         if new_source != source {
                             rewriter.make_suggestion(tcx, stmt.source_info.span, String::new(), new_source);
+                        }
+                    }
+
+                    if let Rvalue::Use(Operand::Copy(r_place) | Operand::Move(r_place)) = rvalue {
+                        let lhs_ownership = place_ownership(tcx, ownership, func, body, place.as_ref(), loc);
+                        let rhs_ownership = place_ownership(tcx, ownership, func, body, r_place.as_ref(), loc);
+                        let lhs_mutability = place_mutability(tcx, mutability, func, body, place.as_ref(), loc);
+                        if rhs_ownership == Some(true) && lhs_ownership == Some(true) {
+                            rewriter.make_suggestion(tcx, stmt.source_info.span.shrink_to_hi(), String::new(), String::from(".take()"));
+                        } else if rhs_ownership == Some(true) && lhs_ownership == Some(false) {
+                            let call = if lhs_mutability == Some(true) {
+                                String::from(".as_deref_mut()")
+                            } else {
+                                String::from(".as_deref()")
+                            };
+                            rewriter.make_suggestion(tcx, stmt.source_info.span.shrink_to_hi(), String::new(), call);
                         }
                     }
                 }
@@ -222,8 +241,10 @@ pub fn rewrite_place_expr<'tcx>(
         let i = place.projection.len() - i - 1;
         match proj {
             ProjectionElem::Deref => {
-                let is_optional = dbg!(place_ownership(tcx, ownership, func, body, base_place, loc)).is_some();
-                if is_optional {
+                let ownership = place_ownership(tcx, ownership, func, body, base_place, loc);
+                if ownership == Some(true) {
+                    new_source = format!("(*{new_source}.as_mut().unwrap())");
+                } else if ownership == Some(false) {
                     new_source = format!("(*{new_source}.unwrap())");
                 } else {
                     new_source = format!("(*{new_source})");
@@ -280,13 +301,15 @@ fn rewrite_malloc<'tcx>(
     };
     // malloc(_) as *mut Foo
     let malloc_span = cast_span.with_lo(terminator.source_info.span.lo());
+    let malloc_source = tcx.sess.source_map().span_to_snippet(malloc_span).unwrap();
+    let ty = malloc_source.rsplit_once(' ').unwrap().1;
 
     rewritten_stmts.insert(cast_loc);
     rewriter.make_suggestion(
         tcx,
         malloc_span,
         String::from("use box instead of malloc"),
-        String::from("Some(Box::new(Default::default()))"),
+        format!("Some(Box::<{ty}>::new(Default::default()))"),
     );
 }
 
@@ -516,6 +539,10 @@ fn place_ownership<'tcx>(
     place: PlaceRef<'tcx>,
     loc: Location,
 ) -> Option<bool> {
+    if !place.ty(body, tcx).ty.is_unsafe_ptr() {
+        // no ownership info for non-pointer type
+        return None;
+    }
     assert!(place.projection.iter().all(|e| matches!(e, ProjectionElem::Field(_, _) | ProjectionElem::Deref)));
     let field_idx = place
         .projection
@@ -552,6 +579,45 @@ fn place_ownership<'tcx>(
         let mut rho_range = ownership.func_summaries[func].locals[place.local][ssa_idx].clone();
         let rho = rho_range.nth(n_derefs).unwrap();
         return ownership.approximate_rho_ctxt.get().unwrap()[func][rho];
+    }
+}
+
+fn place_mutability<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    mutability: &mutability_analysis::InterSummary,
+    func: Func,
+    body: &Body<'tcx>,
+    place: PlaceRef<'tcx>,
+    loc: Location,
+) -> Option<bool> {
+    if !place.ty(body, tcx).ty.is_unsafe_ptr() {
+        // no ownership info for non-pointer type
+        return None;
+    }
+    assert!(place.projection.iter().all(|e| matches!(e, ProjectionElem::Field(_, _) | ProjectionElem::Deref)));
+    let field_idx = place
+        .projection
+        .iter()
+        .rev()
+        .enumerate()
+        .find(|(_i, elem)| matches!(elem, ProjectionElem::Field(_, _)));
+    if let Some((idx, ProjectionElem::Field(field, _ty))) = field_idx {
+        // TODO: do we have results for struct fields?
+        return None;
+    } else {
+        let n_derefs = place.projection.len();
+        let ssa_idx = mutability
+            .func_summaries[func]
+            .ssa_name_source_map
+            .try_def(place.local, loc)
+            .or_else(|| mutability
+                .func_summaries[func]
+                .ssa_name_source_map
+                .try_use(place.local, loc)
+            )
+            .unwrap();
+        let mut mu = mutability.func_summaries[func].locals[place.local][ssa_idx].clone();
+        return Some(mutability.approximate_mu_ctxt.get().unwrap()[func][mu]);
     }
 }
 
