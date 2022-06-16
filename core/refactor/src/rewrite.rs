@@ -7,7 +7,7 @@ use rustc_hir::{def_id::LocalDefId, FnRetTy, FnSig, ItemKind};
 use rustc_index::bit_set::BitSet;
 use rustc_middle::{mir::Local, ty::TyCtxt};
 
-use rewrite_body::{BodyRewriteCtxt, rewrite_body};
+use rewrite_body::{rewrite_body, BodyRewriteCtxt};
 
 pub fn rewrite(
     tcx: TyCtxt<'_>,

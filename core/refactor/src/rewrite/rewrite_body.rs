@@ -1,18 +1,16 @@
 use std::collections::HashSet;
 
 use analysis::{
-    call_graph::Func,
-    fat_thin_analysis,
-    ssa::RichLocation, ownership_analysis, mutability_analysis,
+    call_graph::Func, fat_thin_analysis, mutability_analysis, ownership_analysis, ssa::RichLocation,
 };
 use either::Either;
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::{
     mir::{
-        BasicBlock, Body, Local, Location, PlaceRef, ProjectionElem, Rvalue, StatementKind,
-        TerminatorKind, Operand, Statement, ConstantKind, CastKind, Constant, Place,
+        BasicBlock, Body, CastKind, Constant, ConstantKind, Local, Location, Operand, Place,
+        PlaceRef, ProjectionElem, Rvalue, Statement, StatementKind, TerminatorKind,
     },
-    ty::{TyCtxt, Const, ScalarInt},
+    ty::{Const, ScalarInt, TyCtxt},
 };
 use rustc_span::{BytePos, Span};
 use rustc_target::abi::VariantIdx;
@@ -30,7 +28,8 @@ pub struct BodyRewriteCtxt<'tcx, 'a> {
 
 impl BodyRewriteCtxt<'_, '_> {
     fn rewrite(&mut self, span: Span, to: impl Into<String>, msg: &'static str) {
-        self.rewriter.make_suggestion(self.tcx, span, msg.into(), to.into());
+        self.rewriter
+            .make_suggestion(self.tcx, span, msg.into(), to.into());
     }
 
     fn span_to_snippet(&self, span: Span) -> String {
@@ -66,11 +65,14 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
                     x if x.ends_with("::free") => {
                         cx.rewrite(span, "", "delete explicit free() call");
                     }
-                    "std::ptr::mut_ptr::<impl *mut T>::offset" | "std::ptr::const_ptr::<impl *const T>::offset" => {
+                    "std::ptr::mut_ptr::<impl *mut T>::offset"
+                    | "std::ptr::const_ptr::<impl *const T>::offset" => {
                         rewrite_offset(cx, bb_id, &mut rewritten_stmts);
                     }
-                    "std::ptr::mut_ptr::<impl *mut T>::is_null" | "std::ptr::const_ptr::<impl *const T>::is_null" => {
-                        let call_span = span.with_lo(BytePos(span.hi().0 - ".is_null()".len() as u32));
+                    "std::ptr::mut_ptr::<impl *mut T>::is_null"
+                    | "std::ptr::const_ptr::<impl *const T>::is_null" => {
+                        let call_span =
+                            span.with_lo(BytePos(span.hi().0 - ".is_null()".len() as u32));
                         cx.rewrite(call_span, ".is_none()", "");
                     }
                     _ => {}
@@ -79,10 +81,19 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
             _ => {}
         }
 
-        let stmts = bb.statements
+        let stmts = bb
+            .statements
             .iter()
             .enumerate()
-            .map(|(idx, stmt)| (Location { block: bb_id, statement_index: idx }, stmt))
+            .map(|(idx, stmt)| {
+                (
+                    Location {
+                        block: bb_id,
+                        statement_index: idx,
+                    },
+                    stmt,
+                )
+            })
             .filter(|(loc, _)| !rewritten_stmts.contains(loc));
         for (loc, stmt) in stmts {
             match &stmt.kind {
@@ -115,7 +126,7 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
                         }
                     }
                 }
-                _ => {},
+                _ => {}
             }
         }
     }
@@ -133,28 +144,29 @@ pub fn rewrite_rvalue<'tcx>(
             if r_place.projection.len() == 0 {
                 return source.to_owned();
             }
-            rewrite_place_expr(
-                cx,
-                r_place.clone(),
-                loc,
-                true,
-                source,
-            )
-        },
+            rewrite_place_expr(cx, r_place.clone(), loc, true, source)
+        }
         // extremely cursed matcher - rvalue is null pointer literal
-        Rvalue::Use(
-            Operand::Constant(box Constant { literal: ConstantKind::Ty(Const { ty, val }), ..})
-        ) | Rvalue::Cast(
+        Rvalue::Use(Operand::Constant(box Constant {
+            literal: ConstantKind::Ty(Const { ty, val }),
+            ..
+        }))
+        | Rvalue::Cast(
             CastKind::Misc,
-            Operand::Constant(box Constant { literal: ConstantKind::Ty(Const { val, .. }), ..}),
-            ty
-        ) if ty.is_unsafe_ptr() && val.try_to_scalar_int().map(ScalarInt::is_null) == Some(true) => {
+            Operand::Constant(box Constant {
+                literal: ConstantKind::Ty(Const { val, .. }),
+                ..
+            }),
+            ty,
+        ) if ty.is_unsafe_ptr()
+            && val.try_to_scalar_int().map(ScalarInt::is_null) == Some(true) =>
+        {
             return String::from("None");
-        },
+        }
         rvalue => {
             tracing::warn!(?rvalue, "not rewriting unsupported rvalue");
             return source.to_owned();
-        },
+        }
     }
 }
 
@@ -174,27 +186,13 @@ pub fn rewrite_reassignment<'tcx>(
     let lhs_span = span.with_hi(BytePos(span.lo().0 + lhs_source.len() as u32));
     let rhs_span = span.with_lo(BytePos(span.hi().0 - rhs_source.len() as u32));
 
-    let lhs_new = rewrite_place_expr(
-        cx,
-        l_place.clone(),
-        loc,
-        false,
-        lhs_source,
-    );
+    let lhs_new = rewrite_place_expr(cx, l_place.clone(), loc, false, lhs_source);
     let rhs_new = rewrite_rvalue(cx, loc, rvalue, rhs_source);
     if lhs_new != lhs_source {
-        cx.rewrite(
-            lhs_span,
-            lhs_new,
-            "",
-        );
+        cx.rewrite(lhs_span, lhs_new, "");
     }
     if rhs_new != rhs_source {
-        cx.rewrite(
-            rhs_span,
-            rhs_new,
-            "",
-        );
+        cx.rewrite(rhs_span, rhs_new, "");
     }
 }
 
@@ -210,13 +208,17 @@ pub fn rewrite_place_expr<'tcx>(
     source_stack.push(source);
     for (i, (_place, proj)) in place.iter_projections().rev().enumerate() {
         match proj {
-            ProjectionElem::Deref => source_stack.push(source_stack[i]
-                .trim_start_matches('(')
-                .trim_start_matches('*')
-                .trim_end_matches(')')),
-            ProjectionElem::Field(_, _) => source_stack.push(source_stack[i]
-                .trim_end_matches(char::is_alphanumeric)
-                .trim_end_matches('.')),
+            ProjectionElem::Deref => source_stack.push(
+                source_stack[i]
+                    .trim_start_matches('(')
+                    .trim_start_matches('*')
+                    .trim_end_matches(')'),
+            ),
+            ProjectionElem::Field(_, _) => source_stack.push(
+                source_stack[i]
+                    .trim_end_matches(char::is_alphanumeric)
+                    .trim_end_matches('.'),
+            ),
             x => unimplemented!("{x:?}"),
         }
     }
@@ -402,7 +404,11 @@ fn rewrite_calloc(
     );
 }
 
-fn rewrite_offset(cx: &mut BodyRewriteCtxt, bb_id: BasicBlock, rewritten_stmts: &mut HashSet<Location>) {
+fn rewrite_offset(
+    cx: &mut BodyRewriteCtxt,
+    bb_id: BasicBlock,
+    rewritten_stmts: &mut HashSet<Location>,
+) {
     let bb = &cx.body.basic_blocks()[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
@@ -438,10 +444,14 @@ fn rewrite_offset(cx: &mut BodyRewriteCtxt, bb_id: BasicBlock, rewritten_stmts: 
         Either::Left(s) => s,
         Either::Right(_) => return,
     };
-    
+
     match &deref_stmt.kind {
         StatementKind::Assign(box (place, rvalue)) => {
-            if let PlaceRef { local, projection: [ProjectionElem::Deref] } = place.as_ref() {
+            if let PlaceRef {
+                local,
+                projection: [ProjectionElem::Deref],
+            } = place.as_ref()
+            {
                 if local == dest_local {
                     // writing into the slice
                     todo!()
@@ -453,7 +463,7 @@ fn rewrite_offset(cx: &mut BodyRewriteCtxt, bb_id: BasicBlock, rewritten_stmts: 
                 }
             }
         }
-        _ => {},
+        _ => {}
     }
 }
 
@@ -507,7 +517,10 @@ fn place_ownership<'tcx>(
         // no ownership info for non-pointer type
         return None;
     }
-    assert!(place.projection.iter().all(|e| matches!(e, ProjectionElem::Field(_, _) | ProjectionElem::Deref)));
+    assert!(place
+        .projection
+        .iter()
+        .all(|e| matches!(e, ProjectionElem::Field(_, _) | ProjectionElem::Deref)));
     let field_idx = place
         .projection
         .iter()
@@ -522,7 +535,14 @@ fn place_ownership<'tcx>(
         };
         // TODO: is it?
         let n_derefs = idx;
-        let struct_def_id = place.ty(cx.body, cx.tcx).ty.ty_adt_def().unwrap().did.as_local().unwrap();
+        let struct_def_id = place
+            .ty(cx.body, cx.tcx)
+            .ty
+            .ty_adt_def()
+            .unwrap()
+            .did
+            .as_local()
+            .unwrap();
         let mut rho_range = cx.ownership.inter_ctxt.field_defs[&struct_def_id]
             [VariantIdx::from_usize(0)][field.index()]
         .clone();
@@ -530,17 +550,17 @@ fn place_ownership<'tcx>(
         return cx.ownership.approximate_rho_ctxt.get().unwrap()[cx.func][rho];
     } else {
         let n_derefs = place.projection.len();
-        let ssa_idx = cx.ownership
-            .func_summaries[cx.func]
+        let ssa_idx = cx.ownership.func_summaries[cx.func]
             .ssa_name_source_map
             .try_def(place.local, loc)
-            .or_else(|| cx.ownership
-                .func_summaries[cx.func]
-                .ssa_name_source_map
-                .try_use(place.local, loc)
-            )
+            .or_else(|| {
+                cx.ownership.func_summaries[cx.func]
+                    .ssa_name_source_map
+                    .try_use(place.local, loc)
+            })
             .unwrap();
-        let mut rho_range = cx.ownership.func_summaries[cx.func].locals[place.local][ssa_idx].clone();
+        let mut rho_range =
+            cx.ownership.func_summaries[cx.func].locals[place.local][ssa_idx].clone();
         let rho = rho_range.nth(n_derefs).unwrap();
         return cx.ownership.approximate_rho_ctxt.get().unwrap()[cx.func][rho];
     }
@@ -555,7 +575,10 @@ fn place_mutability<'tcx>(
         // no mutability info for non-pointer type
         return None;
     }
-    assert!(place.projection.iter().all(|e| matches!(e, ProjectionElem::Field(_, _) | ProjectionElem::Deref)));
+    assert!(place
+        .projection
+        .iter()
+        .all(|e| matches!(e, ProjectionElem::Field(_, _) | ProjectionElem::Deref)));
     let field_idx = place
         .projection
         .iter()
@@ -568,15 +591,14 @@ fn place_mutability<'tcx>(
     } else {
         // TODO: do we have results through pointer indirections?
         let n_derefs = place.projection.len();
-        let ssa_idx = cx.mutability
-            .func_summaries[cx.func]
+        let ssa_idx = cx.mutability.func_summaries[cx.func]
             .ssa_name_source_map
             .try_def(place.local, loc)
-            .or_else(|| cx.mutability
-                .func_summaries[cx.func]
-                .ssa_name_source_map
-                .try_use(place.local, loc)
-            )
+            .or_else(|| {
+                cx.mutability.func_summaries[cx.func]
+                    .ssa_name_source_map
+                    .try_use(place.local, loc)
+            })
             .unwrap();
         let mu = cx.mutability.func_summaries[cx.func].locals[place.local][ssa_idx].clone();
         return Some(cx.mutability.approximate_mu_ctxt.get().unwrap()[cx.func][mu]);
@@ -602,11 +624,7 @@ fn uncast(cx: &mut BodyRewriteCtxt, loc: Location, local: Local) -> Option<Strin
     match &def_stmt.kind {
         StatementKind::Assign(box (_place, rvalue)) => {
             if let Rvalue::Cast(_kind, operand, _ty) = rvalue {
-                return uncast(
-                    cx,
-                    def_loc,
-                    operand.place().unwrap().as_local().unwrap(),
-                );
+                return uncast(cx, def_loc, operand.place().unwrap().as_local().unwrap());
             }
             let span = def_stmt.source_info.span;
             return Some(cx.span_to_snippet(span));
