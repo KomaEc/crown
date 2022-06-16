@@ -203,7 +203,6 @@ pub fn rewrite_place_expr<'tcx>(
     is_rvalue: bool,
     source: &str,
 ) -> String {
-    dbg!(&place);
     let mut source_stack = Vec::with_capacity(place.projection.len());
     source_stack.push(source);
     for (i, (_place, proj)) in place.iter_projections().rev().enumerate() {
