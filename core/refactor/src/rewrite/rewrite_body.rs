@@ -32,6 +32,10 @@ impl BodyRewriteCtxt<'_, '_> {
     fn rewrite(&mut self, span: Span, to: impl Into<String>, msg: &'static str) {
         self.rewriter.make_suggestion(self.tcx, span, msg.into(), to.into());
     }
+
+    fn span_to_snippet(&self, span: Span) -> String {
+        self.tcx.sess.source_map().span_to_snippet(span).unwrap()
+    }
 }
 
 pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
@@ -83,7 +87,7 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
         for (loc, stmt) in stmts {
             match &stmt.kind {
                 StatementKind::Assign(box (place, rvalue)) => {
-                    let source = cx.tcx.sess.source_map().span_to_snippet(stmt.source_info.span).unwrap();
+                    let source = cx.span_to_snippet(stmt.source_info.span);
 
                     if source.contains(" = ") {
                         rewrite_reassignment(cx, loc, stmt);
@@ -162,7 +166,7 @@ pub fn rewrite_reassignment<'tcx>(
     // TODO: convert everything else to let-else too. it's just better
     let StatementKind::Assign(box (l_place, rvalue)) = &stmt.kind else { panic!() };
     let span = stmt.source_info.span;
-    let stmt_source = cx.tcx.sess.source_map().span_to_snippet(span).unwrap();
+    let stmt_source = cx.span_to_snippet(span);
     // TODO: there can be a newline instead of a space here, which will cause it to panic, but we
     // probably need to have the whitespace, so we don't catch "=="
     let (lhs_source, rhs_source) = stmt_source.split_once(" = ").unwrap();
@@ -283,7 +287,7 @@ fn rewrite_malloc<'tcx>(
     };
     // malloc(_) as *mut Foo
     let malloc_span = cast_span.with_lo(terminator.source_info.span.lo());
-    let malloc_source = cx.tcx.sess.source_map().span_to_snippet(malloc_span).unwrap();
+    let malloc_source = cx.span_to_snippet(malloc_span);
     let ty = malloc_source.rsplit_once(' ').unwrap().1;
 
     rewritten_stmts.insert(cast_loc);
@@ -592,17 +596,9 @@ fn uncast(cx: &mut BodyRewriteCtxt, loc: Location, local: Local) -> Option<Strin
     let def_stmt = match cx.body.stmt_at(def_loc) {
         Either::Left(s) => s,
         Either::Right(terminator) => {
-            return cx.tcx
-                .sess
-                .source_map()
-                .span_to_snippet(terminator.source_info.span)
-                .ok()
+            return Some(cx.span_to_snippet(terminator.source_info.span));
         }
     };
-    let _expr = cx.tcx
-        .sess
-        .source_map()
-        .span_to_snippet(def_stmt.source_info.span);
     match &def_stmt.kind {
         StatementKind::Assign(box (_place, rvalue)) => {
             if let Rvalue::Cast(_kind, operand, _ty) = rvalue {
@@ -613,7 +609,7 @@ fn uncast(cx: &mut BodyRewriteCtxt, loc: Location, local: Local) -> Option<Strin
                 );
             }
             let span = def_stmt.source_info.span;
-            return cx.tcx.sess.source_map().span_to_snippet(span).ok();
+            return Some(cx.span_to_snippet(span));
         }
         _ => todo!(),
     }
