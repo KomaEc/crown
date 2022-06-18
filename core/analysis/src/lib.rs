@@ -9,6 +9,7 @@
 #![feature(step_trait)]
 #![feature(array_windows)]
 
+pub mod api;
 pub mod boundary_model;
 pub mod call_graph;
 pub mod def_use;
@@ -19,6 +20,7 @@ pub mod liveness_analysis;
 // pub mod null_analysis;
 // pub mod null_analysis;
 pub mod mutability_analysis;
+pub mod ownership;
 pub mod ownership_analysis;
 pub mod pointer_analysis;
 pub mod required_mutability;
@@ -28,7 +30,6 @@ pub mod ssa;
 pub mod test;
 pub mod toy_analysis;
 pub mod ty_ext;
-pub mod ownership;
 
 extern crate rustc_arena;
 extern crate rustc_ast;

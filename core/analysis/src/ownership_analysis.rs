@@ -11,7 +11,7 @@ use rustc_hash::FxHashMap;
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::Local,
+    mir::{Local, Location},
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
@@ -104,6 +104,8 @@ pub struct InterSummary {
     pub func_sigs: IndexVec<Func, FuncSig<Surface, Option<bool>>>,
     pub func_summaries: IndexVec<Func, IntraSummary>,
     pub approximate_rho_ctxt: OnceCell<IndexVec<Func, IndexVec<Rho, Option<bool>>>>,
+    /// adt def -> field index -> ptr depth
+    pub struct_results: OnceCell<FxHashMap<LocalDefId, Vec<Vec<Option<bool>>>>>,
 }
 
 impl InterSummary {
@@ -203,6 +205,7 @@ impl InterSummary {
             func_sigs,
             func_summaries,
             approximate_rho_ctxt: OnceCell::new(),
+            struct_results: OnceCell::new(),
         }
         .debug_bidirectionality()
     }
@@ -346,6 +349,36 @@ impl InterSummary {
                     .collect(),
             )
             .unwrap();
+
+        let mut struct_results: FxHashMap<LocalDefId, Vec<Vec<Option<bool>>>> =
+            FxHashMap::default();
+        let graph = &self.inter_ctxt.global_assumptions.le_constraints.graph;
+        let sccs = Sccs::<_, u32>::new(graph);
+        let zero = sccs.scc(Rho::new(0));
+        let one = sccs.scc(Rho::new(1));
+        for (idx, field_def) in self.inter_ctxt.global_source_map.iter().enumerate() {
+            let rho = Rho::new(idx + 2);
+            let x = sccs.scc(rho);
+            let result = if x == zero {
+                Some(false)
+            } else if x == one {
+                Some(true)
+            } else {
+                None
+            };
+
+            let struct_map = struct_results.entry(field_def.adt_def).or_default();
+            if struct_map.len() < field_def.field_idx + 1 {
+                struct_map.resize_with(field_def.field_idx + 1, Default::default);
+            }
+            let field_vec = &mut struct_map[field_def.field_idx];
+            if field_vec.len() < field_def.nested_level + 1 {
+                field_vec.resize_with(field_def.nested_level + 1, Default::default);
+            }
+            field_vec[field_def.nested_level] = result;
+        }
+        self.struct_results.set(struct_results).unwrap();
+
         Ok(())
     }
 
@@ -428,6 +461,43 @@ impl InterSummary {
 
             tracing::debug!("{:?}: ({}) -> {}", did, args.join(", "), ret)
         }
+    }
+}
+
+impl crate::api::AnalysisResults for InterSummary {
+    fn local_result(&self, func: Func, local: Local, ptr_depth: usize) -> Option<bool> {
+        let arc = &self.approximate_rho_ctxt.get().unwrap()[func];
+        let mut results = self.func_summaries[func].locals[local]
+            .iter()
+            .map(|range| range.clone().nth(ptr_depth).unwrap())
+            .map(|rho| arc[rho]);
+        let first = results.next().unwrap();
+        assert!(
+            results.all(|r| r == first),
+            "no single value for local_result"
+        );
+        first
+    }
+
+    fn local_result_at(
+        &self,
+        func: Func,
+        local: Local,
+        loc: Location,
+        ptr_depth: usize,
+    ) -> Option<bool> {
+        let source_map = &self.func_summaries[func].ssa_name_source_map;
+        let ssa_idx = source_map
+            .try_def(local, loc)
+            .or_else(|| source_map.try_use(local, loc))
+            .unwrap();
+        let mut rho_range = self.func_summaries[func].locals[local][ssa_idx].clone();
+        let rho = rho_range.nth(ptr_depth).unwrap();
+        self.approximate_rho_ctxt.get().unwrap()[func][rho]
+    }
+
+    fn field_result(&self, def_id: LocalDefId, field: usize, ptr_depth: usize) -> Option<bool> {
+        self.struct_results.get().unwrap()[&def_id][field][ptr_depth]
     }
 }
 

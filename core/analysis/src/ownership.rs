@@ -1,7 +1,9 @@
-use rustc_middle::mir::{visit::{PlaceContext, MutatingUseContext, NonUseContext, NonMutatingUseContext}, Local, LocalDecls};
+use rustc_middle::mir::{
+    visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext},
+    Local, LocalDecls,
+};
 
 use crate::{def_use::IsDefUse, ty_ext::TyExt};
-
 
 #[derive(Eq, PartialEq, Clone, Copy)]
 pub enum OwnershipDefUse {

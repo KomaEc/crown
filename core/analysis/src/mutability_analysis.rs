@@ -7,7 +7,10 @@ use range_ext::IsRustcIndexDefinedCV;
 use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
-use rustc_middle::{mir::Local, ty::TyCtxt};
+use rustc_middle::{
+    mir::{Local, Location},
+    ty::TyCtxt,
+};
 
 use crate::{
     call_graph::{CallGraph, Func},
@@ -199,6 +202,48 @@ impl InterSummary {
 
             tracing::debug!("{:?}: ({}) -> {}", did, args.join(", "), ret)
         }
+    }
+}
+
+impl crate::api::AnalysisResults for InterSummary {
+    fn local_result(&self, func: Func, local: Local, ptr_depth: usize) -> Option<bool> {
+        if ptr_depth > 0 {
+            tracing::warn!("mutability analysis doesn't support nested level > 0");
+        }
+        let mc = &self.approximate_mu_ctxt.get().unwrap()[func];
+        let mut results = self.func_summaries[func].locals[local]
+            .iter()
+            .map(|&mu| mc[mu]);
+        let first = results.next().unwrap();
+        assert!(
+            results.all(|r| r == first),
+            "no single value for local_result"
+        );
+        Some(first)
+    }
+
+    fn local_result_at(
+        &self,
+        func: Func,
+        local: Local,
+        loc: Location,
+        ptr_depth: usize,
+    ) -> Option<bool> {
+        if ptr_depth > 0 {
+            tracing::warn!("mutability analysis doesn't support nested level > 0");
+        }
+        let source_map = &self.func_summaries[func].ssa_name_source_map;
+        let ssa_idx = source_map
+            .try_def(local, loc)
+            .or_else(|| source_map.try_use(local, loc))
+            .unwrap();
+        let mu = self.func_summaries[func].locals[local][ssa_idx].clone();
+        Some(self.approximate_mu_ctxt.get().unwrap()[func][mu])
+    }
+
+    fn field_result(&self, _def_id: LocalDefId, _field: usize, _ptr_depth: usize) -> Option<bool> {
+        tracing::warn!("mutability analysis doesn't support struct fields");
+        None
     }
 }
 

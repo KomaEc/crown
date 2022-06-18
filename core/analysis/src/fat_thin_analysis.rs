@@ -7,7 +7,11 @@ use graph::implementation::forward_star;
 use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
-use rustc_middle::{mir::Local, ty::TyCtxt};
+use rustc_middle::{
+    mir::{Local, Location},
+    ty::TyCtxt,
+};
+use rustc_target::abi::VariantIdx;
 
 use crate::{
     call_graph::{CallGraph, CallSite, Func},
@@ -231,6 +235,44 @@ impl CrateSummary {
         }
     }
     */
+}
+
+impl crate::api::AnalysisResults for CrateSummary {
+    fn local_result(&self, func: Func, local: Local, ptr_depth: usize) -> Option<bool> {
+        let mut results = self.lambda_ctxt.locals[func][local]
+            .iter()
+            .map(|range| range.clone().nth(ptr_depth).unwrap())
+            .map(|lambda| self.lambda_ctxt.assumptions[lambda]);
+        let first = results.next().unwrap();
+        assert!(
+            results.all(|r| r == first),
+            "no single value for local_result"
+        );
+        first
+    }
+
+    fn local_result_at(
+        &self,
+        func: Func,
+        local: Local,
+        loc: Location,
+        ptr_depth: usize,
+    ) -> Option<bool> {
+        let source_map = &self.ssa_name_source_map[func];
+        let ssa_idx = source_map
+            .try_def(local, loc)
+            .or_else(|| source_map.try_use(local, loc))
+            .unwrap();
+        let mut rho_range = self.lambda_ctxt.locals[func][local][ssa_idx].clone();
+        let rho = rho_range.nth(ptr_depth).unwrap();
+        self.lambda_ctxt.assumptions[rho]
+    }
+
+    fn field_result(&self, def_id: LocalDefId, field: usize, ptr_depth: usize) -> Option<bool> {
+        let mut lambda_range =
+            self.lambda_ctxt.field_defs[&def_id][VariantIdx::from_usize(0)][field].clone();
+        self.lambda_ctxt.assumptions[lambda_range.nth(ptr_depth).unwrap()]
+    }
 }
 
 /// λ1 ≤ λ2
