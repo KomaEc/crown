@@ -12,11 +12,13 @@ extern crate rustc_middle;
 extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 
+use analysis::null_analysis::NullAnalysisResults;
 // use analysis::null_analysis::NullAnalysisResults;
 use clap::Parser;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
-use rustc_hir::{ItemKind, OwnerNode};
+use rustc_hir::{ItemKind, OwnerNode, def_id::LocalDefId};
+use rustc_index::vec::IndexVec;
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config;
@@ -150,13 +152,24 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
 
     match cmd {
         Command::Analyse {
-            null: _,
+            null,
             array,
             ownership,
             mutability,
             pretty_mir,
             all: _,
         } => {
+            if *null {
+                let mut fn_results = IndexVec::<LocalDefId, Option<NullAnalysisResults>>::new();
+                for &def_id in &top_level_fns {
+                    fn_results.insert(def_id, NullAnalysisResults::collect(tcx, def_id));
+                }
+                NullAnalysisResults::resolve_deps(&mut fn_results);
+                for result in fn_results.iter().filter_map(|v| v.as_ref()) {
+                    println!("{result}");
+                }
+            }
+
             if *pretty_mir {
                 refactor::show_mir(tcx, top_level_fns.clone())
             }
