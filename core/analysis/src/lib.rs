@@ -8,6 +8,7 @@
 #![feature(associated_type_defaults)]
 #![feature(step_trait)]
 #![feature(array_windows)]
+#![feature(let_else)]
 
 pub mod api;
 pub mod boundary_model;

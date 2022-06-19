@@ -15,10 +15,7 @@
 use std::fmt::Display;
 
 use rustc_hash::FxHashSet;
-use rustc_hir::{
-    def_id::{DefId, LocalDefId, LOCAL_CRATE},
-    definitions::DefPathData,
-};
+use rustc_hir::{def_id::LocalDefId, definitions::DefPathData};
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
@@ -36,8 +33,22 @@ use rustc_mir_dataflow::{
 pub enum Nullability {
     Nullable,
     NonNullable,
-    DependsOn(FxHashSet<(DefId, usize)>),
+    DependsOn(FxHashSet<Dependency>),
     Unknown,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Dependency {
+    FnArg {
+        fn_def: LocalDefId,
+        arg_idx: usize,
+        nested_level: usize,
+    },
+    StructField {
+        struct_def: LocalDefId,
+        field_idx: usize,
+        nested_level: usize,
+    },
 }
 
 impl JoinSemiLattice for Nullability {
@@ -83,59 +94,61 @@ impl<'tcx> CrateResults<'tcx> {
         for &def_id in fns {
             fn_results.insert(def_id, FuncResults::collect(tcx, def_id));
         }
-        Self::resolve_deps(&mut fn_results);
+        resolve_deps(&mut fn_results);
         CrateResults { fn_results }
     }
+}
 
-    pub fn resolve_deps(fn_results: &mut IndexVec<LocalDefId, Option<FuncResults<'tcx>>>) {
-        fn resolve_deps_for(
-            results: &mut IndexVec<LocalDefId, Option<FuncResults<'_>>>,
-            id: LocalDefId,
-        ) {
-            let mut args = std::mem::take(&mut results[id].as_mut().unwrap().args);
-            for arg_nullability in args.iter_mut() {
-                if let Some(Nullability::DependsOn(deps)) = arg_nullability {
-                    let mut final_nullability = Nullability::Unknown;
-                    'each_dep: for (other_func, other_arg_idx) in deps.iter() {
-                        let other_func = other_func
-                            .as_local()
-                            .expect("nullability depends on external crate");
-                        if results[other_func].is_none() {
-                            // we don't have results for this fn. maybe it is extern
-                            continue 'each_dep;
-                        }
-                        resolve_deps_for(results, other_func);
-                        let other_nullability = results[other_func]
-                            .as_ref()
-                            .unwrap()
-                            .args
-                            .get(*other_arg_idx)
-                            .expect("circular dependency")
-                            .as_ref()
-                            .expect("non-pointer dependency");
-
-                        use Nullability::*;
-                        match (&final_nullability, other_nullability) {
-                            (DependsOn(_), _) => panic!("how"),
-                            (_, DependsOn(_)) => panic!("how"),
-                            (_, NonNullable) => final_nullability = NonNullable,
-                            (Unknown, Nullable) => final_nullability = Nullable,
-                            _ => {}
-                        }
-                    }
-                    *arg_nullability = Some(final_nullability);
-                }
-            }
-            results[id].as_mut().unwrap().args = args;
+fn resolve_deps(fn_results: &mut IndexVec<LocalDefId, Option<FuncResults<'_>>>) {
+    for i in 0..fn_results.len() {
+        let def_id = LocalDefId::new(i);
+        if fn_results[def_id].is_none() {
+            continue;
         }
-        for i in 0..fn_results.len() {
-            let def_id = LocalDefId::new(i);
-            if fn_results[def_id].is_none() {
-                continue;
-            }
-            resolve_deps_for(fn_results, def_id);
-        }
+        resolve_deps_for(fn_results, def_id);
     }
+}
+
+fn resolve_deps_for(results: &mut IndexVec<LocalDefId, Option<FuncResults<'_>>>, id: LocalDefId) {
+    let mut args = std::mem::take(&mut results[id].as_mut().unwrap().args);
+    for arg_nullability in args.iter_mut() {
+        let Some(Nullability::DependsOn(deps)) = arg_nullability else { continue };
+        let mut final_nullability = Nullability::Unknown;
+        'each_dep: for result_ref in deps.iter() {
+            let other_nullability;
+            match result_ref {
+                Dependency::FnArg {
+                    fn_def, arg_idx, ..
+                } => {
+                    if results[*fn_def].is_none() {
+                        // we don't have results for this fn. maybe it is extern
+                        continue 'each_dep;
+                    }
+                    resolve_deps_for(results, *fn_def);
+                    other_nullability = results[*fn_def]
+                        .as_ref()
+                        .unwrap()
+                        .args
+                        .get(*arg_idx)
+                        .expect("circular dependency")
+                        .as_ref()
+                        .expect("non-pointer dependency");
+                }
+                Dependency::StructField { .. } => todo!(),
+            }
+
+            use Nullability::*;
+            match (&final_nullability, other_nullability) {
+                (DependsOn(_), _) => panic!("how"),
+                (_, DependsOn(_)) => panic!("how"),
+                (_, NonNullable) => final_nullability = NonNullable,
+                (Unknown, Nullable) => final_nullability = Nullable,
+                _ => {}
+            }
+        }
+        *arg_nullability = Some(final_nullability);
+    }
+    results[id].as_mut().unwrap().args = args;
 }
 
 pub struct FuncResults<'tcx> {
@@ -326,9 +339,7 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
                 return;
             }
 
-            if def_path.krate != LOCAL_CRATE {
-                return;
-            }
+            let Some(def_id) = def_id.as_local() else { return };
 
             if let DefPathData::ValueNs(name) = def_path.data.last().unwrap().data {
                 let mut non_nullable_arg = |n: usize| {
@@ -361,7 +372,12 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
                     projection: [],
                 } = place.as_ref()
                 {
-                    state[local] = Nullability::DependsOn([(*def_id, idx)].into_iter().collect());
+                    let dep = Dependency::FnArg {
+                        fn_def: def_id,
+                        arg_idx: idx,
+                        nested_level: 0,
+                    };
+                    state[local].join(&Nullability::DependsOn([dep].into_iter().collect()));
                 }
             }
         }
