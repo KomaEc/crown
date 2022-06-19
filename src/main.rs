@@ -12,13 +12,11 @@ extern crate rustc_middle;
 extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 
-use analysis::null_analysis::NullAnalysisResults;
-// use analysis::null_analysis::NullAnalysisResults;
+use analysis::null_analysis;
 use clap::Parser;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
-use rustc_hir::{ItemKind, OwnerNode, def_id::LocalDefId};
-use rustc_index::vec::IndexVec;
+use rustc_hir::{ItemKind, OwnerNode};
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config;
@@ -160,12 +158,8 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             all: _,
         } => {
             if *null {
-                let mut fn_results = IndexVec::<LocalDefId, Option<NullAnalysisResults>>::new();
-                for &def_id in &top_level_fns {
-                    fn_results.insert(def_id, NullAnalysisResults::collect(tcx, def_id));
-                }
-                NullAnalysisResults::resolve_deps(&mut fn_results);
-                for result in fn_results.iter().filter_map(|v| v.as_ref()) {
+                let results = null_analysis::CrateResults::collect(tcx, &top_level_fns);
+                for result in results.fn_results.iter().filter_map(|v| v.as_ref()) {
                     println!("{result}");
                 }
             }
@@ -204,12 +198,16 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             let fatness_analysis = time("fatness analysis", || {
                 refactor::fatness_analysis(tcx, &top_level_struct_defs, &top_level_fns)
             });
+            let null_analysis = time("null analysis", || {
+                null_analysis::CrateResults::collect(tcx, &top_level_fns)
+            });
             time("rewrite", || {
                 refactor::rewrite::rewrite(
                     tcx,
                     &ownership_analysis,
                     &mutability_analysis,
                     &fatness_analysis,
+                    &null_analysis,
                     &top_level_struct_defs,
                     rewrite_mode,
                 )

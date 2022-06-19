@@ -1,6 +1,6 @@
 mod rewrite_body;
 
-use analysis::{call_graph::Func, fat_thin_analysis, mutability_analysis, ownership_analysis};
+use analysis::{call_graph::Func, fat_thin_analysis, mutability_analysis, ownership_analysis, null_analysis};
 use itertools::izip;
 use rewriter::{RewriteMode, Rewriter};
 use rustc_hir::{def_id::LocalDefId, FnRetTy, FnSig, ItemKind};
@@ -14,6 +14,7 @@ pub fn rewrite(
     ownership_analysis: &ownership_analysis::InterSummary,
     mutability_analysis: &mutability_analysis::InterSummary,
     fatness_analysis: &fat_thin_analysis::CrateSummary,
+    _null_analysis: &null_analysis::CrateResults,
     struct_defs: &[LocalDefId],
     rewrite_mode: RewriteMode,
 ) {

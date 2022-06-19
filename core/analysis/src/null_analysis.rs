@@ -73,45 +73,23 @@ impl JoinSemiLattice for Nullability {
     }
 }
 
-pub struct NullAnalysisResults<'tcx> {
-    tcx: TyCtxt<'tcx>,
-    def_id: LocalDefId,
-    results: Results<'tcx, NullAnalysis<'tcx>>,
-    args: Vec<Option<Nullability>>,
+pub struct CrateResults<'tcx> {
+    pub fn_results: IndexVec<LocalDefId, Option<FuncResults<'tcx>>>,
 }
 
-impl<'tcx> NullAnalysisResults<'tcx> {
-    pub fn collect(tcx: TyCtxt<'tcx>, def_id: LocalDefId) -> Self {
-        let body = tcx.optimized_mir(def_id);
-        let engine = Engine::new_generic(tcx, &body, NullAnalysis::new(tcx));
-        let results = engine.iterate_to_fixpoint();
-
-        let mut cursor = ResultsRefCursor::new(&body, &results);
-        cursor.seek_to_block_start(START_BLOCK);
-        let start_results = cursor.get();
-        let args = body
-            .args_iter()
-            .map(|local| {
-                if body.local_decls[local].ty.is_unsafe_ptr() {
-                    Some(start_results[local].clone())
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
-
-        NullAnalysisResults {
-            tcx,
-            def_id,
-            results,
-            args,
+impl<'tcx> CrateResults<'tcx> {
+    pub fn collect(tcx: TyCtxt<'tcx>, fns: &[LocalDefId]) -> Self {
+        let mut fn_results = IndexVec::new();
+        for &def_id in fns {
+            fn_results.insert(def_id, FuncResults::collect(tcx, def_id));
         }
+        Self::resolve_deps(&mut fn_results);
+        CrateResults { fn_results }
     }
 
-    // horrible graph traversal garbage
-    pub fn resolve_deps(results: &mut IndexVec<LocalDefId, Option<Self>>) {
+    pub fn resolve_deps(fn_results: &mut IndexVec<LocalDefId, Option<FuncResults<'tcx>>>) {
         fn resolve_deps_for(
-            results: &mut IndexVec<LocalDefId, Option<NullAnalysisResults<'_>>>,
+            results: &mut IndexVec<LocalDefId, Option<FuncResults<'_>>>,
             id: LocalDefId,
         ) {
             let mut args = std::mem::take(&mut results[id].as_mut().unwrap().args);
@@ -150,17 +128,53 @@ impl<'tcx> NullAnalysisResults<'tcx> {
             }
             results[id].as_mut().unwrap().args = args;
         }
-        for i in 0..results.len() {
+        for i in 0..fn_results.len() {
             let def_id = LocalDefId::new(i);
-            if results[def_id].is_none() {
+            if fn_results[def_id].is_none() {
                 continue;
             }
-            resolve_deps_for(results, def_id);
+            resolve_deps_for(fn_results, def_id);
         }
     }
 }
 
-impl Display for NullAnalysisResults<'_> {
+pub struct FuncResults<'tcx> {
+    tcx: TyCtxt<'tcx>,
+    def_id: LocalDefId,
+    pub results: Results<'tcx, NullAnalysis<'tcx>>,
+    args: Vec<Option<Nullability>>,
+}
+
+impl<'tcx> FuncResults<'tcx> {
+    fn collect(tcx: TyCtxt<'tcx>, def_id: LocalDefId) -> Self {
+        let body = tcx.optimized_mir(def_id);
+        let engine = Engine::new_generic(tcx, &body, NullAnalysis::new(tcx));
+        let results = engine.iterate_to_fixpoint();
+
+        let mut cursor = ResultsRefCursor::new(&body, &results);
+        cursor.seek_to_block_start(START_BLOCK);
+        let start_results = cursor.get();
+        let args = body
+            .args_iter()
+            .map(|local| {
+                if body.local_decls[local].ty.is_unsafe_ptr() {
+                    Some(start_results[local].clone())
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>();
+
+        FuncResults {
+            tcx,
+            def_id,
+            results,
+            args,
+        }
+    }
+}
+
+impl Display for FuncResults<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let fn_name = self.tcx.def_path_str(self.def_id.to_def_id());
         let body = self.tcx.optimized_mir(self.def_id);
