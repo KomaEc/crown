@@ -14,13 +14,13 @@
 
 use std::fmt::Display;
 
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_hir::{def_id::LocalDefId, definitions::DefPathData};
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
-        Constant, ConstantKind, Local, Place, PlaceRef, ProjectionElem, Rvalue, StatementKind,
-        TerminatorKind, START_BLOCK,
+        Body, Constant, ConstantKind, Field, Local, PlaceRef, ProjectionElem, Rvalue,
+        StatementKind, TerminatorKind, VarDebugInfoContents, START_BLOCK,
     },
     ty::{TyCtxt, TyKind},
 };
@@ -41,7 +41,7 @@ pub enum Nullability {
 pub enum Dependency {
     FnArg {
         fn_def: LocalDefId,
-        arg_idx: usize,
+        arg: Local,
         nested_level: usize,
     },
     StructField {
@@ -84,8 +84,43 @@ impl JoinSemiLattice for Nullability {
     }
 }
 
+type CrateFuncResults<'tcx> = IndexVec<LocalDefId, Option<FuncResults<'tcx>>>;
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct CrateStructResults(FxHashMap<LocalDefId, IndexVec<Field, IndexVec<usize, Nullability>>>);
+
+impl JoinSemiLattice for CrateStructResults {
+    fn join(&mut self, other: &Self) -> bool {
+        let mut changed = false;
+        for (&def_id, struct_results) in &other.0 {
+            if !self.0.contains_key(&def_id) {
+                changed = true;
+            }
+            let lhs = self.0.entry(def_id).or_default();
+            for (field_idx, field_results) in struct_results.iter_enumerated() {
+                if lhs.get(field_idx).is_none() {
+                    changed = true;
+                }
+                lhs.ensure_contains_elem(field_idx, || IndexVec::new());
+                let lhs = &mut lhs[field_idx];
+                for (nested_level, result) in field_results.iter_enumerated() {
+                    if lhs.get(nested_level).is_none() {
+                        changed = true;
+                    }
+                    lhs.ensure_contains_elem(nested_level, || Nullability::Unknown);
+                    if lhs[nested_level] != *result {
+                        changed = true;
+                        lhs[nested_level] = result.clone();
+                    }
+                }
+            }
+        }
+        changed
+    }
+}
+
 pub struct CrateResults<'tcx> {
-    pub fn_results: IndexVec<LocalDefId, Option<FuncResults<'tcx>>>,
+    pub fn_results: CrateFuncResults<'tcx>,
+    pub struct_results: CrateStructResults,
 }
 
 impl<'tcx> CrateResults<'tcx> {
@@ -94,95 +129,106 @@ impl<'tcx> CrateResults<'tcx> {
         for &def_id in fns {
             fn_results.insert(def_id, FuncResults::collect(tcx, def_id));
         }
-        resolve_deps(&mut fn_results);
-        CrateResults { fn_results }
+        let struct_results =
+            fn_results
+                .iter()
+                .flatten()
+                .fold(CrateStructResults::default(), |mut acc, x| {
+                    acc.join(&x.start_results.structs);
+                    acc
+                });
+        let mut results = CrateResults {
+            fn_results,
+            struct_results,
+        };
+        resolve_deps(&mut results);
+        results
     }
 }
 
-fn resolve_deps(fn_results: &mut IndexVec<LocalDefId, Option<FuncResults<'_>>>) {
-    for i in 0..fn_results.len() {
+fn resolve_deps(results: &mut CrateResults) {
+    for i in 0..results.fn_results.len() {
         let def_id = LocalDefId::new(i);
-        if fn_results[def_id].is_none() {
+        if results.fn_results[def_id].is_none() {
             continue;
         }
-        resolve_deps_for(fn_results, def_id);
+        resolve_fn_deps(results, def_id);
     }
 }
 
-fn resolve_deps_for(results: &mut IndexVec<LocalDefId, Option<FuncResults<'_>>>, id: LocalDefId) {
-    let mut args = std::mem::take(&mut results[id].as_mut().unwrap().args);
-    for arg_nullability in args.iter_mut() {
-        let Some(Nullability::DependsOn(deps)) = arg_nullability else { continue };
-        let mut final_nullability = Nullability::Unknown;
-        'each_dep: for result_ref in deps.iter() {
-            let other_nullability;
-            match result_ref {
-                Dependency::FnArg {
-                    fn_def, arg_idx, ..
-                } => {
-                    if results[*fn_def].is_none() {
-                        // we don't have results for this fn. maybe it is extern
-                        continue 'each_dep;
-                    }
-                    resolve_deps_for(results, *fn_def);
-                    other_nullability = results[*fn_def]
-                        .as_ref()
-                        .unwrap()
-                        .args
-                        .get(*arg_idx)
-                        .expect("circular dependency")
-                        .as_ref()
-                        .expect("non-pointer dependency");
-                }
-                Dependency::StructField { .. } => todo!(),
-            }
-
-            use Nullability::*;
-            match (&final_nullability, other_nullability) {
-                (DependsOn(_), _) => panic!("how"),
-                (_, DependsOn(_)) => panic!("how"),
-                (_, NonNullable) => final_nullability = NonNullable,
-                (Unknown, Nullable) => final_nullability = Nullable,
-                _ => {}
-            }
+fn resolve_fn_deps(results: &mut CrateResults, id: LocalDefId) {
+    let mut start_results =
+        std::mem::take(&mut results.fn_results[id].as_mut().unwrap().start_results);
+    for local_nullabilities in start_results.locals.iter_mut() {
+        for nested_nullability in local_nullabilities {
+            let Nullability::DependsOn(deps) = nested_nullability else { continue };
+            *nested_nullability = resolve_dep(results, deps);
         }
-        *arg_nullability = Some(final_nullability);
     }
-    results[id].as_mut().unwrap().args = args;
+    results.fn_results[id].as_mut().unwrap().start_results = start_results;
+}
+
+fn resolve_dep(results: &mut CrateResults, deps: &FxHashSet<Dependency>) -> Nullability {
+    let mut ret = Nullability::Unknown;
+    for result_ref in deps.iter() {
+        let other_nullability;
+        match result_ref {
+            Dependency::FnArg {
+                fn_def,
+                arg,
+                nested_level,
+            } => {
+                if results.fn_results[*fn_def].is_none() {
+                    // we don't have results for this fn. maybe it is extern
+                    continue;
+                }
+                resolve_fn_deps(results, *fn_def);
+                other_nullability = results.fn_results[*fn_def]
+                    .as_ref()
+                    .unwrap()
+                    .start_results
+                    .locals
+                    .get(*arg)
+                    .expect("circular dependency")[*nested_level]
+                    .clone();
+            }
+            Dependency::StructField { .. } => todo!(),
+        }
+
+        use Nullability::*;
+        match (&ret, other_nullability) {
+            (DependsOn(_), _) => panic!("how"),
+            (_, DependsOn(_)) => panic!("how"),
+            (_, NonNullable) => ret = NonNullable,
+            (Unknown, Nullable) => ret = Nullable,
+            _ => {}
+        }
+    }
+    ret
 }
 
 pub struct FuncResults<'tcx> {
     tcx: TyCtxt<'tcx>,
     def_id: LocalDefId,
     pub results: Results<'tcx, NullAnalysis<'tcx>>,
-    args: Vec<Option<Nullability>>,
+    start_results: Domain,
 }
 
 impl<'tcx> FuncResults<'tcx> {
     fn collect(tcx: TyCtxt<'tcx>, def_id: LocalDefId) -> Self {
         let body = tcx.optimized_mir(def_id);
-        let engine = Engine::new_generic(tcx, &body, NullAnalysis::new(tcx));
+        let engine = Engine::new_generic(tcx, &body, NullAnalysis::new(tcx, def_id));
         let results = engine.iterate_to_fixpoint();
 
         let mut cursor = ResultsRefCursor::new(&body, &results);
         cursor.seek_to_block_start(START_BLOCK);
-        let start_results = cursor.get();
-        let args = body
-            .args_iter()
-            .map(|local| {
-                if body.local_decls[local].ty.is_unsafe_ptr() {
-                    Some(start_results[local].clone())
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
+        let start_results = cursor.get().clone();
 
         FuncResults {
             tcx,
             def_id,
             results,
-            args,
+            start_results,
         }
     }
 }
@@ -191,58 +237,132 @@ impl Display for FuncResults<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let fn_name = self.tcx.def_path_str(self.def_id.to_def_id());
         let body = self.tcx.optimized_mir(self.def_id);
-        let arg_results = self
-            .args
-            .iter()
-            .enumerate()
-            .filter_map(|(idx, maybe_nullability)| {
-                maybe_nullability.as_ref().map(|nullability| {
-                    let span = body.local_decls[(idx + 1).into()].source_info.span;
-                    let binding_name = self.tcx.sess.source_map().span_to_snippet(span).unwrap();
-                    (binding_name, nullability)
-                })
+        let local_results = self
+            .start_results
+            .locals
+            .iter_enumerated()
+            .map(|(idx, nullability)| {
+                let name = body
+                    .var_debug_info
+                    .iter()
+                    .find(|v| matches!(v.value, VarDebugInfoContents::Place(p) if p.local == idx))
+                    .map(|v| v.name);
+                (idx, name, nullability)
             })
+            .filter(|(_, _, nullability)| !nullability.is_empty())
             .collect::<Vec<_>>();
-        write!(f, "fn {fn_name} has: {arg_results:?}")?;
+        write!(f, "fn {fn_name} has: {local_results:?}")?;
         Ok(())
     }
 }
 
-pub struct NullAnalysis<'tcx> {
-    tcx: TyCtxt<'tcx>,
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
+pub struct Domain {
+    // we use IndexVec<usize, _> instead of Vec<_> so we can have impl JoinSemiLattice for free
+    locals: IndexVec<Local, IndexVec<usize, Nullability>>,
+    structs: CrateStructResults,
 }
 
-impl<'tcx> NullAnalysis<'tcx> {
-    pub fn new(tcx: TyCtxt<'tcx>) -> Self {
-        NullAnalysis { tcx }
-    }
-
-    /// If a `Place` contains a deref of a local, that local is non-nullable. We have to check this
-    /// pretty much everywhere, so this function is here to make the rest of the code quieter.
-    fn check_place(&self, state: &mut IndexVec<Local, Nullability>, place: PlaceRef) {
-        if let PlaceRef {
-            local,
-            projection: [ProjectionElem::Deref, ..],
-        } = place
-        {
-            state[local] = Nullability::NonNullable;
+impl Domain {
+    /// panics if the place is not a raw pointer
+    fn result_for<'tcx>(
+        &mut self,
+        tcx: TyCtxt<'tcx>,
+        body: &Body<'tcx>,
+        place: PlaceRef<'tcx>,
+    ) -> &mut Nullability {
+        let field_idx = place
+            .projection
+            .iter()
+            .rev()
+            .enumerate()
+            .find(|(_i, elem)| matches!(elem, ProjectionElem::Field(_, _)));
+        if let Some((idx, ProjectionElem::Field(field, _ty))) = field_idx {
+            let n_derefs = idx;
+            let struct_place = PlaceRef {
+                local: place.local,
+                projection: &place.projection[..=idx],
+            };
+            let struct_def_id = struct_place
+                .ty(body, tcx)
+                .ty
+                .ty_adt_def()
+                .unwrap()
+                .did
+                .as_local()
+                .unwrap();
+            let struct_results = self.structs.0.entry(struct_def_id).or_default();
+            struct_results.ensure_contains_elem(*field, IndexVec::new);
+            struct_results[*field].ensure_contains_elem(n_derefs, || Nullability::Unknown);
+            &mut self.structs.0.get_mut(&struct_def_id).unwrap()[*field][n_derefs]
+        } else {
+            assert!(place
+                .projection
+                .iter()
+                .all(|e| matches!(e, ProjectionElem::Deref)));
+            let n_derefs = place.projection.len();
+            &mut self.locals[place.local][n_derefs]
         }
     }
 }
 
-impl<'tcx> DebugWithContext<NullAnalysis<'tcx>> for IndexVec<Local, Nullability> {}
+impl JoinSemiLattice for Domain {
+    fn join(&mut self, other: &Self) -> bool {
+        let mut changed = false;
+        changed |= self.locals.join(&other.locals);
+        changed |= self.structs.join(&other.structs);
+        changed
+    }
+}
+
+impl<'tcx> DebugWithContext<NullAnalysis<'tcx>> for Domain {}
+
+pub struct NullAnalysis<'tcx> {
+    tcx: TyCtxt<'tcx>,
+    body: &'tcx Body<'tcx>,
+}
+
+impl<'tcx> NullAnalysis<'tcx> {
+    pub fn new(tcx: TyCtxt<'tcx>, def_id: LocalDefId) -> Self {
+        let body = tcx.optimized_mir(def_id);
+        NullAnalysis { tcx, body }
+    }
+
+    /// If a `Place` contains a deref of a local, that local is non-nullable. We have to check this
+    /// pretty much everywhere, so this function is here to make the rest of the code quieter.
+    fn check_place(&self, state: &mut Domain, place: PlaceRef) {
+        // at the moment we don't bother doing anything to struct fields, because I'm not sure
+        // we need to
+        let n_derefs = place
+            .projection
+            .iter()
+            .take_while(|elem| matches!(elem, ProjectionElem::Deref))
+            .count();
+        for entry in state.locals[place.local].iter_mut().take(n_derefs) {
+            *entry = Nullability::NonNullable;
+        }
+    }
+}
 
 impl<'tcx> AnalysisDomain<'tcx> for NullAnalysis<'tcx> {
-    type Domain = IndexVec<Local, Nullability>;
+    type Domain = Domain;
     type Direction = rustc_mir_dataflow::Backward;
 
     const NAME: &'static str = "pointer_nullability";
 
     fn bottom_value(&self, body: &rustc_middle::mir::Body<'tcx>) -> Self::Domain {
-        // not all locals are pointers, but idk what happens if we use non contiguous indices in
-        // here, so just make it big enough to hold all of them
-        let locals = body.local_decls.len();
-        IndexVec::from_iter(std::iter::repeat(Nullability::Unknown).take(locals))
+        let locals = IndexVec::from_iter(body.local_decls.iter().map(|decl| {
+            IndexVec::from_iter(
+                decl.ty
+                    .walk()
+                    .take_while(|generic_arg| generic_arg.expect_ty().is_unsafe_ptr())
+                    .map(|_| Nullability::Unknown),
+            )
+        }));
+        Domain {
+            locals,
+            structs: CrateStructResults::default(),
+        }
     }
 
     fn initialize_start_block(
@@ -262,31 +382,29 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
     ) {
         match &statement.kind {
             StatementKind::Assign(box (
-                place,
+                l_place,
                 Rvalue::Use(operand) | Rvalue::Cast(_, operand, _),
-            )) if place.projection.is_empty() && operand.place().is_some() => {
+            )) if operand.place().is_some() => {
+                if !l_place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+                    return;
+                }
                 // assigning a pointer to another -> lhs' nullability transfers to rhs (because we
                 // are analysing backwards)
-                self.check_place(state, operand.place().unwrap().as_ref());
-                let lhs = place.as_local().unwrap();
-                if let Some(rhs) = operand.place().as_ref().map(Place::as_local).flatten() {
-                    state[rhs] = state[lhs].clone();
-                }
+                let l_place = l_place.as_ref();
+                let r_place = operand.place().unwrap().as_ref();
+                self.check_place(state, l_place);
+                self.check_place(state, r_place);
+                let l_result = state.result_for(self.tcx, self.body, l_place).clone();
+                *state.result_for(self.tcx, self.body, r_place) = l_result;
             }
-            StatementKind::Assign(box (lhs_place, Rvalue::Use(operand))) => {
+            StatementKind::Assign(box (l_place, _)) => {
                 // assigning through a projection - don't know about nullability anymore, unless
                 // one of the projections is a deref of a local
-                if let PlaceRef {
-                    local,
-                    projection: [],
-                } = lhs_place.as_ref()
-                {
-                    state[local] = Nullability::Unknown;
+                if !l_place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+                    return;
                 }
-                self.check_place(state, lhs_place.as_ref());
-                if let Some(rhs_place) = operand.place() {
-                    self.check_place(state, rhs_place.as_ref());
-                }
+                *state.result_for(self.tcx, self.body, l_place.as_ref()) = Nullability::Unknown;
+                self.check_place(state, l_place.as_ref());
             }
             _ => {}
         }
@@ -299,17 +417,11 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
         _location: rustc_middle::mir::Location,
     ) {
         if let TerminatorKind::Call { func, args, .. } = &terminator.kind {
-            let constant = match func.constant() {
-                Some(Constant {
-                    literal: ConstantKind::Ty(v),
-                    ..
-                }) => v,
-                _ => return,
-            };
-            let def_id = match constant.ty.kind() {
-                TyKind::FnDef(def_id, _) => def_id,
-                _ => return,
-            };
+            let Some(Constant {
+                literal: ConstantKind::Ty(constant),
+                ..
+            }) = func.constant() else { return };
+            let TyKind::FnDef(def_id, _) = constant.ty.kind() else { return };
             let def_path = self.tcx.def_path(*def_id);
             // ::core ...
             let in_core = self.tcx.crate_name(def_path.krate).as_str() == "core";
@@ -317,25 +429,21 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
             let in_ptr = def_path
                 .data
                 .get(0)
-                .map(|d| match d.data {
-                    DefPathData::TypeNs(s) if s.as_str() == "ptr" => true,
-                    _ => false,
-                })
+                .map(|d| matches!(d.data, DefPathData::TypeNs(s) if s.as_str() == "ptr"))
                 .unwrap_or(false);
             // ::{const_ptr, mut_ptr}::{impl} ...
             // ::is_null
             let is_is_null = def_path
                 .data
                 .get(3)
-                .map(|d| match d.data {
-                    DefPathData::ValueNs(s) if s.as_str() == "is_null" => true,
-                    _ => false,
-                })
+                .map(|d| matches!(d.data, DefPathData::ValueNs(s) if s.as_str() == "is_null"))
                 .unwrap_or(false);
             if in_core && in_ptr && is_is_null {
                 let place = args[0].place().expect("null check on constant");
+                self.check_place(state, place.as_ref());
+                *state.result_for(self.tcx, self.body, place.as_ref()) = Nullability::Nullable;
                 let local = place.as_local().expect("projections aren't supported yet");
-                state[local] = Nullability::Nullable;
+                state.locals[local][0] = Nullability::Nullable;
                 return;
             }
 
@@ -344,7 +452,7 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
             if let DefPathData::ValueNs(name) = def_path.data.last().unwrap().data {
                 let mut non_nullable_arg = |n: usize| {
                     if let Some(local) = args[n].place().unwrap().as_local() {
-                        state[local] = Nullability::NonNullable;
+                        state.locals[local][0] = Nullability::NonNullable;
                     }
                 };
                 match name.as_str() {
@@ -374,10 +482,12 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
                 {
                     let dep = Dependency::FnArg {
                         fn_def: def_id,
-                        arg_idx: idx,
+                        arg: Local::from_usize(idx + 1),
                         nested_level: 0,
                     };
-                    state[local].join(&Nullability::DependsOn([dep].into_iter().collect()));
+                    state.locals[local].get_mut(0).map(|result| {
+                        result.join(&Nullability::DependsOn([dep].into_iter().collect()))
+                    });
                 }
             }
         }
