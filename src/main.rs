@@ -11,6 +11,7 @@ extern crate rustc_interface;
 extern crate rustc_middle;
 extern crate rustc_mir_dataflow;
 extern crate rustc_session;
+extern crate rustc_target;
 
 use analysis::null_analysis;
 use clap::Parser;
@@ -20,6 +21,7 @@ use rustc_hir::{ItemKind, OwnerNode};
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config;
+use rustc_target::abi::VariantIdx;
 use std::{borrow::BorrowMut, path::PathBuf, time::Instant};
 
 #[derive(Parser)]
@@ -159,6 +161,14 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
         } => {
             if *null {
                 let results = null_analysis::CrateResults::collect(tcx, &top_level_fns);
+                for (struct_def_id, struct_result) in results.struct_results.0.iter() {
+                    let struct_name = tcx.def_path_str(struct_def_id.to_def_id());
+                    let struct_def = &tcx.adt_def(*struct_def_id).variants[VariantIdx::from_usize(0)];
+                    for (field, field_result) in struct_result.iter_enumerated() {
+                        let field_name = &struct_def.fields[field.as_usize()].name;
+                        println!("{struct_name}.{field_name} has {field_result:?}");
+                    }
+                }
                 for result in results.fn_results.iter().filter_map(|v| v.as_ref()) {
                     println!("{result}");
                 }

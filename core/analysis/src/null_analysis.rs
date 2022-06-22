@@ -29,12 +29,45 @@ use rustc_mir_dataflow::{
     ResultsRefCursor,
 };
 
+fn get_struct_field<'tcx>(tcx: TyCtxt<'tcx>, body: &Body<'tcx>, place: PlaceRef<'tcx>) -> Option<(LocalDefId, Field, usize)> {
+    let field_idx = place
+        .projection
+        .iter()
+        .rev()
+        .enumerate()
+        .find(|(_i, elem)| matches!(elem, ProjectionElem::Field(_, _)));
+    if let Some((idx, ProjectionElem::Field(field, _ty))) = field_idx {
+        let n_derefs = idx;
+        let struct_place = PlaceRef {
+            local: place.local,
+            projection: &place.projection[..=idx],
+        };
+        let struct_def_id = struct_place
+            .ty(body, tcx)
+            .ty
+            .ty_adt_def()
+            .unwrap()
+            .did
+            .as_local()
+            .unwrap();
+        Some((struct_def_id, *field, n_derefs))
+    } else {
+        None
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Nullability {
     Nullable,
     NonNullable,
     DependsOn(FxHashSet<Dependency>),
     Unknown,
+}
+
+impl Nullability {
+    fn is_definite(&self) -> bool {
+        matches!(self, Nullability::Nullable | Nullability::NonNullable)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
@@ -46,7 +79,7 @@ pub enum Dependency {
     },
     StructField {
         struct_def: LocalDefId,
-        field_idx: usize,
+        field_idx: Field,
         nested_level: usize,
     },
 }
@@ -86,7 +119,7 @@ impl JoinSemiLattice for Nullability {
 
 type CrateFuncResults<'tcx> = IndexVec<LocalDefId, Option<FuncResults<'tcx>>>;
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct CrateStructResults(FxHashMap<LocalDefId, IndexVec<Field, IndexVec<usize, Nullability>>>);
+pub struct CrateStructResults(pub FxHashMap<LocalDefId, IndexVec<Field, IndexVec<usize, Nullability>>>);
 
 impl JoinSemiLattice for CrateStructResults {
     fn join(&mut self, other: &Self) -> bool {
@@ -161,18 +194,31 @@ fn resolve_fn_deps(results: &mut CrateResults, id: LocalDefId) {
         std::mem::take(&mut results.fn_results[id].as_mut().unwrap().start_results);
     for local_nullabilities in start_results.locals.iter_mut() {
         for nested_nullability in local_nullabilities {
-            let Nullability::DependsOn(deps) = nested_nullability else { continue };
-            *nested_nullability = resolve_dep(results, deps);
+            if let Nullability::DependsOn(deps) = nested_nullability {
+                *nested_nullability = resolve_dep(results, deps);
+            }
         }
     }
     results.fn_results[id].as_mut().unwrap().start_results = start_results;
+}
+
+fn resolve_struct_deps(results: &mut CrateResults, id: LocalDefId) {
+    let mut struct_results = std::mem::take(results.struct_results.0.get_mut(&id).unwrap());
+    for field in &mut struct_results {
+        for nested_nullability in field.iter_mut() {
+            if let Nullability::DependsOn(deps) = nested_nullability {
+                *nested_nullability = resolve_dep(results, deps);
+            }
+        }
+    }
+    *results.struct_results.0.get_mut(&id).unwrap() = struct_results;
 }
 
 fn resolve_dep(results: &mut CrateResults, deps: &FxHashSet<Dependency>) -> Nullability {
     let mut ret = Nullability::Unknown;
     for result_ref in deps.iter() {
         let other_nullability;
-        match result_ref {
+        other_nullability = match result_ref {
             Dependency::FnArg {
                 fn_def,
                 arg,
@@ -183,17 +229,20 @@ fn resolve_dep(results: &mut CrateResults, deps: &FxHashSet<Dependency>) -> Null
                     continue;
                 }
                 resolve_fn_deps(results, *fn_def);
-                other_nullability = results.fn_results[*fn_def]
+                results.fn_results[*fn_def]
                     .as_ref()
                     .unwrap()
                     .start_results
                     .locals
                     .get(*arg)
                     .expect("circular dependency")[*nested_level]
-                    .clone();
+                    .clone()
             }
-            Dependency::StructField { .. } => todo!(),
-        }
+            Dependency::StructField { struct_def, field_idx, nested_level } => {
+                resolve_struct_deps(results, *struct_def);
+                results.struct_results.0[struct_def][*field_idx][*nested_level].clone()
+            },
+        };
 
         use Nullability::*;
         match (&ret, other_nullability) {
@@ -271,30 +320,11 @@ impl Domain {
         body: &Body<'tcx>,
         place: PlaceRef<'tcx>,
     ) -> &mut Nullability {
-        let field_idx = place
-            .projection
-            .iter()
-            .rev()
-            .enumerate()
-            .find(|(_i, elem)| matches!(elem, ProjectionElem::Field(_, _)));
-        if let Some((idx, ProjectionElem::Field(field, _ty))) = field_idx {
-            let n_derefs = idx;
-            let struct_place = PlaceRef {
-                local: place.local,
-                projection: &place.projection[..=idx],
-            };
-            let struct_def_id = struct_place
-                .ty(body, tcx)
-                .ty
-                .ty_adt_def()
-                .unwrap()
-                .did
-                .as_local()
-                .unwrap();
+        if let Some((struct_def_id, field, n_derefs)) = get_struct_field(tcx, body, place) {
             let struct_results = self.structs.0.entry(struct_def_id).or_default();
-            struct_results.ensure_contains_elem(*field, IndexVec::new);
-            struct_results[*field].ensure_contains_elem(n_derefs, || Nullability::Unknown);
-            &mut self.structs.0.get_mut(&struct_def_id).unwrap()[*field][n_derefs]
+            struct_results.ensure_contains_elem(field, IndexVec::new);
+            struct_results[field].ensure_contains_elem(n_derefs, || Nullability::Unknown);
+            &mut self.structs.0.get_mut(&struct_def_id).unwrap()[field][n_derefs]
         } else {
             assert!(place
                 .projection
@@ -330,16 +360,15 @@ impl<'tcx> NullAnalysis<'tcx> {
 
     /// If a `Place` contains a deref of a local, that local is non-nullable. We have to check this
     /// pretty much everywhere, so this function is here to make the rest of the code quieter.
-    fn check_place(&self, state: &mut Domain, place: PlaceRef) {
-        // at the moment we don't bother doing anything to struct fields, because I'm not sure
-        // we need to
-        let n_derefs = place
-            .projection
-            .iter()
-            .take_while(|elem| matches!(elem, ProjectionElem::Deref))
-            .count();
-        for entry in state.locals[place.local].iter_mut().take(n_derefs) {
-            *entry = Nullability::NonNullable;
+    fn check_place(&self, state: &mut Domain, place: PlaceRef<'tcx>) {
+        for (idx, proj) in place.projection.iter().enumerate() {
+            if let ProjectionElem::Deref = proj {
+                let ptr_place = PlaceRef {
+                    local: place.local,
+                    projection: &place.projection[..idx],
+                };
+                *state.result_for(self.tcx, self.body, ptr_place) = Nullability::NonNullable;
+            }
         }
     }
 }
@@ -385,16 +414,27 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
                 l_place,
                 Rvalue::Use(operand) | Rvalue::Cast(_, operand, _),
             )) if operand.place().is_some() => {
-                if !l_place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
-                    return;
-                }
                 // assigning a pointer to another -> lhs' nullability transfers to rhs (because we
                 // are analysing backwards)
                 let l_place = l_place.as_ref();
                 let r_place = operand.place().unwrap().as_ref();
                 self.check_place(state, l_place);
                 self.check_place(state, r_place);
-                let l_result = state.result_for(self.tcx, self.body, l_place).clone();
+
+                if !l_place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+                    return;
+                }
+                let mut l_result = state.result_for(self.tcx, self.body, l_place).clone();
+                if let Some((struct_def, field_idx, nested_level)) = get_struct_field(self.tcx, self.body, l_place) {
+                    if !l_result.is_definite() {
+                        let dep = Dependency::StructField {
+                            struct_def,
+                            field_idx,
+                            nested_level,
+                        };
+                        l_result.join(&Nullability::DependsOn([dep].into_iter().collect()));
+                    }
+                }
                 *state.result_for(self.tcx, self.body, r_place) = l_result;
             }
             StatementKind::Assign(box (l_place, _)) => {
