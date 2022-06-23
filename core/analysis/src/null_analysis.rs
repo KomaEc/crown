@@ -221,6 +221,8 @@ fn resolve_fn_deps(results: &mut CrateResults, id: LocalDefId) {
         for nested_nullability in local_nullabilities {
             if let Nullability::DependsOn(deps) = nested_nullability {
                 *nested_nullability = resolve_dep(results, deps);
+            } else if *nested_nullability == Nullability::Unknown {
+                *nested_nullability = Nullability::Nullable;
             }
         }
     }
@@ -233,6 +235,8 @@ fn resolve_struct_deps(results: &mut CrateResults, id: LocalDefId) {
         for nested_nullability in field.iter_mut() {
             if let Nullability::DependsOn(deps) = nested_nullability {
                 *nested_nullability = resolve_dep(results, deps);
+            } else if *nested_nullability == Nullability::Unknown {
+                *nested_nullability = Nullability::Nullable;
             }
         }
     }

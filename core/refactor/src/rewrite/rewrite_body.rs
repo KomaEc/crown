@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use analysis::{
-    api::AnalysisResults, call_graph::Func, fat_thin_analysis, mutability_analysis,
+    api::AnalysisResults, call_graph::Func, fat_thin_analysis, mutability_analysis, null_analysis,
     ownership_analysis, ssa::RichLocation,
 };
 use either::Either;
@@ -21,6 +21,7 @@ pub struct BodyRewriteCtxt<'tcx, 'a> {
     pub ownership: &'a ownership_analysis::InterSummary,
     pub mutability: &'a mutability_analysis::InterSummary,
     pub fatness: &'a fat_thin_analysis::CrateSummary,
+    pub null: &'a null_analysis::CrateResults<'tcx>,
     pub func: Func,
     pub def_id: LocalDefId,
     pub body: &'a Body<'tcx>,
