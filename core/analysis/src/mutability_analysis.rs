@@ -8,7 +8,7 @@ use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{Local, Location},
+    mir::{Local, Location, Field},
     ty::TyCtxt,
 };
 
@@ -241,7 +241,7 @@ impl crate::api::AnalysisResults for InterSummary {
         Some(self.approximate_mu_ctxt.get().unwrap()[func][mu])
     }
 
-    fn field_result(&self, _def_id: LocalDefId, _field: usize, _ptr_depth: usize) -> Option<bool> {
+    fn field_result(&self, _def_id: LocalDefId, _field: Field, _ptr_depth: usize) -> Option<bool> {
         tracing::warn!("mutability analysis doesn't support struct fields");
         None
     }

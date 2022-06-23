@@ -1,5 +1,5 @@
 use rustc_hir::def_id::LocalDefId;
-use rustc_middle::mir::{Local, Location};
+use rustc_middle::mir::{Local, Location, Field};
 
 use crate::call_graph::Func;
 
@@ -12,5 +12,5 @@ pub trait AnalysisResults {
         loc: Location,
         ptr_depth: usize,
     ) -> Option<bool>;
-    fn field_result(&self, def_id: LocalDefId, field: usize, ptr_depth: usize) -> Option<bool>;
+    fn field_result(&self, def_id: LocalDefId, field: Field, ptr_depth: usize) -> Option<bool>;
 }

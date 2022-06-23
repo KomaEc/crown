@@ -486,7 +486,7 @@ fn place_result<'tcx, A: AnalysisResults>(
             .did
             .as_local()
             .unwrap();
-        return analysis.field_result(struct_def_id, field.as_usize(), n_derefs);
+        return analysis.field_result(struct_def_id, *field, n_derefs);
     } else {
         let n_derefs = place.projection.len();
         return analysis.local_result(cx.func, place.local, n_derefs);

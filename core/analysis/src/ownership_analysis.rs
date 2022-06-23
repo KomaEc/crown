@@ -11,7 +11,7 @@ use rustc_hash::FxHashMap;
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{Local, Location},
+    mir::{Local, Location, Field},
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
@@ -496,8 +496,8 @@ impl crate::api::AnalysisResults for InterSummary {
         self.approximate_rho_ctxt.get().unwrap()[func][rho]
     }
 
-    fn field_result(&self, def_id: LocalDefId, field: usize, ptr_depth: usize) -> Option<bool> {
-        self.struct_results.get().unwrap()[&def_id][field][ptr_depth]
+    fn field_result(&self, def_id: LocalDefId, field: Field, ptr_depth: usize) -> Option<bool> {
+        self.struct_results.get().unwrap()[&def_id][field.as_usize()][ptr_depth]
     }
 }
 
