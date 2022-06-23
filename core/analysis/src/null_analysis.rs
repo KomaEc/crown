@@ -15,7 +15,7 @@
 use std::fmt::Display;
 
 use rustc_hash::{FxHashMap, FxHashSet};
-use rustc_hir::{def_id::{LocalDefId, DefId}, definitions::DefPathData};
+use rustc_hir::{def_id::LocalDefId, definitions::DefPathData};
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
@@ -28,8 +28,6 @@ use rustc_mir_dataflow::{
     fmt::DebugWithContext, Analysis, AnalysisDomain, Engine, JoinSemiLattice, Results,
     ResultsRefCursor,
 };
-
-use crate::call_graph::Func;
 
 fn get_struct_field<'tcx>(tcx: TyCtxt<'tcx>, body: &Body<'tcx>, place: PlaceRef<'tcx>) -> Option<(LocalDefId, Field, usize)> {
     let field_idx = place
@@ -156,11 +154,10 @@ impl JoinSemiLattice for CrateStructResults {
 pub struct CrateResults<'tcx> {
     pub fn_results: CrateFuncResults<'tcx>,
     pub struct_results: CrateStructResults,
-    func_mapping: IndexVec<Func, DefId>,
 }
 
 impl<'tcx> CrateResults<'tcx> {
-    pub fn collect(tcx: TyCtxt<'tcx>, fns: &[LocalDefId], func_mapping: IndexVec<Func, DefId>) -> Self {
+    pub fn collect(tcx: TyCtxt<'tcx>, fns: &[LocalDefId]) -> Self {
         let mut fn_results = IndexVec::new();
         for &def_id in fns {
             fn_results.insert(def_id, FuncResults::collect(tcx, def_id));
@@ -176,7 +173,6 @@ impl<'tcx> CrateResults<'tcx> {
         let mut results = CrateResults {
             fn_results,
             struct_results,
-            func_mapping,
         };
         resolve_deps(&mut results);
         results
@@ -184,14 +180,13 @@ impl<'tcx> CrateResults<'tcx> {
 }
 
 impl<'tcx> crate::api::AnalysisResults for CrateResults<'tcx> {
-    fn local_result(&self, func: Func, local: Local, ptr_depth: usize) -> Option<bool> {
-        let fn_def = self.func_mapping[func].as_local().unwrap();
-        Some(self.fn_results[fn_def].as_ref().unwrap().start_results.locals[local][ptr_depth] == Nullability::Nullable)
+    fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
+        Some(self.fn_results[func].as_ref().unwrap().start_results.locals[local][ptr_depth] == Nullability::Nullable)
     }
 
     fn local_result_at(
         &self,
-        _func: crate::call_graph::Func,
+        _func: LocalDefId,
         _local: Local,
         _loc: rustc_middle::mir::Location,
         _ptr_depth: usize,

@@ -280,7 +280,7 @@ fn rewrite_malloc<'tcx>(
     rewritten_stmts.insert(cast_loc);
     cx.rewrite(
         malloc_span,
-        format!("Some(Box::<{ty}>::new(Default::default()))"),
+        format!("Some(Box::<{ty}>::new(unsafe {{ std::mem::zeroed() }} /* lol */))"),
         "use box instead of malloc",
     );
 }
@@ -490,7 +490,7 @@ fn place_result<'tcx, A: AnalysisResults>(
         return analysis.field_result(struct_def_id, *field, n_derefs);
     } else {
         let n_derefs = place.projection.len();
-        return analysis.local_result(cx.func, place.local, n_derefs);
+        return analysis.local_result(cx.def_id, place.local, n_derefs);
     }
 }
 

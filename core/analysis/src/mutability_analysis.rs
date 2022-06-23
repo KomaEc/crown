@@ -206,7 +206,8 @@ impl InterSummary {
 }
 
 impl crate::api::AnalysisResults for InterSummary {
-    fn local_result(&self, func: Func, local: Local, ptr_depth: usize) -> Option<bool> {
+    fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
+        let func = self.call_graph.lookup_function(&func.to_def_id()).unwrap();
         if ptr_depth > 0 {
             tracing::warn!("mutability analysis doesn't support nested level > 0");
         }
@@ -224,11 +225,12 @@ impl crate::api::AnalysisResults for InterSummary {
 
     fn local_result_at(
         &self,
-        func: Func,
+        func: LocalDefId,
         local: Local,
         loc: Location,
         ptr_depth: usize,
     ) -> Option<bool> {
+        let func = self.call_graph.lookup_function(&func.to_def_id()).unwrap();
         if ptr_depth > 0 {
             tracing::warn!("mutability analysis doesn't support nested level > 0");
         }

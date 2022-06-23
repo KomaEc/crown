@@ -238,7 +238,8 @@ impl CrateSummary {
 }
 
 impl crate::api::AnalysisResults for CrateSummary {
-    fn local_result(&self, func: Func, local: Local, ptr_depth: usize) -> Option<bool> {
+    fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
+        let func = self.call_graph.lookup_function(&func.to_def_id()).unwrap();
         let mut results = self.lambda_ctxt.locals[func][local]
             .iter()
             .map(|range| range.clone().nth(ptr_depth).unwrap())
@@ -253,11 +254,12 @@ impl crate::api::AnalysisResults for CrateSummary {
 
     fn local_result_at(
         &self,
-        func: Func,
+        func: LocalDefId,
         local: Local,
         loc: Location,
         ptr_depth: usize,
     ) -> Option<bool> {
+        let func = self.call_graph.lookup_function(&func.to_def_id()).unwrap();
         let source_map = &self.ssa_name_source_map[func];
         let ssa_idx = source_map
             .try_def(local, loc)

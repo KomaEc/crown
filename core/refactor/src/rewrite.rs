@@ -1,8 +1,7 @@
 mod rewrite_body;
 
 use analysis::{
-    api::AnalysisResults, call_graph::Func, fat_thin_analysis, mutability_analysis, null_analysis,
-    ownership_analysis,
+    api::AnalysisResults, fat_thin_analysis, mutability_analysis, null_analysis, ownership_analysis,
 };
 use rewriter::{RewriteMode, Rewriter};
 use rustc_hir::{def_id::LocalDefId, FnRetTy, FnSig, ItemKind, Ty, TyKind};
@@ -69,7 +68,7 @@ fn rewrite_functions<'tcx>(
             mutability_analysis,
             fatness_analysis,
             null_analysis,
-            func,
+            did,
             sig,
         );
         let mut body_rewrite_cx = BodyRewriteCtxt {
@@ -94,7 +93,7 @@ fn rewrite_fn_sig(
     mutability: &mutability_analysis::InterSummary,
     fatness: &fat_thin_analysis::CrateSummary,
     null: &null_analysis::CrateResults,
-    func: Func,
+    def_id: LocalDefId,
     sig: &FnSig,
 ) {
     let results_for_local = |i, ty| {
@@ -102,10 +101,12 @@ fn rewrite_fn_sig(
         let nested_depth = ty_nested_depth(ty);
         (0..nested_depth)
             .map(|nested_level| PtrResults {
-                owning: ownership.local_result(func, local, nested_level),
-                fat: fatness.local_result(func, local, nested_level).unwrap(),
-                mutable: mutability.local_result(func, local, nested_level).unwrap(),
-                nullable: null.local_result(func, local, nested_level).unwrap(),
+                owning: ownership.local_result(def_id, local, nested_level),
+                fat: fatness.local_result(def_id, local, nested_level).unwrap(),
+                mutable: mutability
+                    .local_result(def_id, local, nested_level)
+                    .unwrap(),
+                nullable: null.local_result(def_id, local, nested_level).unwrap(),
             })
             .collect::<Vec<_>>()
     };
