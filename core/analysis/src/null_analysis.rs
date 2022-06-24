@@ -29,7 +29,11 @@ use rustc_mir_dataflow::{
     ResultsRefCursor,
 };
 
-fn get_struct_field<'tcx>(tcx: TyCtxt<'tcx>, body: &Body<'tcx>, place: PlaceRef<'tcx>) -> Option<(LocalDefId, Field, usize)> {
+fn get_struct_field<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    body: &Body<'tcx>,
+    place: PlaceRef<'tcx>,
+) -> Option<(LocalDefId, Field, usize)> {
     let field_idx = place
         .projection
         .iter()
@@ -119,7 +123,9 @@ impl JoinSemiLattice for Nullability {
 
 type CrateFuncResults<'tcx> = IndexVec<LocalDefId, Option<FuncResults<'tcx>>>;
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub struct CrateStructResults(pub FxHashMap<LocalDefId, IndexVec<Field, IndexVec<usize, Nullability>>>);
+pub struct CrateStructResults(
+    pub FxHashMap<LocalDefId, IndexVec<Field, IndexVec<usize, Nullability>>>,
+);
 
 impl JoinSemiLattice for CrateStructResults {
     fn join(&mut self, other: &Self) -> bool {
@@ -181,7 +187,10 @@ impl<'tcx> CrateResults<'tcx> {
 
 impl<'tcx> crate::api::AnalysisResults for CrateResults<'tcx> {
     fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
-        Some(self.fn_results[func].as_ref().unwrap().start_results.locals[local][ptr_depth] == Nullability::Nullable)
+        Some(
+            self.fn_results[func].as_ref().unwrap().start_results.locals[local][ptr_depth]
+                == Nullability::Nullable,
+        )
     }
 
     fn local_result_at(
@@ -262,10 +271,14 @@ fn resolve_dep(results: &mut CrateResults, deps: &FxHashSet<Dependency>) -> Null
                     .expect("circular dependency")[*nested_level]
                     .clone()
             }
-            Dependency::StructField { struct_def, field_idx, nested_level } => {
+            Dependency::StructField {
+                struct_def,
+                field_idx,
+                nested_level,
+            } => {
                 resolve_struct_deps(results, *struct_def);
                 results.struct_results.0[struct_def][*field_idx][*nested_level].clone()
-            },
+            }
         };
 
         use Nullability::*;
@@ -449,7 +462,9 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
                     return;
                 }
                 let mut l_result = state.result_for(self.tcx, self.body, l_place).clone();
-                if let Some((struct_def, field_idx, nested_level)) = get_struct_field(self.tcx, self.body, l_place) {
+                if let Some((struct_def, field_idx, nested_level)) =
+                    get_struct_field(self.tcx, self.body, l_place)
+                {
                     if !l_result.is_definite() {
                         let dep = Dependency::StructField {
                             struct_def,

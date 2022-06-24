@@ -11,7 +11,7 @@ use rustc_hash::FxHashMap;
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{Local, Location, Field},
+    mir::{Field, Local, Location},
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;

@@ -8,7 +8,7 @@ use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{Local, Location, Field},
+    mir::{Field, Local, Location},
     ty::TyCtxt,
 };
 

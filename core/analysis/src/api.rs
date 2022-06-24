@@ -1,5 +1,5 @@
 use rustc_hir::def_id::LocalDefId;
-use rustc_middle::mir::{Local, Location, Field};
+use rustc_middle::mir::{Field, Local, Location};
 
 pub trait AnalysisResults {
     fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool>;

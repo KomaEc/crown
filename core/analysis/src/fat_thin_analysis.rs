@@ -8,7 +8,7 @@ use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{Local, Location, Field},
+    mir::{Field, Local, Location},
     ty::TyCtxt,
 };
 use rustc_target::abi::VariantIdx;
@@ -271,8 +271,9 @@ impl crate::api::AnalysisResults for CrateSummary {
     }
 
     fn field_result(&self, def_id: LocalDefId, field: Field, ptr_depth: usize) -> Option<bool> {
-        let mut lambda_range =
-            self.lambda_ctxt.field_defs[&def_id][VariantIdx::from_usize(0)][field.as_usize()].clone();
+        let mut lambda_range = self.lambda_ctxt.field_defs[&def_id][VariantIdx::from_usize(0)]
+            [field.as_usize()]
+        .clone();
         self.lambda_ctxt.assumptions[lambda_range.nth(ptr_depth).unwrap()]
     }
 }
