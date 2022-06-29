@@ -90,9 +90,8 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
         });
         for (_, stmt) in stmts {
             match &stmt.kind {
-                StatementKind::Assign(box (place, rvalue)) => {
+                StatementKind::Assign(box (l_place, rvalue)) => {
                     let source = cx.span_to_snippet(stmt.source_info.span);
-
                     if source.contains(" = ") {
                         rewrite_reassignment(cx, stmt);
                     } else {
@@ -104,9 +103,9 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
                     }
 
                     if let Rvalue::Use(Operand::Copy(r_place) | Operand::Move(r_place)) = rvalue {
-                        let lhs_ownership = place_result(cx, cx.ownership, place.as_ref());
+                        let lhs_ownership = place_result(cx, cx.ownership, l_place.as_ref());
                         let rhs_ownership = place_result(cx, cx.ownership, r_place.as_ref());
-                        let lhs_mutability = place_result(cx, cx.mutability, place.as_ref());
+                        let lhs_mutability = place_result(cx, cx.mutability, l_place.as_ref());
                         if rhs_ownership == Some(true) && lhs_ownership == Some(true) {
                             cx.rewrite(stmt.source_info.span.shrink_to_hi(), ".take()", "");
                         } else if rhs_ownership == Some(true) && lhs_ownership == Some(false) {
@@ -216,9 +215,10 @@ pub fn rewrite_place_expr<'tcx>(
             ProjectionElem::Deref => {
                 let ownership = place_result(cx, cx.ownership, base_place);
                 let mutability = place_result(cx, cx.mutability, base_place);
-                if ownership == Some(true) {
+                let nullable = place_result(cx, cx.null, base_place).unwrap();
+                if ownership == Some(true) && nullable {
                     new_source = format!("(*{new_source}.as_mut().unwrap())");
-                } else if ownership == Some(false) {
+                } else if ownership == Some(false) && nullable {
                     let maybe_as = match (is_rvalue, mutability) {
                         (false, _) => "",
                         (true, Some(true)) => ".as_mut()",
@@ -277,12 +277,14 @@ fn rewrite_malloc<'tcx>(
     let malloc_source = cx.span_to_snippet(malloc_span);
     let ty = malloc_source.rsplit_once(' ').unwrap().1;
 
+    let mut new_source = format!("Box::<{ty}>::new(unsafe {{ std::mem::zeroed() }})");
+    if place_result(cx, cx.null, dest_place.as_ref()) == Some(true) {
+        new_source.insert_str(0, "Some(");
+        new_source.push(')');
+    }
+
     rewritten_stmts.insert(cast_loc);
-    cx.rewrite(
-        malloc_span,
-        format!("Some(Box::<{ty}>::new(unsafe {{ std::mem::zeroed() }} /* lol */))"),
-        "use box instead of malloc",
-    );
+    cx.rewrite(malloc_span, new_source, "use box instead of malloc");
 }
 
 fn rewrite_realloc(

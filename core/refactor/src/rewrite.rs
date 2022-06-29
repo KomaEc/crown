@@ -1,7 +1,8 @@
 mod rewrite_body;
 
 use analysis::{
-    api::AnalysisResults, fat_thin_analysis, mutability_analysis, null_analysis, ownership_analysis,
+    api::AnalysisResults, call_graph::Func, fat_thin_analysis, mutability_analysis, null_analysis,
+    ownership_analysis,
 };
 use rewriter::{RewriteMode, Rewriter};
 use rustc_hir::{def_id::LocalDefId, FnRetTy, FnSig, ItemKind, Ty, TyKind};
@@ -68,6 +69,7 @@ fn rewrite_functions<'tcx, 'a>(
             mutability_analysis,
             fatness_analysis,
             null_analysis,
+            func,
             did,
             sig,
         );
@@ -93,19 +95,22 @@ fn rewrite_fn_sig(
     mutability: &mutability_analysis::InterSummary,
     fatness: &fat_thin_analysis::CrateSummary,
     null: &null_analysis::CrateResults,
+    func: Func,
     def_id: LocalDefId,
     sig: &FnSig,
 ) {
     let results_for_local = |i, ty| {
-        let local = Local::from_usize(i + 1);
+        let local = Local::from_usize(i);
         let nested_depth = ty_nested_depth(ty);
         (0..nested_depth)
             .map(|nested_level| PtrResults {
-                owning: ownership.local_result(def_id, local, nested_level),
-                fat: fatness.local_result(def_id, local, nested_level).unwrap(),
-                mutable: mutability
-                    .local_result(def_id, local, nested_level)
-                    .unwrap(),
+                owning: ownership.func_sigs[func].sig[i][nested_level],
+                fat: fatness.lambda_ctxt.assumptions[fatness.func_summaries[func].func_sig[i]
+                    .clone()
+                    .nth(nested_level)
+                    .unwrap()]
+                .unwrap_or(false),
+                mutable: mutability.func_sigs[func].sig[i][nested_level].unwrap_or(true),
                 nullable: null.local_result(def_id, local, nested_level).unwrap(),
             })
             .collect::<Vec<_>>()
@@ -116,7 +121,7 @@ fn rewrite_fn_sig(
     }
 
     for (i, ty) in sig.decl.inputs.iter().enumerate() {
-        rewrite_raw_ptr_ty(tcx, rewriter, ty, &results_for_local(i, ty));
+        rewrite_raw_ptr_ty(tcx, rewriter, ty, &results_for_local(i + 1, ty));
     }
 }
 
@@ -179,11 +184,15 @@ struct PtrResults {
 
 fn rewrite_raw_ptr_ty(tcx: TyCtxt<'_>, rewriter: &mut Rewriter, ty: &Ty, results: &[PtrResults]) {
     // we want both recursion and local variable capture, so we need both a fn and a closure
-    fn visit_nested_pointer(ty: &Ty, results: &[PtrResults], f: &mut impl FnMut(&Ty, PtrResults)) {
+    fn visit_nested_pointer(
+        ty: &Ty,
+        results: &[PtrResults],
+        f: &mut impl FnMut(&Ty, Option<&PtrResults>),
+    ) {
         if let TyKind::Ptr(mut_ty) = &ty.kind {
             visit_nested_pointer(mut_ty.ty, &results[1..], f);
         }
-        f(ty, results[0]);
+        f(ty, results.get(0));
     }
 
     let mut new_ty = String::new();
@@ -192,6 +201,7 @@ fn rewrite_raw_ptr_ty(tcx: TyCtxt<'_>, rewriter: &mut Rewriter, ty: &Ty, results
             new_ty = tcx.sess.source_map().span_to_snippet(ty.span).unwrap();
             return;
         }
+        let result = result.unwrap();
 
         if result.fat {
             new_ty = format!("[{new_ty}]");
