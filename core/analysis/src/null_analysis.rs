@@ -44,7 +44,7 @@ fn get_struct_field<'tcx>(
         let n_derefs = idx;
         let struct_place = PlaceRef {
             local: place.local,
-            projection: &place.projection[..=idx],
+            projection: &place.projection[..place.projection.len() - idx - 1],
         };
         let struct_def_id = struct_place
             .ty(body, tcx)
@@ -585,21 +585,17 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx, '_> {
                 .enumerate()
                 .filter_map(|(idx, op)| op.place().map(|place| (idx, place)))
             {
-                self.check_place(state, place.as_ref());
-                if let PlaceRef {
-                    local,
-                    projection: [],
-                } = place.as_ref()
-                {
-                    let dep = Dependency::FnArg {
-                        fn_def: def_id,
-                        arg: Local::from_usize(idx + 1),
-                        nested_level: 0,
-                    };
-                    state.locals[local].get_mut(0).map(|result| {
-                        result.join(&Nullability::DependsOn([dep].into_iter().collect()))
-                    });
+                if !place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+                    continue;
                 }
+                self.check_place(state, place.as_ref());
+                let dep = Dependency::FnArg {
+                    fn_def: def_id,
+                    arg: Local::from_usize(idx + 1),
+                    nested_level: 0,
+                };
+                let result = state.result_for(self.tcx, self.body, place.as_ref());
+                result.join(&Nullability::DependsOn([dep].into_iter().collect()));
             }
         }
     }
