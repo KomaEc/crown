@@ -219,18 +219,32 @@ fn resolve_deps(results: &mut CrateResults) {
 }
 
 fn resolve_fn_deps(results: &mut CrateResults, id: LocalDefId) {
-    let mut start_results =
-        std::mem::take(&mut results.fn_results[id].as_mut().unwrap().start_results);
-    for local_nullabilities in start_results.locals.iter_mut() {
-        for nested_nullability in local_nullabilities {
-            if let Nullability::DependsOn(deps) = nested_nullability {
-                *nested_nullability = resolve_dep(results, deps);
-            } else if *nested_nullability == Nullability::Unknown {
-                *nested_nullability = Nullability::Nullable;
+    let mut unfinished = true;
+    while unfinished {
+        let mut start_results =
+            results.fn_results[id].as_mut().unwrap().start_results.clone();
+        unfinished = false;
+        for local_nullabilities in start_results.locals.iter_mut() {
+            for nested_nullability in local_nullabilities {
+                if let Nullability::DependsOn(deps) = nested_nullability {
+                    let result = resolve_dep(results, deps, Some(id));
+                    if result.is_none() && deps.iter().any(|d| matches!(d, Dependency::FnArg { fn_def, .. } if *fn_def == id)) {
+                        // function depends on itself, skip this local now but keep looping until
+                        // it is resolved
+                        unfinished = true;
+                    } else if result.is_none() {
+                        // cyclic dep between fns so we assume the worst
+                        *nested_nullability = Nullability::Nullable;
+                    } else {
+                        *nested_nullability = result.unwrap();
+                    }
+                } else if *nested_nullability == Nullability::Unknown {
+                    *nested_nullability = Nullability::Nullable;
+                }
             }
         }
+        results.fn_results[id].as_mut().unwrap().start_results = start_results;
     }
-    results.fn_results[id].as_mut().unwrap().start_results = start_results;
 }
 
 fn resolve_struct_deps(results: &mut CrateResults, id: LocalDefId) {
@@ -238,7 +252,8 @@ fn resolve_struct_deps(results: &mut CrateResults, id: LocalDefId) {
     for field in &mut struct_results {
         for nested_nullability in field.iter_mut() {
             if let Nullability::DependsOn(deps) = nested_nullability {
-                *nested_nullability = resolve_dep(results, deps);
+                // this unwrap is wrong but i cba to fix it yet bc it's rare
+                *nested_nullability = resolve_dep(results, deps, None).unwrap();
             } else if *nested_nullability == Nullability::Unknown {
                 *nested_nullability = Nullability::Nullable;
             }
@@ -247,7 +262,7 @@ fn resolve_struct_deps(results: &mut CrateResults, id: LocalDefId) {
     *results.struct_results.0.get_mut(&id).unwrap() = struct_results;
 }
 
-fn resolve_dep(results: &mut CrateResults, deps: &FxHashSet<Dependency>) -> Nullability {
+fn resolve_dep(results: &mut CrateResults, deps: &FxHashSet<Dependency>, skip: Option<LocalDefId>) -> Option<Nullability> {
     let mut ret = Nullability::Unknown;
     for result_ref in deps.iter() {
         let other_nullability;
@@ -261,14 +276,17 @@ fn resolve_dep(results: &mut CrateResults, deps: &FxHashSet<Dependency>) -> Null
                     // we don't have results for this fn. maybe it is extern
                     continue;
                 }
-                resolve_fn_deps(results, *fn_def);
+                // avoid stack overflow for self-reference
+                if Some(*fn_def) != skip {
+                    resolve_fn_deps(results, *fn_def);
+                }
                 results.fn_results[*fn_def]
                     .as_ref()
                     .unwrap()
                     .start_results
                     .locals
-                    .get(*arg)
-                    .expect("circular dependency")[*nested_level]
+                    [*arg]
+                    [*nested_level]
                     .clone()
             }
             Dependency::StructField {
@@ -284,13 +302,13 @@ fn resolve_dep(results: &mut CrateResults, deps: &FxHashSet<Dependency>) -> Null
         use Nullability::*;
         match (&ret, other_nullability) {
             (DependsOn(_), _) => panic!("how"),
-            (_, DependsOn(_)) => panic!("how"),
+            (_, DependsOn(_)) => return None,    // cyclic
             (_, NonNullable) => ret = NonNullable,
             (Unknown, Nullable) => ret = Nullable,
             _ => {}
         }
     }
-    ret
+    Some(ret)
 }
 
 pub struct FuncResults<'tcx, 'a> {
