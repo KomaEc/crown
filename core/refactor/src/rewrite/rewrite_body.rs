@@ -15,19 +15,19 @@ use rustc_middle::{
 };
 use rustc_span::{BytePos, Span};
 
-pub struct BodyRewriteCtxt<'tcx, 'a> {
+pub struct BodyRewriteCtxt<'tcx, 'a, 'b> {
     pub tcx: TyCtxt<'tcx>,
     pub rewriter: &'a mut rewriter::Rewriter,
     pub ownership: &'a ownership_analysis::InterSummary,
     pub mutability: &'a mutability_analysis::InterSummary,
     pub fatness: &'a fat_thin_analysis::CrateSummary,
-    pub null: &'a null_analysis::CrateResults<'tcx>,
+    pub null: &'a null_analysis::CrateResults<'tcx, 'b>,
     pub func: Func,
     pub def_id: LocalDefId,
     pub body: &'a Body<'tcx>,
 }
 
-impl BodyRewriteCtxt<'_, '_> {
+impl BodyRewriteCtxt<'_, '_, '_> {
     fn rewrite(&mut self, span: Span, to: impl Into<String>, msg: &'static str) {
         self.rewriter
             .make_suggestion(self.tcx, span, msg.into(), to.into());
@@ -126,7 +126,7 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
 }
 
 pub fn rewrite_rvalue<'tcx>(
-    cx: &mut BodyRewriteCtxt<'tcx, '_>,
+    cx: &mut BodyRewriteCtxt<'tcx, '_, '_>,
     rvalue: &Rvalue<'tcx>,
     source: &str,
 ) -> String {
@@ -162,7 +162,7 @@ pub fn rewrite_rvalue<'tcx>(
     }
 }
 
-pub fn rewrite_reassignment<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_>, stmt: &Statement<'tcx>) {
+pub fn rewrite_reassignment<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_, '_>, stmt: &Statement<'tcx>) {
     // TODO: convert everything else to let-else too. it's just better
     let StatementKind::Assign(box (l_place, rvalue)) = &stmt.kind else { panic!() };
     let span = stmt.source_info.span;
@@ -185,7 +185,7 @@ pub fn rewrite_reassignment<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_>, stmt: &Sta
 }
 
 pub fn rewrite_place_expr<'tcx>(
-    cx: &mut BodyRewriteCtxt<'tcx, '_>,
+    cx: &mut BodyRewriteCtxt<'tcx, '_, '_>,
     place: Place<'tcx>,
     is_rvalue: bool,
     source: &str,
@@ -453,7 +453,7 @@ fn rewrite_offset(
 }
 
 fn place_result<'tcx, A: AnalysisResults>(
-    cx: &BodyRewriteCtxt<'tcx, '_>,
+    cx: &BodyRewriteCtxt<'tcx, '_, '_>,
     analysis: &A,
     place: PlaceRef<'tcx>,
 ) -> Option<bool> {

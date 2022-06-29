@@ -15,7 +15,7 @@
 use std::fmt::Display;
 
 use rustc_hash::{FxHashMap, FxHashSet};
-use rustc_hir::{def_id::LocalDefId, definitions::DefPathData};
+use rustc_hir::{def_id::LocalDefId, definitions::DefPathData, ItemKind};
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
@@ -121,7 +121,7 @@ impl JoinSemiLattice for Nullability {
     }
 }
 
-type CrateFuncResults<'tcx> = IndexVec<LocalDefId, Option<FuncResults<'tcx>>>;
+type CrateFuncResults<'tcx, 'a> = IndexVec<LocalDefId, Option<FuncResults<'tcx, 'a>>>;
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CrateStructResults(
     pub FxHashMap<LocalDefId, IndexVec<Field, IndexVec<usize, Nullability>>>,
@@ -157,16 +157,16 @@ impl JoinSemiLattice for CrateStructResults {
     }
 }
 
-pub struct CrateResults<'tcx> {
-    pub fn_results: CrateFuncResults<'tcx>,
+pub struct CrateResults<'tcx, 'a> {
+    pub fn_results: CrateFuncResults<'tcx, 'a>,
     pub struct_results: CrateStructResults,
 }
 
-impl<'tcx> CrateResults<'tcx> {
-    pub fn collect(tcx: TyCtxt<'tcx>, fns: &[LocalDefId]) -> Self {
+impl<'tcx, 'a> CrateResults<'tcx, 'a> {
+    pub fn collect(tcx: TyCtxt<'tcx>, fns: &[LocalDefId], structs: &'a [LocalDefId]) -> Self {
         let mut fn_results = IndexVec::new();
         for &def_id in fns {
-            fn_results.insert(def_id, FuncResults::collect(tcx, def_id));
+            fn_results.insert(def_id, FuncResults::collect(tcx, def_id, structs));
         }
         let struct_results =
             fn_results
@@ -185,7 +185,7 @@ impl<'tcx> CrateResults<'tcx> {
     }
 }
 
-impl<'tcx> crate::api::AnalysisResults for CrateResults<'tcx> {
+impl<'tcx> crate::api::AnalysisResults for CrateResults<'tcx, '_> {
     fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
         Some(
             self.fn_results[func].as_ref().unwrap().start_results.locals[local][ptr_depth]
@@ -293,17 +293,17 @@ fn resolve_dep(results: &mut CrateResults, deps: &FxHashSet<Dependency>) -> Null
     ret
 }
 
-pub struct FuncResults<'tcx> {
+pub struct FuncResults<'tcx, 'a> {
     tcx: TyCtxt<'tcx>,
     def_id: LocalDefId,
-    pub results: Results<'tcx, NullAnalysis<'tcx>>,
+    pub results: Results<'tcx, NullAnalysis<'tcx, 'a>>,
     start_results: Domain,
 }
 
-impl<'tcx> FuncResults<'tcx> {
-    fn collect(tcx: TyCtxt<'tcx>, def_id: LocalDefId) -> Self {
+impl<'tcx, 'a> FuncResults<'tcx, 'a> {
+    fn collect(tcx: TyCtxt<'tcx>, def_id: LocalDefId, structs: &'a [LocalDefId]) -> Self {
         let body = tcx.optimized_mir(def_id);
-        let engine = Engine::new_generic(tcx, &body, NullAnalysis::new(tcx, def_id));
+        let engine = Engine::new_generic(tcx, &body, NullAnalysis::new(tcx, def_id, structs));
         let results = engine.iterate_to_fixpoint();
 
         let mut cursor = ResultsRefCursor::new(&body, &results);
@@ -319,7 +319,7 @@ impl<'tcx> FuncResults<'tcx> {
     }
 }
 
-impl Display for FuncResults<'_> {
+impl Display for FuncResults<'_, '_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let fn_name = self.tcx.def_path_str(self.def_id.to_def_id());
         let body = self.tcx.optimized_mir(self.def_id);
@@ -382,17 +382,18 @@ impl JoinSemiLattice for Domain {
     }
 }
 
-impl<'tcx> DebugWithContext<NullAnalysis<'tcx>> for Domain {}
+impl<'tcx> DebugWithContext<NullAnalysis<'tcx, '_>> for Domain {}
 
-pub struct NullAnalysis<'tcx> {
+pub struct NullAnalysis<'tcx, 'a> {
     tcx: TyCtxt<'tcx>,
     body: &'tcx Body<'tcx>,
+    structs: &'a [LocalDefId],
 }
 
-impl<'tcx> NullAnalysis<'tcx> {
-    pub fn new(tcx: TyCtxt<'tcx>, def_id: LocalDefId) -> Self {
+impl<'tcx, 'a> NullAnalysis<'tcx, 'a> {
+    pub fn new(tcx: TyCtxt<'tcx>, def_id: LocalDefId, structs: &'a [LocalDefId]) -> Self {
         let body = tcx.optimized_mir(def_id);
-        NullAnalysis { tcx, body }
+        NullAnalysis { tcx, body, structs }
     }
 
     /// If a `Place` contains a deref of a local, that local is non-nullable. We have to check this
@@ -410,7 +411,7 @@ impl<'tcx> NullAnalysis<'tcx> {
     }
 }
 
-impl<'tcx> AnalysisDomain<'tcx> for NullAnalysis<'tcx> {
+impl<'tcx> AnalysisDomain<'tcx> for NullAnalysis<'tcx, '_> {
     type Domain = Domain;
     type Direction = rustc_mir_dataflow::Backward;
 
@@ -425,9 +426,22 @@ impl<'tcx> AnalysisDomain<'tcx> for NullAnalysis<'tcx> {
                     .map(|_| Nullability::Unknown),
             )
         }));
+        let structs = CrateStructResults(FxHashMap::from_iter(self.structs.iter().map(|&def_id| {
+            let ItemKind::Struct(ref variant_data, _) = self.tcx.hir().expect_item(def_id).kind else { panic!() };
+            let fields = variant_data.fields().iter().map(|f| {
+                let mut ty = f.ty;
+                let mut nested_level = 0;
+                while let rustc_hir::TyKind::Ptr(ref mut_ty) = ty.kind {
+                    nested_level += 1;
+                    ty = mut_ty.ty;
+                }
+                IndexVec::from_iter(std::iter::repeat(Nullability::Unknown).take(nested_level))
+            });
+            (def_id, IndexVec::from_iter(fields))
+        })));
         Domain {
             locals,
-            structs: CrateStructResults::default(),
+            structs,
         }
     }
 
@@ -439,7 +453,7 @@ impl<'tcx> AnalysisDomain<'tcx> for NullAnalysis<'tcx> {
     }
 }
 
-impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx> {
+impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx, '_> {
     fn apply_statement_effect(
         &self,
         state: &mut Self::Domain,

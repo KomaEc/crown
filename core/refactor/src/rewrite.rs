@@ -24,7 +24,7 @@ pub fn rewrite<'tcx>(
     ownership_analysis: &ownership_analysis::InterSummary,
     mutability_analysis: &mutability_analysis::InterSummary,
     fatness_analysis: &fat_thin_analysis::CrateSummary,
-    null_analysis: &null_analysis::CrateResults<'tcx>,
+    null_analysis: &null_analysis::CrateResults<'tcx, '_>,
     struct_defs: &[LocalDefId],
     rewrite_mode: RewriteMode,
 ) {
@@ -49,13 +49,13 @@ pub fn rewrite<'tcx>(
     rewriter.write(rewrite_mode)
 }
 
-fn rewrite_functions<'tcx>(
+fn rewrite_functions<'tcx, 'a>(
     tcx: TyCtxt<'tcx>,
     rewriter: &mut Rewriter,
     ownership_analysis: &ownership_analysis::InterSummary,
     mutability_analysis: &mutability_analysis::InterSummary,
     fatness_analysis: &fat_thin_analysis::CrateSummary,
-    null_analysis: &null_analysis::CrateResults<'tcx>,
+    null_analysis: &null_analysis::CrateResults<'tcx, 'a>,
 ) {
     for (func, did) in ownership_analysis.call_graph.functions.iter_enumerated() {
         let did = did.expect_local();
@@ -125,7 +125,7 @@ fn rewrite_structs<'tcx>(
     rewriter: &mut Rewriter,
     ownership_analysis: &ownership_analysis::InterSummary,
     fatness_analysis: &fat_thin_analysis::CrateSummary,
-    null_analysis: &null_analysis::CrateResults<'tcx>,
+    null_analysis: &null_analysis::CrateResults<'tcx, '_>,
     dids: &[LocalDefId],
 ) {
     for &did in dids {
@@ -148,7 +148,7 @@ fn rewrite_struct<'tcx>(
     rewriter: &mut Rewriter,
     ownership: &ownership_analysis::InterSummary,
     fatness: &fat_thin_analysis::CrateSummary,
-    null: &null_analysis::CrateResults<'tcx>,
+    null: &null_analysis::CrateResults<'tcx, '_>,
     variant_data: &rustc_hir::VariantData,
     did: LocalDefId,
 ) {

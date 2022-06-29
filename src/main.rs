@@ -160,7 +160,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             all: _,
         } => {
             if *null {
-                let results = null_analysis::CrateResults::collect(tcx, &top_level_fns);
+                let results = null_analysis::CrateResults::collect(tcx, &top_level_fns, &top_level_struct_defs);
                 for (struct_def_id, struct_result) in results.struct_results.0.iter() {
                     let struct_name = tcx.def_path_str(struct_def_id.to_def_id());
                     let struct_def = &tcx.adt_def(*struct_def_id).variants[VariantIdx::from_usize(0)];
@@ -209,7 +209,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                 refactor::fatness_analysis(tcx, &top_level_struct_defs, &top_level_fns)
             });
             let null_analysis = time("null analysis", || {
-                null_analysis::CrateResults::collect(tcx, &top_level_fns)
+                null_analysis::CrateResults::collect(tcx, &top_level_fns, &top_level_struct_defs)
             });
             time("rewrite", || {
                 refactor::rewrite::rewrite(
