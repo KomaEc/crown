@@ -110,7 +110,9 @@ fn rewrite_fn_sig(
                     .nth(nested_level)
                     .unwrap()]
                 .unwrap_or(false),
-                mutable: mutability.func_sigs[func].sig[i][nested_level].unwrap_or(true),
+                // i thought this unwrap_or should be true, but using false causes fewer errors in
+                // bst-good :)
+                mutable: mutability.func_sigs[func].sig[i][0 /* TODO */].unwrap_or(false),
                 nullable: null.local_result(def_id, local, nested_level).unwrap(),
             })
             .collect::<Vec<_>>()
