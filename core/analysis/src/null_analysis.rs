@@ -195,12 +195,12 @@ impl<'tcx> crate::api::AnalysisResults for CrateResults<'tcx, '_> {
 
     fn local_result_at(
         &self,
-        _func: LocalDefId,
-        _local: Local,
+        func: LocalDefId,
+        local: Local,
         _loc: rustc_middle::mir::Location,
-        _ptr_depth: usize,
+        ptr_depth: usize,
     ) -> Option<bool> {
-        unimplemented!()
+        self.local_result(func, local, ptr_depth)
     }
 
     fn field_result(&self, def_id: LocalDefId, field: Field, ptr_depth: usize) -> Option<bool> {
