@@ -76,7 +76,7 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
                             span.with_lo(BytePos(span.hi().0 - ".is_null()".len() as u32));
                         cx.rewrite(call_span, ".is_none()", "");
                     }
-                    _ => {}
+                    _ => rewrite_terminator(cx, bb_id),
                 }
             }
             _ => {}
@@ -121,6 +121,43 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
                 _ => {}
             }
         }
+    }
+}
+
+fn rewrite_terminator<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_, '_>, bb_id: BasicBlock) {
+    let bb = &cx.body.basic_blocks()[bb_id];
+    let terminator = bb.terminator();
+    let terminator_loc = cx.body.terminator_loc(bb_id);
+    let (callee, (dest_place, _dest_bb)) = match &terminator.kind {
+        TerminatorKind::Call {
+            func, destination, ..
+        } => (func, destination.unwrap()),
+        _ => panic!(),
+    };
+    let const_ty = callee.constant().unwrap().literal.ty();
+    let Some(callee_def_id) = match const_ty.kind() {
+        rustc_middle::ty::TyKind::FnDef(def_id, _substs) => def_id,
+        _ => panic!(),
+    }.as_local() else { return };
+
+    let is_raw_ptr = cx.tcx.fn_sig(callee_def_id).no_bound_vars().unwrap().output().is_unsafe_ptr();
+    if !is_raw_ptr {
+        return;
+    }
+
+    let l_null = place_result(cx, cx.null, terminator_loc, dest_place.as_ref());
+    let r_null = cx.null.sig_result(callee_def_id, Local::from_usize(0), 0);
+
+    let span = terminator.source_info.span;
+    let source = cx.span_to_snippet(span);
+
+    match (l_null, r_null) {
+        (Some(true), Some(false)) => {
+            cx.rewrite(span.shrink_to_lo(), "Some(", "");
+            cx.rewrite(span.shrink_to_hi(), ")", "");
+        },
+        (Some(false), Some(true)) => cx.rewrite(span.shrink_to_hi(), ".unwrap()", ""),
+        _ => {},
     }
 }
 
