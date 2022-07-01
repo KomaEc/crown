@@ -15,7 +15,7 @@
 use std::fmt::Display;
 
 use rustc_hash::{FxHashMap, FxHashSet};
-use rustc_hir::{def_id::LocalDefId, definitions::DefPathData, ItemKind};
+use rustc_hir::{def_id::LocalDefId, definitions::DefPathData, ItemKind, FnRetTy};
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
@@ -122,10 +122,28 @@ impl JoinSemiLattice for Nullability {
 }
 
 type CrateFuncResults<'tcx, 'a> = IndexVec<LocalDefId, Option<FuncResults<'tcx, 'a>>>;
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct FnReturnResults(
+    pub IndexVec<LocalDefId, Option<IndexVec<usize, Nullability>>>,
+);
+
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct CrateStructResults(
     pub FxHashMap<LocalDefId, IndexVec<Field, IndexVec<usize, Nullability>>>,
 );
+
+impl JoinSemiLattice for FnReturnResults {
+    fn join(&mut self, other: &Self) -> bool {
+        let mut changed = false;
+        for (def_id, other) in other.0.iter_enumerated() {
+            if let Some(other) = other {
+                changed |= self.0[def_id].as_mut().unwrap().join(other);
+            }
+        }
+        changed
+    }
+}
 
 impl JoinSemiLattice for CrateStructResults {
     fn join(&mut self, other: &Self) -> bool {
@@ -163,11 +181,25 @@ pub struct CrateResults<'tcx, 'a> {
 }
 
 impl<'tcx, 'a> CrateResults<'tcx, 'a> {
-    pub fn collect(tcx: TyCtxt<'tcx>, fns: &[LocalDefId], structs: &'a [LocalDefId]) -> Self {
+    pub fn collect(tcx: TyCtxt<'tcx>, fns: &'a [LocalDefId], structs: &'a [LocalDefId]) -> Self {
         let mut fn_results = IndexVec::new();
         for &def_id in fns {
-            fn_results.insert(def_id, FuncResults::collect(tcx, def_id, structs));
+            fn_results.insert(def_id, FuncResults::collect(tcx, def_id, fns, structs));
         }
+
+        let mut fn_results_iter = fn_results.iter().flatten();
+        let first = fn_results_iter.next().unwrap();
+        let fn_ret_results = fn_results_iter
+            .map(|results| &results.start_results.fn_returns)
+            .fold(first.start_results.fn_returns.clone(), |mut acc, x| {
+                acc.join(&x);
+                acc
+            });
+        for &def_id in fns {
+            let ret_result = fn_ret_results.0[def_id].clone().unwrap();
+            fn_results[def_id].as_mut().unwrap().start_results.locals[Local::from_usize(0)].join(&ret_result);
+        }
+
         let struct_results =
             fn_results
                 .iter()
@@ -323,9 +355,9 @@ pub struct FuncResults<'tcx, 'a> {
 }
 
 impl<'tcx, 'a> FuncResults<'tcx, 'a> {
-    fn collect(tcx: TyCtxt<'tcx>, def_id: LocalDefId, structs: &'a [LocalDefId]) -> Self {
+    fn collect(tcx: TyCtxt<'tcx>, def_id: LocalDefId, fns: &'a [LocalDefId], structs: &'a [LocalDefId]) -> Self {
         let body = tcx.optimized_mir(def_id);
-        let engine = Engine::new_generic(tcx, &body, NullAnalysis::new(tcx, def_id, structs));
+        let engine = Engine::new_generic(tcx, &body, NullAnalysis::new(tcx, def_id, fns, structs));
         let results = engine.iterate_to_fixpoint();
 
         let mut cursor = ResultsRefCursor::new(&body, &results);
@@ -369,6 +401,7 @@ pub struct Domain {
     // we use IndexVec<usize, _> instead of Vec<_> so we can have impl JoinSemiLattice for free
     locals: IndexVec<Local, IndexVec<usize, Nullability>>,
     structs: CrateStructResults,
+    fn_returns: FnReturnResults,
 }
 
 impl Domain {
@@ -400,6 +433,7 @@ impl JoinSemiLattice for Domain {
         let mut changed = false;
         changed |= self.locals.join(&other.locals);
         changed |= self.structs.join(&other.structs);
+        changed |= self.fn_returns.join(&other.fn_returns);
         changed
     }
 }
@@ -409,13 +443,14 @@ impl<'tcx> DebugWithContext<NullAnalysis<'tcx, '_>> for Domain {}
 pub struct NullAnalysis<'tcx, 'a> {
     tcx: TyCtxt<'tcx>,
     body: &'tcx Body<'tcx>,
+    fns: &'a [LocalDefId],
     structs: &'a [LocalDefId],
 }
 
 impl<'tcx, 'a> NullAnalysis<'tcx, 'a> {
-    pub fn new(tcx: TyCtxt<'tcx>, def_id: LocalDefId, structs: &'a [LocalDefId]) -> Self {
+    pub fn new(tcx: TyCtxt<'tcx>, def_id: LocalDefId, fns: &'a [LocalDefId], structs: &'a [LocalDefId]) -> Self {
         let body = tcx.optimized_mir(def_id);
-        NullAnalysis { tcx, body, structs }
+        NullAnalysis { tcx, body, fns, structs }
     }
 
     /// If a `Place` contains a deref of a local, that local is non-nullable. We have to check this
@@ -448,22 +483,34 @@ impl<'tcx> AnalysisDomain<'tcx> for NullAnalysis<'tcx, '_> {
                     .map(|_| Nullability::Unknown),
             )
         }));
+
+        let hir_ptr_depth = |mut ty: &rustc_hir::Ty| {
+            let mut nested_depth = 0;
+            while let rustc_hir::TyKind::Ptr(ref mut_ty) = ty.kind {
+                nested_depth += 1;
+                ty = mut_ty.ty;
+            }
+            nested_depth
+        };
         let structs = CrateStructResults(FxHashMap::from_iter(self.structs.iter().map(|&def_id| {
             let ItemKind::Struct(ref variant_data, _) = self.tcx.hir().expect_item(def_id).kind else { panic!() };
             let fields = variant_data.fields().iter().map(|f| {
-                let mut ty = f.ty;
-                let mut nested_level = 0;
-                while let rustc_hir::TyKind::Ptr(ref mut_ty) = ty.kind {
-                    nested_level += 1;
-                    ty = mut_ty.ty;
-                }
-                IndexVec::from_iter(std::iter::repeat(Nullability::Unknown).take(nested_level))
+                IndexVec::from_iter(std::iter::repeat(Nullability::Unknown).take(hir_ptr_depth(f.ty)))
             });
             (def_id, IndexVec::from_iter(fields))
         })));
+        let mut fn_returns = FnReturnResults(IndexVec::new());
+        self.fns.iter()
+            .map(|&def_id| {
+                let ItemKind::Fn(ref sig, _, _) = self.tcx.hir().expect_item(def_id).kind else { panic!() };
+                let FnRetTy::Return(ref ty) = sig.decl.output else { return (def_id, IndexVec::new()) };
+                (def_id, IndexVec::from_iter(std::iter::repeat(Nullability::Unknown).take(hir_ptr_depth(ty))))
+            })
+            .for_each(|(def_id, entry)| { fn_returns.0.insert(def_id, entry); });
         Domain {
             locals,
             structs,
+            fn_returns,
         }
     }
 
@@ -531,7 +578,10 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx, '_> {
         terminator: &rustc_middle::mir::Terminator<'tcx>,
         _location: rustc_middle::mir::Location,
     ) {
-        if let TerminatorKind::Call { func, args, .. } = &terminator.kind {
+        if let TerminatorKind::Call { func, args, destination, .. } = &terminator.kind {
+            if let Some((dest_place, _)) = destination {
+                self.check_place(state, dest_place.as_ref());
+            }
             let Some(Constant {
                 literal: ConstantKind::Ty(constant),
                 ..
@@ -601,6 +651,17 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx, '_> {
                 let result = state.result_for(self.tcx, self.body, place.as_ref());
                 result.join(&Nullability::DependsOn([dep].into_iter().collect()));
             }
+
+            let is_raw_ptr = self.tcx.fn_sig(def_id).no_bound_vars().unwrap().output().is_unsafe_ptr();
+            if self.tcx.is_foreign_item(def_id) || !is_raw_ptr {
+                return;
+            }
+
+            // lhs transfers to rhs as in normal assignment
+            let Some((dest_place, _)) = destination else { return };
+            let l_result = state.result_for(self.tcx, self.body, dest_place.as_ref());
+            // TODO: handle more levels of nesting, both here and in assignments
+            state.fn_returns.0[dbg!(def_id)].as_mut().unwrap()[0] = l_result.clone();
         }
     }
 
