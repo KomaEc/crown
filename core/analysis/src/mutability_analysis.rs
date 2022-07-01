@@ -247,6 +247,11 @@ impl crate::api::AnalysisResults for InterSummary {
         tracing::warn!("mutability analysis doesn't support struct fields");
         None
     }
+
+    fn sig_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
+        let func = self.call_graph.lookup_function(&func.to_def_id()).unwrap();
+        self.func_sigs[func].sig[local.as_usize()][ptr_depth]
+    }
 }
 
 pub type MutabilityAnalysisBoundary = Boundary<Option<Mu>, Option<Mu>>;

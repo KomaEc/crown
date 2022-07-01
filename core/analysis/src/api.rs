@@ -11,4 +11,5 @@ pub trait AnalysisResults {
         ptr_depth: usize,
     ) -> Option<bool>;
     fn field_result(&self, def_id: LocalDefId, field: Field, ptr_depth: usize) -> Option<bool>;
+    fn sig_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool>;
 }

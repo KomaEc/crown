@@ -501,6 +501,11 @@ impl crate::api::AnalysisResults for InterSummary {
     fn field_result(&self, def_id: LocalDefId, field: Field, ptr_depth: usize) -> Option<bool> {
         self.struct_results.get().unwrap()[&def_id][field.as_usize()][ptr_depth]
     }
+
+    fn sig_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
+        let func = self.call_graph.lookup_function(&func.to_def_id()).unwrap();
+        self.func_sigs[func].sig[local.as_usize()][ptr_depth]
+    }
 }
 
 pub struct AnalysisEngine<'analysis, 'tcx> {

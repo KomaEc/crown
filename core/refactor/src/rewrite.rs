@@ -1,7 +1,7 @@
 mod rewrite_body;
 
 use analysis::{
-    api::AnalysisResults, call_graph::Func, fat_thin_analysis, mutability_analysis, null_analysis,
+    api::AnalysisResults, fat_thin_analysis, mutability_analysis, null_analysis,
     ownership_analysis,
 };
 use rewriter::{RewriteMode, Rewriter};
@@ -69,7 +69,6 @@ fn rewrite_functions<'tcx, 'a>(
             mutability_analysis,
             fatness_analysis,
             null_analysis,
-            func,
             did,
             sig,
         );
@@ -95,7 +94,6 @@ fn rewrite_fn_sig(
     mutability: &mutability_analysis::InterSummary,
     fatness: &fat_thin_analysis::CrateSummary,
     null: &null_analysis::CrateResults,
-    func: Func,
     def_id: LocalDefId,
     sig: &FnSig,
 ) {
@@ -104,15 +102,11 @@ fn rewrite_fn_sig(
         let nested_depth = ty_nested_depth(ty);
         (0..nested_depth)
             .map(|nested_level| PtrResults {
-                owning: ownership.func_sigs[func].sig[i][nested_level],
-                fat: fatness.lambda_ctxt.assumptions[fatness.func_summaries[func].func_sig[i]
-                    .clone()
-                    .nth(nested_level)
-                    .unwrap()]
-                .unwrap_or(false),
+                owning: ownership.sig_result(def_id, local, nested_level),
+                fat: fatness.sig_result(def_id, local, nested_level).unwrap_or(false),
                 // i thought this unwrap_or should be true, but using false causes fewer errors in
                 // bst-good :)
-                mutable: mutability.func_sigs[func].sig[i][0 /* TODO */].unwrap_or(false),
+                mutable: mutability.sig_result(def_id, local, 0 /* TODO */).unwrap_or(false),
                 nullable: null.local_result(def_id, local, nested_level).unwrap(),
             })
             .collect::<Vec<_>>()

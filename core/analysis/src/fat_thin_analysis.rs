@@ -276,6 +276,14 @@ impl crate::api::AnalysisResults for CrateSummary {
         .clone();
         self.lambda_ctxt.assumptions[lambda_range.nth(ptr_depth).unwrap()]
     }
+
+    fn sig_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
+        let func = self.call_graph.lookup_function(&func.to_def_id()).unwrap();
+        self.lambda_ctxt.assumptions[self.func_summaries[func].func_sig[local.as_usize()]
+                    .clone()
+                    .nth(ptr_depth)
+                    .unwrap()]
+    }
 }
 
 /// λ1 ≤ λ2

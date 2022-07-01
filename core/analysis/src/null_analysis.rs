@@ -206,6 +206,10 @@ impl<'tcx> crate::api::AnalysisResults for CrateResults<'tcx, '_> {
     fn field_result(&self, def_id: LocalDefId, field: Field, ptr_depth: usize) -> Option<bool> {
         Some(self.struct_results.0.get(&def_id).unwrap()[field][ptr_depth] == Nullability::Nullable)
     }
+
+    fn sig_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
+        self.local_result(func, local, ptr_depth)
+    }
 }
 
 fn resolve_deps(results: &mut CrateResults) {
