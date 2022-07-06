@@ -7,7 +7,7 @@ extern "C" {
 }
 // A linked list node
 
-#[repr(C)]#[derive(Copy, Clone)]
+#[repr(C)]
 pub struct Node {
     pub data: i32,
     pub next: *mut Node,
@@ -17,7 +17,7 @@ pub struct Node {
 pub unsafe extern "C" fn push(mut head_ref: *mut *mut Node,
                               mut new_data: i32) {
     /* 1. allocate node */
-    let mut new_node: *mut Node =
+    let mut new_node =
         malloc(::std::mem::size_of::<Node>() as libc::c_ulong) as *mut Node;
     /* 2. put in the data  */
     (*new_node).data = new_data;
@@ -37,7 +37,7 @@ pub unsafe extern "C" fn insertAfter(mut prev_node: *mut Node,
         return
     }
     /* 2. allocate new node */
-    let mut new_node: *mut Node =
+    let mut new_node =
         malloc(::std::mem::size_of::<Node>() as libc::c_ulong) as *mut Node;
     /* 3. put in the data  */
     (*new_node).data = new_data;
@@ -51,10 +51,9 @@ pub unsafe extern "C" fn insertAfter(mut prev_node: *mut Node,
 pub unsafe extern "C" fn append(mut head_ref: *mut *mut Node,
                                 mut new_data: i32) {
     /* 1. allocate node */
-    let mut new_node: *mut Node =
+    let mut new_node =
         malloc(::std::mem::size_of::<Node>() as libc::c_ulong) as
             *mut Node; /* used in step 5*/
-    let mut last: *mut Node = *head_ref;
     /* 2. put in the data  */
     (*new_node).data = new_data;
     /* 3. This new node is going to be the last node, so make next of
@@ -62,6 +61,7 @@ pub unsafe extern "C" fn append(mut head_ref: *mut *mut Node,
     (*new_node).next = 0 as *mut Node;
     /* 4. If the Linked List is empty, then make the new node as head */
     if (*head_ref).is_null() { *head_ref = new_node; return }
+    let mut last = *head_ref;
     /* 5. Else traverse till the last node */
     while !(*last).next.is_null() { last = (*last).next }
     /* 6. Change the next of last node */
