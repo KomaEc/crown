@@ -11,9 +11,10 @@ use rustc_middle::{
         BasicBlock, Body, CastKind, Constant, ConstantKind, Local, Location, Operand, Place,
         PlaceRef, ProjectionElem, Rvalue, Statement, StatementKind, TerminatorKind,
     },
-    ty::{Const, ScalarInt, TyCtxt},
+    ty::{Const, ScalarInt, TyCtxt, TyKind},
 };
 use rustc_span::{BytePos, Span};
+use tracing::{trace, debug_span, warn, debug};
 
 pub struct BodyRewriteCtxt<'tcx, 'a, 'b> {
     pub tcx: TyCtxt<'tcx>,
@@ -30,7 +31,7 @@ pub struct BodyRewriteCtxt<'tcx, 'a, 'b> {
 impl BodyRewriteCtxt<'_, '_, '_> {
     fn rewrite(&mut self, span: Span, to: impl Into<String>, msg: &'static str) {
         let to = to.into();
-        tracing::debug!(?span, ?to, "suggestion");
+        debug!(?span, ?to, "suggestion");
         self.rewriter
             .make_suggestion(self.tcx, span, msg.into(), to.into());
     }
@@ -46,42 +47,42 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
     let mut rewritten_stmts = HashSet::new();
     for (bb_id, bb) in cx.body.basic_blocks().iter_enumerated() {
         let terminator = bb.terminator();
-        match &terminator.kind {
-            TerminatorKind::Call { func: callee, .. } => {
-                let const_ty = callee.constant().unwrap().literal.ty();
-                let callee_def_id = match const_ty.kind() {
-                    rustc_middle::ty::TyKind::FnDef(def_id, _substs) => def_id,
-                    _ => panic!(),
-                };
-                let callee_name = cx.tcx.def_path_str(*callee_def_id);
-                let span = terminator.source_info.span;
-                match callee_name.as_str() {
-                    x if x.ends_with("::malloc") => {
-                        rewrite_malloc(cx, bb_id, &mut rewritten_stmts);
-                    }
-                    x if x.ends_with("::realloc") => {
-                        rewrite_realloc(cx, bb_id, &mut rewritten_stmts);
-                    }
-                    x if x.ends_with("::calloc") => {
-                        rewrite_calloc(cx, bb_id, &mut rewritten_stmts);
-                    }
-                    x if x.ends_with("::free") => {
-                        cx.rewrite(span, "", "delete explicit free() call");
-                    }
-                    "std::ptr::mut_ptr::<impl *mut T>::offset"
-                    | "std::ptr::const_ptr::<impl *const T>::offset" => {
-                        rewrite_offset(cx, bb_id, &mut rewritten_stmts);
-                    }
-                    "std::ptr::mut_ptr::<impl *mut T>::is_null"
-                    | "std::ptr::const_ptr::<impl *const T>::is_null" => {
-                        let call_span =
-                            span.with_lo(BytePos(span.hi().0 - ".is_null()".len() as u32));
-                        cx.rewrite(call_span, ".is_none()", "");
-                    }
-                    _ => rewrite_terminator(cx, bb_id),
+        if let TerminatorKind::Call { func: callee, .. } = &terminator.kind {
+            let const_ty = callee.constant().unwrap().literal.ty();
+            let TyKind::FnDef(callee_def_id, _) = const_ty.kind() else { panic!() };
+            let callee_name = cx.tcx.def_path_str(*callee_def_id);
+            let span = terminator.source_info.span;
+            match callee_name.as_str() {
+                x if x.ends_with("::malloc") => {
+                    rewrite_malloc(cx, bb_id, &mut rewritten_stmts);
                 }
+                x if x.ends_with("::realloc") => {
+                    rewrite_realloc(cx, bb_id, &mut rewritten_stmts);
+                }
+                x if x.ends_with("::calloc") => {
+                    rewrite_calloc(cx, bb_id, &mut rewritten_stmts);
+                }
+                x if x.ends_with("::free") => {
+                    cx.rewrite(span, "", "delete explicit free() call");
+                    for (idx, stmt) in bb.statements.iter().enumerate() {
+                        if span.contains(stmt.source_info.span) {
+                            trace!("free {span:?} contains {:?}", stmt.source_info.span);
+                            rewritten_stmts.insert(Location { block: bb_id, statement_index: idx });
+                        }
+                    }
+                }
+                "std::ptr::mut_ptr::<impl *mut T>::offset"
+                | "std::ptr::const_ptr::<impl *const T>::offset" => {
+                    rewrite_offset(cx, bb_id, &mut rewritten_stmts);
+                }
+                "std::ptr::mut_ptr::<impl *mut T>::is_null"
+                | "std::ptr::const_ptr::<impl *const T>::is_null" => {
+                    let call_span =
+                        span.with_lo(BytePos(span.hi().0 - ".is_null()".len() as u32));
+                    cx.rewrite(call_span, ".is_none()", "");
+                }
+                _ => rewrite_terminator(cx, bb_id),
             }
-            _ => {}
         }
 
         let stmts = bb.statements.iter().enumerate()
@@ -91,20 +92,19 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
             }, stmt))
             .filter(|(loc, _)| !rewritten_stmts.contains(loc));
         for (loc, stmt) in stmts {
-            match &stmt.kind {
-                StatementKind::Assign(box (l_place, rvalue)) => {
-                    let source = cx.span_to_snippet(stmt.source_info.span);
-                    if source.contains(" = ") {
-                        rewrite_reassignment(cx, loc, stmt);
-                    } else {
-                        // binding or temporary. rules for these are the same so far
-                        let new_source = rewrite_rvalue(cx, loc, rvalue, l_place.as_ref(), &source);
-                        if new_source != source {
-                            cx.rewrite(stmt.source_info.span, new_source, "");
-                        }
-                    }
+            let _guard = debug_span!("stmt", ?loc).entered();
+            let StatementKind::Assign(box (l_place, rvalue)) = &stmt.kind else { continue };
+            let source = cx.span_to_snippet(stmt.source_info.span);
+            if source.contains(" = ") {
+                trace!("reassignment");
+                rewrite_reassignment(cx, loc, stmt);
+            } else {
+                // binding or temporary. rules for these are the same so far
+                trace!("binding");
+                let new_source = rewrite_rvalue(cx, loc, rvalue, l_place.as_ref(), &source);
+                if new_source != source {
+                    cx.rewrite(stmt.source_info.span, new_source, "");
                 }
-                _ => {}
             }
         }
     }
@@ -114,17 +114,12 @@ fn rewrite_terminator<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_, '_>, bb_id: Basic
     let bb = &cx.body.basic_blocks()[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
-    let (callee, (dest_place, _dest_bb)) = match &terminator.kind {
-        TerminatorKind::Call {
-            func, destination, ..
-        } => (func, destination.unwrap()),
-        _ => panic!(),
-    };
+    let TerminatorKind::Call {
+        func: callee, destination: Some((dest_place, _dest_bb)), ..
+    } = &terminator.kind else { panic!() };
     let const_ty = callee.constant().unwrap().literal.ty();
-    let Some(callee_def_id) = match const_ty.kind() {
-        rustc_middle::ty::TyKind::FnDef(def_id, _substs) => def_id,
-        _ => panic!(),
-    }.as_local() else { return };
+    let TyKind::FnDef(callee_def_id, _) = const_ty.kind() else { panic!() };
+    let Some(callee_def_id) = callee_def_id.as_local() else { return };
 
     let is_raw_ptr = cx.tcx.fn_sig(callee_def_id).no_bound_vars().unwrap().output().is_unsafe_ptr();
     if !is_raw_ptr {
@@ -204,7 +199,7 @@ pub fn rewrite_rvalue<'tcx>(
             return String::from("None");
         }
         rvalue => {
-            tracing::warn!(?rvalue, "not rewriting unsupported rvalue");
+            warn!(?rvalue, "not rewriting unsupported rvalue");
             return source.to_owned();
         }
     }
@@ -299,12 +294,9 @@ fn rewrite_malloc<'tcx>(
     let bb = &cx.body.basic_blocks()[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
-    let (_args, (dest_place, dest_bb)) = match &terminator.kind {
-        TerminatorKind::Call {
-            args, destination, ..
-        } => (args, destination.unwrap()),
-        _ => panic!(),
-    };
+    let TerminatorKind::Call {
+        destination: Some((dest_place, dest_bb)), ..
+    } = terminator.kind else { panic!() };
     if place_result(cx, cx.ownership, terminator_loc, dest_place.as_ref()) != Some(true) {
         return;
     }
@@ -346,12 +338,9 @@ fn rewrite_realloc(
     let bb = &cx.body.basic_blocks()[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
-    let (args, (dest_place, dest_bb)) = match &terminator.kind {
-        TerminatorKind::Call {
-            args, destination, ..
-        } => (args, destination.unwrap()),
-        _ => panic!(),
-    };
+    let TerminatorKind::Call {
+        args, destination: Some((dest_place, dest_bb)), ..
+    } = &terminator.kind else { panic!() };
     if place_result(cx, cx.fatness, terminator_loc, dest_place.as_ref()) != Some(true) {
         return;
     }
@@ -369,7 +358,7 @@ fn rewrite_realloc(
     // let x = realloc(_, _) as *mut Foo
     let cast_span = match &cast_statement.kind {
         StatementKind::Assign(box (_, Rvalue::Cast(_, op, _)))
-            if op.place() == Some(dest_place) =>
+            if op.place() == Some(*dest_place) =>
         {
             cast_statement.source_info.span
         }
@@ -401,12 +390,9 @@ fn rewrite_calloc(
     let bb = &cx.body.basic_blocks()[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
-    let (args, (dest_place, dest_bb)) = match &terminator.kind {
-        TerminatorKind::Call {
-            args, destination, ..
-        } => (args, destination.unwrap()),
-        _ => panic!(),
-    };
+    let TerminatorKind::Call {
+        args, destination: Some((dest_place, dest_bb)), ..
+    } = &terminator.kind else { panic!() };
     if place_result(cx, cx.fatness, terminator_loc, dest_place.as_ref()) != Some(true) {
         return;
     }
@@ -422,7 +408,7 @@ fn rewrite_calloc(
     // let x = calloc(_) as *mut Foo
     let cast_span = match &cast_statement.kind {
         StatementKind::Assign(box (_, Rvalue::Cast(_, op, _)))
-            if op.place() == Some(dest_place) =>
+            if op.place() == Some(*dest_place) =>
         {
             cast_statement.source_info.span
         }
@@ -450,12 +436,9 @@ fn rewrite_offset(
     let bb = &cx.body.basic_blocks()[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
-    let (args, (dest_place, dest_bb)) = match &terminator.kind {
-        TerminatorKind::Call {
-            args, destination, ..
-        } => (args, destination.unwrap()),
-        _ => panic!(),
-    };
+    let TerminatorKind::Call {
+        args, destination: Some((dest_place, dest_bb)), ..
+    } = &terminator.kind else { panic!() };
     let dest_local = dest_place.as_local().unwrap();
 
     let ptr_place = args[0].place().unwrap().as_ref();
@@ -495,7 +478,7 @@ fn rewrite_offset(
                     todo!()
                 }
             } else if let Rvalue::Use(operand) = rvalue {
-                if operand.place() == Some(dest_place) {
+                if operand.place() == Some(*dest_place) {
                     // reading from the slice into a local
                     todo!()
                 }
