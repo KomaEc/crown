@@ -29,6 +29,8 @@ pub struct BodyRewriteCtxt<'tcx, 'a, 'b> {
 
 impl BodyRewriteCtxt<'_, '_, '_> {
     fn rewrite(&mut self, span: Span, to: impl Into<String>, msg: &'static str) {
+        let to = to.into();
+        tracing::debug!(?span, ?to, "suggestion");
         self.rewriter
             .make_suggestion(self.tcx, span, msg.into(), to.into());
     }
@@ -96,25 +98,9 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
                         rewrite_reassignment(cx, loc, stmt);
                     } else {
                         // binding or temporary. rules for these are the same so far
-                        let new_source = rewrite_rvalue(cx, loc, rvalue, &source);
+                        let new_source = rewrite_rvalue(cx, loc, rvalue, l_place.as_ref(), &source);
                         if new_source != source {
                             cx.rewrite(stmt.source_info.span, new_source, "");
-                        }
-                    }
-
-                    if let Rvalue::Use(Operand::Copy(r_place) | Operand::Move(r_place)) = rvalue {
-                        let lhs_ownership = place_result(cx, cx.ownership, loc, l_place.as_ref());
-                        let rhs_ownership = place_result(cx, cx.ownership, loc, r_place.as_ref());
-                        let lhs_mutability = place_result(cx, cx.mutability, loc, l_place.as_ref());
-                        if rhs_ownership == Some(true) && lhs_ownership == Some(true) {
-                            cx.rewrite(stmt.source_info.span.shrink_to_hi(), ".take()", "");
-                        } else if rhs_ownership == Some(true) && lhs_ownership == Some(false) {
-                            let call = if lhs_mutability == Some(true) {
-                                String::from(".as_deref_mut()")
-                            } else {
-                                String::from(".as_deref()")
-                            };
-                            cx.rewrite(stmt.source_info.span.shrink_to_hi(), call, "");
                         }
                     }
                 }
@@ -165,15 +151,40 @@ pub fn rewrite_rvalue<'tcx>(
     cx: &mut BodyRewriteCtxt<'tcx, '_, '_>,
     loc: Location,
     rvalue: &Rvalue<'tcx>,
+    l_place: PlaceRef<'tcx>,
     source: &str,
 ) -> String {
     match rvalue {
         // rvalue is just a place
         Rvalue::Use(Operand::Copy(r_place) | Operand::Move(r_place)) => {
-            if r_place.projection.len() == 0 {
-                return source.to_owned();
+            let mut new = rewrite_place_expr(cx, loc, r_place.clone(), true, &source);
+
+            let l_ownership = place_result(cx, cx.ownership, loc, l_place);
+            let r_ownership = place_result(cx, cx.ownership, loc, r_place.as_ref());
+            let l_mutability = place_result(cx, cx.mutability, loc, l_place);
+            let l_null = place_result(cx, cx.null, loc, l_place);
+            let r_null = place_result(cx, cx.null, loc, r_place.as_ref());
+            if r_null == Some(true) && r_ownership == Some(true) {
+                if l_ownership == Some(true) {
+                    new.push_str(".take()");
+                } else if l_ownership == Some(false) {
+                    if l_mutability == Some(true) {
+                        new.push_str(".as_deref_mut()");
+                    } else {
+                        new.push_str(".as_deref()");
+                    }
+                }
             }
-            rewrite_place_expr(cx, loc, r_place.clone(), true, source)
+
+            match (l_null, r_null) {
+                (Some(true), Some(false)) => {
+                    new.insert_str(0, "Some(");
+                    new.push(')');
+                },
+                (Some(false), Some(true)) => new.push_str(".unwrap()"),
+                _ => {},
+            }
+            new
         }
         // extremely cursed matcher - rvalue is null pointer literal
         Rvalue::Use(Operand::Constant(box Constant {
@@ -212,7 +223,7 @@ pub fn rewrite_reassignment<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_, '_>, loc: L
     let rhs_span = span.with_lo(BytePos(span.hi().0 - rhs_source.len() as u32));
 
     let lhs_new = rewrite_place_expr(cx, loc, l_place.clone(), false, lhs_source);
-    let rhs_new = rewrite_rvalue(cx, loc, rvalue, rhs_source);
+    let rhs_new = rewrite_rvalue(cx, loc, rvalue, l_place.as_ref(), rhs_source);
     if lhs_new != lhs_source {
         cx.rewrite(lhs_span, lhs_new, "");
     }
