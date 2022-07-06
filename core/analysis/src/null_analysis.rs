@@ -20,7 +20,7 @@ use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
         Body, Constant, ConstantKind, Field, Local, PlaceRef, ProjectionElem, Rvalue,
-        StatementKind, TerminatorKind, VarDebugInfoContents, START_BLOCK,
+        StatementKind, TerminatorKind, VarDebugInfoContents, START_BLOCK, BasicBlock,
     },
     ty::{TyCtxt, TyKind},
 };
@@ -28,6 +28,7 @@ use rustc_mir_dataflow::{
     fmt::DebugWithContext, Analysis, AnalysisDomain, Engine, JoinSemiLattice, Results,
     ResultsRefCursor,
 };
+use tracing::{debug_span, trace};
 
 fn get_struct_field<'tcx>(
     tcx: TyCtxt<'tcx>,
@@ -64,7 +65,8 @@ fn get_struct_field<'tcx>(
 pub enum Nullability {
     Nullable,
     NonNullable,
-    DependsOn(FxHashSet<Dependency>),
+    IntraDeps(FxHashSet<IntraDep>),
+    InterDeps(FxHashSet<InterDep>),
     Unknown,
 }
 
@@ -75,7 +77,7 @@ impl Nullability {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum Dependency {
+pub enum InterDep {
     FnArg {
         fn_def: LocalDefId,
         arg: Local,
@@ -88,6 +90,13 @@ pub enum Dependency {
     },
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct IntraDep {
+    bb_id: BasicBlock,
+    local: Local,
+    nested_level: usize,
+}
+
 impl JoinSemiLattice for Nullability {
     fn join(&mut self, other: &Self) -> bool {
         use Nullability::*;
@@ -98,17 +107,31 @@ impl JoinSemiLattice for Nullability {
                 return true;
             }
             (NonNullable, _) => return false,
-            (DependsOn(left), DependsOn(right)) => {
+            (IntraDeps(_), other) if other.is_definite() => {
+                *self = other.clone();
+                return true;
+            }
+            (IntraDeps(left), IntraDeps(right)) => {
                 let union = left.union(&right).cloned().collect();
                 if &union != left {
-                    *self = DependsOn(union);
+                    *self = IntraDeps(union);
                     return true;
                 } else {
                     return false;
                 }
             }
-            (DependsOn(_), Unknown) => return false,
-            (DependsOn(_), other) => {
+            (IntraDeps(_), _) => return false,
+            (InterDeps(left), InterDeps(right)) => {
+                let union = left.union(&right).cloned().collect();
+                if &union != left {
+                    *self = InterDeps(union);
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            (InterDeps(_), Unknown) => return false,
+            (InterDeps(_), other) => {
                 *self = other.clone();
                 return true;
             }
@@ -262,9 +285,9 @@ fn resolve_fn_deps(results: &mut CrateResults, id: LocalDefId) {
         unfinished = false;
         for local_nullabilities in start_results.locals.iter_mut() {
             for nested_nullability in local_nullabilities {
-                if let Nullability::DependsOn(deps) = nested_nullability {
+                if let Nullability::InterDeps(deps) = nested_nullability {
                     let result = resolve_dep(results, deps, Some(id));
-                    if result.is_none() && deps.iter().any(|d| matches!(d, Dependency::FnArg { fn_def, .. } if *fn_def == id)) {
+                    if result.is_none() && deps.iter().any(|d| matches!(d, InterDep::FnArg { fn_def, .. } if *fn_def == id)) {
                         // function depends on itself, skip this local now but keep looping until
                         // it is resolved
                         unfinished = true;
@@ -287,7 +310,7 @@ fn resolve_struct_deps(results: &mut CrateResults, id: LocalDefId) {
     let mut struct_results = std::mem::take(results.struct_results.0.get_mut(&id).unwrap());
     for field in &mut struct_results {
         for nested_nullability in field.iter_mut() {
-            if let Nullability::DependsOn(deps) = nested_nullability {
+            if let Nullability::InterDeps(deps) = nested_nullability {
                 // this unwrap is wrong but i cba to fix it yet bc it's rare
                 *nested_nullability = resolve_dep(results, deps, None).unwrap();
             } else if *nested_nullability == Nullability::Unknown {
@@ -298,12 +321,12 @@ fn resolve_struct_deps(results: &mut CrateResults, id: LocalDefId) {
     *results.struct_results.0.get_mut(&id).unwrap() = struct_results;
 }
 
-fn resolve_dep(results: &mut CrateResults, deps: &FxHashSet<Dependency>, skip: Option<LocalDefId>) -> Option<Nullability> {
+fn resolve_dep(results: &mut CrateResults, deps: &FxHashSet<InterDep>, skip: Option<LocalDefId>) -> Option<Nullability> {
     let mut ret = Nullability::Unknown;
     for result_ref in deps.iter() {
         let other_nullability;
         other_nullability = match result_ref {
-            Dependency::FnArg {
+            InterDep::FnArg {
                 fn_def,
                 arg,
                 nested_level,
@@ -325,7 +348,7 @@ fn resolve_dep(results: &mut CrateResults, deps: &FxHashSet<Dependency>, skip: O
                     [*nested_level]
                     .clone()
             }
-            Dependency::StructField {
+            InterDep::StructField {
                 struct_def,
                 field_idx,
                 nested_level,
@@ -337,8 +360,8 @@ fn resolve_dep(results: &mut CrateResults, deps: &FxHashSet<Dependency>, skip: O
 
         use Nullability::*;
         match (&ret, other_nullability) {
-            (DependsOn(_), _) => panic!("how"),
-            (_, DependsOn(_)) => return None,    // cyclic
+            (InterDeps(_), _) => panic!("how"),
+            (_, InterDeps(_)) => return None,    // cyclic
             (_, NonNullable) => ret = NonNullable,
             (Unknown, Nullable) => ret = Nullable,
             _ => {}
@@ -356,13 +379,28 @@ pub struct FuncResults<'tcx, 'a> {
 
 impl<'tcx, 'a> FuncResults<'tcx, 'a> {
     fn collect(tcx: TyCtxt<'tcx>, def_id: LocalDefId, fns: &'a [LocalDefId], structs: &'a [LocalDefId]) -> Self {
+        let fn_name = tcx.def_path_str(def_id.to_def_id());
+        let _guard = debug_span!("null analysis", ?fn_name).entered();
         let body = tcx.optimized_mir(def_id);
         let engine = Engine::new_generic(tcx, &body, NullAnalysis::new(tcx, def_id, fns, structs));
         let results = engine.iterate_to_fixpoint();
 
         let mut cursor = ResultsRefCursor::new(&body, &results);
         cursor.seek_to_block_start(START_BLOCK);
-        let start_results = cursor.get().clone();
+        let mut start_results = cursor.get().clone();
+
+        for (local, local_result) in start_results.locals.iter_enumerated_mut() {
+            for (nested_level, nested_result) in local_result.iter_enumerated_mut() {
+                if let Nullability::IntraDeps(deps) = nested_result {
+                    trace!(?local, nested_level, "intra resolve");
+                    *nested_result = deps.iter()
+                        .fold(Nullability::Unknown, |mut acc, dep| {
+                            acc.join(&resolve_intra_dep(&mut cursor, dep.clone()));
+                            acc
+                        });
+                }
+            }
+        }
 
         FuncResults {
             tcx,
@@ -370,6 +408,30 @@ impl<'tcx, 'a> FuncResults<'tcx, 'a> {
             results,
             start_results,
         }
+    }
+}
+
+fn resolve_intra_dep<'tcx>(cursor: &mut ResultsRefCursor<'_, '_, 'tcx, NullAnalysis<'tcx, '_>>, dep: IntraDep) -> Nullability {
+    cursor.seek_to_block_start(dep.bb_id);
+    let target = cursor.get().locals[dep.local][dep.nested_level].clone();
+    match target {
+        Nullability::IntraDeps(deps) => {
+            return deps.into_iter()
+                .fold(Nullability::Unknown, |mut acc, dep| {
+                    acc.join(&resolve_intra_dep(cursor, dep));
+                    acc
+                });
+        }
+        Nullability::Unknown => {
+            return cursor.analysis().body.predecessors()[dep.bb_id]
+                .iter()
+                .fold(Nullability::Unknown, |mut acc, &pred| {
+                    let dep = IntraDep { bb_id: pred, ..dep };
+                    acc.join(&resolve_intra_dep(cursor, dep));
+                    acc
+                });
+        }
+        x => return x,
     }
 }
 
@@ -527,7 +589,7 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx, '_> {
         &self,
         state: &mut Self::Domain,
         statement: &rustc_middle::mir::Statement<'tcx>,
-        _location: rustc_middle::mir::Location,
+        loc: rustc_middle::mir::Location,
     ) {
         match &statement.kind {
             StatementKind::Assign(box (
@@ -538,6 +600,7 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx, '_> {
                 // are analysing backwards)
                 let l_place = l_place.as_ref();
                 let r_place = operand.place().unwrap().as_ref();
+                let _guard = debug_span!("known assign", ?l_place, ?r_place, ?loc).entered();
                 self.check_place(state, l_place);
                 self.check_place(state, r_place);
 
@@ -549,14 +612,24 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx, '_> {
                     get_struct_field(self.tcx, self.body, l_place)
                 {
                     if !l_result.is_definite() {
-                        let dep = Dependency::StructField {
+                        let dep = InterDep::StructField {
                             struct_def,
                             field_idx,
                             nested_level,
                         };
-                        l_result.join(&Nullability::DependsOn([dep].into_iter().collect()));
+                        l_result.join(&Nullability::InterDeps([dep].into_iter().collect()));
+                    }
+                } else {
+                    if l_result == Nullability::Unknown {
+                        let dep = IntraDep {
+                            bb_id: loc.block,
+                            local: l_place.local,
+                            nested_level: l_place.projection.len(),
+                        };
+                        l_result = Nullability::IntraDeps([dep].into_iter().collect());
                     }
                 }
+                trace!(?l_result);
                 *state.result_for(self.tcx, self.body, r_place) = l_result;
             }
             StatementKind::Assign(box (l_place, _)) => {
@@ -643,13 +716,13 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx, '_> {
                     continue;
                 }
                 self.check_place(state, place.as_ref());
-                let dep = Dependency::FnArg {
+                let dep = InterDep::FnArg {
                     fn_def: def_id,
                     arg: Local::from_usize(idx + 1),
                     nested_level: 0,
                 };
                 let result = state.result_for(self.tcx, self.body, place.as_ref());
-                result.join(&Nullability::DependsOn([dep].into_iter().collect()));
+                result.join(&Nullability::InterDeps([dep].into_iter().collect()));
             }
 
             let is_raw_ptr = self.tcx.fn_sig(def_id).no_bound_vars().unwrap().output().is_unsafe_ptr();
@@ -661,7 +734,7 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx, '_> {
             let Some((dest_place, _)) = destination else { return };
             let l_result = state.result_for(self.tcx, self.body, dest_place.as_ref());
             // TODO: handle more levels of nesting, both here and in assignments
-            state.fn_returns.0[dbg!(def_id)].as_mut().unwrap()[0] = l_result.clone();
+            state.fn_returns.0[def_id].as_mut().unwrap()[0] = l_result.clone();
         }
     }
 
