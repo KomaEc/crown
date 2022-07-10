@@ -14,7 +14,7 @@ use rustc_middle::{
     ty::{Const, ScalarInt, TyCtxt, TyKind},
 };
 use rustc_span::{BytePos, Span};
-use tracing::{trace, debug_span, warn, debug};
+use tracing::{debug, debug_span, info_span, trace, warn};
 
 pub struct BodyRewriteCtxt<'tcx, 'a, 'b> {
     pub tcx: TyCtxt<'tcx>,
@@ -42,6 +42,8 @@ impl BodyRewriteCtxt<'_, '_, '_> {
 }
 
 pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
+    let fn_name = cx.tcx.def_path_str(cx.def_id.to_def_id());
+    let _guard = info_span!("body", ?fn_name).entered();
     // some terminators also cause statement rewrites, so we track which ones have been rewritten
     // and don't try to rewrite them twice
     let mut rewritten_stmts = HashSet::new();
@@ -67,7 +69,10 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
                     for (idx, stmt) in bb.statements.iter().enumerate() {
                         if span.contains(stmt.source_info.span) {
                             trace!("free {span:?} contains {:?}", stmt.source_info.span);
-                            rewritten_stmts.insert(Location { block: bb_id, statement_index: idx });
+                            rewritten_stmts.insert(Location {
+                                block: bb_id,
+                                statement_index: idx,
+                            });
                         }
                     }
                 }
@@ -77,22 +82,30 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
                 }
                 "std::ptr::mut_ptr::<impl *mut T>::is_null"
                 | "std::ptr::const_ptr::<impl *const T>::is_null" => {
-                    let call_span =
-                        span.with_lo(BytePos(span.hi().0 - ".is_null()".len() as u32));
+                    let call_span = span.with_lo(BytePos(span.hi().0 - ".is_null()".len() as u32));
                     cx.rewrite(call_span, ".is_none()", "");
                 }
                 _ => rewrite_terminator(cx, bb_id),
             }
         }
 
-        let stmts = bb.statements.iter().enumerate()
-            .map(|(idx, stmt)| (Location {
-                block: bb_id,
-                statement_index: idx,
-            }, stmt))
-            .filter(|(loc, _)| !rewritten_stmts.contains(loc));
+        let stmts = bb.statements.iter().enumerate().map(|(idx, stmt)| {
+            (
+                Location {
+                    block: bb_id,
+                    statement_index: idx,
+                },
+                stmt,
+            )
+        });
         for (loc, stmt) in stmts {
             let _guard = debug_span!("stmt", ?loc).entered();
+            if rewritten_stmts.contains(&loc) {
+                continue;
+            }
+            if handle_split_assignment(cx, loc, &mut rewritten_stmts) {
+                continue;
+            }
             let StatementKind::Assign(box (l_place, rvalue)) = &stmt.kind else { continue };
             let source = cx.span_to_snippet(stmt.source_info.span);
             if source.contains(" = ") {
@@ -101,7 +114,7 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
             } else {
                 // binding or temporary. rules for these are the same so far
                 trace!("binding");
-                let new_source = rewrite_rvalue(cx, loc, rvalue, l_place.as_ref(), &source);
+                let new_source = rewrite_rvalue(cx, loc, rvalue, loc, l_place.as_ref(), &source);
                 if new_source != source {
                     cx.rewrite(stmt.source_info.span, new_source, "");
                 }
@@ -121,7 +134,13 @@ fn rewrite_terminator<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_, '_>, bb_id: Basic
     let TyKind::FnDef(callee_def_id, _) = const_ty.kind() else { panic!() };
     let Some(callee_def_id) = callee_def_id.as_local() else { return };
 
-    let is_raw_ptr = cx.tcx.fn_sig(callee_def_id).no_bound_vars().unwrap().output().is_unsafe_ptr();
+    let is_raw_ptr = cx
+        .tcx
+        .fn_sig(callee_def_id)
+        .no_bound_vars()
+        .unwrap()
+        .output()
+        .is_unsafe_ptr();
     if !is_raw_ptr {
         return;
     }
@@ -136,9 +155,77 @@ fn rewrite_terminator<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_, '_>, bb_id: Basic
         (Some(true), Some(false)) => {
             cx.rewrite(span.shrink_to_lo(), "Some(", "");
             cx.rewrite(span.shrink_to_hi(), ")", "");
-        },
+        }
         (Some(false), Some(true)) => cx.rewrite(span.shrink_to_hi(), ".unwrap()", ""),
-        _ => {},
+        _ => {}
+    }
+}
+
+fn handle_split_assignment<'tcx>(
+    cx: &mut BodyRewriteCtxt<'tcx, '_, '_>,
+    loc: Location,
+    rewritten_stmts: &mut HashSet<Location>,
+) -> bool {
+    let stmt = cx.body.stmt_at(loc).left().unwrap();
+    let StatementKind::Assign(box (l_place, rvalue)) = &stmt.kind else { return false };
+    let next_loc = loc.successor_within_block();
+    let Some(next_stmt) = cx.body.stmt_at(next_loc).left() else { return false };
+    let StatementKind::Assign(box (next_l_place, next_rvalue)) = &next_stmt.kind else {
+        return false
+    };
+    let (Rvalue::Use(next_op) | Rvalue::Cast(_, next_op, _)) = next_rvalue else { return false };
+    let Some(next_r_place) = next_op.place() else { return false };
+    let span = next_stmt.source_info.span;
+    if !(next_r_place.as_local().is_some()
+        && next_r_place.as_local() == l_place.as_local()
+        && span.contains(stmt.source_info.span))
+    {
+        return false;
+    }
+
+    let source = cx.span_to_snippet(span);
+    if !source.contains(" = ") {
+        return false;
+    }
+    let (l_source, r_source) = source.split_once(" = ").unwrap();
+    let l_span = span.with_hi(BytePos(span.lo().0 + l_source.len() as u32));
+    let r_span = span.with_lo(BytePos(span.hi().0 - r_source.len() as u32));
+    let l_new = rewrite_place_expr(cx, next_loc, next_l_place.clone(), false, l_source);
+    // important detaiil - using stmt1 rvalue in rewriting stmt2
+    let r_new = rewrite_rvalue(cx, loc, rvalue, next_loc, next_l_place.as_ref(), r_source);
+    if l_new != l_source {
+        cx.rewrite(l_span, l_new, "");
+    }
+    if r_new != r_source {
+        cx.rewrite(r_span, r_new, "");
+    }
+    rewritten_stmts.insert(next_loc);
+    return true;
+}
+
+pub fn rewrite_reassignment<'tcx>(
+    cx: &mut BodyRewriteCtxt<'tcx, '_, '_>,
+    loc: Location,
+    stmt: &Statement<'tcx>,
+) {
+    // TODO: convert everything else to let-else too. it's just better
+    let StatementKind::Assign(box (l_place, rvalue)) = &stmt.kind else { panic!() };
+    let span = stmt.source_info.span;
+    let stmt_source = cx.span_to_snippet(span);
+    // TODO: there can be a newline instead of a space here, which will cause it to panic, but we
+    // probably need to have the whitespace, so we don't catch "=="
+    let (lhs_source, rhs_source) = stmt_source.split_once(" = ").unwrap();
+
+    let lhs_span = span.with_hi(BytePos(span.lo().0 + lhs_source.len() as u32));
+    let rhs_span = span.with_lo(BytePos(span.hi().0 - rhs_source.len() as u32));
+
+    let lhs_new = rewrite_place_expr(cx, loc, l_place.clone(), false, lhs_source);
+    let rhs_new = rewrite_rvalue(cx, loc, rvalue, loc, l_place.as_ref(), rhs_source);
+    if lhs_new != lhs_source {
+        cx.rewrite(lhs_span, lhs_new, "");
+    }
+    if rhs_new != rhs_source {
+        cx.rewrite(rhs_span, rhs_new, "");
     }
 }
 
@@ -146,6 +233,7 @@ pub fn rewrite_rvalue<'tcx>(
     cx: &mut BodyRewriteCtxt<'tcx, '_, '_>,
     loc: Location,
     rvalue: &Rvalue<'tcx>,
+    l_loc: Location,
     l_place: PlaceRef<'tcx>,
     source: &str,
 ) -> String {
@@ -154,10 +242,10 @@ pub fn rewrite_rvalue<'tcx>(
         Rvalue::Use(Operand::Copy(r_place) | Operand::Move(r_place)) => {
             let mut new = rewrite_place_expr(cx, loc, r_place.clone(), true, &source);
 
-            let l_ownership = place_result(cx, cx.ownership, loc, l_place);
+            let l_ownership = place_result(cx, cx.ownership, l_loc, l_place);
             let r_ownership = place_result(cx, cx.ownership, loc, r_place.as_ref());
-            let l_mutability = place_result(cx, cx.mutability, loc, l_place);
-            let l_null = place_result(cx, cx.null, loc, l_place);
+            let l_mutability = place_result(cx, cx.mutability, l_loc, l_place);
+            let l_null = place_result(cx, cx.null, l_loc, l_place);
             let r_null = place_result(cx, cx.null, loc, r_place.as_ref());
             if r_null == Some(true) && r_ownership == Some(true) {
                 if l_ownership == Some(true) {
@@ -175,9 +263,9 @@ pub fn rewrite_rvalue<'tcx>(
                 (Some(true), Some(false)) => {
                     new.insert_str(0, "Some(");
                     new.push(')');
-                },
+                }
                 (Some(false), Some(true)) => new.push_str(".unwrap()"),
-                _ => {},
+                _ => {}
             }
             new
         }
@@ -202,28 +290,6 @@ pub fn rewrite_rvalue<'tcx>(
             warn!(?rvalue, "not rewriting unsupported rvalue");
             return source.to_owned();
         }
-    }
-}
-
-pub fn rewrite_reassignment<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_, '_>, loc: Location, stmt: &Statement<'tcx>) {
-    // TODO: convert everything else to let-else too. it's just better
-    let StatementKind::Assign(box (l_place, rvalue)) = &stmt.kind else { panic!() };
-    let span = stmt.source_info.span;
-    let stmt_source = cx.span_to_snippet(span);
-    // TODO: there can be a newline instead of a space here, which will cause it to panic, but we
-    // probably need to have the whitespace, so we don't catch "=="
-    let (lhs_source, rhs_source) = stmt_source.split_once(" = ").unwrap();
-
-    let lhs_span = span.with_hi(BytePos(span.lo().0 + lhs_source.len() as u32));
-    let rhs_span = span.with_lo(BytePos(span.hi().0 - rhs_source.len() as u32));
-
-    let lhs_new = rewrite_place_expr(cx, loc, l_place.clone(), false, lhs_source);
-    let rhs_new = rewrite_rvalue(cx, loc, rvalue, l_place.as_ref(), rhs_source);
-    if lhs_new != lhs_source {
-        cx.rewrite(lhs_span, lhs_new, "");
-    }
-    if rhs_new != rhs_source {
-        cx.rewrite(rhs_span, rhs_new, "");
     }
 }
 
