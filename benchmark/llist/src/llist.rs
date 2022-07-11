@@ -54,6 +54,7 @@ pub unsafe extern "C" fn append(mut head_ref: *mut *mut Node,
     let mut new_node =
         malloc(::std::mem::size_of::<Node>() as libc::c_ulong) as
             *mut Node; /* used in step 5*/
+    //let mut last = *head_ref;
     /* 2. put in the data  */
     (*new_node).data = new_data;
     /* 3. This new node is going to be the last node, so make next of
