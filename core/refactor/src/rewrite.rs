@@ -1,8 +1,7 @@
 mod rewrite_body;
 
 use analysis::{
-    api::AnalysisResults, fat_thin_analysis, mutability_analysis, null_analysis,
-    ownership_analysis,
+    api::AnalysisResults, fat_thin_analysis, mutability_analysis, null_analysis, ownership_analysis,
 };
 use rewriter::{RewriteMode, Rewriter};
 use rustc_hir::{def_id::LocalDefId, FnRetTy, FnSig, ItemKind, Ty, TyKind};
@@ -103,10 +102,14 @@ fn rewrite_fn_sig(
         (0..nested_depth)
             .map(|nested_level| PtrResults {
                 owning: ownership.sig_result(def_id, local, nested_level),
-                fat: fatness.sig_result(def_id, local, nested_level).unwrap_or(false),
+                fat: fatness
+                    .sig_result(def_id, local, nested_level)
+                    .unwrap_or(false),
                 // i thought this unwrap_or should be true, but using false causes fewer errors in
                 // bst-good :)
-                mutable: mutability.sig_result(def_id, local, 0 /* TODO */).unwrap_or(false),
+                mutable: mutability
+                    .sig_result(def_id, local, 0 /* TODO */)
+                    .unwrap_or(false),
                 nullable: null.local_result(def_id, local, nested_level).unwrap(),
             })
             .collect::<Vec<_>>()
