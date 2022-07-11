@@ -671,114 +671,116 @@ impl<'tcx> Analysis<'tcx> for NullAnalysis<'tcx, '_> {
 
     fn apply_terminator_effect(
         &self,
-        state: &mut Self::Domain,
-        terminator: &rustc_middle::mir::Terminator<'tcx>,
+        _state: &mut Self::Domain,
+        _terminator: &rustc_middle::mir::Terminator<'tcx>,
         _location: rustc_middle::mir::Location,
     ) {
-        if let TerminatorKind::Call {
-            func,
-            args,
-            destination,
-            ..
-        } = &terminator.kind
-        {
-            if let Some((dest_place, _)) = destination {
-                self.check_place(state, dest_place.as_ref());
-            }
-            let Some(Constant {
-                literal: ConstantKind::Ty(constant),
-                ..
-            }) = func.constant() else { return };
-            let TyKind::FnDef(def_id, _) = constant.ty.kind() else { return };
-            let def_path = self.tcx.def_path(*def_id);
-            // ::core ...
-            let in_core = self.tcx.crate_name(def_path.krate).as_str() == "core";
-            // ::ptr ...
-            let in_ptr = def_path
-                .data
-                .get(0)
-                .map(|d| matches!(d.data, DefPathData::TypeNs(s) if s.as_str() == "ptr"))
-                .unwrap_or(false);
-            // ::{const_ptr, mut_ptr}::{impl} ...
-            // ::is_null
-            let is_is_null = def_path
-                .data
-                .get(3)
-                .map(|d| matches!(d.data, DefPathData::ValueNs(s) if s.as_str() == "is_null"))
-                .unwrap_or(false);
-            if in_core && in_ptr && is_is_null {
-                let place = args[0].place().expect("null check on constant");
-                self.check_place(state, place.as_ref());
-                *state.result_for(self.tcx, self.body, place.as_ref()) = Nullability::Nullable;
-                let local = place.as_local().expect("projections aren't supported yet");
-                state.locals[local][0] = Nullability::Nullable;
-                return;
-            }
-
-            let Some(def_id) = def_id.as_local() else { return };
-
-            if let DefPathData::ValueNs(name) = def_path.data.last().unwrap().data {
-                let mut non_nullable_arg = |n: usize| {
-                    if let Some(local) = args[n].place().unwrap().as_local() {
-                        state.locals[local][0] = Nullability::NonNullable;
-                    }
-                };
-                match name.as_str() {
-                    "strlen" | "free" => {
-                        non_nullable_arg(0);
-                        return;
-                    }
-                    "strcat" | "strncat" | "strcmp" | "strncmp" | "strstr" => {
-                        non_nullable_arg(0);
-                        non_nullable_arg(1);
-                        return;
-                    }
-                    _ => {}
-                }
-            }
-
-            for (idx, place) in args
-                .iter()
-                .enumerate()
-                .filter_map(|(idx, op)| op.place().map(|place| (idx, place)))
-            {
-                if !place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
-                    continue;
-                }
-                self.check_place(state, place.as_ref());
-                let dep = InterDep::FnArg {
-                    fn_def: def_id,
-                    arg: Local::from_usize(idx + 1),
-                    nested_level: 0,
-                };
-                let result = state.result_for(self.tcx, self.body, place.as_ref());
-                result.join(&Nullability::InterDeps([dep].into_iter().collect()));
-            }
-
-            let is_raw_ptr = self
-                .tcx
-                .fn_sig(def_id)
-                .no_bound_vars()
-                .unwrap()
-                .output()
-                .is_unsafe_ptr();
-            if self.tcx.is_foreign_item(def_id) || !is_raw_ptr {
-                return;
-            }
-
-            // lhs transfers to rhs as in normal assignment
-            let Some((dest_place, _)) = destination else { return };
-            let l_result = state.result_for(self.tcx, self.body, dest_place.as_ref());
-            // TODO: handle more levels of nesting, both here and in assignments
-            state.fn_returns.0[def_id].as_mut().unwrap()[0] = l_result.clone();
-        }
     }
 
     fn apply_call_return_effect(
         &self,
-        _state: &mut Self::Domain,
-        _block: rustc_middle::mir::BasicBlock,
+        state: &mut Self::Domain,
+        bb_id: rustc_middle::mir::BasicBlock,
         _return_places: rustc_mir_dataflow::CallReturnPlaces<'_, 'tcx>,
     ) {
+        let terminator = self.body.basic_blocks()[bb_id].terminator.as_ref().unwrap();
+        if let TerminatorKind::InlineAsm { .. } = terminator.kind {
+            return;
+        }
+        let TerminatorKind::Call {
+            func,
+            args,
+            destination,
+            ..
+        } = &terminator.kind else { return };
+        if let Some((dest_place, _)) = destination {
+            self.check_place(state, dest_place.as_ref());
+        }
+        let Some(Constant {
+            literal: ConstantKind::Ty(constant),
+            ..
+        }) = func.constant() else { return };
+        let TyKind::FnDef(def_id, _) = constant.ty.kind() else { return };
+        let def_path = self.tcx.def_path(*def_id);
+        // ::core ...
+        let in_core = self.tcx.crate_name(def_path.krate).as_str() == "core";
+        // ::ptr ...
+        let in_ptr = def_path
+            .data
+            .get(0)
+            .map(|d| matches!(d.data, DefPathData::TypeNs(s) if s.as_str() == "ptr"))
+            .unwrap_or(false);
+        // ::{const_ptr, mut_ptr}::{impl} ...
+        // ::is_null
+        let is_is_null = def_path
+            .data
+            .get(3)
+            .map(|d| matches!(d.data, DefPathData::ValueNs(s) if s.as_str() == "is_null"))
+            .unwrap_or(false);
+        if in_core && in_ptr && is_is_null {
+            let place = args[0].place().expect("null check on constant");
+            self.check_place(state, place.as_ref());
+            *state.result_for(self.tcx, self.body, place.as_ref()) = Nullability::Nullable;
+            let local = place.as_local().expect("projections aren't supported yet");
+            state.locals[local][0] = Nullability::Nullable;
+            return;
+        }
+
+        let Some(def_id) = def_id.as_local() else { return };
+
+        if let DefPathData::ValueNs(name) = def_path.data.last().unwrap().data {
+            let mut non_nullable_arg = |n: usize| {
+                if let Some(local) = args[n].place().unwrap().as_local() {
+                    state.locals[local][0] = Nullability::NonNullable;
+                }
+            };
+            match name.as_str() {
+                "strlen" | "free" => {
+                    non_nullable_arg(0);
+                    return;
+                }
+                "strcat" | "strncat" | "strcmp" | "strncmp" | "strstr" => {
+                    non_nullable_arg(0);
+                    non_nullable_arg(1);
+                    return;
+                }
+                _ => {}
+            }
+        }
+
+        for (idx, place) in args
+            .iter()
+            .enumerate()
+            .filter_map(|(idx, op)| op.place().map(|place| (idx, place)))
+        {
+            if !place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+                continue;
+            }
+            self.check_place(state, place.as_ref());
+            let dep = InterDep::FnArg {
+                fn_def: def_id,
+                arg: Local::from_usize(idx + 1),
+                nested_level: 0,
+            };
+            let result = state.result_for(self.tcx, self.body, place.as_ref());
+            result.join(&Nullability::InterDeps([dep].into_iter().collect()));
+        }
+
+        let is_raw_ptr = self
+            .tcx
+            .fn_sig(def_id)
+            .no_bound_vars()
+            .unwrap()
+            .output()
+            .is_unsafe_ptr();
+        if self.tcx.is_foreign_item(def_id) || !is_raw_ptr {
+            return;
+        }
+
+        // lhs transfers to rhs as in normal assignment
+        let Some((dest_place, _)) = destination else { return };
+        let l_result = state.result_for(self.tcx, self.body, dest_place.as_ref());
+        // TODO: handle more levels of nesting, both here and in assignments
+        state.fn_returns.0[def_id].as_mut().unwrap()[0] = l_result.clone();
     }
 }
