@@ -83,7 +83,7 @@ impl<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> Visitor<'tcx>
         self.rename_body(body, &body.compute_phi_node::<DefUse>(self.tcx))
     }
 
-    fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
+    fn visit_local(&mut self, local: Local, context: PlaceContext, location: Location) {
         if let Some(def_use) = DefUse::categorize(context) {
             if IsDefUse::defining(def_use) {
                 let i = self.ssa_state().define(local);

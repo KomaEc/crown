@@ -7,7 +7,7 @@ use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{visit::Visitor, Location, Terminator, TerminatorKind},
-    ty::{TyCtxt, TyKind::FnDef},
+    ty::TyCtxt,
 };
 
 pub struct CallGraph {
@@ -119,20 +119,8 @@ struct CallGraphNodeVis<'me, 'tcx> {
 
 impl<'me, 'tcx> Visitor<'tcx> for CallGraphNodeVis<'me, 'tcx> {
     fn visit_terminator(&mut self, terminator: &Terminator, location: Location) {
-        if let TerminatorKind::Call {
-            func,
-            args: _,
-            destination: _,
-            cleanup: _,
-            from_hir_call: _,
-            fn_span: _,
-        } = &terminator.kind
-        {
-            let ty = func
-                .constant()
-                .expect("closures or function pointers are not supported!")
-                .ty();
-            if let &FnDef(callee_did, _generic_args) = ty.kind() {
+        if let TerminatorKind::Call { func, .. } = &terminator.kind {
+            if let Some((callee_did, _generic_args)) = func.const_fn_def() {
                 // local defined functions: libc externs or user functions
                 if let Some(did) = callee_did.as_local() {
                     // if it is user functions
@@ -148,7 +136,7 @@ impl<'me, 'tcx> Visitor<'tcx> for CallGraphNodeVis<'me, 'tcx> {
                     }
                 }
             } else {
-                panic!("what could it be? {}", ty)
+                panic!("what could it be? {:?}", func)
             }
         }
     }

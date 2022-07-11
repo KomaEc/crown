@@ -4,7 +4,7 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, PlaceContext, Visitor},
-        BasicBlock, Location, Operand, Place,
+        Location, Operand, Place,
     },
     ty::TyCtxt,
 };
@@ -18,21 +18,19 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     }
 
     #[inline]
-    fn default_dest(&mut self, destination: Option<(Place<'tcx>, BasicBlock)>, location: Location) {
-        if let Some((lhs, _)) = destination {
-            self.visit_place(
-                &lhs,
-                PlaceContext::MutatingUse(MutatingUseContext::Call),
-                location,
-            );
-        }
+    fn default_dest(&mut self, destination: Place<'tcx>, location: Location) {
+        self.visit_place(
+            &destination,
+            PlaceContext::MutatingUse(MutatingUseContext::Call),
+            location,
+        );
     }
 
     /// Basically, this is self.super_terminator(..)
     fn default_model_lib_call(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         tracing::debug!("... default modelling: introducing no constraint");
@@ -46,7 +44,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
         &mut self,
         callee: DefId,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         let def_path = self.tcx().def_path(callee);
@@ -90,7 +88,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
         &mut self,
         callee: DefId,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         let foreign_item = self.tcx().hir().expect_foreign_item(callee.expect_local());
@@ -115,7 +113,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_ptr_offset(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location);
@@ -124,7 +122,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_ptr_is_null(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location)
@@ -133,7 +131,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_printf(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location)
@@ -142,7 +140,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_calloc(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location)
@@ -151,7 +149,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_realloc(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location)
@@ -160,7 +158,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_malloc(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location)
@@ -169,7 +167,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_free(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location)
@@ -178,7 +176,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_memmove(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location)
@@ -187,7 +185,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_memcpy(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location)
@@ -196,7 +194,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_memset(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location)
@@ -205,7 +203,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_strncat(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location)
@@ -214,7 +212,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_strcmp(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location)
@@ -223,7 +221,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_strstr(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location)
@@ -232,7 +230,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
     fn model_strlen(
         &mut self,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         self.default_model_lib_call(args, destination, location)

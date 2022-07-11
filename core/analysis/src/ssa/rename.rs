@@ -117,7 +117,7 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
         body: &Body<'tcx>,
         insertion_points: &PhiNodeInsertionPoints<PhantomData<*const Self::DefUse>>,
     ) {
-        let dominators = body.dominators();
+        let dominators = body.basic_blocks.dominators();
         let mut children = IndexVec::from_elem(vec![], body.basic_blocks());
         let mut root = BasicBlock::from_u32(0);
         body.basic_blocks().indices().for_each(|bb| {
@@ -186,8 +186,8 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler {
             self.rename_terminator(terminator, location);
         }
 
-        for succ in body.successors(block) {
-            let pos = body.predecessors()[succ]
+        for succ in body.basic_blocks.successors(block) {
+            let pos = body.basic_blocks.predecessors()[succ]
                 .iter()
                 .position(|&pred| pred == block)
                 .unwrap();
@@ -211,7 +211,7 @@ struct StackPopper<'me, 'tcx, DefUse: IsDefUse>(
 );
 
 impl<'me, 'tcx, DefUse: IsDefUse> Visitor<'tcx> for StackPopper<'me, 'tcx, DefUse> {
-    fn visit_local(&mut self, &local: &Local, context: PlaceContext, _location: Location) {
+    fn visit_local(&mut self, local: Local, context: PlaceContext, _location: Location) {
         if DefUse::categorize_finely(local, self.1, context).map_or(false, IsDefUse::defining) {
             let ssa_idx = self.0[local].pop();
             if let Some(ssa_idx) = ssa_idx {

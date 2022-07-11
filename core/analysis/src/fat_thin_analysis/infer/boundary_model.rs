@@ -2,7 +2,7 @@ use graph::implementation::forward_star::Direction;
 use rustc_hir::def_id::DefId;
 use rustc_middle::mir::{
     visit::{MutatingUseContext, PlaceContext, Visitor},
-    BasicBlock, Local, Location, Operand, Place, RETURN_PLACE,
+    Local, Location, Operand, Place, RETURN_PLACE,
 };
 
 use crate::{
@@ -21,7 +21,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
         &mut self,
         _callee: DefId,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         assert_eq!(
@@ -66,31 +66,29 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
                 self.visit_operand(arg, location)
             }
         }
-        if let Some((destination, _)) = destination {
-            if destination
-                .ty(self.ctxt.body, self.ctxt.tcx)
-                .ty
-                .is_ptr_but_not_fn_ptr()
-            {
-                let lambdas = self.try_define_ptr_place(&destination, location);
-                self.boundary_constraints[call_site].push(BoundaryConstraint::Return {
-                    caller: lambdas,
-                    callee: Place::return_place().local,
-                });
-                tracing::debug!(
-                    "generate boundary constraint ({:?}, {:?}) ≤ ({:?}, {:?})",
-                    edge_data.source,
-                    destination,
-                    edge_data.target,
-                    Place::return_place().local,
-                )
-            } else {
-                self.visit_place(
-                    &destination,
-                    PlaceContext::MutatingUse(MutatingUseContext::Call),
-                    location,
-                )
-            }
+        if destination
+            .ty(self.ctxt.body, self.ctxt.tcx)
+            .ty
+            .is_ptr_but_not_fn_ptr()
+        {
+            let lambdas = self.try_define_ptr_place(&destination, location);
+            self.boundary_constraints[call_site].push(BoundaryConstraint::Return {
+                caller: lambdas,
+                callee: Place::return_place().local,
+            });
+            tracing::debug!(
+                "generate boundary constraint ({:?}, {:?}) ≤ ({:?}, {:?})",
+                edge_data.source,
+                destination,
+                edge_data.target,
+                Place::return_place().local,
+            )
+        } else {
+            self.visit_place(
+                &destination,
+                PlaceContext::MutatingUse(MutatingUseContext::Call),
+                location,
+            )
         }
     }
 

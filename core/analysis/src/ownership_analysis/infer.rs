@@ -12,7 +12,7 @@ use rustc_middle::{
         BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
         ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind, RETURN_PLACE,
     },
-    ty::{adjustment::PointerCast, subst::GenericArgKind, TyCtxt, TyKind::FnDef},
+    ty::{adjustment::PointerCast, subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
 
@@ -260,7 +260,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
                     let variant_idx = place_ty.variant_index.unwrap_or(VariantIdx::new(0));
                     let adt_def = ty.ty_adt_def().unwrap();
                     let rhos = self.ctxt.field_defs[&adt_def
-                        .did
+                        .did()
                         .as_local()
                         .expect("struct definitions should be in scope!!!")][variant_idx]
                         [field.index()]
@@ -356,7 +356,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
 impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
     for IntraInfer<'infercx, 'tcx, Handler>
 {
-    fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
+    fn visit_local(&mut self, local: Local, context: PlaceContext, location: Location) {
         if let Some(def_use) = <Self as HasSSANameHandler>::DefUse::categorize_finely(
             local,
             &self.ctxt.body.local_decls,
@@ -482,16 +482,10 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
             ref func,
             ref args,
             destination,
-            cleanup: _,
-            from_hir_call: _,
-            fn_span: _,
+            ..
         } = terminator.kind
         {
-            let ty = func
-                .constant()
-                .expect("closures or function pointers are not supported!")
-                .ty();
-            if let &FnDef(callee_did, _generic_args) = ty.kind() {
+            if let Some((callee_did, _generic_args)) = func.const_fn_def() {
                 match callee_did.as_local() {
                     Some(did) => {
                         if matches!(

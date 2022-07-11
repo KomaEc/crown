@@ -170,7 +170,7 @@ impl CrateSummary {
                 nested_level,
             } => {
                 let adt_def = tcx.adt_def(adt_def);
-                let variant_def = &adt_def.variants[variant_idx];
+                let variant_def = &adt_def.variants()[variant_idx];
                 let field_def = &variant_def.fields[field_idx];
                 format!(
                     "{:*<1$}{2}.{3}",
@@ -188,7 +188,7 @@ impl CrateSummary {
                 for (variant_idx, y) in x.iter_enumerated() {
                     for (field_idx, z) in y.iter().enumerate() {
                         let adt_def = tcx.adt_def(adt_did);
-                        let field_def = &adt_def.variants[variant_idx].fields[field_idx];
+                        let field_def = &adt_def.variants()[variant_idx].fields[field_idx];
                         let field_def_str = format!("{}.{}", tcx.type_of(adt_did), field_def.name);
                         tracing::debug!(
                             "for field {}: {}:",

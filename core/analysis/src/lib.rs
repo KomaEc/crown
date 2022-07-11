@@ -1,8 +1,6 @@
 #![feature(rustc_private)]
 #![feature(box_patterns)]
 #![feature(min_specialization)]
-#![feature(crate_visibility_modifier)]
-#![feature(bool_to_option)]
 #![feature(split_array)]
 #![feature(generic_associated_types)]
 #![feature(associated_type_defaults)]
@@ -21,14 +19,11 @@ pub mod libcall_model;
 pub mod liveness_analysis;
 pub mod mutability_analysis;
 pub mod null_analysis;
-pub mod ownership;
 pub mod ownership_analysis;
-pub mod pointer_analysis;
 pub mod rustc_index_ext;
 pub mod ssa;
 #[cfg(test)]
 pub mod test;
-pub mod toy_analysis;
 pub mod ty_ext;
 pub mod usage_analysis;
 
@@ -117,7 +112,7 @@ where
                 (
                     did,
                     tcx.adt_def(did)
-                        .variants
+                        .variants()
                         .iter_enumerated()
                         .map(|(variant_idx, variant_def)| {
                             variant_def
@@ -495,7 +490,7 @@ impl<T> LocationMap<T>
 where
     T: Default + Clone,
 {
-    crate fn new(body: &Body<'_>) -> Self {
+    pub(crate) fn new(body: &Body<'_>) -> Self {
         LocationMap {
             map: body
                 .basic_blocks()
@@ -518,26 +513,20 @@ pub fn get_struct_field<'tcx>(
     place: PlaceRef<'tcx>,
 ) -> Option<(LocalDefId, Field, usize)> {
     let field = place
-        .projection
-        .iter()
+        .iter_projections()
         .rev()
         .enumerate()
-        .find(|(_i, elem)| matches!(elem, ProjectionElem::Field(_, _)));
-    if let Some((idx, ProjectionElem::Field(field, _ty))) = field {
-        let n_derefs = idx;
-        let struct_place = PlaceRef {
-            local: place.local,
-            projection: &place.projection[..place.projection.len() - idx - 1],
-        };
-        let struct_def_id = struct_place
+        .find(|(_i, (_base, elem))| matches!(elem, ProjectionElem::Field(_, _)));
+    if let Some((n_derefs, (base, ProjectionElem::Field(field, _ty)))) = field {
+        let struct_def_id = base
             .ty(body, tcx)
             .ty
             .ty_adt_def()
             .unwrap()
-            .did
+            .did()
             .as_local()
             .unwrap();
-        Some((struct_def_id, *field, n_derefs))
+        Some((struct_def_id, field, n_derefs))
     } else {
         None
     }

@@ -30,7 +30,7 @@ use rustc_middle::{
         BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
         ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind, RETURN_PLACE,
     },
-    ty::{TyCtxt, TyKind::FnDef},
+    ty::TyCtxt,
 };
 use rustc_target::abi::VariantIdx;
 
@@ -342,7 +342,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handle
                     let variant_idx = place_ty.variant_index.unwrap_or(VariantIdx::new(0));
                     let adt_def = ty.ty_adt_def().unwrap();
                     let lambdas = self.ctxt.lambda_ctxt.field_defs[&adt_def
-                        .did
+                        .did()
                         .as_local()
                         .expect("struct definition should be in scope!")][variant_idx]
                         [field.index()]
@@ -414,7 +414,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handle
 impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
     for InferEngine<'infercx, 'tcx, Handler>
 {
-    fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
+    fn visit_local(&mut self, local: Local, context: PlaceContext, location: Location) {
         if let Some(def_use) = <Self as HasSSANameHandler>::DefUse::categorize(context) {
             if def_use.defining() {
                 self.define_local(local, location);
@@ -473,16 +473,10 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
             ref func,
             ref args,
             destination,
-            cleanup: _,
-            from_hir_call: _,
-            fn_span: _,
+            ..
         } = terminator.kind
         {
-            let ty = func
-                .constant()
-                .expect("closures or function pointers are not supported!")
-                .ty();
-            if let &FnDef(callee_did, _generic_args) = ty.kind() {
+            if let Some((callee_did, _generic_args)) = func.const_fn_def() {
                 // local defined functions: libc externs or user functions
                 match callee_did.as_local() {
                     Some(did) => {
@@ -508,7 +502,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                     }
                 }
             } else {
-                unreachable!("what could it be? {}", ty)
+                unreachable!("what could it be? {:?}", func)
             }
         } else if let TerminatorKind::Return = terminator.kind {
             self.model_return(location);

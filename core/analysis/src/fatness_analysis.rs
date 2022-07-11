@@ -1,7 +1,7 @@
 use rustc_hir::{def_id::LocalDefId, definitions::DefPathData};
 use rustc_middle::{
-    mir::{Constant, ConstantKind, Field, Local, Location, Terminator, TerminatorKind},
-    ty::{TyCtxt, TyKind},
+    mir::{Field, Local, Location, Terminator, TerminatorKind},
+    ty::TyCtxt,
 };
 use rustc_mir_dataflow::JoinSemiLattice;
 
@@ -96,12 +96,8 @@ impl Analysis for FatnessAnalysis {
             args,
             ..
         } = &terminator.kind else { return };
-        let Some(Constant {
-            literal: ConstantKind::Ty(constant),
-            ..
-        }) = func.constant() else { return };
-        let TyKind::FnDef(def_id, _) = constant.ty.kind() else { return };
-        let def_path = cx.tcx.def_path(*def_id);
+        let Some((def_id, _)) = func.const_fn_def() else { return };
+        let def_path = cx.tcx.def_path(def_id);
         // ::core ...
         let in_core = cx.tcx.crate_name(def_path.krate).as_str() == "core";
         // ::ptr ...

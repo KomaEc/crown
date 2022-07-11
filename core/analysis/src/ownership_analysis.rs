@@ -124,7 +124,7 @@ impl InterSummary {
                 (
                     did,
                     tcx.adt_def(did)
-                        .variants
+                        .variants()
                         .iter_enumerated()
                         .map(|(variant_idx, variant_def)| {
                             variant_def
@@ -526,7 +526,7 @@ impl<'me, 'tcx> AnalysisEngine<'me, 'tcx> {
                 for (variant_idx, y) in x.iter_enumerated() {
                     for (field_idx, z) in y.iter().enumerate() {
                         let adt_def = self.tcx.adt_def(adt_did);
-                        let field_def = &adt_def.variants[variant_idx].fields[field_idx];
+                        let field_def = &adt_def.variants()[variant_idx].fields[field_idx];
                         let field_def_str =
                             format!("{}.{}", self.tcx.type_of(adt_did), field_def.name);
                         tracing::debug!(

@@ -93,6 +93,8 @@ impl IsDefUse for DefaultDefUse {
 
             // Debug info is neither def nor use.
             PlaceContext::NonUse(NonUseContext::VarDebugInfo) => None,
+
+            PlaceContext::MutatingUse(MutatingUseContext::Deinit | MutatingUseContext::SetDiscriminant) => todo!(),
         }
     }
 }
@@ -180,6 +182,8 @@ impl IsDefUse for OwnershipAnalysisDefUse {
 
             // Debug info is neither def nor use.
             PlaceContext::NonUse(NonUseContext::VarDebugInfo) => None,
+
+            PlaceContext::MutatingUse(MutatingUseContext::Deinit | MutatingUseContext::SetDiscriminant) => todo!(),
         }
     }
 }
@@ -228,7 +232,7 @@ impl<'me, 'tcx, DefUse> Visitor<'tcx> for DefSitesGatherer<'me, 'tcx, DefUse>
 where
     DefUse: IsDefUse,
 {
-    fn visit_local(&mut self, &local: &Local, context: PlaceContext, location: Location) {
+    fn visit_local(&mut self, local: Local, context: PlaceContext, location: Location) {
         if DefUse::categorize_finely(local, self.body, context)
             .map_or(false, |def_use| DefUse::defining(def_use))
         {

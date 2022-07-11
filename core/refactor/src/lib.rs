@@ -1,5 +1,4 @@
 #![feature(rustc_private)]
-#![feature(bool_to_option)]
 #![feature(array_windows)]
 #![feature(box_patterns)]
 #![feature(split_array)]

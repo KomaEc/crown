@@ -69,7 +69,7 @@ impl<DefUse: IsDefUse> SSANameSourceMap<DefUse> {
             .iter_enumerated()
             .map(|(bb, bb_insertion_points)| {
                 bb_insertion_points.repack(|_, _| {
-                    let uses = smallvec![SSAIdx::MAX; body.predecessors()[bb].len()];
+                    let uses = smallvec![SSAIdx::MAX; body.basic_blocks.predecessors()[bb].len()];
                     (SSAIdx::MAX, uses)
                 })
             })

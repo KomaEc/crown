@@ -8,10 +8,10 @@ use either::Either;
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::{
     mir::{
-        BasicBlock, Body, CastKind, Constant, ConstantKind, Local, Location, Operand, Place,
-        PlaceRef, ProjectionElem, Rvalue, Statement, StatementKind, TerminatorKind,
+        BasicBlock, Body, CastKind, Constant, Local, Location, Operand, Place, PlaceRef,
+        ProjectionElem, Rvalue, Statement, StatementKind, TerminatorKind,
     },
-    ty::{Const, ScalarInt, TyCtxt, TyKind},
+    ty::{ScalarInt, TyCtxt},
 };
 use rustc_span::{BytePos, Span};
 use tracing::{debug, debug_span, info_span, trace, warn};
@@ -50,9 +50,8 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
     for (bb_id, bb) in cx.body.basic_blocks().iter_enumerated() {
         let terminator = bb.terminator();
         if let TerminatorKind::Call { func: callee, .. } = &terminator.kind {
-            let const_ty = callee.constant().unwrap().literal.ty();
-            let TyKind::FnDef(callee_def_id, _) = const_ty.kind() else { panic!() };
-            let callee_name = cx.tcx.def_path_str(*callee_def_id);
+            let (callee_def_id, _) = callee.const_fn_def().unwrap();
+            let callee_name = cx.tcx.def_path_str(callee_def_id);
             let span = terminator.source_info.span;
             match callee_name.as_str() {
                 x if x.ends_with("::malloc") => {
@@ -128,10 +127,9 @@ fn rewrite_terminator<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_, '_>, bb_id: Basic
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
     let TerminatorKind::Call {
-        func: callee, destination: Some((dest_place, _dest_bb)), ..
+        func: callee, destination, ..
     } = &terminator.kind else { panic!() };
-    let const_ty = callee.constant().unwrap().literal.ty();
-    let TyKind::FnDef(callee_def_id, _) = const_ty.kind() else { panic!() };
+    let (callee_def_id, _) = callee.const_fn_def().unwrap();
     let Some(callee_def_id) = callee_def_id.as_local() else { return };
 
     let is_raw_ptr = cx
@@ -147,7 +145,7 @@ fn rewrite_terminator<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_, '_>, bb_id: Basic
 
     let l_null = cx
         .null
-        .place_result(cx.tcx, cx.def_id, terminator_loc, dest_place.as_ref());
+        .place_result(cx.tcx, cx.def_id, terminator_loc, destination.as_ref());
     let r_null = cx.null.sig_result(callee_def_id, Local::from_usize(0), 0);
 
     let span = terminator.source_info.span;
@@ -278,19 +276,18 @@ pub fn rewrite_rvalue<'tcx>(
             new
         }
         // extremely cursed matcher - rvalue is null pointer literal
-        Rvalue::Use(Operand::Constant(box Constant {
-            literal: ConstantKind::Ty(Const { ty, val }),
-            ..
-        }))
-        | Rvalue::Cast(
-            CastKind::Misc,
-            Operand::Constant(box Constant {
-                literal: ConstantKind::Ty(Const { val, .. }),
-                ..
-            }),
+        Rvalue::Use(Operand::Constant(box Constant { literal, .. }))
+            if literal.ty().is_unsafe_ptr()
+                && literal.try_to_scalar_int().map(ScalarInt::is_null) == Some(true) =>
+        {
+            return String::from("None")
+        }
+        Rvalue::Cast(
+            CastKind::PointerFromExposedAddress,
+            Operand::Constant(box Constant { literal, .. }),
             ty,
         ) if ty.is_unsafe_ptr()
-            && val.try_to_scalar_int().map(ScalarInt::is_null) == Some(true) =>
+            && literal.try_to_scalar_int().map(ScalarInt::is_null) == Some(true) =>
         {
             return String::from("None");
         }
@@ -376,17 +373,17 @@ fn rewrite_malloc<'tcx>(
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
     let TerminatorKind::Call {
-        destination: Some((dest_place, dest_bb)), ..
+        destination, target: Some(target), ..
     } = terminator.kind else { panic!() };
     if cx
         .ownership
-        .place_result(cx.tcx, cx.def_id, terminator_loc, dest_place.as_ref())
+        .place_result(cx.tcx, cx.def_id, terminator_loc, destination.as_ref())
         != Some(true)
     {
         return;
     }
 
-    let cast_loc = dest_bb.start_location();
+    let cast_loc = target.start_location();
     let cast_statement = match cx.body.stmt_at(cast_loc) {
         Either::Left(s) => s,
         Either::Right(_) => todo!("malloc dest isn't statement"),
@@ -394,7 +391,7 @@ fn rewrite_malloc<'tcx>(
     // let x = malloc(_) as *mut Foo
     let cast_span = match &cast_statement.kind {
         StatementKind::Assign(box (_, Rvalue::Cast(_, op, _)))
-            if op.place() == Some(dest_place) =>
+            if op.place() == Some(destination) =>
         {
             cast_statement.source_info.span
         }
@@ -408,7 +405,7 @@ fn rewrite_malloc<'tcx>(
     let mut new_source = format!("Box::<{ty}>::new(unsafe {{ std::mem::zeroed() }})");
     if cx
         .null
-        .place_result(cx.tcx, cx.def_id, terminator_loc, dest_place.as_ref())
+        .place_result(cx.tcx, cx.def_id, terminator_loc, destination.as_ref())
         == Some(true)
     {
         new_source.insert_str(0, "Some(");
@@ -428,11 +425,11 @@ fn rewrite_realloc(
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
     let TerminatorKind::Call {
-        args, destination: Some((dest_place, dest_bb)), ..
+        args, destination, target: Some(target), ..
     } = &terminator.kind else { panic!() };
     if cx
         .fatness
-        .place_result(cx.tcx, cx.def_id, terminator_loc, dest_place.as_ref())
+        .place_result(cx.tcx, cx.def_id, terminator_loc, destination.as_ref())
         != Some(true)
     {
         return;
@@ -443,7 +440,7 @@ fn rewrite_realloc(
     let ptr_expr = uncast(cx, terminator_loc, ptr).unwrap();
     let size_expr = uncast(cx, terminator_loc, size).unwrap();
 
-    let cast_loc = dest_bb.start_location();
+    let cast_loc = target.start_location();
     let cast_statement = match cx.body.stmt_at(cast_loc) {
         Either::Left(s) => s,
         Either::Right(_) => todo!("realloc dest isn't statement"),
@@ -451,7 +448,7 @@ fn rewrite_realloc(
     // let x = realloc(_, _) as *mut Foo
     let cast_span = match &cast_statement.kind {
         StatementKind::Assign(box (_, Rvalue::Cast(_, op, _)))
-            if op.place() == Some(*dest_place) =>
+            if op.place() == Some(*destination) =>
         {
             cast_statement.source_info.span
         }
@@ -484,11 +481,11 @@ fn rewrite_calloc(
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
     let TerminatorKind::Call {
-        args, destination: Some((dest_place, dest_bb)), ..
+        args, destination, target: Some(target), ..
     } = &terminator.kind else { panic!() };
     if cx
         .fatness
-        .place_result(cx.tcx, cx.def_id, terminator_loc, dest_place.as_ref())
+        .place_result(cx.tcx, cx.def_id, terminator_loc, destination.as_ref())
         != Some(true)
     {
         return;
@@ -497,7 +494,7 @@ fn rewrite_calloc(
     let nmemb = args[0].place().unwrap().as_local().unwrap();
     let nmemb_expr = uncast(cx, terminator_loc, nmemb).unwrap();
 
-    let cast_loc = dest_bb.start_location();
+    let cast_loc = target.start_location();
     let cast_statement = match cx.body.stmt_at(cast_loc) {
         Either::Left(s) => s,
         Either::Right(_) => todo!("calloc dest isn't statement"),
@@ -505,7 +502,7 @@ fn rewrite_calloc(
     // let x = calloc(_) as *mut Foo
     let cast_span = match &cast_statement.kind {
         StatementKind::Assign(box (_, Rvalue::Cast(_, op, _)))
-            if op.place() == Some(*dest_place) =>
+            if op.place() == Some(*destination) =>
         {
             cast_statement.source_info.span
         }
@@ -534,9 +531,9 @@ fn rewrite_offset(
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
     let TerminatorKind::Call {
-        args, destination: Some((dest_place, dest_bb)), ..
+        args, destination, target: Some(target), ..
     } = &terminator.kind else { panic!() };
-    let dest_local = dest_place.as_local().unwrap();
+    let dest_local = destination.as_local().unwrap();
 
     let ptr_place = args[0].place().unwrap().as_ref();
     if cx
@@ -562,7 +559,7 @@ fn rewrite_offset(
     // we have a problem! buffer_good has an offset call at line 282 that *doesn't* terminate into
     // a using statement at all. there's a whole other basic block before the use. maybe look into
     // source map to find the use?
-    let deref_stmt = match cx.body.stmt_at(dest_bb.start_location()) {
+    let deref_stmt = match cx.body.stmt_at(target.start_location()) {
         Either::Left(s) => s,
         Either::Right(_) => return,
     };
@@ -579,7 +576,7 @@ fn rewrite_offset(
                     todo!()
                 }
             } else if let Rvalue::Use(operand) = rvalue {
-                if operand.place() == Some(*dest_place) {
+                if operand.place() == Some(*destination) {
                     // reading from the slice into a local
                     todo!()
                 }

@@ -5,11 +5,10 @@ use rustc_hir::{def_id::LocalDefId, FnRetTy, ItemKind};
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
-        BasicBlock, Body, Constant, ConstantKind, Field, Local, Location, Place, PlaceRef,
-        ProjectionElem, Rvalue, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents,
-        START_BLOCK,
+        BasicBlock, Body, Field, Local, Location, Place, PlaceRef, ProjectionElem, Rvalue,
+        StatementKind, Terminator, TerminatorKind, VarDebugInfoContents, START_BLOCK,
     },
-    ty::{TyCtxt, TyKind},
+    ty::TyCtxt,
 };
 use rustc_mir_dataflow::{
     fmt::DebugWithContext, AnalysisDomain, Engine, JoinSemiLattice, Results, ResultsRefCursor,
@@ -255,7 +254,7 @@ impl<'tcx, 'a, A: Analysis> CrateResults<'tcx, 'a, A> {
     pub fn show(&self, tcx: TyCtxt<'tcx>) {
         for (struct_def_id, struct_result) in self.struct_results.0.iter() {
             let struct_name = tcx.def_path_str(struct_def_id.to_def_id());
-            let struct_def = &tcx.adt_def(*struct_def_id).variants[0u32.into()];
+            let struct_def = &tcx.adt_def(*struct_def_id).variants()[0u32.into()];
             for (field, field_result) in struct_result.iter_enumerated() {
                 let field_name = &struct_def.fields[field.as_usize()].name;
                 println!("{struct_name}.{field_name} has {field_result:?}");
@@ -490,7 +489,7 @@ fn resolve_intra_dep<'tcx, A: Analysis>(
                 });
         }
         IntermediateResult::Unknown => {
-            return cursor.analysis().0.body.predecessors()[dep.bb_id]
+            return cursor.analysis().0.body.basic_blocks.predecessors()[dep.bb_id]
                 .iter()
                 .fold(IntermediateResult::Unknown, |mut acc, &pred| {
                     let dep = IntraDep { bb_id: pred, ..dep };
@@ -744,17 +743,13 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
             destination,
             ..
         } = &terminator.kind else { return };
-        self.check_places(state, Some(destination.unwrap().0), None, loc);
+        self.check_places(state, Some(*destination), None, loc);
         for arg in args {
             if let Some(place) = arg.place() {
                 self.check_places(state, None, Some(place), loc);
             }
         }
-        let Some(Constant {
-            literal: ConstantKind::Ty(constant),
-            ..
-        }) = func.constant() else { return };
-        let TyKind::FnDef(def_id, _) = constant.ty.kind() else { return };
+        let Some((def_id, _)) = func.const_fn_def() else { return };
         self.call(state, terminator, loc);
 
         let Some(def_id) = def_id.as_local() else {
@@ -791,7 +786,7 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
         }
 
         // lhs transfers to rhs as in normal assignment
-        let l_result = state.result_for(self.0.tcx, self.0.body, destination.unwrap().0.as_ref());
+        let l_result = state.result_for(self.0.tcx, self.0.body, destination.as_ref());
         // TODO: handle more levels of nesting, both here and in assignments
         // TODO: maybe this could cause intra deps to be transmitted across functions? that might
         // break the resolution logic

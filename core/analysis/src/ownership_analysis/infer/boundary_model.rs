@@ -1,7 +1,7 @@
 use rustc_hir::def_id::DefId;
 use rustc_middle::mir::{
     visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-    BasicBlock, Location, Operand, Place, RETURN_PLACE,
+    Location, Operand, Place, RETURN_PLACE,
 };
 
 use crate::{
@@ -20,7 +20,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
         &mut self,
         callee: DefId,
         args: &Vec<Operand<'tcx>>,
-        destination: Option<(Place<'tcx>, BasicBlock)>,
+        destination: Place<'tcx>,
         location: Location,
     ) {
         // let caller = self.ctxt.func;
@@ -63,31 +63,27 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
         // We introduce rho_x = 0. Upon instantiation, assert rho_x' if rho_f.0 is known
         // S.f = f.0
         // This should introduce the pseudo constraint rho_S.f = rho_f.0
-        let dest = destination
-            .map(|(destination, _)| {
-                if destination
-                    .ty(self.ctxt.body, self.ctxt.tcx)
-                    .ty
-                    .is_ptr_but_not_fn_ptr()
-                {
-                    let res = self.process_ptr_place(&destination, location);
-                    match res {
-                        PtrPlaceDefResult::Base { old, new } => {
-                            self.ctxt.constraint_system.assume(old.start, false);
-                            Some(new)
-                        }
-                        PtrPlaceDefResult::Proj(rhos) => Some(rhos),
-                    }
-                } else {
-                    self.visit_place(
-                        &destination,
-                        PlaceContext::MutatingUse(MutatingUseContext::Call),
-                        location,
-                    );
-                    None
+        let dest = if destination
+            .ty(self.ctxt.body, self.ctxt.tcx)
+            .ty
+            .is_ptr_but_not_fn_ptr()
+        {
+            let res = self.process_ptr_place(&destination, location);
+            match res {
+                PtrPlaceDefResult::Base { old, new } => {
+                    self.ctxt.constraint_system.assume(old.start, false);
+                    Some(new)
                 }
-            })
-            .flatten();
+                PtrPlaceDefResult::Proj(rhos) => Some(rhos),
+            }
+        } else {
+            self.visit_place(
+                &destination,
+                PlaceContext::MutatingUse(MutatingUseContext::Call),
+                location,
+            );
+            None
+        };
 
         self.boundaries.push(Boundary {
             callee,
@@ -116,7 +112,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
             }
         } else {
             self.visit_local(
-                &RETURN_PLACE,
+                RETURN_PLACE,
                 PlaceContext::NonMutatingUse(NonMutatingUseContext::Move),
                 location,
             );
