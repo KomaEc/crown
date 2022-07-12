@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use analysis::{
     api::AnalysisResults, call_graph::Func, fat_thin_analysis, mutability_analysis, null_analysis,
-    ownership_analysis, ssa::RichLocation,
+    ownership_analysis, ssa::RichLocation, get_struct_field,
 };
 use either::Either;
 use rustc_hir::def_id::LocalDefId;
@@ -568,29 +568,8 @@ fn place_result<'tcx, A: AnalysisResults>(
         .projection
         .iter()
         .all(|e| matches!(e, ProjectionElem::Field(_, _) | ProjectionElem::Deref)));
-    let field_idx = place
-        .projection
-        .iter()
-        .rev()
-        .enumerate()
-        .find(|(_i, elem)| matches!(elem, ProjectionElem::Field(_, _)));
-    if let Some((idx, ProjectionElem::Field(field, _ty))) = field_idx {
-        // place of the adt
-        let place = PlaceRef {
-            local: place.local,
-            projection: &place.projection[..place.projection.len() - 1],
-        };
-        // TODO: is it?
-        let n_derefs = idx;
-        let struct_def_id = place
-            .ty(cx.body, cx.tcx)
-            .ty
-            .ty_adt_def()
-            .unwrap()
-            .did
-            .as_local()
-            .unwrap();
-        return analysis.field_result(struct_def_id, *field, n_derefs);
+    if let Some((struct_def_id, field, n_derefs)) = get_struct_field(cx.tcx, cx.body, place) {
+        return analysis.field_result(struct_def_id, field, n_derefs);
     } else {
         let n_derefs = place.projection.len();
         return analysis.local_result_at(cx.def_id, place.local, loc, n_derefs);

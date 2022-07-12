@@ -30,36 +30,7 @@ use rustc_mir_dataflow::{
 };
 use tracing::{debug_span, trace};
 
-fn get_struct_field<'tcx>(
-    tcx: TyCtxt<'tcx>,
-    body: &Body<'tcx>,
-    place: PlaceRef<'tcx>,
-) -> Option<(LocalDefId, Field, usize)> {
-    let field_idx = place
-        .projection
-        .iter()
-        .rev()
-        .enumerate()
-        .find(|(_i, elem)| matches!(elem, ProjectionElem::Field(_, _)));
-    if let Some((idx, ProjectionElem::Field(field, _ty))) = field_idx {
-        let n_derefs = idx;
-        let struct_place = PlaceRef {
-            local: place.local,
-            projection: &place.projection[..place.projection.len() - idx - 1],
-        };
-        let struct_def_id = struct_place
-            .ty(body, tcx)
-            .ty
-            .ty_adt_def()
-            .unwrap()
-            .did
-            .as_local()
-            .unwrap();
-        Some((struct_def_id, *field, n_derefs))
-    } else {
-        None
-    }
-}
+use crate::get_struct_field;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Nullability {

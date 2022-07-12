@@ -59,7 +59,7 @@ use rustc_hash::FxHashMap;
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{BasicBlock, Body, Local, Location},
+    mir::{BasicBlock, Body, Field, Local, Location, PlaceRef, ProjectionElem},
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
@@ -508,5 +508,36 @@ where
 rustc_index::newtype_index! {
     pub struct FieldDefIdx {
         DEBUG_FORMAT = "field_def ({})"
+    }
+}
+
+pub fn get_struct_field<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    body: &Body<'tcx>,
+    place: PlaceRef<'tcx>,
+) -> Option<(LocalDefId, Field, usize)> {
+    let field = place
+        .projection
+        .iter()
+        .rev()
+        .enumerate()
+        .find(|(_i, elem)| matches!(elem, ProjectionElem::Field(_, _)));
+    if let Some((idx, ProjectionElem::Field(field, _ty))) = field {
+        let n_derefs = idx;
+        let struct_place = PlaceRef {
+            local: place.local,
+            projection: &place.projection[..place.projection.len() - idx - 1],
+        };
+        let struct_def_id = struct_place
+            .ty(body, tcx)
+            .ty
+            .ty_adt_def()
+            .unwrap()
+            .did
+            .as_local()
+            .unwrap();
+        Some((struct_def_id, *field, n_derefs))
+    } else {
+        None
     }
 }
