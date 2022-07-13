@@ -30,6 +30,7 @@ pub mod ssa;
 pub mod test;
 pub mod toy_analysis;
 pub mod ty_ext;
+pub mod usage_analysis;
 
 extern crate rustc_arena;
 extern crate rustc_ast;
