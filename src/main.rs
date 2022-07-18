@@ -13,7 +13,7 @@ extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 extern crate rustc_target;
 
-use analysis::null_analysis;
+use analysis::{null_analysis, fatness_analysis};
 use clap::Parser;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
@@ -188,7 +188,12 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             }
 
             if *array {
-                refactor::print_fat_thin_analysis_results(tcx, top_level_struct_defs, top_level_fns)
+                let results = fatness_analysis::CrateResults::collect(
+                    tcx,
+                    &top_level_fns,
+                    &top_level_struct_defs,
+                );
+                results.show(tcx);
             }
         }
         &Command::Rewrite { rewrite_mode } => {
@@ -199,7 +204,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                 refactor::mutability_analysis(tcx, &top_level_struct_defs, &top_level_fns)
             });
             let fatness_analysis = time("fatness analysis", || {
-                refactor::fatness_analysis(tcx, &top_level_struct_defs, &top_level_fns)
+                fatness_analysis::CrateResults::collect(tcx, &top_level_fns, &top_level_struct_defs)
             });
             let null_analysis = time("null analysis", || {
                 null_analysis::CrateResults::collect(tcx, &top_level_fns, &top_level_struct_defs)

@@ -15,6 +15,7 @@ pub mod boundary_model;
 pub mod call_graph;
 pub mod def_use;
 pub mod fat_thin_analysis;
+pub mod fatness_analysis;
 pub mod lattice;
 pub mod libcall_model;
 pub mod liveness_analysis;

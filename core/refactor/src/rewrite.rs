@@ -1,7 +1,7 @@
 mod rewrite_body;
 
 use analysis::{
-    api::AnalysisResults, fat_thin_analysis, mutability_analysis, null_analysis, ownership_analysis,
+    api::AnalysisResults, fatness_analysis, mutability_analysis, null_analysis, ownership_analysis,
 };
 use rewriter::{RewriteMode, Rewriter};
 use rustc_hir::{def_id::LocalDefId, FnRetTy, FnSig, ItemKind, Ty, TyKind};
@@ -19,12 +19,12 @@ fn ty_nested_depth(ty: &Ty) -> usize {
     }
 }
 
-pub fn rewrite<'tcx>(
+pub fn rewrite<'tcx, 'a>(
     tcx: TyCtxt<'tcx>,
     ownership_analysis: &ownership_analysis::InterSummary,
     mutability_analysis: &mutability_analysis::InterSummary,
-    fatness_analysis: &fat_thin_analysis::CrateSummary,
-    null_analysis: &null_analysis::CrateResults<'tcx, '_>,
+    fatness_analysis: &fatness_analysis::CrateResults<'tcx, 'a>,
+    null_analysis: &null_analysis::CrateResults<'tcx, 'a>,
     struct_defs: &[LocalDefId],
     rewrite_mode: RewriteMode,
 ) {
@@ -54,7 +54,7 @@ fn rewrite_functions<'tcx, 'a>(
     rewriter: &mut Rewriter,
     ownership_analysis: &ownership_analysis::InterSummary,
     mutability_analysis: &mutability_analysis::InterSummary,
-    fatness_analysis: &fat_thin_analysis::CrateSummary,
+    fatness_analysis: &fatness_analysis::CrateResults<'tcx, 'a>,
     null_analysis: &null_analysis::CrateResults<'tcx, 'a>,
 ) {
     for (func, did) in ownership_analysis.call_graph.functions.iter_enumerated() {
@@ -87,11 +87,11 @@ fn rewrite_functions<'tcx, 'a>(
 }
 
 fn rewrite_fn_sig(
-    tcx: TyCtxt<'_>,
+    tcx: TyCtxt,
     rewriter: &mut Rewriter,
     ownership: &ownership_analysis::InterSummary,
     mutability: &mutability_analysis::InterSummary,
-    fatness: &fat_thin_analysis::CrateSummary,
+    fatness: &fatness_analysis::CrateResults,
     null: &null_analysis::CrateResults,
     def_id: LocalDefId,
     sig: &FnSig,
@@ -128,7 +128,7 @@ fn rewrite_structs<'tcx>(
     tcx: TyCtxt<'tcx>,
     rewriter: &mut Rewriter,
     ownership_analysis: &ownership_analysis::InterSummary,
-    fatness_analysis: &fat_thin_analysis::CrateSummary,
+    fatness_analysis: &fatness_analysis::CrateResults<'tcx, '_>,
     null_analysis: &null_analysis::CrateResults<'tcx, '_>,
     dids: &[LocalDefId],
 ) {
@@ -151,7 +151,7 @@ fn rewrite_struct<'tcx>(
     tcx: TyCtxt<'tcx>,
     rewriter: &mut Rewriter,
     ownership: &ownership_analysis::InterSummary,
-    fatness: &fat_thin_analysis::CrateSummary,
+    fatness: &fatness_analysis::CrateResults<'tcx, '_>,
     null: &null_analysis::CrateResults<'tcx, '_>,
     variant_data: &rustc_hir::VariantData,
     did: LocalDefId,

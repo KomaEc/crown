@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use analysis::{
-    api::AnalysisResults, call_graph::Func, fat_thin_analysis, mutability_analysis, null_analysis,
+    api::AnalysisResults, call_graph::Func, fatness_analysis, mutability_analysis, null_analysis,
     ownership_analysis, ssa::RichLocation, get_struct_field,
 };
 use either::Either;
@@ -21,7 +21,7 @@ pub struct BodyRewriteCtxt<'tcx, 'a, 'b> {
     pub rewriter: &'a mut rewriter::Rewriter,
     pub ownership: &'a ownership_analysis::InterSummary,
     pub mutability: &'a mutability_analysis::InterSummary,
-    pub fatness: &'a fat_thin_analysis::CrateSummary,
+    pub fatness: &'a fatness_analysis::CrateResults<'tcx, 'b>,
     pub null: &'a null_analysis::CrateResults<'tcx, 'b>,
     pub func: Func,
     pub def_id: LocalDefId,
@@ -578,9 +578,9 @@ fn place_result<'tcx, A: AnalysisResults>(
 
 /// returns the source of an expression with all its outer `as _` removed
 fn uncast(cx: &mut BodyRewriteCtxt, loc: Location, local: Local) -> Option<String> {
-    let source_map = &cx.fatness.ssa_name_source_map[cx.func];
+    let source_map = &cx.mutability.func_summaries[cx.func].ssa_name_source_map;
     let ssa_idx = source_map.try_use(local, loc).unwrap();
-    let def_loc_rich = &cx.fatness.def_sites[cx.func].defs[local][ssa_idx];
+    let def_loc_rich = &cx.mutability.func_summaries[cx.func].ssa_def_sites.defs[local][ssa_idx];
     let def_loc = match def_loc_rich {
         RichLocation::Mir(l) => *l,
         RichLocation::Entry => todo!(),
