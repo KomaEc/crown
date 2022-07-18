@@ -323,8 +323,6 @@ fn resolve_fn_deps<A: Analysis>(results: &mut CrateResults<A>, id: LocalDefId) {
                     } else {
                         *nested_result = result.unwrap();
                     }
-                } else if *nested_result == IntermediateResult::Unknown {
-                    *nested_result = A::Result::DEFAULT.to_intermediate();
                 }
             }
         }
@@ -339,8 +337,6 @@ fn resolve_struct_deps<A: Analysis>(results: &mut CrateResults<A>, id: LocalDefI
             if let IntermediateResult::InterDeps(deps) = nested_result {
                 // this unwrap is wrong but i cba to fix it yet bc it's rare
                 *nested_result = resolve_dep(results, deps, None).unwrap();
-            } else if *nested_result == IntermediateResult::Unknown {
-                *nested_result = A::Result::DEFAULT.to_intermediate();
             }
         }
     }
@@ -387,6 +383,7 @@ fn resolve_dep<A: Analysis>(
 
         use IntermediateResult::*;
         match (&mut ret, other_result) {
+            (_, IntraDeps(_)) => {}, // don't transmit intra deps outside fns
             (InterDeps(_), _) => panic!("how"),
             (_, InterDeps(_)) => return None, // cyclic
             (l @ (Definite(_) | Unknown), r @ (Definite(_) | Unknown)) => {

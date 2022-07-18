@@ -147,8 +147,6 @@ impl Analysis for NullAnalysis {
             let place = args[0].place().expect("null check on constant");
             *state.result_for(cx.tcx, cx.body, place.as_ref()) =
                 Nullability::Nullable.to_intermediate();
-            let local = place.as_local().expect("projections aren't supported yet");
-            state.locals[local][0] = Nullability::Nullable.to_intermediate();
             return;
         }
 
