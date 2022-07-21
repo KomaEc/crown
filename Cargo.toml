@@ -1,11 +1,7 @@
 [workspace]
 members = [
-    "core/compiler_interface",
-    "core/analysis",
-    "core/rewriter",
-    "core/refactor",
-    "core/utils/graph",
-    "core/utils/range_ext",
+    "core",
+    "utils/graph_ext",
 ]
 
 [package]
@@ -20,6 +16,4 @@ rustc_private = true
 clap = { version = "3.1.2", features = ["derive"] }
 tracing = "0.1.32"
 tracing-subscriber = "0.3.10"
-analysis = { path = "core/analysis" }
-refactor = { path = "core/refactor" }
-rewriter = { path = "core/rewriter" }
+core = { path = "core" }

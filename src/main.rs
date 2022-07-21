@@ -54,8 +54,8 @@ enum Command {
         all: bool,
     },
     Rewrite {
-        #[clap(arg_enum, default_value_t = rewriter::RewriteMode::Print)]
-        rewrite_mode: rewriter::RewriteMode,
+        #[clap(arg_enum, default_value_t = core::rewriter::RewriteMode::Print)]
+        rewrite_mode: core::rewriter::RewriteMode,
     },
 }
 
@@ -96,7 +96,7 @@ fn compiler_config(input_path: PathBuf) -> Config {
         output_dir: None,
         output_file: None,
         file_loader: None,
-        stderr: None,
+        crate_check_cfg: rustc_interface::interface::parse_check_cfg(vec![]),
         lint_caps: rustc_hash::FxHashMap::default(),
         parse_sess_created: None,
         register_lints: None,
@@ -118,89 +118,65 @@ fn time<T>(label: &str, f: impl FnOnce() -> T) -> T {
 }
 
 fn run(cmd: &Command, tcx: TyCtxt<'_>) {
-    let top_level_fns = tcx
-        .hir()
-        .krate()
-        .owners
-        .iter()
-        .filter_map(|maybe_owner| {
-            let owner = maybe_owner.as_owner();
-            let OwnerNode::Item(item) = owner.as_ref()?.node() else { return None };
-            if !matches!(item.kind, ItemKind::Fn(_, _, _)) {
-                return None;
-            }
-            Some(item.def_id)
-        })
-        .collect::<Vec<_>>();
+    let mut functions = Vec::new();
+    let mut structs = Vec::new();
 
-    let top_level_struct_defs = tcx
-        .hir()
-        .krate()
-        .owners
-        .iter()
-        .filter_map(|maybe_owner| {
-            let owner = maybe_owner.as_owner();
-            let OwnerNode::Item(item) = owner.as_ref()?.node() else { return None };
-            if !matches!(item.kind, ItemKind::Struct(_, _)) {
-                return None;
-            }
-            Some(item.def_id)
-        })
-        .collect::<Vec<_>>();
+    for maybe_owner in tcx.hir().krate().owners.iter() {
+        let Some(owner) = maybe_owner.as_owner() else { continue };
+        let OwnerNode::Item(item) = owner.node() else { continue };
+        match item.kind {
+            ItemKind::Fn(..) => functions.push(item.def_id.to_def_id()),
+            ItemKind::Struct(..) => structs.push(item.def_id.to_def_id()),
+            _ => {}
+        };
+    }
 
     match cmd {
-        Command::Analyse {
-            null: _,
-            array,
-            ownership,
-            mutability,
-            pretty_mir,
-            all: _,
-        } => {
-            if *pretty_mir {
-                refactor::show_mir(tcx, top_level_fns.clone())
-            }
+        Command::Analyse { .. } => {
+            // if *pretty_mir {
+            //     refactor::show_mir(tcx, top_level_fns.clone())
+            // }
 
-            if *ownership {
-                refactor::show_ownership_analysis_results(
-                    tcx,
-                    top_level_struct_defs.clone(),
-                    top_level_fns.clone(),
-                )
-            }
+            // if *ownership {
+            //     refactor::show_ownership_analysis_results(
+            //         tcx,
+            //         top_level_struct_defs.clone(),
+            //         top_level_fns.clone(),
+            //     )
+            // }
 
-            if *mutability {
-                refactor::show_mutability_analysis_results(
-                    tcx,
-                    top_level_struct_defs.clone(),
-                    top_level_fns.clone(),
-                )
-            }
+            // if *mutability {
+            //     refactor::show_mutability_analysis_results(
+            //         tcx,
+            //         top_level_struct_defs.clone(),
+            //         top_level_fns.clone(),
+            //     )
+            // }
 
-            if *array {
-                refactor::print_fat_thin_analysis_results(tcx, top_level_struct_defs, top_level_fns)
-            }
+            // if *array {
+            //     refactor::print_fat_thin_analysis_results(tcx, top_level_struct_defs, top_level_fns)
+            // }
         }
-        &Command::Rewrite { rewrite_mode } => {
-            let ownership_analysis = time("ownership analysis", || {
-                refactor::ownership_analysis(tcx, &top_level_struct_defs, &top_level_fns)
-            });
-            let mutability_analysis = time("mutability analysis", || {
-                refactor::mutability_analysis(tcx, &top_level_struct_defs, &top_level_fns)
-            });
-            let fatness_analysis = time("fatness analysis", || {
-                refactor::fatness_analysis(tcx, &top_level_struct_defs, &top_level_fns)
-            });
-            time("rewrite", || {
-                refactor::rewrite::rewrite(
-                    tcx,
-                    &ownership_analysis,
-                    &mutability_analysis,
-                    &fatness_analysis,
-                    &top_level_struct_defs,
-                    rewrite_mode,
-                )
-            });
+        &Command::Rewrite { .. } => {
+            // let ownership_analysis = time("ownership analysis", || {
+            //     refactor::ownership_analysis(tcx, &top_level_struct_defs, &top_level_fns)
+            // });
+            // let mutability_analysis = time("mutability analysis", || {
+            //     refactor::mutability_analysis(tcx, &top_level_struct_defs, &top_level_fns)
+            // });
+            // let fatness_analysis = time("fatness analysis", || {
+            //     refactor::fatness_analysis(tcx, &top_level_struct_defs, &top_level_fns)
+            // });
+            // time("rewrite", || {
+            //     refactor::rewrite::rewrite(
+            //         tcx,
+            //         &ownership_analysis,
+            //         &mutability_analysis,
+            //         &fatness_analysis,
+            //         &top_level_struct_defs,
+            //         rewrite_mode,
+            //     )
+            // });
         }
     }
 }
