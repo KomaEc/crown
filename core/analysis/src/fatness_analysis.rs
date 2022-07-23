@@ -1,7 +1,7 @@
 use rustc_hir::{def_id::LocalDefId, definitions::DefPathData};
 use rustc_middle::{
     mir::{
-        Constant, ConstantKind, Field, Local, PlaceRef, Terminator, TerminatorKind,
+        Constant, ConstantKind, Field, Local, Terminator, TerminatorKind,
     },
     ty::{TyCtxt, TyKind},
 };
@@ -17,7 +17,7 @@ pub struct CrateResults<'tcx, 'a>(usage_analysis::CrateResults<'tcx, 'a, Fatness
 
 impl<'tcx, 'a> CrateResults<'tcx, 'a> {
     pub fn collect(tcx: TyCtxt<'tcx>, fns: &'a [LocalDefId], structs: &'a [LocalDefId]) -> Self {
-        CrateResults(usage_analysis::CrateResults::collect(tcx, fns, structs))
+        CrateResults(usage_analysis::CrateResults::collect(tcx, fns, structs, FatnessAnalysis))
     }
 
     pub fn show(&self, tcx: TyCtxt<'tcx>) {
@@ -76,23 +76,18 @@ impl AnalysisResult for Fatness {
     const DEFAULT: Self = Fatness::Thin;
 }
 
+#[derive(Clone)]
 struct FatnessAnalysis;
 
 impl Analysis for FatnessAnalysis {
     type Result = Fatness;
-
-    fn check_place<'tcx>(
-        _cx: &UsageAnalysis<'tcx, '_, Self>,
-        _state: &mut Domain<Self::Result>,
-        _l_place: PlaceRef<'tcx>,
-    ) {
-    }
 
     fn call<'tcx>(
         cx: &UsageAnalysis<'tcx, '_, Self>,
         state: &mut Domain<Self::Result>,
         terminator: &Terminator<'tcx>,
     ) {
+        // if .offset() is called on a pointer, then it is fat
         let TerminatorKind::Call {
             func,
             args,

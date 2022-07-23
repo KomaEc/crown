@@ -15,7 +15,7 @@
 use rustc_hir::{def_id::LocalDefId, definitions::DefPathData};
 use rustc_middle::{
     mir::{
-        Constant, ConstantKind, Field, Local, PlaceRef, ProjectionElem, Terminator, TerminatorKind,
+        Constant, ConstantKind, Field, Local, ProjectionElem, Terminator, TerminatorKind, Place,
     },
     ty::{TyCtxt, TyKind},
 };
@@ -31,7 +31,7 @@ pub struct CrateResults<'tcx, 'a>(usage_analysis::CrateResults<'tcx, 'a, NullAna
 
 impl<'tcx, 'a> CrateResults<'tcx, 'a> {
     pub fn collect(tcx: TyCtxt<'tcx>, fns: &'a [LocalDefId], structs: &'a [LocalDefId]) -> Self {
-        CrateResults(usage_analysis::CrateResults::collect(tcx, fns, structs))
+        CrateResults(usage_analysis::CrateResults::collect(tcx, fns, structs, NullAnalysis))
     }
 
     pub fn show(&self, tcx: TyCtxt<'tcx>) {
@@ -89,26 +89,32 @@ impl AnalysisResult for Nullability {
     const DEFAULT: Self = Nullability::Nullable;
 }
 
+#[derive(Clone)]
 pub struct NullAnalysis;
 
 impl Analysis for NullAnalysis {
     type Result = Nullability;
 
-    fn check_place<'tcx>(
+    fn check_places<'tcx>(
         cx: &UsageAnalysis<'tcx, '_, Self>,
         state: &mut Domain<Self::Result>,
-        place: PlaceRef<'tcx>,
+        l_place: Option<Place<'tcx>>,
+        r_place: Option<Place<'tcx>>,
     ) {
-        // For every deref in this place, record that the base of the deref was not null
-        for (idx, proj) in place.projection.iter().enumerate() {
-            if let ProjectionElem::Deref = proj {
-                let ptr_place = PlaceRef {
-                    local: place.local,
-                    projection: &place.projection[..idx],
-                };
-                *state.result_for(cx.tcx, cx.body, ptr_place) =
-                    IntermediateResult::Definite(Nullability::NonNullable);
+        let mut check_place = |place: Place<'tcx>| {
+            // For every deref in this place, record that the base of the deref was not null
+            for (base, proj) in place.iter_projections() {
+                if let ProjectionElem::Deref = proj {
+                    *state.result_for(cx.tcx, cx.body, base) =
+                        IntermediateResult::Definite(Nullability::NonNullable);
+                }
             }
+        };
+        if let Some(l_place) = l_place {
+            check_place(l_place);
+        }
+        if let Some(r_place) = r_place {
+            check_place(r_place);
         }
     }
 

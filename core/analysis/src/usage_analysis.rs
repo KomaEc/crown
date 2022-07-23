@@ -1,7 +1,4 @@
-use std::{
-    fmt::{Debug, Display},
-    marker::PhantomData,
-};
+use std::fmt::{Debug, Display};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_hir::{def_id::LocalDefId, FnRetTy, ItemKind};
@@ -9,7 +6,7 @@ use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
         BasicBlock, Body, Field, Local, PlaceRef, ProjectionElem, Rvalue, StatementKind,
-        Terminator, TerminatorKind, VarDebugInfoContents, START_BLOCK, Constant, ConstantKind,
+        Terminator, TerminatorKind, VarDebugInfoContents, START_BLOCK, Constant, ConstantKind, Place,
     },
     ty::{TyCtxt, TyKind},
 };
@@ -31,19 +28,21 @@ pub(crate) trait AnalysisResult:
     }
 }
 
-pub(crate) trait Analysis: Sized {
+pub(crate) trait Analysis: Clone + Sized {
     type Result: AnalysisResult;
 
-    fn check_place<'tcx>(
-        cx: &UsageAnalysis<'tcx, '_, Self>,
-        state: &mut Domain<Self::Result>,
-        l_place: PlaceRef<'tcx>,
-    );
+    fn check_places<'tcx>(
+        _cx: &UsageAnalysis<'tcx, '_, Self>,
+        _state: &mut Domain<Self::Result>,
+        _l_place: Option<Place<'tcx>>,
+        _r_place: Option<Place<'tcx>>,
+    ) {}
+
     fn call<'tcx>(
-        cx: &UsageAnalysis<'tcx, '_, Self>,
-        state: &mut Domain<Self::Result>,
-        terminator: &Terminator<'tcx>,
-    );
+        _cx: &UsageAnalysis<'tcx, '_, Self>,
+        _state: &mut Domain<Self::Result>,
+        _terminator: &Terminator<'tcx>,
+    ) {}
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -63,7 +62,7 @@ impl<R: AnalysisResult> IntermediateResult<R> {
         match self {
             IntermediateResult::Definite(v) => v.clone(),
             IntermediateResult::Unknown => R::DEFAULT,
-            _ => panic!("result was not definite"),
+            _ => panic!("result was not resolved properly"),
         }
     }
 }
@@ -203,10 +202,10 @@ pub(crate) struct CrateResults<'tcx, 'a, A: Analysis> {
 }
 
 impl<'tcx, 'a, A: Analysis> CrateResults<'tcx, 'a, A> {
-    pub fn collect(tcx: TyCtxt<'tcx>, fns: &'a [LocalDefId], structs: &'a [LocalDefId]) -> Self {
+    pub fn collect(tcx: TyCtxt<'tcx>, fns: &'a [LocalDefId], structs: &'a [LocalDefId], analysis: A) -> Self {
         let mut fn_results = IndexVec::new();
         for &def_id in fns {
-            fn_results.insert(def_id, FuncResults::collect(tcx, def_id, fns, structs));
+            fn_results.insert(def_id, FuncResults::collect(tcx, def_id, fns, structs, analysis.clone()));
         }
 
         let mut fn_results_iter = fn_results.iter().flatten();
@@ -408,9 +407,10 @@ impl<'tcx, 'a, A: Analysis> FuncResults<'tcx, 'a, A> {
         def_id: LocalDefId,
         fns: &'a [LocalDefId],
         structs: &'a [LocalDefId],
+        analysis: A,
     ) -> Self {
         let body = tcx.optimized_mir(def_id);
-        let engine = Engine::new_generic(tcx, &body, UsageAnalysis::new(tcx, def_id, fns, structs));
+        let engine = Engine::new_generic(tcx, &body, UsageAnalysis::new(tcx, def_id, fns, structs, analysis));
         let results = engine.iterate_to_fixpoint();
 
         let mut cursor = ResultsRefCursor::new(&body, &results);
@@ -540,7 +540,7 @@ pub(crate) struct UsageAnalysis<'tcx, 'a, A: Analysis> {
     pub body: &'tcx Body<'tcx>,
     fns: &'a [LocalDefId],
     structs: &'a [LocalDefId],
-    analysis: PhantomData<A>,
+    pub analysis: A,
 }
 
 impl<'tcx, 'a, A: Analysis> UsageAnalysis<'tcx, 'a, A> {
@@ -549,6 +549,7 @@ impl<'tcx, 'a, A: Analysis> UsageAnalysis<'tcx, 'a, A> {
         def_id: LocalDefId,
         fns: &'a [LocalDefId],
         structs: &'a [LocalDefId],
+        analysis: A,
     ) -> Self {
         let body = tcx.optimized_mir(def_id);
         UsageAnalysis {
@@ -556,7 +557,7 @@ impl<'tcx, 'a, A: Analysis> UsageAnalysis<'tcx, 'a, A> {
             body,
             fns,
             structs,
-            analysis: PhantomData,
+            analysis,
         }
     }
 }
@@ -627,18 +628,16 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
                 l_place,
                 Rvalue::Use(operand) | Rvalue::Cast(_, operand, _),
             )) if operand.place().is_some() => {
-                let l_place = l_place.as_ref();
-                let r_place = operand.place().unwrap().as_ref();
+                let r_place = operand.place().unwrap();
                 let _guard = debug_span!("known assign", ?l_place, ?r_place, ?loc).entered();
 
-                A::check_place(self, state, l_place);
-                A::check_place(self, state, r_place);
+                A::check_places(self, state, Some(*l_place), Some(r_place));
                 if !l_place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
                     return;
                 }
-                let mut l_result = state.result_for(self.tcx, self.body, l_place).clone();
+                let mut l_result = state.result_for(self.tcx, self.body, l_place.as_ref()).clone();
                 if let Some((struct_def, field_idx, nested_level)) =
-                    get_struct_field(self.tcx, self.body, l_place)
+                    get_struct_field(self.tcx, self.body, l_place.as_ref())
                 {
                     if !l_result.is_definite() {
                         let dep = InterDep::StructField {
@@ -659,10 +658,10 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
                     }
                 }
                 trace!(?l_result);
-                *state.result_for(self.tcx, self.body, r_place) = l_result;
+                *state.result_for(self.tcx, self.body, r_place.as_ref()) = l_result;
             }
             StatementKind::Assign(box (l_place, _)) => {
-                A::check_place(self, state, l_place.as_ref());
+                A::check_places(self, state, Some(*l_place), None);
                 if !l_place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
                     return;
                 }
@@ -697,10 +696,10 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
             destination,
             ..
         } = &terminator.kind else { return };
-        A::check_place(self, state, destination.unwrap().0.as_ref());
+        A::check_places(self, state, Some(destination.unwrap().0), None);
         for arg in args {
             if let Some(place) = arg.place() {
-                A::check_place(self, state, place.as_ref());
+                A::check_places(self, state, None, Some(place));
             }
         }
         let Some(Constant {
@@ -722,7 +721,6 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
             if !place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
                 continue;
             }
-            A::check_place(self, state, place.as_ref());
             let dep = InterDep::FnArg {
                 fn_def: def_id,
                 arg: Local::from_usize(idx + 1),
