@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
 use analysis::{
-    api::AnalysisResults, call_graph::Func, fatness_analysis, mutability_analysis, null_analysis,
-    ownership_analysis, ssa::RichLocation, get_struct_field,
+    api::AnalysisResults, call_graph::Func, fatness_analysis, get_struct_field,
+    mutability_analysis, null_analysis, ownership_analysis,
 };
 use either::Either;
 use rustc_hir::def_id::LocalDefId;
@@ -20,7 +20,7 @@ pub struct BodyRewriteCtxt<'tcx, 'a, 'b> {
     pub tcx: TyCtxt<'tcx>,
     pub rewriter: &'a mut rewriter::Rewriter,
     pub ownership: &'a ownership_analysis::InterSummary,
-    pub mutability: &'a mutability_analysis::InterSummary,
+    pub mutability: &'a mutability_analysis::CrateResults<'tcx, 'b>,
     pub fatness: &'a fatness_analysis::CrateResults<'tcx, 'b>,
     pub null: &'a null_analysis::CrateResults<'tcx, 'b>,
     pub func: Func,
@@ -577,29 +577,6 @@ fn place_result<'tcx, A: AnalysisResults>(
 }
 
 /// returns the source of an expression with all its outer `as _` removed
-fn uncast(cx: &mut BodyRewriteCtxt, loc: Location, local: Local) -> Option<String> {
-    let source_map = &cx.mutability.func_summaries[cx.func].ssa_name_source_map;
-    let ssa_idx = source_map.try_use(local, loc).unwrap();
-    let def_loc_rich = &cx.mutability.func_summaries[cx.func].ssa_def_sites.defs[local][ssa_idx];
-    let def_loc = match def_loc_rich {
-        RichLocation::Mir(l) => *l,
-        RichLocation::Entry => todo!(),
-        _ => todo!(),
-    };
-    let def_stmt = match cx.body.stmt_at(def_loc) {
-        Either::Left(s) => s,
-        Either::Right(terminator) => {
-            return Some(cx.span_to_snippet(terminator.source_info.span));
-        }
-    };
-    match &def_stmt.kind {
-        StatementKind::Assign(box (_place, rvalue)) => {
-            if let Rvalue::Cast(_kind, operand, _ty) = rvalue {
-                return uncast(cx, def_loc, operand.place().unwrap().as_local().unwrap());
-            }
-            let span = def_stmt.source_info.span;
-            return Some(cx.span_to_snippet(span));
-        }
-        _ => todo!(),
-    }
+fn uncast(_cx: &mut BodyRewriteCtxt, _loc: Location, _local: Local) -> Option<String> {
+    todo!("figure out how to get defs now that ssa fatness and mutability are gone");
 }

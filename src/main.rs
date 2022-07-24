@@ -13,7 +13,7 @@ extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 extern crate rustc_target;
 
-use analysis::{null_analysis, fatness_analysis};
+use analysis::{fatness_analysis, mutability_analysis, null_analysis};
 use clap::Parser;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
@@ -22,6 +22,7 @@ use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config;
 use std::{borrow::BorrowMut, path::PathBuf, time::Instant};
+use tracing_subscriber::EnvFilter;
 
 #[derive(Parser)]
 struct Cli {
@@ -61,7 +62,10 @@ enum Command {
 }
 
 fn main() {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .without_time()
+        .with_env_filter(EnvFilter::from_default_env())
+        .init();
     let args = Cli::parse();
     rustc_interface::run_compiler(compiler_config(args.path), move |compiler| {
         compiler.enter(|queries| {
@@ -180,11 +184,12 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             }
 
             if *mutability {
-                refactor::show_mutability_analysis_results(
+                let results = mutability_analysis::CrateResults::collect(
                     tcx,
-                    top_level_struct_defs.clone(),
-                    top_level_fns.clone(),
-                )
+                    &top_level_fns,
+                    &top_level_struct_defs,
+                );
+                results.show(tcx);
             }
 
             if *array {
@@ -201,7 +206,11 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                 refactor::ownership_analysis(tcx, &top_level_struct_defs, &top_level_fns)
             });
             let mutability_analysis = time("mutability analysis", || {
-                refactor::mutability_analysis(tcx, &top_level_struct_defs, &top_level_fns)
+                mutability_analysis::CrateResults::collect(
+                    tcx,
+                    &top_level_fns,
+                    &top_level_struct_defs,
+                )
             });
             let fatness_analysis = time("fatness analysis", || {
                 fatness_analysis::CrateResults::collect(tcx, &top_level_fns, &top_level_struct_defs)

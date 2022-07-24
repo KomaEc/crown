@@ -28,7 +28,7 @@ use std::process::exit;
 use analysis::{
     call_graph::CallGraph,
     fat_thin_analysis::{self, CrateSummary, Lambda},
-    mutability_analysis, ownership_analysis,
+    ownership_analysis,
     ssa::rename::handler::LogSSAName,
 };
 use rustc_hir::def_id::LocalDefId;
@@ -128,27 +128,6 @@ pub fn show_ownership_analysis_results<'tcx>(
     }
 }
 
-pub fn show_mutability_analysis_results<'tcx>(
-    tcx: TyCtxt<'tcx>,
-    structs: Vec<LocalDefId>,
-    funcs: Vec<LocalDefId>,
-) {
-    let call_graph = CallGraph::new(tcx, funcs.into_iter().map(|did| did.to_def_id()));
-    let mut mutability_analysis =
-        mutability_analysis::InterSummary::new(tcx, &structs, call_graph, LogSSAName);
-
-    match mutability_analysis.resolve() {
-        Ok(()) => {
-            mutability_analysis.show_result();
-        }
-        Err(reason) => {
-            tracing::error!("Cannot solve ownership constraints!");
-
-            mutability_analysis::explain_error(reason)
-        }
-    }
-}
-
 pub fn fatness_analysis(
     tcx: TyCtxt<'_>,
     structs: &[LocalDefId],
@@ -180,26 +159,6 @@ pub fn ownership_analysis(
             tracing::error!("Cannot solve ownership constraints!");
 
             ownership_analysis::explain_error(reason);
-
-            exit(0)
-        }
-    }
-}
-
-pub fn mutability_analysis(
-    tcx: TyCtxt<'_>,
-    structs: &[LocalDefId],
-    funcs: &[LocalDefId],
-) -> mutability_analysis::InterSummary {
-    let call_graph = CallGraph::new(tcx, funcs.into_iter().map(|did| did.to_def_id()));
-    let mut mutability_analysis =
-        mutability_analysis::InterSummary::new(tcx, &structs, call_graph, LogSSAName);
-    match mutability_analysis.resolve() {
-        Ok(()) => mutability_analysis,
-        Err(reason) => {
-            tracing::error!("Cannot solve ownership constraints!");
-
-            mutability_analysis::explain_error(reason);
 
             exit(0)
         }

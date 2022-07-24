@@ -22,7 +22,7 @@ fn ty_nested_depth(ty: &Ty) -> usize {
 pub fn rewrite<'tcx, 'a>(
     tcx: TyCtxt<'tcx>,
     ownership_analysis: &ownership_analysis::InterSummary,
-    mutability_analysis: &mutability_analysis::InterSummary,
+    mutability_analysis: &mutability_analysis::CrateResults<'tcx, 'a>,
     fatness_analysis: &fatness_analysis::CrateResults<'tcx, 'a>,
     null_analysis: &null_analysis::CrateResults<'tcx, 'a>,
     struct_defs: &[LocalDefId],
@@ -53,7 +53,7 @@ fn rewrite_functions<'tcx, 'a>(
     tcx: TyCtxt<'tcx>,
     rewriter: &mut Rewriter,
     ownership_analysis: &ownership_analysis::InterSummary,
-    mutability_analysis: &mutability_analysis::InterSummary,
+    mutability_analysis: &mutability_analysis::CrateResults<'tcx, 'a>,
     fatness_analysis: &fatness_analysis::CrateResults<'tcx, 'a>,
     null_analysis: &null_analysis::CrateResults<'tcx, 'a>,
 ) {
@@ -90,7 +90,7 @@ fn rewrite_fn_sig(
     tcx: TyCtxt,
     rewriter: &mut Rewriter,
     ownership: &ownership_analysis::InterSummary,
-    mutability: &mutability_analysis::InterSummary,
+    mutability: &mutability_analysis::CrateResults,
     fatness: &fatness_analysis::CrateResults,
     null: &null_analysis::CrateResults,
     def_id: LocalDefId,
