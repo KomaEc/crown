@@ -5,8 +5,8 @@ use rustc_hir::{def_id::LocalDefId, FnRetTy, ItemKind};
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
-        BasicBlock, Body, Field, Local, PlaceRef, ProjectionElem, Rvalue, StatementKind,
-        Terminator, TerminatorKind, VarDebugInfoContents, START_BLOCK, Constant, ConstantKind, Place,
+        BasicBlock, Body, Constant, ConstantKind, Field, Local, Place, PlaceRef, ProjectionElem,
+        Rvalue, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents, START_BLOCK,
     },
     ty::{TyCtxt, TyKind},
 };
@@ -36,13 +36,15 @@ pub(crate) trait Analysis: Clone + Sized {
         _state: &mut Domain<Self::Result>,
         _l_place: Option<Place<'tcx>>,
         _r_place: Option<Place<'tcx>>,
-    ) {}
+    ) {
+    }
 
     fn call<'tcx>(
         _cx: &UsageAnalysis<'tcx, '_, Self>,
         _state: &mut Domain<Self::Result>,
         _terminator: &Terminator<'tcx>,
-    ) {}
+    ) {
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -202,10 +204,18 @@ pub(crate) struct CrateResults<'tcx, 'a, A: Analysis> {
 }
 
 impl<'tcx, 'a, A: Analysis> CrateResults<'tcx, 'a, A> {
-    pub fn collect(tcx: TyCtxt<'tcx>, fns: &'a [LocalDefId], structs: &'a [LocalDefId], analysis: A) -> Self {
+    pub fn collect(
+        tcx: TyCtxt<'tcx>,
+        fns: &'a [LocalDefId],
+        structs: &'a [LocalDefId],
+        analysis: A,
+    ) -> Self {
         let mut fn_results = IndexVec::new();
         for &def_id in fns {
-            fn_results.insert(def_id, FuncResults::collect(tcx, def_id, fns, structs, analysis.clone()));
+            fn_results.insert(
+                def_id,
+                FuncResults::collect(tcx, def_id, fns, structs, analysis.clone()),
+            );
         }
 
         let mut fn_results_iter = fn_results.iter().flatten();
@@ -240,8 +250,7 @@ impl<'tcx, 'a, A: Analysis> CrateResults<'tcx, 'a, A> {
     pub fn show(&self, tcx: TyCtxt<'tcx>) {
         for (struct_def_id, struct_result) in self.struct_results.0.iter() {
             let struct_name = tcx.def_path_str(struct_def_id.to_def_id());
-            let struct_def =
-                &tcx.adt_def(*struct_def_id).variants[0u32.into()];
+            let struct_def = &tcx.adt_def(*struct_def_id).variants[0u32.into()];
             for (field, field_result) in struct_result.iter_enumerated() {
                 let field_name = &struct_def.fields[field.as_usize()].name;
                 println!("{struct_name}.{field_name} has {field_result:?}");
@@ -382,7 +391,7 @@ fn resolve_dep<A: Analysis>(
 
         use IntermediateResult::*;
         match (&mut ret, other_result) {
-            (_, IntraDeps(_)) => {}, // don't transmit intra deps outside fns
+            (_, IntraDeps(_)) => {} // don't transmit intra deps outside fns
             (InterDeps(_), _) => panic!("how"),
             (_, InterDeps(_)) => return None, // cyclic
             (l @ (Definite(_) | Unknown), r @ (Definite(_) | Unknown)) => {
@@ -410,7 +419,11 @@ impl<'tcx, 'a, A: Analysis> FuncResults<'tcx, 'a, A> {
         analysis: A,
     ) -> Self {
         let body = tcx.optimized_mir(def_id);
-        let engine = Engine::new_generic(tcx, &body, UsageAnalysis::new(tcx, def_id, fns, structs, analysis));
+        let engine = Engine::new_generic(
+            tcx,
+            &body,
+            UsageAnalysis::new(tcx, def_id, fns, structs, analysis),
+        );
         let results = engine.iterate_to_fixpoint();
 
         let mut cursor = ResultsRefCursor::new(&body, &results);
@@ -426,7 +439,11 @@ impl<'tcx, 'a, A: Analysis> FuncResults<'tcx, 'a, A> {
                     *nested_result =
                         deps.iter()
                             .fold(IntermediateResult::Unknown, |mut acc, dep| {
-                                acc.join(&resolve_intra_dep(&mut cursor, dep.clone(), &mut in_progress));
+                                acc.join(&resolve_intra_dep(
+                                    &mut cursor,
+                                    dep.clone(),
+                                    &mut in_progress,
+                                ));
                                 acc
                             });
                 }
@@ -642,7 +659,9 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
                 if !l_place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
                     return;
                 }
-                let mut l_result = state.result_for(self.tcx, self.body, l_place.as_ref()).clone();
+                let mut l_result = state
+                    .result_for(self.tcx, self.body, l_place.as_ref())
+                    .clone();
                 if let Some((struct_def, field_idx, nested_level)) =
                     get_struct_field(self.tcx, self.body, l_place.as_ref())
                 {
@@ -670,7 +689,9 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
                 // specific results at each location, but I think it is only useful with a very
                 // complex rewrite scheme which may not be necessary. With `=` it broke mutability
                 // rewrite, so I changed it.
-                state.result_for(self.tcx, self.body, r_place.as_ref()).join(&l_result);
+                state
+                    .result_for(self.tcx, self.body, r_place.as_ref())
+                    .join(&l_result);
             }
             StatementKind::Assign(box (l_place, _)) => {
                 A::check_places(self, state, Some(*l_place), None);

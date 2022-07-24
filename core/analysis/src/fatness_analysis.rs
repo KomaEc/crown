@@ -1,15 +1,11 @@
 use rustc_hir::{def_id::LocalDefId, definitions::DefPathData};
 use rustc_middle::{
-    mir::{
-        Constant, ConstantKind, Field, Local, Terminator, TerminatorKind,
-    },
+    mir::{Constant, ConstantKind, Field, Local, Terminator, TerminatorKind},
     ty::{TyCtxt, TyKind},
 };
 use rustc_mir_dataflow::JoinSemiLattice;
 
-use crate::usage_analysis::{
-    self, Analysis, AnalysisResult, Domain, UsageAnalysis,
-};
+use crate::usage_analysis::{self, Analysis, AnalysisResult, Domain, UsageAnalysis};
 
 // defer to CrateResults instead of exposing it to avoid having to make everything in
 // usage_analysis public
@@ -17,7 +13,12 @@ pub struct CrateResults<'tcx, 'a>(usage_analysis::CrateResults<'tcx, 'a, Fatness
 
 impl<'tcx, 'a> CrateResults<'tcx, 'a> {
     pub fn collect(tcx: TyCtxt<'tcx>, fns: &'a [LocalDefId], structs: &'a [LocalDefId]) -> Self {
-        CrateResults(usage_analysis::CrateResults::collect(tcx, fns, structs, FatnessAnalysis))
+        CrateResults(usage_analysis::CrateResults::collect(
+            tcx,
+            fns,
+            structs,
+            FatnessAnalysis,
+        ))
     }
 
     pub fn show(&self, tcx: TyCtxt<'tcx>) {
@@ -116,8 +117,7 @@ impl Analysis for FatnessAnalysis {
             .unwrap_or(false);
         if in_core && in_ptr && is_offset {
             let place = args[0].place().expect("pointer offset on constant");
-            *state.result_for(cx.tcx, cx.body, place.as_ref()) =
-                Fatness::Fat.to_intermediate();
+            *state.result_for(cx.tcx, cx.body, place.as_ref()) = Fatness::Fat.to_intermediate();
             return;
         }
     }

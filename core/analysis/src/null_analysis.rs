@@ -15,7 +15,7 @@
 use rustc_hir::{def_id::LocalDefId, definitions::DefPathData};
 use rustc_middle::{
     mir::{
-        Constant, ConstantKind, Field, Local, ProjectionElem, Terminator, TerminatorKind, Place,
+        Constant, ConstantKind, Field, Local, Place, ProjectionElem, Terminator, TerminatorKind,
     },
     ty::{TyCtxt, TyKind},
 };
@@ -31,7 +31,12 @@ pub struct CrateResults<'tcx, 'a>(usage_analysis::CrateResults<'tcx, 'a, NullAna
 
 impl<'tcx, 'a> CrateResults<'tcx, 'a> {
     pub fn collect(tcx: TyCtxt<'tcx>, fns: &'a [LocalDefId], structs: &'a [LocalDefId]) -> Self {
-        CrateResults(usage_analysis::CrateResults::collect(tcx, fns, structs, NullAnalysis))
+        CrateResults(usage_analysis::CrateResults::collect(
+            tcx,
+            fns,
+            structs,
+            NullAnalysis,
+        ))
     }
 
     pub fn show(&self, tcx: TyCtxt<'tcx>) {
