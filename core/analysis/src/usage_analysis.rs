@@ -417,6 +417,8 @@ impl<'tcx, 'a, A: Analysis> FuncResults<'tcx, 'a, A> {
         cursor.seek_to_block_start(START_BLOCK);
         let mut start_results = cursor.get().clone();
 
+        // anti-stack overflow
+        let mut in_progress = Vec::new();
         for (local, local_result) in start_results.locals.iter_enumerated_mut() {
             for (nested_level, nested_result) in local_result.iter_enumerated_mut() {
                 if let IntermediateResult::IntraDeps(deps) = nested_result {
@@ -424,7 +426,7 @@ impl<'tcx, 'a, A: Analysis> FuncResults<'tcx, 'a, A> {
                     *nested_result =
                         deps.iter()
                             .fold(IntermediateResult::Unknown, |mut acc, dep| {
-                                acc.join(&resolve_intra_dep(&mut cursor, dep.clone()));
+                                acc.join(&resolve_intra_dep(&mut cursor, dep.clone(), &mut in_progress));
                                 acc
                             });
                 }
@@ -443,7 +445,12 @@ impl<'tcx, 'a, A: Analysis> FuncResults<'tcx, 'a, A> {
 fn resolve_intra_dep<'tcx, A: Analysis>(
     cursor: &mut ResultsRefCursor<'_, '_, 'tcx, UsageAnalysis<'tcx, '_, A>>,
     dep: IntraDep,
+    in_progress: &mut Vec<IntraDep>,
 ) -> IntermediateResult<A::Result> {
+    if in_progress.contains(&dep) {
+        return IntermediateResult::Unknown;
+    }
+    in_progress.push(dep.clone());
     cursor.seek_to_block_start(dep.bb_id);
     let target = cursor.get().locals[dep.local][dep.nested_level].clone();
     match target {
@@ -451,7 +458,7 @@ fn resolve_intra_dep<'tcx, A: Analysis>(
             return deps
                 .into_iter()
                 .fold(IntermediateResult::Unknown, |mut acc, dep| {
-                    acc.join(&resolve_intra_dep(cursor, dep));
+                    acc.join(&resolve_intra_dep(cursor, dep, in_progress));
                     acc
                 });
         }
@@ -460,7 +467,7 @@ fn resolve_intra_dep<'tcx, A: Analysis>(
                 .iter()
                 .fold(IntermediateResult::Unknown, |mut acc, &pred| {
                     let dep = IntraDep { bb_id: pred, ..dep };
-                    acc.join(&resolve_intra_dep(cursor, dep));
+                    acc.join(&resolve_intra_dep(cursor, dep, in_progress));
                     acc
                 });
         }
@@ -658,7 +665,12 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
                     }
                 }
                 trace!(?l_result);
-                *state.result_for(self.tcx, self.body, r_place.as_ref()) = l_result;
+                // If you want the general result for all locations of a pointer, this is correct.
+                // Previously it used `=` instead of `join`, which seemed like it should give more
+                // specific results at each location, but I think it is only useful with a very
+                // complex rewrite scheme which may not be necessary. With `=` it broke mutability
+                // rewrite, so I changed it.
+                state.result_for(self.tcx, self.body, r_place.as_ref()).join(&l_result);
             }
             StatementKind::Assign(box (l_place, _)) => {
                 A::check_places(self, state, Some(*l_place), None);
