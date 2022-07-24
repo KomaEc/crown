@@ -24,7 +24,6 @@ pub mod null_analysis;
 pub mod ownership;
 pub mod ownership_analysis;
 pub mod pointer_analysis;
-pub mod required_mutability;
 pub mod rustc_index_ext;
 pub mod ssa;
 #[cfg(test)]
