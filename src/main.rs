@@ -14,6 +14,7 @@ extern crate rustc_session;
 
 // use analysis::null_analysis::NullAnalysisResults;
 use clap::Parser;
+use core::Program;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
 use rustc_hir::{ItemKind, OwnerNode};
@@ -56,6 +57,10 @@ enum Command {
     Rewrite {
         #[clap(arg_enum, default_value_t = core::rewriter::RewriteMode::Print)]
         rewrite_mode: core::rewriter::RewriteMode,
+    },
+    Playground {
+        #[clap(long)]
+        mir: bool,
     },
 }
 
@@ -131,7 +136,15 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
         };
     }
 
-    match cmd {
+    let program = Program::new(tcx, functions, structs);
+
+    match *cmd {
+        Command::Playground { mir } => {
+            if mir {
+                program.print_mir();
+            }
+            program.inspect_nested_places();
+        }
         Command::Analyse { .. } => {
             // if *pretty_mir {
             //     refactor::show_mir(tcx, top_level_fns.clone())
@@ -157,7 +170,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             //     refactor::print_fat_thin_analysis_results(tcx, top_level_struct_defs, top_level_fns)
             // }
         }
-        &Command::Rewrite { .. } => {
+        Command::Rewrite { .. } => {
             // let ownership_analysis = time("ownership analysis", || {
             //     refactor::ownership_analysis(tcx, &top_level_struct_defs, &top_level_fns)
             // });

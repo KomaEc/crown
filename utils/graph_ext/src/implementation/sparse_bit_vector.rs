@@ -58,6 +58,10 @@ impl<N: Idx> SparseBitVectorGraph<N> {
         self.edges[src].insert(dst)
     }
 
+    pub fn has_edge(&self, src: N, dst: N) -> bool {
+        self.edges[src].contains(dst)
+    }
+
     #[inline]
     pub fn successor_nodes(&self, src: N) -> &HybridBitSet<N> {
         &self.edges[src]

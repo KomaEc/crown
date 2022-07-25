@@ -29,22 +29,26 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
 
-mod analysis;
+pub(crate) mod analysis;
+pub(crate) mod call_graph;
+pub(crate) mod macros;
+pub mod playground;
 pub mod rewriter;
+pub(crate) mod struct_dep_graph;
 #[cfg(test)]
 pub(crate) mod test;
-mod macros;
 
-use analysis::call_graph::CallGraph;
+use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
+use struct_dep_graph::StructDepGraph;
 
 /// Input program is assumed to consist of only top-level
 /// functions and struct definitions.
 pub struct Program<'tcx> {
     tcx: TyCtxt<'tcx>,
     call_graph: CallGraph,
-    structs: Vec<DefId>,
+    struct_dep_graph: StructDepGraph,
 }
 
 impl<'tcx> Program<'tcx> {
@@ -52,11 +56,23 @@ impl<'tcx> Program<'tcx> {
         Program {
             tcx,
             call_graph: CallGraph::new(tcx, functions),
-            structs,
+            struct_dep_graph: StructDepGraph::new(tcx, structs),
         }
     }
 
     pub fn call_graph(&self) -> &CallGraph {
         &self.call_graph
+    }
+
+    pub fn struct_dep_graph(&self) -> &StructDepGraph {
+        &self.struct_dep_graph
+    }
+
+    pub fn functions(&self) -> &[DefId] {
+        &self.call_graph.functions.raw[..]
+    }
+
+    pub fn structs(&self) -> &[DefId] {
+        &self.struct_dep_graph.structs.raw[..]
     }
 }

@@ -1,13 +1,13 @@
 //! The set of macros defined/re-exported from rustc
 
+#[cfg(not(debug_assertions))]
+pub(crate) use rustc_index::newtype_index;
 
 
-// pub(crate) use rustc_index::newtype_index;
-/// !!!!
-/// Cheating rust-analyzer
-/// 
+
+/// Cheating on rust-analyzer
+#[cfg(debug_assertions)]
 #[macro_export]
-// #[allow_internal_unstable(step_trait, rustc_attrs, trusted_step)]
 macro_rules! newtype_index {
     // ---- public rules ----
 
@@ -446,4 +446,5 @@ macro_rules! newtype_index {
     );
 }
 
+#[cfg(debug_assertions)]
 pub(crate) use newtype_index;

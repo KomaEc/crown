@@ -129,10 +129,15 @@ impl<'me, 'tcx> Visitor<'tcx> for CallGraphNodeVis<'me, 'tcx> {
             fn_span: _,
         } = &terminator.kind
         {
-            let ty = func
-                .constant()
-                .expect("closures or function pointers are not supported!")
-                .ty();
+            let Some(func_constant) = func.constant() else {
+                tracing::warn!("closures or function pointers are now ignored");
+                return
+            };
+            let ty = func_constant.ty();
+            // let ty = func
+            //     .constant()
+            //     .expect("closures or function pointers are not supported!")
+            //     .ty();
             if let &FnDef(callee_did, _generic_args) = ty.kind() {
                 // local defined functions: libc externs or user functions
                 if let Some(did) = callee_did.as_local() {
@@ -168,7 +173,7 @@ mod test {
             let crate::Program {
                 tcx: _,
                 call_graph,
-                structs: _,
+                struct_dep_graph: _,
             } = program;
             for caller in call_graph.graph.nodes() {
                 for callee in call_graph.successors(caller) {

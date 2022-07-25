@@ -11,13 +11,13 @@ pub trait PlaceExt {
 
 impl<'tcx> PlaceExt for Place<'tcx> {
     fn r#abstract(self) -> PlaceAbs {
-        let mut ans = PlaceAbs {
-            base_local: self.local,
-            num_derefs: 0,
-        };
+        let mut ans = PlaceAbs::from_local(self.local);
         for projection_elem in self.projection {
-            let ProjectionElem::Deref = projection_elem else { continue };
-            ans.num_derefs += 1;
+            match projection_elem {
+                ProjectionElem::Deref => ans.dereferenced = true,
+                ProjectionElem::Field(_, _) => todo!(),
+                _ => continue,
+            }
         }
         ans
     }
