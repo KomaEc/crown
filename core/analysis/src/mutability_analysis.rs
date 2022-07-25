@@ -5,7 +5,7 @@ use rustc_middle::{
 };
 use rustc_mir_dataflow::JoinSemiLattice;
 
-use crate::usage_analysis::{self, Domain, IntermediateResult, UsageAnalysis};
+use crate::usage_analysis::{self, Domain, IntermediateResult, UsageAnalysisContext};
 
 // defer to CrateResults instead of exposing it to avoid having to make everything in
 // usage_analysis public
@@ -83,7 +83,8 @@ impl usage_analysis::Analysis for MutabilityAnalysis {
     type Result = Mutability;
 
     fn check_places<'tcx>(
-        cx: &UsageAnalysis<'tcx, '_, Self>,
+        &self,
+        cx: &UsageAnalysisContext<'tcx, '_>,
         state: &mut Domain<Self::Result>,
         l_place: Option<Place<'tcx>>,
         _r_place: Option<Place<'tcx>>,

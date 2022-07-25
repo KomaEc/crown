@@ -5,7 +5,7 @@ use rustc_middle::{
 };
 use rustc_mir_dataflow::JoinSemiLattice;
 
-use crate::usage_analysis::{self, Analysis, AnalysisResult, Domain, UsageAnalysis};
+use crate::usage_analysis::{self, Analysis, AnalysisResult, Domain, UsageAnalysisContext};
 
 // defer to CrateResults instead of exposing it to avoid having to make everything in
 // usage_analysis public
@@ -84,7 +84,8 @@ impl Analysis for FatnessAnalysis {
     type Result = Fatness;
 
     fn call<'tcx>(
-        cx: &UsageAnalysis<'tcx, '_, Self>,
+        &self,
+        cx: &UsageAnalysisContext<'tcx, '_>,
         state: &mut Domain<Self::Result>,
         terminator: &Terminator<'tcx>,
     ) {

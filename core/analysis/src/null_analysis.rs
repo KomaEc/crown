@@ -22,7 +22,7 @@ use rustc_middle::{
 use rustc_mir_dataflow::JoinSemiLattice;
 
 use crate::usage_analysis::{
-    self, Analysis, AnalysisResult, Domain, IntermediateResult, UsageAnalysis,
+    self, Analysis, AnalysisResult, Domain, IntermediateResult, UsageAnalysisContext,
 };
 
 // defer to CrateResults instead of exposing it to avoid having to make everything in
@@ -101,7 +101,8 @@ impl Analysis for NullAnalysis {
     type Result = Nullability;
 
     fn check_places<'tcx>(
-        cx: &UsageAnalysis<'tcx, '_, Self>,
+        &self,
+        cx: &UsageAnalysisContext<'tcx, '_>,
         state: &mut Domain<Self::Result>,
         l_place: Option<Place<'tcx>>,
         r_place: Option<Place<'tcx>>,
@@ -124,7 +125,8 @@ impl Analysis for NullAnalysis {
     }
 
     fn call<'tcx>(
-        cx: &UsageAnalysis<'tcx, '_, Self>,
+        &self,
+        cx: &UsageAnalysisContext<'tcx, '_>,
         state: &mut Domain<Self::Result>,
         terminator: &Terminator<'tcx>,
     ) {

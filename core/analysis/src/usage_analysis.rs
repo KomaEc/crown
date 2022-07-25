@@ -32,7 +32,8 @@ pub(crate) trait Analysis: Clone + Sized {
     type Result: AnalysisResult;
 
     fn check_places<'tcx>(
-        _cx: &UsageAnalysis<'tcx, '_, Self>,
+        &self,
+        _cx: &UsageAnalysisContext<'tcx, '_>,
         _state: &mut Domain<Self::Result>,
         _l_place: Option<Place<'tcx>>,
         _r_place: Option<Place<'tcx>>,
@@ -40,7 +41,8 @@ pub(crate) trait Analysis: Clone + Sized {
     }
 
     fn call<'tcx>(
-        _cx: &UsageAnalysis<'tcx, '_, Self>,
+        &self,
+        _cx: &UsageAnalysisContext<'tcx, '_>,
         _state: &mut Domain<Self::Result>,
         _terminator: &Terminator<'tcx>,
     ) {
@@ -418,12 +420,16 @@ impl<'tcx, 'a, A: Analysis> FuncResults<'tcx, 'a, A> {
         structs: &'a [LocalDefId],
         analysis: A,
     ) -> Self {
+        let fn_name = tcx.def_path_str(def_id.to_def_id());
+        let _guard = debug_span!("fn", ?fn_name).entered();
         let body = tcx.optimized_mir(def_id);
-        let engine = Engine::new_generic(
+        let cx = UsageAnalysisContext {
             tcx,
-            &body,
-            UsageAnalysis::new(tcx, def_id, fns, structs, analysis),
-        );
+            body,
+            fns,
+            structs,
+        };
+        let engine = Engine::new_generic(tcx, &body, UsageAnalysis(cx, analysis));
         let results = engine.iterate_to_fixpoint();
 
         let mut cursor = ResultsRefCursor::new(&body, &results);
@@ -480,7 +486,7 @@ fn resolve_intra_dep<'tcx, A: Analysis>(
                 });
         }
         IntermediateResult::Unknown => {
-            return cursor.analysis().body.predecessors()[dep.bb_id]
+            return cursor.analysis().0.body.predecessors()[dep.bb_id]
                 .iter()
                 .fold(IntermediateResult::Unknown, |mut acc, &pred| {
                     let dep = IntraDep { bb_id: pred, ..dep };
@@ -531,6 +537,7 @@ impl<R: AnalysisResult> Domain<R> {
         body: &Body<'tcx>,
         place: PlaceRef<'tcx>,
     ) -> &mut IntermediateResult<R> {
+        trace!(?place, "result for");
         if let Some((struct_def_id, field, n_derefs)) = get_struct_field(tcx, body, place) {
             let struct_results = self.structs.0.entry(struct_def_id).or_default();
             struct_results.ensure_contains_elem(field, IndexVec::new);
@@ -557,34 +564,31 @@ impl<R: AnalysisResult> JoinSemiLattice for Domain<R> {
     }
 }
 
-impl<'tcx, A: Analysis> DebugWithContext<UsageAnalysis<'tcx, '_, A>> for Domain<A::Result> {}
-
-pub(crate) struct UsageAnalysis<'tcx, 'a, A: Analysis> {
+pub(crate) struct UsageAnalysisContext<'tcx, 'a> {
     pub tcx: TyCtxt<'tcx>,
     pub body: &'tcx Body<'tcx>,
     fns: &'a [LocalDefId],
     structs: &'a [LocalDefId],
-    pub analysis: A,
 }
 
-impl<'tcx, 'a, A: Analysis> UsageAnalysis<'tcx, 'a, A> {
-    pub fn new(
-        tcx: TyCtxt<'tcx>,
-        def_id: LocalDefId,
-        fns: &'a [LocalDefId],
-        structs: &'a [LocalDefId],
-        analysis: A,
-    ) -> Self {
-        let body = tcx.optimized_mir(def_id);
-        UsageAnalysis {
-            tcx,
-            body,
-            fns,
-            structs,
-            analysis,
-        }
+pub(crate) struct UsageAnalysis<'tcx, 'a, A: Analysis>(UsageAnalysisContext<'tcx, 'a>, A);
+
+impl<'tcx, A: Analysis> UsageAnalysis<'tcx, '_, A> {
+    fn check_places(
+        &self,
+        state: &mut Domain<A::Result>,
+        l_place: Option<Place<'tcx>>,
+        r_place: Option<Place<'tcx>>,
+    ) {
+        self.1.check_places(&self.0, state, l_place, r_place);
+    }
+
+    fn call(&self, state: &mut Domain<A::Result>, terminator: &Terminator<'tcx>) {
+        self.1.call(&self.0, state, terminator);
     }
 }
+
+impl<'tcx, A: Analysis> DebugWithContext<UsageAnalysis<'tcx, '_, A>> for Domain<A::Result> {}
 
 impl<'tcx, A: Analysis> AnalysisDomain<'tcx> for UsageAnalysis<'tcx, '_, A> {
     type Domain = Domain<A::Result>;
@@ -610,17 +614,17 @@ impl<'tcx, A: Analysis> AnalysisDomain<'tcx> for UsageAnalysis<'tcx, '_, A> {
             }
             nested_depth
         };
-        let structs = CrateStructResults(FxHashMap::from_iter(self.structs.iter().map(|&def_id| {
-            let ItemKind::Struct(ref variant_data, _) = self.tcx.hir().expect_item(def_id).kind else { panic!() };
+        let structs = CrateStructResults(FxHashMap::from_iter(self.0.structs.iter().map(|&def_id| {
+            let ItemKind::Struct(ref variant_data, _) = self.0.tcx.hir().expect_item(def_id).kind else { panic!() };
             let fields = variant_data.fields().iter().map(|f| {
                 IndexVec::from_iter(std::iter::repeat(IntermediateResult::Unknown).take(hir_ptr_depth(f.ty)))
             });
             (def_id, IndexVec::from_iter(fields))
         })));
         let mut fn_returns = FnReturnResults(IndexVec::new());
-        self.fns.iter()
+        self.0.fns.iter()
             .map(|&def_id| {
-                let ItemKind::Fn(ref sig, _, _) = self.tcx.hir().expect_item(def_id).kind else { panic!() };
+                let ItemKind::Fn(ref sig, _, _) = self.0.tcx.hir().expect_item(def_id).kind else { panic!() };
                 let FnRetTy::Return(ref ty) = sig.decl.output else { return (def_id, IndexVec::new()) };
                 (def_id, IndexVec::from_iter(std::iter::repeat(IntermediateResult::Unknown).take(hir_ptr_depth(ty))))
             })
@@ -647,23 +651,24 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
         statement: &rustc_middle::mir::Statement<'tcx>,
         loc: rustc_middle::mir::Location,
     ) {
+        let _guard = debug_span!("stmt", ?loc).entered();
         match &statement.kind {
             StatementKind::Assign(box (
                 l_place,
                 Rvalue::Use(operand) | Rvalue::Cast(_, operand, _),
             )) if operand.place().is_some() => {
                 let r_place = operand.place().unwrap();
-                let _guard = debug_span!("known assign", ?l_place, ?r_place, ?loc).entered();
+                let _guard = debug_span!("known assign", ?l_place, ?r_place).entered();
 
-                A::check_places(self, state, Some(*l_place), Some(r_place));
-                if !l_place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+                self.check_places(state, Some(*l_place), Some(r_place));
+                if !l_place.ty(self.0.body, self.0.tcx).ty.is_unsafe_ptr() {
                     return;
                 }
                 let mut l_result = state
-                    .result_for(self.tcx, self.body, l_place.as_ref())
+                    .result_for(self.0.tcx, self.0.body, l_place.as_ref())
                     .clone();
                 if let Some((struct_def, field_idx, nested_level)) =
-                    get_struct_field(self.tcx, self.body, l_place.as_ref())
+                    get_struct_field(self.0.tcx, self.0.body, l_place.as_ref())
                 {
                     if !l_result.is_definite() {
                         let dep = InterDep::StructField {
@@ -690,15 +695,15 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
                 // complex rewrite scheme which may not be necessary. With `=` it broke mutability
                 // rewrite, so I changed it.
                 state
-                    .result_for(self.tcx, self.body, r_place.as_ref())
+                    .result_for(self.0.tcx, self.0.body, r_place.as_ref())
                     .join(&l_result);
             }
             StatementKind::Assign(box (l_place, _)) => {
-                A::check_places(self, state, Some(*l_place), None);
-                if !l_place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+                self.check_places(state, Some(*l_place), None);
+                if !l_place.ty(self.0.body, self.0.tcx).ty.is_unsafe_ptr() {
                     return;
                 }
-                *state.result_for(self.tcx, self.body, l_place.as_ref()) =
+                *state.result_for(self.0.tcx, self.0.body, l_place.as_ref()) =
                     IntermediateResult::Unknown;
             }
             _ => {}
@@ -719,7 +724,10 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
         bb_id: rustc_middle::mir::BasicBlock,
         _return_places: rustc_mir_dataflow::CallReturnPlaces<'_, 'tcx>,
     ) {
-        let terminator = self.body.basic_blocks()[bb_id].terminator.as_ref().unwrap();
+        let terminator = self.0.body.basic_blocks()[bb_id]
+            .terminator
+            .as_ref()
+            .unwrap();
         if let TerminatorKind::InlineAsm { .. } = terminator.kind {
             return;
         }
@@ -729,10 +737,10 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
             destination,
             ..
         } = &terminator.kind else { return };
-        A::check_places(self, state, Some(destination.unwrap().0), None);
+        self.check_places(state, Some(destination.unwrap().0), None);
         for arg in args {
             if let Some(place) = arg.place() {
-                A::check_places(self, state, None, Some(place));
+                self.check_places(state, None, Some(place));
             }
         }
         let Some(Constant {
@@ -740,7 +748,7 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
             ..
         }) = func.constant() else { return };
         let TyKind::FnDef(def_id, _) = constant.ty.kind() else { return };
-        A::call(self, state, terminator);
+        self.call(state, terminator);
 
         let Some(def_id) = def_id.as_local() else {
             return;
@@ -751,7 +759,7 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
             .enumerate()
             .filter_map(|(idx, op)| op.place().map(|place| (idx, place)))
         {
-            if !place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+            if !place.ty(self.0.body, self.0.tcx).ty.is_unsafe_ptr() {
                 continue;
             }
             let dep = InterDep::FnArg {
@@ -759,23 +767,24 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
                 arg: Local::from_usize(idx + 1),
                 nested_level: 0,
             };
-            let result = state.result_for(self.tcx, self.body, place.as_ref());
+            let result = state.result_for(self.0.tcx, self.0.body, place.as_ref());
             result.join(&IntermediateResult::InterDeps([dep].into_iter().collect()));
         }
 
         let is_raw_ptr = self
+            .0
             .tcx
             .fn_sig(def_id)
             .no_bound_vars()
             .unwrap()
             .output()
             .is_unsafe_ptr();
-        if self.tcx.is_foreign_item(def_id) || !is_raw_ptr {
+        if self.0.tcx.is_foreign_item(def_id) || !is_raw_ptr {
             return;
         }
 
         // lhs transfers to rhs as in normal assignment
-        let l_result = state.result_for(self.tcx, self.body, destination.unwrap().0.as_ref());
+        let l_result = state.result_for(self.0.tcx, self.0.body, destination.unwrap().0.as_ref());
         // TODO: handle more levels of nesting, both here and in assignments
         // TODO: maybe this could cause intra deps to be transmitted across functions? that might
         // break the resolution logic
