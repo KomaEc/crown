@@ -15,7 +15,8 @@
 use rustc_hir::{def_id::LocalDefId, definitions::DefPathData};
 use rustc_middle::{
     mir::{
-        Constant, ConstantKind, Field, Local, Place, ProjectionElem, Terminator, TerminatorKind,
+        Constant, ConstantKind, Field, Local, Location, Place, ProjectionElem, Terminator,
+        TerminatorKind,
     },
     ty::{TyCtxt, TyKind},
 };
@@ -106,6 +107,7 @@ impl Analysis for NullAnalysis {
         state: &mut Domain<Self::Result>,
         l_place: Option<Place<'tcx>>,
         r_place: Option<Place<'tcx>>,
+        _loc: Location,
     ) {
         let mut check_place = |place: Place<'tcx>| {
             // For every deref in this place, record that the base of the deref was not null
@@ -129,6 +131,7 @@ impl Analysis for NullAnalysis {
         cx: &UsageAnalysisContext<'tcx, '_>,
         state: &mut Domain<Self::Result>,
         terminator: &Terminator<'tcx>,
+        _loc: Location,
     ) {
         let TerminatorKind::Call {
             func,

@@ -5,8 +5,9 @@ use rustc_hir::{def_id::LocalDefId, FnRetTy, ItemKind};
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
-        BasicBlock, Body, Constant, ConstantKind, Field, Local, Place, PlaceRef, ProjectionElem,
-        Rvalue, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents, START_BLOCK,
+        BasicBlock, Body, Constant, ConstantKind, Field, Local, Location, Place, PlaceRef,
+        ProjectionElem, Rvalue, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents,
+        START_BLOCK,
     },
     ty::{TyCtxt, TyKind},
 };
@@ -37,6 +38,7 @@ pub(crate) trait Analysis: Clone + Sized {
         _state: &mut Domain<Self::Result>,
         _l_place: Option<Place<'tcx>>,
         _r_place: Option<Place<'tcx>>,
+        _loc: Location,
     ) {
     }
 
@@ -45,6 +47,7 @@ pub(crate) trait Analysis: Clone + Sized {
         _cx: &UsageAnalysisContext<'tcx, '_>,
         _state: &mut Domain<Self::Result>,
         _terminator: &Terminator<'tcx>,
+        _loc: Location,
     ) {
     }
 }
@@ -425,6 +428,7 @@ impl<'tcx, 'a, A: Analysis> FuncResults<'tcx, 'a, A> {
         let body = tcx.optimized_mir(def_id);
         let cx = UsageAnalysisContext {
             tcx,
+            def_id,
             body,
             fns,
             structs,
@@ -566,6 +570,7 @@ impl<R: AnalysisResult> JoinSemiLattice for Domain<R> {
 
 pub(crate) struct UsageAnalysisContext<'tcx, 'a> {
     pub tcx: TyCtxt<'tcx>,
+    pub def_id: LocalDefId,
     pub body: &'tcx Body<'tcx>,
     fns: &'a [LocalDefId],
     structs: &'a [LocalDefId],
@@ -579,12 +584,13 @@ impl<'tcx, A: Analysis> UsageAnalysis<'tcx, '_, A> {
         state: &mut Domain<A::Result>,
         l_place: Option<Place<'tcx>>,
         r_place: Option<Place<'tcx>>,
+        loc: Location,
     ) {
-        self.1.check_places(&self.0, state, l_place, r_place);
+        self.1.check_places(&self.0, state, l_place, r_place, loc);
     }
 
-    fn call(&self, state: &mut Domain<A::Result>, terminator: &Terminator<'tcx>) {
-        self.1.call(&self.0, state, terminator);
+    fn call(&self, state: &mut Domain<A::Result>, terminator: &Terminator<'tcx>, loc: Location) {
+        self.1.call(&self.0, state, terminator, loc);
     }
 }
 
@@ -660,7 +666,7 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
                 let r_place = operand.place().unwrap();
                 let _guard = debug_span!("known assign", ?l_place, ?r_place).entered();
 
-                self.check_places(state, Some(*l_place), Some(r_place));
+                self.check_places(state, Some(*l_place), Some(r_place), loc);
                 if !l_place.ty(self.0.body, self.0.tcx).ty.is_unsafe_ptr() {
                     return;
                 }
@@ -699,7 +705,7 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
                     .join(&l_result);
             }
             StatementKind::Assign(box (l_place, _)) => {
-                self.check_places(state, Some(*l_place), None);
+                self.check_places(state, Some(*l_place), None, loc);
                 if !l_place.ty(self.0.body, self.0.tcx).ty.is_unsafe_ptr() {
                     return;
                 }
@@ -724,6 +730,7 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
         bb_id: rustc_middle::mir::BasicBlock,
         _return_places: rustc_mir_dataflow::CallReturnPlaces<'_, 'tcx>,
     ) {
+        let loc = self.0.body.terminator_loc(bb_id);
         let terminator = self.0.body.basic_blocks()[bb_id]
             .terminator
             .as_ref()
@@ -737,10 +744,10 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
             destination,
             ..
         } = &terminator.kind else { return };
-        self.check_places(state, Some(destination.unwrap().0), None);
+        self.check_places(state, Some(destination.unwrap().0), None, loc);
         for arg in args {
             if let Some(place) = arg.place() {
-                self.check_places(state, None, Some(place));
+                self.check_places(state, None, Some(place), loc);
             }
         }
         let Some(Constant {
@@ -748,7 +755,7 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
             ..
         }) = func.constant() else { return };
         let TyKind::FnDef(def_id, _) = constant.ty.kind() else { return };
-        self.call(state, terminator);
+        self.call(state, terminator, loc);
 
         let Some(def_id) = def_id.as_local() else {
             return;

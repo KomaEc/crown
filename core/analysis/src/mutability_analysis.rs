@@ -1,23 +1,32 @@
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::{
-    mir::{Field, Local, Place, ProjectionElem},
+    mir::{Field, Local, Location, Place, PlaceRef, ProjectionElem},
     ty::TyCtxt,
 };
 use rustc_mir_dataflow::JoinSemiLattice;
 
-use crate::usage_analysis::{self, Domain, IntermediateResult, UsageAnalysisContext};
+use crate::{
+    api::AnalysisResults,
+    ownership_analysis,
+    usage_analysis::{self, Domain, IntermediateResult, UsageAnalysisContext},
+};
 
 // defer to CrateResults instead of exposing it to avoid having to make everything in
 // usage_analysis public
-pub struct CrateResults<'tcx, 'a>(usage_analysis::CrateResults<'tcx, 'a, MutabilityAnalysis>);
+pub struct CrateResults<'tcx, 'a>(usage_analysis::CrateResults<'tcx, 'a, MutabilityAnalysis<'a>>);
 
 impl<'tcx, 'a> CrateResults<'tcx, 'a> {
-    pub fn collect(tcx: TyCtxt<'tcx>, fns: &'a [LocalDefId], structs: &'a [LocalDefId]) -> Self {
+    pub fn collect(
+        tcx: TyCtxt<'tcx>,
+        fns: &'a [LocalDefId],
+        structs: &'a [LocalDefId],
+        ownership: &'a ownership_analysis::InterSummary,
+    ) -> Self {
         CrateResults(usage_analysis::CrateResults::collect(
             tcx,
             fns,
             structs,
-            MutabilityAnalysis,
+            MutabilityAnalysis { ownership },
         ))
     }
 
@@ -77,9 +86,11 @@ impl usage_analysis::AnalysisResult for Mutability {
 }
 
 #[derive(Clone)]
-struct MutabilityAnalysis;
+struct MutabilityAnalysis<'o> {
+    ownership: &'o ownership_analysis::InterSummary,
+}
 
-impl usage_analysis::Analysis for MutabilityAnalysis {
+impl usage_analysis::Analysis for MutabilityAnalysis<'_> {
     type Result = Mutability;
 
     fn check_places<'tcx>(
@@ -87,9 +98,10 @@ impl usage_analysis::Analysis for MutabilityAnalysis {
         cx: &UsageAnalysisContext<'tcx, '_>,
         state: &mut Domain<Self::Result>,
         l_place: Option<Place<'tcx>>,
-        _r_place: Option<Place<'tcx>>,
+        r_place: Option<Place<'tcx>>,
+        loc: Location,
     ) {
-        tracing::trace!(?l_place, ?_r_place, "hello");
+        tracing::trace!(?l_place, ?r_place, "hello");
         let Some(l_place) = l_place else { return };
         for (base, proj) in l_place.iter_projections() {
             if matches!(proj, ProjectionElem::Deref) {
@@ -97,6 +109,26 @@ impl usage_analysis::Analysis for MutabilityAnalysis {
                 *state.result_for(cx.tcx, cx.body, base) =
                     IntermediateResult::Definite(Mutability::Mutable);
             }
+        }
+
+        let Some(r_place) = r_place else { return };
+        let l_ownership = self
+            .ownership
+            .place_result(cx.tcx, cx.def_id, loc, l_place.as_ref());
+        let r_ownership = self
+            .ownership
+            .place_result(cx.tcx, cx.def_id, loc, r_place.as_ref());
+        // if moving out of a pointer, the pointer is mutable
+        if l_ownership == Some(true)
+            && r_ownership == Some(true)
+            && r_place.projection.last() == Some(&ProjectionElem::Deref)
+        {
+            let ptr_place = PlaceRef {
+                local: r_place.local,
+                projection: &r_place.projection[0..r_place.projection.len() - 1],
+            };
+            *state.result_for(cx.tcx, cx.body, ptr_place) =
+                IntermediateResult::Definite(Mutability::Mutable);
         }
     }
 }

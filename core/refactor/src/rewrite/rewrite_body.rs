@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 
 use analysis::{
-    api::AnalysisResults, call_graph::Func, fatness_analysis, get_struct_field,
-    mutability_analysis, null_analysis, ownership_analysis,
+    api::AnalysisResults, call_graph::Func, fatness_analysis, mutability_analysis, null_analysis,
+    ownership_analysis,
 };
 use either::Either;
 use rustc_hir::def_id::LocalDefId;
@@ -145,7 +145,9 @@ fn rewrite_terminator<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_, '_>, bb_id: Basic
         return;
     }
 
-    let l_null = place_result(cx, cx.null, terminator_loc, dest_place.as_ref());
+    let l_null = cx
+        .null
+        .place_result(cx.tcx, cx.def_id, terminator_loc, dest_place.as_ref());
     let r_null = cx.null.sig_result(callee_def_id, Local::from_usize(0), 0);
 
     let span = terminator.source_info.span;
@@ -242,11 +244,17 @@ pub fn rewrite_rvalue<'tcx>(
         Rvalue::Use(Operand::Copy(r_place) | Operand::Move(r_place)) => {
             let mut new = rewrite_place_expr(cx, loc, r_place.clone(), true, &source);
 
-            let l_ownership = place_result(cx, cx.ownership, l_loc, l_place);
-            let r_ownership = place_result(cx, cx.ownership, loc, r_place.as_ref());
-            let l_mutability = place_result(cx, cx.mutability, l_loc, l_place);
-            let l_null = place_result(cx, cx.null, l_loc, l_place);
-            let r_null = place_result(cx, cx.null, loc, r_place.as_ref());
+            let l_ownership = cx.ownership.place_result(cx.tcx, cx.def_id, l_loc, l_place);
+            let r_ownership = cx
+                .ownership
+                .place_result(cx.tcx, cx.def_id, loc, r_place.as_ref());
+            let l_mutability = cx
+                .mutability
+                .place_result(cx.tcx, cx.def_id, l_loc, l_place);
+            let l_null = cx.null.place_result(cx.tcx, cx.def_id, l_loc, l_place);
+            let r_null = cx
+                .null
+                .place_result(cx.tcx, cx.def_id, loc, r_place.as_ref());
             if r_null == Some(true) && r_ownership == Some(true) {
                 if l_ownership == Some(true) {
                     new.push_str(".take()");
@@ -324,9 +332,16 @@ pub fn rewrite_place_expr<'tcx>(
         let i = place.projection.len() - i - 1;
         match proj {
             ProjectionElem::Deref => {
-                let ownership = place_result(cx, cx.ownership, loc, base_place);
-                let mutability = place_result(cx, cx.mutability, loc, base_place);
-                let nullable = place_result(cx, cx.null, loc, base_place).unwrap();
+                let ownership = cx
+                    .ownership
+                    .place_result(cx.tcx, cx.def_id, loc, base_place);
+                let mutability = cx
+                    .mutability
+                    .place_result(cx.tcx, cx.def_id, loc, base_place);
+                let nullable = cx
+                    .null
+                    .place_result(cx.tcx, cx.def_id, loc, base_place)
+                    .unwrap();
                 if ownership == Some(true) && nullable {
                     new_source = format!("(*{new_source}.as_mut().unwrap())");
                 } else if ownership == Some(false) && nullable {
@@ -363,7 +378,11 @@ fn rewrite_malloc<'tcx>(
     let TerminatorKind::Call {
         destination: Some((dest_place, dest_bb)), ..
     } = terminator.kind else { panic!() };
-    if place_result(cx, cx.ownership, terminator_loc, dest_place.as_ref()) != Some(true) {
+    if cx
+        .ownership
+        .place_result(cx.tcx, cx.def_id, terminator_loc, dest_place.as_ref())
+        != Some(true)
+    {
         return;
     }
 
@@ -387,7 +406,11 @@ fn rewrite_malloc<'tcx>(
     let ty = malloc_source.rsplit_once(' ').unwrap().1;
 
     let mut new_source = format!("Box::<{ty}>::new(unsafe {{ std::mem::zeroed() }})");
-    if place_result(cx, cx.null, terminator_loc, dest_place.as_ref()) == Some(true) {
+    if cx
+        .null
+        .place_result(cx.tcx, cx.def_id, terminator_loc, dest_place.as_ref())
+        == Some(true)
+    {
         new_source.insert_str(0, "Some(");
         new_source.push(')');
     }
@@ -407,7 +430,11 @@ fn rewrite_realloc(
     let TerminatorKind::Call {
         args, destination: Some((dest_place, dest_bb)), ..
     } = &terminator.kind else { panic!() };
-    if place_result(cx, cx.fatness, terminator_loc, dest_place.as_ref()) != Some(true) {
+    if cx
+        .fatness
+        .place_result(cx.tcx, cx.def_id, terminator_loc, dest_place.as_ref())
+        != Some(true)
+    {
         return;
     }
 
@@ -459,7 +486,11 @@ fn rewrite_calloc(
     let TerminatorKind::Call {
         args, destination: Some((dest_place, dest_bb)), ..
     } = &terminator.kind else { panic!() };
-    if place_result(cx, cx.fatness, terminator_loc, dest_place.as_ref()) != Some(true) {
+    if cx
+        .fatness
+        .place_result(cx.tcx, cx.def_id, terminator_loc, dest_place.as_ref())
+        != Some(true)
+    {
         return;
     }
 
@@ -508,7 +539,11 @@ fn rewrite_offset(
     let dest_local = dest_place.as_local().unwrap();
 
     let ptr_place = args[0].place().unwrap().as_ref();
-    if place_result(cx, cx.fatness, terminator_loc, ptr_place) != Some(true) {
+    if cx
+        .fatness
+        .place_result(cx.tcx, cx.def_id, terminator_loc, ptr_place)
+        != Some(true)
+    {
         return;
     }
 
@@ -551,28 +586,6 @@ fn rewrite_offset(
             }
         }
         _ => {}
-    }
-}
-
-fn place_result<'tcx, A: AnalysisResults>(
-    cx: &BodyRewriteCtxt<'tcx, '_, '_>,
-    analysis: &A,
-    loc: Location,
-    place: PlaceRef<'tcx>,
-) -> Option<bool> {
-    if !place.ty(cx.body, cx.tcx).ty.is_unsafe_ptr() {
-        // no ownership info for non-pointer type
-        return None;
-    }
-    assert!(place
-        .projection
-        .iter()
-        .all(|e| matches!(e, ProjectionElem::Field(_, _) | ProjectionElem::Deref)));
-    if let Some((struct_def_id, field, n_derefs)) = get_struct_field(cx.tcx, cx.body, place) {
-        return analysis.field_result(struct_def_id, field, n_derefs);
-    } else {
-        let n_derefs = place.projection.len();
-        return analysis.local_result_at(cx.def_id, place.local, loc, n_derefs);
     }
 }
 

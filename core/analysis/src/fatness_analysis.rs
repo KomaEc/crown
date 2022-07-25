@@ -1,6 +1,6 @@
 use rustc_hir::{def_id::LocalDefId, definitions::DefPathData};
 use rustc_middle::{
-    mir::{Constant, ConstantKind, Field, Local, Terminator, TerminatorKind},
+    mir::{Constant, ConstantKind, Field, Local, Location, Terminator, TerminatorKind},
     ty::{TyCtxt, TyKind},
 };
 use rustc_mir_dataflow::JoinSemiLattice;
@@ -88,6 +88,7 @@ impl Analysis for FatnessAnalysis {
         cx: &UsageAnalysisContext<'tcx, '_>,
         state: &mut Domain<Self::Result>,
         terminator: &Terminator<'tcx>,
+        _loc: Location,
     ) {
         // if .offset() is called on a pointer, then it is fat
         let TerminatorKind::Call {

@@ -184,10 +184,12 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             }
 
             if *mutability {
+                let ownership = refactor::ownership_analysis(tcx, &top_level_struct_defs, &top_level_fns);
                 let results = mutability_analysis::CrateResults::collect(
                     tcx,
                     &top_level_fns,
                     &top_level_struct_defs,
+                    &ownership,
                 );
                 results.show(tcx);
             }
@@ -210,6 +212,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                     tcx,
                     &top_level_fns,
                     &top_level_struct_defs,
+                    &ownership_analysis,
                 )
             });
             let fatness_analysis = time("fatness analysis", || {
