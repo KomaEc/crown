@@ -53,11 +53,9 @@ impl CallGraph {
         }
         .construct()
     }
-}
 
-impl CallGraph {
     #[inline]
-    pub fn lookup_function(&self, did: &DefId) -> Result<Func, Func> {
+    fn lookup_function(&self, did: &DefId) -> Result<Func, Func> {
         self.functions.binary_search(did)
     }
 }
@@ -173,7 +171,7 @@ mod test {
             let crate::Program {
                 tcx: _,
                 call_graph,
-                struct_dep_graph: _,
+                structs: _,
             } = program;
             for caller in call_graph.graph.nodes() {
                 for callee in call_graph.successors(caller) {

@@ -3,8 +3,6 @@
 #[cfg(not(debug_assertions))]
 pub(crate) use rustc_index::newtype_index;
 
-
-
 /// Cheating on rust-analyzer
 #[cfg(debug_assertions)]
 #[macro_export]

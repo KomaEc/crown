@@ -31,24 +31,24 @@ extern crate rustc_type_ir;
 
 pub(crate) mod analysis;
 pub(crate) mod call_graph;
+pub(crate) mod structs;
 pub(crate) mod macros;
 pub mod playground;
 pub mod rewriter;
-pub(crate) mod struct_dep_graph;
 #[cfg(test)]
 pub(crate) mod test;
 
 use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
-use struct_dep_graph::StructDepGraph;
+use structs::Structs;
 
 /// Input program is assumed to consist of only top-level
 /// functions and struct definitions.
 pub struct Program<'tcx> {
     tcx: TyCtxt<'tcx>,
     call_graph: CallGraph,
-    struct_dep_graph: StructDepGraph,
+    structs: Structs,
 }
 
 impl<'tcx> Program<'tcx> {
@@ -56,23 +56,23 @@ impl<'tcx> Program<'tcx> {
         Program {
             tcx,
             call_graph: CallGraph::new(tcx, functions),
-            struct_dep_graph: StructDepGraph::new(tcx, structs),
+            structs: Structs::new(tcx, structs),
         }
     }
 
+    #[inline]
     pub fn call_graph(&self) -> &CallGraph {
         &self.call_graph
     }
 
-    pub fn struct_dep_graph(&self) -> &StructDepGraph {
-        &self.struct_dep_graph
-    }
-
+    #[inline]
     pub fn functions(&self) -> &[DefId] {
         &self.call_graph.functions.raw[..]
     }
 
+    #[inline]
+    /// Return the set of top-level struct definitions in post order
     pub fn structs(&self) -> &[DefId] {
-        &self.struct_dep_graph.structs.raw[..]
+        &self.structs.structs_in_post_order()
     }
 }
