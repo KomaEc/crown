@@ -5,8 +5,8 @@ use rustc_hir::{def_id::LocalDefId, FnRetTy, ItemKind};
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
-        BasicBlock, Body, Field, Local, Location, Place, PlaceRef, ProjectionElem, Rvalue,
-        StatementKind, Terminator, TerminatorKind, VarDebugInfoContents, START_BLOCK,
+        Body, Field, Local, Location, Place, PlaceRef, ProjectionElem, Rvalue, StatementKind,
+        Terminator, TerminatorKind, VarDebugInfoContents, START_BLOCK,
     },
     ty::TyCtxt,
 };
@@ -54,7 +54,6 @@ pub(crate) trait Analysis: Clone + Sized {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum IntermediateResult<R: AnalysisResult> {
     Definite(R),
-    IntraDeps(FxHashSet<IntraDep>),
     InterDeps(FxHashSet<InterDep>),
     Unknown,
 }
@@ -87,13 +86,6 @@ pub enum InterDep {
     },
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub struct IntraDep {
-    bb_id: BasicBlock,
-    local: Local,
-    nested_level: usize,
-}
-
 impl<R: AnalysisResult> JoinSemiLattice for IntermediateResult<R> {
     fn join(&mut self, other: &Self) -> bool {
         use IntermediateResult::*;
@@ -105,20 +97,6 @@ impl<R: AnalysisResult> JoinSemiLattice for IntermediateResult<R> {
                 return changed;
             }
             (Definite(_), _) => return false,
-            (IntraDeps(_), other) if other.is_definite() => {
-                *self = other.clone();
-                return true;
-            }
-            (IntraDeps(left), IntraDeps(right)) => {
-                let union = left.union(&right).cloned().collect();
-                if &union != left {
-                    *self = IntraDeps(union);
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-            (IntraDeps(_), _) => return false,
             (InterDeps(left), InterDeps(right)) => {
                 let union = left.union(&right).cloned().collect();
                 if &union != left {
@@ -395,13 +373,11 @@ fn resolve_dep<A: Analysis>(
 
         use IntermediateResult::*;
         match (&mut ret, other_result) {
-            (_, IntraDeps(_)) => {} // don't transmit intra deps outside fns
             (InterDeps(_), _) => panic!("how"),
             (_, InterDeps(_)) => return None, // cyclic
             (l @ (Definite(_) | Unknown), r @ (Definite(_) | Unknown)) => {
                 l.join(&r);
             }
-            _ => {}
         }
     }
     Some(ret)
@@ -437,27 +413,7 @@ impl<'tcx, 'a, A: Analysis> FuncResults<'tcx, 'a, A> {
 
         let mut cursor = ResultsRefCursor::new(&body, &results);
         cursor.seek_to_block_start(START_BLOCK);
-        let mut start_results = cursor.get().clone();
-
-        // anti-stack overflow
-        let mut in_progress = Vec::new();
-        for (local, local_result) in start_results.locals.iter_enumerated_mut() {
-            for (nested_level, nested_result) in local_result.iter_enumerated_mut() {
-                if let IntermediateResult::IntraDeps(deps) = nested_result {
-                    trace!(?local, nested_level, "intra resolve");
-                    *nested_result =
-                        deps.iter()
-                            .fold(IntermediateResult::Unknown, |mut acc, dep| {
-                                acc.join(&resolve_intra_dep(
-                                    &mut cursor,
-                                    dep.clone(),
-                                    &mut in_progress,
-                                ));
-                                acc
-                            });
-                }
-            }
-        }
+        let start_results = cursor.get().clone();
 
         FuncResults {
             tcx,
@@ -465,39 +421,6 @@ impl<'tcx, 'a, A: Analysis> FuncResults<'tcx, 'a, A> {
             _results: results,
             start_results,
         }
-    }
-}
-
-fn resolve_intra_dep<'tcx, A: Analysis>(
-    cursor: &mut ResultsRefCursor<'_, '_, 'tcx, UsageAnalysis<'tcx, '_, A>>,
-    dep: IntraDep,
-    in_progress: &mut Vec<IntraDep>,
-) -> IntermediateResult<A::Result> {
-    if in_progress.contains(&dep) {
-        return IntermediateResult::Unknown;
-    }
-    in_progress.push(dep.clone());
-    cursor.seek_to_block_start(dep.bb_id);
-    let target = cursor.get().locals[dep.local][dep.nested_level].clone();
-    match target {
-        IntermediateResult::IntraDeps(deps) => {
-            return deps
-                .into_iter()
-                .fold(IntermediateResult::Unknown, |mut acc, dep| {
-                    acc.join(&resolve_intra_dep(cursor, dep, in_progress));
-                    acc
-                });
-        }
-        IntermediateResult::Unknown => {
-            return cursor.analysis().0.body.basic_blocks.predecessors()[dep.bb_id]
-                .iter()
-                .fold(IntermediateResult::Unknown, |mut acc, &pred| {
-                    let dep = IntraDep { bb_id: pred, ..dep };
-                    acc.join(&resolve_intra_dep(cursor, dep, in_progress));
-                    acc
-                });
-        }
-        x => return x,
     }
 }
 
@@ -683,15 +606,6 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
                         };
                         l_result.join(&IntermediateResult::InterDeps([dep].into_iter().collect()));
                     }
-                } else {
-                    if l_result == IntermediateResult::Unknown {
-                        let dep = IntraDep {
-                            bb_id: loc.block,
-                            local: l_place.local,
-                            nested_level: l_place.projection.len(),
-                        };
-                        l_result = IntermediateResult::IntraDeps([dep].into_iter().collect());
-                    }
                 }
                 trace!(?l_result);
                 // If you want the general result for all locations of a pointer, this is correct.
@@ -788,8 +702,6 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
         // lhs transfers to rhs as in normal assignment
         let l_result = state.result_for(self.0.tcx, self.0.body, destination.as_ref());
         // TODO: handle more levels of nesting, both here and in assignments
-        // TODO: maybe this could cause intra deps to be transmitted across functions? that might
-        // break the resolution logic
         state.fn_returns.0[def_id].as_mut().unwrap()[0] = l_result.clone();
     }
 }
