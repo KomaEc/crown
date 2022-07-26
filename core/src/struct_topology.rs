@@ -8,7 +8,7 @@ use rustc_type_ir::TyKind::Adt;
 
 use crate::analysis::place_ext::place_abs::AggregateOffset;
 
-pub struct Structs {
+pub struct StructTopology {
     /// Structs in post order of the dependency graph.
     /// Dependency graph encodes direct dependencies between user defined structs.
     /// For instance, in `struct S { f: T } struct T;`
@@ -17,10 +17,10 @@ pub struct Structs {
     /// `S` is not considered dependent on `T`
     post_order: Vec<DefId>,
     /// struct -> field -> aggregate offset of this field
-    pointer_aggregate_offset: FxHashMap<DefId, Vec<AggregateOffset>>,
+    aggregate_offset: FxHashMap<DefId, Vec<AggregateOffset>>,
 }
 
-impl Structs {
+impl StructTopology {
     pub fn new(tcx: TyCtxt, structs: Vec<DefId>) -> Self {
         // structs.sort();
         let structs = IndexVec::from_raw(structs);
@@ -66,7 +66,7 @@ impl Structs {
         }
         assert_eq!(post_order.len(), structs.len());
 
-        let mut pointer_aggregate_offset = FxHashMap::default();
+        let mut aggregate_offset = FxHashMap::default();
 
         for &did in &post_order {
             let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };
@@ -82,7 +82,7 @@ impl Structs {
                             TyKind::RawPtr(..) | TyKind::Ref(..) => 1,
                             TyKind::Adt(sub_adt_def, _) if sub_adt_def.is_box() => 1,
                             TyKind::Adt(..) => {
-                                let offsets: &Vec<AggregateOffset> = pointer_aggregate_offset
+                                let offsets: &Vec<AggregateOffset> = aggregate_offset
                                     .get(&field_def.did)
                                     .expect("sub-structs should have been initialised!");
                                 offsets.last().map(|offset| offset.as_usize()).unwrap_or(0)
@@ -93,12 +93,12 @@ impl Structs {
                 })
                 .collect();
 
-            pointer_aggregate_offset.insert(did, offsets);
+            aggregate_offset.insert(did, offsets);
         }
 
-        Structs {
+        StructTopology {
             post_order,
-            pointer_aggregate_offset,
+            aggregate_offset,
         }
     }
 
@@ -107,9 +107,14 @@ impl Structs {
         &self.post_order[..]
     }
 
+    // #[inline]
+    // pub fn aggregate_offset(&self) -> &FxHashMap<DefId, Vec<AggregateOffset>> {
+    //     &self.aggregate_offset
+    // }
+
     #[inline]
     pub fn struct_offset(&self, did: &DefId) -> Option<AggregateOffset> {
-        self.pointer_aggregate_offset
+        self.aggregate_offset
             .get(did)?
             // .expect("expect user defined top-level struct")
             .last()
@@ -120,7 +125,7 @@ impl Structs {
     #[inline]
     pub fn field_offsets(&self, did: &DefId) -> Option<&[AggregateOffset]> {
         self
-            .pointer_aggregate_offset
+            .aggregate_offset
             .get(did)
             .map(|vec| &vec[..])
             //.expect("expect user defined top-level struct")[..]

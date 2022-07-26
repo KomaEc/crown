@@ -31,7 +31,7 @@ extern crate rustc_type_ir;
 
 pub(crate) mod analysis;
 pub(crate) mod call_graph;
-pub(crate) mod structs;
+pub(crate) mod struct_topology;
 pub(crate) mod macros;
 pub mod playground;
 pub mod rewriter;
@@ -41,14 +41,14 @@ pub(crate) mod test;
 use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
-use structs::Structs;
+use struct_topology::StructTopology;
 
 /// Input program is assumed to consist of only top-level
 /// functions and struct definitions.
 pub struct Program<'tcx> {
-    tcx: TyCtxt<'tcx>,
+    pub(crate) tcx: TyCtxt<'tcx>,
     call_graph: CallGraph,
-    structs: Structs,
+    struct_topology: StructTopology,
 }
 
 impl<'tcx> Program<'tcx> {
@@ -56,13 +56,18 @@ impl<'tcx> Program<'tcx> {
         Program {
             tcx,
             call_graph: CallGraph::new(tcx, functions),
-            structs: Structs::new(tcx, structs),
+            struct_topology: StructTopology::new(tcx, structs),
         }
     }
 
     #[inline]
     pub fn call_graph(&self) -> &CallGraph {
         &self.call_graph
+    }
+
+    #[inline]
+    pub fn struct_topology(&self) -> &StructTopology {
+        &self.struct_topology
     }
 
     #[inline]
@@ -73,6 +78,6 @@ impl<'tcx> Program<'tcx> {
     #[inline]
     /// Return the set of top-level struct definitions in post order
     pub fn structs(&self) -> &[DefId] {
-        &self.structs.structs_in_post_order()
+        &self.struct_topology.structs_in_post_order()
     }
 }

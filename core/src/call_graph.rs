@@ -171,7 +171,7 @@ mod test {
             let crate::Program {
                 tcx: _,
                 call_graph,
-                structs: _,
+                struct_topology: _,
             } = program;
             for caller in call_graph.graph.nodes() {
                 for callee in call_graph.successors(caller) {
