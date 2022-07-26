@@ -94,7 +94,7 @@ impl StructTopology {
                             TyKind::Adt(..) => {
                                 let offsets: &Vec<AggregateOffset> = aggregate_offset
                                     .get(&field_def.did)
-                                    .expect("sub-structs should have been initialised / library structs are not supported");
+                                    .expect("sub-structs should have been initialised");
                                 offsets.last().map(|offset| offset.as_usize()).unwrap_or(0)
                             }
                             _ => 0,
