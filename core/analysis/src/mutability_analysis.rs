@@ -1,6 +1,6 @@
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::{
-    mir::{Field, Local, Location, Place, PlaceRef, ProjectionElem},
+    mir::{Field, Local, Location, Place, ProjectionElem},
     ty::TyCtxt,
 };
 use rustc_mir_dataflow::JoinSemiLattice;
@@ -101,15 +101,19 @@ impl usage_analysis::Analysis for MutabilityAnalysis<'_> {
         r_place: Option<Place<'tcx>>,
         loc: Location,
     ) {
+        let mut mutable = |place: Place<'tcx>| {
+            for (base, proj) in place.iter_projections() {
+                if matches!(proj, ProjectionElem::Deref) {
+                    tracing::trace!(place=?base, "mutable");
+                    *state.result_for(cx.tcx, cx.body, base) =
+                        IntermediateResult::Definite(Mutability::Mutable);
+                }
+            }
+        };
+
         tracing::trace!(?l_place, ?r_place, "hello");
         let Some(l_place) = l_place else { return };
-        for (base, proj) in l_place.iter_projections() {
-            if matches!(proj, ProjectionElem::Deref) {
-                tracing::trace!(place=?base, "mutable");
-                *state.result_for(cx.tcx, cx.body, base) =
-                    IntermediateResult::Definite(Mutability::Mutable);
-            }
-        }
+        mutable(l_place);
 
         let Some(r_place) = r_place else { return };
         let l_ownership = self
@@ -118,17 +122,11 @@ impl usage_analysis::Analysis for MutabilityAnalysis<'_> {
         let r_ownership = self
             .ownership
             .place_result(cx.tcx, cx.def_id, loc, r_place.as_ref());
+        tracing::trace!(?l_ownership, ?r_ownership);
         // if moving out of a pointer, the pointer is mutable
-        if l_ownership == Some(true)
-            && r_ownership == Some(true)
-            && r_place.projection.last() == Some(&ProjectionElem::Deref)
-        {
-            let ptr_place = PlaceRef {
-                local: r_place.local,
-                projection: &r_place.projection[0..r_place.projection.len() - 1],
-            };
-            *state.result_for(cx.tcx, cx.body, ptr_place) =
-                IntermediateResult::Definite(Mutability::Mutable);
+        if l_ownership == Some(true) && r_ownership == Some(true) {
+            tracing::trace!("transfer ⇒ mutable");
+            mutable(r_place);
         }
     }
 }
