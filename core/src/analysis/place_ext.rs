@@ -3,26 +3,50 @@
 pub mod place_abs;
 
 use place_abs::PlaceAbs;
-use rustc_middle::mir::{Place, ProjectionElem};
+use rustc_middle::{
+    mir::{HasLocalDecls, Place, ProjectionElem},
+    ty::TyKind,
+};
 
 use super::OwnershipAnalysisCtxt;
 
 pub trait PlaceExt<'tcx> {
-    fn r#abstract<'octxt>(self, octxt: OwnershipAnalysisCtxt<'octxt, 'tcx>) -> PlaceAbs;
+    fn r#abstract<'octxt, D>(
+        self,
+        local_decls: &D,
+        octxt: OwnershipAnalysisCtxt<'octxt, 'tcx>,
+    ) -> Option<PlaceAbs>
+    where
+        D: HasLocalDecls<'tcx>;
 }
 
 impl<'tcx> PlaceExt<'tcx> for Place<'tcx> {
-    fn r#abstract<'octxt>(self, octxt: OwnershipAnalysisCtxt<'octxt, 'tcx>) -> PlaceAbs {
+    fn r#abstract<'octxt, D>(
+        self,
+        local_decls: &D,
+        octxt: OwnershipAnalysisCtxt<'octxt, 'tcx>,
+    ) -> Option<PlaceAbs>
+    where
+        D: HasLocalDecls<'tcx>,
+    {
         let mut ans = PlaceAbs::from_local(self.local);
+        let mut offset_to_be = 0u32.into();
         for (place, projection_elem) in self.iter_projections() {
             match projection_elem {
                 ProjectionElem::Deref => ans.dereferenced = true,
                 ProjectionElem::Field(field, _) => {
-                    todo!()
-                },
+                    ans.offset = offset_to_be;
+                    let place_ty = place.ty(local_decls, octxt.program.tcx);
+                    let TyKind::Adt(adt_def, _) = place_ty.ty.kind() else { unreachable!("impossible") };
+                    assert!(adt_def.is_struct());
+                    offset_to_be += octxt
+                        .program
+                        .struct_topology()
+                        .field_offsets(&adt_def.did())?[field.as_usize()]
+                }
                 _ => continue,
             }
         }
-        ans
+        Some(ans)
     }
 }

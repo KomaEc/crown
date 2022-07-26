@@ -6,6 +6,20 @@ crate::macros::newtype_index! {
     }
 }
 
+impl std::ops::Add<AggregateOffset> for AggregateOffset {
+    type Output = Self;
+
+    fn add(self, rhs: AggregateOffset) -> Self::Output {
+        self + rhs.as_usize()
+    }
+}
+
+impl std::ops::AddAssign for AggregateOffset {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = *self + rhs
+    }
+}
+
 /// place abstraction
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct PlaceAbs {

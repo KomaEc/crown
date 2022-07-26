@@ -31,10 +31,10 @@ extern crate rustc_type_ir;
 
 pub(crate) mod analysis;
 pub(crate) mod call_graph;
-pub(crate) mod struct_topology;
 pub(crate) mod macros;
 pub mod playground;
 pub mod rewriter;
+pub(crate) mod struct_topology;
 #[cfg(test)]
 pub(crate) mod test;
 
