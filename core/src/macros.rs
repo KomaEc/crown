@@ -3,7 +3,7 @@
 #[cfg(not(debug_assertions))]
 pub(crate) use rustc_index::newtype_index;
 
-/// Cheating on rust-analyzer
+/// Small hack that makes rust-analyzer work on vscode
 #[cfg(debug_assertions)]
 #[macro_export]
 macro_rules! newtype_index {
