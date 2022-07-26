@@ -30,16 +30,14 @@ impl<'tcx> PlaceExt<'tcx> for Place<'tcx> {
         D: HasLocalDecls<'tcx>,
     {
         let mut ans = PlaceAbs::from_local(self.local);
-        let mut offset_to_be = 0u32.into();
         for (place, projection_elem) in self.iter_projections() {
             match projection_elem {
                 ProjectionElem::Deref => ans.dereferenced = true,
                 ProjectionElem::Field(field, _) => {
-                    ans.offset = offset_to_be;
                     let place_ty = place.ty(local_decls, octxt.program.tcx);
                     let TyKind::Adt(adt_def, _) = place_ty.ty.kind() else { unreachable!("impossible") };
                     assert!(adt_def.is_struct());
-                    offset_to_be += octxt
+                    ans.offset += octxt
                         .program
                         .struct_topology()
                         .field_offsets(&adt_def.did())?[field.as_usize()]

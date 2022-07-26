@@ -16,7 +16,8 @@ pub struct StructTopology {
     /// in `struct S { f: *mut T } struct T;`
     /// `S` is not considered dependent on `T`
     post_order: Vec<DefId>,
-    /// struct -> field -> aggregate offset of this field
+    /// struct -> field -> aggregate offset start of this field
+    /// an additional entry last() represents the sum
     aggregate_offset: FxHashMap<DefId, Vec<AggregateOffset>>,
 }
 
@@ -73,35 +74,25 @@ impl StructTopology {
             assert!(adt_def.is_struct());
 
             let mut offset = AggregateOffset::from_u32(0);
+            let mut offsets = vec![offset];
 
-            let offsets = adt_def
-                .all_fields()
-                .map(|field_def| {
-                    offset = offset
-                        + match field_def.ty(tcx, subst_ref).kind() {
-                            TyKind::RawPtr(..) | TyKind::Ref(..) => 1,
-                            TyKind::Adt(sub_adt_def, _) if sub_adt_def.is_box() => 1,
-                            // non-user defined structs are ignored
-                            TyKind::Adt(..) if {
-                                if cfg!(debug_assertions) {
-                                    let is_local = field_def.did.is_local();
-                                    assert_eq!(is_local, !post_order.contains(&field_def.did));
-                                    is_local
-                                } else {
-                                    field_def.did.is_local()
-                                }
-                            } => 0,
-                            TyKind::Adt(..) => {
-                                let offsets: &Vec<AggregateOffset> = aggregate_offset
-                                    .get(&field_def.did)
-                                    .expect("sub-structs should have been initialised");
-                                offsets.last().map(|offset| offset.as_usize()).unwrap_or(0)
-                            }
-                            _ => 0,
-                        };
-                    offset
-                })
-                .collect();
+            offsets.extend(adt_def.all_fields().map(|field_def| {
+                offset = offset
+                    + match field_def.ty(tcx, subst_ref).kind() {
+                        TyKind::RawPtr(..) | TyKind::Ref(..) => 1,
+                        TyKind::Adt(sub_adt_def, _) if sub_adt_def.is_box() => 1,
+                        // non-user defined structs are ignored
+                        TyKind::Adt(sub_adt_def, _) if !post_order.contains(&sub_adt_def.did()) => 0,
+                        TyKind::Adt(sub_adt_def, _) => {
+                            let offsets: &Vec<AggregateOffset> = aggregate_offset
+                                .get(&sub_adt_def.did())
+                                .expect("sub-structs should have been initialised");
+                            offsets.last().map(|offset| offset.as_usize()).unwrap_or(0)
+                        }
+                        _ => 0,
+                    };
+                offset
+            }));
 
             aggregate_offset.insert(did, offsets);
         }
@@ -117,27 +108,91 @@ impl StructTopology {
         &self.post_order[..]
     }
 
-    // #[inline]
-    // pub fn aggregate_offset(&self) -> &FxHashMap<DefId, Vec<AggregateOffset>> {
-    //     &self.aggregate_offset
-    // }
-
+    /// Return the total offset of a struct definition, `None` if
+    /// `did` is not a user define struct
     #[inline]
     pub fn struct_offset(&self, did: &DefId) -> Option<AggregateOffset> {
-        self.aggregate_offset
-            .get(did)?
-            // .expect("expect user defined top-level struct")
-            .last()
-            .map(|&offset| offset)
-            .or(Some(0u32.into()))
+        let last = self.aggregate_offset.get(did)?.last();
+        assert!(last.is_some());
+        last.map(|&offset| offset)
     }
 
     #[inline]
     pub fn field_offsets(&self, did: &DefId) -> Option<&[AggregateOffset]> {
         self.aggregate_offset.get(did).map(|vec| &vec[..])
-        //.expect("expect user defined top-level struct")[..]
     }
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use crate::analysis::place_ext::place_abs::AggregateOffset;
+
+    const TEXT: &str = "
+    struct s {
+        f: t,
+        g: *mut i32,
+        h: *mut s,
+    }
+    struct t {
+        f: *mut i32,
+        g: u
+    }
+    struct u {
+        f: v,
+        g: w,
+        h: x
+    }
+    struct v {
+        f: i32,
+    }
+    struct w {
+        f: *mut i32
+    }
+    struct x;
+    ";
+
+    #[test]
+    fn test() {
+        crate::test::run_compiler_with(TEXT.into(), |program| {
+            macro_rules! define_structs {
+                ($( $x: ident ),*) => {
+                    $(
+                        let $x = program
+                            .structs()
+                            .iter()
+                            .find(|&&did| {
+                            let stringify!($x) = program.tcx.def_path_str(did).as_str() else { return false };
+                            true
+                        })
+                        .unwrap();
+                    )*
+                };
+            }
+            define_structs!(s, t, u, v, w, x);
+            assert_eq!(
+                program.struct_topology().field_offsets(&s).unwrap(),
+                [0, 2, 3, 4].map(|x| AggregateOffset::from_u32(x))
+            );
+            assert_eq!(
+                program.struct_topology().field_offsets(&t).unwrap(),
+                [0, 1, 2].map(|x| AggregateOffset::from_u32(x))
+            );
+            assert_eq!(
+                program.struct_topology().field_offsets(&u).unwrap(),
+                [0, 0, 1, 1].map(|x| AggregateOffset::from_u32(x))
+            );
+            assert_eq!(
+                program.struct_topology().field_offsets(&v).unwrap(),
+                [0, 0].map(|x| AggregateOffset::from_u32(x))
+            );
+            assert_eq!(
+                program.struct_topology().field_offsets(&w).unwrap(),
+                [0, 1].map(|x| AggregateOffset::from_u32(x))
+            );
+            assert_eq!(
+                program.struct_topology().field_offsets(&x).unwrap(),
+                [0].map(|x| AggregateOffset::from_u32(x))
+            )
+        })
+    }
+}
