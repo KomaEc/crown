@@ -54,10 +54,10 @@ impl CallGraph {
         .construct()
     }
 
-    #[inline]
-    fn lookup_function(&self, did: &DefId) -> Result<Func, Func> {
-        self.functions.binary_search(did)
-    }
+    // #[inline]
+    // fn lookup_function(&self, did: &DefId) -> Result<Func, Func> {
+    //     self.functions.binary_search(did)
+    // }
 }
 
 crate::macros::newtype_index! {
