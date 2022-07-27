@@ -2,8 +2,8 @@
 #![feature(box_patterns)]
 #![feature(let_else)]
 
-extern crate rustc_hash;
 extern crate rustc_hir;
+extern crate rustc_hash;
 extern crate rustc_index;
 extern crate rustc_middle;
 extern crate rustc_mir_dataflow;

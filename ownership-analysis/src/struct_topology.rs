@@ -127,7 +127,7 @@ impl StructTopology {
 
 #[cfg(test)]
 mod tests {
-    use crate::analysis::place_ext::place_abs::AggregateOffset;
+    use crate::place_ext::place_abs::AggregateOffset;
 
     const TEXT: &str = "
     struct s {
