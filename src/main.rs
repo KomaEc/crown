@@ -11,17 +11,21 @@ extern crate rustc_interface;
 extern crate rustc_middle;
 extern crate rustc_mir_dataflow;
 extern crate rustc_session;
+extern crate rustc_target;
 
-// use analysis::null_analysis::NullAnalysisResults;
 use clap::Parser;
-use core::Program;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
-use rustc_hir::{ItemKind, OwnerNode};
+use rustc_hir::{def_id::DefId, ItemKind, OwnerNode};
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config;
 use std::{borrow::BorrowMut, path::PathBuf, time::Instant};
+use tracing_subscriber::EnvFilter;
+
+use ownership_analysis::Program;
+use refactor::rewriter::RewriteMode;
+use usage_analysis::{fatness, null};
 
 #[derive(Parser)]
 struct Cli {
@@ -48,15 +52,12 @@ enum Command {
         #[clap(long, short = 'M')]
         mutability: bool,
 
-        #[clap(long, short = 'p')]
-        pretty_mir: bool,
-
         #[clap(long, short)]
         all: bool,
     },
     Rewrite {
-        #[clap(arg_enum, default_value_t = core::rewriter::RewriteMode::Print)]
-        rewrite_mode: core::rewriter::RewriteMode,
+        #[clap(arg_enum, default_value_t = RewriteMode::Print)]
+        rewrite_mode: RewriteMode,
     },
     Playground {
         #[clap(long)]
@@ -65,7 +66,10 @@ enum Command {
 }
 
 fn main() {
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .without_time()
+        .with_env_filter(EnvFilter::from_default_env())
+        .init();
     let args = Cli::parse();
     rustc_interface::run_compiler(compiler_config(args.path), move |compiler| {
         compiler.enter(|queries| {
@@ -94,14 +98,14 @@ fn compiler_config(input_path: PathBuf) -> Config {
             unstable_features: UnstableFeatures::from_environment(None),
             ..config::Options::default()
         },
-        input: config::Input::File(input_path),
-        diagnostic_output: rustc_session::DiagnosticOutput::Default,
         crate_cfg: rustc_hash::FxHashSet::default(),
+        crate_check_cfg: rustc_interface::interface::parse_check_cfg(vec![]),
+        input: config::Input::File(input_path),
         input_path: None,
         output_dir: None,
         output_file: None,
         file_loader: None,
-        crate_check_cfg: rustc_interface::interface::parse_check_cfg(vec![]),
+        diagnostic_output: rustc_session::DiagnosticOutput::Default,
         lint_caps: rustc_hash::FxHashMap::default(),
         parse_sess_created: None,
         register_lints: None,
@@ -136,6 +140,17 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
         };
     }
 
+    let local_fns = functions
+        .iter()
+        .copied()
+        .filter_map(DefId::as_local)
+        .collect::<Vec<_>>();
+    let local_structs = structs
+        .iter()
+        .copied()
+        .filter_map(DefId::as_local)
+        .collect::<Vec<_>>();
+
     let program = time("construct call graph and struct topology", || {
         Program::new(tcx, functions, structs)
     });
@@ -148,51 +163,33 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             program.verify_shape_of_place();
             program.inspect_place_abs();
         }
-        Command::Analyse { .. } => {
-            // if *pretty_mir {
-            //     refactor::show_mir(tcx, top_level_fns.clone())
-            // }
+        Command::Analyse {
+            null,
+            array,
+            ownership,
+            mutability,
+            all: _,
+        } => {
+            if null {
+                let results = null::CrateResults::collect(tcx, &local_fns, &local_structs);
+                results.show(tcx);
+            }
 
-            // if *ownership {
-            //     refactor::show_ownership_analysis_results(
-            //         tcx,
-            //         top_level_struct_defs.clone(),
-            //         top_level_fns.clone(),
-            //     )
-            // }
+            if ownership {
+                todo!("ownership analysis");
+            }
 
-            // if *mutability {
-            //     refactor::show_mutability_analysis_results(
-            //         tcx,
-            //         top_level_struct_defs.clone(),
-            //         top_level_fns.clone(),
-            //     )
-            // }
+            if mutability {
+                todo!("ownership analysis");
+            }
 
-            // if *array {
-            //     refactor::print_fat_thin_analysis_results(tcx, top_level_struct_defs, top_level_fns)
-            // }
+            if array {
+                let results = fatness::CrateResults::collect(tcx, &local_fns, &local_structs);
+                results.show(tcx);
+            }
         }
-        Command::Rewrite { .. } => {
-            // let ownership_analysis = time("ownership analysis", || {
-            //     refactor::ownership_analysis(tcx, &top_level_struct_defs, &top_level_fns)
-            // });
-            // let mutability_analysis = time("mutability analysis", || {
-            //     refactor::mutability_analysis(tcx, &top_level_struct_defs, &top_level_fns)
-            // });
-            // let fatness_analysis = time("fatness analysis", || {
-            //     refactor::fatness_analysis(tcx, &top_level_struct_defs, &top_level_fns)
-            // });
-            // time("rewrite", || {
-            //     refactor::rewrite::rewrite(
-            //         tcx,
-            //         &ownership_analysis,
-            //         &mutability_analysis,
-            //         &fatness_analysis,
-            //         &top_level_struct_defs,
-            //         rewrite_mode,
-            //     )
-            // });
+        Command::Rewrite { rewrite_mode: _ } => {
+            todo!("ownership analysis");
         }
     }
 }

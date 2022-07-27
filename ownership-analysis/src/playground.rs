@@ -6,10 +6,7 @@ use rustc_middle::mir::{
     Body, Location, Place,
 };
 
-use crate::{
-    analysis::{place_ext::PlaceExt, OwnershipAnalysisCtxt},
-    Program,
-};
+use crate::{place_ext::PlaceExt, Program};
 
 impl<'tcx> Program<'tcx> {
     pub fn verify_shape_of_place(&self) {
@@ -52,11 +49,7 @@ impl<'tcx> Program<'tcx> {
     }
 
     pub fn inspect_place_abs(&self) {
-        struct Vis<'me, 'tcx>(
-            &'me OwnershipAnalysisCtxt<'me, 'tcx>,
-            &'me Body<'tcx>,
-            FxHashSet<Place<'tcx>>,
-        );
+        struct Vis<'me, 'tcx>(&'me Program<'tcx>, &'me Body<'tcx>, FxHashSet<Place<'tcx>>);
         impl<'me, 'tcx> Visitor<'tcx> for Vis<'me, 'tcx> {
             fn visit_place(
                 &mut self,
@@ -69,18 +62,18 @@ impl<'tcx> Program<'tcx> {
                     return;
                 }
                 visited.insert(*place);
-                let octxt = self.0;
                 let body = self.1;
                 let (PlaceContext::MutatingUse(..) | PlaceContext::NonMutatingUse(..)) = context else { return };
-                if place.projection.len() < 2 { return }
-                let Some(place_abs) = place.r#abstract(body, &octxt) else { return };
+                if place.projection.len() < 2 {
+                    return;
+                }
+                let Some(place_abs) = place.r#abstract(body, self.0) else { return };
                 tracing::debug!("{:?} -> {}", place, place_abs)
             }
         }
-        let octxt = OwnershipAnalysisCtxt::new(&*self);
         for &did in &self.call_graph.functions {
             let body = self.tcx.optimized_mir(did);
-            let mut vis = Vis(&octxt, body, FxHashSet::default());
+            let mut vis = Vis(self, body, FxHashSet::default());
             vis.visit_body(body);
         }
     }

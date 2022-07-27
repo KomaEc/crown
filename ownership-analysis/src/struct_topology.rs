@@ -6,7 +6,7 @@ use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
 
-use crate::analysis::place_ext::place_abs::AggregateOffset;
+use crate::place_ext::place_abs::AggregateOffset;
 
 pub struct StructTopology {
     /// Structs in post order of the dependency graph.

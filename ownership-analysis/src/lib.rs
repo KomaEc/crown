@@ -29,14 +29,16 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
 
-pub(crate) mod analysis;
-pub(crate) mod call_graph;
-pub(crate) mod macros;
+mod body_ext;
+mod call_graph;
+mod constants;
+mod macros;
+mod place_ext;
 pub mod playground;
-pub mod rewriter;
-pub(crate) mod struct_topology;
+mod struct_topology;
 #[cfg(test)]
-pub(crate) mod test;
+mod test;
+// pub mod sssa;
 
 use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;
@@ -79,5 +81,15 @@ impl<'tcx> Program<'tcx> {
     /// Return the set of top-level struct definitions in post order
     pub fn structs(&self) -> &[DefId] {
         &self.struct_topology.structs_in_post_order()
+    }
+}
+
+pub struct OwnershipAnalysisCtxt<'octxt, 'tcx> {
+    program: &'octxt Program<'tcx>,
+}
+
+impl<'octxt, 'tcx> OwnershipAnalysisCtxt<'octxt, 'tcx> {
+    pub fn new(program: &'octxt Program<'tcx>) -> Self {
+        Self { program }
     }
 }

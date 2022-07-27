@@ -1,6 +1,9 @@
 [workspace]
 members = [
-    "core",
+    "analysis-interface",
+    "ownership-analysis",
+    "usage-analysis",
+    "refactor",
     "utils/graph_ext",
 ]
 
@@ -13,7 +16,11 @@ edition = "2021"
 rustc_private = true
 
 [dependencies]
+analysis-interface = { path = "analysis-interface" }
+ownership-analysis = { path = "ownership-analysis" }
+usage-analysis = { path = "usage-analysis" }
+refactor = { path = "refactor" }
+
 clap = { version = "3.1.2", features = ["derive"] }
 tracing = "0.1.32"
-tracing-subscriber = "0.3.10"
-core = { path = "core" }
+tracing-subscriber = { version = "0.3.10", features = ["env-filter"] }

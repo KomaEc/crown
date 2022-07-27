@@ -1,8 +1,7 @@
 use clap::ArgEnum;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::{FileName, Span};
-pub use rustfix;
-use rustfix::*;
+use rustfix::{LinePosition, LineRange, Replacement, Snippet, Solution, Suggestion};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -91,7 +90,7 @@ impl Rewriter {
             use std::io::stdout;
             let code = fs::read_to_string(file.as_path()).expect("source code read failed");
             let rewrited =
-                apply_suggestions(&code, &suggestions).expect("apply suggestions failed");
+                rustfix::apply_suggestions(&code, &suggestions).expect("apply suggestions failed");
             let mut out: Box<dyn std::io::Write> = match mode {
                 RewriteMode::InPlace => Box::new(File::create(file).expect("cannot open file")),
                 RewriteMode::Print => Box::new(stdout()),

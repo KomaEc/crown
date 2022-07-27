@@ -1,0 +1,9 @@
+[package]
+name = "ownership-analysis"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tracing = "0.1.32"
+graph_ext = { path = "../utils/graph_ext" }
+smallvec = "1.9.0"

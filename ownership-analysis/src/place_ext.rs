@@ -8,24 +8,16 @@ use rustc_middle::{
     ty::TyKind,
 };
 
-use super::OwnershipAnalysisCtxt;
+use crate::Program;
 
 pub trait PlaceExt<'tcx> {
-    fn r#abstract<'octxt, D>(
-        self,
-        local_decls: &D,
-        octxt: &OwnershipAnalysisCtxt<'octxt, 'tcx>,
-    ) -> Option<PlaceAbs>
+    fn r#abstract<'octxt, D>(self, local_decls: &D, program: &Program<'tcx>) -> Option<PlaceAbs>
     where
         D: HasLocalDecls<'tcx>;
 }
 
 impl<'tcx> PlaceExt<'tcx> for Place<'tcx> {
-    fn r#abstract<'octxt, D>(
-        self,
-        local_decls: &D,
-        octxt: &OwnershipAnalysisCtxt<'octxt, 'tcx>,
-    ) -> Option<PlaceAbs>
+    fn r#abstract<'octxt, D>(self, local_decls: &D, program: &Program<'tcx>) -> Option<PlaceAbs>
     where
         D: HasLocalDecls<'tcx>,
     {
@@ -34,16 +26,14 @@ impl<'tcx> PlaceExt<'tcx> for Place<'tcx> {
             match projection_elem {
                 ProjectionElem::Deref => ans.dereferenced = true,
                 ProjectionElem::Field(field, _) => {
-                    let place_ty = place.ty(local_decls, octxt.program.tcx);
+                    let place_ty = place.ty(local_decls, program.tcx);
                     let ty = place_ty.ty;
                     if matches!(ty.kind(), TyKind::Tuple(..)) {
                         return None;
                     }
                     let TyKind::Adt(adt_def, _) = ty.kind() else { unreachable!("{}", place_ty.ty) };
-                    ans.offset += octxt
-                        .program
-                        .struct_topology()
-                        .field_offsets(&adt_def.did())?[field.as_usize()]
+                    ans.offset +=
+                        program.struct_topology().field_offsets(&adt_def.did())?[field.as_usize()]
                 }
                 _ => continue,
             }

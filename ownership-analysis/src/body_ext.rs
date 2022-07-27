@@ -1,6 +1,6 @@
 //! Extensions to mir Body
 
-use crate::analysis::constants::DOM_FRONTIER_SIZE_HINT;
+use crate::constants::DOM_FRONTIER_SIZE_HINT;
 use rustc_index::{bit_set::HybridBitSet, vec::IndexVec};
 use rustc_middle::mir::{BasicBlock, Body};
 use smallvec::SmallVec;

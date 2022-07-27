@@ -1,0 +1,10 @@
+[package]
+name = "usage-analysis"
+authors = ["Rose Hudson <rose@krx.sh>"]
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+analysis-interface = { path = "../analysis-interface" }
+tracing = "0.1.32"
+smallvec = "1.9.0"
