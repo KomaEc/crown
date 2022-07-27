@@ -57,6 +57,7 @@ macro_rules! newtype_index {
             }
         }
 
+        #[allow(dead_code)]
         impl $type {
             /// Maximum value the index can take, as a `u32`.
             $v const MAX_AS_U32: u32 = $max;

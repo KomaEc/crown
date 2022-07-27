@@ -45,7 +45,7 @@ impl<'tcx> CrateInfo<'tcx> {
                 }
             }
         }
-        for &did in self.functions() {
+        for did in self.functions() {
             let body = self.tcx.optimized_mir(did);
             Vis.visit_body(body);
         }
@@ -80,7 +80,7 @@ impl<'tcx> CrateInfo<'tcx> {
             }
         }
         let octxt = OwnershipAnalysisCtxt::new(&*self);
-        for &did in self.functions() {
+        for did in self.functions() {
             let body = self.tcx.optimized_mir(did);
             let mut vis = Vis(&octxt, body, FxHashSet::default());
             vis.visit_body(body);

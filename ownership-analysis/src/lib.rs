@@ -36,7 +36,7 @@ mod playground;
 mod struct_topology;
 #[cfg(test)]
 mod test;
-mod utils;
+pub mod utils;
 
 use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;
