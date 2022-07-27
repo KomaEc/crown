@@ -4,7 +4,6 @@ members = [
     "ownership-analysis",
     "usage-analysis",
     "refactor",
-    "utils/graph_ext",
 ]
 
 [package]

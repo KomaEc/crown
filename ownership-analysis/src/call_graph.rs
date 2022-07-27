@@ -1,4 +1,4 @@
-use graph_ext::{delegate_graph_via, implementation::forward_star};
+use crate::utils::graph_ext::{delegate_graph_via, implementation::forward_star};
 use rustc_data_structures::graph::{
     scc::Sccs, DirectedGraph, GraphPredecessors, GraphSuccessors, WithNumEdges, WithNumNodes,
     WithPredecessors, WithSuccessors,
@@ -11,13 +11,13 @@ use rustc_middle::{
 };
 use rustc_type_ir::TyKind::FnDef;
 
-pub struct CallGraph {
+pub(crate) struct CallGraph {
     /// Invariant: the set of functions are sorted by `DefId` to facilitate
     /// reverse lookup
-    pub functions: IndexVec<Func, DefId>,
-    pub call_sites: IndexVec<CallSite, Location>,
-    pub graph: forward_star::Graph<Func, CallSite>,
-    pub sccs_data: CallGraphSccsData,
+    pub(super) functions: IndexVec<Func, DefId>,
+    call_sites: IndexVec<CallSite, Location>,
+    graph: forward_star::Graph<Func, CallSite>,
+    sccs_data: CallGraphSccsData,
 }
 
 pub struct CallGraphSccsData {
@@ -42,7 +42,7 @@ impl CallGraphSccsData {
 delegate_graph_via!(CallGraph.graph: forward_star::Graph<Func, CallSite>);
 
 impl CallGraph {
-    pub fn new(tcx: TyCtxt, mut bodies: Vec<DefId>) -> Self {
+    pub(crate) fn new(tcx: TyCtxt, mut bodies: Vec<DefId>) -> Self {
         bodies.sort();
         let num_nodes = bodies.len();
         CallGraphConstruction {

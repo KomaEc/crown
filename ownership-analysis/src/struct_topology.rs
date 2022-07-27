@@ -1,4 +1,4 @@
-use graph_ext::implementation::sparse_bit_vector::{self, SparseBitVectorGraph};
+use crate::utils::graph_ext::implementation::sparse_bit_vector::{self, SparseBitVectorGraph};
 use rustc_data_structures::graph::iterate::post_order_from;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -8,7 +8,7 @@ use rustc_type_ir::TyKind::Adt;
 
 use crate::analysis::place_ext::place_abs::AggregateOffset;
 
-pub struct StructTopology {
+pub(crate) struct StructTopology {
     /// Structs in post order of the dependency graph.
     /// Dependency graph encodes direct dependencies between user defined structs.
     /// For instance, in `struct S { f: T } struct T;`
@@ -22,7 +22,7 @@ pub struct StructTopology {
 }
 
 impl StructTopology {
-    pub fn new(tcx: TyCtxt, structs: Vec<DefId>) -> Self {
+    pub(crate) fn new(tcx: TyCtxt, structs: Vec<DefId>) -> Self {
         // structs.sort();
         let structs = IndexVec::from_raw(structs);
         let graph: SparseBitVectorGraph<u32> = sparse_bit_vector::SparseBitVectorGraph::new(
@@ -106,7 +106,7 @@ impl StructTopology {
     }
 
     #[inline]
-    pub fn structs_in_post_order(&self) -> &[DefId] {
+    pub(crate) fn structs_in_post_order(&self) -> &[DefId] {
         &self.post_order[..]
     }
 

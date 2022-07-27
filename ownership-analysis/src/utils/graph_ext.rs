@@ -1,14 +1,7 @@
-#![feature(min_specialization)]
-#![feature(rustc_private)]
-
-extern crate rustc_data_structures;
-extern crate rustc_index;
-extern crate rustc_serialize;
-
 pub mod implementation;
 // pub mod tred;
 
-#[macro_export]
+// #[macro_export]
 macro_rules! delegate_graph_via {
     ($S:ident.$f:ident$colon:tt $ty:ty) => {
         impl DirectedGraph for $S {
@@ -50,3 +43,5 @@ macro_rules! delegate_graph_via {
         }
     };
 }
+
+pub(crate) use delegate_graph_via;

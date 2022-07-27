@@ -19,5 +19,6 @@ once_cell = "1.13.0"
 proptest = "1.0.0"
 rustfix = "0.6.0"
 clap = { version = "3.1.2", features = ["derive"] }
+rand = "0.8.4"
 
-graph_ext = { path = "../utils/graph_ext" }
+# graph_ext = { path = "../utils/graph_ext" }

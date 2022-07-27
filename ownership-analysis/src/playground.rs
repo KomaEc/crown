@@ -45,7 +45,7 @@ impl<'tcx> CrateInfo<'tcx> {
                 }
             }
         }
-        for &did in &self.call_graph.functions {
+        for &did in self.functions() {
             let body = self.tcx.optimized_mir(did);
             Vis.visit_body(body);
         }
@@ -80,7 +80,7 @@ impl<'tcx> CrateInfo<'tcx> {
             }
         }
         let octxt = OwnershipAnalysisCtxt::new(&*self);
-        for &did in &self.call_graph.functions {
+        for &did in self.functions() {
             let body = self.tcx.optimized_mir(did);
             let mut vis = Vis(&octxt, body, FxHashSet::default());
             vis.visit_body(body);
@@ -88,7 +88,7 @@ impl<'tcx> CrateInfo<'tcx> {
     }
 
     pub fn print_mir(&self) {
-        self.call_graph.functions.iter().for_each(|&fn_did| {
+        self.functions().iter().for_each(|&fn_did| {
             let body = self.tcx.optimized_mir(fn_did);
             rustc_middle::mir::pretty::write_mir_fn(
                 self.tcx,

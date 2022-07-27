@@ -29,14 +29,14 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
 
-pub(crate) mod analysis;
-pub(crate) mod call_graph;
-pub(crate) mod macros;
-pub mod playground;
-pub mod rewriter;
-pub(crate) mod struct_topology;
+mod analysis;
+mod call_graph;
+mod macros;
+mod playground;
+mod struct_topology;
 #[cfg(test)]
-pub(crate) mod test;
+mod test;
+mod utils;
 
 use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;

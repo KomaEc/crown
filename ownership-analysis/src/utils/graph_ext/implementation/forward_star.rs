@@ -471,13 +471,13 @@ mod tests {
 
     use super::*;
 
-    rustc_index::newtype_index! {
+    crate::macros::newtype_index! {
         pub struct Node {
             DEBUG_FORMAT = "{}"
         }
     }
 
-    rustc_index::newtype_index! {
+    crate::macros::newtype_index! {
         pub struct Edge {
             DEBUG_FORMAT = "{}"
         }
