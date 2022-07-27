@@ -23,7 +23,7 @@ use rustc_session::config;
 use std::{borrow::BorrowMut, path::PathBuf, time::Instant};
 use tracing_subscriber::EnvFilter;
 
-use ownership_analysis::Program;
+use ownership_analysis::CrateInfo;
 use refactor::rewriter::RewriteMode;
 use usage_analysis::{fatness, null};
 
@@ -152,7 +152,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
         .collect::<Vec<_>>();
 
     let program = time("construct call graph and struct topology", || {
-        Program::new(tcx, functions, structs)
+        CrateInfo::new(tcx, functions, structs)
     });
 
     match *cmd {

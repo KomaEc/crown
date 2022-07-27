@@ -1,4 +1,4 @@
-use crate::Program;
+use crate::CrateInfo;
 use once_cell::sync::OnceCell;
 use rustc_errors::registry;
 use rustc_hir::{ItemKind, OwnerNode};
@@ -44,7 +44,7 @@ impl Into<rustc_session::config::Input> for Input {
     }
 }
 
-pub(crate) fn run_compiler_with(input: Input, f: impl FnOnce(Program) + Send) {
+pub(crate) fn run_compiler_with(input: Input, f: impl FnOnce(CrateInfo) + Send) {
     let out = process::Command::new("rustc")
         .arg("--print=sysroot")
         .current_dir(".")
@@ -86,7 +86,7 @@ pub(crate) fn run_compiler_with(input: Input, f: impl FnOnce(Program) + Send) {
                         _ => {}
                     };
                 }
-                let program = Program::new(tcx, functions, structs);
+                let program = CrateInfo::new(tcx, functions, structs);
                 f(program)
             })
         })

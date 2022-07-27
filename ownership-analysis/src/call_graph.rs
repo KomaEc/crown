@@ -162,7 +162,7 @@ mod test {
     fn test() {
         init_logger();
         crate::test::run_compiler_with(TEST_PROGRAMS.into(), |program| {
-            let crate::Program {
+            let crate::CrateInfo {
                 tcx: _,
                 call_graph,
                 struct_topology: _,

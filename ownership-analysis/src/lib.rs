@@ -29,16 +29,14 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
 
-mod body_ext;
-mod call_graph;
-mod constants;
-mod macros;
-mod place_ext;
+pub(crate) mod analysis;
+pub(crate) mod call_graph;
+pub(crate) mod macros;
 pub mod playground;
-mod struct_topology;
+pub mod rewriter;
+pub(crate) mod struct_topology;
 #[cfg(test)]
-mod test;
-// pub mod sssa;
+pub(crate) mod test;
 
 use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;
@@ -47,15 +45,15 @@ use struct_topology::StructTopology;
 
 /// Input program is assumed to consist of only top-level
 /// functions and struct definitions.
-pub struct Program<'tcx> {
-    pub(crate) tcx: TyCtxt<'tcx>,
+pub struct CrateInfo<'tcx> {
+    tcx: TyCtxt<'tcx>,
     call_graph: CallGraph,
     struct_topology: StructTopology,
 }
 
-impl<'tcx> Program<'tcx> {
+impl<'tcx> CrateInfo<'tcx> {
     pub fn new(tcx: TyCtxt<'tcx>, functions: Vec<DefId>, structs: Vec<DefId>) -> Self {
-        Program {
+        CrateInfo {
             tcx,
             call_graph: CallGraph::new(tcx, functions),
             struct_topology: StructTopology::new(tcx, structs),
@@ -63,12 +61,12 @@ impl<'tcx> Program<'tcx> {
     }
 
     #[inline]
-    pub fn call_graph(&self) -> &CallGraph {
+    fn call_graph(&self) -> &CallGraph {
         &self.call_graph
     }
 
     #[inline]
-    pub fn struct_topology(&self) -> &StructTopology {
+    fn struct_topology(&self) -> &StructTopology {
         &self.struct_topology
     }
 
@@ -81,15 +79,5 @@ impl<'tcx> Program<'tcx> {
     /// Return the set of top-level struct definitions in post order
     pub fn structs(&self) -> &[DefId] {
         &self.struct_topology.structs_in_post_order()
-    }
-}
-
-pub struct OwnershipAnalysisCtxt<'octxt, 'tcx> {
-    program: &'octxt Program<'tcx>,
-}
-
-impl<'octxt, 'tcx> OwnershipAnalysisCtxt<'octxt, 'tcx> {
-    pub fn new(program: &'octxt Program<'tcx>) -> Self {
-        Self { program }
     }
 }

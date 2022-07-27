@@ -6,7 +6,7 @@ use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
 
-use crate::place_ext::place_abs::AggregateOffset;
+use crate::analysis::place_ext::place_abs::AggregateOffset;
 
 pub struct StructTopology {
     /// Structs in post order of the dependency graph.
@@ -113,21 +113,21 @@ impl StructTopology {
     /// Return the total offset of a struct definition, `None` if
     /// `did` is a library struct/enum/union
     #[inline]
-    pub fn struct_offset(&self, did: &DefId) -> Option<AggregateOffset> {
+    pub(crate) fn struct_offset(&self, did: &DefId) -> Option<AggregateOffset> {
         let last = self.aggregate_offset.get(did)?.last();
         assert!(last.is_some());
         last.map(|&offset| offset)
     }
 
     #[inline]
-    pub fn field_offsets(&self, did: &DefId) -> Option<&[AggregateOffset]> {
+    pub(crate) fn field_offsets(&self, did: &DefId) -> Option<&[AggregateOffset]> {
         self.aggregate_offset.get(did).map(|vec| &vec[..])
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::place_ext::place_abs::AggregateOffset;
+    use crate::analysis::place_ext::place_abs::AggregateOffset;
 
     const TEXT: &str = "
     struct s {

@@ -11,7 +11,7 @@ use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::mir::{visit::Visitor, BasicBlock, Body, Local};
 use smallvec::SmallVec;
 
-use core::{body_ext::BodyExt, place_ext::PlaceExt};
+use crate::analysis::{body_ext::BodyExt, place_ext::PlaceExt};
 
 use super::{constants::PHI_NODES_SIZE_HINT, OwnershipAnalysisCtxt};
 
