@@ -136,14 +136,17 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
         };
     }
 
-    let program = Program::new(tcx, functions, structs);
+    let program = time("construct call graph and struct topology", || {
+        Program::new(tcx, functions, structs)
+    });
 
     match *cmd {
         Command::Playground { mir } => {
             if mir {
                 program.print_mir();
             }
-            program.inspect_nested_places();
+            program.verify_shape_of_place();
+            program.inspect_place_abs();
         }
         Command::Analyse { .. } => {
             // if *pretty_mir {

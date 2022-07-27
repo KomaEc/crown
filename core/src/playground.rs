@@ -1,14 +1,18 @@
 //! Playing with ORC and rustc
 
+use rustc_hash::FxHashSet;
 use rustc_middle::mir::{
     visit::{PlaceContext, Visitor},
-    Location, Place,
+    Body, Location, Place,
 };
 
-use crate::Program;
+use crate::{
+    analysis::{place_ext::PlaceExt, OwnershipAnalysisCtxt},
+    Program,
+};
 
 impl<'tcx> Program<'tcx> {
-    pub fn inspect_nested_places(&self) {
+    pub fn verify_shape_of_place(&self) {
         struct Vis;
         impl<'tcx> Visitor<'tcx> for Vis {
             fn visit_place(
@@ -44,6 +48,40 @@ impl<'tcx> Program<'tcx> {
         for &did in &self.call_graph.functions {
             let body = self.tcx.optimized_mir(did);
             Vis.visit_body(body);
+        }
+    }
+
+    pub fn inspect_place_abs(&self) {
+        struct Vis<'me, 'tcx>(
+            &'me OwnershipAnalysisCtxt<'me, 'tcx>,
+            &'me Body<'tcx>,
+            FxHashSet<Place<'tcx>>,
+        );
+        impl<'me, 'tcx> Visitor<'tcx> for Vis<'me, 'tcx> {
+            fn visit_place(
+                &mut self,
+                place: &Place<'tcx>,
+                context: PlaceContext,
+                _location: Location,
+            ) {
+                let visited = &mut self.2;
+                if visited.contains(&place) {
+                    return;
+                }
+                visited.insert(*place);
+                let octxt = self.0;
+                let body = self.1;
+                let (PlaceContext::MutatingUse(..) | PlaceContext::NonMutatingUse(..)) = context else { return };
+                if place.projection.len() < 2 { return }
+                let Some(place_abs) = place.r#abstract(body, &octxt) else { return };
+                tracing::debug!("{:?} -> {}", place, place_abs)
+            }
+        }
+        let octxt = OwnershipAnalysisCtxt::new(&*self);
+        for &did in &self.call_graph.functions {
+            let body = self.tcx.optimized_mir(did);
+            let mut vis = Vis(&octxt, body, FxHashSet::default());
+            vis.visit_body(body);
         }
     }
 

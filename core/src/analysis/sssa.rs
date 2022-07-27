@@ -13,17 +13,19 @@ use smallvec::SmallVec;
 
 use crate::analysis::{body_ext::BodyExt, place_ext::PlaceExt};
 
-use super::constants::PHI_NODES_SIZE_HINT;
+use super::{constants::PHI_NODES_SIZE_HINT, OwnershipAnalysisCtxt};
 
-fn syntactic_ssa_form<'tcx>(body: &Body<'tcx>) -> PhiNodeInsertionPoints<u32> {
+fn syntactic_ssa_form<'octxt, 'tcx>(
+    body: &Body<'tcx>,
+    octxt: &OwnershipAnalysisCtxt<'octxt, 'tcx>,
+) -> PhiNodeInsertionPoints<u32> {
     let mut inserted = PhiNodeInsertionPoints::from_raw(IndexVec::from_elem(
         BasicBlockInsersionPoints::new(),
         body.basic_blocks(),
     ));
-    let dominance_frontier = body.cal_dom_frontier();
+    let dominance_frontier = body.calculate_dominance_frontier();
 
     fn collect_def_sites_for<'tcx>(body: &Body<'tcx>) -> IndexVec<Local, Vec<BitSet<BasicBlock>>> {
-        let max_deref_levels = body.max_deref_levels();
         use rustc_middle::mir::{
             visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext},
             Place,
@@ -93,23 +95,23 @@ fn syntactic_ssa_form<'tcx>(body: &Body<'tcx>) -> PhiNodeInsertionPoints<u32> {
         }
     }
 
-    for basic_block_insertions in inserted.iter_mut() {
-        basic_block_insertions.data.sort_by(
-            |&(a, al), &(b, bl)| {
-                if a == b {
-                    al.cmp(&bl)
-                } else {
-                    a.cmp(&b)
-                }
-            },
-        );
+    // for basic_block_insertions in inserted.iter_mut() {
+    //     basic_block_insertions.data.sort_by(
+    //         |&(a, al), &(b, bl)| {
+    //             if a == b {
+    //                 al.cmp(&bl)
+    //             } else {
+    //                 a.cmp(&b)
+    //             }
+    //         },
+    //     );
 
-        let mut new_local_found = true;
-        let mut cur: Local;
-        basic_block_insertions.data.retain(|&mut (a, al)| {
+    //     let mut new_local_found = true;
+    //     let mut cur: Local;
+    //     basic_block_insertions.data.retain(|&mut (a, al)| {
 
-        });
-    }
+    //     });
+    // }
     inserted
 }
 

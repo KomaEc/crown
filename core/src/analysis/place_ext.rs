@@ -14,7 +14,7 @@ pub trait PlaceExt<'tcx> {
     fn r#abstract<'octxt, D>(
         self,
         local_decls: &D,
-        octxt: OwnershipAnalysisCtxt<'octxt, 'tcx>,
+        octxt: &OwnershipAnalysisCtxt<'octxt, 'tcx>,
     ) -> Option<PlaceAbs>
     where
         D: HasLocalDecls<'tcx>;
@@ -24,7 +24,7 @@ impl<'tcx> PlaceExt<'tcx> for Place<'tcx> {
     fn r#abstract<'octxt, D>(
         self,
         local_decls: &D,
-        octxt: OwnershipAnalysisCtxt<'octxt, 'tcx>,
+        octxt: &OwnershipAnalysisCtxt<'octxt, 'tcx>,
     ) -> Option<PlaceAbs>
     where
         D: HasLocalDecls<'tcx>,
@@ -35,8 +35,11 @@ impl<'tcx> PlaceExt<'tcx> for Place<'tcx> {
                 ProjectionElem::Deref => ans.dereferenced = true,
                 ProjectionElem::Field(field, _) => {
                     let place_ty = place.ty(local_decls, octxt.program.tcx);
-                    let TyKind::Adt(adt_def, _) = place_ty.ty.kind() else { unreachable!("impossible") };
-                    assert!(adt_def.is_struct());
+                    let ty = place_ty.ty;
+                    if matches!(ty.kind(), TyKind::Tuple(..)) {
+                        return None;
+                    }
+                    let TyKind::Adt(adt_def, _) = ty.kind() else { unreachable!("{}", place_ty.ty) };
                     ans.offset += octxt
                         .program
                         .struct_topology()

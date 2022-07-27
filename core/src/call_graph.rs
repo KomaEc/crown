@@ -132,27 +132,21 @@ impl<'me, 'tcx> Visitor<'tcx> for CallGraphNodeVis<'me, 'tcx> {
                 return
             };
             let ty = func_constant.ty();
-            // let ty = func
-            //     .constant()
-            //     .expect("closures or function pointers are not supported!")
-            //     .ty();
-            if let &FnDef(callee_did, _generic_args) = ty.kind() {
-                // local defined functions: libc externs or user functions
-                if let Some(did) = callee_did.as_local() {
-                    // if it is user functions
-                    if matches!(
-                        self.tcx.hir().find_by_def_id(did),
-                        Some(rustc_hir::Node::Item(_))
-                    ) {
-                        let other = self.functions.binary_search(&callee_did).unwrap();
-                        assert_eq!(
-                            self.call_graph.add_edge(self.this, other),
-                            self.call_sites.push(location)
-                        );
-                    }
-                }
-            } else {
+            let &FnDef(callee_did, _generic_args) = ty.kind() else {
                 panic!("what could it be? {}", ty)
+            };
+            // local defined functions: libc externs or user functions
+            let Some(did) = callee_did.as_local() else { return };
+            // if it is user functions
+            if matches!(
+                self.tcx.hir().find_by_def_id(did),
+                Some(rustc_hir::Node::Item(_))
+            ) {
+                let other = self.functions.binary_search(&callee_did).unwrap();
+                assert_eq!(
+                    self.call_graph.add_edge(self.this, other),
+                    self.call_sites.push(location)
+                );
             }
         }
     }

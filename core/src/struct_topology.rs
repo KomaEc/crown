@@ -81,13 +81,15 @@ impl StructTopology {
                     + match field_def.ty(tcx, subst_ref).kind() {
                         TyKind::RawPtr(..) | TyKind::Ref(..) => 1,
                         TyKind::Adt(sub_adt_def, _) if sub_adt_def.is_box() => 1,
-                        // non-user defined structs are ignored
-                        TyKind::Adt(sub_adt_def, _) if !post_order.contains(&sub_adt_def.did()) => 0,
                         TyKind::Adt(sub_adt_def, _) => {
-                            let offsets: &Vec<AggregateOffset> = aggregate_offset
+                            aggregate_offset
                                 .get(&sub_adt_def.did())
-                                .expect("sub-structs should have been initialised");
-                            offsets.last().map(|offset| offset.as_usize()).unwrap_or(0)
+                                .and_then(|offsets: &Vec<AggregateOffset>| {
+                                    assert!(!offsets.is_empty());
+                                    offsets.last().map(|&offset| offset.as_usize())
+                                })
+                                // non-user defined structs are ignored
+                                .unwrap_or(0)
                         }
                         _ => 0,
                     };
@@ -109,7 +111,7 @@ impl StructTopology {
     }
 
     /// Return the total offset of a struct definition, `None` if
-    /// `did` is not a user define struct
+    /// `did` is a library struct/enum/union
     #[inline]
     pub fn struct_offset(&self, did: &DefId) -> Option<AggregateOffset> {
         let last = self.aggregate_offset.get(did)?.last();
