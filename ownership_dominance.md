@@ -102,6 +102,8 @@ The additional inequality constraints appear in load and store statements encode
 
 Perform ownership analysis _outside in_. We first infer for top-level pointers to define an approximate ownership scheme. Then we track pointers behind one-level of dereference. If the base pointer is owning, then the inner pointer is allow to transfer ownership. Otherwise, the inner pointer can only be transient. Then two-level, etc. until a fixpoint.
 
+Scalability
+
 As a really contrived example, the program
 
 ```c
@@ -168,3 +170,77 @@ p = q; // p is redefined
 ```
 
 Note that before re-definition, base pointers have certain separation or uniqueness property, that at least it does not alias other pointers in a method.
+
+
+
+
+
+
+
+#### 8.5
+
+##### Iterative Algorithm ?
+
+Iterative algorithm: expand pointers further in each round
+
+```rust
+// A utility function to right rotate subtree rooted with y
+// See the diagram given above.
+pub unsafe extern "C" fn rightRotate(mut y: *mut Node) -> *mut Node {
+    let mut x: *mut Node = (*y).left;
+    let mut T2: *mut Node = (*x).right;
+    // Perform rotation
+    (*y).left = T2;
+    (*x).right = y;
+    // Update heights
+    (*y).height =
+        max(height((*y).left), height((*y).right)) + 1 as i32;
+    (*x).height =
+        max(height((*x).left), height((*x).right)) + 1 as i32;
+    // Return new root
+    return x;
+}
+```
+
+In the first round:
+
+```rust
+x = ...;
+... = y;
+```
+
+In the second round, `*mut struct Node` is expanded into `*mut struct Node { left: *mut Node, right: *mut Node }`:
+
+```rust
+x = (*y).left;
+// T2 = (*x).right; // note that (*x).right has no connection to (*(*y).left).right in this round
+(*y).left = T2
+(*x).right = y;
+```
+
+In the third round, `*mut Node` is exapended further!
+
+```rust
+x = (*y).left; // && (*x).right = (*(*y).left).right && ...
+T2 = (*x).right; // && ...
+(*y).left = T2;
+(*x).right = y;
+```
+
+
+
+###### Problem
+
+State explosion??? Shall we use a separate shape analyser (say facebook Infer) for composite data structure (say singly linked list)
+
+
+
+##### Data Structure
+
+How to track the flow for `*p` ? There is no natural algorithm in the SSA framework to rename the whole expression `*p`, for instance,  `(*p_0)_1` to `(*p_0)_2`. 
+
+* Value Flow Graph
+  Use an initial imprecise points-to analysis. Upon a store `*p = ...`, if `p` points to `{a, b}`, then issue two special statement $\chi(a)$ and $\chi(b)$. Rename both of them. Upon a load `... = *p`, if `p` points to `{a, b}`, then issue $\mu(a)$ and $\mu(b)$.
+   This may introduce false def-use chains.
+* Singleton Points to Set
+  Track the flow for dereference expression by line number. Top-level variables are renamed, `*p` are tracked by `*(p_k)[l]`
