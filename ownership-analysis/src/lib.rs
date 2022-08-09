@@ -32,6 +32,7 @@ extern crate rustc_type_ir;
 mod analysis;
 mod call_graph;
 mod macros;
+pub mod numbering;
 mod playground;
 mod struct_topology;
 #[cfg(test)]
@@ -72,7 +73,7 @@ impl<'tcx> CrateInfo<'tcx> {
 
     #[inline]
     pub fn functions(&self) -> &[DefId] {
-        &self.call_graph.functions.raw[..]
+        &self.call_graph.functions()
     }
 
     #[inline]

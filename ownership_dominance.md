@@ -207,13 +207,14 @@ In the first round:
 ```rust
 x = ...;
 ... = y;
+return x;
 ```
 
 In the second round, `*mut struct Node` is expanded into `*mut struct Node { left: *mut Node, right: *mut Node }`:
 
 ```rust
 x = (*y).left;
-// T2 = (*x).right; // note that (*x).right has no connection to (*(*y).left).right in this round
+T2 = (*x).right; // note that (*x).right has no connection to (*(*y).left).right in this round
 (*y).left = T2
 (*x).right = y;
 ```
@@ -229,6 +230,16 @@ T2 = (*x).right; // && ...
 
 
 
+```
+*q = malloc(..); // q_1
+p = q; // p_2 = q_1; p_2_1 = q_1_1;
+free(*p); // p_2_1
+```
+
+
+
+
+
 ###### Problem
 
 State explosion??? Shall we use a separate shape analyser (say facebook Infer) for composite data structure (say singly linked list)
@@ -239,8 +250,38 @@ State explosion??? Shall we use a separate shape analyser (say facebook Infer) f
 
 How to track the flow for `*p` ? There is no natural algorithm in the SSA framework to rename the whole expression `*p`, for instance,  `(*p_0)_1` to `(*p_0)_2`. 
 
+CBMC: rename `p` when defining `*p`.
+
 * Value Flow Graph
   Use an initial imprecise points-to analysis. Upon a store `*p = ...`, if `p` points to `{a, b}`, then issue two special statement $\chi(a)$ and $\chi(b)$. Rename both of them. Upon a load `... = *p`, if `p` points to `{a, b}`, then issue $\mu(a)$ and $\mu(b)$.
    This may introduce false def-use chains.
 * Singleton Points to Set
   Track the flow for dereference expression by line number. Top-level variables are renamed, `*p` are tracked by `*(p_k)[l]`
+
+
+
+
+
+
+
+1. CBMC: SSA
+2. Two routes, old analysis
+3. Empirical study on level of dereferences
+4. Limit scope to singly linked list and non-recursive data structures
+5. Emprical study: singly linked list is one of the major data structure
+6. Array
+
+
+
+
+
+
+
+
+
+#### 8.12
+
+1. CBMC: SSA
+   Pointer dereferences are resolved to symbolic value.
+2. Ownership Dominance property: treats `*p` as `x`! So `(*p).left` can be treated as `x.left`. Defining `*p` is treated as defining `p`!
+

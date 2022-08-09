@@ -1,11 +1,11 @@
 //! Extensions to mir Body
 
-use crate::analysis::constants::DOM_FRONTIER_SIZE_HINT;
+use crate::analysis::constants::SIZE_DOM_FRONTIER;
 use rustc_index::{bit_set::HybridBitSet, vec::IndexVec};
 use rustc_middle::mir::{BasicBlock, Body};
 use smallvec::SmallVec;
 
-pub type DominanceFrontier = IndexVec<BasicBlock, SmallVec<[BasicBlock; DOM_FRONTIER_SIZE_HINT]>>;
+pub type DominanceFrontier = IndexVec<BasicBlock, SmallVec<[BasicBlock; SIZE_DOM_FRONTIER]>>;
 
 pub trait BodyExt {
     fn calculate_dominance_frontier(&self) -> DominanceFrontier;
