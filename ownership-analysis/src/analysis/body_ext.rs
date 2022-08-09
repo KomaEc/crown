@@ -8,11 +8,11 @@ use smallvec::SmallVec;
 pub type DominanceFrontier = IndexVec<BasicBlock, SmallVec<[BasicBlock; SIZE_DOM_FRONTIER]>>;
 
 pub trait BodyExt {
-    fn calculate_dominance_frontier(&self) -> DominanceFrontier;
+    fn compute_dominance_frontier(&self) -> DominanceFrontier;
 }
 
 impl<'tcx> BodyExt for Body<'tcx> {
-    fn calculate_dominance_frontier(&self) -> DominanceFrontier {
+    fn compute_dominance_frontier(&self) -> DominanceFrontier {
         let dominators = self.basic_blocks.dominators();
         let mut df = IndexVec::from_elem(
             HybridBitSet::new_empty(self.basic_blocks().len()),
