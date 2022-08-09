@@ -1,21 +1,45 @@
 //! Functions that calculate the join points of phi nodes
 
+use std::collections::VecDeque;
+
 use derivative::Derivative;
-use rustc_index::vec::IndexVec;
+use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::mir::{BasicBlock, Body, Local};
 use smallvec::SmallVec;
 
 use super::{
     body_ext::DominanceFrontier,
     constants::{NUM_PHI_NODES, SIZE_PHI_NODE},
+    def_sites::DefSites,
     state::SSAIdx,
 };
 
 pub fn compute_join_points<'tcx>(
     body: &Body<'tcx>,
     dominance_frontier: &DominanceFrontier,
+    def_sites: &DefSites,
 ) -> JoinPoints<PhiNode> {
-    todo!()
+    let mut join_points = JoinPoints::from_raw(IndexVec::from_elem(
+        BasicBlockNodes::new(),
+        body.basic_blocks(),
+    ));
+    let mut already_added = BitSet::new_empty(body.basic_blocks().len());
+    for (a, bbs) in def_sites.iter_enumerated() {
+        let mut work_list = bbs.iter().collect::<VecDeque<_>>();
+        while let Some(bb) = work_list.pop_front() {
+            for &bb_f in &dominance_frontier[bb] {
+                if !already_added.contains(bb_f) {
+                    join_points[bb_f].data.push((a, PhiNode::default()));
+                    already_added.insert(bb_f);
+                    if !def_sites[a].contains(bb_f) {
+                        work_list.push_back(bb_f);
+                    }
+                }
+            }
+        }
+        already_added.clear();
+    }
+    join_points
 }
 
 /// A phi node for a local X: X_i = $\phi$(X_j, X_k)
@@ -76,22 +100,21 @@ impl<Payload> From<IndexVec<BasicBlock, BasicBlockNodes<Payload>>> for JoinPoint
     }
 }
 
-// /// `PhiNodeInsertionPoints<Payload>` should act completely the same as
-// /// `IndexVec<BasicBlock, BasicBlockInsersionPoints<Payload>>`, so we implement
-// /// `Deref`
-// impl<Payload> std::ops::Deref for JoinPoints<Payload> {
-//     type Target = IndexVec<BasicBlock, BasicBlockNodes<Payload>>;
+impl<T> std::ops::Index<BasicBlock> for JoinPoints<T> {
+    type Output = BasicBlockNodes<T>;
 
-//     fn deref(&self) -> &Self::Target {
-//         &self.raw
-//     }
-// }
+    #[inline]
+    fn index(&self, bb: BasicBlock) -> &Self::Output {
+        &self.data[bb]
+    }
+}
 
-// impl<Payload> std::ops::DerefMut for JoinPoints<Payload> {
-//     fn deref_mut(&mut self) -> &mut Self::Target {
-//         &mut self.raw
-//     }
-// }
+impl<T> std::ops::IndexMut<BasicBlock> for JoinPoints<T> {
+    #[inline]
+    fn index_mut(&mut self, bb: BasicBlock) -> &mut Self::Output {
+        &mut self.data[bb]
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct BasicBlockNodes<Node> {
