@@ -3,7 +3,7 @@
 extern crate rustc_hir;
 extern crate rustc_middle;
 
-use rustc_hir::def_id::LocalDefId;
+use rustc_hir::def_id::{DefId, LocalDefId};
 use rustc_middle::{
     mir::{Body, Field, Local, Location, PlaceRef, ProjectionElem},
     ty::TyCtxt,
@@ -68,5 +68,25 @@ pub fn get_struct_field<'tcx>(
         Some((struct_def_id, field, n_derefs))
     } else {
         None
+    }
+}
+
+pub trait OrcInput<'tcx> {
+    fn tcx(&self) -> TyCtxt<'tcx>;
+    fn functions(&self) -> &[DefId];
+    fn structs(&self) -> &[DefId];
+}
+
+impl<'tcx> OrcInput<'tcx> for (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>) {
+    fn tcx(&self) -> TyCtxt<'tcx> {
+        self.0
+    }
+
+    fn functions(&self) -> &[DefId] {
+        &self.1[..]
+    }
+
+    fn structs(&self) -> &[DefId] {
+        &self.2[..]
     }
 }

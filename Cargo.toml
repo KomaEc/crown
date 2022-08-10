@@ -20,6 +20,7 @@ analysis-interface = { path = "analysis-interface" }
 ownership-analysis = { path = "ownership-analysis" }
 usage-analysis = { path = "usage-analysis" }
 refactor = { path = "refactor" }
+empirical-study = { path = "empirical-study" }
 
 clap = { version = "3.1.2", features = ["derive"] }
 tracing = "0.1.32"

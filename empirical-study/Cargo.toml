@@ -9,3 +9,6 @@ edition = "2021"
 rustc_private = true
 
 [dependencies]
+# ownership-analysis = { path = "../ownership-analysis" }
+analysis-interface = { path = "../analysis-interface" }
+cli-table = "0.4"

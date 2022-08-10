@@ -38,6 +38,7 @@ mod struct_topology;
 mod test;
 pub mod utils;
 
+use analysis_interface::OrcInput;
 use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
@@ -49,6 +50,20 @@ pub struct CrateInfo<'tcx> {
     tcx: TyCtxt<'tcx>,
     call_graph: CallGraph,
     struct_topology: StructTopology,
+}
+
+impl<'tcx> OrcInput<'tcx> for CrateInfo<'tcx> {
+    fn tcx(&self) -> TyCtxt<'tcx> {
+        self.tcx
+    }
+
+    fn functions(&self) -> &[DefId] {
+        self.functions()
+    }
+
+    fn structs(&self) -> &[DefId] {
+        self.structs()
+    }
 }
 
 impl<'tcx> CrateInfo<'tcx> {

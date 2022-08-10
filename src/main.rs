@@ -23,6 +23,7 @@ use rustc_session::config;
 use std::{borrow::BorrowMut, path::PathBuf, time::Instant};
 use tracing_subscriber::EnvFilter;
 
+use empirical_study::EmpiricalStudy;
 use ownership_analysis::CrateInfo;
 use refactor::rewriter::RewriteMode;
 use usage_analysis::{fatness, null};
@@ -65,6 +66,7 @@ enum Command {
         #[clap(long)]
         addr: bool,
     },
+    EmpiricalStudy,
 }
 
 fn main() {
@@ -158,6 +160,9 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
     });
 
     match *cmd {
+        Command::EmpiricalStudy => {
+            program.perform_empirical_study();
+        }
         Command::Playground { mir, addr } => {
             if mir {
                 program.print_mir();
