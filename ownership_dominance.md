@@ -255,7 +255,7 @@ CBMC: rename `p` when defining `*p`.
 * Value Flow Graph
   Use an initial imprecise points-to analysis. Upon a store `*p = ...`, if `p` points to `{a, b}`, then issue two special statement $\chi(a)$ and $\chi(b)$. Rename both of them. Upon a load `... = *p`, if `p` points to `{a, b}`, then issue $\mu(a)$ and $\mu(b)$.
    This may introduce false def-use chains.
-* Singleton Points to Set
+* Singleton Points to Set§
   Track the flow for dereference expression by line number. Top-level variables are renamed, `*p` are tracked by `*(p_k)[l]`
 
 

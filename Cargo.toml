@@ -2,6 +2,7 @@
 members = [
     "analysis-interface",
     "ownership-analysis",
+    "field-taint-analysis",
     "usage-analysis",
     "refactor",
     "empirical-study",
