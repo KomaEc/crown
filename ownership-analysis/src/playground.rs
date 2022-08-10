@@ -3,7 +3,7 @@
 use rustc_hash::FxHashSet;
 use rustc_middle::mir::{
     visit::{PlaceContext, Visitor},
-    Body, Location, Place,
+    Body, Location, Place, Rvalue,
 };
 
 use crate::{
@@ -49,6 +49,32 @@ impl<'tcx> CrateInfo<'tcx> {
             let body = self.tcx.optimized_mir(did);
             Vis.visit_body(body);
         }
+    }
+
+    pub fn compute_percentage_of_non_address_taking_functions(&self) {
+        struct Vis;
+        impl<'tcx> Visitor<'tcx> for Vis {
+            fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, _location: Location) {
+                if let Rvalue::AddressOf(rustc_ast::Mutability::Mut, _) = rvalue {
+                    panic!("{:?} to be catched", rvalue)
+                }
+            }
+        }
+        let prev_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(|_| {}));
+        let n_address_taking_functions = self
+            .functions()
+            .iter()
+            .filter(|&did| {
+                let body = self.tcx.optimized_mir(did);
+                std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| Vis.visit_body(body)))
+                    .is_ok()
+            })
+            .count();
+        std::panic::set_hook(prev_hook);
+        let percentage = n_address_taking_functions as f64 / self.functions().len() as f64;
+        println!("-------------stat: percntage of non address taking functions-----------------");
+        println!("                   {percentage}");
     }
 
     pub fn inspect_place_abs(&self) {

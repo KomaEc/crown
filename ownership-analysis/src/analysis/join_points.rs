@@ -14,7 +14,8 @@ use super::{
     state::SSAIdx,
 };
 
-pub fn compute_join_points<'tcx>(
+/// `def_sites` contains only locals with long live-range
+pub fn semi_pruned_ssa<'tcx>(
     body: &Body<'tcx>,
     dominance_frontier: &DominanceFrontier,
     def_sites: &DefSites,

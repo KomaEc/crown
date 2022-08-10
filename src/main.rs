@@ -62,6 +62,8 @@ enum Command {
     Playground {
         #[clap(long)]
         mir: bool,
+        #[clap(long)]
+        addr: bool,
     },
 }
 
@@ -156,9 +158,12 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
     });
 
     match *cmd {
-        Command::Playground { mir } => {
+        Command::Playground { mir, addr } => {
             if mir {
                 program.print_mir();
+            }
+            if addr {
+                program.compute_percentage_of_non_address_taking_functions();
             }
             program.verify_shape_of_place();
             program.inspect_place_abs();
