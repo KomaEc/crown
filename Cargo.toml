@@ -4,6 +4,7 @@ members = [
     "ownership-analysis",
     "usage-analysis",
     "refactor",
+    "empirical-study",
 ]
 
 [package]
