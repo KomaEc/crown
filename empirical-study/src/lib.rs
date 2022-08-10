@@ -32,7 +32,7 @@ pub trait EmpiricalStudy<'tcx> {
         macro_rules! perform {
             ($ ($func:ident), *) => {
                 $ (
-                    println!("==============================Study: {}==============================", stringify!($func));
+                    println!("Performing Study: {}", stringify!($func));
                     self.$func();
                 ) *
             };
