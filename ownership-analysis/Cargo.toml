@@ -20,5 +20,6 @@ proptest = "1.0.0"
 rustfix = "0.6.0"
 clap = { version = "3.1.2", features = ["derive"] }
 rand = "0.8.4"
-
+petgraph = "0.6.2"
+static_assertions = "1.1.0"
 analysis-interface = { path = "../analysis-interface" }

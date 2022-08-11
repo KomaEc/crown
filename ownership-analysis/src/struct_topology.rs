@@ -15,7 +15,7 @@ pub(crate) struct StructTopology {
     /// `S` is considered dependent on `T`;
     /// in `struct S { f: *mut T } struct T;`
     /// `S` is not considered dependent on `T`
-    post_order: Vec<DefId>,
+    pub(crate) post_order: Vec<DefId>,
     /// struct -> field -> aggregate offset start of this field
     /// an additional entry last() represents the sum
     aggregate_offset: FxHashMap<DefId, Vec<AggregateOffset>>,

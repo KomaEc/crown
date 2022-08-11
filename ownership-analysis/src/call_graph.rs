@@ -11,7 +11,7 @@ use rustc_type_ir::TyKind::FnDef;
 pub(crate) struct CallGraph {
     // /// Invariant: the set of functions are sorted by `DefId` to facilitate
     // /// reverse lookup
-    functions: IndexVec<Func, DefId>,
+    pub(crate) functions: IndexVec<Func, DefId>,
     // functions: FxHashMap<DefId, Func>,
     /// TODO
     call_sites: IndexVec<CallSite, ()>,

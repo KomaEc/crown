@@ -64,6 +64,14 @@ impl<'tcx> OrcInput<'tcx> for CrateInfo<'tcx> {
     fn structs(&self) -> &[DefId] {
         self.structs()
     }
+
+    fn into_trivial(self) -> (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>) {
+        (
+            self.tcx,
+            self.call_graph.functions.raw,
+            self.struct_topology.post_order,
+        )
+    }
 }
 
 impl<'tcx> CrateInfo<'tcx> {

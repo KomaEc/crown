@@ -1,9 +1,37 @@
-//! The set of macros defined/re-exported from rustc
+//! Macros defined or re-exported from rustc
+
+/// Implement `IndexType` trait of petgraph for an index type.
+/// Note that `IndexType` should not be imported elsewhere.
+#[macro_export]
+macro_rules! petgraph_index {
+    ($I:ident) => {
+        static_assertions::assert_impl_all!($I: rustc_index::vec::Idx, Default);
+
+        unsafe impl petgraph::graph::IndexType for $I {
+            #[inline(always)]
+            fn new(x: usize) -> Self {
+                $I::from_usize(x)
+            }
+
+            #[inline(always)]
+            fn index(&self) -> usize {
+                <$I as rustc_index::vec::Idx>::index(*self)
+            }
+
+            #[inline(always)]
+            fn max() -> Self {
+                $I::MAX
+            }
+        }
+    };
+}
+
+pub(crate) use petgraph_index;
 
 #[cfg(not(debug_assertions))]
 pub(crate) use rustc_index::newtype_index;
 
-/// Small hack that makes rust-analyzer work on vscode
+/// A hack that makes rust-analyzer work on vscode
 #[cfg(debug_assertions)]
 #[macro_export]
 macro_rules! newtype_index {
@@ -447,3 +475,20 @@ macro_rules! newtype_index {
 
 #[cfg(debug_assertions)]
 pub(crate) use newtype_index;
+
+#[cfg(debug_assertions)]
+mod static_tests {
+    use super::*;
+    crate::newtype_index! {
+        struct Compiled {
+            DEBUG_FORMAT = "{}"
+        }
+    }
+    impl Default for Compiled {
+        fn default() -> Self {
+            Compiled::from_u32(0)
+        }
+    }
+
+    petgraph_index!(Compiled);
+}
