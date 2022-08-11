@@ -1,10 +1,9 @@
-use analysis_interface::OrcInput;
+use analysis_interface::{OrcInput, whole_crate_discretization::WholeCrateDiscretization};
 use petgraph::{
     graph::node_index,
     prelude::DiGraph,
-    stable_graph::{IndexType, NodeIndex},
+    stable_graph::IndexType,
     unionfind::UnionFind,
-    Directed, Graph,
 };
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -65,6 +64,9 @@ unsafe impl IndexType for AbstractLocation {
 }
 
 pub struct Steensgaard {
+
+    structs_ok: WholeCrateDiscretization<AbstractLocation>,
+
     /// `DefId` of structs -> indices of `field_targets`
     structs: FxHashMap<DefId, usize>,
     /// Structs -> start `AbstractLocation`, the set of field targets
@@ -113,6 +115,31 @@ impl Steensgaard {
         for _ in 0..n_struct_fields {
             pts_graph.add_node(());
         }
+
+
+        let structs_ok = WholeCrateDiscretization::new(
+            input.tcx(), 
+            input.structs(), 
+            AbstractLocation::NULL + 1 + n_struct_fields as u32, 
+            |tcx, did| {
+                let adt_def = tcx.adt_def(did);
+                assert!(adt_def.is_struct());
+                adt_def.all_fields()
+            }, 
+            |field| {
+                let new_node_index = pts_graph.add_node(());
+                assert_eq!(new_node_index, field.into());
+                pts_graph.add_edge(
+                    new_node_index,
+                    node_index(new_node_index.index() - n_struct_fields),
+                    (),
+                );
+            },
+            |tcx, field_def| {
+                tcx.type_of(field_def.did).is_unsafe_ptr()
+            }
+        );
+
 
         let structs: FxHashMap<DefId, usize> = input
             .structs()
@@ -180,6 +207,7 @@ impl Steensgaard {
         let pts_targets = UnionFind::new(pts_graph.node_count());
 
         Steensgaard {
+            structs_ok,
             structs,
             fields,
             field_indices_start,

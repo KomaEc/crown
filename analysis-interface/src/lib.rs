@@ -4,7 +4,7 @@ extern crate rustc_hir;
 extern crate rustc_hash;
 extern crate rustc_middle;
 
-pub mod def_id_indexing;
+pub mod whole_crate_discretization;
 
 use rustc_hir::def_id::{DefId, LocalDefId};
 use rustc_middle::{
