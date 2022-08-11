@@ -1,7 +1,10 @@
 #![feature(rustc_private)]
 
 extern crate rustc_hir;
+extern crate rustc_hash;
 extern crate rustc_middle;
+
+pub mod def_id_indexing;
 
 use rustc_hir::def_id::{DefId, LocalDefId};
 use rustc_middle::{
@@ -75,18 +78,49 @@ pub trait OrcInput<'tcx> {
     fn tcx(&self) -> TyCtxt<'tcx>;
     fn functions(&self) -> &[DefId];
     fn structs(&self) -> &[DefId];
+    fn into_trivial(self) -> (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>);
 }
 
 impl<'tcx> OrcInput<'tcx> for (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>) {
+    #[inline]
     fn tcx(&self) -> TyCtxt<'tcx> {
         self.0
     }
 
+    #[inline]
     fn functions(&self) -> &[DefId] {
         &self.1[..]
     }
 
+    #[inline]
     fn structs(&self) -> &[DefId] {
         &self.2[..]
+    }
+
+    #[inline]
+    fn into_trivial(self) -> (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>) {
+        self
+    }
+}
+
+impl<'tcx, Input: OrcInput<'tcx>> OrcInput<'tcx> for &Input {
+    fn tcx(&self) -> TyCtxt<'tcx> {
+        (*self).tcx()
+    }
+
+    fn functions(&self) -> &[DefId] {
+        (*self).functions()
+    }
+
+    fn structs(&self) -> &[DefId] {
+        (*self).functions()
+    }
+
+    fn into_trivial(self) -> (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>) {
+        (
+            self.tcx(),
+            self.functions().iter().map(|&did| did).collect(),
+            self.structs().iter().map(|&did| did).collect(),
+        )
     }
 }

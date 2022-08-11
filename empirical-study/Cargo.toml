@@ -10,5 +10,6 @@ rustc_private = true
 
 [dependencies]
 # ownership-analysis = { path = "../ownership-analysis" }
+field-taint-analysis = { path = "../field-taint-analysis" }
 analysis-interface = { path = "../analysis-interface" }
 cli-table = "0.4"
