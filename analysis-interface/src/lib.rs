@@ -1,10 +1,15 @@
 #![feature(rustc_private)]
+#![feature(step_trait)]
+#![feature(trusted_step)]
+#![feature(min_specialization)]
 
 extern crate rustc_hir;
 extern crate rustc_hash;
+extern crate rustc_index;
 extern crate rustc_middle;
 
 pub mod whole_crate_discretization;
+pub mod macros;
 
 use rustc_hir::def_id::{DefId, LocalDefId};
 use rustc_middle::{

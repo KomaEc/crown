@@ -26,10 +26,10 @@ macro_rules! petgraph_index {
     };
 }
 
-pub(crate) use petgraph_index;
+pub use petgraph_index;
 
 #[cfg(not(debug_assertions))]
-pub(crate) use rustc_index::newtype_index;
+pub use rustc_index::newtype_index;
 
 /// A hack that makes rust-analyzer work on vscode
 #[cfg(debug_assertions)]
@@ -474,7 +474,7 @@ macro_rules! newtype_index {
 }
 
 #[cfg(debug_assertions)]
-pub(crate) use newtype_index;
+pub use newtype_index;
 
 #[cfg(debug_assertions)]
 mod static_tests {
@@ -492,3 +492,25 @@ mod static_tests {
 
     petgraph_index!(Compiled);
 }
+
+
+#[macro_export]
+macro_rules! orc_index {
+    ($name:ident) => {
+        #[cfg(debug_assertions)]
+        $crate::newtype_index! {
+            pub struct $name {
+                DEBUG_FORMAT = "{}"
+            }
+        }
+        #[cfg(not(debug_assertions))]
+        rustc_index::newtype_index! {
+            pub struct $name {
+                DEBUG_FORMAT = "{}"
+            }
+        }
+        $crate::petgraph_index!{$name}
+    };
+}
+
+pub use orc_index;

@@ -11,7 +11,7 @@ use super::{
     join_points::{JoinPoints, PhiNode},
 };
 
-crate::macros::newtype_index! {
+analysis_interface::macros::newtype_index! {
     pub struct SSAIdx {
         DEBUG_FORMAT = "{}"
     }

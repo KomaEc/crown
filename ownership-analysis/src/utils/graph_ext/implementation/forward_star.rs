@@ -471,13 +471,13 @@ mod tests {
 
     use super::*;
 
-    crate::macros::newtype_index! {
+    analysis_interface::macros::newtype_index! {
         pub struct Node {
             DEBUG_FORMAT = "{}"
         }
     }
 
-    crate::macros::newtype_index! {
+    analysis_interface::macros::newtype_index! {
         pub struct Edge {
             DEBUG_FORMAT = "{}"
         }

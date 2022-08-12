@@ -14,6 +14,7 @@ use rustc_middle::ty::TyCtxt;
 ///
 /// # Example Usages
 /// Discretise the set of all locals with pointer type of functions in a crate.
+#[derive(Debug)]
 pub struct WholeCrateDiscretization<I> {
     belongers: FxHashMap<DefId, usize>,
     /// Sets of contents (represented by an interval of index `I`) of each belonger.
