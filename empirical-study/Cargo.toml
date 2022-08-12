@@ -9,7 +9,7 @@ edition = "2021"
 rustc_private = true
 
 [dependencies]
-# ownership-analysis = { path = "../ownership-analysis" }
-field-taint-analysis = { path = "../field-taint-analysis" }
-analysis-interface = { path = "../analysis-interface" }
+# orc-ownership-analysis = { path = "../orc-ownership-analysis" }
+orc-taint-analysis = { path = "../orc-taint-analysis" }
+orc-common = { path = "../orc-common" }
 cli-table = "0.4"

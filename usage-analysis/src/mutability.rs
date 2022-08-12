@@ -6,7 +6,7 @@ use rustc_middle::{
 use rustc_mir_dataflow::JoinSemiLattice;
 
 use crate::usage::{self, Domain, IntermediateResult, UsageAnalysisContext};
-use analysis_interface::AnalysisResults;
+use orc_common::AnalysisResults;
 
 // defer to CrateResults instead of exposing it to avoid having to make everything in
 // usage public

@@ -35,7 +35,7 @@ extern crate rustc_type_ir;
 
 pub(crate) mod steensgaard;
 
-use analysis_interface::OrcInput;
+use orc_common::OrcInput;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 

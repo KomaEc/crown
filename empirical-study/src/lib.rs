@@ -20,7 +20,7 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
 
-use analysis_interface::OrcInput;
+use orc_common::OrcInput;
 use rustc_middle::mir::{visit::Visitor, Location, Rvalue};
 
 use cli_table::{format::Justify, print_stdout, Cell, Style, Table};

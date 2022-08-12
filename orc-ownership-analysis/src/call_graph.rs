@@ -70,19 +70,19 @@ impl CallGraph {
     // }
 }
 
-analysis_interface::macros::newtype_index! {
+orc_common::macros::newtype_index! {
     pub(super) struct Func {
         DEBUG_FORMAT = "Function_({})"
     }
 }
 
-analysis_interface::macros::newtype_index! {
+orc_common::macros::newtype_index! {
     pub struct CallSite {
         DEBUG_FORMAT = "CallSite_({})"
     }
 }
 
-analysis_interface::macros::newtype_index! {
+orc_common::macros::newtype_index! {
     struct CallGraphScc {
         DEBUG_FORMAT = "FunctionGroup_({})"
     }

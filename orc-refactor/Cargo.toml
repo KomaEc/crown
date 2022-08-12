@@ -1,5 +1,5 @@
 [package]
-name = "refactor"
+name = "orc-refactor"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,7 +7,7 @@ edition = "2021"
 rustc_private = true
 
 [dependencies]
-analysis-interface = { path = "../analysis-interface" }
+orc-common = { path = "../orc-common" }
 usage-analysis = { path = "../usage-analysis" }
 
 clap = { version = "3.1.2", features = ["derive"] }

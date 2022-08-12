@@ -1,10 +1,10 @@
 [workspace]
 members = [
-    "analysis-interface",
-    "ownership-analysis",
-    "field-taint-analysis",
+    "orc-common",
+    "orc-ownership-analysis",
+    "orc-taint-analysis",
     "usage-analysis",
-    "refactor",
+    "orc-refactor",
     "empirical-study",
 ]
 
@@ -17,10 +17,10 @@ edition = "2021"
 rustc_private = true
 
 [dependencies]
-analysis-interface = { path = "analysis-interface" }
-ownership-analysis = { path = "ownership-analysis" }
+orc-common = { path = "orc-common" }
+orc-ownership-analysis = { path = "orc-ownership-analysis" }
 usage-analysis = { path = "usage-analysis" }
-refactor = { path = "refactor" }
+orc-refactor = { path = "orc-refactor" }
 empirical-study = { path = "empirical-study" }
 
 clap = { version = "3.1.2", features = ["derive"] }

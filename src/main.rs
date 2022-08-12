@@ -24,8 +24,8 @@ use std::{borrow::BorrowMut, path::PathBuf, time::Instant};
 use tracing_subscriber::EnvFilter;
 
 use empirical_study::EmpiricalStudy;
-use ownership_analysis::CrateInfo;
-use refactor::rewriter::RewriteMode;
+use orc_ownership_analysis::CrateInfo;
+use orc_refactor::rewriter::RewriteMode;
 use usage_analysis::{fatness, null};
 
 #[derive(Parser)]

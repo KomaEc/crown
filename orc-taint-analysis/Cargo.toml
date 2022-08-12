@@ -1,5 +1,5 @@
 [package]
-name = "field-taint-analysis"
+name = "orc-taint-analysis"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,4 +11,4 @@ rustc_private = true
 [dependencies]
 petgraph = "0.6.2"
 static_assertions = "1.1.0"
-analysis-interface = { path = "../analysis-interface" }
+orc-common = { path = "../orc-common" }

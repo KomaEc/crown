@@ -2,7 +2,7 @@ use rustc_middle::mir::{HasLocalDecls, Local};
 
 use crate::analysis::OwnershipAnalysisCtxt;
 
-analysis_interface::macros::newtype_index! {
+orc_common::macros::newtype_index! {
     pub struct AggregateOffset {
         DEBUG_FORMAT = "{}"
     }

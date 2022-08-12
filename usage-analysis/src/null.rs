@@ -42,7 +42,7 @@ impl<'tcx, 'a> CrateResults<'tcx, 'a> {
     }
 }
 
-impl<'tcx, 'a> analysis_interface::AnalysisResults for CrateResults<'tcx, 'a> {
+impl<'tcx, 'a> orc_common::AnalysisResults for CrateResults<'tcx, 'a> {
     fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
         self.0.local_result(func, local, ptr_depth)
     }

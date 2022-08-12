@@ -1,6 +1,6 @@
 pub mod constraint;
 
-use analysis_interface::{whole_crate_discretization::WholeCrateDiscretization, OrcInput};
+use orc_common::{whole_crate_discretization::WholeCrateDiscretization, OrcInput};
 use petgraph::{
     graph::node_index, prelude::DiGraph, unionfind::UnionFind,
 };
@@ -10,7 +10,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 
-analysis_interface::macros::orc_index!(AbstractLocation);
+orc_common::macros::orc_index!(AbstractLocation);
 
 impl AbstractLocation {
     pub const NULL: Self = AbstractLocation::from_u32(0);

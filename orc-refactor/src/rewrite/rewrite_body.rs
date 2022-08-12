@@ -13,7 +13,7 @@ use rustc_span::{BytePos, Span};
 use rustc_target::abi::VariantIdx;
 use tracing::{debug, debug_span, info_span, trace, warn};
 
-use analysis_interface::AnalysisResults;
+use orc_common::AnalysisResults;
 use usage_analysis::{fatness, mutability, null};
 
 pub struct BodyRewriteCtxt<'tcx, 'a, 'b> {

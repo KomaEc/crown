@@ -6,7 +6,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 
-use analysis_interface::AnalysisResults;
+use orc_common::AnalysisResults;
 use usage_analysis::{fatness, mutability, null};
 
 use crate::rewriter::{RewriteMode, Rewriter};
@@ -21,7 +21,7 @@ fn ty_nested_depth(ty: &Ty) -> usize {
 
 pub fn rewrite<'tcx, 'a>(
     tcx: TyCtxt<'tcx>,
-    ownership_analysis: &dyn AnalysisResults,
+    orc_ownership_analysis: &dyn AnalysisResults,
     mutability_analysis: &mutability::CrateResults<'tcx, 'a>,
     fatness_analysis: &fatness::CrateResults<'tcx, 'a>,
     null_analysis: &null::CrateResults<'tcx, 'a>,
@@ -33,7 +33,7 @@ pub fn rewrite<'tcx, 'a>(
     rewrite_structs(
         tcx,
         &mut rewriter,
-        ownership_analysis,
+        orc_ownership_analysis,
         fatness_analysis,
         null_analysis,
         struct_defs,
@@ -41,7 +41,7 @@ pub fn rewrite<'tcx, 'a>(
     rewrite_functions(
         tcx,
         &mut rewriter,
-        ownership_analysis,
+        orc_ownership_analysis,
         mutability_analysis,
         fatness_analysis,
         null_analysis,
@@ -54,7 +54,7 @@ pub fn rewrite<'tcx, 'a>(
 fn rewrite_functions<'tcx, 'a>(
     tcx: TyCtxt<'tcx>,
     rewriter: &mut Rewriter,
-    ownership_analysis: &dyn AnalysisResults,
+    orc_ownership_analysis: &dyn AnalysisResults,
     mutability_analysis: &mutability::CrateResults<'tcx, 'a>,
     fatness_analysis: &fatness::CrateResults<'tcx, 'a>,
     null_analysis: &null::CrateResults<'tcx, 'a>,
@@ -66,7 +66,7 @@ fn rewrite_functions<'tcx, 'a>(
         rewrite_fn_sig(
             tcx,
             rewriter,
-            ownership_analysis,
+            orc_ownership_analysis,
             mutability_analysis,
             fatness_analysis,
             null_analysis,
@@ -76,7 +76,7 @@ fn rewrite_functions<'tcx, 'a>(
         let mut body_rewrite_cx = BodyRewriteCtxt {
             tcx,
             rewriter,
-            ownership: ownership_analysis,
+            ownership: orc_ownership_analysis,
             mutability: mutability_analysis,
             fatness: fatness_analysis,
             null: null_analysis,
@@ -128,7 +128,7 @@ fn rewrite_fn_sig(
 fn rewrite_structs<'tcx>(
     tcx: TyCtxt<'tcx>,
     rewriter: &mut Rewriter,
-    ownership_analysis: &dyn AnalysisResults,
+    orc_ownership_analysis: &dyn AnalysisResults,
     fatness_analysis: &fatness::CrateResults<'tcx, '_>,
     null_analysis: &null::CrateResults<'tcx, '_>,
     dids: &[LocalDefId],
@@ -139,7 +139,7 @@ fn rewrite_structs<'tcx>(
         rewrite_struct(
             tcx,
             rewriter,
-            ownership_analysis,
+            orc_ownership_analysis,
             fatness_analysis,
             null_analysis,
             variant_data,

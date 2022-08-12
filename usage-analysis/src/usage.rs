@@ -15,7 +15,7 @@ use rustc_mir_dataflow::{
 };
 use tracing::{debug_span, trace};
 
-use analysis_interface::get_struct_field;
+use orc_common::get_struct_field;
 
 pub(crate) trait AnalysisResult:
     Clone + std::fmt::Debug + Eq + Into<bool> + JoinSemiLattice
@@ -244,7 +244,7 @@ impl<'tcx, 'a, A: Analysis> CrateResults<'tcx, 'a, A> {
     }
 }
 
-impl<'tcx, A: Analysis> analysis_interface::AnalysisResults for CrateResults<'tcx, '_, A> {
+impl<'tcx, A: Analysis> orc_common::AnalysisResults for CrateResults<'tcx, '_, A> {
     fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
         Some(
             self.fn_results[func].as_ref().unwrap().start_results.locals[local][ptr_depth]
