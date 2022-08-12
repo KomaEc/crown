@@ -21,26 +21,35 @@ pub struct WholeCrateDiscretization<I> {
     /// Indices of contents of each belonger. Pointers into `content_indices`
     content_indices_start: Vec<usize>,
     content_indices: Vec<usize>,
-    // _marker: PhantomData<*const Content>,
 }
 
 impl<I> WholeCrateDiscretization<I>
 where
-    I: std::ops::AddAssign<u32> + Clone + Copy {
+    I: std::ops::AddAssign<u32>
+        + std::ops::Add<u32, Output = I>
+        + Clone
+        + Copy
+        + PartialOrd
+        + Ord
+        + PartialEq
+        + Eq,
+{
+    #[inline]
     pub fn new<'tcx, ContentHolder, F, G, P, It>(
         tcx: TyCtxt<'tcx>,
         dids: &[DefId],
         first_content: I,
         content_holder_iter: F,
         mut with_content: G,
-        to_step: P
+        to_step: P,
     ) -> Self
     where
         ContentHolder: 'tcx,
         F: Fn(TyCtxt<'tcx>, DefId) -> It,
         G: FnMut(I),
         P: Fn(TyCtxt<'tcx>, &ContentHolder) -> bool,
-        It: Iterator<Item = &'tcx ContentHolder> {
+        It: Iterator<Item = &'tcx ContentHolder>,
+    {
         let belongers: FxHashMap<DefId, usize> = dids
             .iter()
             .enumerate()
@@ -55,7 +64,8 @@ where
 
         for &did in dids {
             let mut content = unsafe { *contents.last().unwrap_unchecked() };
-            let mut content_index = unsafe { *content_indices_start.last().unwrap_unchecked() };
+            let mut start = unsafe { *content_indices_start.last().unwrap_unchecked() };
+            let mut content_index = 0;
             for holder in content_holder_iter(tcx, did) {
                 with_content(content);
                 content_indices.push(content_index);
@@ -63,30 +73,39 @@ where
                     content += 1;
                     content_index += 1;
                 }
+                start += 1;
             }
             contents.push(content);
-            content_indices_start.push(content_index);
+            content_indices_start.push(start);
         }
-        
+
         WholeCrateDiscretization {
             belongers,
             contents,
             content_indices_start,
             content_indices,
-            // _marker: PhantomData,
         }
     }
 
-    pub fn get_contents(&self, belonger: DefId) -> Range<I> {
-        let inner_idx = self.belongers[&belonger];
+    #[inline]
+    fn get_contents_inner(&self, inner_idx: usize) -> Range<I> {
         let start = self.contents[inner_idx];
         let end = self.contents[inner_idx + 1];
         Range { start, end }
     }
 
-    pub fn get_index(&self, belonger: DefId, idx: usize) -> usize {
+    #[inline]
+    pub fn get_contents(&self, belonger: DefId) -> Range<I> {
         let inner_idx = self.belongers[&belonger];
-        let offset = self.content_indices_start[inner_idx] + idx;
-        self.content_indices[offset]
+        self.get_contents_inner(inner_idx)
+    }
+
+    #[inline]
+    pub fn get_content(&self, belonger: DefId, idx: usize) -> I {
+        let inner_idx = self.belongers[&belonger];
+        let offset = self.content_indices[self.content_indices_start[inner_idx] + idx];
+        let Range { start, end } = self.get_contents_inner(inner_idx);
+        assert!(start + (offset as u32) < end);
+        start + (offset as u32)
     }
 }
