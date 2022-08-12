@@ -77,6 +77,35 @@ impl<'tcx> CrateInfo<'tcx> {
         println!("                   {percentage}");
     }
 
+    pub fn assert_assign_simple(&self) {
+        struct Vis;
+        impl<'tcx> Visitor<'tcx> for Vis {
+            fn visit_assign(
+                &mut self,
+                place: &Place<'tcx>,
+                rvalue: &Rvalue<'tcx>,
+                _location: Location,
+            ) {
+                match rvalue {
+                    Rvalue::Use(operand) | Rvalue::Cast(_, operand, _) => {
+                        assert!(
+                            place.as_local().is_some()
+                                || operand.place().and_then(|place| place.as_local()).is_some()
+                                || operand.constant().is_some()
+                        );
+                    }
+                    Rvalue::CopyForDeref(rplace) => {
+                        assert!(place.as_local().is_some() || rplace.as_local().is_some());
+                    }
+                    Rvalue::Ref(_, _, _) | Rvalue::AddressOf(_, _) => {
+                        assert!(place.as_local().is_some())
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
     pub fn inspect_place_abs(&self) {
         struct Vis<'me, 'tcx>(
             &'me OwnershipAnalysisCtxt<'me, 'tcx>,

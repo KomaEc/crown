@@ -171,7 +171,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                 program.compute_percentage_of_non_address_taking_functions();
             }
             program.verify_shape_of_place();
-            program.inspect_place_abs();
+            program.assert_assign_simple();
         }
         Command::Analyse {
             null,
