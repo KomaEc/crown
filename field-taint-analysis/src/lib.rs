@@ -11,6 +11,9 @@
 //! in the analysis result.
 
 #![feature(rustc_private)]
+#![feature(step_trait)]
+#![feature(trusted_step)]
+#![feature(min_specialization)]
 
 extern crate rustc_arena;
 extern crate rustc_ast;

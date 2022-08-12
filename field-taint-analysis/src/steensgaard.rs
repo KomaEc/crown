@@ -1,22 +1,19 @@
+pub mod constraint;
+
 use analysis_interface::{whole_crate_discretization::WholeCrateDiscretization, OrcInput};
 use petgraph::{
-    graph::node_index, prelude::DiGraph, stable_graph::IndexType, unionfind::UnionFind,
+    graph::node_index, prelude::DiGraph, unionfind::UnionFind,
 };
-use rustc_hash::FxHashMap;
-use rustc_hir::def_id::DefId;
+use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{visit::Visitor, Place, Rvalue},
+    mir::{visit::Visitor, Place, Rvalue, Body},
     ty::TyCtxt,
 };
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-#[repr(transparent)]
-pub struct AbstractLocation {
-    index: u32,
-}
+analysis_interface::macros::orc_index!(AbstractLocation);
 
 impl AbstractLocation {
-    pub const NULL: Self = AbstractLocation { index: 0 };
+    pub const NULL: Self = AbstractLocation::from_u32(0);
 }
 
 impl std::ops::Add<u32> for AbstractLocation {
@@ -24,9 +21,7 @@ impl std::ops::Add<u32> for AbstractLocation {
 
     #[inline]
     fn add(self, rhs: u32) -> Self::Output {
-        AbstractLocation {
-            index: self.index + rhs,
-        }
+        self + (rhs as usize)
     }
 }
 
@@ -43,28 +38,13 @@ impl Default for AbstractLocation {
     }
 }
 
-unsafe impl IndexType for AbstractLocation {
-    #[inline]
-    fn new(x: usize) -> Self {
-        AbstractLocation { index: x as u32 }
-    }
-
-    #[inline]
-    fn index(&self) -> usize {
-        self.index as usize
-    }
-
-    #[inline]
-    fn max() -> Self {
-        Self { index: u32::MAX }
-    }
-}
-
+#[derive(Debug)]
 pub struct Steensgaard {
     structs: WholeCrateDiscretization<AbstractLocation>,
     functions: WholeCrateDiscretization<AbstractLocation>,
     pts_targets: UnionFind<AbstractLocation>,
-    pts_graph: DiGraph<(), (), AbstractLocation>,
+    pts_graph: IndexVec<AbstractLocation, AbstractLocation>,
+    // pts_graph: DiGraph<(), (), AbstractLocation>,
     // /// `DefId` of structs -> indices of `field_targets`
     // structs: FxHashMap<DefId, usize>,
     // /// Structs -> start `AbstractLocation`, the set of field targets
@@ -102,7 +82,10 @@ impl Steensgaard {
             acc + n_fields
         });
 
-        let mut pts_graph = DiGraph::with_capacity(2 * n_struct_fields_of_ptr_type + 1, n_struct_fields_of_ptr_type);
+        let mut pts_graph = DiGraph::with_capacity(
+            2 * n_struct_fields_of_ptr_type + 1,
+            n_struct_fields_of_ptr_type,
+        );
 
         // Add the meaningless NULL node
         assert_eq!(pts_graph.add_node(()), AbstractLocation::NULL.into());
@@ -115,28 +98,30 @@ impl Steensgaard {
         let structs = WholeCrateDiscretization::new(
             input.tcx(),
             input.structs(),
-            AbstractLocation::new(pts_graph.node_count()), //AbstractLocation::NULL + 1 + n_struct_fields_of_ptr_type as u32,
+            AbstractLocation::from_usize(pts_graph.node_count()), //AbstractLocation::NULL + 1 + n_struct_fields_of_ptr_type as u32,
             |tcx, did| {
                 let adt_def = tcx.adt_def(did);
                 assert!(adt_def.is_struct());
                 adt_def.all_fields()
             },
             |field| {
-                let new_node_index = pts_graph.add_node(());
-                assert_eq!(new_node_index, field.into());
+                let field_node = pts_graph.add_node(());
+                assert_eq!(field_node, field.into());
                 pts_graph.add_edge(
-                    new_node_index,
-                    node_index(new_node_index.index() - n_struct_fields_of_ptr_type),
+                    field_node,
+                    node_index(field_node.index() - n_struct_fields_of_ptr_type),
                     (),
                 );
             },
             |tcx, field_def| tcx.type_of(field_def.did).is_unsafe_ptr(),
         );
 
+        assert_eq!(pts_graph.node_count(), 1 + 2 * n_struct_fields_of_ptr_type);
+
         let functions = WholeCrateDiscretization::new(
             input.tcx(),
             input.functions(),
-            AbstractLocation::new(pts_graph.node_count()),
+            AbstractLocation::from_usize(pts_graph.node_count()),
             |tcx, did| {
                 let body = tcx.optimized_mir(did);
                 body.local_decls.iter()
@@ -221,6 +206,7 @@ impl Steensgaard {
 
 struct SteensgaardSolver<'me, 'tcx> {
     steensgaard: &'me mut Steensgaard,
+    body: &'me Body<'tcx>,
     tcx: TyCtxt<'tcx>,
 }
 
@@ -231,5 +217,23 @@ impl<'me, 'tcx> Visitor<'tcx> for SteensgaardSolver<'me, 'tcx> {
         rvalue: &Rvalue<'tcx>,
         _: rustc_middle::mir::Location,
     ) {
+        if !place.ty(self.body, self.tcx).ty.is_unsafe_ptr() { return }
+
+        match rvalue {
+            Rvalue::Use(operand) | Rvalue::Cast(_, operand, _) => {
+                assert!(
+                    place.as_local().is_some()
+                        || operand.place().and_then(|place| place.as_local()).is_some()
+                        || operand.constant().is_some()
+                );
+            }
+            Rvalue::CopyForDeref(rplace) => {
+                assert!(place.as_local().is_some() || rplace.as_local().is_some());
+            }
+            Rvalue::Ref(_, _, _) | Rvalue::AddressOf(_, _) => {
+                assert!(place.as_local().is_some())
+            }
+            _ => {}
+        }
     }
 }
