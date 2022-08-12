@@ -1,12 +1,10 @@
 pub mod constraint;
 
 use orc_common::{whole_crate_discretization::WholeCrateDiscretization, OrcInput};
-use petgraph::{
-    graph::node_index, prelude::DiGraph, unionfind::UnionFind,
-};
+use petgraph::{graph::node_index, prelude::DiGraph, unionfind::UnionFind};
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{visit::Visitor, Place, Rvalue, Body},
+    mir::{visit::Visitor, Body, Place, Rvalue},
     ty::TyCtxt,
 };
 
@@ -43,7 +41,9 @@ pub struct Steensgaard {
     structs: WholeCrateDiscretization<AbstractLocation>,
     functions: WholeCrateDiscretization<AbstractLocation>,
     pts_targets: UnionFind<AbstractLocation>,
-    pts_graph: IndexVec<AbstractLocation, AbstractLocation>,
+    /// Steensgaard's analysis tracks for sinlge points-to relation for an
+    /// abstract location, thus pts graph can be simplified as a vector.
+    pts: IndexVec<AbstractLocation, AbstractLocation>,
     // pts_graph: DiGraph<(), (), AbstractLocation>,
     // /// `DefId` of structs -> indices of `field_targets`
     // structs: FxHashMap<DefId, usize>,
@@ -82,51 +82,48 @@ impl Steensgaard {
             acc + n_fields
         });
 
-        let mut pts_graph = DiGraph::with_capacity(
-            2 * n_struct_fields_of_ptr_type + 1,
-            n_struct_fields_of_ptr_type,
-        );
+        let mut pts = IndexVec::with_capacity(2 * n_struct_fields_of_ptr_type + 1);
 
-        // Add the meaningless NULL node
-        assert_eq!(pts_graph.add_node(()), AbstractLocation::NULL.into());
+        // null points to null
+        assert_eq!(pts.push(AbstractLocation::NULL), AbstractLocation::NULL);
 
-        // Adding the pts target of each struct field
+        // field pts targets should point to themselves
         for _ in 0..n_struct_fields_of_ptr_type {
-            pts_graph.add_node(());
+            let this = pts.next_index();
+            pts.push(this);
         }
 
         let structs = WholeCrateDiscretization::new(
             input.tcx(),
             input.structs(),
-            AbstractLocation::from_usize(pts_graph.node_count()), //AbstractLocation::NULL + 1 + n_struct_fields_of_ptr_type as u32,
+            pts.next_index(), //AbstractLocation::NULL + 1 + n_struct_fields_of_ptr_type as u32,
             |tcx, did| {
                 let adt_def = tcx.adt_def(did);
                 assert!(adt_def.is_struct());
                 adt_def.all_fields()
             },
-            |field| {
-                let field_node = pts_graph.add_node(());
-                assert_eq!(field_node, field.into());
-                pts_graph.add_edge(
-                    field_node,
-                    node_index(field_node.index() - n_struct_fields_of_ptr_type),
-                    (),
+            |field: AbstractLocation| {
+                let field_pts = AbstractLocation::from_u32(
+                    field.as_u32() - (n_struct_fields_of_ptr_type as u32),
                 );
+                assert_eq!(pts.push(field_pts), field);
             },
             |tcx, field_def| tcx.type_of(field_def.did).is_unsafe_ptr(),
         );
 
-        assert_eq!(pts_graph.node_count(), 1 + 2 * n_struct_fields_of_ptr_type);
+        // assert_eq!(pts_graph.node_count(), 1 + 2 * n_struct_fields_of_ptr_type);
 
         let functions = WholeCrateDiscretization::new(
             input.tcx(),
             input.functions(),
-            AbstractLocation::from_usize(pts_graph.node_count()),
+            pts.next_index(),
             |tcx, did| {
                 let body = tcx.optimized_mir(did);
                 body.local_decls.iter()
             },
-            |_| {},
+            |local| {
+                assert_eq!(pts.push(AbstractLocation::NULL), local);
+            },
             |_, local_decl| local_decl.ty.is_unsafe_ptr(),
         );
 
@@ -193,14 +190,24 @@ impl Steensgaard {
         //     local_indices_start.push(local_index);
         // }
 
-        let pts_targets = UnionFind::new(pts_graph.node_count());
+        let pts_targets = UnionFind::new(pts.len());
 
         Steensgaard {
             structs,
             functions,
             pts_targets,
-            pts_graph,
+            pts,
         }
+    }
+
+    pub(crate) fn join(&mut self, p: AbstractLocation, q: AbstractLocation) {
+        if self.pts_targets.find_mut(p) == self.pts_targets.find_mut(q) {
+            return
+        }
+        let p_pts = self.pts[p];
+        let q_pts = self.pts[q];
+        self.pts_targets.union(p, q);
+        self.join(p_pts, q_pts);
     }
 }
 
@@ -217,7 +224,9 @@ impl<'me, 'tcx> Visitor<'tcx> for SteensgaardSolver<'me, 'tcx> {
         rvalue: &Rvalue<'tcx>,
         _: rustc_middle::mir::Location,
     ) {
-        if !place.ty(self.body, self.tcx).ty.is_unsafe_ptr() { return }
+        if !place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+            return;
+        }
 
         match rvalue {
             Rvalue::Use(operand) | Rvalue::Cast(_, operand, _) => {

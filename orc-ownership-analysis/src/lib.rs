@@ -37,8 +37,8 @@ mod struct_topology;
 mod test;
 pub mod utils;
 
-use orc_common::OrcInput;
 use call_graph::CallGraph;
+use orc_common::OrcInput;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
 use struct_topology::StructTopology;

@@ -493,7 +493,6 @@ mod static_tests {
     petgraph_index!(Compiled);
 }
 
-
 #[macro_export]
 macro_rules! orc_index {
     ($name:ident) => {
@@ -509,7 +508,7 @@ macro_rules! orc_index {
                 DEBUG_FORMAT = "{}"
             }
         }
-        $crate::petgraph_index!{$name}
+        $crate::petgraph_index! {$name}
     };
 }
 

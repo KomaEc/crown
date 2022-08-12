@@ -10,5 +10,3 @@ pub enum ConstraintKind {
 
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub struct Constraint(ConstraintKind, AbstractLocation, AbstractLocation);
-
-
