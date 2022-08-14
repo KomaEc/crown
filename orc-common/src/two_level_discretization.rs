@@ -15,7 +15,7 @@ use rustc_middle::ty::TyCtxt;
 /// # Example Usages
 /// Discretise the set of all locals with pointer type of functions in a crate.
 #[derive(Debug)]
-pub struct WholeCrateDiscretization<I> {
+pub struct TwoLevelDiscretization<I> {
     belongers: FxHashMap<DefId, usize>,
     /// Sets of contents (represented by an interval of index `I`) of each belonger.
     contents: Vec<I>,
@@ -24,7 +24,7 @@ pub struct WholeCrateDiscretization<I> {
     content_indices: Vec<usize>,
 }
 
-impl<I> WholeCrateDiscretization<I>
+impl<I> TwoLevelDiscretization<I>
 where
     I: std::ops::AddAssign<u32>
         + std::ops::Add<u32, Output = I>
@@ -80,7 +80,7 @@ where
             content_indices_start.push(start);
         }
 
-        WholeCrateDiscretization {
+        TwoLevelDiscretization {
             belongers,
             contents,
             content_indices_start,

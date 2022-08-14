@@ -1,6 +1,6 @@
 pub mod constraint;
 
-use orc_common::{whole_crate_discretization::WholeCrateDiscretization, OrcInput};
+use orc_common::{two_level_discretization::TwoLevelDiscretization, OrcInput};
 use petgraph::{graph::node_index, prelude::DiGraph, unionfind::UnionFind};
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
@@ -38,8 +38,8 @@ impl Default for AbstractLocation {
 
 #[derive(Debug)]
 pub struct Steensgaard {
-    structs: WholeCrateDiscretization<AbstractLocation>,
-    functions: WholeCrateDiscretization<AbstractLocation>,
+    structs: TwoLevelDiscretization<AbstractLocation>,
+    functions: TwoLevelDiscretization<AbstractLocation>,
     pts_targets: UnionFind<AbstractLocation>,
     /// Steensgaard's analysis tracks for sinlge points-to relation for an
     /// abstract location, thus pts graph can be simplified as a vector.
@@ -93,7 +93,7 @@ impl Steensgaard {
             pts.push(this);
         }
 
-        let structs = WholeCrateDiscretization::new(
+        let structs = TwoLevelDiscretization::new(
             input.tcx(),
             input.structs(),
             pts.next_index(), //AbstractLocation::NULL + 1 + n_struct_fields_of_ptr_type as u32,
@@ -113,7 +113,7 @@ impl Steensgaard {
 
         // assert_eq!(pts_graph.node_count(), 1 + 2 * n_struct_fields_of_ptr_type);
 
-        let functions = WholeCrateDiscretization::new(
+        let functions = TwoLevelDiscretization::new(
             input.tcx(),
             input.functions(),
             pts.next_index(),

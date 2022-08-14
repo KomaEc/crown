@@ -9,7 +9,7 @@ extern crate rustc_index;
 extern crate rustc_middle;
 
 pub mod macros;
-pub mod whole_crate_discretization;
+pub mod two_level_discretization;
 
 use rustc_hir::def_id::{DefId, LocalDefId};
 use rustc_middle::{
