@@ -44,8 +44,8 @@ impl Default for AbstractLocation {
 
 #[derive(Debug)]
 pub struct Steensgaard {
-    structs: TwoLevelDiscretization<AbstractLocation>,
-    functions: TwoLevelDiscretization<AbstractLocation>,
+    struct_fields: TwoLevelDiscretization<AbstractLocation>,
+    function_locals: TwoLevelDiscretization<AbstractLocation>,
     pts_targets: UnionFind<AbstractLocation>,
     /// Steensgaard's analysis tracks for sinlge points-to relation for an
     /// abstract location, thus pts graph can be simplified as a vector.
@@ -199,8 +199,8 @@ impl Steensgaard {
         let pts_targets = UnionFind::new(pts.len());
 
         Steensgaard {
-            structs,
-            functions,
+            struct_fields: structs,
+            function_locals: functions,
             pts_targets,
             pts,
         }
@@ -218,20 +218,20 @@ impl Steensgaard {
 }
 
 #[derive(Clone, Copy)]
-struct Watch {
+struct Watcher {
     next: u32,
     constraint: u32,
 }
 
-impl Watch {
+impl Watcher {
     #[inline]
     fn new_first(constraint: usize) -> Self {
-        Watch::new(0, constraint)
+        Watcher::new(0, constraint)
     }
 
     #[inline]
     fn new(next: usize, constraint: usize) -> Self {
-        Watch {
+        Watcher {
             next: next as u32,
             constraint: constraint as u32,
         }
@@ -248,22 +248,22 @@ impl Watch {
     }
 }
 
-struct WatchLists {
-    nodes: Vec<Watch>,
+struct WatcherLists {
+    nodes: Vec<Watcher>,
     /// start index of an abstract location
-    watches: IndexVec<AbstractLocation, usize>,
+    head: IndexVec<AbstractLocation, usize>,
 }
 
-impl WatchLists {
+impl WatcherLists {
     fn new(n_locs: usize) -> Self {
-        WatchLists {
-            nodes: vec![Watch::new_first(0)],
-            watches: IndexVec::from_elem_n(0, n_locs),
+        WatcherLists {
+            nodes: vec![Watcher::new_first(0)],
+            head: IndexVec::from_elem_n(0, n_locs),
         }
     }
 
-    fn get_list(&self, loc: AbstractLocation) -> WatchList<'_> {
-        WatchList {
+    fn get_list(&self, loc: AbstractLocation) -> WatcherList<'_> {
+        WatcherList {
             lists: self,
             this: loc,
         }
@@ -272,40 +272,40 @@ impl WatchLists {
     /// Add a new watch location for constraint
     #[inline]
     fn add_watch(&mut self, constraint_idx: usize, loc: AbstractLocation) {
-        let next = std::mem::replace(&mut self.watches[loc], self.nodes.len());
-        let watch = Watch::new(next, constraint_idx);
+        let next = std::mem::replace(&mut self.head[loc], self.nodes.len());
+        let watch = Watcher::new(next, constraint_idx);
         self.nodes.push(watch);
     }
 }
 
-struct WatchList<'me> {
-    lists: &'me WatchLists,
+struct WatcherList<'me> {
+    lists: &'me WatcherLists,
     this: AbstractLocation,
 }
 
-impl<'me> WatchList<'me> {
-    fn iter(&self) -> WatchListIter<'_> {
-        WatchListIter {
-            watch_list: self.lists,
-            node_idx: self.lists.watches[self.this],
+impl<'me> WatcherList<'me> {
+    fn iter(&self) -> WatcherListIter<'_> {
+        WatcherListIter {
+            watcher_lists: self.lists,
+            node_idx: self.lists.head[self.this],
         }
     }
 }
 
-struct WatchListIter<'me> {
-    watch_list: &'me WatchLists,
+struct WatcherListIter<'me> {
+    watcher_lists: &'me WatcherLists,
     // loc: AbstractLocation,
     node_idx: usize,
 }
 
-impl<'me> Iterator for WatchListIter<'me> {
+impl<'me> Iterator for WatcherListIter<'me> {
     type Item = usize;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.node_idx > 0 {
-            let watch = self.watch_list.nodes[self.node_idx];
-            self.node_idx = watch.next();
-            Some(watch.constraint())
+            let cur_watcher = self.watcher_lists.nodes[self.node_idx];
+            self.node_idx = cur_watcher.next();
+            Some(cur_watcher.constraint())
         } else {
             None
         }
@@ -317,7 +317,9 @@ struct ConstraintGeneration<'me, 'tcx> {
     body: &'me Body<'tcx>,
     tcx: TyCtxt<'tcx>,
     constraints: &'me mut Vec<Constraint>,
-    watches: &'me mut WatchLists,
+    watchers: &'me mut WatcherLists,
+    /// a buffer to hold a watcher list
+    buffer: &'me mut Vec<usize>,
 }
 
 enum PlaceLocation {
@@ -326,35 +328,123 @@ enum PlaceLocation {
 }
 
 impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
+    pub(crate) fn notify(&mut self, p: AbstractLocation, buffer: &mut Vec<usize>) {
+        buffer.clear();
+        buffer.extend(self.watchers.get_list(p).iter());
+
+        for &constraint_idx in &*buffer {
+            match self.constraints[constraint_idx].0 {
+                ConstraintKind::Assign => {
+                    let q = AbstractLocation::from_u32(
+                        self.constraints[constraint_idx].1.as_u32()
+                            + self.constraints[constraint_idx].2.as_u32()
+                            - p.as_u32(),
+                    );
+                    if self.steensgaard.pts[q].is_null() {
+                        self.set_pts(q, self.steensgaard.pts[p]);
+                    }
+                }
+                ConstraintKind::Store => {
+                    // *p = q
+                    assert_eq!(self.constraints[constraint_idx].1, p);
+                    let q = self.constraints[constraint_idx].2;
+                    let pts_p = self.steensgaard.pts[p];
+                    self.constraints[constraint_idx] =
+                        Constraint::new(ConstraintKind::Assign, pts_p, q);
+                    self.resolve_assign(pts_p, q, constraint_idx)
+                }
+                ConstraintKind::Load => {
+                    // q = *p
+                    assert_eq!(self.constraints[constraint_idx].2, p);
+                    let q = self.constraints[constraint_idx].1;
+                    let pts_p = self.steensgaard.pts[p];
+                    self.constraints[constraint_idx] =
+                        Constraint::new(ConstraintKind::Assign, q, pts_p);
+                    self.resolve_assign(q, pts_p, constraint_idx)
+                },
+                _ => {
+                    unreachable!("internal error: addr constraint is watching")
+                }
+            }
+        }
+    }
+
+    /// update the pts graph such that `p` points to `q`
+    pub(crate) fn set_pts(&mut self, p: AbstractLocation, q: AbstractLocation) {
+        assert!(self.steensgaard.pts[p].is_null());
+        assert!(!q.is_null());
+        self.steensgaard.pts[p] = q;
+
+        // notify all wathers of `p`
+        let mut buffer = std::mem::replace(self.buffer, Vec::new());
+        self.notify(p, &mut buffer);
+        let _ = std::mem::replace(self.buffer, buffer);
+    }
+
+    fn resolve_assign(&mut self, p: AbstractLocation, q: AbstractLocation, constraint_idx: usize) {
+        let pts = &self.steensgaard.pts;
+        match (pts[p].is_null(), pts[q].is_null()) {
+            (true, true) => {
+                self.watchers.add_watch(constraint_idx, p);
+                self.watchers.add_watch(constraint_idx, q);
+            }
+            (true, false) => {
+                // pts[p] = pts[q];
+                self.set_pts(p, pts[q]);
+            }
+            (false, true) => {
+                // pts[q] = pts[p];
+                self.set_pts(q, pts[p]);
+            }
+            (false, false) => {
+                let pts_p = pts[p];
+                let pts_q = pts[q];
+                self.steensgaard.join(pts_p, pts_q);
+            }
+        };
+    }
 
     /// resolves the constraint (joins abstract locations), add constraint to
     /// constraint sets and watcher list if fails
-    #[inline]
-    pub(crate) fn resolve(&mut self, constraint@Constraint(kind, p, q): Constraint) {
+    pub(crate) fn resolve(&mut self, constraint @ Constraint(kind, mut p, mut q): Constraint) {
         assert!(!p.is_null() && !q.is_null());
+
+        let constraint_idx = self.constraints.len();
+        self.constraints.push(constraint);
 
         let pts = &mut self.steensgaard.pts;
         match kind {
             ConstraintKind::Addr => {
                 if pts[p].is_null() {
-                    pts[p] = q;
+                    // pts[p] = q;
+                    self.set_pts(p, q)
                 } else {
                     let pts_p = pts[p];
                     self.steensgaard.join(pts_p, q);
                 }
-            },
-            ConstraintKind::Assign => todo!(),
-            ConstraintKind::Store => todo!(),
-            ConstraintKind::Load => todo!(),
+                return;
+            }
+            ConstraintKind::Assign => {}
+            ConstraintKind::Store => {
+                if pts[p].is_null() {
+                    self.watchers.add_watch(constraint_idx, p);
+                    return
+                } else {
+                    p = pts[p];
+                }
+            }
+            ConstraintKind::Load => {
+                if pts[q].is_null() {
+                    self.watchers.add_watch(constraint_idx, q);
+                    return
+                } else {
+                    q = pts[q];
+                }
+            }
         }
 
-        // let (fst, snd) = match kind {
-        //     ConstraintKind::Addr => (pts[p], q),
-        //     ConstraintKind::Assign => (pts[p], pts[q]),
-        //     ConstraintKind::Store => (pts[pts[p]], pts[q]),
-        //     ConstraintKind::Load => (pts[p], pts[pts[q]]),
-        // };
-        // self.steensgaard.join(fst, snd);
+        // process assign(p, q)
+        self.resolve_assign(p, q, constraint_idx)
     }
 
     fn place_location(&self, place: Place<'tcx>) -> PlaceLocation {
@@ -376,7 +466,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
             let TyKind::Adt(adt_def, _) = struct_ty.kind() else { unreachable!() };
             let loc = self
                 .steensgaard
-                .structs
+                .struct_fields
                 .get_content(adt_def.did(), field.index());
             return PlaceLocation::Plain(loc);
         }
@@ -384,7 +474,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
         assert!(place.local_or_deref_local().is_some());
         let loc = self
             .steensgaard
-            .functions
+            .function_locals
             .get_content(self.body.source.def_id(), place.local.as_usize());
         if place.as_local().is_some() {
             return PlaceLocation::Plain(loc);
