@@ -14,6 +14,7 @@
 #![feature(step_trait)]
 #![feature(trusted_step)]
 #![feature(min_specialization)]
+#![feature(let_else)]
 
 extern crate rustc_arena;
 extern crate rustc_ast;
@@ -34,26 +35,3 @@ extern crate rustc_target;
 extern crate rustc_type_ir;
 
 pub(crate) mod steensgaard;
-
-use orc_common::OrcInput;
-use rustc_hash::FxHashMap;
-use rustc_hir::def_id::DefId;
-
-type AbstractLocation = usize;
-
-type SteensgaardResults = petgraph::unionfind::UnionFind<AbstractLocation>;
-
-pub struct FieldTaintAnalysisResult<'me, Input: for<'tcx> OrcInput<'tcx>> {
-    steensgaard_results: SteensgaardResults,
-    crate_to_be_analysed: &'me Input,
-    /// Struct DefId -> Field -> AbstractLocation
-    /// Non pointer fields are mapped to `AbstractLocation::MAX`
-    field_targets: FxHashMap<DefId, usize>,
-}
-
-impl<'me, Input: for<'tcx> OrcInput<'tcx>> FieldTaintAnalysisResult<'me, Input> {
-    /// Return `true` if `S.f` may taint `T.g`.
-    pub fn may_taint(&self, s_did: DefId, f: usize, t_did: DefId, g: usize) -> bool {
-        true
-    }
-}

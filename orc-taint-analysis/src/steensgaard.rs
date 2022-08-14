@@ -1,17 +1,23 @@
 pub mod constraint;
 
 use orc_common::{two_level_discretization::TwoLevelDiscretization, OrcInput};
-use petgraph::{graph::node_index, prelude::DiGraph, unionfind::UnionFind};
+use petgraph::unionfind::UnionFind;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{visit::Visitor, Body, Place, Rvalue},
-    ty::TyCtxt,
+    mir::{visit::Visitor, Body, Place, ProjectionElem, Rvalue},
+    ty::{TyCtxt, TyKind},
 };
+
+use self::constraint::{Constraint, ConstraintKind};
 
 orc_common::macros::orc_index!(AbstractLocation);
 
 impl AbstractLocation {
     pub const NULL: Self = AbstractLocation::from_u32(0);
+
+    pub fn is_null(&self) -> bool {
+        *self == Self::NULL
+    }
 }
 
 impl std::ops::Add<u32> for AbstractLocation {
@@ -202,7 +208,7 @@ impl Steensgaard {
 
     pub(crate) fn join(&mut self, p: AbstractLocation, q: AbstractLocation) {
         if self.pts_targets.find_mut(p) == self.pts_targets.find_mut(q) {
-            return
+            return;
         }
         let p_pts = self.pts[p];
         let q_pts = self.pts[q];
@@ -211,13 +217,184 @@ impl Steensgaard {
     }
 }
 
-struct SteensgaardSolver<'me, 'tcx> {
+#[derive(Clone, Copy)]
+struct Watch {
+    next: u32,
+    constraint: u32,
+}
+
+impl Watch {
+    #[inline]
+    fn new_first(constraint: usize) -> Self {
+        Watch::new(0, constraint)
+    }
+
+    #[inline]
+    fn new(next: usize, constraint: usize) -> Self {
+        Watch {
+            next: next as u32,
+            constraint: constraint as u32,
+        }
+    }
+
+    #[inline]
+    fn next(&self) -> usize {
+        self.next as usize
+    }
+
+    #[inline]
+    fn constraint(&self) -> usize {
+        self.constraint as usize
+    }
+}
+
+struct WatchLists {
+    nodes: Vec<Watch>,
+    /// start index of an abstract location
+    watches: IndexVec<AbstractLocation, usize>,
+}
+
+impl WatchLists {
+    fn new(n_locs: usize) -> Self {
+        WatchLists {
+            nodes: vec![Watch::new_first(0)],
+            watches: IndexVec::from_elem_n(0, n_locs),
+        }
+    }
+
+    fn get_list(&self, loc: AbstractLocation) -> WatchList<'_> {
+        WatchList {
+            lists: self,
+            this: loc,
+        }
+    }
+
+    /// Add a new watch location for constraint
+    #[inline]
+    fn add_watch(&mut self, constraint_idx: usize, loc: AbstractLocation) {
+        let next = std::mem::replace(&mut self.watches[loc], self.nodes.len());
+        let watch = Watch::new(next, constraint_idx);
+        self.nodes.push(watch);
+    }
+}
+
+struct WatchList<'me> {
+    lists: &'me WatchLists,
+    this: AbstractLocation,
+}
+
+impl<'me> WatchList<'me> {
+    fn iter(&self) -> WatchListIter<'_> {
+        WatchListIter {
+            watch_list: self.lists,
+            node_idx: self.lists.watches[self.this],
+        }
+    }
+}
+
+struct WatchListIter<'me> {
+    watch_list: &'me WatchLists,
+    // loc: AbstractLocation,
+    node_idx: usize,
+}
+
+impl<'me> Iterator for WatchListIter<'me> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.node_idx > 0 {
+            let watch = self.watch_list.nodes[self.node_idx];
+            self.node_idx = watch.next();
+            Some(watch.constraint())
+        } else {
+            None
+        }
+    }
+}
+
+struct ConstraintGeneration<'me, 'tcx> {
     steensgaard: &'me mut Steensgaard,
     body: &'me Body<'tcx>,
     tcx: TyCtxt<'tcx>,
+    constraints: &'me mut Vec<Constraint>,
+    watches: &'me mut WatchLists,
 }
 
-impl<'me, 'tcx> Visitor<'tcx> for SteensgaardSolver<'me, 'tcx> {
+enum PlaceLocation {
+    Plain(AbstractLocation),
+    Deref(AbstractLocation),
+}
+
+impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
+
+    /// resolves the constraint (joins abstract locations), add constraint to
+    /// constraint sets and watcher list if fails
+    #[inline]
+    pub(crate) fn resolve(&mut self, constraint@Constraint(kind, p, q): Constraint) {
+        assert!(!p.is_null() && !q.is_null());
+
+        let pts = &mut self.steensgaard.pts;
+        match kind {
+            ConstraintKind::Addr => {
+                if pts[p].is_null() {
+                    pts[p] = q;
+                } else {
+                    let pts_p = pts[p];
+                    self.steensgaard.join(pts_p, q);
+                }
+            },
+            ConstraintKind::Assign => todo!(),
+            ConstraintKind::Store => todo!(),
+            ConstraintKind::Load => todo!(),
+        }
+
+        // let (fst, snd) = match kind {
+        //     ConstraintKind::Addr => (pts[p], q),
+        //     ConstraintKind::Assign => (pts[p], pts[q]),
+        //     ConstraintKind::Store => (pts[pts[p]], pts[q]),
+        //     ConstraintKind::Load => (pts[p], pts[pts[q]]),
+        // };
+        // self.steensgaard.join(fst, snd);
+    }
+
+    fn place_location(&self, place: Place<'tcx>) -> PlaceLocation {
+        let mut place = place.as_ref();
+
+        // peel off all index projections
+        for (place_base, proj_elem) in place.iter_projections().rev() {
+            match proj_elem {
+                ProjectionElem::Index(..)
+                | ProjectionElem::ConstantIndex { .. }
+                | ProjectionElem::Subslice { .. }
+                | ProjectionElem::Downcast(..) => place = place_base,
+                _ => break,
+            }
+        }
+
+        if let Some((struct_place, ProjectionElem::Field(field, ty))) = place.last_projection() {
+            let struct_ty = struct_place.ty(self.body, self.tcx).ty;
+            let TyKind::Adt(adt_def, _) = struct_ty.kind() else { unreachable!() };
+            let loc = self
+                .steensgaard
+                .structs
+                .get_content(adt_def.did(), field.index());
+            return PlaceLocation::Plain(loc);
+        }
+
+        assert!(place.local_or_deref_local().is_some());
+        let loc = self
+            .steensgaard
+            .functions
+            .get_content(self.body.source.def_id(), place.local.as_usize());
+        if place.as_local().is_some() {
+            return PlaceLocation::Plain(loc);
+        } else {
+            return PlaceLocation::Deref(loc);
+        }
+    }
+}
+
+impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
     fn visit_assign(
         &mut self,
         place: &Place<'tcx>,
@@ -228,21 +405,53 @@ impl<'me, 'tcx> Visitor<'tcx> for SteensgaardSolver<'me, 'tcx> {
             return;
         }
 
-        match rvalue {
+        let (is_addr_of, rplace) = match rvalue {
             Rvalue::Use(operand) | Rvalue::Cast(_, operand, _) => {
                 assert!(
                     place.as_local().is_some()
                         || operand.place().and_then(|place| place.as_local()).is_some()
                         || operand.constant().is_some()
                 );
+                let Some(rplace) = operand.place() else { return };
+                (false, rplace)
             }
             Rvalue::CopyForDeref(rplace) => {
                 assert!(place.as_local().is_some() || rplace.as_local().is_some());
+                (false, *rplace)
             }
-            Rvalue::Ref(_, _, _) | Rvalue::AddressOf(_, _) => {
-                assert!(place.as_local().is_some())
+            Rvalue::Ref(_, _, rplace) | Rvalue::AddressOf(_, rplace) => {
+                assert!(place.as_local().is_some());
+                (true, *rplace)
             }
-            _ => {}
-        }
+            _ => {
+                unreachable!("rvalue of pointer type can only be use/deref_copy/addr/ref")
+            }
+        };
+
+        let l_loc = self.place_location(*place);
+        let r_loc = self.place_location(rplace);
+
+        let constraint = if is_addr_of {
+            let PlaceLocation::Plain(p) = l_loc else { unreachable!() };
+            match r_loc {
+                PlaceLocation::Plain(q) => Constraint::new(ConstraintKind::Addr, p, q),
+                PlaceLocation::Deref(q) => Constraint::new(ConstraintKind::Assign, p, q),
+            }
+        } else {
+            match (l_loc, r_loc) {
+                (PlaceLocation::Plain(p), PlaceLocation::Plain(q)) => {
+                    Constraint::new(ConstraintKind::Assign, p, q)
+                }
+                (PlaceLocation::Plain(p), PlaceLocation::Deref(q)) => {
+                    Constraint::new(ConstraintKind::Load, p, q)
+                }
+                (PlaceLocation::Deref(p), PlaceLocation::Plain(q)) => {
+                    Constraint::new(ConstraintKind::Store, p, q)
+                }
+                _ => unreachable!(),
+            }
+        };
+
+        self.resolve(constraint);
     }
 }
