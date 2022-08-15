@@ -19,6 +19,7 @@ rustc_private = true
 [dependencies]
 orc-common = { path = "orc-common" }
 orc-ownership-analysis = { path = "orc-ownership-analysis" }
+orc-taint-analysis = { path = "orc-taint-analysis" }
 usage-analysis = { path = "usage-analysis" }
 orc-refactor = { path = "orc-refactor" }
 empirical-study = { path = "empirical-study" }

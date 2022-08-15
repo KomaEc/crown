@@ -50,6 +50,9 @@ enum Command {
         #[clap(long, short = 'O')]
         ownership: bool,
 
+        #[clap(long, short = 'T')]
+        taint: bool,
+
         #[clap(long, short = 'M')]
         mutability: bool,
 
@@ -177,6 +180,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             null,
             array,
             ownership,
+            taint,
             mutability,
             all: _,
         } => {
@@ -187,6 +191,10 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
 
             if ownership {
                 todo!("ownership analysis");
+            }
+
+            if taint {
+                orc_taint_analysis::run_steensgaard(&program)
             }
 
             if mutability {

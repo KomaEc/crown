@@ -50,31 +50,10 @@ pub struct Steensgaard {
     /// Steensgaard's analysis tracks for sinlge points-to relation for an
     /// abstract location, thus pts graph can be simplified as a vector.
     pts: IndexVec<AbstractLocation, AbstractLocation>,
-    // pts_graph: DiGraph<(), (), AbstractLocation>,
-    // /// `DefId` of structs -> indices of `field_targets`
-    // structs: FxHashMap<DefId, usize>,
-    // /// Structs -> start `AbstractLocation`, the set of field targets
-    // /// for struct `idx` is `field_targets[idx] ~ field_targets[idx+1]`.
-    // /// There is an additional trailing entry that indicates the end of
-    // /// the last struct
-    // fields: Vec<AbstractLocation>,
-    // field_indices_start: Vec<usize>,
-    // field_indices: Vec<usize>,
-    // /// `DefId` of functions -> indices of `formals`
-    // functions: FxHashMap<DefId, usize>,
-    // /// Similar as `field_targets`, but stores function locals.
-    // /// Function formals are the starting member of `locals`
-    // locals: Vec<AbstractLocation>,
-    // /// Functionally similar as `locals`, but points into `local_indices`
-    // local_indices_start: Vec<usize>,
-    // /// Store actual indices for each locals. For example, if a function
-    // /// containts three locals _0, _1, _2, if only _1 is of pointer type,
-    // /// then the indices should all be 0, and only that of _1 is meaningful
-    // local_indices: Vec<usize>,
 }
 
 impl Steensgaard {
-    pub fn initiate<'tcx, Input: OrcInput<'tcx>>(input: Input) -> Self {
+    pub fn new<'tcx, Input: OrcInput<'tcx>>(input: Input) -> Self {
         let n_struct_fields_of_ptr_type = input.structs().iter().fold(0usize, |acc, did| {
             let adt_def = input.tcx().adt_def(*did);
             assert!(adt_def.is_struct());
@@ -117,8 +96,6 @@ impl Steensgaard {
             |tcx, field_def| tcx.type_of(field_def.did).is_unsafe_ptr(),
         );
 
-        // assert_eq!(pts_graph.node_count(), 1 + 2 * n_struct_fields_of_ptr_type);
-
         let functions = TwoLevelDiscretization::new(
             input.tcx(),
             input.functions(),
@@ -133,77 +110,38 @@ impl Steensgaard {
             |_, local_decl| local_decl.ty.is_unsafe_ptr(),
         );
 
-        // let structs: FxHashMap<DefId, usize> = input
-        //     .structs()
-        //     .iter()
-        //     .enumerate()
-        //     .map(|(idx, did)| (*did, idx))
-        //     .collect();
-        // let mut fields: Vec<AbstractLocation> = Vec::with_capacity(structs.len() + 1); // vec![AbstractLocation::NULL; structs.len() + 1];
-        // fields.push(AbstractLocation::NULL + 1 + n_struct_fields as u32);
-        // let mut field_indices_start: Vec<usize> = Vec::with_capacity(structs.len() + 1); // vec![0; structs.len() + 1];
-        // field_indices_start.push(0);
-        // let mut field_indices: Vec<usize> = Vec::new();
-
-        // for &did in input.structs() {
-        //     let adt_def = input.tcx().adt_def(did);
-        //     assert!(adt_def.is_struct());
-        //     let mut field = unsafe { *fields.last().unwrap_unchecked() };
-        //     let mut field_index = unsafe { *field_indices_start.last().unwrap_unchecked() };
-        //     for field_def in adt_def.all_fields() {
-        //         let new_node_index = pts_graph.add_node(());
-        //         assert_eq!(new_node_index, field.into());
-        //         pts_graph.add_edge(
-        //             new_node_index,
-        //             node_index(new_node_index.index() - n_struct_fields),
-        //             (),
-        //         );
-        //         field_indices.push(field_index);
-        //         if input.tcx().type_of(field_def.did).is_unsafe_ptr() {
-        //             field += 1;
-        //             field_index += 1;
-        //         }
-        //     }
-        //     fields.push(field);
-        //     field_indices_start.push(field_index);
-        // }
-
-        // let functions: FxHashMap<DefId, usize> = input
-        //     .functions()
-        //     .iter()
-        //     .enumerate()
-        //     .map(|(idx, did)| (*did, idx))
-        //     .collect();
-        // let mut locals: Vec<AbstractLocation> = Vec::with_capacity(functions.len() + 1); // vec![AbstractLocation::NULL; structs.len() + 1];
-        // locals.push(AbstractLocation::NULL + 1 + 2 * n_struct_fields as u32);
-        // let mut local_indices_start: Vec<usize> = Vec::with_capacity(functions.len() + 1); // vec![0; structs.len() + 1];
-        // local_indices_start.push(0);
-        // let mut local_indices: Vec<usize> = Vec::new();
-
-        // for &did in input.functions() {
-        //     let body = input.tcx().optimized_mir(did);
-        //     let mut local = unsafe { *locals.last().unwrap_unchecked() };
-        //     let mut local_index = unsafe { *local_indices_start.last().unwrap_unchecked() };
-        //     for decl in &body.local_decls {
-        //         // Do nothing with local
-        //         local_indices.push(local_index);
-        //         if decl.ty.is_unsafe_ptr() {
-        //             local += 1;
-        //             local_index += 1;
-        //         }
-        //     }
-        //     locals.push(local);
-        //     local_indices_start.push(local_index);
-        // }
-
         let pts_targets = UnionFind::new(pts.len());
 
-        Steensgaard {
+        let mut steensgaard = Steensgaard {
             struct_fields: structs,
             function_locals: functions,
             pts_targets,
             pts,
+        };
+
+        let mut constraints = Vec::new();
+        let mut watchers = WatcherLists::new(steensgaard.node_count());
+        let mut buffer = Vec::with_capacity(steensgaard.node_count());
+
+        for did in input.functions() {
+            let body = input.tcx().optimized_mir(did);
+            let mut cg = ConstraintGeneration {
+                steensgaard: &mut steensgaard,
+                body,
+                tcx: input.tcx(),
+                constraints: &mut constraints,
+                watchers: &mut watchers,
+                buffer: &mut buffer,
+            };
+            cg.visit_body(body);
         }
+
+        steensgaard
+    }
+
+    #[inline]
+    pub fn node_count(&self) -> usize {
+        self.pts.len()
     }
 
     pub(crate) fn join(&mut self, p: AbstractLocation, q: AbstractLocation) {
@@ -342,6 +280,10 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
                     );
                     if self.steensgaard.pts[q].is_null() {
                         self.set_pts(q, self.steensgaard.pts[p]);
+                    } else {
+                        let pts_p = self.steensgaard.pts[p];
+                        let pts_q = self.steensgaard.pts[q];
+                        self.steensgaard.join(pts_p, pts_q)
                     }
                 }
                 ConstraintKind::Store => {
@@ -409,9 +351,6 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
     pub(crate) fn resolve(&mut self, constraint @ Constraint(kind, mut p, mut q): Constraint) {
         assert!(!p.is_null() && !q.is_null());
 
-        let constraint_idx = self.constraints.len();
-        self.constraints.push(constraint);
-
         let pts = &mut self.steensgaard.pts;
         match kind {
             ConstraintKind::Addr => {
@@ -427,6 +366,8 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
             ConstraintKind::Assign => {}
             ConstraintKind::Store => {
                 if pts[p].is_null() {
+                    let constraint_idx = self.constraints.len();
+                    self.constraints.push(constraint);
                     self.watchers.add_watch(constraint_idx, p);
                     return
                 } else {
@@ -435,6 +376,8 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
             }
             ConstraintKind::Load => {
                 if pts[q].is_null() {
+                    let constraint_idx = self.constraints.len();
+                    self.constraints.push(constraint);
                     self.watchers.add_watch(constraint_idx, q);
                     return
                 } else {
@@ -444,6 +387,8 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
         }
 
         // process assign(p, q)
+        let constraint_idx = self.constraints.len();
+        self.constraints.push(Constraint::new(ConstraintKind::Assign, p, q));
         self.resolve_assign(p, q, constraint_idx)
     }
 
@@ -461,7 +406,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
             }
         }
 
-        if let Some((struct_place, ProjectionElem::Field(field, ty))) = place.last_projection() {
+        if let Some((struct_place, ProjectionElem::Field(field, _))) = place.last_projection() {
             let struct_ty = struct_place.ty(self.body, self.tcx).ty;
             let TyKind::Adt(adt_def, _) = struct_ty.kind() else { unreachable!() };
             let loc = self

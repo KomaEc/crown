@@ -16,6 +16,9 @@
 #![feature(min_specialization)]
 #![feature(let_else)]
 
+use orc_common::OrcInput;
+use steensgaard::Steensgaard;
+
 extern crate rustc_arena;
 extern crate rustc_ast;
 extern crate rustc_ast_pretty;
@@ -35,3 +38,7 @@ extern crate rustc_target;
 extern crate rustc_type_ir;
 
 pub(crate) mod steensgaard;
+
+pub fn run_steensgaard<'tcx, Input: OrcInput<'tcx>>(input: Input) {
+    let _ = Steensgaard::new(input);
+}
