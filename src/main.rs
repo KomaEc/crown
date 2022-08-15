@@ -164,7 +164,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
 
     match *cmd {
         Command::EmpiricalStudy => {
-            program.perform_empirical_study();
+            time("empirical study", || program.perform_empirical_study());
         }
         Command::Playground { mir, addr } => {
             if mir {
@@ -194,7 +194,9 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             }
 
             if taint {
-                orc_taint_analysis::run_steensgaard(&program)
+                time("taint analysis", || {
+                    orc_taint_analysis::run_steensgaard(&program)
+                });
             }
 
             if mutability {

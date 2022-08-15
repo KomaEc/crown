@@ -30,6 +30,7 @@ where
         + std::ops::Add<u32, Output = I>
         + Clone
         + Copy
+        + std::fmt::Debug
         + PartialOrd
         + Ord
         + PartialEq
@@ -63,21 +64,25 @@ where
         content_indices_start.push(0);
         let mut content_indices = Vec::new();
 
+        let mut next_content = first_content;
+        let mut next_start = 0;
+
         for &did in dids {
-            let mut content = unsafe { *contents.last().unwrap_unchecked() };
-            let mut start = unsafe { *content_indices_start.last().unwrap_unchecked() };
-            let mut content_index = 0;
+            // let mut next_content = unsafe { *contents.last().unwrap_unchecked() };
+            // let mut next_start = unsafe { *content_indices_start.last().unwrap_unchecked() };
+            let mut offset = 0;
+
             for holder in content_holder_iter(tcx, did) {
-                with_content(content);
-                content_indices.push(content_index);
+                content_indices.push(offset);
                 if to_step(tcx, holder) {
-                    content += 1;
-                    content_index += 1;
+                    with_content(next_content);
+                    next_content += 1;
+                    offset += 1;
                 }
-                start += 1;
+                next_start += 1;
             }
-            contents.push(content);
-            content_indices_start.push(start);
+            contents.push(next_content);
+            content_indices_start.push(next_start);
         }
 
         TwoLevelDiscretization {
@@ -86,6 +91,11 @@ where
             content_indices_start,
             content_indices,
         }
+    }
+
+    #[inline]
+    pub fn has_entry(&self, belonger: DefId) -> bool {
+        self.belongers.contains_key(&belonger)
     }
 
     #[inline]
@@ -103,9 +113,11 @@ where
 
     #[inline]
     pub fn get_content(&self, belonger: DefId, idx: usize) -> I {
+        // println!("getting content {:?}:{idx}", belonger);
         let inner_idx = self.belongers[&belonger];
         let offset = self.content_indices[self.content_indices_start[inner_idx] + idx];
         let Range { start, end } = self.get_contents_inner(inner_idx);
+        // println!("range: {:?}~{:?}, offset: {offset}", start, end);
         assert!(start + (offset as u32) < end);
         start + (offset as u32)
     }

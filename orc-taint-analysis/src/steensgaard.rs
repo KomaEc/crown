@@ -4,9 +4,10 @@ use orc_common::{two_level_discretization::TwoLevelDiscretization, OrcInput};
 use petgraph::unionfind::UnionFind;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{visit::Visitor, Body, Place, ProjectionElem, Rvalue},
-    ty::{TyCtxt, TyKind},
+    mir::{visit::Visitor, Body, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind},
+    ty::{Ty, TyCtxt, TyKind},
 };
+use rustc_type_ir::TyKind::FnDef;
 
 use self::constraint::{Constraint, ConstraintKind};
 
@@ -42,6 +43,13 @@ impl Default for AbstractLocation {
     }
 }
 
+fn peel_off_array(mut ty: Ty) -> Ty {
+    while let TyKind::Array(inner_ty, _) = ty.kind() {
+        ty = *inner_ty
+    }
+    ty
+}
+
 #[derive(Debug)]
 pub struct Steensgaard {
     struct_fields: TwoLevelDiscretization<AbstractLocation>,
@@ -61,7 +69,7 @@ impl Steensgaard {
                 .all_fields()
                 .filter(|field_def| {
                     let ty = input.tcx().type_of(field_def.did);
-                    ty.is_unsafe_ptr()
+                    ty.is_unsafe_ptr() || ty.is_region_ptr()
                 })
                 .count();
             acc + n_fields
@@ -84,8 +92,9 @@ impl Steensgaard {
             pts.next_index(), //AbstractLocation::NULL + 1 + n_struct_fields_of_ptr_type as u32,
             |tcx, did| {
                 let adt_def = tcx.adt_def(did);
+                // println!("discretising {:?}", adt_def);
                 assert!(adt_def.is_struct());
-                adt_def.all_fields()
+                adt_def.all_fields() //.inspect(|field_def| println!("field {:?}", field_def))
             },
             |field: AbstractLocation| {
                 let field_pts = AbstractLocation::from_u32(
@@ -93,7 +102,7 @@ impl Steensgaard {
                 );
                 assert_eq!(pts.push(field_pts), field);
             },
-            |tcx, field_def| tcx.type_of(field_def.did).is_unsafe_ptr(),
+            |tcx, field_def| peel_off_array(tcx.type_of(field_def.did)).is_unsafe_ptr(), // tcx.type_of(field_def.did).is_unsafe_ptr(),
         );
 
         let functions = TwoLevelDiscretization::new(
@@ -107,7 +116,10 @@ impl Steensgaard {
             |local| {
                 assert_eq!(pts.push(AbstractLocation::NULL), local);
             },
-            |_, local_decl| local_decl.ty.is_unsafe_ptr(),
+            |_, local_decl| {
+                peel_off_array(local_decl.ty).is_unsafe_ptr()
+                    || peel_off_array(local_decl.ty).is_region_ptr()
+            },
         );
 
         let pts_targets = UnionFind::new(pts.len());
@@ -303,7 +315,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
                     self.constraints[constraint_idx] =
                         Constraint::new(ConstraintKind::Assign, q, pts_p);
                     self.resolve_assign(q, pts_p, constraint_idx)
-                },
+                }
                 _ => {
                     unreachable!("internal error: addr constraint is watching")
                 }
@@ -317,7 +329,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
         assert!(!q.is_null());
         self.steensgaard.pts[p] = q;
 
-        // notify all wathers of `p`
+        // notify all watchers of `p`
         let mut buffer = std::mem::replace(self.buffer, Vec::new());
         self.notify(p, &mut buffer);
         let _ = std::mem::replace(self.buffer, buffer);
@@ -369,7 +381,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
                     let constraint_idx = self.constraints.len();
                     self.constraints.push(constraint);
                     self.watchers.add_watch(constraint_idx, p);
-                    return
+                    return;
                 } else {
                     p = pts[p];
                 }
@@ -379,7 +391,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
                     let constraint_idx = self.constraints.len();
                     self.constraints.push(constraint);
                     self.watchers.add_watch(constraint_idx, q);
-                    return
+                    return;
                 } else {
                     q = pts[q];
                 }
@@ -388,11 +400,19 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
 
         // process assign(p, q)
         let constraint_idx = self.constraints.len();
-        self.constraints.push(Constraint::new(ConstraintKind::Assign, p, q));
+        self.constraints
+            .push(Constraint::new(ConstraintKind::Assign, p, q));
         self.resolve_assign(p, q, constraint_idx)
     }
 
-    fn place_location(&self, place: Place<'tcx>) -> PlaceLocation {
+    #[inline]
+    fn place_location(&self, place: Place<'tcx>) -> Option<PlaceLocation> {
+        // println!("place: {:?}", place);
+        // println!(
+        //     "{:?}: {}",
+        //     place.local, self.body.local_decls[place.local].ty
+        // );
+
         let mut place = place.as_ref();
 
         // peel off all index projections
@@ -409,11 +429,14 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
         if let Some((struct_place, ProjectionElem::Field(field, _))) = place.last_projection() {
             let struct_ty = struct_place.ty(self.body, self.tcx).ty;
             let TyKind::Adt(adt_def, _) = struct_ty.kind() else { unreachable!() };
+            if !self.steensgaard.struct_fields.has_entry(adt_def.did()) {
+                return None;
+            }
             let loc = self
                 .steensgaard
                 .struct_fields
                 .get_content(adt_def.did(), field.index());
-            return PlaceLocation::Plain(loc);
+            return Some(PlaceLocation::Plain(loc));
         }
 
         assert!(place.local_or_deref_local().is_some());
@@ -422,9 +445,9 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
             .function_locals
             .get_content(self.body.source.def_id(), place.local.as_usize());
         if place.as_local().is_some() {
-            return PlaceLocation::Plain(loc);
+            return Some(PlaceLocation::Plain(loc));
         } else {
-            return PlaceLocation::Deref(loc);
+            return Some(PlaceLocation::Deref(loc));
         }
     }
 }
@@ -441,30 +464,27 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
         }
 
         let (is_addr_of, rplace) = match rvalue {
-            Rvalue::Use(operand) | Rvalue::Cast(_, operand, _) => {
-                assert!(
-                    place.as_local().is_some()
-                        || operand.place().and_then(|place| place.as_local()).is_some()
-                        || operand.constant().is_some()
-                );
+            Rvalue::Use(operand) => {
                 let Some(rplace) = operand.place() else { return };
                 (false, rplace)
             }
-            Rvalue::CopyForDeref(rplace) => {
-                assert!(place.as_local().is_some() || rplace.as_local().is_some());
-                (false, *rplace)
+            Rvalue::Cast(_, operand, _) => {
+                let Some(rplace) = operand.place() else { return };
+                // integer pointer cast is ignored
+                if !rplace.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+                    return;
+                }
+                (false, rplace)
             }
-            Rvalue::Ref(_, _, rplace) | Rvalue::AddressOf(_, rplace) => {
-                assert!(place.as_local().is_some());
-                (true, *rplace)
-            }
+            Rvalue::CopyForDeref(rplace) => (false, *rplace),
+            Rvalue::Ref(_, _, rplace) | Rvalue::AddressOf(_, rplace) => (true, *rplace),
             _ => {
                 unreachable!("rvalue of pointer type can only be use/deref_copy/addr/ref")
             }
         };
 
-        let l_loc = self.place_location(*place);
-        let r_loc = self.place_location(rplace);
+        let Some(l_loc) = self.place_location(*place) else { return };
+        let Some(r_loc) = self.place_location(rplace) else { return };
 
         let constraint = if is_addr_of {
             let PlaceLocation::Plain(p) = l_loc else { unreachable!() };
@@ -488,5 +508,51 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
         };
 
         self.resolve(constraint);
+    }
+
+    fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _: rustc_middle::mir::Location) {
+        let TerminatorKind::Call {
+            func,
+            args,
+            destination,
+            ..
+        } = &terminator.kind else { return };
+
+        let Some(func) = func.constant() else { return };
+        let &FnDef(callee_did, _generic_args) = func.ty().kind() else { return };
+
+        if !self.steensgaard.function_locals.has_entry(callee_did) {
+            return;
+        }
+
+        for (idx, arg) in args.iter().enumerate() {
+            let Some(place) = arg.place() else { continue };
+            if !place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+                continue;
+            }
+            let Some(arg_loc) = self.place_location(place) else { continue };
+            let param_loc = self
+                .steensgaard
+                .function_locals
+                .get_content(callee_did, idx + 1);
+
+            let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
+            let constraint_idx = self.constraints.len();
+            self.constraints
+                .push(Constraint::new(ConstraintKind::Assign, param_loc, arg_loc));
+            self.resolve_assign(param_loc, arg_loc, constraint_idx)
+        }
+
+        if !destination.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+            return;
+        }
+
+        let Some(dest_loc) = self.place_location(*destination) else { return };
+        let PlaceLocation::Plain(dest_loc) = dest_loc else { unreachable!("destination place contains derefs") };
+        let ret_loc = self.steensgaard.function_locals.get_content(callee_did, 0);
+        let constraint_idx = self.constraints.len();
+        self.constraints
+            .push(Constraint::new(ConstraintKind::Assign, dest_loc, ret_loc));
+        self.resolve_assign(dest_loc, ret_loc, constraint_idx);
     }
 }
