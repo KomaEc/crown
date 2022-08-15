@@ -118,7 +118,7 @@ impl<'tcx, Input: OrcInput<'tcx>> OrcInput<'tcx> for &Input {
     }
 
     fn structs(&self) -> &[DefId] {
-        (*self).functions()
+        (*self).structs()
     }
 
     fn into_trivial(self) -> (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>) {
