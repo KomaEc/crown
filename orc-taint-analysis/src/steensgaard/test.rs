@@ -13,7 +13,7 @@ fn test1() {
         (*s).g = q;
     }
     ";
-    orc_common::test::run_compiler_with(PROGRAM.into(), |tcx, functions, structs| {
+    orc_common::test_infra::run_compiler_with(PROGRAM.into(), |tcx, functions, structs| {
         let input = (tcx, functions, structs);
         let steensgaard = Steensgaard::new(&input);
         steensgaard.print_results();
@@ -33,7 +33,7 @@ fn test2() {
         let mut p = &local;
     }
     ";
-    orc_common::test::run_compiler_with(PROGRAM.into(), |tcx, functions, structs| {
+    orc_common::test_infra::run_compiler_with(PROGRAM.into(), |tcx, functions, structs| {
         let input = (tcx, functions, structs);
         let steensgaard = Steensgaard::new(&input);
         steensgaard.print_results();

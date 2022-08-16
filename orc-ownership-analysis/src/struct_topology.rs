@@ -155,7 +155,7 @@ mod tests {
 
     #[test]
     fn test() {
-        orc_common::test::run_compiler_with(TEXT.into(), |tcx, functions, structs| {
+        orc_common::test_infra::run_compiler_with(TEXT.into(), |tcx, functions, structs| {
             let program = CrateInfo::new(tcx, functions, structs);
             macro_rules! define_structs {
                 ($( $x: ident ),*) => {

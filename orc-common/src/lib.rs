@@ -18,7 +18,7 @@ extern crate rustc_span;
 
 pub mod item_set;
 pub mod macros;
-pub mod test;
+pub mod test_infra;
 
 use rustc_hir::def_id::{DefId, LocalDefId};
 use rustc_middle::{

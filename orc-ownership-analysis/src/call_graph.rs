@@ -165,13 +165,13 @@ impl<'me, 'tcx> Visitor<'tcx> for CallGraphNodeVis<'me, 'tcx> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use orc_common::test::init_logger;
+    use orc_common::test_infra::init_logger;
     use rustc_data_structures::graph::{scc::Sccs, WithSuccessors};
 
     #[test]
     fn test() {
         init_logger();
-        orc_common::test::run_compiler_with(TEST_PROGRAMS.into(), |tcx, functions, structs| {
+        orc_common::test_infra::run_compiler_with(TEST_PROGRAMS.into(), |tcx, functions, structs| {
             let crate::CrateInfo {
                 tcx: _,
                 call_graph,
