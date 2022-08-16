@@ -2,13 +2,21 @@
 #![feature(step_trait)]
 #![feature(trusted_step)]
 #![feature(min_specialization)]
+#![feature(let_else)]
+#![feature(generic_associated_types)]
 
-extern crate rustc_hir;
+extern crate rustc_error_codes;
+extern crate rustc_errors;
 extern crate rustc_hash;
+extern crate rustc_hir;
 extern crate rustc_index;
+extern crate rustc_interface;
 extern crate rustc_middle;
+extern crate rustc_session;
+extern crate rustc_span;
 
 pub mod macros;
+pub mod test;
 pub mod two_level_discretization;
 
 use rustc_hir::def_id::{DefId, LocalDefId};
@@ -83,7 +91,6 @@ pub trait OrcInput<'tcx> {
     fn tcx(&self) -> TyCtxt<'tcx>;
     fn functions(&self) -> &[DefId];
     fn structs(&self) -> &[DefId];
-    fn into_trivial(self) -> (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>);
 }
 
 impl<'tcx> OrcInput<'tcx> for (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>) {
@@ -101,11 +108,6 @@ impl<'tcx> OrcInput<'tcx> for (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>) {
     fn structs(&self) -> &[DefId] {
         &self.2[..]
     }
-
-    #[inline]
-    fn into_trivial(self) -> (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>) {
-        self
-    }
 }
 
 impl<'tcx, Input: OrcInput<'tcx>> OrcInput<'tcx> for &Input {
@@ -119,13 +121,5 @@ impl<'tcx, Input: OrcInput<'tcx>> OrcInput<'tcx> for &Input {
 
     fn structs(&self) -> &[DefId] {
         (*self).structs()
-    }
-
-    fn into_trivial(self) -> (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>) {
-        (
-            self.tcx(),
-            self.functions().iter().map(|&did| did).collect(),
-            self.structs().iter().map(|&did| did).collect(),
-        )
     }
 }

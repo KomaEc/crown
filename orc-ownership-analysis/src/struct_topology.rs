@@ -127,7 +127,7 @@ impl StructTopology {
 
 #[cfg(test)]
 mod tests {
-    use crate::analysis::place_ext::place_abs::AggregateOffset;
+    use crate::{analysis::place_ext::place_abs::AggregateOffset, CrateInfo};
 
     const TEXT: &str = "
     struct s {
@@ -155,7 +155,8 @@ mod tests {
 
     #[test]
     fn test() {
-        crate::test::run_compiler_with(TEXT.into(), |program| {
+        orc_common::test::run_compiler_with(TEXT.into(), |tcx, functions, structs| {
+            let program = CrateInfo::new(tcx, functions, structs);
             macro_rules! define_structs {
                 ($( $x: ident ),*) => {
                     $(

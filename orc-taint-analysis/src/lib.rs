@@ -17,6 +17,10 @@
 #![feature(let_else)]
 
 use orc_common::OrcInput;
+use rustc_hash::FxHashMap;
+use rustc_hir::def_id::DefId;
+use rustc_index::bit_set::HybridBitSet;
+use rustc_middle::mir::Local;
 use steensgaard::Steensgaard;
 
 extern crate rustc_arena;
@@ -38,6 +42,19 @@ extern crate rustc_target;
 extern crate rustc_type_ir;
 
 pub(crate) mod steensgaard;
+
+// pub struct AddressTakenTargets {
+//     locals: FxHashMap<DefId, HybridBitSet<Local>>,
+//     fields: FxHashMap<DefId, HybridBitSet<usize>>,
+// }
+
+// impl AddressTakenTargets {
+//     pub fn new<'tcx, Input: OrcInput<'tcx>>(input: Input) -> Self {
+//         for did in input.functions() {
+
+//         }
+//     }
+// }
 
 pub fn run_steensgaard<'tcx, Input: OrcInput<'tcx>>(input: Input) {
     let _ = Steensgaard::new(input);

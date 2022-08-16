@@ -1,10 +1,15 @@
 pub mod constraint;
+#[cfg(test)]
+mod test;
 
-use orc_common::{two_level_discretization::TwoLevelDiscretization, OrcInput};
+use orc_common::{
+    two_level_discretization::{Array, ArraySubPart, ItemSet},
+    OrcInput,
+};
 use petgraph::unionfind::UnionFind;
-use rustc_index::vec::IndexVec;
+use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
-    mir::{visit::Visitor, Body, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind},
+    mir::{visit::Visitor, Body, Local, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind},
     ty::{Ty, TyCtxt, TyKind},
 };
 use rustc_type_ir::TyKind::FnDef;
@@ -52,8 +57,8 @@ fn peel_off_array(mut ty: Ty) -> Ty {
 
 #[derive(Debug)]
 pub struct Steensgaard {
-    struct_fields: TwoLevelDiscretization<AbstractLocation>,
-    function_locals: TwoLevelDiscretization<AbstractLocation>,
+    struct_fields: ItemSet<AbstractLocation, Array>,
+    function_locals: ItemSet<AbstractLocation, ArraySubPart>,
     pts_targets: UnionFind<AbstractLocation>,
     /// Steensgaard's analysis tracks for sinlge points-to relation for an
     /// abstract location, thus pts graph can be simplified as a vector.
@@ -62,31 +67,46 @@ pub struct Steensgaard {
 
 impl Steensgaard {
     pub fn new<'tcx, Input: OrcInput<'tcx>>(input: Input) -> Self {
-        let n_struct_fields_of_ptr_type = input.structs().iter().fold(0usize, |acc, did| {
-            let adt_def = input.tcx().adt_def(*did);
-            assert!(adt_def.is_struct());
-            let n_fields = adt_def
-                .all_fields()
-                .filter(|field_def| {
-                    let ty = input.tcx().type_of(field_def.did);
-                    ty.is_unsafe_ptr() || ty.is_region_ptr()
-                })
-                .count();
-            acc + n_fields
+        // let n_struct_fields_of_ptr_type = input.structs().iter().fold(0usize, |acc, did| {
+        //     let adt_def = input.tcx().adt_def(*did);
+        //     assert!(adt_def.is_struct());
+        //     let n_fields = adt_def
+        //         .all_fields()
+        //         .filter(|field_def| {
+        //             let ty = input.tcx().type_of(field_def.did);
+        //             ty.is_unsafe_ptr() || ty.is_region_ptr()
+        //         })
+        //         .count();
+        //     acc + n_fields
+        // });
+
+        // let mut pts = IndexVec::with_capacity(2 * n_struct_fields_of_ptr_type + 1);
+
+        // // null points to null
+        // assert_eq!(pts.push(AbstractLocation::NULL), AbstractLocation::NULL);
+
+        // // field pts targets should point to themselves
+        // for _ in 0..n_struct_fields_of_ptr_type {
+        //     let this = pts.next_index();
+        //     pts.push(this);
+        // }
+
+        let n_struct_fields = input.structs().iter().fold(0usize, |acc, did| {
+            acc + input.tcx().adt_def(*did).all_fields().count()
         });
 
-        let mut pts = IndexVec::with_capacity(2 * n_struct_fields_of_ptr_type + 1);
+        let mut pts = IndexVec::with_capacity(2 * n_struct_fields + 1);
 
         // null points to null
         assert_eq!(pts.push(AbstractLocation::NULL), AbstractLocation::NULL);
 
         // field pts targets should point to themselves
-        for _ in 0..n_struct_fields_of_ptr_type {
+        for _ in 0..n_struct_fields {
             let this = pts.next_index();
             pts.push(this);
         }
 
-        let structs = TwoLevelDiscretization::new(
+        let struct_fields = ItemSet::new(
             input.tcx(),
             input.structs(),
             pts.next_index(), //AbstractLocation::NULL + 1 + n_struct_fields_of_ptr_type as u32,
@@ -98,14 +118,27 @@ impl Steensgaard {
             },
             |field: AbstractLocation| {
                 let field_pts = AbstractLocation::from_u32(
-                    field.as_u32() - (n_struct_fields_of_ptr_type as u32),
+                    field.as_u32() - (n_struct_fields as u32), // (n_struct_fields_of_ptr_type as u32),
                 );
                 assert_eq!(pts.push(field_pts), field);
             },
-            |tcx, field_def| peel_off_array(tcx.type_of(field_def.did)).is_unsafe_ptr(), // tcx.type_of(field_def.did).is_unsafe_ptr(),
+            |_| |_, _| true, // peel_off_array(input.tcx().type_of(field_def.did)).is_unsafe_ptr(),
         );
 
-        let functions = TwoLevelDiscretization::new(
+        struct AddrTaken<'me>(&'me mut BitSet<Local>);
+        impl<'me, 'tcx> Visitor<'tcx> for AddrTaken<'me> {
+            fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, _: rustc_middle::mir::Location) {
+                match rvalue {
+                    Rvalue::AddressOf(_, place) | Rvalue::Ref(_, _, place) => {
+                        let Some(local) = place.as_local() else { return };
+                        self.0.insert(local);
+                    }
+                    _ => return,
+                }
+            }
+        }
+
+        let function_locals = ItemSet::new(
             input.tcx(),
             input.functions(),
             pts.next_index(),
@@ -116,17 +149,25 @@ impl Steensgaard {
             |local| {
                 assert_eq!(pts.push(AbstractLocation::NULL), local);
             },
-            |_, local_decl| {
-                peel_off_array(local_decl.ty).is_unsafe_ptr()
-                    || peel_off_array(local_decl.ty).is_region_ptr()
+            |did| {
+                let body = input.tcx().optimized_mir(did);
+                let mut addr_taken = BitSet::<Local>::new_empty(body.local_decls.len());
+                let mut vis = AddrTaken(&mut addr_taken);
+                vis.visit_body(body);
+                move |local_idx, local_decl| {
+                    let ty = peel_off_array(local_decl.ty);
+                    ty.is_unsafe_ptr()
+                        || ty.is_region_ptr()
+                        || addr_taken.contains(local_idx.into())
+                }
             },
         );
 
         let pts_targets = UnionFind::new(pts.len());
 
         let mut steensgaard = Steensgaard {
-            struct_fields: structs,
-            function_locals: functions,
+            struct_fields,
+            function_locals,
             pts_targets,
             pts,
         };
@@ -164,6 +205,33 @@ impl Steensgaard {
         let q_pts = self.pts[q];
         self.pts_targets.union(p, q);
         self.join(p_pts, q_pts);
+    }
+
+    // #[cfg(debug_assertions)]
+    pub fn print_results(&self) {
+        for &did in self.struct_fields.belongers() {
+            println!("results for {:?}:", did);
+            let fields_result = self
+                .struct_fields
+                .get_contents(did)
+                .map(|loc| self.pts_targets.find(self.pts[loc]))
+                .collect::<Vec<_>>();
+            for (idx, tgt) in fields_result.into_iter().enumerate() {
+                println!("{:?}.{idx} -> {:?}", did, tgt);
+            }
+        }
+
+        for &did in self.function_locals.belongers() {
+            println!("results for {:?}:", did);
+            let locals_result = self
+                .function_locals
+                .get_contents(did)
+                .map(|loc| self.pts_targets.find(self.pts[loc]))
+                .collect::<Vec<_>>();
+            for (idx, tgt) in locals_result.into_iter().enumerate() {
+                println!("{:?}.{idx} -> {:?}", did, tgt);
+            }
+        }
     }
 }
 
@@ -407,11 +475,11 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
 
     #[inline]
     fn place_location(&self, place: Place<'tcx>) -> Option<PlaceLocation> {
-        // println!("place: {:?}", place);
-        // println!(
-        //     "{:?}: {}",
-        //     place.local, self.body.local_decls[place.local].ty
-        // );
+        println!("place: {:?}", place);
+        println!(
+            "{:?}: {}",
+            place.local, self.body.local_decls[place.local].ty
+        );
 
         let mut place = place.as_ref();
 
@@ -459,9 +527,12 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
         rvalue: &Rvalue<'tcx>,
         _: rustc_middle::mir::Location,
     ) {
-        if !place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+        let place_ty = place.ty(self.body, self.tcx).ty;
+        if !place_ty.is_unsafe_ptr() && !place_ty.is_region_ptr() {
             return;
         }
+
+        println!("visiting assignment {:?}: {place_ty} = {:?}", place, rvalue);
 
         let (is_addr_of, rplace) = match rvalue {
             Rvalue::Use(operand) => {
@@ -471,7 +542,8 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
             Rvalue::Cast(_, operand, _) => {
                 let Some(rplace) = operand.place() else { return };
                 // integer pointer cast is ignored
-                if !rplace.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+                let rplace_ty = rplace.ty(self.body, self.tcx).ty;
+                if !rplace_ty.is_unsafe_ptr() && !rplace_ty.is_region_ptr() {
                     return;
                 }
                 (false, rplace)
@@ -527,7 +599,8 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
 
         for (idx, arg) in args.iter().enumerate() {
             let Some(place) = arg.place() else { continue };
-            if !place.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+            let place_ty = place.ty(self.body, self.tcx).ty;
+            if !place_ty.is_unsafe_ptr() && !place_ty.is_region_ptr() {
                 continue;
             }
             let Some(arg_loc) = self.place_location(place) else { continue };
@@ -543,7 +616,8 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
             self.resolve_assign(param_loc, arg_loc, constraint_idx)
         }
 
-        if !destination.ty(self.body, self.tcx).ty.is_unsafe_ptr() {
+        let dest_ty = destination.ty(self.body, self.tcx).ty;
+        if !dest_ty.is_unsafe_ptr() && !dest_ty.is_region_ptr() {
             return;
         }
 
