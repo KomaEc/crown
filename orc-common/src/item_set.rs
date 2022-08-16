@@ -154,6 +154,11 @@ where
     Rep::ItemsRep<I>: std::ops::Index<usize, Output = I>
 {
     #[inline]
+    pub fn iter(&self) -> impl Iterator<Item = (&DefId, Range<I>)> {
+        self.belongers.iter().map(|(did, &idx)| (did, self.get_contents_inner(idx)))
+    }
+
+    #[inline]
     fn get_contents_inner(&self, inner_idx: usize) -> Range<I> {
         let start = self.items[inner_idx];
         let end = self.items[inner_idx + 1];
@@ -168,11 +173,11 @@ where
 
     #[inline]
     pub fn get_content(&self, belonger: DefId, idx: usize) -> I {
-        println!("getting content {:?}:{idx}", belonger);
+        // println!("getting content {:?}:{idx}", belonger);
         let inner_idx = self.belongers[&belonger];
         let offset = self.item_indices[self.item_indices_start[inner_idx] + idx];
         let Range { start, end } = self.get_contents_inner(inner_idx);
-        println!("range: {:?}~{:?}, offset: {offset}", start, end);
+        // println!("range: {:?}~{:?}, offset: {offset}", start, end);
         assert!(start + (offset as u32) < end);
         start + (offset as u32)
     }

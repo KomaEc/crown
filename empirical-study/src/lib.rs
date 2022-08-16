@@ -21,6 +21,7 @@ extern crate rustc_target;
 extern crate rustc_type_ir;
 
 use orc_common::OrcInput;
+use orc_taint_analysis::taint_results;
 use rustc_middle::mir::{visit::Visitor, Location, Rvalue};
 
 use cli_table::{format::Justify, print_stdout, Cell, Style, Table};
@@ -38,10 +39,14 @@ pub trait EmpiricalStudy<'tcx> {
             };
         }
 
-        perform![compute_percentage_of_non_address_taking_functions];
+        perform![
+            compute_percentage_of_non_address_taking_functions,
+            compute_percentage_of_non_self_referential_structs
+        ];
     }
 
     fn compute_percentage_of_non_address_taking_functions(&self);
+    fn compute_percentage_of_non_self_referential_structs(&self);
 }
 
 impl<'tcx, Input: OrcInput<'tcx>> EmpiricalStudy<'tcx> for Input {
@@ -79,6 +84,46 @@ impl<'tcx, Input: OrcInput<'tcx>> EmpiricalStudy<'tcx> for Input {
         .title(vec![
             "# Functions".cell().bold(true),
             "# Functions without &mut".cell().bold(true),
+            "Percentage".cell().bold(true),
+        ])
+        .bold(true);
+
+        assert!(print_stdout(table).is_ok());
+    }
+
+    fn compute_percentage_of_non_self_referential_structs(&self) {
+        let taint_results = taint_results(self);
+        let maybe_self_referential_structs = taint_results.maybe_self_referential_structs();
+        for &did in self.structs() {
+            let adt_def = self.tcx().adt_def(did);
+            println!("{:?}", adt_def);
+            let field_defs = &adt_def.variants().raw[0].fields;
+            maybe_self_referential_structs.get(&did).map(|pairs| {
+                println!(
+                    "aliasing fields: {}",
+                    pairs
+                        .iter()
+                        .map(|&(f, g)| format!("({}, {})", field_defs[f].name, field_defs[g].name))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
+            });
+        }
+
+
+        let percentage = format!(
+            "{:.1}%",
+            100.0 * maybe_self_referential_structs.len() as f64 / self.structs().len() as f64
+        );
+        let table = vec![vec![
+            self.structs().len().cell().justify(Justify::Right),
+            maybe_self_referential_structs.len().cell().justify(Justify::Right),
+            percentage.cell().justify(Justify::Right),
+        ]]
+        .table()
+        .title(vec![
+            "# Struct Definitions".cell().bold(true),
+            "# Maybe Self Referential Struct Definitions".cell().bold(true),
             "Percentage".cell().bold(true),
         ])
         .bold(true);

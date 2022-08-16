@@ -57,40 +57,16 @@ fn peel_off_array(mut ty: Ty) -> Ty {
 
 #[derive(Debug)]
 pub struct Steensgaard {
-    struct_fields: ItemSet<AbstractLocation, Array>,
-    function_locals: ItemSet<AbstractLocation, ArraySubPart>,
-    pts_targets: UnionFind<AbstractLocation>,
+    pub(crate) struct_fields: ItemSet<AbstractLocation, Array>,
+    pub(crate) function_locals: ItemSet<AbstractLocation, ArraySubPart>,
+    pub(crate) pts_targets: UnionFind<AbstractLocation>,
     /// Steensgaard's analysis tracks for sinlge points-to relation for an
     /// abstract location, thus pts graph can be simplified as a vector.
-    pts: IndexVec<AbstractLocation, AbstractLocation>,
+    pub(crate) pts: IndexVec<AbstractLocation, AbstractLocation>,
 }
 
 impl Steensgaard {
     pub fn new<'tcx, Input: OrcInput<'tcx>>(input: Input) -> Self {
-        // let n_struct_fields_of_ptr_type = input.structs().iter().fold(0usize, |acc, did| {
-        //     let adt_def = input.tcx().adt_def(*did);
-        //     assert!(adt_def.is_struct());
-        //     let n_fields = adt_def
-        //         .all_fields()
-        //         .filter(|field_def| {
-        //             let ty = input.tcx().type_of(field_def.did);
-        //             ty.is_unsafe_ptr() || ty.is_region_ptr()
-        //         })
-        //         .count();
-        //     acc + n_fields
-        // });
-
-        // let mut pts = IndexVec::with_capacity(2 * n_struct_fields_of_ptr_type + 1);
-
-        // // null points to null
-        // assert_eq!(pts.push(AbstractLocation::NULL), AbstractLocation::NULL);
-
-        // // field pts targets should point to themselves
-        // for _ in 0..n_struct_fields_of_ptr_type {
-        //     let this = pts.next_index();
-        //     pts.push(this);
-        // }
-
         let n_struct_fields = input.structs().iter().fold(0usize, |acc, did| {
             acc + input.tcx().adt_def(*did).all_fields().count()
         });
@@ -205,6 +181,11 @@ impl Steensgaard {
         let q_pts = self.pts[q];
         self.pts_targets.union(p, q);
         self.join(p_pts, q_pts);
+    }
+
+    pub(crate) fn may_alias(&self, p: AbstractLocation, q: AbstractLocation) -> bool {
+        if p.is_null() || q.is_null() { return false }
+        self.pts_targets.equiv(self.pts[p], self.pts[q])
     }
 
     // #[cfg(debug_assertions)]
@@ -475,11 +456,11 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
 
     #[inline]
     fn place_location(&self, place: Place<'tcx>) -> Option<PlaceLocation> {
-        println!("place: {:?}", place);
-        println!(
-            "{:?}: {}",
-            place.local, self.body.local_decls[place.local].ty
-        );
+        // println!("place: {:?}", place);
+        // println!(
+        //     "{:?}: {}",
+        //     place.local, self.body.local_decls[place.local].ty
+        // );
 
         let mut place = place.as_ref();
 
@@ -532,7 +513,7 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
             return;
         }
 
-        println!("visiting assignment {:?}: {place_ty} = {:?}", place, rvalue);
+        // println!("visiting assignment {:?}: {place_ty} = {:?}", place, rvalue);
 
         let (is_addr_of, rplace) = match rvalue {
             Rvalue::Use(operand) => {

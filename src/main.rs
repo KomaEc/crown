@@ -195,7 +195,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
 
             if taint {
                 time("taint analysis", || {
-                    orc_taint_analysis::run_steensgaard(&program)
+                    orc_taint_analysis::report_results(&program)
                 });
             }
 

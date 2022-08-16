@@ -16,6 +16,8 @@
 #![feature(min_specialization)]
 #![feature(let_else)]
 
+use std::ops::Range;
+
 use orc_common::OrcInput;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -43,19 +45,35 @@ extern crate rustc_type_ir;
 
 pub(crate) mod steensgaard;
 
-// pub struct AddressTakenTargets {
-//     locals: FxHashMap<DefId, HybridBitSet<Local>>,
-//     fields: FxHashMap<DefId, HybridBitSet<usize>>,
-// }
+pub fn taint_results<'tcx, Input: OrcInput<'tcx>>(input: Input) -> Steensgaard {
+    Steensgaard::new(input)
+}
 
-// impl AddressTakenTargets {
-//     pub fn new<'tcx, Input: OrcInput<'tcx>>(input: Input) -> Self {
-//         for did in input.functions() {
+pub fn report_results<'tcx, Input: OrcInput<'tcx>>(input: Input) {
+    Steensgaard::new(input).print_results()
+}
 
-//         }
-//     }
-// }
-
-pub fn run_steensgaard<'tcx, Input: OrcInput<'tcx>>(input: Input) {
-    let _ = Steensgaard::new(input);
+impl Steensgaard {
+    pub fn maybe_self_referential_structs(&self) -> FxHashMap<DefId, Vec<(usize, usize)>> {
+        let mut may_self_referential: FxHashMap<DefId, Vec<(usize, usize)>> = FxHashMap::default();
+        for (&did, fields) in self.struct_fields.iter() {
+            let Range { start, end } = fields.clone();
+            for f in fields {
+                for g in (f + 1u32)..end {
+                    if self.may_alias(f, g) {
+                        let aliased_pair = (f.index() - start.index(), g.index() - start.index());
+                        match may_self_referential.entry(did) {
+                            std::collections::hash_map::Entry::Occupied(mut o) => {
+                                o.get_mut().push(aliased_pair);
+                            },
+                            std::collections::hash_map::Entry::Vacant(v) => {
+                                v.insert(vec![aliased_pair]);
+                            },
+                        }
+                    }
+                }
+            }
+        }
+        may_self_referential
+    }
 }
