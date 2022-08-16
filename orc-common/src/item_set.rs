@@ -28,7 +28,6 @@ impl InnerRep for Array {
     type ItemIndicesRep = ();
 }
 
-
 impl InnerRep for Singleton {
     // type Item<T> = usize;
     type ItemsRep<I> = usize;
@@ -151,11 +150,13 @@ where
         + PartialEq
         + Eq,
     Rep: InnerRep,
-    Rep::ItemsRep<I>: std::ops::Index<usize, Output = I>
+    Rep::ItemsRep<I>: std::ops::Index<usize, Output = I>,
 {
     #[inline]
     pub fn iter(&self) -> impl Iterator<Item = (&DefId, Range<I>)> {
-        self.belongers.iter().map(|(did, &idx)| (did, self.get_contents_inner(idx)))
+        self.belongers
+            .iter()
+            .map(|(did, &idx)| (did, self.get_contents_inner(idx)))
     }
 
     #[inline]

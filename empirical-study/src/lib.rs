@@ -110,20 +110,24 @@ impl<'tcx, Input: OrcInput<'tcx>> EmpiricalStudy<'tcx> for Input {
             });
         }
 
-
         let percentage = format!(
             "{:.1}%",
             100.0 * maybe_self_referential_structs.len() as f64 / self.structs().len() as f64
         );
         let table = vec![vec![
             self.structs().len().cell().justify(Justify::Right),
-            maybe_self_referential_structs.len().cell().justify(Justify::Right),
+            maybe_self_referential_structs
+                .len()
+                .cell()
+                .justify(Justify::Right),
             percentage.cell().justify(Justify::Right),
         ]]
         .table()
         .title(vec![
             "# Struct Definitions".cell().bold(true),
-            "# Maybe Self Referential Struct Definitions".cell().bold(true),
+            "# Maybe Self Referential Struct Definitions"
+                .cell()
+                .bold(true),
             "Percentage".cell().bold(true),
         ])
         .bold(true);

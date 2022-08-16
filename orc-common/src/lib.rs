@@ -16,9 +16,9 @@ extern crate rustc_middle;
 extern crate rustc_session;
 extern crate rustc_span;
 
+pub mod item_set;
 pub mod macros;
 pub mod test;
-pub mod item_set;
 
 use rustc_hir::def_id::{DefId, LocalDefId};
 use rustc_middle::{

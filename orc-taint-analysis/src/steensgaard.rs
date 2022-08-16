@@ -184,7 +184,9 @@ impl Steensgaard {
     }
 
     pub(crate) fn may_alias(&self, p: AbstractLocation, q: AbstractLocation) -> bool {
-        if p.is_null() || q.is_null() { return false }
+        if p.is_null() || q.is_null() {
+            return false;
+        }
         self.pts_targets.equiv(self.pts[p], self.pts[q])
     }
 

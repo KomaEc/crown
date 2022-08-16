@@ -21,8 +21,6 @@ use std::ops::Range;
 use orc_common::OrcInput;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_index::bit_set::HybridBitSet;
-use rustc_middle::mir::Local;
 use steensgaard::Steensgaard;
 
 extern crate rustc_arena;
@@ -65,10 +63,10 @@ impl Steensgaard {
                         match may_self_referential.entry(did) {
                             std::collections::hash_map::Entry::Occupied(mut o) => {
                                 o.get_mut().push(aliased_pair);
-                            },
+                            }
                             std::collections::hash_map::Entry::Vacant(v) => {
                                 v.insert(vec![aliased_pair]);
-                            },
+                            }
                         }
                     }
                 }
