@@ -6,6 +6,7 @@ members = [
     "usage-analysis",
     "orc-refactor",
     "empirical-study",
+    "ownership-analysis"
 ]
 
 [package]
@@ -19,6 +20,7 @@ rustc_private = true
 [dependencies]
 orc-common = { path = "orc-common" }
 orc-ownership-analysis = { path = "orc-ownership-analysis" }
+ownership-analysis = { path = "ownership-analysis" }
 orc-taint-analysis = { path = "orc-taint-analysis" }
 usage-analysis = { path = "usage-analysis" }
 orc-refactor = { path = "orc-refactor" }
