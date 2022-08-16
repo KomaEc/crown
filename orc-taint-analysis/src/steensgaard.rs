@@ -3,7 +3,7 @@ pub mod constraint;
 mod test;
 
 use orc_common::{
-    two_level_discretization::{Array, ArraySubPart, ItemSet},
+    item_set::{Array, ArraySubPart, ItemSet},
     OrcInput,
 };
 use petgraph::unionfind::UnionFind;

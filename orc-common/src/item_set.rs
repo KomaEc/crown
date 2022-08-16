@@ -10,6 +10,8 @@ use rustc_middle::ty::TyCtxt;
 
 pub trait InnerRep {
     // type Item<T>;
+    type ItemsRep<I> = Vec<I>;
+    type ItemIndicesRep = (Vec<usize>, Vec<usize>);
 }
 
 #[derive(Debug)]
@@ -19,16 +21,18 @@ pub struct ArraySubPart;
 #[derive(Debug)]
 pub struct Singleton;
 
+impl InnerRep for ArraySubPart {}
+
 impl InnerRep for Array {
     // type Item<T> = T;
+    type ItemIndicesRep = ();
 }
 
-impl InnerRep for ArraySubPart {
-    // type Item<T> = T;
-}
 
 impl InnerRep for Singleton {
     // type Item<T> = usize;
+    type ItemsRep<I> = usize;
+    type ItemIndicesRep = ();
 }
 
 /// TODO: specialize for different inner rep
@@ -43,7 +47,7 @@ where
 {
     belongers: FxHashMap<DefId, usize>,
     /// Sets of contents (represented by an interval of index `I`) of each belonger.
-    items: Vec<I>,
+    items: Rep::ItemsRep<I>, //Vec<I>,
     /// Indices of contents of each belonger. Pointers into `content_indices`
     item_indices_start: Vec<usize>,
     item_indices: Vec<usize>,
@@ -62,6 +66,7 @@ where
         + PartialEq
         + Eq,
     Rep: InnerRep,
+    Rep::ItemsRep<I>: From<Vec<I>>,
 {
     #[inline]
     pub fn new<'tcx, ItemHolder, F, G, S, P, It>(
@@ -116,7 +121,7 @@ where
 
         ItemSet {
             belongers,
-            items,
+            items: items.into(),
             item_indices_start,
             item_indices,
             _rep: PhantomData,
@@ -132,7 +137,22 @@ where
     pub fn has_entry(&self, belonger: DefId) -> bool {
         self.belongers.contains_key(&belonger)
     }
+}
 
+impl<I, Rep> ItemSet<I, Rep>
+where
+    I: std::ops::AddAssign<u32>
+        + std::ops::Add<u32, Output = I>
+        + Clone
+        + Copy
+        + std::fmt::Debug
+        + PartialOrd
+        + Ord
+        + PartialEq
+        + Eq,
+    Rep: InnerRep,
+    Rep::ItemsRep<I>: std::ops::Index<usize, Output = I>
+{
     #[inline]
     fn get_contents_inner(&self, inner_idx: usize) -> Range<I> {
         let start = self.items[inner_idx];

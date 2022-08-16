@@ -4,6 +4,7 @@
 #![feature(min_specialization)]
 #![feature(let_else)]
 #![feature(generic_associated_types)]
+#![feature(associated_type_defaults)]
 
 extern crate rustc_error_codes;
 extern crate rustc_errors;
@@ -17,7 +18,7 @@ extern crate rustc_span;
 
 pub mod macros;
 pub mod test;
-pub mod two_level_discretization;
+pub mod item_set;
 
 use rustc_hir::def_id::{DefId, LocalDefId};
 use rustc_middle::{
