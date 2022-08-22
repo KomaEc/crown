@@ -165,7 +165,7 @@ fn handle_split_assignment<'tcx>(
     let mut stmts: Vec<(Place, Place, Span, Location)> = Vec::new();
     while let Some(stmt) = cx.body.stmt_at(loc).left() {
         let StatementKind::Assign(box (l_place, rvalue)) = &stmt.kind else { break };
-        let Rvalue::Use(Operand::Copy(r_place) | Operand::Move(r_place)) = rvalue else { break };
+        let (Rvalue::Use(Operand::Copy(r_place) | Operand::Move(r_place)) | Rvalue::CopyForDeref(r_place)) = rvalue else { break };
         if stmts.len() != 0
             && !(stmts.last().unwrap().0.as_local() == Some(r_place.local)
                 && stmt.source_info.span.contains(stmts.last().unwrap().2))
@@ -240,11 +240,11 @@ pub fn rewrite_rvalue<'tcx>(
 ) -> String {
     match rvalue {
         // rvalue is just a place
-        Rvalue::Use(Operand::Copy(r_place) | Operand::Move(r_place)) => {
+        Rvalue::Use(Operand::Copy(r_place) | Operand::Move(r_place))
+        | Rvalue::CopyForDeref(r_place) => {
             let base_source = strip_place(*r_place, source);
             rewrite_place_expr(cx, loc, r_place.clone(), Some(l_place), &base_source)
         }
-        // extremely cursed matcher - rvalue is null pointer literal
         Rvalue::Use(Operand::Constant(box Constant { literal, .. }))
             if literal.ty().is_unsafe_ptr()
                 && literal.try_to_scalar_int().map(ScalarInt::is_null) == Some(true) =>
@@ -585,8 +585,10 @@ fn rewrite_offset(
                     // writing into the slice
                     todo!()
                 }
-            } else if let Rvalue::Use(operand) = rvalue {
-                if operand.place() == Some(*destination) {
+            } else if let Rvalue::Use(Operand::Move(r_place) | Operand::Copy(r_place))
+            | Rvalue::CopyForDeref(r_place) = rvalue
+            {
+                if r_place == destination {
                     // reading from the slice into a local
                     todo!()
                 }

@@ -5,8 +5,8 @@ use rustc_hir::{def_id::LocalDefId, FnRetTy, ItemKind};
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
-        Body, Field, Local, Location, Place, PlaceRef, ProjectionElem, Rvalue, StatementKind,
-        Terminator, TerminatorKind, VarDebugInfoContents, START_BLOCK,
+        Body, Field, Local, Location, Operand, Place, PlaceRef, ProjectionElem, Rvalue,
+        StatementKind, Terminator, TerminatorKind, VarDebugInfoContents, START_BLOCK,
     },
     ty::TyCtxt,
 };
@@ -583,12 +583,13 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
         match &statement.kind {
             StatementKind::Assign(box (
                 l_place,
-                Rvalue::Use(operand) | Rvalue::Cast(_, operand, _),
-            )) if operand.place().is_some() => {
-                let r_place = operand.place().unwrap();
+                Rvalue::Use(Operand::Move(r_place) | Operand::Copy(r_place))
+                | Rvalue::Cast(_, Operand::Move(r_place) | Operand::Copy(r_place), _)
+                | Rvalue::CopyForDeref(r_place),
+            )) => {
                 let _guard = debug_span!("known assign", ?l_place, ?r_place).entered();
 
-                self.check_places(state, Some(*l_place), Some(r_place), loc);
+                self.check_places(state, Some(*l_place), Some(*r_place), loc);
                 if !l_place.ty(self.0.body, self.0.tcx).ty.is_unsafe_ptr() {
                     return;
                 }
