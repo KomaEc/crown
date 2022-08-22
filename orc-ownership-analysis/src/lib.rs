@@ -63,17 +63,17 @@ impl<'tcx> OrcInput<'tcx> for CrateInfo<'tcx> {
     fn structs(&self) -> &[DefId] {
         self.structs()
     }
-
-    // fn into_trivial(self) -> (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>) {
-    //     (
-    //         self.tcx,
-    //         self.call_graph.functions.raw,
-    //         self.struct_topology.post_order,
-    //     )
-    // }
 }
 
 impl<'tcx> CrateInfo<'tcx> {
+    pub fn from_input<Input: OrcInput<'tcx>>(input: &Input) -> Self {
+        CrateInfo {
+            tcx: input.tcx(),
+            call_graph: CallGraph::new(input.tcx(), input.functions().to_vec()),
+            struct_topology: StructTopology::new(input.tcx(), input.structs().to_vec()),
+        }
+    }
+
     pub fn new(tcx: TyCtxt<'tcx>, functions: Vec<DefId>, structs: Vec<DefId>) -> Self {
         CrateInfo {
             tcx,
@@ -82,10 +82,10 @@ impl<'tcx> CrateInfo<'tcx> {
         }
     }
 
-    #[inline]
-    fn call_graph(&self) -> &CallGraph {
-        &self.call_graph
-    }
+    // #[inline]
+    // fn call_graph(&self) -> &CallGraph {
+    //     &self.call_graph
+    // }
 
     #[inline]
     fn struct_topology(&self) -> &StructTopology {

@@ -69,7 +69,10 @@ enum Command {
         #[clap(long)]
         addr: bool,
     },
+    /// Perform empirical studies and show results.
     EmpiricalStudy,
+    /// Pretty print Mir despite compilation error
+    ShowMir,
 }
 
 fn main() {
@@ -158,15 +161,28 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
         .filter_map(DefId::as_local)
         .collect::<Vec<_>>();
 
-    let program = time("construct call graph and struct topology", || {
-        CrateInfo::new(tcx, functions, structs)
-    });
+    let input = (tcx, functions, structs);
 
     match *cmd {
+        Command::ShowMir => {
+            input.1.iter().for_each(|&fn_did| {
+                let body = input.0.optimized_mir(fn_did);
+                rustc_middle::mir::pretty::write_mir_fn(
+                    input.0,
+                    body,
+                    &mut |_, _| Ok(()),
+                    &mut std::io::stdout(),
+                )
+                .unwrap();
+            });
+        }
         Command::EmpiricalStudy => {
-            time("empirical study", || program.perform_empirical_study());
+            time("empirical study", || input.perform_empirical_study());
         }
         Command::Playground { mir, addr } => {
+            let program = time("construct call graph and struct topology", || {
+                CrateInfo::from_input(&input)
+            });
             if mir {
                 program.print_mir();
             }
@@ -195,7 +211,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
 
             if taint {
                 time("taint analysis", || {
-                    orc_taint_analysis::report_results(&program)
+                    orc_taint_analysis::report_results(&input)
                 });
             }
 
