@@ -2,7 +2,6 @@ mod infer;
 
 use std::{collections::VecDeque, fmt::Display, ops::Range};
 
-use crate::utils::range_ext::IsRustcIndexDefinedCV;
 use once_cell::unsync::OnceCell;
 use rustc_data_structures::graph::{iterate::DepthFirstSearch, scc::Sccs, WithNumNodes};
 use rustc_hash::FxHashMap;
@@ -18,16 +17,15 @@ use crate::{
     call_graph::{CallGraph, Func},
     def_use::OwnershipAnalysisDefUse,
     ssa::rename::{
-        handler::{SSADefSites, SSANameSourceMap},
+        handler::{LogSSAName, SSADefSites, SSANameSourceMap},
         SSAIdx, SSANameHandler,
     },
     ty_ext::TyExt,
+    utils::range_ext::{IsRustcIndexDefinedCV, RangeExt},
     Boundary, FuncSig, Inner, Surface, ULEConstraintGraph, UnitVar,
 };
 
 use self::infer::PtrPlaceDefResult;
-
-use crate::utils::range_ext::RangeExt;
 
 impl orc_common::AnalysisResults for InterSummary {
     fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
@@ -151,6 +149,23 @@ pub struct InterSummary {
 }
 
 impl InterSummary {
+    pub fn collect<'tcx>(
+        tcx: TyCtxt<'tcx>,
+        structs: &[LocalDefId],
+        funcs: &[LocalDefId],
+    ) -> Option<Self> {
+        let call_graph = CallGraph::new(tcx, funcs.iter().copied().map(LocalDefId::to_def_id));
+        let mut ret = Self::new(tcx, structs, call_graph, LogSSAName);
+        match ret.resolve() {
+            Ok(()) => Some(ret),
+            Err(reason) => {
+                tracing::error!("Cannot solve ownership constraints!");
+                explain_error(reason);
+                None
+            }
+        }
+    }
+
     pub fn new<'tcx, Handler: SSANameHandler<Output = ()>>(
         tcx: TyCtxt<'tcx>,
         adt_defs: &[LocalDefId],

@@ -27,7 +27,7 @@ use tracing_subscriber::EnvFilter;
 use empirical_study::EmpiricalStudy;
 use orc_ownership_analysis::CrateInfo;
 use orc_refactor::rewriter::RewriteMode;
-use usage_analysis::{fatness, null};
+use usage_analysis::{fatness, mutability, null};
 
 #[derive(Parser)]
 struct Cli {
@@ -90,9 +90,7 @@ fn main() -> Result<()> {
                 .borrow_mut()
                 .unwrap()
                 .peek_mut()
-                .enter(|tcx| {
-                    run(&args.cmd, tcx)
-                })
+                .enter(|tcx| run(&args.cmd, tcx))
         })
     })
 }
@@ -220,12 +218,17 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             all: _,
         } => {
             if null {
-                let results = null::CrateResults::collect(tcx, &local_fns, &local_structs);
+                let results = time("null analysis", || {
+                    null::CrateResults::collect(tcx, &local_fns, &local_structs)
+                });
                 results.show(tcx);
             }
 
             if ownership {
-                todo!("ownership analysis");
+                let Some(ownership) = time("ownership analysis", || {
+                    ownership_analysis::ownership_analysis::InterSummary::collect(tcx, &local_structs, &local_fns)
+                }) else { bail!("ownership analysis failed") };
+                ownership.show_result();
             }
 
             if taint {
@@ -235,7 +238,13 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             }
 
             if mutability {
-                todo!("ownership analysis");
+                let Some(ownership) = time("ownership analysis", || {
+                    ownership_analysis::ownership_analysis::InterSummary::collect(tcx, &local_structs, &local_fns)
+                }) else { bail!("ownership analysis failed") };
+                let mutability = time("mutability analysis", || {
+                    mutability::CrateResults::collect(tcx, &local_fns, &local_structs, &ownership)
+                });
+                mutability.show(tcx);
             }
 
             if array {
@@ -243,8 +252,31 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 results.show(tcx);
             }
         }
-        Command::Rewrite { rewrite_mode: _ } => {
-            todo!("ownership analysis");
+        Command::Rewrite { rewrite_mode } => {
+            let Some(ownership) = time("ownership analysis", || {
+                ownership_analysis::ownership_analysis::InterSummary::collect(tcx, &local_structs, &local_fns)
+            }) else { bail!("ownership analysis failed") };
+            let mutability = time("mutability analysis", || {
+                mutability::CrateResults::collect(tcx, &local_fns, &local_structs, &ownership)
+            });
+            let fatness = time("fatness analysis", || {
+                fatness::CrateResults::collect(tcx, &local_fns, &local_structs)
+            });
+            let null = time("null analysis", || {
+                null::CrateResults::collect(tcx, &local_fns, &local_structs)
+            });
+            time("rewrite", || {
+                orc_refactor::rewrite::rewrite(
+                    tcx,
+                    &ownership,
+                    &mutability,
+                    &fatness,
+                    &null,
+                    &local_fns,
+                    &local_structs,
+                    rewrite_mode,
+                )
+            })
         }
     }
     Ok(())
