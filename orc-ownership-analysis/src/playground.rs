@@ -2,8 +2,8 @@
 
 use rustc_hash::FxHashSet;
 use rustc_middle::mir::{
-    visit::{PlaceContext, Visitor},
-    Body, Location, Place, Rvalue,
+    visit::{MutatingUseContext, PlaceContext, Visitor},
+    Body, Local, LocalInfo, LocalKind, Location, Place, Rvalue,
 };
 
 use crate::{
@@ -142,16 +142,54 @@ impl<'tcx> CrateInfo<'tcx> {
         }
     }
 
-    pub fn print_mir(&self) {
-        self.functions().iter().for_each(|&fn_did| {
-            let body = self.tcx.optimized_mir(fn_did);
-            rustc_middle::mir::pretty::write_mir_fn(
-                self.tcx,
-                body,
-                &mut |_, _| Ok(()),
-                &mut std::io::stdout(),
-            )
-            .unwrap();
-        });
+    pub fn verify_temp_local_usage(&self) {
+        use rustc_index::vec::IndexVec;
+        for &did in self.functions() {
+            let body = self.tcx.optimized_mir(did);
+            let mut cnt = IndexVec::from_elem(0, &body.local_decls);
+            // for cnt in &mut cnt.raw[1..1+body.arg_count] {
+            //     *cnt += 1;
+            // }
+            struct Vis<'me>(&'me mut IndexVec<Local, usize>);
+            impl<'me, 'tcx> Visitor<'tcx> for Vis<'me> {
+                fn visit_local(
+                    &mut self,
+                    local: Local,
+                    context: PlaceContext,
+                    _location: Location,
+                ) {
+                    if matches!(
+                        context,
+                        PlaceContext::MutatingUse(
+                            MutatingUseContext::Call | MutatingUseContext::Store
+                        )
+                    ) {
+                        self.0[local] += 1;
+                    }
+                }
+            }
+            Vis(&mut cnt).visit_body(body);
+
+            for local in body.local_decls.indices() {
+                match body.local_kind(local) {
+                    LocalKind::Var => {
+                        // assert!(cnt[local] >= 1, "{}:{:?}", self.tcx.def_path_str(body.source.def_id()), local)
+                    }
+                    LocalKind::Temp => {
+                        assert!(
+                            !matches!(
+                                body.local_decls[local].local_info,
+                                Some(box LocalInfo::DerefTemp)
+                            ) || cnt[local] == 1,
+                            "{:?}:{:?}",
+                            body.source.def_id(),
+                            local
+                        )
+                    }
+                    LocalKind::Arg => {}
+                    LocalKind::ReturnPointer => {}
+                }
+            }
+        }
     }
 }

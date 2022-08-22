@@ -76,6 +76,13 @@ impl<T: Idx> NameState<T> {
         ))
     }
 
+    /// Get the newest version for a variable. If `None` is returned,
+    /// this variable is uninitialised.
+    #[inline]
+    pub fn try_get_name(&self, var: T) -> Option<SSAIdx> {
+        self.stack[var].last().copied()
+    }
+
     #[inline]
     /// Remove fresh names generated in current dominance tree paths
     /// the parameter `n_blocks` is the number of basic block nodes along

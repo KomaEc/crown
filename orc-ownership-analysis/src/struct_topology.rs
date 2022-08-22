@@ -18,7 +18,6 @@ pub(crate) struct StructTopology {
     pub(crate) post_order: Vec<DefId>,
     /// struct -> field -> aggregate offset start of this field
     /// an additional entry last() represents the sum
-    /// TODO: use ItemSet
     aggregate_offset: FxHashMap<DefId, Vec<AggregateOffset>>,
 }
 

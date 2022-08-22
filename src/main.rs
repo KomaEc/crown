@@ -13,6 +13,7 @@ extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 extern crate rustc_target;
 
+use anyhow::{bail, Result};
 use clap::Parser;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
@@ -65,17 +66,18 @@ enum Command {
     },
     Playground {
         #[clap(long)]
-        mir: bool,
-        #[clap(long)]
         addr: bool,
     },
     /// Perform empirical studies and show results.
     EmpiricalStudy,
     /// Pretty print Mir despite compilation error
-    ShowMir,
+    ShowMir {
+        #[clap(long, short)]
+        function: Option<String>,
+    },
 }
 
-fn main() {
+fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .without_time()
         .with_env_filter(EnvFilter::from_default_env())
@@ -89,10 +91,10 @@ fn main() {
                 .unwrap()
                 .peek_mut()
                 .enter(|tcx| {
-                    run(&args.cmd, tcx);
+                    run(&args.cmd, tcx)
                 })
-        });
-    });
+        })
+    })
 }
 
 fn compiler_config(input_path: PathBuf) -> Config {
@@ -136,7 +138,7 @@ fn time<T>(label: &str, f: impl FnOnce() -> T) -> T {
     ret
 }
 
-fn run(cmd: &Command, tcx: TyCtxt<'_>) {
+fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
     let mut functions = Vec::new();
     let mut structs = Vec::new();
 
@@ -164,9 +166,17 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
     let input = (tcx, functions, structs);
 
     match *cmd {
-        Command::ShowMir => {
-            input.1.iter().for_each(|&fn_did| {
-                let body = input.0.optimized_mir(fn_did);
+        Command::ShowMir { ref function } => {
+            if let Some(def_path_str) = function {
+                let Some(&did) = input
+                    .1
+                    .iter()
+                    .find(|did| input.0.def_path_str(**did) == *def_path_str)
+                    else {
+                        bail!("no such function!")
+                    };
+
+                let body = input.0.optimized_mir(did);
                 rustc_middle::mir::pretty::write_mir_fn(
                     input.0,
                     body,
@@ -174,22 +184,31 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
                     &mut std::io::stdout(),
                 )
                 .unwrap();
-            });
+            } else {
+                input.1.iter().for_each(|&fn_did| {
+                    let body = input.0.optimized_mir(fn_did);
+                    rustc_middle::mir::pretty::write_mir_fn(
+                        input.0,
+                        body,
+                        &mut |_, _| Ok(()),
+                        &mut std::io::stdout(),
+                    )
+                    .unwrap();
+                });
+            }
         }
         Command::EmpiricalStudy => {
             time("empirical study", || input.perform_empirical_study());
         }
-        Command::Playground { mir, addr } => {
+        Command::Playground { addr } => {
             let program = time("construct call graph and struct topology", || {
                 CrateInfo::from_input(&input)
             });
-            if mir {
-                program.print_mir();
-            }
             if addr {
                 program.compute_percentage_of_non_address_taking_functions();
             }
             program.verify_shape_of_place();
+            program.verify_temp_local_usage(); //.expect("verification failed");
             program.assert_assign_simple();
         }
         Command::Analyse {
@@ -228,4 +247,5 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) {
             todo!("ownership analysis");
         }
     }
+    Ok(())
 }

@@ -25,8 +25,10 @@ pub fn semi_pruned_ssa<'tcx>(
         body.basic_blocks(),
     ));
     let mut already_added = BitSet::new_empty(body.basic_blocks().len());
+    let mut work_list = VecDeque::with_capacity(body.basic_blocks.len());
     for (a, bbs) in def_sites.iter_enumerated() {
-        let mut work_list = bbs.iter().collect::<VecDeque<_>>();
+        // let mut work_list = bbs.iter().collect::<VecDeque<_>>();
+        work_list.extend(bbs.iter());
         while let Some(bb) = work_list.pop_front() {
             for &bb_f in &dominance_frontier[bb] {
                 if !already_added.contains(bb_f) {
@@ -38,6 +40,7 @@ pub fn semi_pruned_ssa<'tcx>(
                 }
             }
         }
+        work_list.clear();
         already_added.clear();
     }
     join_points
