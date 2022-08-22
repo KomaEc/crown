@@ -156,7 +156,7 @@ impl RustcLivenessDefUse {
                 unreachable!("A projection could be a def or a use and must be handled separately")
             }
 
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }

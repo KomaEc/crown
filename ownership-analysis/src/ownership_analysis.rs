@@ -2,14 +2,14 @@ mod infer;
 
 use std::{collections::VecDeque, fmt::Display, ops::Range};
 
-use once_cell::unsync::OnceCell;
 use crate::utils::range_ext::IsRustcIndexDefinedCV;
+use once_cell::unsync::OnceCell;
 use rustc_data_structures::graph::{iterate::DepthFirstSearch, scc::Sccs, WithNumNodes};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{Local, Field, Location},
+    mir::{Field, Local, Location},
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
@@ -28,7 +28,6 @@ use crate::{
 use self::infer::PtrPlaceDefResult;
 
 use crate::utils::range_ext::RangeExt;
-
 
 impl orc_common::AnalysisResults for InterSummary {
     fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {

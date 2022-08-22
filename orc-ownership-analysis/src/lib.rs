@@ -2,7 +2,7 @@
 #![feature(box_patterns)]
 #![feature(min_specialization)]
 #![feature(split_array)]
-#![feature(generic_associated_types)]
+// #![feature(generic_associated_types)]
 #![feature(associated_type_defaults)]
 #![feature(step_trait)]
 #![feature(trusted_step)]

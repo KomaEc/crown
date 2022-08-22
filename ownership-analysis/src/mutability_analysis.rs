@@ -2,8 +2,8 @@ mod infer;
 
 use std::collections::VecDeque;
 
-use once_cell::unsync::OnceCell;
 use crate::utils::range_ext::IsRustcIndexDefinedCV;
+use once_cell::unsync::OnceCell;
 use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;

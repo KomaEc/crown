@@ -120,11 +120,7 @@ struct CallGraphNodeVis<'me, 'tcx> {
 
 impl<'me, 'tcx> Visitor<'tcx> for CallGraphNodeVis<'me, 'tcx> {
     fn visit_terminator(&mut self, terminator: &Terminator, location: Location) {
-        if let TerminatorKind::Call {
-            func,
-            ..
-        } = &terminator.kind
-        {
+        if let TerminatorKind::Call { func, .. } = &terminator.kind {
             let ty = func
                 .constant()
                 .expect("closures or function pointers are not supported!")

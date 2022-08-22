@@ -108,10 +108,10 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
             s if s.as_str() == "strcmp" => self.model_strcmp(args, destination, location),
             s if s.as_str() == "strstr" => self.model_strstr(args, destination, location),
             s if s.as_str() == "strlen" => self.model_strlen(args, destination, location),
-            s => { 
+            s => {
                 tracing::warn!("call to {s} is not handled");
-                self.default_model_lib_call(args, destination, location) 
-            },
+                self.default_model_lib_call(args, destination, location)
+            }
             // s => panic!("extern call to {s} is not supported"),
         }
     }

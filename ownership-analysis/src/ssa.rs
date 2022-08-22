@@ -26,7 +26,7 @@ pub enum RichLocation {
     Phi(BasicBlock),
 }
 
-/* 
+/*
 rustc_index::newtype_index! {
     pub struct SSAIdx {
         DEBUG_FORMAT = "{}"

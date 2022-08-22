@@ -8,9 +8,9 @@ use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
 
-pub trait InnerRep {
+pub trait InnerRep<I> {
     // type Item<T>;
-    type ItemsRep<I> = Vec<I>;
+    type ItemsRep = Vec<I>;
     type ItemIndicesRep = DefaultIndicesRep; // (Vec<usize>, Vec<usize>);
 }
 
@@ -27,16 +27,16 @@ pub struct ArraySubPart;
 #[derive(Debug)]
 pub struct Singleton;
 
-impl InnerRep for ArraySubPart {}
+impl<I> InnerRep<I> for ArraySubPart {}
 
-impl InnerRep for Array {
+impl<I> InnerRep<I> for Array {
     // type Item<T> = T;
     type ItemIndicesRep = ();
 }
 
-impl InnerRep for Singleton {
+impl<I> InnerRep<I> for Singleton {
     // type Item<T> = usize;
-    type ItemsRep<I> = usize;
+    type ItemsRep = usize;
     type ItemIndicesRep = ();
 }
 
@@ -48,11 +48,11 @@ impl InnerRep for Singleton {
 #[derive(Debug)]
 pub struct ItemSet<I, Rep>
 where
-    Rep: InnerRep,
+    Rep: InnerRep<I>,
 {
     belongers: FxHashMap<DefId, usize>,
     /// Sets of contents (represented by an interval of index `I`) of each belonger.
-    items: Rep::ItemsRep<I>, //Vec<I>,
+    items: Rep::ItemsRep, //Vec<I>,
     /// Indices of contents of each belonger. Pointers into `content_indices`
     item_indices_start: Vec<usize>,
     item_indices: Vec<usize>,
@@ -70,8 +70,8 @@ where
         + Ord
         + PartialEq
         + Eq,
-    Rep: InnerRep,
-    Rep::ItemsRep<I>: From<Vec<I>>,
+    Rep: InnerRep<I>,
+    Rep::ItemsRep: From<Vec<I>>,
 {
     #[inline]
     pub fn new<'tcx, ItemHolder, F, G, S, P, It>(
@@ -155,8 +155,8 @@ where
         + Ord
         + PartialEq
         + Eq,
-    Rep: InnerRep,
-    Rep::ItemsRep<I>: std::ops::Index<usize, Output = I>,
+    Rep: InnerRep<I>,
+    Rep::ItemsRep: std::ops::Index<usize, Output = I>,
 {
     #[inline]
     pub fn iter(&self) -> impl Iterator<Item = (&DefId, Range<I>)> {

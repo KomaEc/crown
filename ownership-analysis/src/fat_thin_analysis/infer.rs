@@ -3,6 +3,7 @@ pub mod libcall_model;
 
 use std::ops::Range;
 
+use crate::utils::range_ext::RangeExt;
 use crate::{
     boundary_model::BoundaryModel,
     call_graph::{CallGraph, CallSite, Func},
@@ -22,7 +23,6 @@ use crate::{
     ty_ext::TyExt,
     CrateAnalysisCtxt, CrateAnalysisCtxtIntraView,
 };
-use crate::utils::range_ext::RangeExt;
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
@@ -505,19 +505,34 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                             self.ctxt.tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::ForeignItem(_))
                         ) {
-                            self.model_libc_call(callee_did, args, target.map(|tgt| (destination, tgt)), location);
+                            self.model_libc_call(
+                                callee_did,
+                                args,
+                                target.map(|tgt| (destination, tgt)),
+                                location,
+                            );
                             return;
                         } else if matches!(
                             self.ctxt.tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::Item(_))
                         ) {
-                            self.model_boundary(callee_did, args, target.map(|tgt| (destination, tgt)), location);
+                            self.model_boundary(
+                                callee_did,
+                                args,
+                                target.map(|tgt| (destination, tgt)),
+                                location,
+                            );
                             return;
                         }
                     }
                     // library functions
                     None => {
-                        self.model_library_call(callee_did, args, target.map(|tgt| (destination, tgt)), location);
+                        self.model_library_call(
+                            callee_did,
+                            args,
+                            target.map(|tgt| (destination, tgt)),
+                            location,
+                        );
                         return;
                     }
                 }

@@ -26,12 +26,7 @@ pub fn required_mutability(tcx: TyCtxt<'_>, did: LocalDefId) -> BitSet<Local> {
     }
 
     impl<'me, 'tcx> Visitor<'tcx> for RequiredMutabilityVis<'me, 'tcx> {
-        fn visit_local(
-            &mut self,
-            local: Local,
-            place_context: PlaceContext,
-            _location: Location,
-        ) {
+        fn visit_local(&mut self, local: Local, place_context: PlaceContext, _location: Location) {
             if self.body.local_decls[local].ty.is_ptr_but_not_fn_ptr() {
                 // we only account for mutation of pointer through indirection
                 if let PlaceContext::MutatingUse(MutatingUseContext::Projection) = place_context {

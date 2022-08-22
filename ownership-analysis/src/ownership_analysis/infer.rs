@@ -508,20 +508,35 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
                             self.ctxt.tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::ForeignItem(_))
                         ) {
-                            self.model_libc_call(callee_did, args, target.map(|tgt| (destination, tgt)), location);
+                            self.model_libc_call(
+                                callee_did,
+                                args,
+                                target.map(|tgt| (destination, tgt)),
+                                location,
+                            );
                             return;
                         } else if matches!(
                             self.ctxt.tcx.hir().find_by_def_id(did),
                             Some(rustc_hir::Node::Item(_))
                         ) {
-                            self.model_boundary(callee_did, args, target.map(|tgt| (destination, tgt)), location);
+                            self.model_boundary(
+                                callee_did,
+                                args,
+                                target.map(|tgt| (destination, tgt)),
+                                location,
+                            );
                             return;
                         }
 
                         unreachable!()
                     }
                     None => {
-                        self.model_library_call(callee_did, args, target.map(|tgt| (destination, tgt)), location);
+                        self.model_library_call(
+                            callee_did,
+                            args,
+                            target.map(|tgt| (destination, tgt)),
+                            location,
+                        );
                         return;
                     }
                 }

@@ -50,9 +50,7 @@ extern crate rustc_target;
 extern crate rustc_type_ir;
 
 use call_graph::{CallGraph, Func};
-use utils::graph_ext::implementation::forward_star::Graph;
 use lattice::JoinLattice;
-use utils::range_ext::{IsRustcIndexDefinedCV, RangeExt};
 use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::LocalDefId;
@@ -69,6 +67,8 @@ use std::{
     ops::{Index, IndexMut, Range},
 };
 use ty_ext::TyExt;
+use utils::graph_ext::implementation::forward_star::Graph;
+use utils::range_ext::{IsRustcIndexDefinedCV, RangeExt};
 
 pub struct CrateAnalysisCtxt<CV, Domain>
 where
