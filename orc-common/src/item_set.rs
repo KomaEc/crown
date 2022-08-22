@@ -8,10 +8,17 @@ use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
 
+
 pub trait InnerRep {
     // type Item<T>;
     type ItemsRep<I> = Vec<I>;
-    type ItemIndicesRep = (Vec<usize>, Vec<usize>);
+    type ItemIndicesRep = DefaultIndicesRep;// (Vec<usize>, Vec<usize>);
+}
+
+#[allow(unused)]
+pub struct DefaultIndicesRep {
+    indices_start: Vec<usize>,
+    indices: Vec<usize>,
 }
 
 #[derive(Debug)]
