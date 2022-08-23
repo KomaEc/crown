@@ -2,6 +2,8 @@
 #![feature(box_patterns)]
 #![feature(let_else)]
 
+extern crate rustc_error_codes;
+extern crate rustc_errors;
 extern crate rustc_hash;
 extern crate rustc_hir;
 extern crate rustc_index;
