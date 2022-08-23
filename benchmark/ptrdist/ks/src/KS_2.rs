@@ -774,7 +774,7 @@ unsafe fn main_0(mut argc: libc::c_int, mut argv: *mut *mut libc::c_char) {
     /* PLUS_STATS */
     exit(0 as libc::c_int);
 }
-#[main]
+
 pub fn main() {
     let mut args: Vec<*mut libc::c_char> = Vec::new();
     for arg in ::std::env::args() {
