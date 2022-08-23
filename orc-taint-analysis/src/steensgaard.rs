@@ -42,12 +42,6 @@ impl std::ops::AddAssign<u32> for AbstractLocation {
     }
 }
 
-impl Default for AbstractLocation {
-    fn default() -> Self {
-        Self::NULL
-    }
-}
-
 fn peel_off_array(mut ty: Ty) -> Ty {
     while let TyKind::Array(inner_ty, _) = ty.kind() {
         ty = *inner_ty

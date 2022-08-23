@@ -476,22 +476,6 @@ macro_rules! newtype_index {
 #[cfg(debug_assertions)]
 pub use newtype_index;
 
-#[cfg(debug_assertions)]
-mod static_tests {
-    use super::*;
-    crate::newtype_index! {
-        struct Compiled {
-            DEBUG_FORMAT = "{}"
-        }
-    }
-    impl Default for Compiled {
-        fn default() -> Self {
-            Compiled::from_u32(0)
-        }
-    }
-
-    petgraph_index!(Compiled);
-}
 
 #[macro_export]
 macro_rules! orc_index {
@@ -506,6 +490,11 @@ macro_rules! orc_index {
         rustc_index::newtype_index! {
             pub struct $name {
                 DEBUG_FORMAT = "{}"
+            }
+        }
+        impl Default for $name {
+            fn default() -> Self {
+                Self::from_u32(0)
             }
         }
         $crate::petgraph_index! {$name}
