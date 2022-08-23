@@ -6,6 +6,7 @@ pub mod def_sites;
 pub mod join_points;
 pub mod place_ext;
 pub mod state;
+pub mod ty_ext;
 // pub mod sssa;
 
 pub struct OwnershipAnalysisCtxt<'octxt, 'tcx> {

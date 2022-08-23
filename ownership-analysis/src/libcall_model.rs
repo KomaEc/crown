@@ -111,8 +111,7 @@ pub trait LibCallModel<'tcx>: Visitor<'tcx> {
             s => {
                 tracing::warn!("call to {s} is not handled");
                 self.default_model_lib_call(args, destination, location)
-            }
-            // s => panic!("extern call to {s} is not supported"),
+            } // s => panic!("extern call to {s} is not supported"),
         }
     }
 

@@ -1,8 +1,10 @@
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::mir::{
     visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-    BasicBlock, Body, Local, LocalInfo, Location, Place,
+    BasicBlock, Body, Local, LocalKind, Location,
 };
+
+use crate::analysis::ty_ext::TyExt;
 
 use super::OwnershipAnalysisCtxt;
 
@@ -20,16 +22,18 @@ impl<'octxt, 'tcx> OwnershipAnalysisCtxt<'octxt, 'tcx> {
 
         struct Vis<'me, 'octxt, 'tcx>(
             &'me mut DefSites,
+            &'me IndexVec<Local, usize>,
             &'me Body<'tcx>,
             &'me OwnershipAnalysisCtxt<'octxt, 'tcx>,
+            BasicBlock,
         );
         impl<'me, 'octxt, 'tcx> Visitor<'tcx> for Vis<'me, 'octxt, 'tcx> {
-            fn visit_place(
-                &mut self,
-                place: &Place<'tcx>,
-                context: PlaceContext,
-                location: Location,
-            ) {
+            fn visit_basic_block_data(&mut self, block: BasicBlock, data: &rustc_middle::mir::BasicBlockData<'tcx>) {
+                self.4 = block;
+                self.super_basic_block_data(block, data)
+            }
+
+            fn visit_local(&mut self, local: Local, context: PlaceContext, _: Location) {
                 if !matches!(
                     context,
                     PlaceContext::NonMutatingUse(
@@ -41,24 +45,21 @@ impl<'octxt, 'tcx> OwnershipAnalysisCtxt<'octxt, 'tcx> {
                     return;
                 }
 
-                if matches!(
-                    self.1.local_decls[place.local].local_info,
-                    Some(box LocalInfo::DerefTemp)
-                ) && matches!(
-                    context,
-                    PlaceContext::MutatingUse(MutatingUseContext::Store)
-                ) {
-                    // let Some(_) = place.as_local() else { unreachable!("deref temp is mutated through projections") };
-                    assert!(
-                        place.as_local().is_some(),
-                        "deref temp is mutated through projections"
-                    );
-                    return;
+                // for local variables (user defined or compiler generated temporaries),
+                // we track only for those that are non-local, which means they are defined
+                // at least twice
+                if self.2.local_decls[local].ty.contains_ptr(self.3)
+                    && (matches!(
+                        self.2.local_kind(local),
+                        LocalKind::Arg | LocalKind::ReturnPointer
+                    ) || self.1[local] > 1)
+                {
+                    self.0[local].insert(self.4);
                 }
             }
         }
 
-        Vis(&mut def_sites, body, self).visit_body(body);
+        Vis(&mut def_sites, &def_counts, body, self, BasicBlock::from_u32(0)).visit_body(body);
 
         def_sites
     }
@@ -67,17 +68,10 @@ impl<'octxt, 'tcx> OwnershipAnalysisCtxt<'octxt, 'tcx> {
 struct DefCounts<'me>(&'me mut IndexVec<Local, usize>);
 
 impl<'me, 'tcx> Visitor<'tcx> for DefCounts<'me> {
-    fn visit_local(
-        &mut self,
-        local: Local,
-        context: PlaceContext,
-        _location: Location,
-    ) {
+    fn visit_local(&mut self, local: Local, context: PlaceContext, _location: Location) {
         if matches!(
             context,
-            PlaceContext::MutatingUse(
-                MutatingUseContext::Call | MutatingUseContext::Store
-            )
+            PlaceContext::MutatingUse(MutatingUseContext::Call | MutatingUseContext::Store)
         ) {
             self.0[local] += 1;
         }
