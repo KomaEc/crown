@@ -15,7 +15,7 @@ use super::{
 };
 
 /// `def_sites` contains only locals with long live-range
-pub fn semi_pruned_ssa<'tcx>(
+pub fn semi_pruned_join_points<'tcx>(
     body: &Body<'tcx>,
     dominance_frontier: &DominanceFrontier,
     def_sites: &DefSites,

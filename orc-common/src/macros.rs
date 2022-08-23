@@ -476,7 +476,6 @@ macro_rules! newtype_index {
 #[cfg(debug_assertions)]
 pub use newtype_index;
 
-
 #[macro_export]
 macro_rules! orc_index {
     ($name:ident) => {

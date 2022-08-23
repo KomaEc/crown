@@ -23,4 +23,5 @@ rand = "0.8"
 petgraph = "0.6"
 static_assertions = "1.1"
 thiserror = "1.0"
+cadical = "0.1"
 orc-common = { path = "../orc-common" }
