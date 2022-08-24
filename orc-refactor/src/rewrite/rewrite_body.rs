@@ -18,7 +18,7 @@ use usage_analysis::{fatness, mutability, null};
 
 pub struct BodyRewriteCtxt<'tcx, 'a, 'b> {
     pub tcx: TyCtxt<'tcx>,
-    pub rewriter: &'a mut crate::rewriter::Rewriter,
+    pub rewriter: &'a mut orc_common::rewriter::Rewriter,
     pub ownership: &'a dyn AnalysisResults,
     pub mutability: &'a mutability::CrateResults<'tcx, 'b>,
     pub fatness: &'a fatness::CrateResults<'tcx, 'b>,

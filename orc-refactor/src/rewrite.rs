@@ -9,7 +9,7 @@ use rustc_middle::{
 use orc_common::AnalysisResults;
 use usage_analysis::{fatness, mutability, null};
 
-use crate::rewriter::{RewriteMode, Rewriter};
+use orc_common::rewriter::{RewriteMode, Rewriter};
 use rewrite_body::{rewrite_body, BodyRewriteCtxt};
 
 fn ty_nested_depth(ty: &Ty) -> usize {

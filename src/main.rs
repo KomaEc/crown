@@ -26,7 +26,7 @@ use tracing_subscriber::EnvFilter;
 
 use empirical_study::EmpiricalStudy;
 use orc_ownership_analysis::CrateInfo;
-use orc_refactor::rewriter::RewriteMode;
+use orc_common::rewriter::RewriteMode;
 use usage_analysis::{fatness, mutability, null};
 
 #[derive(Parser)]

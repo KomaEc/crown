@@ -5,7 +5,7 @@
 #![feature(let_else)]
 
 pub mod rewrite;
-pub mod rewriter;
+// pub mod rewriter;
 
 extern crate either;
 extern crate rustc_ast;
