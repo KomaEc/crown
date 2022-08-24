@@ -41,6 +41,7 @@ struct Cli {
 
 #[derive(Parser)]
 enum Command {
+    Preprocess,
     Analyse {
         #[clap(long, short)]
         null: bool,
@@ -164,6 +165,9 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
     let input = (tcx, functions, structs);
 
     match *cmd {
+        Command::Preprocess => {
+            orc_preprocess::preprocess(tcx);
+        }
         Command::ShowMir { ref function } => {
             if let Some(def_path_str) = function {
                 let Some(&did) = input

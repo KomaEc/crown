@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "orc-common",
+    "orc-preprocess",
     "orc-ownership-analysis",
     "orc-taint-analysis",
     "usage-analysis",
@@ -19,6 +20,7 @@ rustc_private = true
 
 [dependencies]
 orc-common = { path = "orc-common" }
+orc-preprocess = { path = "orc-preprocess" }
 orc-ownership-analysis = { path = "orc-ownership-analysis" }
 ownership-analysis = { path = "ownership-analysis" }
 orc-taint-analysis = { path = "orc-taint-analysis" }
