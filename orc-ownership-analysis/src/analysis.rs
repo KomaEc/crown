@@ -1,5 +1,7 @@
 use crate::CrateInfo;
 
+use self::constraint::{CadicalDatabase, Database};
+
 pub mod body_ext;
 pub mod constants;
 pub mod constraint;
@@ -10,13 +12,19 @@ pub mod state;
 pub mod ty_ext;
 // pub mod sssa;
 
-pub struct OwnershipAnalysisCtxt<'octxt, 'tcx, Solver = cadical::Solver> {
+pub struct OwnershipAnalysisCtxt<'octxt, 'tcx, DB = CadicalDatabase>
+where
+    DB: Database,
+{
     program: &'octxt CrateInfo<'tcx>,
-    solver: Solver,
+    database: DB,
 }
 
 impl<'octxt, 'tcx> OwnershipAnalysisCtxt<'octxt, 'tcx> {
     pub fn new(program: &'octxt CrateInfo<'tcx>) -> Self {
-        Self { program, solver: cadical::Solver::new() }
+        Self {
+            program,
+            database: CadicalDatabase::new(),
+        }
     }
 }
