@@ -201,6 +201,7 @@ impl InterSummary {
                                                 None
                                             }
                                         })
+                                        .filter(|ty| !(ty.is_array() || ty.is_slice()))
                                         .take_while(|ty| ty.is_ptr_but_not_fn_ptr())
                                         .enumerate()
                                         .for_each(|(nested_level, _)| {

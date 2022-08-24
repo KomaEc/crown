@@ -280,7 +280,10 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
                     };
                 }
                 ProjectionElem::Deref => n_derefs += 1,
-                _ => unimplemented!("projections other than deref and field are not supported!"),
+                _ => {
+                    // unimplemented!("projections other than deref and field are not supported!"),
+                    continue
+                }
             }
         }
         let Range { start, end } = base;
@@ -391,20 +394,26 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
             .ty
             .is_ptr_but_not_fn_ptr()
         {
+            tracing::debug!("place ty: {}", place
+            .ty(self.ctxt.body, self.ctxt.tcx)
+            .ty);
             if let Rvalue::Use(Operand::Move(rhs))
             | Rvalue::Use(Operand::Copy(rhs))
-            | Rvalue::Cast(CastKind::Misc, Operand::Move(rhs), _)
-            | Rvalue::Cast(CastKind::Misc, Operand::Copy(rhs), _)
-            | Rvalue::Cast(
-                CastKind::Pointer(PointerCast::MutToConstPointer),
-                Operand::Move(rhs),
-                _,
-            )
-            | Rvalue::Cast(
-                CastKind::Pointer(PointerCast::MutToConstPointer),
-                Operand::Copy(rhs),
-                _,
-            ) = rvalue
+            | Rvalue::Cast(_, Operand::Move(rhs), _)
+            | Rvalue::Cast(_, Operand::Copy(rhs), _)
+            // | Rvalue::Cast(CastKind::Misc, Operand::Move(rhs), _)
+            // | Rvalue::Cast(CastKind::Misc, Operand::Copy(rhs), _)
+            // | Rvalue::Cast(
+            //     CastKind::Pointer(PointerCast::MutToConstPointer),
+            //     Operand::Move(rhs),
+            //     _,
+            // )
+            // | Rvalue::Cast(
+            //     CastKind::Pointer(PointerCast::MutToConstPointer),
+            //     Operand::Copy(rhs),
+            //     _,
+            // ) 
+            = rvalue
             {
                 match (
                     self.process_ptr_place(place, location),
@@ -583,17 +592,23 @@ impl<'infercx, 'tcx> IntraInferCtxt<'infercx, 'tcx> {
             .map(|(local, local_decl)| {
                 let start = constraint_system.le_constraints.local_start + intra_source_map.len();
                 let mut end = start;
+                // let debug = tcx.def_path_str(body.source.def_id()) == "src::KS_1::ReadNetList"
+                //     && local == Local::from_u32(56);
+                // if debug { tracing::debug!("visiting {:?}: {}", local, local_decl.ty);}
                 local_decl
                     .ty
                     .walk()
                     .filter_map(|generic_arg| {
                         if let GenericArgKind::Type(ty) = generic_arg.unpack() {
+                            // if debug {  tracing::debug!("outter: visiting {ty}"); }
                             Some(ty)
                         } else {
                             None
                         }
                     })
+                    .filter(|ty| !(ty.is_array() || ty.is_slice()))
                     .take_while(|ty| ty.is_ptr_but_not_fn_ptr())
+                    // .inspect(|ty| if debug {  tracing::debug!("inner: visiting {ty}"); })
                     .enumerate()
                     .for_each(|(nested_level, _)| {
                         assert_eq!(end, constraint_system.new_var());
@@ -604,6 +619,7 @@ impl<'infercx, 'tcx> IntraInferCtxt<'infercx, 'tcx> {
                             nested_level,
                         });
                     });
+                // if debug { assert!(end > start); panic!() }
                 // end = end + 1;
                 (end > start)
                     .then(|| IndexVec::from_raw(vec![Range { start, end }]))
@@ -611,6 +627,8 @@ impl<'infercx, 'tcx> IntraInferCtxt<'infercx, 'tcx> {
                 // IndexVec::from_raw(vec![Range { start, end }])
             })
             .collect();
+
+        // panic!("stop");
 
         IntraInferCtxt {
             tcx,
