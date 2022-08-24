@@ -25,8 +25,8 @@ use std::{borrow::BorrowMut, path::PathBuf, time::Instant};
 use tracing_subscriber::EnvFilter;
 
 use empirical_study::EmpiricalStudy;
-use orc_ownership_analysis::CrateInfo;
 use orc_common::rewriter::RewriteMode;
+use orc_ownership_analysis::CrateInfo;
 use usage_analysis::{fatness, mutability, null};
 
 #[derive(Parser)]
@@ -41,7 +41,10 @@ struct Cli {
 
 #[derive(Parser)]
 enum Command {
-    Preprocess,
+    Preprocess {
+        #[clap(arg_enum, default_value_t = RewriteMode::Print)]
+        rewrite_mode: RewriteMode,
+    },
     Analyse {
         #[clap(long, short)]
         null: bool,
@@ -165,8 +168,8 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
     let input = (tcx, functions, structs);
 
     match *cmd {
-        Command::Preprocess => {
-            orc_preprocess::preprocess(tcx);
+        Command::Preprocess { rewrite_mode } => {
+            orc_preprocess::preprocess(tcx, rewrite_mode);
         }
         Command::ShowMir { ref function } => {
             if let Some(def_path_str) = function {

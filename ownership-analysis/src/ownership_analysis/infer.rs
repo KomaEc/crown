@@ -282,7 +282,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler
                 ProjectionElem::Deref => n_derefs += 1,
                 _ => {
                     // unimplemented!("projections other than deref and field are not supported!"),
-                    continue
+                    continue;
                 }
             }
         }
@@ -394,9 +394,7 @@ impl<'infercx, 'tcx, Handler: SSANameHandler> Visitor<'tcx>
             .ty
             .is_ptr_but_not_fn_ptr()
         {
-            tracing::debug!("place ty: {}", place
-            .ty(self.ctxt.body, self.ctxt.tcx)
-            .ty);
+            tracing::debug!("place ty: {}", place.ty(self.ctxt.body, self.ctxt.tcx).ty);
             if let Rvalue::Use(Operand::Move(rhs))
             | Rvalue::Use(Operand::Copy(rhs))
             | Rvalue::Cast(_, Operand::Move(rhs), _)
