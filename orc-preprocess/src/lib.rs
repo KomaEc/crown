@@ -19,57 +19,17 @@ pub fn preprocess(tcx: TyCtxt, mode: RewriteMode) {
     insert_null_statement(tcx, mode)
 }
 
-// struct WhileLoopDesugarer<'me, 'hir> {
-//     tcx: TyCtxt<'hir>,
-//     rewriter: &'me mut Rewriter,
-// }
-
-// impl<'me, 'hir> Visitor<'hir> for WhileLoopDesugarer<'me, 'hir> {
-//     fn visit_expr(&mut self, expr: &'hir Expr<'hir>) {
-//         let ExprKind::Loop(_, _, loop_src, span) = expr.kind else {
-//             return intravisit::walk_expr(self, expr)
-//         };
-//         match loop_src {
-//             LoopSource::Loop => return intravisit::walk_expr(self, expr),
-//             LoopSource::While => {},
-//             LoopSource::ForLoop => panic!("src code is assumed to not contain for loop"),
-//         }
-//         self.rewriter.make_suggestion(
-//             self.tcx,
-//             span,
-//             "".to_string(),
-//             rustc_hir_pretty::id_to_string(&self.tcx.hir(), expr.hir_id)
-//         )
-//     }
-// }
-
-// fn desugar_while_loop(tcx: TyCtxt, mode: RewriteMode) {
-//     let mut rewriter = Rewriter::default();
-
-//     for maybe_owner in tcx.hir().krate().owners.iter() {
-//         let Some(owner) = maybe_owner.as_owner() else { continue };
-//         let OwnerNode::Item(item) = owner.node() else { continue };
-//         let ItemKind::Fn(_, _, body_id) = item.kind else { continue };
-//         let hir_body = tcx.hir().body(body_id);
-//         WhileLoopDesugarer {
-//             rewriter: &mut rewriter,
-//             tcx,
-//         }
-//         .visit_expr(&hir_body.value);
-//     }
-
-//     rewriter.write(mode)
-// }
-
 struct NullStmtInsertor<'me, 'hir> {
     tcx: TyCtxt<'hir>,
     rewriter: &'me mut Rewriter,
-    skip: bool,
+    in_while_loop: bool,
 }
 impl<'me, 'hir> Visitor<'hir> for NullStmtInsertor<'me, 'hir> {
     fn visit_expr(&mut self, expr: &'hir Expr<'hir>) {
         match expr.kind {
-            ExprKind::If(cond, truth_branch, false_branch) if !self.skip => {
+            ExprKind::If(cond, truth_branch, false_branch) => {
+                let is_while_loop_cond = self.in_while_loop;
+                self.in_while_loop = false;
                 let ExprKind::DropTemps(mut cond) = cond.kind else {
                     panic!("for some reasons, if conditions are all droptemps.");
                 };
@@ -97,7 +57,8 @@ impl<'me, 'hir> Visitor<'hir> for NullStmtInsertor<'me, 'hir> {
 
                             if sign {
                                 self.insert_to_branch(stmt_str, truth_branch);
-                            } else {
+                            } else if !is_while_loop_cond {
+                                // normal if { } else { }
                                 if let Some(false_branch) = false_branch {
                                     self.insert_to_branch(stmt_str, false_branch);
                                 } else {
@@ -110,6 +71,12 @@ impl<'me, 'hir> Visitor<'hir> for NullStmtInsertor<'me, 'hir> {
                                         "else { ".to_string() + &stmt_str + " }",
                                     )
                                 }
+                            } else {
+                                // while !p.is_null() {}
+                                // while loop always has false branch, to hold { break; }
+                                // its span for some reason is the whole loop expression
+                                let span = false_branch.unwrap().span.shrink_to_hi();
+                                self.rewriter.make_suggestion(self.tcx, span, String::new(), stmt_str);
                             }
 
                             return;
@@ -118,11 +85,8 @@ impl<'me, 'hir> Visitor<'hir> for NullStmtInsertor<'me, 'hir> {
                     _ => {}
                 }
             }
-            ExprKind::If(..) if self.skip => {
-                self.skip = false;
-            }
             ExprKind::Loop(_, _, LoopSource::While, _) => {
-                self.skip = true;
+                self.in_while_loop = true;
             }
             _ => {}
         }
@@ -161,7 +125,7 @@ fn insert_null_statement(tcx: TyCtxt, mode: RewriteMode) {
         NullStmtInsertor {
             rewriter: &mut rewriter,
             tcx,
-            skip: false,
+            in_while_loop: false,
         }
         .visit_expr(&hir_body.value);
     }
