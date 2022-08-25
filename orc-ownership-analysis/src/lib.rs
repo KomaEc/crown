@@ -30,12 +30,13 @@ extern crate rustc_target;
 extern crate rustc_type_ir;
 
 mod analysis;
-mod call_graph;
+// mod call_graph;
+pub mod call_graph;
 mod playground;
+pub mod sparse_bit_vector;
 mod struct_topology;
 #[cfg(test)]
 mod test;
-pub(crate) mod utils;
 
 use call_graph::CallGraph;
 use orc_common::OrcInput;
@@ -57,7 +58,7 @@ impl<'tcx> OrcInput<'tcx> for CrateInfo<'tcx> {
     }
 
     fn functions(&self) -> &[DefId] {
-        self.functions()
+        self.call_graph.functions()
     }
 
     fn structs(&self) -> &[DefId] {
@@ -69,15 +70,16 @@ impl<'tcx> CrateInfo<'tcx> {
     pub fn from_input<Input: OrcInput<'tcx>>(input: &Input) -> Self {
         CrateInfo {
             tcx: input.tcx(),
-            call_graph: CallGraph::new(input.tcx(), input.functions().to_vec()),
+            call_graph: CallGraph::new(input.tcx(), input.functions()),
             struct_topology: StructTopology::new(input.tcx(), input.structs().to_vec()),
         }
     }
 
+    /// TODO: remove this
     pub fn new(tcx: TyCtxt<'tcx>, functions: Vec<DefId>, structs: Vec<DefId>) -> Self {
         CrateInfo {
             tcx,
-            call_graph: CallGraph::new(tcx, functions),
+            call_graph: CallGraph::new(tcx, &functions[..]),
             struct_topology: StructTopology::new(tcx, structs),
         }
     }
@@ -94,7 +96,7 @@ impl<'tcx> CrateInfo<'tcx> {
 
     #[inline]
     pub(crate) fn functions(&self) -> &[DefId] {
-        &self.call_graph.functions()
+        self.call_graph.functions()
     }
 
     #[inline]

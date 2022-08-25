@@ -1,4 +1,4 @@
-use crate::utils::graph_ext::implementation::sparse_bit_vector::{self, SparseBitVectorGraph};
+use crate::sparse_bit_vector::{self, SparseBitVectorGraph};
 use rustc_data_structures::graph::iterate::post_order_from;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;

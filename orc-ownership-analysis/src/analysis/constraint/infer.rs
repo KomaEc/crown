@@ -9,7 +9,6 @@ use crate::{analysis::state::SSAState, CrateInfo};
 
 use super::{CadicalDatabase, Database};
 
-
 /// Should it hold 'tcx at all?
 pub(crate) struct Ctxt<'me, 'tcx: 'me, DB = CadicalDatabase>
 where

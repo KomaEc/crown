@@ -72,7 +72,8 @@ impl<'tcx> CrateInfo<'tcx> {
             })
             .count();
         std::panic::set_hook(prev_hook);
-        let percentage = n_address_taking_functions as f64 / self.functions().len() as f64;
+        let percentage =
+            n_address_taking_functions as f64 / self.call_graph.function_count() as f64;
         println!("-------------stat: percntage of non address taking functions-----------------");
         println!("                   {percentage}");
     }
@@ -144,7 +145,7 @@ impl<'tcx> CrateInfo<'tcx> {
 
     pub fn verify_temp_local_usage(&self) {
         use rustc_index::vec::IndexVec;
-        for &did in self.functions() {
+        for did in self.functions() {
             let body = self.tcx.optimized_mir(did);
             let mut cnt = IndexVec::from_elem(0, &body.local_decls);
             // for cnt in &mut cnt.raw[1..1+body.arg_count] {
