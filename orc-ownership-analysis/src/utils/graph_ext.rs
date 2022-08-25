@@ -1,5 +1,5 @@
-pub mod implementation;
-// pub mod tred;
+pub(crate) mod implementation;
+// pub(crate) mod tred;
 
 // macro_rules! delegate_graph_via {
 //     ($S:ident.$f:ident$colon:tt $ty:ty) => {
@@ -43,4 +43,4 @@ pub mod implementation;
 //     };
 // }
 
-// pub(crate) use delegate_graph_via;
+// pub(crate)(crate) use delegate_graph_via;

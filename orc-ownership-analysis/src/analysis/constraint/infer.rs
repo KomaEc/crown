@@ -11,7 +11,7 @@ use super::{CadicalDatabase, Database};
 
 
 /// Should it hold 'tcx at all?
-pub struct Ctxt<'me, 'tcx: 'me, DB = CadicalDatabase>
+pub(crate) struct Ctxt<'me, 'tcx: 'me, DB = CadicalDatabase>
 where
     DB: Database,
 {
@@ -22,7 +22,7 @@ where
 }
 
 /// FIXME: is it the right way?
-pub trait Mode {
+pub(crate) trait Mode {
     type Ctxt<'me, 'tcx, DB>
     where
         Self: 'me,
@@ -30,9 +30,9 @@ pub trait Mode {
         DB: Database + 'me;
 }
 #[derive(Debug)]
-pub struct PureRename;
+pub(crate) struct PureRename;
 #[derive(Debug)]
-pub struct Inference;
+pub(crate) struct Inference;
 impl Mode for PureRename {
     type Ctxt<'me, 'tcx: 'me, DB: Database + 'me> = ();
 }
@@ -40,7 +40,7 @@ impl Mode for Inference {
     type Ctxt<'me, 'tcx, DB> = Ctxt<'me, 'tcx, DB> where Self: 'me, 'tcx: 'me, DB: Database + 'me;
 }
 
-pub struct Renamer<'me, 'tcx: 'me> {
+pub(crate) struct Renamer<'me, 'tcx: 'me> {
     body: &'me Body<'tcx>,
     tcx: TyCtxt<'tcx>,
     state: SSAState,
@@ -48,7 +48,7 @@ pub struct Renamer<'me, 'tcx: 'me> {
 }
 
 impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
-    pub fn go<M: Mode>(&mut self) {
+    pub(crate) fn go<M: Mode>(&mut self) {
         let dominators = self.body.basic_blocks.dominators();
         let mut children = IndexVec::from_elem(vec![], self.body.basic_blocks());
         let mut root = BasicBlock::from_u32(0);
@@ -83,7 +83,7 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
         }
     }
 
-    pub fn go_basic_block<M: Mode>(&mut self, bb: BasicBlock, data: &BasicBlockData) {
+    pub(crate) fn go_basic_block<M: Mode>(&mut self, bb: BasicBlock, data: &BasicBlockData) {
         tracing::debug!("Renaming {:?}", bb);
 
         let BasicBlockData {

@@ -60,7 +60,7 @@ impl CallGraph {
     }
 
     #[inline]
-    pub fn functions(&self) -> &[DefId] {
+    pub(crate) fn functions(&self) -> &[DefId] {
         &self.functions.raw[..]
     }
 
@@ -77,7 +77,7 @@ orc_common::macros::newtype_index! {
 }
 
 orc_common::macros::newtype_index! {
-    pub struct CallSite {
+    pub(crate) struct CallSite {
         DEBUG_FORMAT = "CallSite_({})"
     }
 }
@@ -96,7 +96,7 @@ struct CallGraphConstruction<'tcx> {
 }
 
 impl<'tcx> CallGraphConstruction<'tcx> {
-    pub fn construct(mut self) -> CallGraph {
+    pub(crate) fn construct(mut self) -> CallGraph {
         for &did in &self.functions {
             let body = self.tcx.optimized_mir(did);
             CallGraphNodeVis {

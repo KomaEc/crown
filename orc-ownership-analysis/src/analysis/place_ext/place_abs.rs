@@ -3,13 +3,13 @@ use rustc_middle::mir::{HasLocalDecls, Local};
 use crate::analysis::OwnershipAnalysisCtxt;
 
 orc_common::macros::newtype_index! {
-    pub struct AggregateOffset {
+    pub(crate) struct AggregateOffset {
         DEBUG_FORMAT = "{}"
     }
 }
 
 impl AggregateOffset {
-    pub const ZERO: Self = AggregateOffset::from_u32(0);
+    pub(crate) const ZERO: Self = AggregateOffset::from_u32(0);
 }
 
 impl std::ops::Add<AggregateOffset> for AggregateOffset {
@@ -28,11 +28,11 @@ impl std::ops::AddAssign for AggregateOffset {
 
 /// place abstraction
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub struct PlaceAbs {
-    pub base_local: Local,
-    pub dereferenced: bool,
-    pub(super) start: AggregateOffset,
-    pub(super) end: AggregateOffset,
+pub(crate) struct PlaceAbs {
+    pub(crate) base_local: Local,
+    pub(crate) dereferenced: bool,
+    pub(crate) start: AggregateOffset,
+    pub(crate) end: AggregateOffset,
 }
 
 impl std::fmt::Display for PlaceAbs {
@@ -61,7 +61,7 @@ impl std::fmt::Display for PlaceAbs {
 }
 
 impl PlaceAbs {
-    pub fn from_local<'octxt, 'tcx, D>(
+    pub(crate) fn from_local<'octxt, 'tcx, D>(
         local: Local,
         local_decls: &D,
         octxt: &OwnershipAnalysisCtxt<'octxt, 'tcx>,

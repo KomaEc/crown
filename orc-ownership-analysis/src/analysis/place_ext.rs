@@ -1,6 +1,6 @@
 //! Extensions to mir Place
 
-pub mod place_abs;
+pub(crate) mod place_abs;
 
 use place_abs::PlaceAbs;
 use rustc_middle::{
@@ -10,7 +10,7 @@ use rustc_middle::{
 
 use super::OwnershipAnalysisCtxt;
 
-pub trait PlaceExt<'tcx> {
+pub(crate) trait PlaceExt<'tcx> {
     fn r#abstract<'octxt, D>(
         self,
         local_decls: &D,

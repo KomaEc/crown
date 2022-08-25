@@ -6,31 +6,31 @@ use rustc_data_structures::graph::{
 };
 
 #[derive(Clone)]
-pub struct Graph<Node: Idx, Edge: Idx> {
-    pub nodes: IndexVec<Node, NodeData<Edge>>,
-    pub edges: IndexVec<Edge, EdgeData<Node, Edge>>,
+pub(crate) struct Graph<Node: Idx, Edge: Idx> {
+    pub(crate) nodes: IndexVec<Node, NodeData<Edge>>,
+    pub(crate) edges: IndexVec<Edge, EdgeData<Node, Edge>>,
 }
 
 #[derive(Clone)]
-pub struct NodeData<Edge: Idx> {
-    pub first_edges: [Edge; 2],
+pub(crate) struct NodeData<Edge: Idx> {
+    pub(crate) first_edges: [Edge; 2],
 }
 
 #[derive(Clone)]
-pub struct EdgeData<Node: Idx, Edge: Idx> {
-    pub next_edges: [Edge; 2],
-    pub source: Node,
-    pub target: Node,
+pub(crate) struct EdgeData<Node: Idx, Edge: Idx> {
+    pub(crate) next_edges: [Edge; 2],
+    pub(crate) source: Node,
+    pub(crate) target: Node,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub enum Direction {
+pub(crate) enum Direction {
     Outgoing,
     Incoming,
 }
 
 impl Direction {
-    pub fn reverse(self) -> Self {
+    pub(crate) fn reverse(self) -> Self {
         match self {
             Direction::Outgoing => Direction::Incoming,
             Direction::Incoming => Direction::Outgoing,
@@ -38,16 +38,16 @@ impl Direction {
     }
 
     #[inline(always)]
-    pub fn index(self) -> usize {
+    pub(crate) fn index(self) -> usize {
         self as usize
     }
 }
 
 /// This is to be compatible with rustc_index
-pub const INVALID_EDGE_INDEX: u32 = 0xFFFF_FF00;
+pub(crate) const INVALID_EDGE_INDEX: u32 = 0xFFFF_FF00;
 
 impl<Node: Idx, Edge: Idx> Graph<Node, Edge> {
-    pub fn new(num_nodes: usize, edge_pairs: impl Iterator<Item = (Node, Node)>) -> Self {
+    pub(crate) fn new(num_nodes: usize, edge_pairs: impl Iterator<Item = (Node, Node)>) -> Self {
         let nodes = IndexVec::from_elem_n(
             NodeData {
                 first_edges: [Edge::new(INVALID_EDGE_INDEX as usize); 2],
@@ -64,7 +64,7 @@ impl<Node: Idx, Edge: Idx> Graph<Node, Edge> {
         g
     }
 
-    pub fn with_capacity(nodes: usize, edges: usize) -> Self {
+    pub(crate) fn with_capacity(nodes: usize, edges: usize) -> Self {
         Graph {
             nodes: IndexVec::with_capacity(nodes),
             edges: IndexVec::with_capacity(edges),
@@ -72,20 +72,20 @@ impl<Node: Idx, Edge: Idx> Graph<Node, Edge> {
     }
 
     #[inline]
-    pub fn len_nodes(&self) -> usize {
+    pub(crate) fn len_nodes(&self) -> usize {
         self.nodes.len()
     }
 
     #[inline]
-    pub fn len_edges(&self) -> usize {
+    pub(crate) fn len_edges(&self) -> usize {
         self.edges.len()
     }
 
-    pub fn next_node_index(&self) -> Node {
+    pub(crate) fn next_node_index(&self) -> Node {
         Node::new(self.nodes.len())
     }
 
-    pub fn add_node(&mut self) -> Node {
+    pub(crate) fn add_node(&mut self) -> Node {
         let idx = self.next_node_index();
         let node = NodeData {
             first_edges: [Edge::new(INVALID_EDGE_INDEX as usize); 2],
@@ -94,11 +94,11 @@ impl<Node: Idx, Edge: Idx> Graph<Node, Edge> {
         idx
     }
 
-    pub fn next_edge_index(&self) -> Edge {
+    pub(crate) fn next_edge_index(&self) -> Edge {
         Edge::new(self.edges.len())
     }
 
-    pub fn add_edge(&mut self, source: Node, target: Node) -> Edge {
+    pub(crate) fn add_edge(&mut self, source: Node, target: Node) -> Edge {
         let idx = self.next_edge_index();
         let next_out = self.nodes[source].first_edges[Direction::Outgoing.index()];
         let next_in = self.nodes[target].first_edges[Direction::Incoming.index()];
@@ -113,7 +113,7 @@ impl<Node: Idx, Edge: Idx> Graph<Node, Edge> {
         idx
     }
 
-    pub fn add_edge_without_dup(&mut self, source: Node, target: Node) -> Option<Edge> {
+    pub(crate) fn add_edge_without_dup(&mut self, source: Node, target: Node) -> Option<Edge> {
         if self.successor_nodes(source).any(|tgt| tgt == target) {
             None
         } else {
@@ -121,19 +121,19 @@ impl<Node: Idx, Edge: Idx> Graph<Node, Edge> {
         }
     }
 
-    pub fn nodes<'a>(&'a self) -> impl Iterator<Item = Node> + 'a {
+    pub(crate) fn nodes<'a>(&'a self) -> impl Iterator<Item = Node> + 'a {
         self.nodes.indices()
     }
 
-    pub fn outgoing_edges<'a>(&'a self, source: Node) -> AdjacentEdges<'a, Node, Edge> {
+    pub(crate) fn outgoing_edges<'a>(&'a self, source: Node) -> AdjacentEdges<'a, Node, Edge> {
         self.adjacent_edges(source, Direction::Outgoing)
     }
 
-    pub fn incoming_edges<'a>(&'a self, source: Node) -> AdjacentEdges<'a, Node, Edge> {
+    pub(crate) fn incoming_edges<'a>(&'a self, source: Node) -> AdjacentEdges<'a, Node, Edge> {
         self.adjacent_edges(source, Direction::Incoming)
     }
 
-    pub fn adjacent_edges<'a>(
+    pub(crate) fn adjacent_edges<'a>(
         &'a self,
         source: Node,
         direction: Direction,
@@ -145,15 +145,15 @@ impl<Node: Idx, Edge: Idx> Graph<Node, Edge> {
         }
     }
 
-    pub fn successor_nodes<'a>(&'a self, source: Node) -> SuccessorNodes<'a, Node, Edge> {
+    pub(crate) fn successor_nodes<'a>(&'a self, source: Node) -> SuccessorNodes<'a, Node, Edge> {
         self.outgoing_edges(source).targets()
     }
 
-    pub fn predecessor_nodes<'a>(&'a self, source: Node) -> PredecessorNodes<'a, Node, Edge> {
+    pub(crate) fn predecessor_nodes<'a>(&'a self, source: Node) -> PredecessorNodes<'a, Node, Edge> {
         self.incoming_edges(source).sources()
     }
 
-    pub fn depth_traverse<'a>(
+    pub(crate) fn depth_traverse<'a>(
         &'a self,
         start: Node,
         direction: Direction,
@@ -162,7 +162,7 @@ impl<Node: Idx, Edge: Idx> Graph<Node, Edge> {
     }
 
     /*
-    pub fn from_another_graph_rep<G>(g: G) -> Self
+    pub(crate) fn from_another_graph_rep<G>(g: G) -> Self
     where
         G: DirectedGraph<Node = Node> + WithNumNodes + WithSuccessors,
     {
@@ -178,7 +178,7 @@ impl<Node: Idx, Edge: Idx> Graph<Node, Edge> {
 
 // # Iterators
 
-pub struct SuccessorNodes<'g, Node: Idx, Edge: Idx>(AdjacentEdges<'g, Node, Edge>);
+pub(crate) struct SuccessorNodes<'g, Node: Idx, Edge: Idx>(AdjacentEdges<'g, Node, Edge>);
 
 impl<'g, Node: Idx, Edge: Idx> Iterator for SuccessorNodes<'g, Node, Edge> {
     type Item = Node;
@@ -194,7 +194,7 @@ impl<'g, Node: Idx, Edge: Idx> Iterator for SuccessorNodes<'g, Node, Edge> {
     }
 }
 
-pub struct PredecessorNodes<'g, Node: Idx, Edge: Idx>(AdjacentEdges<'g, Node, Edge>);
+pub(crate) struct PredecessorNodes<'g, Node: Idx, Edge: Idx>(AdjacentEdges<'g, Node, Edge>);
 
 impl<'g, Node: Idx, Edge: Idx> Iterator for PredecessorNodes<'g, Node, Edge> {
     type Item = Node;
@@ -210,18 +210,18 @@ impl<'g, Node: Idx, Edge: Idx> Iterator for PredecessorNodes<'g, Node, Edge> {
     }
 }
 
-pub struct AdjacentEdges<'g, Node: Idx, Edge: Idx> {
+pub(crate) struct AdjacentEdges<'g, Node: Idx, Edge: Idx> {
     graph: &'g Graph<Node, Edge>,
     direction: Direction,
     next_edge: Edge,
 }
 
 impl<'g, Node: Idx, Edge: Idx> AdjacentEdges<'g, Node, Edge> {
-    pub fn sources(self) -> PredecessorNodes<'g, Node, Edge> {
+    pub(crate) fn sources(self) -> PredecessorNodes<'g, Node, Edge> {
         PredecessorNodes(self)
     }
 
-    pub fn targets(self) -> SuccessorNodes<'g, Node, Edge> {
+    pub(crate) fn targets(self) -> SuccessorNodes<'g, Node, Edge> {
         SuccessorNodes(self)
     }
 }
@@ -245,7 +245,7 @@ impl<'g, Node: Idx, Edge: Idx> Iterator for AdjacentEdges<'g, Node, Edge> {
 }
 
 /// Visiting order: FIFO
-pub struct DepthFirstTraversal<'g, Node: Idx, Edge: Idx> {
+pub(crate) struct DepthFirstTraversal<'g, Node: Idx, Edge: Idx> {
     graph: &'g Graph<Node, Edge>,
     direction: Direction,
     visited: Vec<bool>,
@@ -253,7 +253,7 @@ pub struct DepthFirstTraversal<'g, Node: Idx, Edge: Idx> {
 }
 
 impl<'g, Node: Idx, Edge: Idx> DepthFirstTraversal<'g, Node, Edge> {
-    pub fn with_start_node(
+    pub(crate) fn with_start_node(
         graph: &'g Graph<Node, Edge>,
         start: Node,
         direction: Direction,
@@ -268,7 +268,7 @@ impl<'g, Node: Idx, Edge: Idx> DepthFirstTraversal<'g, Node, Edge> {
         }
     }
 
-    pub fn visit(&mut self, node: Node) {
+    pub(crate) fn visit(&mut self, node: Node) {
         if !self.visited[node.index()] {
             self.visited[node.index()] = true;
             self.stack.push(node)
@@ -290,7 +290,7 @@ impl<'g, Node: Idx, Edge: Idx> Iterator for DepthFirstTraversal<'g, Node, Edge> 
 }
 
 impl<Node: Idx, Edge: Idx> EdgeData<Node, Edge> {
-    pub fn target_of_direction(&self, direction: Direction) -> Node {
+    pub(crate) fn target_of_direction(&self, direction: Direction) -> Node {
         match direction {
             Direction::Outgoing => self.target,
             Direction::Incoming => self.source,
@@ -340,17 +340,17 @@ impl<'graph, Node: Idx, Edge: Idx> GraphPredecessors<'graph> for Graph<Node, Edg
 // # SCC
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct SCCIndex(pub usize);
+pub(crate) struct SCCIndex(pub(crate) usize);
 
 const INVALID_SCC_INDEX: SCCIndex = SCCIndex(usize::MAX);
 
-pub struct SCCs {
+pub(crate) struct SCCs {
     scc_indices: Vec<SCCIndex>,
     num_component: usize,
 }
 
 impl SCCs {
-    pub fn components(&self) -> Vec<Vec<NodeIndex>> {
+    pub(crate) fn components(&self) -> Vec<Vec<NodeIndex>> {
         let mut res = vec![Vec::new(); self.num_component];
         for (i, &s) in self.scc_indices.iter().enumerate() {
             res[s.0].push(NodeIndex::new(i))
@@ -370,7 +370,7 @@ impl std::ops::AddAssign<usize> for Time {
     }
 }
 
-pub struct TarjanSCC<'g> {
+pub(crate) struct TarjanSCC<'g> {
     graph: &'g Graph,
     low_link: Vec<Time>,
     timestamp: Time,
@@ -455,7 +455,7 @@ impl<'g> TarjanSCC<'g> {
         }
     }
 
-    pub fn construct(graph: &'g Graph) -> SCCs {
+    pub(crate) fn construct(graph: &'g Graph) -> SCCs {
         let mut tarjan_scc = TarjanSCC::new(graph);
         tarjan_scc.run();
         SCCs {
@@ -472,13 +472,13 @@ mod tests {
     use super::*;
 
     orc_common::macros::newtype_index! {
-        pub struct Node {
+        pub(crate) struct Node {
             DEBUG_FORMAT = "{}"
         }
     }
 
     orc_common::macros::newtype_index! {
-        pub struct Edge {
+        pub(crate) struct Edge {
             DEBUG_FORMAT = "{}"
         }
     }

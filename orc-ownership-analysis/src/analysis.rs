@@ -2,17 +2,17 @@ use crate::CrateInfo;
 
 use self::constraint::{CadicalDatabase, Database};
 
-pub mod body_ext;
-pub mod constants;
+pub(crate) mod body_ext;
+pub(crate) mod constants;
 pub mod constraint;
-pub mod def_sites;
-pub mod join_points;
-pub mod place_ext;
-pub mod state;
-pub mod ty_ext;
-// pub mod sssa;
+pub(crate) mod def_sites;
+pub(crate) mod join_points;
+pub(crate) mod place_ext;
+pub(crate) mod state;
+pub(crate) mod ty_ext;
+// pub(crate) mod sssa;
 
-pub struct OwnershipAnalysisCtxt<'octxt, 'tcx, DB = CadicalDatabase>
+pub(crate) struct OwnershipAnalysisCtxt<'octxt, 'tcx, DB = CadicalDatabase>
 where
     DB: Database,
 {
@@ -21,7 +21,7 @@ where
 }
 
 impl<'octxt, 'tcx> OwnershipAnalysisCtxt<'octxt, 'tcx> {
-    pub fn new(program: &'octxt CrateInfo<'tcx>) -> Self {
+    pub(crate) fn new(program: &'octxt CrateInfo<'tcx>) -> Self {
         Self {
             program,
             database: CadicalDatabase::new(),

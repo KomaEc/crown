@@ -35,7 +35,7 @@ mod playground;
 mod struct_topology;
 #[cfg(test)]
 mod test;
-pub mod utils;
+pub(crate) mod utils;
 
 use call_graph::CallGraph;
 use orc_common::OrcInput;
@@ -93,13 +93,13 @@ impl<'tcx> CrateInfo<'tcx> {
     }
 
     #[inline]
-    pub fn functions(&self) -> &[DefId] {
+    pub(crate) fn functions(&self) -> &[DefId] {
         &self.call_graph.functions()
     }
 
     #[inline]
     /// Return the set of top-level struct definitions in post order
-    pub fn structs(&self) -> &[DefId] {
+    pub(crate) fn structs(&self) -> &[DefId] {
         &self.struct_topology.structs_in_post_order()
     }
 }

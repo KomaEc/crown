@@ -10,7 +10,7 @@ use rustc_index::{
 };
 
 #[derive(Clone)]
-pub struct SparseBitVectorGraph<N: Idx> {
+pub(crate) struct SparseBitVectorGraph<N: Idx> {
     edges: IndexVec<N, HybridBitSet<N>>,
 }
 
@@ -43,7 +43,7 @@ impl<N: Idx> WithSuccessors for SparseBitVectorGraph<N> {
 }
 
 impl<N: Idx> SparseBitVectorGraph<N> {
-    pub fn new(num_nodes: usize, edge_pairs: impl Iterator<Item = (N, N)>) -> Self {
+    pub(crate) fn new(num_nodes: usize, edge_pairs: impl Iterator<Item = (N, N)>) -> Self {
         let mut edges: IndexVec<N, HybridBitSet<N>> =
             IndexVec::from_elem_n(HybridBitSet::new_empty(num_nodes), num_nodes);
         for (src, dst) in edge_pairs {
@@ -54,26 +54,26 @@ impl<N: Idx> SparseBitVectorGraph<N> {
 
     /// Return [`true`] if changed
     /// #[inline]
-    pub fn add_edge(&mut self, src: N, dst: N) -> bool {
+    pub(crate) fn add_edge(&mut self, src: N, dst: N) -> bool {
         self.edges[src].insert(dst)
     }
 
-    pub fn has_edge(&self, src: N, dst: N) -> bool {
+    pub(crate) fn has_edge(&self, src: N, dst: N) -> bool {
         self.edges[src].contains(dst)
     }
 
     #[inline]
-    pub fn successor_nodes(&self, src: N) -> &HybridBitSet<N> {
+    pub(crate) fn successor_nodes(&self, src: N) -> &HybridBitSet<N> {
         &self.edges[src]
     }
 
     #[inline]
-    pub fn successor_nodes_mut(&mut self, src: N) -> &mut HybridBitSet<N> {
+    pub(crate) fn successor_nodes_mut(&mut self, src: N) -> &mut HybridBitSet<N> {
         &mut self.edges[src]
     }
 
     #[inline]
-    pub fn pick2_successor_nodes_mut(
+    pub(crate) fn pick2_successor_nodes_mut(
         &mut self,
         n1: N,
         n2: N,
@@ -81,7 +81,7 @@ impl<N: Idx> SparseBitVectorGraph<N> {
         self.edges.pick2_mut(n1, n2)
     }
 
-    pub fn collect_edges(&self) -> Vec<(N, N)> {
+    pub(crate) fn collect_edges(&self) -> Vec<(N, N)> {
         self.edges
             .clone()
             .into_iter_enumerated()
@@ -89,7 +89,7 @@ impl<N: Idx> SparseBitVectorGraph<N> {
             .collect()
     }
 
-    pub fn reverse(&self) -> Self {
+    pub(crate) fn reverse(&self) -> Self {
         Self::new(
             self.num_nodes(),
             self.collect_edges()

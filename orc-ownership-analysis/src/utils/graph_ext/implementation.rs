@@ -1,2 +1,2 @@
-pub mod forward_star;
-pub mod sparse_bit_vector;
+pub(crate) mod forward_star;
+pub(crate) mod sparse_bit_vector;

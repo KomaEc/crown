@@ -1,4 +1,4 @@
-pub mod infer;
+pub(crate) mod infer;
 
 orc_common::macros::orc_index!(OwnershipSig);
 
@@ -21,7 +21,7 @@ pub(crate) enum Constraint {
     Assume { x: OwnershipSig, sign: bool },
 }
 
-pub trait Mode {
+pub(crate) trait Mode {
     /// `Store<'a>` is a reference to a storage that holds
     /// the newly added constraint.
     type Store<'a>
@@ -58,7 +58,7 @@ impl Mode for NoEmit {
     fn store_assumption(_store: Self::Store<'_>, _x: OwnershipSig, _sign: bool) {}
 }
 
-pub trait Database {
+pub(crate) trait Database {
     fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig);
     fn push_linear<M: Mode>(
         &mut self,
@@ -77,7 +77,7 @@ pub trait Database {
     }
 }
 
-pub struct CadicalDatabase {
+pub(crate) struct CadicalDatabase {
     pub(crate) solver: cadical::Solver,
 }
 

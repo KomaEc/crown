@@ -15,7 +15,7 @@ use super::{
 };
 
 /// `def_sites` contains only locals with long live-range
-pub fn semi_pruned_join_points<'tcx>(
+pub(crate) fn semi_pruned_join_points<'tcx>(
     body: &Body<'tcx>,
     dominance_frontier: &DominanceFrontier,
     def_sites: &DefSites,
@@ -49,33 +49,33 @@ pub fn semi_pruned_join_points<'tcx>(
 /// A phi node for a local X: X_i = $\phi$(X_j, X_k)
 #[derive(Clone, Derivative)]
 #[derivative(Default)]
-pub struct PhiNode {
+pub(crate) struct PhiNode {
     #[derivative(Default(value = "SSAIdx::INIT"))]
-    pub lhs: SSAIdx,
-    pub rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>,
+    pub(crate) lhs: SSAIdx,
+    pub(crate) rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>,
 }
 
 impl PhiNode {
-    pub fn new(lhs: SSAIdx, rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>) -> Self {
+    pub(crate) fn new(lhs: SSAIdx, rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>) -> Self {
         Self { lhs, rhs }
     }
 }
 
 #[derive(Clone, Debug)]
-pub struct JoinPoints<Payload> {
+pub(crate) struct JoinPoints<Payload> {
     data: IndexVec<BasicBlock, BasicBlockNodes<Payload>>,
 }
 
 impl<Payload> JoinPoints<Payload> {
-    pub fn from_raw(raw: IndexVec<BasicBlock, BasicBlockNodes<Payload>>) -> Self {
+    pub(crate) fn from_raw(raw: IndexVec<BasicBlock, BasicBlockNodes<Payload>>) -> Self {
         JoinPoints { data: raw }
     }
 
-    pub fn into_iter(self) -> impl Iterator<Item = BasicBlockNodes<Payload>> {
+    pub(crate) fn into_iter(self) -> impl Iterator<Item = BasicBlockNodes<Payload>> {
         self.data.into_iter()
     }
 
-    pub fn repack<F, U>(&self, f: F) -> JoinPoints<U>
+    pub(crate) fn repack<F, U>(&self, f: F) -> JoinPoints<U>
     where
         F: Fn(Local, &Payload) -> U,
     {
@@ -86,7 +86,7 @@ impl<Payload> JoinPoints<Payload> {
             .into()
     }
 
-    pub fn filter_repack<U, F>(&self, f: F) -> JoinPoints<U>
+    pub(crate) fn filter_repack<U, F>(&self, f: F) -> JoinPoints<U>
     where
         F: Fn(Local, &Payload) -> Option<U>,
     {
@@ -121,7 +121,7 @@ impl<T> std::ops::IndexMut<BasicBlock> for JoinPoints<T> {
 }
 
 #[derive(Clone, Debug)]
-pub struct BasicBlockNodes<Node> {
+pub(crate) struct BasicBlockNodes<Node> {
     data: SmallVec<[(Local, Node); NUM_PHI_NODES]>,
 }
 
@@ -135,54 +135,54 @@ impl<Payload> FromIterator<(Local, Payload)> for BasicBlockNodes<Payload> {
 }
 
 impl<T> BasicBlockNodes<T> {
-    pub fn new() -> Self {
+    pub(crate) fn new() -> Self {
         BasicBlockNodes {
             data: SmallVec::new(),
         }
     }
 
     #[inline]
-    pub fn push(&mut self, local: Local, payload: T) {
+    pub(crate) fn push(&mut self, local: Local, payload: T) {
         self.data.push((local, payload))
     }
 
     #[inline]
-    pub fn is_empty(&self) -> bool {
+    pub(crate) fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 
     #[inline]
-    pub fn locals(&self) -> impl Iterator<Item = Local> + '_ {
+    pub(crate) fn locals(&self) -> impl Iterator<Item = Local> + '_ {
         self.data.iter().map(|&(local, _)| local)
     }
 
     #[inline]
-    pub fn into_iter(self) -> impl Iterator<Item = T> {
+    pub(crate) fn into_iter(self) -> impl Iterator<Item = T> {
         self.data.into_iter().map(|(_, payload)| payload)
     }
 
     #[inline]
-    pub fn iter(&self) -> impl Iterator<Item = &T> {
+    pub(crate) fn iter(&self) -> impl Iterator<Item = &T> {
         self.data.iter().map(|(_, payload)| payload)
     }
 
     #[inline]
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
         self.data.iter_mut().map(|(_, payload)| payload)
     }
 
     #[inline]
-    pub fn into_iter_enumerated(self) -> impl Iterator<Item = (Local, T)> {
+    pub(crate) fn into_iter_enumerated(self) -> impl Iterator<Item = (Local, T)> {
         self.data.into_iter()
     }
 
     #[inline]
-    pub fn iter_enumerated(&self) -> impl Iterator<Item = (Local, &T)> {
+    pub(crate) fn iter_enumerated(&self) -> impl Iterator<Item = (Local, &T)> {
         self.data.iter().map(|(local, payload)| (*local, payload))
     }
 
     #[inline]
-    pub fn iter_enumerated_mut(&mut self) -> impl Iterator<Item = (Local, &mut T)> {
+    pub(crate) fn iter_enumerated_mut(&mut self) -> impl Iterator<Item = (Local, &mut T)> {
         self.data
             .iter_mut()
             .map(|(local, payload)| (*local, payload))
@@ -210,7 +210,7 @@ impl<T> std::ops::IndexMut<Local> for BasicBlockNodes<T> {
 }
 
 impl<T> BasicBlockNodes<T> {
-    pub fn repack<F, U>(&self, f: F) -> BasicBlockNodes<U>
+    pub(crate) fn repack<F, U>(&self, f: F) -> BasicBlockNodes<U>
     where
         F: Fn(Local, &T) -> U,
     {
@@ -219,7 +219,7 @@ impl<T> BasicBlockNodes<T> {
             .collect::<BasicBlockNodes<_>>()
     }
 
-    pub fn filter_repack<U, F>(&self, f: F) -> BasicBlockNodes<U>
+    pub(crate) fn filter_repack<U, F>(&self, f: F) -> BasicBlockNodes<U>
     where
         F: Fn(Local, &T) -> Option<U>,
     {

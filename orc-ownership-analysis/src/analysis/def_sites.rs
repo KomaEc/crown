@@ -8,7 +8,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 
-pub type DefSites = IndexVec<Local, BitSet<BasicBlock>>;
+pub(crate) type DefSites = IndexVec<Local, BitSet<BasicBlock>>;
 
 pub(crate) fn initial_def_sites<'tcx>(
     body: &Body<'tcx>,
@@ -72,7 +72,7 @@ pub(crate) fn initial_def_sites<'tcx>(
 }
 
 // impl<'octxt, 'tcx> OwnershipAnalysisCtxt<'octxt, 'tcx> {
-//     pub fn initial_def_sites(&self, body: &Body<'tcx>) -> DefSites {
+//     pub(crate) fn initial_def_sites(&self, body: &Body<'tcx>) -> DefSites {
 //         let mut def_sites = IndexVec::from_elem(
 //             BitSet::new_empty(body.basic_blocks.len()),
 //             &body.local_decls,

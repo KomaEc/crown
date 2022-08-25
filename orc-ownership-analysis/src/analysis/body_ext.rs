@@ -5,9 +5,9 @@ use rustc_index::{bit_set::HybridBitSet, vec::IndexVec};
 use rustc_middle::mir::{BasicBlock, Body};
 use smallvec::SmallVec;
 
-pub type DominanceFrontier = IndexVec<BasicBlock, SmallVec<[BasicBlock; SIZE_DOM_FRONTIER]>>;
+pub(crate) type DominanceFrontier = IndexVec<BasicBlock, SmallVec<[BasicBlock; SIZE_DOM_FRONTIER]>>;
 
-pub trait BodyExt {
+pub(crate) trait BodyExt {
     fn compute_dominance_frontier(&self) -> DominanceFrontier;
 }
 

@@ -12,13 +12,13 @@ use super::{
 };
 
 orc_common::macros::newtype_index! {
-    pub struct SSAIdx {
+    pub(crate) struct SSAIdx {
         DEBUG_FORMAT = "{}"
     }
 }
 
 impl SSAIdx {
-    pub const INIT: Self = SSAIdx::from_u32(0);
+    pub(crate) const INIT: Self = SSAIdx::from_u32(0);
 }
 
 impl std::ops::AddAssign<usize> for SSAIdx {
@@ -28,13 +28,13 @@ impl std::ops::AddAssign<usize> for SSAIdx {
     }
 }
 
-pub struct SSAState {
+pub(crate) struct SSAState {
     pub(crate) name_state: NameState<Local>,
     pub(crate) join_points: JoinPoints<PhiNode>,
 }
 
 #[derive(Clone, Debug)]
-pub struct NameState<T: Idx> {
+pub(crate) struct NameState<T: Idx> {
     count: IndexVec<T, SSAIdx>,
     stack: IndexVec<T, Vec<SSAIdx>>,
     /// number of definitions in current dominance tree path
@@ -44,12 +44,12 @@ pub struct NameState<T: Idx> {
 
 impl<T: Idx> NameState<T> {
     #[inline]
-    pub fn enter_new_block(&mut self) {
+    pub(crate) fn enter_new_block(&mut self) {
         self.n_defs.push(smallvec![]);
     }
 
     #[inline]
-    pub fn generate_fresh_name(&mut self, var: T) -> SSAIdx {
+    pub(crate) fn generate_fresh_name(&mut self, var: T) -> SSAIdx {
         // get number of definitions in current block
         let n_defs = self
             .n_defs
@@ -69,7 +69,7 @@ impl<T: Idx> NameState<T> {
     }
 
     #[inline]
-    pub fn get_name(&self, var: T) -> SSAIdx {
+    pub(crate) fn get_name(&self, var: T) -> SSAIdx {
         *self.stack[var].last().expect(&format!(
             "internal error: cannot find fresh name supply for {:?}",
             var
@@ -79,12 +79,12 @@ impl<T: Idx> NameState<T> {
     /// Get the newest version for a variable. If `None` is returned,
     /// this variable is uninitialised.
     #[inline]
-    pub fn try_get_name(&self, var: T) -> Option<SSAIdx> {
+    pub(crate) fn try_get_name(&self, var: T) -> Option<SSAIdx> {
         self.stack[var].last().copied()
     }
 
     #[inline]
-    pub fn pop_names(&mut self) {
+    pub(crate) fn pop_names(&mut self) {
         self.remove_names(1)
     }
 
@@ -92,7 +92,7 @@ impl<T: Idx> NameState<T> {
     /// Remove fresh names generated in current dominance tree paths
     /// the parameter `n_blocks` is the number of basic block nodes along
     /// the tree path
-    pub fn remove_names(&mut self, n_blocks: usize) {
+    pub(crate) fn remove_names(&mut self, n_blocks: usize) {
         let n_defs = self.n_defs.drain(self.n_defs.len() - n_blocks..);
 
         for n_defs in n_defs {

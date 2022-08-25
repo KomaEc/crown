@@ -1,1 +1,1 @@
-pub mod graph_ext;
+pub(crate) mod graph_ext;
