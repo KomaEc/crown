@@ -9,12 +9,16 @@ use crate::{analysis::state::SSAState, CrateInfo};
 
 use super::{CadicalDatabase, Database};
 
+
+/// Should it hold 'tcx at all?
 pub struct Ctxt<'me, 'tcx: 'me, DB = CadicalDatabase>
 where
     DB: Database,
 {
     crate_info: &'me CrateInfo<'tcx>,
     database: &'me mut DB,
+    // TODO: signatures for the function that is analysed (and perhaps
+    // those in the same connected component)
 }
 
 /// FIXME: is it the right way?
