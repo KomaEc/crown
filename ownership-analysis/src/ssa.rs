@@ -1,18 +1,4 @@
-use std::marker::PhantomData;
-
-use rustc_data_structures::graph::WithSuccessors;
-use rustc_index::vec::IndexVec;
-use rustc_middle::{
-    mir::{
-        visit::{PlaceContext, Visitor},
-        BasicBlock, BasicBlockData, Body, Local, Location, Place, Statement, Terminator,
-    },
-    ty::TyCtxt,
-};
-
-use crate::{def_use::IsDefUse, ssa::body_ext::BodyExt};
-
-use self::body_ext::PhiNodeInsertionPoints;
+use rustc_middle::mir::{BasicBlock, Location};
 
 pub mod body_ext;
 pub mod pretty;

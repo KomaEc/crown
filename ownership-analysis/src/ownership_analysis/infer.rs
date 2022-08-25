@@ -9,10 +9,10 @@ use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
     mir::{
         visit::{PlaceContext, Visitor},
-        BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
-        ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind, RETURN_PLACE,
+        BasicBlock, Body, Local, Location, Operand, Place, PlaceElem, PlaceRef, ProjectionElem,
+        Rvalue, Statement, Terminator, TerminatorKind, RETURN_PLACE,
     },
-    ty::{adjustment::PointerCast, subst::GenericArgKind, TyCtxt},
+    ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
 
