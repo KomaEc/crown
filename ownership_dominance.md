@@ -279,9 +279,10 @@ CBMC: rename `p` when defining `*p`.
 
 
 
-#### 8.12
+#### 8.26
 
 1. CBMC: SSA
    Pointer dereferences are resolved to symbolic value.
 2. Ownership Dominance property: treats `*p` as `x`! So `(*p).left` can be treated as `x.left`. Defining `*p` is treated as defining `p`!
-
+3. Static single information form to deal with null tests
+4. Algorithm 3.7 that prunes SSA
