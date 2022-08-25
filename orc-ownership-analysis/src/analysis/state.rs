@@ -29,8 +29,8 @@ impl std::ops::AddAssign<usize> for SSAIdx {
 }
 
 pub struct SSAState {
-    name_state: NameState<Local>,
-    join_points: JoinPoints<PhiNode>,
+    pub(crate) name_state: NameState<Local>,
+    pub(crate) join_points: JoinPoints<PhiNode>,
 }
 
 #[derive(Clone, Debug)]
@@ -81,6 +81,11 @@ impl<T: Idx> NameState<T> {
     #[inline]
     pub fn try_get_name(&self, var: T) -> Option<SSAIdx> {
         self.stack[var].last().copied()
+    }
+
+    #[inline]
+    pub fn pop_names(&mut self) {
+        self.remove_names(1)
     }
 
     #[inline]

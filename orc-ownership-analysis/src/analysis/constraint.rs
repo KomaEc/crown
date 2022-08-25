@@ -1,4 +1,4 @@
-pub mod gathering;
+pub mod infer;
 
 orc_common::macros::orc_index!(OwnershipSig);
 
@@ -59,7 +59,7 @@ impl Mode for NoEmit {
 }
 
 pub trait Database {
-    fn add_linear(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig);
+    fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig);
     fn push_linear<M: Mode>(
         &mut self,
         store: M::Store<'_>,
@@ -67,12 +67,12 @@ pub trait Database {
         y: OwnershipSig,
         z: OwnershipSig,
     ) {
-        self.add_linear(x, y, z);
+        self.push_linear_impl(x, y, z);
         M::store_linear(store, x, y, z);
     }
-    fn add_assume(&mut self, x: OwnershipSig, sign: bool);
+    fn push_assume_impl(&mut self, x: OwnershipSig, sign: bool);
     fn push_assume<M: Mode>(&mut self, store: M::Store<'_>, x: OwnershipSig, sign: bool) {
-        self.add_assume(x, sign);
+        self.push_assume_impl(x, sign);
         M::store_assumption(store, x, sign);
     }
 }
@@ -91,7 +91,7 @@ impl CadicalDatabase {
 
 impl Database for CadicalDatabase {
     #[inline]
-    fn add_linear(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
+    fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
         self.solver
             .add_clause([-x.into_lit(), -y.into_lit()].into_iter());
         self.solver
@@ -103,7 +103,7 @@ impl Database for CadicalDatabase {
     }
 
     #[inline]
-    fn add_assume(&mut self, x: OwnershipSig, sign: bool) {
+    fn push_assume_impl(&mut self, x: OwnershipSig, sign: bool) {
         let mut lit = x.into_lit();
         if !sign {
             lit = -lit
