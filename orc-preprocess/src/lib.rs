@@ -76,7 +76,12 @@ impl<'me, 'hir> Visitor<'hir> for NullStmtInsertor<'me, 'hir> {
                                 // while loop always has false branch, to hold { break; }
                                 // its span for some reason is the whole loop expression
                                 let span = false_branch.unwrap().span.shrink_to_hi();
-                                self.rewriter.make_suggestion(self.tcx, span, String::new(), stmt_str);
+                                self.rewriter.make_suggestion(
+                                    self.tcx,
+                                    span,
+                                    String::new(),
+                                    stmt_str,
+                                );
                             }
 
                             return;
@@ -92,7 +97,6 @@ impl<'me, 'hir> Visitor<'hir> for NullStmtInsertor<'me, 'hir> {
         }
 
         intravisit::walk_expr(self, expr)
-        
     }
 }
 
