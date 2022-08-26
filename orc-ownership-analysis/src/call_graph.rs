@@ -1,4 +1,4 @@
-use petgraph::{algo::TarjanScc, prelude::GraphMap, Directed};
+use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hir::def_id::DefId;
 use rustc_middle::{
     mir::{visit::Visitor, Terminator, TerminatorKind},
@@ -7,7 +7,7 @@ use rustc_middle::{
 use rustc_type_ir::TyKind::FnDef;
 
 pub struct CallGraph {
-    graph: GraphMap<DefId, (), Directed>,
+    graph: DiGraphMap<DefId, ()>,
     /// (sccs + post_order): Vec<Vec<DefId>>,
     sccs: Vec<usize>,
     post_order: Vec<DefId>,
@@ -15,7 +15,7 @@ pub struct CallGraph {
 
 impl CallGraph {
     pub fn new(tcx: TyCtxt, functions: &[DefId]) -> Self {
-        let mut graph = GraphMap::new();
+        let mut graph = DiGraphMap::new();
         for did in functions {
             graph.add_node(*did);
         }
@@ -67,7 +67,7 @@ impl CallGraph {
 
 struct CallGraphConstruction<'me> {
     caller: DefId,
-    graph: &'me mut GraphMap<DefId, (), Directed>,
+    graph: &'me mut DiGraphMap<DefId, ()>,
 }
 
 impl<'me, 'tcx> Visitor<'tcx> for CallGraphConstruction<'me> {

@@ -1,10 +1,10 @@
-use crate::sparse_bit_vector::{self, SparseBitVectorGraph};
-use rustc_data_structures::graph::iterate::post_order_from;
+// use crate::sparse_bit_vector::{self, SparseBitVectorGraph};
+// use rustc_data_structures::graph::iterate::post_order_from;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
+use petgraph::{prelude::DiGraphMap, algo::TarjanScc};
 
 use crate::analysis::place_ext::place_abs::AggregateOffset;
 
@@ -23,49 +23,21 @@ pub(crate) struct StructTopology {
 
 impl StructTopology {
     pub(crate) fn new(tcx: TyCtxt, structs: Vec<DefId>) -> Self {
-        // structs.sort();
-        let structs = IndexVec::from_raw(structs);
-        let graph: SparseBitVectorGraph<u32> = sparse_bit_vector::SparseBitVectorGraph::new(
-            structs.len(),
-            structs.iter_enumerated().flat_map(|(sid, &did)| {
-                let adt_def = tcx.adt_def(did);
-                assert!(adt_def.is_struct());
-                let structs_ref = &structs;
-                adt_def.all_fields().filter_map(move |field_def| {
-                    let ty = tcx.type_of(field_def.did);
-                    if let TyKind::Adt(sub_adt_def, _) = ty.kind() {
-                        return structs_ref
-                            .binary_search(&sub_adt_def.did())
-                            .map(|sub_sid| (sid, sub_sid))
-                            .ok();
-                    }
-                    None
-                })
-            }),
-        );
-
-        let mut visited = BitSet::new_empty(structs.len());
-        let mut post_order = Vec::with_capacity(structs.len());
-        for sid in structs.indices() {
-            if !visited.contains(sid) {
-                // struct dep graph must be acyclic
-                debug_assert!(
-                    rustc_data_structures::graph::iterate::TriColorDepthFirstSearch::new(&graph)
-                        .run_from(
-                            sid,
-                            &mut rustc_data_structures::graph::iterate::CycleDetector
-                        )
-                        .is_none()
-                );
-
-                let mut nodes = post_order_from(&graph, sid)
-                    .into_iter()
-                    .filter_map(|sid| visited.insert(sid).then(|| structs[sid]))
-                    .collect();
-                post_order.append(&mut nodes);
+        let mut graph = DiGraphMap::with_capacity(structs.len(), structs.len());
+        structs.iter().for_each(|did| { graph.add_node(*did); });
+        for did in structs.iter() {
+            let adt_def = tcx.adt_def(did);
+            assert!(adt_def.is_struct());
+            for field_def in adt_def.all_fields() {
+                let ty = tcx.type_of(field_def.did);
+                if let TyKind::Adt(sub_adt_def, _) = ty.kind() {
+                    graph.add_edge(*did, sub_adt_def.did(), ());
+                }
             }
         }
-        assert_eq!(post_order.len(), structs.len());
+
+        let mut post_order = Vec::with_capacity(structs.len());
+        TarjanScc::new().run(&graph, |nodes| post_order.extend(nodes));
 
         let mut aggregate_offset = FxHashMap::default();
 

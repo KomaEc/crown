@@ -30,10 +30,8 @@ extern crate rustc_target;
 extern crate rustc_type_ir;
 
 mod analysis;
-// mod call_graph;
 pub mod call_graph;
 mod playground;
-pub mod sparse_bit_vector;
 mod struct_topology;
 #[cfg(test)]
 mod test;
