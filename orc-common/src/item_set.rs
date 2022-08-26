@@ -11,34 +11,32 @@ use rustc_middle::ty::TyCtxt;
 pub trait InnerRep<I> {
     // type Item<T>;
     type ItemsRep = Vec<I>;
-    type ItemIndicesRep = DefaultIndicesRep; // (Vec<usize>, Vec<usize>);
-}
-
-#[allow(unused)]
-pub struct DefaultIndicesRep {
-    indices_start: Vec<usize>,
-    indices: Vec<usize>,
 }
 
 #[derive(Debug)]
 pub struct Array;
 #[derive(Debug)]
 pub struct ArraySubPart;
-#[derive(Debug)]
-pub struct Singleton;
 
 impl<I> InnerRep<I> for ArraySubPart {}
 
-impl<I> InnerRep<I> for Array {
-    // type Item<T> = T;
-    type ItemIndicesRep = ();
-}
+impl<I> InnerRep<I> for Array {}
 
-impl<I> InnerRep<I> for Singleton {
-    // type Item<T> = usize;
-    type ItemsRep = usize;
-    type ItemIndicesRep = ();
-}
+// pub trait Mode {
+
+//     fn reset_with<I>(old: &mut I, new: I);
+// }
+// pub struct NoReset;
+// pub struct Reset;
+
+// impl Mode for NoReset {
+//     fn reset_with<I>(offset: &mut I, new: I) {}
+// }
+// impl Mode for Reset {
+//     fn reset_with(offset: &mut usize) {
+//         todo!()
+//     }
+// }
 
 /// TODO: specialize for different inner rep
 /// Discretisation of a set of things common to a group of def_ids.
@@ -54,8 +52,9 @@ where
     /// Sets of contents (represented by an interval of index `I`) of each belonger.
     items: Rep::ItemsRep, //Vec<I>,
     /// Indices of contents of each belonger. Pointers into `content_indices`
-    item_indices_start: Vec<usize>,
-    item_indices: Vec<usize>,
+    offset_of_for_belonger: Vec<usize>,
+    /// If step width is fixed, then this field can be optimized away
+    offset_of: Vec<usize>,
     _rep: PhantomData<*const Rep>,
 }
 
@@ -99,12 +98,12 @@ where
 
         let mut items = Vec::with_capacity(belongers.len() + 1);
         items.push(first_item);
-        let mut item_indices_start = Vec::with_capacity(belongers.len() + 1);
-        item_indices_start.push(0);
-        let mut item_indices = Vec::new();
+        let mut offset_of_belonger = Vec::with_capacity(belongers.len() + 1);
+        offset_of_belonger.push(0);
+        let mut offset_of = Vec::new();
 
         let mut next_item = first_item;
-        let mut next_start = 0;
+        let mut n_holders = 0;
 
         for &did in dids {
             let to_step = step(did);
@@ -112,23 +111,23 @@ where
             let mut offset = 0;
 
             for (idx, holder) in item_holder_iter(tcx, did).enumerate() {
-                item_indices.push(offset);
+                offset_of.push(offset);
                 if to_step(idx, holder) {
                     with_content(next_item);
                     next_item += 1;
                     offset += 1;
                 }
-                next_start += 1;
+                n_holders += 1;
             }
             items.push(next_item);
-            item_indices_start.push(next_start);
+            offset_of_belonger.push(n_holders);
         }
 
         ItemSet {
             belongers,
             items: items.into(),
-            item_indices_start,
-            item_indices,
+            offset_of_for_belonger: offset_of_belonger,
+            offset_of,
             _rep: PhantomData,
         }
     }
@@ -182,7 +181,7 @@ where
     pub fn get_content(&self, belonger: DefId, idx: usize) -> I {
         // println!("getting content {:?}:{idx}", belonger);
         let inner_idx = self.belongers[&belonger];
-        let offset = self.item_indices[self.item_indices_start[inner_idx] + idx];
+        let offset = self.offset_of[self.offset_of_for_belonger[inner_idx] + idx];
         let Range { start, end } = self.get_contents_inner(inner_idx);
         // println!("range: {:?}~{:?}, offset: {offset}", start, end);
         assert!(start + (offset as u32) < end);
