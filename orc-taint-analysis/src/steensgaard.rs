@@ -2,10 +2,7 @@ pub mod constraint;
 #[cfg(test)]
 mod test;
 
-use orc_common::{
-    item_set::{Array, ArraySubPart, ItemSet},
-    OrcInput,
-};
+use orc_common::{item_set::ItemSet, OrcInput};
 use petgraph::unionfind::UnionFind;
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
@@ -51,8 +48,8 @@ fn peel_off_array(mut ty: Ty) -> Ty {
 
 #[derive(Debug)]
 pub struct Steensgaard {
-    pub(crate) struct_fields: ItemSet<AbstractLocation, Array>,
-    pub(crate) function_locals: ItemSet<AbstractLocation, ArraySubPart>,
+    pub(crate) struct_fields: ItemSet<AbstractLocation>,
+    pub(crate) function_locals: ItemSet<AbstractLocation>,
     pub(crate) pts_targets: UnionFind<AbstractLocation>,
     /// Steensgaard's analysis tracks for sinlge points-to relation for an
     /// abstract location, thus pts graph can be simplified as a vector.
@@ -480,7 +477,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
             let loc = self
                 .steensgaard
                 .struct_fields
-                .get_content(adt_def.did(), field.index());
+                .get_singleton_content(adt_def.did(), field.index());
             return Some(PlaceLocation::Plain(loc));
         }
 
@@ -488,7 +485,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
         let loc = self
             .steensgaard
             .function_locals
-            .get_content(self.body.source.def_id(), place.local.as_usize());
+            .get_singleton_content(self.body.source.def_id(), place.local.as_usize());
         if place.as_local().is_some() {
             return Some(PlaceLocation::Plain(loc));
         } else {
@@ -584,7 +581,7 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
             let param_loc = self
                 .steensgaard
                 .function_locals
-                .get_content(callee_did, idx + 1);
+                .get_singleton_content(callee_did, idx + 1);
 
             let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
             let constraint_idx = self.constraints.len();
@@ -600,7 +597,7 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
 
         let Some(dest_loc) = self.place_location(*destination) else { return };
         let PlaceLocation::Plain(dest_loc) = dest_loc else { unreachable!("destination place contains derefs") };
-        let ret_loc = self.steensgaard.function_locals.get_content(callee_did, 0);
+        let ret_loc = self.steensgaard.function_locals.get_singleton_content(callee_did, 0);
         let constraint_idx = self.constraints.len();
         self.constraints
             .push(Constraint::new(ConstraintKind::Assign, dest_loc, ret_loc));

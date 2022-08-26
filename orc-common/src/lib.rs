@@ -5,6 +5,7 @@
 #![feature(let_else)]
 // #![feature(generic_associated_types)]
 #![feature(associated_type_defaults)]
+#![feature(split_array)]
 
 extern crate rustc_error_codes;
 extern crate rustc_errors;

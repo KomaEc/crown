@@ -1,10 +1,10 @@
 // use crate::sparse_bit_vector::{self, SparseBitVectorGraph};
 // use rustc_data_structures::graph::iterate::post_order_from;
+use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
-use petgraph::{prelude::DiGraphMap, algo::TarjanScc};
 
 use crate::analysis::place_ext::place_abs::Offset;
 
@@ -24,7 +24,9 @@ pub(crate) struct StructTopology {
 impl StructTopology {
     pub(crate) fn new(tcx: TyCtxt, structs: Vec<DefId>) -> Self {
         let mut graph = DiGraphMap::with_capacity(structs.len(), structs.len());
-        structs.iter().for_each(|did| { graph.add_node(*did); });
+        structs.iter().for_each(|did| {
+            graph.add_node(*did);
+        });
         for did in structs.iter() {
             let adt_def = tcx.adt_def(did);
             assert!(adt_def.is_struct());

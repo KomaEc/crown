@@ -44,21 +44,18 @@ impl<I> InnerRep<I> for Array {}
 /// # Example Usages
 /// Discretise the set of all locals with pointer type of functions in a crate.
 #[derive(Debug)]
-pub struct ItemSet<I, Rep>
-where
-    Rep: InnerRep<I>,
-{
+pub struct ItemSet<I> {
     belongers: FxHashMap<DefId, usize>,
     /// Sets of contents (represented by an interval of index `I`) of each belonger.
-    items: Rep::ItemsRep, //Vec<I>,
+    items: Vec<I>,
     /// Indices of contents of each belonger. Pointers into `content_indices`
-    offset_of_for_belonger: Vec<usize>,
+    offset_of_start: Vec<usize>,
     /// If step width is fixed, then this field can be optimized away
     offset_of: Vec<usize>,
-    _rep: PhantomData<*const Rep>,
+    // _rep: PhantomData<*const Rep>,
 }
 
-impl<I, Rep> ItemSet<I, Rep>
+impl<I> ItemSet<I>
 where
     I: std::ops::AddAssign<u32>
         + std::ops::Add<u32, Output = I>
@@ -69,8 +66,6 @@ where
         + Ord
         + PartialEq
         + Eq,
-    Rep: InnerRep<I>,
-    Rep::ItemsRep: From<Vec<I>>,
 {
     #[inline]
     pub fn new<'tcx, ItemHolder, F, G, S, P, It>(
@@ -98,38 +93,60 @@ where
 
         let mut items = Vec::with_capacity(belongers.len() + 1);
         items.push(first_item);
-        let mut offset_of_belonger = Vec::with_capacity(belongers.len() + 1);
-        offset_of_belonger.push(0);
+        let mut offset_of_start = Vec::with_capacity(belongers.len() + 1);
+        offset_of_start.push(0);
         let mut offset_of = Vec::new();
 
         let mut next_item = first_item;
-        let mut n_holders = 0;
+        let mut offset_of_index = 0;
+
+        // println!("go");
 
         for &did in dids {
-            let to_step = step(did);
+            let step_size = step(did);
 
             let mut offset = 0;
 
+            offset_of.push(offset);
+
+            let mut n_holders = 0;
             for (idx, holder) in item_holder_iter(tcx, did).enumerate() {
-                offset_of.push(offset);
-                if to_step(idx, holder) {
+                // offset_of.push(offset);
+                if step_size(idx, holder) {
                     with_content(next_item);
                     next_item += 1;
                     offset += 1;
                 }
+                offset_of.push(offset);
+                // offset_of_index += 1;
                 n_holders += 1;
             }
+            // println!("{:?}", offset_of);
             items.push(next_item);
-            offset_of_belonger.push(n_holders);
+            offset_of_index += n_holders + 1;
+            offset_of_start.push(offset_of_index);
         }
+        // println!("{:?}", offset_of_for_belonger);
 
         ItemSet {
             belongers,
             items: items.into(),
-            offset_of_for_belonger: offset_of_belonger,
+            offset_of_start,
             offset_of,
-            _rep: PhantomData,
+            // _rep: PhantomData,
         }
+
+        // for &did in dids {
+        //     // println!("go {:?}", did);
+        //     let to_step = step(did);
+        //     for (idx, holder) in item_holder_iter(tcx, did).enumerate() {
+        //         if to_step(idx, holder) {
+        //             let _ = this.get_content(did, idx);
+        //         }
+        //     }
+        // }
+
+        // this
     }
 
     #[inline]
@@ -143,7 +160,7 @@ where
     }
 }
 
-impl<I, Rep> ItemSet<I, Rep>
+impl<I> ItemSet<I>
 where
     I: std::ops::AddAssign<u32>
         + std::ops::Add<u32, Output = I>
@@ -154,8 +171,6 @@ where
         + Ord
         + PartialEq
         + Eq,
-    Rep: InnerRep<I>,
-    Rep::ItemsRep: std::ops::Index<usize, Output = I>,
 {
     #[inline]
     pub fn iter(&self) -> impl Iterator<Item = (&DefId, Range<I>)> {
@@ -178,13 +193,25 @@ where
     }
 
     #[inline]
-    pub fn get_content(&self, belonger: DefId, idx: usize) -> I {
-        // println!("getting content {:?}:{idx}", belonger);
+    fn get_offset_of_inner(&self, inner_idx: usize) -> &[usize] {
+        let start = self.offset_of_start[inner_idx];
+        let end = self.offset_of_start[inner_idx + 1];
+        &self.offset_of[start..end]
+    }
+
+    // #[inline]
+    // pub fn get_offset_of(&self, belonger: DefId) -> &[usize] {
+    //     let inner_idx = self.belongers[&belonger];
+    //     self.get_offset_of_inner(inner_idx)
+    // }
+
+    #[inline]
+    pub fn get_singleton_content(&self, belonger: DefId, idx: usize) -> I {
         let inner_idx = self.belongers[&belonger];
-        let offset = self.offset_of[self.offset_of_for_belonger[inner_idx] + idx];
-        let Range { start, end } = self.get_contents_inner(inner_idx);
-        // println!("range: {:?}~{:?}, offset: {offset}", start, end);
-        assert!(start + (offset as u32) < end);
-        start + (offset as u32)
+        let offset_of = self.get_offset_of_inner(inner_idx);
+        let offset = offset_of[idx];
+        assert_eq!(offset_of[idx + 1], offset + 1);
+        let start = self.items[inner_idx];
+        start + offset as u32
     }
 }
