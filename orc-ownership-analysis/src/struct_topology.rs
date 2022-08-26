@@ -6,7 +6,7 @@ use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
 use petgraph::{prelude::DiGraphMap, algo::TarjanScc};
 
-use crate::analysis::place_ext::place_abs::AggregateOffset;
+use crate::analysis::place_ext::place_abs::Offset;
 
 pub(crate) struct StructTopology {
     /// Structs in post order of the dependency graph.
@@ -18,7 +18,7 @@ pub(crate) struct StructTopology {
     pub(crate) post_order: Vec<DefId>,
     /// struct -> field -> aggregate offset start of this field
     /// an additional entry last() represents the sum
-    aggregate_offset: FxHashMap<DefId, Vec<AggregateOffset>>,
+    offset_of: FxHashMap<DefId, Vec<Offset>>,
 }
 
 impl StructTopology {
@@ -39,13 +39,13 @@ impl StructTopology {
         let mut post_order = Vec::with_capacity(structs.len());
         TarjanScc::new().run(&graph, |nodes| post_order.extend(nodes));
 
-        let mut aggregate_offset = FxHashMap::default();
+        let mut offset_of = FxHashMap::default();
 
         for &did in &post_order {
             let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };
             assert!(adt_def.is_struct());
 
-            let mut offset = AggregateOffset::from_u32(0);
+            let mut offset = Offset::from_u32(0);
             let mut offsets = vec![offset];
 
             offsets.extend(adt_def.all_fields().map(|field_def| {
@@ -54,9 +54,9 @@ impl StructTopology {
                         TyKind::RawPtr(..) | TyKind::Ref(..) => 1,
                         TyKind::Adt(sub_adt_def, _) if sub_adt_def.is_box() => 1,
                         TyKind::Adt(sub_adt_def, _) => {
-                            aggregate_offset
+                            offset_of
                                 .get(&sub_adt_def.did())
-                                .and_then(|offsets: &Vec<AggregateOffset>| {
+                                .and_then(|offsets: &Vec<Offset>| {
                                     assert!(!offsets.is_empty());
                                     offsets.last().map(|&offset| offset.as_usize())
                                 })
@@ -68,12 +68,12 @@ impl StructTopology {
                 offset
             }));
 
-            aggregate_offset.insert(did, offsets);
+            offset_of.insert(did, offsets);
         }
 
         StructTopology {
             post_order,
-            aggregate_offset,
+            offset_of,
         }
     }
 
@@ -85,21 +85,21 @@ impl StructTopology {
     /// Return the total offset of a struct definition, `None` if
     /// `did` is a library struct/enum/union
     #[inline]
-    pub(crate) fn struct_offset(&self, did: &DefId) -> Option<AggregateOffset> {
-        let last = self.aggregate_offset.get(did)?.last();
+    pub(crate) fn struct_offset(&self, did: &DefId) -> Option<Offset> {
+        let last = self.offset_of.get(did)?.last();
         assert!(last.is_some());
         last.map(|&offset| offset)
     }
 
     #[inline]
-    pub(crate) fn field_offsets(&self, did: &DefId) -> Option<&[AggregateOffset]> {
-        self.aggregate_offset.get(did).map(|vec| &vec[..])
+    pub(crate) fn field_offsets(&self, did: &DefId) -> Option<&[Offset]> {
+        self.offset_of.get(did).map(|vec| &vec[..])
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{analysis::place_ext::place_abs::AggregateOffset, CrateInfo};
+    use crate::{analysis::place_ext::place_abs::Offset, CrateInfo};
 
     const TEXT: &str = "
     struct s {
@@ -146,27 +146,27 @@ mod tests {
             define_structs!(s, t, u, v, w, x);
             assert_eq!(
                 program.struct_topology().field_offsets(&s).unwrap(),
-                [0, 2, 3, 4].map(|x| AggregateOffset::from_u32(x))
+                [0, 2, 3, 4].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology().field_offsets(&t).unwrap(),
-                [0, 1, 2].map(|x| AggregateOffset::from_u32(x))
+                [0, 1, 2].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology().field_offsets(&u).unwrap(),
-                [0, 0, 1, 1].map(|x| AggregateOffset::from_u32(x))
+                [0, 0, 1, 1].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology().field_offsets(&v).unwrap(),
-                [0, 0].map(|x| AggregateOffset::from_u32(x))
+                [0, 0].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology().field_offsets(&w).unwrap(),
-                [0, 1].map(|x| AggregateOffset::from_u32(x))
+                [0, 1].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology().field_offsets(&x).unwrap(),
-                [0].map(|x| AggregateOffset::from_u32(x))
+                [0].map(|x| Offset::from_u32(x))
             )
         })
     }

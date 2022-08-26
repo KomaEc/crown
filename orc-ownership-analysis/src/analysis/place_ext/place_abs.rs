@@ -3,24 +3,24 @@ use rustc_middle::mir::{HasLocalDecls, Local};
 use crate::analysis::OwnershipAnalysisCtxt;
 
 orc_common::macros::newtype_index! {
-    pub(crate) struct AggregateOffset {
+    pub(crate) struct Offset {
         DEBUG_FORMAT = "{}"
     }
 }
 
-impl AggregateOffset {
-    pub(crate) const ZERO: Self = AggregateOffset::from_u32(0);
+impl Offset {
+    pub(crate) const ZERO: Self = Offset::from_u32(0);
 }
 
-impl std::ops::Add<AggregateOffset> for AggregateOffset {
+impl std::ops::Add<Offset> for Offset {
     type Output = Self;
 
-    fn add(self, rhs: AggregateOffset) -> Self::Output {
+    fn add(self, rhs: Offset) -> Self::Output {
         self + rhs.as_usize()
     }
 }
 
-impl std::ops::AddAssign for AggregateOffset {
+impl std::ops::AddAssign for Offset {
     fn add_assign(&mut self, rhs: Self) {
         *self = *self + rhs
     }
@@ -31,8 +31,8 @@ impl std::ops::AddAssign for AggregateOffset {
 pub(crate) struct PlaceAbs {
     pub(crate) base_local: Local,
     pub(crate) dereferenced: bool,
-    pub(crate) start: AggregateOffset,
-    pub(crate) end: AggregateOffset,
+    pub(crate) start: Offset,
+    pub(crate) end: Offset,
 }
 
 impl std::fmt::Display for PlaceAbs {
@@ -72,7 +72,7 @@ impl PlaceAbs {
         PlaceAbs {
             base_local: local,
             dereferenced: false,
-            start: AggregateOffset::ZERO,
+            start: Offset::ZERO,
             end: local_decls.local_decls()[local]
                 .ty
                 .ty_adt_def()
@@ -82,7 +82,7 @@ impl PlaceAbs {
                         .struct_topology()
                         .struct_offset(&adt_def.did())
                 })
-                .unwrap_or(AggregateOffset::ZERO),
+                .unwrap_or(Offset::ZERO),
         }
     }
 }
