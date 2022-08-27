@@ -124,7 +124,6 @@ pub trait Step {
     fn size(size: Self::StepSize) -> usize;
     fn l2_items<I>(items: Range<I>) -> Self::L2Items<I>;
 }
-pub trait NotFixed {}
 #[derive(Debug)]
 pub struct Arbitrary;
 impl Step for Arbitrary {
@@ -146,7 +145,6 @@ impl Step for Arbitrary {
         size
     }
 }
-impl NotFixed for Arbitrary {}
 #[derive(Debug)]
 pub struct FixedSize<const SIZE: usize>;
 impl<const SIZE: usize> Step for FixedSize<SIZE> {
@@ -172,7 +170,7 @@ impl Step for Maybe {
     type L2Items<I> = I;
 
     type StepSize = bool;
-    
+
     type OffSetOfConstruction =
         FrozenVecVecConstruction<usize>;
 
@@ -187,7 +185,6 @@ impl Step for Maybe {
         size as usize
     }
 }
-impl NotFixed for Maybe {}
 
 pub trait ResetAcrossDefId {
     fn reset<I>(item: &mut I, to_be: I);
