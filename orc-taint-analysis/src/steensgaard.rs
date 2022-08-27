@@ -92,7 +92,7 @@ impl Steensgaard {
                 );
                 assert_eq!(pts.push(field_pts), field);
             },
-            |_| |_, _| 1, // peel_off_array(input.tcx().type_of(field_def.did)).is_unsafe_ptr(),
+            |_| |_, _| (), // peel_off_array(input.tcx().type_of(field_def.did)).is_unsafe_ptr(),
         );
 
         struct AddrTaken<'me>(&'me mut BitSet<Local>);
@@ -126,9 +126,9 @@ impl Steensgaard {
                 vis.visit_body(body);
                 move |local_idx, local_decl| {
                     let ty = peel_off_array(local_decl.ty);
-                    (ty.is_unsafe_ptr()
+                    ty.is_unsafe_ptr()
                         || ty.is_region_ptr()
-                        || addr_taken.contains(local_idx.into())) as usize
+                        || addr_taken.contains(local_idx.into())
                 }
             },
         );
@@ -186,7 +186,7 @@ impl Steensgaard {
 
     // #[cfg(debug_assertions)]
     pub fn print_results(&self) {
-        for &did in self.struct_fields.belongers() {
+        for &did in self.struct_fields.dids() {
             println!("results for {:?}:", did);
             let fields_result = self
                 .struct_fields
@@ -198,7 +198,7 @@ impl Steensgaard {
             }
         }
 
-        for &did in self.function_locals.belongers() {
+        for &did in self.function_locals.dids() {
             println!("results for {:?}:", did);
             let locals_result = self
                 .function_locals
@@ -480,7 +480,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
             let loc = self
                 .steensgaard
                 .struct_fields
-                .assert_singleton_item(adt_def.did(), field.index());
+                .get_item(adt_def.did(), field.index());
             return Some(PlaceLocation::Plain(loc));
         }
 
@@ -488,7 +488,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
         let loc = self
             .steensgaard
             .function_locals
-            .assert_singleton_item(self.body.source.def_id(), place.local.as_usize());
+            .get_item(self.body.source.def_id(), place.local.as_usize());
         if place.as_local().is_some() {
             return Some(PlaceLocation::Plain(loc));
         } else {
@@ -584,7 +584,7 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
             let param_loc = self
                 .steensgaard
                 .function_locals
-                .assert_singleton_item(callee_did, idx + 1);
+                .get_item(callee_did, idx + 1);
 
             let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
             let constraint_idx = self.constraints.len();
@@ -600,10 +600,7 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
 
         let Some(dest_loc) = self.place_location(*destination) else { return };
         let PlaceLocation::Plain(dest_loc) = dest_loc else { unreachable!("destination place contains derefs") };
-        let ret_loc = self
-            .steensgaard
-            .function_locals
-            .assert_singleton_item(callee_did, 0);
+        let ret_loc = self.steensgaard.function_locals.get_item(callee_did, 0);
         let constraint_idx = self.constraints.len();
         self.constraints
             .push(Constraint::new(ConstraintKind::Assign, dest_loc, ret_loc));
