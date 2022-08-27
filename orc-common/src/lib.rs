@@ -3,7 +3,7 @@
 #![feature(trusted_step)]
 #![feature(min_specialization)]
 #![feature(let_else)]
-// #![feature(generic_associated_types)]
+#![feature(generic_associated_types)]
 #![feature(associated_type_defaults)]
 #![feature(split_array)]
 
@@ -17,7 +17,7 @@ extern crate rustc_middle;
 extern crate rustc_session;
 extern crate rustc_span;
 
-pub mod item_set;
+pub mod data_structure;
 pub mod macros;
 pub mod rewriter;
 pub mod test_infra;

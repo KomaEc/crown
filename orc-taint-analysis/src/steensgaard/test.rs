@@ -19,8 +19,8 @@ fn test1() {
         steensgaard.print_results();
         let s = input.2[0];
         let pts = &steensgaard.pts;
-        let f = steensgaard.struct_fields.get_singleton_content(s, 0);
-        let g = steensgaard.struct_fields.get_singleton_content(s, 1);
+        let f = steensgaard.struct_fields.assert_singleton_item(s, 0);
+        let g = steensgaard.struct_fields.assert_singleton_item(s, 1);
         assert!(steensgaard.pts_targets.equiv(pts[f], pts[g]))
     })
 }
@@ -39,8 +39,8 @@ fn test2() {
         steensgaard.print_results();
         let pts = &steensgaard.pts;
         let f = input.1[0];
-        let local = steensgaard.function_locals.get_singleton_content(f, 1);
-        let p = steensgaard.function_locals.get_singleton_content(f, 2);
+        let local = steensgaard.function_locals.assert_singleton_item(f, 1);
+        let p = steensgaard.function_locals.assert_singleton_item(f, 2);
         assert_ne!(local, p);
         assert_eq!(pts[p], local);
     })

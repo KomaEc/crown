@@ -2,7 +2,10 @@ pub mod constraint;
 #[cfg(test)]
 mod test;
 
-use orc_common::{item_set::ItemSet, OrcInput};
+use orc_common::{
+    data_structure::{FixedSize, HashMapDefIdVecRange, Maybe},
+    OrcInput,
+};
 use petgraph::unionfind::UnionFind;
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
@@ -48,8 +51,8 @@ fn peel_off_array(mut ty: Ty) -> Ty {
 
 #[derive(Debug)]
 pub struct Steensgaard {
-    pub(crate) struct_fields: ItemSet<AbstractLocation>,
-    pub(crate) function_locals: ItemSet<AbstractLocation>,
+    pub(crate) struct_fields: HashMapDefIdVecRange<AbstractLocation, FixedSize<1>>,
+    pub(crate) function_locals: HashMapDefIdVecRange<AbstractLocation, Maybe>,
     pub(crate) pts_targets: UnionFind<AbstractLocation>,
     /// Steensgaard's analysis tracks for sinlge points-to relation for an
     /// abstract location, thus pts graph can be simplified as a vector.
@@ -73,7 +76,7 @@ impl Steensgaard {
             pts.push(this);
         }
 
-        let struct_fields = ItemSet::new(
+        let struct_fields = HashMapDefIdVecRange::new(
             input.tcx(),
             input.structs(),
             pts.next_index(), //AbstractLocation::NULL + 1 + n_struct_fields_of_ptr_type as u32,
@@ -89,7 +92,7 @@ impl Steensgaard {
                 );
                 assert_eq!(pts.push(field_pts), field);
             },
-            |_| |_, _| true, // peel_off_array(input.tcx().type_of(field_def.did)).is_unsafe_ptr(),
+            |_| |_, _| 1, // peel_off_array(input.tcx().type_of(field_def.did)).is_unsafe_ptr(),
         );
 
         struct AddrTaken<'me>(&'me mut BitSet<Local>);
@@ -105,7 +108,7 @@ impl Steensgaard {
             }
         }
 
-        let function_locals = ItemSet::new(
+        let function_locals = HashMapDefIdVecRange::new(
             input.tcx(),
             input.functions(),
             pts.next_index(),
@@ -123,9 +126,9 @@ impl Steensgaard {
                 vis.visit_body(body);
                 move |local_idx, local_decl| {
                     let ty = peel_off_array(local_decl.ty);
-                    ty.is_unsafe_ptr()
+                    (ty.is_unsafe_ptr()
                         || ty.is_region_ptr()
-                        || addr_taken.contains(local_idx.into())
+                        || addr_taken.contains(local_idx.into())) as usize
                 }
             },
         );
@@ -187,7 +190,7 @@ impl Steensgaard {
             println!("results for {:?}:", did);
             let fields_result = self
                 .struct_fields
-                .get_contents(did)
+                .level_one_items(did)
                 .map(|loc| self.pts_targets.find(self.pts[loc]))
                 .collect::<Vec<_>>();
             for (idx, tgt) in fields_result.into_iter().enumerate() {
@@ -199,7 +202,7 @@ impl Steensgaard {
             println!("results for {:?}:", did);
             let locals_result = self
                 .function_locals
-                .get_contents(did)
+                .level_one_items(did)
                 .map(|loc| self.pts_targets.find(self.pts[loc]))
                 .collect::<Vec<_>>();
             for (idx, tgt) in locals_result.into_iter().enumerate() {
@@ -477,7 +480,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
             let loc = self
                 .steensgaard
                 .struct_fields
-                .get_singleton_content(adt_def.did(), field.index());
+                .assert_singleton_item(adt_def.did(), field.index());
             return Some(PlaceLocation::Plain(loc));
         }
 
@@ -485,7 +488,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
         let loc = self
             .steensgaard
             .function_locals
-            .get_singleton_content(self.body.source.def_id(), place.local.as_usize());
+            .assert_singleton_item(self.body.source.def_id(), place.local.as_usize());
         if place.as_local().is_some() {
             return Some(PlaceLocation::Plain(loc));
         } else {
@@ -581,7 +584,7 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
             let param_loc = self
                 .steensgaard
                 .function_locals
-                .get_singleton_content(callee_did, idx + 1);
+                .assert_singleton_item(callee_did, idx + 1);
 
             let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
             let constraint_idx = self.constraints.len();
@@ -597,7 +600,10 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
 
         let Some(dest_loc) = self.place_location(*destination) else { return };
         let PlaceLocation::Plain(dest_loc) = dest_loc else { unreachable!("destination place contains derefs") };
-        let ret_loc = self.steensgaard.function_locals.get_singleton_content(callee_did, 0);
+        let ret_loc = self
+            .steensgaard
+            .function_locals
+            .assert_singleton_item(callee_did, 0);
         let constraint_idx = self.constraints.len();
         self.constraints
             .push(Constraint::new(ConstraintKind::Assign, dest_loc, ret_loc));
