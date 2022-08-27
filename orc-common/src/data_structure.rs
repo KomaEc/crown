@@ -242,7 +242,6 @@ where
         item_holder_iter: F,
         mut with_content: G,
         mut step: S,
-        // to_step: P,
     ) -> Self
     where
         ItemHolder: 'tcx,
@@ -260,37 +259,19 @@ where
 
         let mut items = Vec::with_capacity(fx_hash_map.len() + 1);
         items.push(first_item);
-        // let mut offset_of_start = Vec::with_capacity(fx_hash_map.len() + 1);
-        // offset_of_start.push(0);
-        // let mut offset_of = Vec::new();
 
         let mut offset_of = St::OffSetOfConstruction::new(fx_hash_map.len());
 
         let mut next_item = first_item;
-        // let mut offset_of_index = 0;
-
-        // println!("go");
 
         for &did in dids {
             Re::reset(&mut next_item, first_item);
-
             let step_size = step(did);
-
             let mut offset = 0;
-
-            // offset_of.push(offset);
-
             offset_of.reserve_offset(offset);
 
-            // let mut n_holders = 0;
             for (idx, holder) in item_holder_iter(tcx, did).enumerate() {
                 let size = St::size(step_size(idx, holder));
-                // , &|did| {
-                //     let did_idx = fx_hash_map[&did];
-                //     let end = items[did_idx + 1];
-                //     let start = items[did_idx];
-                //     Range { start, end }
-                // }
                 if size > 0 {
                     with_content(St::l2_items(Range {
                         start: next_item,
@@ -299,47 +280,19 @@ where
                 }
                 next_item += size as u32;
                 offset += size;
-                // if step_size(idx, holder) {
-                //     with_content(St::l2_items(Range { start: next_item, end: next_item + 1 }));
-                //     // with_content(next_item);
-                //     next_item += 1;
-                //     offset += 1;
-                // }
-                // offset_of.push(offset);
                 offset_of.reserve_offset(offset);
-                // n_holders += 1;
             }
-            // println!("{:?}", offset_of.frozen_vec_vec.l2_indexing);
-            // println!("{:?}", offset_of);
             items.push(next_item);
-            // offset_of_index += n_holders + 1;
-            // offset_of_start.push(offset_of_index);
             offset_of.push_offsets();
         }
         let offset_of = offset_of.done();
-        // println!("{:?}", offset_of.frozen_vec_vec.l1_indexing);
-        // println!("{:?}", offset_of_start);
 
         HashMapDefIdVecRange {
             fx_hash_map,
             items,
-            // offset_of_start,
-            // offset_of,
             offset_of,
             _marker: PhantomData,
         }
-
-        // for &did in dids {
-        //     // println!("go {:?}", did);
-        //     let to_step = step(did);
-        //     for (idx, holder) in item_holder_iter(tcx, did).enumerate() {
-        //         if to_step(idx, holder) {
-        //             let _ = this.get_content(did, idx);
-        //         }
-        //     }
-        // }
-
-        // this
     }
 
     #[inline]
