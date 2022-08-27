@@ -77,10 +77,12 @@ impl PlaceAbs {
                 .ty
                 .ty_adt_def()
                 .and_then(|adt_def| {
-                    octxt
-                        .program
-                        .struct_topology()
-                        .struct_offset(&adt_def.did())
+                    adt_def.is_struct().then(|| {
+                        octxt
+                            .program
+                            .struct_topology()
+                            .struct_offset(&adt_def.did())
+                    })
                 })
                 .unwrap_or(Offset::ZERO),
         }

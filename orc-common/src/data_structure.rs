@@ -72,6 +72,14 @@ impl<I> FrozenVecVecConstruction<I> {
     pub fn done(self) -> FrozenVecVec<I> {
         self.frozen_vec_vec
     }
+
+    #[inline]
+    pub fn get_previous(&self, l1: usize) -> &[I] {
+        if l1 + 1 >= self.frozen_vec_vec.l1_indexing.len() {
+            panic!("the entry for {l1} is still under construction")
+        }
+        &self.frozen_vec_vec[l1]
+    }
 }
 
 pub trait IsOffsetOfConstruction {
@@ -106,7 +114,6 @@ impl IsOffsetOfConstruction for FrozenVecVecConstruction<usize> {
     fn done(self) -> Self::OffsetOf {
         self.done()
     }
-
 }
 
 impl IsOffsetOfConstruction for () {
@@ -128,9 +135,8 @@ pub trait Step {
 pub struct Arbitrary;
 impl Step for Arbitrary {
     type L2Items<I> = Range<I>;
-    
-    type OffSetOfConstruction =
-        FrozenVecVecConstruction<usize>;
+
+    type OffSetOfConstruction = FrozenVecVecConstruction<usize>;
 
     type StepSize = usize;
 
@@ -138,7 +144,6 @@ impl Step for Arbitrary {
     fn l2_items<I>(items: Range<I>) -> Self::L2Items<I> {
         items
     }
-
 
     #[inline]
     fn size(size: Self::StepSize) -> usize {
@@ -171,14 +176,12 @@ impl Step for Maybe {
 
     type StepSize = bool;
 
-    type OffSetOfConstruction =
-        FrozenVecVecConstruction<usize>;
+    type OffSetOfConstruction = FrozenVecVecConstruction<usize>;
 
     #[inline]
     fn l2_items<I>(items: Range<I>) -> Self::L2Items<I> {
         items.start
     }
-
 
     #[inline]
     fn size(size: Self::StepSize) -> usize {
@@ -213,11 +216,6 @@ pub struct HashMapDefIdVecRange<I, St: Step = Arbitrary, Re: ResetAcrossDefId = 
     fx_hash_map: FxHashMap<DefId, usize>,
     /// Sets of contents (represented by an interval of index `I`) of each did.
     items: Vec<I>,
-    // /// Indices of contents of each def_id. Pointers into `content_indices`
-    // offset_of_start: Vec<usize>,
-    // offset_of: Vec<usize>,
-    /// This can be optimised away if `FixedSize`
-    // offset_of: FrozenVecVec<usize>,
     offset_of: <<St as Step>::OffSetOfConstruction as IsOffsetOfConstruction>::OffsetOf,
     _marker: PhantomData<*const (St, Re)>,
 }
@@ -266,10 +264,7 @@ where
         // offset_of_start.push(0);
         // let mut offset_of = Vec::new();
 
-        let mut offset_of =
-            St::OffSetOfConstruction::new(
-                fx_hash_map.len(),
-            );
+        let mut offset_of = St::OffSetOfConstruction::new(fx_hash_map.len());
 
         let mut next_item = first_item;
         // let mut offset_of_index = 0;
@@ -290,6 +285,12 @@ where
             // let mut n_holders = 0;
             for (idx, holder) in item_holder_iter(tcx, did).enumerate() {
                 let size = St::size(step_size(idx, holder));
+                // , &|did| {
+                //     let did_idx = fx_hash_map[&did];
+                //     let end = items[did_idx + 1];
+                //     let start = items[did_idx];
+                //     Range { start, end }
+                // }
                 if size > 0 {
                     with_content(St::l2_items(Range {
                         start: next_item,
@@ -374,10 +375,7 @@ where
 
 impl<I, Re> HashMapDefIdVecRange<I, Arbitrary, Re>
 where
-    I: std::ops::Add<u32, Output = I>
-        + Clone
-        + Copy
-        + PartialOrd,
+    I: std::ops::Add<u32, Output = I> + Clone + Copy + PartialOrd,
     Re: ResetAcrossDefId,
 {
     #[inline]
@@ -394,10 +392,7 @@ where
 
 impl<I, Re> HashMapDefIdVecRange<I, Maybe, Re>
 where
-    I: std::ops::Add<u32, Output = I>
-        + Clone
-        + Copy
-        + PartialEq,
+    I: std::ops::Add<u32, Output = I> + Clone + Copy + PartialEq,
     Re: ResetAcrossDefId,
 {
     #[inline]
@@ -422,9 +417,7 @@ where
 
 impl<I, const N: usize, Re> HashMapDefIdVecRange<I, FixedSize<N>, Re>
 where
-    I: std::ops::Add<u32, Output = I>
-        + Clone
-        + Copy,
+    I: std::ops::Add<u32, Output = I> + Clone + Copy,
     Re: ResetAcrossDefId,
 {
     #[inline]

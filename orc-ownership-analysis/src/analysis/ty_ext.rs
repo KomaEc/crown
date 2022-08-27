@@ -16,7 +16,10 @@ impl<'tcx> TyExt<'tcx> for Ty<'tcx> {
         }
 
         let TyKind::Adt(adt_def, _) = self.kind() else { return false };
-        let Some(total_offset) = struct_topology.struct_offset(&adt_def.did()) else { return false };
+        if !adt_def.is_struct() {
+            return false;
+        }
+        let total_offset = struct_topology.struct_offset(&adt_def.did());
         return total_offset.as_usize() > 0;
     }
 

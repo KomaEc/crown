@@ -40,10 +40,13 @@ impl<'tcx> PlaceExt<'tcx> for Place<'tcx> {
                         return None;
                     }
                     let TyKind::Adt(adt_def, _) = ty.kind() else { unreachable!("{}", place_ty.ty) };
+                    if !adt_def.is_struct() {
+                        return None;
+                    }
                     let offsets = octxt
                         .program
                         .struct_topology()
-                        .field_offsets(&adt_def.did())?;
+                        .field_offsets(&adt_def.did());
                     if offsets.len() == 1 {
                         return None;
                     }

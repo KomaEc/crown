@@ -1,5 +1,4 @@
-// use crate::sparse_bit_vector::{self, SparseBitVectorGraph};
-// use rustc_data_structures::graph::iterate::post_order_from;
+use orc_common::data_structure::FrozenVecVec;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -16,9 +15,10 @@ pub(crate) struct StructTopology {
     /// in `struct S { f: *mut T } struct T;`
     /// `S` is not considered dependent on `T`
     pub(crate) post_order: Vec<DefId>,
+    did_idx: FxHashMap<DefId, usize>,
     /// struct -> field -> aggregate offset start of this field
     /// an additional entry last() represents the sum
-    offset_of: FxHashMap<DefId, Vec<Offset>>,
+    offset_of: FrozenVecVec<Offset>,
 }
 
 impl StructTopology {
@@ -41,40 +41,44 @@ impl StructTopology {
         let mut post_order = Vec::with_capacity(structs.len());
         TarjanScc::new().run(&graph, |nodes| post_order.extend(nodes));
 
-        let mut offset_of = FxHashMap::default();
+        let did_idx: FxHashMap<DefId, usize> = post_order
+            .iter()
+            .enumerate()
+            .map(|(idx, &did)| (did, idx))
+            .collect();
 
-        for &did in &post_order {
+        let mut offset_of = FrozenVecVec::new(post_order.len());
+        for &did in post_order.iter() {
+            println!("go {:?}", did);
             let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };
-            assert!(adt_def.is_struct());
 
             let mut offset = Offset::from_u32(0);
-            let mut offsets = vec![offset];
-
-            offsets.extend(adt_def.all_fields().map(|field_def| {
+            offset_of.reserve_item(offset);
+            for field_def in adt_def.all_fields() {
                 offset = offset
                     + match field_def.ty(tcx, subst_ref).kind() {
                         TyKind::RawPtr(..) | TyKind::Ref(..) => 1,
                         TyKind::Adt(sub_adt_def, _) if sub_adt_def.is_box() => 1,
-                        TyKind::Adt(sub_adt_def, _) => {
-                            offset_of
-                                .get(&sub_adt_def.did())
-                                .and_then(|offsets: &Vec<Offset>| {
-                                    assert!(!offsets.is_empty());
-                                    offsets.last().map(|&offset| offset.as_usize())
-                                })
-                                // non-user defined structs are ignored
-                                .unwrap_or(0)
-                        }
+                        TyKind::Adt(sub_adt_def, _) => did_idx
+                            .get(&sub_adt_def.did())
+                            .and_then(|&field_did_idx| {
+                                offset_of
+                                    .get_previous(field_did_idx)
+                                    .last()
+                                    .map(|&offset| offset.as_usize())
+                            })
+                            .unwrap_or(0),
                         _ => 0,
                     };
-                offset
-            }));
-
-            offset_of.insert(did, offsets);
+                offset_of.reserve_item(offset);
+            }
+            offset_of.push_items();
         }
+        let offset_of = offset_of.done();
 
         StructTopology {
             post_order,
+            did_idx,
             offset_of,
         }
     }
@@ -84,18 +88,16 @@ impl StructTopology {
         &self.post_order[..]
     }
 
-    /// Return the total offset of a struct definition, `None` if
-    /// `did` is a library struct/enum/union
     #[inline]
-    pub(crate) fn struct_offset(&self, did: &DefId) -> Option<Offset> {
-        let last = self.offset_of.get(did)?.last();
-        assert!(last.is_some());
-        last.map(|&offset| offset)
+    pub(crate) fn struct_offset(&self, did: &DefId) -> Offset {
+        let idx = self.did_idx[did];
+        self.offset_of[idx].last().copied().unwrap()
     }
 
     #[inline]
-    pub(crate) fn field_offsets(&self, did: &DefId) -> Option<&[Offset]> {
-        self.offset_of.get(did).map(|vec| &vec[..])
+    pub(crate) fn field_offsets(&self, did: &DefId) -> &[Offset] {
+        let idx = self.did_idx[did];
+        &self.offset_of[idx]
     }
 }
 
@@ -147,27 +149,27 @@ mod tests {
             }
             define_structs!(s, t, u, v, w, x);
             assert_eq!(
-                program.struct_topology().field_offsets(&s).unwrap(),
+                program.struct_topology().field_offsets(&s), //.unwrap(),
                 [0, 2, 3, 4].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology().field_offsets(&t).unwrap(),
+                program.struct_topology().field_offsets(&t), //.unwrap(),
                 [0, 1, 2].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology().field_offsets(&u).unwrap(),
+                program.struct_topology().field_offsets(&u), //.unwrap(),
                 [0, 0, 1, 1].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology().field_offsets(&v).unwrap(),
+                program.struct_topology().field_offsets(&v), //.unwrap(),
                 [0, 0].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology().field_offsets(&w).unwrap(),
+                program.struct_topology().field_offsets(&w), //.unwrap(),
                 [0, 1].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology().field_offsets(&x).unwrap(),
+                program.struct_topology().field_offsets(&x), //.unwrap(),
                 [0].map(|x| Offset::from_u32(x))
             )
         })
