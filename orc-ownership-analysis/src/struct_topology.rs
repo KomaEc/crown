@@ -95,6 +95,11 @@ impl StructTopology {
     }
 
     #[inline]
+    pub(crate) fn contains(&self, did: &DefId) -> bool {
+        self.did_idx.contains_key(did)
+    }
+
+    #[inline]
     pub(crate) fn struct_offset(&self, did: &DefId) -> Offset {
         let idx = self.did_idx[did];
         self.offset_of[idx].last().copied().unwrap()

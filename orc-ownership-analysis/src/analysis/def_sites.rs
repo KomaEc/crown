@@ -12,7 +12,7 @@ use smallvec::SmallVec;
 
 pub(crate) struct Definitions {
     /// BasicBlock -> statement_index -> possible definitions
-    /// 
+    ///
     /// We've made an assumption that a local can only be used or defined
     /// once in a statement/terminator
     pub(crate) defs: VecArray<SmallVec<[Local; 2]>>,

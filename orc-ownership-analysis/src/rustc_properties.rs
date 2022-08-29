@@ -1,15 +1,11 @@
 //! Dynamically verify several assumptions we made on rustc.
 
-use rustc_hash::FxHashSet;
 use rustc_middle::mir::{
     visit::{MutatingUseContext, PlaceContext, Visitor},
-    Body, Local, LocalInfo, LocalKind, Location, Place, Rvalue, Terminator, TerminatorKind,
+    Local, LocalInfo, LocalKind, Location, Place, Rvalue, Terminator, TerminatorKind,
 };
 
-use crate::{
-    analysis::{place_ext::PlaceExt, OwnershipAnalysisCtxt},
-    CrateInfo,
-};
+use crate::CrateInfo;
 
 impl<'tcx> CrateInfo<'tcx> {
     pub fn verify(&self) {
