@@ -5,7 +5,7 @@ use self::constraint::{CadicalDatabase, Database};
 pub(crate) mod body_ext;
 pub(crate) mod constants;
 pub mod constraint;
-pub(crate) mod def_sites;
+pub(crate) mod def;
 pub(crate) mod join_points;
 pub(crate) mod place_ext;
 pub(crate) mod state;

@@ -5,13 +5,17 @@ use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
         visit::Visitor, BasicBlock, BasicBlockData, Body, Local, Location, Operand, Place, Rvalue,
-        Statement, StatementKind,
+        Statement, StatementKind, Constant,
     },
     ty::TyCtxt,
 };
 
 use crate::{
-    analysis::{def_sites::Definitions, state::{SSAState, SSAIdx}, ty_ext::TyExt},
+    analysis::{
+        def::Definitions,
+        state::{SSAIdx, SSAState},
+        ty_ext::TyExt,
+    },
     struct_topology::StructTopology,
 };
 
@@ -182,11 +186,18 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
         }
 
         match rvalue {
-            Rvalue::Use(Operand::Constant(_)) | Rvalue::Cast(_, Operand::Constant(_), _) => todo!(),
-            Rvalue::Use(Operand::Copy(rplace) | Operand::Move(rplace))
-            | Rvalue::Cast(_, Operand::Copy(rplace) | Operand::Move(rplace), _) => todo!(),
-            Rvalue::CopyForDeref(rplace) => todo!(),
-            Rvalue::Ref(_, _, rplace) | Rvalue::AddressOf(_, rplace) => todo!(),
+            Rvalue::Use(operand) | Rvalue::Cast(_, operand, _) => {}
+
+            Rvalue::CopyForDeref(rplace) => {}
+
+            Rvalue::Ref(_, _, rplace) | Rvalue::AddressOf(_, rplace) => {
+                let lhs = place
+                    .as_local()
+                    .expect("we assume that rustc guarantees the lhs of `p = &q` being local");
+                
+                
+            }
+
             Rvalue::BinaryOp(_, _) | Rvalue::CheckedBinaryOp(_, _) | Rvalue::UnaryOp(_, _) => {
                 unreachable!("{:?}: {ty} cannot contain ptr", rvalue)
             }
@@ -209,5 +220,20 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
             let ssa_idx = self.state.name_state.generate_fresh_name(place.local);
             tracing::debug!("fresh name for {:?}: {:?}", place.local, ssa_idx);
         }
+    }
+}
+
+pub(crate) enum SimplifiedAssignment<'me, 'tcx> {
+    RhsPlace(Local, &'me Place<'tcx>),
+    RhsConstant(Local, &'me Constant<'tcx>),
+    /// lhs place must contain projections
+    LhsPlace(&'me Place<'tcx>, Local),
+    Addr(Local, &'me Place<'tcx>),
+    DerefCopy(Local, &'me Place<'tcx>),
+}
+
+impl<'me, 'tcx> SimplifiedAssignment<'me, 'tcx> {
+    pub(crate) fn from_assign(place: &'me Place<'tcx>, rvalue: &'me Rvalue<'tcx>) -> Self {
+        todo!()
     }
 }

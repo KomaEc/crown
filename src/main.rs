@@ -207,6 +207,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 CrateInfo::from_input(&input)
             });
             program.verify();
+            println!("verification success");
         }
         Command::Analyse {
             null,

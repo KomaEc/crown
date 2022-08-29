@@ -140,3 +140,6 @@ pub(crate) fn initial_definitions<'tcx>(
         sites,
     }
 }
+
+#[cfg(test)]
+mod test {}

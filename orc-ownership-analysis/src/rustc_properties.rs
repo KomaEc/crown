@@ -10,9 +10,9 @@ use crate::CrateInfo;
 impl<'tcx> CrateInfo<'tcx> {
     pub fn verify(&self) {
         self.verify_shape_of_place();
-        self.assert_assign_simple();
+        self.verify_place_regularity();
         self.verify_temp_local_usage();
-        self.verify_args_are_all_locals()
+        self.verify_args_are_all_locals();
     }
 
     fn verify_shape_of_place(&self) {
@@ -54,34 +54,35 @@ impl<'tcx> CrateInfo<'tcx> {
         }
     }
 
-    pub fn compute_percentage_of_non_address_taking_functions(&self) {
-        struct Vis;
-        impl<'tcx> Visitor<'tcx> for Vis {
-            fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, _location: Location) {
-                if let Rvalue::AddressOf(rustc_ast::Mutability::Mut, _) = rvalue {
-                    panic!("{:?} to be catched", rvalue)
-                }
-            }
-        }
-        let prev_hook = std::panic::take_hook();
-        std::panic::set_hook(Box::new(|_| {}));
-        let n_address_taking_functions = self
-            .functions()
-            .iter()
-            .filter(|&did| {
-                let body = self.tcx.optimized_mir(did);
-                std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| Vis.visit_body(body)))
-                    .is_ok()
-            })
-            .count();
-        std::panic::set_hook(prev_hook);
-        let percentage =
-            n_address_taking_functions as f64 / self.call_graph.function_count() as f64;
-        println!("-------------stat: percntage of non address taking functions-----------------");
-        println!("                   {percentage}");
-    }
+    // pub fn compute_percentage_of_non_address_taking_functions(&self) -> Result<()> {
+    //     struct Vis;
+    //     impl<'tcx> Visitor<'tcx> for Vis {
+    //         fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, _location: Location) {
+    //             if let Rvalue::AddressOf(rustc_ast::Mutability::Mut, _) = rvalue {
+    //                 panic!("{:?} to be catched", rvalue)
+    //             }
+    //         }
+    //     }
+    //     let prev_hook = std::panic::take_hook();
+    //     std::panic::set_hook(Box::new(|_| {}));
+    //     let n_address_taking_functions = self
+    //         .functions()
+    //         .iter()
+    //         .filter(|&did| {
+    //             let body = self.tcx.optimized_mir(did);
+    //             std::panic::catch_unwind(std::panic::assertUnwindSafe(|| Vis.visit_body(body)))
+    //                 .is_ok()
+    //         })
+    //         .count();
+    //     std::panic::set_hook(prev_hook);
+    //     let percentage =
+    //         n_address_taking_functions as f64 / self.call_graph.function_count() as f64;
+    //     println!("-------------stat: percntage of non address taking functions-----------------");
+    //     println!("                   {percentage}");
+    //     Ok(())
+    // }
 
-    fn assert_assign_simple(&self) {
+    fn verify_place_regularity(&self) {
         struct Vis;
         impl<'tcx> Visitor<'tcx> for Vis {
             fn visit_assign(
@@ -90,6 +91,12 @@ impl<'tcx> CrateInfo<'tcx> {
                 rvalue: &Rvalue<'tcx>,
                 _location: Location,
             ) {
+                // we only have the following cases:
+                // local = place
+                // local = constant
+                // place = local
+                // local = &place
+                // local = deref_copy place
                 match rvalue {
                     Rvalue::Use(operand) | Rvalue::Cast(_, operand, _) => {
                         assert!(
@@ -97,9 +104,11 @@ impl<'tcx> CrateInfo<'tcx> {
                                 || operand.place().and_then(|place| place.as_local()).is_some()
                                 || operand.constant().is_some()
                         );
+                        assert!(!operand.constant().is_some() || place.as_local().is_some());
                     }
                     Rvalue::CopyForDeref(rplace) => {
-                        assert!(place.as_local().is_some() || rplace.as_local().is_some());
+                        assert!(place.as_local().is_some());
+                        assert!(rplace.as_local().is_none());
                     }
                     Rvalue::Ref(_, _, _) | Rvalue::AddressOf(_, _) => {
                         assert!(place.as_local().is_some())
@@ -107,6 +116,36 @@ impl<'tcx> CrateInfo<'tcx> {
                     _ => {}
                 }
             }
+
+            fn visit_place(
+                &mut self,
+                place: &Place<'tcx>,
+                context: PlaceContext,
+                _location: Location,
+            ) {
+                let PlaceContext::MutatingUse(MutatingUseContext::Call) = context else { return };
+                assert!(place.as_local().is_some())
+            }
+        }
+    }
+
+    fn verify_args_are_all_locals(&self) {
+        struct Vis;
+        impl<'tcx> Visitor<'tcx> for Vis {
+            fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _: Location) {
+                let TerminatorKind::Call { destination, args, .. } = &terminator.kind else { return };
+                for arg in args {
+                    assert!(
+                        arg.place().and_then(|place| place.as_local()).is_some()
+                            || arg.constant().is_some()
+                    );
+                }
+                assert!(destination.as_local().is_some());
+            }
+        }
+        for did in self.functions() {
+            let body = self.tcx.optimized_mir(did);
+            Vis.visit_body(body);
         }
     }
 
@@ -194,26 +233,6 @@ impl<'tcx> CrateInfo<'tcx> {
                     LocalKind::ReturnPointer => {}
                 }
             }
-        }
-    }
-
-    fn verify_args_are_all_locals(&self) {
-        struct Vis;
-        impl<'tcx> Visitor<'tcx> for Vis {
-            fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _: Location) {
-                let TerminatorKind::Call { destination, args, .. } = &terminator.kind else { return };
-                for arg in args {
-                    assert!(
-                        arg.place().and_then(|place| place.as_local()).is_some()
-                            || arg.constant().is_some()
-                    );
-                }
-                assert!(destination.as_local().is_some());
-            }
-        }
-        for did in self.functions() {
-            let body = self.tcx.optimized_mir(did);
-            Vis.visit_body(body);
         }
     }
 }
