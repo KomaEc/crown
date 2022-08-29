@@ -57,9 +57,7 @@ impl<I> VecArray<I> {
             .array_windows()
             .map(|&[start, end]| &self.l2_indexing[start..end])
     }
-
 }
-
 
 #[derive(Debug)]
 pub struct VecArrayConstruction<I> {
