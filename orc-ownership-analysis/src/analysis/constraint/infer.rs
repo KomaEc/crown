@@ -1,11 +1,14 @@
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{BasicBlock, BasicBlockData, Body, Location},
+    mir::{visit::Visitor, BasicBlock, BasicBlockData, Body, Location, Statement, StatementKind, Place, Rvalue},
     ty::TyCtxt,
 };
 
-use crate::{analysis::state::SSAState, CrateInfo};
+use crate::{
+    analysis::{def_sites::Definitions, state::SSAState},
+    CrateInfo,
+};
 
 use super::{CadicalDatabase, Database};
 
@@ -29,13 +32,13 @@ pub(crate) trait Mode {
         DB: Database + 'me;
 }
 #[derive(Debug)]
-pub(crate) struct PureRename;
+pub(crate) struct Pure;
 #[derive(Debug)]
-pub(crate) struct Inference;
-impl Mode for PureRename {
+pub(crate) struct WithCtxt;
+impl Mode for Pure {
     type Ctxt<'me, 'tcx: 'me, DB: Database + 'me> = ();
 }
-impl Mode for Inference {
+impl Mode for WithCtxt {
     type Ctxt<'me, 'tcx, DB> = Ctxt<'me, 'tcx, DB> where Self: 'me, 'tcx: 'me, DB: Database + 'me;
 }
 
@@ -43,7 +46,7 @@ pub(crate) struct Renamer<'me, 'tcx: 'me> {
     body: &'me Body<'tcx>,
     tcx: TyCtxt<'tcx>,
     state: SSAState,
-    // ctxt: Ctxt<'me, 'tcx, DB>
+    definitions: Definitions,
 }
 
 impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
@@ -66,18 +69,26 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
             ToPopNames,
         }
 
-        let mut recursion_stack = vec![(root, State::ToVisit)];
+        let mut recursion = vec![(root, State::ToVisit)];
 
-        while let Some((bb, state)) = recursion_stack.pop() {
+        while let Some((bb, state)) = recursion.pop() {
             match state {
                 State::ToVisit => {
-                    self.state.name_state.enter_new_block();
+                    // self.state.name_state.enter_new_block();
                     self.go_basic_block::<M>(bb, &self.body.basic_blocks()[bb]);
-                    recursion_stack.push((bb, State::ToPopNames));
-                    recursion_stack
-                        .extend(children[bb].iter().rev().map(|&bb| (bb, State::ToVisit)));
+                    recursion.push((bb, State::ToPopNames));
+                    recursion.extend(children[bb].iter().rev().map(|&bb| (bb, State::ToVisit)));
                 }
-                State::ToPopNames => self.state.name_state.pop_names(),
+                State::ToPopNames => {
+                    for &local in self
+                        .definitions
+                        .of_block(bb)
+                        .iter()
+                        .flatten()
+                    {
+                        self.state.name_state.pop(local);
+                    }
+                }
             }
         }
     }
@@ -125,5 +136,28 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
         }
 
         todo!()
+    }
+}
+
+impl<'me, 'tcx: 'me> Visitor<'tcx> for Renamer<'me, 'tcx> {
+    fn visit_statement(&mut self, statement: &Statement<'tcx>, location: Location,) {
+        match &statement.kind {
+            StatementKind::Assign(box (place, rvalue)) => self.visit_assign(place, rvalue, location),
+            StatementKind::SetDiscriminant { .. } => todo!(),
+            StatementKind::AscribeUserType(_, _) => todo!(),
+            StatementKind::StorageLive(_) |
+            StatementKind::StorageDead(_) |
+            StatementKind::Deinit(_) |
+            StatementKind::Retag(_, _) |
+            StatementKind::FakeRead(_) |
+            StatementKind::Coverage(_) |
+            StatementKind::CopyNonOverlapping(_) |
+            StatementKind::Nop => unreachable!("statement {:?} is not assumed to appear", statement),
+        }
+    }
+
+    fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location,) {
+        tracing::debug!("processing assignment {:?} = {:?}", place, rvalue);
+        
     }
 }

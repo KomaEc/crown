@@ -68,10 +68,7 @@ enum Command {
         #[clap(arg_enum, default_value_t = RewriteMode::Print)]
         rewrite_mode: RewriteMode,
     },
-    Playground {
-        #[clap(long)]
-        addr: bool,
-    },
+    VerifyRustcProperties,
     /// Perform empirical studies and show results.
     EmpiricalStudy,
     /// Pretty print Mir despite compilation error
@@ -205,16 +202,11 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         Command::EmpiricalStudy => {
             time("empirical study", || input.perform_empirical_study());
         }
-        Command::Playground { addr } => {
+        Command::VerifyRustcProperties => {
             let program = time("construct call graph and struct topology", || {
                 CrateInfo::from_input(&input)
             });
-            if addr {
-                program.compute_percentage_of_non_address_taking_functions();
-            }
-            program.verify_shape_of_place();
-            program.verify_temp_local_usage(); //.expect("verification failed");
-            program.assert_assign_simple();
+            program.verify();
         }
         Command::Analyse {
             null,

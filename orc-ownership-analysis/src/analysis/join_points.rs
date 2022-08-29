@@ -10,7 +10,7 @@ use smallvec::SmallVec;
 use super::{
     body_ext::DominanceFrontier,
     constants::{NUM_PHI_NODES, SIZE_PHI_NODE},
-    def_sites::DefSites,
+    def_sites::Definitions,
     state::SSAIdx,
 };
 
@@ -18,8 +18,10 @@ use super::{
 pub(crate) fn semi_pruned_join_points<'tcx>(
     body: &Body<'tcx>,
     dominance_frontier: &DominanceFrontier,
-    def_sites: &DefSites,
+    // def_sites: &DefSites,
+    definitions: &Definitions,
 ) -> JoinPoints<PhiNode> {
+    let def_sites = &definitions.sites;
     let mut join_points = JoinPoints::from_raw(IndexVec::from_elem(
         BasicBlockNodes::new(),
         body.basic_blocks(),
@@ -61,6 +63,7 @@ impl PhiNode {
     }
 }
 
+/// TODO: use `VecArray<(Local, Payload)>` ??
 #[derive(Clone, Debug)]
 pub(crate) struct JoinPoints<Payload> {
     data: IndexVec<BasicBlock, BasicBlockNodes<Payload>>,

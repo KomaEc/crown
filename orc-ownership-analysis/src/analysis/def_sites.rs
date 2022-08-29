@@ -1,31 +1,60 @@
 use crate::{analysis::ty_ext::TyExt, struct_topology::StructTopology};
+use orc_common::data_structure::vec_array::{VecArray, VecArrayConstruction};
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-        BasicBlock, Body, Local, LocalInfo, Location, Place,
+        BasicBlock, BasicBlockData, Body, Local, LocalInfo, Location, Place,
     },
     ty::TyCtxt,
 };
+use smallvec::SmallVec;
 
-pub(crate) type DefSites = IndexVec<Local, BitSet<BasicBlock>>;
+pub(crate) struct Definitions {
+    /// BasicBlock -> statement_index -> possible definitions
+    /// 
+    /// We've made an assumption that a local can only be used or defined
+    /// once in a statement/terminator
+    pub(crate) defs: VecArray<SmallVec<[Local; 2]>>,
+    pub(crate) sites: IndexVec<Local, BitSet<BasicBlock>>,
+}
 
-pub(crate) fn initial_def_sites<'tcx>(
+impl Definitions {
+    #[inline]
+    pub(crate) fn of_block(&self, block: BasicBlock) -> &[SmallVec<[Local; 2]>] {
+        &self.defs[block.index()]
+    }
+
+    #[inline]
+    pub(crate) fn of_location(&self, location: Location) -> &SmallVec<[Local; 2]> {
+        let Location {
+            block,
+            statement_index,
+        } = location;
+        &self.defs[block.index()][statement_index]
+    }
+}
+
+pub(crate) fn initial_definitions<'tcx>(
     body: &Body<'tcx>,
     tcx: TyCtxt<'tcx>,
     struct_topology: &StructTopology,
-) -> DefSites {
-    let mut def_sites = IndexVec::from_elem(
+) -> Definitions {
+    let mut sites = IndexVec::from_elem(
         BitSet::new_empty(body.basic_blocks.len()),
         &body.local_decls,
     );
 
+    let mut defs = VecArray::new(body.basic_blocks().len());
+
     struct Vis<'me, 'tcx> {
-        def_sites: &'me mut DefSites,
+        sites: &'me mut IndexVec<Local, BitSet<BasicBlock>>,
+        defs: &'me mut VecArrayConstruction<SmallVec<[Local; 2]>>,
+        defs_in_cur_stmt: SmallVec<[Local; 2]>,
         body: &'me Body<'tcx>,
         tcx: TyCtxt<'tcx>,
         struct_topology: &'me StructTopology,
-        basic_block: BasicBlock,
+        basic_block: Option<BasicBlock>,
     }
     impl<'me, 'tcx> Visitor<'tcx> for Vis<'me, 'tcx> {
         fn visit_basic_block_data(
@@ -33,8 +62,42 @@ pub(crate) fn initial_def_sites<'tcx>(
             block: BasicBlock,
             data: &rustc_middle::mir::BasicBlockData<'tcx>,
         ) {
-            self.basic_block = block;
-            self.super_basic_block_data(block, data)
+            let old_block = std::mem::replace(&mut self.basic_block, Some(block));
+            if old_block.is_some() {
+                self.defs.done_with_array();
+            }
+            // // self.basic_block = Some(block);
+            // self.super_basic_block_data(block, data)
+
+            let BasicBlockData {
+                statements,
+                terminator,
+                is_cleanup: _,
+            } = data;
+
+            let mut index = 0;
+            for statement in statements {
+                let location = Location {
+                    block,
+                    statement_index: index,
+                };
+                self.visit_statement(statement, location);
+                let defs_in_cur_stmt = std::mem::take(&mut self.defs_in_cur_stmt);
+                self.defs.add_item_to_array(defs_in_cur_stmt);
+                index += 1;
+            }
+
+            if let Some(terminator) = terminator {
+                let location = Location {
+                    block,
+                    statement_index: index,
+                };
+                self.visit_terminator(terminator, location);
+                let defs_in_cur_stmt = std::mem::take(&mut self.defs_in_cur_stmt);
+                self.defs.add_item_to_array(defs_in_cur_stmt);
+            }
+
+            self.defs.done_with_array();
         }
 
         fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, _: Location) {
@@ -54,72 +117,26 @@ pub(crate) fn initial_def_sites<'tcx>(
                 && !place.is_indirect()
                 && !matches!(local_info, Some(LocalInfo::DerefTemp))
             {
-                self.def_sites[place.local].insert(self.basic_block);
+                // self.defs.add_item_to_array(item);
+                self.defs_in_cur_stmt.push(place.local);
+                self.sites[place.local].insert(self.basic_block.unwrap());
             }
         }
     }
 
     Vis {
-        def_sites: &mut def_sites,
+        sites: &mut sites,
+        defs: &mut defs,
+        defs_in_cur_stmt: SmallVec::default(),
         tcx,
         body,
         struct_topology,
-        basic_block: BasicBlock::from_u32(0),
+        basic_block: None, // BasicBlock::from_u32(0),
     }
     .visit_body(body);
 
-    def_sites
+    Definitions {
+        defs: defs.done(),
+        sites,
+    }
 }
-
-// impl<'octxt, 'tcx> OwnershipAnalysisCtxt<'octxt, 'tcx> {
-//     pub(crate) fn initial_def_sites(&self, body: &Body<'tcx>) -> DefSites {
-//         let mut def_sites = IndexVec::from_elem(
-//             BitSet::new_empty(body.basic_blocks.len()),
-//             &body.local_decls,
-//         );
-
-//         struct Vis<'me, 'octxt, 'tcx>(
-//             &'me mut DefSites,
-//             &'me Body<'tcx>,
-//             &'me OwnershipAnalysisCtxt<'octxt, 'tcx>,
-//             BasicBlock,
-//         );
-//         impl<'me, 'octxt, 'tcx> Visitor<'tcx> for Vis<'me, 'octxt, 'tcx> {
-//             fn visit_basic_block_data(
-//                 &mut self,
-//                 block: BasicBlock,
-//                 data: &rustc_middle::mir::BasicBlockData<'tcx>,
-//             ) {
-//                 self.3 = block;
-//                 self.super_basic_block_data(block, data)
-//             }
-
-//             fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, _: Location) {
-//                 if !matches!(
-//                     context,
-//                     PlaceContext::NonMutatingUse(
-//                         NonMutatingUseContext::Copy | NonMutatingUseContext::Move
-//                     ) | PlaceContext::MutatingUse(
-//                         MutatingUseContext::Call | MutatingUseContext::Store
-//                     )
-//                 ) {
-//                     return;
-//                 }
-
-//                 let ty = place.ty(self.1, self.2.tcx()).ty;
-//                 let local_info = self.1.local_decls[place.local].local_info.as_deref();
-
-//                 if ty.contains_ptr(self.2.program.struct_topology())
-//                     && !place.is_indirect()
-//                     && !matches!(local_info, Some(LocalInfo::DerefTemp))
-//                 {
-//                     self.0[place.local].insert(self.3);
-//                 }
-//             }
-//         }
-
-//         Vis(&mut def_sites, body, self, BasicBlock::from_u32(0)).visit_body(body);
-
-//         def_sites
-//     }
-// }

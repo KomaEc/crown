@@ -18,6 +18,9 @@ pub(crate) struct StructTopology {
     did_idx: FxHashMap<DefId, usize>,
     /// struct -> field -> aggregate offset start of this field
     /// an additional entry last() represents the sum
+    /// TODO: will we need `Vec<VecArray<Offset>>`?
+    /// First level index represents the level of pointer dereferenc
+    /// we track
     offset_of: VecArray<Offset>,
 }
 
@@ -28,12 +31,14 @@ impl StructTopology {
             graph.add_node(*did);
         });
         for did in structs.iter() {
-            let adt_def = tcx.adt_def(did);
+            let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };
             assert!(adt_def.is_struct());
             for field_def in adt_def.all_fields() {
-                let ty = tcx.type_of(field_def.did);
+                let ty = field_def.ty(tcx, subst_ref);
                 if let TyKind::Adt(sub_adt_def, _) = ty.kind() {
-                    graph.add_edge(*did, sub_adt_def.did(), ());
+                    if graph.contains_node(sub_adt_def.did()) {
+                        graph.add_edge(*did, sub_adt_def.did(), ());
+                    }
                 }
             }
         }
@@ -49,8 +54,9 @@ impl StructTopology {
 
         let mut offset_of = VecArray::new(post_order.len());
         for &did in post_order.iter() {
-            println!("go {:?}", did);
+            // println!("go {:?}", did);
             let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };
+            assert!(adt_def.is_struct());
 
             let mut offset = Offset::from_u32(0);
             offset_of.add_item_to_array(offset);

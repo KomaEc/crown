@@ -1,9 +1,9 @@
-//! Playing with ORC and rustc
+//! Dynamically verify several assumptions we made on rustc.
 
 use rustc_hash::FxHashSet;
 use rustc_middle::mir::{
     visit::{MutatingUseContext, PlaceContext, Visitor},
-    Body, Local, LocalInfo, LocalKind, Location, Place, Rvalue,
+    Body, Local, LocalInfo, LocalKind, Location, Place, Rvalue, Terminator, TerminatorKind,
 };
 
 use crate::{
@@ -12,7 +12,14 @@ use crate::{
 };
 
 impl<'tcx> CrateInfo<'tcx> {
-    pub fn verify_shape_of_place(&self) {
+    pub fn verify(&self) {
+        self.verify_shape_of_place();
+        self.assert_assign_simple();
+        self.verify_temp_local_usage();
+        self.verify_args_are_all_locals()
+    }
+
+    fn verify_shape_of_place(&self) {
         struct Vis;
         impl<'tcx> Visitor<'tcx> for Vis {
             fn visit_place(
@@ -78,7 +85,7 @@ impl<'tcx> CrateInfo<'tcx> {
         println!("                   {percentage}");
     }
 
-    pub fn assert_assign_simple(&self) {
+    fn assert_assign_simple(&self) {
         struct Vis;
         impl<'tcx> Visitor<'tcx> for Vis {
             fn visit_assign(
@@ -107,43 +114,43 @@ impl<'tcx> CrateInfo<'tcx> {
         }
     }
 
-    pub fn inspect_place_abs(&self) {
-        struct Vis<'me, 'tcx>(
-            &'me OwnershipAnalysisCtxt<'me, 'tcx>,
-            &'me Body<'tcx>,
-            FxHashSet<Place<'tcx>>,
-        );
-        impl<'me, 'tcx> Visitor<'tcx> for Vis<'me, 'tcx> {
-            fn visit_place(
-                &mut self,
-                place: &Place<'tcx>,
-                context: PlaceContext,
-                _location: Location,
-            ) {
-                let visited = &mut self.2;
-                if visited.contains(&place) {
-                    return;
-                }
-                visited.insert(*place);
-                let octxt = self.0;
-                let body = self.1;
-                let (PlaceContext::MutatingUse(..) | PlaceContext::NonMutatingUse(..)) = context else { return };
-                if place.projection.len() < 2 {
-                    return;
-                }
-                let Some(place_abs) = place.r#abstract(body, &octxt) else { return };
-                tracing::debug!("{:?} -> {}", place, place_abs)
-            }
-        }
-        let octxt = OwnershipAnalysisCtxt::new(&*self);
-        for did in self.functions() {
-            let body = self.tcx.optimized_mir(did);
-            let mut vis = Vis(&octxt, body, FxHashSet::default());
-            vis.visit_body(body);
-        }
-    }
+    // pub fn inspect_place_abs(&self) {
+    //     struct Vis<'me, 'tcx>(
+    //         &'me OwnershipAnalysisCtxt<'me, 'tcx>,
+    //         &'me Body<'tcx>,
+    //         FxHashSet<Place<'tcx>>,
+    //     );
+    //     impl<'me, 'tcx> Visitor<'tcx> for Vis<'me, 'tcx> {
+    //         fn visit_place(
+    //             &mut self,
+    //             place: &Place<'tcx>,
+    //             context: PlaceContext,
+    //             _location: Location,
+    //         ) {
+    //             let visited = &mut self.2;
+    //             if visited.contains(&place) {
+    //                 return;
+    //             }
+    //             visited.insert(*place);
+    //             let octxt = self.0;
+    //             let body = self.1;
+    //             let (PlaceContext::MutatingUse(..) | PlaceContext::NonMutatingUse(..)) = context else { return };
+    //             if place.projection.len() < 2 {
+    //                 return;
+    //             }
+    //             let Some(place_abs) = place.r#abstract(body, &octxt) else { return };
+    //             tracing::debug!("{:?} -> {}", place, place_abs)
+    //         }
+    //     }
+    //     let octxt = OwnershipAnalysisCtxt::new(&*self);
+    //     for did in self.functions() {
+    //         let body = self.tcx.optimized_mir(did);
+    //         let mut vis = Vis(&octxt, body, FxHashSet::default());
+    //         vis.visit_body(body);
+    //     }
+    // }
 
-    pub fn verify_temp_local_usage(&self) {
+    fn verify_temp_local_usage(&self) {
         use rustc_index::vec::IndexVec;
         for did in self.functions() {
             let body = self.tcx.optimized_mir(did);
@@ -191,6 +198,26 @@ impl<'tcx> CrateInfo<'tcx> {
                     LocalKind::ReturnPointer => {}
                 }
             }
+        }
+    }
+
+    fn verify_args_are_all_locals(&self) {
+        struct Vis;
+        impl<'tcx> Visitor<'tcx> for Vis {
+            fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _: Location) {
+                let TerminatorKind::Call { destination, args, .. } = &terminator.kind else { return };
+                for arg in args {
+                    assert!(
+                        arg.place().and_then(|place| place.as_local()).is_some()
+                            || arg.constant().is_some()
+                    );
+                }
+                assert!(destination.as_local().is_some());
+            }
+        }
+        for did in self.functions() {
+            let body = self.tcx.optimized_mir(did);
+            Vis.visit_body(body);
         }
     }
 }
