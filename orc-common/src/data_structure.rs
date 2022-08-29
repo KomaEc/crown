@@ -2,85 +2,15 @@
 //! a set of things. This set is represented by an interval of
 //! indices.
 
+pub mod vec_array;
+
 use std::{marker::PhantomData, ops::Range};
 
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
 
-/// A frozen, allocation-avoiding representation of `Vec<Vec<I>>`
-#[derive(Debug)]
-pub struct FrozenVecVec<I> {
-    l1_indexing: Vec<usize>,
-    l2_indexing: Vec<I>,
-}
-
-impl<I> std::ops::Index<usize> for FrozenVecVec<I> {
-    type Output = [I];
-
-    fn index(&self, index: usize) -> &Self::Output {
-        let end = self.l1_indexing[index + 1];
-        let start = self.l1_indexing[index];
-        &self.l2_indexing[start..end]
-    }
-}
-
-impl<I> std::ops::IndexMut<usize> for FrozenVecVec<I> {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        let end = self.l1_indexing[index + 1];
-        let start = self.l1_indexing[index];
-        &mut self.l2_indexing[start..end]
-    }
-}
-
-impl<I> FrozenVecVec<I> {
-    pub fn new(len: usize) -> FrozenVecVecConstruction<I> {
-        let mut l1_indexing = Vec::with_capacity(len + 1);
-        l1_indexing.push(0);
-        let l2_indexing = Vec::new();
-        let frozen_vec_vec = FrozenVecVec {
-            l1_indexing,
-            l2_indexing,
-        };
-        FrozenVecVecConstruction {
-            frozen_vec_vec,
-            l1_index: 0,
-            n_cur_items: 0,
-        }
-    }
-}
-
-#[derive(Debug)]
-pub struct FrozenVecVecConstruction<I> {
-    frozen_vec_vec: FrozenVecVec<I>,
-    l1_index: usize,
-    n_cur_items: usize,
-}
-
-impl<I> FrozenVecVecConstruction<I> {
-    pub fn reserve_item(&mut self, item: I) {
-        self.frozen_vec_vec.l2_indexing.push(item);
-        self.n_cur_items += 1;
-    }
-
-    pub fn push_items(&mut self) {
-        self.l1_index += std::mem::take(&mut self.n_cur_items);
-        self.frozen_vec_vec.l1_indexing.push(self.l1_index);
-    }
-
-    #[inline]
-    pub fn done(self) -> FrozenVecVec<I> {
-        self.frozen_vec_vec
-    }
-
-    #[inline]
-    pub fn get_previous(&self, l1: usize) -> &[I] {
-        if l1 + 1 >= self.frozen_vec_vec.l1_indexing.len() {
-            panic!("the entry for {l1} is still under construction")
-        }
-        &self.frozen_vec_vec[l1]
-    }
-}
+use self::vec_array::{VecArray, VecArrayConstruction};
 
 pub trait IsOffsetOfConstruction {
     type OffsetOf: std::fmt::Debug = ();
@@ -92,22 +22,22 @@ pub trait IsOffsetOfConstruction {
     fn done(self) -> Self::OffsetOf;
 }
 
-impl IsOffsetOfConstruction for FrozenVecVecConstruction<usize> {
-    type OffsetOf = FrozenVecVec<usize>;
+impl IsOffsetOfConstruction for VecArrayConstruction<usize> {
+    type OffsetOf = VecArray<usize>;
 
     #[inline]
     fn new(len: usize) -> Self {
-        FrozenVecVec::new(len)
+        VecArray::new(len)
     }
 
     #[inline]
     fn reserve_offset(&mut self, offset: usize) {
-        self.reserve_item(offset)
+        self.add_item_to_array(offset)
     }
 
     #[inline]
     fn push_offsets(&mut self) {
-        self.push_items();
+        self.done_with_array();
     }
 
     #[inline]
@@ -126,7 +56,7 @@ impl IsOffsetOfConstruction for () {
 pub trait Step {
     type L2Items<I>;
     type OffSetOfConstruction: std::fmt::Debug + IsOffsetOfConstruction =
-        FrozenVecVecConstruction<usize>;
+        VecArrayConstruction<usize>;
     type StepSize = usize;
     fn size(size: Self::StepSize) -> usize;
     fn l2_items<I>(items: Range<I>) -> Self::L2Items<I>;
@@ -136,7 +66,7 @@ pub struct Arbitrary;
 impl Step for Arbitrary {
     type L2Items<I> = Range<I>;
 
-    type OffSetOfConstruction = FrozenVecVecConstruction<usize>;
+    type OffSetOfConstruction = VecArrayConstruction<usize>;
 
     type StepSize = usize;
 
@@ -176,7 +106,7 @@ impl Step for Maybe {
 
     type StepSize = bool;
 
-    type OffSetOfConstruction = FrozenVecVecConstruction<usize>;
+    type OffSetOfConstruction = VecArrayConstruction<usize>;
 
     #[inline]
     fn l2_items<I>(items: Range<I>) -> Self::L2Items<I> {

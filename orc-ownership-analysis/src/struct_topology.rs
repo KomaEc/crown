@@ -1,4 +1,4 @@
-use orc_common::data_structure::FrozenVecVec;
+use orc_common::data_structure::vec_array::VecArray;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -18,7 +18,7 @@ pub(crate) struct StructTopology {
     did_idx: FxHashMap<DefId, usize>,
     /// struct -> field -> aggregate offset start of this field
     /// an additional entry last() represents the sum
-    offset_of: FrozenVecVec<Offset>,
+    offset_of: VecArray<Offset>,
 }
 
 impl StructTopology {
@@ -47,13 +47,13 @@ impl StructTopology {
             .map(|(idx, &did)| (did, idx))
             .collect();
 
-        let mut offset_of = FrozenVecVec::new(post_order.len());
+        let mut offset_of = VecArray::new(post_order.len());
         for &did in post_order.iter() {
             println!("go {:?}", did);
             let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };
 
             let mut offset = Offset::from_u32(0);
-            offset_of.reserve_item(offset);
+            offset_of.add_item_to_array(offset);
             for field_def in adt_def.all_fields() {
                 offset = offset
                     + match field_def.ty(tcx, subst_ref).kind() {
@@ -63,16 +63,16 @@ impl StructTopology {
                             .get(&sub_adt_def.did())
                             .and_then(|&field_did_idx| {
                                 offset_of
-                                    .get_previous(field_did_idx)
+                                    .get_constructed(field_did_idx)
                                     .last()
                                     .map(|&offset| offset.as_usize())
                             })
                             .unwrap_or(0),
                         _ => 0,
                     };
-                offset_of.reserve_item(offset);
+                offset_of.add_item_to_array(offset);
             }
-            offset_of.push_items();
+            offset_of.done_with_array();
         }
         let offset_of = offset_of.done();
 

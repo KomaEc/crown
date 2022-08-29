@@ -1,3 +1,4 @@
+use orc_common::data_structure::vec_array::VecArray;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hir::def_id::DefId;
 use rustc_middle::{
@@ -8,9 +9,10 @@ use rustc_type_ir::TyKind::FnDef;
 
 pub struct CallGraph {
     graph: DiGraphMap<DefId, ()>,
-    /// (sccs + post_order): Vec<Vec<DefId>>,
-    sccs: Vec<usize>,
-    post_order: Vec<DefId>,
+    // /// (sccs + post_order): Vec<Vec<DefId>>,
+    // sccs: Vec<usize>,
+    // post_order: Vec<DefId>,
+    post_order: VecArray<DefId>,
 }
 
 impl CallGraph {
@@ -28,22 +30,26 @@ impl CallGraph {
         }
 
         let mut tarjan_scc = TarjanScc::new();
-        let mut sccs = vec![0];
-        let mut post_order = Vec::with_capacity(functions.len());
+        let mut post_order = VecArray::new(functions.len());
+        // let mut sccs = vec![0];
+        // let mut post_order = Vec::with_capacity(functions.len());
         tarjan_scc.run(&graph, |nodes| {
-            post_order.extend(nodes);
-            sccs.push(post_order.len());
+            // post_order.extend(nodes);
+            // sccs.push(post_order.len());
+            post_order.push_array(nodes.iter().copied())
         });
+        let post_order = post_order.done();
         CallGraph {
             graph,
-            sccs,
+            // sccs,
             post_order,
         }
     }
 
     #[inline]
     pub fn functions(&self) -> &[DefId] {
-        &self.post_order
+        // &self.post_order
+        self.post_order.everything()
     }
 
     #[inline]
@@ -53,15 +59,16 @@ impl CallGraph {
 
     #[inline]
     pub fn num_sccs(&self) -> usize {
-        self.sccs.len() - 1
+        // self.sccs.len() - 1
+        self.post_order.array_count()
     }
 
     #[inline]
     pub fn sccs(&self) -> impl Iterator<Item = &[DefId]> {
-        // self.post_order.iter().map(|nodes| &nodes[..])
-        self.sccs
-            .array_windows()
-            .map(|&[start, end]| &self.post_order[start..end])
+        // self.sccs
+        //     .array_windows()
+        //     .map(|&[start, end]| &self.post_order[start..end])
+        self.post_order.iter()
     }
 }
 
@@ -156,9 +163,11 @@ mod test {
                 group.sort();
             }
 
-            let ([c1, c2, c3, c4], _) = post_order_sorted.split_array_ref();
+            let ([c1, c2, c3, c4], empty) = post_order_sorted.split_array_ref();
+            assert!(empty.is_empty());
 
-            let (&[f, g, h, m, l, cond], _) = functions.split_array_ref();
+            let (&[f, g, h, m, l, cond], empty) = functions.split_array_ref();
+            assert!(empty.is_empty());
 
             assert_eq!(*c1, vec![cond]);
             assert_eq!(*c2, vec![l]);
