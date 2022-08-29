@@ -4,8 +4,8 @@ use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
-        visit::Visitor, BasicBlock, BasicBlockData, Body, Local, Location, Operand, Place, Rvalue,
-        Statement, StatementKind, Constant,
+        visit::Visitor, BasicBlock, BasicBlockData, Body, Constant, Local, Location, Operand,
+        Place, Rvalue, Statement, StatementKind,
     },
     ty::TyCtxt,
 };
@@ -194,8 +194,6 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
                 let lhs = place
                     .as_local()
                     .expect("we assume that rustc guarantees the lhs of `p = &q` being local");
-                
-                
             }
 
             Rvalue::BinaryOp(_, _) | Rvalue::CheckedBinaryOp(_, _) | Rvalue::UnaryOp(_, _) => {

@@ -4,12 +4,26 @@ use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-        BasicBlock, BasicBlockData, Body, Local, LocalInfo, Location, Place,
+        BasicBlock, BasicBlockData, Body, CastKind, Local, LocalInfo, Location, Place, Rvalue,
     },
     ty::TyCtxt,
 };
 use smallvec::SmallVec;
 
+// e has type T and T coerces to U; coercion-cast
+// e has type *T, U is *U_0, and either U_0: Sized or unsize_kind(T) = unsize_kind(U_0); ptr-ptr-cast
+// e has type *T and U is a numeric type, while T: Sized; ptr-addr-cast
+// e is an integer and U is *U_0, while U_0: Sized; addr-ptr-cast
+// e has type T and T and U are any numeric types; numeric-cast
+// e is a C-like enum and U is an integer type; enum-cast
+// e has type bool or char and U is an integer; prim-int-cast
+// e has type u8 and U is char; u8-char-cast
+// e has type &[T; n] and U is *const T; array-ptr-cast
+// e is a function pointer type and U has type *T, while T: Sized; fptr-ptr-cast
+// e is a function pointer type and U is an integer; fptr-addr-cast
+
+/// TODO: handle addr-ptr cast? Currently, definitions are accounted
+/// for const addr to ptr cast.
 pub(crate) struct Definitions {
     /// BasicBlock -> statement_index -> possible definitions
     ///
@@ -54,20 +68,16 @@ pub(crate) fn initial_definitions<'tcx>(
         body: &'me Body<'tcx>,
         tcx: TyCtxt<'tcx>,
         struct_topology: &'me StructTopology,
-        basic_block: Option<BasicBlock>,
+        // basic_block: BasicBlock,
     }
+    // println!("visiting {:?}", body.source.def_id());
     impl<'me, 'tcx> Visitor<'tcx> for Vis<'me, 'tcx> {
         fn visit_basic_block_data(
             &mut self,
             block: BasicBlock,
             data: &rustc_middle::mir::BasicBlockData<'tcx>,
         ) {
-            let old_block = std::mem::replace(&mut self.basic_block, Some(block));
-            if old_block.is_some() {
-                self.defs.done_with_array();
-            }
-            // // self.basic_block = Some(block);
-            // self.super_basic_block_data(block, data)
+            // println!("visiting {:?}", block);
 
             let BasicBlockData {
                 statements,
@@ -96,11 +106,25 @@ pub(crate) fn initial_definitions<'tcx>(
                 let defs_in_cur_stmt = std::mem::take(&mut self.defs_in_cur_stmt);
                 self.defs.add_item_to_array(defs_in_cur_stmt);
             }
-
             self.defs.done_with_array();
         }
 
-        fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, _: Location) {
+        fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, location: Location) {
+            if let Rvalue::Cast(CastKind::PointerFromExposedAddress, operand, _) = rvalue {
+                // if let Some(constant) = operand.constant() {
+                //     println!("{:?}", constant.literal);
+                //     panic!("")
+                // }
+                // return;
+                if operand.place().is_some() {
+                    return;
+                }
+            }
+
+            self.super_rvalue(rvalue, location)
+        }
+
+        fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
             if !matches!(
                 context,
                 PlaceContext::NonMutatingUse(
@@ -117,9 +141,9 @@ pub(crate) fn initial_definitions<'tcx>(
                 && !place.is_indirect()
                 && !matches!(local_info, Some(LocalInfo::DerefTemp))
             {
-                // self.defs.add_item_to_array(item);
+                // println!("defining {:?} at {:?}", place.local, location);
                 self.defs_in_cur_stmt.push(place.local);
-                self.sites[place.local].insert(self.basic_block.unwrap());
+                self.sites[place.local].insert(location.block);
             }
         }
     }
@@ -131,7 +155,7 @@ pub(crate) fn initial_definitions<'tcx>(
         tcx,
         body,
         struct_topology,
-        basic_block: None, // BasicBlock::from_u32(0),
+        // basic_block: BasicBlock::from_u32(0),
     }
     .visit_body(body);
 
@@ -142,4 +166,86 @@ pub(crate) fn initial_definitions<'tcx>(
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+
+    use super::{initial_definitions, Definitions};
+    use rustc_middle::mir::{BasicBlock, Local, Location};
+
+    impl Definitions {
+        fn assert_round_tripping(&self) {
+            for (local, sites) in self.sites.iter_enumerated() {
+                for bb in sites.iter() {
+                    self.of_block(bb)
+                        .iter()
+                        .flatten()
+                        .copied()
+                        .find(|&l| l == local)
+                        .unwrap_or_else(|| {
+                            panic!("{:?} should contain definition of {:?}", bb, local)
+                        });
+                }
+            }
+
+            for (bb, defs) in self.defs.iter().enumerate() {
+                let bb = rustc_middle::mir::BasicBlock::from(bb);
+                for local in defs.iter().flatten().copied() {
+                    assert!(self.sites[local].contains(bb))
+                }
+            }
+        }
+    }
+
+    // use std::path::PathBuf;
+    #[test]
+    fn test1() {
+        const INPUT: &str = "
+    static mut STATIC: usize = 0;
+    const ADDR: usize = 47;
+
+    unsafe fn f(mut p: *mut *mut usize, q: *mut *mut usize, mut r: *mut usize, addr: usize) -> *mut usize {
+        p = ADDR as *mut _;
+        *q = p as *mut _;
+        r = *q;
+        *p = r;
+
+        STATIC = *r;
+
+        r = addr as *mut _;
+
+        return r;
+    }";
+
+        // let file = std::path::PathBuf::from("../workspace/def_site.rs");
+        orc_common::test_infra::run_compiler_with(INPUT.into(), |tcx, functions, structs| {
+            let program = crate::CrateInfo::new(tcx, functions, structs);
+            let mut def_iter = program.functions().iter().copied().map(|did| {
+                let body = tcx.optimized_mir(did);
+                initial_definitions(body, tcx, program.struct_topology())
+            });
+            let Some(definition) = def_iter.next() else { unreachable!() };
+            assert!(def_iter.next().is_none());
+            definition.assert_round_tripping();
+            // do not count definition for rhs of addr-ptr cast
+            assert_eq!(
+                definition
+                    .of_location(Location {
+                        block: BasicBlock::from_u32(0),
+                        statement_index: 13
+                    })
+                    .to_vec(),
+                vec![Local::from_u32(13)]
+            );
+            // q is never defined in this program
+            assert!(
+                definition
+                    .defs
+                    .iter()
+                    .flatten()
+                    .flatten()
+                    .copied()
+                    .find(|local| local.index() == 2)
+                    .is_none()
+            )
+        })
+    }
+}
