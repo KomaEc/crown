@@ -1,10 +1,11 @@
 //! State for analysis steps
 
+use orc_common::data_structure::assoc::AssocExt;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{Local, Location};
 
 use super::{
-    def::{ConsumeChain, Consume},
+    def::{Consume, ConsumeChain},
     join_points::{JoinPoints, PhiNode},
 };
 
@@ -36,8 +37,7 @@ impl SSAState {
     #[inline]
     pub(crate) fn consume_at(&mut self, local: Local, location: Location) -> Option<Consume> {
         let consume = self.consume_chain.consumes[location.block.index()][location.statement_index]
-            .iter_mut()
-            .find_map(|(this, consume)| (*this == local).then(|| consume))?;
+            .get_mut(&local)?;
         let old_ssa_idx = self.name_state.get_name(local);
         let new_ssa_idx = self.name_state.generate_fresh_name(local);
         tracing::debug!(

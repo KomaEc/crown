@@ -2,6 +2,7 @@
 //! a set of things. This set is represented by an interval of
 //! indices.
 
+pub mod assoc;
 pub mod vec_array;
 
 use std::{marker::PhantomData, ops::Range};

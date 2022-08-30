@@ -4,8 +4,8 @@ use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
-        visit::Visitor, BasicBlock, BasicBlockData, Body, CastKind, Constant, Local, Location,
-        Operand, Place, Rvalue, Statement, StatementKind,
+        BasicBlock, BasicBlockData, Body, CastKind, Local, Location, Operand, Place, Rvalue,
+        Statement, StatementKind, Terminator, TerminatorKind, RETURN_PLACE,
     },
     ty::TyCtxt,
 };
@@ -51,15 +51,15 @@ impl Mode for WithCtxt {
     type Ctxt<'me, DB> = InferCtxt<'me, DB> where Self: 'me, DB: Database + 'me;
 }
 
-pub(crate) struct Renamer<'me, 'tcx: 'me> {
-    body: &'me Body<'tcx>,
+pub(crate) struct Renamer<'rn, 'tcx: 'rn> {
+    body: &'rn Body<'tcx>,
     tcx: TyCtxt<'tcx>,
-    struct_topology: &'me StructTopology,
+    struct_topology: &'rn StructTopology,
     state: SSAState,
     definitions: Definitions,
 }
 
-impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
+impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
     pub(crate) fn go<M: Mode>(&mut self) {
         let dominators = self.body.basic_blocks.dominators();
         let mut children = IndexVec::from_elem(vec![], self.body.basic_blocks());
@@ -98,7 +98,7 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
         }
     }
 
-    pub(crate) fn go_basic_block<M: Mode>(&mut self, bb: BasicBlock, data: &BasicBlockData) {
+    pub(crate) fn go_basic_block<M: Mode>(&mut self, bb: BasicBlock, data: &BasicBlockData<'tcx>) {
         tracing::debug!("Renaming {:?}", bb);
 
         let BasicBlockData {
@@ -119,8 +119,7 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
                 block: bb,
                 statement_index: index,
             };
-            // go statement
-            todo!();
+            self.go_statement::<M>(statement, location);
             index += 1;
         }
 
@@ -129,8 +128,7 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
                 block: bb,
                 statement_index: index,
             };
-            // go terminator
-            todo!()
+            self.go_terminator::<M>(terminator, location);
         }
 
         for succ in self.body.basic_blocks.successors(bb) {
@@ -139,8 +137,6 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
                 phi_node.rhs.push(ssa_idx)
             }
         }
-
-        todo!()
     }
 
     fn go_statement<M: Mode>(&mut self, statement: &Statement<'tcx>, location: Location) {
@@ -167,21 +163,40 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
         }
     }
 
-    // fn try_define_place(&mut self, place: &Place<'tcx>, location: Location) -> Option<SSAIdx> {
-    //     if self
-    //         .definitions
-    //         .of_location(location)
-    //         .contains(&place.local)
-    //     {
-    //         let name_state = &mut self.state.name_state;
-    //         let old_ssa_idx = name_state.get_name(place.local);
-    //         let new_ssa_idx = name_state.generate_fresh_name(place.local);
-    //         tracing::debug!("fresh name for {:?}: {:?}", place.local, new_ssa_idx);
-    //         todo!();
-    //         return Some(old_ssa_idx);
-    //     }
-    //     None
-    // }
+    /// TODO: handle return?
+    fn go_terminator<M: Mode>(&mut self, terminator: &Terminator<'tcx>, location: Location) {
+        match &terminator.kind {
+            TerminatorKind::Call {
+                args, destination, ..
+            } => {
+                let destination = destination.as_local().unwrap();
+                let dest_ty = self.body.local_decls[destination].ty;
+                if dest_ty.contains_ptr(&self.struct_topology) {
+                    let _ = self.state.consume_at(destination, location).unwrap();
+                    tracing::error!("TODO")
+                }
+                for arg in args {
+                    match arg {
+                        Operand::Move(arg) | Operand::Copy(arg) => {
+                            let arg_ty = arg.ty(self.body, self.tcx).ty;
+                            if arg_ty.contains_ptr(&self.struct_topology) {
+                                let _ = self.state.consume_at(arg.local, location).unwrap();
+                            }
+                        }
+                        _ => continue,
+                    }
+                }
+            }
+            TerminatorKind::Return => {
+                let return_place = RETURN_PLACE;
+                let ret_ty = self.body.local_decls[return_place].ty;
+                if ret_ty.contains_ptr(&self.struct_topology) {
+                    let _ = self.state.consume_at(return_place, location).unwrap();
+                }
+            }
+            _ => {}
+        }
+    }
 
     fn go_assign<M: Mode>(
         &mut self,
@@ -194,18 +209,22 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
         let lhs = place;
         let rhs = rvalue;
 
-        // TODO: this completely skips ptr to addr cast.
+        // Is this condition even necessary? If it is to be defined, then
+        // it must contain pointers!!!
         let ty = lhs.ty(self.body, self.tcx).ty;
         if !ty.contains_ptr(self.struct_topology) {
+            if let Rvalue::Cast(
+                CastKind::PointerExposeAddress,
+                Operand::Move(rhs) | Operand::Copy(rhs),
+                _,
+            ) = rhs
+            {
+                let _ = self.state.consume_at(rhs.local, location);
+            }
             return;
         }
 
-        // let def_of_loc = self.definitions.of_location(location);
-
-        // if def_of_loc.contains(&lhs.local) {
-        //     let ssa_idx = self.state.name_state.generate_fresh_name(lhs.local);
-        //     tracing::debug!("fresh name for {:?}: {:?}", lhs.local, ssa_idx);
-        // }
+        let lhs_consume = self.state.consume_at(lhs.local, location);
 
         match rhs {
             Rvalue::Use(Operand::Constant(..)) => {
@@ -230,14 +249,21 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
                 //     let ssa_idx = self.state.name_state.generate_fresh_name(rhs.local);
                 //     tracing::debug!("fresh name for {:?}: {:?}", rhs.local, ssa_idx);
                 // }
+                let rhs_consume = self.state.consume_at(rhs.local, location);
+                let (Some(lhs_consume), Some(rhs_consume)) = (lhs_consume, rhs_consume) else { return };
+                tracing::error!("TODO");
             }
 
-            Rvalue::CopyForDeref(rhs) => {}
+            Rvalue::CopyForDeref(rhs) => {
+                tracing::warn!("deref_copy is ignored")
+            }
 
-            Rvalue::Ref(_, _, rhs) | Rvalue::AddressOf(_, rhs) => {
+            Rvalue::Ref(_, _, _) | Rvalue::AddressOf(_, _) => {
                 let lhs = lhs
                     .as_local()
                     .expect("we assume that rustc guarantees the lhs of `p = &q` being local");
+
+                tracing::error!("TODO");
             }
 
             Rvalue::BinaryOp(_, _) | Rvalue::CheckedBinaryOp(_, _) | Rvalue::UnaryOp(_, _) => {
@@ -251,31 +277,5 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
             | Rvalue::ThreadLocalRef(_)
             | Rvalue::Repeat(_, _) => unreachable!("rvalue {:?} is not assumed to appear", rhs),
         }
-    }
-
-    // fn go_place<M: Mode>(&mut self, place: &Place, location: Location) {
-    //     if self
-    //         .definitions
-    //         .of_location(location)
-    //         .contains(&place.local)
-    //     {
-    //         let ssa_idx = self.state.name_state.generate_fresh_name(place.local);
-    //         tracing::debug!("fresh name for {:?}: {:?}", place.local, ssa_idx);
-    //     }
-    // }
-}
-
-pub(crate) enum SimplifiedAssignment<'me, 'tcx> {
-    RhsPlace(Local, &'me Place<'tcx>),
-    RhsConstant(Local, &'me Constant<'tcx>),
-    /// lhs place must contain projections
-    LhsPlace(&'me Place<'tcx>, Local),
-    Addr(Local, &'me Place<'tcx>),
-    DerefCopy(Local, &'me Place<'tcx>),
-}
-
-impl<'me, 'tcx> SimplifiedAssignment<'me, 'tcx> {
-    pub(crate) fn from_assign(place: &'me Place<'tcx>, rvalue: &'me Rvalue<'tcx>) -> Self {
-        todo!()
     }
 }

@@ -103,15 +103,13 @@ impl ConsumeChain {
     // }
 
     #[inline]
-    pub(crate) fn of_location(&self, location: Location) -> impl Iterator<Item = Local> + '_ {
+    pub(crate) fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume); 2]> {
         //&SmallVec<[Local; 2]> {
         let Location {
             block,
             statement_index,
         } = location;
-        self.consumes[block.index()][statement_index]
-            .iter()
-            .map(|&(l, _)| l)
+        &self.consumes[block.index()][statement_index]
     }
 }
 
