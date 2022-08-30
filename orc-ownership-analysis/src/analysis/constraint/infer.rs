@@ -4,8 +4,8 @@ use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
-        visit::Visitor, BasicBlock, BasicBlockData, Body, Constant, Local, Location, Operand,
-        Place, Rvalue, Statement, StatementKind,
+        visit::Visitor, BasicBlock, BasicBlockData, Body, CastKind, Constant, Local, Location,
+        Operand, Place, Rvalue, Statement, StatementKind,
     },
     ty::TyCtxt,
 };
@@ -90,7 +90,7 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
                     recursion.extend(children[bb].iter().rev().map(|&bb| (bb, State::ToVisit)));
                 }
                 State::ToPopNames => {
-                    for &local in self.definitions.of_block(bb).iter().flatten() {
+                    for local in self.definitions.of_block(bb).iter().flatten().copied() {
                         self.state.name_state.pop(local);
                     }
                 }
@@ -167,6 +167,22 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
         }
     }
 
+    // fn try_define_place(&mut self, place: &Place<'tcx>, location: Location) -> Option<SSAIdx> {
+    //     if self
+    //         .definitions
+    //         .of_location(location)
+    //         .contains(&place.local)
+    //     {
+    //         let name_state = &mut self.state.name_state;
+    //         let old_ssa_idx = name_state.get_name(place.local);
+    //         let new_ssa_idx = name_state.generate_fresh_name(place.local);
+    //         tracing::debug!("fresh name for {:?}: {:?}", place.local, new_ssa_idx);
+    //         todo!();
+    //         return Some(old_ssa_idx);
+    //     }
+    //     None
+    // }
+
     fn go_assign<M: Mode>(
         &mut self,
         place: &Place<'tcx>,
@@ -175,33 +191,57 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
     ) {
         tracing::debug!("processing assignment {:?} = {:?}", place, rvalue);
 
-        let ty = place.ty(self.body, self.tcx).ty;
+        let lhs = place;
+        let rhs = rvalue;
+
+        // TODO: this completely skips ptr to addr cast.
+        let ty = lhs.ty(self.body, self.tcx).ty;
         if !ty.contains_ptr(self.struct_topology) {
             return;
         }
 
-        if self
-            .definitions
-            .of_location(location)
-            .contains(&place.local)
-        {
-            let ssa_idx = self.state.name_state.generate_fresh_name(place.local);
-            tracing::debug!("fresh name for {:?}: {:?}", place.local, ssa_idx);
-        }
+        // let def_of_loc = self.definitions.of_location(location);
 
-        match rvalue {
-            Rvalue::Use(operand) | Rvalue::Cast(_, operand, _) => {}
+        // if def_of_loc.contains(&lhs.local) {
+        //     let ssa_idx = self.state.name_state.generate_fresh_name(lhs.local);
+        //     tracing::debug!("fresh name for {:?}: {:?}", lhs.local, ssa_idx);
+        // }
 
-            Rvalue::CopyForDeref(rplace) => {}
+        match rhs {
+            Rvalue::Use(Operand::Constant(..)) => {
+                tracing::debug!("ignoring rvalue {:?}", rhs)
+            }
 
-            Rvalue::Ref(_, _, rplace) | Rvalue::AddressOf(_, rplace) => {
-                let lhs = place
+            Rvalue::Cast(CastKind::PointerFromExposedAddress, ..) => {
+                tracing::debug!("ignoring rvalue {:?}", rhs)
+            }
+
+            Rvalue::Cast(CastKind::PointerExposeAddress, ..) => {
+                unreachable!("lhs shoud be a pointer")
+            }
+
+            Rvalue::Cast(_, Operand::Constant(_constant), _) => {
+                todo!("constant pointer {:?}", _constant)
+            }
+
+            Rvalue::Use(Operand::Move(rhs) | Operand::Copy(rhs))
+            | Rvalue::Cast(_, Operand::Move(rhs) | Operand::Copy(rhs), _) => {
+                // if def_of_loc.contains(&rhs.local) {
+                //     let ssa_idx = self.state.name_state.generate_fresh_name(rhs.local);
+                //     tracing::debug!("fresh name for {:?}: {:?}", rhs.local, ssa_idx);
+                // }
+            }
+
+            Rvalue::CopyForDeref(rhs) => {}
+
+            Rvalue::Ref(_, _, rhs) | Rvalue::AddressOf(_, rhs) => {
+                let lhs = lhs
                     .as_local()
                     .expect("we assume that rustc guarantees the lhs of `p = &q` being local");
             }
 
             Rvalue::BinaryOp(_, _) | Rvalue::CheckedBinaryOp(_, _) | Rvalue::UnaryOp(_, _) => {
-                unreachable!("{:?}: {ty} cannot contain ptr", rvalue)
+                unreachable!("{:?}: {ty} cannot contain ptr", rhs)
             }
             Rvalue::NullaryOp(_, _)
             | Rvalue::Aggregate(_, _)
@@ -209,20 +249,20 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
             | Rvalue::Len(_)
             | Rvalue::ShallowInitBox(_, _)
             | Rvalue::ThreadLocalRef(_)
-            | Rvalue::Repeat(_, _) => unreachable!("rvalue {:?} is not assumed to appear", rvalue),
+            | Rvalue::Repeat(_, _) => unreachable!("rvalue {:?} is not assumed to appear", rhs),
         }
     }
 
-    fn go_place<M: Mode>(&mut self, place: &Place, location: Location) {
-        if self
-            .definitions
-            .of_location(location)
-            .contains(&place.local)
-        {
-            let ssa_idx = self.state.name_state.generate_fresh_name(place.local);
-            tracing::debug!("fresh name for {:?}: {:?}", place.local, ssa_idx);
-        }
-    }
+    // fn go_place<M: Mode>(&mut self, place: &Place, location: Location) {
+    //     if self
+    //         .definitions
+    //         .of_location(location)
+    //         .contains(&place.local)
+    //     {
+    //         let ssa_idx = self.state.name_state.generate_fresh_name(place.local);
+    //         tracing::debug!("fresh name for {:?}: {:?}", place.local, ssa_idx);
+    //     }
+    // }
 }
 
 pub(crate) enum SimplifiedAssignment<'me, 'tcx> {

@@ -286,3 +286,7 @@ CBMC: rename `p` when defining `*p`.
 2. Ownership Dominance property: treats `*p` as `x`! So `(*p).left` can be treated as `x.left`. Defining `*p` is treated as defining `p`!
 3. Static single information form to deal with null tests
 4. Algorithm 3.7 that prunes SSA
+
+
+#### 9.4
+1. To deal with head references, we may lift the requirement that a local must be non-owning upon exit for function arguments.

@@ -1,11 +1,12 @@
 //! State for analysis steps
 
 use rustc_index::vec::IndexVec;
-use rustc_middle::mir::Local;
-use rustc_mir_dataflow::move_paths::LocationMap;
-use smallvec::SmallVec;
+use rustc_middle::mir::{Local, Location};
 
-use super::join_points::{JoinPoints, PhiNode};
+use super::{
+    def::{ConsumeChain, Consume},
+    join_points::{JoinPoints, PhiNode},
+};
 
 orc_common::macros::newtype_index! {
     pub(crate) struct SSAIdx {
@@ -27,7 +28,30 @@ impl std::ops::AddAssign<usize> for SSAIdx {
 pub(crate) struct SSAState {
     pub(crate) name_state: NameState,
     pub(crate) join_points: JoinPoints<PhiNode>,
-    pub(crate) ssa_names: LocationMap<SmallVec<[(Local, SSAIdx); 2]>>,
+    /// TODO: initialise
+    pub(crate) consume_chain: ConsumeChain,
+}
+
+impl SSAState {
+    #[inline]
+    pub(crate) fn consume_at(&mut self, local: Local, location: Location) -> Option<Consume> {
+        let consume = self.consume_chain.consumes[location.block.index()][location.statement_index]
+            .iter_mut()
+            .find_map(|(this, consume)| (*this == local).then(|| consume))?;
+        let old_ssa_idx = self.name_state.get_name(local);
+        let new_ssa_idx = self.name_state.generate_fresh_name(local);
+        tracing::debug!(
+            "consuming {:?} at {:?}, use: {:?}, def: {:?}",
+            local,
+            location,
+            old_ssa_idx,
+            new_ssa_idx
+        );
+        consume.r#use = old_ssa_idx;
+        consume.def = new_ssa_idx;
+        assert_eq!(new_ssa_idx, self.consume_chain.locs[local].push(location));
+        Some(*consume)
+    }
 }
 
 #[derive(Clone, Debug)]

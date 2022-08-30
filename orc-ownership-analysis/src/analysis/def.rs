@@ -10,6 +10,8 @@ use rustc_middle::{
 };
 use smallvec::SmallVec;
 
+use super::state::SSAIdx;
+
 // e has type T and T coerces to U; coercion-cast
 // e has type *T, U is *U_0, and either U_0: Sized or unsize_kind(T) = unsize_kind(U_0); ptr-ptr-cast
 // e has type *T and U is a numeric type, while T: Sized; ptr-addr-cast
@@ -46,6 +48,70 @@ impl Definitions {
             statement_index,
         } = location;
         &self.defs[block.index()][statement_index]
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Consume {
+    pub(crate) r#use: SSAIdx,
+    pub(crate) def: SSAIdx,
+}
+
+impl Consume {
+    #[inline]
+    pub(crate) fn new() -> Self {
+        Consume {
+            r#use: SSAIdx::INIT,
+            def: SSAIdx::INIT,
+        }
+    }
+}
+
+/// In ownership analysis, use happens only at definition
+pub(crate) struct ConsumeChain {
+    /// ssa index for each consumption
+    pub(crate) consumes: VecArray<SmallVec<[(Local, Consume); 2]>>,
+    /// location of each definition
+    /// TODO map to RichLocation
+    pub(crate) locs: IndexVec<Local, IndexVec<SSAIdx, Location>>,
+}
+
+impl ConsumeChain {
+    /// TODO: `UseDefChain` subsumes `Definitions`
+    pub(crate) fn init<'tcx>(body: &Body<'tcx>, definitions: &Definitions) -> Self {
+        let mut names = VecArray::new(definitions.defs.array_count());
+        for def in definitions.defs.iter() {
+            names.push_array(def.iter().map(|vec| {
+                vec.iter()
+                    .copied()
+                    .map(|local| (local, Consume::new()))
+                    .collect()
+            }));
+        }
+        let names = names.done();
+        // this has to cope with `NameState`
+        let locs = IndexVec::from_elem(IndexVec::new(), &body.local_decls);
+        ConsumeChain {
+            consumes: names,
+            locs,
+        }
+    }
+
+    // #[inline]
+    // pub(crate) fn of_block(&self, block: BasicBlock) -> impl Iterator<Item = impl Iterator<Item = Local>>{//&[SmallVec<[Local; 2]>] {
+    //     &self.defs[block.index()]
+    // }
+
+    #[inline]
+    pub(crate) fn of_location(&self, location: Location) -> impl Iterator<Item = Local> + '_ {
+        //&SmallVec<[Local; 2]> {
+        let Location {
+            block,
+            statement_index,
+        } = location;
+        self.consumes[block.index()][statement_index]
+            .iter()
+            .map(|&(l, _)| l)
     }
 }
 
