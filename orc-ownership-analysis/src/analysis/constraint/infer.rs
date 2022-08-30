@@ -148,11 +148,15 @@ impl<'me, 'tcx: 'me> Renamer<'me, 'tcx> {
             StatementKind::Assign(box (place, rvalue)) => {
                 self.go_assign::<M>(place, rvalue, location)
             }
-            StatementKind::SetDiscriminant { .. } => todo!(),
-            StatementKind::AscribeUserType(_, _) => todo!(),
-            StatementKind::StorageLive(_)
+            StatementKind::SetDiscriminant { .. } => {
+                tracing::debug!("ignoring SetDiscriminant statement {:?}", statement)
+            }
+            StatementKind::Deinit(..) => {
+                tracing::debug!("ignoring Deinit statement {:?}", statement)
+            }
+            StatementKind::AscribeUserType(_, _)
+            | StatementKind::StorageLive(_)
             | StatementKind::StorageDead(_)
-            | StatementKind::Deinit(_)
             | StatementKind::Retag(_, _)
             | StatementKind::FakeRead(_)
             | StatementKind::Coverage(_)

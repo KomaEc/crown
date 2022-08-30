@@ -13,6 +13,7 @@ impl<'tcx> CrateInfo<'tcx> {
         self.verify_place_regularity();
         self.verify_temp_local_usage();
         self.verify_args_are_all_locals();
+        self.verify_stmt_regularity()
     }
 
     fn verify_shape_of_place(&self) {
@@ -232,6 +233,42 @@ impl<'tcx> CrateInfo<'tcx> {
                     LocalKind::Arg => {}
                     LocalKind::ReturnPointer => {}
                 }
+            }
+        }
+    }
+
+    fn verify_stmt_regularity(&self) {
+        for did in self.functions().iter().copied() {
+            let body = self.tcx.optimized_mir(did);
+            for bb_data in body.basic_blocks.iter() {
+                let rustc_middle::mir::BasicBlockData {
+                    statements,
+                    terminator: _,
+                    ..
+                } = bb_data;
+                for statement in statements {
+                    if !matches!(
+                        statement.kind,
+                        rustc_middle::mir::StatementKind::Assign(..)
+                        // this happens when initialising aggregates
+                        | rustc_middle::mir::StatementKind::Deinit(..)
+                        // this happens when dealing with fn_ptr, which is wrapped
+                        // in an Option type
+                        | rustc_middle::mir::StatementKind::SetDiscriminant { .. }
+                    ) {
+                        panic!("unexpected stmt kind {:?} at {:?}", statement.kind, did)
+                    }
+                }
+                // for terminator in terminator {
+                //     if !matches!(
+                //         terminator.kind,
+                //         rustc_middle::mir::TerminatorKind::Call {..}
+                //         | rustc_middle::mir::TerminatorKind::Return
+                //         | rustc_middle::mir::TerminatorKind::SwitchInt { .. }
+                //     ) {
+                //         panic!("unexpected terminator kind {:?} at {:?}", terminator.kind, did)
+                //     }
+                // }
             }
         }
     }

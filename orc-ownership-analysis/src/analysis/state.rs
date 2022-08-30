@@ -2,6 +2,8 @@
 
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::Local;
+use rustc_mir_dataflow::move_paths::LocationMap;
+use smallvec::SmallVec;
 
 use super::join_points::{JoinPoints, PhiNode};
 
@@ -25,6 +27,7 @@ impl std::ops::AddAssign<usize> for SSAIdx {
 pub(crate) struct SSAState {
     pub(crate) name_state: NameState,
     pub(crate) join_points: JoinPoints<PhiNode>,
+    pub(crate) ssa_names: LocationMap<SmallVec<[(Local, SSAIdx); 2]>>,
 }
 
 #[derive(Clone, Debug)]

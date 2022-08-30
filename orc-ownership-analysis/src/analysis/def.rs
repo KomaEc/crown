@@ -125,6 +125,8 @@ pub(crate) fn initial_definitions<'tcx>(
         }
 
         fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
+            // Deinit and SetDiscriminant are not definitions
+
             if !matches!(
                 context,
                 PlaceContext::NonMutatingUse(
@@ -236,16 +238,14 @@ mod test {
                 vec![Local::from_u32(13)]
             );
             // q is never defined in this program
-            assert!(
-                definition
-                    .defs
-                    .iter()
-                    .flatten()
-                    .flatten()
-                    .copied()
-                    .find(|local| local.index() == 2)
-                    .is_none()
-            )
+            assert!(definition
+                .defs
+                .iter()
+                .flatten()
+                .flatten()
+                .copied()
+                .find(|local| local.index() == 2)
+                .is_none())
         })
     }
 }
