@@ -160,27 +160,27 @@ mod tests {
             }
             define_structs!(s, t, u, v, w, x);
             assert_eq!(
-                program.struct_topology().field_offsets(&s), //.unwrap(),
+                program.struct_topology.field_offsets(&s), //.unwrap(),
                 [0, 2, 3, 4].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology().field_offsets(&t), //.unwrap(),
+                program.struct_topology.field_offsets(&t), //.unwrap(),
                 [0, 1, 2].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology().field_offsets(&u), //.unwrap(),
+                program.struct_topology.field_offsets(&u), //.unwrap(),
                 [0, 0, 1, 1].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology().field_offsets(&v), //.unwrap(),
+                program.struct_topology.field_offsets(&v), //.unwrap(),
                 [0, 0].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology().field_offsets(&w), //.unwrap(),
+                program.struct_topology.field_offsets(&w), //.unwrap(),
                 [0, 1].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology().field_offsets(&x), //.unwrap(),
+                program.struct_topology.field_offsets(&x), //.unwrap(),
                 [0].map(|x| Offset::from_u32(x))
             )
         })

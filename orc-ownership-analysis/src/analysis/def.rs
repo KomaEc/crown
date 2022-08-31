@@ -5,6 +5,7 @@ use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
         BasicBlock, BasicBlockData, Body, CastKind, Local, LocalInfo, Location, Place, Rvalue,
+        Terminator, TerminatorKind, RETURN_PLACE,
     },
     ty::TyCtxt,
 };
@@ -67,18 +68,29 @@ impl Consume {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum RichLocation {
+    Entry,
+    Phi(BasicBlock),
+    Mir(Location),
+}
+
+impl From<Location> for RichLocation {
+    fn from(location: Location) -> Self {
+        RichLocation::Mir(location)
+    }
+}
+
 /// In ownership analysis, use happens only at definition
 pub(crate) struct ConsumeChain {
     /// ssa index for each consumption
     pub(crate) consumes: VecArray<SmallVec<[(Local, Consume); 2]>>,
     /// location of each definition
-    /// TODO map to RichLocation
-    pub(crate) locs: IndexVec<Local, IndexVec<SSAIdx, Location>>,
+    pub(crate) locs: IndexVec<Local, IndexVec<SSAIdx, RichLocation>>,
 }
 
 impl ConsumeChain {
-    /// TODO: `UseDefChain` subsumes `Definitions`
-    pub(crate) fn init<'tcx>(body: &Body<'tcx>, definitions: &Definitions) -> Self {
+    pub(crate) fn new<'tcx>(body: &Body<'tcx>, definitions: Definitions) -> Self {
         let mut names = VecArray::new(definitions.defs.array_count());
         for def in definitions.defs.iter() {
             names.push_array(def.iter().map(|vec| {
@@ -89,8 +101,18 @@ impl ConsumeChain {
             }));
         }
         let names = names.done();
-        // this has to cope with `NameState`
-        let locs = IndexVec::from_elem(IndexVec::new(), &body.local_decls);
+
+        let locs = IndexVec::from_fn_n(
+            |local| {
+                matches!(
+                    body.local_decls[local].local_info.as_deref(),
+                    Some(LocalInfo::DerefTemp)
+                )
+                .then(|| IndexVec::new())
+                .unwrap_or_else(|| IndexVec::from_raw(vec![RichLocation::Entry]))
+            },
+            body.local_decls.len(),
+        );
         ConsumeChain {
             consumes: names,
             locs,
@@ -101,6 +123,11 @@ impl ConsumeChain {
     // pub(crate) fn of_block(&self, block: BasicBlock) -> impl Iterator<Item = impl Iterator<Item = Local>>{//&[SmallVec<[Local; 2]>] {
     //     &self.defs[block.index()]
     // }
+
+    #[inline]
+    pub(crate) fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume); 2]>] {
+        &self.consumes[block.index()]
+    }
 
     #[inline]
     pub(crate) fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume); 2]> {
@@ -174,18 +201,50 @@ pub(crate) fn initial_definitions<'tcx>(
         }
 
         fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, location: Location) {
-            if let Rvalue::Cast(CastKind::PointerFromExposedAddress, operand, _) = rvalue {
-                // if let Some(constant) = operand.constant() {
-                //     println!("{:?}", constant.literal);
-                //     panic!("")
-                // }
-                // return;
-                if operand.place().is_some() {
-                    return;
+            // if let Rvalue::Cast(CastKind::PointerFromExposedAddress, operand, _) = rvalue {
+            //     // if let Some(constant) = operand.constant() {
+            //     //     println!("{:?}", constant.literal);
+            //     //     panic!("")
+            //     // }
+            //     // return;
+            //     if operand.place().is_some() {
+            //         return;
+            //     }
+            // }
+
+            // ignore rvalues of the following kinds
+            match rvalue {
+                Rvalue::Cast(CastKind::PointerFromExposedAddress, operand, _)
+                    if operand.place().is_some() =>
+                {
+                    return
                 }
+                Rvalue::BinaryOp(_, _)
+                | Rvalue::CheckedBinaryOp(_, _)
+                | Rvalue::UnaryOp(_, _)
+                | Rvalue::NullaryOp(_, _)
+                | Rvalue::Aggregate(_, _)
+                | Rvalue::Discriminant(_)
+                | Rvalue::Len(_)
+                | Rvalue::ShallowInitBox(_, _)
+                | Rvalue::ThreadLocalRef(_)
+                | Rvalue::Repeat(_, _) => return,
+                _ => {}
             }
 
             self.super_rvalue(rvalue, location)
+        }
+
+        fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
+            let TerminatorKind::Return = terminator.kind else {
+                return self.super_terminator(terminator, location)
+            };
+            let return_place = Place::from(RETURN_PLACE);
+            self.visit_place(
+                &return_place,
+                PlaceContext::NonMutatingUse(NonMutatingUseContext::Move),
+                location,
+            )
         }
 
         fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
@@ -286,7 +345,7 @@ mod test {
             let program = crate::CrateInfo::new(tcx, functions, structs);
             let mut def_iter = program.functions().iter().copied().map(|did| {
                 let body = tcx.optimized_mir(did);
-                initial_definitions(body, tcx, program.struct_topology())
+                initial_definitions(body, tcx, &program.struct_topology)
             });
             let Some(definition) = def_iter.next() else { unreachable!() };
             assert!(def_iter.next().is_none());

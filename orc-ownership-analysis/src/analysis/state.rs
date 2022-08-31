@@ -2,10 +2,11 @@
 
 use orc_common::data_structure::assoc::AssocExt;
 use rustc_index::vec::IndexVec;
-use rustc_middle::mir::{Local, Location};
+use rustc_middle::mir::{Body, Local, LocalInfo, Location};
 
 use super::{
-    def::{Consume, ConsumeChain},
+    body_ext::DominanceFrontier,
+    def::{Consume, ConsumeChain, Definitions},
     join_points::{JoinPoints, PhiNode},
 };
 
@@ -34,8 +35,26 @@ pub(crate) struct SSAState {
 }
 
 impl SSAState {
+    pub(crate) fn new<'tcx>(
+        body: &Body<'tcx>,
+        dominance_frontier: &DominanceFrontier,
+        definitions: Definitions,
+    ) -> Self {
+        let name_state = NameState::new(body);
+        let join_points = JoinPoints::new(body, dominance_frontier, &definitions);
+        let consume_chain = ConsumeChain::new(body, definitions);
+        SSAState {
+            name_state,
+            join_points,
+            consume_chain,
+        }
+    }
+}
+
+impl SSAState {
     #[inline]
-    pub(crate) fn consume_at(&mut self, local: Local, location: Location) -> Option<Consume> {
+    pub(crate) fn try_consume_at(&mut self, local: Local, location: Location) -> Option<Consume> {
+        // tracing::debug!("consume chain before: {:?}", &self.consume_chain.consumes[location.block.index()]);
         let consume = self.consume_chain.consumes[location.block.index()][location.statement_index]
             .get_mut(&local)?;
         let old_ssa_idx = self.name_state.get_name(local);
@@ -49,8 +68,19 @@ impl SSAState {
         );
         consume.r#use = old_ssa_idx;
         consume.def = new_ssa_idx;
-        assert_eq!(new_ssa_idx, self.consume_chain.locs[local].push(location));
-        Some(*consume)
+        let consume = consume.clone();
+        // tracing::debug!("consume chain before: {:?}", &self.consume_chain.consumes[location.block.index()]);
+        assert_eq!(
+            new_ssa_idx,
+            self.consume_chain.locs[local].push(location.into())
+        );
+        Some(consume)
+    }
+
+    #[inline]
+    pub(crate) fn consume_at(&mut self, local: Local, location: Location) -> Consume {
+        self.try_consume_at(local, location)
+            .unwrap_or_else(|| panic!("{:?} isn't defined at {:?}", local, location))
     }
 }
 
@@ -61,6 +91,23 @@ pub(crate) struct NameState {
 }
 
 impl NameState {
+    fn new<'tcx>(body: &Body<'tcx>) -> Self {
+        let count = IndexVec::from_elem(SSAIdx::INIT, &body.local_decls);
+        let stack = IndexVec::from_fn_n(
+            |local| {
+                matches!(
+                    body.local_decls[local].local_info.as_deref(),
+                    Some(LocalInfo::DerefTemp)
+                )
+                .then(|| Vec::new())
+                .unwrap_or_else(|| vec![SSAIdx::INIT])
+            },
+            body.local_decls.len(),
+        );
+        // let stack = IndexVec::from_elem(vec![SSAIdx::INIT], &body.local_decls);
+        NameState { count, stack }
+    }
+
     #[inline]
     pub(crate) fn generate_fresh_name(&mut self, var: Local) -> SSAIdx {
         self.count[var] += 1;
@@ -88,10 +135,11 @@ impl NameState {
 
     #[inline]
     pub(crate) fn pop(&mut self, var: Local) -> SSAIdx {
-        tracing::debug!("popping {:?}", var);
-        self.stack[var]
+        let ssa_idx = self.stack[var]
             .pop()
-            .unwrap_or_else(|| panic!("internal error: poping non existing version for {:?}", var))
+            .unwrap_or_else(|| panic!("internal error: poping non existing version for {:?}", var));
+        // tracing::debug!("popping {:?}~{:?}", var, ssa_idx);
+        ssa_idx
     }
 }
 

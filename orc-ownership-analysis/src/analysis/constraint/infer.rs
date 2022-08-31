@@ -12,7 +12,8 @@ use rustc_middle::{
 
 use crate::{
     analysis::{
-        def::Definitions,
+        body_ext::DominanceFrontier,
+        def::{Definitions, RichLocation},
         state::{SSAIdx, SSAState},
         ty_ext::TyExt,
     },
@@ -52,15 +53,30 @@ impl Mode for WithCtxt {
 }
 
 pub(crate) struct Renamer<'rn, 'tcx: 'rn> {
-    body: &'rn Body<'tcx>,
     tcx: TyCtxt<'tcx>,
+    body: &'rn Body<'tcx>,
     struct_topology: &'rn StructTopology,
     state: SSAState,
-    definitions: Definitions,
 }
 
 impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
+    pub(crate) fn new(
+        tcx: TyCtxt<'tcx>,
+        body: &'rn Body<'tcx>,
+        struct_topology: &'rn StructTopology,
+        dominance_frontier: &DominanceFrontier,
+        definitions: Definitions,
+    ) -> Self {
+        Renamer {
+            tcx,
+            body,
+            struct_topology,
+            state: SSAState::new(body, dominance_frontier, definitions),
+        }
+    }
+
     pub(crate) fn go<M: Mode>(&mut self) {
+        tracing::debug!("Renaming {:?}", self.body.source.def_id());
         let dominators = self.body.basic_blocks.dominators();
         let mut children = IndexVec::from_elem(vec![], self.body.basic_blocks());
         let mut root = BasicBlock::from_u32(0);
@@ -90,8 +106,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     recursion.extend(children[bb].iter().rev().map(|&bb| (bb, State::ToVisit)));
                 }
                 State::ToPopNames => {
-                    for local in self.definitions.of_block(bb).iter().flatten().copied() {
-                        self.state.name_state.pop(local);
+                    for &(local, _) in self.state.consume_chain.of_block(bb).iter().flatten() {
+                        let ssa_idx = self.state.name_state.pop(local);
+                        tracing::debug!("popping at {:?}: {:?}~{:?}", bb, local, ssa_idx);
                     }
                 }
             }
@@ -110,7 +127,11 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         for (local, phi_node) in self.state.join_points[bb].iter_enumerated_mut() {
             let ssa_idx = self.state.name_state.generate_fresh_name(local);
             phi_node.lhs = ssa_idx;
-            todo!()
+            assert_eq!(
+                self.state.consume_chain.locs[local].push(RichLocation::Phi(bb)),
+                ssa_idx
+            );
+            tracing::debug!("defining {:?} at Phi({:?}), def: {:?}", local, bb, ssa_idx)
         }
 
         let mut index = 0;
@@ -134,7 +155,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         for succ in self.body.basic_blocks.successors(bb) {
             for (local, phi_node) in self.state.join_points[succ].iter_enumerated_mut() {
                 let ssa_idx = self.state.name_state.get_name(local);
-                phi_node.rhs.push(ssa_idx)
+                phi_node.rhs.push(ssa_idx);
+                tracing::debug!("using {:?} at Phi({:?}), use: {:?}", local, succ, ssa_idx)
             }
         }
     }
@@ -169,18 +191,19 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             TerminatorKind::Call {
                 args, destination, ..
             } => {
+                tracing::debug!("processing terminator {:?}", terminator.kind);
                 let destination = destination.as_local().unwrap();
                 let dest_ty = self.body.local_decls[destination].ty;
                 if dest_ty.contains_ptr(&self.struct_topology) {
-                    let _ = self.state.consume_at(destination, location).unwrap();
-                    tracing::error!("TODO")
+                    let _ = self.state.consume_at(destination, location);
+                    // tracing::error!("TODO")
                 }
                 for arg in args {
                     match arg {
                         Operand::Move(arg) | Operand::Copy(arg) => {
                             let arg_ty = arg.ty(self.body, self.tcx).ty;
                             if arg_ty.contains_ptr(&self.struct_topology) {
-                                let _ = self.state.consume_at(arg.local, location).unwrap();
+                                let _ = self.state.consume_at(arg.local, location);
                             }
                         }
                         _ => continue,
@@ -188,10 +211,11 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 }
             }
             TerminatorKind::Return => {
+                tracing::debug!("processing terminator {:?}", terminator.kind);
                 let return_place = RETURN_PLACE;
                 let ret_ty = self.body.local_decls[return_place].ty;
                 if ret_ty.contains_ptr(&self.struct_topology) {
-                    let _ = self.state.consume_at(return_place, location).unwrap();
+                    let _ = self.state.consume_at(return_place, location);
                 }
             }
             _ => {}
@@ -219,12 +243,12 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 _,
             ) = rhs
             {
-                let _ = self.state.consume_at(rhs.local, location);
+                let _ = self.state.try_consume_at(rhs.local, location);
             }
             return;
         }
 
-        let lhs_consume = self.state.consume_at(lhs.local, location);
+        let lhs_consume = self.state.try_consume_at(lhs.local, location);
 
         match rhs {
             Rvalue::Use(Operand::Constant(..)) => {
@@ -249,9 +273,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 //     let ssa_idx = self.state.name_state.generate_fresh_name(rhs.local);
                 //     tracing::debug!("fresh name for {:?}: {:?}", rhs.local, ssa_idx);
                 // }
-                let rhs_consume = self.state.consume_at(rhs.local, location);
+                let rhs_consume = self.state.try_consume_at(rhs.local, location);
                 let (Some(lhs_consume), Some(rhs_consume)) = (lhs_consume, rhs_consume) else { return };
-                tracing::error!("TODO");
+                // tracing::error!("TODO");
             }
 
             Rvalue::CopyForDeref(rhs) => {
@@ -263,7 +287,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     .as_local()
                     .expect("we assume that rustc guarantees the lhs of `p = &q` being local");
 
-                tracing::error!("TODO");
+                // tracing::error!("TODO");
             }
 
             Rvalue::BinaryOp(_, _) | Rvalue::CheckedBinaryOp(_, _) | Rvalue::UnaryOp(_, _) => {

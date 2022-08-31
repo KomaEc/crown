@@ -25,7 +25,9 @@ impl<'tcx> BodyExt for Body<'tcx> {
                 // if `bb` is a join point
                 for &bb_p in preds {
                     let mut runner = bb_p;
-                    while runner != dominators.immediate_dominator(bb) {
+                    while !dominators.is_dominated_by(bb, runner)
+                    /* runner != dominators.immediate_dominator(bb) */
+                    {
                         df[runner].insert(bb);
                         runner = dominators.immediate_dominator(runner)
                     }

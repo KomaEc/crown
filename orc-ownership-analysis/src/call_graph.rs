@@ -90,7 +90,7 @@ impl<'me, 'tcx> Visitor<'tcx> for CallGraphConstruction<'me> {
             return
         };
         let Some(func_constant) = func.constant() else {
-            tracing::warn!("closures or function pointers are now ignored");
+            // tracing::warn!("closures or function pointers are now ignored");
             return
         };
         let ty = func_constant.ty();

@@ -64,6 +64,8 @@ enum Command {
         #[clap(long, short)]
         all: bool,
     },
+    /// Play with the ownership analysis
+    CrashMe,
     Rewrite {
         #[clap(arg_enum, default_value_t = RewriteMode::Print)]
         rewrite_mode: RewriteMode,
@@ -208,6 +210,10 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             });
             program.verify();
             println!("verification success");
+        }
+        Command::CrashMe => {
+            let program = CrateInfo::from_input(&input);
+            program.rename_all();
         }
         Command::Analyse {
             null,

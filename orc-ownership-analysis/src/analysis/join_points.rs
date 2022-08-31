@@ -14,40 +14,6 @@ use super::{
     state::SSAIdx,
 };
 
-/// `def_sites` contains only locals with long live-range
-pub(crate) fn semi_pruned_join_points<'tcx>(
-    body: &Body<'tcx>,
-    dominance_frontier: &DominanceFrontier,
-    // def_sites: &DefSites,
-    definitions: &Definitions,
-) -> JoinPoints<PhiNode> {
-    let def_sites = &definitions.sites;
-    let mut join_points = JoinPoints::from_raw(IndexVec::from_elem(
-        BasicBlockNodes::new(),
-        body.basic_blocks(),
-    ));
-    let mut already_added = BitSet::new_empty(body.basic_blocks().len());
-    let mut work_list = VecDeque::with_capacity(body.basic_blocks.len());
-    for (a, bbs) in def_sites.iter_enumerated() {
-        // let mut work_list = bbs.iter().collect::<VecDeque<_>>();
-        work_list.extend(bbs.iter());
-        while let Some(bb) = work_list.pop_front() {
-            for &bb_f in &dominance_frontier[bb] {
-                if !already_added.contains(bb_f) {
-                    join_points[bb_f].data.push((a, PhiNode::default()));
-                    already_added.insert(bb_f);
-                    if !def_sites[a].contains(bb_f) {
-                        work_list.push_back(bb_f);
-                    }
-                }
-            }
-        }
-        work_list.clear();
-        already_added.clear();
-    }
-    join_points
-}
-
 /// A phi node for a local X: X_i = $\phi$(X_j, X_k)
 #[derive(Clone, Derivative)]
 #[derivative(Default)]
@@ -67,6 +33,40 @@ impl PhiNode {
 #[derive(Clone, Debug)]
 pub(crate) struct JoinPoints<Payload> {
     data: IndexVec<BasicBlock, BasicBlockNodes<Payload>>,
+}
+
+impl JoinPoints<PhiNode> {
+    pub(crate) fn new<'tcx>(
+        body: &Body<'tcx>,
+        dominance_frontier: &DominanceFrontier,
+        definitions: &Definitions,
+    ) -> Self {
+        let def_sites = &definitions.sites;
+        let mut join_points = JoinPoints::from_raw(IndexVec::from_elem(
+            BasicBlockNodes::new(),
+            body.basic_blocks(),
+        ));
+        let mut already_added = BitSet::new_empty(body.basic_blocks().len());
+        let mut work_list = VecDeque::with_capacity(body.basic_blocks.len());
+        for (a, bbs) in def_sites.iter_enumerated() {
+            // let mut work_list = bbs.iter().collect::<VecDeque<_>>();
+            work_list.extend(bbs.iter());
+            while let Some(bb) = work_list.pop_front() {
+                for &bb_f in &dominance_frontier[bb] {
+                    if !already_added.contains(bb_f) {
+                        join_points[bb_f].data.push((a, PhiNode::default()));
+                        already_added.insert(bb_f);
+                        if !def_sites[a].contains(bb_f) {
+                            work_list.push_back(bb_f);
+                        }
+                    }
+                }
+            }
+            work_list.clear();
+            already_added.clear();
+        }
+        join_points
+    }
 }
 
 impl<Payload> JoinPoints<Payload> {
