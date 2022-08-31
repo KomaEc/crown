@@ -35,6 +35,9 @@ pub(crate) struct SSAState {
 }
 
 impl SSAState {
+    /// TODO: smarter initialisation.
+    /// Do not generate entries for non-ptr locals
+    /// Do not generate entries for locals at all.
     pub(crate) fn new<'tcx>(
         body: &Body<'tcx>,
         dominance_frontier: &DominanceFrontier,
