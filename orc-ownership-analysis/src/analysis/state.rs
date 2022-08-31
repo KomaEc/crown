@@ -118,7 +118,7 @@ impl NameState {
 
     #[inline]
     pub(crate) fn get_name(&self, var: Local) -> SSAIdx {
-        self.stack[var].last().copied().unwrap_or_else(|| {
+        self.try_get_name(var).unwrap_or_else(|| {
             panic!(
                 "internal error: cannot find fresh name supply for {:?}",
                 var
