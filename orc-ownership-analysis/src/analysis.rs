@@ -40,7 +40,6 @@ impl<'tcx> CrateCtxt<'tcx> {
             let dominance_frontier = body.compute_dominance_frontier();
             let definitions = initial_definitions(body, self.tcx, &self.struct_topology);
             let mut rn = Renamer::new(
-                self,
                 body,
                 &dominance_frontier,
                 definitions,

@@ -7,7 +7,6 @@ use rustc_middle::{
         BasicBlock, BasicBlockData, Body, CastKind, Local, Location, Operand, Place, Rvalue,
         Statement, StatementKind, Terminator, TerminatorKind, RETURN_PLACE,
     },
-    ty::TyCtxt,
 };
 
 use crate::{
@@ -15,7 +14,6 @@ use crate::{
         body_ext::DominanceFrontier,
         def::{Consume, Definitions, RichLocation},
         state::{SSAIdx, SSAState},
-        ty_ext::TyExt,
     },
     struct_topology::StructTopology, CrateCtxt,
 };
@@ -62,20 +60,17 @@ impl Mode for WithCtxt {
 }
 
 pub(crate) struct Renamer<'rn, 'tcx: 'rn> {
-    crate_ctxt: &'rn CrateCtxt<'tcx>,
     body: &'rn Body<'tcx>,
     state: SSAState,
 }
 
 impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
     pub(crate) fn new(
-        crate_ctxt: &'rn CrateCtxt<'tcx>,
         body: &'rn Body<'tcx>,
         dominance_frontier: &DominanceFrontier,
         definitions: Definitions,
     ) -> Self {
         Renamer {
-            crate_ctxt,
             body,
             state: SSAState::new(body, dominance_frontier, definitions),
         }
@@ -106,7 +101,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         while let Some((bb, state)) = recursion.pop() {
             match state {
                 State::ToVisit => {
-                    // self.state.name_state.enter_new_block();
                     self.go_basic_block::<M>(bb, &self.body.basic_blocks()[bb]);
                     recursion.push((bb, State::ToPopNames));
                     recursion.extend(children[bb].iter().rev().map(|&bb| (bb, State::ToVisit)));
