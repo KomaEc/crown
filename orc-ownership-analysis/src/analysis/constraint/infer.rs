@@ -2,20 +2,18 @@ use std::ops::Range;
 
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
-use rustc_middle::{
-    mir::{
-        BasicBlock, BasicBlockData, Body, CastKind, Local, Location, Operand, Place, Rvalue,
-        Statement, StatementKind, Terminator, TerminatorKind, RETURN_PLACE,
-    },
+use rustc_middle::mir::{
+    BasicBlock, BasicBlockData, Body, CastKind, Local, Location, Operand, Place, Rvalue, Statement,
+    StatementKind, Terminator, TerminatorKind, RETURN_PLACE,
 };
 
 use crate::{
     analysis::{
         body_ext::DominanceFrontier,
         def::{Consume, Definitions, RichLocation},
-        state::{SSAIdx, SSAState}, ty_ext::TyExt,
+        state::{SSAIdx, SSAState},
     },
-    struct_topology::StructTopology, CrateCtxt,
+    struct_topology::StructTopology,
 };
 
 use super::{CadicalDatabase, Database, OwnershipSig};
@@ -154,7 +152,11 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
         for succ in self.body.basic_blocks.successors(bb) {
             for (local, phi_node) in self.state.join_points[succ].iter_enumerated_mut() {
-                let ssa_idx = self.state.name_state.get_name(local);
+                let ssa_idx = self
+                    .state
+                    .name_state
+                    .try_get_name(local)
+                    .unwrap_or_else(|| panic!("{:?}: {}", local, self.body.local_decls[local].ty));
                 phi_node.rhs.push(ssa_idx);
                 tracing::debug!("using {:?} at Phi({:?}), use: {:?}", local, succ, ssa_idx)
             }
@@ -208,7 +210,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 let return_place = RETURN_PLACE;
                 let _ = self.state.try_consume_at(return_place, location);
                 // finalise!
-                for local in self.state.consume_chain.to_finalise().iter() {
+                for local in self.state.consume_chain.to_finalise() {
                     let _ = self.state.name_state.get_name(local);
                 }
             }
@@ -227,7 +229,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         let lhs = place;
         let rhs = rvalue;
 
-
         let lhs_consume = self.state.try_consume_at(lhs.local, location);
         // let rhs_consume = self.state.try_consume_at(rhs.local, location);
 
@@ -243,13 +244,21 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 tracing::debug!("untrusted pointer source: raw address {:?}", operand)
             }
 
-            Rvalue::Cast(CastKind::PointerExposeAddress, Operand::Copy(rhs) | Operand::Move(rhs), _) => {
+            Rvalue::Cast(
+                CastKind::PointerExposeAddress,
+                Operand::Copy(rhs) | Operand::Move(rhs),
+                _,
+            ) => {
                 tracing::debug!("untrusted pointer sink: address {:?}", lhs);
                 let _ = self.state.consume_at(rhs.local, location);
             }
 
             Rvalue::Cast(_, Operand::Constant(box constant), _) => {
-                assert!(lhs_consume.is_none(), "TODO: constant pointer {:?}", constant)
+                assert!(
+                    lhs_consume.is_none(),
+                    "TODO: constant pointer {:?}",
+                    constant
+                )
                 // todo!("constant pointer {:?}, cast_kind: {:?}", constant)
             }
 
@@ -274,7 +283,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
             Rvalue::BinaryOp(_, _) | Rvalue::CheckedBinaryOp(_, _) | Rvalue::UnaryOp(_, _) => {
                 // unreachable!("{:?}: {ty} cannot contain ptr", rhs)
-                return
+                return;
             }
             Rvalue::NullaryOp(_, _)
             | Rvalue::Aggregate(_, _)

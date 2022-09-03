@@ -34,7 +34,7 @@ pub(crate) struct Definitions {
     /// once in a statement/terminator
     consumes: VecArray<SmallVec<[(Local, Consume); 2]>>,
     pub(crate) def_sites: IndexVec<Local, BitSet<BasicBlock>>,
-    to_finalise: BitSet<Local>,
+    pub(crate) to_finalise: BitSet<Local>,
 }
 
 impl Definitions {
@@ -88,34 +88,57 @@ pub(crate) struct ConsumeChain {
     pub(crate) consumes: VecArray<SmallVec<[(Local, Consume); 2]>>,
     /// location of each definition
     pub(crate) locs: IndexVec<Local, IndexVec<SSAIdx, RichLocation>>,
-    to_finalise: BitSet<Local>,
+    // to_finalise: BitSet<Local>,
 }
 
 impl ConsumeChain {
     pub(crate) fn new<'tcx>(body: &Body<'tcx>, definitions: Definitions) -> Self {
-        let Definitions { consumes, to_finalise, .. } = definitions;
+        let Definitions {
+            consumes,
+            to_finalise,
+            ..
+        } = definitions;
 
-        let locs = IndexVec::from_fn_n(
-            |local| {
-                matches!(
-                    body.local_decls[local].local_info.as_deref(),
-                    Some(LocalInfo::DerefTemp)
-                )
-                .then(|| IndexVec::new())
-                .unwrap_or_else(|| IndexVec::from_raw(vec![RichLocation::Entry]))
-            },
-            body.local_decls.len(),
-        );
+        // let locs = IndexVec::from_fn_n(
+        //     |local| {
+        //         matches!(
+        //             body.local_decls[local].local_info.as_deref(),
+        //             Some(LocalInfo::DerefTemp)
+        //         )
+        //         .then(|| IndexVec::new())
+        //         .unwrap_or_else(|| IndexVec::from_raw(vec![RichLocation::Entry]))
+        //     },
+        //     body.local_decls.len(),
+        // );
+
+        // Notice: this has to be in accordance with NameState.stack
+        let locs = body
+            .local_decls
+            .indices()
+            .map(|local| {
+                to_finalise
+                    .contains(local)
+                    .then(|| IndexVec::from_raw(vec![RichLocation::Entry]))
+                    .unwrap_or_else(|| IndexVec::new())
+            })
+            .collect();
         ConsumeChain {
             consumes,
             locs,
-            to_finalise,
+            // to_finalise,
         }
     }
 
-    #[inline]
-    pub(crate) fn to_finalise(&self) -> &BitSet<Local> {
-        &self.to_finalise
+    // #[inline]
+    // pub(crate) fn to_finalise(&self) -> &BitSet<Local> {
+    //     &self.to_finalise
+    // }
+    pub(crate) fn to_finalise(&self) -> impl Iterator<Item = Local> + '_ {
+        self.locs
+            .iter_enumerated()
+            // return place is never finalised
+            .skip(1)
+            .filter_map(|(local, locs)| (!locs.is_empty()).then_some(local))
     }
 
     #[inline]
@@ -260,7 +283,8 @@ pub(crate) fn initial_definitions<'tcx>(
                 && !matches!(local_info, Some(LocalInfo::DerefTemp))
             {
                 // println!("defining {:?} at {:?}", place.local, location);
-                self.consumes_in_cur_stmt.push((place.local, Consume::new()));
+                self.consumes_in_cur_stmt
+                    .push((place.local, Consume::new()));
                 self.def_sites[place.local].insert(location.block);
             }
         }
@@ -277,23 +301,20 @@ pub(crate) fn initial_definitions<'tcx>(
     }
     .visit_body(body);
 
-    let mut to_finalise = BitSet::new_empty(body.local_decls.len());
+    let mut locals_with_ptr = BitSet::new_empty(body.local_decls.len());
 
     for (local, local_decl) in body.local_decls.iter_enumerated() {
         let ty = local_decl.ty;
         let local_info = local_decl.local_info.as_deref();
-        if ty.contains_ptr(struct_topology)
-            && !matches!(local_info, Some(LocalInfo::DerefTemp))
-        {
-            to_finalise.insert(local);
+        if ty.contains_ptr(struct_topology) && !matches!(local_info, Some(LocalInfo::DerefTemp)) {
+            locals_with_ptr.insert(local);
         }
     }
-
 
     Definitions {
         consumes: consumes.done(),
         def_sites,
-        to_finalise,
+        to_finalise: locals_with_ptr,
     }
 }
 

@@ -61,8 +61,14 @@ impl StructTopology {
             let mut offset = Offset::from_u32(0);
             offset_of.add_item_to_array(offset);
             for field_def in adt_def.all_fields() {
+                let mut ty = field_def.ty(tcx, subst_ref);
+                // peel off arrays
+                // Notice: this has to be in accordnace with TyExt
+                while let TyKind::Array(inner_ty, _) = ty.kind() {
+                    ty = *inner_ty;
+                }
                 offset = offset
-                    + match field_def.ty(tcx, subst_ref).kind() {
+                    + match ty.kind() {
                         TyKind::RawPtr(..) | TyKind::Ref(..) => 1,
                         TyKind::Adt(sub_adt_def, _) if sub_adt_def.is_box() => 1,
                         TyKind::Adt(sub_adt_def, _) => did_idx

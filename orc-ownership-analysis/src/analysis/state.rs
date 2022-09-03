@@ -1,8 +1,8 @@
 //! State for analysis steps
 
 use orc_common::data_structure::assoc::AssocExt;
-use rustc_index::{vec::IndexVec, bit_set::BitSet};
-use rustc_middle::mir::{Body, Local, LocalInfo, Location};
+use rustc_index::{bit_set::BitSet, vec::IndexVec};
+use rustc_middle::mir::{Body, Local, Location};
 
 use super::{
     body_ext::DominanceFrontier,
@@ -43,7 +43,7 @@ impl SSAState {
         dominance_frontier: &DominanceFrontier,
         definitions: Definitions,
     ) -> Self {
-        let name_state = NameState::new(body);
+        let name_state = NameState::new(body, &definitions.to_finalise);
         let join_points = JoinPoints::new(body, dominance_frontier, &definitions.def_sites);
         let consume_chain = ConsumeChain::new(body, definitions);
         SSAState {
@@ -99,19 +99,31 @@ pub(crate) struct NameState {
 }
 
 impl NameState {
-    fn new<'tcx>(body: &Body<'tcx>) -> Self {
+    fn new<'tcx>(body: &Body<'tcx>, to_finalise: &BitSet<Local>) -> Self {
         let count = IndexVec::from_elem(SSAIdx::INIT, &body.local_decls);
-        let stack = IndexVec::from_fn_n(
-            |local| {
-                matches!(
-                    body.local_decls[local].local_info.as_deref(),
-                    Some(LocalInfo::DerefTemp)
-                )
-                .then(|| Vec::new())
-                .unwrap_or_else(|| vec![SSAIdx::INIT])
-            },
-            body.local_decls.len(),
-        );
+        // let stack = IndexVec::from_fn_n(
+        //     |local| {
+        //         matches!(
+        //             body.local_decls[local].local_info.as_deref(),
+        //             Some(LocalInfo::DerefTemp)
+        //         )
+        //         .then(|| Vec::new())
+        //         .unwrap_or_else(|| vec![SSAIdx::INIT])
+        //     },
+        //     body.local_decls.len(),
+        // );
+
+        // Notice: this has to be in accordance with ConsumeChain.locs
+        let stack = body
+            .local_decls
+            .indices()
+            .map(|local| {
+                to_finalise
+                    .contains(local)
+                    .then(|| vec![SSAIdx::INIT])
+                    .unwrap_or_else(|| Vec::new())
+            })
+            .collect();
         // let stack = IndexVec::from_elem(vec![SSAIdx::INIT], &body.local_decls);
         NameState { count, stack }
     }

@@ -16,11 +16,16 @@ impl<'tcx> TyExt<'tcx> for Ty<'tcx> {
     }
 
     /// TODO: handle fn_ptr and tuple?
-    fn ptr_count(self, struct_topology: &StructTopology) -> usize {
+    fn ptr_count(mut self, struct_topology: &StructTopology) -> usize {
+        while let TyKind::Array(inner_ty, _) = self.kind() {
+            self = *inner_ty
+        }
+
         if self.is_tracked_ptr() {
             return 1;
         }
 
+        // Notice: this has to be in accordance with struct topology
         let TyKind::Adt(adt_def, _) = self.kind() else { return 0 };
         if !adt_def.is_struct() || !struct_topology.contains(&adt_def.did()) {
             return 0;

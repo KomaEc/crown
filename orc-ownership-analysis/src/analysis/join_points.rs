@@ -42,7 +42,7 @@ impl JoinPoints<PhiNode> {
         body: &Body<'tcx>,
         dominance_frontier: &DominanceFrontier,
         // definitions: &Definitions,
-        def_sites: &IndexVec<Local, BitSet<BasicBlock>>
+        def_sites: &IndexVec<Local, BitSet<BasicBlock>>,
     ) -> Self {
         // let live_range = &definitions.live_range;
         let mut join_points = JoinPoints::from_raw(IndexVec::from_elem(
