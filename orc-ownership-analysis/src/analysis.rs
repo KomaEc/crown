@@ -8,11 +8,11 @@ pub(crate) mod body_ext;
 pub(crate) mod constants;
 pub(crate) mod constraint;
 pub(crate) mod def;
+pub(crate) mod dom;
 pub(crate) mod join_points;
 pub(crate) mod place_ext;
 pub(crate) mod state;
 pub(crate) mod ty_ext;
-pub(crate) mod dom;
 // pub(crate) mod sssa;
 
 // pub(crate) struct OwnershipAnalysisCtxt<'octxt, 'tcx, DB = CadicalDatabase>

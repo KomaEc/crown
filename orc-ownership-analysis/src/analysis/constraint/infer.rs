@@ -13,7 +13,7 @@ use rustc_middle::{
 use crate::{
     analysis::{
         body_ext::DominanceFrontier,
-        def::{Definitions, RichLocation},
+        def::{Consume, Definitions, RichLocation},
         state::{SSAIdx, SSAState},
         ty_ext::TyExt,
     },
@@ -23,33 +23,42 @@ use crate::{
 use super::{CadicalDatabase, Database, OwnershipSig};
 
 /// Should it hold 'tcx at all?
-pub(crate) struct InferCtxt<'me, DB = CadicalDatabase>
+pub(crate) struct InferCtxt<DB = CadicalDatabase>
 where
     DB: Database,
 {
-    database: &'me mut DB,
+    database: DB,
     local_sig: IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>,
     // store: VecArray<Range<OwnershipSig>>,
     // TODO: signatures for the function that is analysed (and perhaps
     // those in the same connected component)
 }
 
+impl<DB: Database> InferCtxt<DB> {
+    pub(crate) fn consume_place<'tcx>(
+        &mut self,
+        place: &Place<'tcx>,
+        consume: Consume,
+        struct_topology: &StructTopology,
+    ) {
+    }
+}
+
 /// FIXME: is it the right way?
 pub(crate) trait Mode {
-    type Ctxt<'me, DB>
+    type Ctxt<DB>
     where
-        Self: 'me,
-        DB: Database + 'me;
+        DB: Database;
 }
 #[derive(Debug)]
 pub(crate) struct Pure;
 #[derive(Debug)]
 pub(crate) struct WithCtxt;
 impl Mode for Pure {
-    type Ctxt<'me, DB: Database + 'me> = ();
+    type Ctxt<DB: Database> = ();
 }
 impl Mode for WithCtxt {
-    type Ctxt<'me, DB> = InferCtxt<'me, DB> where Self: 'me, DB: Database + 'me;
+    type Ctxt<DB> = InferCtxt<DB> where DB: Database;
 }
 
 pub(crate) struct Renamer<'rn, 'tcx: 'rn> {
@@ -115,7 +124,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    pub(crate) fn go_basic_block<M: Mode>(&mut self, bb: BasicBlock, data: &BasicBlockData<'tcx>) {
+    fn go_basic_block<M: Mode>(&mut self, bb: BasicBlock, data: &BasicBlockData<'tcx>) {
         tracing::debug!("Renaming {:?}", bb);
 
         let BasicBlockData {

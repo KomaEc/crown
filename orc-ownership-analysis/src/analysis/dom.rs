@@ -3,7 +3,6 @@ use rustc_data_structures::graph::WithStartNode;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body};
 
-
 pub(crate) struct DomTree {
     pub(crate) idoms: IndexVec<BasicBlock, Option<BasicBlock>>,
     /// BasicBlock -> Array of BasicBlock
