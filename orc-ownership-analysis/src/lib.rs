@@ -44,13 +44,13 @@ use struct_topology::StructTopology;
 
 /// Input program is assumed to consist of only top-level
 /// functions and struct definitions.
-pub struct CrateInfo<'tcx> {
+pub struct CrateCtxt<'tcx> {
     tcx: TyCtxt<'tcx>,
     call_graph: CallGraph,
     struct_topology: StructTopology,
 }
 
-impl<'tcx> OrcInput<'tcx> for CrateInfo<'tcx> {
+impl<'tcx> OrcInput<'tcx> for CrateCtxt<'tcx> {
     fn tcx(&self) -> TyCtxt<'tcx> {
         self.tcx
     }
@@ -64,9 +64,9 @@ impl<'tcx> OrcInput<'tcx> for CrateInfo<'tcx> {
     }
 }
 
-impl<'tcx> CrateInfo<'tcx> {
+impl<'tcx> CrateCtxt<'tcx> {
     pub fn from_input<Input: OrcInput<'tcx>>(input: &Input) -> Self {
-        CrateInfo {
+        CrateCtxt {
             tcx: input.tcx(),
             call_graph: CallGraph::new(input.tcx(), input.functions()),
             struct_topology: StructTopology::new(input.tcx(), input.structs().to_vec()),
@@ -75,7 +75,7 @@ impl<'tcx> CrateInfo<'tcx> {
 
     /// TODO: remove this
     pub fn new(tcx: TyCtxt<'tcx>, functions: Vec<DefId>, structs: Vec<DefId>) -> Self {
-        CrateInfo {
+        CrateCtxt {
             tcx,
             call_graph: CallGraph::new(tcx, &functions[..]),
             struct_topology: StructTopology::new(tcx, structs),
@@ -87,10 +87,10 @@ impl<'tcx> CrateInfo<'tcx> {
     //     &self.call_graph
     // }
 
-    // #[inline]
-    // fn struct_topology(&self) -> &StructTopology {
-    //     &self.struct_topology
-    // }
+    #[inline]
+    fn struct_topology(&self) -> &StructTopology {
+        &self.struct_topology
+    }
 
     #[inline]
     pub(crate) fn functions(&self) -> &[DefId] {

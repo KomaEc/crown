@@ -26,7 +26,7 @@ use tracing_subscriber::EnvFilter;
 
 use empirical_study::EmpiricalStudy;
 use orc_common::rewriter::RewriteMode;
-use orc_ownership_analysis::CrateInfo;
+use orc_ownership_analysis::CrateCtxt;
 use usage_analysis::{fatness, mutability, null};
 
 #[derive(Parser)]
@@ -206,13 +206,13 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         }
         Command::VerifyRustcProperties => {
             let program = time("construct call graph and struct topology", || {
-                CrateInfo::from_input(&input)
+                CrateCtxt::from_input(&input)
             });
             program.verify();
             println!("verification success");
         }
         Command::CrashMe => {
-            let program = CrateInfo::from_input(&input);
+            let program = CrateCtxt::from_input(&input);
             program.rename_all();
         }
         Command::Analyse {

@@ -1,5 +1,5 @@
 use crate::analysis::body_ext::BodyExt;
-use crate::CrateInfo;
+use crate::CrateCtxt;
 
 use self::constraint::infer::{Pure, Renamer};
 use self::def::initial_definitions;
@@ -32,7 +32,7 @@ pub(crate) mod ty_ext;
 //     }
 // }
 
-impl<'tcx> CrateInfo<'tcx> {
+impl<'tcx> CrateCtxt<'tcx> {
     pub fn rename_all(&self) {
         for &did in self.functions() {
             println!("renaming {:?}", did);
@@ -40,9 +40,8 @@ impl<'tcx> CrateInfo<'tcx> {
             let dominance_frontier = body.compute_dominance_frontier();
             let definitions = initial_definitions(body, self.tcx, &self.struct_topology);
             let mut rn = Renamer::new(
-                self.tcx,
+                self,
                 body,
-                &self.struct_topology,
                 &dominance_frontier,
                 definitions,
             );

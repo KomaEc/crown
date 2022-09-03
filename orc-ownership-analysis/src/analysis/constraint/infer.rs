@@ -17,7 +17,7 @@ use crate::{
         state::{SSAIdx, SSAState},
         ty_ext::TyExt,
     },
-    struct_topology::StructTopology,
+    struct_topology::StructTopology, CrateCtxt,
 };
 
 use super::{CadicalDatabase, Database, OwnershipSig};
@@ -62,24 +62,21 @@ impl Mode for WithCtxt {
 }
 
 pub(crate) struct Renamer<'rn, 'tcx: 'rn> {
-    tcx: TyCtxt<'tcx>,
+    crate_ctxt: &'rn CrateCtxt<'tcx>,
     body: &'rn Body<'tcx>,
-    struct_topology: &'rn StructTopology,
     state: SSAState,
 }
 
 impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
     pub(crate) fn new(
-        tcx: TyCtxt<'tcx>,
+        crate_ctxt: &'rn CrateCtxt<'tcx>,
         body: &'rn Body<'tcx>,
-        struct_topology: &'rn StructTopology,
         dominance_frontier: &DominanceFrontier,
         definitions: Definitions,
     ) -> Self {
         Renamer {
-            tcx,
+            crate_ctxt,
             body,
-            struct_topology,
             state: SSAState::new(body, dominance_frontier, definitions),
         }
     }
@@ -202,18 +199,11 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             } => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
                 let destination = destination.as_local().unwrap();
-                let dest_ty = self.body.local_decls[destination].ty;
-                if dest_ty.contains_ptr(&self.struct_topology) {
-                    let _ = self.state.consume_at(destination, location);
-                    // tracing::error!("TODO")
-                }
+                let _ = self.state.try_consume_at(destination, location);
                 for arg in args {
                     match arg {
                         Operand::Move(arg) | Operand::Copy(arg) => {
-                            let arg_ty = arg.ty(self.body, self.tcx).ty;
-                            if arg_ty.contains_ptr(&self.struct_topology) {
-                                let _ = self.state.consume_at(arg.local, location);
-                            }
+                            let _ = self.state.try_consume_at(arg.local, location);
                         }
                         _ => continue,
                     }
@@ -222,10 +212,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             TerminatorKind::Return => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
                 let return_place = RETURN_PLACE;
-                let ret_ty = self.body.local_decls[return_place].ty;
-                if ret_ty.contains_ptr(&self.struct_topology) {
-                    let _ = self.state.consume_at(return_place, location);
-                }
+                let _ = self.state.try_consume_at(return_place, location);
             }
             _ => {}
         }
@@ -242,46 +229,34 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         let lhs = place;
         let rhs = rvalue;
 
-        // Is this condition even necessary? If it is to be defined, then
-        // it must contain pointers!!!
-        let ty = lhs.ty(self.body, self.tcx).ty;
-        if !ty.contains_ptr(self.struct_topology) {
-            if let Rvalue::Cast(
-                CastKind::PointerExposeAddress,
-                Operand::Move(rhs) | Operand::Copy(rhs),
-                _,
-            ) = rhs
-            {
-                let _ = self.state.try_consume_at(rhs.local, location);
-            }
-            return;
-        }
 
         let lhs_consume = self.state.try_consume_at(lhs.local, location);
+        // let rhs_consume = self.state.try_consume_at(rhs.local, location);
 
         match rhs {
-            Rvalue::Use(Operand::Constant(..)) => {
-                tracing::debug!("ignoring rvalue {:?}", rhs)
+            Rvalue::Use(Operand::Constant(_)) => {
+                // assert!(lhs_consume.is_none(), "pointers cannot be mir constants: {:?}", constant)
+                if lhs_consume.is_some() {
+                    tracing::debug!("constant pointer rvalue {:?}", rhs)
+                }
             }
 
-            Rvalue::Cast(CastKind::PointerFromExposedAddress, ..) => {
-                tracing::debug!("ignoring rvalue {:?}", rhs)
+            Rvalue::Cast(CastKind::PointerFromExposedAddress, operand, _) => {
+                tracing::debug!("untrusted pointer source: raw address {:?}", operand)
             }
 
-            Rvalue::Cast(CastKind::PointerExposeAddress, ..) => {
-                unreachable!("lhs shoud be a pointer")
+            Rvalue::Cast(CastKind::PointerExposeAddress, Operand::Copy(rhs) | Operand::Move(rhs), _) => {
+                tracing::debug!("untrusted pointer sink: address {:?}", lhs);
+                let _ = self.state.consume_at(rhs.local, location);
             }
 
-            Rvalue::Cast(_, Operand::Constant(_constant), _) => {
-                todo!("constant pointer {:?}", _constant)
+            Rvalue::Cast(_, Operand::Constant(box constant), _) => {
+                assert!(lhs_consume.is_none(), "TODO: constant pointer {:?}", constant)
+                // todo!("constant pointer {:?}, cast_kind: {:?}", constant)
             }
 
             Rvalue::Use(Operand::Move(rhs) | Operand::Copy(rhs))
             | Rvalue::Cast(_, Operand::Move(rhs) | Operand::Copy(rhs), _) => {
-                // if def_of_loc.contains(&rhs.local) {
-                //     let ssa_idx = self.state.name_state.generate_fresh_name(rhs.local);
-                //     tracing::debug!("fresh name for {:?}: {:?}", rhs.local, ssa_idx);
-                // }
                 let rhs_consume = self.state.try_consume_at(rhs.local, location);
                 let (Some(lhs_consume), Some(rhs_consume)) = (lhs_consume, rhs_consume) else { return };
                 // tracing::error!("TODO");
@@ -300,7 +275,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             }
 
             Rvalue::BinaryOp(_, _) | Rvalue::CheckedBinaryOp(_, _) | Rvalue::UnaryOp(_, _) => {
-                unreachable!("{:?}: {ty} cannot contain ptr", rhs)
+                // unreachable!("{:?}: {ty} cannot contain ptr", rhs)
+                return
             }
             Rvalue::NullaryOp(_, _)
             | Rvalue::Aggregate(_, _)
@@ -308,7 +284,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             | Rvalue::Len(_)
             | Rvalue::ShallowInitBox(_, _)
             | Rvalue::ThreadLocalRef(_)
-            | Rvalue::Repeat(_, _) => unreachable!("rvalue {:?} is not assumed to appear", rhs),
+            | Rvalue::Repeat(_, _) => return, // unreachable!("rvalue {:?} is not assumed to appear", rhs),
         }
     }
 }

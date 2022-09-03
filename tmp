@@ -1,0 +1,545 @@
+renaming DefId(0:13 ~ lib[31f9]::src::bst::newNode)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming DefId(0:13 ~ lib[31f9]::src::bst::newNode)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _4 = std::mem::size_of::<src::bst::node>() -> bb1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _3 = move _4 as u64 (Misc)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _2 = src::bst::malloc(move _3) -> bb2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _2 at bb1[1], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _0 = move _2 as *mut src::bst::node (Misc)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb2[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _2 at bb2[0], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _5 = _1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment ((*_0).0: i32) = move _5
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment ((*_0).2: *mut src::bst::node) = const 0_usize as *mut src::bst::node (PointerFromExposedAddress)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m untrusted pointer source: raw address const 0_usize
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _6 = ((*_0).2: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _6 at bb2[4], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment ((*_0).1: *mut src::bst::node) = move _6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _6 at bb2[5], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator return
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb2[6], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb2: _0~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb2: _2~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb2: _6~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb2: _6~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb2: _0~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb1: _2~1
+completed
+renaming DefId(0:14 ~ lib[31f9]::src::bst::inorder)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming DefId(0:14 ~ lib[31f9]::src::bst::inorder)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _4 = _1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _4 at bb0[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _1 at bb0[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _3 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _4) -> bb1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _4 at bb0[1], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _2 = Not(move _3)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _6 = ((*_1).1: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _6 at bb2[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _5 = src::bst::inorder(move _6) -> bb3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _6 at bb2[1], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _11 = const b"%d \x00"
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _11 at bb3[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m constant pointer rvalue const b"%d \x00"
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _10 = &raw const (*_11)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _10 at bb3[1], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _9 = move _10 as *const u8 (Pointer(ArrayToPointer))
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _9 at bb3[2], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _10 at bb3[2], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _8 = move _9 as *const i8 (Misc)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _8 at bb3[3], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _9 at bb3[3], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _12 = ((*_1).0: i32)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _7 = src::bst::printf(move _8, move _12) -> bb4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _8 at bb3[5], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _14 = ((*_1).2: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _14 at bb4[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _13 = src::bst::inorder(move _14) -> bb6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _14 at bb4[1], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _1 at Phi(bb6), use: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _6 at Phi(bb6), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _8 at Phi(bb6), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb6), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _10 at Phi(bb6), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _11 at Phi(bb6), use: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _14 at Phi(bb6), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb4: _14~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb4: _14~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb3: _11~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb3: _10~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb3: _9~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb3: _10~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb3: _8~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb3: _9~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb3: _8~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb2: _6~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb2: _6~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb5
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _1 = const {0x0 as *mut src::bst::node}
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _1 at bb5[0], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m constant pointer rvalue const {0x0 as *mut src::bst::node}
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _1 at Phi(bb6), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _6 at Phi(bb6), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _8 at Phi(bb6), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb6), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _10 at Phi(bb6), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _11 at Phi(bb6), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _14 at Phi(bb6), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb5: _1~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _1 at Phi(bb6), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _6 at Phi(bb6), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _8 at Phi(bb6), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _9 at Phi(bb6), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _10 at Phi(bb6), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _11 at Phi(bb6), def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _14 at Phi(bb6), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator return
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb0: _4~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb0: _1~3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb0: _4~1
+completed
+renaming DefId(0:15 ~ lib[31f9]::src::bst::insert)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming DefId(0:15 ~ lib[31f9]::src::bst::insert)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _4 = _1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _4 at bb0[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _1 at bb0[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _3 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _4) -> bb1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _4 at bb0[1], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _1 = const {0x0 as *mut src::bst::node}
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _1 at bb2[0], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m constant pointer rvalue const {0x0 as *mut src::bst::node}
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _5 = _2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _0 = src::bst::newNode(move _5) -> bb9
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb2[2], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _0 at Phi(bb9), use: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _1 at Phi(bb9), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb9), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _10 at Phi(bb9), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _12 at Phi(bb9), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _13 at Phi(bb9), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb2: _1~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb2: _0~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _7 = _2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _8 = ((*_1).0: i32)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _6 = Lt(move _7, move _8)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _10 = ((*_1).1: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _10 at bb4[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _11 = _2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _9 = src::bst::insert(move _10, move _11) -> bb6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _9 at bb4[2], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _10 at bb4[2], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment ((*_1).1: *mut src::bst::node) = move _9
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _9 at bb6[0], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb8), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _10 at Phi(bb8), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _12 at Phi(bb8), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _13 at Phi(bb8), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb6: _9~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb4: _10~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb4: _10~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb4: _9~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb5
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _13 = ((*_1).2: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _13 at bb5[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _14 = _2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _12 = src::bst::insert(move _13, move _14) -> bb7
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _12 at bb5[2], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _13 at bb5[2], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb7
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment ((*_1).2: *mut src::bst::node) = move _12
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _12 at bb7[0], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb8), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _10 at Phi(bb8), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _12 at Phi(bb8), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _13 at Phi(bb8), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb7: _12~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb5: _13~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb5: _13~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb5: _12~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb8
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _9 at Phi(bb8), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _10 at Phi(bb8), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _12 at Phi(bb8), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _13 at Phi(bb8), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _0 = _1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb8[0], use: 0, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _1 at bb8[0], use: 1, def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _0 at Phi(bb9), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _1 at Phi(bb9), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb9), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _10 at Phi(bb9), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _12 at Phi(bb9), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _13 at Phi(bb9), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb8: _0~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb8: _1~3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb9
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _0 at Phi(bb9), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _1 at Phi(bb9), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _9 at Phi(bb9), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _10 at Phi(bb9), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _12 at Phi(bb9), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _13 at Phi(bb9), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator return
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb9[0], use: 3, def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb9: _0~4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb0: _4~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb0: _1~4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb0: _4~1
+completed
+renaming DefId(0:16 ~ lib[31f9]::src::bst::minValueNode)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming DefId(0:16 ~ lib[31f9]::src::bst::minValueNode)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _0 = _1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb0[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _1 at bb0[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _0 at Phi(bb1), use: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _8 at Phi(bb1), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb1), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _0 at Phi(bb1), def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _8 at Phi(bb1), def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _9 at Phi(bb1), def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _5 = _0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _5 at bb1[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb1[0], use: 2, def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _4 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _5) -> bb5
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _5 at bb1[1], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb5
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _3 = Not(move _4)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _2 = const false
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _8 at Phi(bb4), use: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _8 = ((*_0).1: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _8 at bb3[0], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _7 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _8) -> bb6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _8 at bb3[1], use: 2, def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _6 = Not(move _7)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _2 = move _6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _8 at Phi(bb4), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb3: _8~3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb3: _8~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _8 at Phi(bb4), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb7
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _9 = ((*_0).1: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _9 at bb7[0], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _0 = move _9
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb7[1], use: 3, def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _9 at bb7[1], use: 2, def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _0 at Phi(bb1), use: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _8 at Phi(bb1), use: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb1), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb7: _9~3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb7: _0~4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb7: _9~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb8
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator return
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb8[0], use: 3, def: 5
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb8: _0~5
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb1: _5~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb1: _0~3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb1: _5~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb0: _0~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb0: _1~1
+completed
+renaming DefId(0:17 ~ lib[31f9]::src::bst::deleteNode)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming DefId(0:17 ~ lib[31f9]::src::bst::deleteNode)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _4 = _1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _4 at bb0[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _1 at bb0[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _3 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _4) -> bb1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _4 at bb0[1], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _1 = const {0x0 as *mut src::bst::node}
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _1 at bb2[0], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m constant pointer rvalue const {0x0 as *mut src::bst::node}
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _0 = _1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb2[1], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _1 at bb2[1], use: 2, def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _0 at Phi(bb21), use: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _1 at Phi(bb21), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _8 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _14 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _15 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _18 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _19 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _21 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _22 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _24 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _25 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _27 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _28 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _29 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _30 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _32 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _33 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb2: _1~3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb2: _0~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb2: _1~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _6 = _2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _7 = ((*_1).0: i32)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _5 = Lt(move _6, move _7)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _9 = ((*_1).1: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _9 at bb4[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _10 = _2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _8 = src::bst::deleteNode(move _9, move _10) -> bb6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _8 at bb4[2], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _9 at bb4[2], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment ((*_1).1: *mut src::bst::node) = move _8
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _8 at bb6[0], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _8 at Phi(bb20), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb20), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _14 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _15 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _18 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _24 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _29 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _30 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _32 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _33 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb6: _8~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb4: _9~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb4: _9~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb4: _8~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb5
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _12 = _2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _13 = ((*_1).0: i32)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _11 = Gt(move _12, move _13)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb7
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _15 = ((*_1).2: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _15 at bb7[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _16 = _2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _14 = src::bst::deleteNode(move _15, move _16) -> bb9
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _14 at bb7[2], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _15 at bb7[2], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb9
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment ((*_1).2: *mut src::bst::node) = move _14
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _14 at bb9[0], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _8 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _14 at Phi(bb20), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _15 at Phi(bb20), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _18 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _24 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _29 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _30 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _32 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _33 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb9: _14~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb7: _15~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb7: _15~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb7: _14~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb8
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _18 = ((*_1).1: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _18 at bb8[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _17 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _18) -> bb10
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _18 at bb8[1], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb10
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb11
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _19 = ((*_1).2: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _19 at bb11[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _22 = _1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _22 at bb11[1], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _1 at bb11[1], use: 1, def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _21 = move _22 as *mut libc::c_void (Misc)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _21 at bb11[2], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _22 at bb11[2], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _20 = src::bst::free(move _21) -> bb12
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _21 at bb11[3], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb12
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _0 = _19
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb12[0], use: 0, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _19 at bb12[0], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _0 at Phi(bb21), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _1 at Phi(bb21), use: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _8 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _14 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _15 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _18 at Phi(bb21), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _19 at Phi(bb21), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _21 at Phi(bb21), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _22 at Phi(bb21), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _24 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _25 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _27 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _28 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _29 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _30 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _32 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _33 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb12: _0~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb12: _19~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb11: _19~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb11: _22~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb11: _1~4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb11: _21~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb11: _22~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb11: _21~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb13
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _24 = ((*_1).2: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _24 at bb13[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _23 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _24) -> bb14
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _24 at bb13[1], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb14
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb15
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _25 = ((*_1).1: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _25 at bb15[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _28 = _1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _28 at bb15[1], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _1 at bb15[1], use: 1, def: 5
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _27 = move _28 as *mut libc::c_void (Misc)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _27 at bb15[2], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _28 at bb15[2], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _26 = src::bst::free(move _27) -> bb16
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _27 at bb15[3], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb16
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _0 = _25
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb16[0], use: 0, def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _25 at bb16[0], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _0 at Phi(bb21), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _1 at Phi(bb21), use: 5
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _8 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _14 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _15 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _18 at Phi(bb21), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _19 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _21 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _22 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _24 at Phi(bb21), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _25 at Phi(bb21), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _27 at Phi(bb21), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _28 at Phi(bb21), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _29 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _30 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _32 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _33 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb16: _0~3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb16: _25~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb15: _25~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb15: _28~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb15: _1~5
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb15: _27~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb15: _28~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb15: _27~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb17
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _30 = ((*_1).2: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _30 at bb17[0], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _29 = src::bst::minValueNode(move _30) -> bb18
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _29 at bb17[1], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _30 at bb17[1], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb18
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _31 = ((*_29).0: i32)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment ((*_1).0: i32) = move _31
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _33 = ((*_1).2: *mut src::bst::node)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _33 at bb18[2], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _34 = ((*_29).0: i32)
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator _32 = src::bst::deleteNode(move _33, move _34) -> bb19
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _32 at bb18[4], use: 0, def: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _33 at bb18[4], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb19
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment ((*_1).2: *mut src::bst::node) = move _32
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _32 at bb19[0], use: 1, def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _8 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _14 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _15 at Phi(bb20), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _18 at Phi(bb20), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _24 at Phi(bb20), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _29 at Phi(bb20), use: 1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _30 at Phi(bb20), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _32 at Phi(bb20), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _33 at Phi(bb20), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb19: _32~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb18: _33~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb18: _33~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb18: _32~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb17: _30~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb17: _30~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb17: _29~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb13: _24~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb13: _24~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb8: _18~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb8: _18~1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb20
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _8 at Phi(bb20), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _9 at Phi(bb20), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _14 at Phi(bb20), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _15 at Phi(bb20), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _18 at Phi(bb20), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _24 at Phi(bb20), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _29 at Phi(bb20), def: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _30 at Phi(bb20), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _32 at Phi(bb20), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _33 at Phi(bb20), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing assignment _0 = _1
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb20[0], use: 0, def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _1 at bb20[0], use: 1, def: 6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _0 at Phi(bb21), use: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _1 at Phi(bb21), use: 6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _8 at Phi(bb21), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _9 at Phi(bb21), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _14 at Phi(bb21), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _15 at Phi(bb21), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _18 at Phi(bb21), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _19 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _21 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _22 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _24 at Phi(bb21), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _25 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _27 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _28 at Phi(bb21), use: 0
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _29 at Phi(bb21), use: 2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _30 at Phi(bb21), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _32 at Phi(bb21), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m using _33 at Phi(bb21), use: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb20: _0~4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb20: _1~6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m Renaming bb21
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _0 at Phi(bb21), def: 5
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _1 at Phi(bb21), def: 7
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _8 at Phi(bb21), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _9 at Phi(bb21), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _14 at Phi(bb21), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _15 at Phi(bb21), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _18 at Phi(bb21), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _19 at Phi(bb21), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _21 at Phi(bb21), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _22 at Phi(bb21), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _24 at Phi(bb21), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _25 at Phi(bb21), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _27 at Phi(bb21), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _28 at Phi(bb21), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _29 at Phi(bb21), def: 3
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _30 at Phi(bb21), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _32 at Phi(bb21), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m defining _33 at Phi(bb21), def: 4
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m processing terminator return
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::state[0m[2m:[0m consuming _0 at bb21[0], use: 5, def: 6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb21: _0~6
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb0: _4~2
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb0: _1~7
+[34mDEBUG[0m [2morc_ownership_analysis::analysis::constraint::infer[0m[2m:[0m popping at bb0: _4~1
+completed

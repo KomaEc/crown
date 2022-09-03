@@ -342,7 +342,7 @@ mod test {
 
         // let file = std::path::PathBuf::from("../workspace/def_site.rs");
         orc_common::test_infra::run_compiler_with(INPUT.into(), |tcx, functions, structs| {
-            let program = crate::CrateInfo::new(tcx, functions, structs);
+            let program = crate::CrateCtxt::new(tcx, functions, structs);
             let mut def_iter = program.functions().iter().copied().map(|did| {
                 let body = tcx.optimized_mir(did);
                 initial_definitions(body, tcx, &program.struct_topology)

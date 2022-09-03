@@ -5,9 +5,9 @@ use rustc_middle::mir::{
     Local, LocalInfo, LocalKind, Location, Place, Rvalue, Terminator, TerminatorKind,
 };
 
-use crate::CrateInfo;
+use crate::CrateCtxt;
 
-impl<'tcx> CrateInfo<'tcx> {
+impl<'tcx> CrateCtxt<'tcx> {
     pub fn verify(&self) {
         self.verify_shape_of_place();
         self.verify_place_regularity();
