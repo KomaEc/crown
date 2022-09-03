@@ -1,7 +1,7 @@
 //! State for analysis steps
 
 use orc_common::data_structure::assoc::AssocExt;
-use rustc_index::vec::IndexVec;
+use rustc_index::{vec::IndexVec, bit_set::BitSet};
 use rustc_middle::mir::{Body, Local, LocalInfo, Location};
 
 use super::{
@@ -44,7 +44,7 @@ impl SSAState {
         definitions: Definitions,
     ) -> Self {
         let name_state = NameState::new(body);
-        let join_points = JoinPoints::new(body, dominance_frontier, &definitions);
+        let join_points = JoinPoints::new(body, dominance_frontier, &definitions.def_sites);
         let consume_chain = ConsumeChain::new(body, definitions);
         SSAState {
             name_state,
@@ -85,6 +85,11 @@ impl SSAState {
         self.try_consume_at(local, location)
             .unwrap_or_else(|| panic!("{:?} isn't defined at {:?}", local, location))
     }
+
+    // #[inline]
+    // pub(crate) fn try_finalise(&mut self, local: Local) -> Option<SSAIdx> {
+    //     self.name_state.try_get_name(local)
+    // }
 }
 
 #[derive(Clone, Debug)]

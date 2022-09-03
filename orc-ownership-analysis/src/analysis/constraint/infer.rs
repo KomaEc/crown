@@ -13,7 +13,7 @@ use crate::{
     analysis::{
         body_ext::DominanceFrontier,
         def::{Consume, Definitions, RichLocation},
-        state::{SSAIdx, SSAState},
+        state::{SSAIdx, SSAState}, ty_ext::TyExt,
     },
     struct_topology::StructTopology, CrateCtxt,
 };
@@ -207,6 +207,10 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
                 let return_place = RETURN_PLACE;
                 let _ = self.state.try_consume_at(return_place, location);
+                // finalise!
+                for local in self.state.consume_chain.to_finalise().iter() {
+                    let _ = self.state.name_state.get_name(local);
+                }
             }
             _ => {}
         }

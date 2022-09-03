@@ -32,23 +32,24 @@ pub(crate) struct Definitions {
     ///
     /// We've made an assumption that a local can only be used or defined
     /// once in a statement/terminator
-    pub(crate) defs: VecArray<SmallVec<[Local; 2]>>,
-    pub(crate) sites: IndexVec<Local, BitSet<BasicBlock>>,
+    consumes: VecArray<SmallVec<[(Local, Consume); 2]>>,
+    pub(crate) def_sites: IndexVec<Local, BitSet<BasicBlock>>,
+    to_finalise: BitSet<Local>,
 }
 
 impl Definitions {
     #[inline]
-    pub(crate) fn of_block(&self, block: BasicBlock) -> &[SmallVec<[Local; 2]>] {
-        &self.defs[block.index()]
+    pub(crate) fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume); 2]>] {
+        &self.consumes[block.index()]
     }
 
     #[inline]
-    pub(crate) fn of_location(&self, location: Location) -> &SmallVec<[Local; 2]> {
+    pub(crate) fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume); 2]> {
         let Location {
             block,
             statement_index,
         } = location;
-        &self.defs[block.index()][statement_index]
+        &self.consumes[block.index()][statement_index]
     }
 }
 
@@ -87,20 +88,12 @@ pub(crate) struct ConsumeChain {
     pub(crate) consumes: VecArray<SmallVec<[(Local, Consume); 2]>>,
     /// location of each definition
     pub(crate) locs: IndexVec<Local, IndexVec<SSAIdx, RichLocation>>,
+    to_finalise: BitSet<Local>,
 }
 
 impl ConsumeChain {
     pub(crate) fn new<'tcx>(body: &Body<'tcx>, definitions: Definitions) -> Self {
-        let mut names = VecArray::new(definitions.defs.array_count());
-        for def in definitions.defs.iter() {
-            names.push_array(def.iter().map(|vec| {
-                vec.iter()
-                    .copied()
-                    .map(|local| (local, Consume::new()))
-                    .collect()
-            }));
-        }
-        let names = names.done();
+        let Definitions { consumes, to_finalise, .. } = definitions;
 
         let locs = IndexVec::from_fn_n(
             |local| {
@@ -114,30 +107,30 @@ impl ConsumeChain {
             body.local_decls.len(),
         );
         ConsumeChain {
-            consumes: names,
+            consumes,
             locs,
+            to_finalise,
         }
     }
 
-    // #[inline]
-    // pub(crate) fn of_block(&self, block: BasicBlock) -> impl Iterator<Item = impl Iterator<Item = Local>>{//&[SmallVec<[Local; 2]>] {
-    //     &self.defs[block.index()]
-    // }
+    #[inline]
+    pub(crate) fn to_finalise(&self) -> &BitSet<Local> {
+        &self.to_finalise
+    }
 
     #[inline]
     pub(crate) fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume); 2]>] {
         &self.consumes[block.index()]
     }
 
-    #[inline]
-    pub(crate) fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume); 2]> {
-        //&SmallVec<[Local; 2]> {
-        let Location {
-            block,
-            statement_index,
-        } = location;
-        &self.consumes[block.index()][statement_index]
-    }
+    // #[inline]
+    // pub(crate) fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume); 2]> {
+    //     let Location {
+    //         block,
+    //         statement_index,
+    //     } = location;
+    //     &self.consumes[block.index()][statement_index]
+    // }
 }
 
 pub(crate) fn initial_definitions<'tcx>(
@@ -145,17 +138,17 @@ pub(crate) fn initial_definitions<'tcx>(
     tcx: TyCtxt<'tcx>,
     struct_topology: &StructTopology,
 ) -> Definitions {
-    let mut sites = IndexVec::from_elem(
+    let mut def_sites = IndexVec::from_elem(
         BitSet::new_empty(body.basic_blocks.len()),
         &body.local_decls,
     );
 
-    let mut defs = VecArray::new(body.basic_blocks().len());
+    let mut consumes = VecArray::new(body.basic_blocks().len());
 
     struct Vis<'me, 'tcx> {
-        sites: &'me mut IndexVec<Local, BitSet<BasicBlock>>,
-        defs: &'me mut VecArrayConstruction<SmallVec<[Local; 2]>>,
-        defs_in_cur_stmt: SmallVec<[Local; 2]>,
+        def_sites: &'me mut IndexVec<Local, BitSet<BasicBlock>>,
+        consumes: &'me mut VecArrayConstruction<SmallVec<[(Local, Consume); 2]>>,
+        consumes_in_cur_stmt: SmallVec<[(Local, Consume); 2]>,
         body: &'me Body<'tcx>,
         tcx: TyCtxt<'tcx>,
         struct_topology: &'me StructTopology,
@@ -183,8 +176,8 @@ pub(crate) fn initial_definitions<'tcx>(
                     statement_index: index,
                 };
                 self.visit_statement(statement, location);
-                let defs_in_cur_stmt = std::mem::take(&mut self.defs_in_cur_stmt);
-                self.defs.add_item_to_array(defs_in_cur_stmt);
+                let defs_in_cur_stmt = std::mem::take(&mut self.consumes_in_cur_stmt);
+                self.consumes.add_item_to_array(defs_in_cur_stmt);
                 index += 1;
             }
 
@@ -194,10 +187,10 @@ pub(crate) fn initial_definitions<'tcx>(
                     statement_index: index,
                 };
                 self.visit_terminator(terminator, location);
-                let defs_in_cur_stmt = std::mem::take(&mut self.defs_in_cur_stmt);
-                self.defs.add_item_to_array(defs_in_cur_stmt);
+                let defs_in_cur_stmt = std::mem::take(&mut self.consumes_in_cur_stmt);
+                self.consumes.add_item_to_array(defs_in_cur_stmt);
             }
-            self.defs.done_with_array();
+            self.consumes.done_with_array();
         }
 
         fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, location: Location) {
@@ -267,16 +260,16 @@ pub(crate) fn initial_definitions<'tcx>(
                 && !matches!(local_info, Some(LocalInfo::DerefTemp))
             {
                 // println!("defining {:?} at {:?}", place.local, location);
-                self.defs_in_cur_stmt.push(place.local);
-                self.sites[place.local].insert(location.block);
+                self.consumes_in_cur_stmt.push((place.local, Consume::new()));
+                self.def_sites[place.local].insert(location.block);
             }
         }
     }
 
     Vis {
-        sites: &mut sites,
-        defs: &mut defs,
-        defs_in_cur_stmt: SmallVec::default(),
+        def_sites: &mut def_sites,
+        consumes: &mut consumes,
+        consumes_in_cur_stmt: SmallVec::default(),
         tcx,
         body,
         struct_topology,
@@ -284,9 +277,23 @@ pub(crate) fn initial_definitions<'tcx>(
     }
     .visit_body(body);
 
+    let mut to_finalise = BitSet::new_empty(body.local_decls.len());
+
+    for (local, local_decl) in body.local_decls.iter_enumerated() {
+        let ty = local_decl.ty;
+        let local_info = local_decl.local_info.as_deref();
+        if ty.contains_ptr(struct_topology)
+            && !matches!(local_info, Some(LocalInfo::DerefTemp))
+        {
+            to_finalise.insert(local);
+        }
+    }
+
+
     Definitions {
-        defs: defs.done(),
-        sites,
+        consumes: consumes.done(),
+        def_sites,
+        to_finalise,
     }
 }
 
@@ -298,23 +305,23 @@ mod test {
 
     impl Definitions {
         fn assert_round_tripping(&self) {
-            for (local, sites) in self.sites.iter_enumerated() {
+            for (local, sites) in self.def_sites.iter_enumerated() {
                 for bb in sites.iter() {
                     self.of_block(bb)
                         .iter()
                         .flatten()
                         .copied()
-                        .find(|&l| l == local)
+                        .find(|&(l, _)| l == local)
                         .unwrap_or_else(|| {
                             panic!("{:?} should contain definition of {:?}", bb, local)
                         });
                 }
             }
 
-            for (bb, defs) in self.defs.iter().enumerate() {
+            for (bb, consumes) in self.consumes.iter().enumerate() {
                 let bb = rustc_middle::mir::BasicBlock::from(bb);
-                for local in defs.iter().flatten().copied() {
-                    assert!(self.sites[local].contains(bb))
+                for (local, _) in consumes.iter().flatten().copied() {
+                    assert!(self.def_sites[local].contains(bb))
                 }
             }
         }
@@ -357,17 +364,19 @@ mod test {
                         block: BasicBlock::from_u32(0),
                         statement_index: 13
                     })
-                    .to_vec(),
+                    .into_iter()
+                    .map(|&(local, _)| local)
+                    .collect::<Vec<_>>(),
                 vec![Local::from_u32(13)]
             );
             // q is never defined in this program
             assert!(definition
-                .defs
+                .consumes
                 .iter()
                 .flatten()
                 .flatten()
                 .copied()
-                .find(|local| local.index() == 2)
+                .find(|(local, _)| local.index() == 2)
                 .is_none())
         })
     }
