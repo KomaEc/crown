@@ -152,11 +152,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
         for succ in self.body.basic_blocks.successors(bb) {
             for (local, phi_node) in self.state.join_points[succ].iter_enumerated_mut() {
-                let ssa_idx = self
-                    .state
-                    .name_state
-                    .try_get_name(local)
-                    .unwrap_or_else(|| panic!("{:?}: {}", local, self.body.local_decls[local].ty));
+                let ssa_idx = self.state.name_state.get_name(local);
+                // .unwrap_or_else(|| panic!("{:?}: {}", local, self.body.local_decls[local].ty));
                 phi_node.rhs.push(ssa_idx);
                 tracing::debug!("using {:?} at Phi({:?}), use: {:?}", local, succ, ssa_idx)
             }

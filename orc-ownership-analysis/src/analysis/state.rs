@@ -30,7 +30,6 @@ impl std::ops::AddAssign<usize> for SSAIdx {
 pub(crate) struct SSAState {
     pub(crate) name_state: NameState,
     pub(crate) join_points: JoinPoints<PhiNode>,
-    /// TODO: initialise
     pub(crate) consume_chain: ConsumeChain,
 }
 
