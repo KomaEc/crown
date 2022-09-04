@@ -119,8 +119,9 @@ impl NameState {
             .map(|local| {
                 to_finalise
                     .contains(local)
-                    .then(|| vec![SSAIdx::INIT]).unwrap_or_default()
-                    // .unwrap_or_else(Vec::new)
+                    .then(|| vec![SSAIdx::INIT])
+                    .unwrap_or_default()
+                // .unwrap_or_else(Vec::new)
             })
             .collect();
         // let stack = IndexVec::from_elem(vec![SSAIdx::INIT], &body.local_decls);

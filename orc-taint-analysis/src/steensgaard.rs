@@ -192,7 +192,7 @@ impl Steensgaard {
                 .struct_fields
                 .level_one_items(did)
                 .map(|loc| self.pts_targets.find(self.pts[loc]));
-                // .collect::<Vec<_>>();
+            // .collect::<Vec<_>>();
             for (idx, tgt) in fields_result.enumerate() {
                 println!("{:?}.{idx} -> {:?}", did, tgt);
             }
@@ -204,7 +204,7 @@ impl Steensgaard {
                 .function_locals
                 .level_one_items(did)
                 .map(|loc| self.pts_targets.find(self.pts[loc]));
-                // .collect::<Vec<_>>();
+            // .collect::<Vec<_>>();
             for (idx, tgt) in locals_result.enumerate() {
                 println!("{:?}.{idx} -> {:?}", did, tgt);
             }

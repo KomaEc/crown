@@ -348,7 +348,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             Rvalue::Cast(CastKind::PointerFromExposedAddress, operand, _) => {
                 // even tho lhs is a pointer, it does not necessarily have an entry!
                 // this is because we limit the nested level of pointers
-                if let Some(lhs_consume) = lhs_consume { M::consume_place(infer_cx, self.body, lhs, lhs_consume) }
+                if let Some(lhs_consume) = lhs_consume {
+                    M::consume_place(infer_cx, self.body, lhs, lhs_consume)
+                }
                 // lhs_consume.map(|lhs_consume| M::consume_place(infer_cx, self.body, lhs, lhs_consume));
                 tracing::debug!("untrusted pointer source: raw address {:?}", operand)
             }
@@ -375,9 +377,13 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             Rvalue::Use(Operand::Move(rhs) | Operand::Copy(rhs))
             | Rvalue::Cast(_, Operand::Move(rhs) | Operand::Copy(rhs), _) => {
                 let rhs_consume = self.state.try_consume_at(rhs.local, location);
-                if let Some(consume) = lhs_consume { M::consume_place(infer_cx, self.body, lhs, consume) }
+                if let Some(consume) = lhs_consume {
+                    M::consume_place(infer_cx, self.body, lhs, consume)
+                }
                 // lhs_consume.map(|consume| M::consume_place(infer_cx, self.body, lhs, consume));
-                if let Some(consume) = rhs_consume { M::consume_place(infer_cx, self.body, rhs, consume) }
+                if let Some(consume) = rhs_consume {
+                    M::consume_place(infer_cx, self.body, rhs, consume)
+                }
                 // rhs_consume.map(|consume| M::consume_place(infer_cx, self.body, rhs, consume));
                 // let (Some(lhs_consume), Some(rhs_consume)) = (lhs_consume, rhs_consume) else { return };
                 // tracing::error!("TODO");

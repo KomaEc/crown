@@ -120,8 +120,9 @@ impl ConsumeChain {
             .map(|local| {
                 to_finalise
                     .contains(local)
-                    .then(|| IndexVec::from_raw(vec![RichLocation::Entry])).unwrap_or_default()
-                    // .unwrap_or_else(IndexVec::new)
+                    .then(|| IndexVec::from_raw(vec![RichLocation::Entry]))
+                    .unwrap_or_default()
+                // .unwrap_or_else(IndexVec::new)
             })
             .collect();
         ConsumeChain {
