@@ -38,7 +38,7 @@ impl<'tcx> CrateCtxt<'tcx> {
             println!("renaming {:?}", did);
             let body = self.tcx.optimized_mir(did);
             let dominance_frontier = body.compute_dominance_frontier();
-            let definitions = initial_definitions(body, self.tcx, &self.struct_topology);
+            let definitions = initial_definitions(body, self.tcx, self);
             let mut rn = Renamer::new(body, &dominance_frontier, definitions);
             rn.go::<Pure, ()>(());
             println!("completed");

@@ -1,4 +1,4 @@
-use crate::{analysis::ty_ext::TyExt, struct_topology::StructTopology};
+use crate::{analysis::ty_ext::TyExt, struct_topology::StructTopology, CrateCtxt};
 use orc_common::data_structure::vec_array::{VecArray, VecArrayConstruction};
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
@@ -35,22 +35,6 @@ pub(crate) struct Definitions {
     consumes: VecArray<SmallVec<[(Local, Consume); 2]>>,
     pub(crate) def_sites: IndexVec<Local, BitSet<BasicBlock>>,
     pub(crate) to_finalise: BitSet<Local>,
-}
-
-impl Definitions {
-    #[inline]
-    pub(crate) fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume); 2]>] {
-        &self.consumes[block.index()]
-    }
-
-    #[inline]
-    pub(crate) fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume); 2]> {
-        let Location {
-            block,
-            statement_index,
-        } = location;
-        &self.consumes[block.index()][statement_index]
-    }
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -162,7 +146,8 @@ impl ConsumeChain {
 pub(crate) fn initial_definitions<'tcx>(
     body: &Body<'tcx>,
     tcx: TyCtxt<'tcx>,
-    struct_topology: &StructTopology,
+    crate_ctxt: &CrateCtxt<'tcx>,
+    // struct_topology: &StructTopology,
 ) -> Definitions {
     let mut def_sites = IndexVec::from_elem(
         BitSet::new_empty(body.basic_blocks.len()),
@@ -177,7 +162,8 @@ pub(crate) fn initial_definitions<'tcx>(
         consumes_in_cur_stmt: SmallVec<[(Local, Consume); 2]>,
         body: &'me Body<'tcx>,
         tcx: TyCtxt<'tcx>,
-        struct_topology: &'me StructTopology,
+        crate_ctxt: &'me CrateCtxt<'tcx>,
+        // struct_topology: &'me StructTopology,
         // basic_block: BasicBlock,
     }
     // println!("visiting {:?}", body.source.def_id());
@@ -281,7 +267,7 @@ pub(crate) fn initial_definitions<'tcx>(
             let ty = place.ty(self.body, self.tcx).ty;
             let local_info = self.body.local_decls[place.local].local_info.as_deref();
 
-            if ty.contains_ptr(self.struct_topology)
+            if self.crate_ctxt.ty_contains_ptr(ty)//ty.contains_ptr(self.struct_topology)
                 && !place.is_indirect()
                 && !matches!(local_info, Some(LocalInfo::DerefTemp))
             {
@@ -299,33 +285,49 @@ pub(crate) fn initial_definitions<'tcx>(
         consumes_in_cur_stmt: SmallVec::default(),
         tcx,
         body,
-        struct_topology,
+        crate_ctxt
+        // struct_topology,
         // basic_block: BasicBlock::from_u32(0),
     }
     .visit_body(body);
 
-    let mut locals_with_ptr = BitSet::new_empty(body.local_decls.len());
+    let mut to_finalise = BitSet::new_empty(body.local_decls.len());
 
     for (local, local_decl) in body.local_decls.iter_enumerated() {
         let ty = local_decl.ty;
         let local_info = local_decl.local_info.as_deref();
-        if ty.contains_ptr(struct_topology) && !matches!(local_info, Some(LocalInfo::DerefTemp)) {
-            locals_with_ptr.insert(local);
+        if crate_ctxt.ty_contains_ptr(ty) && !matches!(local_info, Some(LocalInfo::DerefTemp)) {
+            to_finalise.insert(local);
         }
     }
 
     Definitions {
         consumes: consumes.done(),
         def_sites,
-        to_finalise: locals_with_ptr,
+        to_finalise,
     }
 }
 
 #[cfg(test)]
 mod test {
 
-    use super::{initial_definitions, Definitions};
+    use super::{initial_definitions, Consume, Definitions};
     use rustc_middle::mir::{BasicBlock, Local, Location};
+    use smallvec::SmallVec;
+
+    impl Definitions {
+        fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume); 2]>] {
+            &self.consumes[block.index()]
+        }
+
+        fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume); 2]> {
+            let Location {
+                block,
+                statement_index,
+            } = location;
+            &self.consumes[block.index()][statement_index]
+        }
+    }
 
     impl Definitions {
         fn assert_round_tripping(&self) {
@@ -376,7 +378,7 @@ mod test {
             let program = crate::CrateCtxt::new(tcx, functions, structs);
             let mut def_iter = program.functions().iter().copied().map(|did| {
                 let body = tcx.optimized_mir(did);
-                initial_definitions(body, tcx, &program.struct_topology)
+                initial_definitions(body, tcx, &program)
             });
             let Some(definition) = def_iter.next() else { unreachable!() };
             assert!(def_iter.next().is_none());

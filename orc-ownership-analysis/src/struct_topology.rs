@@ -100,21 +100,21 @@ impl StructTopology {
         &self.post_order[..]
     }
 
+    // #[inline]
+    // pub(crate) fn contains(&self, did: &DefId) -> bool {
+    //     self.did_idx.contains_key(did)
+    // }
+
     #[inline]
-    pub(crate) fn contains(&self, did: &DefId) -> bool {
-        self.did_idx.contains_key(did)
+    pub(crate) fn struct_size(&self, did: &DefId) -> Option<Offset> {
+        let idx = self.did_idx.get(did).copied()?;
+        Some(self.offset_of[idx].last().copied().unwrap())
     }
 
     #[inline]
-    pub(crate) fn struct_offset(&self, did: &DefId) -> Offset {
-        let idx = self.did_idx[did];
-        self.offset_of[idx].last().copied().unwrap()
-    }
-
-    #[inline]
-    pub(crate) fn field_offsets(&self, did: &DefId) -> &[Offset] {
-        let idx = self.did_idx[did];
-        &self.offset_of[idx]
+    pub(crate) fn field_offsets(&self, did: &DefId) -> Option<&[Offset]> {
+        let idx = self.did_idx.get(did).copied()?;
+        Some(&self.offset_of[idx])
     }
 }
 
@@ -166,27 +166,27 @@ mod tests {
             }
             define_structs!(s, t, u, v, w, x);
             assert_eq!(
-                program.struct_topology.field_offsets(&s), //.unwrap(),
+                program.struct_topology.field_offsets(&s).unwrap(),
                 [0, 2, 3, 4].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology.field_offsets(&t), //.unwrap(),
+                program.struct_topology.field_offsets(&t).unwrap(),
                 [0, 1, 2].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology.field_offsets(&u), //.unwrap(),
+                program.struct_topology.field_offsets(&u).unwrap(),
                 [0, 0, 1, 1].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology.field_offsets(&v), //.unwrap(),
+                program.struct_topology.field_offsets(&v).unwrap(),
                 [0, 0].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology.field_offsets(&w), //.unwrap(),
+                program.struct_topology.field_offsets(&w).unwrap(),
                 [0, 1].map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology.field_offsets(&x), //.unwrap(),
+                program.struct_topology.field_offsets(&x).unwrap(),
                 [0].map(|x| Offset::from_u32(x))
             )
         })

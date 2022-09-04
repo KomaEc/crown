@@ -81,27 +81,27 @@ impl<Payload> JoinPoints<Payload> {
         self.data.into_iter()
     }
 
-    pub(crate) fn repack<F, U>(&self, f: F) -> JoinPoints<U>
-    where
-        F: Fn(Local, &Payload) -> U,
-    {
-        self.data
-            .iter()
-            .map(|bb_nodes| bb_nodes.repack(&f))
-            .collect::<IndexVec<_, _>>()
-            .into()
-    }
+    // pub(crate) fn repack<F, U>(&self, f: F) -> JoinPoints<U>
+    // where
+    //     F: Fn(Local, &Payload) -> U,
+    // {
+    //     self.data
+    //         .iter()
+    //         .map(|bb_nodes| bb_nodes.repack(&f))
+    //         .collect::<IndexVec<_, _>>()
+    //         .into()
+    // }
 
-    pub(crate) fn filter_repack<U, F>(&self, f: F) -> JoinPoints<U>
-    where
-        F: Fn(Local, &Payload) -> Option<U>,
-    {
-        self.data
-            .iter()
-            .map(|bb_nodes| bb_nodes.filter_repack(&f))
-            .collect::<IndexVec<_, _>>()
-            .into()
-    }
+    // pub(crate) fn filter_repack<U, F>(&self, f: F) -> JoinPoints<U>
+    // where
+    //     F: Fn(Local, &Payload) -> Option<U>,
+    // {
+    //     self.data
+    //         .iter()
+    //         .map(|bb_nodes| bb_nodes.filter_repack(&f))
+    //         .collect::<IndexVec<_, _>>()
+    //         .into()
+    // }
 }
 
 impl<Payload> From<IndexVec<BasicBlock, BasicBlockNodes<Payload>>> for JoinPoints<Payload> {
@@ -128,7 +128,7 @@ impl<T> std::ops::IndexMut<BasicBlock> for JoinPoints<T> {
 
 #[derive(Clone, Debug)]
 pub(crate) struct BasicBlockNodes<Node> {
-    data: SmallVec<[(Local, Node); NUM_PHI_NODES]>,
+    pub(crate) data: SmallVec<[(Local, Node); NUM_PHI_NODES]>,
 }
 
 impl<Payload> FromIterator<(Local, Payload)> for BasicBlockNodes<Payload> {
@@ -145,41 +145,6 @@ impl<T> BasicBlockNodes<T> {
         BasicBlockNodes {
             data: SmallVec::new(),
         }
-    }
-
-    #[inline]
-    pub(crate) fn push(&mut self, local: Local, payload: T) {
-        self.data.push((local, payload))
-    }
-
-    #[inline]
-    pub(crate) fn is_empty(&self) -> bool {
-        self.data.is_empty()
-    }
-
-    #[inline]
-    pub(crate) fn locals(&self) -> impl Iterator<Item = Local> + '_ {
-        self.data.iter().map(|&(local, _)| local)
-    }
-
-    #[inline]
-    pub(crate) fn into_iter(self) -> impl Iterator<Item = T> {
-        self.data.into_iter().map(|(_, payload)| payload)
-    }
-
-    #[inline]
-    pub(crate) fn iter(&self) -> impl Iterator<Item = &T> {
-        self.data.iter().map(|(_, payload)| payload)
-    }
-
-    #[inline]
-    pub(crate) fn iter_mut(&mut self) -> impl Iterator<Item = &mut T> {
-        self.data.iter_mut().map(|(_, payload)| payload)
-    }
-
-    #[inline]
-    pub(crate) fn into_iter_enumerated(self) -> impl Iterator<Item = (Local, T)> {
-        self.data.into_iter()
     }
 
     #[inline]
@@ -215,22 +180,22 @@ impl<T> std::ops::IndexMut<Local> for BasicBlockNodes<T> {
     }
 }
 
-impl<T> BasicBlockNodes<T> {
-    pub(crate) fn repack<F, U>(&self, f: F) -> BasicBlockNodes<U>
-    where
-        F: Fn(Local, &T) -> U,
-    {
-        self.iter_enumerated()
-            .map(|(local, t)| (local, f(local, t)))
-            .collect::<BasicBlockNodes<_>>()
-    }
+// impl<T> BasicBlockNodes<T> {
+//     pub(crate) fn repack<F, U>(&self, f: F) -> BasicBlockNodes<U>
+//     where
+//         F: Fn(Local, &T) -> U,
+//     {
+//         self.iter_enumerated()
+//             .map(|(local, t)| (local, f(local, t)))
+//             .collect::<BasicBlockNodes<_>>()
+//     }
 
-    pub(crate) fn filter_repack<U, F>(&self, f: F) -> BasicBlockNodes<U>
-    where
-        F: Fn(Local, &T) -> Option<U>,
-    {
-        self.iter_enumerated()
-            .filter_map(|(local, t)| Some((local, f(local, t)?)))
-            .collect::<BasicBlockNodes<_>>()
-    }
-}
+//     pub(crate) fn filter_repack<U, F>(&self, f: F) -> BasicBlockNodes<U>
+//     where
+//         F: Fn(Local, &T) -> Option<U>,
+//     {
+//         self.iter_enumerated()
+//             .filter_map(|(local, t)| Some((local, f(local, t)?)))
+//             .collect::<BasicBlockNodes<_>>()
+//     }
+// }

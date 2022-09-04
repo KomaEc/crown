@@ -122,10 +122,16 @@ impl Mode for WithCtxt {
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
-        let struct_topology = infer_cx.crate_ctxt.struct_topology();
         let base = place.local;
         let base_ty = body.local_decls[base].ty;
-        let base_offset = base_ty.ptr_count(struct_topology);
+        let base_offset = infer_cx.crate_ctxt.ty_ptr_count(base_ty);
+
+        let local_sig = infer_cx.local_sig[base][consume.r#use].clone();
+
+        assert_eq!(base_offset, local_sig.end.index() - local_sig.start.index());
+
+        // let field_offsets = struct_topology.field_offsets(did)
+
 
         // let mut ty = base_ty;
         // for proj_elem in place.projection {
