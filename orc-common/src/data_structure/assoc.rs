@@ -34,7 +34,7 @@ impl<K: Eq, V> AssocExt<K, V> for Vec<(K, V)> {
         Q: Eq,
     {
         self.iter()
-            .find_map(|(key, value)| (key.borrow() == k).then(|| value))
+            .find_map(|(key, value)| (key.borrow() == k).then_some(value))
     }
 
     #[inline]
@@ -44,7 +44,7 @@ impl<K: Eq, V> AssocExt<K, V> for Vec<(K, V)> {
         Q: Eq,
     {
         self.iter_mut()
-            .find_map(|(key, value)| ((*key).borrow() == k).then(|| value))
+            .find_map(|(key, value)| ((*key).borrow() == k).then_some(value))
     }
 }
 
@@ -56,7 +56,7 @@ impl<K: Eq, V, const N: usize> AssocExt<K, V> for SmallVec<[(K, V); N]> {
         Q: Eq,
     {
         self.iter()
-            .find_map(|(key, value)| (key.borrow() == k).then(|| value))
+            .find_map(|(key, value)| (key.borrow() == k).then_some(value))
     }
 
     #[inline]
@@ -66,6 +66,6 @@ impl<K: Eq, V, const N: usize> AssocExt<K, V> for SmallVec<[(K, V); N]> {
         Q: Eq,
     {
         self.iter_mut()
-            .find_map(|(key, value)| ((*key).borrow() == k).then(|| value))
+            .find_map(|(key, value)| ((*key).borrow() == k).then_some(value))
     }
 }

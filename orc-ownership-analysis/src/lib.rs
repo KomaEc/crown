@@ -103,6 +103,6 @@ impl<'tcx> CrateCtxt<'tcx> {
     #[inline]
     /// Return the set of top-level struct definitions in post order
     pub(crate) fn structs(&self) -> &[DefId] {
-        &self.struct_topology.structs_in_post_order()
+        self.struct_topology.structs_in_post_order()
     }
 }

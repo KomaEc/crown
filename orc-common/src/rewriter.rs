@@ -19,9 +19,9 @@ pub struct Rewriter {
 }
 
 impl Rewriter {
-    pub fn make_suggestion<'tcx>(
+    pub fn make_suggestion(
         &mut self,
-        tcx: TyCtxt<'tcx>,
+        tcx: TyCtxt,
         span: Span,
         message: String,
         replacement: String,
@@ -38,7 +38,7 @@ impl Rewriter {
 
         let file = source_map
             .get_source_file(&file_name)
-            .expect(&format!("failed to open source file {:?}", file_name));
+            .unwrap_or_else(|| panic!("failed to open source file {:?}", file_name));
 
         // get the char offsets within the file
         let lo_offset = file.original_relative_byte_pos(span.lo()).0;

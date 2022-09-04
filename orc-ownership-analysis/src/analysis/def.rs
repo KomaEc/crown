@@ -94,7 +94,7 @@ pub(crate) struct ConsumeChain {
 }
 
 impl ConsumeChain {
-    pub(crate) fn new<'tcx>(body: &Body<'tcx>, definitions: Definitions) -> Self {
+    pub(crate) fn new(body: &Body, definitions: Definitions) -> Self {
         let Definitions {
             consumes,
             to_finalise,
@@ -120,8 +120,8 @@ impl ConsumeChain {
             .map(|local| {
                 to_finalise
                     .contains(local)
-                    .then(|| IndexVec::from_raw(vec![RichLocation::Entry]))
-                    .unwrap_or_else(|| IndexVec::new())
+                    .then(|| IndexVec::from_raw(vec![RichLocation::Entry])).unwrap_or_default()
+                    // .unwrap_or_else(IndexVec::new)
             })
             .collect();
         ConsumeChain {

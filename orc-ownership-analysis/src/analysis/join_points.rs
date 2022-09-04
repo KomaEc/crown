@@ -201,8 +201,8 @@ impl<T> std::ops::Index<Local> for BasicBlockNodes<T> {
     fn index(&self, local: Local) -> &Self::Output {
         self.data
             .iter()
-            .find_map(|&(this_local, ref t)| (this_local == local).then(|| t))
-            .expect(&format!("no phi node for {:?}", local))
+            .find_map(|&(this_local, ref t)| (this_local == local).then_some(t))
+            .unwrap_or_else(|| panic!("no phi node for {:?}", local))
     }
 }
 
@@ -210,8 +210,8 @@ impl<T> std::ops::IndexMut<Local> for BasicBlockNodes<T> {
     fn index_mut(&mut self, local: Local) -> &mut Self::Output {
         self.data
             .iter_mut()
-            .find_map(|&mut (this_local, ref mut t)| (this_local == local).then(|| t))
-            .expect(&format!("no phi node for {:?}", local))
+            .find_map(|&mut (this_local, ref mut t)| (this_local == local).then_some(t))
+            .unwrap_or_else(|| panic!("no phi node for {:?}", local))
     }
 }
 

@@ -12,7 +12,7 @@ use std::str;
 static TRACING_SUB_FMT_SET: OnceCell<()> = OnceCell::new();
 
 pub fn init_logger() {
-    TRACING_SUB_FMT_SET.get_or_init(|| tracing_subscriber::fmt::init());
+    TRACING_SUB_FMT_SET.get_or_init(tracing_subscriber::fmt::init);
 }
 
 /// A simpler input type than `rustc_session::config::Input`
@@ -33,9 +33,9 @@ impl From<&'static str> for Input {
     }
 }
 
-impl Into<rustc_session::config::Input> for Input {
-    fn into(self) -> rustc_session::config::Input {
-        match self {
+impl From<Input> for rustc_session::config::Input {
+    fn from(input: Input) -> Self {
+        match input {
             Input::File(path) => rustc_session::config::Input::File(path),
             Input::Str(str) => rustc_session::config::Input::Str {
                 name: rustc_span::FileName::Custom("main.rs".to_string()),
@@ -73,7 +73,7 @@ pub fn run_compiler_with(
         register_lints: None,
         override_queries: None,
         make_codegen_backend: None,
-        registry: registry::Registry::new(&rustc_error_codes::DIAGNOSTICS),
+        registry: registry::Registry::new(rustc_error_codes::DIAGNOSTICS),
     };
 
     rustc_interface::run_compiler(config, |compiler| {

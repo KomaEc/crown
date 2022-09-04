@@ -105,7 +105,7 @@ impl<'tcx> CrateCtxt<'tcx> {
                                 || operand.place().and_then(|place| place.as_local()).is_some()
                                 || operand.constant().is_some()
                         );
-                        assert!(!operand.constant().is_some() || place.as_local().is_some());
+                        assert!(operand.constant().is_none() || place.as_local().is_some());
                     }
                     Rvalue::CopyForDeref(rplace) => {
                         assert!(place.as_local().is_some());

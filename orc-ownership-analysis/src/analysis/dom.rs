@@ -10,7 +10,7 @@ pub(crate) struct DomTree {
 }
 
 impl DomTree {
-    pub(crate) fn new<'tcx>(body: &Body<'tcx>) -> Self {
+    pub(crate) fn new(body: &Body) -> Self {
         let dominators = body.basic_blocks.dominators();
         let mut tree = VecArray::new(body.basic_blocks().len());
         let mut idoms = IndexVec::with_capacity(body.basic_blocks().len());

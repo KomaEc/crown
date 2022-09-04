@@ -70,7 +70,7 @@ impl SSAState {
         );
         consume.r#use = old_ssa_idx;
         consume.def = new_ssa_idx;
-        let consume = consume.clone();
+        let consume = *consume;
         // tracing::debug!("consume chain before: {:?}", &self.consume_chain.consumes[location.block.index()]);
         assert_eq!(
             new_ssa_idx,
@@ -119,8 +119,8 @@ impl NameState {
             .map(|local| {
                 to_finalise
                     .contains(local)
-                    .then(|| vec![SSAIdx::INIT])
-                    .unwrap_or_else(|| Vec::new())
+                    .then(|| vec![SSAIdx::INIT]).unwrap_or_default()
+                    // .unwrap_or_else(Vec::new)
             })
             .collect();
         // let stack = IndexVec::from_elem(vec![SSAIdx::INIT], &body.local_decls);
@@ -154,11 +154,10 @@ impl NameState {
 
     #[inline]
     pub(crate) fn pop(&mut self, var: Local) -> SSAIdx {
-        let ssa_idx = self.stack[var]
-            .pop()
-            .unwrap_or_else(|| panic!("internal error: poping non existing version for {:?}", var));
         // tracing::debug!("popping {:?}~{:?}", var, ssa_idx);
-        ssa_idx
+        self.stack[var]
+            .pop()
+            .unwrap_or_else(|| panic!("internal error: poping non existing version for {:?}", var))
     }
 }
 

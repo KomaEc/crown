@@ -191,9 +191,9 @@ impl Steensgaard {
             let fields_result = self
                 .struct_fields
                 .level_one_items(did)
-                .map(|loc| self.pts_targets.find(self.pts[loc]))
-                .collect::<Vec<_>>();
-            for (idx, tgt) in fields_result.into_iter().enumerate() {
+                .map(|loc| self.pts_targets.find(self.pts[loc]));
+                // .collect::<Vec<_>>();
+            for (idx, tgt) in fields_result.enumerate() {
                 println!("{:?}.{idx} -> {:?}", did, tgt);
             }
         }
@@ -203,9 +203,9 @@ impl Steensgaard {
             let locals_result = self
                 .function_locals
                 .level_one_items(did)
-                .map(|loc| self.pts_targets.find(self.pts[loc]))
-                .collect::<Vec<_>>();
-            for (idx, tgt) in locals_result.into_iter().enumerate() {
+                .map(|loc| self.pts_targets.find(self.pts[loc]));
+                // .collect::<Vec<_>>();
+            for (idx, tgt) in locals_result.enumerate() {
                 println!("{:?}.{idx} -> {:?}", did, tgt);
             }
         }
@@ -375,7 +375,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
         self.steensgaard.pts[p] = q;
 
         // notify all watchers of `p`
-        let mut buffer = std::mem::replace(self.buffer, Vec::new());
+        let mut buffer = std::mem::take(self.buffer);
         self.notify(p, &mut buffer);
         let _ = std::mem::replace(self.buffer, buffer);
     }
