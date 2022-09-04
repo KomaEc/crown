@@ -33,14 +33,14 @@ pub(crate) mod ty_ext;
 // }
 
 impl<'tcx> CrateCtxt<'tcx> {
-    pub fn rename_all(&self) {
+    pub fn crash_me(&self) {
         for &did in self.functions() {
             println!("renaming {:?}", did);
             let body = self.tcx.optimized_mir(did);
             let dominance_frontier = body.compute_dominance_frontier();
             let definitions = initial_definitions(body, self.tcx, &self.struct_topology);
             let mut rn = Renamer::new(body, &dominance_frontier, definitions);
-            rn.go::<Pure>();
+            rn.go::<Pure, ()>(());
             println!("completed");
         }
     }

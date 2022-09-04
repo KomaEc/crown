@@ -213,7 +213,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         }
         Command::CrashMe => {
             let program = CrateCtxt::from_input(&input);
-            program.rename_all();
+            time("crash me", || program.crash_me());
         }
         Command::Analyse {
             null,

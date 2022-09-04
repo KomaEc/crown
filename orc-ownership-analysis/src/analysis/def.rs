@@ -87,6 +87,8 @@ pub(crate) struct ConsumeChain {
     /// ssa index for each consumption
     pub(crate) consumes: VecArray<SmallVec<[(Local, Consume); 2]>>,
     /// location of each definition
+    ///
+    /// Those locals with empty entries definitely do not contain pointers
     pub(crate) locs: IndexVec<Local, IndexVec<SSAIdx, RichLocation>>,
     // to_finalise: BitSet<Local>,
 }

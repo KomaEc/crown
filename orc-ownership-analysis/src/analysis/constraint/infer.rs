@@ -1,5 +1,6 @@
-use std::ops::Range;
+use std::{borrow::BorrowMut, ops::Range};
 
+// use orc_common::pointer::BorrowMut;
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{
@@ -10,51 +11,131 @@ use rustc_middle::mir::{
 use crate::{
     analysis::{
         body_ext::DominanceFrontier,
+        constraint::{CadicalDatabase, Database, OwnershipSig},
         def::{Consume, Definitions, RichLocation},
         state::{SSAIdx, SSAState},
+        ty_ext::TyExt,
     },
-    struct_topology::StructTopology,
+    CrateCtxt,
 };
 
-use super::{CadicalDatabase, Database, OwnershipSig};
+// pub(crate) trait Context {
+//     fn f(x: impl Context) -> bool {
+//         false
+//     }
+// }
 
-/// Should it hold 'tcx at all?
-pub(crate) struct InferCtxt<DB = CadicalDatabase>
-where
-    DB: Database,
-{
+// impl Context for () {}
+// impl<'me, 'tcx: 'me, DB: Database> Context for InferCtxt<'me, 'tcx, DB> {}
+
+pub(crate) struct InferCtxt<'infercx, 'tcx, DB = CadicalDatabase> {
     database: DB,
+    crate_ctxt: &'infercx CrateCtxt<'tcx>,
     local_sig: IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>,
+    next: OwnershipSig,
     // store: VecArray<Range<OwnershipSig>>,
     // TODO: signatures for the function that is analysed (and perhaps
     // those in the same connected component)
 }
 
-impl<DB: Database> InferCtxt<DB> {
-    pub(crate) fn consume_place<'tcx>(
-        &mut self,
-        place: &Place<'tcx>,
-        consume: Consume,
-        struct_topology: &StructTopology,
-    ) {
+impl<'infercx, 'tcx, DB> InferCtxt<'infercx, 'tcx, DB>
+where
+    'tcx: 'infercx,
+    DB: Database,
+{
+    pub(crate) fn new(crate_ctxt: &CrateCtxt<'tcx>, body: &Body<'tcx>, db: DB) -> Self {
+        InferCtxt {
+            database: db,
+            crate_ctxt,
+            local_sig: todo!(),
+            next: OwnershipSig::MIN,
+        }
     }
+
+    // pub(crate) fn consume_place(&mut self, place: &Place<'tcx>, consume: Consume) {}
+    // pub(crate) fn transfer(
+    //     &mut self,
+    //     lhs: &Place<'tcx>,
+    //     lhs_consume: Consume,
+    //     rhs: &Place<'tcx>,
+    //     rhs_consume: Consume,
+    // ) {
+    // }
 }
 
 /// FIXME: is it the right way?
 pub(crate) trait Mode {
-    type Ctxt<DB>
+    type Ctxt<'infercx, 'tcx, DB>
     where
-        DB: Database;
+        Self: 'infercx,
+        'tcx: 'infercx,
+        DB: Database + 'infercx;
+
+    fn consume_place<'infercx, 'tcx, DB>(
+        infer_cx: Self::Ctxt<'infercx, 'tcx, DB>,
+        body: &Body<'tcx>,
+        place: &Place<'tcx>,
+        consume: Consume,
+    ) where
+        Self: 'infercx,
+        'tcx: 'infercx,
+        DB: Database + 'infercx;
 }
 #[derive(Debug)]
 pub(crate) struct Pure;
 #[derive(Debug)]
 pub(crate) struct WithCtxt;
 impl Mode for Pure {
-    type Ctxt<DB: Database> = ();
+    type Ctxt<'infercx, 'tcx, DB> = ()
+    where
+        'tcx: 'infercx,
+        DB: Database + 'infercx;
+
+    #[inline]
+    fn consume_place<'infercx, 'tcx, DB>(
+        infer_cx: Self::Ctxt<'infercx, 'tcx, DB>,
+        body: &Body<'tcx>,
+        place: &Place<'tcx>,
+        consume: Consume,
+    ) where
+        Self: 'infercx,
+        'tcx: 'infercx,
+        DB: Database + 'infercx,
+    {
+    }
 }
 impl Mode for WithCtxt {
-    type Ctxt<DB> = InferCtxt<DB> where DB: Database;
+    type Ctxt<'infercx, 'tcx, DB> = InferCtxt<'infercx, 'tcx, DB>
+    where
+        Self: 'infercx,
+        'tcx: 'infercx,
+        DB: Database + 'infercx;
+
+    #[inline]
+    fn consume_place<'infercx, 'tcx, DB>(
+        infer_cx: InferCtxt<'infercx, 'tcx, DB>,
+        body: &Body<'tcx>,
+        place: &Place<'tcx>,
+        consume: Consume,
+    ) where
+        Self: 'infercx,
+        'tcx: 'infercx,
+        DB: Database + 'infercx,
+    {
+        let struct_topology = infer_cx.crate_ctxt.struct_topology();
+        let base = place.local;
+        let base_ty = body.local_decls[base].ty;
+        let base_offset = base_ty.ptr_count(struct_topology);
+
+        // let mut ty = base_ty;
+        // for proj_elem in place.projection {
+
+        // }
+
+        // for (base_place, proj_elem) in place.iter_projections() {
+
+        // }
+    }
 }
 
 pub(crate) struct Renamer<'rn, 'tcx: 'rn> {
@@ -74,7 +155,10 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    pub(crate) fn go<M: Mode>(&mut self) {
+    pub(crate) fn go<M: Mode + 'rn, DB: Database + 'rn>(
+        &mut self,
+        mut infer_cx: impl BorrowMut<M::Ctxt<'rn, 'tcx, DB>>,
+    ) {
         tracing::debug!("Renaming {:?}", self.body.source.def_id());
         let dominators = self.body.basic_blocks.dominators();
         let mut children = IndexVec::from_elem(vec![], self.body.basic_blocks());
@@ -99,7 +183,11 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         while let Some((bb, state)) = recursion.pop() {
             match state {
                 State::ToVisit => {
-                    self.go_basic_block::<M>(bb, &self.body.basic_blocks()[bb]);
+                    self.go_basic_block::<M, _>(
+                        infer_cx.borrow_mut(),
+                        bb,
+                        &self.body.basic_blocks()[bb],
+                    );
                     recursion.push((bb, State::ToPopNames));
                     recursion.extend(children[bb].iter().rev().map(|&bb| (bb, State::ToVisit)));
                 }
@@ -113,7 +201,12 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    fn go_basic_block<M: Mode>(&mut self, bb: BasicBlock, data: &BasicBlockData<'tcx>) {
+    fn go_basic_block<M: Mode, DB: Database + 'rn>(
+        &mut self,
+        infer_cx: &mut M::Ctxt<'rn, 'tcx, DB>,
+        bb: BasicBlock,
+        data: &BasicBlockData<'tcx>,
+    ) {
         tracing::debug!("Renaming {:?}", bb);
 
         let BasicBlockData {
@@ -138,7 +231,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 block: bb,
                 statement_index: index,
             };
-            self.go_statement::<M>(statement, location);
+            self.go_statement::<M, _>(infer_cx.borrow_mut(), statement, location);
             index += 1;
         }
 
@@ -147,7 +240,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 block: bb,
                 statement_index: index,
             };
-            self.go_terminator::<M>(terminator, location);
+            self.go_terminator::<M, _>(infer_cx, terminator, location);
         }
 
         for succ in self.body.basic_blocks.successors(bb) {
@@ -160,10 +253,15 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    fn go_statement<M: Mode>(&mut self, statement: &Statement<'tcx>, location: Location) {
+    fn go_statement<M: Mode, DB: Database + 'rn>(
+        &mut self,
+        infer_cx: &mut M::Ctxt<'rn, 'tcx, DB>,
+        statement: &Statement<'tcx>,
+        location: Location,
+    ) {
         match &statement.kind {
             StatementKind::Assign(box (place, rvalue)) => {
-                self.go_assign::<M>(place, rvalue, location)
+                self.go_assign::<M, _>(infer_cx, place, rvalue, location)
             }
             StatementKind::SetDiscriminant { .. } => {
                 tracing::debug!("ignoring SetDiscriminant statement {:?}", statement)
@@ -185,7 +283,12 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
     }
 
     /// TODO: handle return?
-    fn go_terminator<M: Mode>(&mut self, terminator: &Terminator<'tcx>, location: Location) {
+    fn go_terminator<M: Mode, DB: Database + 'rn>(
+        &mut self,
+        infer_cx: &mut M::Ctxt<'rn, 'tcx, DB>,
+        terminator: &Terminator<'tcx>,
+        location: Location,
+    ) {
         match &terminator.kind {
             TerminatorKind::Call {
                 args, destination, ..
@@ -215,8 +318,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    fn go_assign<M: Mode>(
+    fn go_assign<M: Mode, DB: Database + 'rn>(
         &mut self,
+        infer_cx: &mut M::Ctxt<'rn, 'tcx, DB>,
         place: &Place<'tcx>,
         rvalue: &Rvalue<'tcx>,
         location: Location,

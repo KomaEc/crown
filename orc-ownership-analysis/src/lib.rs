@@ -90,10 +90,10 @@ impl<'tcx> CrateCtxt<'tcx> {
     //     &self.call_graph
     // }
 
-    // #[inline]
-    // fn struct_topology(&self) -> &StructTopology {
-    //     &self.struct_topology
-    // }
+    #[inline]
+    fn struct_topology(&self) -> &StructTopology {
+        &self.struct_topology
+    }
 
     #[inline]
     pub(crate) fn functions(&self) -> &[DefId] {
