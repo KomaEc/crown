@@ -72,7 +72,7 @@ pub(crate) trait Mode {
         DB: Database + 'infercx;
 
     fn consume_place<'infercx, 'tcx, DB>(
-        infer_cx: Self::Ctxt<'infercx, 'tcx, DB>,
+        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         body: &Body<'tcx>,
         place: &Place<'tcx>,
         consume: Consume,
@@ -93,7 +93,7 @@ impl Mode for Pure {
 
     #[inline]
     fn consume_place<'infercx, 'tcx, DB>(
-        infer_cx: Self::Ctxt<'infercx, 'tcx, DB>,
+        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         body: &Body<'tcx>,
         place: &Place<'tcx>,
         consume: Consume,
@@ -113,7 +113,7 @@ impl Mode for WithCtxt {
 
     #[inline]
     fn consume_place<'infercx, 'tcx, DB>(
-        infer_cx: InferCtxt<'infercx, 'tcx, DB>,
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
         body: &Body<'tcx>,
         place: &Place<'tcx>,
         consume: Consume,
@@ -331,17 +331,24 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         let rhs = rvalue;
 
         let lhs_consume = self.state.try_consume_at(lhs.local, location);
-        // let rhs_consume = self.state.try_consume_at(rhs.local, location);
+        //.map(|consume| M::consume_place(infer_cx, self.body, place, consume));
 
         match rhs {
             Rvalue::Use(Operand::Constant(_)) => {
                 // assert!(lhs_consume.is_none(), "pointers cannot be mir constants: {:?}", constant)
-                if lhs_consume.is_some() {
+                // if lhs_consume.is_some() {
+                //     tracing::debug!("constant pointer rvalue {:?}", rhs)
+                // }
+                if let Some(lhs_consume) = lhs_consume {
+                    M::consume_place(infer_cx, self.body, lhs, lhs_consume);
                     tracing::debug!("constant pointer rvalue {:?}", rhs)
                 }
             }
 
             Rvalue::Cast(CastKind::PointerFromExposedAddress, operand, _) => {
+                // even tho lhs is a pointer, it does not necessarily have an entry!
+                // this is because we limit the nested level of pointers
+                lhs_consume.map(|lhs_consume| M::consume_place(infer_cx, self.body, lhs, lhs_consume));
                 tracing::debug!("untrusted pointer source: raw address {:?}", operand)
             }
 
@@ -350,8 +357,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 Operand::Copy(rhs) | Operand::Move(rhs),
                 _,
             ) => {
+                let rhs_consume = self.state.consume_at(rhs.local, location);
+                M::consume_place(infer_cx, self.body, rhs, rhs_consume);
                 tracing::debug!("untrusted pointer sink: address {:?}", lhs);
-                let _ = self.state.consume_at(rhs.local, location);
             }
 
             Rvalue::Cast(_, Operand::Constant(box constant), _) => {
@@ -366,7 +374,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             Rvalue::Use(Operand::Move(rhs) | Operand::Copy(rhs))
             | Rvalue::Cast(_, Operand::Move(rhs) | Operand::Copy(rhs), _) => {
                 let rhs_consume = self.state.try_consume_at(rhs.local, location);
-                let (Some(lhs_consume), Some(rhs_consume)) = (lhs_consume, rhs_consume) else { return };
+                lhs_consume.map(|consume| M::consume_place(infer_cx, self.body, lhs, consume));
+                rhs_consume.map(|consume| M::consume_place(infer_cx, self.body, rhs, consume));
+                // let (Some(lhs_consume), Some(rhs_consume)) = (lhs_consume, rhs_consume) else { return };
                 // tracing::error!("TODO");
             }
 
