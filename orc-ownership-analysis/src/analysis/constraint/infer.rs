@@ -1,5 +1,6 @@
 use std::{borrow::BorrowMut, ops::Range};
 
+use itertools::izip;
 // use orc_common::pointer::BorrowMut;
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
@@ -14,28 +15,16 @@ use crate::{
         body_ext::DominanceFrontier,
         constraint::{CadicalDatabase, Database, OwnershipSig},
         def::{Consume, Definitions, RichLocation},
-        state::{SSAIdx, SSAState}
+        state::{SSAIdx, SSAState},
     },
-    CrateCtxt, struct_topology::Offset,
+    CrateCtxt,
 };
-
-// pub(crate) trait Context {
-//     fn f(x: impl Context) -> bool {
-//         false
-//     }
-// }
-
-// impl Context for () {}
-// impl<'me, 'tcx: 'me, DB: Database> Context for InferCtxt<'me, 'tcx, DB> {}
 
 pub(crate) struct InferCtxt<'infercx, 'tcx, DB = CadicalDatabase> {
     database: DB,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     local_sig: IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>,
     next: OwnershipSig,
-    // store: VecArray<Range<OwnershipSig>>,
-    // TODO: signatures for the function that is analysed (and perhaps
-    // those in the same connected component)
 }
 
 impl<'infercx, 'tcx, DB> InferCtxt<'infercx, 'tcx, DB>
@@ -43,24 +32,41 @@ where
     'tcx: 'infercx,
     DB: Database,
 {
-    pub(crate) fn new(crate_ctxt: &CrateCtxt<'tcx>, body: &Body<'tcx>, db: DB) -> Self {
+    pub(crate) fn new(
+        crate_ctxt: &'infercx CrateCtxt<'tcx>,
+        body: &Body<'tcx>,
+        definitions: &Definitions,
+        db: DB,
+    ) -> Self {
+        let mut local_sig = IndexVec::with_capacity(definitions.def_sites.len());
+        let mut next = OwnershipSig::MIN;
+
+        for local in definitions.def_sites.indices() {
+            if definitions.to_finalise.contains(local) {
+                let ty = body.local_decls[local].ty;
+                let count = crate_ctxt.ty_ptr_count(ty);
+                let sigs = vec![next..next + count];
+                next += count;
+                local_sig.push(IndexVec::from_raw(sigs));
+            } else {
+                local_sig.push(IndexVec::default());
+            }
+        }
+
         InferCtxt {
             database: db,
             crate_ctxt,
-            local_sig: todo!(),
-            next: OwnershipSig::MIN,
+            local_sig,
+            next,
         }
     }
 
-    // pub(crate) fn consume_place(&mut self, place: &Place<'tcx>, consume: Consume) {}
-    // pub(crate) fn transfer(
-    //     &mut self,
-    //     lhs: &Place<'tcx>,
-    //     lhs_consume: Consume,
-    //     rhs: &Place<'tcx>,
-    //     rhs_consume: Consume,
-    // ) {
-    // }
+    pub(crate) fn new_sigs(&mut self, size: u32) -> Range<OwnershipSig> {
+        let start = self.next;
+        let end = start + size;
+        self.next = end;
+        start..end
+    }
 }
 
 /// FIXME: is it the right way?
@@ -71,13 +77,31 @@ pub(crate) trait Mode {
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    fn consume_place<'infercx, 'tcx, DB>(
+    type ConsumeResult;
+
+    fn interpret_consume<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         body: &Body<'tcx>,
         place: &Place<'tcx>,
-        consume: Consume,
+        consume: Consume<SSAIdx>,
+    ) -> Self::ConsumeResult
+    where
+        'tcx: 'infercx,
+        DB: Database + 'infercx;
+
+    fn transfer_ownership<'infercx, 'tcx, DB>(
+        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
+        lhs_result: Self::ConsumeResult,
+        rhs_result: Self::ConsumeResult,
     ) where
-        Self: 'infercx,
+        'tcx: 'infercx,
+        DB: Database + 'infercx;
+
+    fn finalise<'infercx, 'tcx, DB>(
+        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
+        local: Local,
+        r#use: SSAIdx,
+    ) where
         'tcx: 'infercx,
         DB: Database + 'infercx;
 }
@@ -91,14 +115,33 @@ impl Mode for Pure {
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
+    type ConsumeResult = ();
+
     #[inline]
-    fn consume_place<'infercx, 'tcx, DB>(
-        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        body: &Body<'tcx>,
-        place: &Place<'tcx>,
-        consume: Consume,
+    fn interpret_consume<'infercx, 'tcx, DB>(
+        (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
+        _: &Body<'tcx>,
+        _: &Place<'tcx>,
+        _: Consume<SSAIdx>,
     ) where
-        Self: 'infercx,
+        'tcx: 'infercx,
+        DB: Database + 'infercx,
+    {
+    }
+
+    #[inline]
+    fn transfer_ownership<'infercx, 'tcx, DB>(
+        (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
+        (): Self::ConsumeResult,
+        (): Self::ConsumeResult,
+    ) where
+        'tcx: 'infercx,
+        DB: Database + 'infercx,
+    {
+    }
+
+    fn finalise<'infercx, 'tcx, DB>((): &mut Self::Ctxt<'infercx, 'tcx, DB>, _: Local, _: SSAIdx)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
@@ -111,28 +154,32 @@ impl Mode for WithCtxt {
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    #[inline]
-    fn consume_place<'infercx, 'tcx, DB>(
+    type ConsumeResult = Consume<Range<OwnershipSig>>;
+
+    fn interpret_consume<'infercx, 'tcx, DB>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
         body: &Body<'tcx>,
         place: &Place<'tcx>,
-        consume: Consume,
-    ) where
-        Self: 'infercx,
+        consume: Consume<SSAIdx>,
+    ) -> Self::ConsumeResult
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
         let base = place.local;
         let mut base_ty = body.local_decls[base].ty;
-        let base_offset = infer_cx.crate_ctxt.ty_ptr_count(base_ty);
+        let base_offset = infer_cx.crate_ctxt.ty_ptr_count(base_ty) as u32;
 
-        let local_sig = infer_cx.local_sig[base][consume.r#use].clone();
+        let Range {
+            start: old_start,
+            end: old_end,
+        } = infer_cx.local_sig[base][consume.r#use].clone();
 
-        assert_eq!(base_offset, local_sig.end.index() - local_sig.start.index());
+        assert_eq!(base_offset, old_end.as_u32() - old_start.as_u32());
 
-        let mut offset: Offset = 0;
+        let mut proj_start_offset = 0;
 
-        for (place_base, projection_elem) in place.iter_projections() {
+        for projection_elem in place.projection {
             match projection_elem {
                 // do not track pointers behind dereferences for now
                 ProjectionElem::Deref => unreachable!("indirect place is mistakenly consumed"),
@@ -141,8 +188,8 @@ impl Mode for WithCtxt {
                     let Some(field_offsets) = infer_cx
                         .crate_ctxt
                         .struct_topology()
-                        .field_offsets(&adt_def.did()) else { return };
-                    offset += field_offsets[field.index()];
+                        .field_offsets(&adt_def.did()) else { unreachable!() };
+                    proj_start_offset += field_offsets[field.index()];
                     base_ty = ty;
                 }
                 // [ty] is equivalent to ty
@@ -157,16 +204,73 @@ impl Mode for WithCtxt {
             }
         }
 
-        // let field_offsets = struct_topology.field_offsets(did)
+        let Range {
+            start: new_start,
+            end: new_end,
+        } = infer_cx.new_sigs(base_offset);
+        // let new_start = infer_cx.next;
+        // let new_end = new_start + base_offset;
+        assert_eq!(
+            infer_cx.local_sig[base].push(new_start..new_end),
+            consume.def
+        );
 
-        // let mut ty = base_ty;
-        // for proj_elem in place.projection {
+        for (old, new) in
+            (old_start..old_start + proj_start_offset).zip(new_start..new_start + proj_start_offset)
+        {
+            infer_cx.database.push_equal::<super::Debug>((), old, new);
+        }
 
-        // }
+        let proj_end_offset = proj_start_offset + infer_cx.crate_ctxt.ty_ptr_count(base_ty);
 
-        // for (base_place, proj_elem) in place.iter_projections() {
+        for (old, new) in
+            (old_start + proj_end_offset..old_end).zip(new_start + proj_end_offset..new_end)
+        {
+            infer_cx.database.push_equal::<super::Debug>((), old, new);
+        }
 
-        // }
+        Consume {
+            r#use: old_start + proj_start_offset..old_start + proj_end_offset,
+            def: new_start + proj_start_offset..new_start + proj_end_offset,
+        }
+    }
+
+    fn transfer_ownership<'infercx, 'tcx, DB>(
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
+        lhs_result: Self::ConsumeResult,
+        rhs_result: Self::ConsumeResult,
+    ) where
+        'tcx: 'infercx,
+        DB: Database + 'infercx,
+    {
+        for (lhs_use, lhs_def, rhs_use, rhs_def) in izip!(
+            lhs_result.r#use,
+            lhs_result.def,
+            rhs_result.r#use,
+            rhs_result.def
+        ) {
+            infer_cx
+                .database
+                .push_assume::<super::Debug>((), lhs_use, false);
+            infer_cx
+                .database
+                .push_linear::<super::Debug>((), lhs_def, rhs_def, rhs_use)
+        }
+    }
+
+    fn finalise<'infercx, 'tcx, DB>(
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
+        local: Local,
+        r#use: SSAIdx,
+    ) where
+        'tcx: 'infercx,
+        DB: Database + 'infercx,
+    {
+        for sig in infer_cx.local_sig[local][r#use].clone() {
+            infer_cx
+                .database
+                .push_assume::<super::Debug>((), sig, false)
+        }
     }
 }
 
@@ -326,12 +430,21 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 args, destination, ..
             } => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
-                let destination = destination.as_local().unwrap();
-                let _ = self.state.try_consume_at(destination, location);
+                assert!(destination.as_local().is_some());
+                // let destination = destination.as_local().unwrap();
+                let _ = self
+                    .state
+                    .try_consume_at(destination.local, location)
+                    .map(|consume| M::interpret_consume(infer_cx, self.body, destination, consume));
                 for arg in args {
                     match arg {
                         Operand::Move(arg) | Operand::Copy(arg) => {
-                            let _ = self.state.try_consume_at(arg.local, location);
+                            let _ = self
+                                .state
+                                .try_consume_at(arg.local, location)
+                                .map(|consume| {
+                                    M::interpret_consume(infer_cx, self.body, arg, consume)
+                                });
                         }
                         _ => continue,
                     }
@@ -340,10 +453,17 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             TerminatorKind::Return => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
                 let return_place = RETURN_PLACE;
-                let _ = self.state.try_consume_at(return_place, location);
-                // finalise!
+                let _ = self
+                    .state
+                    .try_consume_at(return_place, location)
+                    .map(|consume| {
+                        M::interpret_consume(infer_cx, self.body, &Place::return_place(), consume)
+                    });
+                // finalise! note that return place is consumed before, so it needs
+                // to be finalised as well
                 for local in self.state.consume_chain.to_finalise() {
-                    let _ = self.state.name_state.get_name(local);
+                    let r#use = self.state.name_state.get_name(local);
+                    M::finalise(infer_cx, local, r#use);
                 }
             }
             _ => {}
@@ -372,7 +492,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 //     tracing::debug!("constant pointer rvalue {:?}", rhs)
                 // }
                 if let Some(lhs_consume) = lhs_consume {
-                    M::consume_place(infer_cx, self.body, lhs, lhs_consume);
+                    let _ = M::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
                     tracing::debug!("constant pointer rvalue {:?}", rhs)
                 }
             }
@@ -381,7 +501,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 // even tho lhs is a pointer, it does not necessarily have an entry!
                 // this is because we limit the nested level of pointers
                 if let Some(lhs_consume) = lhs_consume {
-                    M::consume_place(infer_cx, self.body, lhs, lhs_consume)
+                    let _ = M::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
                 }
                 // lhs_consume.map(|lhs_consume| M::consume_place(infer_cx, self.body, lhs, lhs_consume));
                 tracing::debug!("untrusted pointer source: raw address {:?}", operand)
@@ -393,7 +513,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 _,
             ) => {
                 let rhs_consume = self.state.consume_at(rhs.local, location);
-                M::consume_place(infer_cx, self.body, rhs, rhs_consume);
+                let _ = M::interpret_consume(infer_cx, self.body, rhs, rhs_consume);
                 tracing::debug!("untrusted pointer sink: address {:?}", lhs);
             }
 
@@ -409,24 +529,27 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             Rvalue::Use(Operand::Move(rhs) | Operand::Copy(rhs))
             | Rvalue::Cast(_, Operand::Move(rhs) | Operand::Copy(rhs), _) => {
                 let rhs_consume = self.state.try_consume_at(rhs.local, location);
-                if let Some(consume) = lhs_consume {
-                    M::consume_place(infer_cx, self.body, lhs, consume)
-                }
-                // lhs_consume.map(|consume| M::consume_place(infer_cx, self.body, lhs, consume));
-                if let Some(consume) = rhs_consume {
-                    M::consume_place(infer_cx, self.body, rhs, consume)
-                }
-                // rhs_consume.map(|consume| M::consume_place(infer_cx, self.body, rhs, consume));
-                // let (Some(lhs_consume), Some(rhs_consume)) = (lhs_consume, rhs_consume) else { return };
-                // tracing::error!("TODO");
+                let lhs_consume = lhs_consume
+                    .map(|consume| M::interpret_consume(infer_cx, self.body, lhs, consume));
+                let rhs_consume = rhs_consume
+                    .map(|consume| M::interpret_consume(infer_cx, self.body, rhs, consume));
+
+                lhs_consume.and_then(|lhs_result| {
+                    rhs_consume
+                        .map(|rhs_result| M::transfer_ownership(infer_cx, lhs_result, rhs_result))
+                });
+
+                // if let (Some(lhs_consume), Some(rhs_consume)) = (lhs_consume, rhs_consume) {
+                //     M::transfer_ownership(infer_cx, lhs_consume, rhs_consume)
+                // }
             }
 
-            Rvalue::CopyForDeref(rhs) => {
-                tracing::warn!("deref_copy is ignored")
+            Rvalue::CopyForDeref(_) => {
+                tracing::debug!("deref_copy is ignored")
             }
 
             Rvalue::Ref(_, _, _) | Rvalue::AddressOf(_, _) => {
-                let lhs = lhs
+                let _ = lhs
                     .as_local()
                     .expect("we assume that rustc guarantees the lhs of `p = &q` being local");
 

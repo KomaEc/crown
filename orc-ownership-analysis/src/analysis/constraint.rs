@@ -17,6 +17,20 @@ impl OwnershipSig {
     }
 }
 
+impl std::ops::Add<u32> for OwnershipSig {
+    type Output = Self;
+
+    fn add(self, rhs: u32) -> Self::Output {
+        OwnershipSig::from_u32(self.as_u32() + rhs)
+    }
+}
+
+impl std::ops::AddAssign<u32> for OwnershipSig {
+    fn add_assign(&mut self, rhs: u32) {
+        *self = *self + rhs
+    }
+}
+
 #[derive(Clone, Debug)]
 pub(crate) enum Constraint {
     /// x + y = z
@@ -28,6 +42,8 @@ pub(crate) enum Constraint {
     },
     /// assert [sign]x
     Assume { x: OwnershipSig, sign: bool },
+    /// x = y
+    Equal { x: OwnershipSig, y: OwnershipSig },
 }
 
 impl std::fmt::Display for Constraint {
@@ -37,6 +53,7 @@ impl std::fmt::Display for Constraint {
             Constraint::Assume { x, sign } => sign
                 .then(|| f.write_fmt(format_args!("{x} = 1")))
                 .unwrap_or_else(|| f.write_fmt(format_args!("{x} = 0"))),
+            Constraint::Equal { x, y } => f.write_fmt(format_args!("{x} = {y}")),
         }
     }
 }
@@ -50,6 +67,8 @@ pub(crate) trait Mode {
     fn store_linear(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig);
 
     fn store_assumption(store: Self::Store<'_>, x: OwnershipSig, sign: bool);
+
+    fn store_equal(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig);
 }
 
 pub(crate) struct Emit;
@@ -64,6 +83,10 @@ impl Mode for Emit {
     #[inline]
     fn store_assumption(store: Self::Store<'_>, x: OwnershipSig, sign: bool) {
         store.push(Constraint::Assume { x, sign })
+    }
+
+    fn store_equal(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig) {
+        store.push(Constraint::Equal { x, y })
     }
 }
 
@@ -104,6 +127,11 @@ macro_rules! make_logging_mode {
                 let constraint = Constraint::Assume { x, sign };
                 tracing_for!($level, "emitting constraint: {constraint}")
             }
+
+            fn store_equal((): Self::Store<'_>, x: OwnershipSig, y: OwnershipSig) {
+                let constraint = Constraint::Equal { x, y };
+                tracing_for!($level, "emitting constraint: {constraint}")
+            }
         }
     };
 }
@@ -130,12 +158,19 @@ pub(crate) trait Database {
         self.push_assume_impl(x, sign);
         M::store_assumption(store, x, sign);
     }
+    fn push_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig);
+    fn push_equal<M: Mode>(&mut self, store: M::Store<'_>, x: OwnershipSig, y: OwnershipSig) {
+        self.push_equal_impl(x, y);
+        M::store_equal(store, x, y);
+    }
 }
 
 impl Database for () {
     fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {}
 
     fn push_assume_impl(&mut self, x: OwnershipSig, sign: bool) {}
+
+    fn push_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {}
 }
 
 pub(crate) struct CadicalDatabase {
@@ -170,5 +205,13 @@ impl Database for CadicalDatabase {
             lit = -lit
         };
         self.solver.add_clause(std::iter::once(lit));
+    }
+
+    #[inline]
+    fn push_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
+        self.solver
+            .add_clause([-x.into_lit(), y.into_lit()].into_iter());
+        self.solver
+            .add_clause([x.into_lit(), -y.into_lit()].into_iter());
     }
 }

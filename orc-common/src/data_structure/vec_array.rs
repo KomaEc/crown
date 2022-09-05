@@ -30,10 +30,7 @@ impl<I> VecArray<I> {
         let mut indices = Vec::with_capacity(len + 1);
         indices.push(0);
         let data = Vec::new();
-        let frozen_vec_vec = VecArray {
-            indices,
-            data,
-        };
+        let frozen_vec_vec = VecArray { indices, data };
         VecArrayConstruction {
             vec_array: frozen_vec_vec,
             start_index: 0,

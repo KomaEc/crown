@@ -1,4 +1,4 @@
-use crate::{analysis::ty_ext::TyExt, struct_topology::StructTopology, CrateCtxt};
+use crate::CrateCtxt;
 use orc_common::data_structure::vec_array::{VecArray, VecArrayConstruction};
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
@@ -32,23 +32,25 @@ pub(crate) struct Definitions {
     ///
     /// We've made an assumption that a local can only be used or defined
     /// once in a statement/terminator
-    consumes: VecArray<SmallVec<[(Local, Consume); 2]>>,
+    consumes: VecArray<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
     pub(crate) def_sites: IndexVec<Local, BitSet<BasicBlock>>,
     pub(crate) to_finalise: BitSet<Local>,
 }
 
-#[derive(Clone, Copy, Debug)]
-pub(crate) struct Consume {
-    pub(crate) r#use: SSAIdx,
-    pub(crate) def: SSAIdx,
+#[derive(Clone, Debug)]
+pub(crate) struct Consume<T: Clone + std::fmt::Debug> {
+    pub(crate) r#use: T,
+    pub(crate) def: T,
 }
 
-impl Consume {
+impl<T: Clone + Copy + std::fmt::Debug> Copy for Consume<T> {}
+
+impl<T: Clone + std::fmt::Debug + Default> Consume<T> {
     #[inline]
     pub(crate) fn new() -> Self {
         Consume {
-            r#use: SSAIdx::INIT,
-            def: SSAIdx::INIT,
+            r#use: T::default(), //SSAIdx::INIT,
+            def: T::default(),   //SSAIdx::INIT,
         }
     }
 }
@@ -69,7 +71,7 @@ impl From<Location> for RichLocation {
 /// In ownership analysis, use happens only at definition
 pub(crate) struct ConsumeChain {
     /// ssa index for each consumption
-    pub(crate) consumes: VecArray<SmallVec<[(Local, Consume); 2]>>,
+    pub(crate) consumes: VecArray<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
     /// location of each definition
     ///
     /// Those locals with empty entries definitely do not contain pointers
@@ -123,13 +125,11 @@ impl ConsumeChain {
     pub(crate) fn to_finalise(&self) -> impl Iterator<Item = Local> + '_ {
         self.locs
             .iter_enumerated()
-            // return place is never finalised
-            .skip(1)
             .filter_map(|(local, locs)| (!locs.is_empty()).then_some(local))
     }
 
     #[inline]
-    pub(crate) fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume); 2]>] {
+    pub(crate) fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume<SSAIdx>); 2]>] {
         &self.consumes[block.index()]
     }
 
@@ -158,8 +158,8 @@ pub(crate) fn initial_definitions<'tcx>(
 
     struct Vis<'me, 'tcx> {
         def_sites: &'me mut IndexVec<Local, BitSet<BasicBlock>>,
-        consumes: &'me mut VecArrayConstruction<SmallVec<[(Local, Consume); 2]>>,
-        consumes_in_cur_stmt: SmallVec<[(Local, Consume); 2]>,
+        consumes: &'me mut VecArrayConstruction<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
+        consumes_in_cur_stmt: SmallVec<[(Local, Consume<SSAIdx>); 2]>,
         body: &'me Body<'tcx>,
         tcx: TyCtxt<'tcx>,
         crate_ctxt: &'me CrateCtxt<'tcx>,
@@ -310,16 +310,18 @@ pub(crate) fn initial_definitions<'tcx>(
 #[cfg(test)]
 mod test {
 
+    use crate::analysis::state::SSAIdx;
+
     use super::{initial_definitions, Consume, Definitions};
     use rustc_middle::mir::{BasicBlock, Local, Location};
     use smallvec::SmallVec;
 
     impl Definitions {
-        fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume); 2]>] {
+        fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume<SSAIdx>); 2]>] {
             &self.consumes[block.index()]
         }
 
-        fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume); 2]> {
+        fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume<SSAIdx>); 2]> {
             let Location {
                 block,
                 statement_index,

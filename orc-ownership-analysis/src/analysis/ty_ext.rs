@@ -48,7 +48,7 @@ impl<'tcx> CrateCtxt<'tcx> {
         self.ty_ptr_count(ty) > 0
     }
 
-    pub(crate) fn ty_ptr_count(&self, mut ty: Ty<'tcx>) -> usize {
+    pub(crate) fn ty_ptr_count(&self, mut ty: Ty<'tcx>) -> u32 {
         while let TyKind::Array(inner_ty, _) = ty.kind() {
             ty = *inner_ty
         }
@@ -66,7 +66,7 @@ impl<'tcx> CrateCtxt<'tcx> {
             .struct_topology()
             .struct_size(&adt_def.did())
             // .map(Offset::index)
-            .unwrap_or(0) as usize;
+            .unwrap_or(0);
         return total_offset;
     }
 }

@@ -74,11 +74,8 @@ impl StructTopology {
                         TyKind::Adt(sub_adt_def, _) => did_idx
                             .get(&sub_adt_def.did())
                             .and_then(|&field_did_idx| {
-                                offset_of
-                                    .get_constructed(field_did_idx)
-                                    .last()
-                                    .copied()
-                                    // .map(|&offset| offset.as_usize())
+                                offset_of.get_constructed(field_did_idx).last().copied()
+                                // .map(|&offset| offset.as_usize())
                             })
                             .unwrap_or(0),
                         _ => 0,
@@ -168,27 +165,27 @@ mod tests {
             define_structs!(s, t, u, v, w, x);
             assert_eq!(
                 program.struct_topology.field_offsets(&s).unwrap(),
-                [0, 2, 3, 4]//.map(|x| Offset::from_u32(x))
+                [0, 2, 3, 4] //.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology.field_offsets(&t).unwrap(),
-                [0, 1, 2]//.map(|x| Offset::from_u32(x))
+                [0, 1, 2] //.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology.field_offsets(&u).unwrap(),
-                [0, 0, 1, 1]//.map(|x| Offset::from_u32(x))
+                [0, 0, 1, 1] //.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology.field_offsets(&v).unwrap(),
-                [0, 0]//.map(|x| Offset::from_u32(x))
+                [0, 0] //.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology.field_offsets(&w).unwrap(),
-                [0, 1]//.map(|x| Offset::from_u32(x))
+                [0, 1] //.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology.field_offsets(&x).unwrap(),
-                [0]//.map(|x| Offset::from_u32(x))
+                [0] //.map(|x| Offset::from_u32(x))
             )
         })
     }

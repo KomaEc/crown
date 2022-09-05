@@ -16,6 +16,12 @@ orc_common::macros::newtype_index! {
     }
 }
 
+impl Default for SSAIdx {
+    fn default() -> Self {
+        Self::INIT
+    }
+}
+
 impl SSAIdx {
     pub(crate) const INIT: Self = SSAIdx::from_u32(0);
 }
@@ -55,7 +61,11 @@ impl SSAState {
 
 impl SSAState {
     #[inline]
-    pub(crate) fn try_consume_at(&mut self, local: Local, location: Location) -> Option<Consume> {
+    pub(crate) fn try_consume_at(
+        &mut self,
+        local: Local,
+        location: Location,
+    ) -> Option<Consume<SSAIdx>> {
         // tracing::debug!("consume chain before: {:?}", &self.consume_chain.consumes[location.block.index()]);
         let consume = self.consume_chain.consumes[location.block.index()][location.statement_index]
             .get_mut(&local)?;
@@ -80,7 +90,7 @@ impl SSAState {
     }
 
     #[inline]
-    pub(crate) fn consume_at(&mut self, local: Local, location: Location) -> Consume {
+    pub(crate) fn consume_at(&mut self, local: Local, location: Location) -> Consume<SSAIdx> {
         self.try_consume_at(local, location)
             .unwrap_or_else(|| panic!("{:?} isn't defined at {:?}", local, location))
     }

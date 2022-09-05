@@ -22,11 +22,11 @@ pub(crate) struct PhiNode {
     pub(crate) rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>,
 }
 
-impl PhiNode {
-    pub(crate) fn new(lhs: SSAIdx, rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>) -> Self {
-        Self { lhs, rhs }
-    }
-}
+// impl PhiNode {
+//     pub(crate) fn new(lhs: SSAIdx, rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>) -> Self {
+//         Self { lhs, rhs }
+//     }
+// }
 
 /// Property: the set of join points must guarantee that
 /// definitions (consumptions) flow into the final return
@@ -77,9 +77,9 @@ impl<Payload> JoinPoints<Payload> {
         JoinPoints { data: raw }
     }
 
-    pub(crate) fn into_iter(self) -> impl Iterator<Item = BasicBlockNodes<Payload>> {
-        self.data.into_iter()
-    }
+    // pub(crate) fn into_iter(self) -> impl Iterator<Item = BasicBlockNodes<Payload>> {
+    //     self.data.into_iter()
+    // }
 
     // pub(crate) fn repack<F, U>(&self, f: F) -> JoinPoints<U>
     // where
@@ -147,10 +147,10 @@ impl<T> BasicBlockNodes<T> {
         }
     }
 
-    #[inline]
-    pub(crate) fn iter_enumerated(&self) -> impl Iterator<Item = (Local, &T)> {
-        self.data.iter().map(|(local, payload)| (*local, payload))
-    }
+    // #[inline]
+    // pub(crate) fn iter_enumerated(&self) -> impl Iterator<Item = (Local, &T)> {
+    //     self.data.iter().map(|(local, payload)| (*local, payload))
+    // }
 
     #[inline]
     pub(crate) fn iter_enumerated_mut(&mut self) -> impl Iterator<Item = (Local, &mut T)> {
@@ -160,25 +160,25 @@ impl<T> BasicBlockNodes<T> {
     }
 }
 
-impl<T> std::ops::Index<Local> for BasicBlockNodes<T> {
-    type Output = T;
+// impl<T> std::ops::Index<Local> for BasicBlockNodes<T> {
+//     type Output = T;
 
-    fn index(&self, local: Local) -> &Self::Output {
-        self.data
-            .iter()
-            .find_map(|&(this_local, ref t)| (this_local == local).then_some(t))
-            .unwrap_or_else(|| panic!("no phi node for {:?}", local))
-    }
-}
+//     fn index(&self, local: Local) -> &Self::Output {
+//         self.data
+//             .iter()
+//             .find_map(|&(this_local, ref t)| (this_local == local).then_some(t))
+//             .unwrap_or_else(|| panic!("no phi node for {:?}", local))
+//     }
+// }
 
-impl<T> std::ops::IndexMut<Local> for BasicBlockNodes<T> {
-    fn index_mut(&mut self, local: Local) -> &mut Self::Output {
-        self.data
-            .iter_mut()
-            .find_map(|&mut (this_local, ref mut t)| (this_local == local).then_some(t))
-            .unwrap_or_else(|| panic!("no phi node for {:?}", local))
-    }
-}
+// impl<T> std::ops::IndexMut<Local> for BasicBlockNodes<T> {
+//     fn index_mut(&mut self, local: Local) -> &mut Self::Output {
+//         self.data
+//             .iter_mut()
+//             .find_map(|&mut (this_local, ref mut t)| (this_local == local).then_some(t))
+//             .unwrap_or_else(|| panic!("no phi node for {:?}", local))
+//     }
+// }
 
 // impl<T> BasicBlockNodes<T> {
 //     pub(crate) fn repack<F, U>(&self, f: F) -> BasicBlockNodes<U>

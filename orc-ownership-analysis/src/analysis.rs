@@ -1,5 +1,7 @@
 use crate::analysis::body_ext::BodyExt;
 use crate::CrateCtxt;
+use crate::analysis::constraint::CadicalDatabase;
+use crate::analysis::constraint::infer::{InferCtxt, WithCtxt};
 
 use self::constraint::infer::{Pure, Renamer};
 use self::def::initial_definitions;
@@ -33,7 +35,7 @@ pub(crate) mod ty_ext;
 // }
 
 impl<'tcx> CrateCtxt<'tcx> {
-    pub fn crash_me(&self) {
+    pub fn crash_me_with_pure_rename(&self) {
         for &did in self.functions() {
             println!("renaming {:?}", did);
             let body = self.tcx.optimized_mir(did);
@@ -41,6 +43,19 @@ impl<'tcx> CrateCtxt<'tcx> {
             let definitions = initial_definitions(body, self.tcx, self);
             let mut rn = Renamer::new(body, &dominance_frontier, definitions);
             rn.go::<Pure, ()>(());
+            println!("completed");
+        }
+    }
+
+    pub fn crash_me_with_inference(&self) {
+        for &did in self.functions() {
+            println!("inferring {:?}", did);
+            let body = self.tcx.optimized_mir(did);
+            let dominance_frontier = body.compute_dominance_frontier();
+            let definitions = initial_definitions(body, self.tcx, self);
+            let mut infer_cx = InferCtxt::new(self, body, &definitions, CadicalDatabase::new());
+            let mut rn = Renamer::new(body, &dominance_frontier, definitions);
+            rn.go::<WithCtxt, _>(&mut infer_cx);
             println!("completed");
         }
     }
