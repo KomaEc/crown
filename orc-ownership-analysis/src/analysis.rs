@@ -42,6 +42,7 @@ impl<'tcx> CrateCtxt<'tcx> {
     }
 
     pub fn crash_me_with_inference_and_solve(&self) -> anyhow::Result<()> {
+        let mut databases = Vec::with_capacity(self.functions().len());
         for &did in self.functions() {
             println!("solving {:?}", did);
             let body = self.tcx.optimized_mir(did);
@@ -55,6 +56,7 @@ impl<'tcx> CrateCtxt<'tcx> {
                 Some(false) => anyhow::bail!("failed in solving ownership constraints"),
                 None => anyhow::bail!("timeout"),
             }
+            databases.push(infer_cx.database);
         }
         Ok(())
     }
