@@ -166,11 +166,11 @@ pub(crate) trait Database {
 }
 
 impl Database for () {
-    fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {}
+    fn push_linear_impl(&mut self, _: OwnershipSig, _: OwnershipSig, _: OwnershipSig) {}
 
-    fn push_assume_impl(&mut self, x: OwnershipSig, sign: bool) {}
+    fn push_assume_impl(&mut self, _: OwnershipSig, _: bool) {}
 
-    fn push_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {}
+    fn push_equal_impl(&mut self, _: OwnershipSig, _: OwnershipSig) {}
 }
 
 pub(crate) struct CadicalDatabase {

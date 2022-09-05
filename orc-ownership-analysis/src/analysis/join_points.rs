@@ -70,6 +70,18 @@ impl JoinPoints<PhiNode> {
         }
         join_points
     }
+
+    // pub(crate) fn phi_nodes(&self) -> impl Iterator<Item = (Local, &PhiNode)> {
+    //     self.data
+    //         .iter()
+    //         .flat_map(|bb_nodes| bb_nodes.iter_enumerated())
+    // }
+
+    pub(crate) fn phi_nodes_mut(&mut self) -> impl Iterator<Item = (Local, &mut PhiNode)> {
+        self.data
+            .iter_mut()
+            .flat_map(|bb_nodes| bb_nodes.iter_enumerated_mut())
+    }
 }
 
 impl<Payload> JoinPoints<Payload> {
