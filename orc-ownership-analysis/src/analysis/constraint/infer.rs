@@ -4,19 +4,19 @@ use std::{borrow::BorrowMut, ops::Range};
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{
-    BasicBlock, BasicBlockData, Body, CastKind, Local, Location, Operand, Place, Rvalue, Statement,
-    StatementKind, Terminator, TerminatorKind, RETURN_PLACE,
+    BasicBlock, BasicBlockData, Body, CastKind, Local, Location, Operand, Place, ProjectionElem,
+    Rvalue, Statement, StatementKind, Terminator, TerminatorKind, RETURN_PLACE,
 };
+use rustc_type_ir::TyKind;
 
 use crate::{
     analysis::{
         body_ext::DominanceFrontier,
         constraint::{CadicalDatabase, Database, OwnershipSig},
         def::{Consume, Definitions, RichLocation},
-        state::{SSAIdx, SSAState},
-        ty_ext::TyExt,
+        state::{SSAIdx, SSAState}
     },
-    CrateCtxt,
+    CrateCtxt, struct_topology::Offset,
 };
 
 // pub(crate) trait Context {
@@ -123,15 +123,41 @@ impl Mode for WithCtxt {
         DB: Database + 'infercx,
     {
         let base = place.local;
-        let base_ty = body.local_decls[base].ty;
+        let mut base_ty = body.local_decls[base].ty;
         let base_offset = infer_cx.crate_ctxt.ty_ptr_count(base_ty);
 
         let local_sig = infer_cx.local_sig[base][consume.r#use].clone();
 
         assert_eq!(base_offset, local_sig.end.index() - local_sig.start.index());
 
-        // let field_offsets = struct_topology.field_offsets(did)
+        let mut offset: Offset = 0;
 
+        for (place_base, projection_elem) in place.iter_projections() {
+            match projection_elem {
+                // do not track pointers behind dereferences for now
+                ProjectionElem::Deref => unreachable!("indirect place is mistakenly consumed"),
+                ProjectionElem::Field(field, ty) => {
+                    let TyKind::Adt(adt_def, _) = base_ty.kind() else { unreachable!() };
+                    let Some(field_offsets) = infer_cx
+                        .crate_ctxt
+                        .struct_topology()
+                        .field_offsets(&adt_def.did()) else { return };
+                    offset += field_offsets[field.index()];
+                    base_ty = ty;
+                }
+                // [ty] is equivalent to ty
+                ProjectionElem::Index(_) => base_ty = base_ty.builtin_index().unwrap(),
+                ProjectionElem::ConstantIndex { .. } => {
+                    unreachable!("unexpected constant index {:?}", place)
+                }
+                ProjectionElem::Subslice { .. } => {
+                    unreachable!("unexpected subslicing {:?}", place)
+                }
+                ProjectionElem::Downcast(..) => unreachable!("unexpected downcasting {:?}", place),
+            }
+        }
+
+        // let field_offsets = struct_topology.field_offsets(did)
 
         // let mut ty = base_ty;
         // for proj_elem in place.projection {

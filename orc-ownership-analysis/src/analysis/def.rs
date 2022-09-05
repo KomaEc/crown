@@ -285,9 +285,8 @@ pub(crate) fn initial_definitions<'tcx>(
         consumes_in_cur_stmt: SmallVec::default(),
         tcx,
         body,
-        crate_ctxt
-        // struct_topology,
-        // basic_block: BasicBlock::from_u32(0),
+        crate_ctxt, // struct_topology,
+                    // basic_block: BasicBlock::from_u32(0),
     }
     .visit_body(body);
 

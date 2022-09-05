@@ -5,7 +5,7 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
 
-use crate::analysis::place_ext::place_abs::Offset;
+pub(crate) type Offset = u32;
 
 pub(crate) struct StructTopology {
     /// Structs in post order of the dependency graph.
@@ -58,7 +58,7 @@ impl StructTopology {
             let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };
             assert!(adt_def.is_struct());
 
-            let mut offset = Offset::from_u32(0);
+            let mut offset = 0; //Offset::from_u32(0);
             offset_of.add_item_to_array(offset);
             for field_def in adt_def.all_fields() {
                 let mut ty = field_def.ty(tcx, subst_ref);
@@ -77,7 +77,8 @@ impl StructTopology {
                                 offset_of
                                     .get_constructed(field_did_idx)
                                     .last()
-                                    .map(|&offset| offset.as_usize())
+                                    .copied()
+                                    // .map(|&offset| offset.as_usize())
                             })
                             .unwrap_or(0),
                         _ => 0,
@@ -120,7 +121,7 @@ impl StructTopology {
 
 #[cfg(test)]
 mod tests {
-    use crate::{analysis::place_ext::place_abs::Offset, CrateCtxt};
+    use crate::CrateCtxt;
 
     const TEXT: &str = "
     struct s {
@@ -167,27 +168,27 @@ mod tests {
             define_structs!(s, t, u, v, w, x);
             assert_eq!(
                 program.struct_topology.field_offsets(&s).unwrap(),
-                [0, 2, 3, 4].map(|x| Offset::from_u32(x))
+                [0, 2, 3, 4]//.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology.field_offsets(&t).unwrap(),
-                [0, 1, 2].map(|x| Offset::from_u32(x))
+                [0, 1, 2]//.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology.field_offsets(&u).unwrap(),
-                [0, 0, 1, 1].map(|x| Offset::from_u32(x))
+                [0, 0, 1, 1]//.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology.field_offsets(&v).unwrap(),
-                [0, 0].map(|x| Offset::from_u32(x))
+                [0, 0]//.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology.field_offsets(&w).unwrap(),
-                [0, 1].map(|x| Offset::from_u32(x))
+                [0, 1]//.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
                 program.struct_topology.field_offsets(&x).unwrap(),
-                [0].map(|x| Offset::from_u32(x))
+                [0]//.map(|x| Offset::from_u32(x))
             )
         })
     }

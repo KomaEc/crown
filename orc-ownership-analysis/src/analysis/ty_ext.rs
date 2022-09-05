@@ -3,8 +3,6 @@ use rustc_type_ir::TyKind;
 
 use crate::CrateCtxt;
 
-use super::place_ext::place_abs::Offset;
-
 pub(crate) trait TyExt<'tcx> {
     // fn contains_ptr(self, struct_topology: &StructTopology) -> bool;
     // fn ptr_count(self, struct_topology: &StructTopology) -> usize;
@@ -67,8 +65,8 @@ impl<'tcx> CrateCtxt<'tcx> {
         let total_offset = self
             .struct_topology()
             .struct_size(&adt_def.did())
-            .map(Offset::index)
-            .unwrap_or(0);
+            // .map(Offset::index)
+            .unwrap_or(0) as usize;
         return total_offset;
     }
 }

@@ -2,29 +2,27 @@
 
 // use crate::analysis::OwnershipAnalysisCtxt;
 
-orc_common::macros::newtype_index! {
-    pub(crate) struct Offset {
-        DEBUG_FORMAT = "{}"
-    }
-}
-
-// impl Offset {
-//     pub(crate) const ZERO: Self = Offset::from_u32(0);
+// orc_common::macros::newtype_index! {
+//     pub(crate) struct Offset {
+//         DEBUG_FORMAT = "{}"
+//     }
 // }
 
-impl std::ops::Add<Offset> for Offset {
-    type Output = Self;
 
-    fn add(self, rhs: Offset) -> Self::Output {
-        self + rhs.as_usize()
-    }
-}
 
-impl std::ops::AddAssign for Offset {
-    fn add_assign(&mut self, rhs: Self) {
-        *self = *self + rhs
-    }
-}
+// impl std::ops::Add<Offset> for Offset {
+//     type Output = Self;
+
+//     fn add(self, rhs: Offset) -> Self::Output {
+//         self + rhs.as_usize()
+//     }
+// }
+
+// impl std::ops::AddAssign for Offset {
+//     fn add_assign(&mut self, rhs: Self) {
+//         *self = *self + rhs
+//     }
+// }
 
 // /// place abstraction
 // #[derive(Clone, Copy, PartialEq, Eq, Debug)]
