@@ -447,16 +447,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 ssa_idx
             );
             tracing::debug!("defining {:?} at Phi({:?}), def: {:?}", local, bb, ssa_idx);
-            // ///
-            // if &format!("{:?}", self.body.source.def_id())
-            //     == "DefId(0:6734 ~ lib[31f9]::src::catalog::xmlCatalogXMLResolve)"
-            //     && local.index() == 117
-            // {
-            //     println!(
-            //         "defining {:?}: {} at Phi({:?}), def: {:?}",
-            //         local, self.body.local_decls[local].ty, bb, ssa_idx
-            //     );
-            // }
             M::define_phi_node(infer_cx, local, self.body.local_decls[local].ty, ssa_idx);
         }
 
@@ -577,10 +567,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         rvalue: &Rvalue<'tcx>,
         location: Location,
     ) {
-        // if &format!("{:?}", self.body.source.def_id())
-        // == "DefId(0:6734 ~ lib[31f9]::src::catalog::xmlCatalogXMLResolve)" {
-        //     println!("processing assignment {:?} = {:?}", place, rvalue)
-        // }
         tracing::debug!("processing assignment {:?} = {:?}", place, rvalue);
 
         let lhs = place;

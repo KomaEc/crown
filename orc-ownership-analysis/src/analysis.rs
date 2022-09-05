@@ -1,10 +1,8 @@
 use crate::analysis::body_ext::BodyExt;
-use crate::analysis::constraint::infer::{InferCtxt, WithCtxt};
+use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer, WithCtxt};
 use crate::analysis::constraint::CadicalDatabase;
+use crate::analysis::def::initial_definitions;
 use crate::CrateCtxt;
-
-use self::constraint::infer::{Pure, Renamer};
-use self::def::initial_definitions;
 
 pub(crate) mod body_ext;
 pub(crate) mod constants;
