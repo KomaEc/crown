@@ -51,7 +51,7 @@ impl<'tcx> CrateCtxt<'tcx> {
             rn.go::<WithCtxt, _>(&mut infer_cx);
             match infer_cx.database.solver.solve() {
                 Some(true) => println!("succeeded"),
-                Some(false) => anyhow::bail!("failed in solving ownership constraints"),
+                Some(false) => println!("failed"), // anyhow::bail!("failed in solving ownership constraints"),
                 None => anyhow::bail!("timeout"),
             }
             databases.push(infer_cx.database);

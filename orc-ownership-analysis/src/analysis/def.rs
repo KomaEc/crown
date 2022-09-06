@@ -5,7 +5,6 @@ use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
         BasicBlock, BasicBlockData, Body, CastKind, Local, LocalInfo, Location, Place, Rvalue,
-        Terminator, TerminatorKind, RETURN_PLACE,
     },
     ty::TyCtxt,
 };
@@ -54,6 +53,8 @@ impl<T: Clone + std::fmt::Debug + Default> Consume<T> {
         }
     }
 }
+
+const _: () = assert!(0 == std::mem::size_of::<Consume<()>>());
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum RichLocation {
@@ -125,6 +126,7 @@ impl ConsumeChain {
     pub(crate) fn to_finalise(&self) -> impl Iterator<Item = Local> + '_ {
         self.locs
             .iter_enumerated()
+            .skip(1)
             .filter_map(|(local, locs)| (!locs.is_empty()).then_some(local))
     }
 
@@ -240,18 +242,20 @@ pub(crate) fn initial_definitions<'tcx>(
             self.super_rvalue(rvalue, location)
         }
 
-        fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
-            let TerminatorKind::Return = terminator.kind else {
-                return self.super_terminator(terminator, location)
-            };
-            let return_place = Place::from(RETURN_PLACE);
-            self.visit_place(
-                &return_place,
-                PlaceContext::NonMutatingUse(NonMutatingUseContext::Move),
-                location,
-            )
-        }
+        // fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
+        //     let TerminatorKind::Return = terminator.kind else {
+        //         return self.super_terminator(terminator, location)
+        //     };
+        //     let return_place = Place::from(RETURN_PLACE);
+        //     self.visit_place(
+        //         &return_place,
+        //         PlaceContext::NonMutatingUse(NonMutatingUseContext::Move),
+        //         location,
+        //     )
+        // }
 
+        // Note that we didn't re-implement visit_local. This is because return place should not
+        // be counted as a consumption at return clause.
         fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
             // Deinit and SetDiscriminant are not definitions
 

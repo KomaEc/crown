@@ -7,12 +7,18 @@ use rustc_middle::{
 };
 use rustc_type_ir::TyKind::FnDef;
 
+// pub(crate) struct FnSig<T> {
+//     output: T,
+//     inputs: Vec<T>,
+// }
+
 pub struct CallGraph {
     graph: DiGraphMap<DefId, ()>,
     // /// (sccs + post_order): Vec<Vec<DefId>>,
     // sccs: Vec<usize>,
     // post_order: Vec<DefId>,
     post_order: VecArray<DefId>,
+    // func_sigs: FxHashMap<DefId, >
 }
 
 impl CallGraph {
