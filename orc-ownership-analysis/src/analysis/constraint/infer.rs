@@ -7,7 +7,7 @@ use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
-        BasicBlock, BasicBlockData, Body, CastKind, Local, Location, Operand, Place,
+        AggregateKind, BasicBlock, BasicBlockData, Body, CastKind, Local, Location, Operand, Place,
         ProjectionElem, Rvalue, Statement, StatementKind, Terminator, TerminatorKind,
     },
     ty::Ty,
@@ -74,9 +74,12 @@ where
         self.next = end;
         start..end
     }
+
+    pub(crate) fn all_sigs(&self) -> Range<OwnershipSig> {
+        OwnershipSig::MIN..self.next
+    }
 }
 
-/// FIXME: is it the right way?
 pub(crate) trait Mode {
     type Ctxt<'infercx, 'tcx, DB>
     where
@@ -128,6 +131,14 @@ pub(crate) trait Mode {
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
+    // fn join<'infercx, 'tcx, DB>(
+    //     infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
+    //     left: Self::Interpretation,
+    //     right: Self::Interpretation,
+    // ) where
+    //     'tcx: 'infercx,
+    //     DB: Database + 'infercx;
+
     fn source<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         result: Consume<Self::Interpretation>,
@@ -148,6 +159,16 @@ pub(crate) trait Mode {
     {
         Self::assume(infer_cx, result.r#use, true);
         Self::assume(infer_cx, result.def, false)
+    }
+
+    /// Special treatment to null assignment
+    fn null_assignment<'infercx, 'tcx, DB>(
+        _: &mut Self::Ctxt<'infercx, 'tcx, DB>,
+        _: Consume<Self::Interpretation>,
+    ) where
+        'tcx: 'infercx,
+        DB: Database + 'infercx,
+    {
     }
 
     /// Impose no constraint on a definition. Constraints are still emitted
@@ -262,6 +283,16 @@ impl Mode for Pure {
     {
     }
 
+    // fn join<'infercx, 'tcx, DB>(
+    //     (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
+    //     (): Self::Interpretation,
+    //     (): Self::Interpretation,
+    // ) where
+    //     'tcx: 'infercx,
+    //     DB: Database + 'infercx,
+    // {
+    // }
+
     fn assume<'infercx, 'tcx, DB>(
         (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
         (): Self::Interpretation,
@@ -347,6 +378,9 @@ impl Mode for WithCtxt {
         }
     }
 
+    /// Note: we may be very careful on cast when dealing with multi-level pointers.
+    /// note that pointer to complex structures may be cast to a pointer to unit in
+    /// order to perform free
     fn interpret_consume<'infercx, 'tcx, DB>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
         body: &Body<'tcx>,
@@ -450,6 +484,19 @@ impl Mode for WithCtxt {
         }
     }
 
+    // fn join<'infercx, 'tcx, DB>(
+    //     infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
+    //     left: Self::Interpretation,
+    //     right: Self::Interpretation,
+    // ) where
+    //     'tcx: 'infercx,
+    //     DB: Database + 'infercx,
+    // {
+    //     for (l, r) in left.zip(right) {
+    //         infer_cx.database.push_equal::<super::Debug>((), l, r)
+    //     }
+    // }
+
     fn assume<'infercx, 'tcx, DB>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
         result: Self::Interpretation,
@@ -522,6 +569,14 @@ impl Mode for WithCtxt {
         }
     }
 }
+
+// /// The kind of temporary that is ensured local or Special, and is not
+// /// renamed in the inference.
+// pub(crate) enum IgnoredTemporaryKind {
+//     DerefCopy,
+//     ArgFree,
+//     DestMalloc,
+// }
 
 pub(crate) struct Renamer<'rn, 'tcx: 'rn> {
     body: &'rn Body<'tcx>,
@@ -746,17 +801,16 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         //.map(|consume| M::consume_place(infer_cx, self.body, place, consume));
 
         match rhs {
-            Rvalue::Use(Operand::Constant(_)) => {
+            Rvalue::Use(Operand::Constant(_))
+            | Rvalue::Cast(CastKind::PointerFromExposedAddress, Operand::Constant(_), _) => {
                 if let Some(lhs_consume) = self.state.try_consume_at(lhs.local, location) {
                     let lhs_consume = M::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
-                    M::unknown_source(infer_cx, lhs_consume);
+                    M::null_assignment(infer_cx, lhs_consume);
                     tracing::debug!("constant pointer rvalue {:?}", rhs)
                 }
             }
 
             Rvalue::Cast(CastKind::PointerFromExposedAddress, operand, _) => {
-                // handle cases like null pointer
-
                 // even tho lhs is a pointer, it does not necessarily have an entry!
                 // this is because we limit the nested level of pointers
                 if let Some(lhs_consume) = self.state.try_consume_at(lhs.local, location) {
@@ -825,9 +879,39 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     def: lhs_def,
                 } = M::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
 
+                /* TODO */
+
                 M::assume(infer_cx, lhs_use, false);
                 // correctness???
                 M::assume(infer_cx, lhs_def, false);
+            }
+
+            Rvalue::Repeat(Operand::Copy(rhs) | Operand::Move(rhs), _) => {
+                let _ = self
+                    .state
+                    .try_consume_at(lhs.local, location)
+                    .map(|consume| M::interpret_consume(infer_cx, self.body, lhs, consume));
+                let _ = self
+                    .state
+                    .try_consume_at(rhs.local, location)
+                    .map(|consume| M::interpret_consume(infer_cx, self.body, rhs, consume));
+
+                /* TODO */
+            }
+
+            Rvalue::Aggregate(box AggregateKind::Array(_), rhs_vec) => {
+                let _ = self
+                    .state
+                    .try_consume_at(lhs.local, location)
+                    .map(|consume| M::interpret_consume(infer_cx, self.body, lhs, consume));
+
+                for rhs in rhs_vec {
+                    let Some(rhs) = rhs.place() else { continue };
+                    let _ = self
+                        .state
+                        .try_consume_at(rhs.local, location)
+                        .map(|consume| M::interpret_consume(infer_cx, self.body, &rhs, consume));
+                }
 
                 /* TODO */
             }
@@ -835,13 +919,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             Rvalue::Repeat(..) | Rvalue::Aggregate(..) => {
                 // handle cases like _1 = [0 as *mut _; 50] or _1 = [move _12, move _13]
 
-                /* TODO */
-
-                //  TODO!!!!!!!!! consuming right hand side
-                //
-                //
-                //
-                //
                 let lhs_consume = self
                     .state
                     .try_consume_at(lhs.local, location)

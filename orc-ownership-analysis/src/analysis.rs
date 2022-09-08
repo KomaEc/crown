@@ -50,7 +50,18 @@ impl<'tcx> CrateCtxt<'tcx> {
             let mut rn = Renamer::new(body, &dominance_frontier, definitions);
             rn.go::<WithCtxt, _>(&mut infer_cx);
             match infer_cx.database.solver.solve() {
-                Some(true) => println!("succeeded"),
+                Some(true) => {
+                    println!("succeeded");
+                    for sig in infer_cx.all_sigs() {
+                        let value = infer_cx.database.solver.value(sig.into_lit());
+                        // println!("{sig} = {:?}", value)
+                        if let Some(value) = value {
+                            tracing::debug!("{sig} = {}", value as u32);
+                        } else {
+                            tracing::debug!("{sig} = any")
+                        }
+                    }
+                }
                 Some(false) => println!("failed"), // anyhow::bail!("failed in solving ownership constraints"),
                 None => anyhow::bail!("timeout"),
             }

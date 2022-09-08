@@ -8,6 +8,7 @@
 #![feature(trusted_step)]
 #![feature(array_windows)]
 #![feature(let_else)]
+#![feature(is_some_with)]
 
 extern crate rustc_arena;
 extern crate rustc_ast;
