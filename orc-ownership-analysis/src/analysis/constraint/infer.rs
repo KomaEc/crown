@@ -152,7 +152,7 @@ pub(crate) trait Mode {
 
     /// Impose no constraint on a definition. Constraints are still emitted
     /// because the old value of lhs must be non-owning
-    fn ignore_lhs<'infercx, 'tcx, DB>(
+    fn unknown_source<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         result: Consume<Self::Interpretation>,
     ) where
@@ -162,7 +162,7 @@ pub(crate) trait Mode {
         Self::assume(infer_cx, result.r#use, false)
     }
 
-    fn ignore_rhs<'infercx, 'tcx, DB>(
+    fn unknown_sink<'infercx, 'tcx, DB>(
         _: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         _: Consume<Self::Interpretation>,
     ) where
@@ -749,7 +749,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             Rvalue::Use(Operand::Constant(_)) => {
                 if let Some(lhs_consume) = self.state.try_consume_at(lhs.local, location) {
                     let lhs_consume = M::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
-                    M::ignore_lhs(infer_cx, lhs_consume);
+                    M::unknown_source(infer_cx, lhs_consume);
                     tracing::debug!("constant pointer rvalue {:?}", rhs)
                 }
             }
@@ -761,7 +761,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 // this is because we limit the nested level of pointers
                 if let Some(lhs_consume) = self.state.try_consume_at(lhs.local, location) {
                     let lhs_consume = M::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
-                    M::ignore_lhs(infer_cx, lhs_consume);
+                    M::unknown_source(infer_cx, lhs_consume);
                     tracing::debug!("untrusted pointer source: raw address {:?}", operand)
                 }
             }
@@ -776,7 +776,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 let rhs_consume = self.state.consume_at(rhs.local, location);
                 let rhs_consume = M::interpret_consume(infer_cx, self.body, rhs, rhs_consume);
                 // correctness?
-                M::ignore_rhs(infer_cx, rhs_consume);
+                M::unknown_sink(infer_cx, rhs_consume);
                 tracing::debug!("untrusted pointer sink: address {:?}", lhs);
             }
 
@@ -804,8 +804,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
                 match (lhs_consume, rhs_consume) {
                     (None, None) => {}
-                    (None, Some(rhs_consume)) => M::ignore_rhs(infer_cx, rhs_consume),
-                    (Some(lhs_consume), None) => M::ignore_lhs(infer_cx, lhs_consume),
+                    (None, Some(rhs_consume)) => M::unknown_sink(infer_cx, rhs_consume),
+                    (Some(lhs_consume), None) => M::unknown_source(infer_cx, lhs_consume),
                     (Some(lhs_consume), Some(rhs_consume)) => {
                         M::transfer(infer_cx, lhs_consume, rhs_consume)
                     }
