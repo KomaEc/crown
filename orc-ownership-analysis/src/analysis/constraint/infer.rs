@@ -131,6 +131,17 @@ pub(crate) trait Mode {
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
+    fn borrow<'infercx, 'tcx, DB>(
+        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
+        consume: Consume<Self::Interpretation>,
+    ) where
+        'tcx: 'infercx,
+        DB: Database + 'infercx,
+    {
+        Self::assume(infer_cx, consume.r#use, false);
+        Self::assume(infer_cx, consume.def, false);
+    }
+
     // fn join<'infercx, 'tcx, DB>(
     //     infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
     //     left: Self::Interpretation,
@@ -561,7 +572,7 @@ impl Mode for WithCtxt {
                 }
             } else {
                 // library
-                /* TODO */
+                infer_cx.model_library_call(&func_sig, callee)
             }
         } else {
             // closure or fn ptr
