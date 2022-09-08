@@ -1,3 +1,5 @@
+use smallvec::SmallVec;
+
 use crate::analysis::body_ext::BodyExt;
 use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer, WithCtxt};
 use crate::analysis::constraint::CadicalDatabase;
@@ -12,6 +14,17 @@ pub(crate) mod def;
 pub(crate) mod join_points;
 pub(crate) mod state;
 pub(crate) mod ty_ext;
+
+pub(crate) struct FnSig<T> {
+    ret: T,
+    args: SmallVec<[T; 4]>,
+}
+
+impl<T> FnSig<T> {
+    pub(crate) fn new(ret: T, args: SmallVec<[T; 4]>) -> Self {
+        FnSig { ret, args }
+    }
+}
 
 impl<'tcx> CrateCtxt<'tcx> {
     pub fn crash_me_with_pure_rename(&self) {

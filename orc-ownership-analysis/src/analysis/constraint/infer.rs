@@ -21,6 +21,7 @@ use crate::{
         def::{Consume, Definitions, RichLocation},
         join_points::PhiNode,
         state::{SSAIdx, SSAState},
+        FnSig,
     },
     CrateCtxt,
 };
@@ -89,11 +90,11 @@ pub(crate) trait Mode {
 
     type Interpretation: Clone + std::fmt::Debug;
 
-    type OutputAndInputs<T>;
+    type FnSig<T>;
 
     fn transform_fn_sig(
         func_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>,
-    ) -> Self::OutputAndInputs<Option<Consume<Self::Interpretation>>>;
+    ) -> Self::FnSig<Option<Consume<Self::Interpretation>>>;
 
     // type ConsumeInterpretation;
 
@@ -223,7 +224,7 @@ pub(crate) trait Mode {
     // Note that Vec<Consume<()>> won't allocate memories
     fn model_call<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        func_sig: Self::OutputAndInputs<Option<Consume<Self::Interpretation>>>,
+        func_sig: Self::FnSig<Option<Consume<Self::Interpretation>>>,
         // func_args: Vec<Consume<Self::Interpretation>>,
         // func_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>,
         func: &Operand,
@@ -243,7 +244,7 @@ impl Mode for Pure {
 
     type Interpretation = ();
 
-    type OutputAndInputs<T> = ();
+    type FnSig<T> = ();
 
     fn transform_fn_sig(func_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>) {
         for _ in func_sig {}
@@ -337,14 +338,14 @@ impl Mode for WithCtxt {
 
     type Interpretation = Range<OwnershipSig>;
 
-    type OutputAndInputs<T> = (T, Vec<T>);
+    type FnSig<T> = FnSig<T>;
 
     fn transform_fn_sig(
         mut func_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>,
-    ) -> Self::OutputAndInputs<Option<Consume<Self::Interpretation>>> {
+    ) -> Self::FnSig<Option<Consume<Self::Interpretation>>> {
         let destination = func_sig.next().unwrap();
         let args = func_sig.collect();
-        (destination, args)
+        FnSig::new(destination, args)
     }
 
     fn define_phi_node<'infercx, 'tcx, DB>(
@@ -540,10 +541,7 @@ impl Mode for WithCtxt {
 
     fn model_call<'infercx, 'tcx, DB>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
-        func_sig: (
-            Option<Consume<Self::Interpretation>>,
-            Vec<Option<Consume<Self::Interpretation>>>,
-        ),
+        fn_sig: Self::FnSig<Option<Consume<Self::Interpretation>>>,
         func: &Operand,
     ) where
         'tcx: 'infercx,
@@ -564,7 +562,7 @@ impl Mode for WithCtxt {
                     rustc_hir::Node::Item(_) => { /* TODO */ }
                     // extern
                     rustc_hir::Node::ForeignItem(foreign_item) => {
-                        infer_cx.model_libc_call(&func_sig, foreign_item.ident)
+                        infer_cx.model_libc_call(&fn_sig, foreign_item.ident)
                     }
                     // in libxml2.rust/src/xmlschemastypes.rs/{} impl_xmlSchemaValDate/set_mon
                     rustc_hir::Node::ImplItem(_) => { /* TODO */ }
@@ -572,7 +570,7 @@ impl Mode for WithCtxt {
                 }
             } else {
                 // library
-                infer_cx.model_library_call(&func_sig, callee)
+                infer_cx.model_library_call(&fn_sig, callee)
             }
         } else {
             // closure or fn ptr
