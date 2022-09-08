@@ -13,7 +13,8 @@ impl<'tcx> CrateCtxt<'tcx> {
         self.verify_place_regularity();
         self.verify_temp_local_usage();
         self.verify_args_are_all_locals();
-        self.verify_stmt_regularity()
+        self.verify_stmt_regularity();
+        self.verify_return_clause_unique()
     }
 
     fn verify_shape_of_place(&self) {
@@ -54,34 +55,6 @@ impl<'tcx> CrateCtxt<'tcx> {
             Vis.visit_body(body);
         }
     }
-
-    // pub fn compute_percentage_of_non_address_taking_functions(&self) -> Result<()> {
-    //     struct Vis;
-    //     impl<'tcx> Visitor<'tcx> for Vis {
-    //         fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, _location: Location) {
-    //             if let Rvalue::AddressOf(rustc_ast::Mutability::Mut, _) = rvalue {
-    //                 panic!("{:?} to be catched", rvalue)
-    //             }
-    //         }
-    //     }
-    //     let prev_hook = std::panic::take_hook();
-    //     std::panic::set_hook(Box::new(|_| {}));
-    //     let n_address_taking_functions = self
-    //         .functions()
-    //         .iter()
-    //         .filter(|&did| {
-    //             let body = self.tcx.optimized_mir(did);
-    //             std::panic::catch_unwind(std::panic::assertUnwindSafe(|| Vis.visit_body(body)))
-    //                 .is_ok()
-    //         })
-    //         .count();
-    //     std::panic::set_hook(prev_hook);
-    //     let percentage =
-    //         n_address_taking_functions as f64 / self.call_graph.function_count() as f64;
-    //     println!("-------------stat: percntage of non address taking functions-----------------");
-    //     println!("                   {percentage}");
-    //     Ok(())
-    // }
 
     fn verify_place_regularity(&self) {
         struct Vis;
@@ -149,42 +122,6 @@ impl<'tcx> CrateCtxt<'tcx> {
             Vis.visit_body(body);
         }
     }
-
-    // pub fn inspect_place_abs(&self) {
-    //     struct Vis<'me, 'tcx>(
-    //         &'me OwnershipAnalysisCtxt<'me, 'tcx>,
-    //         &'me Body<'tcx>,
-    //         FxHashSet<Place<'tcx>>,
-    //     );
-    //     impl<'me, 'tcx> Visitor<'tcx> for Vis<'me, 'tcx> {
-    //         fn visit_place(
-    //             &mut self,
-    //             place: &Place<'tcx>,
-    //             context: PlaceContext,
-    //             _location: Location,
-    //         ) {
-    //             let visited = &mut self.2;
-    //             if visited.contains(&place) {
-    //                 return;
-    //             }
-    //             visited.insert(*place);
-    //             let octxt = self.0;
-    //             let body = self.1;
-    //             let (PlaceContext::MutatingUse(..) | PlaceContext::NonMutatingUse(..)) = context else { return };
-    //             if place.projection.len() < 2 {
-    //                 return;
-    //             }
-    //             let Some(place_abs) = place.r#abstract(body, &octxt) else { return };
-    //             tracing::debug!("{:?} -> {}", place, place_abs)
-    //         }
-    //     }
-    //     let octxt = OwnershipAnalysisCtxt::new(&*self);
-    //     for did in self.functions() {
-    //         let body = self.tcx.optimized_mir(did);
-    //         let mut vis = Vis(&octxt, body, FxHashSet::default());
-    //         vis.visit_body(body);
-    //     }
-    // }
 
     fn verify_temp_local_usage(&self) {
         use rustc_index::vec::IndexVec;
@@ -270,6 +207,24 @@ impl<'tcx> CrateCtxt<'tcx> {
                 //     }
                 // }
             }
+        }
+    }
+
+    fn verify_return_clause_unique(&self) {
+        for did in self.functions().iter().copied() {
+            let body = self.tcx.optimized_mir(did);
+            assert!(
+                body.basic_blocks
+                    .iter()
+                    .filter(
+                        |bb_data| bb_data.terminator.is_some_and(|terminator| matches!(
+                            terminator.kind,
+                            TerminatorKind::Return
+                        ))
+                    )
+                    .count()
+                    <= 1
+            );
         }
     }
 }
