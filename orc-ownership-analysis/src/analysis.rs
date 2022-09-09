@@ -1,5 +1,5 @@
-use std::marker::PhantomData;
 use smallvec::SmallVec;
+use std::marker::PhantomData;
 
 use crate::analysis::body_ext::BodyExt;
 use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer, WithCtxt};

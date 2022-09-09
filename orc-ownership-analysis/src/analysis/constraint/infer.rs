@@ -1,7 +1,6 @@
 use std::{borrow::BorrowMut, ops::Range};
 
 use itertools::izip;
-use TyKind::FnDef;
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
@@ -12,6 +11,7 @@ use rustc_middle::{
     ty::Ty,
 };
 use rustc_type_ir::TyKind;
+use TyKind::FnDef;
 
 use crate::{
     analysis::{
@@ -31,7 +31,7 @@ pub struct InferCtxt<'infercx, 'tcx, DB = CadicalDatabase> {
     pub database: &'infercx mut DB,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     pub local_sigs: IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>,
-    gen: OwnershipSigGenerator
+    gen: OwnershipSigGenerator,
 }
 
 impl<'infercx, 'tcx, DB> InferCtxt<'infercx, 'tcx, DB>
@@ -287,7 +287,7 @@ impl Mode for Pure {
         _: Consume<Self::Interpretation>,
     ) where
         'tcx: 'infercx,
-        DB: Database + 'infercx
+        DB: Database + 'infercx,
     {
     }
 

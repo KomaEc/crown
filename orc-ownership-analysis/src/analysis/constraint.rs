@@ -34,13 +34,12 @@ impl std::ops::AddAssign<u32> for OwnershipSig {
 }
 
 pub struct OwnershipSigGenerator {
-    start: OwnershipSig,
     next: OwnershipSig,
 }
 
 impl OwnershipSigGenerator {
     pub fn new(start: OwnershipSig) -> Self {
-        OwnershipSigGenerator { start, next: start }
+        OwnershipSigGenerator { next: start }
     }
 
     pub fn gen(&mut self, num: u32) -> Range<OwnershipSig> {
@@ -48,10 +47,6 @@ impl OwnershipSigGenerator {
         self.next += num;
         let end = self.next;
         start..end
-    }
-
-    pub fn all_sigs(&self) -> Range<OwnershipSig> {
-        self.start..self.next
     }
 }
 
