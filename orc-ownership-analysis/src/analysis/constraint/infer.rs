@@ -2,7 +2,6 @@ use std::{borrow::BorrowMut, ops::Range};
 
 use itertools::izip;
 use TyKind::FnDef;
-// use orc_common::pointer::BorrowMut;
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
@@ -31,7 +30,7 @@ pub mod model_call;
 pub struct InferCtxt<'infercx, 'tcx, DB = CadicalDatabase> {
     pub database: DB,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
-    pub local_sig: IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>,
+    pub local_sigs: IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>,
     next: OwnershipSig,
 }
 
@@ -46,7 +45,7 @@ where
         definitions: &Definitions,
         db: DB,
     ) -> Self {
-        let mut local_sig = IndexVec::with_capacity(definitions.def_sites.len());
+        let mut local_sigs = IndexVec::with_capacity(definitions.def_sites.len());
         let mut next = OwnershipSig::MIN;
 
         for local in definitions.def_sites.indices() {
@@ -55,16 +54,16 @@ where
                 let count = crate_ctxt.ty_ptr_count(ty);
                 let sigs = vec![next..next + count];
                 next += count;
-                local_sig.push(IndexVec::from_raw(sigs));
+                local_sigs.push(IndexVec::from_raw(sigs));
             } else {
-                local_sig.push(IndexVec::default());
+                local_sigs.push(IndexVec::default());
             }
         }
 
         InferCtxt {
             database: db,
             crate_ctxt,
-            local_sig,
+            local_sigs,
             next,
         }
     }
@@ -143,14 +142,6 @@ pub trait Mode {
         Self::assume(infer_cx, consume.def, false);
     }
 
-    // fn join<'infercx, 'tcx, DB>(
-    //     infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-    //     left: Self::Interpretation,
-    //     right: Self::Interpretation,
-    // ) where
-    //     'tcx: 'infercx,
-    //     DB: Database + 'infercx;
-
     fn source<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         result: Consume<Self::Interpretation>,
@@ -200,9 +191,7 @@ pub trait Mode {
         _: Consume<Self::Interpretation>,
     ) where
         'tcx: 'infercx,
-        DB: Database + 'infercx,
-    {
-    }
+        DB: Database + 'infercx;
 
     fn assume<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
@@ -225,17 +214,15 @@ pub trait Mode {
     fn model_call<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         fn_sig: Self::FnSig<Option<Consume<Self::Interpretation>>>,
-        // func_args: Vec<Consume<Self::Interpretation>>,
-        // func_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>,
         func: &Operand,
     ) where
         'tcx: 'infercx,
         DB: Database + 'infercx;
 }
 #[derive(Debug)]
-pub struct Pure;
+pub enum Pure {}
 #[derive(Debug)]
-pub struct WithCtxt;
+pub enum WithCtxt {}
 impl Mode for Pure {
     type Ctxt<'infercx, 'tcx, DB> = ()
     where
@@ -246,8 +233,8 @@ impl Mode for Pure {
 
     type FnSig<T> = ();
 
-    fn transform_fn_sig(func_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>) {
-        for _ in func_sig {}
+    fn transform_fn_sig(fn_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>) {
+        for _ in fn_sig {}
     }
 
     fn define_phi_node<'infercx, 'tcx, DB>(
@@ -295,15 +282,14 @@ impl Mode for Pure {
     {
     }
 
-    // fn join<'infercx, 'tcx, DB>(
-    //     (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
-    //     (): Self::Interpretation,
-    //     (): Self::Interpretation,
-    // ) where
-    //     'tcx: 'infercx,
-    //     DB: Database + 'infercx,
-    // {
-    // }
+    fn unknown_sink<'infercx, 'tcx, DB>(
+        (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
+        _: Consume<Self::Interpretation>,
+    ) where
+        'tcx: 'infercx,
+        DB: Database + 'infercx
+    {
+    }
 
     fn assume<'infercx, 'tcx, DB>(
         (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
@@ -359,7 +345,7 @@ impl Mode for WithCtxt {
     {
         let offset = infer_cx.crate_ctxt.ty_ptr_count(ty);
         let sigs = infer_cx.new_sigs(offset);
-        assert_eq!(def, infer_cx.local_sig[local].push(sigs));
+        assert_eq!(def, infer_cx.local_sigs[local].push(sigs));
     }
 
     fn join_phi_nodes<'infercx, 'tcx, DB>(
@@ -379,8 +365,8 @@ impl Mode for WithCtxt {
                 if lhs == rhs {
                     continue;
                 }
-                let lhs_sigs = infer_cx.local_sig[local][lhs].clone();
-                let rhs_sigs = infer_cx.local_sig[local][rhs].clone();
+                let lhs_sigs = infer_cx.local_sigs[local][lhs].clone();
+                let rhs_sigs = infer_cx.local_sigs[local][rhs].clone();
                 for (lhs_sig, rhs_sig) in lhs_sigs.zip(rhs_sigs) {
                     infer_cx
                         .database
@@ -411,7 +397,7 @@ impl Mode for WithCtxt {
         let Range {
             start: old_start,
             end: old_end,
-        } = infer_cx.local_sig[base][consume.r#use].clone();
+        } = infer_cx.local_sigs[base][consume.r#use].clone();
 
         assert_eq!(base_offset, old_end.as_u32() - old_start.as_u32());
 
@@ -449,7 +435,7 @@ impl Mode for WithCtxt {
         // let new_start = infer_cx.next;
         // let new_end = new_start + base_offset;
         assert_eq!(
-            infer_cx.local_sig[base].push(new_start..new_end),
+            infer_cx.local_sigs[base].push(new_start..new_end),
             consume.def
         );
 
@@ -496,18 +482,19 @@ impl Mode for WithCtxt {
         }
     }
 
-    // fn join<'infercx, 'tcx, DB>(
-    //     infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
-    //     left: Self::Interpretation,
-    //     right: Self::Interpretation,
-    // ) where
-    //     'tcx: 'infercx,
-    //     DB: Database + 'infercx,
-    // {
-    //     for (l, r) in left.zip(right) {
-    //         infer_cx.database.push_equal::<super::Debug>((), l, r)
-    //     }
-    // }
+    fn unknown_sink<'infercx, 'tcx, DB>(
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
+        consume: Consume<Self::Interpretation>,
+    ) where
+        'tcx: 'infercx,
+        DB: Database + 'infercx,
+    {
+        for (r#use, def) in consume.r#use.zip(consume.def) {
+            infer_cx
+                .database
+                .push_less_equal::<super::Debug>((), def, r#use);
+        }
+    }
 
     fn assume<'infercx, 'tcx, DB>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
@@ -532,7 +519,7 @@ impl Mode for WithCtxt {
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
-        for sig in infer_cx.local_sig[local][r#use].clone() {
+        for sig in infer_cx.local_sigs[local][r#use].clone() {
             infer_cx
                 .database
                 .push_assume::<super::Debug>((), sig, false)

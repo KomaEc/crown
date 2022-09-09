@@ -1,6 +1,5 @@
 use std::marker::PhantomData;
 
-use orc_common::data_structure::vec_array::VecArray;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use smallvec::SmallVec;
@@ -19,7 +18,6 @@ pub mod def;
 pub mod join_points;
 pub mod state;
 pub mod ty_ext;
-
 
 pub struct FnSig<T> {
     ret: T,
@@ -75,9 +73,9 @@ impl<'tcx> CrateCtxt<'tcx> {
                         let value = infer_cx.database.solver.value(sig.into_lit());
                         // println!("{sig} = {:?}", value)
                         if let Some(value) = value {
-                            tracing::debug!("{sig} = {}", value as u32);
+                            println!("{sig} = {}", value as u32);
                         } else {
-                            tracing::debug!("{sig} = any")
+                            println!("{sig} = any")
                         }
                     }
                 }
@@ -91,18 +89,18 @@ impl<'tcx> CrateCtxt<'tcx> {
 }
 
 pub trait AnalysisKind {
-    type DB;
+    type Constraints<DB>;
 }
-pub struct Modular;
+pub enum Modular {}
 impl AnalysisKind for Modular {
-    type DB = FxHashMap<DefId, CadicalDatabase>;
+    type Constraints<DB> = FxHashMap<DefId, DB>;
 }
-pub struct WholeProgram;
+pub enum WholeProgram {}
 impl AnalysisKind for WholeProgram {
-    type DB = CadicalDatabase;
+    type Constraints<DB> = DB;
 }
 
-pub struct Analysis<Kind: AnalysisKind> {
-    db: Kind::DB,
+pub struct Analysis<DB, Kind: AnalysisKind> {
+    db: Kind::Constraints<DB>,
     _kind: PhantomData<*const Kind>,
 }

@@ -61,11 +61,7 @@ impl SSAState {
 
 impl SSAState {
     #[inline]
-    pub fn try_consume_at(
-        &mut self,
-        local: Local,
-        location: Location,
-    ) -> Option<Consume<SSAIdx>> {
+    pub fn try_consume_at(&mut self, local: Local, location: Location) -> Option<Consume<SSAIdx>> {
         // tracing::debug!("consume chain before: {:?}", &self.consume_chain.consumes[location.block.index()]);
         let consume = self.consume_chain.consumes[location.block.index()][location.statement_index]
             .get_mut(&local)?;

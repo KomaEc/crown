@@ -44,6 +44,8 @@ pub enum Constraint {
     Assume { x: OwnershipSig, sign: bool },
     /// x = y
     Equal { x: OwnershipSig, y: OwnershipSig },
+    /// x <= y
+    LessEqual { x: OwnershipSig, y: OwnershipSig },
 }
 
 impl std::fmt::Display for Constraint {
@@ -54,6 +56,7 @@ impl std::fmt::Display for Constraint {
                 .then(|| f.write_fmt(format_args!("{x} = 1")))
                 .unwrap_or_else(|| f.write_fmt(format_args!("{x} = 0"))),
             Constraint::Equal { x, y } => f.write_fmt(format_args!("{x} = {y}")),
+            Constraint::LessEqual { x, y } => f.write_fmt(format_args!("{x} <= {y}")),
         }
     }
 }
@@ -69,6 +72,8 @@ pub trait Mode {
     fn store_assumption(store: Self::Store<'_>, x: OwnershipSig, sign: bool);
 
     fn store_equal(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig);
+
+    fn store_less_equal(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig);
 }
 
 pub struct Emit;
@@ -87,6 +92,10 @@ impl Mode for Emit {
 
     fn store_equal(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig) {
         store.push(Constraint::Equal { x, y })
+    }
+
+    fn store_less_equal(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig) {
+        store.push(Constraint::LessEqual { x, y })
     }
 }
 
@@ -132,6 +141,11 @@ macro_rules! make_logging_mode {
                 let constraint = Constraint::Equal { x, y };
                 tracing_for!($level, "emitting constraint: {constraint}")
             }
+
+            fn store_less_equal((): Self::Store<'_>, x: OwnershipSig, y: OwnershipSig) {
+                let constraint = Constraint::LessEqual { x, y };
+                tracing_for!($level, "emitting constraint: {constraint}")
+            }
         }
     };
 }
@@ -163,6 +177,11 @@ pub trait Database {
         self.push_equal_impl(x, y);
         M::store_equal(store, x, y);
     }
+    fn push_less_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig);
+    fn push_less_equal<M: Mode>(&mut self, store: M::Store<'_>, x: OwnershipSig, y: OwnershipSig) {
+        self.push_less_equal_impl(x, y);
+        M::store_less_equal(store, x, y);
+    }
 }
 
 impl Database for () {
@@ -171,6 +190,8 @@ impl Database for () {
     fn push_assume_impl(&mut self, _: OwnershipSig, _: bool) {}
 
     fn push_equal_impl(&mut self, _: OwnershipSig, _: OwnershipSig) {}
+
+    fn push_less_equal_impl(&mut self, _: OwnershipSig, _: OwnershipSig) {}
 }
 
 pub struct CadicalDatabase {
@@ -209,9 +230,17 @@ impl Database for CadicalDatabase {
 
     #[inline]
     fn push_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
+        // self.solver
+        //     .add_clause([-x.into_lit(), y.into_lit()].into_iter());
+        // self.solver
+        //     .add_clause([x.into_lit(), -y.into_lit()].into_iter());
+        self.push_less_equal_impl(x, y);
+        self.push_less_equal_impl(y, x)
+    }
+
+    #[inline]
+    fn push_less_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
         self.solver
             .add_clause([-x.into_lit(), y.into_lit()].into_iter());
-        self.solver
-            .add_clause([x.into_lit(), -y.into_lit()].into_iter());
     }
 }
