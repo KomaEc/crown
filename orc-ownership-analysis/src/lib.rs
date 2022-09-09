@@ -97,13 +97,13 @@ impl<'tcx> CrateCtxt<'tcx> {
     }
 
     #[inline]
-    pub(crate) fn functions(&self) -> &[DefId] {
+    pub fn functions(&self) -> &[DefId] {
         self.call_graph.functions()
     }
 
     #[inline]
     /// Return the set of top-level struct definitions in post order
-    pub(crate) fn structs(&self) -> &[DefId] {
+    pub fn structs(&self) -> &[DefId] {
         self.struct_topology.structs_in_post_order()
     }
 }

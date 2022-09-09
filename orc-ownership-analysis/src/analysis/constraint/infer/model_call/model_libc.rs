@@ -12,7 +12,7 @@ use crate::analysis::{
 };
 
 impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx> InferCtxt<'infercx, 'tcx, DB> {
-    pub(crate) fn model_libc_call(
+    pub fn model_libc_call(
         &mut self,
         fn_sig: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         callee: Ident,

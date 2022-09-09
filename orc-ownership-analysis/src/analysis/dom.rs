@@ -3,14 +3,14 @@ use rustc_data_structures::graph::WithStartNode;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body};
 
-pub(crate) struct DomTree {
-    pub(crate) idoms: IndexVec<BasicBlock, Option<BasicBlock>>,
+pub struct DomTree {
+    pub idoms: IndexVec<BasicBlock, Option<BasicBlock>>,
     /// BasicBlock -> Array of BasicBlock
-    pub(crate) tree: VecArray<BasicBlock>,
+    pub tree: VecArray<BasicBlock>,
 }
 
 impl DomTree {
-    pub(crate) fn new(body: &Body) -> Self {
+    pub fn new(body: &Body) -> Self {
         let dominators = body.basic_blocks.dominators();
         let mut tree = VecArray::new(body.basic_blocks().len());
         let mut idoms = IndexVec::with_capacity(body.basic_blocks().len());

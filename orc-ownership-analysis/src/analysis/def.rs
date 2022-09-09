@@ -26,27 +26,27 @@ use super::state::SSAIdx;
 
 /// TODO: handle addr-ptr cast? Currently, definitions are accounted
 /// for const addr to ptr cast.
-pub(crate) struct Definitions {
+pub struct Definitions {
     /// BasicBlock -> statement_index -> possible definitions
     ///
     /// We've made an assumption that a local can only be used or defined
     /// once in a statement/terminator
     consumes: VecArray<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
-    pub(crate) def_sites: IndexVec<Local, BitSet<BasicBlock>>,
-    pub(crate) to_finalise: BitSet<Local>,
+    pub def_sites: IndexVec<Local, BitSet<BasicBlock>>,
+    pub to_finalise: BitSet<Local>,
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct Consume<T: Clone + std::fmt::Debug> {
-    pub(crate) r#use: T,
-    pub(crate) def: T,
+pub struct Consume<T: Clone + std::fmt::Debug> {
+    pub r#use: T,
+    pub def: T,
 }
 
 impl<T: Clone + Copy + std::fmt::Debug> Copy for Consume<T> {}
 
 impl<T: Clone + std::fmt::Debug + Default> Consume<T> {
     #[inline]
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Consume {
             r#use: T::default(), //SSAIdx::INIT,
             def: T::default(),   //SSAIdx::INIT,
@@ -57,7 +57,7 @@ impl<T: Clone + std::fmt::Debug + Default> Consume<T> {
 const _: () = assert!(0 == std::mem::size_of::<Consume<()>>());
 
 #[derive(Clone, Copy, Debug)]
-pub(crate) enum RichLocation {
+pub enum RichLocation {
     Entry,
     Phi(BasicBlock),
     Mir(Location),
@@ -70,18 +70,18 @@ impl From<Location> for RichLocation {
 }
 
 /// In ownership analysis, use happens only at definition
-pub(crate) struct ConsumeChain {
+pub struct ConsumeChain {
     /// ssa index for each consumption
-    pub(crate) consumes: VecArray<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
+    pub consumes: VecArray<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
     /// location of each definition
     ///
     /// Those locals with empty entries definitely do not contain pointers
-    pub(crate) locs: IndexVec<Local, IndexVec<SSAIdx, RichLocation>>,
+    pub locs: IndexVec<Local, IndexVec<SSAIdx, RichLocation>>,
     // to_finalise: BitSet<Local>,
 }
 
 impl ConsumeChain {
-    pub(crate) fn new(body: &Body, definitions: Definitions) -> Self {
+    pub fn new(body: &Body, definitions: Definitions) -> Self {
         let Definitions {
             consumes,
             to_finalise,
@@ -120,10 +120,10 @@ impl ConsumeChain {
     }
 
     // #[inline]
-    // pub(crate) fn to_finalise(&self) -> &BitSet<Local> {
+    // pub fn to_finalise(&self) -> &BitSet<Local> {
     //     &self.to_finalise
     // }
-    pub(crate) fn to_finalise(&self) -> impl Iterator<Item = Local> + '_ {
+    pub fn to_finalise(&self) -> impl Iterator<Item = Local> + '_ {
         self.locs
             .iter_enumerated()
             .skip(1)
@@ -131,12 +131,12 @@ impl ConsumeChain {
     }
 
     #[inline]
-    pub(crate) fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume<SSAIdx>); 2]>] {
+    pub fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume<SSAIdx>); 2]>] {
         &self.consumes[block.index()]
     }
 
     // #[inline]
-    // pub(crate) fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume); 2]> {
+    // pub fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume); 2]> {
     //     let Location {
     //         block,
     //         statement_index,
@@ -145,7 +145,7 @@ impl ConsumeChain {
     // }
 }
 
-pub(crate) fn initial_definitions<'tcx>(
+pub fn initial_definitions<'tcx>(
     body: &Body<'tcx>,
     tcx: TyCtxt<'tcx>,
     crate_ctxt: &CrateCtxt<'tcx>,

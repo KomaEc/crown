@@ -26,12 +26,12 @@ use crate::{
     CrateCtxt,
 };
 
-pub(crate) mod model_call;
+pub mod model_call;
 
-pub(crate) struct InferCtxt<'infercx, 'tcx, DB = CadicalDatabase> {
-    pub(crate) database: DB,
+pub struct InferCtxt<'infercx, 'tcx, DB = CadicalDatabase> {
+    pub database: DB,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
-    pub(crate) local_sig: IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>,
+    pub local_sig: IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>,
     next: OwnershipSig,
 }
 
@@ -40,7 +40,7 @@ where
     'tcx: 'infercx,
     DB: Database,
 {
-    pub(crate) fn new(
+    pub fn new(
         crate_ctxt: &'infercx CrateCtxt<'tcx>,
         body: &Body<'tcx>,
         definitions: &Definitions,
@@ -69,19 +69,19 @@ where
         }
     }
 
-    pub(crate) fn new_sigs(&mut self, size: u32) -> Range<OwnershipSig> {
+    pub fn new_sigs(&mut self, size: u32) -> Range<OwnershipSig> {
         let start = self.next;
         let end = start + size;
         self.next = end;
         start..end
     }
 
-    pub(crate) fn all_sigs(&self) -> Range<OwnershipSig> {
+    pub fn all_sigs(&self) -> Range<OwnershipSig> {
         OwnershipSig::MIN..self.next
     }
 }
 
-pub(crate) trait Mode {
+pub trait Mode {
     type Ctxt<'infercx, 'tcx, DB>
     where
         Self: 'infercx,
@@ -93,7 +93,7 @@ pub(crate) trait Mode {
     type FnSig<T>;
 
     fn transform_fn_sig(
-        func_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>,
+        fn_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>,
     ) -> Self::FnSig<Option<Consume<Self::Interpretation>>>;
 
     // type ConsumeInterpretation;
@@ -224,7 +224,7 @@ pub(crate) trait Mode {
     // Note that Vec<Consume<()>> won't allocate memories
     fn model_call<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        func_sig: Self::FnSig<Option<Consume<Self::Interpretation>>>,
+        fn_sig: Self::FnSig<Option<Consume<Self::Interpretation>>>,
         // func_args: Vec<Consume<Self::Interpretation>>,
         // func_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>,
         func: &Operand,
@@ -233,9 +233,9 @@ pub(crate) trait Mode {
         DB: Database + 'infercx;
 }
 #[derive(Debug)]
-pub(crate) struct Pure;
+pub struct Pure;
 #[derive(Debug)]
-pub(crate) struct WithCtxt;
+pub struct WithCtxt;
 impl Mode for Pure {
     type Ctxt<'infercx, 'tcx, DB> = ()
     where
@@ -341,10 +341,10 @@ impl Mode for WithCtxt {
     type FnSig<T> = FnSig<T>;
 
     fn transform_fn_sig(
-        mut func_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>,
+        mut fn_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>,
     ) -> Self::FnSig<Option<Consume<Self::Interpretation>>> {
-        let destination = func_sig.next().unwrap();
-        let args = func_sig.collect();
+        let destination = fn_sig.next().unwrap();
+        let args = fn_sig.collect();
         FnSig::new(destination, args)
     }
 
@@ -581,19 +581,19 @@ impl Mode for WithCtxt {
 
 // /// The kind of temporary that is ensured local or Special, and is not
 // /// renamed in the inference.
-// pub(crate) enum IgnoredTemporaryKind {
+// pub enum IgnoredTemporaryKind {
 //     DerefCopy,
 //     ArgFree,
 //     DestMalloc,
 // }
 
-pub(crate) struct Renamer<'rn, 'tcx: 'rn> {
+pub struct Renamer<'rn, 'tcx: 'rn> {
     body: &'rn Body<'tcx>,
     state: SSAState,
 }
 
 impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
-    pub(crate) fn new(
+    pub fn new(
         body: &'rn Body<'tcx>,
         dominance_frontier: &DominanceFrontier,
         definitions: Definitions,
@@ -604,7 +604,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    pub(crate) fn go<M: Mode + 'rn, DB: Database + 'rn>(
+    pub fn go<M: Mode + 'rn, DB: Database + 'rn>(
         &'rn mut self,
         mut infer_cx: impl BorrowMut<M::Ctxt<'rn, 'tcx, DB>>,
     ) {
@@ -755,7 +755,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
                 // hmmm we can't do this. args do not necessarily match sigs. args may contain constants!!
 
-                let func_sig = std::iter::once(Some(destination))
+                let fn_sig = std::iter::once(Some(destination))
                     .chain(args.iter().map(|arg| match arg {
                         Operand::Move(arg) | Operand::Copy(arg) => Some(arg),
                         Operand::Constant(..) => None,
@@ -769,9 +769,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                         })
                     });
 
-                let func_sig = M::transform_fn_sig(func_sig);
+                let fn_sig = M::transform_fn_sig(fn_sig);
 
-                M::model_call(infer_cx, func_sig, func);
+                M::model_call(infer_cx, fn_sig, func);
             }
             TerminatorKind::Return => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
@@ -883,16 +883,12 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
             Rvalue::Ref(_, _, _) | Rvalue::AddressOf(_, _) => {
                 let lhs_consume = self.state.consume_at(lhs.local, location);
-                let Consume {
-                    r#use: lhs_use,
-                    def: lhs_def,
-                } = M::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
+                let lhs_consume = M::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
 
                 /* TODO */
 
-                M::assume(infer_cx, lhs_use, false);
                 // correctness???
-                M::assume(infer_cx, lhs_def, false);
+                M::borrow(infer_cx, lhs_consume)
             }
 
             Rvalue::Repeat(Operand::Copy(rhs) | Operand::Move(rhs), _) => {

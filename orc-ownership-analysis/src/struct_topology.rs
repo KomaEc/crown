@@ -5,16 +5,16 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
 
-pub(crate) type Offset = u32;
+pub type Offset = u32;
 
-pub(crate) struct StructTopology {
+pub struct StructTopology {
     /// Structs in post order of the dependency graph.
     /// Dependency graph encodes direct dependencies between user defined structs.
     /// For instance, in `struct S { f: T } struct T;`
     /// `S` is considered dependent on `T`;
     /// in `struct S { f: *mut T } struct T;`
     /// `S` is not considered dependent on `T`
-    pub(crate) post_order: Vec<DefId>,
+    pub post_order: Vec<DefId>,
     did_idx: FxHashMap<DefId, usize>,
     /// struct -> field -> aggregate offset start of this field
     /// an additional entry last() represents the sum
@@ -25,7 +25,7 @@ pub(crate) struct StructTopology {
 }
 
 impl StructTopology {
-    pub(crate) fn new(tcx: TyCtxt, structs: Vec<DefId>) -> Self {
+    pub fn new(tcx: TyCtxt, structs: Vec<DefId>) -> Self {
         let mut graph = DiGraphMap::with_capacity(structs.len(), structs.len());
         structs.iter().for_each(|did| {
             graph.add_node(*did);
@@ -93,23 +93,23 @@ impl StructTopology {
     }
 
     #[inline]
-    pub(crate) fn structs_in_post_order(&self) -> &[DefId] {
+    pub fn structs_in_post_order(&self) -> &[DefId] {
         &self.post_order[..]
     }
 
     // #[inline]
-    // pub(crate) fn contains(&self, did: &DefId) -> bool {
+    // pub fn contains(&self, did: &DefId) -> bool {
     //     self.did_idx.contains_key(did)
     // }
 
     #[inline]
-    pub(crate) fn struct_size(&self, did: &DefId) -> Option<Offset> {
+    pub fn struct_size(&self, did: &DefId) -> Option<Offset> {
         let idx = self.did_idx.get(did).copied()?;
         Some(self.offset_of[idx].last().copied().unwrap())
     }
 
     #[inline]
-    pub(crate) fn field_offsets(&self, did: &DefId) -> Option<&[Offset]> {
+    pub fn field_offsets(&self, did: &DefId) -> Option<&[Offset]> {
         let idx = self.did_idx.get(did).copied()?;
         Some(&self.offset_of[idx])
     }

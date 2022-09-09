@@ -1,3 +1,8 @@
+use std::marker::PhantomData;
+
+use orc_common::data_structure::vec_array::VecArray;
+use rustc_hash::FxHashMap;
+use rustc_hir::def_id::DefId;
 use smallvec::SmallVec;
 
 use crate::analysis::body_ext::BodyExt;
@@ -6,22 +11,23 @@ use crate::analysis::constraint::CadicalDatabase;
 use crate::analysis::def::initial_definitions;
 use crate::CrateCtxt;
 
-pub(crate) mod body_ext;
-pub(crate) mod constants;
-pub(crate) mod constraint;
-pub(crate) mod def;
-// pub(crate) mod dom;
-pub(crate) mod join_points;
-pub(crate) mod state;
-pub(crate) mod ty_ext;
+pub mod body_ext;
+pub mod constants;
+pub mod constraint;
+pub mod def;
+// pub mod dom;
+pub mod join_points;
+pub mod state;
+pub mod ty_ext;
 
-pub(crate) struct FnSig<T> {
+
+pub struct FnSig<T> {
     ret: T,
     args: SmallVec<[T; 4]>,
 }
 
 impl<T> FnSig<T> {
-    pub(crate) fn new(ret: T, args: SmallVec<[T; 4]>) -> Self {
+    fn new(ret: T, args: SmallVec<[T; 4]>) -> Self {
         FnSig { ret, args }
     }
 }
@@ -82,4 +88,21 @@ impl<'tcx> CrateCtxt<'tcx> {
         }
         Ok(())
     }
+}
+
+pub trait AnalysisKind {
+    type DB;
+}
+pub struct Modular;
+impl AnalysisKind for Modular {
+    type DB = FxHashMap<DefId, CadicalDatabase>;
+}
+pub struct WholeProgram;
+impl AnalysisKind for WholeProgram {
+    type DB = CadicalDatabase;
+}
+
+pub struct Analysis<Kind: AnalysisKind> {
+    db: Kind::DB,
+    _kind: PhantomData<*const Kind>,
 }

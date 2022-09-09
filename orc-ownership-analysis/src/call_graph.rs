@@ -7,13 +7,13 @@ use rustc_middle::{
 };
 use rustc_type_ir::TyKind::FnDef;
 
-// pub(crate) struct FnSig<T> {
+// pub struct FnSig<T> {
 //     output: T,
 //     inputs: Vec<T>,
 // }
 
 pub struct CallGraph {
-    graph: DiGraphMap<DefId, ()>,
+    // graph: DiGraphMap<DefId, ()>,
     // /// (sccs + post_order): Vec<Vec<DefId>>,
     // sccs: Vec<usize>,
     // post_order: Vec<DefId>,
@@ -46,7 +46,7 @@ impl CallGraph {
         });
         let post_order = post_order.done();
         CallGraph {
-            graph,
+            // graph,
             // sccs,
             post_order,
         }
@@ -60,7 +60,7 @@ impl CallGraph {
 
     #[inline]
     pub fn function_count(&self) -> usize {
-        self.graph.node_count()
+        self.functions().len()
     }
 
     #[inline]
@@ -152,11 +152,11 @@ mod test {
         init_logger();
         orc_common::test_infra::run_compiler_with(TEST_PROGRAMS.into(), |tcx, functions, _| {
             let call_graph = CallGraph::new(tcx, &functions[..]);
-            for &caller in call_graph.functions() {
-                for callee in call_graph.graph.neighbors(caller) {
-                    tracing::debug!("{:?} ---> {:?}", caller, callee)
-                }
-            }
+            // for &caller in call_graph.functions() {
+            //     for callee in call_graph.graph.neighbors(caller) {
+            //         tracing::debug!("{:?} ---> {:?}", caller, callee)
+            //     }
+            // }
 
             assert_eq!(call_graph.num_sccs(), 4);
 

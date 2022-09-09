@@ -12,7 +12,7 @@ use crate::analysis::{
 };
 
 impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx> InferCtxt<'infercx, 'tcx, DB> {
-    pub(crate) fn model_library_call(
+    pub fn model_library_call(
         &mut self,
         fn_sig: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         callee: DefId,
@@ -48,7 +48,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx> InferCtxt<'infercx, 'tcx
         }
     }
 
-    pub(crate) fn model_is_null(&mut self, fn_sig: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
+    pub fn model_is_null(&mut self, fn_sig: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
         let FnSig { args, .. } = fn_sig;
         assert_eq!(args.len(), 1);
         let arg = args.first().map(Option::as_ref).flatten().cloned().unwrap();

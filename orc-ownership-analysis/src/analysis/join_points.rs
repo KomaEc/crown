@@ -16,14 +16,14 @@ use super::{
 /// A phi node for a local X: X_i = $\phi$(X_j, X_k)
 #[derive(Clone, Derivative)]
 #[derivative(Default)]
-pub(crate) struct PhiNode {
+pub struct PhiNode {
     #[derivative(Default(value = "SSAIdx::INIT"))]
-    pub(crate) lhs: SSAIdx,
-    pub(crate) rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>,
+    pub lhs: SSAIdx,
+    pub rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>,
 }
 
 // impl PhiNode {
-//     pub(crate) fn new(lhs: SSAIdx, rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>) -> Self {
+//     pub fn new(lhs: SSAIdx, rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>) -> Self {
 //         Self { lhs, rhs }
 //     }
 // }
@@ -33,12 +33,12 @@ pub(crate) struct PhiNode {
 /// block, for an implicit final use. Therefore, it seems
 /// not necessary to construct a semi-pruned SSA
 #[derive(Clone, Debug)]
-pub(crate) struct JoinPoints<Payload> {
+pub struct JoinPoints<Payload> {
     data: IndexVec<BasicBlock, BasicBlockNodes<Payload>>,
 }
 
 impl JoinPoints<PhiNode> {
-    pub(crate) fn new<'tcx>(
+    pub fn new<'tcx>(
         body: &Body<'tcx>,
         dominance_frontier: &DominanceFrontier,
         // definitions: &Definitions,
@@ -71,13 +71,13 @@ impl JoinPoints<PhiNode> {
         join_points
     }
 
-    // pub(crate) fn phi_nodes(&self) -> impl Iterator<Item = (Local, &PhiNode)> {
+    // pub fn phi_nodes(&self) -> impl Iterator<Item = (Local, &PhiNode)> {
     //     self.data
     //         .iter()
     //         .flat_map(|bb_nodes| bb_nodes.iter_enumerated())
     // }
 
-    pub(crate) fn phi_nodes_mut(&mut self) -> impl Iterator<Item = (Local, &mut PhiNode)> {
+    pub fn phi_nodes_mut(&mut self) -> impl Iterator<Item = (Local, &mut PhiNode)> {
         self.data
             .iter_mut()
             .flat_map(|bb_nodes| bb_nodes.iter_enumerated_mut())
@@ -85,15 +85,15 @@ impl JoinPoints<PhiNode> {
 }
 
 impl<Payload> JoinPoints<Payload> {
-    pub(crate) fn from_raw(raw: IndexVec<BasicBlock, BasicBlockNodes<Payload>>) -> Self {
+    pub fn from_raw(raw: IndexVec<BasicBlock, BasicBlockNodes<Payload>>) -> Self {
         JoinPoints { data: raw }
     }
 
-    // pub(crate) fn into_iter(self) -> impl Iterator<Item = BasicBlockNodes<Payload>> {
+    // pub fn into_iter(self) -> impl Iterator<Item = BasicBlockNodes<Payload>> {
     //     self.data.into_iter()
     // }
 
-    // pub(crate) fn repack<F, U>(&self, f: F) -> JoinPoints<U>
+    // pub fn repack<F, U>(&self, f: F) -> JoinPoints<U>
     // where
     //     F: Fn(Local, &Payload) -> U,
     // {
@@ -104,7 +104,7 @@ impl<Payload> JoinPoints<Payload> {
     //         .into()
     // }
 
-    // pub(crate) fn filter_repack<U, F>(&self, f: F) -> JoinPoints<U>
+    // pub fn filter_repack<U, F>(&self, f: F) -> JoinPoints<U>
     // where
     //     F: Fn(Local, &Payload) -> Option<U>,
     // {
@@ -139,8 +139,8 @@ impl<T> std::ops::IndexMut<BasicBlock> for JoinPoints<T> {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct BasicBlockNodes<Node> {
-    pub(crate) data: SmallVec<[(Local, Node); NUM_PHI_NODES]>,
+pub struct BasicBlockNodes<Node> {
+    pub data: SmallVec<[(Local, Node); NUM_PHI_NODES]>,
 }
 
 impl<Payload> FromIterator<(Local, Payload)> for BasicBlockNodes<Payload> {
@@ -153,19 +153,19 @@ impl<Payload> FromIterator<(Local, Payload)> for BasicBlockNodes<Payload> {
 }
 
 impl<T> BasicBlockNodes<T> {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         BasicBlockNodes {
             data: SmallVec::new(),
         }
     }
 
     // #[inline]
-    // pub(crate) fn iter_enumerated(&self) -> impl Iterator<Item = (Local, &T)> {
+    // pub fn iter_enumerated(&self) -> impl Iterator<Item = (Local, &T)> {
     //     self.data.iter().map(|(local, payload)| (*local, payload))
     // }
 
     #[inline]
-    pub(crate) fn iter_enumerated_mut(&mut self) -> impl Iterator<Item = (Local, &mut T)> {
+    pub fn iter_enumerated_mut(&mut self) -> impl Iterator<Item = (Local, &mut T)> {
         self.data
             .iter_mut()
             .map(|(local, payload)| (*local, payload))
@@ -193,7 +193,7 @@ impl<T> BasicBlockNodes<T> {
 // }
 
 // impl<T> BasicBlockNodes<T> {
-//     pub(crate) fn repack<F, U>(&self, f: F) -> BasicBlockNodes<U>
+//     pub fn repack<F, U>(&self, f: F) -> BasicBlockNodes<U>
 //     where
 //         F: Fn(Local, &T) -> U,
 //     {
@@ -202,7 +202,7 @@ impl<T> BasicBlockNodes<T> {
 //             .collect::<BasicBlockNodes<_>>()
 //     }
 
-//     pub(crate) fn filter_repack<U, F>(&self, f: F) -> BasicBlockNodes<U>
+//     pub fn filter_repack<U, F>(&self, f: F) -> BasicBlockNodes<U>
 //     where
 //         F: Fn(Local, &T) -> Option<U>,
 //     {

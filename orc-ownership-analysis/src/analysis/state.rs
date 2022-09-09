@@ -11,7 +11,7 @@ use super::{
 };
 
 orc_common::macros::newtype_index! {
-    pub(crate) struct SSAIdx {
+    pub struct SSAIdx {
         DEBUG_FORMAT = "{}"
     }
 }
@@ -23,7 +23,7 @@ impl Default for SSAIdx {
 }
 
 impl SSAIdx {
-    pub(crate) const INIT: Self = SSAIdx::from_u32(0);
+    pub const INIT: Self = SSAIdx::from_u32(0);
 }
 
 impl std::ops::AddAssign<usize> for SSAIdx {
@@ -33,17 +33,17 @@ impl std::ops::AddAssign<usize> for SSAIdx {
     }
 }
 
-pub(crate) struct SSAState {
-    pub(crate) name_state: NameState,
-    pub(crate) join_points: JoinPoints<PhiNode>,
-    pub(crate) consume_chain: ConsumeChain,
+pub struct SSAState {
+    pub name_state: NameState,
+    pub join_points: JoinPoints<PhiNode>,
+    pub consume_chain: ConsumeChain,
 }
 
 impl SSAState {
     /// TODO: smarter initialisation.
     /// Do not generate entries for non-ptr locals
     /// Do not generate entries for locals at all.
-    pub(crate) fn new<'tcx>(
+    pub fn new<'tcx>(
         body: &Body<'tcx>,
         dominance_frontier: &DominanceFrontier,
         definitions: Definitions,
@@ -61,7 +61,7 @@ impl SSAState {
 
 impl SSAState {
     #[inline]
-    pub(crate) fn try_consume_at(
+    pub fn try_consume_at(
         &mut self,
         local: Local,
         location: Location,
@@ -90,19 +90,19 @@ impl SSAState {
     }
 
     #[inline]
-    pub(crate) fn consume_at(&mut self, local: Local, location: Location) -> Consume<SSAIdx> {
+    pub fn consume_at(&mut self, local: Local, location: Location) -> Consume<SSAIdx> {
         self.try_consume_at(local, location)
             .unwrap_or_else(|| panic!("{:?} isn't defined at {:?}", local, location))
     }
 
     // #[inline]
-    // pub(crate) fn try_finalise(&mut self, local: Local) -> Option<SSAIdx> {
+    // pub fn try_finalise(&mut self, local: Local) -> Option<SSAIdx> {
     //     self.name_state.try_get_name(local)
     // }
 }
 
 #[derive(Clone, Debug)]
-pub(crate) struct NameState {
+pub struct NameState {
     count: IndexVec<Local, SSAIdx>,
     stack: IndexVec<Local, Vec<SSAIdx>>,
 }
@@ -139,7 +139,7 @@ impl NameState {
     }
 
     #[inline]
-    pub(crate) fn generate_fresh_name(&mut self, var: Local) -> SSAIdx {
+    pub fn generate_fresh_name(&mut self, var: Local) -> SSAIdx {
         self.count[var] += 1;
         let idx = self.count[var];
         self.stack[var].push(idx);
@@ -147,7 +147,7 @@ impl NameState {
     }
 
     #[inline]
-    pub(crate) fn get_name(&self, var: Local) -> SSAIdx {
+    pub fn get_name(&self, var: Local) -> SSAIdx {
         self.try_get_name(var).unwrap_or_else(|| {
             panic!(
                 "internal error: cannot find fresh name supply for {:?}",
@@ -159,12 +159,12 @@ impl NameState {
     /// Get the newest version for a variable. If `None` is returned,
     /// this variable is uninitialised.
     #[inline]
-    pub(crate) fn try_get_name(&self, var: Local) -> Option<SSAIdx> {
+    pub fn try_get_name(&self, var: Local) -> Option<SSAIdx> {
         self.stack[var].last().copied()
     }
 
     #[inline]
-    pub(crate) fn pop(&mut self, var: Local) -> SSAIdx {
+    pub fn pop(&mut self, var: Local) -> SSAIdx {
         // tracing::debug!("popping {:?}~{:?}", var, ssa_idx);
         self.stack[var]
             .pop()

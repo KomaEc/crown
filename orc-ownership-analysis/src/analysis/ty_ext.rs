@@ -3,7 +3,7 @@ use rustc_type_ir::TyKind;
 
 use crate::CrateCtxt;
 
-pub(crate) trait TyExt<'tcx> {
+pub trait TyExt<'tcx> {
     // fn contains_ptr(self, struct_topology: &StructTopology) -> bool;
     // fn ptr_count(self, struct_topology: &StructTopology) -> usize;
     fn is_tracked_ptr(self) -> bool;
@@ -44,11 +44,11 @@ impl<'tcx> TyExt<'tcx> for Ty<'tcx> {
 }
 
 impl<'tcx> CrateCtxt<'tcx> {
-    pub(crate) fn ty_contains_ptr(&self, ty: Ty<'tcx>) -> bool {
+    pub fn ty_contains_ptr(&self, ty: Ty<'tcx>) -> bool {
         self.ty_ptr_count(ty) > 0
     }
 
-    pub(crate) fn ty_ptr_count(&self, mut ty: Ty<'tcx>) -> u32 {
+    pub fn ty_ptr_count(&self, mut ty: Ty<'tcx>) -> u32 {
         while let TyKind::Array(inner_ty, _) = ty.kind() {
             ty = *inner_ty
         }

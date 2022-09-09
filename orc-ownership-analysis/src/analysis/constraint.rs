@@ -1,4 +1,4 @@
-pub(crate) mod infer;
+pub mod infer;
 
 orc_common::macros::orc_index!(OwnershipSig);
 
@@ -10,9 +10,9 @@ impl std::fmt::Display for OwnershipSig {
 }
 
 impl OwnershipSig {
-    pub(crate) const MIN: Self = OwnershipSig::from_u32(1);
+    pub const MIN: Self = OwnershipSig::from_u32(1);
 
-    pub(crate) fn into_lit(self) -> i32 {
+    pub fn into_lit(self) -> i32 {
         self.as_u32() as i32
     }
 }
@@ -32,7 +32,7 @@ impl std::ops::AddAssign<u32> for OwnershipSig {
 }
 
 #[derive(Clone, Debug)]
-pub(crate) enum Constraint {
+pub enum Constraint {
     /// x + y = z
     /// CNF | (¬x ∨ ¬y) ∧ (¬x ∨ z) ∧ (x ∨ y ∨ ¬z) ∧ (¬y ∨ z)
     Linear {
@@ -58,7 +58,7 @@ impl std::fmt::Display for Constraint {
     }
 }
 
-pub(crate) trait Mode {
+pub trait Mode {
     /// `Store<'a>` is a reference to a storage that holds
     /// the newly added constraint.
     type Store<'a>
@@ -71,7 +71,7 @@ pub(crate) trait Mode {
     fn store_equal(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig);
 }
 
-pub(crate) struct Emit;
+pub struct Emit;
 impl Mode for Emit {
     type Store<'a> = &'a mut Vec<Constraint>;
 
@@ -107,7 +107,7 @@ macro_rules! tracing_for {
 
 macro_rules! make_logging_mode {
     ($level:ident) => {
-        pub(crate) struct $level;
+        pub struct $level;
         impl Mode for $level {
             type Store<'a> = ();
 
@@ -141,7 +141,7 @@ make_logging_mode!(Info);
 make_logging_mode!(Warn);
 make_logging_mode!(Error);
 
-pub(crate) trait Database {
+pub trait Database {
     fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig);
     fn push_linear<M: Mode>(
         &mut self,
@@ -173,12 +173,12 @@ impl Database for () {
     fn push_equal_impl(&mut self, _: OwnershipSig, _: OwnershipSig) {}
 }
 
-pub(crate) struct CadicalDatabase {
-    pub(crate) solver: cadical::Solver,
+pub struct CadicalDatabase {
+    pub solver: cadical::Solver,
 }
 
 impl CadicalDatabase {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         CadicalDatabase {
             solver: cadical::Solver::new(),
         }
