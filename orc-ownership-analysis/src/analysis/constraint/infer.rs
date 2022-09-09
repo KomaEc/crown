@@ -16,7 +16,7 @@ use rustc_type_ir::TyKind;
 use crate::{
     analysis::{
         body_ext::DominanceFrontier,
-        constraint::{CadicalDatabase, Database, OwnershipSig},
+        constraint::{CadicalDatabase, Database, OwnershipSig, OwnershipSigGenerator},
         def::{Consume, Definitions, RichLocation},
         join_points::PhiNode,
         state::{SSAIdx, SSAState},
@@ -28,10 +28,10 @@ use crate::{
 pub mod model_call;
 
 pub struct InferCtxt<'infercx, 'tcx, DB = CadicalDatabase> {
-    pub database: DB,
+    pub database: &'infercx mut DB,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     pub local_sigs: IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>,
-    next: OwnershipSig,
+    gen: OwnershipSigGenerator
 }
 
 impl<'infercx, 'tcx, DB> InferCtxt<'infercx, 'tcx, DB>
@@ -43,17 +43,20 @@ where
         crate_ctxt: &'infercx CrateCtxt<'tcx>,
         body: &Body<'tcx>,
         definitions: &Definitions,
-        db: DB,
+        db: &'infercx mut DB,
     ) -> Self {
         let mut local_sigs = IndexVec::with_capacity(definitions.def_sites.len());
-        let mut next = OwnershipSig::MIN;
+        // let mut next = OwnershipSig::MIN;
+
+        let mut gen = OwnershipSigGenerator::new(OwnershipSig::MIN);
 
         for local in definitions.def_sites.indices() {
             if definitions.to_finalise.contains(local) {
                 let ty = body.local_decls[local].ty;
                 let count = crate_ctxt.ty_ptr_count(ty);
-                let sigs = vec![next..next + count];
-                next += count;
+                let sigs = gen.gen(count);
+                let sigs = vec![sigs];
+                // next += count;
                 local_sigs.push(IndexVec::from_raw(sigs));
             } else {
                 local_sigs.push(IndexVec::default());
@@ -64,20 +67,17 @@ where
             database: db,
             crate_ctxt,
             local_sigs,
-            next,
+            gen,
         }
     }
 
     pub fn new_sigs(&mut self, size: u32) -> Range<OwnershipSig> {
-        let start = self.next;
-        let end = start + size;
-        self.next = end;
-        start..end
+        self.gen.gen(size)
     }
 
-    pub fn all_sigs(&self) -> Range<OwnershipSig> {
-        OwnershipSig::MIN..self.next
-    }
+    // pub fn all_sigs(&self) -> Range<OwnershipSig> {
+    //     OwnershipSig::MIN..self.next
+    // }
 }
 
 pub trait Mode {

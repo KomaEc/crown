@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 pub mod infer;
 
 orc_common::macros::orc_index!(OwnershipSig);
@@ -28,6 +30,28 @@ impl std::ops::Add<u32> for OwnershipSig {
 impl std::ops::AddAssign<u32> for OwnershipSig {
     fn add_assign(&mut self, rhs: u32) {
         *self = *self + rhs
+    }
+}
+
+pub struct OwnershipSigGenerator {
+    start: OwnershipSig,
+    next: OwnershipSig,
+}
+
+impl OwnershipSigGenerator {
+    pub fn new(start: OwnershipSig) -> Self {
+        OwnershipSigGenerator { start, next: start }
+    }
+
+    pub fn gen(&mut self, num: u32) -> Range<OwnershipSig> {
+        let start = self.next;
+        self.next += num;
+        let end = self.next;
+        start..end
+    }
+
+    pub fn all_sigs(&self) -> Range<OwnershipSig> {
+        self.start..self.next
     }
 }
 
