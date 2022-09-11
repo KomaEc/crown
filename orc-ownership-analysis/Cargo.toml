@@ -25,5 +25,6 @@ static_assertions = "1.1"
 thiserror = "1.0"
 anyhow = "1.0"
 cadical = "0.1"
+z3 = { version = "0.11.2", features = ["static-link-z3"] }
 itertools = "0.10"
 orc-common = { path = "../orc-common" }
