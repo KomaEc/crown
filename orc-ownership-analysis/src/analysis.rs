@@ -12,9 +12,8 @@ use crate::analysis::def::initial_definitions;
 use crate::analysis::dom::compute_dominance_frontier;
 use crate::CrateCtxt;
 
-use self::constraint::{generate_signatures_for_local, Database, OwnershipSig};
-use self::def::maybe_owned;
-use self::state::SSAIdx;
+use crate::analysis::constraint::{generate_signatures_for_local, Database, OwnershipSig};
+use crate::analysis::state::SSAIdx;
 
 // pub mod body_ext;
 pub mod constants;
@@ -23,7 +22,7 @@ pub mod def;
 pub mod dom;
 pub mod join_points;
 pub mod state;
-pub mod ty_ext;
+pub mod ty;
 
 pub struct FnSig<T> {
     ret: T,

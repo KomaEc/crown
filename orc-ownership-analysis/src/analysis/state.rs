@@ -4,7 +4,7 @@ use orc_common::data_structure::assoc::AssocExt;
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::mir::{Body, Local, Location};
 
-use super::{
+use crate::analysis::{
     def::{Consume, ConsumeChain, Definitions},
     dom::DominanceFrontier,
     join_points::{JoinPoints, PhiNode},

@@ -15,17 +15,18 @@ use TyKind::FnDef;
 
 use crate::{
     analysis::{
-        constraint::{Database, OwnershipSig, OwnershipSigGenerator},
+        constraint::{
+            generate_signatures_for_local, Database, OwnershipSig, OwnershipSigGenerator,
+        },
         def::{Consume, Definitions, RichLocation},
         dom::DominanceFrontier,
         join_points::PhiNode,
         state::{SSAIdx, SSAState},
+        ty::ty_ptr_measure,
         FnSig,
     },
     CrateCtxt,
 };
-
-use super::generate_signatures_for_local;
 
 pub mod model_call;
 
@@ -346,7 +347,7 @@ impl Mode for WithCtxt {
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
-        let offset = infer_cx.crate_ctxt.ty_ptr_count(ty);
+        let offset = ty_ptr_measure(ty, infer_cx.crate_ctxt);
         let sigs = infer_cx.new_sigs(offset);
         assert_eq!(def, infer_cx.local_sigs[local].push(sigs));
     }
@@ -395,7 +396,7 @@ impl Mode for WithCtxt {
         tracing::debug!("interpretting consume for {:?} with {:?}", place, consume);
         let base = place.local;
         let mut base_ty = body.local_decls[base].ty;
-        let base_offset = infer_cx.crate_ctxt.ty_ptr_count(base_ty);
+        let base_offset = ty_ptr_measure(base_ty, infer_cx.crate_ctxt);
 
         let Range {
             start: old_start,
@@ -448,7 +449,7 @@ impl Mode for WithCtxt {
             infer_cx.database.push_equal::<super::Debug>((), old, new);
         }
 
-        let proj_end_offset = proj_start_offset + infer_cx.crate_ctxt.ty_ptr_count(base_ty);
+        let proj_end_offset = proj_start_offset + ty_ptr_measure(base_ty, infer_cx.crate_ctxt);
 
         for (old, new) in
             (old_start + proj_end_offset..old_end).zip(new_start + proj_end_offset..new_end)

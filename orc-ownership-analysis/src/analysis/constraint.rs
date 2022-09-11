@@ -2,9 +2,10 @@ use std::ops::Range;
 
 use rustc_middle::mir::LocalDecl;
 
-use crate::CrateCtxt;
-
-use super::def::maybe_owned;
+use crate::{
+    analysis::{def::maybe_owned, ty::ty_ptr_measure},
+    CrateCtxt,
+};
 
 pub mod infer;
 
@@ -69,8 +70,8 @@ pub fn generate_signatures_for_local<'tcx>(
 ) -> Option<Range<OwnershipSig>> {
     maybe_owned(local_decl, crate_ctxt).then(|| {
         let ty = local_decl.ty;
-        let count = crate_ctxt.ty_ptr_count(ty);
-        gen.gen(count)
+        let measure = ty_ptr_measure(ty, crate_ctxt);
+        gen.gen(measure)
     })
 }
 
