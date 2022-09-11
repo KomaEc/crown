@@ -14,7 +14,9 @@ impl<'tcx> CrateCtxt<'tcx> {
         self.verify_temp_local_usage();
         self.verify_args_are_all_locals();
         self.verify_stmt_regularity();
-        self.verify_return_clause_unique()
+        self.verify_return_clause_unique();
+        #[cfg(debug_assertions)]
+        self.compute_max_num_scc();
     }
 
     fn verify_shape_of_place(&self) {
@@ -226,5 +228,16 @@ impl<'tcx> CrateCtxt<'tcx> {
                     <= 1
             );
         }
+    }
+
+    #[cfg(debug_assertions)]
+    fn compute_max_num_scc(&self) {
+        let max_num = self
+            .call_graph
+            .sccs()
+            .map(|scc| scc.len())
+            .reduce(std::cmp::max)
+            .unwrap();
+        println!("max scc: {max_num}")
     }
 }

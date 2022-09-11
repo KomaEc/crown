@@ -8,8 +8,8 @@ use rustc_middle::mir::{BasicBlock, Body, Local};
 use smallvec::SmallVec;
 
 use super::{
-    body_ext::DominanceFrontier,
     constants::{NUM_PHI_NODES, SIZE_PHI_NODE},
+    dom::DominanceFrontier,
     state::SSAIdx,
 };
 

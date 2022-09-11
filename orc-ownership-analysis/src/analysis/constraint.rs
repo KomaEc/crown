@@ -1,5 +1,11 @@
 use std::ops::Range;
 
+use rustc_middle::mir::LocalDecl;
+
+use crate::CrateCtxt;
+
+use super::def::maybe_owned;
+
 pub mod infer;
 
 orc_common::macros::orc_index!(OwnershipSig);
@@ -12,7 +18,7 @@ impl std::fmt::Display for OwnershipSig {
 }
 
 impl OwnershipSig {
-    pub const MIN: Self = OwnershipSig::from_u32(1);
+    // pub const MIN: Self = OwnershipSig::from_u32(1);
 
     pub fn into_lit(self) -> i32 {
         self.as_u32() as i32
@@ -48,6 +54,24 @@ impl OwnershipSigGenerator {
         let end = self.next;
         start..end
     }
+
+    #[inline]
+    pub fn next(&self) -> OwnershipSig {
+        self.next
+    }
+}
+
+#[inline]
+pub fn generate_signatures_for_local<'tcx>(
+    local_decl: &LocalDecl<'tcx>,
+    gen: &mut OwnershipSigGenerator,
+    crate_ctxt: &CrateCtxt<'tcx>,
+) -> Option<Range<OwnershipSig>> {
+    maybe_owned(local_decl, crate_ctxt).then(|| {
+        let ty = local_decl.ty;
+        let count = crate_ctxt.ty_ptr_count(ty);
+        gen.gen(count)
+    })
 }
 
 #[derive(Clone, Debug)]
@@ -175,6 +199,8 @@ make_logging_mode!(Warn);
 make_logging_mode!(Error);
 
 pub trait Database {
+    const FIRST_AVAILABLE_SIG: OwnershipSig;
+
     fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig);
     fn push_linear<M: Mode>(
         &mut self,
@@ -204,6 +230,8 @@ pub trait Database {
 }
 
 impl Database for () {
+    const FIRST_AVAILABLE_SIG: OwnershipSig = OwnershipSig::from_u32(0);
+
     fn push_linear_impl(&mut self, _: OwnershipSig, _: OwnershipSig, _: OwnershipSig) {}
 
     fn push_assume_impl(&mut self, _: OwnershipSig, _: bool) {}
@@ -226,6 +254,8 @@ impl CadicalDatabase {
 }
 
 impl Database for CadicalDatabase {
+    const FIRST_AVAILABLE_SIG: OwnershipSig = OwnershipSig::from_u32(1);
+
     #[inline]
     fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
         self.solver

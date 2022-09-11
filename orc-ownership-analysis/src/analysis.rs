@@ -6,20 +6,21 @@ use smallvec::SmallVec;
 use std::marker::PhantomData;
 use std::ops::Range;
 
-use crate::analysis::body_ext::BodyExt;
 use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer, WithCtxt};
-use crate::analysis::constraint::CadicalDatabase;
+use crate::analysis::constraint::{CadicalDatabase, OwnershipSigGenerator};
 use crate::analysis::def::initial_definitions;
+use crate::analysis::dom::compute_dominance_frontier;
 use crate::CrateCtxt;
 
-use self::constraint::{Database, OwnershipSig};
+use self::constraint::{generate_signatures_for_local, Database, OwnershipSig};
+use self::def::maybe_owned;
 use self::state::SSAIdx;
 
-pub mod body_ext;
+// pub mod body_ext;
 pub mod constants;
 pub mod constraint;
 pub mod def;
-// pub mod dom;
+pub mod dom;
 pub mod join_points;
 pub mod state;
 pub mod ty_ext;
@@ -49,7 +50,7 @@ impl<'tcx> CrateCtxt<'tcx> {
         for &did in self.functions() {
             println!("renaming {:?}", did);
             let body = self.tcx.optimized_mir(did);
-            let dominance_frontier = body.compute_dominance_frontier();
+            let dominance_frontier = compute_dominance_frontier(body);
             let definitions = initial_definitions(body, self.tcx, self);
             let mut rn = Renamer::new(body, &dominance_frontier, definitions);
             rn.go::<Pure, ()>(());
@@ -62,48 +63,49 @@ impl<'tcx> CrateCtxt<'tcx> {
         for &did in self.functions() {
             println!("solving {:?}", did);
             let body = self.tcx.optimized_mir(did);
-            let dominance_frontier = body.compute_dominance_frontier();
+
+            let dominance_frontier = compute_dominance_frontier(body);
             let definitions = initial_definitions(body, self.tcx, self);
-            let mut infer_cx = InferCtxt::new(self, body, &definitions, CadicalDatabase::new());
             let mut rn = Renamer::new(body, &dominance_frontier, definitions);
+
+            let start = CadicalDatabase::FIRST_AVAILABLE_SIG;
+            let mut gen = OwnershipSigGenerator::new(start);
+            let mut database = CadicalDatabase::new();
+            let mut infer_cx = InferCtxt::new(self, body, &mut database, &mut gen);
+
             rn.go::<WithCtxt, _>(&mut infer_cx);
-            match infer_cx.database.solver.solve() {
+            match database.solver.solve() {
                 Some(true) => {
                     println!("succeeded");
-                    // for sig in infer_cx.all_sigs() {
-                    //     let value = infer_cx.database.solver.value(sig.into_lit());
-                    //     // println!("{sig} = {:?}", value)
-                    //     if let Some(value) = value {
-                    //         println!("{sig} = {}", value as u32);
-                    //     } else {
-                    //         println!("{sig} = any")
-                    //     }
-                    // }
+                    for sig in start..gen.next() {
+                        let value = database.solver.value(sig.into_lit());
+                        // println!("{sig} = {:?}", value)
+                        if let Some(value) = value {
+                            println!("{sig} = {}", value as u32);
+                        } else {
+                            println!("{sig} = any")
+                        }
+                    }
                 }
                 Some(false) => println!("failed"), // anyhow::bail!("failed in solving ownership constraints"),
                 None => anyhow::bail!("timeout"),
             }
-            databases.push(infer_cx.database);
+            databases.push(database);
         }
         Ok(())
     }
 }
 
-pub trait AnalysisKind {
-    type Constraints<DB>;
-}
+/// This trait should be associated with a ctxt repr type
+pub trait AnalysisKind {}
 pub enum Modular {}
-impl AnalysisKind for Modular {
-    type Constraints<DB> = Vec<DB>; // FxHashMap<DefId, DB>;
-}
+impl AnalysisKind for Modular {}
 pub enum WholeProgram {}
-impl AnalysisKind for WholeProgram {
-    type Constraints<DB> = DB;
-}
+impl AnalysisKind for WholeProgram {}
 
 pub struct Analysis<'analysis, 'tcx, DB, Kind: AnalysisKind> {
     crate_ctxt: &'analysis CrateCtxt<'tcx>,
-    db: Kind::Constraints<DB>,
+    analysis_ctxt: AnalysisCtxt<DB>, // Kind::Ctxt<DB>,
     _kind: PhantomData<*const Kind>,
 }
 
@@ -113,13 +115,38 @@ where
     DB: Database,
 {
     pub fn new(crate_ctxt: &'analysis CrateCtxt<'tcx>, database: DB) -> Self {
-        let mut analysis_ctxt = AnalysisCtxt::default();
-        for &did in crate_ctxt.functions() {
+        let mut analysis_ctxt = AnalysisCtxt::new(database);
+        for &did in crate_ctxt.call_graph.functions() {
             let body = crate_ctxt.tcx.optimized_mir(did);
-            let dominance_frontier = body.compute_dominance_frontier();
-            let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
+            let fn_sig = {
+                let mut local_decls = body.local_decls.iter();
+                let return_local_decl = local_decls.next().unwrap();
+                let ret = generate_signatures_for_local(
+                    return_local_decl,
+                    &mut analysis_ctxt.gen,
+                    crate_ctxt,
+                );
+
+                let args = local_decls
+                    .map(|local_decl| {
+                        generate_signatures_for_local(
+                            local_decl,
+                            &mut analysis_ctxt.gen,
+                            crate_ctxt,
+                        )
+                    })
+                    .collect();
+
+                FnSig { ret, args }
+            };
         }
         todo!()
+        // for &did in crate_ctxt.functions() {
+        //     let body = crate_ctxt.tcx.optimized_mir(did);
+        //     let dominance_frontier = body.compute_dominance_frontier();
+        //     let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
+        // }
+        // todo!()
         // Self {
         //     crate_ctxt,
         //     db: database,
@@ -134,6 +161,7 @@ pub struct AnalysisCtxt<DB> {
     /// DefId -> FnSig
     fn_sigs: FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
     database: DB,
+    gen: OwnershipSigGenerator,
 }
 
 impl<DB: Database> AnalysisCtxt<DB> {
@@ -142,6 +170,7 @@ impl<DB: Database> AnalysisCtxt<DB> {
             local_sigs: Default::default(),
             fn_sigs: Default::default(),
             database,
+            gen: OwnershipSigGenerator::new(DB::FIRST_AVAILABLE_SIG),
         }
     }
 }

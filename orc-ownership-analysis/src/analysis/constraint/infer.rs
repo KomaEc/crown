@@ -15,9 +15,9 @@ use TyKind::FnDef;
 
 use crate::{
     analysis::{
-        body_ext::DominanceFrontier,
-        constraint::{CadicalDatabase, Database, OwnershipSig, OwnershipSigGenerator},
+        constraint::{Database, OwnershipSig, OwnershipSigGenerator},
         def::{Consume, Definitions, RichLocation},
+        dom::DominanceFrontier,
         join_points::PhiNode,
         state::{SSAIdx, SSAState},
         FnSig,
@@ -25,13 +25,15 @@ use crate::{
     CrateCtxt,
 };
 
+use super::generate_signatures_for_local;
+
 pub mod model_call;
 
-pub struct InferCtxt<'infercx, 'tcx, DB = CadicalDatabase> {
-    pub database: DB,
+pub struct InferCtxt<'infercx, 'tcx, DB> {
+    database: &'infercx mut DB,
+    gen: &'infercx mut OwnershipSigGenerator,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     pub local_sigs: IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>,
-    pub gen: OwnershipSigGenerator,
 }
 
 impl<'infercx, 'tcx, DB> InferCtxt<'infercx, 'tcx, DB>
@@ -42,41 +44,43 @@ where
     pub fn new(
         crate_ctxt: &'infercx CrateCtxt<'tcx>,
         body: &Body<'tcx>,
-        definitions: &Definitions,
-        db: DB,
+        // definitions: &Definitions,
+        database: &'infercx mut DB,
+        gen: &'infercx mut OwnershipSigGenerator,
     ) -> Self {
-        let mut local_sigs = IndexVec::with_capacity(definitions.def_sites.len());
+        let mut local_sigs = IndexVec::with_capacity(body.local_decls.len());
 
-        let mut gen = OwnershipSigGenerator::new(OwnershipSig::MIN);
-
-        for local in definitions.def_sites.indices() {
-            if definitions.to_finalise.contains(local) {
-                let ty = body.local_decls[local].ty;
-                let count = crate_ctxt.ty_ptr_count(ty);
-                let sigs = gen.gen(count);
-                let sigs = vec![sigs];
-                // next += count;
-                local_sigs.push(IndexVec::from_raw(sigs));
+        // for (local, local_decl) in body.local_decls.iter_enumerated() {
+        //     if definitions.maybe_owned.contains(local) {
+        for local_decl in body.local_decls.iter() {
+            if let Some(sigs) = generate_signatures_for_local(local_decl, gen, crate_ctxt) {
+                local_sigs.push(IndexVec::from_raw(vec![sigs]));
             } else {
                 local_sigs.push(IndexVec::default());
             }
+            // if maybe_owned(local_decl, crate_ctxt) {
+            //     let ty = local_decl.ty;
+            //     let count = crate_ctxt.ty_ptr_count(ty);
+            //     let sigs = gen.gen(count);
+            //     let sigs = vec![sigs];
+            //     // next += count;
+            //     local_sigs.push(IndexVec::from_raw(sigs));
+            // } else {
+            //     local_sigs.push(IndexVec::default());
+            // }
         }
 
         InferCtxt {
-            database: db,
+            database,
+            gen,
             crate_ctxt,
             local_sigs,
-            gen,
         }
     }
 
     pub fn new_sigs(&mut self, size: u32) -> Range<OwnershipSig> {
         self.gen.gen(size)
     }
-
-    // pub fn all_sigs(&self) -> Range<OwnershipSig> {
-    //     OwnershipSig::MIN..self.next
-    // }
 }
 
 pub trait Mode {

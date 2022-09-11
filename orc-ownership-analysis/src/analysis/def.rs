@@ -4,13 +4,38 @@ use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-        BasicBlock, BasicBlockData, Body, CastKind, Local, LocalInfo, Location, Place, Rvalue,
+        BasicBlock, BasicBlockData, Body, CastKind, Local, LocalDecl, LocalInfo, Location, Place,
+        Rvalue,
     },
     ty::TyCtxt,
 };
 use smallvec::SmallVec;
 
 use super::state::SSAIdx;
+
+// impl<'tcx> CrateCtxt<'tcx> {
+//     pub fn maybe_owned(&self ,local_decl: &LocalDecl<'tcx>) -> bool {
+//         let ty = local_decl.ty;
+//         self.ty_contains_ptr(ty) && !matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp))
+//     }
+
+//     pub fn maybe_owned_locals(&self, body: &Body<'tcx>) -> impl Iterator<Item = Local> + 'tcx {
+//         body
+//             .local_decls
+//             .iter_enumerated()
+//             .filter_map(|(local, local_decl)|
+//                 self.maybe_owned(local_decl)
+//                     .then_some(local))
+//     }
+// }
+
+/// test whether a local might be owning
+#[inline]
+pub fn maybe_owned<'tcx>(local_decl: &LocalDecl<'tcx>, crate_ctxt: &CrateCtxt<'tcx>) -> bool {
+    let ty = local_decl.ty;
+    crate_ctxt.ty_contains_ptr(ty)
+        && !matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp))
+}
 
 // e has type T and T coerces to U; coercion-cast
 // e has type *T, U is *U_0, and either U_0: Sized or unsize_kind(T) = unsize_kind(U_0); ptr-ptr-cast
@@ -33,7 +58,7 @@ pub struct Definitions {
     /// once in a statement/terminator
     consumes: VecArray<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
     pub def_sites: IndexVec<Local, BitSet<BasicBlock>>,
-    pub to_finalise: BitSet<Local>,
+    pub maybe_owned: BitSet<Local>,
 }
 
 #[derive(Clone, Debug)]
@@ -81,10 +106,10 @@ pub struct ConsumeChain {
 }
 
 impl ConsumeChain {
-    pub fn new(body: &Body, definitions: Definitions) -> Self {
+    pub fn new<'tcx>(body: &Body<'tcx>, definitions: Definitions) -> Self {
         let Definitions {
             consumes,
-            to_finalise,
+            maybe_owned,
             ..
         } = definitions;
 
@@ -103,15 +128,33 @@ impl ConsumeChain {
         // Notice: this has to be in accordance with NameState.stack
         let locs = body
             .local_decls
+            // .iter()
+            // .map(|local_decl| {
+            //     if maybe_owned(local_decl, crate_ctxt) {
+            //         IndexVec::from_raw(vec![RichLocation::Entry])
+            //     } else {
+            //         IndexVec::new()
+            //     }
+            // })
             .indices()
             .map(|local| {
-                to_finalise
+                maybe_owned
                     .contains(local)
                     .then(|| IndexVec::from_raw(vec![RichLocation::Entry]))
                     .unwrap_or_default()
                 // .unwrap_or_else(IndexVec::new)
             })
             .collect();
+
+        // let mut locs = IndexVec::with_capacity(body.local_decls.len());
+        // for local_decl in &body.local_decls {
+        //     if maybe_owned(local_decl, crate_ctxt) {
+        //         locs.push(IndexVec::from_raw(vec![RichLocation::Entry]));
+        //     } else {
+        //         locs.push(IndexVec::new());
+        //     }
+        // }
+
         ConsumeChain {
             consumes,
             locs,
@@ -119,10 +162,7 @@ impl ConsumeChain {
         }
     }
 
-    // #[inline]
-    // pub fn to_finalise(&self) -> &BitSet<Local> {
-    //     &self.to_finalise
-    // }
+    /// Note that return place is never finalised
     pub fn to_finalise(&self) -> impl Iterator<Item = Local> + '_ {
         self.locs
             .iter_enumerated()
@@ -294,20 +334,23 @@ pub fn initial_definitions<'tcx>(
     }
     .visit_body(body);
 
-    let mut to_finalise = BitSet::new_empty(body.local_decls.len());
+    let mut maybe_owned = BitSet::new_empty(body.local_decls.len());
 
     for (local, local_decl) in body.local_decls.iter_enumerated() {
-        let ty = local_decl.ty;
-        let local_info = local_decl.local_info.as_deref();
-        if crate_ctxt.ty_contains_ptr(ty) && !matches!(local_info, Some(LocalInfo::DerefTemp)) {
-            to_finalise.insert(local);
+        // let ty = local_decl.ty;
+        // let local_info = local_decl.local_info.as_deref();
+        // if crate_ctxt.ty_contains_ptr(ty) && !matches!(local_info, Some(LocalInfo::DerefTemp)) {
+        //     to_finalise.insert(local);
+        // }
+        if self::maybe_owned(local_decl, crate_ctxt) {
+            maybe_owned.insert(local);
         }
     }
 
     Definitions {
         consumes: consumes.done(),
         def_sites,
-        to_finalise,
+        maybe_owned,
     }
 }
 

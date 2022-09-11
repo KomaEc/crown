@@ -5,8 +5,8 @@ use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::mir::{Body, Local, Location};
 
 use super::{
-    body_ext::DominanceFrontier,
     def::{Consume, ConsumeChain, Definitions},
+    dom::DominanceFrontier,
     join_points::{JoinPoints, PhiNode},
 };
 
@@ -47,8 +47,9 @@ impl SSAState {
         body: &Body<'tcx>,
         dominance_frontier: &DominanceFrontier,
         definitions: Definitions,
+        // crate_ctxt: &CrateCtxt<'tcx>,
     ) -> Self {
-        let name_state = NameState::new(body, &definitions.to_finalise);
+        let name_state = NameState::new(body, &definitions.maybe_owned);
         let join_points = JoinPoints::new(body, dominance_frontier, &definitions.def_sites);
         let consume_chain = ConsumeChain::new(body, definitions);
         SSAState {
@@ -104,7 +105,7 @@ pub struct NameState {
 }
 
 impl NameState {
-    fn new<'tcx>(body: &Body<'tcx>, to_finalise: &BitSet<Local>) -> Self {
+    fn new<'tcx>(body: &Body<'tcx>, maybe_owned: &BitSet<Local>) -> Self {
         let count = IndexVec::from_elem(SSAIdx::INIT, &body.local_decls);
         // let stack = IndexVec::from_fn_n(
         //     |local| {
@@ -121,9 +122,17 @@ impl NameState {
         // Notice: this has to be in accordance with ConsumeChain.locs
         let stack = body
             .local_decls
+            // .iter()
+            // .map(|local_decl| {
+            //     if maybe_owned(local_decl, crate_ctxt) {
+            //         vec![SSAIdx::INIT]
+            //     } else {
+            //         Vec::new()
+            //     }
+            // })
             .indices()
             .map(|local| {
-                to_finalise
+                maybe_owned
                     .contains(local)
                     .then(|| vec![SSAIdx::INIT])
                     .unwrap_or_default()
