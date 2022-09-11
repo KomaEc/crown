@@ -1,9 +1,6 @@
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_index::vec::IndexVec;
-use rustc_middle::mir::Local;
 use smallvec::SmallVec;
-use std::marker::PhantomData;
 use std::ops::Range;
 
 use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer};
@@ -13,7 +10,6 @@ use crate::analysis::dom::compute_dominance_frontier;
 use crate::CrateCtxt;
 
 use crate::analysis::constraint::{generate_signatures_for_local, Database, OwnershipSig};
-use crate::analysis::state::SSAIdx;
 
 // pub mod body_ext;
 pub mod constants;
@@ -33,6 +29,17 @@ impl<T> FnSig<T> {
     fn new(ret: T, args: SmallVec<[T; 4]>) -> Self {
         FnSig { ret, args }
     }
+
+    fn iter(&self) -> impl Iterator<Item = &T> {
+        std::iter::once(&self.ret).chain(self.args.iter())
+    }
+
+    fn repack<U>(self, mut f: impl FnMut(T) -> U) -> FnSig<U> {
+        FnSig {
+            ret: f(self.ret),
+            args: self.args.into_iter().map(f).collect(),
+        }
+    }
 }
 
 impl<T: Default> Default for FnSig<T> {
@@ -41,6 +48,46 @@ impl<T: Default> Default for FnSig<T> {
             ret: Default::default(),
             args: Default::default(),
         }
+    }
+}
+
+impl<T: std::fmt::Debug> std::fmt::Debug for FnSig<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FnSig")
+            .field("ret", &self.ret)
+            .field("args", &self.args)
+            .finish()
+        // f.write_str("(")?;
+        // f.write_str(
+        //     &self
+        //         .args
+        //         .iter()
+        //         .map(|data| format!("{:?}", data))
+        //         .collect::<Vec<_>>()
+        //         .join(", "),
+        // )?;
+        // f.write_str(") -> ")?;
+        // f.write_fmt(format_args!("{:?}", self.ret))
+    }
+}
+
+impl<T: std::fmt::Display> std::fmt::Display for FnSig<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // f.debug_struct("FnSig")
+        //     .field("ret", &self.ret)
+        //     .field("args", &self.args)
+        //     .finish()
+        f.write_str("(")?;
+        f.write_str(
+            &self
+                .args
+                .iter()
+                .map(|data| format!("{data}"))
+                .collect::<Vec<_>>()
+                .join(", "),
+        )?;
+        f.write_str(") -> ")?;
+        f.write_fmt(format_args!("{}", self.ret))
     }
 }
 
@@ -60,18 +107,23 @@ impl<'tcx> CrateCtxt<'tcx> {
     pub fn crash_me_with_inference(&self) -> anyhow::Result<()> {
         StandAlone::analyze(self)
     }
+
+    pub fn crash_me_with_whole_program_analysis(&self) -> anyhow::Result<()> {
+        WholeProgram::analyze(self)
+    }
 }
 
-/// This trait should be associated with a ctxt repr type
 pub trait AnalysisKind {
-    type InterCtxt<'analysis> where Self: 'analysis;
+    type InterCtxt<'analysis>
+    where
+        Self: 'analysis;
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<()>;
 }
 pub enum Modular {}
 impl AnalysisKind for Modular {
     type InterCtxt<'analysis> = ();
 
-    fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<()> {
+    fn analyze(_: &CrateCtxt) -> anyhow::Result<()> {
         // TODO implement this
         anyhow::bail!("modular analysis is not implemented")
     }
@@ -81,7 +133,72 @@ impl AnalysisKind for WholeProgram {
     type InterCtxt<'analysis> = &'analysis FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>;
 
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<()> {
-        todo!()   
+        type DB = CadicalDatabase;
+
+        let start = DB::FIRST_AVAILABLE_SIG;
+        let mut gen = OwnershipSigGenerator::new(start);
+
+        let mut fn_sigs = FxHashMap::default();
+        for &did in crate_ctxt.call_graph.functions() {
+            let body = crate_ctxt.tcx.optimized_mir(did);
+            let fn_sig = {
+                let mut local_decls = body.local_decls.iter();
+                let return_local_decl = local_decls.next().unwrap();
+                let ret = generate_signatures_for_local(return_local_decl, &mut gen, crate_ctxt);
+
+                let args = local_decls
+                    .take(body.arg_count)
+                    .map(|local_decl| {
+                        generate_signatures_for_local(local_decl, &mut gen, crate_ctxt)
+                    })
+                    .collect();
+
+                FnSig { ret, args }
+            };
+            println!("generating signatures for {:?}: {:?}", did, fn_sig);
+            fn_sigs.insert(did, fn_sig);
+        }
+
+        let mut database = DB::new();
+        for &did in crate_ctxt.call_graph.functions() {
+            println!("solving {:?}", did);
+            let body = crate_ctxt.tcx.optimized_mir(did);
+
+            let dominance_frontier = compute_dominance_frontier(body);
+            let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
+            let mut rn = Renamer::new(body, &dominance_frontier, definitions);
+
+            let infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, &fn_sigs);
+
+            rn.go::<Self, _>(infer_cx);
+
+            match database.solver.solve() {
+                Some(true) => {}
+                Some(false) => anyhow::bail!("failed at {:?}", did),
+                None => anyhow::bail!("time out"),
+            }
+        }
+
+        for (did, fn_sig) in fn_sigs {
+            let fn_sig = fn_sig.repack(|sigs| {
+                if let Some(sigs) = sigs {
+                    sigs.map(|sig| match database.solver.value(sig.into_lit()) {
+                        Some(true) => "&move",
+                        Some(false) => "&",
+                        None => "&any",
+                    })
+                    .collect::<Vec<_>>()
+                    .join(" ")
+                } else {
+                    "_".to_owned()
+                }
+            });
+
+            let def_path_str = crate_ctxt.tcx.def_path_str(did);
+            println!("{def_path_str}: {fn_sig}")
+        }
+
+        Ok(())
     }
 }
 pub enum StandAlone {}
@@ -125,81 +242,71 @@ impl AnalysisKind for StandAlone {
     }
 }
 
-
-pub struct Analysis<'analysis, 'tcx, DB, Kind: AnalysisKind> {
-    crate_ctxt: &'analysis CrateCtxt<'tcx>,
-    // analysis_ctxt: AnalysisCtxt<DB>, // Kind::Ctxt<DB>,
-    _kind: PhantomData<*const (Kind, DB)>,
-}
-
-impl<'analysis, 'tcx, DB> Analysis<'analysis, 'tcx, DB, WholeProgram>
-where
-    'tcx: 'analysis,
-    DB: Database,
-{
-    pub fn new(crate_ctxt: &'analysis CrateCtxt<'tcx>, database: DB) -> Self {
-        // let mut analysis_ctxt = AnalysisCtxt::new(database);
-        let start = DB::FIRST_AVAILABLE_SIG;
-        let mut gen = OwnershipSigGenerator::new(start);
-
-        let mut fn_sigs = FxHashMap::default();
-        for &did in crate_ctxt.call_graph.functions() {
-            let body = crate_ctxt.tcx.optimized_mir(did);
-            let fn_sig = {
-                let mut local_decls = body.local_decls.iter();
-                let return_local_decl = local_decls.next().unwrap();
-                let ret = generate_signatures_for_local(
-                    return_local_decl,
-                    &mut gen,
-                    crate_ctxt,
-                );
-
-                let args = local_decls
-                    .map(|local_decl| {
-                        generate_signatures_for_local(
-                            local_decl,
-                            &mut gen,
-                            crate_ctxt,
-                        )
-                    })
-                    .collect();
-
-                FnSig { ret, args }
-            };
-            fn_sigs.insert(did, fn_sig);
-        }
-        todo!()
-        // for &did in crate_ctxt.functions() {
-        //     let body = crate_ctxt.tcx.optimized_mir(did);
-        //     let dominance_frontier = body.compute_dominance_frontier();
-        //     let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
-        // }
-        // todo!()
-        // Self {
-        //     crate_ctxt,
-        //     db: database,
-        //     _kind: PhantomData,
-        // }
-    }
-}
-
-// pub struct AnalysisCtxt<DB> {
-//     /// DefId -> Local -> SSAIdx -> Range<OwnershipSig>
-//     local_sigs: FxHashMap<DefId, IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>>,
-//     /// DefId -> FnSig
-//     fn_sigs: FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
-//     database: DB,
-//     gen: OwnershipSigGenerator,
+// pub struct Analysis<'analysis, 'tcx, DB, Kind: AnalysisKind> {
+//     crate_ctxt: &'analysis CrateCtxt<'tcx>,
+//     // analysis_ctxt: AnalysisCtxt<DB>, // Kind::Ctxt<DB>,
+//     _kind: PhantomData<*const (Kind, DB)>,
 // }
 
-// impl<DB: Database> AnalysisCtxt<DB> {
-//     pub fn new(database: DB) -> Self {
-//         AnalysisCtxt {
-//             local_sigs: Default::default(),
-//             fn_sigs: Default::default(),
-//             database,
-//             gen: OwnershipSigGenerator::new(DB::FIRST_AVAILABLE_SIG),
+// impl<'analysis, 'tcx, DB> Analysis<'analysis, 'tcx, DB, WholeProgram>
+// where
+//     'tcx: 'analysis,
+//     DB: Database,
+// {
+//     pub fn new(crate_ctxt: &'analysis CrateCtxt<'tcx>, database: DB) -> Self {
+//         // let mut analysis_ctxt = AnalysisCtxt::new(database);
+//         let start = DB::FIRST_AVAILABLE_SIG;
+//         let mut gen = OwnershipSigGenerator::new(start);
+
+//         let mut fn_sigs = FxHashMap::default();
+//         for &did in crate_ctxt.call_graph.functions() {
+//             let body = crate_ctxt.tcx.optimized_mir(did);
+//             let fn_sig = {
+//                 let mut local_decls = body.local_decls.iter();
+//                 let return_local_decl = local_decls.next().unwrap();
+//                 let ret = generate_signatures_for_local(return_local_decl, &mut gen, crate_ctxt);
+
+//                 let args = local_decls
+//                     .map(|local_decl| {
+//                         generate_signatures_for_local(local_decl, &mut gen, crate_ctxt)
+//                     })
+//                     .collect();
+
+//                 FnSig { ret, args }
+//             };
+//             fn_sigs.insert(did, fn_sig);
 //         }
+//         todo!()
+//         // for &did in crate_ctxt.functions() {
+//         //     let body = crate_ctxt.tcx.optimized_mir(did);
+//         //     let dominance_frontier = body.compute_dominance_frontier();
+//         //     let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
+//         // }
+//         // todo!()
+//         // Self {
+//         //     crate_ctxt,
+//         //     db: database,
+//         //     _kind: PhantomData,
+//         // }
 //     }
 // }
 
+// // pub struct AnalysisCtxt<DB> {
+// //     /// DefId -> Local -> SSAIdx -> Range<OwnershipSig>
+// //     local_sigs: FxHashMap<DefId, IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>>,
+// //     /// DefId -> FnSig
+// //     fn_sigs: FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
+// //     database: DB,
+// //     gen: OwnershipSigGenerator,
+// // }
+
+// // impl<DB: Database> AnalysisCtxt<DB> {
+// //     pub fn new(database: DB) -> Self {
+// //         AnalysisCtxt {
+// //             local_sigs: Default::default(),
+// //             fn_sigs: Default::default(),
+// //             database,
+// //             gen: OwnershipSigGenerator::new(DB::FIRST_AVAILABLE_SIG),
+// //         }
+// //     }
+// // }

@@ -295,23 +295,22 @@ impl Database for CadicalDatabase {
     }
 }
 
+// impl<'z3> Database for z3::Solver<'z3> {
+//     const FIRST_AVAILABLE_SIG: OwnershipSig = OwnershipSig::from_u32(1);
 
-impl<'z3> Database for z3::Solver<'z3> {
-    const FIRST_AVAILABLE_SIG: OwnershipSig = OwnershipSig::from_u32(1);
+//     fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
+//         todo!()
+//     }
 
-    fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
-        todo!()
-    }
+//     fn push_assume_impl(&mut self, x: OwnershipSig, sign: bool) {
+//         todo!()
+//     }
 
-    fn push_assume_impl(&mut self, x: OwnershipSig, sign: bool) {
-        todo!()
-    }
+//     fn push_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
+//         todo!()
+//     }
 
-    fn push_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
-        todo!()
-    }
-
-    fn push_less_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
-        todo!()
-    }
-}
+//     fn push_less_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
+//         todo!()
+//     }
+// }

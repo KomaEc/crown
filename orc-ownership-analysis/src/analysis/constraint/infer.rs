@@ -16,14 +16,15 @@ use TyKind::FnDef;
 use crate::{
     analysis::{
         constraint::{
-            generate_signatures_for_local, Database, OwnershipSig, OwnershipSigGenerator,
+            generate_signatures_for_local, infer::model_call::ModelCall, Database, OwnershipSig,
+            OwnershipSigGenerator,
         },
         def::{Consume, Definitions, RichLocation},
         dom::DominanceFrontier,
         join_points::PhiNode,
         state::{SSAIdx, SSAState},
         ty::ty_ptr_measure,
-        FnSig, AnalysisKind,
+        AnalysisKind, FnSig,
     },
     CrateCtxt,
 };
@@ -61,16 +62,6 @@ where
             } else {
                 local_sigs.push(IndexVec::default());
             }
-            // if maybe_owned(local_decl, crate_ctxt) {
-            //     let ty = local_decl.ty;
-            //     let count = crate_ctxt.ty_ptr_count(ty);
-            //     let sigs = gen.gen(count);
-            //     let sigs = vec![sigs];
-            //     // next += count;
-            //     local_sigs.push(IndexVec::from_raw(sigs));
-            // } else {
-            //     local_sigs.push(IndexVec::default());
-            // }
         }
 
         InferCtxt {
@@ -220,7 +211,7 @@ pub trait Mode {
     // Note that Vec<Consume<()>> won't allocate memories
     fn model_call<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        fn_sig: Self::FnSig<Option<Consume<Self::Interpretation>>>,
+        caller: Self::FnSig<Option<Consume<Self::Interpretation>>>,
         func: &Operand,
     ) where
         'tcx: 'infercx,
@@ -320,7 +311,6 @@ impl Mode for Pure {
     {
     }
 }
-
 
 // pub trait WithCtxt: AnalysisKind {}
 // impl<K: AnalysisKind> WithCtxt for K {}
@@ -538,7 +528,7 @@ impl<K: AnalysisKind> Mode for K {
 
     fn model_call<'infercx, 'tcx, DB>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
-        fn_sig: Self::FnSig<Option<Consume<Self::Interpretation>>>,
+        caller: Self::FnSig<Option<Consume<Self::Interpretation>>>,
         func: &Operand,
     ) where
         'tcx: 'infercx,
@@ -556,10 +546,12 @@ impl<K: AnalysisKind> Mode for K {
                     .unwrap()
                 {
                     // this crate
-                    rustc_hir::Node::Item(_) => { /* TODO */ }
+                    rustc_hir::Node::Item(_) => {
+                        <K as ModelCall>::model_call(infer_cx, &caller, callee)
+                    }
                     // extern
                     rustc_hir::Node::ForeignItem(foreign_item) => {
-                        infer_cx.model_libc_call(&fn_sig, foreign_item.ident)
+                        infer_cx.model_libc_call(&caller, foreign_item.ident)
                     }
                     // in libxml2.rust/src/xmlschemastypes.rs/{} impl_xmlSchemaValDate/set_mon
                     rustc_hir::Node::ImplItem(_) => { /* TODO */ }
@@ -567,7 +559,7 @@ impl<K: AnalysisKind> Mode for K {
                 }
             } else {
                 // library
-                infer_cx.model_library_call(&fn_sig, callee)
+                infer_cx.model_library_call(&caller, callee)
             }
         } else {
             // closure or fn ptr
@@ -575,7 +567,6 @@ impl<K: AnalysisKind> Mode for K {
         }
     }
 }
-
 
 // /// The kind of temporary that is ensured local or Special, and is not
 // /// renamed in the inference.

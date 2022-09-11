@@ -8,13 +8,15 @@ use crate::analysis::{
         Database, OwnershipSig,
     },
     def::Consume,
-    FnSig, AnalysisKind,
+    AnalysisKind, FnSig,
 };
 
-impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind> InferCtxt<'infercx, 'tcx, DB, Kind> {
+impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind>
+    InferCtxt<'infercx, 'tcx, DB, Kind>
+{
     pub fn model_library_call(
         &mut self,
-        fn_sig: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
+        caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         callee: DefId,
     ) {
         let def_path = self.crate_ctxt.tcx.def_path(callee);
@@ -39,7 +41,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind> Infe
                     // }
                     // if it is core::ptr::<..>::is_null
                     rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "is_null" => {
-                        self.model_is_null(fn_sig);
+                        self.model_is_null(caller);
                         return;
                     }
                     _ => {}
@@ -48,8 +50,8 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind> Infe
         }
     }
 
-    pub fn model_is_null(&mut self, fn_sig: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
-        let FnSig { args, .. } = fn_sig;
+    pub fn model_is_null(&mut self, caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
+        let FnSig { args, .. } = caller;
         assert_eq!(args.len(), 1);
         let arg = args.first().map(Option::as_ref).flatten().cloned().unwrap();
         <Kind as Mode>::borrow(self, arg)

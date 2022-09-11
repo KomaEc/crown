@@ -219,6 +219,9 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             time("crash me with inference and solve", || {
                 program.crash_me_with_inference()
             })?;
+            time("crash me with whole program analysis", || {
+                program.crash_me_with_whole_program_analysis()
+            })?;
         }
         Command::Analyse {
             null,
