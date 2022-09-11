@@ -125,9 +125,9 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler + HasTyC
         insertion_points: &PhiNodeInsertionPoints<PhantomData<*const Self::DefUse>>,
     ) {
         let dominators = body.basic_blocks.dominators();
-        let mut children = IndexVec::from_elem(vec![], body.basic_blocks());
+        let mut children = IndexVec::from_elem(vec![], &body.basic_blocks);
         let mut root = BasicBlock::from_u32(0);
-        body.basic_blocks().indices().for_each(|bb| {
+        body.basic_blocks.indices().for_each(|bb| {
             let dom = dominators.immediate_dominator(bb);
             if dom != bb {
                 children[dom].push(bb)
@@ -143,9 +143,9 @@ pub trait SSARename<'tcx>: HasSSARenameState<Local> + HasSSANameHandler + HasTyC
         while let Some((bb, to_pop_stack)) = visitor_stack.pop() {
             if to_pop_stack {
                 StackPopper::<Self::DefUse>(&mut self.ssa_state().stack, body, tcx, PhantomData)
-                    .visit_basic_block_data(bb, &body.basic_blocks()[bb]);
+                    .visit_basic_block_data(bb, &body.basic_blocks[bb]);
             } else {
-                self.rename_basic_block_data(body, bb, &body.basic_blocks()[bb], insertion_points);
+                self.rename_basic_block_data(body, bb, &body.basic_blocks[bb], insertion_points);
                 visitor_stack.push((bb, true));
                 visitor_stack.extend(children[bb].iter().rev().map(|&bb| (bb, false)));
             }

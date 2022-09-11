@@ -201,11 +201,11 @@ impl<'tcx> BodyExt<'tcx> for Body<'tcx> {
     fn dominance_frontier(&self) -> DominanceFrontier {
         let dominators = self.basic_blocks.dominators();
         let mut df = IndexVec::from_elem(
-            HybridBitSet::new_empty(self.basic_blocks().len()),
-            self.basic_blocks(),
+            HybridBitSet::new_empty(self.basic_blocks.len()),
+            &self.basic_blocks,
         );
 
-        for bb in self.basic_blocks().indices() {
+        for bb in self.basic_blocks.indices() {
             let preds = &self.basic_blocks.predecessors()[bb];
             if preds.len() >= 2 {
                 // if `bb` is a join point
@@ -247,7 +247,7 @@ pub fn minimal_ssa_form<'tcx, DefUse: IsDefUse>(
     let mut inserted: PhiNodeInsertionPoints<PhantomData<*const DefUse>> =
         PhiNodeInsertionPoints::new(IndexVec::from_elem(
             BasicBlockInsersionPoints::new(),
-            body.basic_blocks(),
+            &body.basic_blocks,
         ));
     let def_sites = def_sites
         .iter_mut()
@@ -262,7 +262,7 @@ pub fn minimal_ssa_form<'tcx, DefUse: IsDefUse>(
         })
         .collect::<IndexVec<Local, _>>();
     for a in body.local_decls.indices() {
-        let mut already_added = BitSet::new_empty(body.basic_blocks().len());
+        let mut already_added = BitSet::new_empty(body.basic_blocks.len());
         let mut work_list = VecDeque::from_iter(def_sites[a].iter().map(|&bb| bb));
         while let Some(bb) = work_list.pop_front() {
             for &bb_f in &dominance_frontier[bb] {

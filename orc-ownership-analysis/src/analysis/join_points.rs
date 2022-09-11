@@ -47,9 +47,9 @@ impl JoinPoints<PhiNode> {
         // let live_range = &definitions.live_range;
         let mut join_points = JoinPoints::from_raw(IndexVec::from_elem(
             BasicBlockNodes::new(),
-            body.basic_blocks(),
+            &body.basic_blocks,
         ));
-        let mut already_added = BitSet::new_empty(body.basic_blocks().len());
+        let mut already_added = BitSet::new_empty(body.basic_blocks.len());
         let mut work_list = VecDeque::with_capacity(body.basic_blocks.len());
         for (a, bbs) in def_sites.iter_enumerated() {
             // let mut work_list = bbs.iter().collect::<VecDeque<_>>();

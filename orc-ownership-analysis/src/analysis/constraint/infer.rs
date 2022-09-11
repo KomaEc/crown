@@ -28,10 +28,10 @@ use crate::{
 pub mod model_call;
 
 pub struct InferCtxt<'infercx, 'tcx, DB = CadicalDatabase> {
-    pub database: &'infercx mut DB,
+    pub database: DB,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     pub local_sigs: IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>,
-    gen: OwnershipSigGenerator,
+    pub gen: OwnershipSigGenerator,
 }
 
 impl<'infercx, 'tcx, DB> InferCtxt<'infercx, 'tcx, DB>
@@ -43,10 +43,9 @@ where
         crate_ctxt: &'infercx CrateCtxt<'tcx>,
         body: &Body<'tcx>,
         definitions: &Definitions,
-        db: &'infercx mut DB,
+        db: DB,
     ) -> Self {
         let mut local_sigs = IndexVec::with_capacity(definitions.def_sites.len());
-        // let mut next = OwnershipSig::MIN;
 
         let mut gen = OwnershipSigGenerator::new(OwnershipSig::MIN);
 
@@ -597,9 +596,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
     ) {
         tracing::debug!("Renaming {:?}", self.body.source.def_id());
         let dominators = self.body.basic_blocks.dominators();
-        let mut children = IndexVec::from_elem(vec![], self.body.basic_blocks());
+        let mut children = IndexVec::from_elem(vec![], &self.body.basic_blocks);
         let mut root = BasicBlock::from_u32(0);
-        self.body.basic_blocks().indices().for_each(|bb| {
+        self.body.basic_blocks.indices().for_each(|bb| {
             let dom = dominators.immediate_dominator(bb);
             if dom != bb {
                 children[dom].push(bb)
@@ -622,7 +621,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     self.go_basic_block::<M, _>(
                         infer_cx.borrow_mut(),
                         bb,
-                        &self.body.basic_blocks()[bb],
+                        &self.body.basic_blocks[bb],
                     );
                     recursion.push((bb, State::ToPopNames));
                     recursion.extend(children[bb].iter().rev().map(|&bb| (bb, State::ToVisit)));
@@ -717,7 +716,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             | StatementKind::Retag(_, _)
             | StatementKind::FakeRead(_)
             | StatementKind::Coverage(_)
-            | StatementKind::CopyNonOverlapping(_)
+            | StatementKind::Intrinsic(_)
+            // | StatementKind::CopyNonOverlapping(_)
             | StatementKind::Nop => {
                 unreachable!("statement {:?} is not assumed to appear", statement)
             }

@@ -46,7 +46,7 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
     // some terminators also cause statement rewrites, so we track which ones have been rewritten
     // and don't try to rewrite them twice
     let mut rewritten_stmts = HashSet::new();
-    for (bb_id, bb) in cx.body.basic_blocks().iter_enumerated() {
+    for (bb_id, bb) in cx.body.basic_blocks.iter_enumerated() {
         let terminator = bb.terminator();
         if let TerminatorKind::Call { func: callee, .. } = &terminator.kind {
             let (callee_def_id, _) = callee.const_fn_def().unwrap();
@@ -122,7 +122,7 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
 }
 
 fn rewrite_terminator<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_, '_>, bb_id: BasicBlock) {
-    let bb = &cx.body.basic_blocks()[bb_id];
+    let bb = &cx.body.basic_blocks[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
     let TerminatorKind::Call {
@@ -379,7 +379,7 @@ fn rewrite_malloc<'tcx>(
     bb_id: BasicBlock,
     rewritten_stmts: &mut HashSet<Location>,
 ) {
-    let bb = &cx.body.basic_blocks()[bb_id];
+    let bb = &cx.body.basic_blocks[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
     let TerminatorKind::Call {
@@ -431,7 +431,7 @@ fn rewrite_realloc(
     bb_id: BasicBlock,
     rewritten_stmts: &mut HashSet<Location>,
 ) {
-    let bb = &cx.body.basic_blocks()[bb_id];
+    let bb = &cx.body.basic_blocks[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
     let TerminatorKind::Call {
@@ -487,7 +487,7 @@ fn rewrite_calloc(
     bb_id: BasicBlock,
     rewritten_stmts: &mut HashSet<Location>,
 ) {
-    let bb = &cx.body.basic_blocks()[bb_id];
+    let bb = &cx.body.basic_blocks[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
     let TerminatorKind::Call {
@@ -537,7 +537,7 @@ fn rewrite_offset(
     bb_id: BasicBlock,
     rewritten_stmts: &mut HashSet<Location>,
 ) {
-    let bb = &cx.body.basic_blocks()[bb_id];
+    let bb = &cx.body.basic_blocks[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
     let TerminatorKind::Call {
