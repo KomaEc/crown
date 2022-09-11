@@ -1,8 +1,7 @@
-
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_middle::mir::Local;
 use rustc_index::vec::IndexVec;
+use rustc_middle::mir::Local;
 use smallvec::SmallVec;
 use std::marker::PhantomData;
 use std::ops::Range;
@@ -129,10 +128,20 @@ where
     }
 }
 
-#[derive(Default)]
-pub struct AnalysisCtxt {
+pub struct AnalysisCtxt<DB> {
     /// DefId -> Local -> SSAIdx -> Range<OwnershipSig>
     local_sigs: FxHashMap<DefId, IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>>,
     /// DefId -> FnSig
     fn_sigs: FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
+    database: DB,
+}
+
+impl<DB: Database> AnalysisCtxt<DB> {
+    pub fn new(database: DB) -> Self {
+        AnalysisCtxt {
+            local_sigs: Default::default(),
+            fn_sigs: Default::default(),
+            database,
+        }
+    }
 }

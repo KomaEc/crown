@@ -645,10 +645,7 @@ impl<'tcx, A: Analysis> rustc_mir_dataflow::Analysis<'tcx> for UsageAnalysis<'tc
         _return_places: rustc_mir_dataflow::CallReturnPlaces<'_, 'tcx>,
     ) {
         let loc = self.0.body.terminator_loc(bb_id);
-        let terminator = self.0.body.basic_blocks[bb_id]
-            .terminator
-            .as_ref()
-            .unwrap();
+        let terminator = self.0.body.basic_blocks[bb_id].terminator.as_ref().unwrap();
         if let TerminatorKind::InlineAsm { .. } = terminator.kind {
             return;
         }

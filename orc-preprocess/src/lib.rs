@@ -41,7 +41,9 @@ impl<'me, 'hir> Visitor<'hir> for NullStmtInsertor<'me, 'hir> {
                 }
 
                 match cond.kind {
-                    ExprKind::MethodCall(path, receiver, _, _) if path.ident.as_str() == "is_null" => {
+                    ExprKind::MethodCall(path, receiver, _, _)
+                        if path.ident.as_str() == "is_null" =>
+                    {
                         // let ptr = args.first().unwrap();
                         let ptr = receiver;
 
