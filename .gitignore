@@ -18,3 +18,5 @@ proptest-regressions/
 ground_truth
 /workspace
 **/*.bak
+
+.z3-trace

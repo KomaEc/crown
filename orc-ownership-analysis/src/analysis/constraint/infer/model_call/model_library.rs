@@ -4,14 +4,14 @@ use rustc_hir::def_id::DefId;
 
 use crate::analysis::{
     constraint::{
-        infer::{InferCtxt, Mode, WithCtxt},
+        infer::{InferCtxt, Mode},
         Database, OwnershipSig,
     },
     def::Consume,
-    FnSig,
+    FnSig, AnalysisKind,
 };
 
-impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx> InferCtxt<'infercx, 'tcx, DB> {
+impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind> InferCtxt<'infercx, 'tcx, DB, Kind> {
     pub fn model_library_call(
         &mut self,
         fn_sig: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
@@ -52,6 +52,6 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx> InferCtxt<'infercx, 'tcx
         let FnSig { args, .. } = fn_sig;
         assert_eq!(args.len(), 1);
         let arg = args.first().map(Option::as_ref).flatten().cloned().unwrap();
-        <WithCtxt as Mode>::borrow(self, arg)
+        <Kind as Mode>::borrow(self, arg)
     }
 }

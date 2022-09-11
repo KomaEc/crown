@@ -6,7 +6,7 @@ use smallvec::SmallVec;
 use std::marker::PhantomData;
 use std::ops::Range;
 
-use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer, WithCtxt};
+use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer};
 use crate::analysis::constraint::{CadicalDatabase, OwnershipSigGenerator};
 use crate::analysis::def::initial_definitions;
 use crate::analysis::dom::compute_dominance_frontier;
@@ -58,27 +58,57 @@ impl<'tcx> CrateCtxt<'tcx> {
     }
 
     pub fn crash_me_with_inference(&self) -> anyhow::Result<()> {
-        let mut databases = Vec::with_capacity(self.functions().len());
-        for &did in self.functions() {
+        StandAlone::analyze(self)
+    }
+}
+
+/// This trait should be associated with a ctxt repr type
+pub trait AnalysisKind {
+    type InterCtxt<'analysis> where Self: 'analysis;
+    fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<()>;
+}
+pub enum Modular {}
+impl AnalysisKind for Modular {
+    type InterCtxt<'analysis> = ();
+
+    fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<()> {
+        // TODO implement this
+        anyhow::bail!("modular analysis is not implemented")
+    }
+}
+pub enum WholeProgram {}
+impl AnalysisKind for WholeProgram {
+    type InterCtxt<'analysis> = &'analysis FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>;
+
+    fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<()> {
+        todo!()   
+    }
+}
+pub enum StandAlone {}
+impl AnalysisKind for StandAlone {
+    type InterCtxt<'analysis> = ();
+
+    fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<()> {
+        let mut databases = Vec::with_capacity(crate_ctxt.functions().len());
+        for &did in crate_ctxt.functions() {
             println!("solving {:?}", did);
-            let body = self.tcx.optimized_mir(did);
+            let body = crate_ctxt.tcx.optimized_mir(did);
 
             let dominance_frontier = compute_dominance_frontier(body);
-            let definitions = initial_definitions(body, self.tcx, self);
+            let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
             let mut rn = Renamer::new(body, &dominance_frontier, definitions);
 
             let start = CadicalDatabase::FIRST_AVAILABLE_SIG;
             let mut gen = OwnershipSigGenerator::new(start);
             let mut database = CadicalDatabase::new();
-            let mut infer_cx = InferCtxt::new(self, body, &mut database, &mut gen);
+            let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, ());
 
-            rn.go::<WithCtxt, _>(&mut infer_cx);
+            rn.go::<Self, _>(&mut infer_cx);
             match database.solver.solve() {
                 Some(true) => {
                     println!("succeeded");
                     for sig in start..gen.next() {
                         let value = database.solver.value(sig.into_lit());
-                        // println!("{sig} = {:?}", value)
                         if let Some(value) = value {
                             println!("{sig} = {}", value as u32);
                         } else {
@@ -95,22 +125,6 @@ impl<'tcx> CrateCtxt<'tcx> {
     }
 }
 
-/// This trait should be associated with a ctxt repr type
-pub trait AnalysisKind {
-    type Ctxt;
-}
-pub enum Modular {}
-impl AnalysisKind for Modular {
-    type Ctxt = ();
-}
-pub enum WholeProgram {}
-impl AnalysisKind for WholeProgram {
-    type Ctxt = FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>;
-}
-pub enum StandAlone {}
-impl AnalysisKind for StandAlone {
-    type Ctxt = ();
-}
 
 pub struct Analysis<'analysis, 'tcx, DB, Kind: AnalysisKind> {
     crate_ctxt: &'analysis CrateCtxt<'tcx>,

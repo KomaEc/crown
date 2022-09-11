@@ -23,31 +23,33 @@ use crate::{
         join_points::PhiNode,
         state::{SSAIdx, SSAState},
         ty::ty_ptr_measure,
-        FnSig,
+        FnSig, AnalysisKind,
     },
     CrateCtxt,
 };
 
 pub mod model_call;
 
-pub struct InferCtxt<'infercx, 'tcx, DB> {
+pub struct InferCtxt<'infercx, 'tcx, DB, Kind: AnalysisKind + 'infercx> {
+    inter_ctxt: Kind::InterCtxt<'infercx>,
     database: &'infercx mut DB,
     gen: &'infercx mut OwnershipSigGenerator,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     pub local_sigs: IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>,
 }
 
-impl<'infercx, 'tcx, DB> InferCtxt<'infercx, 'tcx, DB>
+impl<'infercx, 'tcx, DB, Kind> InferCtxt<'infercx, 'tcx, DB, Kind>
 where
     'tcx: 'infercx,
     DB: Database,
+    Kind: AnalysisKind,
 {
     pub fn new(
         crate_ctxt: &'infercx CrateCtxt<'tcx>,
         body: &Body<'tcx>,
-        // definitions: &Definitions,
         database: &'infercx mut DB,
         gen: &'infercx mut OwnershipSigGenerator,
+        inter_ctxt: Kind::InterCtxt<'infercx>,
     ) -> Self {
         let mut local_sigs = IndexVec::with_capacity(body.local_decls.len());
 
@@ -72,6 +74,7 @@ where
         }
 
         InferCtxt {
+            inter_ctxt,
             database,
             gen,
             crate_ctxt,
@@ -225,8 +228,6 @@ pub trait Mode {
 }
 #[derive(Debug)]
 pub enum Pure {}
-#[derive(Debug)]
-pub enum WithCtxt {}
 impl Mode for Pure {
     type Ctxt<'infercx, 'tcx, DB> = ()
     where
@@ -319,8 +320,13 @@ impl Mode for Pure {
     {
     }
 }
-impl Mode for WithCtxt {
-    type Ctxt<'infercx, 'tcx, DB> = InferCtxt<'infercx, 'tcx, DB>
+
+
+// pub trait WithCtxt: AnalysisKind {}
+// impl<K: AnalysisKind> WithCtxt for K {}
+
+impl<K: AnalysisKind> Mode for K {
+    type Ctxt<'infercx, 'tcx, DB> = InferCtxt<'infercx, 'tcx, DB, K>
     where
         Self: 'infercx,
         'tcx: 'infercx,
@@ -339,7 +345,7 @@ impl Mode for WithCtxt {
     }
 
     fn define_phi_node<'infercx, 'tcx, DB>(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         local: Local,
         ty: Ty<'tcx>,
         def: SSAIdx,
@@ -353,7 +359,7 @@ impl Mode for WithCtxt {
     }
 
     fn join_phi_nodes<'infercx, 'tcx, DB>(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         phi_nodes: impl Iterator<Item = (Local, &'infercx mut PhiNode)>,
     ) where
         'tcx: 'infercx,
@@ -384,7 +390,7 @@ impl Mode for WithCtxt {
     /// note that pointer to complex structures may be cast to a pointer to unit in
     /// order to perform free
     fn interpret_consume<'infercx, 'tcx, DB>(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         body: &Body<'tcx>,
         place: &Place<'tcx>,
         consume: Consume<SSAIdx>,
@@ -464,7 +470,7 @@ impl Mode for WithCtxt {
     }
 
     fn transfer<'infercx, 'tcx, DB>(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         lhs_result: Consume<Self::Interpretation>,
         rhs_result: Consume<Self::Interpretation>,
     ) where
@@ -487,7 +493,7 @@ impl Mode for WithCtxt {
     }
 
     fn unknown_sink<'infercx, 'tcx, DB>(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         consume: Consume<Self::Interpretation>,
     ) where
         'tcx: 'infercx,
@@ -501,7 +507,7 @@ impl Mode for WithCtxt {
     }
 
     fn assume<'infercx, 'tcx, DB>(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         result: Self::Interpretation,
         value: bool,
     ) where
@@ -516,7 +522,7 @@ impl Mode for WithCtxt {
     }
 
     fn finalise<'infercx, 'tcx, DB>(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         local: Local,
         r#use: SSAIdx,
     ) where
@@ -531,7 +537,7 @@ impl Mode for WithCtxt {
     }
 
     fn model_call<'infercx, 'tcx, DB>(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB>,
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         fn_sig: Self::FnSig<Option<Consume<Self::Interpretation>>>,
         func: &Operand,
     ) where
@@ -569,6 +575,7 @@ impl Mode for WithCtxt {
         }
     }
 }
+
 
 // /// The kind of temporary that is ensured local or Special, and is not
 // /// renamed in the inference.
