@@ -2,11 +2,12 @@ use std::{borrow::BorrowMut, ops::Range};
 
 use itertools::izip;
 use rustc_data_structures::graph::WithSuccessors;
+use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
         AggregateKind, BasicBlock, BasicBlockData, Body, CastKind, Local, Location, Operand, Place,
-        ProjectionElem, Rvalue, Statement, StatementKind, Terminator, TerminatorKind,
+        ProjectionElem, Rvalue, Statement, StatementKind, Terminator, TerminatorKind, RETURN_PLACE,
     },
     ty::Ty,
 };
@@ -63,6 +64,17 @@ where
                 local_sigs.push(IndexVec::default());
             }
         }
+
+        <Kind as ModelCall>::model_inputs(
+            &inter_ctxt,
+            database,
+            body.source.def_id(),
+            local_sigs
+                .iter()
+                .skip(1)
+                .take(body.arg_count)
+                .map(|vec| vec.raw.first().cloned()),
+        );
 
         InferCtxt {
             inter_ctxt,
@@ -216,6 +228,14 @@ pub trait Mode {
     ) where
         'tcx: 'infercx,
         DB: Database + 'infercx;
+
+    fn model_output<'infercx, 'tcx, DB>(
+        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
+        ssa_idx: Option<SSAIdx>,
+        r#fn: DefId,
+    ) where
+        'tcx: 'infercx,
+        DB: Database + 'infercx;
 }
 #[derive(Debug)]
 pub enum Pure {}
@@ -306,6 +326,16 @@ impl Mode for Pure {
 
     fn model_call<'infercx, 'tcx, DB>((): &mut Self::Ctxt<'infercx, 'tcx, DB>, (): (), _: &Operand)
     where
+        'tcx: 'infercx,
+        DB: Database + 'infercx,
+    {
+    }
+
+    fn model_output<'infercx, 'tcx, DB>(
+        (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
+        _: Option<SSAIdx>,
+        _: DefId,
+    ) where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
@@ -566,6 +596,18 @@ impl<K: AnalysisKind> Mode for K {
             /* TODO */
         }
     }
+
+    fn model_output<'infercx, 'tcx, DB>(
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
+        ssa_idx: Option<SSAIdx>,
+        r#fn: DefId,
+    ) where
+        'tcx: 'infercx,
+        DB: Database + 'infercx,
+    {
+        let output = ssa_idx.map(|ssa_idx| infer_cx.local_sigs[RETURN_PLACE][ssa_idx].clone());
+        <K as ModelCall>::model_output(infer_cx, r#fn, output)
+    }
 }
 
 // /// The kind of temporary that is ensured local or Special, and is not
@@ -598,6 +640,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         mut infer_cx: impl BorrowMut<M::Ctxt<'rn, 'tcx, DB>>,
     ) {
         tracing::debug!("Renaming {:?}", self.body.source.def_id());
+
         let dominators = self.body.basic_blocks.dominators();
         let mut children = IndexVec::from_elem(vec![], &self.body.basic_blocks);
         let mut root = BasicBlock::from_u32(0);
@@ -771,7 +814,11 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 // maybe not consuming return place?????
                 // comment out visit_terminator in def.rs then we're done
 
-                /* TODO */
+                M::model_output(
+                    infer_cx,
+                    self.state.name_state.try_get_name(RETURN_PLACE),
+                    self.body.source.def_id(),
+                );
 
                 // finalise!
                 // note that return place should not be finalised!!

@@ -18,6 +18,21 @@ pub trait ModelCall: AnalysisKind + Sized {
         caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         callee: DefId,
     );
+
+    fn model_inputs<DB: Database, Iter>(
+        // infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
+        inter_ctxt: &Self::InterCtxt<'_>,
+        database: &mut DB,
+        r#fn: DefId,
+        inputs: Iter,
+    ) where
+        Iter: Iterator<Item = Option<Range<OwnershipSig>>>;
+
+    fn model_output<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
+        r#fn: DefId,
+        output: Option<Range<OwnershipSig>>,
+    );
 }
 
 impl<K: AnalysisKind> ModelCall for K {
@@ -25,6 +40,24 @@ impl<K: AnalysisKind> ModelCall for K {
         _: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
         _: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         _: DefId,
+    ) {
+    }
+
+    default fn model_inputs<DB: Database, Iter>(
+        // _: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
+        _: &K::InterCtxt<'_>,
+        _: &mut DB,
+        _: DefId,
+        _: Iter,
+    ) where
+        Iter: Iterator<Item = Option<Range<OwnershipSig>>>,
+    {
+    }
+
+    default fn model_output<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
+        _: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
+        _: DefId,
+        _: Option<Range<OwnershipSig>>,
     ) {
     }
 }
@@ -85,6 +118,50 @@ impl ModelCall for WholeProgram {
             } else {
                 assert!(arg.is_none())
             }
+        }
+    }
+
+    fn model_inputs<DB: Database, Iter>(
+        inter_ctxt: &<WholeProgram as AnalysisKind>::InterCtxt<'_>,
+        database: &mut DB,
+        r#fn: DefId,
+        inputs: Iter,
+    ) where
+        Iter: Iterator<Item = Option<Range<OwnershipSig>>>,
+    {
+        let fn_sig = &inter_ctxt[&r#fn];
+
+        for (input, sigs) in inputs.zip(fn_sig.iter().skip(1)) {
+            // debug_assert!(!input.clone().xor(sigs.clone()).is_some())
+            match (input, sigs) {
+                (Some(input), Some(sigs)) => {
+                    for (input, sig) in input.zip(sigs.clone()) {
+                        database.push_equal::<crate::analysis::constraint::Debug>((), input, sig)
+                    }
+                }
+                (None, None) => {}
+                _ => assert!(false),
+            }
+        }
+    }
+
+    fn model_output<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, WholeProgram>,
+        r#fn: DefId,
+        output: Option<Range<OwnershipSig>>,
+    ) {
+        let fn_sig = &infer_cx.inter_ctxt[&r#fn];
+        let ret = fn_sig.ret.clone();
+        match (output, ret) {
+            (Some(output), Some(ret)) => {
+                for (output, ret) in output.zip(ret) {
+                    infer_cx
+                        .database
+                        .push_equal::<crate::analysis::constraint::Debug>((), output, ret)
+                }
+            }
+            (None, None) => {}
+            _ => assert!(false),
         }
     }
 }
