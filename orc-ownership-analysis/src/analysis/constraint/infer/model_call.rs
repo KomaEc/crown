@@ -68,8 +68,12 @@ impl ModelCall for WholeProgram {
         caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         callee: DefId,
     ) {
-
-        let c_variadic = infer_cx.crate_ctxt.tcx.fn_sig(callee).skip_binder().c_variadic;
+        let c_variadic = infer_cx
+            .crate_ctxt
+            .tcx
+            .fn_sig(callee)
+            .skip_binder()
+            .c_variadic;
 
         let callee = &infer_cx.inter_ctxt[&callee];
 

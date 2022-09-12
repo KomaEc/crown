@@ -190,8 +190,6 @@ impl AnalysisKind for WholeProgram {
 
             rn.go::<Self, _>(infer_cx);
 
-            // println!("z3 status:\n {}", database.solver);
-
             match database.solver.check() {
                 z3::SatResult::Unsat => {
                     println!("failed.");
@@ -200,12 +198,6 @@ impl AnalysisKind for WholeProgram {
                 z3::SatResult::Unknown => bail!("z3 status: unknown"),
                 z3::SatResult::Sat => {}
             }
-
-            // match database.solver.solve() {
-            //     Some(true) => {}
-            //     Some(false) => anyhow::bail!("failed at {:?}", did),
-            //     None => anyhow::bail!("time out"),
-            // }
         }
 
         let z3_model = database.solver.get_model().unwrap();
@@ -213,10 +205,16 @@ impl AnalysisKind for WholeProgram {
         for (did, fn_sig) in fn_sigs {
             let fn_sig = fn_sig.repack(|sigs| {
                 if let Some(sigs) = sigs {
-                    sigs.map(|sig| match z3_model.eval(&database.z3_ast[sig], true).unwrap().as_bool()/* database.solver.value(sig.into_lit()) */ {
-                        Some(true) => "&move",
-                        Some(false) => "&",
-                        None => "&any",
+                    sigs.map(|sig| {
+                        match z3_model
+                            .eval(&database.z3_ast[sig], true)
+                            .unwrap()
+                            .as_bool()
+                        {
+                            Some(true) => "&move",
+                            Some(false) => "&",
+                            None => "&any",
+                        }
                     })
                     .collect::<Vec<_>>()
                     .join(" ")
@@ -253,18 +251,8 @@ impl AnalysisKind for StandAlone {
 
             rn.go::<Self, _>(&mut infer_cx);
             match database.solver.solve() {
-                Some(true) => {
-                    println!("succeeded");
-                    // for sig in start..gen.next() {
-                    //     let value = database.solver.value(sig.into_lit());
-                    //     if let Some(value) = value {
-                    //         println!("{sig} = {}", value as u32);
-                    //     } else {
-                    //         println!("{sig} = any")
-                    //     }
-                    // }
-                }
-                Some(false) => println!("failed"), // anyhow::bail!("failed in solving ownership constraints"),
+                Some(true) => println!("succeeded"),
+                Some(false) => println!("failed"),
                 None => anyhow::bail!("timeout"),
             }
             databases.push(database);
