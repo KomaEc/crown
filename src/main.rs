@@ -29,6 +29,12 @@ use orc_common::rewriter::RewriteMode;
 use orc_ownership_analysis::CrateCtxt;
 use usage_analysis::{fatness, mutability, null};
 
+// // Set up Jemalloc
+// use jemallocator::Jemalloc;
+
+// #[global_allocator]
+// static GLOBAL: Jemalloc = Jemalloc;
+
 #[derive(Parser)]
 struct Cli {
     #[clap(subcommand)]

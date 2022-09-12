@@ -9,6 +9,7 @@
 #![feature(array_windows)]
 #![feature(let_else)]
 #![feature(is_some_with)]
+// #![feature(allocator_api)]
 
 extern crate rustc_arena;
 extern crate rustc_ast;
