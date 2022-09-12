@@ -58,7 +58,8 @@ where
         // for (local, local_decl) in body.local_decls.iter_enumerated() {
         //     if definitions.maybe_owned.contains(local) {
         for local_decl in body.local_decls.iter() {
-            if let Some(sigs) = generate_signatures_for_local(local_decl, gen, crate_ctxt) {
+            if let Some(sigs) = generate_signatures_for_local(local_decl, gen, database, crate_ctxt)
+            {
                 local_sigs.push(IndexVec::from_raw(vec![sigs]));
             } else {
                 local_sigs.push(IndexVec::default());
@@ -86,7 +87,7 @@ where
     }
 
     pub fn new_sigs(&mut self, size: u32) -> Range<OwnershipSig> {
-        self.gen.gen(size)
+        self.database.new_vars(self.gen.gen(size))
     }
 }
 

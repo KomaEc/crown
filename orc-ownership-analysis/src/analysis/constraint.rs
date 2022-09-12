@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+use rustc_index::vec::IndexVec;
 use rustc_middle::mir::LocalDecl;
 
 use crate::{
@@ -56,22 +57,23 @@ impl OwnershipSigGenerator {
         start..end
     }
 
-    #[inline]
-    pub fn next(&self) -> OwnershipSig {
-        self.next
-    }
+    // #[inline]
+    // pub fn next(&self) -> OwnershipSig {
+    //     self.next
+    // }
 }
 
 #[inline]
-pub fn generate_signatures_for_local<'tcx>(
+pub fn generate_signatures_for_local<'tcx, DB: Database>(
     local_decl: &LocalDecl<'tcx>,
     gen: &mut OwnershipSigGenerator,
+    database: &mut DB,
     crate_ctxt: &CrateCtxt<'tcx>,
 ) -> Option<Range<OwnershipSig>> {
     maybe_owned(local_decl, crate_ctxt).then(|| {
         let ty = local_decl.ty;
         let measure = ty_ptr_measure(ty, crate_ctxt);
-        gen.gen(measure)
+        database.new_vars(gen.gen(measure))
     })
 }
 
@@ -202,6 +204,14 @@ make_logging_mode!(Error);
 pub trait Database {
     const FIRST_AVAILABLE_SIG: OwnershipSig;
 
+    #[inline]
+    fn new_var(&mut self, _: OwnershipSig) {}
+
+    #[inline]
+    fn new_vars(&mut self, sigs: Range<OwnershipSig>) -> Range<OwnershipSig> {
+        sigs
+    }
+
     fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig);
     fn push_linear<M: Mode>(
         &mut self,
@@ -295,22 +305,66 @@ impl Database for CadicalDatabase {
     }
 }
 
-// impl<'z3> Database for z3::Solver<'z3> {
-//     const FIRST_AVAILABLE_SIG: OwnershipSig = OwnershipSig::from_u32(1);
+pub struct Z3Database<'z3> {
+    pub ctx: &'z3 z3::Context,
+    pub solver: z3::Solver<'z3>,
+    pub z3_ast: IndexVec<OwnershipSig, z3::ast::Bool<'z3>>,
+}
 
-//     fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
-//         todo!()
-//     }
+impl<'z3> Z3Database<'z3> {
+    pub fn new(ctx: &'z3 z3::Context) -> Self {
+        let mut z3_ast = IndexVec::with_capacity(100);
+        z3_ast.push(z3::ast::Bool::new_const(ctx, "dummy"));
+        Z3Database {
+            ctx,
+            solver: z3::Solver::new(ctx),
+            z3_ast,
+        }
+    }
+}
 
-//     fn push_assume_impl(&mut self, x: OwnershipSig, sign: bool) {
-//         todo!()
-//     }
+impl<'z3> Database for Z3Database<'z3> {
+    const FIRST_AVAILABLE_SIG: OwnershipSig = OwnershipSig::from_u32(1);
 
-//     fn push_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
-//         todo!()
-//     }
+    fn new_var(&mut self, x: OwnershipSig) {
+        assert_eq!(
+            x,
+            self.z3_ast
+                .push(z3::ast::Bool::new_const(self.ctx, x.as_u32()))
+        )
+    }
 
-//     fn push_less_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
-//         todo!()
-//     }
-// }
+    fn new_vars(&mut self, sigs: Range<OwnershipSig>) -> Range<OwnershipSig> {
+        for sig in sigs.clone() {
+            self.new_var(sig)
+        }
+        sigs
+    }
+
+    fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
+        let [x, y, z] = [x, y, z].map(|sig| &self.z3_ast[sig]);
+        self.solver
+            .assert(&z3::ast::Bool::or(self.ctx, &[&!x, &!y]));
+        self.solver.assert(&z3::ast::Bool::or(self.ctx, &[&!x, z]));
+        self.solver
+            .assert(&z3::ast::Bool::or(self.ctx, &[x, y, &!z]));
+        self.solver.assert(&z3::ast::Bool::or(self.ctx, &[&!y, z]));
+    }
+
+    fn push_assume_impl(&mut self, x: OwnershipSig, sign: bool) {
+        let x = &self.z3_ast[x];
+        let value = z3::ast::Bool::from_bool(self.ctx, sign);
+        self.solver.assert(&!(x.xor(&value)))
+        // self.solver.assert(&!z3::ast::Bool::xor(x, &value));
+    }
+
+    fn push_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
+        let [x, y] = [x, y].map(|sig| &self.z3_ast[sig]);
+        self.solver.assert(&!(x.xor(y)));
+    }
+
+    fn push_less_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
+        let [x, y] = [x, y].map(|sig| &self.z3_ast[sig]);
+        self.solver.assert(&z3::ast::Bool::or(self.ctx, &[&!x, y]));
+    }
+}

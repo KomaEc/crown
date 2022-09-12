@@ -1,10 +1,11 @@
+use anyhow::bail;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use smallvec::SmallVec;
 use std::ops::Range;
 
 use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer};
-use crate::analysis::constraint::{CadicalDatabase, OwnershipSigGenerator};
+use crate::analysis::constraint::{CadicalDatabase, OwnershipSigGenerator, Z3Database};
 use crate::analysis::def::initial_definitions;
 use crate::analysis::dom::compute_dominance_frontier;
 use crate::CrateCtxt;
@@ -134,10 +135,14 @@ impl AnalysisKind for WholeProgram {
     type InterCtxt<'analysis> = &'analysis FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>;
 
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<()> {
-        type DB = CadicalDatabase;
+        type DB<'z3> = Z3Database<'z3>;
 
         let start = DB::FIRST_AVAILABLE_SIG;
         let mut gen = OwnershipSigGenerator::new(start);
+
+        let config = z3::Config::new();
+        let ctx = z3::Context::new(&config);
+        let mut database = DB::new(&ctx);
 
         let mut fn_sigs = FxHashMap::default();
         for &did in crate_ctxt.call_graph.functions() {
@@ -145,12 +150,22 @@ impl AnalysisKind for WholeProgram {
             let fn_sig = {
                 let mut local_decls = body.local_decls.iter();
                 let return_local_decl = local_decls.next().unwrap();
-                let ret = generate_signatures_for_local(return_local_decl, &mut gen, crate_ctxt);
+                let ret = generate_signatures_for_local(
+                    return_local_decl,
+                    &mut gen,
+                    &mut database,
+                    crate_ctxt,
+                );
 
                 let args = local_decls
                     .take(body.arg_count)
                     .map(|local_decl| {
-                        generate_signatures_for_local(local_decl, &mut gen, crate_ctxt)
+                        generate_signatures_for_local(
+                            local_decl,
+                            &mut gen,
+                            &mut database,
+                            crate_ctxt,
+                        )
                     })
                     .collect();
 
@@ -160,9 +175,11 @@ impl AnalysisKind for WholeProgram {
             fn_sigs.insert(did, fn_sig);
         }
 
-        let mut database = DB::new();
         for &did in crate_ctxt.call_graph.functions() {
             println!("solving {:?}", did);
+
+            database.solver.push();
+
             let body = crate_ctxt.tcx.optimized_mir(did);
 
             let dominance_frontier = compute_dominance_frontier(body);
@@ -173,17 +190,30 @@ impl AnalysisKind for WholeProgram {
 
             rn.go::<Self, _>(infer_cx);
 
-            match database.solver.solve() {
-                Some(true) => {}
-                Some(false) => anyhow::bail!("failed at {:?}", did),
-                None => anyhow::bail!("time out"),
+            // println!("z3 status:\n {}", database.solver);
+
+            match database.solver.check() {
+                z3::SatResult::Unsat => {
+                    println!("failed.");
+                    database.solver.pop(1);
+                }
+                z3::SatResult::Unknown => bail!("z3 status: unknown"),
+                z3::SatResult::Sat => {}
             }
+
+            // match database.solver.solve() {
+            //     Some(true) => {}
+            //     Some(false) => anyhow::bail!("failed at {:?}", did),
+            //     None => anyhow::bail!("time out"),
+            // }
         }
+
+        let z3_model = database.solver.get_model().unwrap();
 
         for (did, fn_sig) in fn_sigs {
             let fn_sig = fn_sig.repack(|sigs| {
                 if let Some(sigs) = sigs {
-                    sigs.map(|sig| match database.solver.value(sig.into_lit()) {
+                    sigs.map(|sig| match z3_model.eval(&database.z3_ast[sig], true).unwrap().as_bool()/* database.solver.value(sig.into_lit()) */ {
                         Some(true) => "&move",
                         Some(false) => "&",
                         None => "&any",
@@ -225,14 +255,14 @@ impl AnalysisKind for StandAlone {
             match database.solver.solve() {
                 Some(true) => {
                     println!("succeeded");
-                    for sig in start..gen.next() {
-                        let value = database.solver.value(sig.into_lit());
-                        if let Some(value) = value {
-                            println!("{sig} = {}", value as u32);
-                        } else {
-                            println!("{sig} = any")
-                        }
-                    }
+                    // for sig in start..gen.next() {
+                    //     let value = database.solver.value(sig.into_lit());
+                    //     if let Some(value) = value {
+                    //         println!("{sig} = {}", value as u32);
+                    //     } else {
+                    //         println!("{sig} = any")
+                    //     }
+                    // }
                 }
                 Some(false) => println!("failed"), // anyhow::bail!("failed in solving ownership constraints"),
                 None => anyhow::bail!("timeout"),

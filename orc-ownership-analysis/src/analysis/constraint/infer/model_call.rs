@@ -68,10 +68,15 @@ impl ModelCall for WholeProgram {
         caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         callee: DefId,
     ) {
+
+        let c_variadic = infer_cx.crate_ctxt.tcx.fn_sig(callee).skip_binder().c_variadic;
+
         let callee = &infer_cx.inter_ctxt[&callee];
 
         #[cfg(debug_assertions)]
-        assert_eq!(callee.iter().count(), caller.iter().count());
+        if !c_variadic {
+            assert_eq!(callee.iter().count(), caller.iter().count());
+        }
 
         let mut callee_caller = callee.iter().zip(caller.iter());
 
@@ -93,7 +98,7 @@ impl ModelCall for WholeProgram {
                 }
             }
         } else {
-            assert!(dest.is_none())
+            assert!(c_variadic || dest.is_none())
         }
 
         // para = arg ~> rho(para') + rho(arg') = rho(arg)
@@ -116,7 +121,7 @@ impl ModelCall for WholeProgram {
                     }
                 }
             } else {
-                assert!(arg.is_none())
+                assert!(c_variadic || arg.is_none())
             }
         }
     }
