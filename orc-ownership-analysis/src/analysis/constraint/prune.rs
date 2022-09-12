@@ -4,7 +4,7 @@ use rustc_hash::FxHashSet;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body};
 
-use super::infer::{Renamer, Pure};
+use super::infer::{Pure, Renamer};
 
 pub fn pruned(body: &Body, ssa_state: SSAState) -> SSAState {
     let mut rn = Renamer::new(body, ssa_state);

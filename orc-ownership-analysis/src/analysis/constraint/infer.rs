@@ -629,7 +629,6 @@ pub struct Renamer<'rn, 'tcx: 'rn> {
 }
 
 impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
-
     pub fn new(body: &'rn Body<'tcx>, state: SSAState) -> Self {
         Renamer { body, state }
     }

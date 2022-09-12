@@ -127,10 +127,7 @@ impl ConsumeChain {
             })
             .collect();
 
-        ConsumeChain {
-            consumes,
-            locs,
-        }
+        ConsumeChain { consumes, locs }
     }
 
     pub fn reset(&mut self) {
