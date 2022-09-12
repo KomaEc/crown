@@ -9,6 +9,7 @@ use crate::{
 };
 
 pub mod infer;
+pub mod prune;
 
 orc_common::macros::orc_index!(OwnershipSig);
 

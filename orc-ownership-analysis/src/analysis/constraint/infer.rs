@@ -20,8 +20,7 @@ use crate::{
             generate_signatures_for_local, infer::model_call::ModelCall, Database, OwnershipSig,
             OwnershipSigGenerator,
         },
-        def::{Consume, Definitions, RichLocation},
-        dom::DominanceFrontier,
+        def::{Consume, RichLocation},
         join_points::PhiNode,
         state::{SSAIdx, SSAState},
         ty::ty_ptr_measure,
@@ -117,9 +116,9 @@ pub trait Mode {
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    fn join_phi_nodes<'infercx, 'tcx, DB>(
-        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        phi_nodes: impl Iterator<Item = (Local, &'infercx mut PhiNode)>,
+    fn join_phi_nodes<'a, 'infercx, 'tcx, DB>(
+        infer_cx: &'a mut Self::Ctxt<'infercx, 'tcx, DB>,
+        phi_nodes: impl Iterator<Item = (Local, &'a mut PhiNode)>,
     ) where
         'tcx: 'infercx,
         DB: Database + 'infercx;
@@ -265,9 +264,9 @@ impl Mode for Pure {
     {
     }
 
-    fn join_phi_nodes<'infercx, 'tcx, DB>(
-        (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        _: impl Iterator<Item = (Local, &'infercx mut PhiNode)>,
+    fn join_phi_nodes<'a, 'infercx, 'tcx, DB>(
+        (): &'a mut Self::Ctxt<'infercx, 'tcx, DB>,
+        _: impl Iterator<Item = (Local, &'a mut PhiNode)>,
     ) where
         'tcx: 'infercx,
         DB: Database + 'infercx,
@@ -357,6 +356,7 @@ impl<K: AnalysisKind> Mode for K {
 
     type FnSig<T> = FnSig<T>;
 
+    #[inline]
     fn transform_fn_sig(
         mut fn_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>,
     ) -> Self::FnSig<Option<Consume<Self::Interpretation>>> {
@@ -365,6 +365,7 @@ impl<K: AnalysisKind> Mode for K {
         FnSig::new(destination, args)
     }
 
+    #[inline]
     fn define_phi_node<'infercx, 'tcx, DB>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         local: Local,
@@ -379,9 +380,9 @@ impl<K: AnalysisKind> Mode for K {
         assert_eq!(def, infer_cx.local_sigs[local].push(sigs));
     }
 
-    fn join_phi_nodes<'infercx, 'tcx, DB>(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
-        phi_nodes: impl Iterator<Item = (Local, &'infercx mut PhiNode)>,
+    fn join_phi_nodes<'a, 'infercx, 'tcx, DB>(
+        infer_cx: &'a mut InferCtxt<'infercx, 'tcx, DB, K>,
+        phi_nodes: impl Iterator<Item = (Local, &'a mut PhiNode)>,
     ) where
         'tcx: 'infercx,
         DB: Database + 'infercx,
@@ -513,6 +514,7 @@ impl<K: AnalysisKind> Mode for K {
         }
     }
 
+    #[inline]
     fn unknown_sink<'infercx, 'tcx, DB>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         consume: Consume<Self::Interpretation>,
@@ -527,6 +529,7 @@ impl<K: AnalysisKind> Mode for K {
         }
     }
 
+    #[inline]
     fn assume<'infercx, 'tcx, DB>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         result: Self::Interpretation,
@@ -542,6 +545,7 @@ impl<K: AnalysisKind> Mode for K {
         }
     }
 
+    #[inline]
     fn finalise<'infercx, 'tcx, DB>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         local: Local,
@@ -621,23 +625,17 @@ impl<K: AnalysisKind> Mode for K {
 
 pub struct Renamer<'rn, 'tcx: 'rn> {
     body: &'rn Body<'tcx>,
-    state: SSAState,
+    pub state: SSAState,
 }
 
 impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
-    pub fn new(
-        body: &'rn Body<'tcx>,
-        dominance_frontier: &DominanceFrontier,
-        definitions: Definitions,
-    ) -> Self {
-        Renamer {
-            body,
-            state: SSAState::new(body, dominance_frontier, definitions),
-        }
+
+    pub fn new(body: &'rn Body<'tcx>, state: SSAState) -> Self {
+        Renamer { body, state }
     }
 
     pub fn go<M: Mode + 'rn, DB: Database + 'rn>(
-        &'rn mut self,
+        &mut self,
         mut infer_cx: impl BorrowMut<M::Ctxt<'rn, 'tcx, DB>>,
     ) {
         tracing::debug!("Renaming {:?}", self.body.source.def_id());

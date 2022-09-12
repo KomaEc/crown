@@ -107,29 +107,10 @@ pub struct NameState {
 impl NameState {
     fn new<'tcx>(body: &Body<'tcx>, maybe_owned: &BitSet<Local>) -> Self {
         let count = IndexVec::from_elem(SSAIdx::INIT, &body.local_decls);
-        // let stack = IndexVec::from_fn_n(
-        //     |local| {
-        //         matches!(
-        //             body.local_decls[local].local_info.as_deref(),
-        //             Some(LocalInfo::DerefTemp)
-        //         )
-        //         .then(|| Vec::new())
-        //         .unwrap_or_else(|| vec![SSAIdx::INIT])
-        //     },
-        //     body.local_decls.len(),
-        // );
 
         // Notice: this has to be in accordance with ConsumeChain.locs
         let stack = body
             .local_decls
-            // .iter()
-            // .map(|local_decl| {
-            //     if maybe_owned(local_decl, crate_ctxt) {
-            //         vec![SSAIdx::INIT]
-            //     } else {
-            //         Vec::new()
-            //     }
-            // })
             .indices()
             .map(|local| {
                 maybe_owned
@@ -141,6 +122,15 @@ impl NameState {
             .collect();
         // let stack = IndexVec::from_elem(vec![SSAIdx::INIT], &body.local_decls);
         NameState { count, stack }
+    }
+
+    pub fn reset(&mut self) {
+        self.count.raw.fill(SSAIdx::INIT);
+        for stack in &mut self.stack {
+            if !stack.is_empty() {
+                stack.truncate(1);
+            }
+        }
     }
 
     #[inline]

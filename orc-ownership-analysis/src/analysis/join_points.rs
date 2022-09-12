@@ -1,6 +1,7 @@
 //! Functions that calculate the join points of phi nodes
 
 use std::collections::VecDeque;
+use std::ops::{Deref, DerefMut};
 
 use derivative::Derivative;
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
@@ -122,21 +123,35 @@ impl<Payload> From<IndexVec<BasicBlock, BasicBlockNodes<Payload>>> for JoinPoint
     }
 }
 
-impl<T> std::ops::Index<BasicBlock> for JoinPoints<T> {
-    type Output = BasicBlockNodes<T>;
+impl<T> Deref for JoinPoints<T> {
+    type Target = IndexVec<BasicBlock, BasicBlockNodes<T>>;
 
-    #[inline]
-    fn index(&self, bb: BasicBlock) -> &Self::Output {
-        &self.data[bb]
+    fn deref(&self) -> &Self::Target {
+        &self.data
     }
 }
 
-impl<T> std::ops::IndexMut<BasicBlock> for JoinPoints<T> {
-    #[inline]
-    fn index_mut(&mut self, bb: BasicBlock) -> &mut Self::Output {
-        &mut self.data[bb]
+impl<T> DerefMut for JoinPoints<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data
     }
 }
+
+// impl<T> std::ops::Index<BasicBlock> for JoinPoints<T> {
+//     type Output = BasicBlockNodes<T>;
+
+//     #[inline]
+//     fn index(&self, bb: BasicBlock) -> &Self::Output {
+//         &self.data[bb]
+//     }
+// }
+
+// impl<T> std::ops::IndexMut<BasicBlock> for JoinPoints<T> {
+//     #[inline]
+//     fn index_mut(&mut self, bb: BasicBlock) -> &mut Self::Output {
+//         &mut self.data[bb]
+//     }
+// }
 
 #[derive(Clone, Debug)]
 pub struct BasicBlockNodes<Node> {
@@ -169,6 +184,26 @@ impl<T> BasicBlockNodes<T> {
         self.data
             .iter_mut()
             .map(|(local, payload)| (*local, payload))
+    }
+
+    // pub fn locals(&self) -> impl Iterator<Item = Local> + '_ {
+    //     self.data
+    //         .iter()
+    //         .map(|&(local, _)| local)
+    // }
+}
+
+impl<T> Deref for BasicBlockNodes<T> {
+    type Target = SmallVec<[(Local, T); NUM_PHI_NODES]>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.data
+    }
+}
+
+impl<T> DerefMut for BasicBlockNodes<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.data
     }
 }
 

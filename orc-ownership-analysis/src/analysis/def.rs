@@ -114,29 +114,9 @@ impl ConsumeChain {
             ..
         } = definitions;
 
-        // let locs = IndexVec::from_fn_n(
-        //     |local| {
-        //         matches!(
-        //             body.local_decls[local].local_info.as_deref(),
-        //             Some(LocalInfo::DerefTemp)
-        //         )
-        //         .then(|| IndexVec::new())
-        //         .unwrap_or_else(|| IndexVec::from_raw(vec![RichLocation::Entry]))
-        //     },
-        //     body.local_decls.len(),
-        // );
-
         // Notice: this has to be in accordance with NameState.stack
         let locs = body
             .local_decls
-            // .iter()
-            // .map(|local_decl| {
-            //     if maybe_owned(local_decl, crate_ctxt) {
-            //         IndexVec::from_raw(vec![RichLocation::Entry])
-            //     } else {
-            //         IndexVec::new()
-            //     }
-            // })
             .indices()
             .map(|local| {
                 maybe_owned
@@ -147,19 +127,17 @@ impl ConsumeChain {
             })
             .collect();
 
-        // let mut locs = IndexVec::with_capacity(body.local_decls.len());
-        // for local_decl in &body.local_decls {
-        //     if maybe_owned(local_decl, crate_ctxt) {
-        //         locs.push(IndexVec::from_raw(vec![RichLocation::Entry]));
-        //     } else {
-        //         locs.push(IndexVec::new());
-        //     }
-        // }
-
         ConsumeChain {
             consumes,
             locs,
-            // to_finalise,
+        }
+    }
+
+    pub fn reset(&mut self) {
+        for locs in &mut self.locs {
+            if !locs.is_empty() {
+                locs.truncate(1);
+            }
         }
     }
 

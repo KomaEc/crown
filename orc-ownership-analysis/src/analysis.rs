@@ -5,12 +5,14 @@ use smallvec::SmallVec;
 use std::ops::Range;
 
 use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer};
+use crate::analysis::constraint::prune::pruned;
 use crate::analysis::constraint::{CadicalDatabase, OwnershipSigGenerator, Z3Database};
 use crate::analysis::def::initial_definitions;
 use crate::analysis::dom::compute_dominance_frontier;
 use crate::CrateCtxt;
 
 use crate::analysis::constraint::{generate_signatures_for_local, Database, OwnershipSig};
+use crate::analysis::state::SSAState;
 
 // pub mod body_ext;
 pub mod constants;
@@ -99,7 +101,9 @@ impl<'tcx> CrateCtxt<'tcx> {
             let body = self.tcx.optimized_mir(did);
             let dominance_frontier = compute_dominance_frontier(body);
             let definitions = initial_definitions(body, self.tcx, self);
-            let mut rn = Renamer::new(body, &dominance_frontier, definitions);
+            let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
+            let mut rn = Renamer::new(body, ssa_state);
+            // let mut rn = Renamer::new(body, &dominance_frontier, definitions);
             rn.go::<Pure, ()>(());
             println!("completed");
         }
@@ -184,7 +188,14 @@ impl AnalysisKind for WholeProgram {
 
             let dominance_frontier = compute_dominance_frontier(body);
             let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
-            let mut rn = Renamer::new(body, &dominance_frontier, definitions);
+            let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
+
+            // TODO debug
+            #[cfg(debug_assertions)]
+            let ssa_state = pruned(body, ssa_state);
+
+            // let mut rn = Renamer::new(body, &dominance_frontier, definitions);
+            let mut rn = Renamer::new(body, ssa_state);
 
             let infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, &fn_sigs);
 
@@ -242,7 +253,9 @@ impl AnalysisKind for StandAlone {
 
             let dominance_frontier = compute_dominance_frontier(body);
             let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
-            let mut rn = Renamer::new(body, &dominance_frontier, definitions);
+            let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
+            // let mut rn = Renamer::new(body, &dominance_frontier, definitions);
+            let mut rn = Renamer::new(body, ssa_state);
 
             let start = CadicalDatabase::FIRST_AVAILABLE_SIG;
             let mut gen = OwnershipSigGenerator::new(start);
