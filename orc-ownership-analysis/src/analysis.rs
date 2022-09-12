@@ -114,6 +114,7 @@ impl<'tcx> CrateCtxt<'tcx> {
 }
 
 pub trait AnalysisKind {
+    /// Interprocedural Context
     type InterCtxt<'analysis>
     where
         Self: 'analysis;
@@ -241,72 +242,3 @@ impl AnalysisKind for StandAlone {
         Ok(())
     }
 }
-
-// pub struct Analysis<'analysis, 'tcx, DB, Kind: AnalysisKind> {
-//     crate_ctxt: &'analysis CrateCtxt<'tcx>,
-//     // analysis_ctxt: AnalysisCtxt<DB>, // Kind::Ctxt<DB>,
-//     _kind: PhantomData<*const (Kind, DB)>,
-// }
-
-// impl<'analysis, 'tcx, DB> Analysis<'analysis, 'tcx, DB, WholeProgram>
-// where
-//     'tcx: 'analysis,
-//     DB: Database,
-// {
-//     pub fn new(crate_ctxt: &'analysis CrateCtxt<'tcx>, database: DB) -> Self {
-//         // let mut analysis_ctxt = AnalysisCtxt::new(database);
-//         let start = DB::FIRST_AVAILABLE_SIG;
-//         let mut gen = OwnershipSigGenerator::new(start);
-
-//         let mut fn_sigs = FxHashMap::default();
-//         for &did in crate_ctxt.call_graph.functions() {
-//             let body = crate_ctxt.tcx.optimized_mir(did);
-//             let fn_sig = {
-//                 let mut local_decls = body.local_decls.iter();
-//                 let return_local_decl = local_decls.next().unwrap();
-//                 let ret = generate_signatures_for_local(return_local_decl, &mut gen, crate_ctxt);
-
-//                 let args = local_decls
-//                     .map(|local_decl| {
-//                         generate_signatures_for_local(local_decl, &mut gen, crate_ctxt)
-//                     })
-//                     .collect();
-
-//                 FnSig { ret, args }
-//             };
-//             fn_sigs.insert(did, fn_sig);
-//         }
-//         todo!()
-//         // for &did in crate_ctxt.functions() {
-//         //     let body = crate_ctxt.tcx.optimized_mir(did);
-//         //     let dominance_frontier = body.compute_dominance_frontier();
-//         //     let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
-//         // }
-//         // todo!()
-//         // Self {
-//         //     crate_ctxt,
-//         //     db: database,
-//         //     _kind: PhantomData,
-//         // }
-//     }
-// }
-
-// // pub struct AnalysisCtxt<DB> {
-// //     /// DefId -> Local -> SSAIdx -> Range<OwnershipSig>
-// //     local_sigs: FxHashMap<DefId, IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>>,
-// //     /// DefId -> FnSig
-// //     fn_sigs: FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
-// //     database: DB,
-// //     gen: OwnershipSigGenerator,
-// // }
-
-// // impl<DB: Database> AnalysisCtxt<DB> {
-// //     pub fn new(database: DB) -> Self {
-// //         AnalysisCtxt {
-// //             local_sigs: Default::default(),
-// //             fn_sigs: Default::default(),
-// //             database,
-// //             gen: OwnershipSigGenerator::new(DB::FIRST_AVAILABLE_SIG),
-// //         }
-// //     }
-// // }
