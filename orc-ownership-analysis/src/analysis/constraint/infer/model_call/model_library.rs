@@ -53,7 +53,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind>
     pub fn model_is_null(&mut self, caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
         let FnSig { args, .. } = caller;
         assert_eq!(args.len(), 1);
-        let arg = args.first().map(Option::as_ref).flatten().cloned().unwrap();
+        let arg = args.first().and_then(Option::as_ref).cloned().unwrap();
         <Kind as Mode>::borrow(self, arg)
     }
 }

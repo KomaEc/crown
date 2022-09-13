@@ -23,77 +23,6 @@ pub mod join_points;
 pub mod state;
 pub mod ty;
 
-pub struct FnSig<T> {
-    ret: T,
-    args: SmallVec<[T; 4]>,
-}
-
-impl<T> FnSig<T> {
-    fn new(ret: T, args: SmallVec<[T; 4]>) -> Self {
-        FnSig { ret, args }
-    }
-
-    fn iter(&self) -> impl Iterator<Item = &T> {
-        std::iter::once(&self.ret).chain(self.args.iter())
-    }
-
-    fn repack<U>(self, mut f: impl FnMut(T) -> U) -> FnSig<U> {
-        FnSig {
-            ret: f(self.ret),
-            args: self.args.into_iter().map(f).collect(),
-        }
-    }
-}
-
-impl<T: Default> Default for FnSig<T> {
-    fn default() -> Self {
-        Self {
-            ret: Default::default(),
-            args: Default::default(),
-        }
-    }
-}
-
-impl<T: std::fmt::Debug> std::fmt::Debug for FnSig<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("FnSig")
-            .field("ret", &self.ret)
-            .field("args", &self.args)
-            .finish()
-        // f.write_str("(")?;
-        // f.write_str(
-        //     &self
-        //         .args
-        //         .iter()
-        //         .map(|data| format!("{:?}", data))
-        //         .collect::<Vec<_>>()
-        //         .join(", "),
-        // )?;
-        // f.write_str(") -> ")?;
-        // f.write_fmt(format_args!("{:?}", self.ret))
-    }
-}
-
-impl<T: std::fmt::Display> std::fmt::Display for FnSig<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // f.debug_struct("FnSig")
-        //     .field("ret", &self.ret)
-        //     .field("args", &self.args)
-        //     .finish()
-        f.write_str("(")?;
-        f.write_str(
-            &self
-                .args
-                .iter()
-                .map(|data| format!("{data}"))
-                .collect::<Vec<_>>()
-                .join(", "),
-        )?;
-        f.write_str(") -> ")?;
-        f.write_fmt(format_args!("{}", self.ret))
-    }
-}
-
 impl<'tcx> CrateCtxt<'tcx> {
     pub fn crash_me_with_pure_rename(&self) {
         for &did in self.functions() {
@@ -269,5 +198,61 @@ impl AnalysisKind for StandAlone {
             databases.push(database);
         }
         Ok(())
+    }
+}
+
+pub struct FnSig<T> {
+    ret: T,
+    args: SmallVec<[T; 4]>,
+}
+
+impl<T> FnSig<T> {
+    fn new(ret: T, args: SmallVec<[T; 4]>) -> Self {
+        FnSig { ret, args }
+    }
+
+    fn iter(&self) -> impl Iterator<Item = &T> {
+        std::iter::once(&self.ret).chain(self.args.iter())
+    }
+
+    fn repack<U>(self, mut f: impl FnMut(T) -> U) -> FnSig<U> {
+        FnSig {
+            ret: f(self.ret),
+            args: self.args.into_iter().map(f).collect(),
+        }
+    }
+}
+
+impl<T: Default> Default for FnSig<T> {
+    fn default() -> Self {
+        Self {
+            ret: Default::default(),
+            args: Default::default(),
+        }
+    }
+}
+
+impl<T: std::fmt::Debug> std::fmt::Debug for FnSig<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FnSig")
+            .field("ret", &self.ret)
+            .field("args", &self.args)
+            .finish()
+    }
+}
+
+impl<T: std::fmt::Display> std::fmt::Display for FnSig<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("(")?;
+        f.write_str(
+            &self
+                .args
+                .iter()
+                .map(|data| format!("{data}"))
+                .collect::<Vec<_>>()
+                .join(", "),
+        )?;
+        f.write_str(") -> ")?;
+        f.write_fmt(format_args!("{}", self.ret))
     }
 }

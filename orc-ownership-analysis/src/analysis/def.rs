@@ -107,7 +107,7 @@ pub struct ConsumeChain {
 }
 
 impl ConsumeChain {
-    pub fn new<'tcx>(body: &Body<'tcx>, definitions: Definitions) -> Self {
+    pub fn new(body: &Body, definitions: Definitions) -> Self {
         let Definitions {
             consumes,
             maybe_owned,

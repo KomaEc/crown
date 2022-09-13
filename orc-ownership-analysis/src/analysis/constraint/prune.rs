@@ -5,7 +5,7 @@ use crate::analysis::{
 use orc_common::data_structure::assoc::AssocExt;
 use rustc_hash::FxHashSet;
 use rustc_index::vec::IndexVec;
-use rustc_middle::mir::{BasicBlock, Body, Local, RETURN_PLACE, TerminatorKind};
+use rustc_middle::mir::{BasicBlock, Body, Local, TerminatorKind, RETURN_PLACE};
 
 use super::infer::{Mode, Renamer};
 

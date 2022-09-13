@@ -70,7 +70,6 @@ enum Command {
         #[clap(long, short)]
         all: bool,
     },
-    /// Play with the ownership analysis
     CrashMe,
     Rewrite {
         #[clap(arg_enum, default_value_t = RewriteMode::Print)]

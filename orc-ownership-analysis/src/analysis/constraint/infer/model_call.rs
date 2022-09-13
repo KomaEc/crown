@@ -149,7 +149,7 @@ impl ModelCall for WholeProgram {
                     }
                 }
                 (None, None) => {}
-                _ => assert!(false),
+                _ => unreachable!(),
             }
         }
     }
@@ -170,7 +170,7 @@ impl ModelCall for WholeProgram {
                 }
             }
             (None, None) => {}
-            _ => assert!(false),
+            _ => unreachable!(),
         }
     }
 }
