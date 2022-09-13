@@ -4,9 +4,9 @@ members = [
     "orc-preprocess",
     "orc-ownership-analysis",
     "orc-taint-analysis",
-    "orc-rewrite",
-    "usage-analysis",
     "orc-refactor",
+    "usage-analysis",
+    "refactor",
     "empirical-study",
     "ownership-analysis"
 ]
@@ -26,7 +26,7 @@ orc-ownership-analysis = { path = "orc-ownership-analysis" }
 ownership-analysis = { path = "ownership-analysis" }
 orc-taint-analysis = { path = "orc-taint-analysis" }
 usage-analysis = { path = "usage-analysis" }
-orc-refactor = { path = "orc-refactor" }
+refactor = { path = "refactor" }
 empirical-study = { path = "empirical-study" }
 clap = { version = "3.1.2", features = ["derive"] }
 tracing = "0.1.32"

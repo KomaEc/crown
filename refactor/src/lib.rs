@@ -4,6 +4,10 @@
 #![feature(split_array)]
 #![feature(let_else)]
 
+pub mod rewrite;
+// pub mod rewriter;
+
+extern crate either;
 extern crate rustc_ast;
 extern crate rustc_ast_pretty;
 extern crate rustc_error_codes;
@@ -20,3 +24,4 @@ extern crate rustc_passes;
 extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_target;
+extern crate rustfix;

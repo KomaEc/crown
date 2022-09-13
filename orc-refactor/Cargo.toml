@@ -3,15 +3,14 @@ name = "orc-refactor"
 version = "0.1.0"
 edition = "2021"
 
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
 [package.metadata.rust-analyzer]
 rustc_private = true
 
 [dependencies]
-orc-common = { path = "../orc-common" }
-usage-analysis = { path = "../usage-analysis" }
-
-clap = { version = "3.1.2", features = ["derive"] }
-itertools = "0.10.3"
-rustfix = "0.6.0"
+rustfix = "0.6"
+tracing = "0.1"
+itertools = "0.10"
 smallvec = { version = "1.8.0", features = ["union", "const_generics"] }
-tracing = "0.1.32"
+orc-common = { path = "../orc-common" }

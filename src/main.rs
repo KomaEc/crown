@@ -285,7 +285,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 null::CrateResults::collect(tcx, &local_fns, &local_structs)
             });
             time("rewrite", || {
-                orc_refactor::rewrite::rewrite(
+                refactor::rewrite::rewrite(
                     tcx,
                     &ownership,
                     &mutability,
