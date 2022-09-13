@@ -2,6 +2,7 @@ use anyhow::bail;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use smallvec::SmallVec;
+use z3::Model;
 use std::ops::Range;
 
 use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer};
@@ -13,6 +14,9 @@ use crate::CrateCtxt;
 
 use crate::analysis::constraint::{generate_signatures_for_local, Database, OwnershipSig};
 use crate::analysis::state::SSAState;
+
+use self::constraint::infer::LocalSigs;
+use self::def::ConsumeChain;
 
 // pub mod body_ext;
 pub mod constants;
@@ -45,6 +49,14 @@ impl<'tcx> CrateCtxt<'tcx> {
     pub fn crash_me_with_whole_program_analysis(&self) -> anyhow::Result<()> {
         WholeProgram::analyze(self)
     }
+}
+
+pub struct WholeProgramAnalysisResults<'results> {
+    z3_database: Z3Database<'results>,
+    z3_model: Model<'results>,
+    fn_sigs: FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
+    fn_bodies: FxHashMap<DefId, LocalSigs>,
+    consume_chains: FxHashMap<DefId, ConsumeChain>,
 }
 
 pub trait AnalysisKind {
