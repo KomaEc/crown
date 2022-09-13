@@ -191,10 +191,8 @@ impl AnalysisKind for WholeProgram {
             let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
 
             // TODO debug
-            #[cfg(debug_assertions)]
             let ssa_state = pruned(body, ssa_state);
 
-            // let mut rn = Renamer::new(body, &dominance_frontier, definitions);
             let mut rn = Renamer::new(body, ssa_state);
 
             let infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, &fn_sigs);
