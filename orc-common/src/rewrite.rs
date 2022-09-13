@@ -92,7 +92,13 @@ impl Rewrite for Vec<Suggestion> {
             match mode {
                 RewriteMode::InPlace => fs::write(source_file, fixes).unwrap(),
                 RewriteMode::Print => io::stdout().write_all(fixes.as_ref()).unwrap(),
-                RewriteMode::Alongside => todo!(),
+                RewriteMode::Diff => {
+                    similar::TextDiff::from_lines(&source, &fixes)
+                        .unified_diff()
+                        .header("original", "rewritten")
+                        .to_writer(io::stdout())
+                        .unwrap();
+                }
             }
         }
     }
@@ -165,5 +171,5 @@ pub fn make_suggestion(
 pub enum RewriteMode {
     InPlace,
     Print,
-    Alongside,
+    Diff,
 }
