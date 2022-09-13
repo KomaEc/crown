@@ -1,11 +1,13 @@
+use std::alloc::{Allocator, Global};
+
 /// A vector of non-growable arrays `Vec<Array<I>>`
 #[derive(Debug)]
-pub struct VecArray<I> {
-    indices: Vec<usize>,
-    data: Vec<I>,
+pub struct VecArray<I, A: Allocator = Global> {
+    indices: Vec<usize, A>,
+    data: Vec<I, A>,
 }
 
-impl<I> std::ops::Index<usize> for VecArray<I> {
+impl<I, A: Allocator> std::ops::Index<usize> for VecArray<I, A> {
     type Output = [I];
 
     #[inline]
@@ -16,7 +18,7 @@ impl<I> std::ops::Index<usize> for VecArray<I> {
     }
 }
 
-impl<I> std::ops::IndexMut<usize> for VecArray<I> {
+impl<I, A: Allocator> std::ops::IndexMut<usize> for VecArray<I, A> {
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         let end = self.indices[index + 1];
@@ -33,6 +35,21 @@ impl<I> VecArray<I> {
         let frozen_vec_vec = VecArray { indices, data };
         VecArrayConstruction {
             vec_array: frozen_vec_vec,
+            start_index: 0,
+            n_cur_items: 0,
+        }
+    }
+}
+
+impl<I, A: Allocator + Copy> VecArray<I, A> {
+
+    pub fn new_in(len: usize, alloc: A) -> VecArrayConstruction<I, A> {
+        let mut indices = Vec::with_capacity_in(len + 1, alloc);
+        indices.push(0);
+        let data = Vec::new_in(alloc);
+        let vec_array = VecArray { indices, data };
+        VecArrayConstruction {
+            vec_array,
             start_index: 0,
             n_cur_items: 0,
         }
@@ -57,13 +74,13 @@ impl<I> VecArray<I> {
 }
 
 #[derive(Debug)]
-pub struct VecArrayConstruction<I> {
-    vec_array: VecArray<I>,
+pub struct VecArrayConstruction<I, A: Allocator = Global> {
+    vec_array: VecArray<I, A>,
     start_index: usize,
     n_cur_items: usize,
 }
 
-impl<I> VecArrayConstruction<I> {
+impl<I, A: Allocator> VecArrayConstruction<I, A> {
     #[inline]
     pub fn add_item_to_array(&mut self, item: I) {
         self.vec_array.data.push(item);
@@ -86,7 +103,7 @@ impl<I> VecArrayConstruction<I> {
     }
 
     #[inline]
-    pub fn done(self) -> VecArray<I> {
+    pub fn done(self) -> VecArray<I, A> {
         self.vec_array
     }
 

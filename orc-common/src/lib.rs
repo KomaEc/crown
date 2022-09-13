@@ -7,6 +7,7 @@
 #![feature(associated_type_defaults)]
 #![feature(split_array)]
 #![feature(array_windows)]
+#![feature(allocator_api)]
 
 extern crate rustc_error_codes;
 extern crate rustc_errors;

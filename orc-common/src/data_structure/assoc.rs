@@ -1,4 +1,4 @@
-use std::borrow::Borrow;
+use std::{borrow::Borrow, alloc::Allocator};
 
 use smallvec::SmallVec;
 
@@ -26,7 +26,7 @@ where
         Q: Eq;
 }
 
-impl<K: Eq, V> AssocExt<K, V> for Vec<(K, V)> {
+impl<K: Eq, V, A: Allocator> AssocExt<K, V> for Vec<(K, V), A> {
     #[inline]
     fn get<Q: ?Sized>(&self, k: &Q) -> Option<&V>
     where
