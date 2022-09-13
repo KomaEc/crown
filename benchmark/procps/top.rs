@@ -1,4 +1,5 @@
-use ::libc;
+extern crate libc;
+// use ::libc;
 extern "C" {
     pub type __dirstream;
     #[no_mangle]

@@ -1,4 +1,5 @@
-use ::libc;
+extern crate libc;
+// use ::libc;
 extern "C" {
     #[no_mangle]
     fn sysinfo(__info: *mut sysinfo) -> libc::c_int;
