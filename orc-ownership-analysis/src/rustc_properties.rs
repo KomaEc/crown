@@ -1,8 +1,11 @@
 //! Dynamically verify several assumptions we made on rustc.
 
-use rustc_middle::mir::{
-    visit::{MutatingUseContext, PlaceContext, Visitor},
-    Local, LocalInfo, LocalKind, Location, Place, Rvalue, Terminator, TerminatorKind,
+use rustc_middle::{
+    mir::{
+        visit::{MutatingUseContext, PlaceContext, Visitor},
+        Local, LocalInfo, LocalKind, Location, Place, Rvalue, Terminator, TerminatorKind,
+    },
+    ty::TyCtxt,
 };
 
 use crate::CrateCtxt;
@@ -17,6 +20,7 @@ impl<'tcx> CrateCtxt<'tcx> {
         self.verify_return_clause_unique();
         #[cfg(debug_assertions)]
         self.compute_max_num_scc();
+        self.verify_projection_elem_intern();
     }
 
     fn verify_shape_of_place(&self) {
@@ -239,5 +243,21 @@ impl<'tcx> CrateCtxt<'tcx> {
             .reduce(std::cmp::max)
             .unwrap();
         println!("max scc: {max_num}")
+    }
+
+    fn verify_projection_elem_intern(&self) {
+        struct Vis<'tcx>(TyCtxt<'tcx>);
+        impl<'tcx> Visitor<'tcx> for Vis<'tcx> {
+            fn visit_place(&mut self, place: &Place<'tcx>, _: PlaceContext, _: Location) {
+                let tcx = self.0;
+                let projection = &place.projection[..];
+                let new_place = Place::project_deeper(Place::from(place.local), projection, tcx);
+                assert_eq!(*place, new_place);
+            }
+        }
+        for did in self.functions().iter().copied() {
+            let body = self.tcx.optimized_mir(did);
+            Vis(self.tcx).visit_body(body);
+        }
     }
 }

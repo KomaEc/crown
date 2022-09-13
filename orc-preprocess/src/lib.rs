@@ -6,7 +6,7 @@ extern crate rustc_hir_pretty;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use orc_common::rewriter::{RewriteMode, Rewriter};
+use orc_common::rewrite::{Rewrite, RewriteMode};
 use rustc_hir::{
     intravisit::{self, Visitor},
     Expr, ExprKind, ItemKind, LoopSource, OwnerNode, UnOp,
@@ -19,12 +19,15 @@ pub fn preprocess(tcx: TyCtxt, mode: RewriteMode) {
     insert_null_statement(tcx, mode)
 }
 
-struct NullStmtInsertor<'me, 'hir> {
+struct NullStmtInsertor<'me, 'hir, R> {
     tcx: TyCtxt<'hir>,
-    rewriter: &'me mut Rewriter,
+    rewriter: &'me mut R,
     in_while_loop: bool,
 }
-impl<'me, 'hir> Visitor<'hir> for NullStmtInsertor<'me, 'hir> {
+impl<'me, 'hir, R> Visitor<'hir> for NullStmtInsertor<'me, 'hir, R>
+where
+    R: Rewrite,
+{
     fn visit_expr(&mut self, expr: &'hir Expr<'hir>) {
         match expr.kind {
             ExprKind::If(cond, truth_branch, false_branch) => {
@@ -103,7 +106,10 @@ impl<'me, 'hir> Visitor<'hir> for NullStmtInsertor<'me, 'hir> {
     }
 }
 
-impl<'me, 'hir> NullStmtInsertor<'me, 'hir> {
+impl<'me, 'hir, R> NullStmtInsertor<'me, 'hir, R>
+where
+    R: Rewrite,
+{
     fn insert_to_branch(&mut self, stmt_str: String, branch: &Expr) {
         let branch_span_lo = branch.span.lo();
         let empty_span_after_curly_brace = branch
@@ -120,7 +126,7 @@ impl<'me, 'hir> NullStmtInsertor<'me, 'hir> {
 }
 
 fn insert_null_statement(tcx: TyCtxt, mode: RewriteMode) {
-    let mut rewriter = Rewriter::default();
+    let mut rewriter = Vec::new(); //Rewriter::default();
 
     for maybe_owner in tcx.hir().krate().owners.iter() {
         let Some(owner) = maybe_owner.as_owner() else { continue };

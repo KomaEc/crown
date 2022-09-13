@@ -25,7 +25,7 @@ use std::{borrow::BorrowMut, path::PathBuf, time::Instant};
 use tracing_subscriber::EnvFilter;
 
 use empirical_study::EmpiricalStudy;
-use orc_common::rewriter::RewriteMode;
+use orc_common::rewrite::RewriteMode;
 use orc_ownership_analysis::CrateCtxt;
 use usage_analysis::{fatness, mutability, null};
 

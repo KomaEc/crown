@@ -9,7 +9,7 @@ use rustc_middle::{
 use orc_common::AnalysisResults;
 use usage_analysis::{fatness, mutability, null};
 
-use orc_common::rewriter::{RewriteMode, Rewriter};
+use orc_common::rewrite::{Rewrite, RewriteMode};
 use rewrite_body::{rewrite_body, BodyRewriteCtxt};
 
 fn ty_nested_depth(ty: &Ty) -> usize {
@@ -29,7 +29,7 @@ pub fn rewrite<'tcx, 'a>(
     struct_defs: &[LocalDefId],
     rewrite_mode: RewriteMode,
 ) {
-    let mut rewriter = Rewriter::default();
+    let mut rewriter = Vec::new(); // Rewriter::default();
     rewrite_structs(
         tcx,
         &mut rewriter,
@@ -53,7 +53,7 @@ pub fn rewrite<'tcx, 'a>(
 
 fn rewrite_functions<'tcx, 'a>(
     tcx: TyCtxt<'tcx>,
-    rewriter: &mut Rewriter,
+    rewriter: &mut impl Rewrite, //&mut Rewriter,
     orc_ownership_analysis: &dyn AnalysisResults,
     mutability_analysis: &mutability::CrateResults<'tcx, 'a>,
     fatness_analysis: &fatness::CrateResults<'tcx, 'a>,
@@ -89,7 +89,7 @@ fn rewrite_functions<'tcx, 'a>(
 
 fn rewrite_fn_sig(
     tcx: TyCtxt,
-    rewriter: &mut Rewriter,
+    rewriter: &mut impl Rewrite,
     ownership: &dyn AnalysisResults,
     mutability: &mutability::CrateResults,
     fatness: &fatness::CrateResults,
@@ -127,7 +127,7 @@ fn rewrite_fn_sig(
 
 fn rewrite_structs<'tcx>(
     tcx: TyCtxt<'tcx>,
-    rewriter: &mut Rewriter,
+    rewriter: &mut impl Rewrite,
     orc_ownership_analysis: &dyn AnalysisResults,
     fatness_analysis: &fatness::CrateResults<'tcx, '_>,
     null_analysis: &null::CrateResults<'tcx, '_>,
@@ -150,7 +150,7 @@ fn rewrite_structs<'tcx>(
 
 fn rewrite_struct<'tcx>(
     tcx: TyCtxt<'tcx>,
-    rewriter: &mut Rewriter,
+    rewriter: &mut impl Rewrite,
     ownership: &dyn AnalysisResults,
     fatness: &fatness::CrateResults<'tcx, '_>,
     null: &null::CrateResults<'tcx, '_>,
@@ -182,7 +182,12 @@ struct PtrResults {
     nullable: bool,
 }
 
-fn rewrite_raw_ptr_ty(tcx: TyCtxt<'_>, rewriter: &mut Rewriter, ty: &Ty, results: &[PtrResults]) {
+fn rewrite_raw_ptr_ty(
+    tcx: TyCtxt<'_>,
+    rewriter: &mut impl Rewrite,
+    ty: &Ty,
+    results: &[PtrResults],
+) {
     // we want both recursion and local variable capture, so we need both a fn and a closure
     fn visit_nested_pointer(
         ty: &Ty,

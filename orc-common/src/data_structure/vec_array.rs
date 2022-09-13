@@ -42,7 +42,6 @@ impl<I> VecArray<I> {
 }
 
 impl<I, A: Allocator + Copy> VecArray<I, A> {
-
     pub fn new_in(len: usize, alloc: A) -> VecArrayConstruction<I, A> {
         let mut indices = Vec::with_capacity_in(len + 1, alloc);
         indices.push(0);

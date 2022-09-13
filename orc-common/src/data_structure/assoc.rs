@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, alloc::Allocator};
+use std::{alloc::Allocator, borrow::Borrow};
 
 use smallvec::SmallVec;
 

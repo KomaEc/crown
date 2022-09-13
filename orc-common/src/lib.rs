@@ -21,7 +21,7 @@ extern crate rustc_span;
 
 pub mod data_structure;
 pub mod macros;
-pub mod rewriter;
+pub mod rewrite;
 pub mod test_infra;
 
 use rustc_hir::def_id::{DefId, LocalDefId};

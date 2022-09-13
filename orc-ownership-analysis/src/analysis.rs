@@ -2,8 +2,8 @@ use anyhow::bail;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use smallvec::SmallVec;
-use z3::Model;
 use std::ops::Range;
+use z3::Model;
 
 use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer};
 use crate::analysis::constraint::prune::prune;

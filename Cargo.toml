@@ -4,6 +4,7 @@ members = [
     "orc-preprocess",
     "orc-ownership-analysis",
     "orc-taint-analysis",
+    "orc-rewrite",
     "usage-analysis",
     "orc-refactor",
     "empirical-study",

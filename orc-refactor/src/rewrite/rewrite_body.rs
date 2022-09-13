@@ -13,12 +13,12 @@ use rustc_span::{BytePos, Span};
 use rustc_target::abi::VariantIdx;
 use tracing::{debug, debug_span, info_span, trace, warn};
 
-use orc_common::AnalysisResults;
+use orc_common::{rewrite::Rewrite, AnalysisResults};
 use usage_analysis::{fatness, mutability, null};
 
-pub struct BodyRewriteCtxt<'tcx, 'a, 'b> {
+pub struct BodyRewriteCtxt<'tcx, 'a, 'b, R> {
     pub tcx: TyCtxt<'tcx>,
-    pub rewriter: &'a mut orc_common::rewriter::Rewriter,
+    pub rewriter: &'a mut R,
     pub ownership: &'a dyn AnalysisResults,
     pub mutability: &'a mutability::CrateResults<'tcx, 'b>,
     pub fatness: &'a fatness::CrateResults<'tcx, 'b>,
@@ -27,7 +27,10 @@ pub struct BodyRewriteCtxt<'tcx, 'a, 'b> {
     pub body: &'tcx Body<'tcx>,
 }
 
-impl BodyRewriteCtxt<'_, '_, '_> {
+impl<R> BodyRewriteCtxt<'_, '_, '_, R>
+where
+    R: Rewrite,
+{
     fn rewrite(&mut self, span: Span, to: impl Into<String>, msg: &'static str) {
         let to = to.into();
         debug!(?span, ?to, "suggestion");
@@ -40,7 +43,7 @@ impl BodyRewriteCtxt<'_, '_, '_> {
     }
 }
 
-pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
+pub fn rewrite_body<R: Rewrite>(cx: &mut BodyRewriteCtxt<R>) {
     let fn_name = cx.tcx.def_path_str(cx.def_id.to_def_id());
     let _guard = info_span!("body", ?fn_name).entered();
     // some terminators also cause statement rewrites, so we track which ones have been rewritten
@@ -121,7 +124,10 @@ pub fn rewrite_body(cx: &mut BodyRewriteCtxt) {
     }
 }
 
-fn rewrite_terminator<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_, '_>, bb_id: BasicBlock) {
+fn rewrite_terminator<'tcx, R: Rewrite>(
+    cx: &mut BodyRewriteCtxt<'tcx, '_, '_, R>,
+    bb_id: BasicBlock,
+) {
     let bb = &cx.body.basic_blocks[bb_id];
     let terminator = bb.terminator();
     let terminator_loc = cx.body.terminator_loc(bb_id);
@@ -157,8 +163,8 @@ fn rewrite_terminator<'tcx>(cx: &mut BodyRewriteCtxt<'tcx, '_, '_>, bb_id: Basic
     }
 }
 
-fn handle_split_assignment<'tcx>(
-    cx: &mut BodyRewriteCtxt<'tcx, '_, '_>,
+fn handle_split_assignment<'tcx, R: Rewrite>(
+    cx: &mut BodyRewriteCtxt<'tcx, '_, '_, R>,
     mut loc: Location,
     rewritten_stmts: &mut HashSet<Location>,
 ) -> bool {
@@ -204,8 +210,8 @@ fn handle_split_assignment<'tcx>(
     return true;
 }
 
-pub fn rewrite_reassignment<'tcx>(
-    cx: &mut BodyRewriteCtxt<'tcx, '_, '_>,
+pub fn rewrite_reassignment<'tcx, R: Rewrite>(
+    cx: &mut BodyRewriteCtxt<'tcx, '_, '_, R>,
     loc: Location,
     stmt: &Statement<'tcx>,
 ) {
@@ -231,8 +237,8 @@ pub fn rewrite_reassignment<'tcx>(
     }
 }
 
-pub fn rewrite_rvalue<'tcx>(
-    cx: &mut BodyRewriteCtxt<'tcx, '_, '_>,
+pub fn rewrite_rvalue<'tcx, R: Rewrite>(
+    cx: &mut BodyRewriteCtxt<'tcx, '_, '_, R>,
     loc: Location,
     rvalue: &Rvalue<'tcx>,
     l_place: Place<'tcx>,
@@ -288,8 +294,8 @@ fn strip_place<'tcx, 's>(place: Place<'tcx>, mut source: &'s str) -> &'s str {
     source
 }
 
-pub fn rewrite_place_expr<'tcx>(
-    cx: &mut BodyRewriteCtxt<'tcx, '_, '_>,
+pub fn rewrite_place_expr<'tcx, R: Rewrite>(
+    cx: &mut BodyRewriteCtxt<'tcx, '_, '_, R>,
     loc: Location,
     place: Place<'tcx>,
     l_place: Option<Place<'tcx>>,
@@ -374,8 +380,8 @@ pub fn rewrite_place_expr<'tcx>(
     new_source
 }
 
-fn rewrite_malloc<'tcx>(
-    cx: &mut BodyRewriteCtxt,
+fn rewrite_malloc<'tcx, R: Rewrite>(
+    cx: &mut BodyRewriteCtxt<R>,
     bb_id: BasicBlock,
     rewritten_stmts: &mut HashSet<Location>,
 ) {
@@ -426,8 +432,8 @@ fn rewrite_malloc<'tcx>(
     cx.rewrite(malloc_span, new_source, "use box instead of malloc");
 }
 
-fn rewrite_realloc(
-    cx: &mut BodyRewriteCtxt,
+fn rewrite_realloc<R: Rewrite>(
+    cx: &mut BodyRewriteCtxt<R>,
     bb_id: BasicBlock,
     rewritten_stmts: &mut HashSet<Location>,
 ) {
@@ -482,8 +488,8 @@ fn rewrite_realloc(
     );
 }
 
-fn rewrite_calloc(
-    cx: &mut BodyRewriteCtxt,
+fn rewrite_calloc<R: Rewrite>(
+    cx: &mut BodyRewriteCtxt<R>,
     bb_id: BasicBlock,
     rewritten_stmts: &mut HashSet<Location>,
 ) {
@@ -532,8 +538,8 @@ fn rewrite_calloc(
     );
 }
 
-fn rewrite_offset(
-    cx: &mut BodyRewriteCtxt,
+fn rewrite_offset<R: Rewrite>(
+    cx: &mut BodyRewriteCtxt<R>,
     bb_id: BasicBlock,
     rewritten_stmts: &mut HashSet<Location>,
 ) {
@@ -599,6 +605,10 @@ fn rewrite_offset(
 }
 
 /// returns the source of an expression with all its outer `as _` removed
-fn uncast(_cx: &mut BodyRewriteCtxt, _loc: Location, _local: Local) -> Option<String> {
+fn uncast<R: Rewrite>(
+    _cx: &mut BodyRewriteCtxt<R>,
+    _loc: Location,
+    _local: Local,
+) -> Option<String> {
     todo!("figure out how to get defs now that ssa fatness and mutability are gone");
 }
