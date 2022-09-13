@@ -9,7 +9,7 @@ use rustc_middle::mir::{BasicBlock, Body, Local, TerminatorKind, RETURN_PLACE};
 
 use super::infer::{Mode, Renamer};
 
-pub fn pruned(body: &Body, ssa_state: SSAState) -> SSAState {
+pub fn prune(body: &Body, ssa_state: SSAState) -> SSAState {
     let mut rn = Renamer::new(body, ssa_state);
     let mut special_uses = Vec::with_capacity(body.local_decls.len());
     rn.go::<Prune, ()>(&mut special_uses);

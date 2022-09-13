@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 use std::ops::Range;
 
 use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer};
-use crate::analysis::constraint::prune::pruned;
+use crate::analysis::constraint::prune::prune;
 use crate::analysis::constraint::{CadicalDatabase, OwnershipSigGenerator, Z3Database};
 use crate::analysis::def::initial_definitions;
 use crate::analysis::dom::compute_dominance_frontier;
@@ -120,7 +120,7 @@ impl AnalysisKind for WholeProgram {
             let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
 
             // TODO debug
-            let ssa_state = pruned(body, ssa_state);
+            let ssa_state = prune(body, ssa_state);
 
             let mut rn = Renamer::new(body, ssa_state);
 
