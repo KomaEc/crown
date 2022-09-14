@@ -37,7 +37,6 @@ impl<'tcx> CrateCtxt<'tcx> {
             let definitions = initial_definitions(body, self.tcx, self);
             let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
             let mut rn = Renamer::new(body, ssa_state);
-            // let mut rn = Renamer::new(body, &dominance_frontier, definitions);
             rn.go::<Pure, ()>(());
             println!("completed");
         }
@@ -86,8 +85,8 @@ pub trait AnalysisResults {
     type FnSig<'a>
     where
         Self: 'a;
-    fn local_sigs(&self, r#rn: DefId, local: Local, location: Location) -> Self::Domain<'_>; // Option<&[Ownership]>;
-    fn fn_sigs(&self, r#rn: DefId) -> Self::FnSig<'_>; // FnSig<Option<&[Ownership]>>;
+    fn local_sigs(&self, r#fn: DefId, local: Local, location: Location) -> Self::Domain<'_>;
+    fn fn_sigs(&self, r#fn: DefId) -> Self::FnSig<'_>;
 }
 
 pub trait AnalysisKind {
