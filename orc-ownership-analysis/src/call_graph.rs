@@ -1,24 +1,73 @@
 use orc_common::data_structure::vec_array::VecArray;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
+use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_middle::{
     mir::{visit::Visitor, Terminator, TerminatorKind},
     ty::TyCtxt,
 };
 use rustc_type_ir::TyKind::FnDef;
+use smallvec::SmallVec;
 
-// pub struct FnSig<T> {
-//     output: T,
-//     inputs: Vec<T>,
-// }
+pub struct FnSig<T> {
+    pub ret: T,
+    pub args: SmallVec<[T; 4]>,
+}
+
+impl<T> FnSig<T> {
+    pub fn new(ret: T, args: SmallVec<[T; 4]>) -> Self {
+        FnSig { ret, args }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        std::iter::once(&self.ret).chain(self.args.iter())
+    }
+
+    pub fn repack<U>(self, mut f: impl FnMut(T) -> U) -> FnSig<U> {
+        FnSig {
+            ret: f(self.ret),
+            args: self.args.into_iter().map(f).collect(),
+        }
+    }
+}
+
+impl<T: Default> Default for FnSig<T> {
+    fn default() -> Self {
+        Self {
+            ret: Default::default(),
+            args: Default::default(),
+        }
+    }
+}
+
+impl<T: std::fmt::Debug> std::fmt::Debug for FnSig<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("FnSig")
+            .field("ret", &self.ret)
+            .field("args", &self.args)
+            .finish()
+    }
+}
+
+impl<T: std::fmt::Display> std::fmt::Display for FnSig<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("(")?;
+        f.write_str(
+            &self
+                .args
+                .iter()
+                .map(|data| format!("{data}"))
+                .collect::<Vec<_>>()
+                .join(", "),
+        )?;
+        f.write_str(") -> ")?;
+        f.write_fmt(format_args!("{}", self.ret))
+    }
+}
 
 pub struct CallGraph {
-    // graph: DiGraphMap<DefId, ()>,
-    // /// (sccs + post_order): Vec<Vec<DefId>>,
-    // sccs: Vec<usize>,
-    // post_order: Vec<DefId>,
+    pub did_idx: FxHashMap<DefId, usize>,
     post_order: VecArray<DefId>,
-    // func_sigs: FxHashMap<DefId, >
 }
 
 impl CallGraph {
@@ -46,8 +95,12 @@ impl CallGraph {
         });
         let post_order = post_order.done();
         CallGraph {
-            // graph,
-            // sccs,
+            did_idx: post_order
+                .everything()
+                .iter()
+                .enumerate()
+                .map(|(idx, did)| (*did, idx))
+                .collect(),
             post_order,
         }
     }

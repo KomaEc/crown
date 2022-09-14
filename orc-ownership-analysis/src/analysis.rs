@@ -1,9 +1,8 @@
 use anyhow::bail;
-use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
+use rustc_middle::mir::Local;
 use smallvec::SmallVec;
 use std::ops::Range;
-use z3::Model;
 
 use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer};
 use crate::analysis::constraint::prune::prune;
@@ -14,9 +13,9 @@ use crate::CrateCtxt;
 
 use crate::analysis::constraint::{generate_signatures_for_local, Database, OwnershipSig};
 use crate::analysis::state::SSAState;
+use crate::call_graph::FnSig;
 
-use self::constraint::infer::LocalSigs;
-use self::def::ConsumeChain;
+use self::def::RichLocation;
 
 // pub mod body_ext;
 pub mod constants;
@@ -51,13 +50,50 @@ impl<'tcx> CrateCtxt<'tcx> {
     }
 }
 
-pub struct WholeProgramAnalysisResults<'results> {
-    z3_database: Z3Database<'results>,
-    z3_model: Model<'results>,
-    fn_sigs: FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
-    fn_bodies: FxHashMap<DefId, LocalSigs>,
-    consume_chains: FxHashMap<DefId, ConsumeChain>,
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Ownership {
+    Owning,
+    Transient,
+    Unknown,
 }
+
+impl From<Option<bool>> for Ownership {
+    fn from(value: Option<bool>) -> Self {
+        match value {
+            Some(true) => Ownership::Owning,
+            Some(false) => Ownership::Transient,
+            None => Ownership::Unknown,
+        }
+    }
+}
+
+impl std::fmt::Display for Ownership {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Ownership::Owning => write!(f, "&move"),
+            Ownership::Transient => write!(f, "&"),
+            Ownership::Unknown => write!(f, "&?"),
+        }
+    }
+}
+
+pub trait AnalysisResults {
+    fn local_sigs(
+        &self,
+        r#rn: DefId,
+        local: Local,
+        location: RichLocation,
+    ) -> SmallVec<[Ownership; 2]>;
+    fn fn_sigs(&self, r#rn: DefId) -> FnSig<Option<SmallVec<[Ownership; 2]>>>;
+}
+
+// pub struct WholeProgramAnalysisResults<'results> {
+//     z3_database: Z3Database<'results>,
+//     z3_model: Model<'results>,
+//     fn_sigs: FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
+//     fn_bodies: FxHashMap<DefId, LocalSigs>,
+//     consume_chains: FxHashMap<DefId, ConsumeChain>,
+// }
 
 pub trait AnalysisKind {
     /// Interprocedural Context
@@ -77,7 +113,7 @@ impl AnalysisKind for Modular {
 }
 pub enum WholeProgram {}
 impl AnalysisKind for WholeProgram {
-    type InterCtxt<'analysis> = &'analysis FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>;
+    type InterCtxt<'analysis> = &'analysis Vec<FnSig<Option<Range<OwnershipSig>>>>; //&'analysis FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>;
 
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<()> {
         type DB<'z3> = Z3Database<'z3>;
@@ -89,7 +125,7 @@ impl AnalysisKind for WholeProgram {
         let ctx = z3::Context::new(&config);
         let mut database = DB::new(&ctx);
 
-        let mut fn_sigs = FxHashMap::default();
+        let mut fn_sigs = Vec::with_capacity(crate_ctxt.functions().len()); // FxHashMap::default();
         for &did in crate_ctxt.call_graph.functions() {
             let body = crate_ctxt.tcx.optimized_mir(did);
             let fn_sig = {
@@ -117,8 +153,12 @@ impl AnalysisKind for WholeProgram {
                 FnSig { ret, args }
             };
             println!("generating signatures for {:?}: {:?}", did, fn_sig);
-            fn_sigs.insert(did, fn_sig);
+            // fn_sigs.insert(did, fn_sig);
+            fn_sigs.push(fn_sig);
         }
+
+        let mut local_sigs = Vec::with_capacity(crate_ctxt.call_graph.functions().len());
+        let mut consume_chains = Vec::with_capacity(crate_ctxt.call_graph.functions().len());
 
         for &did in crate_ctxt.call_graph.functions() {
             println!("solving {:?}", did);
@@ -131,14 +171,16 @@ impl AnalysisKind for WholeProgram {
             let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
             let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
 
-            // TODO debug
             let ssa_state = prune(body, ssa_state);
 
             let mut rn = Renamer::new(body, ssa_state);
 
-            let infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, &fn_sigs);
+            let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, &fn_sigs);
 
-            rn.go::<Self, _>(infer_cx);
+            rn.go::<Self, _>(&mut infer_cx);
+
+            local_sigs.push(infer_cx.local_sigs);
+            consume_chains.push(rn.state.consume_chain);
 
             match database.solver.check() {
                 z3::SatResult::Unsat => {
@@ -152,7 +194,13 @@ impl AnalysisKind for WholeProgram {
 
         let z3_model = database.solver.get_model().unwrap();
 
-        for (did, fn_sig) in fn_sigs {
+        for (did, fn_sig) in crate_ctxt
+            .call_graph
+            .functions()
+            .iter()
+            .copied()
+            .zip(fn_sigs)
+        {
             let fn_sig = fn_sig.repack(|sigs| {
                 if let Some(sigs) = sigs {
                     sigs.map(|sig| {
@@ -210,61 +258,5 @@ impl AnalysisKind for StandAlone {
             databases.push(database);
         }
         Ok(())
-    }
-}
-
-pub struct FnSig<T> {
-    ret: T,
-    args: SmallVec<[T; 4]>,
-}
-
-impl<T> FnSig<T> {
-    fn new(ret: T, args: SmallVec<[T; 4]>) -> Self {
-        FnSig { ret, args }
-    }
-
-    fn iter(&self) -> impl Iterator<Item = &T> {
-        std::iter::once(&self.ret).chain(self.args.iter())
-    }
-
-    fn repack<U>(self, mut f: impl FnMut(T) -> U) -> FnSig<U> {
-        FnSig {
-            ret: f(self.ret),
-            args: self.args.into_iter().map(f).collect(),
-        }
-    }
-}
-
-impl<T: Default> Default for FnSig<T> {
-    fn default() -> Self {
-        Self {
-            ret: Default::default(),
-            args: Default::default(),
-        }
-    }
-}
-
-impl<T: std::fmt::Debug> std::fmt::Debug for FnSig<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("FnSig")
-            .field("ret", &self.ret)
-            .field("args", &self.args)
-            .finish()
-    }
-}
-
-impl<T: std::fmt::Display> std::fmt::Display for FnSig<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("(")?;
-        f.write_str(
-            &self
-                .args
-                .iter()
-                .map(|data| format!("{data}"))
-                .collect::<Vec<_>>()
-                .join(", "),
-        )?;
-        f.write_str(") -> ")?;
-        f.write_fmt(format_args!("{}", self.ret))
     }
 }

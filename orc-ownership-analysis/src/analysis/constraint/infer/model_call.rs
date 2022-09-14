@@ -3,10 +3,13 @@ use std::ops::Range;
 use itertools::izip;
 use rustc_hir::def_id::DefId;
 
-use crate::analysis::{
-    constraint::{infer::InferCtxt, Database, OwnershipSig},
-    def::Consume,
-    AnalysisKind, FnSig, WholeProgram,
+use crate::{
+    analysis::{
+        constraint::{infer::InferCtxt, Database, OwnershipSig},
+        def::Consume,
+        AnalysisKind, FnSig, WholeProgram,
+    },
+    CrateCtxt,
 };
 
 pub mod model_libc;
@@ -21,6 +24,7 @@ pub trait ModelCall: AnalysisKind + Sized {
 
     fn model_inputs<DB: Database, Iter>(
         // infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
+        crate_ctxt: &CrateCtxt<'_>,
         inter_ctxt: &Self::InterCtxt<'_>,
         database: &mut DB,
         r#fn: DefId,
@@ -45,6 +49,7 @@ impl<K: AnalysisKind> ModelCall for K {
 
     default fn model_inputs<DB: Database, Iter>(
         // _: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
+        _: &CrateCtxt<'_>,
         _: &K::InterCtxt<'_>,
         _: &mut DB,
         _: DefId,
@@ -75,7 +80,8 @@ impl ModelCall for WholeProgram {
             .skip_binder()
             .c_variadic;
 
-        let callee = &infer_cx.inter_ctxt[&callee];
+        let callee = infer_cx.crate_ctxt.call_graph.did_idx[&callee];
+        let callee = &infer_cx.inter_ctxt[callee];
 
         #[cfg(debug_assertions)]
         if !c_variadic {
@@ -131,6 +137,7 @@ impl ModelCall for WholeProgram {
     }
 
     fn model_inputs<DB: Database, Iter>(
+        crate_ctxt: &CrateCtxt<'_>,
         inter_ctxt: &<WholeProgram as AnalysisKind>::InterCtxt<'_>,
         database: &mut DB,
         r#fn: DefId,
@@ -138,7 +145,8 @@ impl ModelCall for WholeProgram {
     ) where
         Iter: Iterator<Item = Option<Range<OwnershipSig>>>,
     {
-        let fn_sig = &inter_ctxt[&r#fn];
+        let r#fn = crate_ctxt.call_graph.did_idx[&r#fn];
+        let fn_sig = &inter_ctxt[r#fn];
 
         for (input, sigs) in inputs.zip(fn_sig.iter().skip(1)) {
             // debug_assert!(!input.clone().xor(sigs.clone()).is_some())
@@ -159,7 +167,8 @@ impl ModelCall for WholeProgram {
         r#fn: DefId,
         output: Option<Range<OwnershipSig>>,
     ) {
-        let fn_sig = &infer_cx.inter_ctxt[&r#fn];
+        let r#fn = infer_cx.crate_ctxt.call_graph.did_idx[&r#fn];
+        let fn_sig = &infer_cx.inter_ctxt[r#fn];
         let ret = fn_sig.ret.clone();
         match (output, ret) {
             (Some(output), Some(ret)) => {

@@ -68,6 +68,7 @@ where
         }
 
         <Kind as ModelCall>::model_inputs(
+            crate_ctxt,
             &inter_ctxt,
             database,
             body.source.def_id(),
