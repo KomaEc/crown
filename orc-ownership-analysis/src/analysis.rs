@@ -90,31 +90,17 @@ pub trait AnalysisResults {
     fn fn_sigs(&self, r#rn: DefId) -> Self::FnSig<'_>; // FnSig<Option<&[Ownership]>>;
 }
 
-impl<'tcx> AnalysisResults for CrateCtxt<'tcx> {
-    type Domain<'a> = () where Self: 'a;
-
-    type FnSig<'a> = ()
-    where
-        Self: 'a;
-
-    fn local_sigs(&self, _: DefId, _: Local, _: Location) {}
-
-    fn fn_sigs(&self, _: DefId) {}
-}
-
 pub trait AnalysisKind {
     /// Analysis results
-    type Results<'tcx>: AnalysisResults = CrateCtxt<'tcx>;
+    type Results<'tcx> = CrateCtxt<'tcx>;
     /// Interprocedural context
-    type InterCtxt<'analysis>
+    type InterCtxt<'analysis> = ()
     where
         Self: 'analysis;
     fn analyze<'tcx>(crate_ctxt: CrateCtxt<'tcx>) -> anyhow::Result<Self::Results<'tcx>>;
 }
 pub enum Modular {}
 impl AnalysisKind for Modular {
-    type InterCtxt<'analysis> = ();
-
     fn analyze(_: CrateCtxt) -> anyhow::Result<Self::Results<'_>> {
         // TODO implement this
         anyhow::bail!("modular analysis is not implemented")
@@ -297,8 +283,6 @@ impl AnalysisKind for WholeProgram {
 }
 pub enum StandAlone {}
 impl AnalysisKind for StandAlone {
-    type InterCtxt<'analysis> = ();
-
     fn analyze(crate_ctxt: CrateCtxt) -> anyhow::Result<Self::Results<'_>> {
         let mut databases = Vec::with_capacity(crate_ctxt.functions().len());
         for &did in crate_ctxt.functions() {
