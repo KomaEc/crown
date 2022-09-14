@@ -31,14 +31,15 @@ use crate::{
 
 pub mod model_call;
 
-pub type LocalSigs = IndexVec<Local, IndexVec<SSAIdx, Range<OwnershipSig>>>;
+pub type LocalSig = Range<OwnershipSig>;
+pub type LocalSigs<LocalSig> = IndexVec<Local, IndexVec<SSAIdx, LocalSig>>;
 
 pub struct InferCtxt<'infercx, 'tcx, DB, Kind: AnalysisKind + 'infercx> {
     inter_ctxt: Kind::InterCtxt<'infercx>,
     database: &'infercx mut DB,
     gen: &'infercx mut OwnershipSigGenerator,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
-    pub local_sigs: LocalSigs,
+    pub local_sigs: LocalSigs<LocalSig>,
 }
 
 impl<'infercx, 'tcx, DB, Kind> InferCtxt<'infercx, 'tcx, DB, Kind>

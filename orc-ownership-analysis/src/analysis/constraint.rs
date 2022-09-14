@@ -58,10 +58,10 @@ impl OwnershipSigGenerator {
         start..end
     }
 
-    // #[inline]
-    // pub fn next(&self) -> OwnershipSig {
-    //     self.next
-    // }
+    #[inline]
+    pub fn next(&self) -> OwnershipSig {
+        self.next
+    }
 }
 
 #[inline]

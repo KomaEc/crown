@@ -151,14 +151,14 @@ impl ConsumeChain {
         &self.consumes[block.index()]
     }
 
-    // #[inline]
-    // pub fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume); 2]> {
-    //     let Location {
-    //         block,
-    //         statement_index,
-    //     } = location;
-    //     &self.consumes[block.index()][statement_index]
-    // }
+    #[inline]
+    pub fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume<SSAIdx>); 2]> {
+        let Location {
+            block,
+            statement_index,
+        } = location;
+        &self.consumes[block.index()][statement_index]
+    }
 }
 
 pub fn initial_definitions<'tcx>(
