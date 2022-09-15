@@ -3,14 +3,14 @@ pub mod constraint;
 mod test;
 
 use orc_common::{
-    data_structure::{FixedSize, HashMapVecArray, Maybe},
+    data_structure::DidItemsIndexing,
     OrcInput,
 };
 use petgraph::unionfind::UnionFind;
-use rustc_index::{bit_set::BitSet, vec::IndexVec};
+use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{visit::Visitor, Body, Local, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind},
-    ty::{Ty, TyCtxt, TyKind},
+    mir::{visit::Visitor, Body, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind},
+    ty::{TyCtxt, TyKind},
 };
 use rustc_type_ir::TyKind::FnDef;
 
@@ -42,17 +42,10 @@ impl std::ops::AddAssign<u32> for AbstractLocation {
     }
 }
 
-fn peel_off_array(mut ty: Ty) -> Ty {
-    while let TyKind::Array(inner_ty, _) = ty.kind() {
-        ty = *inner_ty
-    }
-    ty
-}
-
 #[derive(Debug)]
 pub struct Steensgaard {
-    pub(crate) struct_fields: HashMapVecArray<AbstractLocation, FixedSize<1>>,
-    pub(crate) function_locals: HashMapVecArray<AbstractLocation, Maybe>,
+    pub(crate) struct_fields: DidItemsIndexing<AbstractLocation>,
+    pub(crate) function_locals: DidItemsIndexing<AbstractLocation>,
     pub(crate) pts_targets: UnionFind<AbstractLocation>,
     /// Steensgaard's analysis tracks for sinlge points-to relation for an
     /// abstract location, thus pts graph can be simplified as a vector.
@@ -76,60 +69,31 @@ impl Steensgaard {
             pts.push(this);
         }
 
-        let struct_fields = HashMapVecArray::new(
-            input.tcx(),
+        let struct_fields = DidItemsIndexing::new(
             input.structs(),
-            pts.next_index(), //AbstractLocation::NULL + 1 + n_struct_fields_of_ptr_type as u32,
-            |tcx, did| {
-                let adt_def = tcx.adt_def(did);
-                // println!("discretising {:?}", adt_def);
+            pts.next_index(),
+            |did| {
+                let adt_def = input.tcx().adt_def(*did);
                 assert!(adt_def.is_struct());
-                adt_def.all_fields() //.inspect(|field_def| println!("field {:?}", field_def))
+                adt_def.all_fields().count()
             },
             |field: AbstractLocation| {
                 let field_pts = AbstractLocation::from_u32(
-                    field.as_u32() - (n_struct_fields as u32), // (n_struct_fields_of_ptr_type as u32),
+                    field.as_u32() - (n_struct_fields as u32),
                 );
                 assert_eq!(pts.push(field_pts), field);
             },
-            |_| |_, _| (), // peel_off_array(input.tcx().type_of(field_def.did)).is_unsafe_ptr(),
         );
 
-        struct AddrTaken<'me>(&'me mut BitSet<Local>);
-        impl<'me, 'tcx> Visitor<'tcx> for AddrTaken<'me> {
-            fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, _: rustc_middle::mir::Location) {
-                match rvalue {
-                    Rvalue::AddressOf(_, place) | Rvalue::Ref(_, _, place) => {
-                        let Some(local) = place.as_local() else { return };
-                        self.0.insert(local);
-                    }
-                    _ => return,
-                }
-            }
-        }
-
-        let function_locals = HashMapVecArray::new(
-            input.tcx(),
+        let function_locals = DidItemsIndexing::new(
             input.functions(),
             pts.next_index(),
-            |tcx, did| {
-                let body = tcx.optimized_mir(did);
-                body.local_decls.iter()
+            |did| {
+                let body = input.tcx().optimized_mir(*did);
+                body.local_decls.len()
             },
             |local| {
                 assert_eq!(pts.push(AbstractLocation::NULL), local);
-            },
-            |did| {
-                let body = input.tcx().optimized_mir(did);
-                let mut addr_taken = BitSet::<Local>::new_empty(body.local_decls.len());
-                let mut vis = AddrTaken(&mut addr_taken);
-                vis.visit_body(body);
-                move |local_idx, local_decl| {
-                    let ty = peel_off_array(local_decl.ty);
-                    ty.is_unsafe_ptr()
-                        || ty.is_region_ptr()
-                        || addr_taken.contains(local_idx.into())
-                }
             },
         );
 
@@ -190,7 +154,7 @@ impl Steensgaard {
             println!("results for {:?}:", did);
             let fields_result = self
                 .struct_fields
-                .level_one_items(did)
+                .get_indices(did)
                 .map(|loc| self.pts_targets.find(self.pts[loc]));
             // .collect::<Vec<_>>();
             for (idx, tgt) in fields_result.enumerate() {
@@ -202,7 +166,7 @@ impl Steensgaard {
             println!("results for {:?}:", did);
             let locals_result = self
                 .function_locals
-                .level_one_items(did)
+                .get_indices(did)
                 .map(|loc| self.pts_targets.find(self.pts[loc]));
             // .collect::<Vec<_>>();
             for (idx, tgt) in locals_result.enumerate() {
@@ -480,7 +444,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
             let loc = self
                 .steensgaard
                 .struct_fields
-                .get_item(adt_def.did(), field.index());
+                .get_index(adt_def.did(), field.index());
             return Some(PlaceLocation::Plain(loc));
         }
 
@@ -488,7 +452,7 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
         let loc = self
             .steensgaard
             .function_locals
-            .get_item(self.body.source.def_id(), place.local.as_usize());
+            .get_index(self.body.source.def_id(), place.local.as_usize());
         if place.as_local().is_some() {
             return Some(PlaceLocation::Plain(loc));
         } else {
@@ -584,7 +548,7 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
             let param_loc = self
                 .steensgaard
                 .function_locals
-                .get_item(callee_did, idx + 1);
+                .get_index(callee_did, idx + 1);
 
             let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
             let constraint_idx = self.constraints.len();
@@ -600,7 +564,7 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
 
         let Some(dest_loc) = self.place_location(*destination) else { return };
         let PlaceLocation::Plain(dest_loc) = dest_loc else { unreachable!("destination place contains derefs") };
-        let ret_loc = self.steensgaard.function_locals.get_item(callee_did, 0);
+        let ret_loc = self.steensgaard.function_locals.get_index(callee_did, 0);
         let constraint_idx = self.constraints.len();
         self.constraints
             .push(Constraint::new(ConstraintKind::Assign, dest_loc, ret_loc));

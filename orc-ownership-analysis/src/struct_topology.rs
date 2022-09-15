@@ -77,7 +77,6 @@ pub fn ptr_measure(mut ty: Ty, struct_topology: impl HasStructTopology) -> Offse
 
 //     //     }
 
-
 //     //     if chase == 0 { break offset }
 //     // }
 //     // let mut stack = Vec::new();
