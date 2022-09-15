@@ -56,13 +56,34 @@ pub fn ptr_measure(mut ty: Ty, struct_topology: impl HasStructTopology) -> Offse
     total_offset
 }
 
-pub fn ptr_measure_with_chasing(
-    mut ty: Ty,
-    struct_topology: impl HasStructTopology,
-    chase: u32,
-) -> Offset {
-    todo!()
-}
+// pub fn ptr_measure_with_chasing(
+//     mut ty: Ty,
+//     struct_topology: impl HasStructTopology,
+//     chase: u32,
+// ) -> Offset {
+//     // let mut chase = chase + 1;
+//     // let mut offset = 0;
+//     // loop {
+//     //     // peel off array
+//     //     while let TyKind::Array(inner_ty, _) = ty.kind() {
+//     //         ty = *inner_ty
+//     //     }
+
+//     //     if ty.is_unsafe_ptr() || ty.is_region_ptr() || ty.is_box() {
+//     //         ty = ty.builtin_deref(true).unwrap().ty;
+//     //         offset += 1;
+//     //         chase -= 1;
+//     //     } else if let TyKind::Adt(adt_def, _) = ty.kind() {
+
+//     //     }
+
+
+//     //     if chase == 0 { break offset }
+//     // }
+//     // let mut stack = Vec::new();
+
+//     todo!()
+// }
 
 pub struct StructTopology {
     /// Structs in post order of the dependency graph.

@@ -3,7 +3,7 @@ pub mod constraint;
 mod test;
 
 use orc_common::{
-    data_structure::{FixedSize, HashMapDefIdVecRange, Maybe},
+    data_structure::{FixedSize, HashMapVecArray, Maybe},
     OrcInput,
 };
 use petgraph::unionfind::UnionFind;
@@ -51,8 +51,8 @@ fn peel_off_array(mut ty: Ty) -> Ty {
 
 #[derive(Debug)]
 pub struct Steensgaard {
-    pub(crate) struct_fields: HashMapDefIdVecRange<AbstractLocation, FixedSize<1>>,
-    pub(crate) function_locals: HashMapDefIdVecRange<AbstractLocation, Maybe>,
+    pub(crate) struct_fields: HashMapVecArray<AbstractLocation, FixedSize<1>>,
+    pub(crate) function_locals: HashMapVecArray<AbstractLocation, Maybe>,
     pub(crate) pts_targets: UnionFind<AbstractLocation>,
     /// Steensgaard's analysis tracks for sinlge points-to relation for an
     /// abstract location, thus pts graph can be simplified as a vector.
@@ -76,7 +76,7 @@ impl Steensgaard {
             pts.push(this);
         }
 
-        let struct_fields = HashMapDefIdVecRange::new(
+        let struct_fields = HashMapVecArray::new(
             input.tcx(),
             input.structs(),
             pts.next_index(), //AbstractLocation::NULL + 1 + n_struct_fields_of_ptr_type as u32,
@@ -108,7 +108,7 @@ impl Steensgaard {
             }
         }
 
-        let function_locals = HashMapDefIdVecRange::new(
+        let function_locals = HashMapVecArray::new(
             input.tcx(),
             input.functions(),
             pts.next_index(),

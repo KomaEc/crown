@@ -90,7 +90,7 @@ where
     }
 
     pub fn new_sigs(&mut self, size: u32) -> Range<OwnershipSig> {
-        self.database.new_vars(self.gen.gen(size))
+        self.database.new_vars(self.gen.new_sigs(size))
     }
 }
 

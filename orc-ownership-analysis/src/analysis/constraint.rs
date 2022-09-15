@@ -48,7 +48,7 @@ impl OwnershipSigGenerator {
         OwnershipSigGenerator { next: start }
     }
 
-    pub fn gen(&mut self, num: u32) -> Range<OwnershipSig> {
+    pub fn new_sigs(&mut self, num: u32) -> Range<OwnershipSig> {
         let start = self.next;
         self.next += num;
         let end = self.next;
@@ -71,7 +71,7 @@ pub fn generate_signatures_for_local<'tcx, DB: Database>(
     maybe_owned(local_decl, crate_ctxt).then(|| {
         let ty = local_decl.ty;
         let measure = ptr_measure(ty, crate_ctxt);
-        database.new_vars(gen.gen(measure))
+        database.new_vars(gen.new_sigs(measure))
     })
 }
 

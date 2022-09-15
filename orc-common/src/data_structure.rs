@@ -143,7 +143,7 @@ impl ResetAcrossDefId for Contiguous {
 /// as `Range<I>`.
 /// TODO: specialise for `FixedSize`
 #[derive(Debug)]
-pub struct HashMapDefIdVecRange<I, St: Step = Arbitrary, Re: ResetAcrossDefId = Contiguous> {
+pub struct HashMapVecArray<I, St: Step = Arbitrary, Re: ResetAcrossDefId = Contiguous> {
     fx_hash_map: FxHashMap<DefId, usize>,
     /// Sets of contents (represented by an interval of index `I`) of each did.
     items: Vec<I>,
@@ -151,7 +151,7 @@ pub struct HashMapDefIdVecRange<I, St: Step = Arbitrary, Re: ResetAcrossDefId = 
     _marker: PhantomData<*const (St, Re)>,
 }
 
-impl<I, St, Re> HashMapDefIdVecRange<I, St, Re>
+impl<I, St, Re> HashMapVecArray<I, St, Re>
 where
     I: std::ops::AddAssign<u32>
         + std::ops::Add<u32, Output = I>
@@ -218,7 +218,7 @@ where
         }
         let offset_of = offset_of.done();
 
-        HashMapDefIdVecRange {
+        HashMapVecArray {
             fx_hash_map,
             items,
             offset_of,
@@ -257,7 +257,7 @@ where
     }
 }
 
-impl<I, Re> HashMapDefIdVecRange<I, Arbitrary, Re>
+impl<I, Re> HashMapVecArray<I, Arbitrary, Re>
 where
     I: std::ops::Add<u32, Output = I> + Clone + Copy + PartialOrd,
     Re: ResetAcrossDefId,
@@ -274,7 +274,7 @@ where
     }
 }
 
-impl<I, Re> HashMapDefIdVecRange<I, Maybe, Re>
+impl<I, Re> HashMapVecArray<I, Maybe, Re>
 where
     I: std::ops::Add<u32, Output = I> + Clone + Copy + PartialEq,
     Re: ResetAcrossDefId,
@@ -299,7 +299,7 @@ where
     }
 }
 
-impl<I, const N: usize, Re> HashMapDefIdVecRange<I, FixedSize<N>, Re>
+impl<I, const N: usize, Re> HashMapVecArray<I, FixedSize<N>, Re>
 where
     I: std::ops::Add<u32, Output = I> + Clone + Copy,
     Re: ResetAcrossDefId,
