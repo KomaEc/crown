@@ -26,7 +26,6 @@ pub mod def;
 pub mod dom;
 pub mod join_points;
 pub mod state;
-pub mod ty;
 
 impl<'tcx> CrateCtxt<'tcx> {
     pub fn crash_me_with_pure_rename(&self) {

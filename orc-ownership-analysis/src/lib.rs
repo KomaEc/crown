@@ -43,7 +43,7 @@ use call_graph::CallGraph;
 use orc_common::OrcInput;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
-use struct_topology::StructTopology;
+use struct_topology::{HasStructTopology, StructTopology};
 
 /// Input program is assumed to consist of only top-level
 /// functions and struct definitions.
@@ -93,10 +93,10 @@ impl<'tcx> CrateCtxt<'tcx> {
     //     &self.call_graph
     // }
 
-    #[inline]
-    fn struct_topology(&self) -> &StructTopology {
-        &self.struct_topology
-    }
+    // #[inline]
+    // fn struct_topology(&self) -> &StructTopology {
+    //     &self.struct_topology
+    // }
 
     #[inline]
     pub fn functions(&self) -> &[DefId] {
@@ -107,5 +107,12 @@ impl<'tcx> CrateCtxt<'tcx> {
     /// Return the set of top-level struct definitions in post order
     pub fn structs(&self) -> &[DefId] {
         self.struct_topology.structs_in_post_order()
+    }
+}
+
+impl<'tcx> HasStructTopology for CrateCtxt<'tcx> {
+    #[inline]
+    fn struct_topology(&self) -> &StructTopology {
+        &self.struct_topology
     }
 }
