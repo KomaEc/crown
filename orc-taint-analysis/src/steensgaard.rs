@@ -2,14 +2,13 @@ pub mod constraint;
 #[cfg(test)]
 mod test;
 
-use orc_common::{
-    data_structure::DidItemsIndexing,
-    OrcInput,
-};
+use orc_common::{data_structure::DidItemsIndexing, OrcInput};
 use petgraph::unionfind::UnionFind;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{visit::Visitor, Body, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind},
+    mir::{
+        visit::Visitor, Body, Operand, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind,
+    },
     ty::{TyCtxt, TyKind},
 };
 use rustc_type_ir::TyKind::FnDef;
@@ -46,6 +45,8 @@ impl std::ops::AddAssign<u32> for AbstractLocation {
 pub struct Steensgaard {
     pub(crate) struct_fields: DidItemsIndexing<AbstractLocation>,
     pub(crate) function_locals: DidItemsIndexing<AbstractLocation>,
+    /// Argument of free
+    pub(crate) free_arg: AbstractLocation,
     pub(crate) pts_targets: UnionFind<AbstractLocation>,
     /// Steensgaard's analysis tracks for sinlge points-to relation for an
     /// abstract location, thus pts graph can be simplified as a vector.
@@ -78,9 +79,8 @@ impl Steensgaard {
                 adt_def.all_fields().count()
             },
             |field: AbstractLocation| {
-                let field_pts = AbstractLocation::from_u32(
-                    field.as_u32() - (n_struct_fields as u32),
-                );
+                let field_pts =
+                    AbstractLocation::from_u32(field.as_u32() - (n_struct_fields as u32));
                 assert_eq!(pts.push(field_pts), field);
             },
         );
@@ -97,11 +97,14 @@ impl Steensgaard {
             },
         );
 
+        let free_arg = pts.push(AbstractLocation::NULL);
+
         let pts_targets = UnionFind::new(pts.len());
 
         let mut steensgaard = Steensgaard {
             struct_fields,
             function_locals,
+            free_arg,
             pts_targets,
             pts,
         };
@@ -459,6 +462,19 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
             return Some(PlaceLocation::Deref(loc));
         }
     }
+
+    pub(crate) fn handle_free(&mut self, free_arg: &Operand<'tcx>) {
+        let Some(free_arg) = free_arg.place() else { return };
+        let ty = free_arg.ty(self.body, self.tcx).ty;
+        assert!(ty.is_unsafe_ptr() || ty.is_region_ptr());
+        let Some(arg_loc) = self.place_location(free_arg) else { return };
+        let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
+        let param_loc = self.steensgaard.free_arg;
+        let constraint_idx = self.constraints.len();
+        self.constraints
+            .push(Constraint::new(ConstraintKind::Assign, param_loc, arg_loc));
+        self.resolve_assign(param_loc, arg_loc, constraint_idx)
+    }
 }
 
 impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
@@ -535,6 +551,17 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
         let &FnDef(callee_did, _generic_args) = func.ty().kind() else { return };
 
         if !self.steensgaard.function_locals.has_entry(callee_did) {
+            // special-casing free function
+            if let Some(local_did) = callee_did.as_local() {
+                if let rustc_hir::Node::ForeignItem(foreign_item) =
+                    self.tcx.hir().find_by_def_id(local_did).unwrap()
+                {
+                    if foreign_item.ident.as_str() == "free" {
+                        self.handle_free(args.first().unwrap())
+                    }
+                }
+            }
+
             return;
         }
 

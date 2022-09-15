@@ -41,12 +41,14 @@ pub trait EmpiricalStudy<'tcx> {
 
         perform![
             // compute_percentage_of_non_address_taking_functions,
-            compute_percentage_of_non_self_referential_structs
+            compute_percentage_of_non_self_referential_structs,
+            report_maybe_owning_fields
         ];
     }
 
     // fn compute_percentage_of_non_address_taking_functions(&self);
     fn compute_percentage_of_non_self_referential_structs(&self);
+    fn report_maybe_owning_fields(&self);
 }
 
 impl<'tcx, Input: OrcInput<'tcx>> EmpiricalStudy<'tcx> for Input {
@@ -133,5 +135,26 @@ impl<'tcx, Input: OrcInput<'tcx>> EmpiricalStudy<'tcx> for Input {
         .bold(true);
 
         assert!(print_stdout(table).is_ok());
+    }
+
+    fn report_maybe_owning_fields(&self) {
+        let taint_results = taint_results(self);
+        let maybe_owning_fields = taint_results.maybe_owning_fields();
+        for &did in self.structs() {
+            let adt_def = self.tcx().adt_def(did);
+            println!("{:?}", adt_def);
+            let field_defs = &adt_def.variants().raw[0].fields;
+
+            maybe_owning_fields.get(&did).map(|fields| {
+                println!(
+                    "maybe owning fields: {}",
+                    fields
+                        .iter()
+                        .map(|&f| field_defs[f].name.as_str().to_owned())
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
+            });
+        }
     }
 }

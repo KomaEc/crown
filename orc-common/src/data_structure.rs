@@ -34,8 +34,7 @@ where
         first_item: I,
         item_num: impl Fn(&DefId) -> usize,
         mut with_content: impl FnMut(I),
-    ) -> Self
-    {
+    ) -> Self {
         let fx_hash_map: FxHashMap<DefId, usize> = dids
             .iter()
             .enumerate()
@@ -55,7 +54,10 @@ where
             items.push(next_item);
         }
 
-        DidItemsIndexing { fx_hash_map, indices: items }
+        DidItemsIndexing {
+            fx_hash_map,
+            indices: items,
+        }
     }
 
     #[inline]

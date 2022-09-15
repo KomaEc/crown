@@ -55,8 +55,8 @@ impl Steensgaard {
     pub fn maybe_self_referential_structs(&self) -> FxHashMap<DefId, Vec<(usize, usize)>> {
         let mut may_self_referential: FxHashMap<DefId, Vec<(usize, usize)>> = FxHashMap::default();
         for (&did, fields) in self.struct_fields.iter() {
-            let Range { start, end } = fields.clone();
-            for f in fields {
+            let Range { start, end } = fields;
+            for f in start..end {
                 for g in (f + 1u32)..end {
                     if self.may_alias(f, g) {
                         let aliased_pair = (f.index() - start.index(), g.index() - start.index());
@@ -73,5 +73,24 @@ impl Steensgaard {
             }
         }
         may_self_referential
+    }
+
+    pub fn maybe_owning_fields(&self) -> FxHashMap<DefId, Vec<usize>> {
+        let mut maybe_owning_fields: FxHashMap<DefId, Vec<usize>> = FxHashMap::default();
+        for (&did, fields) in self.struct_fields.iter() {
+            let Range { start, end } = fields;
+            for f in start..end {
+                if self.may_alias(f, self.free_arg) {
+                    let f = f.index() - start.index();
+                    match maybe_owning_fields.entry(did) {
+                        std::collections::hash_map::Entry::Occupied(mut o) => o.get_mut().push(f),
+                        std::collections::hash_map::Entry::Vacant(v) => {
+                            v.insert(vec![f]);
+                        }
+                    }
+                }
+            }
+        }
+        maybe_owning_fields
     }
 }
