@@ -31,17 +31,16 @@ where
 }
 
 impl<T: HasStructTopology> Measurable for T {
-
     #[inline]
     fn measure(&self, mut ty: Ty) -> Measure {
         while let TyKind::Array(inner_ty, _) = ty.kind() {
             ty = *inner_ty
         }
-    
+
         if ty.is_unsafe_ptr() || ty.is_region_ptr() || ty.is_box() {
             return 1;
         }
-    
+
         // Notice: this has to be in accordance with struct topology
         let TyKind::Adt(adt_def, _) = ty.kind() else { return 0 };
         // if !adt_def.is_struct() || !struct_topology.contains(&adt_def.did()) {
@@ -52,38 +51,10 @@ impl<T: HasStructTopology> Measurable for T {
             .struct_size(&adt_def.did())
             // .map(Offset::index)
             .unwrap_or(0);
-    
+
         total_offset
     }
 }
-
-// #[inline]
-// pub fn contains_ptr(ty: Ty, struct_topology: impl HasStructTopology) -> bool {
-//     ptr_measure(ty, struct_topology) > 0
-// }
-
-// pub fn ptr_measure(mut ty: Ty, struct_topology: impl HasStructTopology) -> Offset {
-//     while let TyKind::Array(inner_ty, _) = ty.kind() {
-//         ty = *inner_ty
-//     }
-
-//     if ty.is_unsafe_ptr() || ty.is_region_ptr() || ty.is_box() {
-//         return 1;
-//     }
-
-//     // Notice: this has to be in accordance with struct topology
-//     let TyKind::Adt(adt_def, _) = ty.kind() else { return 0 };
-//     // if !adt_def.is_struct() || !struct_topology.contains(&adt_def.did()) {
-//     //     return 0;
-//     // }
-//     let total_offset = struct_topology
-//         .struct_topology()
-//         .struct_size(&adt_def.did())
-//         // .map(Offset::index)
-//         .unwrap_or(0);
-
-//     total_offset
-// }
 
 pub struct StructTopology {
     /// Structs in post order of the dependency graph.

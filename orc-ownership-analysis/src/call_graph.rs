@@ -23,13 +23,6 @@ impl<T> FnSig<T> {
         std::iter::once(&self.ret).chain(self.args.iter())
     }
 
-    pub fn repack<U>(self, mut f: impl FnMut(T) -> U) -> FnSig<U> {
-        FnSig {
-            ret: f(self.ret),
-            args: self.args.into_iter().map(f).collect(),
-        }
-    }
-
     pub fn map<U>(&self, mut f: impl FnMut(&T) -> U) -> FnSig<U> {
         FnSig {
             ret: f(&self.ret),
@@ -119,17 +112,6 @@ impl CallGraph {
     }
 
     #[inline]
-    pub fn function_count(&self) -> usize {
-        self.functions().len()
-    }
-
-    #[inline]
-    pub fn num_sccs(&self) -> usize {
-        // self.sccs.len() - 1
-        self.post_order.array_count()
-    }
-
-    #[inline]
     pub fn sccs(&self) -> impl Iterator<Item = &[DefId]> {
         // self.sccs
         //     .array_windows()
@@ -212,13 +194,8 @@ mod test {
         init_logger();
         orc_common::test_infra::run_compiler_with(TEST_PROGRAMS.into(), |tcx, functions, _| {
             let call_graph = CallGraph::new(tcx, &functions[..]);
-            // for &caller in call_graph.functions() {
-            //     for callee in call_graph.graph.neighbors(caller) {
-            //         tracing::debug!("{:?} ---> {:?}", caller, callee)
-            //     }
-            // }
 
-            assert_eq!(call_graph.num_sccs(), 4);
+            assert_eq!(call_graph.sccs().count(), 4);
 
             let mut post_order_sorted = call_graph
                 .sccs()

@@ -33,12 +33,12 @@ extern crate rustc_target;
 extern crate rustc_type_ir;
 
 mod analysis;
-pub mod call_graph;
+mod call_graph;
+mod ptr;
 mod rustc_properties;
 mod struct_topology;
 #[cfg(test)]
 mod test;
-pub mod ptr;
 
 use call_graph::CallGraph;
 use orc_common::OrcInput;

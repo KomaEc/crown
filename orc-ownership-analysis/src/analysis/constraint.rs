@@ -3,7 +3,7 @@ use std::ops::Range;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::LocalDecl;
 
-use crate::{analysis::def::maybe_owned, CrateCtxt, ptr::Measurable};
+use crate::{analysis::def::maybe_owned, ptr::Measurable, CrateCtxt};
 
 pub mod infer;
 pub mod prune;

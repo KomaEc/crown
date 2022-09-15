@@ -25,8 +25,9 @@ use crate::{
         state::{SSAIdx, SSAState},
         AnalysisKind, FnSig,
     },
+    ptr::Measurable,
     struct_topology::HasStructTopology,
-    CrateCtxt, ptr::Measurable,
+    CrateCtxt,
 };
 
 pub mod model_call;

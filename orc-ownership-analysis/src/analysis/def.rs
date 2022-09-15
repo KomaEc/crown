@@ -1,4 +1,4 @@
-use crate::{analysis::state::SSAIdx, CrateCtxt, ptr::Measurable};
+use crate::{analysis::state::SSAIdx, ptr::Measurable, CrateCtxt};
 use orc_common::data_structure::vec_array::{VecArray, VecArrayConstruction};
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
