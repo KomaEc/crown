@@ -38,6 +38,7 @@ mod rustc_properties;
 mod struct_topology;
 #[cfg(test)]
 mod test;
+pub mod ptr;
 
 use call_graph::CallGraph;
 use orc_common::OrcInput;

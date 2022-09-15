@@ -5,7 +5,9 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{Ty, TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
 
-pub type Offset = u32;
+use crate::ptr::{Measurable, Measure};
+
+// pub type Measure = u32;
 
 pub trait HasStructTopology {
     fn struct_topology(&self) -> &StructTopology;
@@ -28,60 +30,59 @@ where
     }
 }
 
-#[inline]
-pub fn contains_ptr(ty: Ty, struct_topology: impl HasStructTopology) -> bool {
-    ptr_measure(ty, struct_topology) > 0
+impl<T: HasStructTopology> Measurable for T {
+
+    #[inline]
+    fn measure(&self, mut ty: Ty) -> Measure {
+        while let TyKind::Array(inner_ty, _) = ty.kind() {
+            ty = *inner_ty
+        }
+    
+        if ty.is_unsafe_ptr() || ty.is_region_ptr() || ty.is_box() {
+            return 1;
+        }
+    
+        // Notice: this has to be in accordance with struct topology
+        let TyKind::Adt(adt_def, _) = ty.kind() else { return 0 };
+        // if !adt_def.is_struct() || !struct_topology.contains(&adt_def.did()) {
+        //     return 0;
+        // }
+        let total_offset = self
+            .struct_topology()
+            .struct_size(&adt_def.did())
+            // .map(Offset::index)
+            .unwrap_or(0);
+    
+        total_offset
+    }
 }
 
-pub fn ptr_measure(mut ty: Ty, struct_topology: impl HasStructTopology) -> Offset {
-    while let TyKind::Array(inner_ty, _) = ty.kind() {
-        ty = *inner_ty
-    }
+// #[inline]
+// pub fn contains_ptr(ty: Ty, struct_topology: impl HasStructTopology) -> bool {
+//     ptr_measure(ty, struct_topology) > 0
+// }
 
-    if ty.is_unsafe_ptr() || ty.is_region_ptr() || ty.is_box() {
-        return 1;
-    }
+// pub fn ptr_measure(mut ty: Ty, struct_topology: impl HasStructTopology) -> Offset {
+//     while let TyKind::Array(inner_ty, _) = ty.kind() {
+//         ty = *inner_ty
+//     }
 
-    // Notice: this has to be in accordance with struct topology
-    let TyKind::Adt(adt_def, _) = ty.kind() else { return 0 };
-    // if !adt_def.is_struct() || !struct_topology.contains(&adt_def.did()) {
-    //     return 0;
-    // }
-    let total_offset = struct_topology
-        .struct_topology()
-        .struct_size(&adt_def.did())
-        // .map(Offset::index)
-        .unwrap_or(0);
+//     if ty.is_unsafe_ptr() || ty.is_region_ptr() || ty.is_box() {
+//         return 1;
+//     }
 
-    total_offset
-}
-
-// pub fn ptr_measure_with_chasing(
-//     mut ty: Ty,
-//     struct_topology: impl HasStructTopology,
-//     chase: u32,
-// ) -> Offset {
-//     // let mut chase = chase + 1;
-//     // let mut offset = 0;
-//     // loop {
-//     //     // peel off array
-//     //     while let TyKind::Array(inner_ty, _) = ty.kind() {
-//     //         ty = *inner_ty
-//     //     }
-
-//     //     if ty.is_unsafe_ptr() || ty.is_region_ptr() || ty.is_box() {
-//     //         ty = ty.builtin_deref(true).unwrap().ty;
-//     //         offset += 1;
-//     //         chase -= 1;
-//     //     } else if let TyKind::Adt(adt_def, _) = ty.kind() {
-
-//     //     }
-
-//     //     if chase == 0 { break offset }
+//     // Notice: this has to be in accordance with struct topology
+//     let TyKind::Adt(adt_def, _) = ty.kind() else { return 0 };
+//     // if !adt_def.is_struct() || !struct_topology.contains(&adt_def.did()) {
+//     //     return 0;
 //     // }
-//     // let mut stack = Vec::new();
+//     let total_offset = struct_topology
+//         .struct_topology()
+//         .struct_size(&adt_def.did())
+//         // .map(Offset::index)
+//         .unwrap_or(0);
 
-//     todo!()
+//     total_offset
 // }
 
 pub struct StructTopology {
@@ -98,7 +99,7 @@ pub struct StructTopology {
     /// TODO: will we need `Vec<VecArray<Offset>>`?
     /// First level index represents the level of pointer dereferenc
     /// we track
-    offset_of: VecArray<Offset>,
+    offset_of: VecArray<Measure>,
 }
 
 impl StructTopology {
@@ -180,13 +181,13 @@ impl StructTopology {
     // }
 
     #[inline]
-    pub fn struct_size(&self, did: &DefId) -> Option<Offset> {
+    pub fn struct_size(&self, did: &DefId) -> Option<Measure> {
         let idx = self.did_idx.get(did).copied()?;
         Some(self.offset_of[idx].last().copied().unwrap())
     }
 
     #[inline]
-    pub fn field_offsets(&self, did: &DefId) -> Option<&[Offset]> {
+    pub fn field_offsets(&self, did: &DefId) -> Option<&[Measure]> {
         let idx = self.did_idx.get(did).copied()?;
         Some(&self.offset_of[idx])
     }

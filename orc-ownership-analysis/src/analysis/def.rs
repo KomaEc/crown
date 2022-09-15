@@ -1,4 +1,4 @@
-use crate::{analysis::state::SSAIdx, struct_topology::contains_ptr, CrateCtxt};
+use crate::{analysis::state::SSAIdx, CrateCtxt, ptr::Measurable};
 use orc_common::data_structure::vec_array::{VecArray, VecArrayConstruction};
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
@@ -31,7 +31,7 @@ use smallvec::SmallVec;
 #[inline]
 pub fn maybe_owned<'tcx>(local_decl: &LocalDecl<'tcx>, crate_ctxt: &CrateCtxt<'tcx>) -> bool {
     let ty = local_decl.ty;
-    contains_ptr(ty, crate_ctxt) && !matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp))
+    crate_ctxt.contains_ptr(ty) && !matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp))
 }
 
 // e has type T and T coerces to U; coercion-cast
@@ -283,7 +283,7 @@ pub fn initial_definitions<'tcx>(
             let ty = place.ty(self.body, self.tcx).ty;
             let local_info = self.body.local_decls[place.local].local_info.as_deref();
 
-            if contains_ptr(ty, self.crate_ctxt)//ty.contains_ptr(self.struct_topology)
+            if self.crate_ctxt.contains_ptr(ty)//ty.contains_ptr(self.struct_topology)
                 && !place.is_indirect()
                 && !matches!(local_info, Some(LocalInfo::DerefTemp))
             {

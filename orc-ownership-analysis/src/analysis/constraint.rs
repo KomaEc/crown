@@ -3,7 +3,7 @@ use std::ops::Range;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::LocalDecl;
 
-use crate::{analysis::def::maybe_owned, struct_topology::ptr_measure, CrateCtxt};
+use crate::{analysis::def::maybe_owned, CrateCtxt, ptr::Measurable};
 
 pub mod infer;
 pub mod prune;
@@ -70,7 +70,7 @@ pub fn generate_signatures_for_local<'tcx, DB: Database>(
 ) -> Option<Range<OwnershipSig>> {
     maybe_owned(local_decl, crate_ctxt).then(|| {
         let ty = local_decl.ty;
-        let measure = ptr_measure(ty, crate_ctxt);
+        let measure = crate_ctxt.measure(ty);
         database.new_vars(gen.new_sigs(measure))
     })
 }

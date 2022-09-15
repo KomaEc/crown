@@ -25,8 +25,8 @@ use crate::{
         state::{SSAIdx, SSAState},
         AnalysisKind, FnSig,
     },
-    struct_topology::{ptr_measure, HasStructTopology},
-    CrateCtxt,
+    struct_topology::HasStructTopology,
+    CrateCtxt, ptr::Measurable,
 };
 
 pub mod model_call;
@@ -379,8 +379,8 @@ impl<K: AnalysisKind> Mode for K {
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
-        let offset = ptr_measure(ty, infer_cx.crate_ctxt);
-        let sigs = infer_cx.new_sigs(offset);
+        let measure = infer_cx.crate_ctxt.measure(ty);
+        let sigs = infer_cx.new_sigs(measure);
         assert_eq!(def, infer_cx.local_sigs[local].push(sigs));
     }
 
@@ -428,7 +428,7 @@ impl<K: AnalysisKind> Mode for K {
         tracing::debug!("interpretting consume for {:?} with {:?}", place, consume);
         let base = place.local;
         let mut base_ty = body.local_decls[base].ty;
-        let base_offset = ptr_measure(base_ty, infer_cx.crate_ctxt);
+        let base_offset = infer_cx.crate_ctxt.measure(base_ty);
 
         let Range {
             start: old_start,
@@ -481,7 +481,7 @@ impl<K: AnalysisKind> Mode for K {
             infer_cx.database.push_equal::<super::Debug>((), old, new);
         }
 
-        let proj_end_offset = proj_start_offset + ptr_measure(base_ty, infer_cx.crate_ctxt);
+        let proj_end_offset = proj_start_offset + infer_cx.crate_ctxt.measure(base_ty);
 
         for (old, new) in
             (old_start + proj_end_offset..old_end).zip(new_start + proj_end_offset..new_end)
