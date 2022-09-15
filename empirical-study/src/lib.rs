@@ -22,7 +22,6 @@ extern crate rustc_type_ir;
 
 use orc_common::OrcInput;
 use orc_taint_analysis::taint_results;
-// use rustc_middle::mir::{visit::Visitor, Location, Rvalue};
 
 use cli_table::{format::Justify, print_stdout, Cell, Style, Table};
 
@@ -40,86 +39,49 @@ pub trait EmpiricalStudy<'tcx> {
         }
 
         perform![
-            // compute_percentage_of_non_address_taking_functions,
             compute_percentage_of_non_self_referential_structs,
-            report_maybe_owning_fields
+            report_maybe_owning_fields,
+            report_maybe_analysable_structs
         ];
     }
 
-    // fn compute_percentage_of_non_address_taking_functions(&self);
     fn compute_percentage_of_non_self_referential_structs(&self);
     fn report_maybe_owning_fields(&self);
+    fn report_maybe_analysable_structs(&self);
 }
 
 impl<'tcx, Input: OrcInput<'tcx>> EmpiricalStudy<'tcx> for Input {
-    // fn compute_percentage_of_non_address_taking_functions(&self) {
-    //     struct Vis;
-    //     impl<'tcx> Visitor<'tcx> for Vis {
-    //         fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, _location: Location) {
-    //             if let Rvalue::AddressOf(rustc_ast::Mutability::Mut, _) = rvalue {
-    //                 panic!("{:?} to be catched", rvalue)
-    //             }
-    //         }
-    //     }
-    //     let prev_hook = std::panic::take_hook();
-    //     std::panic::set_hook(Box::new(|_| {}));
-    //     let n_address_taking_functions = self
-    //         .functions()
-    //         .iter()
-    //         .filter(|&did| {
-    //             let body = self.tcx().optimized_mir(did);
-    //             std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| Vis.visit_body(body)))
-    //                 .is_ok()
-    //         })
-    //         .count();
-    //     std::panic::set_hook(prev_hook);
-    //     let percentage = format!(
-    //         "{:.1}%",
-    //         100.0 * n_address_taking_functions as f64 / self.functions().len() as f64
-    //     );
-    //     let table = vec![vec![
-    //         self.functions().len().cell().justify(Justify::Right),
-    //         n_address_taking_functions.cell().justify(Justify::Right),
-    //         percentage.cell().justify(Justify::Right),
-    //     ]]
-    //     .table()
-    //     .title(vec![
-    //         "# Functions".cell().bold(true),
-    //         "# Functions without &mut".cell().bold(true),
-    //         "Percentage".cell().bold(true),
-    //     ])
-    //     .bold(true);
-
-    //     assert!(print_stdout(table).is_ok());
-    // }
-
     fn compute_percentage_of_non_self_referential_structs(&self) {
         let taint_results = taint_results(self);
-        let maybe_self_referential_structs = taint_results.maybe_self_referential_structs();
-        for &did in self.structs() {
-            let adt_def = self.tcx().adt_def(did);
-            println!("{:?}", adt_def);
-            let field_defs = &adt_def.variants().raw[0].fields;
-            maybe_self_referential_structs.get(&did).map(|pairs| {
+        let aliasing_field_pairs = taint_results.aliasing_field_pairs();
+        for (did, aliasing_field_pairs) in &aliasing_field_pairs {
+            if !aliasing_field_pairs.is_empty() {
+                let adt_def = self.tcx().adt_def(did);
+                println!("{:?}", adt_def);
+                let field_defs = &adt_def.variants().raw[0].fields;
                 println!(
                     "aliasing fields: {}",
-                    pairs
+                    aliasing_field_pairs
                         .iter()
                         .map(|&(f, g)| format!("({}, {})", field_defs[f].name, field_defs[g].name))
                         .collect::<Vec<_>>()
                         .join(", ")
-                )
-            });
+                );
+            }
         }
+
+        let num_maybe_self_referential_structs = aliasing_field_pairs
+            .values()
+            .filter(|pairs| !pairs.is_empty())
+            .count();
 
         let percentage = format!(
             "{:.1}%",
-            100.0 * maybe_self_referential_structs.len() as f64 / self.structs().len() as f64
+            100.0 * num_maybe_self_referential_structs as f64 / self.structs().len() as f64
         );
         let table = vec![vec![
             self.structs().len().cell().justify(Justify::Right),
-            maybe_self_referential_structs
-                .len()
+            num_maybe_self_referential_structs
                 .cell()
                 .justify(Justify::Right),
             percentage.cell().justify(Justify::Right),
@@ -140,21 +102,52 @@ impl<'tcx, Input: OrcInput<'tcx>> EmpiricalStudy<'tcx> for Input {
     fn report_maybe_owning_fields(&self) {
         let taint_results = taint_results(self);
         let maybe_owning_fields = taint_results.maybe_owning_fields();
-        for &did in self.structs() {
-            let adt_def = self.tcx().adt_def(did);
-            println!("{:?}", adt_def);
-            let field_defs = &adt_def.variants().raw[0].fields;
+        for (did, maybe_owning_fields) in maybe_owning_fields {
+            if !maybe_owning_fields.is_empty() {
+                let adt_def = self.tcx().adt_def(did);
+                println!("{:?}", adt_def);
+                let field_defs = &adt_def.variants().raw[0].fields;
 
-            maybe_owning_fields.get(&did).map(|fields| {
                 println!(
                     "maybe owning fields: {}",
-                    fields
+                    maybe_owning_fields
                         .iter()
                         .map(|&f| field_defs[f].name.as_str().to_owned())
                         .collect::<Vec<_>>()
                         .join(", ")
-                )
-            });
+                );
+            }
+        }
+    }
+
+    fn report_maybe_analysable_structs(&self) {
+        let taint_results = taint_results(self);
+        let maybe_owning_fields = taint_results.maybe_owning_fields();
+        let aliasing_field_pairs = taint_results.aliasing_field_pairs();
+
+        for (did, maybe_owning_fields) in maybe_owning_fields {
+            let aliasing_field_pairs = aliasing_field_pairs.get(&did).unwrap();
+            let mut aliasing_fields = aliasing_field_pairs
+                .iter()
+                .flat_map(|&(x, y)| [x, y])
+                .collect::<Vec<_>>();
+            aliasing_fields.sort();
+            aliasing_fields.dedup();
+
+            let maybe_analysable = maybe_owning_fields
+                .iter()
+                .any(|&field| !aliasing_fields.contains(&field));
+
+            if maybe_analysable {
+                let hir_id = self
+                    .tcx()
+                    .hir()
+                    .local_def_id_to_hir_id(did.as_local().unwrap());
+                println!(
+                    "{}",
+                    rustc_hir_pretty::id_to_string(&self.tcx().hir(), hir_id)
+                );
+            }
         }
     }
 }

@@ -52,45 +52,38 @@ pub fn report_results<'tcx, Input: OrcInput<'tcx>>(input: Input) {
 }
 
 impl Steensgaard {
-    pub fn maybe_self_referential_structs(&self) -> FxHashMap<DefId, Vec<(usize, usize)>> {
-        let mut may_self_referential: FxHashMap<DefId, Vec<(usize, usize)>> = FxHashMap::default();
-        for (&did, fields) in self.struct_fields.iter() {
-            let Range { start, end } = fields;
-            for f in start..end {
-                for g in (f + 1u32)..end {
-                    if self.may_alias(f, g) {
-                        let aliased_pair = (f.index() - start.index(), g.index() - start.index());
-                        match may_self_referential.entry(did) {
-                            std::collections::hash_map::Entry::Occupied(mut o) => {
-                                o.get_mut().push(aliased_pair);
-                            }
-                            std::collections::hash_map::Entry::Vacant(v) => {
-                                v.insert(vec![aliased_pair]);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        may_self_referential
+    pub fn aliasing_field_pairs(&self) -> FxHashMap<DefId, Vec<(usize, usize)>> {
+        self.struct_fields
+            .iter()
+            .map(|(&did, fields)| {
+                (did, {
+                    let Range { start, end } = fields;
+                    (start..end)
+                        .flat_map(|f| ((f + 1u32)..end).map(move |g| (f, g)))
+                        .filter_map(|(f, g)| {
+                            self.may_alias(f, g)
+                                .then(|| (f.index() - start.index(), g.index() - start.index()))
+                        })
+                        .collect()
+                })
+            })
+            .collect()
     }
 
     pub fn maybe_owning_fields(&self) -> FxHashMap<DefId, Vec<usize>> {
-        let mut maybe_owning_fields: FxHashMap<DefId, Vec<usize>> = FxHashMap::default();
-        for (&did, fields) in self.struct_fields.iter() {
-            let Range { start, end } = fields;
-            for f in start..end {
-                if self.may_alias(f, self.free_arg) {
-                    let f = f.index() - start.index();
-                    match maybe_owning_fields.entry(did) {
-                        std::collections::hash_map::Entry::Occupied(mut o) => o.get_mut().push(f),
-                        std::collections::hash_map::Entry::Vacant(v) => {
-                            v.insert(vec![f]);
-                        }
-                    }
-                }
-            }
-        }
-        maybe_owning_fields
+        self.struct_fields
+            .iter()
+            .map(|(&did, fields)| {
+                (did, {
+                    let Range { start, end } = fields;
+                    (start..end)
+                        .filter_map(|f| {
+                            self.may_alias(f, self.free_arg)
+                                .then(|| f.index() - start.index())
+                        })
+                        .collect()
+                })
+            })
+            .collect()
     }
 }
