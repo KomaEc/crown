@@ -187,7 +187,7 @@ impl Mode for Prune {
         infer_cx.push((local, r#use));
     }
 
-    fn model_call<'infercx, 'tcx, DB>(
+    fn handle_call<'infercx, 'tcx, DB>(
         _: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         _: Self::FnSig<Option<crate::analysis::def::Consume<Self::Interpretation>>>,
         _: &rustc_middle::mir::Operand,
@@ -197,7 +197,7 @@ impl Mode for Prune {
     {
     }
 
-    fn model_output<'infercx, 'tcx, DB>(
+    fn handle_output<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         ssa_idx: Option<SSAIdx>,
         _: rustc_hir::def_id::DefId,

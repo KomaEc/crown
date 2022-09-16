@@ -17,7 +17,7 @@ use TyKind::FnDef;
 use crate::{
     analysis::{
         constraint::{
-            generate_signatures_for_local, infer::model_call::ModelCall, Database, OwnershipSig,
+            generate_signatures_for_local, infer::handle_call::HandleCall, Database, OwnershipSig,
             OwnershipSigGenerator,
         },
         def::{Consume, RichLocation},
@@ -30,7 +30,7 @@ use crate::{
     CrateCtxt,
 };
 
-pub mod model_call;
+pub mod handle_call;
 
 pub type LocalSig = Range<OwnershipSig>;
 pub type LocalSigs<LocalSig> = IndexVec<Local, IndexVec<SSAIdx, LocalSig>>;
@@ -69,7 +69,7 @@ where
             }
         }
 
-        <Kind as ModelCall>::model_inputs(
+        <Kind as HandleCall>::handle_inputs(
             crate_ctxt,
             &inter_ctxt,
             database,
@@ -226,7 +226,7 @@ pub trait Mode {
 
     // Design: Use Vec<Consume<Self::Interpretation>>?
     // Note that Vec<Consume<()>> won't allocate memories
-    fn model_call<'infercx, 'tcx, DB>(
+    fn handle_call<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         caller: Self::FnSig<Option<Consume<Self::Interpretation>>>,
         func: &Operand,
@@ -234,7 +234,7 @@ pub trait Mode {
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    fn model_output<'infercx, 'tcx, DB>(
+    fn handle_output<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         ssa_idx: Option<SSAIdx>,
         r#fn: DefId,
@@ -329,14 +329,14 @@ impl Mode for Pure {
     {
     }
 
-    fn model_call<'infercx, 'tcx, DB>((): &mut Self::Ctxt<'infercx, 'tcx, DB>, (): (), _: &Operand)
+    fn handle_call<'infercx, 'tcx, DB>((): &mut Self::Ctxt<'infercx, 'tcx, DB>, (): (), _: &Operand)
     where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
     }
 
-    fn model_output<'infercx, 'tcx, DB>(
+    fn handle_output<'infercx, 'tcx, DB>(
         (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
         _: Option<SSAIdx>,
         _: DefId,
@@ -566,7 +566,7 @@ impl<K: AnalysisKind> Mode for K {
         }
     }
 
-    fn model_call<'infercx, 'tcx, DB>(
+    fn handle_call<'infercx, 'tcx, DB>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         caller: Self::FnSig<Option<Consume<Self::Interpretation>>>,
         func: &Operand,
@@ -587,11 +587,11 @@ impl<K: AnalysisKind> Mode for K {
                 {
                     // this crate
                     rustc_hir::Node::Item(_) => {
-                        <K as ModelCall>::model_call(infer_cx, &caller, callee)
+                        <K as HandleCall>::handle_call(infer_cx, &caller, callee)
                     }
                     // extern
                     rustc_hir::Node::ForeignItem(foreign_item) => {
-                        infer_cx.model_libc_call(&caller, foreign_item.ident)
+                        infer_cx.handle_libc_call(&caller, foreign_item.ident)
                     }
                     // in libxml2.rust/src/xmlschemastypes.rs/{} impl_xmlSchemaValDate/set_mon
                     rustc_hir::Node::ImplItem(_) => { /* TODO */ }
@@ -599,7 +599,7 @@ impl<K: AnalysisKind> Mode for K {
                 }
             } else {
                 // library
-                infer_cx.model_library_call(&caller, callee)
+                infer_cx.handle_library_call(&caller, callee)
             }
         } else {
             // closure or fn ptr
@@ -607,7 +607,7 @@ impl<K: AnalysisKind> Mode for K {
         }
     }
 
-    fn model_output<'infercx, 'tcx, DB>(
+    fn handle_output<'infercx, 'tcx, DB>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         ssa_idx: Option<SSAIdx>,
         r#fn: DefId,
@@ -616,7 +616,7 @@ impl<K: AnalysisKind> Mode for K {
         DB: Database + 'infercx,
     {
         let output = ssa_idx.map(|ssa_idx| infer_cx.local_sigs[RETURN_PLACE][ssa_idx].clone());
-        <K as ModelCall>::model_output(infer_cx, r#fn, output)
+        <K as HandleCall>::handle_output(infer_cx, r#fn, output)
     }
 }
 
@@ -807,7 +807,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
                 let fn_sig = M::transform_fn_sig(fn_sig);
 
-                M::model_call(infer_cx, fn_sig, func);
+                M::handle_call(infer_cx, fn_sig, func);
             }
             TerminatorKind::Return => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
@@ -817,7 +817,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 // maybe not consuming return place?????
                 // comment out visit_terminator in def.rs then we're done
 
-                M::model_output(
+                M::handle_output(
                     infer_cx,
                     self.state.name_state.try_get_name(RETURN_PLACE),
                     self.body.source.def_id(),

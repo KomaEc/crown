@@ -14,7 +14,7 @@ use crate::analysis::{
 impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind>
     InferCtxt<'infercx, 'tcx, DB, Kind>
 {
-    pub fn model_library_call(
+    pub fn handle_library_call(
         &mut self,
         caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         callee: DefId,
@@ -41,7 +41,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind>
                     // }
                     // if it is core::ptr::<..>::is_null
                     rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "is_null" => {
-                        self.model_is_null(caller);
+                        self.handle_is_null(caller);
                         return;
                     }
                     _ => {}
@@ -50,7 +50,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind>
         }
     }
 
-    pub fn model_is_null(&mut self, caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
+    pub fn handle_is_null(&mut self, caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
         let FnSig { args, .. } = caller;
         assert_eq!(args.len(), 1);
         let arg = args.first().and_then(Option::as_ref).cloned().unwrap();

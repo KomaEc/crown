@@ -12,17 +12,17 @@ use crate::{
     CrateCtxt,
 };
 
-pub mod model_libc;
-pub mod model_library;
+pub mod handle_libc;
+pub mod handle_library;
 
-pub trait ModelCall: AnalysisKind + Sized {
-    fn model_call<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
+pub trait HandleCall: AnalysisKind + Sized {
+    fn handle_call<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
         caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         callee: DefId,
     );
 
-    fn model_inputs<DB: Database, Iter>(
+    fn handle_inputs<DB: Database, Iter>(
         // infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
         crate_ctxt: &CrateCtxt<'_>,
         inter_ctxt: &Self::InterCtxt<'_>,
@@ -32,22 +32,22 @@ pub trait ModelCall: AnalysisKind + Sized {
     ) where
         Iter: Iterator<Item = Option<Range<OwnershipSig>>>;
 
-    fn model_output<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
+    fn handle_output<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
         r#fn: DefId,
         output: Option<Range<OwnershipSig>>,
     );
 }
 
-impl<K: AnalysisKind> ModelCall for K {
-    default fn model_call<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
+impl<K: AnalysisKind> HandleCall for K {
+    default fn handle_call<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
         _: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
         _: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         _: DefId,
     ) {
     }
 
-    default fn model_inputs<DB: Database, Iter>(
+    default fn handle_inputs<DB: Database, Iter>(
         // _: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
         _: &CrateCtxt<'_>,
         _: &K::InterCtxt<'_>,
@@ -59,7 +59,7 @@ impl<K: AnalysisKind> ModelCall for K {
     {
     }
 
-    default fn model_output<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
+    default fn handle_output<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
         _: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
         _: DefId,
         _: Option<Range<OwnershipSig>>,
@@ -67,8 +67,8 @@ impl<K: AnalysisKind> ModelCall for K {
     }
 }
 
-impl ModelCall for WholeProgram {
-    fn model_call<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
+impl HandleCall for WholeProgram {
+    fn handle_call<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
         caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         callee: DefId,
@@ -136,7 +136,7 @@ impl ModelCall for WholeProgram {
         }
     }
 
-    fn model_inputs<DB: Database, Iter>(
+    fn handle_inputs<DB: Database, Iter>(
         crate_ctxt: &CrateCtxt<'_>,
         inter_ctxt: &<WholeProgram as AnalysisKind>::InterCtxt<'_>,
         database: &mut DB,
@@ -162,7 +162,7 @@ impl ModelCall for WholeProgram {
         }
     }
 
-    fn model_output<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
+    fn handle_output<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, WholeProgram>,
         r#fn: DefId,
         output: Option<Range<OwnershipSig>>,

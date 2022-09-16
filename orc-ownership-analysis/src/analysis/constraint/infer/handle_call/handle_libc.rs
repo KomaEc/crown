@@ -14,19 +14,19 @@ use crate::analysis::{
 impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind>
     InferCtxt<'infercx, 'tcx, DB, Kind>
 {
-    pub fn model_libc_call(
+    pub fn handle_libc_call(
         &mut self,
         caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         callee: Ident,
     ) {
         match callee.as_str() {
-            "malloc" => self.model_malloc(caller),
-            "free" => self.model_free(caller),
+            "malloc" => self.handle_malloc(caller),
+            "free" => self.handle_free(caller),
             _ => {}
         }
     }
 
-    fn model_malloc(&mut self, caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
+    fn handle_malloc(&mut self, caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
         let FnSig {
             ret: destination,
             args,
@@ -37,7 +37,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind>
         <Kind as Mode>::source(self, destination.clone());
     }
 
-    fn model_free(&mut self, caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
+    fn handle_free(&mut self, caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
         let FnSig {
             ret: destination,
             args,
