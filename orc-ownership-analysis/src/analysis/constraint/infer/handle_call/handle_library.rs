@@ -33,13 +33,6 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind>
             // if it is core::ptr::<..>::..
             if let Some(d) = def_path.data.get(3) {
                 match d.data {
-                    // if it is core::ptr::<..>::offset
-                    // rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "offset" => {
-                    //     tracing::debug!("modelling ptr offset");
-                    //     self.model_ptr_offset(args, destination, location);
-                    //     return;
-                    // }
-                    // if it is core::ptr::<..>::is_null
                     rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "is_null" => {
                         self.handle_is_null(caller);
                         return;

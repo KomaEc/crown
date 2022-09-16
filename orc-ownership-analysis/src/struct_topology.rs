@@ -66,10 +66,6 @@ pub struct StructTopology {
     pub post_order: Vec<DefId>,
     did_idx: FxHashMap<DefId, usize>,
     /// struct -> field -> aggregate offset start of this field
-    /// an additional entry last() represents the sum
-    /// TODO: will we need `Vec<VecArray<Offset>>`?
-    /// First level index represents the level of pointer dereferenc
-    /// we track
     offset_of: VecArray<Measure>,
 }
 
