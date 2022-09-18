@@ -109,6 +109,7 @@ impl Rewrite for Vec<Suggestion> {
                         .to_writer(io::stdout())
                         .unwrap();
                 }
+                RewriteMode::Noop => {}
             }
         }
     }
@@ -182,4 +183,5 @@ pub enum RewriteMode {
     InPlace,
     Print,
     Diff,
+    Noop,
 }

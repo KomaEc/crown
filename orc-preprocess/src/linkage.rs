@@ -3,13 +3,12 @@ use petgraph::unionfind::UnionFind;
 use rustc_hash::FxHashMap;
 use rustc_hir::{
     def::{DefKind, Res},
-    def_id::LocalDefId,
     intravisit::{self, Visitor},
     Expr, ExprKind, ForeignItem, ForeignItemKind, Item, ItemKind, OwnerNode, Pat, PatKind, Path,
     QPath, Ty,
 };
 use rustc_middle::{hir::nested_filter::OnlyBodies, ty::TyCtxt};
-use rustc_span::{sym, Symbol};
+use rustc_span::sym;
 
 pub(crate) fn link_functions(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     // (1) Find all `#[no_mangle]` or `#[export_name=...]` functions, and index them by symbol.
@@ -37,46 +36,18 @@ pub(crate) fn link_functions(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     }
 
     // (3) Adjust references to extern fns to refer to the `#[no_mangle]` definition instead.
-    struct Vis<'me, 'tcx, R: Rewrite> {
-        tcx: TyCtxt<'tcx>,
-        rewriter: &'me mut R,
-        symbol_to_def: &'me mut FxHashMap<Symbol, LocalDefId>,
-        extern_def_to_symbol: &'me mut FxHashMap<LocalDefId, Symbol>,
-    }
-    let mut vis = Vis {
-        tcx,
-        rewriter,
-        symbol_to_def: &mut symbol_to_def,
-        extern_def_to_symbol: &mut extern_def_to_symbol,
-    };
-    impl<'me, 'hir, R: Rewrite> Visitor<'hir> for Vis<'me, 'hir, R> {
-        fn visit_expr(&mut self, expr: &'hir Expr<'hir>) {
-            let tcx = self.tcx;
+    let mut vis = resolved_path_visitor(tcx, |path| {
+        let Res::Def(DefKind::Fn, did) = path.res else { return };
+        let Some(local_did) = did.as_local() else { return };
+        let Some(symbol) = extern_def_to_symbol.get(&local_did) else { return };
+        let Some(&did) = symbol_to_def.get(&symbol) else { return };
 
-            if let ExprKind::Path(path) = &expr.kind {
-                if let QPath::Resolved(_, path) = path {
-                    if let Res::Def(DefKind::Fn, did) = path.res {
-                        if let Some(did) = did.as_local() {
-                            if let Some(symbol) = self.extern_def_to_symbol.get(&did) {
-                                if let Some(&did) = self.symbol_to_def.get(&symbol) {
-                                    let span = path.span;
-                                    let replacement =
-                                        "crate::".to_owned() + &tcx.def_path_str(did.to_def_id());
-                                    self.rewriter.replace(tcx, span, replacement)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            intravisit::walk_expr(self, expr)
-        }
-    }
+        let span = path.span;
+        let replacement = "crate::".to_owned() + &tcx.def_path_str(did.to_def_id());
+        rewriter.replace(tcx, span, replacement)
+    });
     for item in items(tcx) {
-        let ItemKind::Fn(_, _, body_id) = item.kind else { continue };
-        let body = tcx.hir().body(body_id);
-        intravisit::walk_body(&mut vis, body)
+        vis.visit_item(item);
     }
 
     // (4) Remove unused externs
@@ -136,16 +107,20 @@ pub(crate) fn link_incomplete_types(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
 
         if incomplete {
             let def_id = foreign_item.def_id.to_def_id();
-            incomplete_to_name.insert(def_id, foreign_item.ident.name);
+            let name = foreign_item.ident.name;
+            incomplete_to_name.insert(def_id, name);
 
-            let span = foreign_item.span;
-            rewriter.erase(tcx, span);
+            // Erase those having a complete definition
+            if name_to_complete.contains_key(&name) {
+                let span = foreign_item.span;
+                rewriter.erase(tcx, span);
 
-            let hir_id = foreign_item.hir_id();
-            let attrs = tcx.hir().attrs(hir_id);
-            for attr in attrs {
-                let span = attr.span;
-                rewriter.erase(tcx, span)
+                let hir_id = foreign_item.hir_id();
+                let attrs = tcx.hir().attrs(hir_id);
+                for attr in attrs {
+                    let span = attr.span;
+                    rewriter.erase(tcx, span)
+                }
             }
         }
     }

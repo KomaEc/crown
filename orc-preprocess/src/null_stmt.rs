@@ -72,14 +72,16 @@ where
                             } else if !is_while_loop_cond {
                                 // normal if { } else { }
                                 if let Some(false_branch) = false_branch {
-                                    self.insert_to_branch(stmt_str, false_branch);
+                                    // give up if { } else if { } ..
+                                    if !matches!(false_branch.kind, ExprKind::If(..)) {
+                                        self.insert_to_branch(stmt_str, false_branch);
+                                    }
                                 } else {
                                     let empty_span_after_curly_brace =
                                         truth_branch.span.shrink_to_hi();
-                                    self.rewriter.replace_with_msg(
+                                    self.rewriter.replace(
                                         self.tcx,
                                         empty_span_after_curly_brace,
-                                        String::new(),
                                         "else { ".to_string() + &stmt_str + " }",
                                     )
                                 }
@@ -88,12 +90,7 @@ where
                                 // while loop always has false branch, to hold { break; }
                                 // its span for some reason is the whole loop expression
                                 let span = false_branch.unwrap().span.shrink_to_hi();
-                                self.rewriter.replace_with_msg(
-                                    self.tcx,
-                                    span,
-                                    String::new(),
-                                    stmt_str,
-                                );
+                                self.rewriter.replace(self.tcx, span, stmt_str);
                             }
 
                             return;
@@ -122,11 +119,7 @@ where
             .span
             .with_lo(branch_span_lo + BytePos(1))
             .shrink_to_lo();
-        self.rewriter.replace_with_msg(
-            self.tcx,
-            empty_span_after_curly_brace,
-            String::new(),
-            stmt_str,
-        )
+        self.rewriter
+            .replace(self.tcx, empty_span_after_curly_brace, stmt_str)
     }
 }
