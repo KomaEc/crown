@@ -1,24 +1,14 @@
 use ::libc;
 extern "C" {
-    #[no_mangle]
     static mut stderr: *mut _IO_FILE;
-    #[no_mangle]
     fn fopen(_: *const libc::c_char, _: *const libc::c_char) -> *mut FILE;
-    #[no_mangle]
     fn fprintf(_: *mut FILE, _: *const libc::c_char, _: ...) -> libc::c_int;
-    #[no_mangle]
     fn sscanf(_: *const libc::c_char, _: *const libc::c_char, _: ...) -> libc::c_int;
-    #[no_mangle]
     fn fgets(__s: *mut libc::c_char, __n: libc::c_int, __stream: *mut FILE) -> *mut libc::c_char;
-    #[no_mangle]
     fn strtol(_: *const libc::c_char, _: *mut *mut libc::c_char, _: libc::c_int) -> libc::c_long;
-    #[no_mangle]
     fn malloc(_: libc::c_ulong) -> *mut libc::c_void;
-    #[no_mangle]
     fn exit(_: libc::c_int) -> !;
-    #[no_mangle]
     fn strtok(_: *mut libc::c_char, _: *const libc::c_char) -> *mut libc::c_char;
-    #[no_mangle]
     fn __assert_fail(
         __assertion: *const libc::c_char,
         __file: *const libc::c_char,

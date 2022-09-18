@@ -1512,7 +1512,7 @@ pub unsafe extern "C" fn yylex() -> libc::c_int {
             'c_3473: loop {
                 yy_act = yy_accept[yy_current_state as usize] as libc::c_int;
                 yytext = yy_bp;
-                yyleng = yy_cp.wrapping_offset_from(yy_bp) as libc::c_long as libc::c_int;
+                yyleng = yy_cp.offset_from(yy_bp) as libc::c_long as libc::c_int;
                 yy_hold_char = *yy_cp;
                 *yy_cp = '\u{0}' as i32 as libc::c_char;
                 yy_c_buf_p = yy_cp;
@@ -1571,7 +1571,7 @@ pub unsafe extern "C" fn yylex() -> libc::c_int {
                             yy_c_buf_p = yy_cp;
                             yytext = yy_bp;
                             yyleng =
-                                yy_cp.wrapping_offset_from(yy_bp) as libc::c_long as libc::c_int;
+                                yy_cp.offset_from(yy_bp) as libc::c_long as libc::c_int;
                             yy_hold_char = *yy_cp;
                             *yy_cp = '\u{0}' as i32 as libc::c_char;
                             yy_c_buf_p = yy_cp;
@@ -1749,7 +1749,7 @@ pub unsafe extern "C" fn yylex() -> libc::c_int {
                         YY_END_OF_BUFFER => {
                             /* amount of text matched not including the EOB char */
                             let mut yy_amount_of_matched_text: libc::c_int =
-                                (yy_cp.wrapping_offset_from(yytext) as libc::c_long
+                                (yy_cp.offset_from(yytext) as libc::c_long
                                     - 1 as libc::c_int as libc::c_long)
                                     as libc::c_int;
                             /* undo the effects of YY_DO_BEFORE_ACTION */
@@ -1882,7 +1882,7 @@ unsafe extern "C" fn yy_get_next_buffer() -> libc::c_int {
     }
     /* try to read more data */
     /* first move last chars to start of buffer */
-    number_to_move = yy_c_buf_p.wrapping_offset_from(yytext) as libc::c_long as libc::c_int;
+    number_to_move = yy_c_buf_p.offset_from(yytext) as libc::c_long as libc::c_int;
     i = 0 as libc::c_int;
     while i < number_to_move {
         let fresh2 = source;

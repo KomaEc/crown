@@ -9,7 +9,7 @@
 #![feature(const_transmute)]
 #![feature(label_break_value)]
 #![feature(main)]
-#![feature(ptr_wrapping_offset_from)]
+#![feature(ptr_offset_from)]
 #![feature(register_tool)]
 #![register_tool(c2rust)]
 

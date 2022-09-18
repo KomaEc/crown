@@ -15,18 +15,21 @@ pub struct Node {
     pub height: i32,
 }
 // A utility function to get height of the tree
+#[no_mangle]
 pub unsafe extern "C" fn height(mut N: *mut Node) -> i32 {
     if N.is_null() { return 0 as i32 }
     return (*N).height;
 }
 // A utility function to get maximum of two integers
 // A utility function to get maximum of two integers
+#[no_mangle]
 pub unsafe extern "C" fn max(mut a: i32, mut b: i32)
  -> i32 {
     return if a > b { a } else { b };
 }
 /* Helper function that allocates a new node with the given key and
     NULL left and right pointers. */
+#[no_mangle]
 pub unsafe extern "C" fn newNode(mut key: i32) -> *mut Node {
     let mut node: *mut Node =
         malloc(::std::mem::size_of::<Node>() as u64) as
@@ -41,6 +44,7 @@ pub unsafe extern "C" fn newNode(mut key: i32) -> *mut Node {
 
 // A utility function to right rotate subtree rooted with y
 // See the diagram given above.
+#[no_mangle]
 pub unsafe extern "C" fn rightRotate(mut y: *mut Node) -> *mut Node {
     let mut x: *mut Node = (*y).left;
     let mut T2: *mut Node = (*x).right;
@@ -82,6 +86,7 @@ pub unsafe extern "C" fn rightRotate(mut y: *mut Node) -> *mut Node {
 }
 // A utility function to left rotate subtree rooted with x
 // See the diagram given above.
+#[no_mangle]
 pub unsafe extern "C" fn leftRotate(mut x: *mut Node) -> *mut Node {
     let mut y: *mut Node = (*x).right;
     let mut T2: *mut Node = (*y).left;
@@ -97,12 +102,13 @@ pub unsafe extern "C" fn leftRotate(mut x: *mut Node) -> *mut Node {
     return y;
 }
 // Get Balance factor of node N
+#[no_mangle]
 pub unsafe extern "C" fn getBalance(mut N: *mut Node) -> i32 {
     if N.is_null() { return 0 as i32 }
     return height((*N).left) - height((*N).right);
 }
 
-
+#[no_mangle]
 pub unsafe extern "C" fn insert(mut node: *mut Node, mut key: i32)
  -> *mut Node {
     /* 1.  Perform the normal BST rotation */
@@ -148,6 +154,7 @@ pub unsafe extern "C" fn insert(mut node: *mut Node, mut key: i32)
    node with minimum key value found in that tree.
    Note that the entire tree does not need to be
    searched. */
+#[no_mangle]
 pub unsafe extern "C" fn minValueNode(mut node: *mut Node) -> *mut Node {
     let mut current: *mut Node = node;
     /* loop down to find the leftmost leaf */
@@ -157,6 +164,7 @@ pub unsafe extern "C" fn minValueNode(mut node: *mut Node) -> *mut Node {
 // Recursive function to delete a node with given key
 // from subtree with given root. It returns root of
 // the modified subtree.
+#[no_mangle]
 pub unsafe extern "C" fn deleteNode(mut root: *mut Node, mut key: i32)
  -> *mut Node {
     // STEP 1: PERFORM STANDARD BST DELETE
@@ -233,6 +241,7 @@ pub unsafe extern "C" fn deleteNode(mut root: *mut Node, mut key: i32)
 // A utility function to print preorder traversal of
 // the tree.
 // The function also prints height of every node
+#[export_name="pre_order"]
 pub unsafe extern "C" fn preOrder(mut root: *mut Node) {
     if !root.is_null() {
         printf(b"%d \x00" as *const u8 as *const libc::c_char, (*root).key);

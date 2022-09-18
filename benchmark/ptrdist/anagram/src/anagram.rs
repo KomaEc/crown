@@ -497,7 +497,7 @@ pub unsafe extern "C" fn ReadDict(mut pchFile: *mut libc::c_char) {
         let fresh1 = pch;
         pch = pch.offset(1);
         *fresh1 = '\u{0}' as i32 as libc::c_char;
-        *pchBase = pch.wrapping_offset_from(pchBase) as libc::c_long as libc::c_char;
+        *pchBase = pch.offset_from(pchBase) as libc::c_long as libc::c_char;
         *pchBase.offset(1 as libc::c_int as isize) = cLetters as libc::c_char;
         pchBase = pch;
         cWords = cWords.wrapping_add(1)
@@ -522,7 +522,7 @@ pub unsafe extern "C" fn ReadDict(mut pchFile: *mut libc::c_char) {
         stderr,
         b"%lu bytes wasted\n\x00" as *const u8 as *const libc::c_char,
         ulLen.wrapping_sub(
-            pchBase.wrapping_offset_from(pchDictionary) as libc::c_long as libc::c_ulong
+            pchBase.offset_from(pchDictionary) as libc::c_long as libc::c_ulong
         ),
     );
 }

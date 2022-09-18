@@ -270,7 +270,7 @@ pub unsafe extern "C" fn initstate(
         *state.offset(-(1 as libc::c_int) as isize) = rand_type as libc::c_long
     } else {
         *state.offset(-(1 as libc::c_int) as isize) = MAX_TYPES as libc::c_long
-            * rptr.wrapping_offset_from(state) as libc::c_long
+            * rptr.offset_from(state) as libc::c_long
             + rand_type as libc::c_long
     }
     if n < BREAK_1 as libc::c_ulong {
@@ -306,7 +306,7 @@ pub unsafe extern "C" fn initstate(
         *state.offset(-(1 as libc::c_int) as isize) = rand_type as libc::c_long
     } else {
         *state.offset(-(1 as libc::c_int) as isize) = MAX_TYPES as libc::c_long
-            * rptr.wrapping_offset_from(state) as libc::c_long
+            * rptr.offset_from(state) as libc::c_long
             + rand_type as libc::c_long
     }
     return ostate;
@@ -324,7 +324,7 @@ pub unsafe extern "C" fn setstate(mut arg_state: *mut libc::c_void) -> *mut libc
         *state.offset(-(1 as libc::c_int) as isize) = rand_type as libc::c_long
     } else {
         *state.offset(-(1 as libc::c_int) as isize) = MAX_TYPES as libc::c_long
-            * rptr.wrapping_offset_from(state) as libc::c_long
+            * rptr.offset_from(state) as libc::c_long
             + rand_type as libc::c_long
     }
     match type_0 {

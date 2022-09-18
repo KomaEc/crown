@@ -1,60 +1,38 @@
 use ::libc;
 extern "C" {
-    #[no_mangle]
     static mut stdout: *mut _IO_FILE;
-    #[no_mangle]
     static mut stderr: *mut _IO_FILE;
-    #[no_mangle]
     fn fprintf(_: *mut FILE, _: *const libc::c_char, _: ...) -> libc::c_int;
-    #[no_mangle]
     fn exit(_: libc::c_int) -> !;
-    #[no_mangle]
     fn __assert_fail(
         __assertion: *const libc::c_char,
         __file: *const libc::c_char,
         __line: libc::c_uint,
         __function: *const libc::c_char,
     ) -> !;
-    #[no_mangle]
     static mut modules: [NetPtr; 1024];
     /* all modules -> nets */
-    #[no_mangle]
     static mut numModules: libc::c_ulong;
-    #[no_mangle]
     static mut nets: [ModulePtr; 1024];
     /* all nets -> modules */
-    #[no_mangle]
     static mut numNets: libc::c_ulong;
-    #[no_mangle]
     static mut groupA: ModuleList;
-    #[no_mangle]
     static mut groupB: ModuleList;
     /* current A, B */
-    #[no_mangle]
     static mut swapToA: ModuleList;
-    #[no_mangle]
     static mut swapToB: ModuleList;
     /* swapped from A,B, ordered */
-    #[no_mangle]
     static mut GP: [libc::c_float; 1024];
-    #[no_mangle]
     static mut moduleToGroup: [Groups; 1024];
     /* current inverse mapping */
-    #[no_mangle]
     static mut D: [libc::c_float; 1024];
     /* module costs */
-    #[no_mangle]
     static mut cost: [libc::c_float; 1024];
     /* net costs */
-    #[no_mangle]
     fn ReadNetList(fname: *mut libc::c_char);
-    #[no_mangle]
     fn NetsToModules();
-    #[no_mangle]
     fn ComputeNetCosts();
-    #[no_mangle]
     fn InitLists();
-    #[no_mangle]
     fn ComputeDs(group: ModuleListPtr, myGroup: Groups, mySwap: Groups);
 }
 pub type size_t = libc::c_ulong;
