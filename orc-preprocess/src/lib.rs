@@ -18,15 +18,16 @@ use rustc_middle::ty::TyCtxt;
 
 pub fn preprocess(tcx: TyCtxt, mode: RewriteMode) {
     let mut rewriter = Vec::new();
-    // desugar_while_loop(tcx, mode)
 
     insert_null_statement(tcx, &mut rewriter);
 
+    link_incomplete_types(tcx, &mut rewriter);
+
     canonicalize_structs(tcx, &mut rewriter);
 
-    link_functions(tcx, &mut rewriter);
+    // TODO link_statics
 
-    link_incomplete_types(tcx, &mut rewriter);
+    link_functions(tcx, &mut rewriter);
 
     rewriter.write(mode)
 }

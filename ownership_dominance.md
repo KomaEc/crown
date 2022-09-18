@@ -290,3 +290,26 @@ CBMC: rename `p` when defining `*p`.
 
 #### 9.4
 1. To deal with head references, we may lift the requirement that a local must be non-owning upon exit for function arguments.
+
+
+#### 9.13
+Language:
+```rust
+p = q;
+p = *q;
+*p = q;
+p = **q; ~ { tmp = deref_copy(*q); p = *tmp; }
+**p = q; ~ { tmp = deref_copy(*p); *tmp = q; }
+```
+
+
+### 9.16
+- [x] First stage analysis (runnable on large benchmark)
+- [x] More empirical studies on struct definitions
+- [ ] More benchmarks (checked-c benchmark)
+- [ ] Better C2Rust results (need linux machine)
+- [ ] Smarter constraint solving?
+    Relax $x + y = z$ by $x \le z \land y \le z \land x + y \le 1$, this may lead to memory leak, but what if the underying C lib is well-written? We may perform this relaxed analysis in second stage
+- [ ] Initial rewrite
+    Method boundaries, not struct definitions
+- [ ] Second stage analysis
