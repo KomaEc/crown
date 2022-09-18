@@ -70,6 +70,7 @@ pub struct StructTopology {
 }
 
 impl StructTopology {
+    // TODO refactor using `StructDependency`
     pub fn new(tcx: TyCtxt, structs: Vec<DefId>) -> Self {
         let mut graph = DiGraphMap::with_capacity(structs.len(), structs.len());
         structs.iter().for_each(|did| {

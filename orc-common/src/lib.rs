@@ -18,10 +18,12 @@ extern crate rustc_interface;
 extern crate rustc_middle;
 extern crate rustc_session;
 extern crate rustc_span;
+extern crate rustc_type_ir;
 
 pub mod data_structure;
 pub mod macros;
 pub mod rewrite;
+pub mod struct_dependency;
 pub mod test_infra;
 
 use rustc_hir::def_id::{DefId, LocalDefId};
