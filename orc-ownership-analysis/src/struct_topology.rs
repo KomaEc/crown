@@ -79,7 +79,10 @@ impl StructTopology {
             let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };
             assert!(adt_def.is_struct());
             for field_def in adt_def.all_fields() {
-                let ty = field_def.ty(tcx, subst_ref);
+                let mut ty = field_def.ty(tcx, subst_ref);
+                while let TyKind::Array(inner_ty, _) = ty.kind() {
+                    ty = *inner_ty;
+                }
                 if let TyKind::Adt(sub_adt_def, _) = ty.kind() {
                     if graph.contains_node(sub_adt_def.did()) {
                         graph.add_edge(*did, sub_adt_def.did(), ());
@@ -108,7 +111,6 @@ impl StructTopology {
             for field_def in adt_def.all_fields() {
                 let mut ty = field_def.ty(tcx, subst_ref);
                 // peel off arrays
-                // Notice: this has to be in accordnace with TyExt
                 while let TyKind::Array(inner_ty, _) = ty.kind() {
                     ty = *inner_ty;
                 }
@@ -119,7 +121,6 @@ impl StructTopology {
                         .get(&sub_adt_def.did())
                         .and_then(|&field_did_idx| {
                             offset_of.get_constructed(field_did_idx).last().copied()
-                            // .map(|&offset| offset.as_usize())
                         })
                         .unwrap_or(0),
                     _ => 0,

@@ -80,15 +80,15 @@ impl HandleCall for WholeProgram {
             .skip_binder()
             .c_variadic;
 
-        let callee = infer_cx.crate_ctxt.call_graph.did_idx[&callee];
-        let callee = &infer_cx.inter_ctxt[callee];
+        let callee_idx = infer_cx.crate_ctxt.call_graph.did_idx[&callee];
+        let callee_sigs = &infer_cx.inter_ctxt[callee_idx];
 
         #[cfg(debug_assertions)]
         if !c_variadic {
-            assert_eq!(callee.iter().count(), caller.iter().count());
+            assert_eq!(callee_sigs.iter().count(), caller.iter().count());
         }
 
-        let mut callee_caller = callee.iter().zip(caller.iter());
+        let mut callee_caller = callee_sigs.iter().zip(caller.iter());
 
         // dest = ret ~> rho(dest) = 0, rho(dest') = rho(ret)
         let (ret, dest) = callee_caller.next().unwrap();
@@ -107,9 +107,11 @@ impl HandleCall for WholeProgram {
                         .push_equal::<crate::analysis::constraint::Debug>((), dest_def, ret);
                 }
             }
-        } else {
-            assert!(c_variadic || dest.is_none())
         }
+        // TODO
+        // else {
+        //     assert!(c_variadic || dest.is_none())
+        // }
 
         // para = arg ~> rho(para') + rho(arg') = rho(arg)
         for (para, arg) in callee_caller {
@@ -130,9 +132,10 @@ impl HandleCall for WholeProgram {
                             );
                     }
                 }
-            } else {
-                assert!(c_variadic || arg.is_none())
             }
+            // else {
+            //     assert!(c_variadic || arg.is_none(), "{:?}", callee)
+            // }
         }
     }
 
