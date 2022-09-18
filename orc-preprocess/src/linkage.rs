@@ -1,7 +1,7 @@
+use std::fmt::format;
+
 use orc_common::{
-    data_structure::{assoc::AssocExt, vec_array::VecArray},
-    rewrite::Rewrite,
-    struct_dependency::StructDependency,
+    data_structure::vec_array::VecArray, rewrite::Rewrite, struct_dependency::StructDependency,
 };
 use petgraph::{algo::TarjanScc, unionfind::UnionFind};
 use rustc_hash::FxHashMap;
@@ -69,11 +69,7 @@ pub(crate) fn link_functions(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
                                     let span = path.span;
                                     let replacement =
                                         "crate::".to_owned() + &tcx.def_path_str(did.to_def_id());
-                                    self.rewriter.replace(
-                                        tcx,
-                                        span,
-                                        replacement,
-                                    )
+                                    self.rewriter.replace(tcx, span, replacement)
                                 }
                             }
                         }
@@ -94,12 +90,20 @@ pub(crate) fn link_functions(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     for foreign_item in foreign_items(tcx)
         .filter(|foreign_item| matches!(foreign_item.kind, ForeignItemKind::Fn(..)))
     {
+        // println!("try erasing {}", foreign_item.ident);
         let did = foreign_item.def_id;
         // Drop any items that resolve to a symbol in another module.
         if let Some(symbol) = extern_def_to_symbol.get(&did) {
             if symbol_to_def.contains_key(&symbol) {
                 let span = foreign_item.span;
-                rewriter.erase(tcx, span)
+                rewriter.erase(tcx, span);
+
+                let hir_id = foreign_item.hir_id();
+                let attrs = tcx.hir().attrs(hir_id);
+                for attr in attrs {
+                    let span = attr.span;
+                    rewriter.erase(tcx, span)
+                }
             }
         }
     }
@@ -144,8 +148,10 @@ pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         |field_def| field_def.ident(tcx),
     );
 
+    // (2) Compute equivalent struct classes
     let mut sccs = VecArray::with_data_capacity(structs.len());
     TarjanScc::new().run(struct_dependency.graph(), |nodes| {
+        println!("{:?}", nodes);
         sccs.push_array(nodes.iter().copied().map(|did| (did, tcx.item_name(did))))
     });
     let sccs = sccs.done();
@@ -175,6 +181,51 @@ pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     }
     let equivalent_classes = equivalent_classes.into_labeling();
 
+    // (3) Erase non-canonical structs
+    let mut version = 0;
+    for item in items(tcx).filter(|item| matches!(item.kind, ItemKind::Struct(..))) {
+        // println!("try erasing {}", item.ident);
+        let Some(&scc_idx) = scc_idx.get(&item.def_id.to_def_id()) else { unreachable!() };
+        let rep_idx = equivalent_classes[scc_idx];
+        if rep_idx == scc_idx {
+            continue;
+        }
+        let span = item.span;
+        // println!("erased: {:?}", span);
+        // rewriter.erase(tcx, span);
+        rewriter.replace(tcx, span, format!("struct OrcGeneratedXXX{version};"));
+        version += 1;
+
+        let hir_id = item.hir_id();
+        let attrs = tcx.hir().attrs(hir_id);
+        for attr in attrs {
+            let span = attr.span;
+            rewriter.erase(tcx, span)
+        }
+    }
+
+    // for impl_item in items(tcx).filter_map(|item| {
+    //     if let ItemKind::Impl(impl_item) = item.kind {
+    //         Some((item.def_id.to_def_id(), impl_item))
+    //     } else {
+    //         None
+    //     }
+    // }) {
+    //     let self_ty = impl_item.self_ty;
+    //     let rustc_hir::TyKind::Path(path) = &self_ty.kind else { continue };
+    //     let QPath::Resolved(_, path) = path else { continue };
+    //     let Res::Def(DefKind::Struct, did) = path.res else { continue };
+    //     let Some(&scc_idx) = scc_idx.get(&did) else { continue };
+    //     let rep_idx = equivalent_classes[scc_idx];
+    //     if rep_idx == scc_idx {
+    //         continue;
+    //     }
+
+    //     let span = self_ty.span;
+    //     rewriter.erase(tcx, span);
+    // }
+
+    // (4) Rewrite references to canonical one
     let mut vis = resolved_path_visitor(tcx, |path| {
         let Res::Def(DefKind::Struct, did) = path.res else { return };
         let Some(&scc_idx) = scc_idx.get(&did) else { return };
@@ -193,21 +244,17 @@ pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         let replacement = "crate::".to_owned() + &tcx.def_path_str(rep_did);
         rewriter.replace(tcx, span, replacement)
     });
-    for item in items(tcx) {
+    for item in items(tcx).filter(|item| !matches!(item.kind, ItemKind::Struct(..))) {
+        // skip automatically derived items
+        let hir_id = item.hir_id();
+        let attrs = tcx.hir().attrs(hir_id);
+        if attrs.iter().any(|attr| attr.has_name(sym::automatically_derived)) {
+            continue
+        }
         vis.visit_item(item)
     }
     for foreign_item in foreign_items(tcx) {
         vis.visit_foreign_item(foreign_item)
-    }
-
-    for item in items(tcx).filter(|item| matches!(item.kind, ItemKind::Struct(..))) {
-        let Some(&scc_idx) = scc_idx.get(&item.def_id.to_def_id()) else { return };
-        let rep_idx = equivalent_classes[scc_idx];
-        if rep_idx == scc_idx {
-            return;
-        }
-        let span = item.span;
-        rewriter.erase(tcx, span)
     }
 
     // let names = sccs.repack(|(did, ident)| ident);
