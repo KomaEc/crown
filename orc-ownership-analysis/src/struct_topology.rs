@@ -101,7 +101,7 @@ impl StructTopology {
             .map(|(idx, &did)| (did, idx))
             .collect();
 
-        let mut offset_of = VecArray::new(post_order.len());
+        let mut offset_of = VecArray::with_indices_capacity(post_order.len());
         for &did in post_order.iter() {
             // println!("go {:?}", did);
             let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };

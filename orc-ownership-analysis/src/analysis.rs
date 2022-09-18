@@ -125,7 +125,7 @@ impl<'tcx> AnalysisResults for WholeProgramResults<'tcx> {
         let r#fn = self.crate_ctxt.call_graph.did_idx[&r#fn];
         let consume_chain = &self.consume_chains[r#fn];
         let consumes = consume_chain.of_location(location);
-        let consume = consumes.get(&local)?;
+        let consume = consumes.get_by_key(&local)?;
         let ssa_idx = consume.def;
         let sigs = self.local_sigs[r#fn][local][ssa_idx].clone();
         Some(&self.model[sigs.start.index()..sigs.end.index()])

@@ -73,7 +73,7 @@ fn dead_code_elimination(body: &Body, ssa_state: &mut SSAState, special_uses: &S
         let loc = ssa_state.consume_chain.locs[local][r#use];
         let RichLocation::Phi(bb) = loc else { continue };
         let phi_nodes = &ssa_state.join_points[bb];
-        let phi_node = phi_nodes.get(&local).unwrap();
+        let phi_node = phi_nodes.get_by_key(&local).unwrap();
         for &ssa_idx in &phi_node.rhs {
             if !useful.contains(&(local, ssa_idx)) {
                 useful.insert((local, ssa_idx));

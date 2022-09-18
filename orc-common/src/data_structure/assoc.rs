@@ -12,15 +12,15 @@ where
         K: Borrow<Q>,
         Q: Eq,
     {
-        self.get(k).is_some()
+        self.get_by_key(k).is_some()
     }
 
-    fn get<Q: ?Sized>(&self, k: &Q) -> Option<&V>
+    fn get_by_key<Q: ?Sized>(&self, k: &Q) -> Option<&V>
     where
         K: Borrow<Q>,
         Q: Eq;
 
-    fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut V>
+    fn get_by_key_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut V>
     where
         K: Borrow<Q>,
         Q: Eq;
@@ -28,7 +28,7 @@ where
 
 impl<K: Eq, V, A: Allocator> AssocExt<K, V> for Vec<(K, V), A> {
     #[inline]
-    fn get<Q: ?Sized>(&self, k: &Q) -> Option<&V>
+    fn get_by_key<Q: ?Sized>(&self, k: &Q) -> Option<&V>
     where
         K: Borrow<Q>,
         Q: Eq,
@@ -38,7 +38,7 @@ impl<K: Eq, V, A: Allocator> AssocExt<K, V> for Vec<(K, V), A> {
     }
 
     #[inline]
-    fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut V>
+    fn get_by_key_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut V>
     where
         K: Borrow<Q>,
         Q: Eq,
@@ -50,7 +50,7 @@ impl<K: Eq, V, A: Allocator> AssocExt<K, V> for Vec<(K, V), A> {
 
 impl<K: Eq, V, const N: usize> AssocExt<K, V> for SmallVec<[(K, V); N]> {
     #[inline]
-    fn get<Q: ?Sized>(&self, k: &Q) -> Option<&V>
+    fn get_by_key<Q: ?Sized>(&self, k: &Q) -> Option<&V>
     where
         K: Borrow<Q>,
         Q: Eq,
@@ -60,7 +60,7 @@ impl<K: Eq, V, const N: usize> AssocExt<K, V> for SmallVec<[(K, V); N]> {
     }
 
     #[inline]
-    fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut V>
+    fn get_by_key_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut V>
     where
         K: Borrow<Q>,
         Q: Eq,

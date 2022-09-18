@@ -85,7 +85,7 @@ impl CallGraph {
         }
 
         let mut tarjan_scc = TarjanScc::new();
-        let mut post_order = VecArray::new(functions.len());
+        let mut post_order = VecArray::with_indices_capacity(functions.len());
         // let mut sccs = vec![0];
         // let mut post_order = Vec::with_capacity(functions.len());
         tarjan_scc.run(&graph, |nodes| {

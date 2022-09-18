@@ -28,8 +28,8 @@ impl<I, A: Allocator> std::ops::IndexMut<usize> for VecArray<I, A> {
 }
 
 impl<I> VecArray<I> {
-    pub fn new(len: usize) -> VecArrayConstruction<I> {
-        let mut indices = Vec::with_capacity(len + 1);
+    pub fn with_indices_capacity(size: usize) -> VecArrayConstruction<I> {
+        let mut indices = Vec::with_capacity(size + 1);
         indices.push(0);
         let data = Vec::new();
         let frozen_vec_vec = VecArray { indices, data };
@@ -38,6 +38,28 @@ impl<I> VecArray<I> {
             start_index: 0,
             n_cur_items: 0,
         }
+    }
+
+    pub fn with_data_capacity(size: usize) -> VecArrayConstruction<I> {
+        let mut indices = Vec::new();
+        indices.push(0);
+        let data = Vec::with_capacity(size);
+        let frozen_vec_vec = VecArray { indices, data };
+        VecArrayConstruction {
+            vec_array: frozen_vec_vec,
+            start_index: 0,
+            n_cur_items: 0,
+        }
+    }
+
+    #[inline]
+    pub fn repack<U, F>(self, f: F) -> VecArray<U>
+    where
+        F: FnMut(I) -> U,
+    {
+        let indices = self.indices;
+        let data = self.data.into_iter().map(f).collect();
+        VecArray { indices, data }
     }
 }
 

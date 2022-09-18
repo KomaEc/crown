@@ -168,7 +168,7 @@ pub fn initial_definitions<'tcx>(
         &body.local_decls,
     );
 
-    let mut consumes = VecArray::new(body.basic_blocks.len());
+    let mut consumes = VecArray::with_indices_capacity(body.basic_blocks.len());
 
     struct Vis<'me, 'tcx> {
         def_sites: &'me mut IndexVec<Local, BitSet<BasicBlock>>,

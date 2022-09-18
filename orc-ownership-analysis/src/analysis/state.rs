@@ -65,7 +65,7 @@ impl SSAState {
     pub fn try_consume_at(&mut self, local: Local, location: Location) -> Option<Consume<SSAIdx>> {
         // tracing::debug!("consume chain before: {:?}", &self.consume_chain.consumes[location.block.index()]);
         let consume = self.consume_chain.consumes[location.block.index()][location.statement_index]
-            .get_mut(&local)?;
+            .get_by_key_mut(&local)?;
         let old_ssa_idx = self.name_state.get_name(local);
         let new_ssa_idx = self.name_state.generate_fresh_name(local);
         tracing::debug!(
