@@ -229,5 +229,5 @@ fn rewrite_raw_ptr_ty(
             new_ty.push('>');
         }
     });
-    rewriter.make_suggestion(tcx, ty.span, String::new(), new_ty);
+    rewriter.replace_with_msg(tcx, ty.span, String::new(), new_ty);
 }

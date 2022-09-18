@@ -35,7 +35,7 @@ where
         let to = to.into();
         debug!(?span, ?to, "suggestion");
         self.rewriter
-            .make_suggestion(self.tcx, span, msg.into(), to.into());
+            .replace_with_msg(self.tcx, span, msg.into(), to.into());
     }
 
     fn span_to_snippet(&self, span: Span) -> String {

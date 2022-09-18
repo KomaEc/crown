@@ -76,7 +76,7 @@ where
                                 } else {
                                     let empty_span_after_curly_brace =
                                         truth_branch.span.shrink_to_hi();
-                                    self.rewriter.make_suggestion(
+                                    self.rewriter.replace_with_msg(
                                         self.tcx,
                                         empty_span_after_curly_brace,
                                         String::new(),
@@ -88,7 +88,7 @@ where
                                 // while loop always has false branch, to hold { break; }
                                 // its span for some reason is the whole loop expression
                                 let span = false_branch.unwrap().span.shrink_to_hi();
-                                self.rewriter.make_suggestion(
+                                self.rewriter.replace_with_msg(
                                     self.tcx,
                                     span,
                                     String::new(),
@@ -122,7 +122,7 @@ where
             .span
             .with_lo(branch_span_lo + BytePos(1))
             .shrink_to_lo();
-        self.rewriter.make_suggestion(
+        self.rewriter.replace_with_msg(
             self.tcx,
             empty_span_after_curly_brace,
             String::new(),

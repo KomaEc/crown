@@ -9,7 +9,17 @@ use std::io::Write;
 // use std::path::PathBuf;
 
 pub trait Rewrite {
-    fn make_suggestion(&mut self, tcx: TyCtxt, span: Span, message: String, replacement: String);
+    #[inline]
+    fn erase(&mut self, tcx: TyCtxt, span: Span) {
+        self.replace_with_msg(tcx, span, "erase".to_owned(), "".to_owned())
+    }
+
+    #[inline]
+    fn replace(&mut self, tcx: TyCtxt, span: Span, replacement: String) {
+        self.replace_with_msg(tcx, span, "replace".to_owned(), replacement)
+    }
+
+    fn replace_with_msg(&mut self, tcx: TyCtxt, span: Span, message: String, replacement: String);
 
     fn write(self, mode: RewriteMode);
 }
@@ -65,7 +75,7 @@ pub trait Rewrite {
 // }
 
 impl Rewrite for Vec<Suggestion> {
-    fn make_suggestion(&mut self, tcx: TyCtxt, span: Span, message: String, replacement: String) {
+    fn replace_with_msg(&mut self, tcx: TyCtxt, span: Span, message: String, replacement: String) {
         let suggestion = make_suggestion(tcx, span, message, replacement);
         self.push(suggestion);
     }

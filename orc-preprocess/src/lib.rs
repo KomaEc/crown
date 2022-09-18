@@ -22,11 +22,11 @@ pub fn preprocess(tcx: TyCtxt, mode: RewriteMode) {
 
     insert_null_statement(tcx, &mut rewriter);
 
+    canonicalize_structs(tcx, &mut rewriter);
+
     link_functions(tcx, &mut rewriter);
 
     link_incomplete_types(tcx, &mut rewriter);
-
-    canonicalize_structs(tcx, &mut rewriter);
 
     rewriter.write(mode)
 }
