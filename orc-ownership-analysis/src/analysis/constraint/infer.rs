@@ -6,8 +6,9 @@ use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
-        AggregateKind, BasicBlock, BasicBlockData, Body, CastKind, Local, Location, Operand, Place,
-        ProjectionElem, Rvalue, Statement, StatementKind, Terminator, TerminatorKind, RETURN_PLACE,
+        AggregateKind, BasicBlock, BasicBlockData, Body, CastKind, Local, Location,
+        Operand, Place, ProjectionElem, Rvalue, Statement, StatementKind,
+        Terminator, TerminatorKind, RETURN_PLACE, NonDivergingIntrinsic,
     },
     ty::Ty,
 };
@@ -41,7 +42,28 @@ pub struct InferCtxt<'infercx, 'tcx, DB, Kind: AnalysisKind + 'infercx> {
     gen: &'infercx mut OwnershipSigGenerator,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     pub local_sigs: LocalSigs<LocalSig>,
+    // ensure_nullness: Vec<Location>,
 }
+
+// fn ensure_nullness(body: &Body) -> Vec<Location> {
+//     let mut ensure_nullness = Vec::new();
+//     for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
+//         let mut index = 0;
+//         for statement in &bb_data.statements {
+//             if let StatementKind::Intrinsic(box NonDivergingIntrinsic::Assume(_)) = &statement.kind
+//             {
+//                 let location = Location {
+//                     block: bb,
+//                     statement_index: index - 2,
+//                 };
+//                 ensure_nullness.push(location);
+//             }
+
+//             index += 1;
+//         }
+//     }
+//     ensure_nullness
+// }
 
 impl<'infercx, 'tcx, DB, Kind> InferCtxt<'infercx, 'tcx, DB, Kind>
 where
@@ -86,6 +108,7 @@ where
             database,
             gen,
             crate_ctxt,
+            // ensure_nullness: ensure_nullness(body),
             local_sigs,
         }
     }
@@ -179,15 +202,15 @@ pub trait Mode {
         Self::assume(infer_cx, result.def, false)
     }
 
-    /// Special treatment to null assignment
-    fn null_assignment<'infercx, 'tcx, DB>(
-        _: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        _: Consume<Self::Interpretation>,
-    ) where
-        'tcx: 'infercx,
-        DB: Database + 'infercx,
-    {
-    }
+    // /// Special treatment to null
+    // fn ensure_null<'infercx, 'tcx, DB>(
+    //     _: &mut Self::Ctxt<'infercx, 'tcx, DB>,
+    //     _: Consume<Self::Interpretation>,
+    // ) where
+    //     'tcx: 'infercx,
+    //     DB: Database + 'infercx,
+    // {
+    // }
 
     /// Impose no constraint on a definition. Constraints are still emitted
     /// because the old value of lhs must be non-owning
@@ -759,13 +782,15 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             StatementKind::Deinit(..) => {
                 tracing::debug!("ignoring Deinit statement {:?}", statement)
             }
+            StatementKind::Intrinsic(box intrinsic) => {
+                assert!(matches!(intrinsic, NonDivergingIntrinsic::Assume(..)))
+            }
             StatementKind::AscribeUserType(_, _)
             | StatementKind::StorageLive(_)
             | StatementKind::StorageDead(_)
             | StatementKind::Retag(_, _)
             | StatementKind::FakeRead(_)
             | StatementKind::Coverage(_)
-            | StatementKind::Intrinsic(_)
             // | StatementKind::CopyNonOverlapping(_)
             | StatementKind::Nop => {
                 unreachable!("statement {:?} is not assumed to appear", statement)
@@ -850,11 +875,10 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         //.map(|consume| M::consume_place(infer_cx, self.body, place, consume));
 
         match rhs {
-            Rvalue::Use(Operand::Constant(_))
-            | Rvalue::Cast(CastKind::PointerFromExposedAddress, Operand::Constant(_), _) => {
+            Rvalue::Use(Operand::Constant(_)) => {
                 if let Some(lhs_consume) = self.state.try_consume_at(lhs.local, location) {
                     let lhs_consume = M::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
-                    M::null_assignment(infer_cx, lhs_consume);
+                    M::unknown_source(infer_cx, lhs_consume);
                     tracing::debug!("constant pointer rvalue {:?}", rhs)
                 }
             }
