@@ -63,9 +63,8 @@ where
                             false_branch
                                 .map(|false_branch| intravisit::walk_expr(self, false_branch));
 
-                            let stmt_str =
-                                rustc_hir_pretty::id_to_string(&self.tcx.hir(), ptr.hir_id)
-                                    + " = 0 as *mut _;";
+                            let ptr_name = rustc_hir_pretty::id_to_string(&self.tcx.hir(), ptr.hir_id);
+                            let stmt_str = format!("::core::intrinsics::assume({ptr_name}.is_null());");
 
                             if sign {
                                 self.insert_to_branch(stmt_str, truth_branch);
