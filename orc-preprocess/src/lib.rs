@@ -16,18 +16,37 @@ use null_stmt::insert_null_statement;
 use orc_common::rewrite::{Rewrite, RewriteMode};
 use rustc_middle::ty::TyCtxt;
 
-pub fn preprocess(tcx: TyCtxt, mode: RewriteMode) {
-    let mut rewriter = Vec::new();
 
-    insert_null_statement(tcx, &mut rewriter);
+pub trait Preprocess {
+    fn preprocess(tcx: TyCtxt, mode: RewriteMode);
+}
 
-    link_incomplete_types(tcx, &mut rewriter);
+pub enum Phase<const PHASE: usize> {}
 
-    canonicalize_structs(tcx, &mut rewriter);
 
-    // TODO link_statics
+impl Preprocess for Phase<0> {
+    fn preprocess(tcx: TyCtxt, mode: RewriteMode) {
+        let mut rewriter = Vec::new();
 
-    link_functions(tcx, &mut rewriter);
+        insert_null_statement(tcx, &mut rewriter);
 
-    rewriter.write(mode)
+        link_incomplete_types(tcx, &mut rewriter);
+
+        rewriter.write(mode)
+    }
+}
+
+
+impl Preprocess for Phase<1> {
+    fn preprocess(tcx: TyCtxt, mode: RewriteMode) {
+        let mut rewriter = Vec::new();
+
+        canonicalize_structs(tcx, &mut rewriter);
+
+        // TODO link_statics
+
+        link_functions(tcx, &mut rewriter);
+
+        rewriter.write(mode)
+    }
 }
