@@ -838,7 +838,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         let lhs = place;
         let rhs = rvalue;
 
-
         match rhs {
             Rvalue::Use(Operand::Constant(_)) => {
                 if let Some(lhs_consume) = self.state.try_consume_at(lhs.local, location) {
@@ -956,7 +955,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 // definitions nor pure uses. If these are to be taken care
                 // of, logic in initial_definition needs to be taken care of
                 // as well
-            
+
                 let lhs_consume = self
                     .state
                     .try_consume_at(lhs.local, location)

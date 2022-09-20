@@ -13,7 +13,7 @@ orc_common::macros::orc_index!(OwnershipSig);
 impl std::fmt::Display for OwnershipSig {
     // \mathbb{O}
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_fmt(format_args!("𝕆({:?})", *self))
+        f.write_fmt(format_args!("𝕆({})", self.as_u32()))
     }
 }
 

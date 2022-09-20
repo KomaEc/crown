@@ -106,11 +106,107 @@ impl AnalysisKind for Modular {
 }
 pub enum WholeProgram {}
 
+impl WholeProgram {
+    fn pre_generate_fn_sigs(
+        crate_ctxt: &CrateCtxt,
+        gen: &mut OwnershipSigGenerator,
+        database: &mut Z3Database,
+    ) -> Vec<FnSig<Option<Range<OwnershipSig>>>> {
+        let mut fn_sigs = Vec::with_capacity(crate_ctxt.functions().len()); // FxHashMap::default();
+        for &did in crate_ctxt.call_graph.functions() {
+            let body = crate_ctxt.tcx.optimized_mir(did);
+            let fn_sig = {
+                let mut local_decls = body.local_decls.iter();
+                let return_local_decl = local_decls.next().unwrap();
+                let ret =
+                    generate_signatures_for_local(return_local_decl, gen, database, &crate_ctxt);
+
+                let args = local_decls
+                    .take(body.arg_count)
+                    .map(|local_decl| {
+                        generate_signatures_for_local(local_decl, gen, database, &crate_ctxt)
+                    })
+                    .collect();
+
+                FnSig { ret, args }
+            };
+            println!("generating signatures for {:?}: {:?}", did, fn_sig);
+            // fn_sigs.insert(did, fn_sig);
+            fn_sigs.push(fn_sig);
+        }
+
+        fn_sigs
+    }
+
+    #[inline]
+    fn solve_body(
+        crate_ctxt: &CrateCtxt,
+        inter_ctxt: <WholeProgram as AnalysisKind>::InterCtxt<'_>,
+        did: DefId,
+        gen: &mut OwnershipSigGenerator,
+        database: &mut Z3Database,
+    ) -> anyhow::Result<(LocalSigs<LocalSig>, SSAState)> {
+        println!("solving {:?}", did);
+
+        database.solver.push();
+
+        let body = crate_ctxt.tcx.optimized_mir(did);
+
+        let dominance_frontier = compute_dominance_frontier(body);
+        let definitions = initial_definitions(body, crate_ctxt.tcx, &crate_ctxt);
+        let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
+
+        let ssa_state = prune(body, ssa_state);
+
+        let mut rn = Renamer::new(body, ssa_state);
+
+        let mut infer_cx = InferCtxt::new(&crate_ctxt, body, database, gen, inter_ctxt);
+
+        rn.go::<Self, _>(&mut infer_cx);
+
+        let results = (infer_cx.local_sigs, rn.state);
+
+        match database.solver.check() {
+            z3::SatResult::Unsat => {
+                println!("failed.");
+                database.solver.pop(1);
+            }
+            z3::SatResult::Unknown => bail!("z3 status: unknown"),
+            z3::SatResult::Sat => {}
+        }
+
+        Ok(results)
+    }
+
+    #[inline]
+    fn retrieve_model(
+        database: Z3Database,
+        start: OwnershipSig,
+        gen: OwnershipSigGenerator,
+    ) -> Vec<Ownership> {
+        let z3_model = database.solver.get_model().unwrap();
+        let mut model = Vec::with_capacity(gen.next().index());
+
+        for _ in 0..start.index() {
+            model.push(Ownership::Unknown);
+        }
+        for sig in start..gen.next() {
+            let value = z3_model
+                .eval(&database.z3_ast[sig], true)
+                .unwrap()
+                .as_bool();
+            model.push(value.into());
+        }   
+
+        model
+    }
+}
+
 pub struct WholeProgramResults<'tcx> {
     crate_ctxt: CrateCtxt<'tcx>,
     model: Vec<Ownership>,
     fn_sigs: Vec<FnSig<Option<Range<OwnershipSig>>>>,
-    local_sigs: Vec<LocalSigs<LocalSig>>,
+    fn_results: Vec<LocalSigs<LocalSig>>,
     consume_chains: Vec<ConsumeChain>,
 }
 
@@ -127,7 +223,7 @@ impl<'tcx> AnalysisResults for WholeProgramResults<'tcx> {
         let consumes = consume_chain.of_location(location);
         let consume = consumes.get_by_key(&local)?;
         let ssa_idx = consume.def;
-        let sigs = self.local_sigs[r#fn][local][ssa_idx].clone();
+        let sigs = self.fn_results[r#fn][local][ssa_idx].clone();
         Some(&self.model[sigs.start.index()..sigs.end.index()])
     }
 
@@ -165,84 +261,19 @@ impl AnalysisKind for WholeProgram {
         let ctx = z3::Context::new(&config);
         let mut database = DB::new(&ctx);
 
-        let mut fn_sigs = Vec::with_capacity(crate_ctxt.functions().len()); // FxHashMap::default();
-        for &did in crate_ctxt.call_graph.functions() {
-            let body = crate_ctxt.tcx.optimized_mir(did);
-            let fn_sig = {
-                let mut local_decls = body.local_decls.iter();
-                let return_local_decl = local_decls.next().unwrap();
-                let ret = generate_signatures_for_local(
-                    return_local_decl,
-                    &mut gen,
-                    &mut database,
-                    &crate_ctxt,
-                );
+        let fn_sigs = WholeProgram::pre_generate_fn_sigs(&crate_ctxt, &mut gen, &mut database);
 
-                let args = local_decls
-                    .take(body.arg_count)
-                    .map(|local_decl| {
-                        generate_signatures_for_local(
-                            local_decl,
-                            &mut gen,
-                            &mut database,
-                            &crate_ctxt,
-                        )
-                    })
-                    .collect();
-
-                FnSig { ret, args }
-            };
-            println!("generating signatures for {:?}: {:?}", did, fn_sig);
-            // fn_sigs.insert(did, fn_sig);
-            fn_sigs.push(fn_sig);
-        }
-
-        let mut local_sigs = Vec::with_capacity(crate_ctxt.call_graph.functions().len());
+        let mut fn_results = Vec::with_capacity(crate_ctxt.call_graph.functions().len());
         let mut consume_chains = Vec::with_capacity(crate_ctxt.call_graph.functions().len());
 
         for &did in crate_ctxt.call_graph.functions() {
-            println!("solving {:?}", did);
-
-            database.solver.push();
-
-            let body = crate_ctxt.tcx.optimized_mir(did);
-
-            let dominance_frontier = compute_dominance_frontier(body);
-            let definitions = initial_definitions(body, crate_ctxt.tcx, &crate_ctxt);
-            let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
-
-            let ssa_state = prune(body, ssa_state);
-
-            let mut rn = Renamer::new(body, ssa_state);
-
-            let mut infer_cx = InferCtxt::new(&crate_ctxt, body, &mut database, &mut gen, &fn_sigs);
-
-            rn.go::<Self, _>(&mut infer_cx);
-
-            local_sigs.push(infer_cx.local_sigs);
-            consume_chains.push(rn.state.consume_chain);
-
-            match database.solver.check() {
-                z3::SatResult::Unsat => {
-                    println!("failed.");
-                    database.solver.pop(1);
-                }
-                z3::SatResult::Unknown => bail!("z3 status: unknown"),
-                z3::SatResult::Sat => {}
-            }
+            let (fn_result, ssa_state) =
+                WholeProgram::solve_body(&crate_ctxt, &fn_sigs, did, &mut gen, &mut database)?;
+            fn_results.push(fn_result);
+            consume_chains.push(ssa_state.consume_chain);
         }
 
-        let z3_model = database.solver.get_model().unwrap();
-        let mut model = Vec::with_capacity(gen.next().index());
-
-        model.push(Ownership::Unknown);
-        for sig in start..gen.next() {
-            let value = z3_model
-                .eval(&database.z3_ast[sig], true)
-                .unwrap()
-                .as_bool();
-            model.push(value.into());
-        }
+        let model = WholeProgram::retrieve_model(database, start, gen);
 
         for (did, fn_sig) in crate_ctxt
             .call_graph
@@ -274,7 +305,7 @@ impl AnalysisKind for WholeProgram {
             crate_ctxt,
             model,
             fn_sigs,
-            local_sigs,
+            fn_results,
             consume_chains,
         })
     }
