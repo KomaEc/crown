@@ -30,7 +30,6 @@ pub struct PhiNode {
 //     }
 // }
 
-
 /// Property: the set of join points must guarantee that
 /// definitions (consumptions) flow into the final return
 /// block, for an implicit final use. Therefore, it seems
@@ -80,6 +79,14 @@ impl JoinPoints<PhiNode> {
     //         .flat_map(|bb_nodes| bb_nodes.iter_enumerated())
     // }
 
+    #[inline]
+    pub fn reset(&mut self) {
+        for (_, phi_node) in self.phi_nodes_mut() {
+            phi_node.rhs.clear();
+        }
+    }
+
+    #[inline]
     pub fn phi_nodes_mut(&mut self) -> impl Iterator<Item = (Local, &mut PhiNode)> {
         self.data
             .iter_mut()
@@ -145,7 +152,6 @@ impl<T> BasicBlockNodes<T> {
             .iter_mut()
             .map(|(local, payload)| (*local, payload))
     }
-
 }
 
 impl<T> Deref for BasicBlockNodes<T> {

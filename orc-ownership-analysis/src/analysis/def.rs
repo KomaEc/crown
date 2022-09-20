@@ -52,7 +52,7 @@ impl<T: Clone + Copy + std::fmt::Debug> Copy for Consume<T> {}
 
 impl Consume<SSAIdx> {
     #[inline]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Consume {
             r#use: SSAIdx::INIT,
             def: SSAIdx::INIT,
@@ -60,11 +60,16 @@ impl Consume<SSAIdx> {
     }
 
     #[inline]
-    pub fn r#use() -> Self {
+    pub const fn pure_use() -> Self {
         Consume {
             r#use: SSAIdx::INIT,
             def: SSAIdx::INVALID,
         }
+    }
+
+    #[inline]
+    pub fn mk_def(&mut self) {
+        self.def = SSAIdx::INIT;
     }
 
     #[inline]
@@ -286,7 +291,7 @@ pub fn initial_definitions<'tcx>(
             {
                 // println!("defining {:?} at {:?}", place.local, location);
                 let consume = if place.is_indirect() {
-                    Consume::r#use()
+                    Consume::pure_use()
                 } else {
                     self.def_sites[place.local].insert(location.block);
                     Consume::new()

@@ -44,7 +44,12 @@ impl<'tcx> CrateCtxt<'tcx> {
     }
 
     pub fn crash_me_with_whole_program_analysis(&self) -> anyhow::Result<()> {
-        WholeProgram::analyze(self).map(|_| ())
+        WholeProgram::analyze(self).map(|results| {
+            let model = &results.model[..];
+            for fn_result in results.fn_results.into_values() {
+                let _ = WholeProgram::apply_results(fn_result, model);
+            }
+        })
     }
 }
 
@@ -168,6 +173,13 @@ impl WholeProgram {
     }
 
     #[inline]
+    fn initial_state<'tcx>(crate_ctxt: &CrateCtxt<'tcx>, body: &Body<'tcx>) -> SSAState {
+        let dominance_frontier = compute_dominance_frontier(body);
+        let definitions = initial_definitions(body, crate_ctxt.tcx, &crate_ctxt);
+        SSAState::new(body, &dominance_frontier, definitions)
+    }
+
+    #[inline]
     fn solve_body<'tcx>(
         body: &Body<'tcx>,
         ssa_state: SSAState,
@@ -224,9 +236,30 @@ impl WholeProgram {
         model
     }
 
-    // fn update_fn_result(fn_result: FnResult, model: &[Ownership]) -> SSAState {
-    //     todo!()
-    // }
+    fn apply_results(fn_result: FnResult, model: &[Ownership]) -> SSAState {
+        let FnResult {
+            fn_body_sig,
+            mut ssa_state,
+        } = fn_result;
+
+        let consumes = &mut ssa_state.consume_chain.consumes;
+        // we have to do this awkwardly as lending iterator is not ready
+        for bb in 0..consumes.len() {
+            for consumes in consumes[bb].iter_mut() {
+                for &mut (local, ref mut consume) in consumes.iter_mut() {
+                    if consume.is_use() {
+                        let outter_most = fn_body_sig[local][consume.r#use].start;
+                        if matches!(model[outter_most.index()], Ownership::Owning) {
+                            consume.mk_def();
+                        }
+                    }
+                }
+            }
+        }
+        ssa_state.name_state.reset();
+        ssa_state.join_points.reset();
+        ssa_state
+    }
 }
 
 pub struct WholeProgramResults {
@@ -282,22 +315,19 @@ impl AnalysisKind for WholeProgram {
         let ctx = z3::Context::new(&config);
         let mut database = DB::new(&ctx);
 
-        let fn_sigs = WholeProgram::pre_generate_fn_sigs(&crate_ctxt, &mut gen, &mut database);
+        let inter_ctxt = WholeProgram::pre_generate_fn_sigs(&crate_ctxt, &mut gen, &mut database);
 
         let mut fn_results = FxHashMap::default();
         fn_results.reserve(crate_ctxt.functions().len());
 
         for &did in crate_ctxt.call_graph.functions() {
             let body = crate_ctxt.tcx.optimized_mir(did);
-
-            let dominance_frontier = compute_dominance_frontier(body);
-            let definitions = initial_definitions(body, crate_ctxt.tcx, &crate_ctxt);
-            let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
+            let ssa_state = WholeProgram::initial_state(crate_ctxt, body);
             let fn_result = WholeProgram::solve_body(
                 body,
                 ssa_state,
                 crate_ctxt,
-                &fn_sigs,
+                &inter_ctxt,
                 &mut gen,
                 &mut database,
             )?;
@@ -308,7 +338,7 @@ impl AnalysisKind for WholeProgram {
 
         let results = WholeProgramResults {
             model,
-            fn_sigs,
+            fn_sigs: inter_ctxt,
             fn_results,
         };
 

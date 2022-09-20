@@ -38,8 +38,8 @@ pub type LocalSig = Range<OwnershipSig>;
 pub type FnBodySig<LocalSig> = IndexVec<Local, IndexVec<SSAIdx, LocalSig>>;
 
 pub struct FnResult {
-    fn_body_sig: FnBodySig<LocalSig>,
-    ssa_state: SSAState,
+    pub fn_body_sig: FnBodySig<LocalSig>,
+    pub ssa_state: SSAState,
 }
 
 impl FnResult {
