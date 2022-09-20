@@ -133,14 +133,14 @@ impl NameState {
         NameState { count, stack }
     }
 
-    // pub fn reset(&mut self) {
-    //     self.count.raw.fill(SSAIdx::INIT);
-    //     for stack in &mut self.stack {
-    //         if !stack.is_empty() {
-    //             stack.truncate(1);
-    //         }
-    //     }
-    // }
+    pub fn reset(&mut self) {
+        self.count.raw.fill(SSAIdx::INIT);
+        for stack in &mut self.stack {
+            if !stack.is_empty() {
+                stack.truncate(1);
+            }
+        }
+    }
 
     #[inline]
     pub fn generate_fresh_name(&mut self, var: Local) -> SSAIdx {

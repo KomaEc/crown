@@ -52,7 +52,7 @@ impl<T: Clone + Copy + std::fmt::Debug> Copy for Consume<T> {}
 
 impl Consume<SSAIdx> {
     #[inline]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Consume {
             r#use: SSAIdx::INIT,
             def: SSAIdx::INIT,
@@ -60,7 +60,7 @@ impl Consume<SSAIdx> {
     }
 
     #[inline]
-    pub fn r#use() -> Self {
+    pub const fn r#use() -> Self {
         Consume {
             r#use: SSAIdx::INIT,
             def: SSAIdx::INVALID,

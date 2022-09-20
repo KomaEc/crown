@@ -16,6 +16,7 @@ use crate::analysis::state::SSAState;
 use crate::call_graph::FnSig;
 
 use self::constraint::infer::FnResult;
+use self::def::Consume;
 
 // pub mod body_ext;
 pub mod constants;
@@ -44,7 +45,12 @@ impl<'tcx> CrateCtxt<'tcx> {
     }
 
     pub fn crash_me_with_whole_program_analysis(&self) -> anyhow::Result<()> {
-        WholeProgram::analyze(self).map(|_| ())
+        WholeProgram::analyze(self).map(|results| {
+            let model = &results.model[..];
+            for fn_result in results.fn_results.into_values() {
+                let _ = WholeProgram::apply_results(fn_result, model);
+            }
+        })
     }
 }
 
@@ -224,9 +230,30 @@ impl WholeProgram {
         model
     }
 
-    // fn update_fn_result(fn_result: FnResult, model: &[Ownership]) -> SSAState {
-    //     todo!()
-    // }
+    fn apply_results(fn_result: FnResult, model: &[Ownership]) -> SSAState {
+        let FnResult {
+            fn_body_sig,
+            mut ssa_state,
+        } = fn_result;
+
+        let consumes = &mut ssa_state.consume_chain.consumes;
+        // we have to do this awkwardly as lending iterator is not ready
+        for bb in 0..consumes.len() {
+            for consume in consumes[bb].iter_mut() {
+                for &mut (local, ref mut consume) in consume.iter_mut() {
+                    if consume.is_use() {
+                        let outter_most = fn_body_sig[local][consume.r#use].start;
+                        if matches!(model[outter_most.index()], Ownership::Owning) {
+                            *consume = Consume::new();
+                        }
+                    }
+                }
+            }
+        }
+        ssa_state.name_state.reset();
+        ssa_state.join_points.reset();
+        ssa_state
+    }
 }
 
 pub struct WholeProgramResults {
