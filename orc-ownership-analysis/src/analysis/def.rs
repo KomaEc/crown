@@ -50,13 +50,26 @@ pub struct Consume<T: Clone + std::fmt::Debug> {
 
 impl<T: Clone + Copy + std::fmt::Debug> Copy for Consume<T> {}
 
-impl<T: Clone + std::fmt::Debug + Default> Consume<T> {
+impl Consume<SSAIdx> {
     #[inline]
     pub fn new() -> Self {
         Consume {
-            r#use: T::default(), //SSAIdx::INIT,
-            def: T::default(),   //SSAIdx::INIT,
+            r#use: SSAIdx::INIT,
+            def: SSAIdx::INIT,
         }
+    }
+
+    #[inline]
+    pub fn r#use() -> Self {
+        Consume {
+            r#use: SSAIdx::INIT,
+            def: SSAIdx::INVALID,
+        }
+    }
+
+    #[inline]
+    pub fn is_use(&self) -> bool {
+        self.def.is_invalid()
     }
 }
 
@@ -268,13 +281,17 @@ pub fn initial_definitions<'tcx>(
             let local_info = self.body.local_decls[place.local].local_info.as_deref();
 
             if self.crate_ctxt.contains_ptr(ty)//ty.contains_ptr(self.struct_topology)
-                && !place.is_indirect()
+                // && !place.is_indirect()
                 && !matches!(local_info, Some(LocalInfo::DerefTemp))
             {
                 // println!("defining {:?} at {:?}", place.local, location);
-                self.consumes_in_cur_stmt
-                    .push((place.local, Consume::new()));
-                self.def_sites[place.local].insert(location.block);
+                let consume = if place.is_indirect() {
+                    Consume::r#use()
+                } else {
+                    self.def_sites[place.local].insert(location.block);
+                    Consume::new()
+                };
+                self.consumes_in_cur_stmt.push((place.local, consume));
             }
         }
     }

@@ -18,7 +18,6 @@ pub trait Measurable {
     /// Note: blocked by adt
     #[inline]
     fn measure_with_threshold(&self, ty: Ty, threshold: Threshold) -> Measure {
-
         let mut ty = ty;
 
         while let Some(inner_ty) = ty.builtin_index() {
@@ -27,7 +26,7 @@ pub trait Measurable {
 
         if let Some(inner_ty_mut) = ty.builtin_deref(true) {
             if threshold.as_u8() == 0 {
-                return 1
+                return 1;
             }
             ty = inner_ty_mut.ty;
             return self.measure_with_threshold(ty, threshold - 1) + 1;

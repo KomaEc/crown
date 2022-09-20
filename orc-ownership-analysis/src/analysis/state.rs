@@ -24,6 +24,12 @@ impl Default for SSAIdx {
 
 impl SSAIdx {
     pub const INIT: Self = SSAIdx::from_u32(0);
+    pub const INVALID: Self = SSAIdx::MAX;
+
+    #[inline]
+    pub fn is_invalid(&self) -> bool {
+        *self == Self::INVALID
+    }
 }
 
 impl std::ops::AddAssign<usize> for SSAIdx {
@@ -67,6 +73,10 @@ impl SSAState {
         let consume = self.consume_chain.consumes[location.block.index()][location.statement_index]
             .get_by_key_mut(&local)?;
         let old_ssa_idx = self.name_state.get_name(local);
+        consume.r#use = old_ssa_idx;
+        if consume.is_use() {
+            return None;
+        }
         let new_ssa_idx = self.name_state.generate_fresh_name(local);
         tracing::debug!(
             "consuming {:?} at {:?}, use: {:?}, def: {:?}",
@@ -75,7 +85,6 @@ impl SSAState {
             old_ssa_idx,
             new_ssa_idx
         );
-        consume.r#use = old_ssa_idx;
         consume.def = new_ssa_idx;
         let consume = *consume;
         // tracing::debug!("consume chain before: {:?}", &self.consume_chain.consumes[location.block.index()]);
