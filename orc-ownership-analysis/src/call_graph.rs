@@ -23,12 +23,12 @@ impl<T> FnSig<T> {
         std::iter::once(&self.ret).chain(self.args.iter())
     }
 
-    pub fn map<U>(&self, mut f: impl FnMut(&T) -> U) -> FnSig<U> {
-        FnSig {
-            ret: f(&self.ret),
-            args: self.args.iter().map(f).collect(),
-        }
-    }
+    // pub fn map<U>(&self, mut f: impl FnMut(&T) -> U) -> FnSig<U> {
+    //     FnSig {
+    //         ret: f(&self.ret),
+    //         args: self.args.iter().map(f).collect(),
+    //     }
+    // }
 }
 
 impl<T: Default> Default for FnSig<T> {

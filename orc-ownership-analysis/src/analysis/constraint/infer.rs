@@ -34,14 +34,19 @@ use crate::{
 pub mod handle_call;
 
 pub type LocalSig = Range<OwnershipSig>;
-pub type LocalSigs<LocalSig> = IndexVec<Local, IndexVec<SSAIdx, LocalSig>>;
+pub type FnBodySig<LocalSig> = IndexVec<Local, IndexVec<SSAIdx, LocalSig>>;
+
+pub struct FnResult {
+    pub fn_body_sig: FnBodySig<LocalSig>,
+    pub ssa_state: SSAState,
+}
 
 pub struct InferCtxt<'infercx, 'tcx, DB, Kind: AnalysisKind + 'infercx> {
     inter_ctxt: Kind::InterCtxt<'infercx>,
     database: &'infercx mut DB,
     gen: &'infercx mut OwnershipSigGenerator,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
-    pub local_sigs: LocalSigs<LocalSig>,
+    pub fn_body_sig: FnBodySig<LocalSig>,
     // ensure_nullness: Vec<Location>,
 }
 
@@ -58,25 +63,25 @@ where
         gen: &'infercx mut OwnershipSigGenerator,
         inter_ctxt: Kind::InterCtxt<'infercx>,
     ) -> Self {
-        let mut local_sigs = IndexVec::with_capacity(body.local_decls.len());
+        let mut fn_body_sig = IndexVec::with_capacity(body.local_decls.len());
 
         // for (local, local_decl) in body.local_decls.iter_enumerated() {
         //     if definitions.maybe_owned.contains(local) {
         for local_decl in body.local_decls.iter() {
             if let Some(sigs) = generate_signatures_for_local(local_decl, gen, database, crate_ctxt)
             {
-                local_sigs.push(IndexVec::from_raw(vec![sigs]));
+                fn_body_sig.push(IndexVec::from_raw(vec![sigs]));
             } else {
-                local_sigs.push(IndexVec::default());
+                fn_body_sig.push(IndexVec::default());
             }
         }
 
         <Kind as HandleCall>::handle_inputs(
-            crate_ctxt,
+            // crate_ctxt,
             &inter_ctxt,
             database,
             body.source.def_id(),
-            local_sigs
+            fn_body_sig
                 .iter()
                 .skip(1)
                 .take(body.arg_count)
@@ -89,7 +94,7 @@ where
             gen,
             crate_ctxt,
             // ensure_nullness: ensure_nullness(body),
-            local_sigs,
+            fn_body_sig,
         }
     }
 
@@ -375,7 +380,7 @@ impl<K: AnalysisKind> Mode for K {
     {
         let measure = infer_cx.crate_ctxt.measure(ty);
         let sigs = infer_cx.new_sigs(measure);
-        assert_eq!(def, infer_cx.local_sigs[local].push(sigs));
+        assert_eq!(def, infer_cx.fn_body_sig[local].push(sigs));
     }
 
     fn join_phi_nodes<'a, 'infercx, 'tcx, DB>(
@@ -395,8 +400,8 @@ impl<K: AnalysisKind> Mode for K {
                 if lhs == rhs {
                     continue;
                 }
-                let lhs_sigs = infer_cx.local_sigs[local][lhs].clone();
-                let rhs_sigs = infer_cx.local_sigs[local][rhs].clone();
+                let lhs_sigs = infer_cx.fn_body_sig[local][lhs].clone();
+                let rhs_sigs = infer_cx.fn_body_sig[local][rhs].clone();
                 for (lhs_sig, rhs_sig) in lhs_sigs.zip(rhs_sigs) {
                     infer_cx
                         .database
@@ -427,7 +432,7 @@ impl<K: AnalysisKind> Mode for K {
         let Range {
             start: old_start,
             end: old_end,
-        } = infer_cx.local_sigs[base][consume.r#use].clone();
+        } = infer_cx.fn_body_sig[base][consume.r#use].clone();
 
         assert_eq!(base_offset, old_end.as_u32() - old_start.as_u32());
 
@@ -469,7 +474,7 @@ impl<K: AnalysisKind> Mode for K {
         // let new_start = infer_cx.next;
         // let new_end = new_start + base_offset;
         assert_eq!(
-            infer_cx.local_sigs[base].push(new_start..new_end),
+            infer_cx.fn_body_sig[base].push(new_start..new_end),
             consume.def
         );
 
@@ -556,7 +561,7 @@ impl<K: AnalysisKind> Mode for K {
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
-        for sig in infer_cx.local_sigs[local][r#use].clone() {
+        for sig in infer_cx.fn_body_sig[local][r#use].clone() {
             infer_cx
                 .database
                 .push_assume::<super::Debug>((), sig, false)
@@ -612,7 +617,7 @@ impl<K: AnalysisKind> Mode for K {
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
-        let output = ssa_idx.map(|ssa_idx| infer_cx.local_sigs[RETURN_PLACE][ssa_idx].clone());
+        let output = ssa_idx.map(|ssa_idx| infer_cx.fn_body_sig[RETURN_PLACE][ssa_idx].clone());
         <K as HandleCall>::handle_output(infer_cx, r#fn, output)
     }
 }

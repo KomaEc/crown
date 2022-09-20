@@ -3,13 +3,10 @@ use std::ops::Range;
 use itertools::izip;
 use rustc_hir::def_id::DefId;
 
-use crate::{
-    analysis::{
-        constraint::{infer::InferCtxt, Database, OwnershipSig},
-        def::Consume,
-        AnalysisKind, FnSig, WholeProgram,
-    },
-    CrateCtxt,
+use crate::analysis::{
+    constraint::{infer::InferCtxt, Database, OwnershipSig},
+    def::Consume,
+    AnalysisKind, FnSig, WholeProgram,
 };
 
 pub mod handle_libc;
@@ -24,7 +21,6 @@ pub trait HandleCall: AnalysisKind + Sized {
 
     fn handle_inputs<DB: Database, Iter>(
         // infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
-        crate_ctxt: &CrateCtxt<'_>,
         inter_ctxt: &Self::InterCtxt<'_>,
         database: &mut DB,
         r#fn: DefId,
@@ -49,7 +45,7 @@ impl<K: AnalysisKind> HandleCall for K {
 
     default fn handle_inputs<DB: Database, Iter>(
         // _: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
-        _: &CrateCtxt<'_>,
+        // _: &CrateCtxt<'_>,
         _: &K::InterCtxt<'_>,
         _: &mut DB,
         _: DefId,
@@ -80,8 +76,7 @@ impl HandleCall for WholeProgram {
             .skip_binder()
             .c_variadic;
 
-        let callee_idx = infer_cx.crate_ctxt.call_graph.did_idx[&callee];
-        let callee_sigs = &infer_cx.inter_ctxt[callee_idx];
+        let callee_sigs = &infer_cx.inter_ctxt[&callee];
 
         // println!("{:?}", callee_sigs);
 
@@ -139,7 +134,6 @@ impl HandleCall for WholeProgram {
     }
 
     fn handle_inputs<DB: Database, Iter>(
-        crate_ctxt: &CrateCtxt<'_>,
         inter_ctxt: &<WholeProgram as AnalysisKind>::InterCtxt<'_>,
         database: &mut DB,
         r#fn: DefId,
@@ -147,8 +141,7 @@ impl HandleCall for WholeProgram {
     ) where
         Iter: Iterator<Item = Option<Range<OwnershipSig>>>,
     {
-        let r#fn = crate_ctxt.call_graph.did_idx[&r#fn];
-        let fn_sig = &inter_ctxt[r#fn];
+        let fn_sig = &inter_ctxt[&r#fn];
 
         for (input, sigs) in inputs.zip(fn_sig.iter().skip(1)) {
             // debug_assert!(!input.clone().xor(sigs.clone()).is_some())
@@ -169,8 +162,8 @@ impl HandleCall for WholeProgram {
         r#fn: DefId,
         output: Option<Range<OwnershipSig>>,
     ) {
-        let r#fn = infer_cx.crate_ctxt.call_graph.did_idx[&r#fn];
-        let fn_sig = &infer_cx.inter_ctxt[r#fn];
+        // let r#fn = infer_cx.crate_ctxt.call_graph.did_idx[&r#fn];
+        let fn_sig = &infer_cx.inter_ctxt[&r#fn];
         let ret = fn_sig.ret.clone();
         match (output, ret) {
             (Some(output), Some(ret)) => {
