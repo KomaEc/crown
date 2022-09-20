@@ -617,14 +617,6 @@ impl<K: AnalysisKind> Mode for K {
     }
 }
 
-// /// The kind of temporary that is ensured local or Special, and is not
-// /// renamed in the inference.
-// pub enum IgnoredTemporaryKind {
-//     DerefCopy,
-//     ArgFree,
-//     DestMalloc,
-// }
-
 pub struct Renamer<'rn, 'tcx: 'rn> {
     body: &'rn Body<'tcx>,
     pub state: SSAState,
@@ -740,7 +732,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         for succ in self.body.basic_blocks.successors(bb) {
             for (local, phi_node) in self.state.join_points[succ].iter_enumerated_mut() {
                 let ssa_idx = self.state.name_state.get_name(local);
-                // .unwrap_or_else(|| panic!("{:?}: {}", local, self.body.local_decls[local].ty));
                 phi_node.rhs.push(ssa_idx);
                 tracing::debug!("using {:?} at Phi({:?}), use: {:?}", local, succ, ssa_idx)
             }
@@ -779,7 +770,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    /// TODO: handle return?
     fn go_terminator<M: Mode, DB: Database + 'rn>(
         &mut self,
         infer_cx: &mut M::Ctxt<'rn, 'tcx, DB>,
@@ -794,8 +784,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 ..
             } => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
-
-                // hmmm we can't do this. args do not necessarily match sigs. args may contain constants!!
 
                 let fn_sig = std::iter::once(Some(destination))
                     .chain(args.iter().map(|arg| match arg {
@@ -850,7 +838,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         let lhs = place;
         let rhs = rvalue;
 
-        //.map(|consume| M::consume_place(infer_cx, self.body, place, consume));
 
         match rhs {
             Rvalue::Use(Operand::Constant(_)) => {
@@ -892,7 +879,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     "TODO: constant pointer {:?}",
                     constant
                 )
-                // todo!("constant pointer {:?}, cast_kind: {:?}", constant)
             }
 
             Rvalue::Use(Operand::Move(rhs) | Operand::Copy(rhs))
@@ -966,6 +952,11 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             Rvalue::Repeat(..) | Rvalue::Aggregate(..) => {
                 // handle cases like _1 = [0 as *mut _; 50] or _1 = [move _12, move _13]
 
+                // TODO note that vars in those rvalues are not counted as
+                // definitions nor pure uses. If these are to be taken care
+                // of, logic in initial_definition needs to be taken care of
+                // as well
+            
                 let lhs_consume = self
                     .state
                     .try_consume_at(lhs.local, location)
@@ -984,10 +975,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             | Rvalue::ShallowInitBox(_, _)
             | Rvalue::ThreadLocalRef(_) => {
                 let lhs_consume = self.state.try_consume_at(lhs.local, location);
-                // let lhs_consume = self
-                //     .state
-                //     .try_consume_at(lhs.local, location)
-                //     .map(|consume| M::interpret_consume(infer_cx, self.body, lhs, consume));
                 assert!(lhs_consume.is_none());
             }
         }
