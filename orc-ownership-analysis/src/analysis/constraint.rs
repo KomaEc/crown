@@ -6,7 +6,7 @@ use rustc_middle::mir::LocalDecl;
 use crate::{analysis::def::maybe_owned, ptr::Measurable, CrateCtxt};
 
 pub mod infer;
-pub mod prune;
+// pub mod prune;
 
 orc_common::macros::orc_index!(OwnershipSig);
 

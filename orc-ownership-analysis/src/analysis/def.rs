@@ -123,13 +123,13 @@ impl ConsumeChain {
         ConsumeChain { consumes, locs }
     }
 
-    pub fn reset(&mut self) {
-        for locs in &mut self.locs {
-            if !locs.is_empty() {
-                locs.truncate(1);
-            }
-        }
-    }
+    // pub fn reset(&mut self) {
+    //     for locs in &mut self.locs {
+    //         if !locs.is_empty() {
+    //             locs.truncate(1);
+    //         }
+    //     }
+    // }
 
     /// Note that return place is never finalised
     pub fn to_finalise(&self) -> impl Iterator<Item = Local> + '_ {

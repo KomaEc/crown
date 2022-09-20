@@ -6,7 +6,6 @@ use rustc_middle::ty::TyCtxt;
 use std::ops::Range;
 
 use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer};
-use crate::analysis::constraint::prune::prune;
 use crate::analysis::constraint::{CadicalDatabase, OwnershipSigGenerator, Z3Database};
 use crate::analysis::def::initial_definitions;
 use crate::analysis::dom::compute_dominance_frontier;
@@ -180,7 +179,7 @@ impl WholeProgram {
         println!("solving {:?}", body.source.def_id());
         database.solver.push();
 
-        let ssa_state = prune(body, ssa_state);
+        // let ssa_state = prune(body, ssa_state);
 
         let mut rn = Renamer::new(body, ssa_state);
 

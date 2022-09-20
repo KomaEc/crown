@@ -23,11 +23,13 @@ pub struct PhiNode {
     pub rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>,
 }
 
+// TODO represent deleted phi node
 // impl PhiNode {
-//     pub fn new(lhs: SSAIdx, rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>) -> Self {
-//         Self { lhs, rhs }
+//     pub fn delete(&mut self) {
+//         self.lhs = SSAIdx::INVALID
 //     }
 // }
+
 
 /// Property: the set of join points must guarantee that
 /// definitions (consumptions) flow into the final return
@@ -89,32 +91,6 @@ impl<Payload> JoinPoints<Payload> {
     pub fn from_raw(raw: IndexVec<BasicBlock, BasicBlockNodes<Payload>>) -> Self {
         JoinPoints { data: raw }
     }
-
-    // pub fn into_iter(self) -> impl Iterator<Item = BasicBlockNodes<Payload>> {
-    //     self.data.into_iter()
-    // }
-
-    // pub fn repack<F, U>(&self, f: F) -> JoinPoints<U>
-    // where
-    //     F: Fn(Local, &Payload) -> U,
-    // {
-    //     self.data
-    //         .iter()
-    //         .map(|bb_nodes| bb_nodes.repack(&f))
-    //         .collect::<IndexVec<_, _>>()
-    //         .into()
-    // }
-
-    // pub fn filter_repack<U, F>(&self, f: F) -> JoinPoints<U>
-    // where
-    //     F: Fn(Local, &Payload) -> Option<U>,
-    // {
-    //     self.data
-    //         .iter()
-    //         .map(|bb_nodes| bb_nodes.filter_repack(&f))
-    //         .collect::<IndexVec<_, _>>()
-    //         .into()
-    // }
 }
 
 impl<Payload> From<IndexVec<BasicBlock, BasicBlockNodes<Payload>>> for JoinPoints<Payload> {
@@ -136,22 +112,6 @@ impl<T> DerefMut for JoinPoints<T> {
         &mut self.data
     }
 }
-
-// impl<T> std::ops::Index<BasicBlock> for JoinPoints<T> {
-//     type Output = BasicBlockNodes<T>;
-
-//     #[inline]
-//     fn index(&self, bb: BasicBlock) -> &Self::Output {
-//         &self.data[bb]
-//     }
-// }
-
-// impl<T> std::ops::IndexMut<BasicBlock> for JoinPoints<T> {
-//     #[inline]
-//     fn index_mut(&mut self, bb: BasicBlock) -> &mut Self::Output {
-//         &mut self.data[bb]
-//     }
-// }
 
 #[derive(Clone, Debug)]
 pub struct BasicBlockNodes<Node> {
@@ -186,11 +146,6 @@ impl<T> BasicBlockNodes<T> {
             .map(|(local, payload)| (*local, payload))
     }
 
-    // pub fn locals(&self) -> impl Iterator<Item = Local> + '_ {
-    //     self.data
-    //         .iter()
-    //         .map(|&(local, _)| local)
-    // }
 }
 
 impl<T> Deref for BasicBlockNodes<T> {
@@ -206,43 +161,3 @@ impl<T> DerefMut for BasicBlockNodes<T> {
         &mut self.data
     }
 }
-
-// impl<T> std::ops::Index<Local> for BasicBlockNodes<T> {
-//     type Output = T;
-
-//     fn index(&self, local: Local) -> &Self::Output {
-//         self.data
-//             .iter()
-//             .find_map(|&(this_local, ref t)| (this_local == local).then_some(t))
-//             .unwrap_or_else(|| panic!("no phi node for {:?}", local))
-//     }
-// }
-
-// impl<T> std::ops::IndexMut<Local> for BasicBlockNodes<T> {
-//     fn index_mut(&mut self, local: Local) -> &mut Self::Output {
-//         self.data
-//             .iter_mut()
-//             .find_map(|&mut (this_local, ref mut t)| (this_local == local).then_some(t))
-//             .unwrap_or_else(|| panic!("no phi node for {:?}", local))
-//     }
-// }
-
-// impl<T> BasicBlockNodes<T> {
-//     pub fn repack<F, U>(&self, f: F) -> BasicBlockNodes<U>
-//     where
-//         F: Fn(Local, &T) -> U,
-//     {
-//         self.iter_enumerated()
-//             .map(|(local, t)| (local, f(local, t)))
-//             .collect::<BasicBlockNodes<_>>()
-//     }
-
-//     pub fn filter_repack<U, F>(&self, f: F) -> BasicBlockNodes<U>
-//     where
-//         F: Fn(Local, &T) -> Option<U>,
-//     {
-//         self.iter_enumerated()
-//             .filter_map(|(local, t)| Some((local, f(local, t)?)))
-//             .collect::<BasicBlockNodes<_>>()
-//     }
-// }
