@@ -82,7 +82,7 @@ impl<I, A: Allocator + Copy> VecArray<I, A> {
     }
 
     #[inline]
-    pub fn array_count(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.indices.len() - 1
     }
 
