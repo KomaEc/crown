@@ -115,7 +115,6 @@ impl HandleCall for WholeProgram {
 
         // para = arg ~> rho(para') + rho(arg') = rho(arg)
         for (para, arg) in callee_caller {
-            println!("go");
             if let Some(para) = para.clone() {
                 if let Some(Consume {
                     r#use: arg_use,

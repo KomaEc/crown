@@ -45,26 +45,6 @@ pub struct InferCtxt<'infercx, 'tcx, DB, Kind: AnalysisKind + 'infercx> {
     // ensure_nullness: Vec<Location>,
 }
 
-// fn ensure_nullness(body: &Body) -> Vec<Location> {
-//     let mut ensure_nullness = Vec::new();
-//     for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
-//         let mut index = 0;
-//         for statement in &bb_data.statements {
-//             if let StatementKind::Intrinsic(box NonDivergingIntrinsic::Assume(_)) = &statement.kind
-//             {
-//                 let location = Location {
-//                     block: bb,
-//                     statement_index: index - 2,
-//                 };
-//                 ensure_nullness.push(location);
-//             }
-
-//             index += 1;
-//         }
-//     }
-//     ensure_nullness
-// }
-
 impl<'infercx, 'tcx, DB, Kind> InferCtxt<'infercx, 'tcx, DB, Kind>
 where
     'tcx: 'infercx,
@@ -135,8 +115,6 @@ pub trait Mode {
         fn_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>,
     ) -> Self::FnSig<Option<Consume<Self::Interpretation>>>;
 
-    // type ConsumeInterpretation;
-
     fn define_phi_node<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         local: Local,
@@ -203,16 +181,6 @@ pub trait Mode {
         Self::assume(infer_cx, result.r#use, true);
         Self::assume(infer_cx, result.def, false)
     }
-
-    // /// Special treatment to null
-    // fn ensure_null<'infercx, 'tcx, DB>(
-    //     _: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-    //     _: Consume<Self::Interpretation>,
-    // ) where
-    //     'tcx: 'infercx,
-    //     DB: Database + 'infercx,
-    // {
-    // }
 
     /// Impose no constraint on a definition. Constraints are still emitted
     /// because the old value of lhs must be non-owning
@@ -468,7 +436,11 @@ impl<K: AnalysisKind> Mode for K {
         for projection_elem in place.projection {
             match projection_elem {
                 // do not track pointers behind dereferences for now
-                ProjectionElem::Deref => unreachable!("indirect place is mistakenly consumed"),
+                ProjectionElem::Deref => {
+                    // TODO threshold!!!
+                    proj_start_offset += 1;
+                    base_ty = base_ty.builtin_deref(true).unwrap().ty;
+                }
                 ProjectionElem::Field(field, ty) => {
                     let TyKind::Adt(adt_def, _) = base_ty.kind() else { unreachable!() };
                     let Some(field_offsets) = infer_cx
@@ -841,10 +813,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             TerminatorKind::Return => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
 
-                /* TODO */
-                //
-                // maybe not consuming return place?????
-                // comment out visit_terminator in def.rs then we're done
 
                 M::handle_output(
                     infer_cx,
