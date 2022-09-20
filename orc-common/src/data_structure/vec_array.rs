@@ -1,5 +1,7 @@
 use std::alloc::{Allocator, Global};
 
+// use lending_iterator::{gat, prelude::LendingIteratorඞItem, LendingIterator};
+
 /// A vector of non-growable arrays `Vec<Array<I>>`
 #[derive(Debug)]
 pub struct VecArray<I, A: Allocator = Global> {
@@ -55,7 +57,7 @@ impl<I> VecArray<I> {
     #[inline]
     pub fn repack<U, F>(self, f: F) -> VecArray<U>
     where
-        F: FnMut(I) -> U,
+        F: Fn(I) -> U,
     {
         let indices = self.indices;
         let data = self.data.into_iter().map(f).collect();
@@ -92,7 +94,31 @@ impl<I, A: Allocator + Copy> VecArray<I, A> {
             .array_windows()
             .map(|&[start, end]| &self.data[start..end])
     }
+
+    // #[inline]
+    // pub fn iter_mut(&mut self) -> VecArrayIterMut<'_, I> {
+    //     //impl Iterator<Item = &mut [I]> {
+    //     VecArrayIterMut {
+    //         indices: self.indices.array_windows(),
+    //         data: &mut self.data,
+    //     }
+    // }
 }
+
+// pub struct VecArrayIterMut<'a, I> {
+//     indices: std::slice::ArrayWindows<'a, usize, 2>,
+//     data: &'a mut [I],
+// }
+
+// #[gat]
+// impl<'a, I> LendingIterator for VecArrayIterMut<'a, I> {
+//     type Item<'next> = &'next mut [I];
+
+//     fn next(self: &'_ mut Self) -> Option<Self::Item<'_>> {
+//         let &[start, end] = self.indices.next()?;
+//         Some(&mut self.data[start..end])
+//     }
+// }
 
 #[derive(Debug)]
 pub struct VecArrayConstruction<I, A: Allocator = Global> {
