@@ -7,8 +7,8 @@ use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
         AggregateKind, BasicBlock, BasicBlockData, Body, CastKind, Local, Location,
-        Operand, Place, ProjectionElem, Rvalue, Statement, StatementKind,
-        Terminator, TerminatorKind, RETURN_PLACE, NonDivergingIntrinsic,
+        NonDivergingIntrinsic, Operand, Place, ProjectionElem, Rvalue, Statement, StatementKind,
+        Terminator, TerminatorKind, RETURN_PLACE,
     },
     ty::Ty,
 };
@@ -127,7 +127,9 @@ pub trait Mode {
 
     type Interpretation: Clone + std::fmt::Debug;
 
-    type FnSig<T>;
+    type FnSig<T>: std::fmt::Debug
+    where
+        T: std::fmt::Debug;
 
     fn transform_fn_sig(
         fn_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>,
@@ -275,7 +277,7 @@ impl Mode for Pure {
 
     type Interpretation = ();
 
-    type FnSig<T> = ();
+    type FnSig<T> = () where T: std::fmt::Debug;
 
     fn transform_fn_sig(fn_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>) {
         for _ in fn_sig {}
@@ -382,7 +384,7 @@ impl<K: AnalysisKind> Mode for K {
 
     type Interpretation = Range<OwnershipSig>;
 
-    type FnSig<T> = FnSig<T>;
+    type FnSig<T> = FnSig<T> where T: std::fmt::Debug;
 
     #[inline]
     fn transform_fn_sig(
@@ -832,6 +834,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
                 let fn_sig = M::transform_fn_sig(fn_sig);
 
+                // println!("{:?}", self.body.source_info(location).span);
+                // println!("{:?}", fn_sig);
                 M::handle_call(infer_cx, fn_sig, func);
             }
             TerminatorKind::Return => {

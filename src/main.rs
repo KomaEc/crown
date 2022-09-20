@@ -115,7 +115,7 @@ fn main() -> Result<()> {
                     .enter(|tcx| orc_preprocess::Phase::<1>::preprocess(tcx, rewrite_mode))
             })
         });
-        return Ok(())
+        return Ok(());
     }
     rustc_interface::run_compiler(compiler_config(args.path), move |compiler| {
         compiler.enter(|queries| {

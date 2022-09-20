@@ -106,7 +106,7 @@ impl Mode for Prune {
 
     type Interpretation = ();
 
-    type FnSig<T> = ();
+    type FnSig<T> = () where T: std::fmt::Debug;
 
     fn transform_fn_sig(
         fn_sig: impl Iterator<Item = Option<crate::analysis::def::Consume<Self::Interpretation>>>,
