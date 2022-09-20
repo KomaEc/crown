@@ -813,7 +813,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             TerminatorKind::Return => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
 
-
                 M::handle_output(
                     infer_cx,
                     self.state.name_state.try_get_name(RETURN_PLACE),

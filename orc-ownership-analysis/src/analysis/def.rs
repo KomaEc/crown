@@ -11,22 +11,6 @@ use rustc_middle::{
 };
 use smallvec::SmallVec;
 
-// impl<'tcx> CrateCtxt<'tcx> {
-//     pub fn maybe_owned(&self ,local_decl: &LocalDecl<'tcx>) -> bool {
-//         let ty = local_decl.ty;
-//         self.ty_contains_ptr(ty) && !matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp))
-//     }
-
-//     pub fn maybe_owned_locals(&self, body: &Body<'tcx>) -> impl Iterator<Item = Local> + 'tcx {
-//         body
-//             .local_decls
-//             .iter_enumerated()
-//             .filter_map(|(local, local_decl)|
-//                 self.maybe_owned(local_decl)
-//                     .then_some(local))
-//     }
-// }
-
 /// test whether a local might be owning
 #[inline]
 pub fn maybe_owned<'tcx>(local_decl: &LocalDecl<'tcx>, crate_ctxt: &CrateCtxt<'tcx>) -> bool {

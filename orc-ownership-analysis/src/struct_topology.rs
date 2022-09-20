@@ -2,7 +2,7 @@ use orc_common::data_structure::vec_array::VecArray;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_middle::ty::{Ty, TyCtxt, TyKind};
+use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
 
 use crate::ptr::{Measurable, Measure};
@@ -32,27 +32,11 @@ where
 
 impl<T: HasStructTopology> Measurable for T {
     #[inline]
-    fn measure(&self, mut ty: Ty) -> Measure {
-        while let TyKind::Array(inner_ty, _) = ty.kind() {
-            ty = *inner_ty
-        }
-
-        if ty.is_unsafe_ptr() || ty.is_region_ptr() || ty.is_box() {
-            return 1;
-        }
-
-        // Notice: this has to be in accordance with struct topology
-        let TyKind::Adt(adt_def, _) = ty.kind() else { return 0 };
-        // if !adt_def.is_struct() || !struct_topology.contains(&adt_def.did()) {
-        //     return 0;
-        // }
-        let total_offset = self
-            .struct_topology()
+    fn measure_adt(&self, adt_def: &rustc_middle::ty::AdtDef) -> Measure {
+        self.struct_topology()
             .struct_size(&adt_def.did())
             // .map(Offset::index)
-            .unwrap_or(0);
-
-        total_offset
+            .unwrap_or(0)
     }
 }
 
