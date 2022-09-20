@@ -18,8 +18,6 @@ use crate::call_graph::FnSig;
 
 use self::constraint::infer::FnResult;
 
-use orc_common::data_structure::assoc::AssocExt;
-
 // pub mod body_ext;
 pub mod constants;
 pub mod constraint;
@@ -179,6 +177,7 @@ impl WholeProgram {
         gen: &mut OwnershipSigGenerator,
         database: &mut Z3Database,
     ) -> anyhow::Result<FnResult> {
+        println!("solving {:?}", body.source.def_id());
         database.solver.push();
 
         let ssa_state = prune(body, ssa_state);
@@ -189,10 +188,7 @@ impl WholeProgram {
 
         rn.go::<Self, _>(&mut infer_cx);
 
-        let results = FnResult {
-            fn_body_sig: infer_cx.fn_body_sig,
-            ssa_state: rn.state,
-        };
+        let results = FnResult::new(rn, infer_cx);
 
         match database.solver.check() {
             z3::SatResult::Unsat => {
@@ -229,15 +225,15 @@ impl WholeProgram {
         model
     }
 
-    fn update_fn_result(fn_result: FnResult, model: &[Ownership]) -> SSAState {
-        todo!()
-    }
+    // fn update_fn_result(fn_result: FnResult, model: &[Ownership]) -> SSAState {
+    //     todo!()
+    // }
 }
 
 pub struct WholeProgramResults {
     model: Vec<Ownership>,
     fn_sigs: FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
-    fn_results: FxHashMap<DefId, FnResult>
+    fn_results: FxHashMap<DefId, FnResult>,
 }
 
 impl AnalysisResults for WholeProgramResults {
@@ -251,11 +247,7 @@ impl AnalysisResults for WholeProgramResults {
         location: Location,
     ) -> Option<&[Ownership]> {
         let fn_result = &self.fn_results[&r#fn];
-        let consume_chain = &fn_result.ssa_state.consume_chain;
-        let consumes = consume_chain.of_location(location);
-        let consume = consumes.get_by_key(&local)?;
-        let ssa_idx = consume.def;
-        let sigs = fn_result.fn_body_sig[local][ssa_idx].clone();
+        let sigs = fn_result.local_sig(local, location)?;
         Some(&self.model[sigs.start.index()..sigs.end.index()])
     }
 
@@ -297,7 +289,6 @@ impl AnalysisKind for WholeProgram {
         fn_results.reserve(crate_ctxt.functions().len());
 
         for &did in crate_ctxt.call_graph.functions() {
-            println!("solving {:?}", did);
             let body = crate_ctxt.tcx.optimized_mir(did);
 
             let dominance_frontier = compute_dominance_frontier(body);
@@ -319,7 +310,7 @@ impl AnalysisKind for WholeProgram {
         let results = WholeProgramResults {
             model,
             fn_sigs,
-            fn_results
+            fn_results,
         };
 
         results.print_fn_sigs(crate_ctxt.tcx, crate_ctxt.functions());

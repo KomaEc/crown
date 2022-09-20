@@ -1,6 +1,7 @@
 use std::{borrow::BorrowMut, ops::Range};
 
 use itertools::izip;
+use orc_common::data_structure::assoc::AssocExt;
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
@@ -37,8 +38,26 @@ pub type LocalSig = Range<OwnershipSig>;
 pub type FnBodySig<LocalSig> = IndexVec<Local, IndexVec<SSAIdx, LocalSig>>;
 
 pub struct FnResult {
-    pub fn_body_sig: FnBodySig<LocalSig>,
-    pub ssa_state: SSAState,
+    fn_body_sig: FnBodySig<LocalSig>,
+    ssa_state: SSAState,
+}
+
+impl FnResult {
+    pub fn new<DB, Kind: AnalysisKind>(rn: Renamer, infer_cx: InferCtxt<'_, '_, DB, Kind>) -> Self {
+        FnResult {
+            fn_body_sig: infer_cx.fn_body_sig,
+            ssa_state: rn.state,
+        }
+    }
+
+    #[inline]
+    pub fn local_sig(&self, local: Local, location: Location) -> Option<LocalSig> {
+        let consume_chain = &self.ssa_state.consume_chain;
+        let consumes = consume_chain.of_location(location);
+        let consume = consumes.get_by_key(&local)?;
+        let ssa_idx = consume.def;
+        Some(self.fn_body_sig[local][ssa_idx].clone())
+    }
 }
 
 pub struct InferCtxt<'infercx, 'tcx, DB, Kind: AnalysisKind + 'infercx> {
