@@ -8,8 +8,8 @@ use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
         AggregateKind, BasicBlock, BasicBlockData, Body, CastKind, Local, Location,
-        NonDivergingIntrinsic, Operand, Place, ProjectionElem, Rvalue, Statement, StatementKind,
-        Terminator, TerminatorKind, RETURN_PLACE,
+        NonDivergingIntrinsic, Operand, Place, PlaceElem, ProjectionElem, Rvalue, Statement,
+        StatementKind, Terminator, TerminatorKind, RETURN_PLACE,
     },
     ty::Ty,
 };
@@ -120,6 +120,67 @@ where
 
     pub fn new_sigs(&mut self, size: u32) -> Range<OwnershipSig> {
         self.database.new_vars(self.gen.new_sigs(size))
+    }
+
+    fn project_deeper(
+        &mut self,
+        base: Consume<<Kind as InferMode<'infercx, 'tcx, DB>>::Interpretation>,
+        mut base_ty: Ty<'tcx>,
+        projection: &[PlaceElem<'tcx>],
+    ) -> Consume<<Kind as InferMode<'infercx, 'tcx, DB>>::Interpretation> {
+        let mut proj_start_offset = 0;
+
+        for projection_elem in projection {
+            match projection_elem {
+                // do not track pointers behind dereferences for now
+                ProjectionElem::Deref => {
+                    // No need to set up threshold. Consumption of indirect places are processed
+                    // only if definitions contain them, which happen in phases where threshold.
+                    // Furthermore, mir places contain only at most one indirection.
+                    proj_start_offset += 1;
+                    base_ty = base_ty.builtin_deref(true).unwrap().ty;
+                }
+                ProjectionElem::Field(field, ty) => {
+                    let TyKind::Adt(adt_def, _) = base_ty.kind() else { unreachable!() };
+                    let Some(field_offsets) = self
+                        .crate_ctxt
+                        .struct_topology()
+                        .field_offsets(&adt_def.did()) else { unreachable!() };
+                    proj_start_offset += field_offsets[field.index()];
+                    base_ty = *ty;
+                }
+                // [ty] is equivalent to ty
+                ProjectionElem::Index(_) => base_ty = base_ty.builtin_index().unwrap(),
+                ProjectionElem::ConstantIndex { .. } => {
+                    unreachable!("unexpected constant index");
+                }
+                ProjectionElem::Subslice { .. } => {
+                    unreachable!("unexpected subslicing")
+                }
+                ProjectionElem::Downcast(..) => unreachable!("unexpected downcasting"),
+            }
+        }
+
+        for (pre, post) in (base.r#use.start..base.r#use.start + proj_start_offset)
+            .zip(base.def.start..base.def.start + proj_start_offset)
+        {
+            self.database.push_equal::<super::Debug>((), pre, post);
+        }
+
+        let proj_end_offset = proj_start_offset + self.crate_ctxt.measure(base_ty);
+
+        assert!(base.r#use.start + proj_end_offset <= base.r#use.end);
+
+        for (pre, post) in (base.r#use.start + proj_end_offset..base.r#use.end)
+            .zip(base.def.start + proj_end_offset..base.def.end)
+        {
+            self.database.push_equal::<super::Debug>((), pre, post);
+        }
+
+        Consume {
+            r#use: base.r#use.start + proj_start_offset..base.r#use.start + proj_end_offset,
+            def: base.def.start + proj_start_offset..base.def.start + proj_end_offset,
+        }
     }
 }
 
@@ -397,79 +458,20 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, K: AnalysisKind + 'infer
     {
         tracing::debug!("interpretting consume for {:?} with {:?}", place, consume);
         let base = place.local;
-        let mut base_ty = body.local_decls[base].ty;
+        let base_ty = body.local_decls[base].ty;
         let base_offset = infer_cx.crate_ctxt.measure(base_ty);
 
-        let Range {
-            start: old_start,
-            end: old_end,
-        } = infer_cx.fn_body_sig[base][consume.r#use].clone();
-
-        assert_eq!(base_offset, old_end.as_u32() - old_start.as_u32());
-
-        let mut proj_start_offset = 0;
-
-        for projection_elem in place.projection {
-            match projection_elem {
-                // do not track pointers behind dereferences for now
-                ProjectionElem::Deref => {
-                    // No need to set up threshold. Consumption of indirect places are processed
-                    // only if definitions contain them, which happen in phases where threshold.
-                    // Furthermore, mir places contain only at most one indirection.
-                    proj_start_offset += 1;
-                    base_ty = base_ty.builtin_deref(true).unwrap().ty;
-                }
-                ProjectionElem::Field(field, ty) => {
-                    let TyKind::Adt(adt_def, _) = base_ty.kind() else { unreachable!() };
-                    let Some(field_offsets) = infer_cx
-                        .crate_ctxt
-                        .struct_topology()
-                        .field_offsets(&adt_def.did()) else { unreachable!() };
-                    proj_start_offset += field_offsets[field.index()];
-                    base_ty = ty;
-                }
-                // [ty] is equivalent to ty
-                ProjectionElem::Index(_) => base_ty = base_ty.builtin_index().unwrap(),
-                ProjectionElem::ConstantIndex { .. } => {
-                    unreachable!("unexpected constant index {:?}", place)
-                }
-                ProjectionElem::Subslice { .. } => {
-                    unreachable!("unexpected subslicing {:?}", place)
-                }
-                ProjectionElem::Downcast(..) => unreachable!("unexpected downcasting {:?}", place),
-            }
-        }
-
-        let Range {
-            start: new_start,
-            end: new_end,
-        } = infer_cx.new_sigs(base_offset);
-
+        let r#use = infer_cx.fn_body_sig[base][consume.r#use].clone();
+        let def = infer_cx.new_sigs(base_offset);
+        assert_eq!(base_offset, r#use.end.as_u32() - r#use.start.as_u32());
         assert_eq!(
-            infer_cx.fn_body_sig[base].push(new_start..new_end),
+            infer_cx.fn_body_sig[base].push(def.start..def.end),
             consume.def
         );
 
-        for (old, new) in
-            (old_start..old_start + proj_start_offset).zip(new_start..new_start + proj_start_offset)
-        {
-            infer_cx.database.push_equal::<super::Debug>((), old, new);
-        }
+        let base = Consume { r#use, def };
 
-        let proj_end_offset = proj_start_offset + infer_cx.crate_ctxt.measure(base_ty);
-
-        assert!(old_start + proj_end_offset <= old_end);
-
-        for (old, new) in
-            (old_start + proj_end_offset..old_end).zip(new_start + proj_end_offset..new_end)
-        {
-            infer_cx.database.push_equal::<super::Debug>((), old, new);
-        }
-
-        Consume {
-            r#use: old_start + proj_start_offset..old_start + proj_end_offset,
-            def: new_start + proj_start_offset..new_start + proj_end_offset,
-        }
+        infer_cx.project_deeper(base, base_ty, place.projection)
     }
 
     fn transfer(
