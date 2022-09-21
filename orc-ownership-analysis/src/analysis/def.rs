@@ -1,3 +1,5 @@
+use std::num::NonZeroU32;
+
 use crate::{analysis::state::SSAIdx, ptr::Measurable, CrateCtxt};
 use orc_common::data_structure::vec_array::{VecArray, VecArrayConstruction};
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
@@ -13,9 +15,10 @@ use smallvec::SmallVec;
 
 /// test whether a local might be owning
 #[inline]
-pub fn maybe_owned<'tcx>(local_decl: &LocalDecl<'tcx>, crate_ctxt: &CrateCtxt<'tcx>) -> bool {
+pub fn try_measure_local(local_decl: &LocalDecl, measurable: impl Measurable) -> Option<NonZeroU32> {
     let ty = local_decl.ty;
-    crate_ctxt.contains_ptr(ty) && !matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp))
+    let measure = measurable.measure(ty);
+    (!matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp))).then(|| NonZeroU32::new(measure)).flatten()
 }
 
 // e has type T and T coerces to U; coercion-cast
@@ -128,13 +131,13 @@ impl ConsumeChain {
         ConsumeChain { consumes, locs }
     }
 
-    // pub fn reset(&mut self) {
-    //     for locs in &mut self.locs {
-    //         if !locs.is_empty() {
-    //             locs.truncate(1);
-    //         }
-    //     }
-    // }
+    pub fn reset(&mut self) {
+        for locs in &mut self.locs {
+            if !locs.is_empty() {
+                locs.truncate(1);
+            }
+        }
+    }
 
     /// Note that return place is never finalised
     pub fn to_finalise(&self) -> impl Iterator<Item = Local> + '_ {
@@ -320,7 +323,7 @@ pub fn initial_definitions<'tcx>(
         // if crate_ctxt.ty_contains_ptr(ty) && !matches!(local_info, Some(LocalInfo::DerefTemp)) {
         //     to_finalise.insert(local);
         // }
-        if self::maybe_owned(local_decl, crate_ctxt) {
+        if self::try_measure_local(local_decl, crate_ctxt).is_some() {
             maybe_owned.insert(local);
         }
     }

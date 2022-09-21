@@ -27,7 +27,7 @@ use crate::{
         state::{SSAIdx, SSAState},
         AnalysisKind, FnSig,
     },
-    ptr::Measurable,
+    ptr::{Measurable, Threshold},
     struct_topology::HasStructTopology,
     CrateCtxt,
 };
@@ -66,6 +66,7 @@ pub struct InferCtxt<'infercx, 'tcx, DB, Kind: AnalysisKind + 'infercx> {
     gen: &'infercx mut OwnershipSigGenerator,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     pub fn_body_sig: FnBodySig<LocalSig>,
+    // threshold: Threshold,
     // ensure_nullness: Vec<Location>,
 }
 
@@ -241,8 +242,6 @@ pub trait Mode {
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    // Design: Use Vec<Consume<Self::Interpretation>>?
-    // Note that Vec<Consume<()>> won't allocate memories
     fn handle_call<'infercx, 'tcx, DB>(
         infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
         caller: Self::FnSig<Option<Consume<Self::Interpretation>>>,
@@ -410,8 +409,7 @@ impl<K: AnalysisKind> Mode for K {
         DB: Database + 'infercx,
     {
         for (local, phi_node) in phi_nodes {
-            // !!!!!!!!
-            // This is not necessary if phi nodes have been prune!
+            // This is not necessary if phi nodes have been prune
             phi_node.rhs.sort();
             phi_node.rhs.dedup();
             let lhs = phi_node.lhs;
@@ -461,7 +459,9 @@ impl<K: AnalysisKind> Mode for K {
             match projection_elem {
                 // do not track pointers behind dereferences for now
                 ProjectionElem::Deref => {
-                    // TODO threshold!!!
+                    // No need to set up threshold. Consumption of indirect places are processed
+                    // only if definitions contain them, which happen in phases where threshold.
+                    // Furthermore, mir places contain only at most one indirection.
                     proj_start_offset += 1;
                     base_ty = base_ty.builtin_deref(true).unwrap().ty;
                 }
@@ -490,8 +490,7 @@ impl<K: AnalysisKind> Mode for K {
             start: new_start,
             end: new_end,
         } = infer_cx.new_sigs(base_offset);
-        // let new_start = infer_cx.next;
-        // let new_end = new_start + base_offset;
+
         assert_eq!(
             infer_cx.fn_body_sig[base].push(new_start..new_end),
             consume.def
@@ -504,6 +503,8 @@ impl<K: AnalysisKind> Mode for K {
         }
 
         let proj_end_offset = proj_start_offset + infer_cx.crate_ctxt.measure(base_ty);
+
+        assert!(old_start + proj_end_offset <= old_end);
 
         for (old, new) in
             (old_start + proj_end_offset..old_end).zip(new_start + proj_end_offset..new_end)

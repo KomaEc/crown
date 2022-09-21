@@ -165,7 +165,6 @@ impl WholeProgram {
                 FnSig { ret, args }
             };
             println!("generating signatures for {:?}: {:?}", did, fn_sig);
-            // fn_sigs.insert(did, fn_sig);
             fn_sigs.insert(did, fn_sig);
         }
 
@@ -258,6 +257,7 @@ impl WholeProgram {
         }
         ssa_state.name_state.reset();
         ssa_state.join_points.reset();
+        ssa_state.consume_chain.reset();
         ssa_state
     }
 }
