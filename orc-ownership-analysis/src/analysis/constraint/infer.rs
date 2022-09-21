@@ -123,10 +123,10 @@ where
     }
 
     fn project_deeper(
-        &mut self,
         base: Consume<<Kind as InferMode<'infercx, 'tcx, DB>>::Interpretation>,
         mut base_ty: Ty<'tcx>,
         projection: &[PlaceElem<'tcx>],
+        infer_cx: &mut Self,
     ) -> Consume<<Kind as InferMode<'infercx, 'tcx, DB>>::Interpretation> {
         let mut proj_start_offset = 0;
 
@@ -142,7 +142,7 @@ where
                 }
                 ProjectionElem::Field(field, ty) => {
                     let TyKind::Adt(adt_def, _) = base_ty.kind() else { unreachable!() };
-                    let Some(field_offsets) = self
+                    let Some(field_offsets) = infer_cx
                         .crate_ctxt
                         .struct_topology()
                         .field_offsets(&adt_def.did()) else { unreachable!() };
@@ -164,17 +164,17 @@ where
         for (pre, post) in (base.r#use.start..base.r#use.start + proj_start_offset)
             .zip(base.def.start..base.def.start + proj_start_offset)
         {
-            self.database.push_equal::<super::Debug>((), pre, post);
+            infer_cx.database.push_equal::<super::Debug>((), pre, post);
         }
 
-        let proj_end_offset = proj_start_offset + self.crate_ctxt.measure(base_ty);
+        let proj_end_offset = proj_start_offset + infer_cx.crate_ctxt.measure(base_ty);
 
         assert!(base.r#use.start + proj_end_offset <= base.r#use.end);
 
         for (pre, post) in (base.r#use.start + proj_end_offset..base.r#use.end)
             .zip(base.def.start + proj_end_offset..base.def.end)
         {
-            self.database.push_equal::<super::Debug>((), pre, post);
+            infer_cx.database.push_equal::<super::Debug>((), pre, post);
         }
 
         Consume {
@@ -471,7 +471,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, K: AnalysisKind<'infercx
 
         let base = Consume { r#use, def };
 
-        infer_cx.project_deeper(base, base_ty, place.projection)
+        InferCtxt::project_deeper(base, base_ty, place.projection, infer_cx)
     }
 
     fn transfer(
