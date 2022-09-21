@@ -43,7 +43,7 @@ pub struct FnResult {
 }
 
 impl FnResult {
-    pub fn new<DB, Kind: AnalysisKind>(rn: Renamer, infer_cx: InferCtxt<'_, '_, DB, Kind>) -> Self {
+    pub fn new<'analysis, DB, Kind: AnalysisKind<'analysis>>(rn: Renamer, infer_cx: InferCtxt<'analysis, '_, DB, Kind>) -> Self {
         FnResult {
             fn_body_sig: infer_cx.fn_body_sig,
             ssa_state: rn.state,
@@ -60,8 +60,8 @@ impl FnResult {
     }
 }
 
-pub struct InferCtxt<'infercx, 'tcx, DB, Kind: AnalysisKind + 'infercx> {
-    inter_ctxt: Kind::InterCtxt<'infercx>,
+pub struct InferCtxt<'infercx, 'tcx, DB, Kind: AnalysisKind<'infercx>> {
+    inter_ctxt: Kind::InterCtxt,
     database: &'infercx mut DB,
     gen: &'infercx mut OwnershipSigGenerator,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
@@ -74,14 +74,14 @@ impl<'infercx, 'tcx, DB, Kind> InferCtxt<'infercx, 'tcx, DB, Kind>
 where
     'tcx: 'infercx,
     DB: Database,
-    Kind: AnalysisKind,
+    Kind: AnalysisKind<'infercx>,
 {
     pub fn new(
         crate_ctxt: &'infercx CrateCtxt<'tcx>,
         body: &Body<'tcx>,
         database: &'infercx mut DB,
         gen: &'infercx mut OwnershipSigGenerator,
-        inter_ctxt: Kind::InterCtxt<'infercx>,
+        inter_ctxt: Kind::InterCtxt,
     ) -> Self {
         let mut fn_body_sig = IndexVec::with_capacity(body.local_decls.len());
 
@@ -383,7 +383,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database> InferMode<'infercx, 'tcx, DB> for P
 // pub trait WithCtxt: AnalysisKind {}
 // impl<K: AnalysisKind> WithCtxt for K {}
 
-impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, K: AnalysisKind + 'infercx>
+impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, K: AnalysisKind<'infercx>>
     InferMode<'infercx, 'tcx, DB> for K
 {
     type Ctxt = InferCtxt<'infercx, 'tcx, DB, K>;

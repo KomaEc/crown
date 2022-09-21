@@ -11,7 +11,7 @@ use crate::analysis::{
     AnalysisKind, FnSig,
 };
 
-impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind>
+impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind<'infercx>>
     InferCtxt<'infercx, 'tcx, DB, Kind>
 {
     pub fn handle_libc_call(

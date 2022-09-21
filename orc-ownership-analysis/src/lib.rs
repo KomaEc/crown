@@ -3,14 +3,12 @@
 #![feature(min_specialization)]
 #![feature(split_array)]
 #![feature(generic_associated_types)]
-#![feature(associated_type_defaults)]
 #![feature(step_trait)]
 #![feature(trusted_step)]
 #![feature(array_windows)]
 #![feature(let_else)]
 #![feature(is_some_with)]
 #![feature(type_alias_impl_trait)]
-// #![feature(allocator_api)]
 
 extern crate rustc_arena;
 extern crate rustc_ast;

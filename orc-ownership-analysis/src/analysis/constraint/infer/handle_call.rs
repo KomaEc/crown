@@ -13,7 +13,7 @@ pub mod handle_libc;
 pub mod handle_library;
 
 pub trait HandleCall<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>:
-    AnalysisKind + Sized
+    AnalysisKind<'infercx> + Sized
 {
     fn handle_call(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
@@ -23,7 +23,7 @@ pub trait HandleCall<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>:
 
     fn handle_inputs(
         // infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
-        inter_ctxt: &Self::InterCtxt<'_>,
+        inter_ctxt: &Self::InterCtxt,
         database: &mut DB,
         r#fn: DefId,
         inputs: impl Iterator<Item = Option<Range<OwnershipSig>>>,
@@ -36,7 +36,7 @@ pub trait HandleCall<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>:
     );
 }
 
-impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, K: AnalysisKind>
+impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, K: AnalysisKind<'infercx>>
     HandleCall<'infercx, 'tcx, DB> for K
 {
     default fn handle_call(
@@ -49,7 +49,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, K: AnalysisKind>
     default fn handle_inputs(
         // _: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
         // _: &CrateCtxt<'_>,
-        _: &K::InterCtxt<'_>,
+        _: &K::InterCtxt,
         _: &mut DB,
         _: DefId,
         _: impl Iterator<Item = Option<Range<OwnershipSig>>>,
@@ -137,7 +137,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx> HandleCall<'infercx, 'tc
     }
 
     fn handle_inputs(
-        inter_ctxt: &<WholeProgram as AnalysisKind>::InterCtxt<'_>,
+        inter_ctxt: &<WholeProgram as AnalysisKind>::InterCtxt,
         database: &mut DB,
         r#fn: DefId,
         inputs: impl Iterator<Item = Option<Range<OwnershipSig>>>,

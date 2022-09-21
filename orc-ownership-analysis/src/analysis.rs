@@ -120,17 +120,17 @@ pub trait AnalysisResults<'a> {
     }
 }
 
-pub trait AnalysisKind {
+pub trait AnalysisKind<'analysis> {
     /// Analysis results
-    type Results = ();
+    type Results;
     /// Interprocedural context
-    type InterCtxt<'analysis> = ()
-    where
-        Self: 'analysis;
+    type InterCtxt;
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results>;
 }
 pub enum Modular {}
-impl AnalysisKind for Modular {
+impl<'analysis> AnalysisKind<'analysis> for Modular {
+    type Results = ();
+    type InterCtxt = ();
     fn analyze(_: &CrateCtxt) -> anyhow::Result<Self::Results> {
         // TODO implement this
         anyhow::bail!("modular analysis is not implemented")
@@ -182,7 +182,7 @@ impl WholeProgram {
         body: &Body<'tcx>,
         ssa_state: SSAState,
         crate_ctxt: &CrateCtxt<'tcx>,
-        inter_ctxt: <WholeProgram as AnalysisKind>::InterCtxt<'_>,
+        inter_ctxt: <WholeProgram as AnalysisKind>::InterCtxt,
         gen: &mut OwnershipSigGenerator,
         database: &mut Z3Database,
     ) -> anyhow::Result<FnResult> {
@@ -299,10 +299,10 @@ impl<'a> AnalysisResults<'a> for WholeProgramResults {
     }
 }
 
-impl AnalysisKind for WholeProgram {
+impl<'analysis> AnalysisKind<'analysis> for WholeProgram {
     type Results = WholeProgramResults;
 
-    type InterCtxt<'analysis> = &'analysis FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>;
+    type InterCtxt = &'analysis FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>;
 
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results> {
         type DB<'z3> = Z3Database<'z3>;
@@ -347,7 +347,9 @@ impl AnalysisKind for WholeProgram {
     }
 }
 pub enum StandAlone {}
-impl AnalysisKind for StandAlone {
+impl<'analysis> AnalysisKind<'analysis> for StandAlone {
+    type Results = ();
+    type InterCtxt = ();
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results> {
         let mut databases = Vec::with_capacity(crate_ctxt.functions().len());
         for &did in crate_ctxt.functions() {
