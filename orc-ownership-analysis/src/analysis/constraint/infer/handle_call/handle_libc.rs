@@ -4,7 +4,7 @@ use rustc_span::symbol::Ident;
 
 use crate::analysis::{
     constraint::{
-        infer::{InferCtxt, Mode},
+        infer::{InferCtxt, InferMode},
         Database, OwnershipSig,
     },
     def::Consume,
@@ -34,7 +34,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind>
         let destination = destination.as_ref().unwrap();
         assert_eq!(args.len(), 1);
         assert!(args[0].is_none());
-        <Kind as Mode>::source(self, destination.clone());
+        <Kind as InferMode<_>>::source(self, destination.clone());
     }
 
     fn handle_free(&mut self, caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
@@ -45,6 +45,6 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind>
         assert!(destination.is_none());
         assert_eq!(args.len(), 1);
         let arg = args[0].clone().unwrap();
-        <Kind as Mode>::sink(self, arg);
+        <Kind as InferMode<_>>::sink(self, arg);
     }
 }

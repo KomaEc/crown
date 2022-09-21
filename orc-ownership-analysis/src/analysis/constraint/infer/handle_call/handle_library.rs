@@ -4,7 +4,7 @@ use rustc_hir::def_id::DefId;
 
 use crate::analysis::{
     constraint::{
-        infer::{InferCtxt, Mode},
+        infer::{InferCtxt, InferMode},
         Database, OwnershipSig,
     },
     def::Consume,
@@ -47,6 +47,6 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind>
         let FnSig { args, .. } = caller;
         assert_eq!(args.len(), 1);
         let arg = args.first().and_then(Option::as_ref).cloned().unwrap();
-        <Kind as Mode>::borrow(self, arg)
+        <Kind as InferMode<_>>::borrow(self, arg)
     }
 }

@@ -226,30 +226,40 @@ pub trait Database {
     }
 
     fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig);
-    fn push_linear<M: Mode>(
+    fn push_linear<Infer: Mode>(
         &mut self,
-        store: M::Store<'_>,
+        store: Infer::Store<'_>,
         x: OwnershipSig,
         y: OwnershipSig,
         z: OwnershipSig,
     ) {
         self.push_linear_impl(x, y, z);
-        M::store_linear(store, x, y, z);
+        Infer::store_linear(store, x, y, z);
     }
     fn push_assume_impl(&mut self, x: OwnershipSig, sign: bool);
-    fn push_assume<M: Mode>(&mut self, store: M::Store<'_>, x: OwnershipSig, sign: bool) {
+    fn push_assume<Infer: Mode>(&mut self, store: Infer::Store<'_>, x: OwnershipSig, sign: bool) {
         self.push_assume_impl(x, sign);
-        M::store_assumption(store, x, sign);
+        Infer::store_assumption(store, x, sign);
     }
     fn push_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig);
-    fn push_equal<M: Mode>(&mut self, store: M::Store<'_>, x: OwnershipSig, y: OwnershipSig) {
+    fn push_equal<Infer: Mode>(
+        &mut self,
+        store: Infer::Store<'_>,
+        x: OwnershipSig,
+        y: OwnershipSig,
+    ) {
         self.push_equal_impl(x, y);
-        M::store_equal(store, x, y);
+        Infer::store_equal(store, x, y);
     }
     fn push_less_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig);
-    fn push_less_equal<M: Mode>(&mut self, store: M::Store<'_>, x: OwnershipSig, y: OwnershipSig) {
+    fn push_less_equal<Infer: Mode>(
+        &mut self,
+        store: Infer::Store<'_>,
+        x: OwnershipSig,
+        y: OwnershipSig,
+    ) {
         self.push_less_equal_impl(x, y);
-        M::store_less_equal(store, x, y);
+        Infer::store_less_equal(store, x, y);
     }
 }
 

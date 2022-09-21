@@ -17,7 +17,6 @@ use crate::call_graph::FnSig;
 
 use self::constraint::infer::FnResult;
 
-// pub mod body_ext;
 pub mod constants;
 pub mod constraint;
 pub mod def;
@@ -80,10 +79,10 @@ impl std::fmt::Display for Ownership {
     }
 }
 
-pub trait AnalysisResults {
-    type FnSig<'a>: Iterator<Item = Option<&'a [Ownership]>>
-    where
-        Self: 'a;
+pub trait AnalysisResults<'a> {
+    type FnSig: Iterator<Item = Option<&'a [Ownership]>>;
+    // where
+    //     Self: 'a;
     fn try_local_result(
         &self,
         r#fn: DefId,
@@ -94,8 +93,8 @@ pub trait AnalysisResults {
     fn local_result(&self, r#fn: DefId, local: Local, location: Location) -> &[Ownership] {
         self.try_local_result(r#fn, local, location).unwrap()
     }
-    fn fn_sig(&self, r#fn: DefId) -> Self::FnSig<'_>;
-    fn print_fn_sigs(&self, tcx: TyCtxt, fns: &[DefId]) {
+    fn fn_sig(&'a self, r#fn: DefId) -> Self::FnSig;
+    fn print_fn_sigs(&'a self, tcx: TyCtxt, fns: &[DefId]) {
         for &did in fns {
             let mut fn_sig = self.fn_sig(did);
             let ret = fn_sig.next().unwrap();
@@ -268,8 +267,8 @@ pub struct WholeProgramResults {
     fn_results: FxHashMap<DefId, FnResult>,
 }
 
-impl AnalysisResults for WholeProgramResults {
-    type FnSig<'a> = impl Iterator<Item = Option<&'a [Ownership]>> + 'a where Self: 'a;
+impl<'a> AnalysisResults<'a> for WholeProgramResults {
+    type FnSig = impl Iterator<Item = Option<&'a [Ownership]>>;
 
     #[inline]
     fn try_local_result(
@@ -284,7 +283,7 @@ impl AnalysisResults for WholeProgramResults {
     }
 
     #[inline]
-    fn fn_sig(&self, r#fn: DefId) -> Self::FnSig<'_> {
+    fn fn_sig(&'a self, r#fn: DefId) -> Self::FnSig {
         let fn_sigs = &self.fn_sigs[&r#fn];
         let ret = fn_sigs
             .ret

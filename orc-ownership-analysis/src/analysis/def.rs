@@ -15,10 +15,15 @@ use smallvec::SmallVec;
 
 /// test whether a local might be owning
 #[inline]
-pub fn try_measure_local(local_decl: &LocalDecl, measurable: impl Measurable) -> Option<NonZeroU32> {
+pub fn try_measure_local(
+    local_decl: &LocalDecl,
+    measurable: impl Measurable,
+) -> Option<NonZeroU32> {
     let ty = local_decl.ty;
     let measure = measurable.measure(ty);
-    (!matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp))).then(|| NonZeroU32::new(measure)).flatten()
+    (!matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp)))
+        .then(|| NonZeroU32::new(measure))
+        .flatten()
 }
 
 // e has type T and T coerces to U; coercion-cast

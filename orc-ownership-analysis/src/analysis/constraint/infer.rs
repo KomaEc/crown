@@ -27,7 +27,7 @@ use crate::{
         state::{SSAIdx, SSAState},
         AnalysisKind, FnSig,
     },
-    ptr::{Measurable, Threshold},
+    ptr::Measurable,
     struct_topology::HasStructTopology,
     CrateCtxt,
 };
@@ -96,7 +96,7 @@ where
             }
         }
 
-        <Kind as HandleCall>::handle_inputs(
+        <Kind as HandleCall<_>>::handle_inputs(
             // crate_ctxt,
             &inter_ctxt,
             database,
@@ -123,12 +123,8 @@ where
     }
 }
 
-pub trait Mode {
-    type Ctxt<'infercx, 'tcx, DB>
-    where
-        Self: 'infercx,
-        'tcx: 'infercx,
-        DB: Database + 'infercx;
+pub trait InferMode<'infercx, 'tcx: 'infercx, DB: Database> {
+    type Ctxt;
 
     type Interpretation: Clone + std::fmt::Debug;
 
@@ -140,24 +136,20 @@ pub trait Mode {
         fn_sig: impl Iterator<Item = Option<Consume<Self::Interpretation>>>,
     ) -> Self::FnSig<Option<Consume<Self::Interpretation>>>;
 
-    fn define_phi_node<'infercx, 'tcx, DB>(
-        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        local: Local,
-        ty: Ty<'tcx>,
-        def: SSAIdx,
-    ) where
+    fn define_phi_node(infer_cx: &mut Self::Ctxt, local: Local, ty: Ty<'tcx>, def: SSAIdx)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    fn join_phi_nodes<'a, 'infercx, 'tcx, DB>(
-        infer_cx: &'a mut Self::Ctxt<'infercx, 'tcx, DB>,
+    fn join_phi_nodes<'a>(
+        infer_cx: &'a mut Self::Ctxt,
         phi_nodes: impl Iterator<Item = (Local, &'a mut PhiNode)>,
     ) where
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    fn interpret_consume<'infercx, 'tcx, DB>(
-        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
+    fn interpret_consume(
+        infer_cx: &mut Self::Ctxt,
         body: &Body<'tcx>,
         place: &Place<'tcx>,
         consume: Consume<SSAIdx>,
@@ -166,18 +158,16 @@ pub trait Mode {
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    fn transfer<'infercx, 'tcx, DB>(
-        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
+    fn transfer(
+        infer_cx: &mut Self::Ctxt,
         lhs_result: Consume<Self::Interpretation>,
         rhs_result: Consume<Self::Interpretation>,
     ) where
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    fn borrow<'infercx, 'tcx, DB>(
-        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        consume: Consume<Self::Interpretation>,
-    ) where
+    fn borrow(infer_cx: &mut Self::Ctxt, consume: Consume<Self::Interpretation>)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
@@ -185,10 +175,8 @@ pub trait Mode {
         Self::assume(infer_cx, consume.def, false);
     }
 
-    fn source<'infercx, 'tcx, DB>(
-        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        result: Consume<Self::Interpretation>,
-    ) where
+    fn source(infer_cx: &mut Self::Ctxt, result: Consume<Self::Interpretation>)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
@@ -196,10 +184,8 @@ pub trait Mode {
         Self::assume(infer_cx, result.def, true)
     }
 
-    fn sink<'infercx, 'tcx, DB>(
-        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        result: Consume<Self::Interpretation>,
-    ) where
+    fn sink(infer_cx: &mut Self::Ctxt, result: Consume<Self::Interpretation>)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
@@ -209,62 +195,46 @@ pub trait Mode {
 
     /// Impose no constraint on a definition. Constraints are still emitted
     /// because the old value of lhs must be non-owning
-    fn unknown_source<'infercx, 'tcx, DB>(
-        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        result: Consume<Self::Interpretation>,
-    ) where
+    fn unknown_source(infer_cx: &mut Self::Ctxt, result: Consume<Self::Interpretation>)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
         Self::assume(infer_cx, result.r#use, false)
     }
 
-    fn unknown_sink<'infercx, 'tcx, DB>(
-        _: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        _: Consume<Self::Interpretation>,
-    ) where
+    fn unknown_sink(_: &mut Self::Ctxt, _: Consume<Self::Interpretation>)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    fn assume<'infercx, 'tcx, DB>(
-        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        result: Self::Interpretation,
-        value: bool,
-    ) where
+    fn assume(infer_cx: &mut Self::Ctxt, result: Self::Interpretation, value: bool)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    fn finalise<'infercx, 'tcx, DB>(
-        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        local: Local,
-        r#use: SSAIdx,
-    ) where
+    fn finalise(infer_cx: &mut Self::Ctxt, local: Local, r#use: SSAIdx)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    fn handle_call<'infercx, 'tcx, DB>(
-        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
+    fn handle_call(
+        infer_cx: &mut Self::Ctxt,
         caller: Self::FnSig<Option<Consume<Self::Interpretation>>>,
         func: &Operand,
     ) where
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    fn handle_output<'infercx, 'tcx, DB>(
-        infer_cx: &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        ssa_idx: Option<SSAIdx>,
-        r#fn: DefId,
-    ) where
+    fn handle_output(infer_cx: &mut Self::Ctxt, ssa_idx: Option<SSAIdx>, r#fn: DefId)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx;
 }
 #[derive(Debug)]
 pub enum Pure {}
-impl Mode for Pure {
-    type Ctxt<'infercx, 'tcx, DB> = ()
-    where
-        'tcx: 'infercx,
-        DB: Database + 'infercx;
+impl<'infercx, 'tcx: 'infercx, DB: Database> InferMode<'infercx, 'tcx, DB> for Pure {
+    type Ctxt = ();
 
     type Interpretation = ();
 
@@ -274,29 +244,23 @@ impl Mode for Pure {
         for _ in fn_sig {}
     }
 
-    fn define_phi_node<'infercx, 'tcx, DB>(
-        (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        _: Local,
-        _: Ty,
-        _: SSAIdx,
-    ) where
+    fn define_phi_node((): &mut Self::Ctxt, _: Local, _: Ty, _: SSAIdx)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
     }
 
-    fn join_phi_nodes<'a, 'infercx, 'tcx, DB>(
-        (): &'a mut Self::Ctxt<'infercx, 'tcx, DB>,
-        _: impl Iterator<Item = (Local, &'a mut PhiNode)>,
-    ) where
+    fn join_phi_nodes<'a>((): &'a mut Self::Ctxt, _: impl Iterator<Item = (Local, &'a mut PhiNode)>)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
     }
 
     #[inline]
-    fn interpret_consume<'infercx, 'tcx, DB>(
-        (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
+    fn interpret_consume(
+        (): &mut Self::Ctxt,
         _: &Body<'tcx>,
         _: &Place<'tcx>,
         _: Consume<SSAIdx>,
@@ -309,8 +273,8 @@ impl Mode for Pure {
     }
 
     #[inline]
-    fn transfer<'infercx, 'tcx, DB>(
-        (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
+    fn transfer(
+        (): &mut Self::Ctxt,
         Consume { r#use: (), def: () }: Consume<Self::Interpretation>,
         Consume { r#use: (), def: () }: Consume<Self::Interpretation>,
     ) where
@@ -319,44 +283,36 @@ impl Mode for Pure {
     {
     }
 
-    fn unknown_sink<'infercx, 'tcx, DB>(
-        (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        _: Consume<Self::Interpretation>,
-    ) where
-        'tcx: 'infercx,
-        DB: Database + 'infercx,
-    {
-    }
-
-    fn assume<'infercx, 'tcx, DB>(
-        (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        (): Self::Interpretation,
-        _: bool,
-    ) where
-        'tcx: 'infercx,
-        DB: Database + 'infercx,
-    {
-    }
-
-    fn finalise<'infercx, 'tcx, DB>((): &mut Self::Ctxt<'infercx, 'tcx, DB>, _: Local, _: SSAIdx)
+    fn unknown_sink((): &mut Self::Ctxt, _: Consume<Self::Interpretation>)
     where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
     }
 
-    fn handle_call<'infercx, 'tcx, DB>((): &mut Self::Ctxt<'infercx, 'tcx, DB>, (): (), _: &Operand)
+    fn assume((): &mut Self::Ctxt, (): Self::Interpretation, _: bool)
     where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
     }
 
-    fn handle_output<'infercx, 'tcx, DB>(
-        (): &mut Self::Ctxt<'infercx, 'tcx, DB>,
-        _: Option<SSAIdx>,
-        _: DefId,
-    ) where
+    fn finalise((): &mut Self::Ctxt, _: Local, _: SSAIdx)
+    where
+        'tcx: 'infercx,
+        DB: Database + 'infercx,
+    {
+    }
+
+    fn handle_call((): &mut Self::Ctxt, (): (), _: &Operand)
+    where
+        'tcx: 'infercx,
+        DB: Database + 'infercx,
+    {
+    }
+
+    fn handle_output((): &mut Self::Ctxt, _: Option<SSAIdx>, _: DefId)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
@@ -366,12 +322,10 @@ impl Mode for Pure {
 // pub trait WithCtxt: AnalysisKind {}
 // impl<K: AnalysisKind> WithCtxt for K {}
 
-impl<K: AnalysisKind> Mode for K {
-    type Ctxt<'infercx, 'tcx, DB> = InferCtxt<'infercx, 'tcx, DB, K>
-    where
-        Self: 'infercx,
-        'tcx: 'infercx,
-        DB: Database + 'infercx;
+impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, K: AnalysisKind + 'infercx>
+    InferMode<'infercx, 'tcx, DB> for K
+{
+    type Ctxt = InferCtxt<'infercx, 'tcx, DB, K>;
 
     type Interpretation = Range<OwnershipSig>;
 
@@ -387,7 +341,7 @@ impl<K: AnalysisKind> Mode for K {
     }
 
     #[inline]
-    fn define_phi_node<'infercx, 'tcx, DB>(
+    fn define_phi_node(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         local: Local,
         ty: Ty<'tcx>,
@@ -401,7 +355,7 @@ impl<K: AnalysisKind> Mode for K {
         assert_eq!(def, infer_cx.fn_body_sig[local].push(sigs));
     }
 
-    fn join_phi_nodes<'a, 'infercx, 'tcx, DB>(
+    fn join_phi_nodes<'a>(
         infer_cx: &'a mut InferCtxt<'infercx, 'tcx, DB, K>,
         phi_nodes: impl Iterator<Item = (Local, &'a mut PhiNode)>,
     ) where
@@ -431,7 +385,7 @@ impl<K: AnalysisKind> Mode for K {
     /// Note: we may be very careful on cast when dealing with multi-level pointers.
     /// note that pointer to complex structures may be cast to a pointer to unit in
     /// order to perform free
-    fn interpret_consume<'infercx, 'tcx, DB>(
+    fn interpret_consume(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         body: &Body<'tcx>,
         place: &Place<'tcx>,
@@ -518,7 +472,7 @@ impl<K: AnalysisKind> Mode for K {
         }
     }
 
-    fn transfer<'infercx, 'tcx, DB>(
+    fn transfer(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         lhs_result: Consume<Self::Interpretation>,
         rhs_result: Consume<Self::Interpretation>,
@@ -542,7 +496,7 @@ impl<K: AnalysisKind> Mode for K {
     }
 
     #[inline]
-    fn unknown_sink<'infercx, 'tcx, DB>(
+    fn unknown_sink(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         consume: Consume<Self::Interpretation>,
     ) where
@@ -557,7 +511,7 @@ impl<K: AnalysisKind> Mode for K {
     }
 
     #[inline]
-    fn assume<'infercx, 'tcx, DB>(
+    fn assume(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         result: Self::Interpretation,
         value: bool,
@@ -573,11 +527,8 @@ impl<K: AnalysisKind> Mode for K {
     }
 
     #[inline]
-    fn finalise<'infercx, 'tcx, DB>(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
-        local: Local,
-        r#use: SSAIdx,
-    ) where
+    fn finalise(infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>, local: Local, r#use: SSAIdx)
+    where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
@@ -588,7 +539,7 @@ impl<K: AnalysisKind> Mode for K {
         }
     }
 
-    fn handle_call<'infercx, 'tcx, DB>(
+    fn handle_call(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         caller: Self::FnSig<Option<Consume<Self::Interpretation>>>,
         func: &Operand,
@@ -609,7 +560,7 @@ impl<K: AnalysisKind> Mode for K {
                 {
                     // this crate
                     rustc_hir::Node::Item(_) => {
-                        <K as HandleCall>::handle_call(infer_cx, &caller, callee)
+                        <K as HandleCall<_>>::handle_call(infer_cx, &caller, callee)
                     }
                     // extern
                     rustc_hir::Node::ForeignItem(foreign_item) => {
@@ -629,7 +580,7 @@ impl<K: AnalysisKind> Mode for K {
         }
     }
 
-    fn handle_output<'infercx, 'tcx, DB>(
+    fn handle_output(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, K>,
         ssa_idx: Option<SSAIdx>,
         r#fn: DefId,
@@ -638,11 +589,11 @@ impl<K: AnalysisKind> Mode for K {
         DB: Database + 'infercx,
     {
         let output = ssa_idx.map(|ssa_idx| infer_cx.fn_body_sig[RETURN_PLACE][ssa_idx].clone());
-        <K as HandleCall>::handle_output(infer_cx, r#fn, output)
+        <K as HandleCall<_>>::handle_output(infer_cx, r#fn, output)
     }
 }
 
-pub struct Renamer<'rn, 'tcx: 'rn> {
+pub struct Renamer<'rn, 'tcx> {
     body: &'rn Body<'tcx>,
     pub state: SSAState,
 }
@@ -652,9 +603,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         Renamer { body, state }
     }
 
-    pub fn go<M: Mode + 'rn, DB: Database + 'rn>(
+    pub fn go<Infer: InferMode<'rn, 'tcx, DB> + 'rn, DB: Database + 'rn>(
         &mut self,
-        mut infer_cx: impl BorrowMut<M::Ctxt<'rn, 'tcx, DB>>,
+        mut infer_cx: impl BorrowMut<Infer::Ctxt>,
     ) {
         tracing::debug!("Renaming {:?}", self.body.source.def_id());
 
@@ -681,7 +632,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         while let Some((bb, state)) = recursion.pop() {
             match state {
                 State::ToVisit => {
-                    self.go_basic_block::<M, _>(
+                    self.go_basic_block::<Infer, _>(
                         infer_cx.borrow_mut(),
                         bb,
                         &self.body.basic_blocks[bb],
@@ -705,15 +656,15 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             }
         }
 
-        M::join_phi_nodes(
+        Infer::join_phi_nodes(
             infer_cx.borrow_mut(),
             self.state.join_points.phi_nodes_mut(),
         );
     }
 
-    fn go_basic_block<M: Mode, DB: Database + 'rn>(
+    fn go_basic_block<Infer: InferMode<'rn, 'tcx, DB>, DB: Database + 'rn>(
         &mut self,
-        infer_cx: &mut M::Ctxt<'rn, 'tcx, DB>,
+        infer_cx: &mut Infer::Ctxt,
         bb: BasicBlock,
         data: &BasicBlockData<'tcx>,
     ) {
@@ -733,7 +684,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 ssa_idx
             );
             tracing::debug!("defining {:?} at Phi({:?}), def: {:?}", local, bb, ssa_idx);
-            M::define_phi_node(infer_cx, local, self.body.local_decls[local].ty, ssa_idx);
+            Infer::define_phi_node(infer_cx, local, self.body.local_decls[local].ty, ssa_idx);
         }
 
         let mut index = 0;
@@ -742,7 +693,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 block: bb,
                 statement_index: index,
             };
-            self.go_statement::<M, _>(infer_cx.borrow_mut(), statement, location);
+            self.go_statement::<Infer, _>(infer_cx.borrow_mut(), statement, location);
             index += 1;
         }
 
@@ -751,7 +702,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 block: bb,
                 statement_index: index,
             };
-            self.go_terminator::<M, _>(infer_cx, terminator, location);
+            self.go_terminator::<Infer, _>(infer_cx, terminator, location);
         }
 
         for succ in self.body.basic_blocks.successors(bb) {
@@ -763,15 +714,15 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    fn go_statement<M: Mode, DB: Database + 'rn>(
+    fn go_statement<Infer: InferMode<'rn, 'tcx, DB>, DB: Database + 'rn>(
         &mut self,
-        infer_cx: &mut M::Ctxt<'rn, 'tcx, DB>,
+        infer_cx: &mut Infer::Ctxt,
         statement: &Statement<'tcx>,
         location: Location,
     ) {
         match &statement.kind {
             StatementKind::Assign(box (place, rvalue)) => {
-                self.go_assign::<M, _>(infer_cx, place, rvalue, location)
+                self.go_assign::<Infer, _>(infer_cx, place, rvalue, location)
             }
             StatementKind::SetDiscriminant { .. } => {
                 tracing::debug!("ignoring SetDiscriminant statement {:?}", statement)
@@ -795,9 +746,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    fn go_terminator<M: Mode, DB: Database + 'rn>(
+    fn go_terminator<Infer: InferMode<'rn, 'tcx, DB>, DB: Database + 'rn>(
         &mut self,
-        infer_cx: &mut M::Ctxt<'rn, 'tcx, DB>,
+        infer_cx: &mut Infer::Ctxt,
         terminator: &Terminator<'tcx>,
         location: Location,
     ) {
@@ -819,21 +770,21 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                         place.and_then(|place| {
                             let consume = self.state.try_consume_at(place.local, location);
                             consume.map(|consume| {
-                                M::interpret_consume(infer_cx, self.body, place, consume)
+                                Infer::interpret_consume(infer_cx, self.body, place, consume)
                             })
                         })
                     });
 
-                let fn_sig = M::transform_fn_sig(fn_sig);
+                let fn_sig = Infer::transform_fn_sig(fn_sig);
 
                 // println!("{:?}", self.body.source_info(location).span);
                 // println!("{:?}", fn_sig);
-                M::handle_call(infer_cx, fn_sig, func);
+                Infer::handle_call(infer_cx, fn_sig, func);
             }
             TerminatorKind::Return => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
 
-                M::handle_output(
+                Infer::handle_output(
                     infer_cx,
                     self.state.name_state.try_get_name(RETURN_PLACE),
                     self.body.source.def_id(),
@@ -844,16 +795,16 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 for local in self.state.consume_chain.to_finalise() {
                     let r#use = self.state.name_state.get_name(local);
                     tracing::debug!("finalising {:?}~{:?}", local, r#use);
-                    M::finalise(infer_cx, local, r#use);
+                    Infer::finalise(infer_cx, local, r#use);
                 }
             }
             _ => {}
         }
     }
 
-    fn go_assign<M: Mode, DB: Database + 'rn>(
+    fn go_assign<Infer: InferMode<'rn, 'tcx, DB>, DB: Database + 'rn>(
         &mut self,
-        infer_cx: &mut M::Ctxt<'rn, 'tcx, DB>,
+        infer_cx: &mut Infer::Ctxt,
         place: &Place<'tcx>,
         rvalue: &Rvalue<'tcx>,
         location: Location,
@@ -866,8 +817,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         match rhs {
             Rvalue::Use(Operand::Constant(_)) => {
                 if let Some(lhs_consume) = self.state.try_consume_at(lhs.local, location) {
-                    let lhs_consume = M::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
-                    M::unknown_source(infer_cx, lhs_consume);
+                    let lhs_consume =
+                        Infer::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
+                    Infer::unknown_source(infer_cx, lhs_consume);
                     tracing::debug!("constant pointer rvalue {:?}", rhs)
                 }
             }
@@ -876,8 +828,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 // even tho lhs is a pointer, it does not necessarily have an entry!
                 // this is because we limit the nested level of pointers
                 if let Some(lhs_consume) = self.state.try_consume_at(lhs.local, location) {
-                    let lhs_consume = M::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
-                    M::unknown_source(infer_cx, lhs_consume);
+                    let lhs_consume =
+                        Infer::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
+                    Infer::unknown_source(infer_cx, lhs_consume);
                     tracing::debug!("untrusted pointer source: raw address {:?}", operand)
                 }
             }
@@ -890,9 +843,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 let lhs_consume = self.state.try_consume_at(lhs.local, location);
                 assert!(lhs_consume.is_none());
                 let rhs_consume = self.state.consume_at(rhs.local, location);
-                let rhs_consume = M::interpret_consume(infer_cx, self.body, rhs, rhs_consume);
+                let rhs_consume = Infer::interpret_consume(infer_cx, self.body, rhs, rhs_consume);
                 // correctness?
-                M::unknown_sink(infer_cx, rhs_consume);
+                Infer::unknown_sink(infer_cx, rhs_consume);
                 tracing::debug!("untrusted pointer sink: address {:?}", lhs);
             }
 
@@ -910,19 +863,19 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 let lhs_consume = self
                     .state
                     .try_consume_at(lhs.local, location)
-                    .map(|consume| M::interpret_consume(infer_cx, self.body, lhs, consume));
+                    .map(|consume| Infer::interpret_consume(infer_cx, self.body, lhs, consume));
 
                 let rhs_consume = self
                     .state
                     .try_consume_at(rhs.local, location)
-                    .map(|consume| M::interpret_consume(infer_cx, self.body, rhs, consume));
+                    .map(|consume| Infer::interpret_consume(infer_cx, self.body, rhs, consume));
 
                 match (lhs_consume, rhs_consume) {
                     (None, None) => {}
-                    (None, Some(rhs_consume)) => M::unknown_sink(infer_cx, rhs_consume),
-                    (Some(lhs_consume), None) => M::unknown_source(infer_cx, lhs_consume),
+                    (None, Some(rhs_consume)) => Infer::unknown_sink(infer_cx, rhs_consume),
+                    (Some(lhs_consume), None) => Infer::unknown_source(infer_cx, lhs_consume),
                     (Some(lhs_consume), Some(rhs_consume)) => {
-                        M::transfer(infer_cx, lhs_consume, rhs_consume)
+                        Infer::transfer(infer_cx, lhs_consume, rhs_consume)
                     }
                 }
             }
@@ -935,23 +888,23 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
             Rvalue::Ref(_, _, _) | Rvalue::AddressOf(_, _) => {
                 let lhs_consume = self.state.consume_at(lhs.local, location);
-                let lhs_consume = M::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
+                let lhs_consume = Infer::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
 
                 /* TODO */
 
                 // correctness???
-                M::borrow(infer_cx, lhs_consume)
+                Infer::borrow(infer_cx, lhs_consume)
             }
 
             Rvalue::Repeat(Operand::Copy(rhs) | Operand::Move(rhs), _) => {
                 let _ = self
                     .state
                     .try_consume_at(lhs.local, location)
-                    .map(|consume| M::interpret_consume(infer_cx, self.body, lhs, consume));
+                    .map(|consume| Infer::interpret_consume(infer_cx, self.body, lhs, consume));
                 let _ = self
                     .state
                     .try_consume_at(rhs.local, location)
-                    .map(|consume| M::interpret_consume(infer_cx, self.body, rhs, consume));
+                    .map(|consume| Infer::interpret_consume(infer_cx, self.body, rhs, consume));
 
                 /* TODO */
             }
@@ -960,14 +913,16 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 let _ = self
                     .state
                     .try_consume_at(lhs.local, location)
-                    .map(|consume| M::interpret_consume(infer_cx, self.body, lhs, consume));
+                    .map(|consume| Infer::interpret_consume(infer_cx, self.body, lhs, consume));
 
                 for rhs in rhs_vec {
                     let Some(rhs) = rhs.place() else { continue };
                     let _ = self
                         .state
                         .try_consume_at(rhs.local, location)
-                        .map(|consume| M::interpret_consume(infer_cx, self.body, &rhs, consume));
+                        .map(|consume| {
+                            Infer::interpret_consume(infer_cx, self.body, &rhs, consume)
+                        });
                 }
 
                 /* TODO */
@@ -984,7 +939,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 let lhs_consume = self
                     .state
                     .try_consume_at(lhs.local, location)
-                    .map(|consume| M::interpret_consume(infer_cx, self.body, lhs, consume));
+                    .map(|consume| Infer::interpret_consume(infer_cx, self.body, lhs, consume));
 
                 if let Some(_) = lhs_consume { /* TODO */ }
             }
