@@ -173,7 +173,7 @@ impl WholeProgram {
     #[inline]
     fn initial_state<'tcx>(crate_ctxt: &CrateCtxt<'tcx>, body: &Body<'tcx>) -> SSAState {
         let dominance_frontier = compute_dominance_frontier(body);
-        let definitions = initial_definitions(body, crate_ctxt.tcx, &crate_ctxt);
+        let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
         SSAState::new(body, &dominance_frontier, definitions)
     }
 
@@ -314,7 +314,7 @@ impl AnalysisKind for WholeProgram {
         let ctx = z3::Context::new(&config);
         let mut database = DB::new(&ctx);
 
-        let inter_ctxt = WholeProgram::pre_generate_fn_sigs(&crate_ctxt, &mut gen, &mut database);
+        let inter_ctxt = WholeProgram::pre_generate_fn_sigs(crate_ctxt, &mut gen, &mut database);
 
         let mut fn_results = FxHashMap::default();
         fn_results.reserve(crate_ctxt.functions().len());
@@ -355,14 +355,14 @@ impl AnalysisKind for StandAlone {
             let body = crate_ctxt.tcx.optimized_mir(did);
 
             let dominance_frontier = compute_dominance_frontier(body);
-            let definitions = initial_definitions(body, crate_ctxt.tcx, &crate_ctxt);
+            let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
             let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
             let mut rn = Renamer::new(body, ssa_state);
 
             let start = CadicalDatabase::FIRST_AVAILABLE_SIG;
             let mut gen = OwnershipSigGenerator::new(start);
             let mut database = CadicalDatabase::new();
-            let mut infer_cx = InferCtxt::new(&crate_ctxt, body, &mut database, &mut gen, ());
+            let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, ());
 
             rn.go::<Self, _>(&mut infer_cx);
             match database.solver.solve() {
