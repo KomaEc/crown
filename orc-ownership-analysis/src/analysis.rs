@@ -26,7 +26,7 @@ pub mod join_points;
 pub mod state;
 
 impl<'tcx> CrateCtxt<'tcx> {
-    pub fn crash_me_with_pure_rename(&self) {
+    pub fn pure_rename(&self) {
         for &did in self.functions() {
             println!("renaming {:?}", did);
             let body = self.tcx.optimized_mir(did);
@@ -39,17 +39,46 @@ impl<'tcx> CrateCtxt<'tcx> {
         }
     }
 
-    pub fn crash_me_with_inference(&self) -> anyhow::Result<()> {
+    pub fn standalone_solve(&self) -> anyhow::Result<()> {
         StandAlone::analyze(self)
     }
 
-    pub fn crash_me_with_whole_program_analysis(&self) -> anyhow::Result<()> {
-        WholeProgram::analyze(self).map(|results| {
-            let model = &results.model[..];
-            for fn_result in results.fn_results.into_values() {
-                let _ = WholeProgram::apply_results(fn_result, model);
+    pub fn whole_program_analysis(&self) -> anyhow::Result<()> {
+        // WholeProgram::analyze(self).map(|results| {
+        //     let model = &results.model[..];
+        //     for fn_result in results.fn_results.into_values() {
+        //         let _ = WholeProgram::apply_results(fn_result, model);
+        //     }
+        // })
+
+
+        let results = WholeProgram::analyze(self)?;
+        let model = results.model;
+        for (did, fn_result) in results.fn_results {
+            let body = self.tcx.optimized_mir(did);
+            for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
+                for index in 0..bb_data.statements.len() + bb_data.terminator.iter().count() {
+                    let location = Location {
+                        block: bb,
+                        statement_index: index,
+                    };
+                    let result = fn_result
+                        .location_result(location)
+                        .map(|(local, result)| {
+                            let result =
+                                result.map(|sigs| &model[sigs.start.index()..sigs.end.index()]);
+                            format!("{:?}: {:?}", local, result)
+                        })
+                        .collect::<Vec<_>>()
+                        .join(", ");
+
+                    println!("@{:?}: {result}", location);
+                }
             }
-        })
+
+            let _ = WholeProgram::apply_results(fn_result, &model[..]);
+        }
+        Ok(())
     }
 }
 

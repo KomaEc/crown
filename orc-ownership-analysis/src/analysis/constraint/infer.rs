@@ -60,6 +60,21 @@ impl FnResult {
         let consume = consumes.get_by_key(&local)?;
         Some(consume.map(|ssa_idx| self.fn_body_sig[local][ssa_idx].clone()))
     }
+
+    #[inline]
+    pub fn location_result(
+        &self,
+        location: Location,
+    ) -> impl Iterator<Item = (Local, Consume<LocalSig>)> + '_ {
+        let consume_chain = &self.ssa_state.consume_chain;
+        let consumes = consume_chain.of_location(location);
+        consumes.iter().map(|(local, consume)| {
+            (
+                *local,
+                consume.map(|ssa_idx| self.fn_body_sig[*local][ssa_idx].clone()),
+            )
+        })
+    }
 }
 
 pub struct InferCtxt<'infercx, 'tcx, DB, Kind>
