@@ -20,3 +20,4 @@ ground_truth
 **/*.bak
 
 .z3-trace
+**/*.orc-trace
