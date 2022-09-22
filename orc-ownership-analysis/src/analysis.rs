@@ -280,7 +280,7 @@ impl WholeProgram {
         }
         for sig in start..gen.next() {
             let value = z3_model
-                .eval(&database.z3_ast[sig], true)
+                .eval(&database.z3_ast[sig], false)
                 .unwrap()
                 .as_bool();
             model.push(value.into());
