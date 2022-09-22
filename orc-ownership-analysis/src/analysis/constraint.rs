@@ -5,6 +5,8 @@ use rustc_middle::mir::LocalDecl;
 
 use crate::{analysis::def::try_measure_local, ptr::Measurable};
 
+use super::def::HasInvalid;
+
 pub mod infer;
 // pub mod prune;
 
@@ -18,10 +20,21 @@ impl std::fmt::Display for OwnershipSig {
 }
 
 impl OwnershipSig {
-    // pub const MIN: Self = OwnershipSig::from_u32(1);
+    pub const INVALID: Self = OwnershipSig::from_u32(0);
+    pub const MIN: Self = OwnershipSig::from_u32(1);
 
     pub fn into_lit(self) -> i32 {
         self.as_u32() as i32
+    }
+}
+
+
+impl HasInvalid for Range<OwnershipSig> {
+    const INVALID: Self = Range { start: OwnershipSig::INVALID, end: OwnershipSig::INVALID };
+
+    #[inline]
+    fn is_invalid(&self) -> bool {
+        self.start == OwnershipSig::INVALID && self.end == OwnershipSig::INVALID
     }
 }
 
@@ -61,31 +74,13 @@ impl OwnershipSigGenerator {
     }
 }
 
-// #[inline]
-// pub fn generate_signatures_for_local<'tcx, DB: Database>(
-//     local_decl: &LocalDecl<'tcx>,
-//     gen: &mut OwnershipSigGenerator,
-//     database: &mut DB,
-//     crate_ctxt: &CrateCtxt<'tcx>,
-// ) -> Option<Range<OwnershipSig>> {
-//     maybe_owned(local_decl, crate_ctxt).then(|| {
-//         let ty = local_decl.ty;
-//         let measure = crate_ctxt.measure(ty);
-//         database.new_vars(gen.new_sigs(measure))
-//     })
-// }
-
 #[inline]
-pub fn generate_signatures_for_local<DB: Database>(
+pub fn generate_signatures_for_local(
     local_decl: &LocalDecl,
     gen: &mut OwnershipSigGenerator,
-    database: &mut DB,
-    // crate_ctxt: &CrateCtxt<'tcx>,
+    database: &mut impl Database,
     measurable: impl Measurable,
 ) -> Option<Range<OwnershipSig>> {
-    // let measure = measruable.measure(local_decl.ty);
-    // (measure > 0 && !matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp)))
-    //     .then(|| database.new_vars(gen.new_sigs(measure)))
     try_measure_local(local_decl, measurable)
         .map(|measure| database.new_vars(gen.new_sigs(measure.get())))
 }
@@ -215,8 +210,6 @@ make_logging_mode!(Warn);
 make_logging_mode!(Error);
 
 pub trait Database {
-    const FIRST_AVAILABLE_SIG: OwnershipSig;
-
     #[inline]
     fn new_var(&mut self, _: OwnershipSig) {}
 
@@ -264,8 +257,6 @@ pub trait Database {
 }
 
 impl Database for () {
-    const FIRST_AVAILABLE_SIG: OwnershipSig = OwnershipSig::from_u32(0);
-
     fn push_linear_impl(&mut self, _: OwnershipSig, _: OwnershipSig, _: OwnershipSig) {}
 
     fn push_assume_impl(&mut self, _: OwnershipSig, _: bool) {}
@@ -288,8 +279,6 @@ impl CadicalDatabase {
 }
 
 impl Database for CadicalDatabase {
-    const FIRST_AVAILABLE_SIG: OwnershipSig = OwnershipSig::from_u32(1);
-
     #[inline]
     fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
         self.solver
@@ -347,8 +336,6 @@ impl<'z3> Z3Database<'z3> {
 }
 
 impl<'z3> Database for Z3Database<'z3> {
-    const FIRST_AVAILABLE_SIG: OwnershipSig = OwnershipSig::from_u32(1);
-
     fn new_var(&mut self, x: OwnershipSig) {
         assert_eq!(
             x,

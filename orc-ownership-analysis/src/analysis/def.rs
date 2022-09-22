@@ -50,13 +50,31 @@ pub struct Definitions {
     pub maybe_owned: BitSet<Local>,
 }
 
+/// The class of type that has an invalid argument
+pub trait HasInvalid: Clone + std::fmt::Debug {
+    const INVALID: Self;
+    fn is_invalid(&self) -> bool;
+}
+
 #[derive(Clone, Debug)]
-pub struct Consume<T: Clone + std::fmt::Debug> {
+pub struct Consume<T> {
     pub r#use: T,
     pub def: T,
 }
 
-impl<T: Clone + Copy + std::fmt::Debug> Copy for Consume<T> {}
+impl<T: HasInvalid> Consume<T> {
+    pub fn map<U: HasInvalid>(self, mut f: impl FnMut(T) -> U) -> Consume<U> {
+        let def = if self.is_use() {
+            U::INVALID
+        } else {
+            f(self.def)
+        };
+        let r#use = f(self.r#use);
+        Consume { r#use, def }
+    }
+}
+
+impl<T: Copy> Copy for Consume<T> {}
 
 impl Consume<SSAIdx> {
     #[inline]
@@ -79,7 +97,9 @@ impl Consume<SSAIdx> {
     pub fn mk_def(&mut self) {
         self.def = SSAIdx::INIT;
     }
+}
 
+impl<T: HasInvalid> Consume<T> {
     #[inline]
     pub fn is_use(&self) -> bool {
         self.def.is_invalid()

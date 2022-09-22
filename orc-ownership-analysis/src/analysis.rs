@@ -11,11 +11,12 @@ use crate::analysis::def::initial_definitions;
 use crate::analysis::dom::compute_dominance_frontier;
 use crate::CrateCtxt;
 
-use crate::analysis::constraint::{generate_signatures_for_local, Database, OwnershipSig};
+use crate::analysis::constraint::{generate_signatures_for_local, OwnershipSig};
 use crate::analysis::state::SSAState;
 use crate::call_graph::FnSig;
 
 use self::constraint::infer::FnResult;
+use self::def::{Consume, HasInvalid};
 
 pub mod constants;
 pub mod constraint;
@@ -88,9 +89,9 @@ pub trait AnalysisResults<'a> {
         r#fn: DefId,
         local: Local,
         location: Location,
-    ) -> Option<&[Ownership]>;
+    ) -> Option<Consume<&[Ownership]>>;
     #[inline]
-    fn local_result(&self, r#fn: DefId, local: Local, location: Location) -> &[Ownership] {
+    fn local_result(&self, r#fn: DefId, local: Local, location: Location) -> Consume<&[Ownership]> {
         self.try_local_result(r#fn, local, location).unwrap()
     }
     fn fn_sig(&'a self, r#fn: DefId) -> Self::FnSig;
@@ -267,6 +268,15 @@ pub struct WholeProgramResults {
     fn_results: FxHashMap<DefId, FnResult>,
 }
 
+impl HasInvalid for &[Ownership] {
+    const INVALID: Self = &[];
+
+    #[inline]
+    fn is_invalid(&self) -> bool {
+        self.is_empty()
+    }
+}
+
 impl<'a> AnalysisResults<'a> for WholeProgramResults {
     type FnSig = impl Iterator<Item = Option<&'a [Ownership]>>;
 
@@ -276,10 +286,12 @@ impl<'a> AnalysisResults<'a> for WholeProgramResults {
         r#fn: DefId,
         local: Local,
         location: Location,
-    ) -> Option<&[Ownership]> {
+    ) -> Option<Consume<&[Ownership]>> {
         let fn_result = &self.fn_results[&r#fn];
-        let sigs = fn_result.local_sig(local, location)?;
-        Some(&self.model[sigs.start.index()..sigs.end.index()])
+        // let sigs = fn_result.local_sig(local, location)?;
+        let local_result = fn_result.local_result(local, location)?;
+        // Some(&self.model[sigs.start.index()..sigs.end.index()])
+        Some(local_result.map(|sigs| &self.model[sigs.start.index()..sigs.end.index()]))
     }
 
     #[inline]
@@ -307,7 +319,7 @@ impl<'analysis> AnalysisKind<'analysis> for WholeProgram {
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results> {
         type DB<'z3> = Z3Database<'z3>;
 
-        let start = DB::FIRST_AVAILABLE_SIG;
+        let start = OwnershipSig::MIN;
         let mut gen = OwnershipSigGenerator::new(start);
 
         let config = z3::Config::new();
@@ -361,7 +373,7 @@ impl<'analysis> AnalysisKind<'analysis> for StandAlone {
             let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
             let mut rn = Renamer::new(body, ssa_state);
 
-            let start = CadicalDatabase::FIRST_AVAILABLE_SIG;
+            let start = OwnershipSig::MIN;
             let mut gen = OwnershipSigGenerator::new(start);
             let mut database = CadicalDatabase::new();
             let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, ());

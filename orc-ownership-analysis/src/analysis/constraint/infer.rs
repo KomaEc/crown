@@ -43,7 +43,10 @@ pub struct FnResult {
 }
 
 impl FnResult {
-    pub fn new<'analysis, DB, Kind: AnalysisKind<'analysis>>(rn: Renamer, infer_cx: InferCtxt<'analysis, '_, DB, Kind>) -> Self {
+    pub fn new<'analysis, DB: Database, Kind: AnalysisKind<'analysis>>(
+        rn: Renamer,
+        infer_cx: InferCtxt<'analysis, '_, DB, Kind>,
+    ) -> Self {
         FnResult {
             fn_body_sig: infer_cx.fn_body_sig,
             ssa_state: rn.state,
@@ -51,23 +54,27 @@ impl FnResult {
     }
 
     #[inline]
-    pub fn local_sig(&self, local: Local, location: Location) -> Option<LocalSig> {
+    pub fn local_result(&self, local: Local, location: Location) -> Option<Consume<LocalSig>> {
         let consume_chain = &self.ssa_state.consume_chain;
         let consumes = consume_chain.of_location(location);
         let consume = consumes.get_by_key(&local)?;
-        let ssa_idx = consume.def;
-        Some(self.fn_body_sig[local][ssa_idx].clone())
+        Some(consume.map(|ssa_idx| self.fn_body_sig[local][ssa_idx].clone()))
     }
 }
 
-pub struct InferCtxt<'infercx, 'tcx, DB, Kind: AnalysisKind<'infercx>> {
+pub struct InferCtxt<'infercx, 'tcx, DB, Kind>
+where
+    'tcx: 'infercx,
+    DB: Database,
+    Kind: AnalysisKind<'infercx>,
+{
     inter_ctxt: Kind::InterCtxt,
     database: &'infercx mut DB,
     gen: &'infercx mut OwnershipSigGenerator,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     pub fn_body_sig: FnBodySig<LocalSig>,
+    // deref_copys: Consume<<Kind as InferMode<'infercx, 'tcx, DB>>::Interpretation>,
     // threshold: Threshold,
-    // ensure_nullness: Vec<Location>,
 }
 
 impl<'infercx, 'tcx, DB, Kind> InferCtxt<'infercx, 'tcx, DB, Kind>
@@ -113,8 +120,17 @@ where
             database,
             gen,
             crate_ctxt,
-            // ensure_nullness: ensure_nullness(body),
             fn_body_sig,
+            // deref_copys: Consume {
+            //     r#use: Range {
+            //         start: OwnershipSig::INVALID,
+            //         end: OwnershipSig::INVALID,
+            //     },
+            //     def: Range {
+            //         start: OwnershipSig::INVALID,
+            //         end: OwnershipSig::INVALID,
+            //     },
+            // },
         }
     }
 
@@ -235,6 +251,16 @@ pub trait InferMode<'infercx, 'tcx: 'infercx, DB: Database> {
         Self::assume(infer_cx, consume.r#use, false);
         Self::assume(infer_cx, consume.def, false);
     }
+
+    // /// Lend by the owner, not re-borrow
+    // fn lend(infer_cx: &mut Self::Ctxt, consume: Consume<Self::Interpretation>)
+    // where
+    //     'tcx: 'infercx,
+    //     DB: Database + 'infercx,
+    // {
+    //     Self::assume(infer_cx, consume.r#use, true);
+    //     Self::assume(infer_cx, consume.def, true);
+    // }
 
     fn source(infer_cx: &mut Self::Ctxt, result: Consume<Self::Interpretation>)
     where

@@ -10,6 +10,8 @@ use crate::analysis::{
     join_points::{JoinPoints, PhiNode},
 };
 
+use super::def::HasInvalid;
+
 orc_common::macros::newtype_index! {
     pub struct SSAIdx {
         DEBUG_FORMAT = "{}"
@@ -24,10 +26,19 @@ impl Default for SSAIdx {
 
 impl SSAIdx {
     pub const INIT: Self = SSAIdx::from_u32(0);
-    pub const INVALID: Self = SSAIdx::MAX;
+    // pub const INVALID: Self = SSAIdx::MAX;
+
+    // #[inline]
+    // pub fn is_invalid(&self) -> bool {
+    //     *self == Self::INVALID
+    // }
+}
+
+impl HasInvalid for SSAIdx {
+    const INVALID: Self = SSAIdx::MAX;
 
     #[inline]
-    pub fn is_invalid(&self) -> bool {
+    fn is_invalid(&self) -> bool {
         *self == Self::INVALID
     }
 }
