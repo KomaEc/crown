@@ -125,11 +125,13 @@ impl<'a> FnResult<'a> for (&'a FnSummary, &'a [Ownership]) {
 
     type LocationResults = impl Iterator<Item = (Local, Consume<&'a [Ownership]>)>;
 
+    #[inline]
     fn local_result(&self, local: Local, location: Location) -> Option<Consume<Self::LocalResult>> {
         let local_result = self.0.local_result(local, location)?;
         Some(local_result.map(|sigs| &self.1[sigs.start.index()..sigs.end.index()]))
     }
 
+    #[inline]
     fn location_result(&'a self, location: Location) -> Self::LocationResults {
         self.0.location_result(location).map(|(local, result)| {
             (
