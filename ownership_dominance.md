@@ -306,10 +306,25 @@ p = **q; ~ { tmp = deref_copy(*q); p = *tmp; }
 ### 9.16
 - [x] First stage analysis (runnable on large benchmark)
 - [x] More empirical studies on struct definitions
-- [ ] More benchmarks (checked-c benchmark)
-- [ ] Better C2Rust results (need linux machine)
+- [x] More benchmarks (checked-c benchmark)
+- [x] Better C2Rust results (need linux machine)
 - [ ] Smarter constraint solving?
     Relax $x + y = z$ by $x \le z \land y \le z \land x + y \le 1$, this may lead to memory leak, but what if the underying C lib is well-written? We may perform this relaxed analysis in second stage
 - [ ] Initial rewrite
     Method boundaries, not struct definitions
 - [ ] Second stage analysis
+
+
+
+### 9.23
+Move is allowed inside owning pointer: `p: &move &move ..`. After moving, the type becomes `&move & ..`. The question is that, if this inner pointer is behind a struct definition, say `struct Wrapper(*mut _)`, does it need to reclaim ownership? If so, where? 
+
+My thoughts: if it needs to, then it should reclaim ownership when the surrounding pointer is moved. However I don't think it needs to, and in this case, we need two kinds of rewrite when performing move of this kind:
+1. `move((*p).0)`, this corresponds to a partial move, which requires explicit ownership re-claiming otherwise rustc fails;
+2. `std::mem::take((*p).0)` if `Wrapper.0` is nullable.
+
+Note that a struct has only two kinds of sink:
+1. consumer functions like `free`;
+2. move.
+
+In the former case, we are happy about partially moved struct. In the latter case, the inferencer will check for ownership signatures, so we should be fine?
