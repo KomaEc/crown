@@ -25,7 +25,7 @@ use crate::{
         def::{Consume, RichLocation},
         join_points::PhiNode,
         state::{SSAIdx, SSAState},
-        AnalysisKind, FnSig,
+        AnalysisKind, FnResult, FnSig,
     },
     ptr::Measurable,
     struct_topology::HasStructTopology,
@@ -37,24 +37,30 @@ pub mod handle_call;
 pub type LocalSig = Range<OwnershipSig>;
 pub type FnBodySig<LocalSig> = IndexVec<Local, IndexVec<SSAIdx, LocalSig>>;
 
-pub struct FnResult {
+pub struct FnSummary {
     pub fn_body_sig: FnBodySig<LocalSig>,
     pub ssa_state: SSAState,
 }
 
-impl FnResult {
+impl FnSummary {
     pub fn new<'analysis, DB: Database, Kind: AnalysisKind<'analysis>>(
         rn: Renamer,
         infer_cx: InferCtxt<'analysis, '_, DB, Kind>,
     ) -> Self {
-        FnResult {
+        FnSummary {
             fn_body_sig: infer_cx.fn_body_sig,
             ssa_state: rn.state,
         }
     }
+}
+
+impl<'a> FnResult<'a> for FnSummary {
+    type LocalResult = LocalSig;
+
+    type LocationResults = impl Iterator<Item = (Local, Consume<LocalSig>)> + 'a;
 
     #[inline]
-    pub fn local_result(&self, local: Local, location: Location) -> Option<Consume<LocalSig>> {
+    fn local_result(&self, local: Local, location: Location) -> Option<Consume<LocalSig>> {
         let consume_chain = &self.ssa_state.consume_chain;
         let consumes = consume_chain.of_location(location);
         let consume = consumes.get_by_key(&local)?;
@@ -62,10 +68,7 @@ impl FnResult {
     }
 
     #[inline]
-    pub fn location_result(
-        &self,
-        location: Location,
-    ) -> impl Iterator<Item = (Local, Consume<LocalSig>)> + '_ {
+    fn location_result(&'a self, location: Location) -> Self::LocationResults {
         let consume_chain = &self.ssa_state.consume_chain;
         let consumes = consume_chain.of_location(location);
         consumes.iter().map(|(local, consume)| {

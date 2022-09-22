@@ -15,7 +15,7 @@ use crate::analysis::constraint::{generate_signatures_for_local, OwnershipSig};
 use crate::analysis::state::SSAState;
 use crate::call_graph::FnSig;
 
-use self::constraint::infer::FnResult;
+use self::constraint::infer::FnSummary;
 use self::def::{Consume, HasInvalid};
 
 pub mod constants;
@@ -44,39 +44,32 @@ impl<'tcx> CrateCtxt<'tcx> {
     }
 
     pub fn whole_program_analysis(&self) -> anyhow::Result<()> {
-        // WholeProgram::analyze(self).map(|results| {
-        //     let model = &results.model[..];
-        //     for fn_result in results.fn_results.into_values() {
-        //         let _ = WholeProgram::apply_results(fn_result, model);
-        //     }
-        // })
-
-
         let results = WholeProgram::analyze(self)?;
-        let model = results.model;
-        for (did, fn_result) in results.fn_results {
+
+        for did in results.fn_summaries.keys() {
             let body = self.tcx.optimized_mir(did);
+            println!("@{:?}", did);
             for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
                 for index in 0..bb_data.statements.len() + bb_data.terminator.iter().count() {
                     let location = Location {
                         block: bb,
                         statement_index: index,
                     };
-                    let result = fn_result
+                    let result = results
+                        .fn_result(*did)
+                        .unwrap()
                         .location_result(location)
-                        .map(|(local, result)| {
-                            let result =
-                                result.map(|sigs| &model[sigs.start.index()..sigs.end.index()]);
-                            format!("{:?}: {:?}", local, result)
-                        })
+                        .map(|(local, result)| format!("{:?}: {:?}", local, result))
                         .collect::<Vec<_>>()
                         .join(", ");
 
                     println!("@{:?}: {result}", location);
                 }
             }
+        }
 
-            let _ = WholeProgram::apply_results(fn_result, &model[..]);
+        for fn_result in results.fn_summaries.into_values() {
+            let _ = WholeProgram::apply_model(fn_result, &results.model[..]);
         }
         Ok(())
     }
@@ -118,20 +111,41 @@ impl HasInvalid for &[Ownership] {
     }
 }
 
+pub trait FnResult<'a> {
+    type LocalResult;
+    type LocationResults: Iterator<Item = (Local, Consume<Self::LocalResult>)>;
+
+    fn local_result(&self, local: Local, location: Location) -> Option<Consume<Self::LocalResult>>;
+
+    fn location_result(&'a self, location: Location) -> Self::LocationResults;
+}
+
+impl<'a> FnResult<'a> for (&'a FnSummary, &'a [Ownership]) {
+    type LocalResult = &'a [Ownership];
+
+    type LocationResults = impl Iterator<Item = (Local, Consume<&'a [Ownership]>)>;
+
+    fn local_result(&self, local: Local, location: Location) -> Option<Consume<Self::LocalResult>> {
+        let local_result = self.0.local_result(local, location)?;
+        Some(local_result.map(|sigs| &self.1[sigs.start.index()..sigs.end.index()]))
+    }
+
+    fn location_result(&'a self, location: Location) -> Self::LocationResults {
+        self.0.location_result(location).map(|(local, result)| {
+            (
+                local,
+                result.map(|sigs| &self.1[sigs.start.index()..sigs.end.index()]),
+            )
+        })
+    }
+}
+
 pub trait AnalysisResults<'a> {
     type FnSig: Iterator<Item = Option<&'a [Ownership]>>;
-    // where
-    //     Self: 'a;
-    fn try_local_result(
-        &self,
-        r#fn: DefId,
-        local: Local,
-        location: Location,
-    ) -> Option<Consume<&[Ownership]>>;
-    #[inline]
-    fn local_result(&self, r#fn: DefId, local: Local, location: Location) -> Consume<&[Ownership]> {
-        self.try_local_result(r#fn, local, location).unwrap()
-    }
+    type FnResult: FnResult<'a>;
+
+    fn fn_result(&'a self, r#fn: DefId) -> Option<Self::FnResult>;
+
     fn fn_sig(&'a self, r#fn: DefId) -> Self::FnSig;
     fn print_fn_sigs(&'a self, tcx: TyCtxt, fns: &[DefId]) {
         for &did in fns {
@@ -224,7 +238,7 @@ impl WholeProgram {
         inter_ctxt: <WholeProgram as AnalysisKind>::InterCtxt,
         gen: &mut OwnershipSigGenerator,
         database: &mut Z3Database,
-    ) -> anyhow::Result<FnResult> {
+    ) -> anyhow::Result<FnSummary> {
         println!("solving {:?}", body.source.def_id());
         database.solver.push();
 
@@ -236,7 +250,7 @@ impl WholeProgram {
 
         rn.go::<Self, _>(&mut infer_cx);
 
-        let results = FnResult::new(rn, infer_cx);
+        let results = FnSummary::new(rn, infer_cx);
 
         match database.solver.check() {
             z3::SatResult::Unsat => {
@@ -273,11 +287,11 @@ impl WholeProgram {
         model
     }
 
-    fn apply_results(fn_result: FnResult, model: &[Ownership]) -> SSAState {
-        let FnResult {
+    fn apply_model(fn_summary: FnSummary, model: &[Ownership]) -> SSAState {
+        let FnSummary {
             fn_body_sig,
             mut ssa_state,
-        } = fn_result;
+        } = fn_summary;
 
         let consumes = &mut ssa_state.consume_chain.consumes;
         // we have to do this awkwardly as lending iterator is not ready
@@ -303,22 +317,17 @@ impl WholeProgram {
 pub struct WholeProgramResults {
     model: Vec<Ownership>,
     fn_sigs: FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
-    fn_results: FxHashMap<DefId, FnResult>,
+    fn_summaries: FxHashMap<DefId, FnSummary>,
 }
 
 impl<'a> AnalysisResults<'a> for WholeProgramResults {
     type FnSig = impl Iterator<Item = Option<&'a [Ownership]>>;
 
-    #[inline]
-    fn try_local_result(
-        &self,
-        r#fn: DefId,
-        local: Local,
-        location: Location,
-    ) -> Option<Consume<&[Ownership]>> {
-        let fn_result = &self.fn_results[&r#fn];
-        let local_result = fn_result.local_result(local, location)?;
-        Some(local_result.map(|sigs| &self.model[sigs.start.index()..sigs.end.index()]))
+    type FnResult = (&'a FnSummary, &'a [Ownership]);
+
+    fn fn_result(&'a self, r#fn: DefId) -> Option<Self::FnResult> {
+        let fn_summary = self.fn_summaries.get(&r#fn)?;
+        Some((fn_summary, &self.model[..]))
     }
 
     #[inline]
@@ -355,13 +364,13 @@ impl<'analysis> AnalysisKind<'analysis> for WholeProgram {
 
         let inter_ctxt = WholeProgram::pre_generate_fn_sigs(crate_ctxt, &mut gen, &mut database);
 
-        let mut fn_results = FxHashMap::default();
-        fn_results.reserve(crate_ctxt.functions().len());
+        let mut fn_summaries = FxHashMap::default();
+        fn_summaries.reserve(crate_ctxt.functions().len());
 
         for &did in crate_ctxt.call_graph.functions() {
             let body = crate_ctxt.tcx.optimized_mir(did);
             let ssa_state = WholeProgram::initial_state(crate_ctxt, body);
-            let fn_result = WholeProgram::solve_body(
+            let fn_summary = WholeProgram::solve_body(
                 body,
                 ssa_state,
                 crate_ctxt,
@@ -369,7 +378,7 @@ impl<'analysis> AnalysisKind<'analysis> for WholeProgram {
                 &mut gen,
                 &mut database,
             )?;
-            fn_results.insert(did, fn_result);
+            fn_summaries.insert(did, fn_summary);
         }
 
         let model = WholeProgram::retrieve_model(database, start, gen);
@@ -377,7 +386,7 @@ impl<'analysis> AnalysisKind<'analysis> for WholeProgram {
         let results = WholeProgramResults {
             model,
             fn_sigs: inter_ctxt,
-            fn_results,
+            fn_summaries,
         };
 
         results.print_fn_sigs(crate_ctxt.tcx, crate_ctxt.functions());
