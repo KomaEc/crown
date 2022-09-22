@@ -3,9 +3,9 @@ use std::ops::Range;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::LocalDecl;
 
-use crate::{analysis::def::try_measure_local, ptr::Measurable};
+use crate::{analysis::consume::try_measure_local, ptr::Measurable};
 
-use super::def::HasInvalid;
+use super::consume::HasInvalid;
 
 pub mod infer;
 // pub mod prune;
@@ -54,18 +54,21 @@ impl std::ops::AddAssign<u32> for OwnershipSig {
     }
 }
 
-pub struct OwnershipSigGenerator {
+pub struct Gen {
     next: OwnershipSig,
 }
 
-impl OwnershipSigGenerator {
-    pub fn new(start: OwnershipSig) -> Self {
-        OwnershipSigGenerator { next: start }
+impl Gen {
+    #[inline]
+    pub const fn new() -> Self {
+        Gen {
+            next: OwnershipSig::MIN,
+        }
     }
 
-    pub fn new_sigs(&mut self, num: u32) -> Range<OwnershipSig> {
+    pub fn new_sigs(&mut self, size: u32) -> Range<OwnershipSig> {
         let start = self.next;
-        self.next += num;
+        self.next += size;
         let end = self.next;
         start..end
     }
@@ -79,7 +82,7 @@ impl OwnershipSigGenerator {
 #[inline]
 pub fn generate_signatures_for_local(
     local_decl: &LocalDecl,
-    gen: &mut OwnershipSigGenerator,
+    gen: &mut Gen,
     database: &mut impl Database,
     measurable: impl Measurable,
 ) -> Option<Range<OwnershipSig>> {

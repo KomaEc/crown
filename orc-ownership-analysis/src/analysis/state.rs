@@ -5,12 +5,12 @@ use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::mir::{Body, Local, Location};
 
 use crate::analysis::{
-    def::{Consume, ConsumeChain, Definitions},
+    consume::{Consume, ConsumeChain, Definitions},
     dom::DominanceFrontier,
     join_points::{JoinPoints, PhiNode},
 };
 
-use super::def::HasInvalid;
+use super::consume::HasInvalid;
 
 orc_common::macros::newtype_index! {
     pub struct SSAIdx {

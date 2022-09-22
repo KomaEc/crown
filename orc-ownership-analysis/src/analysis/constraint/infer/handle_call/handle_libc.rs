@@ -7,7 +7,7 @@ use crate::analysis::{
         infer::{InferCtxt, InferMode},
         Database, OwnershipSig,
     },
-    def::Consume,
+    consume::Consume,
     AnalysisKind, FnSig,
 };
 

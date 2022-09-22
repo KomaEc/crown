@@ -1,6 +1,5 @@
 use orc_common::data_structure::vec_array::VecArray;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
-use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_middle::{
     mir::{visit::Visitor, Terminator, TerminatorKind},
@@ -22,13 +21,6 @@ impl<T> FnSig<T> {
     pub fn iter(&self) -> impl Iterator<Item = &T> {
         std::iter::once(&self.ret).chain(self.args.iter())
     }
-
-    // pub fn map<U>(&self, mut f: impl FnMut(&T) -> U) -> FnSig<U> {
-    //     FnSig {
-    //         ret: f(&self.ret),
-    //         args: self.args.iter().map(f).collect(),
-    //     }
-    // }
 }
 
 impl<T: Default> Default for FnSig<T> {
@@ -66,7 +58,6 @@ impl<T: std::fmt::Display> std::fmt::Display for FnSig<T> {
 }
 
 pub struct CallGraph {
-    pub did_idx: FxHashMap<DefId, usize>,
     post_order: VecArray<DefId>,
 }
 
@@ -86,36 +77,18 @@ impl CallGraph {
 
         let mut tarjan_scc = TarjanScc::new();
         let mut post_order = VecArray::with_indices_capacity(functions.len());
-        // let mut sccs = vec![0];
-        // let mut post_order = Vec::with_capacity(functions.len());
-        tarjan_scc.run(&graph, |nodes| {
-            // post_order.extend(nodes);
-            // sccs.push(post_order.len());
-            post_order.push_array(nodes.iter().copied())
-        });
+        tarjan_scc.run(&graph, |nodes| post_order.push_array(nodes.iter().copied()));
         let post_order = post_order.done();
-        CallGraph {
-            did_idx: post_order
-                .everything()
-                .iter()
-                .enumerate()
-                .map(|(idx, did)| (*did, idx))
-                .collect(),
-            post_order,
-        }
+        CallGraph { post_order }
     }
 
     #[inline]
     pub fn functions(&self) -> &[DefId] {
-        // &self.post_order
         self.post_order.everything()
     }
 
     #[inline]
     pub fn sccs(&self) -> impl Iterator<Item = &[DefId]> {
-        // self.sccs
-        //     .array_windows()
-        //     .map(|&[start, end]| &self.post_order[start..end])
         self.post_order.iter()
     }
 }
@@ -138,15 +111,12 @@ impl<'me, 'tcx> Visitor<'tcx> for CallGraphConstruction<'me> {
             return
         };
         let Some(func_constant) = func.constant() else {
-            // tracing::warn!("closures or function pointers are now ignored");
             return
         };
         let ty = func_constant.ty();
         let &FnDef(callee, _generic_args) = ty.kind() else {
             unreachable!("what could it be? {}", ty)
         };
-        // // local defined functions: libc externs or user functions
-        // let Some(_) = callee.as_local() else { return };
         if !self.graph.contains_node(callee) {
             return;
         }

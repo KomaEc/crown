@@ -6,8 +6,8 @@ use rustc_middle::ty::TyCtxt;
 use std::ops::Range;
 
 use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer};
-use crate::analysis::constraint::{CadicalDatabase, OwnershipSigGenerator, Z3Database};
-use crate::analysis::def::initial_definitions;
+use crate::analysis::constraint::{CadicalDatabase, Gen, Z3Database};
+use crate::analysis::consume::initial_definitions;
 use crate::analysis::dom::compute_dominance_frontier;
 use crate::CrateCtxt;
 
@@ -16,11 +16,11 @@ use crate::analysis::state::SSAState;
 use crate::call_graph::FnSig;
 
 use self::constraint::infer::FnSummary;
-use self::def::{Consume, HasInvalid};
+use self::consume::{Consume, HasInvalid};
 
 pub mod constants;
 pub mod constraint;
-pub mod def;
+pub mod consume;
 pub mod dom;
 pub mod join_points;
 pub mod state;
@@ -48,7 +48,7 @@ impl<'tcx> CrateCtxt<'tcx> {
 
         for did in results.fn_summaries.keys() {
             let body = self.tcx.optimized_mir(did);
-            println!("@{:?}", did);
+            println!("@{}", self.tcx.def_path_str(*did));
             for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
                 for index in 0..bb_data.statements.len() + bb_data.terminator.iter().count() {
                     let location = Location {
@@ -196,7 +196,7 @@ pub enum WholeProgram {}
 impl WholeProgram {
     fn pre_generate_fn_sigs(
         crate_ctxt: &CrateCtxt,
-        gen: &mut OwnershipSigGenerator,
+        gen: &mut Gen,
         database: &mut Z3Database,
     ) -> FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>> {
         let mut fn_sigs = FxHashMap::default();
@@ -232,19 +232,16 @@ impl WholeProgram {
         SSAState::new(body, &dominance_frontier, definitions)
     }
 
-    #[inline]
     fn solve_body<'tcx>(
         body: &Body<'tcx>,
         ssa_state: SSAState,
         crate_ctxt: &CrateCtxt<'tcx>,
         inter_ctxt: <WholeProgram as AnalysisKind>::InterCtxt,
-        gen: &mut OwnershipSigGenerator,
+        gen: &mut Gen,
         database: &mut Z3Database,
     ) -> anyhow::Result<FnSummary> {
         println!("solving {:?}", body.source.def_id());
         database.solver.push();
-
-        // let ssa_state = prune(body, ssa_state);
 
         let mut rn = Renamer::new(body, ssa_state);
 
@@ -266,19 +263,15 @@ impl WholeProgram {
         Ok(results)
     }
 
-    #[inline]
-    fn retrieve_model(
-        database: Z3Database,
-        start: OwnershipSig,
-        gen: OwnershipSigGenerator,
-    ) -> Vec<Ownership> {
+    fn retrieve_model(database: Z3Database, gen: Gen) -> Vec<Ownership> {
         let z3_model = database.solver.get_model().unwrap();
         let mut model = Vec::with_capacity(gen.next().index());
 
-        for _ in 0..start.index() {
-            model.push(Ownership::Unknown);
-        }
-        for sig in start..gen.next() {
+        assert_eq!(OwnershipSig::MIN.index(), 1);
+
+        model.push(Ownership::Unknown);
+
+        for sig in OwnershipSig::MIN..gen.next() {
             let value = z3_model
                 .eval(&database.z3_ast[sig], false)
                 .unwrap()
@@ -332,7 +325,6 @@ impl<'a> AnalysisResults<'a> for WholeProgramResults {
         Some((fn_summary, &self.model[..]))
     }
 
-    #[inline]
     fn fn_sig(&'a self, r#fn: DefId) -> Self::FnSig {
         let fn_sigs = &self.fn_sigs[&r#fn];
         let ret = fn_sigs
@@ -357,8 +349,7 @@ impl<'analysis> AnalysisKind<'analysis> for WholeProgram {
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results> {
         type DB<'z3> = Z3Database<'z3>;
 
-        let start = OwnershipSig::MIN;
-        let mut gen = OwnershipSigGenerator::new(start);
+        let mut gen = Gen::new();
 
         let config = z3::Config::new();
         let ctx = z3::Context::new(&config);
@@ -383,7 +374,7 @@ impl<'analysis> AnalysisKind<'analysis> for WholeProgram {
             fn_summaries.insert(did, fn_summary);
         }
 
-        let model = WholeProgram::retrieve_model(database, start, gen);
+        let model = WholeProgram::retrieve_model(database, gen);
 
         let results = WholeProgramResults {
             model,
@@ -411,8 +402,7 @@ impl<'analysis> AnalysisKind<'analysis> for StandAlone {
             let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
             let mut rn = Renamer::new(body, ssa_state);
 
-            let start = OwnershipSig::MIN;
-            let mut gen = OwnershipSigGenerator::new(start);
+            let mut gen = Gen::new();
             let mut database = CadicalDatabase::new();
             let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, ());
 

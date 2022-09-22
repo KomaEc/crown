@@ -5,7 +5,7 @@ use rustc_hir::def_id::DefId;
 
 use crate::analysis::{
     constraint::{infer::InferCtxt, Database, OwnershipSig},
-    def::Consume,
+    consume::Consume,
     AnalysisKind, FnSig, WholeProgram,
 };
 
