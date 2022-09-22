@@ -144,7 +144,7 @@ impl<'a> FnResult<'a> for (&'a FnSummary, &'a [Ownership]) {
 
 pub trait AnalysisResults<'a> {
     type FnSig: Iterator<Item = Option<&'a [Ownership]>>;
-    type FnResult: FnResult<'a>;
+    type FnResult: FnResult<'a, LocalResult = &'a [Ownership]>;
 
     fn fn_result(&'a self, r#fn: DefId) -> Option<Self::FnResult>;
 
