@@ -80,6 +80,15 @@ impl std::fmt::Display for Ownership {
     }
 }
 
+impl HasInvalid for &[Ownership] {
+    const INVALID: Self = &[];
+
+    #[inline]
+    fn is_invalid(&self) -> bool {
+        self.is_empty()
+    }
+}
+
 pub trait AnalysisResults<'a> {
     type FnSig: Iterator<Item = Option<&'a [Ownership]>>;
     // where
@@ -268,15 +277,6 @@ pub struct WholeProgramResults {
     fn_results: FxHashMap<DefId, FnResult>,
 }
 
-impl HasInvalid for &[Ownership] {
-    const INVALID: Self = &[];
-
-    #[inline]
-    fn is_invalid(&self) -> bool {
-        self.is_empty()
-    }
-}
-
 impl<'a> AnalysisResults<'a> for WholeProgramResults {
     type FnSig = impl Iterator<Item = Option<&'a [Ownership]>>;
 
@@ -288,9 +288,7 @@ impl<'a> AnalysisResults<'a> for WholeProgramResults {
         location: Location,
     ) -> Option<Consume<&[Ownership]>> {
         let fn_result = &self.fn_results[&r#fn];
-        // let sigs = fn_result.local_sig(local, location)?;
         let local_result = fn_result.local_result(local, location)?;
-        // Some(&self.model[sigs.start.index()..sigs.end.index()])
         Some(local_result.map(|sigs| &self.model[sigs.start.index()..sigs.end.index()]))
     }
 

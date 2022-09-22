@@ -28,9 +28,11 @@ impl OwnershipSig {
     }
 }
 
-
 impl HasInvalid for Range<OwnershipSig> {
-    const INVALID: Self = Range { start: OwnershipSig::INVALID, end: OwnershipSig::INVALID };
+    const INVALID: Self = Range {
+        start: OwnershipSig::INVALID,
+        end: OwnershipSig::INVALID,
+    };
 
     #[inline]
     fn is_invalid(&self) -> bool {
