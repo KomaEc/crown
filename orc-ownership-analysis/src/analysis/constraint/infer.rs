@@ -19,8 +19,7 @@ use TyKind::FnDef;
 use crate::{
     analysis::{
         constraint::{
-            generate_signatures_for_local, infer::handle_call::HandleCall, Database, Gen,
-            OwnershipSig,
+            infer::handle_call::HandleCall, initialize_local, Database, Gen, OwnershipSig,
         },
         consume::{Consume, RichLocation, Voidable},
         join_points::PhiNode,
@@ -108,8 +107,7 @@ where
         let mut fn_body_sig = IndexVec::with_capacity(body.local_decls.len());
 
         for local_decl in body.local_decls.iter() {
-            if let Some(sigs) = generate_signatures_for_local(local_decl, gen, database, crate_ctxt)
-            {
+            if let Some(sigs) = initialize_local(local_decl, gen, database, crate_ctxt) {
                 fn_body_sig.push(IndexVec::from_raw(vec![sigs]));
             } else {
                 fn_body_sig.push(IndexVec::default());
@@ -215,15 +213,15 @@ where
 pub trait InferMode<'infercx, 'db, 'tcx> {
     type Ctxt;
 
-    type LocalSig: Voidable; //Clone + std::fmt::Debug;
+    type LocalSig: Clone + std::fmt::Debug;
 
-    type FnSig<T>: std::fmt::Debug
+    type CallArgs<T>: std::fmt::Debug// + FromIterator<T>
     where
         T: std::fmt::Debug;
 
-    fn transform_fn_sig(
-        fn_sig: impl Iterator<Item = Option<Consume<Self::LocalSig>>>,
-    ) -> Self::FnSig<Option<Consume<Self::LocalSig>>>;
+    fn collect_call_args(
+        call_args: impl Iterator<Item = Option<Consume<Self::LocalSig>>>,
+    ) -> Self::CallArgs<Option<Consume<Self::LocalSig>>>;
 
     fn define_phi_node(infer_cx: &mut Self::Ctxt, local: Local, ty: Ty<'tcx>, def: SSAIdx);
 
@@ -275,7 +273,7 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     fn handle_call(
         infer_cx: &mut Self::Ctxt,
-        caller: Self::FnSig<Option<Consume<Self::LocalSig>>>,
+        caller: Self::CallArgs<Option<Consume<Self::LocalSig>>>,
         func: &Operand,
     );
 
@@ -288,10 +286,10 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
 
     type LocalSig = ();
 
-    type FnSig<T> = () where T: std::fmt::Debug;
+    type CallArgs<T> = () where T: std::fmt::Debug;
 
-    fn transform_fn_sig(fn_sig: impl Iterator<Item = Option<Consume<Self::LocalSig>>>) {
-        for _ in fn_sig {}
+    fn collect_call_args(call_args: impl Iterator<Item = Option<Consume<Self::LocalSig>>>) {
+        for _ in call_args {}
     }
 
     fn define_phi_node((): &mut Self::Ctxt, _: Local, _: Ty, _: SSAIdx) {}
@@ -309,7 +307,6 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
         _: &Place<'tcx>,
         _: Consume<SSAIdx>,
     ) -> Option<Consume<()>> {
-        // Consume { r#use: (), def: () }
         None
     }
 
@@ -345,15 +342,13 @@ where
 
     type LocalSig = LocalSig;
 
-    type FnSig<T> = FnSig<T> where T: std::fmt::Debug;
+    type CallArgs<T> = FnSig<T> where T: std::fmt::Debug;
 
     #[inline]
-    fn transform_fn_sig(
-        mut fn_sig: impl Iterator<Item = Option<Consume<Self::LocalSig>>>,
-    ) -> Self::FnSig<Option<Consume<Self::LocalSig>>> {
-        let destination = fn_sig.next().unwrap();
-        let args = fn_sig.collect();
-        FnSig::new(destination, args)
+    fn collect_call_args(
+        call_args: impl Iterator<Item = Option<Consume<Self::LocalSig>>>,
+    ) -> Self::CallArgs<Option<Consume<Self::LocalSig>>> {
+        call_args.collect()
     }
 
     #[inline]
@@ -478,7 +473,7 @@ where
 
     fn handle_call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
-        caller: Self::FnSig<Option<Consume<Self::LocalSig>>>,
+        caller: Self::CallArgs<Option<Consume<Self::LocalSig>>>,
         func: &Operand,
     ) {
         if let Some(func) = func.constant() {
@@ -517,10 +512,10 @@ where
     fn handle_output(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         ssa_idx: Option<SSAIdx>,
-        r#fn: DefId,
+        me: DefId,
     ) {
         let output = ssa_idx.map(|ssa_idx| infer_cx.fn_body_sig[RETURN_PLACE][ssa_idx].clone());
-        <Analysis as HandleCall>::handle_output(infer_cx, r#fn, output)
+        <Analysis as HandleCall>::handle_output(infer_cx, me, output)
     }
 }
 
@@ -714,7 +709,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             } => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
 
-                let fn_sig = std::iter::once(Some(destination))
+                let call_args = std::iter::once(Some(destination))
                     .chain(args.iter().map(|arg| match arg {
                         Operand::Move(arg) | Operand::Copy(arg) => Some(arg),
                         Operand::Constant(..) => None,
@@ -725,11 +720,11 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                         })
                     });
 
-                let fn_sig = Infer::transform_fn_sig(fn_sig);
+                let call_args = Infer::collect_call_args(call_args);
 
                 // println!("{:?}", self.body.source_info(location).span);
                 // println!("{:?}", fn_sig);
-                Infer::handle_call(infer_cx, fn_sig, func);
+                Infer::handle_call(infer_cx, call_args, func);
             }
             TerminatorKind::Return => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);

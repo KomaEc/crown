@@ -1,30 +1,18 @@
-use std::num::NonZeroU32;
-
-use crate::{analysis::state::SSAIdx, ptr::Measurable, CrateCtxt};
+use crate::{
+    analysis::state::SSAIdx,
+    ptr::{try_measure_local, Measurable},
+    CrateCtxt,
+};
 use orc_common::data_structure::vec_array::{VecArray, VecArrayConstruction};
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-        BasicBlock, BasicBlockData, Body, CastKind, Local, LocalDecl, LocalInfo, Location, Place,
-        Rvalue,
+        BasicBlock, BasicBlockData, Body, CastKind, Local, LocalInfo, Location, Place, Rvalue,
     },
     ty::TyCtxt,
 };
 use smallvec::SmallVec;
-
-/// test whether a local might be owning
-#[inline]
-pub fn try_measure_local(
-    local_decl: &LocalDecl,
-    measurable: impl Measurable,
-) -> Option<NonZeroU32> {
-    let ty = local_decl.ty;
-    let measure = measurable.measure(ty);
-    (!matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp)))
-        .then(|| NonZeroU32::new(measure))
-        .flatten()
-}
 
 // e has type T and T coerces to U; coercion-cast
 // e has type *T, U is *U_0, and either U_0: Sized or unsize_kind(T) = unsize_kind(U_0); ptr-ptr-cast

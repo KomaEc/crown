@@ -11,7 +11,7 @@ use crate::analysis::consume::initial_definitions;
 use crate::analysis::dom::compute_dominance_frontier;
 use crate::CrateCtxt;
 
-use crate::analysis::constraint::{generate_signatures_for_local, OwnershipSig};
+use crate::analysis::constraint::{initialize_local, OwnershipSig};
 use crate::analysis::state::SSAState;
 use crate::call_graph::FnSig;
 
@@ -209,14 +209,11 @@ impl WholeProgram {
             let fn_sig = {
                 let mut local_decls = body.local_decls.iter();
                 let return_local_decl = local_decls.next().unwrap();
-                let ret =
-                    generate_signatures_for_local(return_local_decl, gen, database, crate_ctxt);
+                let ret = initialize_local(return_local_decl, gen, database, crate_ctxt);
 
                 let args = local_decls
                     .take(body.arg_count)
-                    .map(|local_decl| {
-                        generate_signatures_for_local(local_decl, gen, database, crate_ctxt)
-                    })
+                    .map(|local_decl| initialize_local(local_decl, gen, database, crate_ctxt))
                     .collect();
 
                 FnSig { ret, args }
@@ -347,6 +344,7 @@ impl<'a> AnalysisResults<'a> for WholeProgramResults {
 impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
     type Results = WholeProgramResults;
 
+    /// TODO refactor this to be `&'analysis FxHashMap<DefId, FnSig<Range<OwnershipSig>>>`
     type InterCtxt = &'analysis FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>;
 
     type DB = Z3Database<'db>;

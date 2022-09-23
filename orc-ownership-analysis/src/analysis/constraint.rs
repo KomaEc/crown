@@ -3,14 +3,18 @@ use std::ops::Range;
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::LocalDecl;
 
-use crate::{analysis::consume::try_measure_local, ptr::Measurable};
+use crate::ptr::{try_measure_local, Measurable};
 
 use super::consume::Voidable;
 
 pub mod infer;
 // pub mod prune;
 
-orc_common::macros::orc_index!(OwnershipSig);
+orc_common::macros::newtype_index! {
+    pub struct OwnershipSig {
+        DEBUG_FORMAT = "{}"// "𝕆({})"
+    }
+}
 
 impl std::fmt::Display for OwnershipSig {
     // \mathbb{O}
@@ -28,18 +32,6 @@ impl OwnershipSig {
     }
 }
 
-impl Voidable for Range<OwnershipSig> {
-    const VOID: Self = Range {
-        start: OwnershipSig::INVALID,
-        end: OwnershipSig::INVALID,
-    };
-
-    #[inline]
-    fn is_void(&self) -> bool {
-        self.start == OwnershipSig::INVALID && self.end == OwnershipSig::INVALID
-    }
-}
-
 impl std::ops::Add<u32> for OwnershipSig {
     type Output = Self;
 
@@ -51,6 +43,29 @@ impl std::ops::Add<u32> for OwnershipSig {
 impl std::ops::AddAssign<u32> for OwnershipSig {
     fn add_assign(&mut self, rhs: u32) {
         *self = *self + rhs
+    }
+}
+
+#[inline]
+pub fn initialize_local(
+    local_decl: &LocalDecl,
+    gen: &mut Gen,
+    database: &mut impl Database,
+    measurable: impl Measurable,
+) -> Option<Range<OwnershipSig>> {
+    try_measure_local(local_decl, measurable)
+        .map(|measure| database.new_vars(gen.new_sigs(measure.get())))
+}
+
+impl Voidable for Range<OwnershipSig> {
+    const VOID: Self = Range {
+        start: OwnershipSig::INVALID,
+        end: OwnershipSig::INVALID,
+    };
+
+    #[inline]
+    fn is_void(&self) -> bool {
+        self.start == OwnershipSig::INVALID && self.end == OwnershipSig::INVALID
     }
 }
 
@@ -77,17 +92,6 @@ impl Gen {
     pub fn next(&self) -> OwnershipSig {
         self.next
     }
-}
-
-#[inline]
-pub fn generate_signatures_for_local(
-    local_decl: &LocalDecl,
-    gen: &mut Gen,
-    database: &mut impl Database,
-    measurable: impl Measurable,
-) -> Option<Range<OwnershipSig>> {
-    try_measure_local(local_decl, measurable)
-        .map(|measure| database.new_vars(gen.new_sigs(measure.get())))
 }
 
 #[derive(Clone, Debug)]

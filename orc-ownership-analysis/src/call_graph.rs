@@ -23,6 +23,15 @@ impl<T> FnSig<T> {
     }
 }
 
+impl<T> FromIterator<T> for FnSig<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut iter = iter.into_iter();
+        let ret = iter.next().unwrap();
+        let args = iter.collect();
+        FnSig { ret, args }
+    }
+}
+
 impl<T: Default> Default for FnSig<T> {
     fn default() -> Self {
         Self {

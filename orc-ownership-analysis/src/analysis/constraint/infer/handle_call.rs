@@ -12,6 +12,8 @@ use crate::analysis::{
 pub mod handle_libc;
 pub mod handle_library;
 
+/// Bad abstraction
+/// TODO refactor
 pub trait HandleCall<'infercx, 'db, 'tcx>: AnalysisKind<'infercx, 'db> + Sized
 where
     'tcx: 'infercx,
