@@ -212,7 +212,7 @@ where
     }
 }
 
-pub trait InferMode<'infercx, 'db, 'tcx: 'infercx> {
+pub trait InferMode<'infercx, 'db, 'tcx> {
     type Ctxt;
 
     type LocalSig: Voidable; //Clone + std::fmt::Debug;
