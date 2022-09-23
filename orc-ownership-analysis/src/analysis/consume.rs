@@ -58,13 +58,14 @@ pub struct Definitions {
 /// For example, it is not suitable to represent `SSAIdx` by something like
 /// `Option<NonZeroSSAIdx>`, because `SSAIdx::index()` corresponds to array
 /// index in `fn_body_sig`, so being able to be zero is quite convenient when
-/// programming with `SSAIdx`. Therefore, I use `SSAIdx::MAX` to represent a
-/// void argument.
+/// programming with `SSAIdx`. On the other hand, using `Option<SSAIdx>`
+/// introduces memory overhead:
 /// ```
 /// use orc_ownership_analysis::analysis::state::SSAIdx;
 /// const _: () = assert!(std::mem::size_of::<SSAIdx>() == 4);
 /// const _: () = assert!(std::mem::size_of::<Option<SSAIdx>>() == 8);
 /// ```
+/// Therefore, I use `SSAIdx::MAX` to represent a void argument.
 ///
 /// `Range<OwnershipSig>` is another example. `Option<Range<OwnershipSig>>`
 /// introduces memory layout overhead.
@@ -74,15 +75,15 @@ pub struct Definitions {
 /// const _: () = assert!(std::mem::size_of::<Range<OwnershipSig>>() == 8);
 /// const _: () = assert!(std::mem::size_of::<Option<Range<OwnershipSig>>>() == 12);
 /// ```
-/// 
+///
 /// Besides, adding `Option` wrapper makes types fatter, and I struggled to
 /// make appropriate synonyms for those wrapped types.
-/// 
+///
 /// Note that nullability is now not obvious statically. To prevent runtime
 /// errors (using invalid objects in a context where valid ones are needed),
 /// `Voidable` types should be wrapped in `Option` as often as possible in
-/// function arguments/return. Those types are stored as raw `Voidable` in
-/// struct definitions.
+/// function arguments/return. They are stored as raw `Voidable` in struct 
+/// definitions.
 pub trait Voidable: Clone + std::fmt::Debug {
     const VOID: Self;
     fn is_void(&self) -> bool;

@@ -15,6 +15,7 @@ use crate::analysis::constraint::{generate_signatures_for_local, OwnershipSig};
 use crate::analysis::state::SSAState;
 use crate::call_graph::FnSig;
 
+use self::constraint::Database;
 use self::constraint::infer::FnSummary;
 use self::consume::{Consume, Voidable};
 
@@ -180,12 +181,14 @@ pub trait AnalysisKind<'analysis> {
     type Results;
     /// Interprocedural context
     type InterCtxt;
+    type DB<'db>: Database;
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results>;
 }
 pub enum Modular {}
 impl<'analysis> AnalysisKind<'analysis> for Modular {
     type Results = ();
     type InterCtxt = ();
+    type DB<'db> = ();
     fn analyze(_: &CrateCtxt) -> anyhow::Result<Self::Results> {
         // TODO implement this
         anyhow::bail!("modular analysis is not implemented")
@@ -346,6 +349,8 @@ impl<'analysis> AnalysisKind<'analysis> for WholeProgram {
 
     type InterCtxt = &'analysis FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>;
 
+    type DB<'z3> = Z3Database<'z3>;
+
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results> {
         type DB<'z3> = Z3Database<'z3>;
 
@@ -391,6 +396,7 @@ pub enum StandAlone {}
 impl<'analysis> AnalysisKind<'analysis> for StandAlone {
     type Results = ();
     type InterCtxt = ();
+    type DB<'db> = CadicalDatabase;
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results> {
         let mut databases = Vec::with_capacity(crate_ctxt.functions().len());
         for &did in crate_ctxt.functions() {

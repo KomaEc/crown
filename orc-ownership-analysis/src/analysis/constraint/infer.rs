@@ -656,10 +656,11 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         Renamer { body, state }
     }
 
-    pub fn go<Infer: InferMode<'rn, 'tcx, DB> + 'rn, DB: Database + 'rn>(
-        &mut self,
-        mut infer_cx: impl BorrowMut<Infer::Ctxt>,
-    ) {
+    pub fn go<Infer, DB>(&mut self, mut infer_cx: impl BorrowMut<Infer::Ctxt>)
+    where
+        Infer: InferMode<'rn, 'tcx, DB> + 'rn,
+        DB: Database + 'rn,
+    {
         tracing::debug!("Renaming {:?}", self.body.source.def_id());
 
         let dominators = self.body.basic_blocks.dominators();
@@ -715,12 +716,15 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         );
     }
 
-    fn go_basic_block<Infer: InferMode<'rn, 'tcx, DB>, DB: Database + 'rn>(
+    fn go_basic_block<Infer, DB>(
         &mut self,
         infer_cx: &mut Infer::Ctxt,
         bb: BasicBlock,
         data: &BasicBlockData<'tcx>,
-    ) {
+    ) where
+        Infer: InferMode<'rn, 'tcx, DB>,
+        DB: Database + 'rn,
+    {
         tracing::debug!("Renaming {:?}", bb);
 
         let BasicBlockData {
@@ -767,12 +771,15 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    fn go_statement<Infer: InferMode<'rn, 'tcx, DB>, DB: Database + 'rn>(
+    fn go_statement<Infer, DB>(
         &mut self,
         infer_cx: &mut Infer::Ctxt,
         statement: &Statement<'tcx>,
         location: Location,
-    ) {
+    ) where
+        Infer: InferMode<'rn, 'tcx, DB>,
+        DB: Database + 'rn,
+    {
         match &statement.kind {
             StatementKind::Assign(box (place, rvalue)) => {
                 self.go_assign::<Infer, _>(infer_cx, place, rvalue, location)
@@ -799,12 +806,15 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    fn go_terminator<Infer: InferMode<'rn, 'tcx, DB>, DB: Database + 'rn>(
+    fn go_terminator<Infer, DB>(
         &mut self,
         infer_cx: &mut Infer::Ctxt,
         terminator: &Terminator<'tcx>,
         location: Location,
-    ) {
+    ) where
+        Infer: InferMode<'rn, 'tcx, DB>,
+        DB: Database + 'rn,
+    {
         match &terminator.kind {
             TerminatorKind::Call {
                 func,
@@ -852,13 +862,16 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    fn go_assign<Infer: InferMode<'rn, 'tcx, DB>, DB: Database + 'rn>(
+    fn go_assign<Infer, DB>(
         &mut self,
         infer_cx: &mut Infer::Ctxt,
         place: &Place<'tcx>,
         rvalue: &Rvalue<'tcx>,
         location: Location,
-    ) {
+    ) where
+        Infer: InferMode<'rn, 'tcx, DB>,
+        DB: Database + 'rn,
+    {
         tracing::debug!("processing assignment {:?} = {:?}", place, rvalue);
 
         let lhs = place;
