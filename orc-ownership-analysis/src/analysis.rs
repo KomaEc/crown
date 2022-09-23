@@ -15,8 +15,8 @@ use crate::analysis::constraint::{generate_signatures_for_local, OwnershipSig};
 use crate::analysis::state::SSAState;
 use crate::call_graph::FnSig;
 
-use self::constraint::Database;
 use self::constraint::infer::FnSummary;
+use self::constraint::Database;
 use self::consume::{Consume, Voidable};
 
 pub mod constants;
@@ -35,7 +35,7 @@ impl<'tcx> CrateCtxt<'tcx> {
             let definitions = initial_definitions(body, self.tcx, self);
             let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
             let mut rn = Renamer::new(body, ssa_state);
-            rn.go::<Pure, ()>(());
+            rn.go::<Pure>(());
             println!("completed");
         }
     }
@@ -176,19 +176,19 @@ pub trait AnalysisResults<'a> {
     }
 }
 
-pub trait AnalysisKind<'analysis> {
+pub trait AnalysisKind<'analysis, 'db> {
     /// Analysis results
     type Results;
     /// Interprocedural context
     type InterCtxt;
-    type DB<'db>: Database;
+    type DB: Database;
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results>;
 }
 pub enum Modular {}
-impl<'analysis> AnalysisKind<'analysis> for Modular {
+impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for Modular {
     type Results = ();
     type InterCtxt = ();
-    type DB<'db> = ();
+    type DB = ();
     fn analyze(_: &CrateCtxt) -> anyhow::Result<Self::Results> {
         // TODO implement this
         anyhow::bail!("modular analysis is not implemented")
@@ -250,7 +250,7 @@ impl WholeProgram {
 
         let mut infer_cx = InferCtxt::new(crate_ctxt, body, database, gen, inter_ctxt);
 
-        rn.go::<Self, _>(&mut infer_cx);
+        rn.go::<Self>(&mut infer_cx);
 
         let results = FnSummary::new(rn, infer_cx);
 
@@ -344,21 +344,21 @@ impl<'a> AnalysisResults<'a> for WholeProgramResults {
     }
 }
 
-impl<'analysis> AnalysisKind<'analysis> for WholeProgram {
+impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
     type Results = WholeProgramResults;
 
     type InterCtxt = &'analysis FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>;
 
-    type DB<'z3> = Z3Database<'z3>;
+    type DB = Z3Database<'db>;
 
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results> {
-        type DB<'z3> = Z3Database<'z3>;
+        // type DB<'z3> = Z3Database<'z3>;
 
         let mut gen = Gen::new();
 
         let config = z3::Config::new();
         let ctx = z3::Context::new(&config);
-        let mut database = DB::new(&ctx);
+        let mut database = Self::DB::new(&ctx);
 
         let inter_ctxt = WholeProgram::pre_generate_fn_sigs(crate_ctxt, &mut gen, &mut database);
 
@@ -393,10 +393,10 @@ impl<'analysis> AnalysisKind<'analysis> for WholeProgram {
     }
 }
 pub enum StandAlone {}
-impl<'analysis> AnalysisKind<'analysis> for StandAlone {
+impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for StandAlone {
     type Results = ();
     type InterCtxt = ();
-    type DB<'db> = CadicalDatabase;
+    type DB = CadicalDatabase;
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results> {
         let mut databases = Vec::with_capacity(crate_ctxt.functions().len());
         for &did in crate_ctxt.functions() {
@@ -412,7 +412,7 @@ impl<'analysis> AnalysisKind<'analysis> for StandAlone {
             let mut database = CadicalDatabase::new();
             let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, ());
 
-            rn.go::<Self, _>(&mut infer_cx);
+            rn.go::<Self>(&mut infer_cx);
             match database.solver.solve() {
                 Some(true) => println!("succeeded"),
                 Some(false) => println!("failed"),

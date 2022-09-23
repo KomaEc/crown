@@ -82,7 +82,7 @@ pub struct Definitions {
 /// Note that nullability is now not obvious statically. To prevent runtime
 /// errors (using invalid objects in a context where valid ones are needed),
 /// `Voidable` types should be wrapped in `Option` as often as possible in
-/// function arguments/return. They are stored as raw `Voidable` in struct 
+/// function arguments/return. They are stored as raw `Voidable` in struct
 /// definitions.
 pub trait Voidable: Clone + std::fmt::Debug {
     const VOID: Self;

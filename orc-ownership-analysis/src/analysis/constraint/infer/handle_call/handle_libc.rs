@@ -5,14 +5,16 @@ use rustc_span::symbol::Ident;
 use crate::analysis::{
     constraint::{
         infer::{InferCtxt, InferMode},
-        Database, OwnershipSig,
+        OwnershipSig,
     },
     consume::Consume,
     AnalysisKind, FnSig,
 };
 
-impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind<'infercx>>
-    InferCtxt<'infercx, 'tcx, DB, Kind>
+impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
+where
+    'tcx: 'infercx,
+    Analysis: AnalysisKind<'infercx, 'db>,
 {
     pub fn handle_libc_call(
         &mut self,
@@ -34,7 +36,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind<'infe
         let destination = destination.as_ref().unwrap();
         assert_eq!(args.len(), 1);
         assert!(args[0].is_none());
-        <Kind as InferMode<_>>::source(self, destination.clone());
+        <Analysis as InferMode>::source(self, destination.clone());
     }
 
     fn handle_free(&mut self, caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
@@ -45,6 +47,6 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, Kind: AnalysisKind<'infe
         assert!(destination.is_none());
         assert_eq!(args.len(), 1);
         let arg = args[0].clone().unwrap();
-        <Kind as InferMode<_>>::sink(self, arg);
+        <Analysis as InferMode>::sink(self, arg);
     }
 }

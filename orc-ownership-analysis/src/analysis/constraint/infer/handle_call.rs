@@ -12,11 +12,12 @@ use crate::analysis::{
 pub mod handle_libc;
 pub mod handle_library;
 
-pub trait HandleCall<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>:
-    AnalysisKind<'infercx> + Sized
+pub trait HandleCall<'infercx, 'db, 'tcx>: AnalysisKind<'infercx, 'db> + Sized
+where
+    'tcx: 'infercx,
 {
     fn handle_call(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         callee: DefId,
     );
@@ -24,23 +25,25 @@ pub trait HandleCall<'infercx, 'tcx: 'infercx, DB: Database + 'infercx>:
     fn handle_inputs(
         // infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
         inter_ctxt: &Self::InterCtxt,
-        database: &mut DB,
+        database: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
         r#fn: DefId,
         inputs: impl Iterator<Item = Option<Range<OwnershipSig>>>,
     );
 
     fn handle_output(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         r#fn: DefId,
         output: Option<Range<OwnershipSig>>,
     );
 }
 
-impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, K: AnalysisKind<'infercx>>
-    HandleCall<'infercx, 'tcx, DB> for K
+impl<'infercx, 'db, 'tcx, Analysis> HandleCall<'infercx, 'db, 'tcx> for Analysis
+where
+    'tcx: 'infercx,
+    Analysis: AnalysisKind<'infercx, 'db>,
 {
     default fn handle_call(
-        _: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
+        _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         _: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         _: DefId,
     ) {
@@ -49,26 +52,27 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx, K: AnalysisKind<'infercx
     default fn handle_inputs(
         // _: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
         // _: &CrateCtxt<'_>,
-        _: &K::InterCtxt,
-        _: &mut DB,
+        _: &Analysis::InterCtxt,
+        _: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
         _: DefId,
         _: impl Iterator<Item = Option<Range<OwnershipSig>>>,
     ) {
     }
 
     default fn handle_output(
-        _: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
+        _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         _: DefId,
         _: Option<Range<OwnershipSig>>,
     ) {
     }
 }
 
-impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx> HandleCall<'infercx, 'tcx, DB>
-    for WholeProgram
+impl<'infercx, 'db, 'tcx> HandleCall<'infercx, 'db, 'tcx> for WholeProgram
+where
+    'tcx: 'infercx,
 {
     fn handle_call(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
         callee: DefId,
     ) {
@@ -138,7 +142,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx> HandleCall<'infercx, 'tc
 
     fn handle_inputs(
         inter_ctxt: &<WholeProgram as AnalysisKind>::InterCtxt,
-        database: &mut DB,
+        database: &mut <WholeProgram as AnalysisKind>::DB,
         r#fn: DefId,
         inputs: impl Iterator<Item = Option<Range<OwnershipSig>>>,
     ) {
@@ -159,7 +163,7 @@ impl<'infercx, 'tcx: 'infercx, DB: Database + 'infercx> HandleCall<'infercx, 'tc
     }
 
     fn handle_output(
-        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, WholeProgram>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, WholeProgram>,
         r#fn: DefId,
         output: Option<Range<OwnershipSig>>,
     ) {
