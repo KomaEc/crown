@@ -329,4 +329,4 @@ Note that a struct has only two kinds of sink:
 
 In the former case, we are happy about partially moved struct. In the latter case, the inferencer will check for ownership signatures, so we should be fine?
 
-Strategy: fields are only checked at function boundaries: return position and argument position. Therefore, we will need specialised logic to initialise inter-procedural context.
+Strategy: fields are only checked at function boundaries: return position and local initialisation position.

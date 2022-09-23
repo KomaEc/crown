@@ -30,7 +30,7 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
 
-mod analysis;
+pub mod analysis;
 mod call_graph;
 mod ptr;
 mod rustc_properties;

@@ -10,14 +10,14 @@ pub trait Measurable {
 
     #[inline]
     fn measure(&self, ty: Ty) -> Measure {
-        self.measure_with_threshold(ty, Threshold(0))
+        self.measure_with_threshold(ty, Level(0))
     }
 
     fn measure_adt(&self, adt_def: &AdtDef) -> Measure;
 
     /// Note: blocked by adt
     #[inline]
-    fn measure_with_threshold(&self, ty: Ty, threshold: Threshold) -> Measure {
+    fn measure_with_threshold(&self, ty: Ty, threshold: Level) -> Measure {
         let mut ty = ty;
 
         while let Some(inner_ty) = ty.builtin_index() {
@@ -40,18 +40,18 @@ pub trait Measurable {
     }
 }
 
-/// Threshold for the level of pointer chasing
+/// Level of pointer chasing
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
-pub struct Threshold(u8);
+pub struct Level(u8);
 
-impl Threshold {
+impl Level {
     #[inline]
     pub fn as_u8(self) -> u8 {
         self.0
     }
 }
 
-impl std::ops::Add<u8> for Threshold {
+impl std::ops::Add<u8> for Level {
     type Output = Self;
 
     fn add(mut self, rhs: u8) -> Self::Output {
@@ -60,7 +60,7 @@ impl std::ops::Add<u8> for Threshold {
     }
 }
 
-impl std::ops::Sub<u8> for Threshold {
+impl std::ops::Sub<u8> for Level {
     type Output = Self;
 
     fn sub(mut self, rhs: u8) -> Self::Output {

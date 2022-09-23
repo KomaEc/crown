@@ -5,7 +5,7 @@ use rustc_middle::mir::LocalDecl;
 
 use crate::{analysis::consume::try_measure_local, ptr::Measurable};
 
-use super::consume::HasInvalid;
+use super::consume::Voidable;
 
 pub mod infer;
 // pub mod prune;
@@ -28,14 +28,14 @@ impl OwnershipSig {
     }
 }
 
-impl HasInvalid for Range<OwnershipSig> {
-    const INVALID: Self = Range {
+impl Voidable for Range<OwnershipSig> {
+    const VOID: Self = Range {
         start: OwnershipSig::INVALID,
         end: OwnershipSig::INVALID,
     };
 
     #[inline]
-    fn is_invalid(&self) -> bool {
+    fn is_void(&self) -> bool {
         self.start == OwnershipSig::INVALID && self.end == OwnershipSig::INVALID
     }
 }

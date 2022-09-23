@@ -16,7 +16,7 @@ use crate::analysis::state::SSAState;
 use crate::call_graph::FnSig;
 
 use self::constraint::infer::FnSummary;
-use self::consume::{Consume, HasInvalid};
+use self::consume::{Consume, Voidable};
 
 pub mod constants;
 pub mod constraint;
@@ -102,11 +102,11 @@ impl std::fmt::Display for Ownership {
     }
 }
 
-impl HasInvalid for &[Ownership] {
-    const INVALID: Self = &[];
+impl Voidable for &[Ownership] {
+    const VOID: Self = &[];
 
     #[inline]
-    fn is_invalid(&self) -> bool {
+    fn is_void(&self) -> bool {
         self.is_empty()
     }
 }

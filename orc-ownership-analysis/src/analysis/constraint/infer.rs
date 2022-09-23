@@ -22,7 +22,7 @@ use crate::{
             generate_signatures_for_local, infer::handle_call::HandleCall, Database, Gen,
             OwnershipSig,
         },
-        consume::{Consume, RichLocation},
+        consume::{Consume, RichLocation, Voidable},
         join_points::PhiNode,
         state::{SSAIdx, SSAState},
         AnalysisKind, FnResult, FnSig,
@@ -91,8 +91,7 @@ where
     gen: &'infercx mut Gen,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     pub fn_body_sig: FnBodySig<LocalSig>,
-    // deref_copys: Consume<<Kind as InferMode<'infercx, 'tcx, DB>>::Interpretation>,
-    // threshold: Threshold,
+    // deref_copys: Consume<<Analysis as InferMode<'infercx, 'tcx, DB>>::LocalSig>,
 }
 
 impl<'infercx, 'tcx, DB, Analysis> InferCtxt<'infercx, 'tcx, DB, Analysis>
@@ -137,16 +136,7 @@ where
             gen,
             crate_ctxt,
             fn_body_sig,
-            // deref_copys: Consume {
-            //     r#use: Range {
-            //         start: OwnershipSig::INVALID,
-            //         end: OwnershipSig::INVALID,
-            //     },
-            //     def: Range {
-            //         start: OwnershipSig::INVALID,
-            //         end: OwnershipSig::INVALID,
-            //     },
-            // },
+            // deref_copys: Consume::VOID,
         }
     }
 
@@ -160,6 +150,10 @@ where
         projection: &[PlaceElem<'tcx>],
         infer_cx: &mut Self,
     ) -> Consume<<Analysis as InferMode<'infercx, 'tcx, DB>>::LocalSig> {
+        if base.is_void() {
+            return base;
+        }
+
         let mut proj_start_offset = 0;
 
         for projection_elem in projection {
@@ -193,6 +187,10 @@ where
             }
         }
 
+        if base.r#use.start + proj_start_offset >= base.r#use.end {
+            return Consume::VOID;
+        }
+
         for (pre, post) in (base.r#use.start..base.r#use.start + proj_start_offset)
             .zip(base.def.start..base.def.start + proj_start_offset)
         {
@@ -219,7 +217,7 @@ where
 pub trait InferMode<'infercx, 'tcx: 'infercx, DB: Database> {
     type Ctxt;
 
-    type LocalSig: Clone + std::fmt::Debug;
+    type LocalSig: Voidable; //Clone + std::fmt::Debug;
 
     type FnSig<T>: std::fmt::Debug
     where
@@ -241,12 +239,13 @@ pub trait InferMode<'infercx, 'tcx: 'infercx, DB: Database> {
         'tcx: 'infercx,
         DB: Database + 'infercx;
 
-    fn interpret_consume(
+    /// Invariant: input `consume` must be valid
+    fn interpret_valid_consume(
         infer_cx: &mut Self::Ctxt,
         body: &Body<'tcx>,
         place: &Place<'tcx>,
         consume: Consume<SSAIdx>,
-    ) -> Consume<Self::LocalSig>
+    ) -> Option<Consume<Self::LocalSig>>
     where
         'tcx: 'infercx,
         DB: Database + 'infercx;
@@ -267,16 +266,6 @@ pub trait InferMode<'infercx, 'tcx: 'infercx, DB: Database> {
         Self::assume(infer_cx, consume.r#use, false);
         Self::assume(infer_cx, consume.def, false);
     }
-
-    // /// Lend by the owner, not re-borrow
-    // fn lend(infer_cx: &mut Self::Ctxt, consume: Consume<Self::Interpretation>)
-    // where
-    //     'tcx: 'infercx,
-    //     DB: Database + 'infercx,
-    // {
-    //     Self::assume(infer_cx, consume.r#use, true);
-    //     Self::assume(infer_cx, consume.def, true);
-    // }
 
     fn source(infer_cx: &mut Self::Ctxt, result: Consume<Self::LocalSig>)
     where
@@ -362,17 +351,18 @@ impl<'infercx, 'tcx: 'infercx, DB: Database> InferMode<'infercx, 'tcx, DB> for P
     }
 
     #[inline]
-    fn interpret_consume(
+    fn interpret_valid_consume(
         (): &mut Self::Ctxt,
         _: &Body<'tcx>,
         _: &Place<'tcx>,
         _: Consume<SSAIdx>,
-    ) -> Consume<()>
+    ) -> Option<Consume<()>>
     where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
-        Consume { r#use: (), def: () }
+        // Consume { r#use: (), def: () }
+        None
     }
 
     #[inline]
@@ -488,15 +478,12 @@ where
         }
     }
 
-    /// Note: we may be very careful on cast when dealing with multi-level pointers.
-    /// note that pointer to complex structures may be cast to a pointer to unit in
-    /// order to perform free
-    fn interpret_consume(
+    fn interpret_valid_consume(
         infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Analysis>,
         body: &Body<'tcx>,
         place: &Place<'tcx>,
         consume: Consume<SSAIdx>,
-    ) -> Consume<Self::LocalSig>
+    ) -> Option<Consume<Self::LocalSig>>
     where
         'tcx: 'infercx,
         DB: Database + 'infercx,
@@ -516,7 +503,9 @@ where
 
         let base = Consume { r#use, def };
 
-        InferCtxt::project_deeper(base, base_ty, place.projection, infer_cx)
+        assert!(!base.is_void());
+
+        InferCtxt::project_deeper(base, base_ty, place.projection, infer_cx).valid()
     }
 
     fn transfer(
@@ -558,8 +547,11 @@ where
     }
 
     #[inline]
-    fn assume(infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Analysis>, result: Self::LocalSig, value: bool)
-    where
+    fn assume(
+        infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Analysis>,
+        result: Self::LocalSig,
+        value: bool,
+    ) where
         'tcx: 'infercx,
         DB: Database + 'infercx,
     {
@@ -640,6 +632,23 @@ where
 pub struct Renamer<'rn, 'tcx> {
     body: &'rn Body<'tcx>,
     pub state: SSAState,
+}
+
+#[inline]
+pub fn consume_place_at<'rn, 'tcx, Infer, DB>(
+    place: &Place<'tcx>,
+    body: &Body<'tcx>,
+    location: Location,
+    rn: &mut Renamer<'rn, 'tcx>,
+    infer_cx: &mut Infer::Ctxt,
+) -> Option<Consume<Infer::LocalSig>>
+where
+    'tcx: 'rn,
+    Infer: InferMode<'rn, 'tcx, DB>,
+    DB: Database + 'rn,
+{
+    let consume = rn.state.try_consume_at(place.local, location)?;
+    Infer::interpret_valid_consume(infer_cx, body, place, consume)
 }
 
 impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
@@ -812,10 +821,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     }))
                     .map(|place| {
                         place.and_then(|place| {
-                            let consume = self.state.try_consume_at(place.local, location);
-                            consume.map(|consume| {
-                                Infer::interpret_consume(infer_cx, self.body, place, consume)
-                            })
+                            consume_place_at::<Infer, _>(place, self.body, location, self, infer_cx)
                         })
                     });
 
@@ -860,9 +866,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
         match rhs {
             Rvalue::Use(Operand::Constant(_)) => {
-                if let Some(lhs_consume) = self.state.try_consume_at(lhs.local, location) {
-                    let lhs_consume =
-                        Infer::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
+                if let Some(lhs_consume) =
+                    consume_place_at::<Infer, _>(lhs, self.body, location, self, infer_cx)
+                {
                     Infer::unknown_source(infer_cx, lhs_consume);
                     tracing::debug!("constant pointer rvalue {:?}", rhs)
                 }
@@ -871,9 +877,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             Rvalue::Cast(CastKind::PointerFromExposedAddress, operand, _) => {
                 // even tho lhs is a pointer, it does not necessarily have an entry!
                 // this is because we limit the nested level of pointers
-                if let Some(lhs_consume) = self.state.try_consume_at(lhs.local, location) {
-                    let lhs_consume =
-                        Infer::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
+                if let Some(lhs_consume) =
+                    consume_place_at::<Infer, _>(lhs, self.body, location, self, infer_cx)
+                {
                     Infer::unknown_source(infer_cx, lhs_consume);
                     tracing::debug!("untrusted pointer source: raw address {:?}", operand)
                 }
@@ -886,11 +892,13 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             ) => {
                 let lhs_consume = self.state.try_consume_at(lhs.local, location);
                 assert!(lhs_consume.is_none());
-                let rhs_consume = self.state.consume_at(rhs.local, location);
-                let rhs_consume = Infer::interpret_consume(infer_cx, self.body, rhs, rhs_consume);
-                // correctness?
-                Infer::unknown_sink(infer_cx, rhs_consume);
-                tracing::debug!("untrusted pointer sink: address {:?}", lhs);
+                if let Some(rhs_consume) =
+                    consume_place_at::<Infer, _>(rhs, self.body, location, self, infer_cx)
+                {
+                    // correctness?
+                    Infer::unknown_sink(infer_cx, rhs_consume);
+                    tracing::debug!("untrusted pointer sink: address {:?}", lhs);
+                }
             }
 
             Rvalue::Cast(_, Operand::Constant(box constant), _) => {
@@ -904,15 +912,10 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
             Rvalue::Use(Operand::Move(rhs) | Operand::Copy(rhs))
             | Rvalue::Cast(_, Operand::Move(rhs) | Operand::Copy(rhs), _) => {
-                let lhs_consume = self
-                    .state
-                    .try_consume_at(lhs.local, location)
-                    .map(|consume| Infer::interpret_consume(infer_cx, self.body, lhs, consume));
-
-                let rhs_consume = self
-                    .state
-                    .try_consume_at(rhs.local, location)
-                    .map(|consume| Infer::interpret_consume(infer_cx, self.body, rhs, consume));
+                let lhs_consume =
+                    consume_place_at::<Infer, _>(lhs, self.body, location, self, infer_cx);
+                let rhs_consume =
+                    consume_place_at::<Infer, _>(rhs, self.body, location, self, infer_cx);
 
                 match (lhs_consume, rhs_consume) {
                     (None, None) => {}
@@ -925,48 +928,35 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             }
 
             Rvalue::CopyForDeref(_) => {
+                /* TODO */
                 let lhs_consume = self.state.try_consume_at(lhs.local, location);
                 assert!(lhs_consume.is_none());
                 tracing::debug!("deref_copy is ignored")
             }
 
             Rvalue::Ref(_, _, _) | Rvalue::AddressOf(_, _) => {
-                let lhs_consume = self.state.consume_at(lhs.local, location);
-                let lhs_consume = Infer::interpret_consume(infer_cx, self.body, lhs, lhs_consume);
-
-                /* TODO */
-
-                // correctness???
-                Infer::borrow(infer_cx, lhs_consume)
+                if let Some(lhs_consume) =
+                    consume_place_at::<Infer, _>(lhs, self.body, location, self, infer_cx)
+                {
+                    /* TODO */
+                    // correctness???
+                    Infer::borrow(infer_cx, lhs_consume)
+                }
             }
 
             Rvalue::Repeat(Operand::Copy(rhs) | Operand::Move(rhs), _) => {
-                let _ = self
-                    .state
-                    .try_consume_at(lhs.local, location)
-                    .map(|consume| Infer::interpret_consume(infer_cx, self.body, lhs, consume));
-                let _ = self
-                    .state
-                    .try_consume_at(rhs.local, location)
-                    .map(|consume| Infer::interpret_consume(infer_cx, self.body, rhs, consume));
+                let _ = consume_place_at::<Infer, _>(lhs, self.body, location, self, infer_cx);
+                let _ = consume_place_at::<Infer, _>(rhs, self.body, location, self, infer_cx);
 
                 /* TODO */
             }
 
             Rvalue::Aggregate(box AggregateKind::Array(_), rhs_vec) => {
-                let _ = self
-                    .state
-                    .try_consume_at(lhs.local, location)
-                    .map(|consume| Infer::interpret_consume(infer_cx, self.body, lhs, consume));
+                let _ = consume_place_at::<Infer, _>(lhs, self.body, location, self, infer_cx);
 
                 for rhs in rhs_vec {
                     let Some(rhs) = rhs.place() else { continue };
-                    let _ = self
-                        .state
-                        .try_consume_at(rhs.local, location)
-                        .map(|consume| {
-                            Infer::interpret_consume(infer_cx, self.body, &rhs, consume)
-                        });
+                    let _ = consume_place_at::<Infer, _>(&rhs, self.body, location, self, infer_cx);
                 }
 
                 /* TODO */
@@ -980,11 +970,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 // of, logic in initial_definition needs to be taken care of
                 // as well
 
-                let lhs_consume = self
-                    .state
-                    .try_consume_at(lhs.local, location)
-                    .map(|consume| Infer::interpret_consume(infer_cx, self.body, lhs, consume));
-
+                let lhs_consume =
+                    consume_place_at::<Infer, _>(lhs, self.body, location, self, infer_cx);
                 if let Some(_) = lhs_consume { /* TODO */ }
             }
 

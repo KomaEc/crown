@@ -10,7 +10,7 @@ use crate::analysis::{
     join_points::{JoinPoints, PhiNode},
 };
 
-use super::consume::HasInvalid;
+use super::consume::Voidable;
 
 orc_common::macros::newtype_index! {
     pub struct SSAIdx {
@@ -34,12 +34,12 @@ impl SSAIdx {
     // }
 }
 
-impl HasInvalid for SSAIdx {
-    const INVALID: Self = SSAIdx::MAX;
+impl Voidable for SSAIdx {
+    const VOID: Self = SSAIdx::MAX;
 
     #[inline]
-    fn is_invalid(&self) -> bool {
-        *self == Self::INVALID
+    fn is_void(&self) -> bool {
+        *self == Self::VOID
     }
 }
 
@@ -78,6 +78,7 @@ impl SSAState {
 }
 
 impl SSAState {
+    /// Try find valid consume at `location`
     #[inline]
     pub fn try_consume_at(&mut self, local: Local, location: Location) -> Option<Consume<SSAIdx>> {
         // tracing::debug!("consume chain before: {:?}", &self.consume_chain.consumes[location.block.index()]);
@@ -106,11 +107,11 @@ impl SSAState {
         Some(consume)
     }
 
-    #[inline]
-    pub fn consume_at(&mut self, local: Local, location: Location) -> Consume<SSAIdx> {
-        self.try_consume_at(local, location)
-            .unwrap_or_else(|| panic!("{:?} isn't defined at {:?}", local, location))
-    }
+    // #[inline]
+    // pub fn consume_at(&mut self, local: Local, location: Location) -> Consume<SSAIdx> {
+    //     self.try_consume_at(local, location)
+    //         .unwrap_or_else(|| panic!("{:?} isn't defined at {:?}", local, location))
+    // }
 
     // #[inline]
     // pub fn try_finalise(&mut self, local: Local) -> Option<SSAIdx> {
