@@ -56,7 +56,7 @@ impl<'tcx> CrateCtxt<'tcx> {
                 }
             }
         }
-        for did in self.functions() {
+        for did in self.fns() {
             let body = self.tcx.optimized_mir(did);
             Vis.visit_body(body);
         }
@@ -123,7 +123,7 @@ impl<'tcx> CrateCtxt<'tcx> {
                 assert!(destination.as_local().is_some());
             }
         }
-        for did in self.functions() {
+        for did in self.fns() {
             let body = self.tcx.optimized_mir(did);
             Vis.visit_body(body);
         }
@@ -131,7 +131,7 @@ impl<'tcx> CrateCtxt<'tcx> {
 
     fn verify_temp_local_usage(&self) {
         use rustc_index::vec::IndexVec;
-        for did in self.functions() {
+        for did in self.fns() {
             let body = self.tcx.optimized_mir(did);
             let mut cnt = IndexVec::from_elem(0, &body.local_decls);
             // for cnt in &mut cnt.raw[1..1+body.arg_count] {
@@ -181,7 +181,7 @@ impl<'tcx> CrateCtxt<'tcx> {
     }
 
     fn verify_stmt_regularity(&self) {
-        for did in self.functions().iter().copied() {
+        for did in self.fns().iter().copied() {
             let body = self.tcx.optimized_mir(did);
             for bb_data in body.basic_blocks.iter() {
                 let rustc_middle::mir::BasicBlockData {
@@ -217,7 +217,7 @@ impl<'tcx> CrateCtxt<'tcx> {
     }
 
     fn verify_return_clause_unique(&self) {
-        for did in self.functions().iter().copied() {
+        for did in self.fns().iter().copied() {
             let body = self.tcx.optimized_mir(did);
             assert!(
                 body.basic_blocks
@@ -255,7 +255,7 @@ impl<'tcx> CrateCtxt<'tcx> {
                 assert_eq!(*place, new_place);
             }
         }
-        for did in self.functions().iter().copied() {
+        for did in self.fns().iter().copied() {
             let body = self.tcx.optimized_mir(did);
             Vis(self.tcx).visit_body(body);
         }

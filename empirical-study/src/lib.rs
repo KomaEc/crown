@@ -20,7 +20,6 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
 
-use orc_common::OrcInput;
 use orc_taint_analysis::taint_results;
 
 use cli_table::{format::Justify, print_stdout, Cell, Style, Table};
@@ -50,13 +49,15 @@ pub trait EmpiricalStudy<'tcx> {
     fn report_maybe_analysable_structs(&self);
 }
 
-impl<'tcx, Input: OrcInput<'tcx>> EmpiricalStudy<'tcx> for Input {
+// impl<'tcx, Input: OrcInput<'tcx>> EmpiricalStudy<'tcx> for Input {
+
+impl<'tcx> EmpiricalStudy<'tcx> for orc_common::CrateData<'tcx> {
     fn compute_percentage_of_non_self_referential_structs(&self) {
         let taint_results = taint_results(self);
         let aliasing_field_pairs = taint_results.aliasing_field_pairs();
         for (did, aliasing_field_pairs) in &aliasing_field_pairs {
             if !aliasing_field_pairs.is_empty() {
-                let adt_def = self.tcx().adt_def(did);
+                let adt_def = self.tcx.adt_def(did);
                 println!("{:?}", adt_def);
                 let field_defs = &adt_def.variants().raw[0].fields;
                 println!(
@@ -77,10 +78,10 @@ impl<'tcx, Input: OrcInput<'tcx>> EmpiricalStudy<'tcx> for Input {
 
         let percentage = format!(
             "{:.1}%",
-            100.0 * num_maybe_self_referential_structs as f64 / self.structs().len() as f64
+            100.0 * num_maybe_self_referential_structs as f64 / self.structs.len() as f64
         );
         let table = vec![vec![
-            self.structs().len().cell().justify(Justify::Right),
+            self.structs.len().cell().justify(Justify::Right),
             num_maybe_self_referential_structs
                 .cell()
                 .justify(Justify::Right),
@@ -104,7 +105,7 @@ impl<'tcx, Input: OrcInput<'tcx>> EmpiricalStudy<'tcx> for Input {
         let maybe_owning_fields = taint_results.maybe_owning_fields();
         for (did, maybe_owning_fields) in maybe_owning_fields {
             if !maybe_owning_fields.is_empty() {
-                let adt_def = self.tcx().adt_def(did);
+                let adt_def = self.tcx.adt_def(did);
                 println!("{:?}", adt_def);
                 let field_defs = &adt_def.variants().raw[0].fields;
 
@@ -140,12 +141,12 @@ impl<'tcx, Input: OrcInput<'tcx>> EmpiricalStudy<'tcx> for Input {
 
             if maybe_analysable {
                 let hir_id = self
-                    .tcx()
+                    .tcx
                     .hir()
                     .local_def_id_to_hir_id(did.as_local().unwrap());
                 println!(
                     "{}",
-                    rustc_hir_pretty::id_to_string(&self.tcx().hir(), hir_id)
+                    rustc_hir_pretty::id_to_string(&self.tcx.hir(), hir_id)
                 );
             }
         }

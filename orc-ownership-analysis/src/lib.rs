@@ -39,7 +39,6 @@ mod struct_topology;
 mod test;
 
 use call_graph::CallGraph;
-use orc_common::OrcInput;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
 use struct_topology::{HasStructTopology, StructTopology};
@@ -52,32 +51,17 @@ pub struct CrateCtxt<'tcx> {
     struct_topology: StructTopology,
 }
 
-impl<'tcx> OrcInput<'tcx> for CrateCtxt<'tcx> {
-    #[inline]
-    fn tcx(&self) -> TyCtxt<'tcx> {
-        self.tcx
-    }
-
-    #[inline]
-    fn functions(&self) -> &[DefId] {
-        self.call_graph.functions()
-    }
-
-    #[inline]
-    fn structs(&self) -> &[DefId] {
-        self.structs()
+impl<'tcx> From<orc_common::CrateData<'tcx>> for CrateCtxt<'tcx> {
+    fn from(krate: orc_common::CrateData<'tcx>) -> Self {
+        CrateCtxt {
+            tcx: krate.tcx,
+            call_graph: CallGraph::new(krate.tcx, &krate.fns),
+            struct_topology: StructTopology::new(krate.tcx, krate.structs),
+        }
     }
 }
 
 impl<'tcx> CrateCtxt<'tcx> {
-    pub fn from_input<Input: OrcInput<'tcx>>(input: &Input) -> Self {
-        CrateCtxt {
-            tcx: input.tcx(),
-            call_graph: CallGraph::new(input.tcx(), input.functions()),
-            struct_topology: StructTopology::new(input.tcx(), input.structs().to_vec()),
-        }
-    }
-
     /// TODO: remove this
     pub fn new(tcx: TyCtxt<'tcx>, functions: Vec<DefId>, structs: Vec<DefId>) -> Self {
         CrateCtxt {
@@ -88,8 +72,8 @@ impl<'tcx> CrateCtxt<'tcx> {
     }
 
     #[inline]
-    pub fn functions(&self) -> &[DefId] {
-        self.call_graph.functions()
+    pub fn fns(&self) -> &[DefId] {
+        self.call_graph.fns()
     }
 
     #[inline]

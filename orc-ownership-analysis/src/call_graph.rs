@@ -92,7 +92,7 @@ impl CallGraph {
     }
 
     #[inline]
-    pub fn functions(&self) -> &[DefId] {
+    pub fn fns(&self) -> &[DefId] {
         self.post_order.everything()
     }
 

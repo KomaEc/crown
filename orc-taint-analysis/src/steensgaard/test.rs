@@ -13,11 +13,11 @@ fn test1() {
         (*s).g = q;
     }
     ";
-    orc_common::test_infra::run_compiler_with(PROGRAM.into(), |tcx, functions, structs| {
-        let input = (tcx, functions, structs);
+    orc_common::test_infra::run_compiler_with(PROGRAM.into(), |tcx, fns, structs| {
+        let input = orc_common::CrateData::new_simple(tcx, fns, structs);
         let steensgaard = Steensgaard::new(&input);
         steensgaard.print_results();
-        let s = input.2[0];
+        let s = input.structs[0];
         let pts = &steensgaard.pts;
         let f = steensgaard.struct_fields.get_index(s, 0);
         let g = steensgaard.struct_fields.get_index(s, 1);
@@ -33,12 +33,12 @@ fn test2() {
         let mut p = &local;
     }
     ";
-    orc_common::test_infra::run_compiler_with(PROGRAM.into(), |tcx, functions, structs| {
-        let input = (tcx, functions, structs);
+    orc_common::test_infra::run_compiler_with(PROGRAM.into(), |tcx, fns, structs| {
+        let input = orc_common::CrateData::new_simple(tcx, fns, structs);
         let steensgaard = Steensgaard::new(&input);
         steensgaard.print_results();
         let pts = &steensgaard.pts;
-        let f = input.1[0];
+        let f = input.fns[0];
         let local = steensgaard.function_locals.get_index(f, 1);
         let p = steensgaard.function_locals.get_index(f, 2);
         assert_ne!(local, p);

@@ -18,7 +18,6 @@
 
 use std::ops::Range;
 
-use orc_common::OrcInput;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use steensgaard::Steensgaard;
@@ -43,11 +42,11 @@ extern crate rustc_type_ir;
 
 pub(crate) mod steensgaard;
 
-pub fn taint_results<'tcx, Input: OrcInput<'tcx>>(input: Input) -> Steensgaard {
+pub fn taint_results(input: &orc_common::CrateData) -> Steensgaard {
     Steensgaard::new(input)
 }
 
-pub fn report_results<'tcx, Input: OrcInput<'tcx>>(input: Input) {
+pub fn report_results(input: &orc_common::CrateData) {
     Steensgaard::new(input).print_results()
 }
 
