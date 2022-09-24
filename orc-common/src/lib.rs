@@ -94,39 +94,14 @@ pub fn get_struct_field<'tcx>(
     }
 }
 
-pub trait OrcInput<'tcx> {
-    fn tcx(&self) -> TyCtxt<'tcx>;
-    fn functions(&self) -> &[DefId];
-    fn structs(&self) -> &[DefId];
+pub struct CrateData<'tcx> {
+    pub tcx: TyCtxt<'tcx>,
+    pub fns: Vec<DefId>,
+    pub structs: Vec<DefId>,
 }
 
-impl<'tcx> OrcInput<'tcx> for (TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>) {
-    #[inline]
-    fn tcx(&self) -> TyCtxt<'tcx> {
-        self.0
-    }
-
-    #[inline]
-    fn functions(&self) -> &[DefId] {
-        &self.1[..]
-    }
-
-    #[inline]
-    fn structs(&self) -> &[DefId] {
-        &self.2[..]
-    }
-}
-
-impl<'tcx, Input: OrcInput<'tcx>> OrcInput<'tcx> for &Input {
-    fn tcx(&self) -> TyCtxt<'tcx> {
-        (*self).tcx()
-    }
-
-    fn functions(&self) -> &[DefId] {
-        (*self).functions()
-    }
-
-    fn structs(&self) -> &[DefId] {
-        (*self).structs()
+impl<'tcx> CrateData<'tcx> {
+    pub fn new_simple(tcx: TyCtxt<'tcx>, fns: Vec<DefId>, structs: Vec<DefId>) -> Self {
+        Self { tcx, fns, structs }
     }
 }

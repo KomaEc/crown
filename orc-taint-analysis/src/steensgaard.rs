@@ -2,7 +2,7 @@ pub mod constraint;
 #[cfg(test)]
 mod test;
 
-use orc_common::{data_structure::DidItemsIndexing, OrcInput};
+use orc_common::data_structure::DidItemsIndexing;
 use petgraph::unionfind::UnionFind;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
@@ -54,9 +54,10 @@ pub struct Steensgaard {
 }
 
 impl Steensgaard {
-    pub fn new<'tcx, Input: OrcInput<'tcx>>(input: Input) -> Self {
-        let n_struct_fields = input.structs().iter().fold(0usize, |acc, did| {
-            acc + input.tcx().adt_def(*did).all_fields().count()
+    // pub fn new<'tcx, Input: OrcInput<'tcx>>(input: Input) -> Self {
+    pub fn new(input: &orc_common::CrateData) -> Self {
+        let n_struct_fields = input.structs.iter().fold(0usize, |acc, did| {
+            acc + input.tcx.adt_def(*did).all_fields().count()
         });
 
         let mut pts = IndexVec::with_capacity(2 * n_struct_fields + 1);
@@ -71,10 +72,10 @@ impl Steensgaard {
         }
 
         let struct_fields = DidItemsIndexing::new(
-            input.structs(),
+            &input.structs[..],
             pts.next_index(),
             |did| {
-                let adt_def = input.tcx().adt_def(*did);
+                let adt_def = input.tcx.adt_def(*did);
                 assert!(adt_def.is_struct());
                 adt_def.all_fields().count()
             },
@@ -86,10 +87,10 @@ impl Steensgaard {
         );
 
         let function_locals = DidItemsIndexing::new(
-            input.functions(),
+            &input.fns[..],
             pts.next_index(),
             |did| {
-                let body = input.tcx().optimized_mir(*did);
+                let body = input.tcx.optimized_mir(*did);
                 body.local_decls.len()
             },
             |local| {
@@ -113,12 +114,12 @@ impl Steensgaard {
         let mut watchers = WatcherLists::new(steensgaard.node_count());
         let mut buffer = Vec::with_capacity(steensgaard.node_count());
 
-        for did in input.functions() {
-            let body = input.tcx().optimized_mir(did);
+        for &did in &input.fns {
+            let body = input.tcx.optimized_mir(did);
             let mut cg = ConstraintGeneration {
                 steensgaard: &mut steensgaard,
                 body,
-                tcx: input.tcx(),
+                tcx: input.tcx,
                 constraints: &mut constraints,
                 watchers: &mut watchers,
                 buffer: &mut buffer,

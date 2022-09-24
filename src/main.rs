@@ -109,17 +109,6 @@ fn main() -> Result<()> {
                 break;
             }
         }
-        // let config = compiler_config(args.path);
-        // rustc_interface::run_compiler(config, move |compiler| {
-        //     compiler.enter(|queries| {
-        //         queries
-        //             .global_ctxt()
-        //             .borrow_mut()
-        //             .unwrap()
-        //             .peek_mut()
-        //             .enter(|tcx| orc_preprocess::Phase::<1>::preprocess(tcx, rewrite_mode))
-        //     })
-        // });
         return Ok(());
     }
     rustc_interface::run_compiler(compiler_config(args.path), move |compiler| {
@@ -200,33 +189,38 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         .filter_map(DefId::as_local)
         .collect::<Vec<_>>();
 
-    let input = (tcx, functions, structs);
+    // let input = (tcx, functions, structs);
+    let input = orc_common::CrateData {
+        tcx,
+        fns: functions,
+        structs,
+    };
 
     match *cmd {
         Command::Preprocess { .. } => unreachable!(),
         Command::ShowMir { ref function } => {
             if let Some(def_path_str) = function {
                 let Some(&did) = input
-                    .1
+                    .fns
                     .iter()
-                    .find(|did| input.0.def_path_str(**did) == *def_path_str)
+                    .find(|did| input.tcx.def_path_str(**did) == *def_path_str)
                     else {
                         bail!("no such function!")
                     };
 
-                let body = input.0.optimized_mir(did);
+                let body = input.tcx.optimized_mir(did);
                 rustc_middle::mir::pretty::write_mir_fn(
-                    input.0,
+                    input.tcx,
                     body,
                     &mut |_, _| Ok(()),
                     &mut std::io::stdout(),
                 )
                 .unwrap();
             } else {
-                input.1.iter().for_each(|&fn_did| {
-                    let body = input.0.optimized_mir(fn_did);
+                input.fns.iter().for_each(|&fn_did| {
+                    let body = input.tcx.optimized_mir(fn_did);
                     rustc_middle::mir::pretty::write_mir_fn(
-                        input.0,
+                        input.tcx,
                         body,
                         &mut |_, _| Ok(()),
                         &mut std::io::stdout(),
@@ -240,13 +234,13 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         }
         Command::VerifyRustcProperties => {
             let program = time("construct call graph and struct topology", || {
-                CrateCtxt::from_input(&input)
+                CrateCtxt::from(input)
             });
             program.verify();
             println!("verification success");
         }
         Command::CrashMe => {
-            let program = CrateCtxt::from_input(&input);
+            let program = CrateCtxt::from(input);
             time("crash me with pure rename", || program.pure_rename());
             time("crash me with inference and solve", || {
                 program.standalone_solve()

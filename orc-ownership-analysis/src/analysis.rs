@@ -28,7 +28,7 @@ pub mod state;
 
 impl<'tcx> CrateCtxt<'tcx> {
     pub fn pure_rename(&self) {
-        for &did in self.functions() {
+        for &did in self.fns() {
             println!("renaming {:?}", did);
             let body = self.tcx.optimized_mir(did);
             let dominance_frontier = compute_dominance_frontier(body);
@@ -203,8 +203,8 @@ impl WholeProgram {
         database: &mut Z3Database,
     ) -> FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>> {
         let mut fn_sigs = FxHashMap::default();
-        fn_sigs.reserve(crate_ctxt.functions().len());
-        for &did in crate_ctxt.call_graph.functions() {
+        fn_sigs.reserve(crate_ctxt.fns().len());
+        for &did in crate_ctxt.call_graph.fns() {
             let body = crate_ctxt.tcx.optimized_mir(did);
             let fn_sig = {
                 let mut local_decls = body.local_decls.iter();
@@ -361,9 +361,9 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
         let inter_ctxt = WholeProgram::pre_generate_fn_sigs(crate_ctxt, &mut gen, &mut database);
 
         let mut fn_summaries = FxHashMap::default();
-        fn_summaries.reserve(crate_ctxt.functions().len());
+        fn_summaries.reserve(crate_ctxt.fns().len());
 
-        for &did in crate_ctxt.call_graph.functions() {
+        for &did in crate_ctxt.call_graph.fns() {
             let body = crate_ctxt.tcx.optimized_mir(did);
             let ssa_state = WholeProgram::initial_state(crate_ctxt, body);
             let fn_summary = WholeProgram::solve_body(
@@ -385,7 +385,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
             fn_summaries,
         };
 
-        results.print_fn_sigs(crate_ctxt.tcx, crate_ctxt.functions());
+        results.print_fn_sigs(crate_ctxt.tcx, crate_ctxt.fns());
 
         Ok(results)
     }
@@ -396,8 +396,8 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for StandAlone {
     type InterCtxt = ();
     type DB = CadicalDatabase;
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results> {
-        let mut databases = Vec::with_capacity(crate_ctxt.functions().len());
-        for &did in crate_ctxt.functions() {
+        let mut databases = Vec::with_capacity(crate_ctxt.fns().len());
+        for &did in crate_ctxt.fns() {
             println!("solving {:?}", did);
             let body = crate_ctxt.tcx.optimized_mir(did);
 
