@@ -11,12 +11,12 @@ use std::io::Write;
 pub trait Rewrite {
     #[inline]
     fn erase(&mut self, tcx: TyCtxt, span: Span) {
-        self.replace_with_msg(tcx, span, "erase".to_owned(), "".to_owned())
+        self.replace_with_msg(tcx, span, format!("erase @ {:?}", span), "".to_owned())
     }
 
     #[inline]
     fn replace(&mut self, tcx: TyCtxt, span: Span, replacement: String) {
-        self.replace_with_msg(tcx, span, "replace".to_owned(), replacement)
+        self.replace_with_msg(tcx, span, format!("replace @ {:?}", span), replacement)
     }
 
     fn replace_with_msg(&mut self, tcx: TyCtxt, span: Span, message: String, replacement: String);
@@ -95,7 +95,10 @@ impl Rewrite for Vec<Suggestion> {
             let mut fix = rustfix::CodeFix::new(&source);
             for suggestion in suggestions.iter().rev() {
                 if let Err(e) = fix.apply(suggestion) {
-                    eprintln!("Failed to apply suggestion to {}: {}", source_file, e);
+                    eprintln!(
+                        "Failed to apply {} to {}: {}",
+                        suggestion.message, source_file, e
+                    );
                 }
             }
             let fixes = fix.finish().unwrap();
@@ -166,7 +169,7 @@ pub fn make_suggestion(
 ) -> Suggestion {
     let snippet = get_snippet(tcx, span);
     Suggestion {
-        message: snippet.file_name.clone(),
+        message: message.clone(), //: snippet.file_name.clone(),
         snippets: vec![snippet.clone()],
         solutions: vec![Solution {
             message,
@@ -184,4 +187,15 @@ pub enum RewriteMode {
     Print,
     Diff,
     Noop,
+}
+
+impl std::fmt::Display for RewriteMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            RewriteMode::InPlace => write!(f, "in-place"),
+            RewriteMode::Print => write!(f, "print"),
+            RewriteMode::Diff => write!(f, "diff"),
+            RewriteMode::Noop => write!(f, "noop"),
+        }
+    }
 }
