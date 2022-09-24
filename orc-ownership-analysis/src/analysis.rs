@@ -129,7 +129,7 @@ impl<'a> FnResult<'a> for (&'a FnSummary, &'a [Ownership]) {
     #[inline]
     fn local_result(&self, local: Local, location: Location) -> Option<Consume<Self::LocalResult>> {
         let local_result = self.0.local_result(local, location)?;
-        Some(local_result.map(|sigs| &self.1[sigs.start.index()..sigs.end.index()]))
+        Some(local_result.map_valid(|sigs| &self.1[sigs.start.index()..sigs.end.index()]))
     }
 
     #[inline]
@@ -137,7 +137,7 @@ impl<'a> FnResult<'a> for (&'a FnSummary, &'a [Ownership]) {
         self.0.location_result(location).map(|(local, result)| {
             (
                 local,
-                result.map(|sigs| &self.1[sigs.start.index()..sigs.end.index()]),
+                result.map_valid(|sigs| &self.1[sigs.start.index()..sigs.end.index()]),
             )
         })
     }

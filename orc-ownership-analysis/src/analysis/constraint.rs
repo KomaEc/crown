@@ -1,4 +1,4 @@
-use std::{ops::Range, num::NonZeroU32};
+use std::{num::NonZeroU32, ops::Range};
 
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{LocalDecl, LocalInfo};

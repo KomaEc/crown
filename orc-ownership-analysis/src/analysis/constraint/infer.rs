@@ -63,7 +63,7 @@ impl<'a> FnResult<'a> for FnSummary {
         let consume_chain = &self.ssa_state.consume_chain;
         let consumes = consume_chain.of_location(location);
         let consume = consumes.get_by_key(&local)?;
-        Some(consume.map(|ssa_idx| self.fn_body_sig[local][ssa_idx].clone()))
+        Some(consume.map_valid(|ssa_idx| self.fn_body_sig[local][ssa_idx].clone()))
     }
 
     #[inline]
@@ -73,7 +73,7 @@ impl<'a> FnResult<'a> for FnSummary {
         consumes.iter().map(|(local, consume)| {
             (
                 *local,
-                consume.map(|ssa_idx| self.fn_body_sig[*local][ssa_idx].clone()),
+                consume.map_valid(|ssa_idx| self.fn_body_sig[*local][ssa_idx].clone()),
             )
         })
     }
@@ -146,7 +146,7 @@ where
         projection: &[PlaceElem<'tcx>],
         infer_cx: &mut Self,
     ) -> Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig> {
-        if base.is_void() {
+        if base.is_invalid() {
             return base;
         }
 
@@ -184,7 +184,10 @@ where
         }
 
         if base.r#use.start + proj_start_offset >= base.r#use.end {
-            return Consume::VOID;
+            return Consume {
+                r#use: Voidable::VOID,
+                def: Voidable::VOID,
+            };
         }
 
         for (pre, post) in (base.r#use.start..base.r#use.start + proj_start_offset)
@@ -408,7 +411,7 @@ where
 
         let base = Consume { r#use, def };
 
-        assert!(!base.is_void());
+        assert!(!base.is_invalid());
 
         InferCtxt::project_deeper(base, base_ty, place.projection, infer_cx).valid()
     }

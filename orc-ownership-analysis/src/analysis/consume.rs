@@ -1,5 +1,5 @@
 use crate::{
-    analysis::{state::SSAIdx, constraint::try_measure_local},
+    analysis::{constraint::try_measure_local, state::SSAIdx},
     ptr::Measurable,
     CrateCtxt,
 };
@@ -96,29 +96,39 @@ pub struct Consume<T> {
     pub def: T,
 }
 
-impl<T: Voidable> Voidable for Consume<T> {
-    const VOID: Self = Consume {
-        r#use: T::VOID,
-        def: T::VOID,
-    };
-
-    #[inline]
-    fn is_void(&self) -> bool {
-        self.r#use.is_void() && self.def.is_void()
-    }
-}
-
 impl<T: Voidable> Consume<T> {
     #[inline]
     pub fn is_use(&self) -> bool {
         !self.r#use.is_void() && self.def.is_void()
     }
 
+    #[inline]
+    pub fn is_invalid(&self) -> bool {
+        self.r#use.is_void() && self.def.is_void()
+    }
+
+    #[inline]
+    pub fn valid(self) -> Option<Self> {
+        (!self.is_invalid()).then_some(self)
+    }
+
     /// Invalid argument preserving map. This is so because `f` may not work on invalid
     /// argument
-    pub fn map<U: Voidable>(self, f: impl Fn(T) -> U) -> Consume<U> {
-        let def = if self.is_use() { U::VOID } else { f(self.def) };
-        let r#use = f(self.r#use);
+    #[inline]
+    pub fn map_valid<U: Voidable>(self, f: impl Fn(T) -> U) -> Consume<U> {
+        self.map(|voidable| {
+            if let Some(obj) = voidable {
+                f(obj)
+            } else {
+                U::VOID
+            }
+        })
+    }
+
+    #[inline]
+    pub fn map<U>(self, f: impl Fn(Option<T>) -> U) -> Consume<U> {
+        let def = f(self.def.valid());
+        let r#use = f(self.r#use.valid());
         Consume { r#use, def }
     }
 }

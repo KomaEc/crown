@@ -1,8 +1,4 @@
-
-
-use rustc_middle::{
-    ty::{AdtDef, Ty, TyKind},
-};
+use rustc_middle::ty::{AdtDef, Ty, TyKind};
 
 pub type Measure = u32;
 
