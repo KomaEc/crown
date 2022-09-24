@@ -1,6 +1,6 @@
 use crate::{
-    analysis::state::SSAIdx,
-    ptr::{try_measure_local, Measurable},
+    analysis::{state::SSAIdx, constraint::try_measure_local},
+    ptr::Measurable,
     CrateCtxt,
 };
 use orc_common::data_structure::vec_array::{VecArray, VecArrayConstruction};
@@ -390,7 +390,7 @@ pub fn initial_definitions<'tcx>(
         // if crate_ctxt.ty_contains_ptr(ty) && !matches!(local_info, Some(LocalInfo::DerefTemp)) {
         //     to_finalise.insert(local);
         // }
-        if self::try_measure_local(local_decl, crate_ctxt).is_some() {
+        if try_measure_local(local_decl, crate_ctxt).is_some() {
             maybe_owned.insert(local);
         }
     }

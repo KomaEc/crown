@@ -1,9 +1,9 @@
-use std::ops::Range;
+use std::{ops::Range, num::NonZeroU32};
 
 use rustc_index::vec::IndexVec;
-use rustc_middle::mir::LocalDecl;
+use rustc_middle::mir::{LocalDecl, LocalInfo};
 
-use crate::ptr::{try_measure_local, Measurable};
+use crate::ptr::Measurable;
 
 use super::consume::Voidable;
 
@@ -44,6 +44,19 @@ impl std::ops::AddAssign<u32> for OwnershipSig {
     fn add_assign(&mut self, rhs: u32) {
         *self = *self + rhs
     }
+}
+
+/// test whether a local might be owning
+#[inline]
+pub fn try_measure_local(
+    local_decl: &LocalDecl,
+    measurable: impl Measurable,
+) -> Option<NonZeroU32> {
+    let ty = local_decl.ty;
+    let measure = measurable.measure(ty);
+    (!matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp)))
+        .then(|| NonZeroU32::new(measure))
+        .flatten()
 }
 
 #[inline]

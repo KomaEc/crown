@@ -1,7 +1,6 @@
-use std::num::NonZeroU32;
+
 
 use rustc_middle::{
-    mir::{LocalDecl, LocalInfo},
     ty::{AdtDef, Ty, TyKind},
 };
 
@@ -43,19 +42,6 @@ pub trait Measurable {
             0
         }
     }
-}
-
-/// test whether a local might be owning
-#[inline]
-pub fn try_measure_local(
-    local_decl: &LocalDecl,
-    measurable: impl Measurable,
-) -> Option<NonZeroU32> {
-    let ty = local_decl.ty;
-    let measure = measurable.measure(ty);
-    (!matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp)))
-        .then(|| NonZeroU32::new(measure))
-        .flatten()
 }
 
 /// Level of pointer chasing
