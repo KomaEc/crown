@@ -131,7 +131,7 @@ pub(crate) fn link_incomplete_types(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
             }
             std::collections::hash_map::Entry::Vacant(v) => {
                 v.insert(vec![incomplete]);
-            },
+            }
         }
     }
 
@@ -178,7 +178,14 @@ pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
             let s_symbol = tcx.item_name(s);
             let t_symbol = tcx.item_name(t);
             if s_symbol == t_symbol {
-                equivalent_classes.union(idx1, idx2);
+                let s = tcx.adt_def(s);
+                let t = tcx.adt_def(t);
+                if s.all_fields()
+                    .zip(t.all_fields())
+                    .all(|(f, g)| f.name == g.name)
+                {
+                    equivalent_classes.union(idx1, idx2);
+                }
             }
         }
     }
@@ -223,9 +230,7 @@ pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         let replacement = "crate::".to_owned() + &tcx.def_path_str(rep_did);
         rewriter.replace(tcx, span, replacement)
     });
-    for item in
-        items(tcx).filter(|item| !matches!(item.kind, ItemKind::Struct(..) | ItemKind::Union(..)))
-    {
+    for item in items(tcx) {
         // skip automatically derived items
         let hir_id = item.hir_id();
         let attrs = tcx.hir().attrs(hir_id);
@@ -234,6 +239,14 @@ pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
             .any(|attr| attr.has_name(sym::automatically_derived))
         {
             continue;
+        }
+
+        // skip erased structs
+        if matches!(item.kind, ItemKind::Struct(..) | ItemKind::Union(..)) {
+            let struct_idx = struct_idx[&item.def_id.to_def_id()];
+            if equivalent_classes[struct_idx] != struct_idx {
+                continue;
+            }
         }
         vis.visit_item(item)
     }

@@ -16,34 +16,32 @@ use linkage::{canonicalize_structs, link_functions, link_incomplete_types};
 use orc_common::rewrite::{Rewrite, RewriteMode};
 use rustc_middle::ty::TyCtxt;
 
-pub trait Preprocess {
-    fn preprocess(tcx: TyCtxt, mode: RewriteMode);
+pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] = &[phase_1, phase_2, phase_3];
+
+fn phase_1(tcx: TyCtxt, mode: RewriteMode) {
+    let mut rewriter = Vec::new();
+
+    ensure_nullness(tcx, &mut rewriter);
+
+    link_incomplete_types(tcx, &mut rewriter);
+
+    rewriter.write(mode)
 }
 
-pub enum Phase<const PHASE: usize> {}
+fn phase_2(tcx: TyCtxt, mode: RewriteMode) {
+    let mut rewriter = Vec::new();
 
-impl Preprocess for Phase<0> {
-    fn preprocess(tcx: TyCtxt, mode: RewriteMode) {
-        let mut rewriter = Vec::new();
+    canonicalize_structs(tcx, &mut rewriter);
 
-        ensure_nullness(tcx, &mut rewriter);
-
-        link_incomplete_types(tcx, &mut rewriter);
-
-        rewriter.write(mode)
-    }
+    rewriter.write(mode)
 }
 
-impl Preprocess for Phase<1> {
-    fn preprocess(tcx: TyCtxt, mode: RewriteMode) {
-        let mut rewriter = Vec::new();
+fn phase_3(tcx: TyCtxt, mode: RewriteMode) {
+    let mut rewriter = Vec::new();
 
-        canonicalize_structs(tcx, &mut rewriter);
+    // TODO link_statics
 
-        // TODO link_statics
+    link_functions(tcx, &mut rewriter);
 
-        link_functions(tcx, &mut rewriter);
-
-        rewriter.write(mode)
-    }
+    rewriter.write(mode)
 }

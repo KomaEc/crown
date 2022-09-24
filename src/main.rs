@@ -15,7 +15,6 @@ extern crate rustc_target;
 
 use anyhow::{bail, Result};
 use clap::Parser;
-use orc_preprocess::Preprocess;
 use rustc_errors::registry;
 use rustc_feature::UnstableFeatures;
 use rustc_hir::{def_id::DefId, ItemKind, OwnerNode};
@@ -93,28 +92,34 @@ fn main() -> Result<()> {
         .init();
     let args = Cli::parse();
     if let Command::Preprocess { rewrite_mode } = args.cmd {
-        let config = compiler_config(args.path.clone());
-        rustc_interface::run_compiler(config, move |compiler| {
-            compiler.enter(|queries| {
-                queries
-                    .global_ctxt()
-                    .borrow_mut()
-                    .unwrap()
-                    .peek_mut()
-                    .enter(|tcx| orc_preprocess::Phase::<0>::preprocess(tcx, rewrite_mode))
-            })
-        });
-        let config = compiler_config(args.path);
-        rustc_interface::run_compiler(config, move |compiler| {
-            compiler.enter(|queries| {
-                queries
-                    .global_ctxt()
-                    .borrow_mut()
-                    .unwrap()
-                    .peek_mut()
-                    .enter(|tcx| orc_preprocess::Phase::<1>::preprocess(tcx, rewrite_mode))
-            })
-        });
+        for preprocess in orc_preprocess::PREPROCESSES {
+            let config = compiler_config(args.path.clone());
+            rustc_interface::run_compiler(config, move |compiler| {
+                compiler.enter(|queries| {
+                    queries
+                        .global_ctxt()
+                        .borrow_mut()
+                        .unwrap()
+                        .peek_mut()
+                        .enter(|tcx| preprocess(tcx, rewrite_mode))
+                })
+            });
+            if !matches!(rewrite_mode, RewriteMode::InPlace) {
+                println!("{rewrite_mode} mode only supports one round of rewrite");
+                break;
+            }
+        }
+        // let config = compiler_config(args.path);
+        // rustc_interface::run_compiler(config, move |compiler| {
+        //     compiler.enter(|queries| {
+        //         queries
+        //             .global_ctxt()
+        //             .borrow_mut()
+        //             .unwrap()
+        //             .peek_mut()
+        //             .enter(|tcx| orc_preprocess::Phase::<1>::preprocess(tcx, rewrite_mode))
+        //     })
+        // });
         return Ok(());
     }
     rustc_interface::run_compiler(compiler_config(args.path), move |compiler| {
