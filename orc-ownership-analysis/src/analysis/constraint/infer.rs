@@ -215,7 +215,7 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     type LocalSig: Clone + std::fmt::Debug;
 
-    type CallArgs<T>: std::fmt::Debug// + FromIterator<T>
+    type CallArgs<T>: std::fmt::Debug
     where
         T: std::fmt::Debug;
 
