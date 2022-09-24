@@ -308,11 +308,12 @@ p = **q; ~ { tmp = deref_copy(*q); p = *tmp; }
 - [x] More empirical studies on struct definitions
 - [x] More benchmarks (checked-c benchmark)
 - [x] Better C2Rust results (need linux machine)
-- [ ] Smarter constraint solving?
-    Relax $x + y = z$ by $x \le z \land y \le z \land x + y \le 1$, this may lead to memory leak, but what if the underying C lib is well-written? We may perform this relaxed analysis in second stage
+- [ ] Support Union
+- [ ] Second stage analysis
 - [ ] Initial rewrite
     Method boundaries, not struct definitions
-- [ ] Second stage analysis
+- [ ] Smarter constraint solving?
+    Relax $x + y = z$ by $x \le z \land y \le z \land x + y \le 1$, this may lead to memory leak, but what if the underying C lib is well-written? We may perform this relaxed analysis in second stage
 
 
 
