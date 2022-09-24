@@ -14,7 +14,7 @@ fn test1() {
     }
     ";
     orc_common::test_infra::run_compiler_with(PROGRAM.into(), |tcx, fns, structs| {
-        let input = orc_common::CrateData::new_simple(tcx, fns, structs);
+        let input = orc_common::CrateData::new(tcx, fns, structs);
         let steensgaard = Steensgaard::new(&input);
         steensgaard.print_results();
         let s = input.structs[0];
@@ -34,7 +34,7 @@ fn test2() {
     }
     ";
     orc_common::test_infra::run_compiler_with(PROGRAM.into(), |tcx, fns, structs| {
-        let input = orc_common::CrateData::new_simple(tcx, fns, structs);
+        let input = orc_common::CrateData::new(tcx, fns, structs);
         let steensgaard = Steensgaard::new(&input);
         steensgaard.print_results();
         let pts = &steensgaard.pts;
