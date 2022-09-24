@@ -190,6 +190,8 @@ where
             };
         }
 
+        // TODO if proj to invalid, should the following constraints be emitted?
+
         for (pre, post) in (base.r#use.start..base.r#use.start + proj_start_offset)
             .zip(base.def.start..base.def.start + proj_start_offset)
         {

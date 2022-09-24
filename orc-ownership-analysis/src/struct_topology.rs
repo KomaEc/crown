@@ -32,7 +32,7 @@ where
 
 impl<T: HasStructTopology> Measurable for T {
     #[inline]
-    fn measure_adt(&self, adt_def: &rustc_middle::ty::AdtDef) -> Measure {
+    fn measure_adt(&self, adt_def: rustc_middle::ty::AdtDef) -> Measure {
         self.struct_topology()
             .struct_size(&adt_def.did())
             // .map(Offset::index)
