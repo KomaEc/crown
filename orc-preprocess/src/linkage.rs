@@ -4,8 +4,8 @@ use rustc_hash::FxHashMap;
 use rustc_hir::{
     def::{DefKind, Res},
     intravisit::{self, Visitor},
-    Expr, ExprKind, ForeignItem, ForeignItemKind, Item, ItemKind, OwnerNode, Pat, PatKind, Path,
-    QPath, Ty,
+    Expr, ExprKind, ForeignItem, ForeignItemKind, Item, ItemKind, Node, OwnerNode, Pat, PatKind,
+    Path, QPath, Ty,
 };
 use rustc_middle::{hir::nested_filter::OnlyBodies, ty::TyCtxt};
 use rustc_span::sym;
@@ -109,9 +109,16 @@ pub(crate) fn link_incomplete_types(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
             let def_id = foreign_item.def_id.to_def_id();
             let name = foreign_item.ident.name;
             incomplete_to_name.insert(def_id, name);
+        }
+    }
 
-            // Erase those having a complete definition
-            if name_to_complete.contains_key(&name) {
+    // (3) Erase incomplete types that have complete definitions; give those that do not a
+    // representative.
+    for (&incomplete, &name) in incomplete_to_name.iter() {
+        // incomplete might be an extern type
+        match name_to_complete.entry(name) {
+            std::collections::hash_map::Entry::Occupied(_) => {
+                let Node::ForeignItem(foreign_item) = tcx.hir().get_by_def_id(incomplete.expect_local()) else { unreachable!() };
                 let span = foreign_item.span;
                 rewriter.erase(tcx, span);
 
@@ -122,17 +129,23 @@ pub(crate) fn link_incomplete_types(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
                     rewriter.erase(tcx, span)
                 }
             }
+            std::collections::hash_map::Entry::Vacant(v) => {
+                v.insert(vec![incomplete]);
+            },
         }
     }
 
-    // (3) Replace references to incomplete types with references to same-named complete types.
+    // (4) Replace references to incomplete types with references to same-named complete types.
     let mut vis = resolved_path_visitor(tcx, |path| {
-        let Res::Def(_, did) = path.res else { return };
+        let Res::Def(_, maybe_incomplete) = path.res else { return };
 
-        if let Some(&name) = incomplete_to_name.get(&did) {
-            if let Some(did) = name_to_complete.get(&name) {
+        if let Some(&name) = incomplete_to_name.get(&maybe_incomplete) {
+            if let Some(complete) = name_to_complete.get(&name) {
+                if maybe_incomplete == complete[0] {
+                    return;
+                };
                 let span = path.span;
-                let replacement = "crate::".to_owned() + &tcx.def_path_str(did[0]);
+                let replacement = "crate::".to_owned() + &tcx.def_path_str(complete[0]);
                 rewriter.replace(tcx, span, replacement)
             }
         }
