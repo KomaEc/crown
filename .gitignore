@@ -21,3 +21,5 @@ ground_truth
 
 .z3-trace
 **/*.orc-trace
+
+deps/
