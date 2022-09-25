@@ -308,7 +308,7 @@ p = **q; ~ { tmp = deref_copy(*q); p = *tmp; }
 - [x] More empirical studies on struct definitions
 - [x] More benchmarks (checked-c benchmark)
 - [x] Better C2Rust results (need linux machine)
-- [ ] Support Union
+- [x] Support Union
 - [ ] Second stage analysis
 - [ ] Initial rewrite
     Method boundaries, not struct definitions

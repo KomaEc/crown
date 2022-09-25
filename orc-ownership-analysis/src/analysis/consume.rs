@@ -365,9 +365,10 @@ pub fn initial_definitions<'tcx>(
             let ty = place.ty(self.body, self.tcx).ty;
             let local_info = self.body.local_decls[place.local].local_info.as_deref();
 
-            if self.crate_ctxt.contains_ptr(ty)//ty.contains_ptr(self.struct_topology)
-                // && !place.is_indirect()
+            if self.crate_ctxt.contains_ptr(ty)
                 && !matches!(local_info, Some(LocalInfo::DerefTemp))
+                // if a local type is union, we do not generate its usage, therefore, direct use/def or
+                // dereferences of unions are treated as unsafe sources/sinks during infer
                 && !self.body.local_decls[place.local].ty.is_union()
             {
                 // println!("defining {:?} at {:?}", place.local, location);
