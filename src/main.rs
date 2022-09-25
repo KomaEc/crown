@@ -1,6 +1,7 @@
 #![feature(let_else)]
 #![feature(rustc_private)]
 
+extern crate rustc_driver;
 extern crate rustc_error_codes;
 extern crate rustc_errors;
 extern crate rustc_feature;
@@ -13,15 +14,18 @@ extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 extern crate rustc_target;
 
-use anyhow::{bail, Result};
+use anyhow::{bail, Context, Result};
 use clap::Parser;
 use rustc_errors::registry;
-use rustc_feature::UnstableFeatures;
 use rustc_hir::{def_id::DefId, ItemKind, OwnerNode};
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config;
-use std::{borrow::BorrowMut, path::PathBuf, time::Instant};
+use std::{
+    borrow::BorrowMut,
+    path::{Path, PathBuf},
+    time::Instant,
+};
 use tracing_subscriber::EnvFilter;
 
 use empirical_study::EmpiricalStudy;
@@ -91,9 +95,10 @@ fn main() -> Result<()> {
         .with_env_filter(EnvFilter::from_default_env())
         .init();
     let args = Cli::parse();
+
     if let Command::Preprocess { rewrite_mode } = args.cmd {
         for preprocess in orc_preprocess::PREPROCESSES {
-            let config = compiler_config(args.path.clone());
+            let config = compiler_config(args.path.clone())?;
             rustc_interface::run_compiler(config, move |compiler| {
                 compiler.enter(|queries| {
                     queries
@@ -105,13 +110,13 @@ fn main() -> Result<()> {
                 })
             });
             if !matches!(rewrite_mode, RewriteMode::InPlace) {
-                println!("{rewrite_mode} mode only supports one round of rewrite");
+                println!("{rewrite_mode} mode does not support multi-phase rewrite");
                 break;
             }
         }
         return Ok(());
     }
-    rustc_interface::run_compiler(compiler_config(args.path), move |compiler| {
+    rustc_interface::run_compiler(compiler_config(args.path)?, move |compiler| {
         compiler.enter(|queries| {
             queries
                 .global_ctxt()
@@ -123,18 +128,59 @@ fn main() -> Result<()> {
     })
 }
 
-fn compiler_config(input_path: PathBuf) -> Config {
-    let out = std::process::Command::new("rustc")
-        .arg("--print=sysroot")
-        .current_dir(".")
+/// Returns where the given rustc stores its sysroot source code.
+fn rustc_sysroot() -> Result<PathBuf> {
+    let mut rustc = std::process::Command::new("rustc");
+    let output = rustc
+        .args(["--print", "sysroot"])
         .output()
-        .unwrap();
-    let sysroot = std::str::from_utf8(&out.stdout).unwrap().trim();
-    Config {
+        .context("failed to determine sysroot")?;
+    if !output.status.success() {
+        bail!(
+            "failed to determine sysroot; rustc said:\n{}",
+            String::from_utf8_lossy(&output.stderr).trim_end()
+        );
+    }
+
+    let sysroot =
+        std::str::from_utf8(&output.stdout).context("sysroot folder is not valid UTF-8")?;
+    let sysroot = Path::new(sysroot.trim_end_matches('\n'));
+    Ok(sysroot.to_path_buf())
+}
+
+fn compiler_config(input_path: PathBuf) -> Result<Config> {
+    let sysroot_path = rustc_sysroot()?;
+
+    let args = [
+        "rustc",
+        "-L",
+        // "dependency=/Users/pd21541/Research/orc/deps",
+        "dependency=./deps",
+        "--extern",
+        // "c2rust_bitfields=/Users/pd21541/Research/orc/deps/libc2rust_bitfields-9912e7b3bbb08750.rlib",
+        "c2rust_bitfields=./deps/libc2rust_bitfields-9912e7b3bbb08750.rlib",
+        // "--extern",
+        // "c2rust_bitfields_derive=/Users/pd21541/Research/orc/deps/libc2rust_bitfields_derive-43a7cfd7aa84b1cd.dylib",
+        "--extern",
+        // "libc=/Users/pd21541/Research/orc/deps/liblibc-224625194917b41f.rlib",
+        "libc=./deps/liblibc-224625194917b41f.rlib",
+    ].map(|s| s.to_owned());
+
+    let matches = rustc_driver::handle_options(&args).context("what?")?;
+    let opts = rustc_session::config::build_session_options(&matches);
+
+
+    Ok(Config {
+        // opts: config::Options {
+        //     maybe_sysroot: Some(sysroot_path),
+        //     unstable_features: UnstableFeatures::from_environment(None),
+        //     search_paths,
+        //     externs,
+        //     ..config::Options::default()
+        // },
         opts: config::Options {
-            maybe_sysroot: Some(PathBuf::from(sysroot)),
-            unstable_features: UnstableFeatures::from_environment(None),
-            ..config::Options::default()
+            maybe_sysroot: Some(sysroot_path),
+            ..opts
         },
         crate_cfg: rustc_hash::FxHashSet::default(),
         crate_check_cfg: rustc_interface::interface::parse_check_cfg(vec![]),
@@ -150,7 +196,7 @@ fn compiler_config(input_path: PathBuf) -> Config {
         override_queries: None,
         make_codegen_backend: None,
         registry: registry::Registry::new(&rustc_error_codes::DIAGNOSTICS),
-    }
+    })
 }
 
 fn time<T>(label: &str, f: impl FnOnce() -> T) -> T {
@@ -190,11 +236,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         .collect::<Vec<_>>();
 
     // let input = (tcx, functions, structs);
-    let input = orc_common::CrateData {
-        tcx,
-        fns,
-        structs,
-    };
+    let input = orc_common::CrateData { tcx, fns, structs };
 
     match *cmd {
         Command::Preprocess { .. } => unreachable!(),
