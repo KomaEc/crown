@@ -26,15 +26,18 @@ use smallvec::SmallVec;
 // e is a function pointer type and U has type *T, while T: Sized; fptr-ptr-cast
 // e is a function pointer type and U is an integer; fptr-addr-cast
 
-/// TODO: handle addr-ptr cast? Currently, definitions are accounted
-/// for const addr to ptr cast.
+
+/// TODO 
+/// 1. `def_sites` -> `maybe_consume_sites`. This is to avoid rebuild phi node join 
+/// points.
+/// 2. `short_live_range: IndexVec<Local, Option<BasicBlock>>`
 pub struct Definitions {
     /// BasicBlock -> statement_index -> possible definitions
     ///
     /// We've made an assumption that a local can only be used or defined
     /// once in a statement/terminator
     consumes: VecArray<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
-    pub def_sites: IndexVec<Local, BitSet<BasicBlock>>,
+    pub maybe_consume_sites: IndexVec<Local, BitSet<BasicBlock>>,
     pub maybe_owned: BitSet<Local>,
 }
 
@@ -243,9 +246,8 @@ pub fn initial_definitions<'tcx>(
     body: &Body<'tcx>,
     tcx: TyCtxt<'tcx>,
     crate_ctxt: &CrateCtxt<'tcx>,
-    // struct_topology: &StructTopology,
 ) -> Definitions {
-    let mut def_sites = IndexVec::from_elem(
+    let mut maybe_consume_sites = IndexVec::from_elem(
         BitSet::new_empty(body.basic_blocks.len()),
         &body.local_decls,
     );
@@ -253,14 +255,12 @@ pub fn initial_definitions<'tcx>(
     let mut consumes = VecArray::with_indices_capacity(body.basic_blocks.len());
 
     struct Vis<'me, 'tcx> {
-        def_sites: &'me mut IndexVec<Local, BitSet<BasicBlock>>,
+        maybe_consume_sites: &'me mut IndexVec<Local, BitSet<BasicBlock>>,
         consumes: &'me mut VecArrayConstruction<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
         consumes_in_cur_stmt: SmallVec<[(Local, Consume<SSAIdx>); 2]>,
         body: &'me Body<'tcx>,
         tcx: TyCtxt<'tcx>,
         crate_ctxt: &'me CrateCtxt<'tcx>,
-        // struct_topology: &'me StructTopology,
-        // basic_block: BasicBlock,
     }
     // println!("visiting {:?}", body.source.def_id());
     impl<'me, 'tcx> Visitor<'tcx> for Vis<'me, 'tcx> {
@@ -302,16 +302,6 @@ pub fn initial_definitions<'tcx>(
         }
 
         fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, location: Location) {
-            // if let Rvalue::Cast(CastKind::PointerFromExposedAddress, operand, _) = rvalue {
-            //     // if let Some(constant) = operand.constant() {
-            //     //     println!("{:?}", constant.literal);
-            //     //     panic!("")
-            //     // }
-            //     // return;
-            //     if operand.place().is_some() {
-            //         return;
-            //     }
-            // }
 
             // ignore rvalues of the following kinds
             match rvalue {
@@ -335,18 +325,6 @@ pub fn initial_definitions<'tcx>(
 
             self.super_rvalue(rvalue, location)
         }
-
-        // fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
-        //     let TerminatorKind::Return = terminator.kind else {
-        //         return self.super_terminator(terminator, location)
-        //     };
-        //     let return_place = Place::from(RETURN_PLACE);
-        //     self.visit_place(
-        //         &return_place,
-        //         PlaceContext::NonMutatingUse(NonMutatingUseContext::Move),
-        //         location,
-        //     )
-        // }
 
         // Note that we didn't re-implement visit_local. This is because return place should not
         // be counted as a consumption at return clause.
@@ -375,16 +353,16 @@ pub fn initial_definitions<'tcx>(
                 let consume = if place.is_indirect() {
                     Consume::pure_use()
                 } else {
-                    self.def_sites[place.local].insert(location.block);
                     Consume::new()
                 };
+                self.maybe_consume_sites[place.local].insert(location.block);
                 self.consumes_in_cur_stmt.push((place.local, consume));
             }
         }
     }
 
     Vis {
-        def_sites: &mut def_sites,
+        maybe_consume_sites: &mut maybe_consume_sites,
         consumes: &mut consumes,
         consumes_in_cur_stmt: SmallVec::default(),
         tcx,
@@ -409,7 +387,7 @@ pub fn initial_definitions<'tcx>(
 
     Definitions {
         consumes: consumes.done(),
-        def_sites,
+        maybe_consume_sites,
         maybe_owned,
     }
 }
