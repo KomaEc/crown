@@ -154,30 +154,18 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
     let args = [
         "rustc",
         "-L",
-        // "dependency=/Users/pd21541/Research/orc/deps",
         "dependency=./deps",
         "--extern",
-        // "c2rust_bitfields=/Users/pd21541/Research/orc/deps/libc2rust_bitfields-9912e7b3bbb08750.rlib",
         "c2rust_bitfields=./deps/libc2rust_bitfields-9912e7b3bbb08750.rlib",
-        // "--extern",
-        // "c2rust_bitfields_derive=/Users/pd21541/Research/orc/deps/libc2rust_bitfields_derive-43a7cfd7aa84b1cd.dylib",
         "--extern",
-        // "libc=/Users/pd21541/Research/orc/deps/liblibc-224625194917b41f.rlib",
         "libc=./deps/liblibc-224625194917b41f.rlib",
-    ].map(|s| s.to_owned());
+    ]
+    .map(|s| s.to_owned());
 
     let matches = rustc_driver::handle_options(&args).context("what?")?;
     let opts = rustc_session::config::build_session_options(&matches);
 
-
     Ok(Config {
-        // opts: config::Options {
-        //     maybe_sysroot: Some(sysroot_path),
-        //     unstable_features: UnstableFeatures::from_environment(None),
-        //     search_paths,
-        //     externs,
-        //     ..config::Options::default()
-        // },
         opts: config::Options {
             maybe_sysroot: Some(sysroot_path),
             ..opts
