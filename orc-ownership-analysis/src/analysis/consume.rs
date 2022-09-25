@@ -368,6 +368,7 @@ pub fn initial_definitions<'tcx>(
             if self.crate_ctxt.contains_ptr(ty)//ty.contains_ptr(self.struct_topology)
                 // && !place.is_indirect()
                 && !matches!(local_info, Some(LocalInfo::DerefTemp))
+                && !self.body.local_decls[place.local].ty.is_union()
             {
                 // println!("defining {:?} at {:?}", place.local, location);
                 let consume = if place.is_indirect() {
