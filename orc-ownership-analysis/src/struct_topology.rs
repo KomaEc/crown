@@ -5,7 +5,7 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
 
-use crate::ptr::{Measurable, Measure};
+use crate::ptr::{Measurable, Measure, abstract_ty};
 
 // pub type Measure = u32;
 
@@ -94,22 +94,17 @@ impl StructTopology {
             let mut offset = 0; //Offset::from_u32(0);
             offset_of.add_item_to_array(offset);
             for field_def in adt_def.all_fields() {
-                let mut ty = field_def.ty(tcx, subst_ref);
-                // peel off arrays
-                while let TyKind::Array(inner_ty, _) = ty.kind() {
-                    ty = *inner_ty;
+
+                let ty = field_def.ty(tcx, subst_ref);
+                let (ptr_depth, maybe_adt) = abstract_ty(ty);
+
+                if ptr_depth > 0 {
+                    offset += ptr_depth
+                } else if let Some(adt_def) = maybe_adt {
+                    if let Some(&field_did_idx) = did_idx.get(&adt_def.did()) {
+                        offset += offset_of.get_constructed(field_did_idx).last().copied().unwrap();
+                    } 
                 }
-                offset += match ty.kind() {
-                    TyKind::RawPtr(..) | TyKind::Ref(..) => 1,
-                    TyKind::Adt(sub_adt_def, _) if sub_adt_def.is_box() => 1,
-                    TyKind::Adt(sub_adt_def, _) => did_idx
-                        .get(&sub_adt_def.did())
-                        .and_then(|&field_did_idx| {
-                            offset_of.get_constructed(field_did_idx).last().copied()
-                        })
-                        .unwrap_or(0),
-                    _ => 0,
-                };
                 offset_of.add_item_to_array(offset);
             }
             offset_of.done_with_array();
