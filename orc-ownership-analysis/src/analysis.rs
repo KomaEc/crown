@@ -484,7 +484,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
         // second stage
         let mut results = results;
 
-        for _ in 0..2 {
+        for _ in 0..1 {
             let mut gen = Gen::new();
 
             let config = z3::Config::new();

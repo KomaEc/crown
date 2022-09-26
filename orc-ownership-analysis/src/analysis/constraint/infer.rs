@@ -145,10 +145,8 @@ where
     fn project_deeper(
         base: Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>,
         ty: Ty<'tcx>,
-        // mut base_ty: Ty<'tcx>,
         projection: &[PlaceElem<'tcx>],
         infer_cx: &mut Self,
-        // mut chased: u32,
     ) -> Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig> {
         if base.is_invalid() {
             return base;
@@ -859,10 +857,13 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 }
             }
 
-            Rvalue::CopyForDeref(_) => {
+            Rvalue::CopyForDeref(rhs) => {
                 /* TODO */
                 let lhs_consume = self.state.try_consume_at(lhs.local, location);
                 assert!(lhs_consume.is_none());
+                let rhs_consume =
+                    consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
+                let _ = rhs_consume;
                 tracing::debug!("deref_copy is ignored")
             }
 
