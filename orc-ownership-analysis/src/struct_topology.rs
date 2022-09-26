@@ -5,7 +5,7 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
 
-use crate::ptr::{Measurable, Measure, abstract_ty};
+use crate::ptr::{abstract_ty, Measurable, Measure};
 
 // pub type Measure = u32;
 
@@ -94,7 +94,6 @@ impl StructTopology {
             let mut offset = 0; //Offset::from_u32(0);
             offset_of.add_item_to_array(offset);
             for field_def in adt_def.all_fields() {
-
                 let ty = field_def.ty(tcx, subst_ref);
                 let (ptr_depth, maybe_adt) = abstract_ty(ty);
 
@@ -102,8 +101,12 @@ impl StructTopology {
                     offset += ptr_depth
                 } else if let Some(adt_def) = maybe_adt {
                     if let Some(&field_did_idx) = did_idx.get(&adt_def.did()) {
-                        offset += offset_of.get_constructed(field_did_idx).last().copied().unwrap();
-                    } 
+                        offset += offset_of
+                            .get_constructed(field_did_idx)
+                            .last()
+                            .copied()
+                            .unwrap();
+                    }
                 }
                 offset_of.add_item_to_array(offset);
             }

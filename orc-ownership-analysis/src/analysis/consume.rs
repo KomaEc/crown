@@ -1,5 +1,5 @@
 use crate::{
-    analysis::{constraint::try_measure_local, state::SSAIdx},
+    analysis::{constraint::local_has_non_zero_measure, state::SSAIdx},
     ptr::Measurable,
     CrateCtxt,
 };
@@ -26,9 +26,8 @@ use smallvec::SmallVec;
 // e is a function pointer type and U has type *T, while T: Sized; fptr-ptr-cast
 // e is a function pointer type and U is an integer; fptr-addr-cast
 
-
-/// TODO 
-/// 1. `def_sites` -> `maybe_consume_sites`. This is to avoid rebuild phi node join 
+/// TODO
+/// 1. `def_sites` -> `maybe_consume_sites`. This is to avoid rebuild phi node join
 /// points.
 /// 2. `short_live_range: IndexVec<Local, Option<BasicBlock>>`
 pub struct Definitions {
@@ -38,7 +37,8 @@ pub struct Definitions {
     /// once in a statement/terminator
     consumes: VecArray<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
     pub maybe_consume_sites: IndexVec<Local, BitSet<BasicBlock>>,
-    pub maybe_owned: BitSet<Local>,
+    /// Caching the results of calling [local_has_non_zero_measure]
+    pub maybe_owning: BitSet<Local>,
 }
 
 /// The class of type that has an invalid argument.
@@ -46,10 +46,10 @@ pub struct Definitions {
 /// there're multiple types in ownership analysis that require void arguments,
 /// and using `Option<>` wrapper may introduce overhead.
 ///
-/// For example, it is not suitable to represent `SSAIdx` by something like
+/// For example, it is not suitable to represent [SSAIdx] by something like
 /// `Option<NonZeroSSAIdx>`, because `SSAIdx::index()` corresponds to array
 /// index in `fn_body_sig`, so being able to be zero is quite convenient when
-/// programming with `SSAIdx`. On the other hand, using `Option<SSAIdx>`
+/// programming with [SSAIdx]. On the other hand, using [Option<SSAIdx>]
 /// introduces memory overhead:
 /// ```
 /// use orc_ownership_analysis::analysis::state::SSAIdx;
@@ -67,13 +67,13 @@ pub struct Definitions {
 /// const _: () = assert!(std::mem::size_of::<Option<Range<OwnershipSig>>>() == 12);
 /// ```
 ///
-/// Besides, adding `Option` wrapper makes types fatter, and I struggled to
+/// Besides, adding [Option] wrapper makes types fatter, and I struggled to
 /// make appropriate synonyms for those wrapped types.
 ///
 /// Note that nullability is now not obvious statically. To prevent runtime
 /// errors (using invalid objects in a context where valid ones are needed),
-/// `Voidable` types should be wrapped in `Option` as often as possible in
-/// function arguments/return. They are stored as raw `Voidable` in struct
+/// [Voidable] types should be wrapped in [Option] as often as possible in
+/// function arguments/return. They are stored as raw [Voidable] in struct
 /// definitions.
 pub trait Voidable: Clone + std::fmt::Debug {
     const VOID: Self;
@@ -156,7 +156,7 @@ impl Consume<SSAIdx> {
     }
 
     #[inline]
-    pub fn mk_def(&mut self) {
+    pub fn enable_def(&mut self) {
         self.def = SSAIdx::INIT;
     }
 }
@@ -184,14 +184,13 @@ pub struct ConsumeChain {
     ///
     /// Those locals with empty entries definitely do not contain pointers
     pub locs: IndexVec<Local, IndexVec<SSAIdx, RichLocation>>,
-    // to_finalise: BitSet<Local>,
 }
 
 impl ConsumeChain {
     pub fn new(body: &Body, definitions: Definitions) -> Self {
         let Definitions {
             consumes,
-            maybe_owned,
+            maybe_owning,
             ..
         } = definitions;
 
@@ -200,7 +199,7 @@ impl ConsumeChain {
             .local_decls
             .indices()
             .map(|local| {
-                maybe_owned
+                maybe_owning
                     .contains(local)
                     .then(|| IndexVec::from_raw(vec![RichLocation::Entry]))
                     .unwrap_or_default()
@@ -302,7 +301,6 @@ pub fn initial_definitions<'tcx>(
         }
 
         fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, location: Location) {
-
             // ignore rvalues of the following kinds
             match rvalue {
                 Rvalue::Cast(CastKind::PointerFromExposedAddress, operand, _)
@@ -372,7 +370,7 @@ pub fn initial_definitions<'tcx>(
     }
     .visit_body(body);
 
-    let mut maybe_owned = BitSet::new_empty(body.local_decls.len());
+    let mut maybe_owning = BitSet::new_empty(body.local_decls.len());
 
     for (local, local_decl) in body.local_decls.iter_enumerated() {
         // let ty = local_decl.ty;
@@ -380,15 +378,17 @@ pub fn initial_definitions<'tcx>(
         // if crate_ctxt.ty_contains_ptr(ty) && !matches!(local_info, Some(LocalInfo::DerefTemp)) {
         //     to_finalise.insert(local);
         // }
-        if try_measure_local(local_decl, crate_ctxt).is_some() {
-            maybe_owned.insert(local);
+        if local_has_non_zero_measure(local_decl, crate_ctxt) {
+            maybe_owning.insert(local);
         }
     }
 
+    let consumes = consumes.done();
+
     Definitions {
-        consumes: consumes.done(),
+        consumes,
         maybe_consume_sites,
-        maybe_owned,
+        maybe_owning,
     }
 }
 

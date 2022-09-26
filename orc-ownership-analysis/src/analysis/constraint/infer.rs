@@ -89,6 +89,7 @@ where
     gen: &'infercx mut Gen,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     pub fn_body_sig: FnBodySig<LocalSig>,
+    phase: u32,
     // deref_copys: Consume<<Analysis as InferMode<'infercx, 'tcx, DB>>::LocalSig>,
 }
 
@@ -103,11 +104,12 @@ where
         database: &'infercx mut Analysis::DB,
         gen: &'infercx mut Gen,
         inter_ctxt: Analysis::InterCtxt,
+        phase: u32,
     ) -> Self {
         let mut fn_body_sig = IndexVec::with_capacity(body.local_decls.len());
 
         for local_decl in body.local_decls.iter() {
-            if let Some(sigs) = initialize_local(local_decl, gen, database, crate_ctxt) {
+            if let Some(sigs) = initialize_local(local_decl, gen, database, crate_ctxt, phase) {
                 fn_body_sig.push(IndexVec::from_raw(vec![sigs]));
             } else {
                 fn_body_sig.push(IndexVec::default());
@@ -132,7 +134,7 @@ where
             gen,
             crate_ctxt,
             fn_body_sig,
-            // deref_copys: Consume::VOID,
+            phase, // deref_copys: Consume::VOID,
         }
     }
 
@@ -142,13 +144,20 @@ where
 
     fn project_deeper(
         base: Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>,
-        mut base_ty: Ty<'tcx>,
+        ty: Ty<'tcx>,
+        // mut base_ty: Ty<'tcx>,
         projection: &[PlaceElem<'tcx>],
         infer_cx: &mut Self,
+        // mut chased: u32,
     ) -> Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig> {
         if base.is_invalid() {
             return base;
         }
+
+        let mut base_ty = ty;
+
+        let mut ptr_chased = 0;
+        let mut adt_gated = false;
 
         let mut proj_start_offset = 0;
 
@@ -161,6 +170,7 @@ where
                     // Furthermore, mir places contain only at most one indirection.
                     proj_start_offset += 1;
                     base_ty = base_ty.builtin_deref(true).unwrap().ty;
+                    ptr_chased += 1;
                 }
                 ProjectionElem::Field(field, ty) => {
                     let TyKind::Adt(adt_def, _) = base_ty.kind() else { unreachable!() };
@@ -170,6 +180,7 @@ where
                         .field_offsets(&adt_def.did()) else { unreachable!() };
                     proj_start_offset += field_offsets[field.index()];
                     base_ty = *ty;
+                    adt_gated = true;
                 }
                 // [ty] is equivalent to ty
                 ProjectionElem::Index(_) => base_ty = base_ty.builtin_index().unwrap(),
@@ -198,8 +209,23 @@ where
             infer_cx.database.push_equal::<super::Debug>((), pre, post);
         }
 
-        let proj_end_offset = proj_start_offset + infer_cx.crate_ctxt.measure(base_ty);
+        // TODO correctness?
+        let projected_ty_measure = if adt_gated {
+            infer_cx.crate_ctxt.measure_ptr(base_ty)
+        } else {
+            infer_cx
+                .crate_ctxt
+                .measure(base_ty, infer_cx.phase - ptr_chased)
+        };
+        let proj_end_offset = proj_start_offset + projected_ty_measure; // infer_cx.crate_ctxt.measure(base_ty, infer_cx.phase - ptr_chased);
 
+        // assert!(
+        //     base.r#use.start + proj_end_offset <= base.r#use.end,
+        //     "{ty}: {} ~> {base_ty}: {}, with projection: {:?}, chased: {ptr_chased}",
+        //     base.r#use.end.index() - base.r#use.start.index(),
+        //     proj_end_offset - proj_start_offset,
+        //     projection
+        // );
         assert!(base.r#use.start + proj_end_offset <= base.r#use.end);
 
         for (pre, post) in (base.r#use.start + proj_end_offset..base.r#use.end)
@@ -207,6 +233,8 @@ where
         {
             infer_cx.database.push_equal::<super::Debug>((), pre, post);
         }
+
+        tracing::debug!("foo");
 
         Consume {
             r#use: base.r#use.start + proj_start_offset..base.r#use.start + proj_end_offset,
@@ -363,7 +391,7 @@ where
         ty: Ty<'tcx>,
         def: SSAIdx,
     ) {
-        let measure = infer_cx.crate_ctxt.measure(ty);
+        let measure = infer_cx.crate_ctxt.measure(ty, infer_cx.phase);
         let sigs = infer_cx.new_sigs(measure);
         assert_eq!(def, infer_cx.fn_body_sig[local].push(sigs));
     }
@@ -401,7 +429,7 @@ where
         tracing::debug!("interpretting consume for {:?} with {:?}", place, consume);
         let base = place.local;
         let base_ty = body.local_decls[base].ty;
-        let base_offset = infer_cx.crate_ctxt.measure(base_ty);
+        let base_offset = infer_cx.crate_ctxt.measure(base_ty, infer_cx.phase);
 
         let r#use = infer_cx.fn_body_sig[base][consume.r#use].clone();
         let def = infer_cx.new_sigs(base_offset);
@@ -414,6 +442,8 @@ where
         let base = Consume { r#use, def };
 
         assert!(!base.is_invalid());
+
+        tracing::debug!("woo");
 
         InferCtxt::project_deeper(base, base_ty, place.projection, infer_cx).valid()
     }

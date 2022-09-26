@@ -43,26 +43,17 @@ impl<T: Default> Default for FnSig<T> {
 
 impl<T: std::fmt::Debug> std::fmt::Debug for FnSig<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("FnSig")
-            .field("ret", &self.ret)
-            .field("args", &self.args)
-            .finish()
-    }
-}
-
-impl<T: std::fmt::Display> std::fmt::Display for FnSig<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str("(")?;
         f.write_str(
             &self
                 .args
                 .iter()
-                .map(|data| format!("{data}"))
+                .map(|data| format!("{:?}", data))
                 .collect::<Vec<_>>()
                 .join(", "),
         )?;
         f.write_str(") -> ")?;
-        f.write_fmt(format_args!("{}", self.ret))
+        f.write_fmt(format_args!("{:?}", self.ret))
     }
 }
 

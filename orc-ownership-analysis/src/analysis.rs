@@ -143,6 +143,16 @@ impl<'a> FnResult<'a> for (&'a FnSummary, &'a [Ownership]) {
     }
 }
 
+fn display_value(value: &[Ownership]) -> String {
+    "[".to_owned()
+        + &value
+            .iter()
+            .map(|value| format!("{value}"))
+            .collect::<Vec<_>>()
+            .join(" ")
+        + "]"
+}
+
 pub trait AnalysisResults<'a> {
     type FnSig: Iterator<Item = Option<&'a [Ownership]>>;
     type FnResult: FnResult<'a, LocalResult = &'a [Ownership]>;
@@ -155,14 +165,16 @@ pub trait AnalysisResults<'a> {
             let mut fn_sig = self.fn_sig(did);
             let ret = fn_sig.next().unwrap();
             let ret = if let Some(sig) = ret {
-                format!("{}", sig[0])
+                // format!("{:?}", sig)
+                display_value(sig)
             } else {
                 "_".to_owned()
             };
             let args = fn_sig
                 .map(|sig| {
                     if let Some(sig) = sig {
-                        format!("{}", sig[0])
+                        // format!("{:?}", sig)
+                        display_value(sig)
                     } else {
                         "_".to_owned()
                     }
@@ -202,6 +214,7 @@ impl WholeProgram {
         gen: &mut Gen,
         database: &mut Z3Database,
     ) -> FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>> {
+        const PHASE: u32 = 0;
         let mut fn_sigs = FxHashMap::default();
         fn_sigs.reserve(crate_ctxt.fns().len());
         for &did in crate_ctxt.call_graph.fns() {
@@ -209,11 +222,13 @@ impl WholeProgram {
             let fn_sig = {
                 let mut local_decls = body.local_decls.iter();
                 let return_local_decl = local_decls.next().unwrap();
-                let ret = initialize_local(return_local_decl, gen, database, crate_ctxt);
+                let ret = initialize_local(return_local_decl, gen, database, crate_ctxt, PHASE);
 
                 let args = local_decls
                     .take(body.arg_count)
-                    .map(|local_decl| initialize_local(local_decl, gen, database, crate_ctxt))
+                    .map(|local_decl| {
+                        initialize_local(local_decl, gen, database, crate_ctxt, PHASE)
+                    })
                     .collect();
 
                 FnSig { ret, args }
@@ -239,13 +254,14 @@ impl WholeProgram {
         inter_ctxt: <WholeProgram as AnalysisKind>::InterCtxt,
         gen: &mut Gen,
         database: &mut Z3Database,
+        phase: u32,
     ) -> anyhow::Result<FnSummary> {
         println!("solving {:?}", body.source.def_id());
         database.solver.push();
 
         let mut rn = Renamer::new(body, ssa_state);
 
-        let mut infer_cx = InferCtxt::new(crate_ctxt, body, database, gen, inter_ctxt);
+        let mut infer_cx = InferCtxt::new(crate_ctxt, body, database, gen, inter_ctxt, phase);
 
         rn.go::<Self>(&mut infer_cx);
 
@@ -264,6 +280,7 @@ impl WholeProgram {
     }
 
     fn retrieve_model(database: Z3Database, gen: Gen) -> Vec<Ownership> {
+        assert!(matches!(database.solver.check(), z3::SatResult::Sat));
         let z3_model = database.solver.get_model().unwrap();
         let mut model = Vec::with_capacity(gen.next().index());
 
@@ -296,7 +313,7 @@ impl WholeProgram {
                     if consume.is_use() {
                         let outter_most = fn_body_sig[local][consume.r#use].start;
                         if matches!(model[outter_most.index()], Ownership::Owning) {
-                            consume.mk_def();
+                            consume.enable_def();
                         }
                     }
                 }
@@ -313,6 +330,81 @@ pub struct WholeProgramResults {
     model: Vec<Ownership>,
     fn_sigs: FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
     fn_summaries: FxHashMap<DefId, FnSummary>,
+}
+
+impl WholeProgramResults {
+    pub fn next_stage(
+        self,
+        crate_ctxt: &CrateCtxt,
+        gen: &mut Gen,
+        database: &mut Z3Database,
+        phase: &mut u32,
+    ) -> (
+        FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
+        impl Iterator<Item = (DefId, SSAState)>,
+    ) {
+        *phase += 1;
+        let phase = *phase;
+
+        let mut inter_ctxt = FxHashMap::default();
+        inter_ctxt.reserve(self.fn_sigs.len());
+
+        for (did, original) in self.fn_sigs.into_iter() {
+            let body = crate_ctxt.tcx.optimized_mir(did);
+            let fn_sig = {
+                let mut local_decls = body.local_decls.iter();
+                let return_local_decl = local_decls.next().unwrap();
+                let ret = initialize_local(return_local_decl, gen, database, crate_ctxt, phase);
+
+                let args = local_decls
+                    .take(body.arg_count)
+                    .map(|local_decl| {
+                        initialize_local(local_decl, gen, database, crate_ctxt, phase)
+                    })
+                    .collect();
+
+                FnSig { ret, args }
+            };
+
+            for (pre, now) in original.iter().zip(fn_sig.iter()) {
+                if let Some(pre) = pre.clone() {
+                    let now = now.clone().unwrap();
+                    assert!(
+                        pre.end.index() - pre.start.index() <= now.end.index() - now.start.index()
+                    );
+                    for (pre, now) in pre.zip(now) {
+                        match self.model[pre.index()] {
+                            Ownership::Owning => {
+                                database.push_assume::<crate::analysis::constraint::Debug>(
+                                    (),
+                                    now,
+                                    true,
+                                );
+                            }
+                            // Ownership::Transient => {
+                            //     database.push_assume::<crate::analysis::constraint::Debug>(
+                            //         (),
+                            //         now,
+                            //         false,
+                            //     );
+                            // }
+                            Ownership::Transient | Ownership::Unknown => {}
+                        }
+                    }
+                }
+            }
+
+            println!("generating signatures for {:?}: {:?}", did, fn_sig);
+
+            inter_ctxt.insert(did, fn_sig);
+        }
+
+        let state_iter = self.fn_summaries.into_iter().map(move |(did, fn_summary)| {
+            (did, WholeProgram::apply_model(fn_summary, &self.model[..]))
+        });
+
+        (inter_ctxt, state_iter)
+    }
 }
 
 impl<'a> AnalysisResults<'a> for WholeProgramResults {
@@ -350,7 +442,8 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
     type DB = Z3Database<'db>;
 
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results> {
-        // type DB<'z3> = Z3Database<'z3>;
+        // first stage
+        let mut phase = 0;
 
         let mut gen = Gen::new();
 
@@ -373,6 +466,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
                 &inter_ctxt,
                 &mut gen,
                 &mut database,
+                phase,
             )?;
             fn_summaries.insert(did, fn_summary);
         }
@@ -387,6 +481,49 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
 
         results.print_fn_sigs(crate_ctxt.tcx, crate_ctxt.fns());
 
+        // second stage
+        let mut results = results;
+
+        for _ in 0..2 {
+            let mut gen = Gen::new();
+
+            let config = z3::Config::new();
+            let ctx = z3::Context::new(&config);
+            let mut database = Self::DB::new(&ctx);
+
+            let (inter_ctxt, state_iter) =
+                results.next_stage(crate_ctxt, &mut gen, &mut database, &mut phase);
+
+            let mut fn_summaries = FxHashMap::default();
+            fn_summaries.reserve(crate_ctxt.fns().len());
+
+            for (did, ssa_state) in state_iter {
+                let body = crate_ctxt.tcx.optimized_mir(did);
+                let fn_summary = WholeProgram::solve_body(
+                    body,
+                    ssa_state,
+                    crate_ctxt,
+                    &inter_ctxt,
+                    &mut gen,
+                    &mut database,
+                    phase,
+                )?;
+                fn_summaries.insert(did, fn_summary);
+            }
+
+            let model = WholeProgram::retrieve_model(database, gen);
+
+            results = WholeProgramResults {
+                model,
+                fn_sigs: inter_ctxt,
+                fn_summaries,
+            };
+
+            results.print_fn_sigs(crate_ctxt.tcx, crate_ctxt.fns());
+
+            // break;
+        }
+
         Ok(results)
     }
 }
@@ -396,6 +533,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for StandAlone {
     type InterCtxt = ();
     type DB = CadicalDatabase;
     fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results> {
+        const PHASE: u32 = 0;
         let mut databases = Vec::with_capacity(crate_ctxt.fns().len());
         for &did in crate_ctxt.fns() {
             println!("solving {:?}", did);
@@ -408,7 +546,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for StandAlone {
 
             let mut gen = Gen::new();
             let mut database = CadicalDatabase::new();
-            let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, ());
+            let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, (), PHASE);
 
             rn.go::<Self>(&mut infer_cx);
             match database.solver.solve() {
