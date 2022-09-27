@@ -3,7 +3,7 @@ use std::alloc::{Allocator, Global};
 // use lending_iterator::{gat, prelude::LendingIteratorඞItem, LendingIterator};
 
 /// A vector of non-growable arrays `Vec<Array<I>>`
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct VecArray<I, A: Allocator = Global> {
     indices: Vec<usize, A>,
     data: Vec<I, A>,
@@ -30,13 +30,25 @@ impl<I, A: Allocator> std::ops::IndexMut<usize> for VecArray<I, A> {
 }
 
 impl<I> VecArray<I> {
+    pub fn with_capacity(indices_capacity: usize, data_capacity: usize) -> VecArrayConstruction<I> {
+        let mut indices = Vec::with_capacity(indices_capacity + 1);
+        indices.push(0);
+        let data = Vec::with_capacity(data_capacity);
+        let vec_array = VecArray { indices, data };
+        VecArrayConstruction {
+            vec_array,
+            start_index: 0,
+            n_cur_items: 0,
+        }
+    }
+
     pub fn with_indices_capacity(size: usize) -> VecArrayConstruction<I> {
         let mut indices = Vec::with_capacity(size + 1);
         indices.push(0);
         let data = Vec::new();
-        let frozen_vec_vec = VecArray { indices, data };
+        let vec_array = VecArray { indices, data };
         VecArrayConstruction {
-            vec_array: frozen_vec_vec,
+            vec_array,
             start_index: 0,
             n_cur_items: 0,
         }
@@ -46,9 +58,9 @@ impl<I> VecArray<I> {
         let mut indices = Vec::new();
         indices.push(0);
         let data = Vec::with_capacity(size);
-        let frozen_vec_vec = VecArray { indices, data };
+        let vec_array = VecArray { indices, data };
         VecArrayConstruction {
-            vec_array: frozen_vec_vec,
+            vec_array,
             start_index: 0,
             n_cur_items: 0,
         }
