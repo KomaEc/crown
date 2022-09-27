@@ -7,6 +7,7 @@
 #![feature(trusted_step)]
 #![feature(array_windows)]
 #![feature(let_else)]
+#![feature(let_chains)]
 #![feature(is_some_with)]
 #![feature(type_alias_impl_trait)]
 

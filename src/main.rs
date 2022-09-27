@@ -270,7 +270,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             println!("verification success");
         }
         Command::CrashMe => {
-            let program = CrateCtxt::from(input);
+            let mut program = CrateCtxt::from(input);
             time("crash me with pure rename", || program.pure_rename());
             time("crash me with inference and solve", || {
                 program.standalone_solve()

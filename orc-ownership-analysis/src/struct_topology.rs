@@ -32,11 +32,26 @@ where
 
 impl<T: HasStructTopology> Measurable for T {
     #[inline]
-    fn measure_adt(&self, adt_def: rustc_middle::ty::AdtDef) -> Measure {
+    fn measure(&self, ty: rustc_middle::ty::Ty, ptr_chased: u32) -> Measure {
+        // let max_ptr_chased = self.struct_topology().offset_of.len() as u32 - 1;
+        let max_ptr_depth = self.struct_topology().offset_of.len() as u32;
+
+        let (ptr_depth, maybe_adt) = abstract_ty(ty);
+
+        if ptr_depth + ptr_chased >= max_ptr_depth {
+            max_ptr_depth - ptr_chased
+        } else if let Some(adt) = maybe_adt {
+            ptr_depth + self.measure_adt(adt, ptr_depth + ptr_chased)
+        } else {
+            ptr_depth
+        }
+    }
+
+    #[inline]
+    fn measure_adt(&self, adt_def: rustc_middle::ty::AdtDef, ptr_chased: u32) -> Measure {
         self.struct_topology()
-            .struct_size(&adt_def.did())
-            // .map(Offset::index)
-            .unwrap_or(0)
+            .struct_size(&adt_def.did(), ptr_chased)
+            .unwrap_or_default()
     }
 }
 
@@ -49,8 +64,8 @@ pub struct StructTopology {
     /// `S` is not considered dependent on `T`
     pub post_order: Vec<DefId>,
     did_idx: FxHashMap<DefId, usize>,
-    /// struct -> field -> aggregate offset start of this field
-    offset_of: VecArray<Measure>,
+    /// derefs -> struct -> field -> aggregate offset start of this field
+    offset_of: Vec<VecArray<Measure>>,
 }
 
 impl StructTopology {
@@ -85,40 +100,17 @@ impl StructTopology {
             .map(|(idx, &did)| (did, idx))
             .collect();
 
-        let mut offset_of = VecArray::with_indices_capacity(post_order.len());
-        for &did in post_order.iter() {
-            // println!("go {:?}", did);
-            let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };
-            assert!(adt_def.is_struct());
+        let offset_of = vec![];
 
-            let mut offset = 0; //Offset::from_u32(0);
-            offset_of.add_item_to_array(offset);
-            for field_def in adt_def.all_fields() {
-                let ty = field_def.ty(tcx, subst_ref);
-                let (ptr_depth, maybe_adt) = abstract_ty(ty);
-
-                if ptr_depth > 0 {
-                    offset += ptr_depth
-                } else if let Some(adt_def) = maybe_adt {
-                    if let Some(&field_did_idx) = did_idx.get(&adt_def.did()) {
-                        offset += offset_of
-                            .get_constructed(field_did_idx)
-                            .last()
-                            .copied()
-                            .unwrap();
-                    }
-                }
-                offset_of.add_item_to_array(offset);
-            }
-            offset_of.done_with_array();
-        }
-        let offset_of = offset_of.done();
-
-        StructTopology {
+        let mut this = StructTopology {
             post_order,
             did_idx,
             offset_of,
-        }
+        };
+
+        this.next_stage(tcx);
+
+        this
     }
 
     #[inline]
@@ -126,95 +118,150 @@ impl StructTopology {
         &self.post_order[..]
     }
 
-    // #[inline]
-    // pub fn contains(&self, did: &DefId) -> bool {
-    //     self.did_idx.contains_key(did)
-    // }
+    #[inline]
+    pub fn struct_size(&self, did: &DefId, ptr_chased: u32) -> Option<Measure> {
+        let idx = self.did_idx.get(did).copied()?;
+        // let offset_of = self.offset_of.last().unwrap();
+        if ptr_chased as usize >= self.offset_of.len() {
+            return None;
+        }
+        let offset_of = &self.offset_of[self.offset_of.len() - 1 - ptr_chased as usize];
+        Some(offset_of[idx].last().copied().unwrap())
+        // Some(self.offset_of_simple[idx].last().copied().unwrap())
+    }
 
     #[inline]
-    pub fn struct_size(&self, did: &DefId) -> Option<Measure> {
+    pub fn field_offsets(&self, did: &DefId, ptr_chased: u32) -> Option<&[Measure]> {
         let idx = self.did_idx.get(did).copied()?;
-        Some(self.offset_of[idx].last().copied().unwrap())
+        // let offset_of = self.offset_of.last().unwrap();
+        if ptr_chased as usize >= self.offset_of.len() {
+            return None;
+        }
+        let offset_of = &self.offset_of[self.offset_of.len() - 1 - ptr_chased as usize];
+        Some(&offset_of[idx])
+        // Some(&self.offset_of_simple[idx])
     }
 
     #[inline]
-    pub fn field_offsets(&self, did: &DefId) -> Option<&[Measure]> {
-        let idx = self.did_idx.get(did).copied()?;
-        Some(&self.offset_of[idx])
-    }
-}
+    pub fn next_stage(&mut self, tcx: TyCtxt) {
+        // let max_ptr_chased = self.offset_of.len() as u32;
+        // assert!(allowed_derefs > 0);
+        let max_ptr_depth = self.offset_of.len() as u32 + 1;
 
-#[cfg(test)]
-mod tests {
-    use crate::CrateCtxt;
+        let data_capacity = self
+            .offset_of
+            .last()
+            .map(|offset_of| offset_of.everything().len())
+            .unwrap_or_default();
+        let mut offset_of = VecArray::with_capacity(self.post_order.len(), data_capacity);
+        for &did in &self.post_order {
+            let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };
+            assert!(adt_def.is_struct());
 
-    const TEXT: &str = "
-    struct s {
-        f: t,
-        g: *mut i32,
-        h: *mut s,
-    }
-    struct t {
-        f: *mut i32,
-        g: u
-    }
-    struct u {
-        f: v,
-        g: w,
-        h: x
-    }
-    struct v {
-        f: i32,
-    }
-    struct w {
-        f: *mut i32
-    }
-    struct x;
-    ";
+            let mut offset = 0;
+            offset_of.add_item_to_array(offset);
 
-    #[test]
-    fn test() {
-        orc_common::test_infra::run_compiler_with(TEXT.into(), |tcx, functions, structs| {
-            let program = CrateCtxt::new(tcx, functions, structs);
-            macro_rules! define_structs {
-                ($( $x: ident ),*) => {
-                    $(
-                        let $x = program
-                            .structs()
-                            .iter()
-                            .find(|&&did| {
-                            let stringify!($x) = program.tcx.def_path_str(did).as_str() else { return false };
-                            true
-                        })
-                        .unwrap();
-                    )*
-                };
+            for field_def in adt_def.all_fields() {
+                let field_ty = field_def.ty(tcx, subst_ref);
+                let (ptr_depth, maybe_adt) = abstract_ty(field_ty);
+                if ptr_depth >= max_ptr_depth {
+                    offset += max_ptr_depth;
+                } else if let Some(adt) = maybe_adt && let Some(&idx) = self.did_idx.get(&adt.did()) {
+                    if ptr_depth == 0 {
+                        offset += offset_of
+                            .get_constructed(idx)
+                            .last()
+                            .unwrap();
+                    } else {
+                        offset += ptr_depth
+                            + self.offset_of[(max_ptr_depth - ptr_depth - 1) as usize]
+                                [idx].last().unwrap();
+                    }
+                } else {
+                    offset += ptr_depth
+                }
+                offset_of.add_item_to_array(offset);
             }
-            define_structs!(s, t, u, v, w, x);
-            assert_eq!(
-                program.struct_topology.field_offsets(&s).unwrap(),
-                [0, 2, 3, 4] //.map(|x| Offset::from_u32(x))
-            );
-            assert_eq!(
-                program.struct_topology.field_offsets(&t).unwrap(),
-                [0, 1, 2] //.map(|x| Offset::from_u32(x))
-            );
-            assert_eq!(
-                program.struct_topology.field_offsets(&u).unwrap(),
-                [0, 0, 1, 1] //.map(|x| Offset::from_u32(x))
-            );
-            assert_eq!(
-                program.struct_topology.field_offsets(&v).unwrap(),
-                [0, 0] //.map(|x| Offset::from_u32(x))
-            );
-            assert_eq!(
-                program.struct_topology.field_offsets(&w).unwrap(),
-                [0, 1] //.map(|x| Offset::from_u32(x))
-            );
-            assert_eq!(
-                program.struct_topology.field_offsets(&x).unwrap(),
-                [0] //.map(|x| Offset::from_u32(x))
-            )
-        })
+            offset_of.done_with_array();
+        }
+
+        let offset_of = offset_of.done();
+
+        self.offset_of.push(offset_of);
     }
 }
+
+// #[cfg(test)]
+// mod tests {
+//     use crate::CrateCtxt;
+
+//     const TEXT: &str = "
+//     struct s {
+//         f: t,
+//         g: *mut i32,
+//         h: *mut s,
+//     }
+//     struct t {
+//         f: *mut i32,
+//         g: u
+//     }
+//     struct u {
+//         f: v,
+//         g: w,
+//         h: x
+//     }
+//     struct v {
+//         f: i32,
+//     }
+//     struct w {
+//         f: *mut i32
+//     }
+//     struct x;
+//     ";
+
+//     #[test]
+//     fn test() {
+//         orc_common::test_infra::run_compiler_with(TEXT.into(), |tcx, functions, structs| {
+//             let program = CrateCtxt::new(tcx, functions, structs);
+//             macro_rules! define_structs {
+//                 ($( $x: ident ),*) => {
+//                     $(
+//                         let $x = program
+//                             .structs()
+//                             .iter()
+//                             .find(|&&did| {
+//                             let stringify!($x) = program.tcx.def_path_str(did).as_str() else { return false };
+//                             true
+//                         })
+//                         .unwrap();
+//                     )*
+//                 };
+//             }
+//             define_structs!(s, t, u, v, w, x);
+//             assert_eq!(
+//                 program.struct_topology.field_offsets(&s).unwrap(),
+//                 [0, 2, 3, 4] //.map(|x| Offset::from_u32(x))
+//             );
+//             assert_eq!(
+//                 program.struct_topology.field_offsets(&t).unwrap(),
+//                 [0, 1, 2] //.map(|x| Offset::from_u32(x))
+//             );
+//             assert_eq!(
+//                 program.struct_topology.field_offsets(&u).unwrap(),
+//                 [0, 0, 1, 1] //.map(|x| Offset::from_u32(x))
+//             );
+//             assert_eq!(
+//                 program.struct_topology.field_offsets(&v).unwrap(),
+//                 [0, 0] //.map(|x| Offset::from_u32(x))
+//             );
+//             assert_eq!(
+//                 program.struct_topology.field_offsets(&w).unwrap(),
+//                 [0, 1] //.map(|x| Offset::from_u32(x))
+//             );
+//             assert_eq!(
+//                 program.struct_topology.field_offsets(&x).unwrap(),
+//                 [0] //.map(|x| Offset::from_u32(x))
+//             )
+//         })
+//     }
+// }

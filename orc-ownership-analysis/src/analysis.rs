@@ -27,7 +27,7 @@ pub mod join_points;
 pub mod state;
 
 impl<'tcx> CrateCtxt<'tcx> {
-    pub fn pure_rename(&self) {
+    pub fn pure_rename(&mut self) {
         for &did in self.fns() {
             println!("renaming {:?}", did);
             let body = self.tcx.optimized_mir(did);
@@ -40,11 +40,11 @@ impl<'tcx> CrateCtxt<'tcx> {
         }
     }
 
-    pub fn standalone_solve(&self) -> anyhow::Result<()> {
+    pub fn standalone_solve(&mut self) -> anyhow::Result<()> {
         StandAlone::analyze(self)
     }
 
-    pub fn whole_program_analysis(&self) -> anyhow::Result<()> {
+    pub fn whole_program_analysis(&mut self) -> anyhow::Result<()> {
         let results = WholeProgram::analyze(self)?;
 
         // for did in results.fn_summaries.keys() {
@@ -194,14 +194,14 @@ pub trait AnalysisKind<'analysis, 'db> {
     /// Interprocedural context
     type InterCtxt;
     type DB: Database;
-    fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results>;
+    fn analyze(crate_ctxt: &mut CrateCtxt) -> anyhow::Result<Self::Results>;
 }
 pub enum Modular {}
 impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for Modular {
     type Results = ();
     type InterCtxt = ();
     type DB = ();
-    fn analyze(_: &CrateCtxt) -> anyhow::Result<Self::Results> {
+    fn analyze(_: &mut CrateCtxt) -> anyhow::Result<Self::Results> {
         // TODO implement this
         anyhow::bail!("modular analysis is not implemented")
     }
@@ -214,7 +214,6 @@ impl WholeProgram {
         gen: &mut Gen,
         database: &mut Z3Database,
     ) -> FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>> {
-        const PHASE: u32 = 0;
         let mut fn_sigs = FxHashMap::default();
         fn_sigs.reserve(crate_ctxt.fns().len());
         for &did in crate_ctxt.call_graph.fns() {
@@ -222,13 +221,11 @@ impl WholeProgram {
             let fn_sig = {
                 let mut local_decls = body.local_decls.iter();
                 let return_local_decl = local_decls.next().unwrap();
-                let ret = initialize_local(return_local_decl, gen, database, crate_ctxt, PHASE);
+                let ret = initialize_local(return_local_decl, gen, database, crate_ctxt);
 
                 let args = local_decls
                     .take(body.arg_count)
-                    .map(|local_decl| {
-                        initialize_local(local_decl, gen, database, crate_ctxt, PHASE)
-                    })
+                    .map(|local_decl| initialize_local(local_decl, gen, database, crate_ctxt))
                     .collect();
 
                 FnSig { ret, args }
@@ -254,14 +251,13 @@ impl WholeProgram {
         inter_ctxt: <WholeProgram as AnalysisKind>::InterCtxt,
         gen: &mut Gen,
         database: &mut Z3Database,
-        phase: u32,
     ) -> anyhow::Result<FnSummary> {
         println!("solving {:?}", body.source.def_id());
         database.solver.push();
 
         let mut rn = Renamer::new(body, ssa_state);
 
-        let mut infer_cx = InferCtxt::new(crate_ctxt, body, database, gen, inter_ctxt, phase);
+        let mut infer_cx = InferCtxt::new(crate_ctxt, body, database, gen, inter_ctxt);
 
         rn.go::<Self>(&mut infer_cx);
 
@@ -338,14 +334,10 @@ impl WholeProgramResults {
         crate_ctxt: &CrateCtxt,
         gen: &mut Gen,
         database: &mut Z3Database,
-        phase: &mut u32,
     ) -> (
         FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
         impl Iterator<Item = (DefId, SSAState)>,
     ) {
-        *phase += 1;
-        let phase = *phase;
-
         let mut inter_ctxt = FxHashMap::default();
         inter_ctxt.reserve(self.fn_sigs.len());
 
@@ -354,13 +346,11 @@ impl WholeProgramResults {
             let fn_sig = {
                 let mut local_decls = body.local_decls.iter();
                 let return_local_decl = local_decls.next().unwrap();
-                let ret = initialize_local(return_local_decl, gen, database, crate_ctxt, phase);
+                let ret = initialize_local(return_local_decl, gen, database, crate_ctxt);
 
                 let args = local_decls
                     .take(body.arg_count)
-                    .map(|local_decl| {
-                        initialize_local(local_decl, gen, database, crate_ctxt, phase)
-                    })
+                    .map(|local_decl| initialize_local(local_decl, gen, database, crate_ctxt))
                     .collect();
 
                 FnSig { ret, args }
@@ -441,9 +431,8 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
 
     type DB = Z3Database<'db>;
 
-    fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results> {
+    fn analyze(crate_ctxt: &mut CrateCtxt) -> anyhow::Result<Self::Results> {
         // first stage
-        let mut phase = 0;
 
         let mut gen = Gen::new();
 
@@ -466,7 +455,6 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
                 &inter_ctxt,
                 &mut gen,
                 &mut database,
-                phase,
             )?;
             fn_summaries.insert(did, fn_summary);
         }
@@ -485,14 +473,15 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
         let mut results = results;
 
         for _ in 0..1 {
+            crate_ctxt.struct_topology.next_stage(crate_ctxt.tcx);
+
             let mut gen = Gen::new();
 
             let config = z3::Config::new();
             let ctx = z3::Context::new(&config);
             let mut database = Self::DB::new(&ctx);
 
-            let (inter_ctxt, state_iter) =
-                results.next_stage(crate_ctxt, &mut gen, &mut database, &mut phase);
+            let (inter_ctxt, state_iter) = results.next_stage(crate_ctxt, &mut gen, &mut database);
 
             let mut fn_summaries = FxHashMap::default();
             fn_summaries.reserve(crate_ctxt.fns().len());
@@ -506,7 +495,6 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
                     &inter_ctxt,
                     &mut gen,
                     &mut database,
-                    phase,
                 )?;
                 fn_summaries.insert(did, fn_summary);
             }
@@ -532,8 +520,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for StandAlone {
     type Results = ();
     type InterCtxt = ();
     type DB = CadicalDatabase;
-    fn analyze(crate_ctxt: &CrateCtxt) -> anyhow::Result<Self::Results> {
-        const PHASE: u32 = 0;
+    fn analyze(crate_ctxt: &mut CrateCtxt) -> anyhow::Result<Self::Results> {
         let mut databases = Vec::with_capacity(crate_ctxt.fns().len());
         for &did in crate_ctxt.fns() {
             println!("solving {:?}", did);
@@ -546,7 +533,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for StandAlone {
 
             let mut gen = Gen::new();
             let mut database = CadicalDatabase::new();
-            let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, (), PHASE);
+            let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, ());
 
             rn.go::<Self>(&mut infer_cx);
             match database.solver.solve() {

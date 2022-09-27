@@ -48,7 +48,7 @@ impl std::ops::AddAssign<u32> for OwnershipSig {
 
 #[inline]
 pub fn local_has_non_zero_measure(local_decl: &LocalDecl, measurable: impl Measurable) -> bool {
-    local_measure(local_decl, measurable, 0).is_some()
+    local_measure(local_decl, measurable).is_some()
 }
 
 /// test whether a local might be owning
@@ -56,10 +56,10 @@ pub fn local_has_non_zero_measure(local_decl: &LocalDecl, measurable: impl Measu
 pub fn local_measure(
     local_decl: &LocalDecl,
     measurable: impl Measurable,
-    allowed_derefs: u32,
+    // allowed_derefs: u32,
 ) -> Option<NonZeroU32> {
     let ty = local_decl.ty;
-    let measure = measurable.measure(ty, allowed_derefs);
+    let measure = measurable.measure(ty, 0);
     (!matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp)))
         .then(|| NonZeroU32::new(measure))
         .flatten()
@@ -71,9 +71,9 @@ pub fn initialize_local(
     gen: &mut Gen,
     database: &mut impl Database,
     measurable: impl Measurable,
-    allowed_derefs: u32,
+    // allowed_derefs: u32,
 ) -> Option<Range<OwnershipSig>> {
-    local_measure(local_decl, measurable, allowed_derefs)
+    local_measure(local_decl, measurable)
         .map(|measure| database.new_vars(gen.new_sigs(measure.get())))
 }
 
