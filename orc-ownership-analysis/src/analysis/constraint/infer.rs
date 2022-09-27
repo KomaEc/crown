@@ -190,9 +190,6 @@ where
         }
 
         if base.r#use.start + proj_start_offset >= base.r#use.end {
-            // panic!("{ty}: {} ~> {base_ty} start: {proj_start_offset}, with projection: {:?}, chased: {ptr_chased}",
-            // base.r#use.end.index() - base.r#use.start.index(),
-            // projection);
             return Consume {
                 r#use: Voidable::VOID,
                 def: Voidable::VOID,
@@ -207,18 +204,9 @@ where
             infer_cx.database.push_equal::<super::Debug>((), pre, post);
         }
 
-        // TODO correctness?
-        // let projected_ty_measure = if adt_gated {
-        //     infer_cx.crate_ctxt.measure_ptr(base_ty)
-        // } else {
-        //     infer_cx
-        //         .crate_ctxt
-        //         .measure(base_ty, infer_cx.phase - ptr_chased)
-        // };
-        // let proj_end_offset = proj_start_offset + projected_ty_measure; // infer_cx.crate_ctxt.measure(base_ty, infer_cx.phase - ptr_chased);
-
         let proj_end_offset = proj_start_offset + infer_cx.crate_ctxt.measure(base_ty, ptr_chased);
 
+        #[cfg(debug_assertions)]
         assert!(
             base.r#use.start + proj_end_offset <= base.r#use.end,
             "{ty}: {} ~> {base_ty}: {}, with projection: {:?}, chased: {ptr_chased}",
@@ -226,15 +214,14 @@ where
             proj_end_offset - proj_start_offset,
             projection
         );
-        // assert!(base.r#use.start + proj_end_offset <= base.r#use.end);
+        #[cfg(not(debug_assertions))]
+        assert!(base.r#use.start + proj_end_offset <= base.r#use.end);
 
         for (pre, post) in (base.r#use.start + proj_end_offset..base.r#use.end)
             .zip(base.def.start + proj_end_offset..base.def.end)
         {
             infer_cx.database.push_equal::<super::Debug>((), pre, post);
         }
-
-        tracing::debug!("foo");
 
         Consume {
             r#use: base.r#use.start + proj_start_offset..base.r#use.start + proj_end_offset,
@@ -442,8 +429,6 @@ where
         let base = Consume { r#use, def };
 
         assert!(!base.is_invalid());
-
-        tracing::debug!("woo");
 
         InferCtxt::project_deeper(base, base_ty, place.projection, infer_cx).valid()
     }

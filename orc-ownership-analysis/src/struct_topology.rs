@@ -7,8 +7,6 @@ use rustc_type_ir::TyKind::Adt;
 
 use crate::ptr::{abstract_ty, Measurable, Measure};
 
-// pub type Measure = u32;
-
 pub trait HasStructTopology {
     fn struct_topology(&self) -> &StructTopology;
 }
@@ -33,7 +31,6 @@ where
 impl<T: HasStructTopology> Measurable for T {
     #[inline]
     fn measure(&self, ty: rustc_middle::ty::Ty, ptr_chased: u32) -> Measure {
-        // let max_ptr_chased = self.struct_topology().offset_of.len() as u32 - 1;
         let max_ptr_depth = self.struct_topology().offset_of.len() as u32;
 
         let (ptr_depth, maybe_adt) = abstract_ty(ty);
@@ -191,77 +188,77 @@ impl StructTopology {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::CrateCtxt;
+#[cfg(test)]
+mod tests {
+    use crate::CrateCtxt;
 
-//     const TEXT: &str = "
-//     struct s {
-//         f: t,
-//         g: *mut i32,
-//         h: *mut s,
-//     }
-//     struct t {
-//         f: *mut i32,
-//         g: u
-//     }
-//     struct u {
-//         f: v,
-//         g: w,
-//         h: x
-//     }
-//     struct v {
-//         f: i32,
-//     }
-//     struct w {
-//         f: *mut i32
-//     }
-//     struct x;
-//     ";
+    const TEXT: &str = "
+    struct s {
+        f: t,
+        g: *mut i32,
+        h: *mut s,
+    }
+    struct t {
+        f: *mut i32,
+        g: u
+    }
+    struct u {
+        f: v,
+        g: w,
+        h: x
+    }
+    struct v {
+        f: i32,
+    }
+    struct w {
+        f: *mut i32
+    }
+    struct x;
+    ";
 
-//     #[test]
-//     fn test() {
-//         orc_common::test_infra::run_compiler_with(TEXT.into(), |tcx, functions, structs| {
-//             let program = CrateCtxt::new(tcx, functions, structs);
-//             macro_rules! define_structs {
-//                 ($( $x: ident ),*) => {
-//                     $(
-//                         let $x = program
-//                             .structs()
-//                             .iter()
-//                             .find(|&&did| {
-//                             let stringify!($x) = program.tcx.def_path_str(did).as_str() else { return false };
-//                             true
-//                         })
-//                         .unwrap();
-//                     )*
-//                 };
-//             }
-//             define_structs!(s, t, u, v, w, x);
-//             assert_eq!(
-//                 program.struct_topology.field_offsets(&s).unwrap(),
-//                 [0, 2, 3, 4] //.map(|x| Offset::from_u32(x))
-//             );
-//             assert_eq!(
-//                 program.struct_topology.field_offsets(&t).unwrap(),
-//                 [0, 1, 2] //.map(|x| Offset::from_u32(x))
-//             );
-//             assert_eq!(
-//                 program.struct_topology.field_offsets(&u).unwrap(),
-//                 [0, 0, 1, 1] //.map(|x| Offset::from_u32(x))
-//             );
-//             assert_eq!(
-//                 program.struct_topology.field_offsets(&v).unwrap(),
-//                 [0, 0] //.map(|x| Offset::from_u32(x))
-//             );
-//             assert_eq!(
-//                 program.struct_topology.field_offsets(&w).unwrap(),
-//                 [0, 1] //.map(|x| Offset::from_u32(x))
-//             );
-//             assert_eq!(
-//                 program.struct_topology.field_offsets(&x).unwrap(),
-//                 [0] //.map(|x| Offset::from_u32(x))
-//             )
-//         })
-//     }
-// }
+    #[test]
+    fn test() {
+        orc_common::test_infra::run_compiler_with(TEXT.into(), |tcx, functions, structs| {
+            let program = CrateCtxt::new(tcx, functions, structs);
+            macro_rules! define_structs {
+                ($( $x: ident ),*) => {
+                    $(
+                        let $x = program
+                            .structs()
+                            .iter()
+                            .find(|&&did| {
+                            let stringify!($x) = program.tcx.def_path_str(did).as_str() else { return false };
+                            true
+                        })
+                        .unwrap();
+                    )*
+                };
+            }
+            define_structs!(s, t, u, v, w, x);
+            assert_eq!(
+                program.struct_topology.field_offsets(&s, 0).unwrap(),
+                [0, 2, 3, 4] //.map(|x| Offset::from_u32(x))
+            );
+            assert_eq!(
+                program.struct_topology.field_offsets(&t, 0).unwrap(),
+                [0, 1, 2] //.map(|x| Offset::from_u32(x))
+            );
+            assert_eq!(
+                program.struct_topology.field_offsets(&u, 0).unwrap(),
+                [0, 0, 1, 1] //.map(|x| Offset::from_u32(x))
+            );
+            assert_eq!(
+                program.struct_topology.field_offsets(&v, 0).unwrap(),
+                [0, 0] //.map(|x| Offset::from_u32(x))
+            );
+            assert_eq!(
+                program.struct_topology.field_offsets(&w, 0).unwrap(),
+                [0, 1] //.map(|x| Offset::from_u32(x))
+            );
+            assert_eq!(
+                program.struct_topology.field_offsets(&x, 0).unwrap(),
+                [0] //.map(|x| Offset::from_u32(x))
+            )
+        })
+    }
+}
