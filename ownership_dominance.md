@@ -310,6 +310,8 @@ p = **q; ~ { tmp = deref_copy(*q); p = *tmp; }
 - [x] Better C2Rust results (need linux machine)
 - [x] Support Union
 - [ ] Second stage analysis
+  - [x] Allow dereferencing once (works on bst, avl)
+  - [ ] Allow dereferencing more
 - [ ] Initial rewrite
     Method boundaries, not struct definitions
 - [ ] Smarter constraint solving?
