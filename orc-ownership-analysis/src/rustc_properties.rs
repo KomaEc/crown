@@ -78,13 +78,19 @@ impl<'tcx> CrateCtxt<'tcx> {
                 // local = &place
                 // local = deref_copy place
                 match rvalue {
-                    Rvalue::Use(operand) | Rvalue::Cast(_, operand, _) => {
+                    Rvalue::Use(operand) /* | Rvalue::Cast(_, operand, _) */ => {
                         assert!(
                             place.as_local().is_some()
                                 || operand.place().and_then(|place| place.as_local()).is_some()
                                 || operand.constant().is_some()
                         );
                         assert!(operand.constant().is_none() || place.as_local().is_some());
+                    }
+                    Rvalue::Cast(_, operand, _) => {
+                        assert!(
+                            operand.place().and_then(|place| place.as_local()).is_some()
+                                || operand.constant().is_some()
+                        )
                     }
                     Rvalue::CopyForDeref(rplace) => {
                         assert!(place.as_local().is_some());
@@ -198,6 +204,7 @@ impl<'tcx> CrateCtxt<'tcx> {
                         // this happens when dealing with fn_ptr, which is wrapped
                         // in an Option type
                         | rustc_middle::mir::StatementKind::SetDiscriminant { .. }
+                        | rustc_middle::mir::StatementKind::Intrinsic(..)
                     ) {
                         panic!("unexpected stmt kind {:?} at {:?}", statement.kind, did)
                     }
