@@ -47,27 +47,27 @@ impl<'tcx> CrateCtxt<'tcx> {
     pub fn whole_program_analysis(&mut self) -> anyhow::Result<()> {
         let results = WholeProgram::analyze(self)?;
 
-        // for did in results.fn_summaries.keys() {
-        //     let body = self.tcx.optimized_mir(did);
-        //     println!("@{}", self.tcx.def_path_str(*did));
-        //     for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
-        //         for index in 0..bb_data.statements.len() + bb_data.terminator.iter().count() {
-        //             let location = Location {
-        //                 block: bb,
-        //                 statement_index: index,
-        //             };
-        //             let result = results
-        //                 .fn_result(*did)
-        //                 .unwrap()
-        //                 .location_result(location)
-        //                 .map(|(local, result)| format!("{:?}: {:?}", local, result))
-        //                 .collect::<Vec<_>>()
-        //                 .join(", ");
+        for did in results.fn_summaries.keys() {
+            let body = self.tcx.optimized_mir(did);
+            println!("@{}", self.tcx.def_path_str(*did));
+            for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
+                for index in 0..bb_data.statements.len() + bb_data.terminator.iter().count() {
+                    let location = Location {
+                        block: bb,
+                        statement_index: index,
+                    };
+                    let result = results
+                        .fn_result(*did)
+                        .unwrap()
+                        .location_result(location)
+                        .map(|(local, result)| format!("{:?}: {:?}", local, result))
+                        .collect::<Vec<_>>()
+                        .join(", ");
 
-        //             println!("@{:?}: {result}", location);
-        //         }
-        //     }
-        // }
+                    println!("@{:?}: {result}", location);
+                }
+            }
+        }
 
         for fn_result in results.fn_summaries.into_values() {
             let _ = WholeProgram::apply_model(fn_result, &results.model[..]);
