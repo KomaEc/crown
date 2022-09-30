@@ -1,11 +1,13 @@
 //! Distinguish def/use in MIR
 
 use rustc_index::vec::IndexVec;
-use rustc_middle::mir::visit::{
-    MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor,
+use rustc_middle::{
+    mir::{
+        visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor},
+        Body, Local, LocalDecls, Location, Place,
+    },
+    ty::TyCtxt,
 };
-use rustc_middle::mir::{Body, Local, LocalDecls, Location, Place};
-use rustc_middle::ty::TyCtxt;
 use smallvec::{smallvec, SmallVec};
 
 use crate::ty_ext::TyExt;

@@ -13,6 +13,7 @@ use rustc_middle::{
 };
 use rustc_target::abi::VariantIdx;
 
+use self::infer::PtrPlaceDefResult;
 use crate::{
     call_graph::{CallGraph, Func},
     def_use::OwnershipAnalysisDefUse,
@@ -24,8 +25,6 @@ use crate::{
     utils::range_ext::{IsRustcIndexDefinedCV, RangeExt},
     Boundary, FuncSig, Inner, Surface, ULEConstraintGraph, UnitVar,
 };
-
-use self::infer::PtrPlaceDefResult;
 
 impl orc_common::AnalysisResults for InterSummary {
     fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {

@@ -1,6 +1,8 @@
 pub mod handler;
 pub mod implementations;
 
+use std::marker::PhantomData;
+
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::{Idx, IndexVec};
 use rustc_middle::{
@@ -12,8 +14,6 @@ use rustc_middle::{
 };
 
 use crate::{def_use::IsDefUse, ssa::body_ext::PhiNodeInsertionPoints};
-
-use std::marker::PhantomData;
 
 orc_common::macros::newtype_index! {
     pub struct SSAIdx {

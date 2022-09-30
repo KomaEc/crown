@@ -3,7 +3,6 @@ pub mod libcall_model;
 
 use std::ops::Range;
 
-use crate::utils::range_ext::RangeExt;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
@@ -13,39 +12,29 @@ use rustc_middle::{
     },
     ty::TyCtxt,
 };
-
 use rustc_type_ir::TyKind::FnDef;
 use smallvec::smallvec;
-
-use crate::{
-    boundary_model::BoundaryModel,
-    def_use::IsDefUse,
-    libcall_model::LibCallModel,
-    ssa::{
-        body_ext::BodyExt,
-        rename::{
-            handler::{SSADefSites, SSANameSourceMap},
-            HasTyCtxt,
-        },
-    },
-    FuncSig, Surface,
-};
-
-use crate::{
-    call_graph::CallGraph,
-    def_use::MutabilityAnalysisDefUse,
-    ssa::{
-        body_ext::PhiNodeInsertionPoints,
-        rename::{
-            HasSSANameHandler, HasSSARenameState, SSAIdx, SSANameHandler, SSARename, SSARenameState,
-        },
-    },
-    ty_ext::TyExt,
-};
 
 use super::{
     AnalysisEngine, ConstraintDatabase, IntraSummary, LocalSourceInfo, Mu,
     MutabilityAnalysisBoundary,
+};
+use crate::{
+    boundary_model::BoundaryModel,
+    call_graph::CallGraph,
+    def_use::{IsDefUse, MutabilityAnalysisDefUse},
+    libcall_model::LibCallModel,
+    ssa::{
+        body_ext::{BodyExt, PhiNodeInsertionPoints},
+        rename::{
+            handler::{SSADefSites, SSANameSourceMap},
+            HasSSANameHandler, HasSSARenameState, HasTyCtxt, SSAIdx, SSANameHandler, SSARename,
+            SSARenameState,
+        },
+    },
+    ty_ext::TyExt,
+    utils::range_ext::RangeExt,
+    FuncSig, Surface,
 };
 
 impl<'analysis, 'tcx> AnalysisEngine<'analysis, 'tcx> {

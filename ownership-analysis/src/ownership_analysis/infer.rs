@@ -15,15 +15,17 @@ use rustc_middle::{
     ty::{subst::GenericArgKind, TyCtxt},
 };
 use rustc_target::abi::VariantIdx;
-
 use rustc_type_ir::TyKind::FnDef;
 use smallvec::smallvec;
 
+use super::{
+    AnalysisEngine, ConstraintDatabase, IntraSummary, LocalSourceInfo, OwnershipAnalysisBoundary,
+    Rho,
+};
 use crate::{
     boundary_model::BoundaryModel,
     call_graph::CallGraph,
-    def_use::IsDefUse,
-    def_use::OwnershipAnalysisDefUse,
+    def_use::{IsDefUse, OwnershipAnalysisDefUse},
     libcall_model::LibCallModel,
     ssa::{
         body_ext::{BodyExt, PhiNodeInsertionPoints},
@@ -34,15 +36,9 @@ use crate::{
         },
     },
     ty_ext::TyExt,
+    utils::range_ext::RangeExt,
     FuncSig, Surface,
 };
-
-use super::{
-    AnalysisEngine, ConstraintDatabase, IntraSummary, LocalSourceInfo, OwnershipAnalysisBoundary,
-    Rho,
-};
-
-use crate::utils::range_ext::RangeExt;
 
 impl<'analysis, 'tcx> AnalysisEngine<'analysis, 'tcx> {
     pub fn infer<Handler: SSANameHandler<Output = ()>>(&mut self, mut extra_handlers: Handler) {

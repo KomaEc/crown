@@ -1,16 +1,16 @@
 use std::marker::PhantomData;
 
-use crate::{
-    def_use::IsDefUse,
-    ssa::{body_ext::PhiNodeInsertionPoints, rename::SSANameHandler, RichLocation},
-    LocationMap,
-};
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Local, Location};
 use smallvec::{smallvec, SmallVec};
 use tracing::debug;
 
 use super::SSAIdx;
+use crate::{
+    def_use::IsDefUse,
+    ssa::{body_ext::PhiNodeInsertionPoints, rename::SSANameHandler, RichLocation},
+    LocationMap,
+};
 
 pub struct SSADefSites<DefUse: IsDefUse> {
     /// Invariant: SSAIdx::from_u32(0) -> RichLocation::Entry,

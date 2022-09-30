@@ -1,8 +1,12 @@
-use crate::fat_thin_analysis::{Constraint, Lambda};
-use crate::utils::graph_ext::implementation::forward_star::Graph;
+use std::ops::Range;
+
 use rustc_data_structures::graph::scc::Sccs;
 use rustc_index::vec::IndexVec;
-use std::ops::Range;
+
+use crate::{
+    fat_thin_analysis::{Constraint, Lambda},
+    utils::graph_ext::implementation::forward_star::Graph,
+};
 
 macro_rules! array_index {
     ($row: expr, $col: expr; $len: expr) => {{
@@ -289,8 +293,7 @@ mod tests {
         assert_soundness(assumptions, solutions, &constraints)
     }
 
-    use proptest::collection::vec;
-    use proptest::prelude::*;
+    use proptest::{collection::vec, prelude::*};
 
     prop_compose! {
         fn domain()

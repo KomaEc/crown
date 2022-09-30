@@ -1,9 +1,8 @@
-use rustc_index::vec::{Idx, IndexVec};
-
 use rustc_data_structures::graph::{
     DirectedGraph, GraphPredecessors, GraphSuccessors, WithNumEdges, WithNumNodes,
     WithPredecessors, WithSuccessors,
 };
+use rustc_index::vec::{Idx, IndexVec};
 
 #[derive(Clone)]
 pub struct Graph<Node: Idx, Edge: Idx> {

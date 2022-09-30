@@ -14,23 +14,23 @@ extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 extern crate rustc_target;
 
-use anyhow::{bail, Context, Result};
-use clap::Parser;
-use rustc_errors::registry;
-use rustc_hir::{def_id::DefId, ItemKind, OwnerNode};
-use rustc_interface::Config;
-use rustc_middle::ty::TyCtxt;
-use rustc_session::config;
 use std::{
     borrow::BorrowMut,
     path::{Path, PathBuf},
     time::Instant,
 };
-use tracing_subscriber::EnvFilter;
 
+use anyhow::{bail, Context, Result};
+use clap::Parser;
 use empirical_study::EmpiricalStudy;
 use orc_common::rewrite::RewriteMode;
 use orc_ownership_analysis::CrateCtxt;
+use rustc_errors::registry;
+use rustc_hir::{def_id::DefId, ItemKind, OwnerNode};
+use rustc_interface::Config;
+use rustc_middle::ty::TyCtxt;
+use rustc_session::config;
+use tracing_subscriber::EnvFilter;
 use usage_analysis::{fatness, mutability, null};
 
 // // Set up Jemalloc

@@ -1,23 +1,26 @@
+use std::ops::Range;
+
 use anyhow::bail;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_middle::mir::{Body, Local, Location};
-use rustc_middle::ty::TyCtxt;
-use std::ops::Range;
+use rustc_middle::{
+    mir::{Body, Local, Location},
+    ty::TyCtxt,
+};
 
-use crate::analysis::constraint::infer::{InferCtxt, Pure, Renamer};
-use crate::analysis::constraint::{CadicalDatabase, Gen, Z3Database};
-use crate::analysis::consume::initial_definitions;
-use crate::analysis::dom::compute_dominance_frontier;
-use crate::CrateCtxt;
-
-use crate::analysis::constraint::{initialize_local, OwnershipSig};
-use crate::analysis::state::SSAState;
-use crate::call_graph::FnSig;
-
-use self::constraint::infer::FnSummary;
-use self::constraint::Database;
-use self::consume::{Consume, Voidable};
+use crate::{
+    analysis::{
+        constraint::{
+            infer::{FnSummary, InferCtxt, Pure, Renamer},
+            initialize_local, CadicalDatabase, Database, Gen, OwnershipSig, Z3Database,
+        },
+        consume::{initial_definitions, Consume, Voidable},
+        dom::compute_dominance_frontier,
+        state::SSAState,
+    },
+    call_graph::FnSig,
+    CrateCtxt,
+};
 
 pub mod constants;
 pub mod constraint;
@@ -49,7 +52,7 @@ impl<'tcx> CrateCtxt<'tcx> {
 
         for did in results.fn_summaries.keys() {
             let body = self.tcx.optimized_mir(did);
-            println!("@{}", self.tcx.def_path_str(*did));
+            tracing::debug!("@{}", self.tcx.def_path_str(*did));
             for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
                 for index in 0..bb_data.statements.len() + bb_data.terminator.iter().count() {
                     let location = Location {
@@ -64,7 +67,7 @@ impl<'tcx> CrateCtxt<'tcx> {
                         .collect::<Vec<_>>()
                         .join(", ");
 
-                    println!("@{:?}: {result}", location);
+                    tracing::debug!("@{:?}: {result}", location);
                 }
             }
         }

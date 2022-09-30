@@ -3,9 +3,8 @@ use std::{num::NonZeroU32, ops::Range};
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{LocalDecl, LocalInfo};
 
-use crate::ptr::Measurable;
-
 use super::consume::Voidable;
+use crate::ptr::Measurable;
 
 pub mod infer;
 // pub mod prune;

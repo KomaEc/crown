@@ -1,6 +1,5 @@
 use std::ops::Range;
 
-use crate::utils::range_ext::RangeExt;
 use rustc_middle::{
     mir::{visit::Visitor, BasicBlock, Location, Operand, Place},
     ty::TyCtxt,
@@ -10,6 +9,7 @@ use crate::{
     fat_thin_analysis::{infer::InferEngine, Lambda},
     libcall_model::LibCallModel,
     ssa::rename::SSANameHandler,
+    utils::range_ext::RangeExt,
 };
 
 impl<'infercx, 'tcx, Handler: SSANameHandler> InferEngine<'infercx, 'tcx, Handler> {

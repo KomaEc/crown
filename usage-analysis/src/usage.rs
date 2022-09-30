@@ -1,5 +1,6 @@
 use std::fmt::{Debug, Display};
 
+use orc_common::get_struct_field;
 use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_hir::{def_id::LocalDefId, FnRetTy, ItemKind};
 use rustc_index::vec::{Idx, IndexVec};
@@ -14,8 +15,6 @@ use rustc_mir_dataflow::{
     fmt::DebugWithContext, AnalysisDomain, Engine, JoinSemiLattice, Results, ResultsRefCursor,
 };
 use tracing::{debug_span, trace};
-
-use orc_common::get_struct_field;
 
 pub(crate) trait AnalysisResult:
     Clone + std::fmt::Debug + Eq + Into<bool> + JoinSemiLattice

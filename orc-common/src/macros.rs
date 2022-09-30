@@ -27,7 +27,6 @@ macro_rules! petgraph_index {
 }
 
 pub use petgraph_index;
-
 #[cfg(not(debug_assertions))]
 pub use rustc_index::newtype_index;
 

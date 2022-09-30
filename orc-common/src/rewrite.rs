@@ -1,11 +1,9 @@
+use std::{collections::HashMap, fs, io, io::Write};
+
 use clap::ArgEnum;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::{FileName, Span};
 use rustfix::{LinePosition, LineRange, Replacement, Snippet, Solution, Suggestion};
-use std::collections::HashMap;
-use std::fs;
-use std::io;
-use std::io::Write;
 // use std::path::PathBuf;
 
 pub trait Rewrite {

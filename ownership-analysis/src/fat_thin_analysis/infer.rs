@@ -3,7 +3,18 @@ pub mod libcall_model;
 
 use std::ops::Range;
 
-use crate::utils::range_ext::RangeExt;
+use rustc_index::vec::{Idx, IndexVec};
+use rustc_middle::{
+    mir::{
+        visit::{PlaceContext, Visitor},
+        BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
+        ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind, RETURN_PLACE,
+    },
+    ty::TyCtxt,
+};
+use rustc_target::abi::VariantIdx;
+use rustc_type_ir::TyKind::FnDef;
+
 use crate::{
     boundary_model::BoundaryModel,
     call_graph::{CallGraph, CallSite, Func},
@@ -21,19 +32,9 @@ use crate::{
         },
     },
     ty_ext::TyExt,
+    utils::range_ext::RangeExt,
     CrateAnalysisCtxt, CrateAnalysisCtxtIntraView,
 };
-use rustc_index::vec::{Idx, IndexVec};
-use rustc_middle::{
-    mir::{
-        visit::{PlaceContext, Visitor},
-        BasicBlock, Body, CastKind, Local, Location, Operand, Place, PlaceElem, PlaceRef,
-        ProjectionElem, Rvalue, Statement, Terminator, TerminatorKind, RETURN_PLACE,
-    },
-    ty::TyCtxt,
-};
-use rustc_target::abi::VariantIdx;
-use rustc_type_ir::TyKind::FnDef;
 
 impl CrateSummary {
     pub fn infer_all<Handler: SSANameHandler<Output = ()>>(

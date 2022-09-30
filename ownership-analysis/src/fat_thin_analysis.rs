@@ -3,7 +3,6 @@ use std::{
     ops::Range,
 };
 
-use crate::utils::graph_ext::implementation::forward_star;
 use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hir::def_id::LocalDefId;
 use rustc_index::vec::IndexVec;
@@ -17,6 +16,7 @@ use crate::{
         handler::{SSADefSites, SSANameSourceMap},
         SSANameHandler,
     },
+    utils::graph_ext::implementation::forward_star,
     CVSourceData, CrateAnalysisCtxt,
 };
 

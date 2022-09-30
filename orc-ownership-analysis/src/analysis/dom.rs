@@ -27,10 +27,11 @@
 //     }
 // }
 
-use crate::analysis::constants::SIZE_DOM_FRONTIER;
 use rustc_index::{bit_set::HybridBitSet, vec::IndexVec};
 use rustc_middle::mir::{BasicBlock, Body};
 use smallvec::SmallVec;
+
+use crate::analysis::constants::SIZE_DOM_FRONTIER;
 
 pub type DominanceFrontier = IndexVec<BasicBlock, SmallVec<[BasicBlock; SIZE_DOM_FRONTIER]>>;
 

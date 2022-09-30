@@ -827,12 +827,32 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 )
             }
 
-            Rvalue::Use(Operand::Move(rhs) | Operand::Copy(rhs))
-            | Rvalue::Cast(_, Operand::Move(rhs) | Operand::Copy(rhs), _) => {
+            Rvalue::Use(Operand::Move(rhs) | Operand::Copy(rhs)) => {
                 let lhs_consume =
                     consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
                 let rhs_consume =
                     consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
+
+                match (lhs_consume, rhs_consume) {
+                    (None, None) => {}
+                    (None, Some(rhs_consume)) => Infer::unknown_sink(infer_cx, rhs_consume),
+                    (Some(lhs_consume), None) => Infer::unknown_source(infer_cx, lhs_consume),
+                    (Some(lhs_consume), Some(rhs_consume)) => {
+                        Infer::transfer(infer_cx, lhs_consume, rhs_consume)
+                    }
+                }
+            }
+
+            Rvalue::Cast(_, Operand::Move(rhs) | Operand::Copy(rhs), ty) => {
+                let lhs_consume =
+                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
+                let rhs_consume =
+                    consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
+
+                if let TyKind::RawPtr(pointee_ty) = ty.kind() {
+                    let pointee_ty = pointee_ty.ty;
+                    if &format!("{pointee_ty}") == "libc::c_void" {}
+                }
 
                 match (lhs_consume, rhs_consume) {
                     (None, None) => {}

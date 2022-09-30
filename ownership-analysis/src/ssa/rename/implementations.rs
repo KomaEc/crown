@@ -1,7 +1,5 @@
-use super::{
-    HasSSANameHandler, HasSSARenameState, HasTyCtxt, SSANameHandler, SSARename, SSARenameState,
-};
-use crate::{def_use::IsDefUse, ssa::body_ext::BodyExt};
+use std::marker::PhantomData;
+
 use rustc_middle::{
     mir::{
         visit::{PlaceContext, Visitor},
@@ -9,7 +7,11 @@ use rustc_middle::{
     },
     ty::TyCtxt,
 };
-use std::marker::PhantomData;
+
+use super::{
+    HasSSANameHandler, HasSSARenameState, HasTyCtxt, SSANameHandler, SSARename, SSARenameState,
+};
+use crate::{def_use::IsDefUse, ssa::body_ext::BodyExt};
 
 pub struct PlainRenamer<'me, 'tcx, DefUse: IsDefUse, H: SSANameHandler> {
     tcx: TyCtxt<'tcx>,

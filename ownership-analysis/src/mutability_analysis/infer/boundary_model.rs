@@ -4,14 +4,13 @@ use rustc_middle::mir::{
     BasicBlock, Location, Operand, Place, RETURN_PLACE,
 };
 
+use super::IntraInfer;
 use crate::{
     boundary_model::BoundaryModel,
     ssa::rename::{HasSSARenameState, SSANameHandler},
     ty_ext::TyExt,
     Boundary,
 };
-
-use super::IntraInfer;
 
 impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
     for IntraInfer<'infercx, 'tcx, Handler>

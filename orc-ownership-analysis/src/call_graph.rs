@@ -127,8 +127,9 @@ impl<'me, 'tcx> Visitor<'tcx> for CallGraphConstruction<'me> {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use orc_common::test_infra::init_logger;
+
+    use super::*;
 
     const TEST_PROGRAMS: &'static str = "
         fn f() {

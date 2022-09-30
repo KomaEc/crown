@@ -1,18 +1,17 @@
-use crate::utils::graph_ext::implementation::forward_star::Direction;
 use rustc_hir::def_id::DefId;
 use rustc_middle::mir::{
     visit::{MutatingUseContext, PlaceContext, Visitor},
     BasicBlock, Local, Location, Operand, Place, RETURN_PLACE,
 };
 
+use super::InferEngine;
 use crate::{
     boundary_model::BoundaryModel,
     fat_thin_analysis::BoundaryConstraint,
     ssa::rename::{HasSSANameHandler, HasSSARenameState, SSANameHandler},
     ty_ext::TyExt,
+    utils::graph_ext::implementation::forward_star::Direction,
 };
-
-use super::InferEngine;
 
 impl<'infercx, 'tcx, Handler: SSANameHandler> BoundaryModel<'tcx>
     for InferEngine<'infercx, 'tcx, Handler>

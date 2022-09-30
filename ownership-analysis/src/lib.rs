@@ -49,6 +49,11 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
 
+use std::{
+    fmt::Display,
+    ops::{Index, IndexMut, Range},
+};
+
 use call_graph::{CallGraph, Func};
 use lattice::JoinLattice;
 use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
@@ -62,13 +67,11 @@ use rustc_middle::{
 use rustc_target::abi::VariantIdx;
 use smallvec::SmallVec;
 use ssa::rename::SSAIdx;
-use std::{
-    fmt::Display,
-    ops::{Index, IndexMut, Range},
-};
 use ty_ext::TyExt;
-use utils::graph_ext::implementation::forward_star::Graph;
-use utils::range_ext::{IsRustcIndexDefinedCV, RangeExt};
+use utils::{
+    graph_ext::implementation::forward_star::Graph,
+    range_ext::{IsRustcIndexDefinedCV, RangeExt},
+};
 
 pub struct CrateAnalysisCtxt<CV, Domain>
 where

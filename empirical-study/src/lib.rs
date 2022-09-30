@@ -20,9 +20,8 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
 
-use orc_taint_analysis::taint_results;
-
 use cli_table::{format::Justify, print_stdout, Cell, Style, Table};
+use orc_taint_analysis::taint_results;
 
 /// A set of empirical studies to be conducted on
 /// input program

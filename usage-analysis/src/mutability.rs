@@ -1,3 +1,4 @@
+use orc_common::AnalysisResults;
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::{
     mir::{Field, Local, Location, Place, ProjectionElem},
@@ -6,7 +7,6 @@ use rustc_middle::{
 use rustc_mir_dataflow::JoinSemiLattice;
 
 use crate::usage::{self, Domain, IntermediateResult, UsageAnalysisContext};
-use orc_common::AnalysisResults;
 
 // defer to CrateResults instead of exposing it to avoid having to make everything in
 // usage public

@@ -2,7 +2,6 @@ mod infer;
 
 use std::collections::VecDeque;
 
-use crate::utils::range_ext::IsRustcIndexDefinedCV;
 use once_cell::unsync::OnceCell;
 use rustc_data_structures::graph::{scc::Sccs, WithNumNodes};
 use rustc_hir::def_id::LocalDefId;
@@ -16,10 +15,9 @@ use crate::{
         handler::{SSADefSites, SSANameSourceMap},
         SSAIdx, SSANameHandler,
     },
+    utils::range_ext::{IsRustcIndexDefinedCV, RangeExt},
     Boundary, FuncSig, Inner, Surface, ULEConstraintGraph, UnitVar,
 };
-
-use crate::utils::range_ext::RangeExt;
 
 #[derive(Clone)]
 pub struct LocalSourceInfo {

@@ -1,7 +1,9 @@
 //! Functions that calculate the join points of phi nodes
 
-use std::collections::VecDeque;
-use std::ops::{Deref, DerefMut};
+use std::{
+    collections::VecDeque,
+    ops::{Deref, DerefMut},
+};
 
 use derivative::Derivative;
 use rustc_index::{bit_set::BitSet, vec::IndexVec};

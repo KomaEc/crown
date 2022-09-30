@@ -1,16 +1,16 @@
 mod rewrite_body;
 
+use orc_common::{
+    rewrite::{Rewrite, RewriteMode},
+    AnalysisResults,
+};
+use rewrite_body::{rewrite_body, BodyRewriteCtxt};
 use rustc_hir::{def_id::LocalDefId, FnRetTy, FnSig, ItemKind, Ty, TyKind};
 use rustc_middle::{
     mir::{Field, Local},
     ty::TyCtxt,
 };
-
-use orc_common::AnalysisResults;
 use usage_analysis::{fatness, mutability, null};
-
-use orc_common::rewrite::{Rewrite, RewriteMode};
-use rewrite_body::{rewrite_body, BodyRewriteCtxt};
 
 fn ty_nested_depth(ty: &Ty) -> usize {
     match &ty.kind {

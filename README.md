@@ -235,6 +235,7 @@ A simple static analysis to distinguish array pointer and non-array pointer
 2. [A Practical Flow-Sensitive and Context-Sensitive C and C++ Memory Leak Detector](https://suif.stanford.edu/papers/pldi03d.pdf)
 A static analysis to analyze whether a pointer variable `p` owns the underlying data. Pointers are labelled with an ownership indicator ρ ∈ {0, 1}.
 For statement `p = q`, either ownership is transferred from `q` to `p`, or a transient pointer is created, which does not claim ownership. This kind of semantics is encoded as 0-1 linear constraints over ownership indicators (For instance, ρ_p + ρ_q = ρ_q_prev)
+$\rho_{p'} + \rho_{q'} = \rho_q \land \rho_p = 0$
 
 I expect: devise such constraint system, infer correct type for `S` and `F`, reorder statements along the way.
 What's new in Rust: if `p = q` creates a transient pointer, then it's permission is somehow dependent on `q`. 

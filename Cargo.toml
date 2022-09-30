@@ -3,6 +3,7 @@ members = [
     "orc-common",
     "orc-preprocess",
     "orc-ownership-analysis",
+    "utvpi",
     "orc-taint-analysis",
     "orc-refactor",
     "usage-analysis",

@@ -1,13 +1,17 @@
 //! Extension methods for Body<'tcx>
 
-use rustc_index::bit_set::{BitSet, HybridBitSet};
-use rustc_index::vec::IndexVec;
-use rustc_middle::mir::{BasicBlock, Body, Local};
-use rustc_middle::ty::TyCtxt;
+use std::{collections::VecDeque, marker::PhantomData};
+
+use rustc_index::{
+    bit_set::{BitSet, HybridBitSet},
+    vec::IndexVec,
+};
+use rustc_middle::{
+    mir::{BasicBlock, Body, Local},
+    ty::TyCtxt,
+};
 // use rustc_mir_dataflow::{Analysis, ResultsCursor};
 use smallvec::SmallVec;
-use std::collections::VecDeque;
-use std::marker::PhantomData;
 
 use crate::def_use::{DefSites, IsDefUse};
 // use crate::liveness_analysis::MaybeLiveLocals;

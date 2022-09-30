@@ -1,8 +1,3 @@
-use crate::{
-    analysis::{constraint::local_has_non_zero_measure, state::SSAIdx},
-    ptr::Measurable,
-    CrateCtxt,
-};
 use orc_common::data_structure::vec_array::{VecArray, VecArrayConstruction};
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
@@ -13,6 +8,12 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use smallvec::SmallVec;
+
+use crate::{
+    analysis::{constraint::local_has_non_zero_measure, state::SSAIdx},
+    ptr::Measurable,
+    CrateCtxt,
+};
 
 // e has type T and T coerces to U; coercion-cast
 // e has type *T, U is *U_0, and either U_0: Sized or unsize_kind(T) = unsize_kind(U_0); ptr-ptr-cast

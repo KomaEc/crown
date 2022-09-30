@@ -5,9 +5,8 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 
-use crate::def_use::IsDefUse;
-
 use super::rename::handler::SSANameSourceMap;
+use crate::def_use::IsDefUse;
 
 const INDENT: &str = "    ";
 

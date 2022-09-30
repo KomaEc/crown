@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use either::Either;
+use orc_common::{rewrite::Rewrite, AnalysisResults};
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::{
     mir::{
@@ -12,8 +13,6 @@ use rustc_middle::{
 use rustc_span::{BytePos, Span};
 use rustc_target::abi::VariantIdx;
 use tracing::{debug, debug_span, info_span, trace, warn};
-
-use orc_common::{rewrite::Rewrite, AnalysisResults};
 use usage_analysis::{fatness, mutability, null};
 
 pub struct BodyRewriteCtxt<'tcx, 'a, 'b, R> {

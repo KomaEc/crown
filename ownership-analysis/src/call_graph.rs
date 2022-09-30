@@ -1,4 +1,3 @@
-use crate::utils::graph_ext::{delegate_graph_via, implementation::forward_star};
 use rustc_data_structures::graph::{
     scc::Sccs, DirectedGraph, GraphPredecessors, GraphSuccessors, WithNumEdges, WithNumNodes,
     WithPredecessors, WithSuccessors,
@@ -10,6 +9,8 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use rustc_type_ir::TyKind::FnDef;
+
+use crate::utils::graph_ext::{delegate_graph_via, implementation::forward_star};
 
 pub struct CallGraph {
     /// Invariant: the set of functions are sorted by `DefId` to facilitate

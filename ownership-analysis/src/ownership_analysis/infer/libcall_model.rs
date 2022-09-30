@@ -6,12 +6,11 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 
+use super::IntraInfer;
 use crate::{
     libcall_model::LibCallModel, ownership_analysis::infer::PtrPlaceDefResult,
     ssa::rename::SSANameHandler, ty_ext::TyExt,
 };
-
-use super::IntraInfer;
 
 impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler> {
     fn lend_arg_assume_non_constant(&mut self, arg: &Operand<'tcx>, location: Location) {

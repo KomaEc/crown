@@ -6,9 +6,8 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 
-use crate::{libcall_model::LibCallModel, ssa::rename::SSANameHandler};
-
 use super::IntraInfer;
+use crate::{libcall_model::LibCallModel, ssa::rename::SSANameHandler};
 
 impl<'infercx, 'tcx, Handler: SSANameHandler> IntraInfer<'infercx, 'tcx, Handler> {
     fn mutating_use_ptr_place(&mut self, place: Place, location: Location) {
