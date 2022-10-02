@@ -255,7 +255,6 @@ impl WholeProgram {
         gen: &mut Gen,
         database: &mut Z3Database,
     ) -> anyhow::Result<FnSummary> {
-        println!("solving {:?}", body.source.def_id());
         database.solver.push();
 
         let mut rn = Renamer::new(body, ssa_state);
@@ -268,7 +267,8 @@ impl WholeProgram {
 
         match database.solver.check() {
             z3::SatResult::Unsat => {
-                println!("failed.");
+                let fn_name = crate_ctxt.tcx.def_path_str(body.source.def_id());
+                println!("failed: {fn_name}");
                 database.solver.pop(1);
             }
             z3::SatResult::Unknown => bail!("z3 status: unknown"),

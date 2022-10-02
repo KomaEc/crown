@@ -287,6 +287,11 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     fn unknown_sink(_: &mut Self::Ctxt, _: Consume<Self::LocalSig>);
 
+    fn cast_to_c_void(
+        infer_cx: &mut Self::Ctxt,
+        consume: Consume<Self::LocalSig>,
+    ) -> Consume<Self::LocalSig>;
+
     fn assume(infer_cx: &mut Self::Ctxt, result: Self::LocalSig, value: bool);
 
     fn finalise(infer_cx: &mut Self::Ctxt, local: Local, r#use: SSAIdx);
@@ -347,6 +352,13 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
     fn handle_call((): &mut Self::Ctxt, (): (), _: &Operand) {}
 
     fn handle_output((): &mut Self::Ctxt, _: Option<SSAIdx>, _: DefId) {}
+
+    fn cast_to_c_void(
+        (): &mut Self::Ctxt,
+        consume: Consume<Self::LocalSig>,
+    ) -> Consume<Self::LocalSig> {
+        consume
+    }
 }
 
 // pub trait WithCtxt: AnalysisKind {}
@@ -536,6 +548,17 @@ where
     ) {
         let output = ssa_idx.map(|ssa_idx| infer_cx.fn_body_sig[RETURN_PLACE][ssa_idx].clone());
         <Analysis as HandleCall>::handle_output(infer_cx, me, output)
+    }
+
+    fn cast_to_c_void(
+        infer_cx: &mut Self::Ctxt,
+        consume: Consume<Self::LocalSig>,
+    ) -> Consume<Self::LocalSig> {
+        consume.repack(|sigs| {
+            let (outter, inner) = (sigs.start..sigs.start + 1u32, sigs.start + 1u32..sigs.end);
+            Self::assume(infer_cx, inner, false);
+            outter
+        })
     }
 }
 
@@ -846,13 +869,17 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             Rvalue::Cast(_, Operand::Move(rhs) | Operand::Copy(rhs), ty) => {
                 let lhs_consume =
                     consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
-                let rhs_consume =
+                let mut rhs_consume =
                     consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
 
                 if let TyKind::RawPtr(pointee_ty) = ty.kind() {
                     let pointee_ty = pointee_ty.ty;
-                    if &format!("{pointee_ty}") == "libc::c_void" {}
+                    if &format!("{pointee_ty}") == "libc::c_void" {
+                        rhs_consume =
+                            rhs_consume.map(|consume| Infer::cast_to_c_void(infer_cx, consume));
+                    }
                 }
+                let rhs_consume = rhs_consume;
 
                 match (lhs_consume, rhs_consume) {
                     (None, None) => {}

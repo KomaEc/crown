@@ -100,6 +100,15 @@ pub struct Consume<T> {
     pub def: T,
 }
 
+impl<T> Consume<T> {
+    #[inline]
+    pub fn repack<U>(self, mut f: impl FnMut(T) -> U) -> Consume<U> {
+        let r#use = f(self.r#use);
+        let def = f(self.def);
+        Consume { r#use, def }
+    }
+}
+
 impl<T: Voidable> Consume<T> {
     #[inline]
     pub fn is_use(&self) -> bool {
