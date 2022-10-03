@@ -475,7 +475,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
         // second stage
         let mut results = results;
 
-        for _ in 0..1 {
+        for _ in 0..2 {
             crate_ctxt.struct_topology.next_stage(crate_ctxt.tcx);
 
             let mut gen = Gen::new();

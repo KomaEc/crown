@@ -21,7 +21,7 @@ use crate::{
         constraint::{
             infer::handle_call::HandleCall, initialize_local, Database, Gen, OwnershipSig,
         },
-        consume::{Consume, RichLocation, Voidable},
+        consume::{Consume, RichLocation},
         join_points::PhiNode,
         state::{SSAIdx, SSAState},
         AnalysisKind, FnResult, FnSig,
@@ -89,7 +89,7 @@ where
     gen: &'infercx mut Gen,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     pub fn_body_sig: FnBodySig<LocalSig>,
-    // deref_copys: Consume<<Analysis as InferMode<'infercx, 'tcx, DB>>::LocalSig>,
+    deref_copy: Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>>,
 }
 
 impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
@@ -132,6 +132,7 @@ where
             gen,
             crate_ctxt,
             fn_body_sig,
+            deref_copy: None,
         }
     }
 
@@ -144,10 +145,8 @@ where
         ty: Ty<'tcx>,
         projection: &[PlaceElem<'tcx>],
         infer_cx: &mut Self,
-    ) -> Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig> {
-        if base.is_invalid() {
-            return base;
-        }
+    ) -> Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>> {
+        assert!(!base.is_invalid());
 
         let mut base_ty = ty;
 
@@ -190,10 +189,7 @@ where
         }
 
         if base.r#use.start + proj_start_offset >= base.r#use.end {
-            return Consume {
-                r#use: Voidable::VOID,
-                def: Voidable::VOID,
-            };
+            return None;
         }
 
         // TODO if proj to invalid, should the following constraints be emitted?
@@ -223,10 +219,10 @@ where
             infer_cx.database.push_equal::<super::Debug>((), pre, post);
         }
 
-        Consume {
+        Some(Consume {
             r#use: base.r#use.start + proj_start_offset..base.r#use.start + proj_end_offset,
             def: base.def.start + proj_start_offset..base.def.start + proj_end_offset,
-        }
+        })
     }
 }
 
@@ -250,13 +246,14 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
         phi_nodes: impl Iterator<Item = (Local, &'a mut PhiNode)>,
     );
 
-    /// Invariant: input `consume` must be valid
-    fn interpret_valid_consume(
+    fn interpret_consume(
         infer_cx: &mut Self::Ctxt,
         body: &Body<'tcx>,
         place: &Place<'tcx>,
-        consume: Consume<SSAIdx>,
+        consume: Option<Consume<SSAIdx>>,
     ) -> Option<Consume<Self::LocalSig>>;
+
+    fn copy_for_deref(infer_cx: &mut Self::Ctxt, consume: Option<Consume<Self::LocalSig>>);
 
     fn transfer(
         infer_cx: &mut Self::Ctxt,
@@ -328,14 +325,16 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
     }
 
     #[inline]
-    fn interpret_valid_consume(
+    fn interpret_consume(
         (): &mut Self::Ctxt,
         _: &Body<'tcx>,
         _: &Place<'tcx>,
-        _: Consume<SSAIdx>,
+        _: Option<Consume<SSAIdx>>,
     ) -> Option<Consume<()>> {
         None
     }
+
+    fn copy_for_deref((): &mut Self::Ctxt, _: Option<Consume<Self::LocalSig>>) {}
 
     #[inline]
     fn transfer(
@@ -429,30 +428,42 @@ where
         }
     }
 
-    fn interpret_valid_consume(
+    fn interpret_consume(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         body: &Body<'tcx>,
         place: &Place<'tcx>,
-        consume: Consume<SSAIdx>,
+        consume: Option<Consume<SSAIdx>>,
     ) -> Option<Consume<Self::LocalSig>> {
-        tracing::debug!("interpretting consume for {:?} with {:?}", place, consume);
         let base = place.local;
         let base_ty = body.local_decls[base].ty;
-        let base_offset = infer_cx.crate_ctxt.measure(base_ty, 0);
 
-        let r#use = infer_cx.fn_body_sig[base][consume.r#use].clone();
-        let def = infer_cx.new_sigs(base_offset);
-        assert_eq!(base_offset, r#use.end.as_u32() - r#use.start.as_u32());
-        assert_eq!(
-            infer_cx.fn_body_sig[base].push(def.start..def.end),
-            consume.def
-        );
+        let base = if let Some(consume) = consume {
+            let base_offset = infer_cx.crate_ctxt.measure(base_ty, 0);
 
-        let base = Consume { r#use, def };
+            tracing::debug!("interpretting consume for {:?} with {:?}", place, consume);
 
-        assert!(!base.is_invalid());
+            let r#use = infer_cx.fn_body_sig[base][consume.r#use].clone();
+            let def = infer_cx.new_sigs(base_offset);
+            assert_eq!(base_offset, r#use.end.as_u32() - r#use.start.as_u32());
+            assert_eq!(
+                infer_cx.fn_body_sig[base].push(def.start..def.end),
+                consume.def
+            );
 
-        InferCtxt::project_deeper(base, base_ty, place.projection, infer_cx).valid()
+            // let base = Consume { r#use, def };
+            Consume { r#use, def }
+        } else if let Some(consume) = infer_cx.deref_copy.take() {
+            consume
+        } else {
+            return None;
+        };
+
+        InferCtxt::project_deeper(base, base_ty, place.projection, infer_cx)
+    }
+
+    fn copy_for_deref(infer_cx: &mut Self::Ctxt, consume: Option<Consume<Self::LocalSig>>) {
+        assert!(infer_cx.deref_copy.is_none());
+        infer_cx.deref_copy = consume
     }
 
     fn transfer(
@@ -599,8 +610,10 @@ where
     'tcx: 'rn,
     Infer: InferMode<'rn, 'db, 'tcx>,
 {
-    let consume = rn.state.try_consume_at(place.local, location)?;
-    Infer::interpret_valid_consume(infer_cx, body, place, consume)
+    let consume = rn.state.try_consume_at(place.local, location);
+    // .or_else(|| matches!(body.local_decls[place.local].local_info, Some(LocalInfo::DerefTemp))
+    // .then(|| infer_cx.de));
+    Infer::interpret_consume(infer_cx, body, place, consume)
 }
 
 impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
@@ -917,7 +930,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 assert!(lhs_consume.is_none());
                 let rhs_consume =
                     consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
-                let _ = rhs_consume;
+                Infer::copy_for_deref(infer_cx, rhs_consume);
                 tracing::debug!("deref_copy is ignored")
             }
 
