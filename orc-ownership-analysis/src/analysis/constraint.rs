@@ -278,6 +278,17 @@ pub trait Database {
         self.push_less_equal_impl(x, y);
         Infer::store_less_equal(store, x, y);
     }
+    fn push_approx_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig);
+    fn push_approx_linear<Infer: Mode>(
+        &mut self,
+        store: Infer::Store<'_>,
+        x: OwnershipSig,
+        y: OwnershipSig,
+        z: OwnershipSig,
+    ) {
+        self.push_approx_linear_impl(x, y, z);
+        Infer::store_linear(store, x, y, z);
+    }
 }
 
 impl Database for () {
@@ -288,6 +299,8 @@ impl Database for () {
     fn push_equal_impl(&mut self, _: OwnershipSig, _: OwnershipSig) {}
 
     fn push_less_equal_impl(&mut self, _: OwnershipSig, _: OwnershipSig) {}
+
+    fn push_approx_linear_impl(&mut self, _: OwnershipSig, _: OwnershipSig, _: OwnershipSig) {}
 }
 
 pub struct CadicalDatabase {
@@ -338,6 +351,15 @@ impl Database for CadicalDatabase {
     fn push_less_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
         self.solver
             .add_clause([-x.into_lit(), y.into_lit()].into_iter());
+    }
+
+    fn push_approx_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
+        self.solver
+            .add_clause([-x.into_lit(), -y.into_lit()].into_iter());
+        self.solver
+            .add_clause([-x.into_lit(), z.into_lit()].into_iter());
+        self.solver
+            .add_clause([-y.into_lit(), z.into_lit()].into_iter());
     }
 }
 
@@ -400,5 +422,13 @@ impl<'z3> Database for Z3Database<'z3> {
     fn push_less_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
         let [x, y] = [x, y].map(|sig| &self.z3_ast[sig]);
         self.solver.assert(&z3::ast::Bool::or(self.ctx, &[&!x, y]));
+    }
+
+    fn push_approx_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
+        let [x, y, z] = [x, y, z].map(|sig| &self.z3_ast[sig]);
+        self.solver
+            .assert(&z3::ast::Bool::or(self.ctx, &[&!x, &!y]));
+        self.solver.assert(&z3::ast::Bool::or(self.ctx, &[&!x, z]));
+        self.solver.assert(&z3::ast::Bool::or(self.ctx, &[&!y, z]));
     }
 }
