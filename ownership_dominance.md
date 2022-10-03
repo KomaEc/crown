@@ -311,7 +311,8 @@ p = **q; ~ { tmp = deref_copy(*q); p = *tmp; }
 - [x] Support Union
 - [ ] Second stage analysis
   - [x] Allow dereferencing once (works on bst, avl)
-  - [ ] Allow dereferencing more
+  - [x] Allow dereferencing more
+  - [ ] Better iterative inference: infer `p` to be owning when `*p = q` and `q` changes its ownership state
 - [ ] Initial rewrite
     Method boundaries, not struct definitions
 - [ ] Smarter constraint solving?
