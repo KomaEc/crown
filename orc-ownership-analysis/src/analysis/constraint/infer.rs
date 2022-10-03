@@ -264,6 +264,8 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
         rhs_result: Consume<Self::LocalSig>,
     );
 
+    fn cast(infer_cx: &mut Self::Ctxt, lhs: Consume<Self::LocalSig>, rhs: Consume<Self::LocalSig>);
+
     fn borrow(infer_cx: &mut Self::Ctxt, consume: Consume<Self::LocalSig>) {
         Self::assume(infer_cx, consume.r#use, false);
         Self::assume(infer_cx, consume.def, false);
@@ -337,6 +339,14 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
 
     #[inline]
     fn transfer(
+        (): &mut Self::Ctxt,
+        Consume { r#use: (), def: () }: Consume<Self::LocalSig>,
+        Consume { r#use: (), def: () }: Consume<Self::LocalSig>,
+    ) {
+    }
+
+    #[inline]
+    fn cast(
         (): &mut Self::Ctxt,
         Consume { r#use: (), def: () }: Consume<Self::LocalSig>,
         Consume { r#use: (), def: () }: Consume<Self::LocalSig>,
@@ -463,6 +473,16 @@ where
                 .database
                 .push_linear::<super::Debug>((), lhs_def, rhs_def, rhs_use)
         }
+    }
+
+    fn cast(
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
+        lhs: Consume<Self::LocalSig>,
+        rhs: Consume<Self::LocalSig>,
+    ) {
+        let lhs = lhs.repack(|sigs| sigs.start..sigs.start + 1u32);
+        let rhs = rhs.repack(|sigs| sigs.start..sigs.start + 1u32);
+        Self::transfer(infer_cx, lhs, rhs)
     }
 
     #[inline]
@@ -886,7 +906,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     (None, Some(rhs_consume)) => Infer::unknown_sink(infer_cx, rhs_consume),
                     (Some(lhs_consume), None) => Infer::unknown_source(infer_cx, lhs_consume),
                     (Some(lhs_consume), Some(rhs_consume)) => {
-                        Infer::transfer(infer_cx, lhs_consume, rhs_consume)
+                        Infer::cast(infer_cx, lhs_consume, rhs_consume)
                     }
                 }
             }
