@@ -1,14 +1,13 @@
 [workspace]
 members = [
-    "orc-common",
-    "orc-preprocess",
-    "orc-ownership-analysis",
-    "utvpi",
-    "orc-taint-analysis",
-    "orc-refactor",
+    "crates/common",
+    "crates/preprocess",
+    "crates/analysis",
+    "crates/taint",
+    # "crates/refactor",
     "usage-analysis",
     "refactor",
-    "empirical-study",
+    "crates/empirical-study",
     "ownership-analysis"
 ]
 
@@ -21,14 +20,14 @@ edition = "2021"
 rustc_private = true
 
 [dependencies]
-orc-common = { path = "orc-common" }
-orc-preprocess = { path = "orc-preprocess" }
-orc-ownership-analysis = { path = "orc-ownership-analysis" }
+common = { path = "crates/common" }
+preprocess = { path = "crates/preprocess" }
+analysis = { path = "crates/analysis" }
 ownership-analysis = { path = "ownership-analysis" }
-orc-taint-analysis = { path = "orc-taint-analysis" }
+taint = { path = "crates/taint" }
 usage-analysis = { path = "usage-analysis" }
 refactor = { path = "refactor" }
-empirical-study = { path = "empirical-study" }
+empirical-study = { path = "crates/empirical-study" }
 clap = { version = "3.1.2", features = ["derive"] }
 tracing = "0.1.32"
 tracing-subscriber = { version = "0.3.10", features = ["env-filter"] }

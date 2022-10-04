@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display};
 
-use orc_common::get_struct_field;
+use common::get_struct_field;
 use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_hir::{def_id::LocalDefId, FnRetTy, ItemKind};
 use rustc_index::vec::{Idx, IndexVec};
@@ -243,7 +243,7 @@ impl<'tcx, 'a, A: Analysis> CrateResults<'tcx, 'a, A> {
     }
 }
 
-impl<'tcx, A: Analysis> orc_common::AnalysisResults for CrateResults<'tcx, '_, A> {
+impl<'tcx, A: Analysis> common::AnalysisResults for CrateResults<'tcx, '_, A> {
     fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
         Some(
             self.fn_results[func].as_ref().unwrap().start_results.locals[local][ptr_depth]

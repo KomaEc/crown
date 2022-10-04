@@ -382,7 +382,7 @@ pub fn explain_error(reason: Vec<Mu>) {
     }
 }
 
-orc_common::macros::newtype_index! {
+common::macros::newtype_index! {
     /// Constraint variables for array analysis
     pub struct Mu {
         DEBUG_FORMAT = "μ_({})"

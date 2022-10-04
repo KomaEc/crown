@@ -8,6 +8,6 @@ edition = "2021"
 rustc_private = true
 
 [dependencies]
-orc-common = { path = "../orc-common" }
+common = { path = "../crates/common" }
 tracing = "0.1.32"
 smallvec = "1.9.0"

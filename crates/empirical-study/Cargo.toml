@@ -1,0 +1,15 @@
+[package]
+name = "empirical-study"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[package.metadata.rust-analyzer]
+rustc_private = true
+
+[dependencies]
+# analysis = { path = "../analysis" }
+taint = { path = "../taint" }
+common = { path = "../common" }
+cli-table = "0.4"

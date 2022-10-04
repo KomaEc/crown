@@ -21,4 +21,4 @@ colored = "2"
 once_cell = "1.9.0"
 proptest = "1.0.0"
 rand = "0.8.4"
-orc-common = { path = "../orc-common" }
+common = { path = "../crates/common" }

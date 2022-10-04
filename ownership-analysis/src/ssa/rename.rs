@@ -15,7 +15,7 @@ use rustc_middle::{
 
 use crate::{def_use::IsDefUse, ssa::body_ext::PhiNodeInsertionPoints};
 
-orc_common::macros::newtype_index! {
+common::macros::newtype_index! {
     pub struct SSAIdx {
         DEBUG_FORMAT = "{}"
     }

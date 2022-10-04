@@ -1,6 +1,6 @@
 mod rewrite_body;
 
-use orc_common::{
+use common::{
     rewrite::{Rewrite, RewriteMode},
     AnalysisResults,
 };

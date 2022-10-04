@@ -470,13 +470,13 @@ mod tests {
 
     use super::*;
 
-    orc_common::macros::newtype_index! {
+    common::macros::newtype_index! {
         pub struct Node {
             DEBUG_FORMAT = "{}"
         }
     }
 
-    orc_common::macros::newtype_index! {
+    common::macros::newtype_index! {
         pub struct Edge {
             DEBUG_FORMAT = "{}"
         }

@@ -507,7 +507,7 @@ where
     }
 }
 
-orc_common::macros::newtype_index! {
+common::macros::newtype_index! {
     pub struct FieldDefIdx {
         DEBUG_FORMAT = "field_def ({})"
     }

@@ -26,7 +26,7 @@ use crate::{
     Boundary, FuncSig, Inner, Surface, ULEConstraintGraph, UnitVar,
 };
 
-impl orc_common::AnalysisResults for InterSummary {
+impl common::AnalysisResults for InterSummary {
     fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool> {
         let func = self.call_graph.lookup_function(&func.to_def_id()).unwrap();
         let arc = &self.approximate_rho_ctxt.get().unwrap()[func];
@@ -986,7 +986,7 @@ pub fn explain_error(reason: Vec<Rho>) {
     }
 }
 
-orc_common::macros::newtype_index! {
+common::macros::newtype_index! {
     /// Constraint variables for array analysis
     pub struct Rho {
         DEBUG_FORMAT = "ρ_({})"

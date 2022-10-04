@@ -290,7 +290,7 @@ pub enum BoundaryConstraint {
     },
 }
 
-orc_common::macros::newtype_index! {
+common::macros::newtype_index! {
     /// Constraint variables for array analysis
     pub struct Lambda {
         DEBUG_FORMAT = "λ_({})"

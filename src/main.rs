@@ -23,8 +23,8 @@ use std::{
 use anyhow::{bail, Context, Result};
 use clap::Parser;
 use empirical_study::EmpiricalStudy;
-use orc_common::rewrite::RewriteMode;
-use orc_ownership_analysis::CrateCtxt;
+use common::rewrite::RewriteMode;
+use analysis::CrateCtxt;
 use rustc_errors::registry;
 use rustc_hir::{def_id::DefId, ItemKind, OwnerNode};
 use rustc_interface::Config;
@@ -97,7 +97,7 @@ fn main() -> Result<()> {
     let args = Cli::parse();
 
     if let Command::Preprocess { rewrite_mode } = args.cmd {
-        for preprocess in orc_preprocess::PREPROCESSES {
+        for preprocess in preprocess::PREPROCESSES {
             let config = compiler_config(args.path.clone())?;
             rustc_interface::run_compiler(config, move |compiler| {
                 compiler.enter(|queries| {
@@ -224,7 +224,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         .collect::<Vec<_>>();
 
     // let input = (tcx, functions, structs);
-    let input = orc_common::CrateData { tcx, fns, structs };
+    let input = common::CrateData { tcx, fns, structs };
 
     match *cmd {
         Command::Preprocess { .. } => unreachable!(),
@@ -303,7 +303,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
 
             if taint {
                 time("taint analysis", || {
-                    orc_taint_analysis::report_results(&input)
+                    taint::report_results(&input)
                 });
             }
 
