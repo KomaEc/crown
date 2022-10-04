@@ -40,9 +40,11 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
 
-pub(crate) mod steensgaard;
+mod steensgaard;
 
-pub fn taint_results(input: &common::CrateData) -> Steensgaard {
+pub use steensgaard::Steensgaard as TaintResult;
+
+pub fn taint_results(input: &common::CrateData) -> TaintResult {
     Steensgaard::new(input)
 }
 

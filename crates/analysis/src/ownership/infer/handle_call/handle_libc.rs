@@ -16,11 +16,7 @@ where
     'tcx: 'infercx,
     Analysis: AnalysisKind<'infercx, 'db>,
 {
-    pub fn handle_libc_call(
-        &mut self,
-        caller: &FnSig<Option<Consume<Range<Var>>>>,
-        callee: Ident,
-    ) {
+    pub fn handle_libc_call(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>, callee: Ident) {
         match callee.as_str() {
             "malloc" => self.handle_malloc(caller),
             "free" => self.handle_free(caller),

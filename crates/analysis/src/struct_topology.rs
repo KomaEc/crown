@@ -68,7 +68,7 @@ pub struct StructTopology {
 
 impl StructTopology {
     // TODO refactor using `StructDependency`
-    pub fn new(tcx: TyCtxt, structs: Vec<DefId>) -> Self {
+    pub fn new(tcx: TyCtxt, structs: &[DefId]) -> Self {
         let mut graph = DiGraphMap::with_capacity(structs.len(), structs.len());
         structs.iter().for_each(|did| {
             graph.add_node(*did);
@@ -196,6 +196,8 @@ pub struct FieldAssumptions {
 
 #[cfg(test)]
 mod tests {
+    use common::CrateData;
+
     use crate::CrateCtxt;
 
     const TEXT: &str = "
@@ -224,8 +226,9 @@ mod tests {
 
     #[test]
     fn test() {
-        common::test_infra::run_compiler_with(TEXT.into(), |tcx, functions, structs| {
-            let program = CrateCtxt::new(tcx, functions, structs);
+        common::test::run_compiler_with(TEXT.into(), |tcx, functions, structs| {
+            let crate_data = CrateData::new(tcx, functions, structs);
+            let program = CrateCtxt::from(crate_data);
             macro_rules! define_structs {
                 ($( $x: ident ),*) => {
                     $(

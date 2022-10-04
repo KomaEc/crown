@@ -91,9 +91,7 @@ pub struct Gen {
 impl Gen {
     #[inline]
     pub const fn new() -> Self {
-        Gen {
-            next: Var::MIN,
-        }
+        Gen { next: Var::MIN }
     }
 
     pub fn new_sigs(&mut self, size: u32) -> Range<Var> {
@@ -113,11 +111,7 @@ impl Gen {
 pub enum Constraint {
     /// x + y = z
     /// CNF | (¬x ∨ ¬y) ∧ (¬x ∨ z) ∧ (x ∨ y ∨ ¬z) ∧ (¬y ∨ z)
-    Linear {
-        x: Var,
-        y: Var,
-        z: Var,
-    },
+    Linear { x: Var, y: Var, z: Var },
     /// assert [sign]x
     Assume { x: Var, sign: bool },
     /// x = y
@@ -199,12 +193,7 @@ macro_rules! make_logging_mode {
             type Store<'a> = ();
 
             #[inline]
-            fn store_linear(
-                (): Self::Store<'_>,
-                x: Var,
-                y: Var,
-                z: Var,
-            ) {
+            fn store_linear((): Self::Store<'_>, x: Var, y: Var, z: Var) {
                 let constraint = Constraint::Linear { x, y, z };
                 tracing_for!($level, "emitting constraint: {constraint}")
             }
@@ -243,13 +232,7 @@ pub trait Database {
     }
 
     fn push_linear_impl(&mut self, x: Var, y: Var, z: Var);
-    fn push_linear<Infer: Mode>(
-        &mut self,
-        store: Infer::Store<'_>,
-        x: Var,
-        y: Var,
-        z: Var,
-    ) {
+    fn push_linear<Infer: Mode>(&mut self, store: Infer::Store<'_>, x: Var, y: Var, z: Var) {
         self.push_linear_impl(x, y, z);
         Infer::store_linear(store, x, y, z);
     }
@@ -259,33 +242,17 @@ pub trait Database {
         Infer::store_assumption(store, x, sign);
     }
     fn push_equal_impl(&mut self, x: Var, y: Var);
-    fn push_equal<Infer: Mode>(
-        &mut self,
-        store: Infer::Store<'_>,
-        x: Var,
-        y: Var,
-    ) {
+    fn push_equal<Infer: Mode>(&mut self, store: Infer::Store<'_>, x: Var, y: Var) {
         self.push_equal_impl(x, y);
         Infer::store_equal(store, x, y);
     }
     fn push_less_equal_impl(&mut self, x: Var, y: Var);
-    fn push_less_equal<Infer: Mode>(
-        &mut self,
-        store: Infer::Store<'_>,
-        x: Var,
-        y: Var,
-    ) {
+    fn push_less_equal<Infer: Mode>(&mut self, store: Infer::Store<'_>, x: Var, y: Var) {
         self.push_less_equal_impl(x, y);
         Infer::store_less_equal(store, x, y);
     }
     fn push_approx_linear_impl(&mut self, x: Var, y: Var, z: Var);
-    fn push_approx_linear<Infer: Mode>(
-        &mut self,
-        store: Infer::Store<'_>,
-        x: Var,
-        y: Var,
-        z: Var,
-    ) {
+    fn push_approx_linear<Infer: Mode>(&mut self, store: Infer::Store<'_>, x: Var, y: Var, z: Var) {
         self.push_approx_linear_impl(x, y, z);
         Infer::store_linear(store, x, y, z);
     }

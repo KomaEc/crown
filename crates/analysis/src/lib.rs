@@ -54,6 +54,7 @@ pub struct CrateCtxt<'tcx> {
     tcx: TyCtxt<'tcx>,
     call_graph: CallGraph,
     struct_topology: StructTopology,
+    // taint_result: taint::TaintResult,
 }
 
 impl<'tcx> From<common::CrateData<'tcx>> for CrateCtxt<'tcx> {
@@ -61,21 +62,13 @@ impl<'tcx> From<common::CrateData<'tcx>> for CrateCtxt<'tcx> {
         CrateCtxt {
             tcx: krate.tcx,
             call_graph: CallGraph::new(krate.tcx, &krate.fns),
-            struct_topology: StructTopology::new(krate.tcx, krate.structs),
+            struct_topology: StructTopology::new(krate.tcx, &krate.structs),
+            // taint_result: taint::taint_results(&krate)
         }
     }
 }
 
 impl<'tcx> CrateCtxt<'tcx> {
-    /// TODO: remove this
-    pub fn new(tcx: TyCtxt<'tcx>, functions: Vec<DefId>, structs: Vec<DefId>) -> Self {
-        CrateCtxt {
-            tcx,
-            call_graph: CallGraph::new(tcx, &functions[..]),
-            struct_topology: StructTopology::new(tcx, structs),
-        }
-    }
-
     #[inline]
     pub fn fns(&self) -> &[DefId] {
         self.call_graph.fns()
