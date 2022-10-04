@@ -2,13 +2,13 @@ use std::ops::Range;
 
 use rustc_hir::def_id::DefId;
 
-use crate::ssa::{
-    constraint::{
-        infer::{InferCtxt, InferMode},
-        OwnershipSig,
+use crate::{
+    call_graph::FnSig,
+    ownership::{infer::InferCtxt, AnalysisKind},
+    ssa::{
+        constraint::{infer::InferMode, Var},
+        consume::Consume,
     },
-    consume::Consume,
-    AnalysisKind, FnSig,
 };
 
 impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
@@ -18,7 +18,7 @@ where
 {
     pub fn handle_library_call(
         &mut self,
-        caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
+        caller: &FnSig<Option<Consume<Range<Var>>>>,
         callee: DefId,
     ) {
         let def_path = self.crate_ctxt.tcx.def_path(callee);
@@ -45,7 +45,7 @@ where
         }
     }
 
-    pub fn handle_is_null(&mut self, caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
+    pub fn handle_is_null(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>) {
         let FnSig { args, .. } = caller;
         assert_eq!(args.len(), 1);
         let arg = args.first().and_then(Option::as_ref).cloned().unwrap();

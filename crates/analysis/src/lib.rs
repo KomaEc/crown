@@ -33,11 +33,12 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
 
-pub mod ssa;
 mod body_ext;
 mod call_graph;
+pub mod ownership;
 mod ptr;
 mod rustc_properties;
+pub mod ssa;
 mod struct_topology;
 #[cfg(test)]
 mod test;

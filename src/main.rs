@@ -20,11 +20,11 @@ use std::{
     time::Instant,
 };
 
+use analysis::CrateCtxt;
 use anyhow::{bail, Context, Result};
 use clap::Parser;
-use empirical_study::EmpiricalStudy;
 use common::rewrite::RewriteMode;
-use analysis::CrateCtxt;
+use empirical_study::EmpiricalStudy;
 use rustc_errors::registry;
 use rustc_hir::{def_id::DefId, ItemKind, OwnerNode};
 use rustc_interface::Config;
@@ -302,9 +302,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             }
 
             if taint {
-                time("taint analysis", || {
-                    taint::report_results(&input)
-                });
+                time("taint analysis", || taint::report_results(&input));
             }
 
             if mutability {

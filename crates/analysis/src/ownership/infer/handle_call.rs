@@ -3,10 +3,14 @@ use std::ops::Range;
 use itertools::izip;
 use rustc_hir::def_id::DefId;
 
-use crate::ssa::{
-    constraint::{infer::InferCtxt, Database, OwnershipSig},
-    consume::Consume,
-    AnalysisKind, FnSig, WholeProgram,
+use super::InferCtxt;
+use crate::{
+    call_graph::FnSig,
+    ownership::{AnalysisKind, WholeProgram},
+    ssa::{
+        constraint::{Database, Var},
+        consume::Consume,
+    },
 };
 
 pub mod handle_libc;
@@ -20,7 +24,7 @@ where
 {
     fn handle_call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
-        caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
+        caller: &FnSig<Option<Consume<Range<Var>>>>,
         callee: DefId,
     );
 
@@ -29,13 +33,13 @@ where
         inter_ctxt: &Self::InterCtxt,
         database: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
         r#fn: DefId,
-        inputs: impl Iterator<Item = Option<Range<OwnershipSig>>>,
+        inputs: impl Iterator<Item = Option<Range<Var>>>,
     );
 
     fn handle_output(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         r#fn: DefId,
-        output: Option<Range<OwnershipSig>>,
+        output: Option<Range<Var>>,
     );
 }
 
@@ -46,7 +50,7 @@ where
 {
     default fn handle_call(
         _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
-        _: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
+        _: &FnSig<Option<Consume<Range<Var>>>>,
         _: DefId,
     ) {
     }
@@ -57,14 +61,14 @@ where
         _: &Analysis::InterCtxt,
         _: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
         _: DefId,
-        _: impl Iterator<Item = Option<Range<OwnershipSig>>>,
+        _: impl Iterator<Item = Option<Range<Var>>>,
     ) {
     }
 
     default fn handle_output(
         _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         _: DefId,
-        _: Option<Range<OwnershipSig>>,
+        _: Option<Range<Var>>,
     ) {
     }
 }
@@ -75,7 +79,7 @@ where
 {
     fn handle_call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
-        caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
+        caller: &FnSig<Option<Consume<Range<Var>>>>,
         callee: DefId,
     ) {
         let c_variadic = infer_cx
@@ -146,7 +150,7 @@ where
         inter_ctxt: &<WholeProgram as AnalysisKind>::InterCtxt,
         database: &mut <WholeProgram as AnalysisKind>::DB,
         r#fn: DefId,
-        inputs: impl Iterator<Item = Option<Range<OwnershipSig>>>,
+        inputs: impl Iterator<Item = Option<Range<Var>>>,
     ) {
         let fn_sig = &inter_ctxt[&r#fn];
 
@@ -167,7 +171,7 @@ where
     fn handle_output(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, WholeProgram>,
         r#fn: DefId,
-        output: Option<Range<OwnershipSig>>,
+        output: Option<Range<Var>>,
     ) {
         // let r#fn = infer_cx.crate_ctxt.call_graph.did_idx[&r#fn];
         let fn_sig = &infer_cx.inter_ctxt[&r#fn];

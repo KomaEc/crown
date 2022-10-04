@@ -189,6 +189,11 @@ impl StructTopology {
     }
 }
 
+pub struct FieldAssumptions {
+    /// struct -> set of fields assumed to be owning
+    assumptions: FxHashMap<DefId, BitSet<u32>>,
+}
+
 #[cfg(test)]
 mod tests {
     use crate::CrateCtxt;

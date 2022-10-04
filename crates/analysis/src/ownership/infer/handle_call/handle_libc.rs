@@ -2,13 +2,13 @@ use std::ops::Range;
 
 use rustc_span::symbol::Ident;
 
-use crate::ssa::{
-    constraint::{
-        infer::{InferCtxt, InferMode},
-        OwnershipSig,
+use crate::{
+    call_graph::FnSig,
+    ownership::{infer::InferCtxt, AnalysisKind},
+    ssa::{
+        constraint::{infer::InferMode, Var},
+        consume::Consume,
     },
-    consume::Consume,
-    AnalysisKind, FnSig,
 };
 
 impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
@@ -18,7 +18,7 @@ where
 {
     pub fn handle_libc_call(
         &mut self,
-        caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>,
+        caller: &FnSig<Option<Consume<Range<Var>>>>,
         callee: Ident,
     ) {
         match callee.as_str() {
@@ -28,7 +28,7 @@ where
         }
     }
 
-    fn handle_malloc(&mut self, caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
+    fn handle_malloc(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>) {
         let FnSig {
             ret: destination,
             args,
@@ -39,7 +39,7 @@ where
         <Analysis as InferMode>::source(self, destination.clone());
     }
 
-    fn handle_free(&mut self, caller: &FnSig<Option<Consume<Range<OwnershipSig>>>>) {
+    fn handle_free(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>) {
         let FnSig {
             ret: destination,
             args,

@@ -10,8 +10,8 @@ use rustc_middle::{
 use smallvec::SmallVec;
 
 use crate::{
-    ssa::{constraint::local_has_non_zero_measure, state::SSAIdx},
     ptr::Measurable,
+    ssa::{constraint::local_has_non_zero_measure, state::SSAIdx},
     CrateCtxt,
 };
 
@@ -59,13 +59,13 @@ pub struct Definitions {
 /// ```
 /// Therefore, I use `SSAIdx::MAX` to represent a void argument.
 ///
-/// `Range<OwnershipSig>` is another example. `Option<Range<OwnershipSig>>`
+/// `Range<Var>` is another example. `Option<Range<Var>>`
 /// introduces memory layout overhead.
 /// ```
-/// use orc_ownership_analysis::analysis::constraint::OwnershipSig;
+/// use orc_ownership_analysis::analysis::constraint::Var;
 /// use std::ops::Range;
-/// const _: () = assert!(std::mem::size_of::<Range<OwnershipSig>>() == 8);
-/// const _: () = assert!(std::mem::size_of::<Option<Range<OwnershipSig>>>() == 12);
+/// const _: () = assert!(std::mem::size_of::<Range<Var>>() == 8);
+/// const _: () = assert!(std::mem::size_of::<Option<Range<Var>>>() == 12);
 /// ```
 ///
 /// Besides, adding [Option] wrapper makes types fatter, and I struggled to

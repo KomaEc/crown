@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use either::Either;
 use common::{rewrite::Rewrite, AnalysisResults};
+use either::Either;
 use rustc_hir::def_id::LocalDefId;
 use rustc_middle::{
     mir::{

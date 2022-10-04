@@ -11,9 +11,9 @@ extern crate rustc_hir_pretty;
 extern crate rustc_middle;
 extern crate rustc_span;
 
+use common::rewrite::{Rewrite, RewriteMode};
 use ensure_null::ensure_nullness;
 use linkage::{canonicalize_structs, link_functions, link_incomplete_types};
-use common::rewrite::{Rewrite, RewriteMode};
 use rustc_middle::ty::TyCtxt;
 
 pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] = &[phase_1, phase_2, phase_3];

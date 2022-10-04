@@ -10,36 +10,36 @@ pub mod infer;
 // pub mod prune;
 
 common::macros::newtype_index! {
-    pub struct OwnershipSig {
+    pub struct Var {
         DEBUG_FORMAT = "{}"// "𝕆({})"
     }
 }
 
-impl std::fmt::Display for OwnershipSig {
+impl std::fmt::Display for Var {
     // \mathbb{O}
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("𝕆({})", self.as_u32()))
     }
 }
 
-impl OwnershipSig {
-    pub const INVALID: Self = OwnershipSig::from_u32(0);
-    pub const MIN: Self = OwnershipSig::from_u32(1);
+impl Var {
+    pub const INVALID: Self = Var::from_u32(0);
+    pub const MIN: Self = Var::from_u32(1);
 
     pub fn into_lit(self) -> i32 {
         self.as_u32() as i32
     }
 }
 
-impl std::ops::Add<u32> for OwnershipSig {
+impl std::ops::Add<u32> for Var {
     type Output = Self;
 
     fn add(self, rhs: u32) -> Self::Output {
-        OwnershipSig::from_u32(self.as_u32() + rhs)
+        Var::from_u32(self.as_u32() + rhs)
     }
 }
 
-impl std::ops::AddAssign<u32> for OwnershipSig {
+impl std::ops::AddAssign<u32> for Var {
     fn add_assign(&mut self, rhs: u32) {
         *self = *self + rhs
     }
@@ -66,37 +66,37 @@ pub fn initialize_local(
     gen: &mut Gen,
     database: &mut impl Database,
     measurable: impl Measurable,
-) -> Option<Range<OwnershipSig>> {
+) -> Option<Range<Var>> {
     local_measure(local_decl, measurable)
         .map(|measure| database.new_vars(gen.new_sigs(measure.get())))
 }
 
-impl Voidable for Range<OwnershipSig> {
+impl Voidable for Range<Var> {
     const VOID: Self = Range {
-        start: OwnershipSig::INVALID,
-        end: OwnershipSig::INVALID,
+        start: Var::INVALID,
+        end: Var::INVALID,
     };
 
     #[inline]
     fn is_void(&self) -> bool {
-        self.start == OwnershipSig::INVALID && self.end == OwnershipSig::INVALID
+        self.start == Var::INVALID && self.end == Var::INVALID
     }
 }
 
-/// A generator for [OwnershipSig]
+/// A generator for [Var]
 pub struct Gen {
-    next: OwnershipSig,
+    next: Var,
 }
 
 impl Gen {
     #[inline]
     pub const fn new() -> Self {
         Gen {
-            next: OwnershipSig::MIN,
+            next: Var::MIN,
         }
     }
 
-    pub fn new_sigs(&mut self, size: u32) -> Range<OwnershipSig> {
+    pub fn new_sigs(&mut self, size: u32) -> Range<Var> {
         let start = self.next;
         self.next += size;
         let end = self.next;
@@ -104,7 +104,7 @@ impl Gen {
     }
 
     #[inline]
-    pub fn next(&self) -> OwnershipSig {
+    pub fn next(&self) -> Var {
         self.next
     }
 }
@@ -114,16 +114,16 @@ pub enum Constraint {
     /// x + y = z
     /// CNF | (¬x ∨ ¬y) ∧ (¬x ∨ z) ∧ (x ∨ y ∨ ¬z) ∧ (¬y ∨ z)
     Linear {
-        x: OwnershipSig,
-        y: OwnershipSig,
-        z: OwnershipSig,
+        x: Var,
+        y: Var,
+        z: Var,
     },
     /// assert [sign]x
-    Assume { x: OwnershipSig, sign: bool },
+    Assume { x: Var, sign: bool },
     /// x = y
-    Equal { x: OwnershipSig, y: OwnershipSig },
+    Equal { x: Var, y: Var },
     /// x <= y
-    LessEqual { x: OwnershipSig, y: OwnershipSig },
+    LessEqual { x: Var, y: Var },
 }
 
 impl std::fmt::Display for Constraint {
@@ -145,13 +145,13 @@ pub trait Mode {
     type Store<'a>
     where
         Self: 'a;
-    fn store_linear(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig);
+    fn store_linear(store: Self::Store<'_>, x: Var, y: Var, z: Var);
 
-    fn store_assumption(store: Self::Store<'_>, x: OwnershipSig, sign: bool);
+    fn store_assumption(store: Self::Store<'_>, x: Var, sign: bool);
 
-    fn store_equal(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig);
+    fn store_equal(store: Self::Store<'_>, x: Var, y: Var);
 
-    fn store_less_equal(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig);
+    fn store_less_equal(store: Self::Store<'_>, x: Var, y: Var);
 }
 
 pub struct Emit;
@@ -159,20 +159,20 @@ impl Mode for Emit {
     type Store<'a> = &'a mut Vec<Constraint>;
 
     #[inline]
-    fn store_linear(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
+    fn store_linear(store: Self::Store<'_>, x: Var, y: Var, z: Var) {
         store.push(Constraint::Linear { x, y, z })
     }
 
     #[inline]
-    fn store_assumption(store: Self::Store<'_>, x: OwnershipSig, sign: bool) {
+    fn store_assumption(store: Self::Store<'_>, x: Var, sign: bool) {
         store.push(Constraint::Assume { x, sign })
     }
 
-    fn store_equal(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig) {
+    fn store_equal(store: Self::Store<'_>, x: Var, y: Var) {
         store.push(Constraint::Equal { x, y })
     }
 
-    fn store_less_equal(store: Self::Store<'_>, x: OwnershipSig, y: OwnershipSig) {
+    fn store_less_equal(store: Self::Store<'_>, x: Var, y: Var) {
         store.push(Constraint::LessEqual { x, y })
     }
 }
@@ -201,26 +201,26 @@ macro_rules! make_logging_mode {
             #[inline]
             fn store_linear(
                 (): Self::Store<'_>,
-                x: OwnershipSig,
-                y: OwnershipSig,
-                z: OwnershipSig,
+                x: Var,
+                y: Var,
+                z: Var,
             ) {
                 let constraint = Constraint::Linear { x, y, z };
                 tracing_for!($level, "emitting constraint: {constraint}")
             }
 
             #[inline]
-            fn store_assumption((): Self::Store<'_>, x: OwnershipSig, sign: bool) {
+            fn store_assumption((): Self::Store<'_>, x: Var, sign: bool) {
                 let constraint = Constraint::Assume { x, sign };
                 tracing_for!($level, "emitting constraint: {constraint}")
             }
 
-            fn store_equal((): Self::Store<'_>, x: OwnershipSig, y: OwnershipSig) {
+            fn store_equal((): Self::Store<'_>, x: Var, y: Var) {
                 let constraint = Constraint::Equal { x, y };
                 tracing_for!($level, "emitting constraint: {constraint}")
             }
 
-            fn store_less_equal((): Self::Store<'_>, x: OwnershipSig, y: OwnershipSig) {
+            fn store_less_equal((): Self::Store<'_>, x: Var, y: Var) {
                 let constraint = Constraint::LessEqual { x, y };
                 tracing_for!($level, "emitting constraint: {constraint}")
             }
@@ -235,56 +235,56 @@ make_logging_mode!(Error);
 
 pub trait Database {
     #[inline]
-    fn new_var(&mut self, _: OwnershipSig) {}
+    fn new_var(&mut self, _: Var) {}
 
     #[inline]
-    fn new_vars(&mut self, sigs: Range<OwnershipSig>) -> Range<OwnershipSig> {
+    fn new_vars(&mut self, sigs: Range<Var>) -> Range<Var> {
         sigs
     }
 
-    fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig);
+    fn push_linear_impl(&mut self, x: Var, y: Var, z: Var);
     fn push_linear<Infer: Mode>(
         &mut self,
         store: Infer::Store<'_>,
-        x: OwnershipSig,
-        y: OwnershipSig,
-        z: OwnershipSig,
+        x: Var,
+        y: Var,
+        z: Var,
     ) {
         self.push_linear_impl(x, y, z);
         Infer::store_linear(store, x, y, z);
     }
-    fn push_assume_impl(&mut self, x: OwnershipSig, sign: bool);
-    fn push_assume<Infer: Mode>(&mut self, store: Infer::Store<'_>, x: OwnershipSig, sign: bool) {
+    fn push_assume_impl(&mut self, x: Var, sign: bool);
+    fn push_assume<Infer: Mode>(&mut self, store: Infer::Store<'_>, x: Var, sign: bool) {
         self.push_assume_impl(x, sign);
         Infer::store_assumption(store, x, sign);
     }
-    fn push_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig);
+    fn push_equal_impl(&mut self, x: Var, y: Var);
     fn push_equal<Infer: Mode>(
         &mut self,
         store: Infer::Store<'_>,
-        x: OwnershipSig,
-        y: OwnershipSig,
+        x: Var,
+        y: Var,
     ) {
         self.push_equal_impl(x, y);
         Infer::store_equal(store, x, y);
     }
-    fn push_less_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig);
+    fn push_less_equal_impl(&mut self, x: Var, y: Var);
     fn push_less_equal<Infer: Mode>(
         &mut self,
         store: Infer::Store<'_>,
-        x: OwnershipSig,
-        y: OwnershipSig,
+        x: Var,
+        y: Var,
     ) {
         self.push_less_equal_impl(x, y);
         Infer::store_less_equal(store, x, y);
     }
-    fn push_approx_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig);
+    fn push_approx_linear_impl(&mut self, x: Var, y: Var, z: Var);
     fn push_approx_linear<Infer: Mode>(
         &mut self,
         store: Infer::Store<'_>,
-        x: OwnershipSig,
-        y: OwnershipSig,
-        z: OwnershipSig,
+        x: Var,
+        y: Var,
+        z: Var,
     ) {
         self.push_approx_linear_impl(x, y, z);
         Infer::store_linear(store, x, y, z);
@@ -292,15 +292,15 @@ pub trait Database {
 }
 
 impl Database for () {
-    fn push_linear_impl(&mut self, _: OwnershipSig, _: OwnershipSig, _: OwnershipSig) {}
+    fn push_linear_impl(&mut self, _: Var, _: Var, _: Var) {}
 
-    fn push_assume_impl(&mut self, _: OwnershipSig, _: bool) {}
+    fn push_assume_impl(&mut self, _: Var, _: bool) {}
 
-    fn push_equal_impl(&mut self, _: OwnershipSig, _: OwnershipSig) {}
+    fn push_equal_impl(&mut self, _: Var, _: Var) {}
 
-    fn push_less_equal_impl(&mut self, _: OwnershipSig, _: OwnershipSig) {}
+    fn push_less_equal_impl(&mut self, _: Var, _: Var) {}
 
-    fn push_approx_linear_impl(&mut self, _: OwnershipSig, _: OwnershipSig, _: OwnershipSig) {}
+    fn push_approx_linear_impl(&mut self, _: Var, _: Var, _: Var) {}
 }
 
 pub struct CadicalDatabase {
@@ -317,7 +317,7 @@ impl CadicalDatabase {
 
 impl Database for CadicalDatabase {
     #[inline]
-    fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
+    fn push_linear_impl(&mut self, x: Var, y: Var, z: Var) {
         self.solver
             .add_clause([-x.into_lit(), -y.into_lit()].into_iter());
         self.solver
@@ -329,7 +329,7 @@ impl Database for CadicalDatabase {
     }
 
     #[inline]
-    fn push_assume_impl(&mut self, x: OwnershipSig, sign: bool) {
+    fn push_assume_impl(&mut self, x: Var, sign: bool) {
         let mut lit = x.into_lit();
         if !sign {
             lit = -lit
@@ -338,7 +338,7 @@ impl Database for CadicalDatabase {
     }
 
     #[inline]
-    fn push_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
+    fn push_equal_impl(&mut self, x: Var, y: Var) {
         // self.solver
         //     .add_clause([-x.into_lit(), y.into_lit()].into_iter());
         // self.solver
@@ -348,12 +348,12 @@ impl Database for CadicalDatabase {
     }
 
     #[inline]
-    fn push_less_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
+    fn push_less_equal_impl(&mut self, x: Var, y: Var) {
         self.solver
             .add_clause([-x.into_lit(), y.into_lit()].into_iter());
     }
 
-    fn push_approx_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
+    fn push_approx_linear_impl(&mut self, x: Var, y: Var, z: Var) {
         self.solver
             .add_clause([-x.into_lit(), -y.into_lit()].into_iter());
         self.solver
@@ -366,7 +366,7 @@ impl Database for CadicalDatabase {
 pub struct Z3Database<'z3> {
     pub ctx: &'z3 z3::Context,
     pub solver: z3::Solver<'z3>,
-    pub z3_ast: IndexVec<OwnershipSig, z3::ast::Bool<'z3>>,
+    pub z3_ast: IndexVec<Var, z3::ast::Bool<'z3>>,
 }
 
 impl<'z3> Z3Database<'z3> {
@@ -382,7 +382,7 @@ impl<'z3> Z3Database<'z3> {
 }
 
 impl<'z3> Database for Z3Database<'z3> {
-    fn new_var(&mut self, x: OwnershipSig) {
+    fn new_var(&mut self, x: Var) {
         assert_eq!(
             x,
             self.z3_ast
@@ -390,14 +390,14 @@ impl<'z3> Database for Z3Database<'z3> {
         )
     }
 
-    fn new_vars(&mut self, sigs: Range<OwnershipSig>) -> Range<OwnershipSig> {
+    fn new_vars(&mut self, sigs: Range<Var>) -> Range<Var> {
         for sig in sigs.clone() {
             self.new_var(sig)
         }
         sigs
     }
 
-    fn push_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
+    fn push_linear_impl(&mut self, x: Var, y: Var, z: Var) {
         let [x, y, z] = [x, y, z].map(|sig| &self.z3_ast[sig]);
         self.solver
             .assert(&z3::ast::Bool::or(self.ctx, &[&!x, &!y]));
@@ -407,24 +407,24 @@ impl<'z3> Database for Z3Database<'z3> {
         self.solver.assert(&z3::ast::Bool::or(self.ctx, &[&!y, z]));
     }
 
-    fn push_assume_impl(&mut self, x: OwnershipSig, sign: bool) {
+    fn push_assume_impl(&mut self, x: Var, sign: bool) {
         let x = &self.z3_ast[x];
         let value = z3::ast::Bool::from_bool(self.ctx, sign);
         self.solver.assert(&!(x.xor(&value)))
         // self.solver.assert(&!z3::ast::Bool::xor(x, &value));
     }
 
-    fn push_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
+    fn push_equal_impl(&mut self, x: Var, y: Var) {
         let [x, y] = [x, y].map(|sig| &self.z3_ast[sig]);
         self.solver.assert(&!(x.xor(y)));
     }
 
-    fn push_less_equal_impl(&mut self, x: OwnershipSig, y: OwnershipSig) {
+    fn push_less_equal_impl(&mut self, x: Var, y: Var) {
         let [x, y] = [x, y].map(|sig| &self.z3_ast[sig]);
         self.solver.assert(&z3::ast::Bool::or(self.ctx, &[&!x, y]));
     }
 
-    fn push_approx_linear_impl(&mut self, x: OwnershipSig, y: OwnershipSig, z: OwnershipSig) {
+    fn push_approx_linear_impl(&mut self, x: Var, y: Var, z: Var) {
         let [x, y, z] = [x, y, z].map(|sig| &self.z3_ast[sig]);
         self.solver
             .assert(&z3::ast::Bool::or(self.ctx, &[&!x, &!y]));
