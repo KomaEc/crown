@@ -1,6 +1,8 @@
 #![feature(let_else)]
 #![feature(rustc_private)]
 
+extern crate once_cell;
+
 extern crate rustc_driver;
 extern crate rustc_error_codes;
 extern crate rustc_errors;
@@ -89,6 +91,22 @@ enum Command {
     },
 }
 
+fn run_compiler<R: Send>(
+    config: Config,
+    run: impl for<'tcx> FnOnce(TyCtxt<'tcx>) -> R + Send,
+) -> R {
+    rustc_interface::run_compiler(config, move |compiler| {
+        compiler.enter(|queries| {
+            queries
+                .global_ctxt()
+                .borrow_mut()
+                .unwrap()
+                .peek_mut()
+                .enter(|tcx| run(tcx))
+        })
+    })
+}
+
 fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .without_time()
@@ -99,16 +117,7 @@ fn main() -> Result<()> {
     if let Command::Preprocess { rewrite_mode } = args.cmd {
         for preprocess in preprocess::PREPROCESSES {
             let config = compiler_config(args.path.clone())?;
-            rustc_interface::run_compiler(config, move |compiler| {
-                compiler.enter(|queries| {
-                    queries
-                        .global_ctxt()
-                        .borrow_mut()
-                        .unwrap()
-                        .peek_mut()
-                        .enter(|tcx| preprocess(tcx, rewrite_mode))
-                })
-            });
+            run_compiler(config, |tcx| preprocess(tcx, rewrite_mode));
             if !matches!(rewrite_mode, RewriteMode::InPlace) {
                 println!("{rewrite_mode} mode does not support multi-phase rewrite");
                 break;
@@ -116,16 +125,7 @@ fn main() -> Result<()> {
         }
         return Ok(());
     }
-    rustc_interface::run_compiler(compiler_config(args.path)?, move |compiler| {
-        compiler.enter(|queries| {
-            queries
-                .global_ctxt()
-                .borrow_mut()
-                .unwrap()
-                .peek_mut()
-                .enter(|tcx| run(&args.cmd, tcx))
-        })
-    })
+    run_compiler(compiler_config(args.path)?, |tcx| run(&args.cmd, tcx))
 }
 
 /// Returns where the given rustc stores its sysroot source code.
@@ -148,8 +148,11 @@ fn rustc_sysroot() -> Result<PathBuf> {
     Ok(sysroot.to_path_buf())
 }
 
+const SYSROOT_PATH: once_cell::unsync::OnceCell<PathBuf> = once_cell::unsync::OnceCell::new();
+
 fn compiler_config(input_path: PathBuf) -> Result<Config> {
-    let sysroot_path = rustc_sysroot()?;
+
+    let sysroot_path = SYSROOT_PATH.get_or_try_init(|| rustc_sysroot())?.to_owned();
 
     let args = [
         "rustc",

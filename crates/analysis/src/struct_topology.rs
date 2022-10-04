@@ -189,6 +189,7 @@ impl StructTopology {
     }
 }
 
+#[allow(dead_code)]
 pub struct FieldAssumptions {
     /// struct -> set of fields assumed to be owning
     assumptions: FxHashMap<DefId, BitSet<u32>>,
