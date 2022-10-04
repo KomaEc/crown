@@ -15,19 +15,6 @@ pub trait Measurable {
         ptr_measure
     }
 
-    /// FIXME incorrect! this measure is gated by adt, however, if `allowed_derefs` > returned measure, then
-    /// the behavior is not right, it doesn't store enough things
-    // #[inline]
-    // fn measure(&self, ty: Ty, allowed_derefs: u32) -> Measure {
-    //     let (ptr_measure, maybe_adt) = abstract_ty(ty);
-    //     let adt_measure = maybe_adt.map(|adt_def| self.measure_adt(adt_def));
-    //     if ptr_measure > allowed_derefs {
-    //         allowed_derefs + 1
-    //     } else {
-    //         ptr_measure + adt_measure.unwrap_or_default()
-    //     }
-    // }
-
     fn measure(&self, ty: Ty, ptr_chased: u32) -> Measure;
 
     fn measure_adt(&self, adt_def: AdtDef, ptr_chased: u32) -> Measure;

@@ -11,6 +11,8 @@
 #![feature(is_some_with)]
 #![feature(type_alias_impl_trait)]
 
+extern crate either;
+
 extern crate rustc_arena;
 extern crate rustc_ast;
 extern crate rustc_ast_pretty;

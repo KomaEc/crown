@@ -1,6 +1,7 @@
 use std::ops::Range;
 
 use anyhow::bail;
+use either::Either;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_middle::{
@@ -72,9 +73,9 @@ impl<'tcx> CrateCtxt<'tcx> {
             }
         }
 
-        for fn_result in results.fn_summaries.into_values() {
-            let _ = WholeProgram::apply_model(fn_result, &results.model[..]);
-        }
+        // for fn_result in results.fn_summaries.into_values() {
+        //     let _ = WholeProgram::apply_model(fn_result, &results.model[..]);
+        // }
         Ok(())
     }
 }
@@ -299,7 +300,7 @@ impl WholeProgram {
     }
 
     /// This is unsound for this moment
-    fn apply_model(fn_summary: FnSummary, model: &[Ownership]) -> SSAState {
+    fn apply_model<'a, 'tcx>(body: &'a Body<'tcx>, fn_summary: FnSummary, model: &[Ownership]) -> SSAState {
         let FnSummary {
             fn_body_sig,
             mut ssa_state,
@@ -308,9 +309,11 @@ impl WholeProgram {
         let consumes = &mut ssa_state.consume_chain.consumes;
         // we have to do this awkwardly as lending iterator is not ready
         for bb in 0..consumes.len() {
-            for consumes in consumes[bb].iter_mut() {
+            for (statement_index, consumes) in consumes[bb].iter_mut().enumerate() {
                 for &mut (local, ref mut consume) in consumes.iter_mut() {
                     if consume.is_use() {
+                        let location = Location { block: bb.into(), statement_index };
+                        let Either::Left(_) = body.stmt_at(location) else { unreachable!("function args and return are assumed to be local. rustc changes this property somehow") };
                         let outter_most = fn_body_sig[local][consume.r#use].start;
                         if matches!(model[outter_most.index()], Ownership::Owning) {
                             consume.enable_def();
@@ -333,14 +336,14 @@ pub struct WholeProgramResults {
 }
 
 impl WholeProgramResults {
-    pub fn next_stage(
+    pub fn next_stage<'tcx>(
         self,
-        crate_ctxt: &CrateCtxt,
+        crate_ctxt: &CrateCtxt<'tcx>,
         gen: &mut Gen,
         database: &mut Z3Database,
     ) -> (
         FxHashMap<DefId, FnSig<Option<Range<OwnershipSig>>>>,
-        impl Iterator<Item = (DefId, SSAState)>,
+        impl Iterator<Item = (DefId, SSAState)> + 'tcx,
     ) {
         let mut inter_ctxt = FxHashMap::default();
         inter_ctxt.reserve(self.fn_sigs.len());
@@ -393,8 +396,10 @@ impl WholeProgramResults {
             inter_ctxt.insert(did, fn_sig);
         }
 
+        let tcx = crate_ctxt.tcx;
+
         let state_iter = self.fn_summaries.into_iter().map(move |(did, fn_summary)| {
-            (did, WholeProgram::apply_model(fn_summary, &self.model[..]))
+            (did, WholeProgram::apply_model(tcx.optimized_mir(did), fn_summary, &self.model[..]))
         });
 
         (inter_ctxt, state_iter)
