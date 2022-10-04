@@ -34,6 +34,7 @@ extern crate rustc_target;
 extern crate rustc_type_ir;
 
 pub mod analysis;
+mod body_ext;
 mod call_graph;
 mod ptr;
 mod rustc_properties;

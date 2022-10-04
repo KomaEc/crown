@@ -116,6 +116,19 @@ impl Voidable for &[Ownership] {
     }
 }
 
+pub trait LocalUsage {
+    fn base_transfered(&self, model: &[Ownership]) -> bool;
+}
+
+impl LocalUsage for Consume<Range<OwnershipSig>> {
+    fn base_transfered(&self, model: &[Ownership]) -> bool {
+        let pre = model[self.r#use.start.index()];
+        let post = model[self.def.start.index()];
+        pre == Ownership::Owning && post == Ownership::Transient
+            || pre == Ownership::Transient && post == Ownership::Owning
+    }
+}
+
 pub trait FnResult<'a> {
     type LocalResult;
     type LocationResults: Iterator<Item = (Local, Consume<Self::LocalResult>)>;
@@ -300,7 +313,11 @@ impl WholeProgram {
     }
 
     /// This is unsound for this moment
-    fn apply_model<'a, 'tcx>(body: &'a Body<'tcx>, fn_summary: FnSummary, model: &[Ownership]) -> SSAState {
+    fn apply_model<'a, 'tcx>(
+        body: &'a Body<'tcx>,
+        fn_summary: FnSummary,
+        model: &[Ownership],
+    ) -> SSAState {
         let FnSummary {
             fn_body_sig,
             mut ssa_state,
@@ -312,7 +329,10 @@ impl WholeProgram {
             for (statement_index, consumes) in consumes[bb].iter_mut().enumerate() {
                 for &mut (local, ref mut consume) in consumes.iter_mut() {
                     if consume.is_use() {
-                        let location = Location { block: bb.into(), statement_index };
+                        let location = Location {
+                            block: bb.into(),
+                            statement_index,
+                        };
                         let Either::Left(_) = body.stmt_at(location) else { unreachable!("function args and return are assumed to be local. rustc changes this property somehow") };
                         let outter_most = fn_body_sig[local][consume.r#use].start;
                         if matches!(model[outter_most.index()], Ownership::Owning) {
@@ -399,7 +419,10 @@ impl WholeProgramResults {
         let tcx = crate_ctxt.tcx;
 
         let state_iter = self.fn_summaries.into_iter().map(move |(did, fn_summary)| {
-            (did, WholeProgram::apply_model(tcx.optimized_mir(did), fn_summary, &self.model[..]))
+            (
+                did,
+                WholeProgram::apply_model(tcx.optimized_mir(did), fn_summary, &self.model[..]),
+            )
         });
 
         (inter_ctxt, state_iter)
