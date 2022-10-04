@@ -298,6 +298,7 @@ impl WholeProgram {
         model
     }
 
+    /// This is unsound for this moment
     fn apply_model(fn_summary: FnSummary, model: &[Ownership]) -> SSAState {
         let FnSummary {
             fn_body_sig,

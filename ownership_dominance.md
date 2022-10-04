@@ -314,7 +314,11 @@ p = **q; ~ { tmp = deref_copy(*q); p = *tmp; }
   - [x] Allow dereferencing more
   - [ ] Better iterative inference: infer `p` to be owning when `*p = q` and `q` changes its ownership state
 - [ ] Initial rewrite
-    Method boundaries, not struct definitions
+  - [ ] Rewrite BST/AVL
+  - [ ] Rewrite Heap
+  - [ ] Rewrite KDTREE
+  - [ ] Rewrite List/Hashtbl
+  - [ ] Rewrite Json parser (array ptr!!!)
 - [ ] Smarter constraint solving?
     Relax $x + y = z$ by $x \le z \land y \le z \land x + y \le 1$, this may lead to memory leak, but what if the underying C lib is well-written? We may perform this relaxed analysis in second stage
 
