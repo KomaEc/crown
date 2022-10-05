@@ -1,7 +1,7 @@
 #![feature(rustc_private)]
 #![feature(let_else)]
 
-mod ensure_null;
+mod signal_nullness;
 mod linkage;
 
 extern crate rustc_ast;
@@ -12,7 +12,7 @@ extern crate rustc_middle;
 extern crate rustc_span;
 
 use common::rewrite::{Rewrite, RewriteMode};
-use ensure_null::ensure_nullness;
+use signal_nullness::signal_nullness;
 use linkage::{canonicalize_structs, link_functions, link_incomplete_types};
 use rustc_middle::ty::TyCtxt;
 
@@ -21,7 +21,7 @@ pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] = &[phase_1, phas
 fn phase_1(tcx: TyCtxt, mode: RewriteMode) {
     let mut rewriter = Vec::new();
 
-    ensure_nullness(tcx, &mut rewriter);
+    signal_nullness(tcx, &mut rewriter);
 
     link_incomplete_types(tcx, &mut rewriter);
 

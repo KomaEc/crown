@@ -6,7 +6,7 @@ use rustc_hir::{
 use rustc_middle::ty::TyCtxt;
 use rustc_span::BytePos;
 
-pub(crate) fn ensure_nullness(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
+pub(crate) fn signal_nullness(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     // let mut rewriter = Vec::new(); //Rewriter::default();
 
     for maybe_owner in tcx.hir().krate().owners.iter() {
@@ -16,7 +16,7 @@ pub(crate) fn ensure_nullness(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         let hir_body = tcx.hir().body(body_id);
         // println!("{}", rustc_hir_pretty::id_to_string(&tcx.hir(), item.hir_id()));
         // println!("body kind: {:?}", hir_body.value);
-        EnsureNull {
+        SignalNullness {
             rewriter,
             tcx,
             in_while_loop: false,
@@ -25,12 +25,12 @@ pub(crate) fn ensure_nullness(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     }
 }
 
-struct EnsureNull<'me, 'hir, R> {
+struct SignalNullness<'me, 'hir, R> {
     tcx: TyCtxt<'hir>,
     rewriter: &'me mut R,
     in_while_loop: bool,
 }
-impl<'me, 'hir, R> Visitor<'hir> for EnsureNull<'me, 'hir, R>
+impl<'me, 'hir, R> Visitor<'hir> for SignalNullness<'me, 'hir, R>
 where
     R: Rewrite,
 {
@@ -57,7 +57,7 @@ where
                         let ptr = receiver;
 
                         // currently we only rewrite variables not complex expressions
-                        if let ExprKind::Path(..) = ptr.kind {
+                        if /* let ExprKind::Path(..) = ptr.kind */ true {
                             // rewrite is ensured, explicitly recurse into two branches
                             intravisit::walk_expr(self, truth_branch);
                             false_branch
@@ -110,7 +110,7 @@ where
     }
 }
 
-impl<'me, 'hir, R> EnsureNull<'me, 'hir, R>
+impl<'me, 'hir, R> SignalNullness<'me, 'hir, R>
 where
     R: Rewrite,
 {
