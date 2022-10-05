@@ -19,7 +19,7 @@ use crate::ssa::{
     state::{SSAIdx, SSAState},
 };
 
-pub trait InferMode<'infercx, 'db, 'tcx> {
+pub trait InferMode<'infercx, 'db, 'tcx, const STRICT: bool> {
     type Ctxt;
 
     type LocalSig: Clone + std::fmt::Debug;
@@ -73,9 +73,7 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     /// Impose no constraint on a definition. Constraints are still emitted
     /// because the old value of lhs must be non-owning
-    fn unknown_source(infer_cx: &mut Self::Ctxt, result: Consume<Self::LocalSig>) {
-        Self::assume(infer_cx, result.r#use, false)
-    }
+    fn unknown_source(infer_cx: &mut Self::Ctxt, result: Consume<Self::LocalSig>);
 
     fn unknown_sink(_: &mut Self::Ctxt, _: Consume<Self::LocalSig>);
 
@@ -98,7 +96,7 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 }
 #[derive(Debug)]
 pub enum Pure {}
-impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
+impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx, false> for Pure {
     type Ctxt = ();
 
     type LocalSig = ();
@@ -145,6 +143,8 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
     ) {
     }
 
+    fn unknown_source((): &mut Self::Ctxt, _: Consume<Self::LocalSig>) {}
+
     fn unknown_sink((): &mut Self::Ctxt, _: Consume<Self::LocalSig>) {}
 
     fn assume((): &mut Self::Ctxt, (): Self::LocalSig, _: bool) {}
@@ -169,7 +169,7 @@ pub struct Renamer<'rn, 'tcx> {
 }
 
 #[inline]
-pub fn consume_place_at<'rn, 'db, 'tcx, Infer>(
+pub fn consume_place_at<'rn, 'db, 'tcx, const STRICT: bool, Infer>(
     place: &Place<'tcx>,
     body: &Body<'tcx>,
     location: Location,
@@ -178,7 +178,7 @@ pub fn consume_place_at<'rn, 'db, 'tcx, Infer>(
 ) -> Option<Consume<Infer::LocalSig>>
 where
     'tcx: 'rn,
-    Infer: InferMode<'rn, 'db, 'tcx>,
+    Infer: InferMode<'rn, 'db, 'tcx, STRICT>,
 {
     let consume = rn.state.try_consume_at(place.local, location);
     // .or_else(|| matches!(body.local_decls[place.local].local_info, Some(LocalInfo::DerefTemp))
@@ -191,9 +191,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         Renamer { body, state }
     }
 
-    pub fn go<'db, Infer>(&mut self, mut infer_cx: impl BorrowMut<Infer::Ctxt>)
+    pub fn go<'db, const STRICT: bool, Infer>(&mut self, mut infer_cx: impl BorrowMut<Infer::Ctxt>)
     where
-        Infer: InferMode<'rn, 'db, 'tcx> + 'rn,
+        Infer: InferMode<'rn, 'db, 'tcx, STRICT> + 'rn,
     {
         tracing::debug!("Renaming {:?}", self.body.source.def_id());
 
@@ -220,7 +220,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         while let Some((bb, state)) = recursion.pop() {
             match state {
                 State::ToVisit => {
-                    self.go_basic_block::<Infer>(
+                    self.go_basic_block::<STRICT, Infer>(
                         infer_cx.borrow_mut(),
                         bb,
                         &self.body.basic_blocks[bb],
@@ -250,13 +250,13 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         );
     }
 
-    fn go_basic_block<'db, Infer>(
+    fn go_basic_block<'db, const STRICT: bool, Infer>(
         &mut self,
         infer_cx: &mut Infer::Ctxt,
         bb: BasicBlock,
         data: &BasicBlockData<'tcx>,
     ) where
-        Infer: InferMode<'rn, 'db, 'tcx>,
+        Infer: InferMode<'rn, 'db, 'tcx, STRICT>,
     {
         tracing::debug!("Renaming {:?}", bb);
 
@@ -283,7 +283,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 block: bb,
                 statement_index: index,
             };
-            self.go_statement::<Infer>(infer_cx.borrow_mut(), statement, location);
+            self.go_statement::<STRICT, Infer>(infer_cx.borrow_mut(), statement, location);
             index += 1;
         }
 
@@ -292,7 +292,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 block: bb,
                 statement_index: index,
             };
-            self.go_terminator::<Infer>(infer_cx, terminator, location);
+            self.go_terminator::<STRICT, Infer>(infer_cx, terminator, location);
         }
 
         for succ in self.body.basic_blocks.successors(bb) {
@@ -304,17 +304,17 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    fn go_statement<'db, Infer>(
+    fn go_statement<'db, const STRICT: bool, Infer>(
         &mut self,
         infer_cx: &mut Infer::Ctxt,
         statement: &Statement<'tcx>,
         location: Location,
     ) where
-        Infer: InferMode<'rn, 'db, 'tcx>,
+        Infer: InferMode<'rn, 'db, 'tcx, STRICT>,
     {
         match &statement.kind {
             StatementKind::Assign(box (place, rvalue)) => {
-                self.go_assign::<Infer>(infer_cx, place, rvalue, location)
+                self.go_assign::<STRICT, Infer>(infer_cx, place, rvalue, location)
             }
             StatementKind::SetDiscriminant { .. } => {
                 tracing::debug!("ignoring SetDiscriminant statement {:?}", statement)
@@ -338,13 +338,13 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    fn go_terminator<'db, Infer>(
+    fn go_terminator<'db, const STRICT: bool, Infer>(
         &mut self,
         infer_cx: &mut Infer::Ctxt,
         terminator: &Terminator<'tcx>,
         location: Location,
     ) where
-        Infer: InferMode<'rn, 'db, 'tcx>,
+        Infer: InferMode<'rn, 'db, 'tcx, STRICT>,
     {
         match &terminator.kind {
             TerminatorKind::Call {
@@ -362,7 +362,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     }))
                     .map(|place| {
                         place.and_then(|place| {
-                            consume_place_at::<Infer>(place, self.body, location, self, infer_cx)
+                            consume_place_at::<STRICT, Infer>(
+                                place, self.body, location, self, infer_cx,
+                            )
                         })
                     });
 
@@ -393,14 +395,14 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         }
     }
 
-    fn go_assign<'db, Infer>(
+    fn go_assign<'db, const STRICT: bool, Infer>(
         &mut self,
         infer_cx: &mut Infer::Ctxt,
         place: &Place<'tcx>,
         rvalue: &Rvalue<'tcx>,
         location: Location,
     ) where
-        Infer: InferMode<'rn, 'db, 'tcx>,
+        Infer: InferMode<'rn, 'db, 'tcx, STRICT>,
     {
         tracing::debug!("processing assignment {:?} = {:?}", place, rvalue);
 
@@ -410,7 +412,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         match rhs {
             Rvalue::Use(Operand::Constant(_)) => {
                 if let Some(lhs_consume) =
-                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx)
+                    consume_place_at::<STRICT, Infer>(lhs, self.body, location, self, infer_cx)
                 {
                     Infer::unknown_source(infer_cx, lhs_consume);
                     tracing::debug!("constant pointer rvalue {:?}", rhs)
@@ -421,7 +423,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 // even tho lhs is a pointer, it does not necessarily have an entry!
                 // this is because we limit the nested level of pointers
                 if let Some(lhs_consume) =
-                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx)
+                    consume_place_at::<STRICT, Infer>(lhs, self.body, location, self, infer_cx)
                 {
                     Infer::unknown_source(infer_cx, lhs_consume);
                     tracing::debug!("untrusted pointer source: raw address {:?}", operand)
@@ -436,7 +438,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 let lhs_consume = self.state.try_consume_at(lhs.local, location);
                 assert!(lhs_consume.is_none());
                 if let Some(rhs_consume) =
-                    consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx)
+                    consume_place_at::<STRICT, Infer>(rhs, self.body, location, self, infer_cx)
                 {
                     // correctness?
                     Infer::unknown_sink(infer_cx, rhs_consume);
@@ -455,9 +457,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
             Rvalue::Use(Operand::Move(rhs) | Operand::Copy(rhs)) => {
                 let lhs_consume =
-                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
+                    consume_place_at::<STRICT, Infer>(lhs, self.body, location, self, infer_cx);
                 let rhs_consume =
-                    consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
+                    consume_place_at::<STRICT, Infer>(rhs, self.body, location, self, infer_cx);
 
                 match (lhs_consume, rhs_consume) {
                     (None, None) => {}
@@ -471,9 +473,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
             Rvalue::Cast(_, Operand::Move(rhs) | Operand::Copy(rhs), ty) => {
                 let lhs_consume =
-                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
+                    consume_place_at::<STRICT, Infer>(lhs, self.body, location, self, infer_cx);
                 let mut rhs_consume =
-                    consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
+                    consume_place_at::<STRICT, Infer>(rhs, self.body, location, self, infer_cx);
 
                 if let TyKind::RawPtr(pointee_ty) = ty.kind() {
                     let pointee_ty = pointee_ty.ty;
@@ -499,14 +501,14 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 let lhs_consume = self.state.try_consume_at(lhs.local, location);
                 assert!(lhs_consume.is_none());
                 let rhs_consume =
-                    consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
+                    consume_place_at::<STRICT, Infer>(rhs, self.body, location, self, infer_cx);
                 Infer::copy_for_deref(infer_cx, rhs_consume);
                 tracing::debug!("deref_copy is ignored")
             }
 
             Rvalue::Ref(_, _, _) | Rvalue::AddressOf(_, _) => {
                 if let Some(lhs_consume) =
-                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx)
+                    consume_place_at::<STRICT, Infer>(lhs, self.body, location, self, infer_cx)
                 {
                     /* TODO */
                     // correctness???
@@ -515,18 +517,20 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             }
 
             Rvalue::Repeat(Operand::Copy(rhs) | Operand::Move(rhs), _) => {
-                let _ = consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
-                let _ = consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
+                let _ = consume_place_at::<STRICT, Infer>(lhs, self.body, location, self, infer_cx);
+                let _ = consume_place_at::<STRICT, Infer>(rhs, self.body, location, self, infer_cx);
 
                 /* TODO */
             }
 
             Rvalue::Aggregate(box AggregateKind::Array(_), rhs_vec) => {
-                let _ = consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
+                let _ = consume_place_at::<STRICT, Infer>(lhs, self.body, location, self, infer_cx);
 
                 for rhs in rhs_vec {
                     let Some(rhs) = rhs.place() else { continue };
-                    let _ = consume_place_at::<Infer>(&rhs, self.body, location, self, infer_cx);
+                    let _ = consume_place_at::<STRICT, Infer>(
+                        &rhs, self.body, location, self, infer_cx,
+                    );
                 }
 
                 /* TODO */
@@ -541,7 +545,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 // as well
 
                 let lhs_consume =
-                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
+                    consume_place_at::<STRICT, Infer>(lhs, self.body, location, self, infer_cx);
                 if let Some(_) = lhs_consume { /* TODO */ }
             }
 

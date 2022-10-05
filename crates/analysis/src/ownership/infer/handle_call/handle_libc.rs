@@ -11,7 +11,8 @@ use crate::{
     },
 };
 
-impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
+impl<'infercx, 'db, 'tcx, const STRICT: bool, Analysis>
+    InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>
 where
     'tcx: 'infercx,
     Analysis: AnalysisKind<'infercx, 'db>,
@@ -32,7 +33,7 @@ where
         let destination = destination.as_ref().unwrap();
         assert_eq!(args.len(), 1);
         assert!(args[0].is_none());
-        <Analysis as InferMode>::source(self, destination.clone());
+        <Analysis as InferMode<STRICT>>::source(self, destination.clone());
     }
 
     fn handle_free(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>) {
@@ -43,6 +44,6 @@ where
         assert!(destination.is_none());
         assert_eq!(args.len(), 1);
         let arg = args[0].clone().unwrap();
-        <Analysis as InferMode>::sink(self, arg);
+        <Analysis as InferMode<STRICT>>::sink(self, arg);
     }
 }

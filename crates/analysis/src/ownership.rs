@@ -33,7 +33,7 @@ impl<'tcx> CrateCtxt<'tcx> {
             let definitions = initial_definitions(body, self.tcx, self);
             let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
             let mut rn = Renamer::new(body, ssa_state);
-            rn.go::<Pure>(());
+            rn.go::<false, Pure>(());
             println!("completed");
         }
     }
@@ -217,13 +217,13 @@ impl WholeProgram {
     }
 
     #[inline]
-    fn initial_state<'tcx>(crate_ctxt: &CrateCtxt<'tcx>, body: &Body<'tcx>) -> SSAState {
+    fn initial_ssa<'a, 'tcx>(crate_ctxt: &'a CrateCtxt<'tcx>, body: &'a Body<'tcx>) -> SSAState {
         let dominance_frontier = compute_dominance_frontier(body);
         let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
         SSAState::new(body, &dominance_frontier, definitions)
     }
 
-    fn solve_body<'tcx>(
+    fn solve_body<'tcx, const STRICT: bool>(
         body: &Body<'tcx>,
         ssa_state: SSAState,
         crate_ctxt: &CrateCtxt<'tcx>,
@@ -237,7 +237,7 @@ impl WholeProgram {
 
         let mut infer_cx = InferCtxt::new(crate_ctxt, body, database, gen, inter_ctxt);
 
-        rn.go::<Self>(&mut infer_cx);
+        rn.go::<STRICT, Self>(&mut infer_cx);
 
         let results = FnSummary::new(rn, infer_cx);
 
@@ -361,6 +361,68 @@ impl WholeProgram {
         ssa_state.consume_chain.reset();
         ssa_state
     }
+
+    fn solve_crate<const STRICT: bool>(
+        crate_ctxt: &mut CrateCtxt,
+        previous_results: Option<WholeProgramResults>,
+    ) -> anyhow::Result<WholeProgramResults> {
+        let mut gen = Gen::new();
+
+        let config = z3::Config::new();
+        let ctx = z3::Context::new(&config);
+        let mut database = <Self as AnalysisKind>::DB::new(&ctx);
+
+        let mut fn_summaries = FxHashMap::default();
+        fn_summaries.reserve(crate_ctxt.fns().len());
+
+        let fn_sigs = if let Some(previous_results) = previous_results {
+            crate_ctxt.struct_topology.next_stage(crate_ctxt.tcx);
+            let (inter_ctxt, fns) =
+                previous_results.next_stage(crate_ctxt, &mut gen, &mut database);
+            for (did, ssa_state) in fns {
+                let body = crate_ctxt.tcx.optimized_mir(did);
+                let fn_summary = WholeProgram::solve_body::<STRICT>(
+                    body,
+                    ssa_state,
+                    crate_ctxt,
+                    &inter_ctxt,
+                    &mut gen,
+                    &mut database,
+                )?;
+                fn_summaries.insert(did, fn_summary);
+            }
+            inter_ctxt
+        } else {
+            let inter_ctxt =
+                WholeProgram::pre_generate_fn_sigs(crate_ctxt, &mut gen, &mut database);
+            for &did in crate_ctxt.call_graph.fns() {
+                let body = crate_ctxt.tcx.optimized_mir(did);
+                let ssa_state = WholeProgram::initial_ssa(crate_ctxt, body);
+                let fn_summary = WholeProgram::solve_body::<STRICT>(
+                    body,
+                    ssa_state,
+                    crate_ctxt,
+                    &inter_ctxt,
+                    &mut gen,
+                    &mut database,
+                )?;
+                fn_summaries.insert(did, fn_summary);
+            }
+            inter_ctxt
+        };
+
+        let model = WholeProgram::retrieve_model(database, gen);
+
+        let results = WholeProgramResults {
+            model,
+            fn_sigs,
+            fn_summaries,
+        };
+
+        results.print_fn_sigs(crate_ctxt.tcx, crate_ctxt.fns());
+
+        Ok(results)
+    }
 }
 
 pub struct WholeProgramResults {
@@ -425,14 +487,14 @@ impl WholeProgramResults {
 
         let tcx = crate_ctxt.tcx;
 
-        let state_iter = self.fn_summaries.into_iter().map(move |(did, fn_summary)| {
+        let fns = self.fn_summaries.into_iter().map(move |(did, fn_summary)| {
             (
                 did,
                 WholeProgram::apply_model(tcx.optimized_mir(did), fn_summary, &self.model[..]),
             )
         });
 
-        (inter_ctxt, state_iter)
+        (inter_ctxt, fns)
     }
 }
 
@@ -475,82 +537,13 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
     fn analyze(crate_ctxt: &mut CrateCtxt) -> anyhow::Result<Self::Results> {
         // first stage
 
-        let mut gen = Gen::new();
-
-        let config = z3::Config::new();
-        let ctx = z3::Context::new(&config);
-        let mut database = Self::DB::new(&ctx);
-
-        let inter_ctxt = WholeProgram::pre_generate_fn_sigs(crate_ctxt, &mut gen, &mut database);
-
-        let mut fn_summaries = FxHashMap::default();
-        fn_summaries.reserve(crate_ctxt.fns().len());
-
-        for &did in crate_ctxt.call_graph.fns() {
-            let body = crate_ctxt.tcx.optimized_mir(did);
-            let ssa_state = WholeProgram::initial_state(crate_ctxt, body);
-            let fn_summary = WholeProgram::solve_body(
-                body,
-                ssa_state,
-                crate_ctxt,
-                &inter_ctxt,
-                &mut gen,
-                &mut database,
-            )?;
-            fn_summaries.insert(did, fn_summary);
-        }
-
-        let model = WholeProgram::retrieve_model(database, gen);
-
-        let results = WholeProgramResults {
-            model,
-            fn_sigs: inter_ctxt,
-            fn_summaries,
-        };
-
-        results.print_fn_sigs(crate_ctxt.tcx, crate_ctxt.fns());
+        let results = WholeProgram::solve_crate::<false>(crate_ctxt, None)?;
 
         // second stage
         let mut results = results;
 
         for _ in 0..2 {
-            crate_ctxt.struct_topology.next_stage(crate_ctxt.tcx);
-
-            let mut gen = Gen::new();
-
-            let config = z3::Config::new();
-            let ctx = z3::Context::new(&config);
-            let mut database = Self::DB::new(&ctx);
-
-            let (inter_ctxt, state_iter) = results.next_stage(crate_ctxt, &mut gen, &mut database);
-
-            let mut fn_summaries = FxHashMap::default();
-            fn_summaries.reserve(crate_ctxt.fns().len());
-
-            for (did, ssa_state) in state_iter {
-                let body = crate_ctxt.tcx.optimized_mir(did);
-                let fn_summary = WholeProgram::solve_body(
-                    body,
-                    ssa_state,
-                    crate_ctxt,
-                    &inter_ctxt,
-                    &mut gen,
-                    &mut database,
-                )?;
-                fn_summaries.insert(did, fn_summary);
-            }
-
-            let model = WholeProgram::retrieve_model(database, gen);
-
-            results = WholeProgramResults {
-                model,
-                fn_sigs: inter_ctxt,
-                fn_summaries,
-            };
-
-            results.print_fn_sigs(crate_ctxt.tcx, crate_ctxt.fns());
-
-            // break;
+            results = WholeProgram::solve_crate::<false>(crate_ctxt, Some(results))?;
         }
 
         Ok(results)
@@ -576,7 +569,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for StandAlone {
             let mut database = CadicalDatabase::new();
             let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, ());
 
-            rn.go::<Self>(&mut infer_cx);
+            rn.go::<false, Self>(&mut infer_cx);
             match database.solver.solve() {
                 Some(true) => println!("succeeded"),
                 Some(false) => println!("failed"),
