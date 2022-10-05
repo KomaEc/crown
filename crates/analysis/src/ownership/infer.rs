@@ -40,9 +40,9 @@ pub struct FnSummary {
 }
 
 impl FnSummary {
-    pub fn new<'analysis, 'db, const STRICT: bool, Kind: AnalysisKind<'analysis, 'db>>(
+    pub fn new<'analysis, 'db, Kind: AnalysisKind<'analysis, 'db>>(
         rn: Renamer,
-        infer_cx: InferCtxt<'analysis, 'db, '_, STRICT, Kind>,
+        infer_cx: InferCtxt<'analysis, 'db, '_, Kind>,
     ) -> Self {
         FnSummary {
             fn_body_sig: infer_cx.fn_body_sig,
@@ -77,7 +77,7 @@ impl<'a> FnResult<'a> for FnSummary {
     }
 }
 
-pub struct InferCtxt<'infercx, 'db, 'tcx, const STRICT: bool, Analysis>
+pub struct InferCtxt<'infercx, 'db, 'tcx, Analysis>
 where
     'tcx: 'infercx,
     Analysis: AnalysisKind<'infercx, 'db>,
@@ -87,11 +87,10 @@ where
     gen: &'infercx mut Gen,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     pub fn_body_sig: FnBodySig<LocalSig>,
-    deref_copy: Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx, STRICT>>::LocalSig>>,
+    deref_copy: Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>>,
 }
 
-impl<'infercx, 'db, 'tcx, const STRICT: bool, Analysis>
-    InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>
+impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
 where
     'tcx: 'infercx,
     Analysis: AnalysisKind<'infercx, 'db>,
@@ -113,7 +112,7 @@ where
             }
         }
 
-        <Analysis as HandleCall<STRICT>>::handle_inputs(
+        <Analysis as HandleCall>::handle_inputs(
             // crate_ctxt,
             &inter_ctxt,
             database,
@@ -140,11 +139,11 @@ where
     }
 
     fn project_deeper(
-        base: Consume<<Analysis as InferMode<'infercx, 'db, 'tcx, STRICT>>::LocalSig>,
+        base: Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>,
         ty: Ty<'tcx>,
         projection: &[PlaceElem<'tcx>],
         infer_cx: &mut Self,
-    ) -> Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx, STRICT>>::LocalSig>> {
+    ) -> Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>> {
         assert!(!base.is_invalid());
 
         let mut base_ty = ty;
@@ -239,14 +238,13 @@ where
     }
 }
 
-impl<'infercx, 'db, 'tcx, const STRICT: bool, Analysis> InferMode<'infercx, 'db, 'tcx, STRICT>
-    for Analysis
+impl<'infercx, 'db, 'tcx, Analysis> InferMode<'infercx, 'db, 'tcx> for Analysis
 where
     'tcx: 'infercx,
     Analysis: AnalysisKind<'infercx, 'db>,
     <Analysis as AnalysisKind<'infercx, 'db>>::DB: 'infercx,
 {
-    type Ctxt = InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>;
+    type Ctxt = InferCtxt<'infercx, 'db, 'tcx, Analysis>;
 
     type LocalSig = LocalSig;
 
@@ -261,7 +259,7 @@ where
 
     #[inline]
     fn define_phi_node(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         local: Local,
         ty: Ty<'tcx>,
         def: SSAIdx,
@@ -272,7 +270,7 @@ where
     }
 
     fn join_phi_nodes<'a>(
-        infer_cx: &'a mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>,
+        infer_cx: &'a mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         phi_nodes: impl Iterator<Item = (Local, &'a mut PhiNode)>,
     ) {
         for (local, phi_node) in phi_nodes {
@@ -296,7 +294,7 @@ where
     }
 
     fn interpret_consume(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         body: &Body<'tcx>,
         place: &Place<'tcx>,
         consume: Option<Consume<SSAIdx>>,
@@ -338,7 +336,7 @@ where
     /// For *mut {f: *mut, g: *mut}, it is allowed that the outter is transfered but inners aren't.
     /// This is allowed in one sentence. But it will never be allowed in a body because of `finalise`!!!
     fn transfer(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         lhs_result: Consume<Self::LocalSig>,
         rhs_result: Consume<Self::LocalSig>,
     ) {
@@ -358,7 +356,7 @@ where
     }
 
     fn cast(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         lhs: Consume<Self::LocalSig>,
         rhs: Consume<Self::LocalSig>,
     ) {
@@ -368,37 +366,20 @@ where
     }
 
     #[inline]
-    fn unknown_source(infer_cx: &mut Self::Ctxt, consume: Consume<Self::LocalSig>) {
-        if STRICT {
-            Self::borrow(infer_cx, consume)
-        } else {
-            Self::assume(infer_cx, consume.r#use, false)
-        }
-    }
-
-    #[inline]
     fn unknown_sink(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         consume: Consume<Self::LocalSig>,
     ) {
-        if STRICT {
-            for (r#use, def) in consume.r#use.zip(consume.def) {
-                infer_cx
-                    .database
-                    .push_equal::<crate::ssa::constraint::Debug>((), def, r#use);
-            }
-        } else {
-            for (r#use, def) in consume.r#use.zip(consume.def) {
-                infer_cx
-                    .database
-                    .push_less_equal::<crate::ssa::constraint::Debug>((), def, r#use);
-            }
+        for (r#use, def) in consume.r#use.zip(consume.def) {
+            infer_cx
+                .database
+                .push_less_equal::<crate::ssa::constraint::Debug>((), def, r#use);
         }
     }
 
     #[inline]
     fn assume(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         result: Self::LocalSig,
         value: bool,
     ) {
@@ -411,7 +392,7 @@ where
 
     #[inline]
     fn finalise(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         local: Local,
         r#use: SSAIdx,
     ) {
@@ -423,7 +404,7 @@ where
     }
 
     fn handle_call(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         caller: Self::CallArgs<Option<Consume<Self::LocalSig>>>,
         func: &Operand,
     ) {
@@ -440,7 +421,7 @@ where
                 {
                     // this crate
                     rustc_hir::Node::Item(_) => {
-                        <Analysis as HandleCall<STRICT>>::handle_call(infer_cx, &caller, callee)
+                        <Analysis as HandleCall>::handle_call(infer_cx, &caller, callee)
                     }
                     // extern
                     rustc_hir::Node::ForeignItem(foreign_item) => {
@@ -461,12 +442,12 @@ where
     }
 
     fn handle_output(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         ssa_idx: Option<SSAIdx>,
         me: DefId,
     ) {
         let output = ssa_idx.map(|ssa_idx| infer_cx.fn_body_sig[RETURN_PLACE][ssa_idx].clone());
-        <Analysis as HandleCall<STRICT>>::handle_output(infer_cx, me, output)
+        <Analysis as HandleCall>::handle_output(infer_cx, me, output)
     }
 
     fn cast_to_c_void(

@@ -11,8 +11,7 @@ use crate::{
     },
 };
 
-impl<'infercx, 'db, 'tcx, const STRICT: bool, Analysis>
-    InferCtxt<'infercx, 'db, 'tcx, STRICT, Analysis>
+impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
 where
     'tcx: 'infercx,
     Analysis: AnalysisKind<'infercx, 'db>,
@@ -50,6 +49,6 @@ where
         let FnSig { args, .. } = caller;
         assert_eq!(args.len(), 1);
         let arg = args.first().and_then(Option::as_ref).cloned().unwrap();
-        <Analysis as InferMode<STRICT>>::borrow(self, arg)
+        <Analysis as InferMode>::borrow(self, arg)
     }
 }

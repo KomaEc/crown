@@ -18,13 +18,12 @@ pub mod handle_library;
 
 /// Bad abstraction
 /// TODO refactor
-pub trait HandleCall<'infercx, 'db, 'tcx, const STRICT: bool>:
-    AnalysisKind<'infercx, 'db> + Sized
+pub trait HandleCall<'infercx, 'db, 'tcx>: AnalysisKind<'infercx, 'db> + Sized
 where
     'tcx: 'infercx,
 {
     fn handle_call(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Self>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         caller: &FnSig<Option<Consume<Range<Var>>>>,
         callee: DefId,
     );
@@ -38,20 +37,19 @@ where
     );
 
     fn handle_output(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Self>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         r#fn: DefId,
         output: Option<Range<Var>>,
     );
 }
 
-impl<'infercx, 'db, 'tcx, const STRICT: bool, Analysis> HandleCall<'infercx, 'db, 'tcx, STRICT>
-    for Analysis
+impl<'infercx, 'db, 'tcx, Analysis> HandleCall<'infercx, 'db, 'tcx> for Analysis
 where
     'tcx: 'infercx,
     Analysis: AnalysisKind<'infercx, 'db>,
 {
     default fn handle_call(
-        _: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Self>,
+        _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         _: &FnSig<Option<Consume<Range<Var>>>>,
         _: DefId,
     ) {
@@ -68,20 +66,19 @@ where
     }
 
     default fn handle_output(
-        _: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Self>,
+        _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         _: DefId,
         _: Option<Range<Var>>,
     ) {
     }
 }
 
-impl<'infercx, 'db, 'tcx, const STRICT: bool> HandleCall<'infercx, 'db, 'tcx, STRICT>
-    for WholeProgram
+impl<'infercx, 'db, 'tcx> HandleCall<'infercx, 'db, 'tcx> for WholeProgram
 where
     'tcx: 'infercx,
 {
     fn handle_call(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, Self>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         caller: &FnSig<Option<Consume<Range<Var>>>>,
         callee: DefId,
     ) {
@@ -172,7 +169,7 @@ where
     }
 
     fn handle_output(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, STRICT, WholeProgram>,
+        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, WholeProgram>,
         r#fn: DefId,
         output: Option<Range<Var>>,
     ) {
