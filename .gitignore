@@ -16,10 +16,12 @@ Cargo.lock
 proptest-regressions/
 
 ground_truth
-/workspace
+workspace
 **/*.bak
 
 .z3-trace
 **/*.orc-trace
 
 deps/
+
+_build/
