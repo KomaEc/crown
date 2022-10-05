@@ -6,10 +6,7 @@ use anyhow::bail;
 use either::Either;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_middle::{
-    mir::{Body, Local, Location},
-    ty::TyCtxt,
-};
+use rustc_middle::mir::{Body, Local, Location};
 
 use self::infer::{FnSummary, InferCtxt};
 use crate::{
@@ -22,7 +19,7 @@ use crate::{
         consume::{initial_definitions, Consume, Voidable},
         dom::compute_dominance_frontier,
         state::SSAState,
-        FnResult,
+        AnalysisResults, FnResult,
     },
     CrateCtxt,
 };
@@ -110,6 +107,13 @@ impl Voidable for &[Ownership] {
     }
 }
 
+pub trait OwnershipSchemes<'analysis>: AnalysisResults<'analysis, Value = Ownership> {}
+
+impl<'analysis, Results> OwnershipSchemes<'analysis> for Results where
+    Results: AnalysisResults<'analysis, Value = Ownership>
+{
+}
+
 // pub trait LocalUsage {
 //     fn base_transfered(&self, model: &[Ownership]) -> bool;
 // }
@@ -142,51 +146,6 @@ impl<'a> FnResult<'a> for (&'a FnSummary, &'a [Ownership]) {
                 result.map_valid(|sigs| &self.1[sigs.start.index()..sigs.end.index()]),
             )
         })
-    }
-}
-
-fn display_value(value: &[Ownership]) -> String {
-    "[".to_owned()
-        + &value
-            .iter()
-            .map(|value| format!("{value}"))
-            .collect::<Vec<_>>()
-            .join(" ")
-        + "]"
-}
-
-pub trait AnalysisResults<'a> {
-    type FnSig: Iterator<Item = Option<&'a [Ownership]>>;
-    type FnResult: FnResult<'a, LocalResult = &'a [Ownership]>;
-
-    fn fn_result(&'a self, r#fn: DefId) -> Option<Self::FnResult>;
-
-    fn fn_sig(&'a self, r#fn: DefId) -> Self::FnSig;
-    fn print_fn_sigs(&'a self, tcx: TyCtxt, fns: &[DefId]) {
-        for &did in fns {
-            let mut fn_sig = self.fn_sig(did);
-            let ret = fn_sig.next().unwrap();
-            let ret = if let Some(sig) = ret {
-                // format!("{:?}", sig)
-                display_value(sig)
-            } else {
-                "_".to_owned()
-            };
-            let args = fn_sig
-                .map(|sig| {
-                    if let Some(sig) = sig {
-                        // format!("{:?}", sig)
-                        display_value(sig)
-                    } else {
-                        "_".to_owned()
-                    }
-                })
-                .collect::<Vec<_>>()
-                .join(", ");
-
-            let fn_path = tcx.def_path_str(did);
-            println!("{fn_path}: ({args}) -> {ret}")
-        }
     }
 }
 
@@ -415,6 +374,8 @@ impl WholeProgramResults {
 }
 
 impl<'a> AnalysisResults<'a> for WholeProgramResults {
+    type Value = Ownership;
+
     type FnSig = impl Iterator<Item = Option<&'a [Ownership]>>;
 
     type FnResult = (&'a FnSummary, &'a [Ownership]);

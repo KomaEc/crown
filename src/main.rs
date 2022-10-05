@@ -151,7 +151,6 @@ fn rustc_sysroot() -> Result<PathBuf> {
 const SYSROOT_PATH: once_cell::unsync::OnceCell<PathBuf> = once_cell::unsync::OnceCell::new();
 
 fn compiler_config(input_path: PathBuf) -> Result<Config> {
-
     let sysroot_path = SYSROOT_PATH.get_or_try_init(|| rustc_sysroot())?.to_owned();
 
     let args = [
