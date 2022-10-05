@@ -6,7 +6,7 @@ use anyhow::bail;
 use either::Either;
 use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_hir::def_id::DefId;
-use rustc_middle::mir::{Body, Local, Location};
+use rustc_middle::mir::{BasicBlockData, Body, Local, Location, Rvalue, StatementKind};
 
 use self::infer::{FnSummary, InferCtxt};
 use crate::{
@@ -126,6 +126,24 @@ impl<'analysis, Results> OwnershipSchemes<'analysis> for Results where
 //             || pre == Ownership::Transient && post == Ownership::Owning
 //     }
 // }
+
+pub trait LocalUsage {
+    fn state_changed(&self) -> bool;
+}
+
+impl LocalUsage for Consume<&[Ownership]> {
+    fn state_changed(&self) -> bool {
+        for (&r#use, &def) in self.r#use.iter().zip(self.def.iter()) {
+            if r#use == def {
+                continue;
+            }
+            if r#use == Ownership::Owning || def == Ownership::Owning {
+                return true;
+            }
+        }
+        false
+    }
+}
 
 impl<'a> FnResult<'a> for (&'a FnSummary, &'a [Ownership]) {
     type LocalResult = &'a [Ownership];
@@ -256,18 +274,64 @@ impl WholeProgram {
         model
     }
 
-    /// This is unsound for this moment
+    /// This is incomplete at this moment
     fn apply_model<'a, 'tcx>(
         body: &'a Body<'tcx>,
         fn_summary: FnSummary,
         model: &[Ownership],
     ) -> SSAState {
+        let mut state_changed_locations: FxHashSet<Location> = FxHashSet::default();
+        let fn_results = (&fn_summary, model);
+
+        for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
+            let BasicBlockData { statements, .. } = bb_data;
+            let mut index = 0;
+            let mut deref_copy: Option<Location> = None;
+            for statement in statements {
+                let location = Location {
+                    block: bb,
+                    statement_index: index,
+                };
+                if let StatementKind::Assign(box (_, rvalue)) = &statement.kind
+                    && let Rvalue::CopyForDeref(_) = rvalue
+                {
+                    let base_location = deref_copy.take().or(Some(location));
+                    deref_copy = base_location;
+                    index += 1;
+                    continue;
+                }
+                if let Some(base_location) = deref_copy.take() {
+                    let StatementKind::Assign(box (_, _)) = &statement.kind else { unreachable!() };
+
+                    let location_result = fn_results
+                        .location_result(base_location)
+                        .chain(fn_results.location_result(location));
+                    for (_, result) in location_result {
+                        if result.state_changed() {
+                            state_changed_locations.insert(location);
+                            state_changed_locations.insert(base_location);
+                        }
+                    }
+
+                    index += 1;
+                    continue;
+                }
+
+                let location_result = fn_results.location_result(location);
+                for (_, result) in location_result {
+                    if result.state_changed() {
+                        state_changed_locations.insert(location);
+                    }
+                }
+
+                index += 1;
+            }
+        }
+
         let FnSummary {
             fn_body_sig,
             mut ssa_state,
         } = fn_summary;
-
-        let mut transfering_stmts: FxHashSet<Location> = FxHashSet::default();
 
         let consumes = &mut ssa_state.consume_chain.consumes;
         // we have to do this awkwardly as lending iterator is not ready
@@ -279,9 +343,13 @@ impl WholeProgram {
                             block: bb.into(),
                             statement_index,
                         };
-                        let Either::Left(_) = body.stmt_at(location) else { unreachable!("function args and return are assumed to be local. rustc changes this property somehow") };
+                        let Either::Left(_) = body.stmt_at(location) else {
+                            unreachable!("function args and return are assumed to be local. rustc changes this property somehow")
+                        };
                         let outter_most = fn_body_sig[local][consume.r#use].start;
-                        if matches!(model[outter_most.index()], Ownership::Owning) {
+                        if matches!(model[outter_most.index()], Ownership::Owning)
+                            || state_changed_locations.contains(&location)
+                        {
                             consume.enable_def();
                         }
                     }
@@ -344,13 +412,6 @@ impl WholeProgramResults {
                                     true,
                                 );
                             }
-                            // Ownership::Transient => {
-                            //     database.push_assume::<crate::analysis::constraint::Debug>(
-                            //         (),
-                            //         now,
-                            //         false,
-                            //     );
-                            // }
                             Ownership::Transient | Ownership::Unknown => {}
                         }
                     }
