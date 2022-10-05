@@ -4,7 +4,7 @@ use std::ops::Range;
 
 use anyhow::bail;
 use either::Either;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_hir::def_id::DefId;
 use rustc_middle::mir::{Body, Local, Location};
 
@@ -266,6 +266,8 @@ impl WholeProgram {
             fn_body_sig,
             mut ssa_state,
         } = fn_summary;
+
+        let mut transfering_stmts: FxHashSet<Location> = FxHashSet::default();
 
         let consumes = &mut ssa_state.consume_chain.consumes;
         // we have to do this awkwardly as lending iterator is not ready

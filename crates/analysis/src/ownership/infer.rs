@@ -160,6 +160,16 @@ where
                     // No need to set up threshold. Consumption of indirect places are processed
                     // only if definitions contain them, which happen in phases where threshold.
                     // Furthermore, mir places contain only at most one indirection.
+
+                    let ptr = base.r#use.start + proj_start_offset;
+                    if ptr < base.r#use.end {
+                        infer_cx
+                            .database
+                            .push_assume::<crate::ssa::constraint::Debug>((), ptr, true);
+                    } else {
+                        break;
+                    }
+
                     proj_start_offset += 1;
                     base_ty = base_ty.builtin_deref(true).unwrap().ty;
                     ptr_chased += 1;
