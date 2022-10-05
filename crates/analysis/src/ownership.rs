@@ -6,7 +6,7 @@ use anyhow::bail;
 use either::Either;
 use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_hir::def_id::DefId;
-use rustc_middle::mir::{BasicBlockData, Body, Local, Location, Rvalue, StatementKind};
+use rustc_middle::{mir::{BasicBlockData, Body, Local, Location, Rvalue, StatementKind}, ty::TyCtxt};
 
 use self::infer::{FnSummary, InferCtxt};
 use crate::{
@@ -24,51 +24,21 @@ use crate::{
     CrateCtxt,
 };
 
-impl<'tcx> CrateCtxt<'tcx> {
-    pub fn pure_rename(&mut self) {
-        for &did in self.fns() {
-            println!("renaming {:?}", did);
-            let body = self.tcx.optimized_mir(did);
-            let dominance_frontier = compute_dominance_frontier(body);
-            let definitions = initial_definitions(body, self.tcx, self);
-            let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
-            let mut rn = Renamer::new(body, ssa_state);
-            rn.go::<Pure>(());
-            println!("completed");
-        }
+pub fn crash_me(crate_ctxt: &mut CrateCtxt) -> anyhow::Result<()> {
+    for &did in crate_ctxt.fns() {
+        println!("renaming {:?}", did);
+        let body = crate_ctxt.tcx.optimized_mir(did);
+        let dominance_frontier = compute_dominance_frontier(body);
+        let definitions = initial_definitions(body, crate_ctxt.tcx, &*crate_ctxt);
+        let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
+        let mut rn = Renamer::new(body, ssa_state);
+        rn.go::<Pure>(());
+        println!("completed");
     }
-
-    pub fn standalone_solve(&mut self) -> anyhow::Result<()> {
-        StandAlone::analyze(self)
-    }
-
-    pub fn whole_program_analysis(&mut self) -> anyhow::Result<()> {
-        let results = WholeProgram::analyze(self)?;
-
-        for did in results.fn_summaries.keys() {
-            let body = self.tcx.optimized_mir(did);
-            tracing::debug!("@{}", self.tcx.def_path_str(*did));
-            for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
-                for index in 0..bb_data.statements.len() + bb_data.terminator.iter().count() {
-                    let location = Location {
-                        block: bb,
-                        statement_index: index,
-                    };
-                    let result = results
-                        .fn_result(*did)
-                        .unwrap()
-                        .location_result(location)
-                        .map(|(local, result)| format!("{:?}: {:?}", local, result))
-                        .collect::<Vec<_>>()
-                        .join(", ");
-
-                    tracing::debug!("@{:?}: {result}", location);
-                }
-            }
-        }
-
-        Ok(())
-    }
+    StandAlone::analyze(crate_ctxt)?;
+    let results = WholeProgram::analyze(crate_ctxt)?;
+    results.trace(crate_ctxt.tcx);
+    Ok(())
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -495,6 +465,30 @@ impl WholeProgramResults {
         });
 
         (inter_ctxt, state_iter)
+    }
+
+    pub fn trace(&self, tcx: TyCtxt) {
+        for did in self.fn_summaries.keys() {
+            let body = tcx.optimized_mir(did);
+            tracing::debug!("@{}", tcx.def_path_str(*did));
+            for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
+                for index in 0..bb_data.statements.len() + bb_data.terminator.iter().count() {
+                    let location = Location {
+                        block: bb,
+                        statement_index: index,
+                    };
+                    let result = self
+                        .fn_result(*did)
+                        .unwrap()
+                        .location_result(location)
+                        .map(|(local, result)| format!("{:?}: {:?}", local, result))
+                        .collect::<Vec<_>>()
+                        .join(", ");
+
+                    tracing::debug!("@{:?}: {result}", location);
+                }
+            }
+        }
     }
 }
 

@@ -22,7 +22,7 @@ use std::{
     time::Instant,
 };
 
-use analysis::CrateCtxt;
+use analysis::{CrateCtxt, ownership::AnalysisKind};
 use anyhow::{bail, Context, Result};
 use clap::Parser;
 use common::rewrite::RewriteMode;
@@ -77,6 +77,7 @@ enum Command {
         all: bool,
     },
     CrashMe,
+    Refactor,
     Rewrite {
         #[clap(arg_enum, default_value_t = RewriteMode::Print)]
         rewrite_mode: RewriteMode,
@@ -107,6 +108,18 @@ fn run_compiler<R: Send>(
     })
 }
 
+fn preprocess(path: &PathBuf, rewrite_mode: RewriteMode) -> Result<()> {
+    for preprocess in preprocess::PREPROCESSES {
+        let config = compiler_config(path.clone())?;
+        run_compiler(config, |tcx| preprocess(tcx, rewrite_mode));
+        if !matches!(rewrite_mode, RewriteMode::InPlace) {
+            println!("{rewrite_mode} mode does not support multi-phase rewrite");
+            break;
+        }
+    }
+    Ok(())
+}
+
 fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .without_time()
@@ -115,15 +128,11 @@ fn main() -> Result<()> {
     let args = Cli::parse();
 
     if let Command::Preprocess { rewrite_mode } = args.cmd {
-        for preprocess in preprocess::PREPROCESSES {
-            let config = compiler_config(args.path.clone())?;
-            run_compiler(config, |tcx| preprocess(tcx, rewrite_mode));
-            if !matches!(rewrite_mode, RewriteMode::InPlace) {
-                println!("{rewrite_mode} mode does not support multi-phase rewrite");
-                break;
-            }
-        }
+        preprocess(&args.path, rewrite_mode)?;
         return Ok(());
+    }
+    if let Command::Refactor = args.cmd {
+        preprocess(&args.path, RewriteMode::InPlace)?;
     }
     run_compiler(compiler_config(args.path)?, |tcx| run(&args.cmd, tcx))
 }
@@ -273,54 +282,14 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         }
         Command::CrashMe => {
             let mut program = CrateCtxt::from(input);
-            time("crash me with pure rename", || program.pure_rename());
-            time("crash me with inference and solve", || {
-                program.standalone_solve()
-            })?;
-            time("crash me with whole program analysis", || {
-                program.whole_program_analysis()
+            time("test running ownership analysis", || {
+                analysis::ownership::crash_me(&mut program)
             })?;
         }
-        Command::Analyse {
-            null,
-            array,
-            ownership,
-            taint,
-            mutability,
-            all: _,
-        } => {
-            if null {
-                let results = time("null analysis", || {
-                    null::CrateResults::collect(tcx, &local_fns, &local_structs)
-                });
-                results.show(tcx);
-            }
-
-            if ownership {
-                let Some(ownership) = time("ownership analysis", || {
-                    ownership_analysis::ownership_analysis::InterSummary::collect(tcx, &local_structs, &local_fns)
-                }) else { bail!("ownership analysis failed") };
-                ownership.show_result();
-            }
-
-            if taint {
-                time("taint analysis", || taint::report_results(&input));
-            }
-
-            if mutability {
-                let Some(ownership) = time("ownership analysis", || {
-                    ownership_analysis::ownership_analysis::InterSummary::collect(tcx, &local_structs, &local_fns)
-                }) else { bail!("ownership analysis failed") };
-                let mutability = time("mutability analysis", || {
-                    mutability::CrateResults::collect(tcx, &local_fns, &local_structs, &ownership)
-                });
-                mutability.show(tcx);
-            }
-
-            if array {
-                let results = fatness::CrateResults::collect(tcx, &local_fns, &local_structs);
-                results.show(tcx);
-            }
+        Command::Analyse { .. } => {
+            let mut crate_ctxt = CrateCtxt::from(input);
+            let ownership_schemes = analysis::ownership::WholeProgram::analyze(&mut crate_ctxt)?;
+            ownership_schemes.trace(tcx);
         }
         Command::Rewrite { rewrite_mode } => {
             let Some(ownership) = time("ownership analysis", || {
@@ -348,6 +317,11 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 )
             })
         }
+        Command::Refactor => {
+            let mut crate_ctxt = CrateCtxt::from(input);
+            let _ = analysis::ownership::WholeProgram::analyze(&mut crate_ctxt)?;
+            todo!();
+        },
     }
     Ok(())
 }
