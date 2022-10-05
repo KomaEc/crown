@@ -254,6 +254,68 @@ impl WholeProgram {
         Ok(results)
     }
 
+    fn solve_crate(
+        crate_ctxt: &mut CrateCtxt,
+        previous_results: Option<WholeProgramResults>,
+    ) -> anyhow::Result<WholeProgramResults> {
+        let mut gen = Gen::new();
+
+        let config = z3::Config::new();
+        let ctx = z3::Context::new(&config);
+        let mut database = <Self as AnalysisKind>::DB::new(&ctx);
+
+        let mut fn_summaries = FxHashMap::default();
+        fn_summaries.reserve(crate_ctxt.fns().len());
+
+        let fn_sigs = if let Some(previous_results) = previous_results {
+            crate_ctxt.struct_topology.next_stage(crate_ctxt.tcx);
+            let (inter_ctxt, fns) =
+                previous_results.next_stage(crate_ctxt, &mut gen, &mut database);
+            for (did, ssa_state) in fns {
+                let body = crate_ctxt.tcx.optimized_mir(did);
+                let fn_summary = WholeProgram::solve_body(
+                    body,
+                    ssa_state,
+                    crate_ctxt,
+                    &inter_ctxt,
+                    &mut gen,
+                    &mut database,
+                )?;
+                fn_summaries.insert(did, fn_summary);
+            }
+            inter_ctxt
+        } else {
+            let inter_ctxt =
+                WholeProgram::pre_generate_fn_sigs(crate_ctxt, &mut gen, &mut database);
+            for &did in crate_ctxt.call_graph.fns() {
+                let body = crate_ctxt.tcx.optimized_mir(did);
+                let ssa_state = WholeProgram::initial_state(crate_ctxt, body);
+                let fn_summary = WholeProgram::solve_body(
+                    body,
+                    ssa_state,
+                    crate_ctxt,
+                    &inter_ctxt,
+                    &mut gen,
+                    &mut database,
+                )?;
+                fn_summaries.insert(did, fn_summary);
+            }
+            inter_ctxt
+        };
+
+        let model = WholeProgram::retrieve_model(database, gen);
+
+        let results = WholeProgramResults {
+            model,
+            fn_sigs,
+            fn_summaries,
+        };
+
+        results.print_fn_sigs(crate_ctxt.tcx, crate_ctxt.fns());
+
+        Ok(results)
+    }
+
     fn retrieve_model(database: Z3Database, gen: Gen) -> Vec<Ownership> {
         assert!(matches!(database.solver.check(), z3::SatResult::Sat));
         let z3_model = database.solver.get_model().unwrap();
@@ -475,82 +537,11 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
     fn analyze(crate_ctxt: &mut CrateCtxt) -> anyhow::Result<Self::Results> {
         // first stage
 
-        let mut gen = Gen::new();
-
-        let config = z3::Config::new();
-        let ctx = z3::Context::new(&config);
-        let mut database = Self::DB::new(&ctx);
-
-        let inter_ctxt = WholeProgram::pre_generate_fn_sigs(crate_ctxt, &mut gen, &mut database);
-
-        let mut fn_summaries = FxHashMap::default();
-        fn_summaries.reserve(crate_ctxt.fns().len());
-
-        for &did in crate_ctxt.call_graph.fns() {
-            let body = crate_ctxt.tcx.optimized_mir(did);
-            let ssa_state = WholeProgram::initial_state(crate_ctxt, body);
-            let fn_summary = WholeProgram::solve_body(
-                body,
-                ssa_state,
-                crate_ctxt,
-                &inter_ctxt,
-                &mut gen,
-                &mut database,
-            )?;
-            fn_summaries.insert(did, fn_summary);
-        }
-
-        let model = WholeProgram::retrieve_model(database, gen);
-
-        let results = WholeProgramResults {
-            model,
-            fn_sigs: inter_ctxt,
-            fn_summaries,
-        };
-
-        results.print_fn_sigs(crate_ctxt.tcx, crate_ctxt.fns());
+        let mut results = WholeProgram::solve_crate(crate_ctxt, None)?;
 
         // second stage
-        let mut results = results;
-
         for _ in 0..2 {
-            crate_ctxt.struct_topology.next_stage(crate_ctxt.tcx);
-
-            let mut gen = Gen::new();
-
-            let config = z3::Config::new();
-            let ctx = z3::Context::new(&config);
-            let mut database = Self::DB::new(&ctx);
-
-            let (inter_ctxt, state_iter) = results.next_stage(crate_ctxt, &mut gen, &mut database);
-
-            let mut fn_summaries = FxHashMap::default();
-            fn_summaries.reserve(crate_ctxt.fns().len());
-
-            for (did, ssa_state) in state_iter {
-                let body = crate_ctxt.tcx.optimized_mir(did);
-                let fn_summary = WholeProgram::solve_body(
-                    body,
-                    ssa_state,
-                    crate_ctxt,
-                    &inter_ctxt,
-                    &mut gen,
-                    &mut database,
-                )?;
-                fn_summaries.insert(did, fn_summary);
-            }
-
-            let model = WholeProgram::retrieve_model(database, gen);
-
-            results = WholeProgramResults {
-                model,
-                fn_sigs: inter_ctxt,
-                fn_summaries,
-            };
-
-            results.print_fn_sigs(crate_ctxt.tcx, crate_ctxt.fns());
-
-            // break;
+            results = WholeProgram::solve_crate(crate_ctxt, Some(results))?;
         }
 
         Ok(results)
