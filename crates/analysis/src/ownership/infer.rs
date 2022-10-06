@@ -37,6 +37,7 @@ pub type FnBodySig<LocalSig> = IndexVec<Local, IndexVec<SSAIdx, LocalSig>>;
 pub struct FnSummary {
     pub fn_body_sig: FnBodySig<LocalSig>,
     pub ssa_state: SSAState,
+    // pub output_params: OutputParams,
 }
 
 impl FnSummary {
@@ -86,7 +87,7 @@ where
     database: &'infercx mut Analysis::DB,
     gen: &'infercx mut Gen,
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
-    pub fn_body_sig: FnBodySig<LocalSig>,
+    fn_body_sig: FnBodySig<LocalSig>,
     deref_copy: Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>>,
 }
 

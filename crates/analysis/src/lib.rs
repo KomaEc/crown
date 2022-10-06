@@ -35,6 +35,7 @@ extern crate rustc_type_ir;
 
 mod body_ext;
 mod call_graph;
+pub mod output_params;
 pub mod ownership;
 mod ptr;
 mod rustc_properties;
@@ -85,5 +86,21 @@ impl<'tcx> HasStructTopology for CrateCtxt<'tcx> {
     #[inline]
     fn struct_topology(&self) -> &StructTopology {
         &self.struct_topology
+    }
+}
+
+pub fn show_output_params(crate_ctxt: &CrateCtxt) {
+    for &did in crate_ctxt.fns() {
+        let body = crate_ctxt.tcx.optimized_mir(did);
+        let output_params = output_params::least_output_params(body, crate_ctxt)
+            .into_iter()
+            .map(|local| format!("{:?}", local))
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        println!(
+            "output parameters of {}: {output_params}",
+            crate_ctxt.tcx.def_path_str(did)
+        )
     }
 }

@@ -1,8 +1,8 @@
 #![feature(rustc_private)]
 #![feature(let_else)]
 
-mod signal_nullness;
 mod linkage;
+mod signal_nullness;
 
 extern crate rustc_ast;
 extern crate rustc_hash;
@@ -12,9 +12,9 @@ extern crate rustc_middle;
 extern crate rustc_span;
 
 use common::rewrite::{Rewrite, RewriteMode};
-use signal_nullness::signal_nullness;
 use linkage::{canonicalize_structs, link_functions, link_incomplete_types};
 use rustc_middle::ty::TyCtxt;
+use signal_nullness::signal_nullness;
 
 pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] = &[phase_1, phase_2, phase_3];
 

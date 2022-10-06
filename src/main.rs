@@ -22,7 +22,7 @@ use std::{
     time::Instant,
 };
 
-use analysis::{CrateCtxt, ownership::AnalysisKind};
+use analysis::{ownership::AnalysisKind, CrateCtxt};
 use anyhow::{bail, Context, Result};
 use clap::Parser;
 use common::rewrite::RewriteMode;
@@ -285,6 +285,8 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             time("test running ownership analysis", || {
                 analysis::ownership::crash_me(&mut program)
             })?;
+
+            analysis::show_output_params(&program);
         }
         Command::Analyse { .. } => {
             let mut crate_ctxt = CrateCtxt::from(input);
@@ -321,7 +323,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             let mut crate_ctxt = CrateCtxt::from(input);
             let _ = analysis::ownership::WholeProgram::analyze(&mut crate_ctxt)?;
             todo!();
-        },
+        }
     }
     Ok(())
 }

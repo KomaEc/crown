@@ -6,7 +6,10 @@ use anyhow::bail;
 use either::Either;
 use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_hir::def_id::DefId;
-use rustc_middle::{mir::{BasicBlockData, Body, Local, Location, Rvalue, StatementKind}, ty::TyCtxt};
+use rustc_middle::{
+    mir::{BasicBlockData, Body, Local, Location, Rvalue, StatementKind},
+    ty::TyCtxt,
+};
 
 use self::infer::{FnSummary, InferCtxt};
 use crate::{
@@ -29,7 +32,7 @@ pub fn crash_me(crate_ctxt: &mut CrateCtxt) -> anyhow::Result<()> {
         println!("renaming {:?}", did);
         let body = crate_ctxt.tcx.optimized_mir(did);
         let dominance_frontier = compute_dominance_frontier(body);
-        let definitions = initial_definitions(body, crate_ctxt.tcx, &*crate_ctxt);
+        let definitions = initial_definitions(body, &*crate_ctxt);
         let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
         let mut rn = Renamer::new(body, ssa_state);
         rn.go::<Pure>(());
@@ -83,19 +86,6 @@ impl<'analysis, Results> OwnershipSchemes<'analysis> for Results where
     Results: AnalysisResults<'analysis, Value = Ownership>
 {
 }
-
-// pub trait LocalUsage {
-//     fn base_transfered(&self, model: &[Ownership]) -> bool;
-// }
-
-// impl LocalUsage for Consume<Range<OwnershipSig>> {
-//     fn base_transfered(&self, model: &[Ownership]) -> bool {
-//         let pre = model[self.r#use.start.index()];
-//         let post = model[self.def.start.index()];
-//         pre == Ownership::Owning && post == Ownership::Transient
-//             || pre == Ownership::Transient && post == Ownership::Owning
-//     }
-// }
 
 pub trait LocalUsage {
     fn state_changed(&self) -> bool;
@@ -189,7 +179,7 @@ impl WholeProgram {
     #[inline]
     fn initial_state<'tcx>(crate_ctxt: &CrateCtxt<'tcx>, body: &Body<'tcx>) -> SSAState {
         let dominance_frontier = compute_dominance_frontier(body);
-        let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
+        let definitions = initial_definitions(body, crate_ctxt);
         SSAState::new(body, &dominance_frontier, definitions)
     }
 
@@ -313,7 +303,7 @@ impl WholeProgram {
         model: &[Ownership],
     ) -> SSAState {
         let mut state_changed_locations: FxHashSet<Location> = FxHashSet::default();
-        let fn_results = (&fn_summary, model);
+        let fn_result = (&fn_summary, model);
 
         for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
             let BasicBlockData { statements, .. } = bb_data;
@@ -335,9 +325,9 @@ impl WholeProgram {
                 if let Some(base_location) = deref_copy.take() {
                     let StatementKind::Assign(box (_, _)) = &statement.kind else { unreachable!() };
 
-                    let location_result = fn_results
+                    let location_result = fn_result
                         .location_result(base_location)
-                        .chain(fn_results.location_result(location));
+                        .chain(fn_result.location_result(location));
                     for (_, result) in location_result {
                         if result.state_changed() {
                             state_changed_locations.insert(location);
@@ -349,7 +339,7 @@ impl WholeProgram {
                     continue;
                 }
 
-                let location_result = fn_results.location_result(location);
+                let location_result = fn_result.location_result(location);
                 for (_, result) in location_result {
                     if result.state_changed() {
                         state_changed_locations.insert(location);
@@ -520,6 +510,43 @@ impl<'a> AnalysisResults<'a> for WholeProgramResults {
     }
 }
 
+#[derive(Clone, Debug)]
+pub enum Param {
+    Output(Consume<Range<Var>>),
+    Normal(Range<Var>),
+}
+
+impl Param {
+    #[inline]
+    pub fn normal(&self) -> &Range<Var> {
+        match self {
+            Param::Normal(sigs) => sigs,
+            Param::Output(..) => panic!("expect normal parameter"),
+        }
+    }
+
+    #[inline]
+    pub fn output(&self) -> &Consume<Range<Var>> {
+        match self {
+            Param::Output(consume) => consume,
+            Param::Normal(..) => panic!("expect output parameter"),
+        }
+    }
+}
+
+impl Voidable for Param {
+    const VOID: Self = Param::Normal(Voidable::VOID);
+
+    fn is_void(&self) -> bool {
+        if let Param::Normal(sigs) = self {
+            return sigs.is_void();
+        }
+        false
+    }
+}
+
+pub type WholeProgramInterCtxt = FxHashMap<DefId, FnSig<Param>>;
+
 impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
     type Results = WholeProgramResults;
 
@@ -553,7 +580,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for StandAlone {
             let body = crate_ctxt.tcx.optimized_mir(did);
 
             let dominance_frontier = compute_dominance_frontier(body);
-            let definitions = initial_definitions(body, crate_ctxt.tcx, crate_ctxt);
+            let definitions = initial_definitions(body, crate_ctxt);
             let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
             let mut rn = Renamer::new(body, ssa_state);
 

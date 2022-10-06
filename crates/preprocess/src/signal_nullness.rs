@@ -57,7 +57,9 @@ where
                         let ptr = receiver;
 
                         // currently we only rewrite variables not complex expressions
-                        if /* let ExprKind::Path(..) = ptr.kind */ true {
+                        if
+                        /* let ExprKind::Path(..) = ptr.kind */
+                        true {
                             // rewrite is ensured, explicitly recurse into two branches
                             intravisit::walk_expr(self, truth_branch);
                             false_branch

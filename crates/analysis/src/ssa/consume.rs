@@ -253,9 +253,9 @@ impl ConsumeChain {
 
 pub fn initial_definitions<'tcx>(
     body: &Body<'tcx>,
-    tcx: TyCtxt<'tcx>,
     crate_ctxt: &CrateCtxt<'tcx>,
 ) -> Definitions {
+    let tcx = crate_ctxt.tcx;
     let mut maybe_consume_sites = IndexVec::from_elem(
         BitSet::new_empty(body.basic_blocks.len()),
         &body.local_decls,
