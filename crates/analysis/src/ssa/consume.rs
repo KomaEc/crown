@@ -15,17 +15,6 @@ use crate::{
     CrateCtxt,
 };
 
-// e has type T and T coerces to U; coercion-cast
-// e has type *T, U is *U_0, and either U_0: Sized or unsize_kind(T) = unsize_kind(U_0); ptr-ptr-cast
-// e has type *T and U is a numeric type, while T: Sized; ptr-addr-cast
-// e is an integer and U is *U_0, while U_0: Sized; addr-ptr-cast
-// e has type T and T and U are any numeric types; numeric-cast
-// e is a C-like enum and U is an integer type; enum-cast
-// e has type bool or char and U is an integer; prim-int-cast
-// e has type u8 and U is char; u8-char-cast
-// e has type &[T; n] and U is *const T; array-ptr-cast
-// e is a function pointer type and U has type *T, while T: Sized; fptr-ptr-cast
-// e is a function pointer type and U is an integer; fptr-addr-cast
 
 /// TODO
 /// 1. `def_sites` -> `maybe_consume_sites`. This is to avoid rebuild phi node join
@@ -251,10 +240,7 @@ impl ConsumeChain {
     }
 }
 
-pub fn initial_definitions<'tcx>(
-    body: &Body<'tcx>,
-    crate_ctxt: &CrateCtxt<'tcx>,
-) -> Definitions {
+pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>) -> Definitions {
     let tcx = crate_ctxt.tcx;
     let mut maybe_consume_sites = IndexVec::from_elem(
         BitSet::new_empty(body.basic_blocks.len()),
@@ -401,105 +387,3 @@ pub fn initial_definitions<'tcx>(
         maybe_owning,
     }
 }
-
-// #[cfg(test)]
-// mod test {
-
-//     use crate::analysis::state::SSAIdx;
-
-//     use super::{initial_definitions, Consume, Definitions};
-//     use rustc_middle::mir::{BasicBlock, Local, Location};
-//     use smallvec::SmallVec;
-
-//     impl Definitions {
-//         fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume<SSAIdx>); 2]>] {
-//             &self.consumes[block.index()]
-//         }
-
-//         fn of_location(&self, location: Location) -> &SmallVec<[(Local, Consume<SSAIdx>); 2]> {
-//             let Location {
-//                 block,
-//                 statement_index,
-//             } = location;
-//             &self.consumes[block.index()][statement_index]
-//         }
-//     }
-
-//     impl Definitions {
-//         fn assert_round_tripping(&self) {
-//             for (local, sites) in self.def_sites.iter_enumerated() {
-//                 for bb in sites.iter() {
-//                     self.of_block(bb)
-//                         .iter()
-//                         .flatten()
-//                         .copied()
-//                         .find(|&(l, _)| l == local)
-//                         .unwrap_or_else(|| {
-//                             panic!("{:?} should contain definition of {:?}", bb, local)
-//                         });
-//                 }
-//             }
-
-//             // for (bb, consumes) in self.consumes.iter().enumerate() {
-//             //     let bb = rustc_middle::mir::BasicBlock::from(bb);
-//             //     for (local, _) in consumes.iter().flatten().copied() {
-//             //         assert!(self.def_sites[local].contains(bb))
-//             //     }
-//             // }
-//         }
-//     }
-
-//     // use std::path::PathBuf;
-//     #[test]
-//     fn test1() {
-//         const INPUT: &str = "
-//     static mut STATIC: usize = 0;
-//     const ADDR: usize = 47;
-
-//     unsafe fn f(mut p: *mut *mut usize, q: *mut *mut usize, mut r: *mut usize, addr: usize) -> *mut usize {
-//         p = ADDR as *mut _;
-//         *q = p as *mut _;
-//         r = *q;
-//         *p = r;
-
-//         STATIC = *r;
-
-//         r = addr as *mut _;
-
-//         return r;
-//     }";
-
-//         // let file = std::path::PathBuf::from("../workspace/def_site.rs");
-//         orc_common::test_infra::run_compiler_with(INPUT.into(), |tcx, functions, structs| {
-//             let program = crate::CrateCtxt::new(tcx, functions, structs);
-//             let mut def_iter = program.functions().iter().copied().map(|did| {
-//                 let body = tcx.optimized_mir(did);
-//                 initial_definitions(body, tcx, &program)
-//             });
-//             let Some(definition) = def_iter.next() else { unreachable!() };
-//             assert!(def_iter.next().is_none());
-//             definition.assert_round_tripping();
-//             // do not count definition for rhs of addr-ptr cast
-//             assert_eq!(
-//                 definition
-//                     .of_location(Location {
-//                         block: BasicBlock::from_u32(0),
-//                         statement_index: 13
-//                     })
-//                     .into_iter()
-//                     .map(|&(local, _)| local)
-//                     .collect::<Vec<_>>(),
-//                 vec![Local::from_u32(13)]
-//             );
-//             // q is never defined in this program
-//             assert!(definition
-//                 .consumes
-//                 .iter()
-//                 .flatten()
-//                 .flatten()
-//                 .copied()
-//                 .find(|(local, _)| local.index() == 2)
-//                 .is_none())
-//         })
-//     }
-// }

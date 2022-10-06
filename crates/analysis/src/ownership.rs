@@ -557,7 +557,6 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
 
     fn analyze(crate_ctxt: &mut CrateCtxt) -> anyhow::Result<Self::Results> {
         // first stage
-
         let mut results = WholeProgram::solve_crate(crate_ctxt, None)?;
 
         // second stage

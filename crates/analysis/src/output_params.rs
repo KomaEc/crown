@@ -4,14 +4,14 @@ use rustc_middle::mir::{
     Body, Local,
 };
 
-use crate::{CrateCtxt, ptr::Measurable};
+use crate::{ptr::Measurable, CrateCtxt};
 
 pub type OutputParams = SsoHashSet<Local>;
 
 pub fn least_output_params(body: &Body, crate_ctxt: &CrateCtxt) -> SsoHashSet<Local> {
     let return_ty = body.return_ty();
     if crate_ctxt.measure(return_ty, 0) > 0 {
-        return SsoHashSet::default()
+        return SsoHashSet::default();
     }
 
     let mut output_params = body

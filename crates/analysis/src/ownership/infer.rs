@@ -10,7 +10,7 @@ use rustc_middle::{
 };
 use rustc_type_ir::TyKind::FnDef;
 
-use self::handle_call::HandleCall;
+use self::boundary::Boundary;
 use super::AnalysisKind;
 use crate::{
     call_graph::FnSig,
@@ -29,7 +29,7 @@ use crate::{
     CrateCtxt,
 };
 
-pub mod handle_call;
+pub mod boundary;
 
 pub type LocalSig = Range<Var>;
 pub type FnBodySig<LocalSig> = IndexVec<Local, IndexVec<SSAIdx, LocalSig>>;
@@ -113,7 +113,7 @@ where
             }
         }
 
-        <Analysis as HandleCall>::handle_inputs(
+        <Analysis as Boundary>::handle_params(
             // crate_ctxt,
             &inter_ctxt,
             database,
@@ -404,7 +404,7 @@ where
         }
     }
 
-    fn handle_call(
+    fn call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         caller: Self::CallArgs<Option<Consume<Self::LocalSig>>>,
         func: &Operand,
@@ -422,7 +422,7 @@ where
                 {
                     // this crate
                     rustc_hir::Node::Item(_) => {
-                        <Analysis as HandleCall>::handle_call(infer_cx, &caller, callee)
+                        <Analysis as Boundary>::handle_call(infer_cx, &caller, callee)
                     }
                     // extern
                     rustc_hir::Node::ForeignItem(foreign_item) => {
@@ -442,13 +442,13 @@ where
         }
     }
 
-    fn handle_output(
+    fn r#return(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         ssa_idx: Option<SSAIdx>,
         me: DefId,
     ) {
         let output = ssa_idx.map(|ssa_idx| infer_cx.fn_body_sig[RETURN_PLACE][ssa_idx].clone());
-        <Analysis as HandleCall>::handle_output(infer_cx, me, output)
+        <Analysis as Boundary>::handle_ret(infer_cx, me, output)
     }
 
     fn cast_to_c_void(

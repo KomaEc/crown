@@ -88,13 +88,13 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     fn finalise(infer_cx: &mut Self::Ctxt, local: Local, r#use: SSAIdx);
 
-    fn handle_call(
+    fn call(
         infer_cx: &mut Self::Ctxt,
         caller: Self::CallArgs<Option<Consume<Self::LocalSig>>>,
         func: &Operand,
     );
 
-    fn handle_output(infer_cx: &mut Self::Ctxt, ssa_idx: Option<SSAIdx>, r#fn: DefId);
+    fn r#return(infer_cx: &mut Self::Ctxt, ssa_idx: Option<SSAIdx>, r#fn: DefId);
 }
 #[derive(Debug)]
 pub enum Pure {}
@@ -151,9 +151,9 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
 
     fn finalise((): &mut Self::Ctxt, _: Local, _: SSAIdx) {}
 
-    fn handle_call((): &mut Self::Ctxt, (): (), _: &Operand) {}
+    fn call((): &mut Self::Ctxt, (): (), _: &Operand) {}
 
-    fn handle_output((): &mut Self::Ctxt, _: Option<SSAIdx>, _: DefId) {}
+    fn r#return((): &mut Self::Ctxt, _: Option<SSAIdx>, _: DefId) {}
 
     fn cast_to_c_void(
         (): &mut Self::Ctxt,
@@ -181,8 +181,6 @@ where
     Infer: InferMode<'rn, 'db, 'tcx>,
 {
     let consume = rn.state.try_consume_at(place.local, location);
-    // .or_else(|| matches!(body.local_decls[place.local].local_info, Some(LocalInfo::DerefTemp))
-    // .then(|| infer_cx.de));
     Infer::interpret_consume(infer_cx, body, place, consume)
 }
 
@@ -370,12 +368,12 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
                 // println!("{:?}", self.body.source_info(location).span);
                 // println!("{:?}", fn_sig);
-                Infer::handle_call(infer_cx, call_args, func);
+                Infer::call(infer_cx, call_args, func);
             }
             TerminatorKind::Return => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
 
-                Infer::handle_output(
+                Infer::r#return(
                     infer_cx,
                     self.state.name_state.try_get_name(RETURN_PLACE),
                     self.body.source.def_id(),

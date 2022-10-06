@@ -13,12 +13,12 @@ use crate::{
     },
 };
 
-pub mod handle_libc;
-pub mod handle_library;
+pub mod libc;
+pub mod library;
 
 /// Bad abstraction
 /// TODO refactor
-pub trait HandleCall<'infercx, 'db, 'tcx>: AnalysisKind<'infercx, 'db> + Sized
+pub trait Boundary<'infercx, 'db, 'tcx>: AnalysisKind<'infercx, 'db> + Sized
 where
     'tcx: 'infercx,
 {
@@ -28,22 +28,21 @@ where
         callee: DefId,
     );
 
-    fn handle_inputs(
-        // infer_cx: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
+    fn handle_params(
         inter_ctxt: &Self::InterCtxt,
         database: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
         r#fn: DefId,
-        inputs: impl Iterator<Item = Option<Range<Var>>>,
+        params: impl Iterator<Item = Option<Range<Var>>>,
     );
 
-    fn handle_output(
+    fn handle_ret(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         r#fn: DefId,
-        output: Option<Range<Var>>,
+        ret: Option<Range<Var>>,
     );
 }
 
-impl<'infercx, 'db, 'tcx, Analysis> HandleCall<'infercx, 'db, 'tcx> for Analysis
+impl<'infercx, 'db, 'tcx, Analysis> Boundary<'infercx, 'db, 'tcx> for Analysis
 where
     'tcx: 'infercx,
     Analysis: AnalysisKind<'infercx, 'db>,
@@ -55,9 +54,7 @@ where
     ) {
     }
 
-    default fn handle_inputs(
-        // _: &mut InferCtxt<'infercx, 'tcx, DB, Self>,
-        // _: &CrateCtxt<'_>,
+    default fn handle_params(
         _: &Analysis::InterCtxt,
         _: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
         _: DefId,
@@ -65,7 +62,7 @@ where
     ) {
     }
 
-    default fn handle_output(
+    default fn handle_ret(
         _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         _: DefId,
         _: Option<Range<Var>>,
@@ -73,7 +70,7 @@ where
     }
 }
 
-impl<'infercx, 'db, 'tcx> HandleCall<'infercx, 'db, 'tcx> for WholeProgram
+impl<'infercx, 'db, 'tcx> Boundary<'infercx, 'db, 'tcx> for WholeProgram
 where
     'tcx: 'infercx,
 {
@@ -90,13 +87,6 @@ where
             .c_variadic;
 
         let callee_sigs = &infer_cx.inter_ctxt[&callee];
-
-        // println!("{:?}", callee_sigs);
-
-        // #[cfg(debug_assertions)]
-        // if !c_variadic {
-        //     assert_eq!(callee_sigs.iter().count(), caller.iter().count());
-        // }
 
         let mut callee_caller = callee_sigs.iter().zip(caller.iter());
 
@@ -146,16 +136,15 @@ where
         }
     }
 
-    fn handle_inputs(
+    fn handle_params(
         inter_ctxt: &<WholeProgram as AnalysisKind>::InterCtxt,
         database: &mut <WholeProgram as AnalysisKind>::DB,
         r#fn: DefId,
-        inputs: impl Iterator<Item = Option<Range<Var>>>,
+        params: impl Iterator<Item = Option<Range<Var>>>,
     ) {
         let fn_sig = &inter_ctxt[&r#fn];
 
-        for (input, sigs) in inputs.zip(fn_sig.iter().skip(1)) {
-            // debug_assert!(!input.clone().xor(sigs.clone()).is_some())
+        for (input, sigs) in params.zip(fn_sig.iter().skip(1)) {
             match (input, sigs) {
                 (Some(input), Some(sigs)) => {
                     for (input, sig) in input.zip(sigs.clone()) {
@@ -168,17 +157,16 @@ where
         }
     }
 
-    fn handle_output(
+    fn handle_ret(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, WholeProgram>,
         r#fn: DefId,
-        output: Option<Range<Var>>,
+        ret: Option<Range<Var>>,
     ) {
-        // let r#fn = infer_cx.crate_ctxt.call_graph.did_idx[&r#fn];
         let fn_sig = &infer_cx.inter_ctxt[&r#fn];
-        let ret = fn_sig.ret.clone();
-        match (output, ret) {
-            (Some(output), Some(ret)) => {
-                for (output, ret) in output.zip(ret) {
+        let sigs = fn_sig.ret.clone();
+        match (ret, sigs) {
+            (Some(output), Some(sigs)) => {
+                for (output, ret) in output.zip(sigs) {
                     infer_cx
                         .database
                         .push_equal::<crate::ssa::constraint::Debug>((), output, ret)
