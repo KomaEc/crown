@@ -30,55 +30,16 @@ pub struct Definitions {
     pub maybe_owning: BitSet<Local>,
 }
 
-/// The class of type that has an invalid argument.
-/// I'm not sure if it's a good abstraction. The reason I did this is because
-/// there're multiple types in ownership analysis that require void arguments,
-/// and using `Option<>` wrapper may introduce overhead.
-///
-/// For example, it is not suitable to represent [SSAIdx] by something like
-/// `Option<NonZeroSSAIdx>`, because `SSAIdx::index()` corresponds to array
-/// index in `fn_body_sig`, so being able to be zero is quite convenient when
-/// programming with [SSAIdx]. On the other hand, using [Option<SSAIdx>]
-/// introduces memory overhead:
-/// ```
-/// use orc_ownership_analysis::analysis::state::SSAIdx;
-/// const _: () = assert!(std::mem::size_of::<SSAIdx>() == 4);
-/// const _: () = assert!(std::mem::size_of::<Option<SSAIdx>>() == 8);
-/// ```
-/// Therefore, I use `SSAIdx::MAX` to represent a void argument.
-///
-/// `Range<Var>` is another example. `Option<Range<Var>>`
-/// introduces memory layout overhead.
-/// ```
-/// use orc_ownership_analysis::analysis::constraint::Var;
-/// use std::ops::Range;
-/// const _: () = assert!(std::mem::size_of::<Range<Var>>() == 8);
-/// const _: () = assert!(std::mem::size_of::<Option<Range<Var>>>() == 12);
-/// ```
-///
-/// Besides, adding [Option] wrapper makes types fatter, and I struggled to
-/// make appropriate synonyms for those wrapped types.
-///
-/// Note that nullability is now not obvious statically. To prevent runtime
-/// errors (using invalid objects in a context where valid ones are needed),
-/// [Voidable] types should be wrapped in [Option] as often as possible in
-/// function arguments/return. They are stored as raw [Voidable] in struct
-/// definitions.
+/// [Voidable] types are only allowed to appear in the generic parameter of [`Consume`].
+/// [`Consume`] is always valid in its first field `r#use`, but sometimes not in its second
+/// field `def`. Changing the type of `def` to [`Option<T>`] is somehow awkward and hard to
+/// work with.
 pub trait Voidable: Clone + std::fmt::Debug {
     const VOID: Self;
     fn is_void(&self) -> bool;
     #[inline]
     fn valid(self) -> Option<Self> {
         (!self.is_void()).then_some(self)
-    }
-}
-
-impl Voidable for () {
-    const VOID: Self = ();
-
-    #[inline]
-    fn is_void(&self) -> bool {
-        true
     }
 }
 

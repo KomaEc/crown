@@ -145,7 +145,7 @@ where
         projection: &[PlaceElem<'tcx>],
         infer_cx: &mut Self,
     ) -> Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>> {
-        assert!(!base.is_invalid());
+        // assert!(!base.is_invalid());
 
         let mut base_ty = ty;
 

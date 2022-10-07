@@ -108,7 +108,7 @@ where
                 }
             }
         } else {
-            assert!(c_variadic || dest.is_none())
+            assert!(dest.is_none())
         }
 
         // para = arg ~> rho(para') + rho(arg') = rho(arg)

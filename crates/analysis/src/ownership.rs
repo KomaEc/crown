@@ -516,6 +516,9 @@ pub enum Param {
     Normal(Range<Var>),
 }
 
+#[cfg(not(debug_assertions))]
+const _: () = assert!(std::mem::size_of::<Option<Param>>() == 16);
+
 impl Param {
     #[inline]
     pub fn normal(&self) -> &Range<Var> {
@@ -542,23 +545,11 @@ impl Param {
     }
 }
 
-impl Voidable for Param {
-    const VOID: Self = Param::Normal(Voidable::VOID);
-
-    fn is_void(&self) -> bool {
-        if let Param::Normal(sigs) = self {
-            return sigs.is_void();
-        }
-        false
-    }
-}
-
-pub type WholeProgramInterCtxt = FxHashMap<DefId, FnSig<Param>>;
+pub type WholeProgramInterCtxt = FxHashMap<DefId, FnSig<Option<Param>>>;
 
 impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
     type Results = WholeProgramResults;
 
-    /// TODO refactor this to be `&'analysis FxHashMap<DefId, FnSig<Range<OwnershipSig>>>`
     type InterCtxt = &'analysis FxHashMap<DefId, FnSig<Option<Range<Var>>>>;
 
     type DB = Z3Database<'db>;
