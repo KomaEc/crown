@@ -309,10 +309,10 @@ p = **q; ~ { tmp = deref_copy(*q); p = *tmp; }
 - [x] More benchmarks (checked-c benchmark)
 - [x] Better C2Rust results (need linux machine)
 - [x] Support Union
-- [ ] Second stage analysis
+- [x] Second stage analysis
   - [x] Allow dereferencing once (works on bst, avl)
   - [x] Allow dereferencing more
-  - [ ] Better iterative inference: infer `p` to be owning when `*p = q` and `q` changes its ownership state
+  - [x] Better iterative inference: infer `p` to be owning when `*p = q` and `q` changes its ownership state
 - [ ] Initial rewrite
   - [ ] Rewrite BST/AVL
   - [ ] Rewrite Heap
