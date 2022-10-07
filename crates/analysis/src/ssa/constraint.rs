@@ -68,7 +68,7 @@ pub fn initialize_local(
     measurable: impl Measurable,
 ) -> Option<Range<Var>> {
     local_measure(local_decl, measurable)
-        .map(|measure| database.new_vars(gen.new_sigs(measure.get())))
+        .map(|measure| database.push_vars(gen.new_sigs(measure.get())))
 }
 
 impl Voidable for Range<Var> {
@@ -224,10 +224,7 @@ make_logging_mode!(Error);
 
 pub trait Database {
     #[inline]
-    fn new_var(&mut self, _: Var) {}
-
-    #[inline]
-    fn new_vars(&mut self, sigs: Range<Var>) -> Range<Var> {
+    fn push_vars(&mut self, sigs: Range<Var>) -> Range<Var> {
         sigs
     }
 
@@ -349,17 +346,13 @@ impl<'z3> Z3Database<'z3> {
 }
 
 impl<'z3> Database for Z3Database<'z3> {
-    fn new_var(&mut self, x: Var) {
-        assert_eq!(
-            x,
-            self.z3_ast
-                .push(z3::ast::Bool::new_const(self.ctx, x.as_u32()))
-        )
-    }
-
-    fn new_vars(&mut self, sigs: Range<Var>) -> Range<Var> {
+    fn push_vars(&mut self, sigs: Range<Var>) -> Range<Var> {
         for sig in sigs.clone() {
-            self.new_var(sig)
+            assert_eq!(
+                sig,
+                self.z3_ast
+                    .push(z3::ast::Bool::new_const(self.ctx, sig.as_u32()))
+            )
         }
         sigs
     }

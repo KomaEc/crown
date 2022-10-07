@@ -15,7 +15,6 @@ use crate::{
     CrateCtxt,
 };
 
-
 /// TODO
 /// 1. `def_sites` -> `maybe_consume_sites`. This is to avoid rebuild phi node join
 /// points.

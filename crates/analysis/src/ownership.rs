@@ -532,6 +532,14 @@ impl Param {
             Param::Normal(..) => panic!("expect output parameter"),
         }
     }
+
+    #[inline]
+    pub fn to_normal(self) -> Range<Var> {
+        match self {
+            Param::Output(Consume { r#use, .. }) => r#use,
+            Param::Normal(normal) => normal,
+        }
+    }
 }
 
 impl Voidable for Param {

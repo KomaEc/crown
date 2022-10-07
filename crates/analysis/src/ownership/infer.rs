@@ -136,7 +136,7 @@ where
     }
 
     pub fn new_sigs(&mut self, size: u32) -> Range<Var> {
-        self.database.new_vars(self.gen.new_sigs(size))
+        self.database.push_vars(self.gen.new_sigs(size))
     }
 
     fn project_deeper(
