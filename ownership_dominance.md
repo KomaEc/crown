@@ -338,3 +338,64 @@ Note that a struct has only two kinds of sink:
 In the former case, we are happy about partially moved struct. In the latter case, the inferencer will check for ownership signatures, so we should be fine?
 
 Strategy: fields are only checked at function boundaries: return position and local initialisation position.
+
+
+
+### 10.7
+#### The problem with ownership analysis:
+1. The analysis does not infer for `&mut` even if `&mut` and `Box` share uniqueness property, so we have to make many 'random' decisions during rewrite;
+2. Sometimes ownership info does not propagate well (especially when library uses its own memory 'manager', say stores customised allocation functions as fn_ptr).
+3. Ownership dominance property prohibits `head_ref` style: input pointers are used as an ouput parameter
+
+
+```rust
+unsafe fn f(output_param: *mut *mut i32) {
+  free(*output_param);
+  *output_param = malloc(..);
+  **output_param = 3;
+}
+
+unsafe fn add(head_ref: *mut *mut list) {
+  let node = new_node();
+  let next = *head_ref; // prohibited by ownership dominance property
+  *head_ref = node; // prohibited by ownership dominance property
+  node.next = next;
+}
+```
+
+Some low hanging fruits: for function parameters, say `p` in `f(p)`, if the address of `p` is never exposed in `f` (`p` does not appear as `_ = p`, `_ = &p`), then `p` cannot be changed within `f`. We can trivially treat `p` as a unique pointer and grant it `&mut` type qualifier. I call those parameters `p` output parameters
+
+#### Output parameters have state
+```rust
+unsafe fn free_f(s: *mut S) {
+  free((*s).f) // ok if `s` is identified as output parameter
+}
+
+unsafe fn free_s(s: *mut S) {
+  // requires (*s).f to be owning
+  free_f(s);
+  // requires (*s).f to be non-owning!
+  // => output params have states!
+  free(s);
+}
+```
+
+States for an output parameter: current value and __future__ value. This is then related to RustHorn, Iris, etc.. In those framework, lifetime is not explicitly dealt with. Instead, mutable reference is formalized as a current/future value pair. Violation of lifetime rules reflects to inconsistency in future values.
+
+Interesting future work: handle mutable reference and lifetime as well?
+
+
+```text
+    x -- pre value
+    |
+    |
+   \/
+    f(x) -- signature of f
+    |
+    |
+   \/
+    x -- post value
+
+    associated constraint: x_post + x_sig = x_pre
+```
+The signature here acts like a filter. If `x_sig = 1`, then `f` consumes a value, `x_pre` hence needs to be owning and `x_post` becomes non-owning; if `x_sig = 0`, then `f` borrows a value, and `x_pre = x_post`. 
