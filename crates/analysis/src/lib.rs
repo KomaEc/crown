@@ -33,7 +33,6 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
 
-mod body_ext;
 mod call_graph;
 pub mod output_params;
 pub mod ownership;
