@@ -43,15 +43,116 @@ impl std::ops::AddAssign<u32> for AbstractLocation {
     }
 }
 
-#[derive(Debug)]
-pub struct Steensgaard {
-    pub(crate) struct_idx: FxHashMap<DefId, usize>,
-    /// struct -> field -> [std::ops::Range<AbstractLocation>]
-    pub(crate) struct_fields: VecArray<AbstractLocation>,
+pub trait FieldStrategy {
+    type StructFields;
 
-    pub(crate) fn_idx: FxHashMap<DefId, usize>,
+    fn place_location<'tcx>(
+        place: Place<'tcx>,
+        body: &Body<'tcx>,
+        struct_fields: &Self::StructFields,
+        fn_locals: &FnLocals,
+        tcx: TyCtxt<'tcx>,
+    ) -> Option<PlaceLocation>;
+}
+
+pub enum FieldInsensitive {}
+
+impl FieldStrategy for FieldInsensitive {
+    type StructFields = ();
+
+    fn place_location<'tcx>(
+        place: Place<'tcx>,
+        body: &Body<'tcx>,
+        (): &Self::StructFields,
+        fn_locals: &FnLocals,
+        _: TyCtxt<'tcx>,
+    ) -> Option<PlaceLocation> {
+        let loc =
+            fn_locals.locations[fn_locals.did_idx[&body.source.def_id()]][place.local.as_usize()];
+        if !place.is_indirect() {
+            Some(PlaceLocation::Plain(loc))
+        } else {
+            Some(PlaceLocation::Deref(loc))
+        }
+    }
+}
+
+pub enum FieldBased {}
+
+impl FieldStrategy for FieldBased {
+    type StructFields = StructFields;
+
+    fn place_location<'tcx>(
+        place: Place<'tcx>,
+        body: &Body<'tcx>,
+        struct_fields: &Self::StructFields,
+        fn_locals: &FnLocals,
+        tcx: TyCtxt<'tcx>,
+    ) -> Option<PlaceLocation> {
+        let mut place = place.as_ref();
+
+        // peel off all index projections
+        for (place_base, proj_elem) in place.iter_projections().rev() {
+            match proj_elem {
+                ProjectionElem::Index(..)
+                | ProjectionElem::ConstantIndex { .. }
+                | ProjectionElem::Subslice { .. }
+                | ProjectionElem::Downcast(..) => place = place_base,
+                _ => break,
+            }
+        }
+
+        if let Some((struct_place, ProjectionElem::Field(field, _))) = place.last_projection() {
+            let struct_ty = struct_place.ty(body, tcx).ty;
+            let TyKind::Adt(adt_def, _) = struct_ty.kind() else { unreachable!() };
+            if !struct_fields.did_idx.contains_key(&adt_def.did()) {
+                return None;
+            }
+            let loc = struct_fields.locations[struct_fields.did_idx[&adt_def.did()]][field.index()];
+            return Some(PlaceLocation::Plain(loc));
+        }
+
+        assert!(place.local_or_deref_local().is_some());
+        let loc =
+            fn_locals.locations[fn_locals.did_idx[&body.source.def_id()]][place.local.as_usize()];
+        if place.as_local().is_some() {
+            return Some(PlaceLocation::Plain(loc));
+        } else {
+            return Some(PlaceLocation::Deref(loc));
+        }
+    }
+}
+
+/// A set of memory locations for mir [`Item`]s, which belong to a group of [`DefId`]s.
+/// [`MemoryLocationGroup<Item>`] is essentially a map [`DefId`] -> [`Item`] -> [AbstractLocation]
+/// or [`DefId`] -> [`Item`] -> [std::ops::Range<AbstractLocation>] if an additional index is
+/// stored for every [`DefId`].
+pub struct MemoryLocationGroup<Item> {
+    pub(crate) did_idx: FxHashMap<DefId, usize>,
+    pub(crate) locations: VecArray<AbstractLocation>,
+    _marker: std::marker::PhantomData<*const Item>,
+}
+
+impl<Item: std::fmt::Debug> std::fmt::Debug for MemoryLocationGroup<Item> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("MemoryLocationSet")
+            .field("idx", &self.did_idx)
+            .field("locations", &self.locations)
+            .field("_marker", &self._marker)
+            .finish()
+    }
+}
+
+pub type StructFields = MemoryLocationGroup<rustc_middle::mir::Field>;
+pub type FnLocals = MemoryLocationGroup<rustc_middle::mir::Local>;
+
+#[derive(Debug)]
+pub struct Steensgaard<F: FieldStrategy> {
+    /// struct -> field -> [std::ops::Range<AbstractLocation>]
+    pub(crate) struct_fields: F::StructFields,
+
     /// fn -> local -> [AbstractLocation]
-    pub(crate) fn_locals: VecArray<AbstractLocation>,
+    pub(crate) fn_locals: FnLocals,
 
     /// Argument of free
     pub(crate) arg_free: AbstractLocation,
@@ -61,8 +162,8 @@ pub struct Steensgaard {
     pub(crate) pts: IndexVec<AbstractLocation, AbstractLocation>,
 }
 
-impl Steensgaard {
-    pub fn new(input: &common::CrateData) -> Self {
+impl Steensgaard<FieldBased> {
+    pub fn field_based(input: &common::CrateData) -> Self {
         let n_struct_fields = input.structs.iter().fold(0usize, |acc, did| {
             acc + input.tcx.adt_def(*did).all_fields().count()
         });
@@ -116,10 +217,16 @@ impl Steensgaard {
         let pts_targets = UnionFind::new(pts.len());
 
         let mut steensgaard = Steensgaard {
-            struct_idx,
-            struct_fields,
-            fn_idx,
-            fn_locals,
+            struct_fields: StructFields {
+                did_idx: struct_idx,
+                locations: struct_fields,
+                _marker: std::marker::PhantomData,
+            },
+            fn_locals: FnLocals {
+                did_idx: fn_idx,
+                locations: fn_locals,
+                _marker: std::marker::PhantomData,
+            },
             arg_free,
             pts_targets,
             pts,
@@ -145,6 +252,94 @@ impl Steensgaard {
         steensgaard
     }
 
+    pub fn print_results(&self) {
+        for (&did, &idx) in self.struct_fields.did_idx.iter() {
+            println!("results for {:?}:", did);
+            let fields_result = self.struct_fields.locations[idx]
+                .split_last()
+                .unwrap()
+                .1
+                .iter()
+                .copied()
+                .map(|loc| self.pts_targets.find(self.pts[loc]));
+            // .collect::<Vec<_>>();
+            for (idx, tgt) in fields_result.enumerate() {
+                println!("{:?}.{idx} -> {:?}", did, tgt);
+            }
+        }
+
+        for (&did, &idx) in self.fn_locals.did_idx.iter() {
+            println!("results for {:?}:", did);
+            let locals_result = self.fn_locals.locations[idx]
+                .iter()
+                .copied()
+                .map(|loc| self.pts_targets.find(self.pts[loc]));
+            for (idx, tgt) in locals_result.enumerate() {
+                println!("{:?}.{idx} -> {:?}", did, tgt);
+            }
+        }
+    }
+}
+
+impl Steensgaard<FieldInsensitive> {
+    pub fn field_insensitive(input: &common::CrateData) -> Self {
+        let mut pts = IndexVec::with_capacity(input.fns.len() * 20);
+        // null points to null
+        assert_eq!(pts.push(AbstractLocation::NULL), AbstractLocation::NULL);
+
+        let mut fn_locals = VecArray::with_capacity(input.fns.len(), input.fns.len() * 20);
+        let mut fn_idx = FxHashMap::default();
+        fn_idx.reserve(input.structs.len());
+        for (idx, did) in input.fns.iter().enumerate() {
+            let r#fn = input.tcx.optimized_mir(*did);
+            for _ in &r#fn.local_decls {
+                let local = pts.next_index();
+                fn_locals.add_item_to_array(local);
+                pts.push(AbstractLocation::NULL);
+            }
+            fn_locals.done_with_array();
+            fn_idx.insert(*did, idx);
+        }
+        let fn_locals = fn_locals.done();
+
+        let arg_free = pts.push(AbstractLocation::NULL);
+
+        let pts_targets = UnionFind::new(pts.len());
+
+        let mut steensgaard = Steensgaard {
+            struct_fields: (),
+            fn_locals: FnLocals {
+                did_idx: fn_idx,
+                locations: fn_locals,
+                _marker: std::marker::PhantomData,
+            },
+            arg_free,
+            pts_targets,
+            pts,
+        };
+
+        let mut constraints = Vec::new();
+        let mut watchers = WatcherLists::new(steensgaard.node_count());
+        let mut buffer = Vec::with_capacity(steensgaard.node_count());
+
+        for &did in &input.fns {
+            let body = input.tcx.optimized_mir(did);
+            let mut cg = ConstraintGeneration {
+                steensgaard: &mut steensgaard,
+                body,
+                tcx: input.tcx,
+                constraints: &mut constraints,
+                watchers: &mut watchers,
+                buffer: &mut buffer,
+            };
+            cg.visit_body(body);
+        }
+
+        steensgaard
+    }
+}
+
+impl<F: FieldStrategy> Steensgaard<F> {
     #[inline]
     pub fn node_count(&self) -> usize {
         self.pts.len()
@@ -165,35 +360,6 @@ impl Steensgaard {
             return false;
         }
         self.pts_targets.equiv(self.pts[p], self.pts[q])
-    }
-
-    // #[cfg(debug_assertions)]
-    pub fn print_results(&self) {
-        for (&did, &idx) in self.struct_idx.iter() {
-            println!("results for {:?}:", did);
-            let fields_result = self.struct_fields[idx]
-                .split_last()
-                .unwrap()
-                .1
-                .iter()
-                .copied()
-                .map(|loc| self.pts_targets.find(self.pts[loc]));
-            // .collect::<Vec<_>>();
-            for (idx, tgt) in fields_result.enumerate() {
-                println!("{:?}.{idx} -> {:?}", did, tgt);
-            }
-        }
-
-        for (&did, &idx) in self.fn_idx.iter() {
-            println!("results for {:?}:", did);
-            let locals_result = self.fn_locals[idx]
-                .iter()
-                .copied()
-                .map(|loc| self.pts_targets.find(self.pts[loc]));
-            for (idx, tgt) in locals_result.enumerate() {
-                println!("{:?}.{idx} -> {:?}", did, tgt);
-            }
-        }
     }
 }
 
@@ -292,8 +458,8 @@ impl<'me> Iterator for WatcherListIter<'me> {
     }
 }
 
-struct ConstraintGeneration<'me, 'tcx> {
-    steensgaard: &'me mut Steensgaard,
+struct ConstraintGeneration<'me, 'tcx, F: FieldStrategy> {
+    steensgaard: &'me mut Steensgaard<F>,
     body: &'me Body<'tcx>,
     tcx: TyCtxt<'tcx>,
     constraints: &'me mut Vec<Constraint>,
@@ -302,12 +468,12 @@ struct ConstraintGeneration<'me, 'tcx> {
     buffer: &'me mut Vec<usize>,
 }
 
-enum PlaceLocation {
+pub enum PlaceLocation {
     Plain(AbstractLocation),
     Deref(AbstractLocation),
 }
 
-impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
+impl<'me, 'tcx, F: FieldStrategy> ConstraintGeneration<'me, 'tcx, F> {
     pub(crate) fn notify(&mut self, p: AbstractLocation, buffer: &mut Vec<usize>) {
         buffer.clear();
         buffer.extend(self.watchers.get_list(p).iter());
@@ -435,48 +601,6 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
         self.resolve_assign(p, q, constraint_idx)
     }
 
-    #[inline]
-    fn place_location(&self, place: Place<'tcx>) -> Option<PlaceLocation> {
-        // println!("place: {:?}", place);
-        // println!(
-        //     "{:?}: {}",
-        //     place.local, self.body.local_decls[place.local].ty
-        // );
-
-        let mut place = place.as_ref();
-
-        // peel off all index projections
-        for (place_base, proj_elem) in place.iter_projections().rev() {
-            match proj_elem {
-                ProjectionElem::Index(..)
-                | ProjectionElem::ConstantIndex { .. }
-                | ProjectionElem::Subslice { .. }
-                | ProjectionElem::Downcast(..) => place = place_base,
-                _ => break,
-            }
-        }
-
-        if let Some((struct_place, ProjectionElem::Field(field, _))) = place.last_projection() {
-            let struct_ty = struct_place.ty(self.body, self.tcx).ty;
-            let TyKind::Adt(adt_def, _) = struct_ty.kind() else { unreachable!() };
-            if !self.steensgaard.struct_idx.contains_key(&adt_def.did()) {
-                return None;
-            }
-            let loc = self.steensgaard.struct_fields[self.steensgaard.struct_idx[&adt_def.did()]]
-                [field.index()];
-            return Some(PlaceLocation::Plain(loc));
-        }
-
-        assert!(place.local_or_deref_local().is_some());
-        let loc = self.steensgaard.fn_locals[self.steensgaard.fn_idx[&self.body.source.def_id()]]
-            [place.local.as_usize()];
-        if place.as_local().is_some() {
-            return Some(PlaceLocation::Plain(loc));
-        } else {
-            return Some(PlaceLocation::Deref(loc));
-        }
-    }
-
     pub(crate) fn handle_free(&mut self, free_arg: &Operand<'tcx>) {
         let Some(free_arg) = free_arg.place() else { return };
         let ty = free_arg.ty(self.body, self.tcx).ty;
@@ -489,9 +613,20 @@ impl<'me, 'tcx> ConstraintGeneration<'me, 'tcx> {
             .push(Constraint::new(ConstraintKind::Assign, param_loc, arg_loc));
         self.resolve_assign(param_loc, arg_loc, constraint_idx)
     }
+
+    #[inline]
+    fn place_location(&self, place: Place<'tcx>) -> Option<PlaceLocation> {
+        F::place_location(
+            place,
+            self.body,
+            &self.steensgaard.struct_fields,
+            &self.steensgaard.fn_locals,
+            self.tcx,
+        )
+    }
 }
 
-impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
+impl<'me, 'tcx, F: FieldStrategy> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx, F> {
     fn visit_assign(
         &mut self,
         place: &Place<'tcx>,
@@ -564,7 +699,7 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
         let Some(func) = func.constant() else { return };
         let &FnDef(callee_did, _generic_args) = func.ty().kind() else { return };
 
-        if !self.steensgaard.fn_idx.contains_key(&callee_did) {
+        if !self.steensgaard.fn_locals.did_idx.contains_key(&callee_did) {
             // special-casing free function
             if let Some(local_did) = callee_did.as_local() {
                 if let rustc_hir::Node::ForeignItem(foreign_item) =
@@ -586,9 +721,8 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
                 continue;
             }
             let Some(arg_loc) = self.place_location(place) else { continue };
-            let param_loc =
-                self.steensgaard.fn_locals[self.steensgaard.fn_idx[&callee_did]][idx + 1];
-            // .get_index(callee_did, idx + 1);
+            let param_loc = self.steensgaard.fn_locals.locations
+                [self.steensgaard.fn_locals.did_idx[&callee_did]][idx + 1];
 
             let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
             let constraint_idx = self.constraints.len();
@@ -604,8 +738,8 @@ impl<'me, 'tcx> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx> {
 
         let Some(dest_loc) = self.place_location(*destination) else { return };
         let PlaceLocation::Plain(dest_loc) = dest_loc else { unreachable!("destination place contains derefs") };
-        let ret_loc = self.steensgaard.fn_locals[self.steensgaard.fn_idx[&callee_did]][0];
-        //.get_index(callee_did, 0);
+        let ret_loc = self.steensgaard.fn_locals.locations
+            [self.steensgaard.fn_locals.did_idx[&callee_did]][0];
         let constraint_idx = self.constraints.len();
         self.constraints
             .push(Constraint::new(ConstraintKind::Assign, dest_loc, ret_loc));

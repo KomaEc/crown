@@ -18,7 +18,7 @@
 
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use steensgaard::Steensgaard;
+use steensgaard::{FieldBased, Steensgaard};
 
 extern crate rustc_arena;
 extern crate rustc_ast;
@@ -40,22 +40,23 @@ extern crate rustc_type_ir;
 
 mod steensgaard;
 
-pub use steensgaard::Steensgaard as TaintResult;
+pub type TaintResult = Steensgaard<FieldBased>;
 
 pub fn taint_results(input: &common::CrateData) -> TaintResult {
-    Steensgaard::new(input)
+    Steensgaard::field_based(input)
 }
 
 pub fn report_results(input: &common::CrateData) {
-    Steensgaard::new(input).print_results()
+    Steensgaard::field_based(input).print_results()
 }
 
-impl Steensgaard {
+impl TaintResult {
     pub fn aliasing_field_pairs(&self) -> FxHashMap<DefId, Vec<(usize, usize)>> {
-        self.struct_idx
+        self.struct_fields
+            .did_idx
             .iter()
             .map(|(&did, &idx)| {
-                let fields = &self.struct_fields[idx];
+                let fields = &self.struct_fields.locations[idx];
                 let (start, end) = (
                     fields.first().copied().unwrap(),
                     fields.last().copied().unwrap(),
@@ -75,11 +76,12 @@ impl Steensgaard {
     }
 
     pub fn maybe_owning_fields(&self) -> FxHashMap<DefId, Vec<usize>> {
-        self.struct_idx
+        self.struct_fields
+            .did_idx
             .iter()
             .map(|(&did, &idx)| {
                 (did, {
-                    let fields = &self.struct_fields[idx];
+                    let fields = &self.struct_fields.locations[idx];
                     let (start, end) = (
                         fields.first().copied().unwrap(),
                         fields.last().copied().unwrap(),
