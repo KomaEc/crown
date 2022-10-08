@@ -16,8 +16,6 @@
 #![feature(min_specialization)]
 #![feature(let_else)]
 
-use std::ops::Range;
-
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use steensgaard::Steensgaard;
@@ -54,32 +52,41 @@ pub fn report_results(input: &common::CrateData) {
 
 impl Steensgaard {
     pub fn aliasing_field_pairs(&self) -> FxHashMap<DefId, Vec<(usize, usize)>> {
-        self.struct_fields
+        self.struct_idx
             .iter()
-            .map(|(&did, fields)| {
-                (did, {
-                    let Range { start, end } = fields;
+            .map(|(&did, &idx)| {
+                let fields = &self.struct_fields[idx];
+                let (start, end) = (
+                    fields.first().copied().unwrap(),
+                    fields.last().copied().unwrap(),
+                );
+                (
+                    did,
                     (start..end)
                         .flat_map(|f| ((f + 1u32)..end).map(move |g| (f, g)))
                         .filter_map(|(f, g)| {
                             self.may_alias(f, g)
                                 .then(|| (f.index() - start.index(), g.index() - start.index()))
                         })
-                        .collect()
-                })
+                        .collect(),
+                )
             })
             .collect()
     }
 
     pub fn maybe_owning_fields(&self) -> FxHashMap<DefId, Vec<usize>> {
-        self.struct_fields
+        self.struct_idx
             .iter()
-            .map(|(&did, fields)| {
+            .map(|(&did, &idx)| {
                 (did, {
-                    let Range { start, end } = fields;
+                    let fields = &self.struct_fields[idx];
+                    let (start, end) = (
+                        fields.first().copied().unwrap(),
+                        fields.last().copied().unwrap(),
+                    );
                     (start..end)
                         .filter_map(|f| {
-                            self.may_alias(f, self.free_arg)
+                            self.may_alias(f, self.arg_free)
                                 .then(|| f.index() - start.index())
                         })
                         .collect()

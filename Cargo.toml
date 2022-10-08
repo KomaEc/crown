@@ -3,7 +3,7 @@ members = [
     "crates/common",
     "crates/preprocess",
     "crates/analysis",
-    "crates/taint",
+    "crates/alias",
     # "crates/refactor",
     "usage-analysis",
     "refactor",
@@ -24,7 +24,7 @@ common = { path = "crates/common" }
 preprocess = { path = "crates/preprocess" }
 analysis = { path = "crates/analysis" }
 ownership-analysis = { path = "ownership-analysis" }
-taint = { path = "crates/taint" }
+alias = { path = "crates/alias" }
 usage-analysis = { path = "usage-analysis" }
 refactor = { path = "refactor" }
 empirical-study = { path = "crates/empirical-study" }

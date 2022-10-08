@@ -19,8 +19,10 @@ fn test1() {
         steensgaard.print_results();
         let s = input.structs[0];
         let pts = &steensgaard.pts;
-        let f = steensgaard.struct_fields.get_index(s, 0);
-        let g = steensgaard.struct_fields.get_index(s, 1);
+        let f = steensgaard.struct_fields[steensgaard.struct_idx[&s]][0];
+        //.get_index(s, 0);
+        let g = steensgaard.struct_fields[steensgaard.struct_idx[&s]][1];
+        //.get_index(s, 1);
         assert!(steensgaard.pts_targets.equiv(pts[f], pts[g]))
     })
 }
@@ -39,8 +41,10 @@ fn test2() {
         steensgaard.print_results();
         let pts = &steensgaard.pts;
         let f = input.fns[0];
-        let local = steensgaard.function_locals.get_index(f, 1);
-        let p = steensgaard.function_locals.get_index(f, 2);
+        let local = steensgaard.fn_locals[steensgaard.fn_idx[&f]][1];
+        //.get_index(f, 1);
+        let p = steensgaard.fn_locals[steensgaard.fn_idx[&f]][2];
+        //.get_index(f, 2);
         assert_ne!(local, p);
         assert_eq!(pts[p], local);
     })

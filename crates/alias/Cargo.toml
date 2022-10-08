@@ -1,5 +1,5 @@
 [package]
-name = "taint"
+name = "alias"
 version = "0.1.0"
 edition = "2021"
 
@@ -11,4 +11,5 @@ rustc_private = true
 [dependencies]
 petgraph = "0.6.2"
 static_assertions = "1.1.0"
+tracing = "0.1"
 common = { path = "../common" }
