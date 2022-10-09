@@ -79,7 +79,6 @@ enum Command {
     Taint,
     Alias,
     ClassifyParams,
-    CrashMe,
     Refactor,
     Rewrite {
         #[clap(arg_enum, default_value_t = RewriteMode::Print)]
@@ -283,15 +282,6 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             program.verify();
             println!("verification success");
         }
-        Command::CrashMe => {
-            let alias_result = alias::alias_results(&input);
-            let mut program = CrateCtxt::from(input);
-            time("test running ownership analysis", || {
-                analysis::ownership::crash_me(&mut program)
-            })?;
-
-            analysis::show_param_qualifiers(&program, &alias_result);
-        }
         Command::Taint => {
             let alias = alias::taint_results(&input);
             alias.print_results();
@@ -303,7 +293,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         Command::ClassifyParams => {
             let alias_result = alias::alias_results(&input);
             let crate_ctxt = CrateCtxt::from(input);
-            analysis::show_param_qualifiers(&crate_ctxt, &alias_result);
+            analysis::param_qualifier::show_param_qualifiers(&crate_ctxt, &alias_result);
         }
         Command::Analyse { .. } => {
             let mut crate_ctxt = CrateCtxt::from(input);
