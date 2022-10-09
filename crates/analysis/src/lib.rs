@@ -34,6 +34,7 @@ extern crate rustc_target;
 extern crate rustc_type_ir;
 
 mod call_graph;
+pub mod noalias_params;
 pub mod output_params;
 pub mod ownership;
 mod ptr;
@@ -42,7 +43,6 @@ pub mod ssa;
 mod struct_topology;
 #[cfg(test)]
 mod test;
-pub mod noalias_params;
 
 use alias::AliasResult;
 use call_graph::CallGraph;
@@ -100,7 +100,7 @@ pub fn show_output_params(crate_ctxt: &CrateCtxt, alias_result: &AliasResult) {
             .collect::<Vec<_>>()
             .join(", ");
 
-        let noalias_params = noalias_params::conservative_unique_params(body, alias_result);
+        let noalias_params = noalias_params::conservative_noalias_params(body, alias_result);
         let noalias_params_str = noalias_params
             .iter()
             .map(|local| format!("{:?}", local))
@@ -114,7 +114,7 @@ pub fn show_output_params(crate_ctxt: &CrateCtxt, alias_result: &AliasResult) {
             .join(", ");
 
         println!(
-            "@{}: output_params: {output_params_str}, noalias_params: {noalias_params_str}, intersection: {unique_params_str}",
+            "@{}: output_params: {output_params_str}, noalias_params: {noalias_params_str}, unique_params: {unique_params_str}",
             crate_ctxt.tcx.def_path_str(did)
         )
     }

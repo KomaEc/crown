@@ -1,4 +1,3 @@
-
 use rustc_hash::FxHashSet;
 use rustc_middle::mir::{
     visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
