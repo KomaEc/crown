@@ -1,7 +1,7 @@
 use alias::AliasResult;
 use rustc_hash::FxHashSet;
 use rustc_middle::mir::{
-    visit::{PlaceContext, Visitor, MutatingUseContext},
+    visit::{MutatingUseContext, PlaceContext, Visitor},
     Body, Local,
 };
 
@@ -24,7 +24,9 @@ pub fn read_only_params(body: &Body, alias_result: &AliasResult) -> ReadOnlyPara
             _location: rustc_middle::mir::Location,
         ) {
             if let PlaceContext::MutatingUse(mutating_use_context) = context {
-                if let MutatingUseContext::Store = mutating_use_context { return; }
+                if let MutatingUseContext::Store = mutating_use_context {
+                    return;
+                }
                 let alias_result = self.2;
                 let body = self.1;
                 let location_of = alias_result.local_locations(&body.source.def_id());
