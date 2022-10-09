@@ -77,6 +77,7 @@ enum Command {
         all: bool,
     },
     Taint,
+    Alias,
     ClassifyParams,
     CrashMe,
     Refactor,
@@ -293,6 +294,10 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         }
         Command::Taint => {
             let alias = alias::taint_results(&input);
+            alias.print_results();
+        }
+        Command::Alias => {
+            let alias = alias::alias_results(&input);
             alias.print_results();
         }
         Command::ClassifyParams => {
