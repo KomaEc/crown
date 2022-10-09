@@ -76,7 +76,8 @@ enum Command {
         #[clap(long, short)]
         all: bool,
     },
-    Alias,
+    Taint,
+    ClassifyParams,
     CrashMe,
     Refactor,
     Rewrite {
@@ -288,11 +289,16 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 analysis::ownership::crash_me(&mut program)
             })?;
 
-            analysis::show_output_params(&program, &alias_result);
+            analysis::show_param_qualifiers(&program, &alias_result);
         }
-        Command::Alias => {
+        Command::Taint => {
             let alias = alias::taint_results(&input);
             alias.print_results();
+        }
+        Command::ClassifyParams => {
+            let alias_result = alias::alias_results(&input);
+            let crate_ctxt = CrateCtxt::from(input);
+            analysis::show_param_qualifiers(&crate_ctxt, &alias_result);
         }
         Command::Analyse { .. } => {
             let mut crate_ctxt = CrateCtxt::from(input);

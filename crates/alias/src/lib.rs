@@ -71,7 +71,7 @@ impl TaintResult {
                     (start..end)
                         .flat_map(|f| ((f + 1u32)..end).map(move |g| (f, g)))
                         .filter_map(|(f, g)| {
-                            self.maybe_alias(f, g)
+                            self.may_alias(f, g)
                                 .then(|| (f.index() - start.index(), g.index() - start.index()))
                         })
                         .collect(),
@@ -93,7 +93,7 @@ impl TaintResult {
                     );
                     (start..end)
                         .filter_map(|f| {
-                            self.maybe_alias(f, self.arg_free)
+                            self.may_alias(f, self.arg_free)
                                 .then(|| f.index() - start.index())
                         })
                         .collect()

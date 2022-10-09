@@ -90,7 +90,7 @@ impl<'tcx> HasStructTopology for CrateCtxt<'tcx> {
     }
 }
 
-pub fn show_output_params(crate_ctxt: &CrateCtxt, alias_result: &AliasResult) {
+pub fn show_param_qualifiers(crate_ctxt: &CrateCtxt, alias_result: &AliasResult) {
     for &did in crate_ctxt.fns() {
         let body = crate_ctxt.tcx.optimized_mir(did);
         let output_params = output_params::least_output_params(body, crate_ctxt);

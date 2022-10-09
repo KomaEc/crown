@@ -384,7 +384,7 @@ impl<F: FieldStrategy> Steensgaard<F> {
         self.join(p_pts, q_pts);
     }
 
-    pub fn maybe_alias(&self, p: AbstractLocation, q: AbstractLocation) -> bool {
+    pub fn may_alias(&self, p: AbstractLocation, q: AbstractLocation) -> bool {
         if p.is_null() || q.is_null() {
             return false;
         }
