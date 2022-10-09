@@ -15,7 +15,7 @@ fn test1() {
     ";
     common::test::run_compiler_with(PROGRAM.into(), |tcx, fns, structs| {
         let input = common::CrateData::new(tcx, fns, structs);
-        let steensgaard = Steensgaard::<FieldBased>::field_based(&input);
+        let steensgaard = Steensgaard::<FieldFocused>::field_based(&input);
         steensgaard.print_results();
         let s = input.structs[0];
         let pts = &steensgaard.pts;
@@ -37,7 +37,7 @@ fn test2() {
     ";
     common::test::run_compiler_with(PROGRAM.into(), |tcx, fns, structs| {
         let input = common::CrateData::new(tcx, fns, structs);
-        let steensgaard = Steensgaard::<FieldBased>::field_based(&input);
+        let steensgaard = Steensgaard::<FieldFocused>::field_based(&input);
         steensgaard.print_results();
         let pts = &steensgaard.pts;
         let f = input.fns[0];

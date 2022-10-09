@@ -77,9 +77,10 @@ impl FieldStrategy for FieldInsensitive {
     }
 }
 
-pub enum FieldBased {}
+/// Field-based strategy with pointer fields as the only source of points-to target
+pub enum FieldFocused {}
 
-impl FieldStrategy for FieldBased {
+impl FieldStrategy for FieldFocused {
     type StructFields = StructFields;
 
     fn place_location<'tcx>(
@@ -162,7 +163,7 @@ pub struct Steensgaard<F: FieldStrategy> {
     pub(crate) pts: IndexVec<AbstractLocation, AbstractLocation>,
 }
 
-impl Steensgaard<FieldBased> {
+impl Steensgaard<FieldFocused> {
     pub fn field_based(input: &common::CrateData) -> Self {
         let n_struct_fields = input.structs.iter().fold(0usize, |acc, did| {
             acc + input.tcx.adt_def(*did).all_fields().count()
@@ -199,13 +200,13 @@ impl Steensgaard<FieldBased> {
 
         let mut fn_locals = VecArray::with_capacity(input.fns.len(), input.fns.len() * 20);
         let mut fn_idx = FxHashMap::default();
-        fn_idx.reserve(input.structs.len());
+        fn_idx.reserve(input.fns.len());
         for (idx, did) in input.fns.iter().enumerate() {
             let r#fn = input.tcx.optimized_mir(*did);
             for _ in &r#fn.local_decls {
                 let local = pts.next_index();
                 fn_locals.add_item_to_array(local);
-                pts.push(AbstractLocation::NULL);
+                assert_eq!(pts.push(AbstractLocation::NULL), local);
             }
             fn_locals.done_with_array();
             fn_idx.insert(*did, idx);
@@ -283,19 +284,30 @@ impl Steensgaard<FieldBased> {
 
 impl Steensgaard<FieldInsensitive> {
     pub fn field_insensitive(input: &common::CrateData) -> Self {
-        let mut pts = IndexVec::with_capacity(input.fns.len() * 20);
+        let n_fn_locals = input.fns.iter().fold(0usize, |acc, did| {
+            acc + input.tcx.optimized_mir(*did).local_decls.len()
+        });
+
+        let mut pts = IndexVec::with_capacity(2 * n_fn_locals + 1);
+
         // null points to null
         assert_eq!(pts.push(AbstractLocation::NULL), AbstractLocation::NULL);
 
+        // initial points-to target for each function local
+        for _ in 0..n_fn_locals {
+            pts.push(AbstractLocation::NULL);
+        }
+
         let mut fn_locals = VecArray::with_capacity(input.fns.len(), input.fns.len() * 20);
         let mut fn_idx = FxHashMap::default();
-        fn_idx.reserve(input.structs.len());
+        fn_idx.reserve(input.fns.len());
         for (idx, did) in input.fns.iter().enumerate() {
             let r#fn = input.tcx.optimized_mir(*did);
             for _ in &r#fn.local_decls {
-                let local = pts.next_index();
+                let local: AbstractLocation = pts.next_index();
+                let local_pt = AbstractLocation::from_u32(local.as_u32() - n_fn_locals as u32);
                 fn_locals.add_item_to_array(local);
-                pts.push(AbstractLocation::NULL);
+                assert_eq!(pts.push(local_pt), local);
             }
             fn_locals.done_with_array();
             fn_idx.insert(*did, idx);
@@ -337,6 +349,19 @@ impl Steensgaard<FieldInsensitive> {
 
         steensgaard
     }
+
+    pub fn print_results(&self) {
+        for (&did, &idx) in self.fn_locals.did_idx.iter() {
+            println!("results for {:?}:", did);
+            let locals_result = self.fn_locals.locations[idx]
+                .iter()
+                .copied()
+                .map(|loc| self.pts_targets.find(self.pts[loc]));
+            for (idx, tgt) in locals_result.enumerate() {
+                println!("{:?}.{idx} -> {:?}", did, tgt);
+            }
+        }
+    }
 }
 
 impl<F: FieldStrategy> Steensgaard<F> {
@@ -359,7 +384,7 @@ impl<F: FieldStrategy> Steensgaard<F> {
         self.join(p_pts, q_pts);
     }
 
-    pub fn may_alias(&self, p: AbstractLocation, q: AbstractLocation) -> bool {
+    pub fn maybe_alias(&self, p: AbstractLocation, q: AbstractLocation) -> bool {
         if p.is_null() || q.is_null() {
             return false;
         }
@@ -601,7 +626,8 @@ impl<'me, 'tcx, F: FieldStrategy> ConstraintGeneration<'me, 'tcx, F> {
         // process assign(p, q)
         let constraint_idx = self.constraints.len();
         self.constraints
-            .push(Constraint::new(ConstraintKind::Assign, p, q));
+            .push(Constraint(ConstraintKind::Assign, p, q));
+        // .push(Constraint::new(ConstraintKind::Assign, p, q));
         self.resolve_assign(p, q, constraint_idx)
     }
 
@@ -645,7 +671,7 @@ impl<'me, 'tcx, F: FieldStrategy> Visitor<'tcx> for ConstraintGeneration<'me, 't
             return;
         }
 
-        // println!("visiting assignment {:?}: {place_ty} = {:?}", place, rvalue);
+        tracing::debug!("visiting assignment {:?}: {place_ty} = {:?}", place, rvalue);
 
         let (is_addr_of, rplace) = match rvalue {
             Rvalue::Use(operand) => {

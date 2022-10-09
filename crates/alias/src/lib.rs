@@ -18,7 +18,7 @@
 
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use steensgaard::{FieldBased, FieldInsensitive, Steensgaard};
+use steensgaard::{FieldFocused, FieldInsensitive, Steensgaard};
 
 extern crate rustc_arena;
 extern crate rustc_ast;
@@ -40,7 +40,7 @@ extern crate rustc_type_ir;
 
 mod steensgaard;
 
-pub type TaintResult = Steensgaard<FieldBased>;
+pub type TaintResult = Steensgaard<FieldFocused>;
 pub type AliasResult = Steensgaard<FieldInsensitive>;
 
 pub fn taint_results(input: &common::CrateData) -> TaintResult {
@@ -71,7 +71,7 @@ impl TaintResult {
                     (start..end)
                         .flat_map(|f| ((f + 1u32)..end).map(move |g| (f, g)))
                         .filter_map(|(f, g)| {
-                            self.may_alias(f, g)
+                            self.maybe_alias(f, g)
                                 .then(|| (f.index() - start.index(), g.index() - start.index()))
                         })
                         .collect(),
@@ -93,7 +93,7 @@ impl TaintResult {
                     );
                     (start..end)
                         .filter_map(|f| {
-                            self.may_alias(f, self.arg_free)
+                            self.maybe_alias(f, self.arg_free)
                                 .then(|| f.index() - start.index())
                         })
                         .collect()
