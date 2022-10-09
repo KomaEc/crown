@@ -282,12 +282,13 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             println!("verification success");
         }
         Command::CrashMe => {
+            let alias_result = alias::alias_results(&input);
             let mut program = CrateCtxt::from(input);
             time("test running ownership analysis", || {
                 analysis::ownership::crash_me(&mut program)
             })?;
 
-            analysis::show_output_params(&program);
+            analysis::show_output_params(&program, &alias_result);
         }
         Command::Alias => {
             let alias = alias::taint_results(&input);

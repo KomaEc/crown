@@ -143,8 +143,8 @@ impl<Item: std::fmt::Debug> std::fmt::Debug for MemoryLocationGroup<Item> {
     }
 }
 
-pub type StructFields = MemoryLocationGroup<rustc_middle::mir::Field>;
-pub type FnLocals = MemoryLocationGroup<rustc_middle::mir::Local>;
+type StructFields = MemoryLocationGroup<rustc_middle::mir::Field>;
+type FnLocals = MemoryLocationGroup<rustc_middle::mir::Local>;
 
 #[derive(Debug)]
 pub struct Steensgaard<F: FieldStrategy> {
@@ -345,6 +345,10 @@ impl<F: FieldStrategy> Steensgaard<F> {
         self.pts.len()
     }
 
+    pub fn local_locations(&self, body_id: &DefId) -> &[AbstractLocation] {
+        &self.fn_locals.locations[self.fn_locals.did_idx[&body_id]]
+    }
+
     pub(crate) fn join(&mut self, p: AbstractLocation, q: AbstractLocation) {
         if self.pts_targets.find_mut(p) == self.pts_targets.find_mut(q) {
             return;
@@ -355,7 +359,7 @@ impl<F: FieldStrategy> Steensgaard<F> {
         self.join(p_pts, q_pts);
     }
 
-    pub(crate) fn may_alias(&self, p: AbstractLocation, q: AbstractLocation) -> bool {
+    pub fn may_alias(&self, p: AbstractLocation, q: AbstractLocation) -> bool {
         if p.is_null() || q.is_null() {
             return false;
         }
@@ -634,7 +638,10 @@ impl<'me, 'tcx, F: FieldStrategy> Visitor<'tcx> for ConstraintGeneration<'me, 't
         _: rustc_middle::mir::Location,
     ) {
         let place_ty = place.ty(self.body, self.tcx).ty;
-        if !place_ty.is_unsafe_ptr() && !place_ty.is_region_ptr() {
+        // if !place_ty.is_unsafe_ptr() && !place_ty.is_region_ptr() {
+        //     return;
+        // }
+        if place_ty.is_primitive_ty() {
             return;
         }
 
@@ -647,18 +654,11 @@ impl<'me, 'tcx, F: FieldStrategy> Visitor<'tcx> for ConstraintGeneration<'me, 't
             }
             Rvalue::Cast(_, operand, _) => {
                 let Some(rplace) = operand.place() else { return };
-                // integer pointer cast is ignored
-                let rplace_ty = rplace.ty(self.body, self.tcx).ty;
-                if !rplace_ty.is_unsafe_ptr() && !rplace_ty.is_region_ptr() {
-                    return;
-                }
                 (false, rplace)
             }
             Rvalue::CopyForDeref(rplace) => (false, *rplace),
             Rvalue::Ref(_, _, rplace) | Rvalue::AddressOf(_, rplace) => (true, *rplace),
-            _ => {
-                unreachable!("rvalue of pointer type can only be use/deref_copy/addr/ref")
-            }
+            _ => return,
         };
 
         let Some(l_loc) = self.place_location(*place) else { return };

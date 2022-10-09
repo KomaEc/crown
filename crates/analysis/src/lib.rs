@@ -42,7 +42,9 @@ pub mod ssa;
 mod struct_topology;
 #[cfg(test)]
 mod test;
+pub mod noalias_params;
 
+use alias::AliasResult;
 use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
@@ -88,17 +90,31 @@ impl<'tcx> HasStructTopology for CrateCtxt<'tcx> {
     }
 }
 
-pub fn show_output_params(crate_ctxt: &CrateCtxt) {
+pub fn show_output_params(crate_ctxt: &CrateCtxt, alias_result: &AliasResult) {
     for &did in crate_ctxt.fns() {
         let body = crate_ctxt.tcx.optimized_mir(did);
-        let output_params = output_params::least_output_params(body, crate_ctxt)
-            .into_iter()
+        let output_params = output_params::least_output_params(body, crate_ctxt);
+        let output_params_str = output_params
+            .iter()
+            .map(|local| format!("{:?}", local))
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        let noalias_params = noalias_params::conservative_unique_params(body, alias_result);
+        let noalias_params_str = noalias_params
+            .iter()
+            .map(|local| format!("{:?}", local))
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        let unique_params = output_params.intersection(&noalias_params);
+        let unique_params_str = unique_params
             .map(|local| format!("{:?}", local))
             .collect::<Vec<_>>()
             .join(", ");
 
         println!(
-            "output parameters of {}: {output_params}",
+            "@{}: output_params: {output_params_str}, noalias_params: {noalias_params_str}, intersection: {unique_params_str}",
             crate_ctxt.tcx.def_path_str(did)
         )
     }

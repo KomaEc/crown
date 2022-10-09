@@ -18,7 +18,7 @@
 
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use steensgaard::{FieldBased, Steensgaard};
+use steensgaard::{FieldBased, FieldInsensitive, Steensgaard};
 
 extern crate rustc_arena;
 extern crate rustc_ast;
@@ -41,9 +41,14 @@ extern crate rustc_type_ir;
 mod steensgaard;
 
 pub type TaintResult = Steensgaard<FieldBased>;
+pub type AliasResult = Steensgaard<FieldInsensitive>;
 
 pub fn taint_results(input: &common::CrateData) -> TaintResult {
     Steensgaard::field_based(input)
+}
+
+pub fn alias_results(input: &common::CrateData) -> AliasResult {
+    Steensgaard::field_insensitive(input)
 }
 
 pub fn report_results(input: &common::CrateData) {

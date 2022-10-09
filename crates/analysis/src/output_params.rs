@@ -1,4 +1,5 @@
-use rustc_data_structures::sso::SsoHashSet;
+
+use rustc_hash::FxHashSet;
 use rustc_middle::mir::{
     visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
     Body, Local,
@@ -6,12 +7,12 @@ use rustc_middle::mir::{
 
 use crate::{ptr::Measurable, CrateCtxt};
 
-pub type OutputParams = SsoHashSet<Local>;
+pub type OutputParams = FxHashSet<Local>;
 
-pub fn least_output_params(body: &Body, crate_ctxt: &CrateCtxt) -> SsoHashSet<Local> {
+pub fn least_output_params(body: &Body, crate_ctxt: &CrateCtxt) -> OutputParams {
     let return_ty = body.return_ty();
     if crate_ctxt.measure(return_ty, 0) > 0 {
-        return SsoHashSet::default();
+        return OutputParams::default();
     }
 
     let mut output_params = body
@@ -22,7 +23,7 @@ pub fn least_output_params(body: &Body, crate_ctxt: &CrateCtxt) -> SsoHashSet<Lo
         })
         .collect();
 
-    struct Prune<'me>(&'me mut SsoHashSet<Local>);
+    struct Prune<'me>(&'me mut OutputParams);
     impl<'me, 'tcx> Visitor<'tcx> for Prune<'me> {
         fn visit_local(
             &mut self,
