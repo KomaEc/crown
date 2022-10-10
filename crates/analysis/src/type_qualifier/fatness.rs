@@ -3,18 +3,46 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 
-use super::framework::{BooleanLatticeSystem, FnLocalsVars, Infer, StructFieldsVars, Var};
+use super::framework::{
+    boolean_system::BooleanSystem, BooleanLattice, FnLocalsVars, Infer, Lattice, StructFieldsVars,
+    Var,
+};
 
+#[derive(Clone, Copy, PartialEq, Eq)]
 /// [`Arr`] ⊑ [`Ptr`]
-pub enum FatnessLattice {
+pub enum Fatness {
     Arr,
     Ptr,
 }
 
-pub struct Fatness;
+impl From<Fatness> for bool {
+    fn from(fatness: Fatness) -> Self {
+        fatness == Fatness::Ptr
+    }
+}
 
-impl Infer for Fatness {
-    type C = BooleanLatticeSystem;
+impl From<bool> for Fatness {
+    fn from(b: bool) -> Self {
+        if b {
+            Fatness::Ptr
+        } else {
+            Fatness::Arr
+        }
+    }
+}
+
+impl Lattice for Fatness {
+    const BOTTOM: Self = Self::Arr;
+
+    const TOP: Self = Self::Ptr;
+}
+
+impl BooleanLattice for Fatness {}
+
+pub struct FatnessAnalysis;
+
+impl Infer for FatnessAnalysis {
+    type L = BooleanSystem<Fatness>;
 
     fn infer_assign<'tcx>(
         place: &Place<'tcx>,
@@ -23,7 +51,7 @@ impl Infer for Fatness {
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
         struct_fields: &StructFieldsVars,
-        database: &mut Self::C,
+        database: &mut Self::L,
         tcx: TyCtxt<'tcx>,
     ) {
         todo!()
@@ -36,7 +64,7 @@ impl Infer for Fatness {
         locals: &[Var],
         fn_locals: &FnLocalsVars,
         struct_fields: &StructFieldsVars,
-        database: &mut <Self as Infer>::C,
+        database: &mut <Self as Infer>::L,
         tcx: TyCtxt<'tcx>,
     ) {
         todo!()

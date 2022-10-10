@@ -8,28 +8,61 @@ use rustc_middle::{
 };
 
 use super::framework::{
-    BooleanLatticeSystem, ConstraintSystem, FnLocalsVars, Infer, StructFieldsVars, Var,
+    boolean_system::BooleanSystem, AnalysisResults, BooleanLattice, FnLocalsVars, Infer, Lattice,
+    StructFieldsVars, Var,
 };
+use crate::type_qualifier::framework::ConstraintSystem;
 
+pub fn mutability_analysis<'tcx>(crate_data: &common::CrateData<'tcx>) -> MutabilityResults<'tcx> {
+    MutabilityResults::new(crate_data)
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
 /// [`Write`] ⊑ [`Read`]
-pub enum MutabilityLattice {
+pub enum Mutability {
     Read,
     Write,
 }
 
-pub struct Mutability;
+pub type MutabilityResults<'tcx> = AnalysisResults<'tcx, MutabilityAnalysis>;
 
-impl Infer for Mutability {
-    type C = BooleanLatticeSystem;
+impl From<Mutability> for bool {
+    fn from(mutability: Mutability) -> Self {
+        mutability == Mutability::Read
+    }
+}
+
+impl From<bool> for Mutability {
+    fn from(b: bool) -> Self {
+        if b {
+            Mutability::Read
+        } else {
+            Mutability::Write
+        }
+    }
+}
+
+impl Lattice for Mutability {
+    const BOTTOM: Self = Self::Write;
+
+    const TOP: Self = Self::Read;
+}
+
+impl BooleanLattice for Mutability {}
+
+pub struct MutabilityAnalysis;
+
+impl Infer for MutabilityAnalysis {
+    type L = BooleanSystem<Mutability>;
 
     fn infer_assign<'tcx>(
         place: &Place<'tcx>,
         rvalue: &Rvalue<'tcx>,
-        location: Location,
+        _location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
         struct_fields: &StructFieldsVars,
-        database: &mut Self::C,
+        database: &mut Self::L,
         tcx: TyCtxt<'tcx>,
     ) {
         let lhs = place;
@@ -49,7 +82,7 @@ impl Infer for Mutability {
 
                 let mut lhs_rhs = lhs.zip(rhs);
                 if let Some((lhs, rhs)) = lhs_rhs.next() {
-                    database.guard(lhs, rhs)
+                    database.guard(rhs, lhs)
                 }
                 for (lhs, rhs) in lhs_rhs {
                     database.guard(lhs, rhs);
@@ -64,7 +97,7 @@ impl Infer for Mutability {
 
                 let mut lhs_rhs = lhs.zip(rhs);
                 if let Some((lhs, rhs)) = lhs_rhs.next() {
-                    database.guard(lhs, rhs)
+                    database.guard(rhs, lhs)
                 }
             }
             Rvalue::Ref(_, BorrowKind::Mut { .. }, rhs)
@@ -74,6 +107,7 @@ impl Infer for Mutability {
         }
     }
 
+    #[allow(unused)]
     fn infer_terminator<'tcx>(
         terminator: &Terminator<'tcx>,
         location: Location,
@@ -81,7 +115,7 @@ impl Infer for Mutability {
         locals: &[Var],
         fn_locals: &FnLocalsVars,
         struct_fields: &StructFieldsVars,
-        database: &mut <Self as Infer>::C,
+        database: &mut <Self as Infer>::L,
         tcx: TyCtxt<'tcx>,
     ) {
     }
@@ -92,7 +126,7 @@ fn place_var<'tcx, const MUT: bool>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFieldsVars,
-    database: &mut <Mutability as Infer>::C,
+    database: &mut <MutabilityAnalysis as Infer>::L,
     tcx: TyCtxt<'tcx>,
 ) -> Range<Var> {
     let mut place_var = Range {
@@ -105,7 +139,7 @@ fn place_var<'tcx, const MUT: bool>(
         match projection_elem {
             ProjectionElem::Deref => {
                 if MUT {
-                    database.source(place_var.start);
+                    database.bottom(place_var.start);
                 }
                 place_var.start = place_var.start + 1;
                 base_ty = base_ty.builtin_deref(true).unwrap().ty;
