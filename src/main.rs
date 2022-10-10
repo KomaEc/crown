@@ -297,7 +297,8 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             analysis::type_qualifier::show_param_qualifiers(&crate_ctxt, &alias_result);
         }
         Command::Mutability => {
-            let mutability_result = analysis::type_qualifier::mutability::mutability_analysis(&input);
+            let mutability_result =
+                analysis::type_qualifier::mutability::mutability_analysis(&input);
             mutability_result.print_fn_sigs(tcx, &input.fns)
         }
         Command::Analyse { .. } => {

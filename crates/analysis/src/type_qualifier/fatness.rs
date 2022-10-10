@@ -52,7 +52,6 @@ impl Infer for FatnessAnalysis {
         locals: &[Var],
         struct_fields: &StructFieldsVars,
         database: &mut Self::L,
-        tcx: TyCtxt<'tcx>,
     ) {
         todo!()
     }

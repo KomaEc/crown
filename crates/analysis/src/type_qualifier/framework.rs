@@ -273,7 +273,6 @@ pub trait Infer {
         locals: &[Var],
         struct_fields: &StructFieldsVars,
         database: &mut Self::L,
-        tcx: TyCtxt<'tcx>,
     );
 
     fn infer_terminator<'tcx>(
@@ -339,7 +338,6 @@ fn infer_basic_block<'tcx, I: Infer>(
             locals,
             struct_fields,
             database,
-            tcx,
         );
         index += 1;
     }
@@ -370,8 +368,8 @@ fn infer_statement<'tcx, I: Infer>(
     locals: &[Var],
     struct_fields: &StructFieldsVars,
     database: &mut I::L,
-    tcx: TyCtxt<'tcx>,
 ) {
+    tracing::debug!("infering statement {:?}", statement);
     match &statement.kind {
         StatementKind::Assign(box (place, rvalue)) => {
             I::infer_assign(
@@ -382,7 +380,6 @@ fn infer_statement<'tcx, I: Infer>(
                 locals,
                 struct_fields,
                 database,
-                tcx,
             );
         }
         StatementKind::SetDiscriminant { .. } => {

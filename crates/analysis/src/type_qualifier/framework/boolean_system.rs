@@ -50,11 +50,12 @@ impl<Value: BooleanLattice> BooleanSystem<Value> {
     pub fn greatest_model(&self, model: &mut IndexVec<Var, Value>) {
         model.raw.fill(true.into());
         let sccs = self.solve();
-        let bottom_valued_vars = &sccs[0];
+        let num_sccs = sccs.len();
+        let bottom_valued_vars = &sccs[num_sccs - 1];
         for &var in bottom_valued_vars {
             model[var] = false.into()
         }
-        assert_eq!(Into::into(model[Self::BOTTOM]), true);
+        assert_eq!(Into::into(model[Self::BOTTOM]), false);
     }
 }
 
@@ -71,6 +72,7 @@ impl<L: BooleanLattice> ConstraintSystem for BooleanSystem<L> {
 
     #[inline]
     fn guard(&mut self, guard: Var, guarded: Var) {
+        tracing::debug!("emit constraint {:?} ≤ {:?}", guard, guarded);
         self.constraint_graph.add_edge(
             NodeIndex::new(guard.index()),
             NodeIndex::new(guarded.index()),

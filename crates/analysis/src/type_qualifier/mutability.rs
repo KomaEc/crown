@@ -3,9 +3,11 @@ use std::ops::Range;
 use rustc_middle::{
     mir::{
         BorrowKind, HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator,
+        TerminatorKind,
     },
     ty::TyCtxt,
 };
+use rustc_type_ir::TyKind;
 
 use super::framework::{
     boolean_system::BooleanSystem, AnalysisResults, BooleanLattice, FnLocalsVars, Infer, Lattice,
@@ -72,16 +74,14 @@ impl Infer for MutabilityAnalysis {
         locals: &[Var],
         struct_fields: &StructFieldsVars,
         database: &mut Self::L,
-        tcx: TyCtxt<'tcx>,
     ) {
         let lhs = place;
         let rhs = rvalue;
 
         match rhs {
             Rvalue::Use(Operand::Copy(rhs) | Operand::Move(rhs)) | Rvalue::CopyForDeref(rhs) => {
-                let lhs = place_var::<true>(lhs, local_decls, locals, struct_fields, database, tcx);
-                let rhs =
-                    place_var::<false>(rhs, local_decls, locals, struct_fields, database, tcx);
+                let lhs = place_var::<true>(lhs, local_decls, locals, struct_fields, database);
+                let rhs = place_var::<false>(rhs, local_decls, locals, struct_fields, database);
 
                 // type safety
                 assert_eq!(
@@ -100,19 +100,20 @@ impl Infer for MutabilityAnalysis {
             }
             Rvalue::Cast(_, Operand::Copy(rhs) | Operand::Move(rhs), _) => {
                 // for cast, we process the head ptr only
-                let lhs = place_var::<true>(lhs, local_decls, locals, struct_fields, database, tcx);
-                let rhs =
-                    place_var::<false>(rhs, local_decls, locals, struct_fields, database, tcx);
+                let lhs = place_var::<true>(lhs, local_decls, locals, struct_fields, database);
+                let rhs = place_var::<false>(rhs, local_decls, locals, struct_fields, database);
 
                 let mut lhs_rhs = lhs.zip(rhs);
                 if let Some((lhs, rhs)) = lhs_rhs.next() {
                     database.guard(rhs, lhs)
                 }
             }
-            Rvalue::Ref(_, BorrowKind::Mut { .. }, rhs)
-            | Rvalue::AddressOf(rustc_ast::Mutability::Mut, rhs) => {}
-            Rvalue::Ref(_, _, rhs) | Rvalue::AddressOf(_, rhs) => {}
-            _ => {}
+            // Rvalue::Ref(_, BorrowKind::Mut { .. }, rhs)
+            // | Rvalue::AddressOf(rustc_ast::Mutability::Mut, rhs) => {}
+            // Rvalue::Ref(_, _, rhs) | Rvalue::AddressOf(_, rhs) => {}
+            _ => {
+                let _ = place_var::<true>(lhs, local_decls, locals, struct_fields, database);
+            }
         }
     }
 
@@ -127,6 +128,16 @@ impl Infer for MutabilityAnalysis {
         database: &mut <Self as Infer>::L,
         tcx: TyCtxt<'tcx>,
     ) {
+        if let TerminatorKind::Call {
+            func,
+            args,
+            destination,
+            ..
+        } = &terminator.kind
+        {
+            let dest_var = place_var::<true>(destination, local_decls, locals, struct_fields, database);
+            
+        }
     }
 }
 
@@ -136,7 +147,6 @@ fn place_var<'tcx, const MUT: bool>(
     locals: &[Var],
     struct_fields: &StructFieldsVars,
     database: &mut <MutabilityAnalysis as Infer>::L,
-    tcx: TyCtxt<'tcx>,
 ) -> Range<Var> {
     let mut place_var = Range {
         start: locals[place.local.index()],
@@ -156,15 +166,21 @@ fn place_var<'tcx, const MUT: bool>(
             ProjectionElem::Field(field, ty) => {
                 assert!(place_var.is_empty());
 
-                let adt_def = base_ty.ty_adt_def().unwrap();
-                let field_vars = struct_fields
-                    .fields(&adt_def.did())
-                    .nth(field.index())
-                    .unwrap();
+                match base_ty.kind() {
+                    TyKind::Adt(adt_def, _) => {
+                        // FIXME union type!!!
+                        let field_vars = struct_fields
+                            .fields(&adt_def.did())
+                            .nth(field.index())
+                            .unwrap();
 
-                place_var = field_vars;
+                        place_var = field_vars;
 
-                base_ty = ty;
+                        base_ty = ty;
+                    }
+                    TyKind::Tuple(..) => return place_var,
+                    _ => unreachable!(),
+                }
             }
             ProjectionElem::Index(_) => {
                 base_ty = base_ty.builtin_index().unwrap();
