@@ -5,27 +5,36 @@ use std::ops::Range;
 use common::data_structure::vec_array::VecArray;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_middle::mir::{
-    BasicBlock, BasicBlockData, Body, HasLocalDecls, LocalDecls, Location, NonDivergingIntrinsic,
-    Place, Rvalue, Statement, StatementKind, Terminator,
+use rustc_middle::{
+    mir::{
+        BasicBlock, BasicBlockData, Body, HasLocalDecls, Location, NonDivergingIntrinsic, Place,
+        Rvalue, Statement, StatementKind, Terminator,
+    },
+    ty::TyCtxt,
 };
 
+common::macros::newtype_index! {
+    pub struct Var {
+        DEBUG_FORMAT = "{}"
+    }
+}
+
 /// A group of [`DefId`]s, with each a set of entities of concerned
-trait MirGroup {}
-enum StructFields {}
-enum FnLocals {}
+pub trait MirGroup {}
+pub enum StructFields {}
+pub enum FnLocals {}
 
 impl MirGroup for StructFields {}
 impl MirGroup for FnLocals {}
 
-struct VarGroup<Group: MirGroup, Var> {
+pub struct VarGroup<Group: MirGroup> {
     did_idx: FxHashMap<DefId, usize>,
     /// [`DefId`] -> entity -> [`std::ops::Range<Var>`]
     vars: VecArray<Var>,
     _group: std::marker::PhantomData<*const Group>,
 }
 
-impl<Group: MirGroup, Var: Copy> VarGroup<Group, Var> {
+impl<Group: MirGroup> VarGroup<Group> {
     #[inline]
     pub fn vars(&self, did: &DefId) -> impl Iterator<Item = Range<Var>> + '_ {
         let idx = self.did_idx[did];
@@ -35,42 +44,66 @@ impl<Group: MirGroup, Var: Copy> VarGroup<Group, Var> {
     }
 }
 
-type StructFieldsVars<Var> = VarGroup<StructFields, Var>;
-type FnLocalsVars<Var> = VarGroup<FnLocals, Var>;
+pub type StructFieldsVars = VarGroup<StructFields>;
+pub type FnLocalsVars = VarGroup<FnLocals>;
 
-impl<Var: Copy> StructFieldsVars<Var> {
+impl StructFieldsVars {
     /// [`fields()`] returns a slice of [`Range<Var>`] that is in lock-step with [`all_fields()`]
     pub fn fields(&self, did: &DefId) -> impl Iterator<Item = Range<Var>> + '_ {
         self.vars(did)
     }
 }
 
-impl<Var: Copy> FnLocalsVars<Var> {
+impl FnLocalsVars {
     /// [`locals()`] returns a slice of [`Range<Var>`] that is in lock-step with [`local_decls`]
     pub fn locals(&self, did: &DefId) -> impl Iterator<Item = Range<Var>> + '_ {
         self.vars(did)
     }
 }
 
-trait ConstraintSystem {
-    type Var;
+pub trait ConstraintSystem {
+    fn source(&mut self, var: Var);
 
-    fn source(&mut self, var: Self::Var);
+    fn sink(&mut self, var: Var);
 
-    fn sink(&mut self, var: Self::Var);
-
-    fn guard(&mut self, guard: Self::Var, guarded: Self::Var);
+    fn guard(&mut self, guard: Var, guarded: Var);
 }
 
-fn infer_body<DB: ConstraintSystem>(
-    body: &Body,
-    locals: &[DB::Var],
-    fn_locals: &FnLocalsVars<DB::Var>,
-    struct_fields: &StructFieldsVars<DB::Var>,
-    database: &mut DB,
+pub trait Infer {
+    type C: ConstraintSystem;
+    fn infer_assign<'tcx>(
+        place: &Place<'tcx>,
+        rvalue: &Rvalue<'tcx>,
+        location: Location,
+        local_decls: &impl HasLocalDecls<'tcx>,
+        locals: &[Var],
+        struct_fields: &StructFieldsVars,
+        database: &mut Self::C,
+        tcx: TyCtxt<'tcx>,
+    );
+
+    fn infer_terminator<'tcx>(
+        terminator: &Terminator<'tcx>,
+        location: Location,
+        local_decls: &impl HasLocalDecls<'tcx>,
+        locals: &[Var],
+        fn_locals: &FnLocalsVars,
+        struct_fields: &StructFieldsVars,
+        database: &mut <Self as Infer>::C,
+        tcx: TyCtxt<'tcx>,
+    );
+}
+
+fn infer_body<'tcx, I: Infer>(
+    body: &Body<'tcx>,
+    locals: &[Var],
+    fn_locals: &FnLocalsVars,
+    struct_fields: &StructFieldsVars,
+    database: &mut I::C,
+    tcx: TyCtxt<'tcx>,
 ) {
     for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
-        infer_basic_block(
+        infer_basic_block::<I>(
             bb,
             bb_data,
             &body.local_decls,
@@ -78,18 +111,20 @@ fn infer_body<DB: ConstraintSystem>(
             fn_locals,
             struct_fields,
             database,
+            tcx,
         )
     }
 }
 
-fn infer_basic_block<'tcx, DB: ConstraintSystem>(
+fn infer_basic_block<'tcx, I: Infer>(
     bb: BasicBlock,
     bb_data: &BasicBlockData<'tcx>,
     local_decls: &impl HasLocalDecls<'tcx>,
-    locals: &[DB::Var],
-    fn_locals: &FnLocalsVars<DB::Var>,
-    struct_fields: &StructFieldsVars<DB::Var>,
-    database: &mut DB,
+    locals: &[Var],
+    fn_locals: &FnLocalsVars,
+    struct_fields: &StructFieldsVars,
+    database: &mut I::C,
+    tcx: TyCtxt<'tcx>,
 ) {
     let BasicBlockData {
         statements,
@@ -103,13 +138,14 @@ fn infer_basic_block<'tcx, DB: ConstraintSystem>(
             block: bb,
             statement_index: index,
         };
-        infer_statement(
+        infer_statement::<I>(
             statement,
             location,
             local_decls,
             locals,
             struct_fields,
             database,
+            tcx,
         );
         index += 1;
     }
@@ -120,7 +156,7 @@ fn infer_basic_block<'tcx, DB: ConstraintSystem>(
             statement_index: index,
         };
 
-        infer_terminator(
+        I::infer_terminator(
             terminator,
             location,
             local_decls,
@@ -128,21 +164,32 @@ fn infer_basic_block<'tcx, DB: ConstraintSystem>(
             fn_locals,
             struct_fields,
             database,
+            tcx,
         );
     }
 }
 
-fn infer_statement<'tcx, DB: ConstraintSystem>(
+fn infer_statement<'tcx, I: Infer>(
     statement: &Statement<'tcx>,
     location: Location,
     local_decls: &impl HasLocalDecls<'tcx>,
-    locals: &[DB::Var],
-    struct_fields: &StructFieldsVars<DB::Var>,
-    database: &mut DB,
+    locals: &[Var],
+    struct_fields: &StructFieldsVars,
+    database: &mut I::C,
+    tcx: TyCtxt<'tcx>,
 ) {
     match &statement.kind {
         StatementKind::Assign(box (place, rvalue)) => {
-            infer_assign(place, rvalue, location, local_decls, locals, struct_fields, database);
+            I::infer_assign(
+                place,
+                rvalue,
+                location,
+                local_decls,
+                locals,
+                struct_fields,
+                database,
+                tcx,
+            );
         }
         StatementKind::SetDiscriminant { .. } => {
             tracing::debug!("ignoring SetDiscriminant statement {:?}", statement)
@@ -159,31 +206,24 @@ fn infer_statement<'tcx, DB: ConstraintSystem>(
         | StatementKind::Retag(_, _)
         | StatementKind::FakeRead(_)
         | StatementKind::Coverage(_)
-        // | StatementKind::CopyNonOverlapping(_)
         | StatementKind::Nop => {
             unreachable!("statement {:?} is not assumed to appear", statement)
         }
     }
 }
 
-fn infer_assign<'tcx, DB: ConstraintSystem>(
-    place: &Place<'tcx>,
-    rvalue: &Rvalue<'tcx>,
-    location: Location,
-    local_decls: &impl HasLocalDecls<'tcx>,
-    locals: &[DB::Var],
-    struct_fields: &StructFieldsVars<DB::Var>,
-    database: &mut DB,
-) {
-}
+pub struct BooleanLatticeSystem;
 
-fn infer_terminator<'tcx, DB: ConstraintSystem>(
-    terminator: &Terminator<'tcx>,
-    location: Location,
-    local_decls: &impl HasLocalDecls<'tcx>,
-    locals: &[DB::Var],
-    fn_locals: &FnLocalsVars<DB::Var>,
-    struct_fields: &StructFieldsVars<DB::Var>,
-    database: &mut DB,
-) {
+impl ConstraintSystem for BooleanLatticeSystem {
+    fn source(&mut self, var: Var) {
+        todo!()
+    }
+
+    fn sink(&mut self, var: Var) {
+        todo!()
+    }
+
+    fn guard(&mut self, guard: Var, guarded: Var) {
+        todo!()
+    }
 }
