@@ -35,13 +35,13 @@ extern crate rustc_type_ir;
 
 mod call_graph;
 pub mod ownership;
-pub mod param_qualifier;
 mod ptr;
 mod rustc_properties;
 pub mod ssa;
 mod struct_topology;
 #[cfg(test)]
 mod test;
+pub mod type_qualifier;
 
 use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;

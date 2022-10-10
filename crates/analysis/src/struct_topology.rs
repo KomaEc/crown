@@ -2,7 +2,6 @@ use common::data_structure::vec_array::VecArray;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_index::bit_set::BitSet;
 use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
 
@@ -187,12 +186,6 @@ impl StructTopology {
 
         self.offset_of.push(offset_of);
     }
-}
-
-#[allow(dead_code)]
-pub struct FieldAssumptions {
-    /// struct -> set of fields assumed to be owning
-    assumptions: FxHashMap<DefId, BitSet<u32>>,
 }
 
 #[cfg(test)]

@@ -293,7 +293,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         Command::ClassifyParams => {
             let alias_result = alias::alias_results(&input);
             let crate_ctxt = CrateCtxt::from(input);
-            analysis::param_qualifier::show_param_qualifiers(&crate_ctxt, &alias_result);
+            analysis::type_qualifier::show_param_qualifiers(&crate_ctxt, &alias_result);
         }
         Command::Analyse { .. } => {
             let mut crate_ctxt = CrateCtxt::from(input);

@@ -2,6 +2,9 @@ use alias::AliasResult;
 
 use crate::CrateCtxt;
 
+pub mod fatness;
+pub mod framework;
+pub mod immutability;
 pub mod noalias;
 pub mod output;
 pub mod read_only;
@@ -32,10 +35,5 @@ pub fn show_param_qualifiers(crate_ctxt: &CrateCtxt, alias_result: &AliasResult)
         println!("  {:<20}: {noalias_params_str}", "noalias_params");
         println!("  {:<20}: {unique_params_str}", "unique_params");
         println!("  {:<20}: {read_only_params_str}", "read_only_params");
-
-        // println!(
-        //     "@{}: output_params: {output_params_str}, noalias_params: {noalias_params_str}, unique_params: {unique_params_str}",
-        //     crate_ctxt.tcx.def_path_str(did)
-        // )
     }
 }
