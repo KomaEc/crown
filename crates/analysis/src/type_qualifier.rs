@@ -4,7 +4,7 @@ use crate::CrateCtxt;
 
 pub mod fatness;
 pub mod framework;
-pub mod immutability;
+pub mod mutability;
 pub mod noalias;
 pub mod output;
 pub mod read_only;
