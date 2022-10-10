@@ -14,11 +14,13 @@ impl<Value: BooleanLattice> BooleanSystem<Value> {
     pub const TOP: Var = Var::from_u32(1);
     pub const BOTTOM: Var = Var::from_u32(0);
 
-    // TODO init, 0 ≤ var ≤ 1 for every var
     pub fn new(universe: &IndexVec<Var, Value>) -> Self {
         let mut constraint_graph = petgraph::graph::Graph::new();
         constraint_graph.reserve_nodes(universe.len());
         constraint_graph.reserve_edges(universe.len() * 3);
+        for _ in 0..universe.len() {
+            constraint_graph.add_node(());
+        }
         let mut system = Self {
             constraint_graph,
             solved: once_cell::unsync::OnceCell::new(),
@@ -52,7 +54,7 @@ impl<Value: BooleanLattice> BooleanSystem<Value> {
         for &var in bottom_valued_vars {
             model[var] = false.into()
         }
-        assert_eq!(Into::into(model[Self::BOTTOM]), false);
+        assert_eq!(Into::into(model[Self::BOTTOM]), true);
     }
 }
 

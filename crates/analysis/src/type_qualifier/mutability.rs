@@ -13,7 +13,7 @@ use super::framework::{
 };
 use crate::type_qualifier::framework::ConstraintSystem;
 
-pub fn mutability_analysis<'tcx>(crate_data: &common::CrateData<'tcx>) -> MutabilityResults<'tcx> {
+pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResults {
     MutabilityResults::new(crate_data)
 }
 
@@ -24,7 +24,16 @@ pub enum Mutability {
     Write,
 }
 
-pub type MutabilityResults<'tcx> = AnalysisResults<'tcx, MutabilityAnalysis>;
+impl std::fmt::Display for Mutability {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Mutability::Read => write!(f, "&read"),
+            Mutability::Write => write!(f, "&write"),
+        }
+    }
+}
+
+pub type MutabilityResults = AnalysisResults<MutabilityAnalysis>;
 
 impl From<Mutability> for bool {
     fn from(mutability: Mutability) -> Self {
@@ -133,7 +142,7 @@ fn place_var<'tcx, const MUT: bool>(
         start: locals[place.local.index()],
         end: locals[place.local.index() + 1],
     };
-    let mut base_ty = place.ty(local_decls, tcx).ty;
+    let mut base_ty = local_decls.local_decls()[place.local].ty;
 
     for projection_elem in place.projection {
         match projection_elem {
@@ -145,11 +154,9 @@ fn place_var<'tcx, const MUT: bool>(
                 base_ty = base_ty.builtin_deref(true).unwrap().ty;
             }
             ProjectionElem::Field(field, ty) => {
-                // FIXME
-                // database.source(lhs_var.start);
                 assert!(place_var.is_empty());
 
-                let adt_def = ty.ty_adt_def().unwrap();
+                let adt_def = base_ty.ty_adt_def().unwrap();
                 let field_vars = struct_fields
                     .fields(&adt_def.did())
                     .nth(field.index())

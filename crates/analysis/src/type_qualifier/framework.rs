@@ -10,8 +10,8 @@ use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
-        BasicBlock, BasicBlockData, Body, HasLocalDecls, Location, NonDivergingIntrinsic, Place,
-        Rvalue, Statement, StatementKind, Terminator,
+        BasicBlock, BasicBlockData, Body, HasLocalDecls, Local, Location, NonDivergingIntrinsic,
+        Place, Rvalue, Statement, StatementKind, Terminator,
     },
     ty::{Ty, TyCtxt},
 };
@@ -19,11 +19,76 @@ use rustc_type_ir::TyKind;
 
 use self::boolean_system::BooleanSystem;
 
-pub struct AnalysisResults<'tcx, I: Infer> {
+pub struct AnalysisResults<I: Infer> {
     struct_fields: StructFieldsVars,
     fn_locals: FnLocalsVars,
     model: IndexVec<Var, <<I as Infer>::L as ConstraintSystem>::Domain>,
-    tcx: TyCtxt<'tcx>,
+}
+
+fn display_value<Value: std::fmt::Display>(value: &[Value]) -> String {
+    "[".to_owned()
+        + &value
+            .iter()
+            .map(|value| format!("{value}"))
+            .collect::<Vec<_>>()
+            .join(" ")
+        + "]"
+}
+
+impl<I: Infer> AnalysisResults<I> {
+    pub fn fn_result(&self, r#fn: &DefId) -> FnResults<I> {
+        let locals = &self.fn_locals.vars[self.fn_locals.did_idx[r#fn]];
+        FnResults {
+            locals,
+            model: &self.model,
+        }
+    }
+
+    pub fn fn_sig(
+        &self,
+        r#fn: &DefId,
+        tcx: TyCtxt,
+    ) -> impl Iterator<Item = &[<<I as Infer>::L as ConstraintSystem>::Domain]> {
+        let fn_result = self.fn_result(r#fn);
+        let body = tcx.optimized_mir(*r#fn);
+        fn_result.results().take(body.arg_count + 1)
+    }
+
+    pub fn print_fn_sigs(&self, tcx: TyCtxt, fns: &[DefId])
+    where
+        <<I as Infer>::L as ConstraintSystem>::Domain: std::fmt::Display,
+    {
+        for did in fns {
+            let mut fn_sig = self.fn_sig(did, tcx);
+            let ret = fn_sig.next().unwrap();
+            let ret = display_value(ret);
+            let args = fn_sig.map(display_value).collect::<Vec<_>>().join(", ");
+
+            let fn_path = tcx.def_path_str(*did);
+            println!("{fn_path}: ({args}) -> {ret}")
+        }
+    }
+}
+
+#[derive(Clone, Copy)]
+pub struct FnResults<'me, I: Infer> {
+    locals: &'me [Var],
+    model: &'me IndexVec<Var, <<I as Infer>::L as ConstraintSystem>::Domain>,
+}
+
+impl<'me, I: Infer> FnResults<'me, I> {
+    pub fn results(
+        self,
+    ) -> impl Iterator<Item = &'me [<<I as Infer>::L as ConstraintSystem>::Domain]> {
+        self.locals
+            .array_windows()
+            .map(|&[start, end]| &self.model.raw[start.index()..end.index()])
+    }
+
+    pub fn local_result(&self, local: Local) -> &[<<I as Infer>::L as ConstraintSystem>::Domain] {
+        let (start, end) = (self.locals[local.index()], self.locals[local.index() + 1]);
+        &self.model.raw[start.index()..end.index()]
+    }
 }
 
 fn count_ptr(mut ty: Ty) -> usize {
@@ -42,13 +107,13 @@ fn count_ptr(mut ty: Ty) -> usize {
     }
 }
 
-impl<'tcx, Domain, I: Infer> AnalysisResults<'tcx, I>
+impl<Domain, I: Infer> AnalysisResults<I>
 where
     <I as Infer>::L: ConstraintSystem<Domain = Domain>,
     Domain: BooleanLattice,
     I: Infer<L = BooleanSystem<Domain>>,
 {
-    pub fn new(crate_data: &common::CrateData<'tcx>) -> Self {
+    pub fn new(crate_data: &common::CrateData) -> Self {
         let mut model = IndexVec::new();
         // not necessary, but need initialization anyway
         model.push(<<I as Infer>::L as ConstraintSystem>::Domain::BOTTOM);
@@ -128,7 +193,6 @@ where
             struct_fields,
             fn_locals,
             model,
-            tcx,
         }
     }
 }

@@ -79,6 +79,7 @@ enum Command {
     Taint,
     Alias,
     ClassifyParams,
+    Mutability,
     Refactor,
     Rewrite {
         #[clap(arg_enum, default_value_t = RewriteMode::Print)]
@@ -294,6 +295,10 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             let alias_result = alias::alias_results(&input);
             let crate_ctxt = CrateCtxt::from(input);
             analysis::type_qualifier::show_param_qualifiers(&crate_ctxt, &alias_result);
+        }
+        Command::Mutability => {
+            let mutability_result = analysis::type_qualifier::mutability::mutability_analysis(&input);
+            mutability_result.print_fn_sigs(tcx, &input.fns)
         }
         Command::Analyse { .. } => {
             let mut crate_ctxt = CrateCtxt::from(input);

@@ -48,13 +48,10 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
 use struct_topology::{HasStructTopology, StructTopology};
 
-/// Input program is assumed to consist of only top-level
-/// functions and struct definitions.
 pub struct CrateCtxt<'tcx> {
     tcx: TyCtxt<'tcx>,
     call_graph: CallGraph,
     struct_topology: StructTopology,
-    // taint_result: taint::TaintResult,
 }
 
 impl<'tcx> From<common::CrateData<'tcx>> for CrateCtxt<'tcx> {
@@ -63,7 +60,6 @@ impl<'tcx> From<common::CrateData<'tcx>> for CrateCtxt<'tcx> {
             tcx: krate.tcx,
             call_graph: CallGraph::new(krate.tcx, &krate.fns),
             struct_topology: StructTopology::new(krate.tcx, &krate.structs),
-            // taint_result: taint::taint_results(&krate)
         }
     }
 }
