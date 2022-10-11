@@ -2,10 +2,8 @@ use alias::AliasResult;
 
 use crate::CrateCtxt;
 
-pub mod fatness;
-pub mod framework;
+pub mod flow_insensitive;
 pub mod lattice;
-pub mod mutability;
 pub mod noalias;
 pub mod output;
 pub mod read_only;

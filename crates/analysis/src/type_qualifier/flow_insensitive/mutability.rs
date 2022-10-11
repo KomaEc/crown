@@ -1,19 +1,22 @@
+pub mod libc;
+pub mod library;
+
 use std::ops::Range;
 
 use rustc_middle::{
     mir::{
-        BorrowKind, HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator,
-        TerminatorKind,
+        HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind,
     },
     ty::TyCtxt,
 };
-use rustc_type_ir::TyKind;
+use rustc_type_ir::TyKind::{self, FnDef};
 
-use super::framework::{
+use self::library::library_call;
+use super::{
     boolean_system::BooleanSystem, AnalysisResults, BooleanLattice, FnLocalsVars, Infer, Lattice,
     StructFieldsVars, Var,
 };
-use crate::type_qualifier::framework::ConstraintSystem;
+use crate::type_qualifier::flow_insensitive::ConstraintSystem;
 
 pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResults {
     MutabilityResults::new(crate_data)
@@ -108,8 +111,9 @@ impl Infer for MutabilityAnalysis {
                     database.guard(rhs, lhs)
                 }
             }
-            // Rvalue::Ref(_, BorrowKind::Mut { .. }, rhs)
-            // | Rvalue::AddressOf(rustc_ast::Mutability::Mut, rhs) => {}
+            // no need to deal with borrow.
+            // 1. no rules in toplas 2006
+            // 2. can be inferred by later usages
             // Rvalue::Ref(_, _, rhs) | Rvalue::AddressOf(_, rhs) => {}
             _ => {
                 let _ = place_var::<true>(lhs, local_decls, locals, struct_fields, database);
@@ -117,10 +121,9 @@ impl Infer for MutabilityAnalysis {
         }
     }
 
-    #[allow(unused)]
     fn infer_terminator<'tcx>(
         terminator: &Terminator<'tcx>,
-        location: Location,
+        _location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
         fn_locals: &FnLocalsVars,
@@ -135,8 +138,101 @@ impl Infer for MutabilityAnalysis {
             ..
         } = &terminator.kind
         {
-            let dest_var = place_var::<true>(destination, local_decls, locals, struct_fields, database);
-            
+            if let Some(func) = func.constant() {
+                let ty = func.ty();
+                let &FnDef(callee, _) = ty.kind() else { unreachable!() };
+                if let Some(local_did) = callee.as_local() {
+                    match tcx.hir().find_by_def_id(local_did).unwrap() {
+                        // this crate
+                        rustc_hir::Node::Item(_) => {
+                            let callee_body = tcx.optimized_mir(callee);
+                            let mut callee_vars =
+                                fn_locals.vars(&callee).take(callee_body.arg_count + 1);
+
+                            let dest = place_var::<true>(
+                                destination,
+                                local_decls,
+                                locals,
+                                struct_fields,
+                                database,
+                            );
+                            let ret = callee_vars.next().unwrap();
+
+                            // type safety
+                            assert_eq!(
+                                dest.end.index() - dest.start.index(),
+                                ret.end.index() - ret.start.index()
+                            );
+
+                            let mut dest_ret = dest.zip(ret);
+
+                            if let Some((dest, ret)) = dest_ret.next() {
+                                database.guard(ret, dest)
+                            }
+                            for (dest, ret) in dest_ret {
+                                database.guard(ret, dest);
+                                database.guard(dest, ret);
+                            }
+
+                            for (arg, param_vars) in args.iter().zip(callee_vars) {
+                                let Some(arg) = arg.place() else { continue; };
+                                let arg_vars = place_var::<false>(
+                                    &arg,
+                                    local_decls,
+                                    locals,
+                                    struct_fields,
+                                    database,
+                                );
+
+                                let mut param_arg = param_vars.zip(arg_vars);
+                                if let Some((param, arg)) = param_arg.next() {
+                                    database.guard(arg, param);
+                                }
+                                for (param, arg) in param_arg {
+                                    database.guard(arg, param);
+                                    database.guard(param, arg);
+                                }
+                            }
+
+                            return;
+                        }
+                        // extern
+                        rustc_hir::Node::ForeignItem(_) => {}
+                        // in libxml2.rust/src/xmlschemastypes.rs/{} impl_xmlSchemaValDate/set_mon
+                        rustc_hir::Node::ImplItem(_) => { /* TODO */ }
+                        _ => unreachable!(),
+                    }
+                } else {
+                    library_call(
+                        destination,
+                        args,
+                        callee,
+                        local_decls,
+                        locals,
+                        struct_fields,
+                        database,
+                        tcx,
+                    );
+                    return;
+                }
+            }
+
+            // conservative catch all
+            let dest_var =
+                place_var::<true>(destination, local_decls, locals, struct_fields, database);
+
+            for var in dest_var {
+                database.bottom(var);
+            }
+
+            for arg in args {
+                let Some(arg) = arg.place() else { continue; };
+                let arg_vars =
+                    place_var::<false>(&arg, local_decls, locals, struct_fields, database);
+                for var in arg_vars {
+                    database.bottom(var);
+                }
+            }
         }
     }
 }

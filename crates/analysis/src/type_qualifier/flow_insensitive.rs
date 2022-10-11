@@ -1,6 +1,8 @@
 //! A context-sensitive, flow-insensitive, field-based type qualifier inference framework
 
 pub mod boolean_system;
+pub mod fatness;
+pub mod mutability;
 
 use std::ops::Range;
 
@@ -219,9 +221,9 @@ impl MirGroup for StructFields {}
 impl MirGroup for FnLocals {}
 
 pub struct VarGroup<Group: MirGroup> {
-    did_idx: FxHashMap<DefId, usize>,
+    pub(super) did_idx: FxHashMap<DefId, usize>,
     /// [`DefId`] -> entity -> [`std::ops::Range<Var>`]
-    vars: VecArray<Var>,
+    pub(super) vars: VecArray<Var>,
     _group: std::marker::PhantomData<*const Group>,
 }
 

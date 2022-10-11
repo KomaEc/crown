@@ -3,7 +3,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 
-use super::framework::{
+use super::{
     boolean_system::BooleanSystem, BooleanLattice, FnLocalsVars, Infer, Lattice, StructFieldsVars,
     Var,
 };

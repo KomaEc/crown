@@ -298,7 +298,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         }
         Command::Mutability => {
             let mutability_result =
-                analysis::type_qualifier::mutability::mutability_analysis(&input);
+                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
             mutability_result.print_fn_sigs(tcx, &input.fns)
         }
         Command::Analyse { .. } => {
