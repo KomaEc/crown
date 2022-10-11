@@ -5,7 +5,8 @@ use std::ops::Range;
 
 use rustc_middle::{
     mir::{
-        HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind, BorrowKind,
+        BorrowKind, HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator,
+        TerminatorKind,
     },
     ty::TyCtxt,
 };

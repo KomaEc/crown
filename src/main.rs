@@ -294,8 +294,14 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         }
         Command::ClassifyParams => {
             let alias_result = alias::alias_results(&input);
+            let mutability_result =
+                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
             let crate_ctxt = CrateCtxt::from(input);
-            analysis::type_qualifier::show_param_qualifiers(&crate_ctxt, &alias_result);
+            analysis::type_qualifier::noalias::show_noalias_params(
+                &crate_ctxt,
+                &alias_result,
+                &mutability_result,
+            );
         }
         Command::Mutability => {
             let mutability_result =
@@ -339,6 +345,14 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             })
         }
         Command::Refactor => {
+            let alias_result = alias::alias_results(&input);
+            let mutability_result =
+                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
+            let fatness_result =
+                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input);
+
+            let _ = (alias_result, mutability_result, fatness_result);
+
             let mut crate_ctxt = CrateCtxt::from(input);
             let _ = analysis::ownership::WholeProgram::analyze(&mut crate_ctxt)?;
             todo!();
