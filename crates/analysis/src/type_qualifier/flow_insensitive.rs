@@ -21,7 +21,7 @@ use rustc_type_ir::TyKind;
 
 use self::boolean_system::BooleanSystem;
 
-pub struct AnalysisResults<I: Infer> {
+pub struct AnalysisResult<I: Infer> {
     struct_fields: StructFieldsVars,
     fn_locals: FnLocalsVars,
     model: IndexVec<Var, <<I as Infer>::L as ConstraintSystem>::Domain>,
@@ -35,10 +35,10 @@ fn display_value<Value: std::fmt::Display>(value: &[Value]) -> String {
         .join(" ")
 }
 
-impl<I: Infer> AnalysisResults<I> {
-    pub fn fn_result(&self, r#fn: &DefId) -> FnResults<I> {
+impl<I: Infer> AnalysisResult<I> {
+    pub fn fn_result(&self, r#fn: &DefId) -> FnResult<I> {
         let locals = &self.fn_locals.vars[self.fn_locals.did_idx[r#fn]];
-        FnResults {
+        FnResult {
             locals,
             model: &self.model,
         }
@@ -80,12 +80,12 @@ impl<I: Infer> AnalysisResults<I> {
 }
 
 #[derive(Clone, Copy)]
-pub struct FnResults<'me, I: Infer> {
+pub struct FnResult<'me, I: Infer> {
     locals: &'me [Var],
     model: &'me IndexVec<Var, <<I as Infer>::L as ConstraintSystem>::Domain>,
 }
 
-impl<'me, I: Infer> FnResults<'me, I> {
+impl<'me, I: Infer> FnResult<'me, I> {
     pub fn results(
         self,
     ) -> impl Iterator<Item = &'me [<<I as Infer>::L as ConstraintSystem>::Domain]> {
@@ -116,7 +116,7 @@ fn count_ptr(mut ty: Ty) -> usize {
     }
 }
 
-impl<Domain, I> AnalysisResults<I>
+impl<Domain, I> AnalysisResult<I>
 where
     Domain: BooleanLattice,
     I: Infer<L = BooleanSystem<Domain>>,
@@ -268,7 +268,7 @@ pub trait ConstraintSystem {
 
     fn bottom(&mut self, var: Var);
 
-    /// [`guard`] -> [`guarded`] or [`guarded`] ⊑ [`guard`]
+    /// [`guard`] -> [`guarded`] or [`guard`] ⊒ [`guarded`]
     fn guard(&mut self, guard: Var, guarded: Var);
 }
 

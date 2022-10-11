@@ -13,13 +13,13 @@ use rustc_type_ir::TyKind::{self, FnDef};
 
 use self::library::library_call;
 use super::{
-    boolean_system::BooleanSystem, AnalysisResults, BooleanLattice, FnLocalsVars, Infer, Lattice,
+    boolean_system::BooleanSystem, AnalysisResult, BooleanLattice, FnLocalsVars, Infer, Lattice,
     StructFieldsVars, Var,
 };
 use crate::type_qualifier::flow_insensitive::ConstraintSystem;
 
-pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResults {
-    MutabilityResults::new(crate_data)
+pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResult {
+    MutabilityResult::new(crate_data)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -38,7 +38,7 @@ impl std::fmt::Display for Mutability {
     }
 }
 
-pub type MutabilityResults = AnalysisResults<MutabilityAnalysis>;
+pub type MutabilityResult = AnalysisResult<MutabilityAnalysis>;
 
 impl From<Mutability> for bool {
     fn from(mutability: Mutability) -> Self {
@@ -94,7 +94,7 @@ impl Infer for MutabilityAnalysis {
 
                 let mut lhs_rhs = lhs.zip(rhs);
                 if let Some((lhs, rhs)) = lhs_rhs.next() {
-                    database.guard(rhs, lhs)
+                    database.guard(lhs, rhs)
                 }
                 for (lhs, rhs) in lhs_rhs {
                     database.guard(lhs, rhs);
@@ -108,7 +108,7 @@ impl Infer for MutabilityAnalysis {
 
                 let mut lhs_rhs = lhs.zip(rhs);
                 if let Some((lhs, rhs)) = lhs_rhs.next() {
-                    database.guard(rhs, lhs)
+                    database.guard(lhs, rhs)
                 }
             }
             // no need to deal with borrow.
@@ -167,7 +167,7 @@ impl Infer for MutabilityAnalysis {
                             let mut dest_ret = dest.zip(ret);
 
                             if let Some((dest, ret)) = dest_ret.next() {
-                                database.guard(ret, dest)
+                                database.guard(dest, ret)
                             }
                             for (dest, ret) in dest_ret {
                                 database.guard(ret, dest);
@@ -186,7 +186,7 @@ impl Infer for MutabilityAnalysis {
 
                                 let mut param_arg = param_vars.zip(arg_vars);
                                 if let Some((param, arg)) = param_arg.next() {
-                                    database.guard(arg, param);
+                                    database.guard(param, arg);
                                 }
                                 for (param, arg) in param_arg {
                                     database.guard(arg, param);

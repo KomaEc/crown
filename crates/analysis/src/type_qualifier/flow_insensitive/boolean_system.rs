@@ -11,8 +11,8 @@ pub struct BooleanSystem<Value: BooleanLattice> {
 }
 
 impl<Value: BooleanLattice> BooleanSystem<Value> {
-    pub const TOP: Var = Var::from_u32(0);
-    pub const BOTTOM: Var = Var::from_u32(1);
+    pub const TOP: Var = Var::from_u32(1);
+    pub const BOTTOM: Var = Var::from_u32(0);
 
     pub fn new(universe: &IndexVec<Var, Value>) -> Self {
         let mut constraint_graph = petgraph::graph::Graph::new();
@@ -26,10 +26,10 @@ impl<Value: BooleanLattice> BooleanSystem<Value> {
             solved: once_cell::unsync::OnceCell::new(),
             _lattice: std::marker::PhantomData,
         };
-        system.guard(Self::BOTTOM, Self::TOP);
+        system.guard(Self::TOP, Self::BOTTOM);
         for var in universe.indices() {
-            system.guard(Self::BOTTOM, var);
-            system.guard(var, Self::TOP);
+            system.guard(Self::TOP, var);
+            system.guard(var, Self::BOTTOM);
         }
         system
     }
@@ -50,8 +50,7 @@ impl<Value: BooleanLattice> BooleanSystem<Value> {
     pub fn greatest_model(&self, model: &mut IndexVec<Var, Value>) {
         model.raw.fill(true.into());
         let sccs = self.solve();
-        let num_sccs = sccs.len();
-        let bottom_valued_vars = &sccs[num_sccs - 1];
+        let bottom_valued_vars = &sccs[0];
         for &var in bottom_valued_vars {
             model[var] = false.into()
         }
@@ -63,11 +62,11 @@ impl<L: BooleanLattice> ConstraintSystem for BooleanSystem<L> {
     type Domain = L;
 
     fn top(&mut self, var: Var) {
-        self.guard(Self::TOP, var);
+        self.guard(var, Self::TOP);
     }
 
     fn bottom(&mut self, var: Var) {
-        self.guard(var, Self::BOTTOM);
+        self.guard(Self::BOTTOM, var);
     }
 
     #[inline]

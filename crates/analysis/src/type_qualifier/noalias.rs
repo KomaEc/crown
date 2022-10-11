@@ -3,9 +3,11 @@ use rustc_hash::FxHashSet;
 use rustc_index::vec::Idx;
 use rustc_middle::mir::{Body, Local};
 
+use super::flow_insensitive::mutability::MutabilityResult;
+
 pub type NoAliasParams = FxHashSet<Local>;
 
-pub fn conservative_noalias_params(body: &Body, alias_result: &AliasResult) -> NoAliasParams {
+pub fn unsound_noalias_params(body: &Body, alias_result: &AliasResult) -> NoAliasParams {
     let mut noalias_params = body
         .args_iter()
         .filter(|&arg| !body.local_decls[arg].ty.is_primitive_ty())
@@ -30,4 +32,15 @@ pub fn conservative_noalias_params(body: &Body, alias_result: &AliasResult) -> N
     }
 
     noalias_params
+}
+
+/// A pointer parameter is marked `noalias` if and only if it is guaranteed
+/// that there is no other pointers in-scope being alias of this parameter, and
+/// that this parameter is only mutated through first-level indirection.
+pub fn conservative_noalias_params(
+    body: &Body,
+    alias_result: &AliasResult,
+    mutability_result: &MutabilityResult,
+) -> NoAliasParams {
+    todo!()
 }

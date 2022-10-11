@@ -18,7 +18,7 @@ pub fn show_param_qualifiers(crate_ctxt: &CrateCtxt, alias_result: &AliasResult)
         let output_params = output::least_output_params(body, crate_ctxt);
         let output_params_str = show_set(output_params.iter());
 
-        let noalias_params = noalias::conservative_noalias_params(body, alias_result);
+        let noalias_params = noalias::unsound_noalias_params(body, alias_result);
         let noalias_params_str = show_set(noalias_params.iter());
 
         let unique_params = output_params.intersection(&noalias_params);

@@ -13,12 +13,12 @@ use rustc_type_ir::TyKind::{self, FnDef};
 
 use self::{libc::libc_call, library::library_call};
 use super::{
-    boolean_system::BooleanSystem, AnalysisResults, BooleanLattice, ConstraintSystem, FnLocalsVars,
+    boolean_system::BooleanSystem, AnalysisResult, BooleanLattice, ConstraintSystem, FnLocalsVars,
     Infer, Lattice, StructFieldsVars, Var,
 };
 
-pub fn fatness_analysis(crate_data: &common::CrateData) -> FatnessResults {
-    FatnessResults::new(crate_data)
+pub fn fatness_analysis(crate_data: &common::CrateData) -> FatnessResult {
+    FatnessResult::new(crate_data)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -37,7 +37,7 @@ impl std::fmt::Display for Fatness {
     }
 }
 
-pub type FatnessResults = AnalysisResults<FatnessAnalysis>;
+pub type FatnessResult = AnalysisResult<FatnessAnalysis>;
 
 impl From<Fatness> for bool {
     fn from(fatness: Fatness) -> Self {
@@ -93,7 +93,7 @@ impl Infer for FatnessAnalysis {
 
                 let mut lhs_rhs = lhs.zip(rhs);
                 if let Some((lhs, rhs)) = lhs_rhs.next() {
-                    database.guard(rhs, lhs)
+                    database.guard(lhs, rhs)
                 }
                 for (lhs, rhs) in lhs_rhs {
                     database.guard(lhs, rhs);
@@ -107,7 +107,7 @@ impl Infer for FatnessAnalysis {
 
                 let mut lhs_rhs = lhs.zip(rhs);
                 if let Some((lhs, rhs)) = lhs_rhs.next() {
-                    database.guard(rhs, lhs)
+                    database.guard(lhs, rhs)
                 }
             }
             // no need to deal with borrow.
@@ -161,7 +161,7 @@ impl Infer for FatnessAnalysis {
                             let mut dest_ret = dest.zip(ret);
 
                             if let Some((dest, ret)) = dest_ret.next() {
-                                database.guard(ret, dest)
+                                database.guard(dest, ret)
                             }
                             for (dest, ret) in dest_ret {
                                 database.guard(ret, dest);
@@ -174,7 +174,7 @@ impl Infer for FatnessAnalysis {
 
                                 let mut param_arg = param_vars.zip(arg_vars);
                                 if let Some((param, arg)) = param_arg.next() {
-                                    database.guard(arg, param);
+                                    database.guard(param, arg);
                                 }
                                 for (param, arg) in param_arg {
                                     database.guard(arg, param);

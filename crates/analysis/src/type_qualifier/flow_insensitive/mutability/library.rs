@@ -82,7 +82,7 @@ fn offset_call<'tcx>(
         let mut dest_arg = dest_vars.zip(arg_vars);
 
         if let Some((dest, arg)) = dest_arg.next() {
-            database.guard(arg, dest)
+            database.guard(dest, arg)
         }
         for (dest, arg) in dest_arg {
             database.guard(arg, dest);

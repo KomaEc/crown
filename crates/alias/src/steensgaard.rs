@@ -384,11 +384,17 @@ impl<F: FieldStrategy> Steensgaard<F> {
         self.join(p_pts, q_pts);
     }
 
+    #[inline]
     pub fn may_alias(&self, p: AbstractLocation, q: AbstractLocation) -> bool {
         if p.is_null() || q.is_null() {
             return false;
         }
         self.pts_targets.equiv(self.pts[p], self.pts[q])
+    }
+
+    #[inline]
+    pub fn pts_rep(&self, p: AbstractLocation) -> AbstractLocation {
+        self.pts_targets.find(self.pts[p])
     }
 }
 
