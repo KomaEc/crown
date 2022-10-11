@@ -5,7 +5,7 @@ use std::ops::Range;
 
 use rustc_middle::{
     mir::{
-        HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind,
+        HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind, BorrowKind,
     },
     ty::TyCtxt,
 };
@@ -111,10 +111,22 @@ impl Infer for MutabilityAnalysis {
                     database.guard(lhs, rhs)
                 }
             }
-            // no need to deal with borrow.
-            // 1. no rules in toplas 2006
-            // 2. can be inferred by later usages
-            // Rvalue::Ref(_, _, rhs) | Rvalue::AddressOf(_, rhs) => {}
+            Rvalue::Ref(_, BorrowKind::Mut { .. }, rhs) | Rvalue::AddressOf(_, rhs) => {
+                let lhs = place_vars::<true>(lhs, local_decls, locals, struct_fields, database);
+                let rhs = place_vars::<true>(rhs, local_decls, locals, struct_fields, database);
+                for (lhs, rhs) in lhs.skip(1).zip(rhs) {
+                    database.guard(lhs, rhs);
+                    database.guard(rhs, lhs);
+                }
+            }
+            Rvalue::Ref(_, _, rhs) => {
+                let lhs = place_vars::<true>(lhs, local_decls, locals, struct_fields, database);
+                let rhs = place_vars::<false>(rhs, local_decls, locals, struct_fields, database);
+                for (lhs, rhs) in lhs.skip(1).zip(rhs) {
+                    database.guard(lhs, rhs);
+                    database.guard(rhs, lhs);
+                }
+            }
             _ => {
                 let _ = place_vars::<true>(lhs, local_decls, locals, struct_fields, database);
             }

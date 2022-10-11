@@ -110,10 +110,14 @@ impl Infer for FatnessAnalysis {
                     database.guard(lhs, rhs)
                 }
             }
-            // no need to deal with borrow.
-            // 1. no rules in toplas 2006
-            // 2. can be inferred by later usages
-            // Rvalue::Ref(_, _, rhs) | Rvalue::AddressOf(_, rhs) => {}
+            Rvalue::Ref(_, _, rhs) | Rvalue::AddressOf(_, rhs) => {
+                let lhs = place_vars(lhs, local_decls, locals, struct_fields);
+                let rhs = place_vars(rhs, local_decls, locals, struct_fields);
+                for (lhs, rhs) in lhs.skip(1).zip(rhs) {
+                    database.guard(lhs, rhs);
+                    database.guard(rhs, lhs);
+                }
+            }
             _ => {
                 // no need. [`place_vars`] is a pure function
                 // let _ = place_vars(lhs, local_decls, locals, struct_fields);
