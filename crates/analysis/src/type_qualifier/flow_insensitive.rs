@@ -46,6 +46,15 @@ impl<I: Infer> AnalysisResults<I> {
         }
     }
 
+    pub fn struct_results(
+        &self,
+        r#struct: &DefId,
+    ) -> impl Iterator<Item = &[<<I as Infer>::L as ConstraintSystem>::Domain]> {
+        self.struct_fields
+            .fields(r#struct)
+            .map(|Range { start, end }| &self.model.raw[start.index()..end.index()])
+    }
+
     pub fn fn_sig(
         &self,
         r#fn: &DefId,

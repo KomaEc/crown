@@ -4,7 +4,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 
-use super::{place_vars, MutabilityAnalysis};
+use super::{place_vars, FatnessAnalysis};
 use crate::type_qualifier::flow_insensitive::{ConstraintSystem, Infer, StructFieldsVars, Var};
 
 pub fn library_call<'tcx>(
@@ -14,7 +14,7 @@ pub fn library_call<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFieldsVars,
-    database: &mut <MutabilityAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as Infer>::L,
     tcx: TyCtxt<'tcx>,
 ) {
     let def_path = tcx.def_path(callee);
@@ -49,22 +49,6 @@ pub fn library_call<'tcx>(
                 _ => {}
             }
         }
-
-        // conservative catch all
-        let dest_var =
-            place_vars::<true>(destination, local_decls, locals, struct_fields, database);
-
-        for var in dest_var {
-            database.bottom(var);
-        }
-
-        for arg in args {
-            let Some(arg) = arg.place() else { continue; };
-            let arg_vars = place_vars::<false>(&arg, local_decls, locals, struct_fields, database);
-            for var in arg_vars {
-                database.bottom(var);
-            }
-        }
     }
 }
 
@@ -74,15 +58,15 @@ fn offset_call<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFieldsVars,
-    database: &mut <MutabilityAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as Infer>::L,
 ) {
-    let dest_vars = place_vars::<true>(destination, local_decls, locals, struct_fields, database);
+    let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
     if let Some(arg) = args[0].place() {
-        let arg_vars = place_vars::<false>(&arg, local_decls, locals, struct_fields, database);
+        let arg_vars = place_vars(&arg, local_decls, locals, struct_fields);
         let mut dest_arg = dest_vars.zip(arg_vars);
 
-        if let Some((dest, arg)) = dest_arg.next() {
-            database.guard(arg, dest)
+        if let Some((_, arg)) = dest_arg.next() {
+            database.bottom(arg);
         }
         for (dest, arg) in dest_arg {
             database.guard(arg, dest);
