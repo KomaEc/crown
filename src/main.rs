@@ -80,6 +80,7 @@ enum Command {
     Alias,
     ClassifyParams,
     Mutability,
+    Fatness,
     Refactor,
     Rewrite {
         #[clap(arg_enum, default_value_t = RewriteMode::Print)]
@@ -300,6 +301,11 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             let mutability_result =
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
             mutability_result.print_fn_sigs(tcx, &input.fns)
+        }
+        Command::Fatness => {
+            let fatness_result =
+                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input);
+            fatness_result.print_fn_sigs(tcx, &input.fns)
         }
         Command::Analyse { .. } => {
             let mut crate_ctxt = CrateCtxt::from(input);

@@ -23,17 +23,17 @@ pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResults 
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-/// [`Write`] ⊑ [`Read`]
+/// [`Mutability::Mut`] ⊑ [`Mutability::Imm`]
 pub enum Mutability {
-    Read,
-    Write,
+    Imm,
+    Mut,
 }
 
 impl std::fmt::Display for Mutability {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Mutability::Read => write!(f, "&read"),
-            Mutability::Write => write!(f, "&write"),
+            Mutability::Imm => write!(f, "&read"),
+            Mutability::Mut => write!(f, "&read_write"),
         }
     }
 }
@@ -42,24 +42,24 @@ pub type MutabilityResults = AnalysisResults<MutabilityAnalysis>;
 
 impl From<Mutability> for bool {
     fn from(mutability: Mutability) -> Self {
-        mutability == Mutability::Read
+        mutability == Mutability::Imm
     }
 }
 
 impl From<bool> for Mutability {
     fn from(b: bool) -> Self {
         if b {
-            Mutability::Read
+            Mutability::Imm
         } else {
-            Mutability::Write
+            Mutability::Mut
         }
     }
 }
 
 impl Lattice for Mutability {
-    const BOTTOM: Self = Self::Write;
+    const BOTTOM: Self = Self::Mut;
 
-    const TOP: Self = Self::Read;
+    const TOP: Self = Self::Imm;
 }
 
 impl BooleanLattice for Mutability {}
@@ -244,7 +244,7 @@ fn place_vars<'tcx, const MUT: bool>(
     struct_fields: &StructFieldsVars,
     database: &mut <MutabilityAnalysis as Infer>::L,
 ) -> Range<Var> {
-    let mut place_var = Range {
+    let mut place_vars = Range {
         start: locals[place.local.index()],
         end: locals[place.local.index() + 1],
     };
@@ -254,13 +254,13 @@ fn place_vars<'tcx, const MUT: bool>(
         match projection_elem {
             ProjectionElem::Deref => {
                 if MUT {
-                    database.bottom(place_var.start);
+                    database.bottom(place_vars.start);
                 }
-                place_var.start = place_var.start + 1;
+                place_vars.start = place_vars.start + 1;
                 base_ty = base_ty.builtin_deref(true).unwrap().ty;
             }
             ProjectionElem::Field(field, ty) => {
-                assert!(place_var.is_empty());
+                assert!(place_vars.is_empty());
 
                 match base_ty.kind() {
                     TyKind::Adt(adt_def, _) => {
@@ -270,11 +270,11 @@ fn place_vars<'tcx, const MUT: bool>(
                             .nth(field.index())
                             .unwrap();
 
-                        place_var = field_vars;
+                        place_vars = field_vars;
 
                         base_ty = ty;
                     }
-                    TyKind::Tuple(..) => return place_var,
+                    TyKind::Tuple(..) => return place_vars,
                     _ => unreachable!(),
                 }
             }
@@ -283,9 +283,13 @@ fn place_vars<'tcx, const MUT: bool>(
             }
             ProjectionElem::ConstantIndex { .. } => unreachable!("unexpected constant index"),
             ProjectionElem::Subslice { .. } => unreachable!("unexpected subslicing"),
-            ProjectionElem::Downcast(..) => unreachable!("unexpected downcasting"),
+            ProjectionElem::Downcast(..) => {
+                // happens when asserting nonnullness of fn ptrs
+                assert!(place_vars.is_empty());
+                return place_vars;
+            }
         }
     }
 
-    place_var
+    place_vars
 }

@@ -28,13 +28,11 @@ pub struct AnalysisResults<I: Infer> {
 }
 
 fn display_value<Value: std::fmt::Display>(value: &[Value]) -> String {
-    "[".to_owned()
-        + &value
-            .iter()
-            .map(|value| format!("{value}"))
-            .collect::<Vec<_>>()
-            .join(" ")
-        + "]"
+    value
+        .iter()
+        .map(|value| format!("{value}"))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 impl<I: Infer> AnalysisResults<I> {
@@ -118,17 +116,17 @@ fn count_ptr(mut ty: Ty) -> usize {
     }
 }
 
-impl<Domain, I: Infer> AnalysisResults<I>
+impl<Domain, I> AnalysisResults<I>
 where
-    <I as Infer>::L: ConstraintSystem<Domain = Domain>,
     Domain: BooleanLattice,
     I: Infer<L = BooleanSystem<Domain>>,
+    <I as Infer>::L: ConstraintSystem<Domain = Domain>,
 {
     pub fn new(crate_data: &common::CrateData) -> Self {
         let mut model = IndexVec::new();
         // not necessary, but need initialization anyway
-        model.push(<<I as Infer>::L as ConstraintSystem>::Domain::BOTTOM);
         model.push(<<I as Infer>::L as ConstraintSystem>::Domain::TOP);
+        model.push(<<I as Infer>::L as ConstraintSystem>::Domain::BOTTOM);
         let mut next: Var = model.next_index();
         let tcx = crate_data.tcx;
         let mut did_idx = FxHashMap::default();

@@ -225,7 +225,7 @@ fn place_vars<'tcx>(
     locals: &[Var],
     struct_fields: &StructFieldsVars,
 ) -> Range<Var> {
-    let mut place_var = Range {
+    let mut place_vars = Range {
         start: locals[place.local.index()],
         end: locals[place.local.index() + 1],
     };
@@ -234,11 +234,11 @@ fn place_vars<'tcx>(
     for projection_elem in place.projection {
         match projection_elem {
             ProjectionElem::Deref => {
-                place_var.start = place_var.start + 1;
+                place_vars.start = place_vars.start + 1;
                 base_ty = base_ty.builtin_deref(true).unwrap().ty;
             }
             ProjectionElem::Field(field, ty) => {
-                assert!(place_var.is_empty());
+                assert!(place_vars.is_empty());
 
                 match base_ty.kind() {
                     TyKind::Adt(adt_def, _) => {
@@ -248,11 +248,11 @@ fn place_vars<'tcx>(
                             .nth(field.index())
                             .unwrap();
 
-                        place_var = field_vars;
+                        place_vars = field_vars;
 
                         base_ty = ty;
                     }
-                    TyKind::Tuple(..) => return place_var,
+                    TyKind::Tuple(..) => return place_vars,
                     _ => unreachable!(),
                 }
             }
@@ -261,9 +261,13 @@ fn place_vars<'tcx>(
             }
             ProjectionElem::ConstantIndex { .. } => unreachable!("unexpected constant index"),
             ProjectionElem::Subslice { .. } => unreachable!("unexpected subslicing"),
-            ProjectionElem::Downcast(..) => unreachable!("unexpected downcasting"),
+            ProjectionElem::Downcast(..) => {
+                // happens when asserting nonnullness of fn ptrs
+                assert!(place_vars.is_empty());
+                return place_vars;
+            }
         }
     }
 
-    place_var
+    place_vars
 }

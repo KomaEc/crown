@@ -11,8 +11,8 @@ pub struct BooleanSystem<Value: BooleanLattice> {
 }
 
 impl<Value: BooleanLattice> BooleanSystem<Value> {
-    pub const TOP: Var = Var::from_u32(1);
-    pub const BOTTOM: Var = Var::from_u32(0);
+    pub const TOP: Var = Var::from_u32(0);
+    pub const BOTTOM: Var = Var::from_u32(1);
 
     pub fn new(universe: &IndexVec<Var, Value>) -> Self {
         let mut constraint_graph = petgraph::graph::Graph::new();
@@ -72,7 +72,7 @@ impl<L: BooleanLattice> ConstraintSystem for BooleanSystem<L> {
 
     #[inline]
     fn guard(&mut self, guard: Var, guarded: Var) {
-        tracing::debug!("emit constraint {:?} ≤ {:?}", guard, guarded);
+        tracing::debug!("emit constraint {:?} ⊒ {:?}", guard, guarded);
         self.constraint_graph.add_edge(
             NodeIndex::new(guard.index()),
             NodeIndex::new(guarded.index()),
