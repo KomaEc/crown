@@ -411,21 +411,3 @@ fn infer_statement<'tcx, I: Infer>(
         }
     }
 }
-
-// pub struct BooleanLatticeSystem;
-
-// impl LatticeConstraintSystem for BooleanLatticeSystem {
-//     type Lattice;
-
-//     fn top(&mut self, var: Var) {
-//         todo!()
-//     }
-
-//     fn bottom(&mut self, var: Var) {
-//         todo!()
-//     }
-
-//     fn guard(&mut self, guard: Var, guarded: Var) {
-//         todo!()
-//     }
-// }

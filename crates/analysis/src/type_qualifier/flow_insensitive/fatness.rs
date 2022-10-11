@@ -22,7 +22,7 @@ pub fn fatness_analysis(crate_data: &common::CrateData) -> FatnessResults {
 }
 
 #[derive(Clone, Copy, PartialEq, Eq)]
-/// [`Arr`] ⊑ [`Ptr`]
+/// [`Fatness::Arr`] ⊑ [`Fatness::Ptr`]
 pub enum Fatness {
     Arr,
     Ptr,
