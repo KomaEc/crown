@@ -4,7 +4,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 
-use super::{place_var, MutabilityAnalysis};
+use super::{place_vars, MutabilityAnalysis};
 use crate::type_qualifier::flow_insensitive::{ConstraintSystem, Infer, StructFieldsVars, Var};
 
 pub fn library_call<'tcx>(
@@ -51,7 +51,7 @@ pub fn library_call<'tcx>(
         }
 
         // conservative catch all
-        let dest_var = place_var::<true>(destination, local_decls, locals, struct_fields, database);
+        let dest_var = place_vars::<true>(destination, local_decls, locals, struct_fields, database);
 
         for var in dest_var {
             database.bottom(var);
@@ -59,7 +59,7 @@ pub fn library_call<'tcx>(
 
         for arg in args {
             let Some(arg) = arg.place() else { continue; };
-            let arg_vars = place_var::<false>(&arg, local_decls, locals, struct_fields, database);
+            let arg_vars = place_vars::<false>(&arg, local_decls, locals, struct_fields, database);
             for var in arg_vars {
                 database.bottom(var);
             }
@@ -75,9 +75,9 @@ fn offset_call<'tcx>(
     struct_fields: &StructFieldsVars,
     database: &mut <MutabilityAnalysis as Infer>::L,
 ) {
-    let dest_vars = place_var::<true>(destination, local_decls, locals, struct_fields, database);
+    let dest_vars = place_vars::<true>(destination, local_decls, locals, struct_fields, database);
     if let Some(arg) = args[0].place() {
-        let arg_vars = place_var::<false>(&arg, local_decls, locals, struct_fields, database);
+        let arg_vars = place_vars::<false>(&arg, local_decls, locals, struct_fields, database);
         let mut dest_arg = dest_vars.zip(arg_vars);
 
         if let Some((dest, arg)) = dest_arg.next() {

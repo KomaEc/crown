@@ -83,8 +83,8 @@ impl Infer for MutabilityAnalysis {
 
         match rhs {
             Rvalue::Use(Operand::Copy(rhs) | Operand::Move(rhs)) | Rvalue::CopyForDeref(rhs) => {
-                let lhs = place_var::<true>(lhs, local_decls, locals, struct_fields, database);
-                let rhs = place_var::<false>(rhs, local_decls, locals, struct_fields, database);
+                let lhs = place_vars::<true>(lhs, local_decls, locals, struct_fields, database);
+                let rhs = place_vars::<false>(rhs, local_decls, locals, struct_fields, database);
 
                 // type safety
                 assert_eq!(
@@ -103,8 +103,8 @@ impl Infer for MutabilityAnalysis {
             }
             Rvalue::Cast(_, Operand::Copy(rhs) | Operand::Move(rhs), _) => {
                 // for cast, we process the head ptr only
-                let lhs = place_var::<true>(lhs, local_decls, locals, struct_fields, database);
-                let rhs = place_var::<false>(rhs, local_decls, locals, struct_fields, database);
+                let lhs = place_vars::<true>(lhs, local_decls, locals, struct_fields, database);
+                let rhs = place_vars::<false>(rhs, local_decls, locals, struct_fields, database);
 
                 let mut lhs_rhs = lhs.zip(rhs);
                 if let Some((lhs, rhs)) = lhs_rhs.next() {
@@ -116,7 +116,7 @@ impl Infer for MutabilityAnalysis {
             // 2. can be inferred by later usages
             // Rvalue::Ref(_, _, rhs) | Rvalue::AddressOf(_, rhs) => {}
             _ => {
-                let _ = place_var::<true>(lhs, local_decls, locals, struct_fields, database);
+                let _ = place_vars::<true>(lhs, local_decls, locals, struct_fields, database);
             }
         }
     }
@@ -149,7 +149,7 @@ impl Infer for MutabilityAnalysis {
                             let mut callee_vars =
                                 fn_locals.vars(&callee).take(callee_body.arg_count + 1);
 
-                            let dest = place_var::<true>(
+                            let dest = place_vars::<true>(
                                 destination,
                                 local_decls,
                                 locals,
@@ -176,7 +176,7 @@ impl Infer for MutabilityAnalysis {
 
                             for (arg, param_vars) in args.iter().zip(callee_vars) {
                                 let Some(arg) = arg.place() else { continue; };
-                                let arg_vars = place_var::<false>(
+                                let arg_vars = place_vars::<false>(
                                     &arg,
                                     local_decls,
                                     locals,
@@ -219,7 +219,7 @@ impl Infer for MutabilityAnalysis {
 
             // conservative catch all
             let dest_var =
-                place_var::<true>(destination, local_decls, locals, struct_fields, database);
+                place_vars::<true>(destination, local_decls, locals, struct_fields, database);
 
             for var in dest_var {
                 database.bottom(var);
@@ -228,7 +228,7 @@ impl Infer for MutabilityAnalysis {
             for arg in args {
                 let Some(arg) = arg.place() else { continue; };
                 let arg_vars =
-                    place_var::<false>(&arg, local_decls, locals, struct_fields, database);
+                    place_vars::<false>(&arg, local_decls, locals, struct_fields, database);
                 for var in arg_vars {
                     database.bottom(var);
                 }
@@ -237,7 +237,7 @@ impl Infer for MutabilityAnalysis {
     }
 }
 
-fn place_var<'tcx, const MUT: bool>(
+fn place_vars<'tcx, const MUT: bool>(
     place: &Place<'tcx>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
