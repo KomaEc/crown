@@ -21,12 +21,13 @@ pub fn show_noalias_params(
     for &did in crate_ctxt.fns() {
         let body = crate_ctxt.tcx.optimized_mir(did);
 
-        let noalias_params =
-            conservative_noalias_params(body, alias_result, mutability_result);
+        let noalias_params = conservative_noalias_params(body, alias_result, mutability_result);
         let noalias_params_str = show_set(noalias_params.iter());
 
-
-        println!("@{}: {noalias_params_str}", crate_ctxt.tcx.def_path_str(did));
+        println!(
+            "@{}: {noalias_params_str}",
+            crate_ctxt.tcx.def_path_str(did)
+        );
     }
 }
 
@@ -45,7 +46,6 @@ pub fn conservative_noalias_params(
     let location_of = alias_result.local_locations(&body.source.def_id());
     let fn_result = mutability_result.fn_result(&body.source.def_id());
 
-    // too conservative!!! `is_null()`, cast by `assume`, etc..
     for arg in body.args_iter().map(|arg| arg.index()) {
         for (local, local_decl) in body.local_decls.iter_enumerated() {
             if local_decl.ty.is_primitive_ty() {

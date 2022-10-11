@@ -186,7 +186,6 @@ where
 
         let mut database = BooleanSystem::new(&model);
 
-        // FIXME context sensitive
         for r#fn in &crate_data.fns {
             let body = tcx.optimized_mir(*r#fn);
             let locals = {
