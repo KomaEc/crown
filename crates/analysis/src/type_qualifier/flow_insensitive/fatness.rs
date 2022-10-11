@@ -242,7 +242,10 @@ fn place_vars<'tcx>(
 
                 match base_ty.kind() {
                     TyKind::Adt(adt_def, _) => {
-                        // FIXME union type!!!
+                        // FIXME correctness?
+                        if adt_def.is_union() {
+                            return place_vars;
+                        }
                         let field_vars = struct_fields
                             .fields(&adt_def.did())
                             .nth(field.index())
