@@ -1,3 +1,4 @@
+#![allow(warnings)]
 #![feature(rustc_private)]
 #![feature(array_windows)]
 #![feature(box_patterns)]

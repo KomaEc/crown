@@ -4,10 +4,10 @@ members = [
     "crates/preprocess",
     "crates/analysis",
     "crates/alias",
-    # "crates/refactor",
-    "usage-analysis",
-    "refactor",
     "crates/empirical-study",
+    "crates/refactor",
+    "usage-analysis",
+    "old_refactor",
     "ownership-analysis"
 ]
 
@@ -26,7 +26,7 @@ analysis = { path = "crates/analysis" }
 ownership-analysis = { path = "ownership-analysis" }
 alias = { path = "crates/alias" }
 usage-analysis = { path = "usage-analysis" }
-refactor = { path = "refactor" }
+old_refactor = { path = "old_refactor" }
 empirical-study = { path = "crates/empirical-study" }
 clap = { version = "3.1.2", features = ["derive"] }
 tracing = "0.1.32"
