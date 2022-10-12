@@ -125,8 +125,8 @@ where
     pub fn new(crate_data: &common::CrateData) -> Self {
         let mut model = IndexVec::new();
         // not necessary, but need initialization anyway
-        model.push(<<I as Infer>::L as ConstraintSystem>::Domain::TOP);
-        model.push(<<I as Infer>::L as ConstraintSystem>::Domain::BOTTOM);
+        model.push(Domain::TOP);
+        model.push(Domain::BOTTOM);
         let mut next: Var = model.next_index();
         let tcx = crate_data.tcx;
         let mut did_idx = FxHashMap::default();
@@ -140,10 +140,7 @@ where
             for field_def in adt_def.all_fields() {
                 let field_ty = field_def.ty(tcx, substs);
                 let ptr_count = count_ptr(field_ty);
-                model.extend(
-                    std::iter::repeat(<<I as Infer>::L as ConstraintSystem>::Domain::BOTTOM)
-                        .take(ptr_count),
-                );
+                model.extend(std::iter::repeat(Domain::BOTTOM).take(ptr_count));
                 vars.add_item_to_array(next);
                 next = next + ptr_count;
                 assert_eq!(model.next_index(), next);
@@ -166,10 +163,7 @@ where
             for local_decl in &body.local_decls {
                 let ty = local_decl.ty;
                 let ptr_count = count_ptr(ty);
-                model.extend(
-                    std::iter::repeat(<<I as Infer>::L as ConstraintSystem>::Domain::BOTTOM)
-                        .take(ptr_count),
-                );
+                model.extend(std::iter::repeat(Domain::BOTTOM).take(ptr_count));
                 vars.add_item_to_array(next);
                 next = next + ptr_count;
                 assert_eq!(model.next_index(), next);

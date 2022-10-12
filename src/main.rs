@@ -56,25 +56,7 @@ enum Command {
         #[clap(arg_enum, default_value_t = RewriteMode::Print)]
         rewrite_mode: RewriteMode,
     },
-    Analyse {
-        #[clap(long, short)]
-        null: bool,
-
-        #[clap(long, short = 'A')]
-        array: bool,
-
-        #[clap(long, short = 'O')]
-        ownership: bool,
-
-        #[clap(long, short = 'T')]
-        taint: bool,
-
-        #[clap(long, short = 'M')]
-        mutability: bool,
-
-        #[clap(long, short)]
-        all: bool,
-    },
+    Analyse,
     Taint,
     Alias,
     ClassifyParams,
@@ -296,7 +278,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input);
             fatness_result.print_fn_sigs(tcx, &input.fns)
         }
-        Command::Analyse { .. } => {
+        Command::Analyse => {
             let mut crate_ctxt = CrateCtxt::from(input);
             let ownership_schemes = analysis::ownership::WholeProgram::analyze(&mut crate_ctxt)?;
             ownership_schemes.trace(tcx);
@@ -307,11 +289,15 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
             let fatness_result =
                 analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input);
-
-            let _ = (alias_result, mutability_result, fatness_result);
-
             let mut crate_ctxt = CrateCtxt::from(input);
-            let _ = analysis::ownership::WholeProgram::analyze(&mut crate_ctxt)?;
+            let ownership_schemes = analysis::ownership::WholeProgram::analyze(&mut crate_ctxt)?;
+
+            let _ = (
+                alias_result,
+                mutability_result,
+                fatness_result,
+                ownership_schemes,
+            );
             todo!();
         }
     }
