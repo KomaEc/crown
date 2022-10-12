@@ -399,3 +399,18 @@ Interesting future work: handle mutable reference and lifetime as well?
     associated constraint: x_post + x_sig = x_pre
 ```
 The signature here acts like a filter. If `x_sig = 1`, then `f` consumes a value, `x_pre` hence needs to be owning and `x_post` becomes non-owning; if `x_sig = 0`, then `f` borrows a value, and `x_pre = x_post`. 
+
+
+### OOPSLA
+
+1. Related work (typ3c, flow-insensitive type qualifier) ==> more analysis implemented, which gives a lot of low hanging fruit (might gives good statistics)
+   1. Sound fatness, mutability analysis. `c::&read_only` -> `rust::&` for free
+   2. Alias analysis + mutability analysis -> `c::&noalias` -> `rust::&mut`.
+   3. Sound provided that the underlying C is 'sound' (no casts, no unions, etc.). Makes sense? C type system is unsound anyway
+2. Ownership analysis: hard (uniqueness, indirection). Our novel algorithm is sound. Paper: inference rules, solver (NP-completeness), algorithmic
+3. Best effort rewrite (mutliple phases)
+
+Timeline:
+1. This week: draft paper, rewrite
+2. Next week: polish paper, evaluation
+3. Final week: polish paper

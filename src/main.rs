@@ -28,12 +28,11 @@ use clap::Parser;
 use common::rewrite::RewriteMode;
 use empirical_study::EmpiricalStudy;
 use rustc_errors::registry;
-use rustc_hir::{def_id::DefId, ItemKind, OwnerNode};
+use rustc_hir::{ItemKind, OwnerNode};
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config;
 use tracing_subscriber::EnvFilter;
-use usage_analysis::{fatness, mutability, null};
 
 // // Set up Jemalloc
 // use jemallocator::Jemalloc;
@@ -82,10 +81,6 @@ enum Command {
     Mutability,
     Fatness,
     Refactor,
-    Rewrite {
-        #[clap(arg_enum, default_value_t = RewriteMode::Print)]
-        rewrite_mode: RewriteMode,
-    },
     VerifyRustcProperties,
     /// Perform empirical studies and show results.
     EmpiricalStudy,
@@ -227,18 +222,6 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         };
     }
 
-    let local_fns = fns
-        .iter()
-        .copied()
-        .filter_map(DefId::as_local)
-        .collect::<Vec<_>>();
-    let local_structs = structs
-        .iter()
-        .copied()
-        .filter_map(DefId::as_local)
-        .collect::<Vec<_>>();
-
-    // let input = (tcx, functions, structs);
     let input = common::CrateData { tcx, fns, structs };
 
     match *cmd {
@@ -317,32 +300,6 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             let mut crate_ctxt = CrateCtxt::from(input);
             let ownership_schemes = analysis::ownership::WholeProgram::analyze(&mut crate_ctxt)?;
             ownership_schemes.trace(tcx);
-        }
-        Command::Rewrite { rewrite_mode } => {
-            let Some(ownership) = time("ownership analysis", || {
-                ownership_analysis::ownership_analysis::InterSummary::collect(tcx, &local_structs, &local_fns)
-            }) else { bail!("ownership analysis failed") };
-            let mutability = time("mutability analysis", || {
-                mutability::CrateResults::collect(tcx, &local_fns, &local_structs, &ownership)
-            });
-            let fatness = time("fatness analysis", || {
-                fatness::CrateResults::collect(tcx, &local_fns, &local_structs)
-            });
-            let null = time("null analysis", || {
-                null::CrateResults::collect(tcx, &local_fns, &local_structs)
-            });
-            time("rewrite", || {
-                old_refactor::rewrite::rewrite(
-                    tcx,
-                    &ownership,
-                    &mutability,
-                    &fatness,
-                    &null,
-                    &local_fns,
-                    &local_structs,
-                    rewrite_mode,
-                )
-            })
         }
         Command::Refactor => {
             let alias_result = alias::alias_results(&input);
