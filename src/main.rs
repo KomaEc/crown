@@ -59,7 +59,7 @@ enum Command {
     Analyse,
     Taint,
     Alias,
-    ClassifyParams,
+    NoAliasParams,
     Mutability,
     Fatness,
     Refactor,
@@ -257,13 +257,12 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             let alias = alias::alias_results(&input);
             alias.print_results();
         }
-        Command::ClassifyParams => {
+        Command::NoAliasParams => {
             let alias_result = alias::alias_results(&input);
             let mutability_result =
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
-            let crate_ctxt = CrateCtxt::from(input);
             analysis::type_qualifier::noalias::show_noalias_params(
-                &crate_ctxt,
+                &input,
                 &alias_result,
                 &mutability_result,
             );

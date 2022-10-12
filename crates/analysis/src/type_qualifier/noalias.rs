@@ -1,14 +1,15 @@
 use alias::AliasResult;
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hir::def_id::DefId;
 use rustc_index::vec::Idx;
 use rustc_middle::mir::{Body, Local};
 
 use super::flow_insensitive::mutability::{Mutability, MutabilityResult};
 
-pub type NoAliasParams = FxHashSet<Local>;
+pub type NoAliasParams = FxHashMap<DefId, FxHashSet<Local>>;
 
 pub fn show_noalias_params(
-    crate_ctxt: &crate::CrateCtxt,
+    crate_data: &common::CrateData,
     alias_result: &AliasResult,
     mutability_result: &MutabilityResult,
 ) {
@@ -18,30 +19,47 @@ pub fn show_noalias_params(
             .join(", ")
     }
 
-    for &did in crate_ctxt.fns() {
-        let body = crate_ctxt.tcx.optimized_mir(did);
+    let noalias_params = compute_noalias_params(crate_data, alias_result, mutability_result);
 
-        let noalias_params = conservative_noalias_params(body, alias_result, mutability_result);
-        let noalias_params_str = show_set(noalias_params.iter());
-
+    for (did, noalias_params) in noalias_params {
+        let noalias_params_str = show_set(noalias_params.into_iter());
         println!(
             "@{}: {noalias_params_str}",
-            crate_ctxt.tcx.def_path_str(did)
+            crate_data.tcx.def_path_str(did)
         );
     }
 }
 
-/// A pointer parameter is marked `noalias` if and only if it is guaranteed
-/// that there is no other pointers in-scope being alias of this parameter
-pub fn conservative_noalias_params(
-    body: &Body,
+pub fn compute_noalias_params(
+    crate_data: &common::CrateData,
     alias_result: &AliasResult,
     mutability_result: &MutabilityResult,
 ) -> NoAliasParams {
+    let mut noalias_params = FxHashMap::default();
+    noalias_params.reserve(crate_data.fns.len());
+
+    for &did in &crate_data.fns {
+        let body = crate_data.tcx.optimized_mir(did);
+        noalias_params.insert(
+            did,
+            conservative_noalias_params(body, alias_result, mutability_result),
+        );
+    }
+
+    noalias_params
+}
+
+/// A pointer parameter is marked `noalias` if and only if it is guaranteed
+/// that there is no other pointers in-scope being alias of this parameter
+fn conservative_noalias_params(
+    body: &Body,
+    alias_result: &AliasResult,
+    mutability_result: &MutabilityResult,
+) -> FxHashSet<Local> {
     let mut noalias_params = body
         .args_iter()
         .filter(|&arg| !body.local_decls[arg].ty.is_primitive_ty())
-        .collect::<NoAliasParams>();
+        .collect::<FxHashSet<Local>>();
 
     let location_of = alias_result.local_locations(&body.source.def_id());
     let fn_result = mutability_result.fn_result(&body.source.def_id());
