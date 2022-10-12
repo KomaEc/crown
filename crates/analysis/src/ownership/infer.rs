@@ -332,10 +332,9 @@ where
         infer_cx.deref_copy = consume
     }
 
-    /// This is correct because of ownership dominance property!!! We are able to treat indirection
-    /// as field selection!
-    /// For *mut {f: *mut, g: *mut}, it is allowed that the outter is transfered but inners aren't.
-    /// This is allowed in one sentence. But it will never be allowed in a body because of `finalise`!!!
+    /// Note that ownership dominance property gurantees uniqueness, so `*mut *mut T` can be treated
+    /// as two separate pointers. The inference allows transfers like `&move &move -> &&move`, but really
+    /// this doesn't happen because of [`finalize()`]
     fn transfer(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         lhs_result: Consume<Self::LocalSig>,
@@ -392,7 +391,7 @@ where
     }
 
     #[inline]
-    fn finalise(
+    fn finalize(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         local: Local,
         r#use: SSAIdx,

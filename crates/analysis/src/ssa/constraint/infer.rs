@@ -86,7 +86,7 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     fn assume(infer_cx: &mut Self::Ctxt, result: Self::LocalSig, value: bool);
 
-    fn finalise(infer_cx: &mut Self::Ctxt, local: Local, r#use: SSAIdx);
+    fn finalize(infer_cx: &mut Self::Ctxt, local: Local, r#use: SSAIdx);
 
     fn call(
         infer_cx: &mut Self::Ctxt,
@@ -149,7 +149,7 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
 
     fn assume((): &mut Self::Ctxt, (): Self::LocalSig, _: bool) {}
 
-    fn finalise((): &mut Self::Ctxt, _: Local, _: SSAIdx) {}
+    fn finalize((): &mut Self::Ctxt, _: Local, _: SSAIdx) {}
 
     fn call((): &mut Self::Ctxt, (): (), _: &Operand) {}
 
@@ -383,8 +383,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 // note that return place should not be finalised!!
                 for local in self.state.consume_chain.to_finalise() {
                     let r#use = self.state.name_state.get_name(local);
-                    tracing::debug!("finalising {:?}~{:?}", local, r#use);
-                    Infer::finalise(infer_cx, local, r#use);
+                    tracing::debug!("finalizing {:?}~{:?}", local, r#use);
+                    Infer::finalize(infer_cx, local, r#use);
                 }
             }
             _ => {}

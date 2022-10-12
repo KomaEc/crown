@@ -407,7 +407,7 @@ The signature here acts like a filter. If `x_sig = 1`, then `f` consumes a value
    1. Sound fatness, mutability analysis. `c::&read_only` -> `rust::&` for free
    2. Alias analysis + mutability analysis -> `c::&noalias` -> `rust::&mut`.
    3. Sound provided that the underlying C is 'sound' (no casts, no unions, etc.). Makes sense? C type system is unsound anyway
-2. Ownership analysis: hard (uniqueness, indirection). Our novel algorithm is sound. Paper: inference rules, solver (NP-completeness), algorithmic
+2. Ownership analysis: hard (uniqueness, indirection). Our novel algorithm is sound. Paper: inference rules (focus on a small core language?), solver (NP-completeness), algorithmic
 3. Best effort rewrite (mutliple phases)
 
 Timeline:
