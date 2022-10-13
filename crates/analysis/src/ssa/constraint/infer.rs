@@ -90,8 +90,8 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     fn call(
         infer_cx: &mut Self::Ctxt,
-        caller: Self::CallArgs<Option<Consume<Self::LocalSig>>>,
-        func: &Operand,
+        args: Self::CallArgs<Option<Consume<Self::LocalSig>>>,
+        callee: &Operand,
     );
 
     fn r#return(infer_cx: &mut Self::Ctxt, ssa_idx: Option<SSAIdx>, r#fn: DefId);
@@ -329,7 +329,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             | StatementKind::Retag(_, _)
             | StatementKind::FakeRead(_)
             | StatementKind::Coverage(_)
-            // | StatementKind::CopyNonOverlapping(_)
             | StatementKind::Nop => {
                 unreachable!("statement {:?} is not assumed to appear", statement)
             }
@@ -379,8 +378,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     self.body.source.def_id(),
                 );
 
-                // finalise!
-                // note that return place should not be finalised!!
+                // finalize!
+                // note that return place should not be finalized!!
                 for local in self.state.consume_chain.to_finalise() {
                     let r#use = self.state.name_state.get_name(local);
                     tracing::debug!("finalizing {:?}~{:?}", local, r#use);

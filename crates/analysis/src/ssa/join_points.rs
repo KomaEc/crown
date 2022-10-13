@@ -16,7 +16,7 @@ use super::{
     state::SSAIdx,
 };
 
-/// A phi node for a local X: X_i = $\phi$(X_j, X_k)
+/// A phi node for a local X: X_i = ϕ(X_j, X_k)
 #[derive(Clone, Derivative)]
 #[derivative(Default)]
 pub struct PhiNode {
@@ -24,13 +24,6 @@ pub struct PhiNode {
     pub lhs: SSAIdx,
     pub rhs: SmallVec<[SSAIdx; SIZE_PHI_NODE]>,
 }
-
-// TODO represent deleted phi node
-// impl PhiNode {
-//     pub fn delete(&mut self) {
-//         self.lhs = SSAIdx::INVALID
-//     }
-// }
 
 /// Property: the set of join points must guarantee that
 /// definitions (consumptions) flow into the final return

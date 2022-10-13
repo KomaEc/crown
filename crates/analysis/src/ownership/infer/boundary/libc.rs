@@ -16,15 +16,15 @@ where
     'tcx: 'infercx,
     Analysis: AnalysisKind<'infercx, 'db>,
 {
-    pub fn handle_libc_call(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>, callee: Ident) {
+    pub fn libc_call(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>, callee: Ident) {
         match callee.as_str() {
-            "malloc" => self.handle_malloc(caller),
-            "free" => self.handle_free(caller),
+            "malloc" => self.call_malloc(caller),
+            "free" => self.call_free(caller),
             _ => {}
         }
     }
 
-    fn handle_malloc(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>) {
+    fn call_malloc(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>) {
         let FnSig {
             ret: destination,
             args,
@@ -35,7 +35,7 @@ where
         <Analysis as InferMode>::source(self, destination.clone());
     }
 
-    fn handle_free(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>) {
+    fn call_free(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>) {
         let FnSig {
             ret: destination,
             args,

@@ -22,20 +22,20 @@ pub trait Boundary<'infercx, 'db, 'tcx>: AnalysisKind<'infercx, 'db> + Sized
 where
     'tcx: 'infercx,
 {
-    fn handle_call(
+    fn call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
-        caller: &FnSig<Option<Consume<Range<Var>>>>,
+        args: &FnSig<Option<Consume<Range<Var>>>>,
         callee: DefId,
     );
 
-    fn handle_params(
+    fn params(
         inter_ctxt: &Self::InterCtxt,
         database: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
         r#fn: DefId,
         params: impl Iterator<Item = Option<Range<Var>>>,
     );
 
-    fn handle_ret(
+    fn r#return(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         r#fn: DefId,
         ret: Option<Range<Var>>,
@@ -47,14 +47,14 @@ where
     'tcx: 'infercx,
     Analysis: AnalysisKind<'infercx, 'db>,
 {
-    default fn handle_call(
+    default fn call(
         _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         _: &FnSig<Option<Consume<Range<Var>>>>,
         _: DefId,
     ) {
     }
 
-    default fn handle_params(
+    default fn params(
         _: &Analysis::InterCtxt,
         _: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
         _: DefId,
@@ -62,7 +62,7 @@ where
     ) {
     }
 
-    default fn handle_ret(
+    default fn r#return(
         _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         _: DefId,
         _: Option<Range<Var>>,
@@ -74,9 +74,9 @@ impl<'infercx, 'db, 'tcx> Boundary<'infercx, 'db, 'tcx> for WholeProgram
 where
     'tcx: 'infercx,
 {
-    fn handle_call(
+    fn call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
-        caller: &FnSig<Option<Consume<Range<Var>>>>,
+        args: &FnSig<Option<Consume<Range<Var>>>>,
         callee: DefId,
     ) {
         let c_variadic = infer_cx
@@ -86,12 +86,12 @@ where
             .skip_binder()
             .c_variadic;
 
-        let callee_sigs = &infer_cx.inter_ctxt[&callee];
+        let params = &infer_cx.inter_ctxt[&callee];
 
-        let mut callee_caller = callee_sigs.iter().zip(caller.iter());
+        let mut params_args = params.iter().zip(args.iter());
 
         // dest = ret ~> rho(dest) = 0, rho(dest') = rho(ret)
-        let (ret, dest) = callee_caller.next().unwrap();
+        let (ret, dest) = params_args.next().unwrap();
         if let Some(ret) = ret.clone() {
             if let Some(Consume {
                 r#use: dest_use,
@@ -112,7 +112,7 @@ where
         }
 
         // para = arg ~> rho(para') + rho(arg') = rho(arg)
-        for (para, arg) in callee_caller {
+        for (para, arg) in params_args {
             if let Some(para) = para.clone() {
                 if let Some(Consume {
                     r#use: arg_use,
@@ -136,7 +136,7 @@ where
         }
     }
 
-    fn handle_params(
+    fn params(
         inter_ctxt: &<WholeProgram as AnalysisKind>::InterCtxt,
         database: &mut <WholeProgram as AnalysisKind>::DB,
         r#fn: DefId,
@@ -157,7 +157,7 @@ where
         }
     }
 
-    fn handle_ret(
+    fn r#return(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, WholeProgram>,
         r#fn: DefId,
         ret: Option<Range<Var>>,

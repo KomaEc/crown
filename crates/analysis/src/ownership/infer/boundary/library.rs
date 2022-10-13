@@ -16,11 +16,7 @@ where
     'tcx: 'infercx,
     Analysis: AnalysisKind<'infercx, 'db>,
 {
-    pub fn handle_library_call(
-        &mut self,
-        caller: &FnSig<Option<Consume<Range<Var>>>>,
-        callee: DefId,
-    ) {
+    pub fn library_call(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>, callee: DefId) {
         let def_path = self.crate_ctxt.tcx.def_path(callee);
         // if it is a library call in core::ptr
         if def_path
@@ -36,7 +32,7 @@ where
             if let Some(d) = def_path.data.get(3) {
                 match d.data {
                     rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "is_null" => {
-                        self.handle_is_null(caller);
+                        self.call_is_null(caller);
                         return;
                     }
                     _ => {}
@@ -45,7 +41,7 @@ where
         }
     }
 
-    pub fn handle_is_null(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>) {
+    pub fn call_is_null(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>) {
         let FnSig { args, .. } = caller;
         assert_eq!(args.len(), 1);
         let arg = args.first().and_then(Option::as_ref).cloned().unwrap();

@@ -25,12 +25,6 @@ impl Default for SSAIdx {
 
 impl SSAIdx {
     pub const INIT: Self = SSAIdx::from_u32(0);
-    // pub const INVALID: Self = SSAIdx::MAX;
-
-    // #[inline]
-    // pub fn is_invalid(&self) -> bool {
-    //     *self == Self::INVALID
-    // }
 }
 
 impl Voidable for SSAIdx {
@@ -56,14 +50,10 @@ pub struct SSAState {
 }
 
 impl SSAState {
-    /// TODO: smarter initialisation.
-    /// Do not generate entries for non-ptr locals
-    /// Do not generate entries for locals at all.
     pub fn new<'tcx>(
         body: &Body<'tcx>,
         dominance_frontier: &DominanceFrontier,
         definitions: Definitions,
-        // crate_ctxt: &CrateCtxt<'tcx>,
     ) -> Self {
         let name_state = NameState::new(body, &definitions.maybe_owning);
         let join_points =
@@ -107,16 +97,6 @@ impl SSAState {
         Some(consume)
     }
 
-    // #[inline]
-    // pub fn consume_at(&mut self, local: Local, location: Location) -> Consume<SSAIdx> {
-    //     self.try_consume_at(local, location)
-    //         .unwrap_or_else(|| panic!("{:?} isn't defined at {:?}", local, location))
-    // }
-
-    // #[inline]
-    // pub fn try_finalise(&mut self, local: Local) -> Option<SSAIdx> {
-    //     self.name_state.try_get_name(local)
-    // }
 }
 
 #[derive(Clone, Debug)]
@@ -173,7 +153,7 @@ impl NameState {
     }
 
     /// Get the newest version for a variable. If `None` is returned,
-    /// this variable is uninitialised.
+    /// this variable is uninitialized.
     #[inline]
     pub fn try_get_name(&self, var: Local) -> Option<SSAIdx> {
         self.stack[var].last().copied()
@@ -187,65 +167,3 @@ impl NameState {
             .unwrap_or_else(|| panic!("internal error: poping non existing version for {:?}", var))
     }
 }
-
-// #[cfg(test)]
-// mod test {
-//     use super::*;
-//     use smallvec::smallvec;
-
-//     #[test]
-//     fn test1() {
-//         let mut state: NameState<u32> = NameState {
-//             count: IndexVec::from_raw(vec![12u32.into()]),
-//             stack: IndexVec::from_raw(vec![vec![4u32.into(), 5u32.into()]]),
-//             n_defs: vec![
-//                 smallvec![(0u32.into(), 1.try_into().unwrap())],
-//                 smallvec![(0u32.into(), 1.try_into().unwrap())],
-//             ],
-//         };
-
-//         assert_eq!(state.get_name(0), 5u32.into());
-//         assert_eq!(state.generate_fresh_name(0), 13u32.into());
-//         assert_eq!(state.get_name(0), 13u32.into());
-
-//         assert_eq!(&state.n_defs[0][..], [(0u32.into(), 1.try_into().unwrap())]);
-//         assert_eq!(&state.n_defs[1][..], [(0u32.into(), 2.try_into().unwrap())]);
-
-//         state.remove_names(1);
-
-//         assert_eq!(state.get_name(0), 4u32.into());
-//         assert_eq!(state.n_defs.len(), 1);
-//     }
-
-//     #[test]
-//     fn test2() {
-//         let mut state: NameState<u32> = NameState {
-//             count: IndexVec::from_raw(vec![0u32.into()]),
-//             stack: IndexVec::from_raw(vec![vec![0u32.into()]]),
-//             n_defs: vec![],
-//         };
-
-//         state.enter_new_block();
-//         assert_eq!(state.get_name(0), SSAIdx::INIT);
-//         let _ = state.generate_fresh_name(0);
-//         assert_eq!(state.get_name(0), 1u32.into());
-//         let _ = state.generate_fresh_name(0);
-//         assert_eq!(state.get_name(0), 2u32.into());
-
-//         state.enter_new_block();
-//         let _ = state.generate_fresh_name(0);
-//         assert_eq!(state.get_name(0), 3u32.into());
-
-//         state.remove_names(1);
-//         assert_eq!(state.get_name(0), 2u32.into());
-
-//         state.enter_new_block();
-//         let _ = state.generate_fresh_name(0);
-//         assert_eq!(state.get_name(0), 4u32.into());
-//         let _ = state.generate_fresh_name(0);
-//         assert_eq!(state.get_name(0), 5u32.into());
-
-//         state.remove_names(1);
-//         assert_eq!(state.get_name(0), 2u32.into());
-//     }
-// }

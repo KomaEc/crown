@@ -113,7 +113,7 @@ where
             }
         }
 
-        <Analysis as Boundary>::handle_params(
+        <Analysis as Boundary>::params(
             // crate_ctxt,
             &inter_ctxt,
             database,
@@ -405,10 +405,10 @@ where
 
     fn call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
-        caller: Self::CallArgs<Option<Consume<Self::LocalSig>>>,
-        func: &Operand,
+        args: Self::CallArgs<Option<Consume<Self::LocalSig>>>,
+        callee: &Operand,
     ) {
-        if let Some(func) = func.constant() {
+        if let Some(func) = callee.constant() {
             let ty = func.ty();
             let &FnDef(callee, _) = ty.kind() else { unreachable!() };
             if let Some(local_did) = callee.as_local() {
@@ -421,11 +421,11 @@ where
                 {
                     // this crate
                     rustc_hir::Node::Item(_) => {
-                        <Analysis as Boundary>::handle_call(infer_cx, &caller, callee)
+                        <Analysis as Boundary>::call(infer_cx, &args, callee)
                     }
                     // extern
                     rustc_hir::Node::ForeignItem(foreign_item) => {
-                        infer_cx.handle_libc_call(&caller, foreign_item.ident)
+                        infer_cx.libc_call(&args, foreign_item.ident)
                     }
                     // in libxml2.rust/src/xmlschemastypes.rs/{} impl_xmlSchemaValDate/set_mon
                     rustc_hir::Node::ImplItem(_) => { /* TODO */ }
@@ -433,7 +433,7 @@ where
                 }
             } else {
                 // library
-                infer_cx.handle_library_call(&caller, callee)
+                infer_cx.library_call(&args, callee)
             }
         } else {
             // closure or fn ptr
@@ -447,7 +447,7 @@ where
         me: DefId,
     ) {
         let output = ssa_idx.map(|ssa_idx| infer_cx.fn_body_sig[RETURN_PLACE][ssa_idx].clone());
-        <Analysis as Boundary>::handle_ret(infer_cx, me, output)
+        <Analysis as Boundary>::r#return(infer_cx, me, output)
     }
 
     fn cast_to_c_void(
