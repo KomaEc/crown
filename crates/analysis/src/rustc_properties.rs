@@ -3,7 +3,7 @@
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, PlaceContext, Visitor},
-        Local, LocalInfo, LocalKind, Location, Place, Rvalue, Terminator, TerminatorKind, Operand,
+        Local, LocalInfo, LocalKind, Location, Operand, Place, Rvalue, Terminator, TerminatorKind,
     },
     ty::TyCtxt,
 };

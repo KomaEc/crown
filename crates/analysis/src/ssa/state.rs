@@ -96,7 +96,6 @@ impl SSAState {
         );
         Some(consume)
     }
-
 }
 
 #[derive(Clone, Debug)]

@@ -279,7 +279,9 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         }
         Command::Analyse => {
             let mut crate_ctxt = CrateCtxt::from(input);
-            let ownership_schemes = analysis::ownership::WholeProgram::analyze(&mut crate_ctxt)?;
+            let ownership_schemes = time("construct ownership scheme", || {
+                analysis::ownership::WholeProgram::analyze(&mut crate_ctxt)
+            })?;
             ownership_schemes.trace(tcx);
         }
         Command::Refactor => {

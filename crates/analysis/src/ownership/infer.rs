@@ -335,7 +335,7 @@ where
     /// Note that ownership dominance property gurantees uniqueness, so `*mut *mut T` can be treated
     /// as two separate pointers. The inference allows transfers like `&move &move -> &&move`, but really
     /// this doesn't happen because of [`finalize()`]
-    fn transfer(
+    fn transfer<const ENSURE_MOVE: bool>(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         lhs_result: Consume<Self::LocalSig>,
         rhs_result: Consume<Self::LocalSig>,
@@ -349,20 +349,29 @@ where
             infer_cx
                 .database
                 .push_assume::<crate::ssa::constraint::Debug>((), lhs_use, false);
-            infer_cx
-                .database
-                .push_linear::<crate::ssa::constraint::Debug>((), lhs_def, rhs_def, rhs_use)
+            if ENSURE_MOVE {
+                infer_cx
+                    .database
+                    .push_equal::<crate::ssa::constraint::Debug>((), lhs_def, rhs_use);
+                infer_cx
+                    .database
+                    .push_assume::<crate::ssa::constraint::Debug>((), rhs_def, false);
+            } else {
+                infer_cx
+                    .database
+                    .push_linear::<crate::ssa::constraint::Debug>((), lhs_def, rhs_def, rhs_use)
+            }
         }
     }
 
-    fn cast(
+    fn cast<const ENSURE_MOVE: bool>(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         lhs: Consume<Self::LocalSig>,
         rhs: Consume<Self::LocalSig>,
     ) {
         let lhs = lhs.repack(|sigs| sigs.start..sigs.start + 1u32);
         let rhs = rhs.repack(|sigs| sigs.start..sigs.start + 1u32);
-        Self::transfer(infer_cx, lhs, rhs)
+        Self::transfer::<ENSURE_MOVE>(infer_cx, lhs, rhs)
     }
 
     #[inline]
