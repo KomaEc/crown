@@ -74,10 +74,11 @@ fn conservative_noalias_params(
                 continue;
             }
             if alias_result.may_alias(location_of[arg], location_of[local])
-                && fn_result
-                    .local_result(Local::new(local))
-                    .first()
-                    .is_some_and(|&&mutability| mutability == Mutability::Mut)
+                && (local == 0
+                    || fn_result
+                        .local_result(Local::new(local))
+                        .first()
+                        .is_some_and(|&&mutability| mutability == Mutability::Mut))
             {
                 noalias_params.remove(&Local::new(arg));
             }

@@ -12,7 +12,7 @@ use rustc_middle::{
 };
 use rustc_type_ir::TyKind::{self, FnDef};
 
-use self::library::library_call;
+use self::{libc::libc_call, library::library_call};
 use super::{
     boolean_system::BooleanSystem, AnalysisResult, BooleanLattice, FnLocalsVars, Infer, Lattice,
     StructFieldsVars, Var,
@@ -210,7 +210,18 @@ impl Infer for MutabilityAnalysis {
                             return;
                         }
                         // extern
-                        rustc_hir::Node::ForeignItem(_) => {}
+                        rustc_hir::Node::ForeignItem(foreign_item) => {
+                            libc_call(
+                                destination,
+                                args,
+                                foreign_item.ident,
+                                local_decls,
+                                locals,
+                                struct_fields,
+                                database,
+                            );
+                            return;
+                        }
                         // in libxml2.rust/src/xmlschemastypes.rs/{} impl_xmlSchemaValDate/set_mon
                         rustc_hir::Node::ImplItem(_) => { /* TODO */ }
                         _ => unreachable!(),

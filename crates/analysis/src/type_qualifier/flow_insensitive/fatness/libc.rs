@@ -18,14 +18,14 @@ pub fn libc_call<'tcx>(
         // "malloc" => {},
         // free is skipped
         // "free" => {},
-        "calloc" => calloc_call(destination, local_decls, locals, struct_fields, database),
+        "calloc" => call_calloc(destination, local_decls, locals, struct_fields, database),
         // realloc is skipped
         // "realloc" => {},
         _ => {}
     }
 }
 
-fn calloc_call<'tcx>(
+fn call_calloc<'tcx>(
     destination: &Place<'tcx>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
