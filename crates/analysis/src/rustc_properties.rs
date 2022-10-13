@@ -3,7 +3,7 @@
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, PlaceContext, Visitor},
-        Local, LocalInfo, LocalKind, Location, Place, Rvalue, Terminator, TerminatorKind,
+        Local, LocalInfo, LocalKind, Location, Place, Rvalue, Terminator, TerminatorKind, Operand,
     },
     ty::TyCtxt,
 };
@@ -121,10 +121,11 @@ impl<'tcx> CrateCtxt<'tcx> {
             fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _: Location) {
                 let TerminatorKind::Call { destination, args, .. } = &terminator.kind else { return };
                 for arg in args {
-                    assert!(
-                        arg.place().and_then(|place| place.as_local()).is_some()
-                            || arg.constant().is_some()
-                    );
+                    match arg {
+                        Operand::Move(place) => assert!(place.as_local().is_some()),
+                        Operand::Copy(..) => unreachable!(),
+                        _ => {}
+                    }
                 }
                 assert!(destination.as_local().is_some());
             }
