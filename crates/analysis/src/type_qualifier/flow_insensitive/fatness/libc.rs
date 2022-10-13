@@ -222,10 +222,15 @@ fn call_memcpy<'tcx>(
     struct_fields: &StructFieldsVars,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
-    call_strncat(destination, args, local_decls, locals, struct_fields, database)
+    call_strncat(
+        destination,
+        args,
+        local_decls,
+        locals,
+        struct_fields,
+        database,
+    )
 }
-
-
 
 fn call_memmove<'tcx>(
     destination: &Place<'tcx>,
@@ -235,7 +240,14 @@ fn call_memmove<'tcx>(
     struct_fields: &StructFieldsVars,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
-    call_memcpy(destination, args, local_decls, locals, struct_fields, database)
+    call_memcpy(
+        destination,
+        args,
+        local_decls,
+        locals,
+        struct_fields,
+        database,
+    )
 }
 
 fn call_memset<'tcx>(
