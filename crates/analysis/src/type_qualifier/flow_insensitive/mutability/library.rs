@@ -30,30 +30,40 @@ pub fn library_call<'tcx>(
     {
         // if it is core::ptr::<..>::..
         if let Some(d) = def_path.data.get(3) {
-            match d.data {
-                rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "is_null" => {
-                    call_is_null(
-                        destination,
-                        args,
-                        local_decls,
-                        locals,
-                        struct_fields,
-                        database,
-                    );
-                    return;
+            if let rustc_hir::definitions::DefPathData::ValueNs(s) = d.data {
+                match s.as_str() {
+                    "is_null" => {
+                        return call_is_null(
+                            destination,
+                            args,
+                            local_decls,
+                            locals,
+                            struct_fields,
+                            database,
+                        )
+                    }
+                    "offset" => {
+                        return call_offset(
+                            destination,
+                            args,
+                            local_decls,
+                            locals,
+                            struct_fields,
+                            database,
+                        )
+                    }
+                    "offset_from" => {
+                        return call_offset_from(
+                            destination,
+                            args,
+                            local_decls,
+                            locals,
+                            struct_fields,
+                            database,
+                        )
+                    }
+                    _ => {}
                 }
-                rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "offset" => {
-                    call_offset(
-                        destination,
-                        args,
-                        local_decls,
-                        locals,
-                        struct_fields,
-                        database,
-                    );
-                    return;
-                }
-                _ => {}
             }
         }
 
@@ -106,4 +116,19 @@ fn call_offset<'tcx>(
             database.guard(dest, arg);
         }
     }
+}
+
+fn call_offset_from<'tcx>(
+    destination: &Place<'tcx>,
+    args: &Vec<Operand<'tcx>>,
+    local_decls: &impl HasLocalDecls<'tcx>,
+    locals: &[Var],
+    struct_fields: &StructFieldsVars,
+    database: &mut <MutabilityAnalysis as Infer>::L,
+) {
+    let dest_vars =
+        place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
+    assert!(dest_vars.is_empty());
+    // no constraint on args
+    let _ = args;
 }
