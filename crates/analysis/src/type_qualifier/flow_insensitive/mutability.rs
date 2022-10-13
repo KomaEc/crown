@@ -84,8 +84,15 @@ impl Infer for MutabilityAnalysis {
 
         match rhs {
             Rvalue::Use(Operand::Copy(rhs) | Operand::Move(rhs)) | Rvalue::CopyForDeref(rhs) => {
-                let lhs = place_vars::<true>(lhs, local_decls, locals, struct_fields, database);
-                let rhs = place_vars::<false>(rhs, local_decls, locals, struct_fields, database);
+                let lhs = place_vars::<MutCtxt>(lhs, local_decls, locals, struct_fields, database);
+                let mut rhs_deref = None;
+                let rhs = place_vars::<UnknownCtxt>(
+                    rhs,
+                    local_decls,
+                    locals,
+                    struct_fields,
+                    &mut rhs_deref,
+                );
 
                 // type safety
                 assert_eq!(
@@ -95,7 +102,10 @@ impl Infer for MutabilityAnalysis {
 
                 let mut lhs_rhs = lhs.zip(rhs);
                 if let Some((lhs, rhs)) = lhs_rhs.next() {
-                    database.guard(lhs, rhs)
+                    database.guard(lhs, rhs);
+                    if let Some(rhs_deref) = rhs_deref {
+                        database.guard(lhs, rhs_deref);
+                    }
                 }
                 for (lhs, rhs) in lhs_rhs {
                     database.guard(lhs, rhs);
@@ -104,32 +114,46 @@ impl Infer for MutabilityAnalysis {
             }
             Rvalue::Cast(_, Operand::Copy(rhs) | Operand::Move(rhs), _) => {
                 // for cast, we process the head ptr only
-                let lhs = place_vars::<true>(lhs, local_decls, locals, struct_fields, database);
-                let rhs = place_vars::<false>(rhs, local_decls, locals, struct_fields, database);
+                let lhs = place_vars::<MutCtxt>(lhs, local_decls, locals, struct_fields, database);
+                let mut rhs_deref = None;
+                let rhs = place_vars::<UnknownCtxt>(
+                    rhs,
+                    local_decls,
+                    locals,
+                    struct_fields,
+                    &mut rhs_deref,
+                );
 
                 let mut lhs_rhs = lhs.zip(rhs);
                 if let Some((lhs, rhs)) = lhs_rhs.next() {
-                    database.guard(lhs, rhs)
+                    database.guard(lhs, rhs);
+                    if let Some(rhs_deref) = rhs_deref {
+                        database.guard(lhs, rhs_deref)
+                    }
                 }
             }
             Rvalue::Ref(_, BorrowKind::Mut { .. }, rhs) | Rvalue::AddressOf(_, rhs) => {
-                let lhs = place_vars::<true>(lhs, local_decls, locals, struct_fields, database);
-                let rhs = place_vars::<true>(rhs, local_decls, locals, struct_fields, database);
+                let lhs =
+                    place_vars::<EnsureNoDeref>(lhs, local_decls, locals, struct_fields, &mut ());
+                let rhs = place_vars::<MutCtxt>(rhs, local_decls, locals, struct_fields, database);
                 for (lhs, rhs) in lhs.skip(1).zip(rhs) {
                     database.guard(lhs, rhs);
                     database.guard(rhs, lhs);
                 }
             }
             Rvalue::Ref(_, _, rhs) => {
-                let lhs = place_vars::<true>(lhs, local_decls, locals, struct_fields, database);
-                let rhs = place_vars::<false>(rhs, local_decls, locals, struct_fields, database);
+                let lhs =
+                    place_vars::<EnsureNoDeref>(lhs, local_decls, locals, struct_fields, &mut ());
+                let rhs =
+                    place_vars::<UnknownCtxt>(rhs, local_decls, locals, struct_fields, &mut None);
+                database.top(lhs.start);
                 for (lhs, rhs) in lhs.skip(1).zip(rhs) {
                     database.guard(lhs, rhs);
                     database.guard(rhs, lhs);
                 }
             }
             _ => {
-                let _ = place_vars::<true>(lhs, local_decls, locals, struct_fields, database);
+                let _ = place_vars::<MutCtxt>(lhs, local_decls, locals, struct_fields, database);
             }
         }
     }
@@ -162,7 +186,7 @@ impl Infer for MutabilityAnalysis {
                             let mut callee_vars =
                                 fn_locals.vars(&callee).take(callee_body.arg_count + 1);
 
-                            let dest = place_vars::<true>(
+                            let dest = place_vars::<MutCtxt>(
                                 destination,
                                 local_decls,
                                 locals,
@@ -189,12 +213,12 @@ impl Infer for MutabilityAnalysis {
 
                             for (arg, param_vars) in args.iter().zip(callee_vars) {
                                 let Some(arg) = arg.place() else { continue; };
-                                let arg_vars = place_vars::<false>(
+                                let arg_vars = place_vars::<EnsureNoDeref>(
                                     &arg,
                                     local_decls,
                                     locals,
                                     struct_fields,
-                                    database,
+                                    &mut (),
                                 );
 
                                 let mut param_arg = param_vars.zip(arg_vars);
@@ -242,31 +266,61 @@ impl Infer for MutabilityAnalysis {
             }
 
             // conservative catch all
-            let dest_var =
-                place_vars::<true>(destination, local_decls, locals, struct_fields, database);
-
-            for var in dest_var {
-                database.bottom(var);
-            }
-
-            for arg in args {
-                let Some(arg) = arg.place() else { continue; };
-                let arg_vars =
-                    place_vars::<false>(&arg, local_decls, locals, struct_fields, database);
-                for var in arg_vars {
-                    database.bottom(var);
-                }
-            }
+            conservative_call(
+                destination,
+                args,
+                local_decls,
+                locals,
+                struct_fields,
+                database,
+            );
         }
     }
 }
 
-fn place_vars<'tcx, const MUT: bool>(
+trait PlaceContext {
+    type DerefStore;
+
+    fn on_deref(var: Var, deref_var: &mut Self::DerefStore);
+}
+
+enum MutCtxt {}
+
+impl PlaceContext for MutCtxt {
+    type DerefStore = <MutabilityAnalysis as Infer>::L;
+
+    fn on_deref(var: Var, database: &mut <MutabilityAnalysis as Infer>::L) {
+        database.bottom(var);
+    }
+}
+
+enum UnknownCtxt {}
+
+impl PlaceContext for UnknownCtxt {
+    type DerefStore = Option<Var>;
+
+    fn on_deref(var: Var, deref_var: &mut Option<Var>) {
+        assert!(deref_var.is_none());
+        *deref_var = Some(var);
+    }
+}
+
+enum EnsureNoDeref {}
+
+impl PlaceContext for EnsureNoDeref {
+    type DerefStore = ();
+
+    fn on_deref(_: Var, (): &mut Self::DerefStore) {
+        unreachable!()
+    }
+}
+
+fn place_vars<'tcx, Ctxt: PlaceContext>(
     place: &Place<'tcx>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFieldsVars,
-    database: &mut <MutabilityAnalysis as Infer>::L,
+    deref_store: &mut Ctxt::DerefStore,
 ) -> Range<Var> {
     let mut place_vars = Range {
         start: locals[place.local.index()],
@@ -277,9 +331,7 @@ fn place_vars<'tcx, const MUT: bool>(
     for projection_elem in place.projection {
         match projection_elem {
             ProjectionElem::Deref => {
-                if MUT {
-                    database.bottom(place_vars.start);
-                }
+                Ctxt::on_deref(place_vars.start, deref_store);
                 place_vars.start = place_vars.start + 1;
                 base_ty = base_ty.builtin_deref(true).unwrap().ty;
             }
@@ -319,4 +371,28 @@ fn place_vars<'tcx, const MUT: bool>(
     }
 
     place_vars
+}
+
+fn conservative_call<'tcx>(
+    destination: &Place<'tcx>,
+    args: &Vec<Operand<'tcx>>,
+    local_decls: &impl HasLocalDecls<'tcx>,
+    locals: &[Var],
+    struct_fields: &StructFieldsVars,
+    database: &mut <MutabilityAnalysis as Infer>::L,
+) {
+    let dest_var = place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
+
+    for var in dest_var {
+        database.bottom(var);
+    }
+
+    for arg in args {
+        let Some(arg) = arg.place() else { continue; };
+        let arg_vars =
+            place_vars::<EnsureNoDeref>(&arg, local_decls, locals, struct_fields, &mut ());
+        for var in arg_vars {
+            database.bottom(var);
+        }
+    }
 }

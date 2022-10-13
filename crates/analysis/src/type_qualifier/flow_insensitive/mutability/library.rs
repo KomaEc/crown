@@ -4,7 +4,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 
-use super::{place_vars, MutabilityAnalysis};
+use super::{conservative_call, place_vars, EnsureNoDeref, MutCtxt, MutabilityAnalysis};
 use crate::type_qualifier::flow_insensitive::{ConstraintSystem, Infer, StructFieldsVars, Var};
 
 pub fn library_call<'tcx>(
@@ -32,11 +32,18 @@ pub fn library_call<'tcx>(
         if let Some(d) = def_path.data.get(3) {
             match d.data {
                 rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "is_null" => {
-                    // Introduce no constraint
+                    call_is_null(
+                        destination,
+                        args,
+                        local_decls,
+                        locals,
+                        struct_fields,
+                        database,
+                    );
                     return;
                 }
                 rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "offset" => {
-                    offset_call(
+                    call_offset(
                         destination,
                         args,
                         local_decls,
@@ -50,25 +57,18 @@ pub fn library_call<'tcx>(
             }
         }
 
-        // conservative catch all
-        let dest_var =
-            place_vars::<true>(destination, local_decls, locals, struct_fields, database);
-
-        for var in dest_var {
-            database.bottom(var);
-        }
-
-        for arg in args {
-            let Some(arg) = arg.place() else { continue; };
-            let arg_vars = place_vars::<false>(&arg, local_decls, locals, struct_fields, database);
-            for var in arg_vars {
-                database.bottom(var);
-            }
-        }
+        conservative_call(
+            destination,
+            args,
+            local_decls,
+            locals,
+            struct_fields,
+            database,
+        );
     }
 }
 
-fn offset_call<'tcx>(
+fn call_is_null<'tcx>(
     destination: &Place<'tcx>,
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
@@ -76,9 +76,26 @@ fn offset_call<'tcx>(
     struct_fields: &StructFieldsVars,
     database: &mut <MutabilityAnalysis as Infer>::L,
 ) {
-    let dest_vars = place_vars::<true>(destination, local_decls, locals, struct_fields, database);
+    let dest_vars =
+        place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
+    assert!(dest_vars.is_empty());
+    // no constraint on args
+    let _ = args;
+}
+
+fn call_offset<'tcx>(
+    destination: &Place<'tcx>,
+    args: &Vec<Operand<'tcx>>,
+    local_decls: &impl HasLocalDecls<'tcx>,
+    locals: &[Var],
+    struct_fields: &StructFieldsVars,
+    database: &mut <MutabilityAnalysis as Infer>::L,
+) {
+    let dest_vars =
+        place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
     if let Some(arg) = args[0].place() {
-        let arg_vars = place_vars::<false>(&arg, local_decls, locals, struct_fields, database);
+        let arg_vars =
+            place_vars::<EnsureNoDeref>(&arg, local_decls, locals, struct_fields, &mut ());
         let mut dest_arg = dest_vars.zip(arg_vars);
 
         if let Some((dest, arg)) = dest_arg.next() {

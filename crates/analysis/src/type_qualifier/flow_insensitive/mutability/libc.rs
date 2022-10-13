@@ -1,8 +1,8 @@
 use rustc_middle::mir::{HasLocalDecls, Operand, Place};
 use rustc_span::symbol::Ident;
 
-use super::{place_vars, MutabilityAnalysis};
-use crate::type_qualifier::flow_insensitive::{ConstraintSystem, Infer, StructFieldsVars, Var};
+use super::{conservative_call, MutabilityAnalysis};
+use crate::type_qualifier::flow_insensitive::{Infer, StructFieldsVars, Var};
 
 pub fn libc_call<'tcx>(
     destination: &Place<'tcx>,
@@ -14,6 +14,7 @@ pub fn libc_call<'tcx>(
     database: &mut <MutabilityAnalysis as Infer>::L,
 ) {
     match callee.as_str() {
+        "strlen" => return call_strlen(),
         // malloc is skipped
         // "malloc" => return call_malloc(destination, local_decls, locals, struct_fields, database),
         // free is skipped
@@ -24,20 +25,18 @@ pub fn libc_call<'tcx>(
         _ => {}
     }
 
-    // conservative catch all
-    let dest_var = place_vars::<true>(destination, local_decls, locals, struct_fields, database);
+    conservative_call(
+        destination,
+        args,
+        local_decls,
+        locals,
+        struct_fields,
+        database,
+    );
+}
 
-    for var in dest_var {
-        database.bottom(var);
-    }
-
-    for arg in args {
-        let Some(arg) = arg.place() else { continue; };
-        let arg_vars = place_vars::<false>(&arg, local_decls, locals, struct_fields, database);
-        for var in arg_vars {
-            database.bottom(var);
-        }
-    }
+fn call_strlen<'tcx>() {
+    // unconstrained
 }
 
 // fn call_malloc<'tcx>(
