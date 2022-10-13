@@ -384,7 +384,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
                 // finalize!
                 // note that return place should not be finalized!!
-                for local in self.state.consume_chain.to_finalise() {
+                for local in self.state.consume_chain.to_finalize() {
                     let r#use = self.state.name_state.get_name(local);
                     tracing::debug!("finalizing {:?}~{:?}", local, r#use);
                     Infer::finalize(infer_cx, local, r#use);

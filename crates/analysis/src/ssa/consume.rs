@@ -178,7 +178,7 @@ impl ConsumeChain {
     }
 
     /// Note that return place is never finalised
-    pub fn to_finalise(&self) -> impl Iterator<Item = Local> + '_ {
+    pub fn to_finalize(&self) -> impl Iterator<Item = Local> + '_ {
         self.locs
             .iter_enumerated()
             .skip(1)
