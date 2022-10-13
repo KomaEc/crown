@@ -30,29 +30,36 @@ pub fn library_call<'tcx>(
     {
         // if it is core::ptr::<..>::..
         if let Some(d) = def_path.data.get(3) {
-            match d.data {
-                rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "is_null" => {
-                    // Introduce no constraint
-                    return;
+            if let rustc_hir::definitions::DefPathData::ValueNs(s) = d.data {
+                match s.as_str() {
+                    "offset" => {
+                        return call_offset(
+                            destination,
+                            args,
+                            local_decls,
+                            locals,
+                            struct_fields,
+                            database,
+                        )
+                    }
+                    "offset_from" => {
+                        return call_offset_from(
+                            destination,
+                            args,
+                            local_decls,
+                            locals,
+                            struct_fields,
+                            database,
+                        )
+                    }
+                    _ => {}
                 }
-                rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "offset" => {
-                    offset_call(
-                        destination,
-                        args,
-                        local_decls,
-                        locals,
-                        struct_fields,
-                        database,
-                    );
-                    return;
-                }
-                _ => {}
             }
         }
     }
 }
 
-fn offset_call<'tcx>(
+fn call_offset<'tcx>(
     destination: &Place<'tcx>,
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
@@ -72,5 +79,23 @@ fn offset_call<'tcx>(
             database.guard(arg, dest);
             database.guard(dest, arg);
         }
+    }
+}
+
+fn call_offset_from<'tcx>(
+    destination: &Place<'tcx>,
+    args: &Vec<Operand<'tcx>>,
+    local_decls: &impl HasLocalDecls<'tcx>,
+    locals: &[Var],
+    struct_fields: &StructFieldsVars,
+    database: &mut <FatnessAnalysis as Infer>::L,
+) {
+    let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
+    assert!(dest_vars.is_empty());
+    // no constraint on args
+    for ptr in args.iter().filter_map(|arg| arg.place()) {
+        let ptr_vars = place_vars(&ptr, local_decls, locals, struct_fields);
+        assert!(!ptr_vars.is_empty());
+        database.bottom(ptr_vars.start);
     }
 }
