@@ -278,9 +278,17 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             fatness_result.print_fn_sigs(tcx, &input.fns)
         }
         Command::Analyse => {
+            let alias_result = alias::alias_results(&input);
+            let mutability_result =
+                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
+            let noalias_params = analysis::type_qualifier::noalias::compute_noalias_params(
+                &input,
+                &alias_result,
+                &mutability_result,
+            );
             let mut crate_ctxt = CrateCtxt::from(input);
             let ownership_schemes = time("construct ownership scheme", || {
-                analysis::ownership::WholeProgram::analyze(&mut crate_ctxt)
+                analysis::ownership::WholeProgram::analyze(&mut crate_ctxt, &noalias_params)
             })?;
             ownership_schemes.trace(tcx);
         }
@@ -290,8 +298,14 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
             let fatness_result =
                 analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input);
+            let noalias_params = analysis::type_qualifier::noalias::compute_noalias_params(
+                &input,
+                &alias_result,
+                &mutability_result,
+            );
             let mut crate_ctxt = CrateCtxt::from(input);
-            let ownership_schemes = analysis::ownership::WholeProgram::analyze(&mut crate_ctxt)?;
+            let ownership_schemes =
+                analysis::ownership::WholeProgram::analyze(&mut crate_ctxt, &noalias_params)?;
 
             let _ = (
                 alias_result,

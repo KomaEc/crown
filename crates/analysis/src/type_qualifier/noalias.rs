@@ -56,13 +56,19 @@ fn conservative_noalias_params(
     alias_result: &AliasResult,
     mutability_result: &MutabilityResult,
 ) -> FxHashSet<Local> {
-    let mut noalias_params = body
-        .args_iter()
-        .filter(|&arg| !body.local_decls[arg].ty.is_primitive_ty())
-        .collect::<FxHashSet<Local>>();
-
     let location_of = alias_result.local_locations(&body.source.def_id());
     let fn_result = mutability_result.fn_result(&body.source.def_id());
+
+    let mut noalias_params = body
+        .args_iter()
+        .filter(|&arg| {
+            !body.local_decls[arg].ty.is_primitive_ty()
+                && fn_result
+                    .local_result(arg)
+                    .first()
+                    .is_some_and(|&&mutability| mutability == Mutability::Mut)
+        })
+        .collect::<FxHashSet<Local>>();
 
     for arg in body.args_iter().map(|arg| arg.index()) {
         for (local, local_decl) in body.local_decls.iter_enumerated() {

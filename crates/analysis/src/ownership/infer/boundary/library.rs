@@ -3,7 +3,6 @@ use std::ops::Range;
 use rustc_hir::def_id::DefId;
 
 use crate::{
-    call_graph::FnSig,
     ownership::{infer::InferCtxt, AnalysisKind},
     ssa::{
         constraint::{infer::InferMode, Var},
@@ -16,7 +15,12 @@ where
     'tcx: 'infercx,
     Analysis: AnalysisKind<'infercx, 'db>,
 {
-    pub fn library_call(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>, callee: DefId) {
+    pub fn library_call(
+        &mut self,
+        _destination: Option<Consume<Range<Var>>>,
+        args: &<Analysis as InferMode<'infercx, 'db, 'tcx>>::CallArgs,
+        callee: DefId,
+    ) {
         let def_path = self.crate_ctxt.tcx.def_path(callee);
         // if it is a library call in core::ptr
         if def_path
@@ -32,7 +36,8 @@ where
             if let Some(d) = def_path.data.get(3) {
                 match d.data {
                     rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "is_null" => {
-                        self.call_is_null(caller);
+                        self.call_is_null(args);
+                        // self.call_is_null(caller);
                         return;
                     }
                     _ => {}
@@ -41,10 +46,11 @@ where
         }
     }
 
-    pub fn call_is_null(&mut self, caller: &FnSig<Option<Consume<Range<Var>>>>) {
-        let FnSig { args, .. } = caller;
+    pub fn call_is_null(&mut self, args: &<Analysis as InferMode<'infercx, 'db, 'tcx>>::CallArgs) {
         assert_eq!(args.len(), 1);
-        let arg = args.first().and_then(Option::as_ref).cloned().unwrap();
-        <Analysis as InferMode>::borrow(self, arg)
+        if let Some((arg, is_ref)) = args[0].clone() {
+            assert!(!is_ref);
+            <Analysis as InferMode>::lend(self, arg)
+        }
     }
 }

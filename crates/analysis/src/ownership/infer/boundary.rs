@@ -2,13 +2,13 @@ use std::ops::Range;
 
 use itertools::izip;
 use rustc_hir::def_id::DefId;
+use rustc_middle::mir::Body;
 
 use super::InferCtxt;
 use crate::{
-    call_graph::FnSig,
     ownership::{AnalysisKind, WholeProgram},
     ssa::{
-        constraint::{Database, Var},
+        constraint::{infer::InferMode, Database, Var},
         consume::Consume,
     },
 };
@@ -24,21 +24,30 @@ where
 {
     fn call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
-        args: &FnSig<Option<Consume<Range<Var>>>>,
+        destination: Option<Consume<Range<Var>>>,
+        args: &<Self as InferMode<'infercx, 'db, 'tcx>>::CallArgs,
+        // args: &FnSig<Option<Consume<Range<Var>>>>,
         callee: DefId,
     );
 
     fn params(
         inter_ctxt: &Self::InterCtxt,
         database: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
-        r#fn: DefId,
+        body: &Body<'tcx>,
         params: impl Iterator<Item = Option<Range<Var>>>,
     );
 
+    // fn r#return(
+    //     infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
+    //     r#fn: DefId,
+    //     ret: Option<Range<Var>>,
+    // );
+
     fn r#return(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
-        r#fn: DefId,
-        ret: Option<Range<Var>>,
+        inter_ctxt: &Self::InterCtxt,
+        database: &mut Self::DB,
+        body: &Body<'tcx>,
+        args: impl Iterator<Item = Option<Range<Var>>>,
     );
 }
 
@@ -49,7 +58,8 @@ where
 {
     default fn call(
         _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
-        _: &FnSig<Option<Consume<Range<Var>>>>,
+        _: Option<Consume<Range<Var>>>,
+        _: &<Self as InferMode<'infercx, 'db, 'tcx>>::CallArgs,
         _: DefId,
     ) {
     }
@@ -57,15 +67,23 @@ where
     default fn params(
         _: &Analysis::InterCtxt,
         _: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
-        _: DefId,
+        _: &Body<'tcx>,
         _: impl Iterator<Item = Option<Range<Var>>>,
     ) {
     }
 
+    // default fn r#return(
+    //     _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
+    //     _: DefId,
+    //     _: Option<Range<Var>>,
+    // ) {
+    // }
+
     default fn r#return(
-        _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
-        _: DefId,
-        _: Option<Range<Var>>,
+        _: &Self::InterCtxt,
+        _: &mut Self::DB,
+        _: &Body<'tcx>,
+        _: impl Iterator<Item = Option<Range<Var>>>,
     ) {
     }
 }
@@ -76,7 +94,8 @@ where
 {
     fn call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
-        args: &FnSig<Option<Consume<Range<Var>>>>,
+        destination: Option<Consume<Range<Var>>>,
+        args: &<Self as InferMode<'infercx, 'db, 'tcx>>::CallArgs,
         callee: DefId,
     ) {
         let c_variadic = infer_cx
@@ -86,18 +105,18 @@ where
             .skip_binder()
             .c_variadic;
 
-        let params = &infer_cx.inter_ctxt[&callee];
+        let mut params = infer_cx.inter_ctxt[&callee].iter();
 
-        let mut params_args = params.iter().zip(args.iter());
+        let ret = params.next().unwrap();
 
         // dest = ret ~> rho(dest) = 0, rho(dest') = rho(ret)
-        let (ret, dest) = params_args.next().unwrap();
         if let Some(ret) = ret.clone() {
             if let Some(Consume {
                 r#use: dest_use,
                 def: dest_def,
-            }) = dest.clone()
+            }) = destination
             {
+                let ret = ret.normal();
                 for (ret, dest_use, dest_def) in izip!(ret, dest_use, dest_def) {
                     infer_cx
                         .database
@@ -108,26 +127,63 @@ where
                 }
             }
         } else {
-            assert!(dest.is_none())
+            assert!(destination.is_none())
         }
 
+        let params_args = params.zip(args.iter());
+
         // para = arg ~> rho(para') + rho(arg') = rho(arg)
-        for (para, arg) in params_args {
-            if let Some(para) = para.clone() {
-                if let Some(Consume {
-                    r#use: arg_use,
-                    def: arg_def,
-                }) = arg.clone()
+        for (param, arg) in params_args {
+            if let Some(param) = param.clone() {
+                if let Some((
+                    Consume {
+                        r#use: arg_use,
+                        def: arg_def,
+                    },
+                    is_ref,
+                )) = arg.clone()
                 {
-                    for (para, arg_use, arg_def) in izip!(para, arg_use, arg_def) {
-                        infer_cx
-                            .database
-                            .push_linear::<crate::ssa::constraint::Debug>(
-                                (),
-                                para,
-                                arg_def,
-                                arg_use,
-                            );
+                    match param {
+                        crate::ownership::Param::Output(output_param) => {
+                            let Consume {
+                                r#use: mut param_use,
+                                def: mut param_def,
+                            } = output_param;
+                            if is_ref {
+                                param_use.start += 1;
+                                param_def.start += 1;
+                            }
+                            for (param_use, param_def, arg_use, arg_def) in
+                                izip!(param_use, param_def, arg_use, arg_def)
+                            {
+                                infer_cx
+                                    .database
+                                    .push_equal::<crate::ssa::constraint::Debug>(
+                                        (),
+                                        param_use,
+                                        arg_use,
+                                    );
+                                infer_cx
+                                    .database
+                                    .push_equal::<crate::ssa::constraint::Debug>(
+                                        (),
+                                        param_def,
+                                        arg_def,
+                                    );
+                            }
+                        }
+                        crate::ownership::Param::Normal(param) => {
+                            for (param, arg_use, arg_def) in izip!(param, arg_use, arg_def) {
+                                infer_cx
+                                    .database
+                                    .push_linear::<crate::ssa::constraint::Debug>(
+                                        (),
+                                        param,
+                                        arg_def,
+                                        arg_use,
+                                    );
+                            }
+                        }
                     }
                 }
             } else {
@@ -139,15 +195,15 @@ where
     fn params(
         inter_ctxt: &<WholeProgram as AnalysisKind>::InterCtxt,
         database: &mut <WholeProgram as AnalysisKind>::DB,
-        r#fn: DefId,
+        body: &Body<'tcx>,
         params: impl Iterator<Item = Option<Range<Var>>>,
     ) {
-        let fn_sig = &inter_ctxt[&r#fn];
+        let fn_sig = &inter_ctxt[&body.source.def_id()];
 
         for (input, sigs) in params.zip(fn_sig.iter().skip(1)) {
             match (input, sigs) {
                 (Some(input), Some(sigs)) => {
-                    for (input, sig) in input.zip(sigs.clone()) {
+                    for (input, sig) in input.zip(sigs.clone().to_input()) {
                         database.push_equal::<crate::ssa::constraint::Debug>((), input, sig)
                     }
                 }
@@ -157,23 +213,58 @@ where
         }
     }
 
+    // fn r#return(
+    //     infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, WholeProgram>,
+    //     r#fn: DefId,
+    //     ret: Option<Range<Var>>,
+    // ) {
+    //     let fn_sig = &infer_cx.inter_ctxt[&r#fn];
+    //     let sigs = fn_sig.ret.clone();
+    //     match (ret, sigs) {
+    //         (Some(output), Some(sigs)) => {
+    //             for (output, ret) in output.zip(sigs.normal()) {
+    //                 infer_cx
+    //                     .database
+    //                     .push_equal::<crate::ssa::constraint::Debug>((), output, ret)
+    //             }
+    //         }
+    //         (None, None) => {}
+    //         _ => unreachable!(),
+    //     }
+    // }
+
     fn r#return(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, WholeProgram>,
-        r#fn: DefId,
-        ret: Option<Range<Var>>,
+        inter_ctxt: &Self::InterCtxt,
+        database: &mut Self::DB,
+        body: &Body<'tcx>,
+        mut args: impl Iterator<Item = Option<Range<Var>>>,
     ) {
-        let fn_sig = &infer_cx.inter_ctxt[&r#fn];
-        let sigs = fn_sig.ret.clone();
-        match (ret, sigs) {
-            (Some(output), Some(sigs)) => {
-                for (output, ret) in output.zip(sigs) {
-                    infer_cx
-                        .database
-                        .push_equal::<crate::ssa::constraint::Debug>((), output, ret)
+        let fn_sig = &inter_ctxt[&body.source.def_id()];
+
+        let ret_arg = args.next().unwrap();
+        let ret_param = fn_sig.ret.clone();
+
+        for (arg, param) in ret_arg.zip(ret_param) {
+            let param = param.normal();
+            for (arg, param) in arg.zip(param) {
+                database.push_equal::<crate::ssa::constraint::Debug>((), arg, param);
+            }
+        }
+
+        for (param, arg) in fn_sig.args.iter().cloned().zip(args) {
+            if let Some((param, arg)) = param.zip(arg) {
+                if let Some(param) = param.to_output() {
+                    // if output then output
+                    for (arg, param) in arg.zip(param) {
+                        database.push_equal::<crate::ssa::constraint::Debug>((), arg, param);
+                    }
+                } else {
+                    // if not then finalize
+                    for arg in arg {
+                        database.push_assume::<crate::ssa::constraint::Debug>((), arg, false);
+                    }
                 }
             }
-            (None, None) => {}
-            _ => unreachable!(),
         }
     }
 }

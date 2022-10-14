@@ -2,18 +2,17 @@ use std::ops::Range;
 
 use common::data_structure::assoc::AssocExt;
 use itertools::izip;
-use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{Body, Local, Location, Operand, Place, PlaceElem, ProjectionElem, RETURN_PLACE},
+    mir::{Body, Local, Location, Operand, Place, PlaceElem, ProjectionElem},
     ty::{Ty, TyKind},
 };
 use rustc_type_ir::TyKind::FnDef;
+use smallvec::SmallVec;
 
 use self::boundary::Boundary;
 use super::AnalysisKind;
 use crate::{
-    call_graph::FnSig,
     ptr::Measurable,
     ssa::{
         constraint::{
@@ -78,6 +77,8 @@ impl<'a> FnResult<'a> for FnSummary {
     }
 }
 
+type CallArgs<Consume> = SmallVec<[Option<(Consume, bool)>; 4]>;
+
 pub struct InferCtxt<'infercx, 'db, 'tcx, Analysis>
 where
     'tcx: 'infercx,
@@ -89,6 +90,15 @@ where
     crate_ctxt: &'infercx CrateCtxt<'tcx>,
     fn_body_sig: FnBodySig<LocalSig>,
     deref_copy: Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>>,
+    call_args: SmallVec<
+        [(
+            Local,
+            (
+                Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>,
+                bool,
+            ),
+        ); 4],
+    >,
 }
 
 impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
@@ -117,7 +127,7 @@ where
             // crate_ctxt,
             &inter_ctxt,
             database,
-            body.source.def_id(),
+            body,
             fn_body_sig
                 .iter()
                 .skip(1)
@@ -132,6 +142,7 @@ where
             crate_ctxt,
             fn_body_sig,
             deref_copy: None,
+            call_args: SmallVec::new(),
         }
     }
 
@@ -249,13 +260,33 @@ where
 
     type LocalSig = LocalSig;
 
-    type CallArgs<T> = FnSig<T> where T: std::fmt::Debug;
+    type CallArgs = CallArgs<Consume<Self::LocalSig>>;
+
+    fn collect_call_args(infer_cx: &mut Self::Ctxt, args: &[Operand<'tcx>]) -> Self::CallArgs {
+        let args = args
+            .iter()
+            .map(|operand| {
+                operand
+                    .place()
+                    .and_then(|operand| operand.as_local())
+                    .and_then(|operand| infer_cx.call_args.get_by_key(&operand))
+                    .cloned()
+            })
+            .collect::<SmallVec<_>>();
+
+        infer_cx.call_args.clear();
+
+        args
+    }
 
     #[inline]
-    fn collect_call_args(
-        call_args: impl Iterator<Item = Option<Consume<Self::LocalSig>>>,
-    ) -> Self::CallArgs<Option<Consume<Self::LocalSig>>> {
-        call_args.collect()
+    fn call_arg(
+        infer_cx: &mut Self::Ctxt,
+        temp: Local,
+        arg: Consume<Self::LocalSig>,
+        is_ref: bool,
+    ) {
+        infer_cx.call_args.push((temp, (arg, is_ref)))
     }
 
     #[inline]
@@ -387,6 +418,15 @@ where
     }
 
     #[inline]
+    fn lend(infer_cx: &mut Self::Ctxt, consume: Consume<Self::LocalSig>) {
+        for (r#use, def) in consume.r#use.zip(consume.def) {
+            infer_cx
+                .database
+                .push_equal::<crate::ssa::constraint::Debug>((), r#use, def)
+        }
+    }
+
+    #[inline]
     fn assume(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         result: Self::LocalSig,
@@ -399,22 +439,23 @@ where
         }
     }
 
-    #[inline]
-    fn finalize(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
-        local: Local,
-        r#use: SSAIdx,
-    ) {
-        for sig in infer_cx.fn_body_sig[local][r#use].clone() {
-            infer_cx
-                .database
-                .push_assume::<crate::ssa::constraint::Debug>((), sig, false)
-        }
-    }
+    // #[inline]
+    // fn finalize(
+    //     infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
+    //     local: Local,
+    //     r#use: SSAIdx,
+    // ) {
+    //     for sig in infer_cx.fn_body_sig[local][r#use].clone() {
+    //         infer_cx
+    //             .database
+    //             .push_assume::<crate::ssa::constraint::Debug>((), sig, false)
+    //     }
+    // }
 
     fn call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
-        args: Self::CallArgs<Option<Consume<Self::LocalSig>>>,
+        destination: Option<Consume<Self::LocalSig>>,
+        args: Self::CallArgs,
         callee: &Operand,
     ) {
         if let Some(func) = callee.constant() {
@@ -430,11 +471,11 @@ where
                 {
                     // this crate
                     rustc_hir::Node::Item(_) => {
-                        <Analysis as Boundary>::call(infer_cx, &args, callee)
+                        <Analysis as Boundary>::call(infer_cx, destination, &args, callee)
                     }
                     // extern
                     rustc_hir::Node::ForeignItem(foreign_item) => {
-                        infer_cx.libc_call(&args, foreign_item.ident)
+                        infer_cx.libc_call(destination, &args, foreign_item.ident)
                     }
                     // in libxml2.rust/src/xmlschemastypes.rs/{} impl_xmlSchemaValDate/set_mon
                     rustc_hir::Node::ImplItem(_) => { /* TODO */ }
@@ -442,7 +483,7 @@ where
                 }
             } else {
                 // library
-                infer_cx.library_call(&args, callee)
+                infer_cx.library_call(destination, &args, callee)
             }
         } else {
             // closure or fn ptr
@@ -450,13 +491,40 @@ where
         }
     }
 
-    fn r#return(
-        infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
-        ssa_idx: Option<SSAIdx>,
-        me: DefId,
+    // fn r#return(
+    //     infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
+    //     ssa_idx: Option<SSAIdx>,
+    //     me: DefId,
+    // ) {
+    //     let output = ssa_idx.map(|ssa_idx| infer_cx.fn_body_sig[RETURN_PLACE][ssa_idx].clone());
+    //     <Analysis as Boundary>::r#return(infer_cx, me, output)
+    // }
+
+    fn r#return<'a>(
+        infer_cx: &mut Self::Ctxt,
+        locals: impl Iterator<Item = (Local, Option<SSAIdx>)> + 'a,
+        body: &'a Body<'tcx>,
     ) {
-        let output = ssa_idx.map(|ssa_idx| infer_cx.fn_body_sig[RETURN_PLACE][ssa_idx].clone());
-        <Analysis as Boundary>::r#return(infer_cx, me, output)
+        let mut locals = locals.map(|(local, ssa_idx)| {
+            ssa_idx.map(|ssa_idx| infer_cx.fn_body_sig[local][ssa_idx].clone())
+        });
+
+        <Analysis as Boundary>::r#return(
+            &infer_cx.inter_ctxt,
+            &mut infer_cx.database,
+            body,
+            locals.by_ref().take(body.arg_count + 1),
+        );
+
+        // finalize temporaries
+        for vars in locals {
+            let Some(vars) = vars else { continue; };
+            for var in vars {
+                infer_cx
+                    .database
+                    .push_assume::<crate::ssa::constraint::Debug>((), var, false)
+            }
+        }
     }
 
     fn cast_to_c_void(

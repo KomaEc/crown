@@ -1,9 +1,11 @@
 use common::data_structure::vec_array::{VecArray, VecArrayConstruction};
+use rustc_hash::FxHashSet;
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
         BasicBlock, BasicBlockData, Body, CastKind, Local, LocalInfo, Location, Place, Rvalue,
+        TerminatorKind,
     },
     ty::TyCtxt,
 };
@@ -28,6 +30,7 @@ pub struct Definitions {
     pub maybe_consume_sites: IndexVec<Local, BitSet<BasicBlock>>,
     /// Caching the results of calling [local_has_non_zero_measure]
     pub maybe_owning: BitSet<Local>,
+    pub call_arg_temps: FxHashSet<Local>,
 }
 
 /// [Voidable] types are only allowed to appear in the generic parameter of [`Consume`].
@@ -143,6 +146,8 @@ pub struct ConsumeChain {
     ///
     /// Those locals with empty entries definitely do not contain pointers
     pub locs: IndexVec<Local, IndexVec<SSAIdx, RichLocation>>,
+
+    pub call_arg_temps: FxHashSet<Local>,
 }
 
 impl ConsumeChain {
@@ -150,6 +155,7 @@ impl ConsumeChain {
         let Definitions {
             consumes,
             maybe_owning,
+            call_arg_temps,
             ..
         } = definitions;
 
@@ -166,7 +172,11 @@ impl ConsumeChain {
             })
             .collect();
 
-        ConsumeChain { consumes, locs }
+        ConsumeChain {
+            consumes,
+            locs,
+            call_arg_temps,
+        }
     }
 
     pub fn reset(&mut self) {
@@ -207,9 +217,21 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
         &body.local_decls,
     );
 
+    let mut call_arg_temps: FxHashSet<Local> = FxHashSet::default();
+    for bb_data in body.basic_blocks.iter() {
+        let Some(terminator) = &bb_data.terminator else { continue; };
+        if let TerminatorKind::Call { args, .. } = &terminator.kind {
+            call_arg_temps.extend(
+                args.iter()
+                    .filter_map(|arg| arg.place().and_then(|arg| arg.as_local())),
+            )
+        }
+    }
+
     let mut consumes = VecArray::with_indices_capacity(body.basic_blocks.len());
 
     struct Vis<'me, 'tcx> {
+        call_arg_temps: &'me FxHashSet<Local>,
         maybe_consume_sites: &'me mut IndexVec<Local, BitSet<BasicBlock>>,
         consumes: &'me mut VecArrayConstruction<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
         consumes_in_cur_stmt: SmallVec<[(Local, Consume<SSAIdx>); 2]>,
@@ -289,7 +311,12 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
                 context,
                 PlaceContext::NonMutatingUse(
                     NonMutatingUseContext::Copy | NonMutatingUseContext::Move
-                ) | PlaceContext::MutatingUse(MutatingUseContext::Call | MutatingUseContext::Store)
+                ) | PlaceContext::MutatingUse(
+                    MutatingUseContext::Call
+                        | MutatingUseContext::Store
+                        | MutatingUseContext::Borrow
+                        | MutatingUseContext::AddressOf
+                )
             ) {
                 return;
             }
@@ -299,9 +326,10 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
 
             if self.crate_ctxt.contains_ptr(ty)
                 && !matches!(local_info, Some(LocalInfo::DerefTemp))
-                // if a local type is union, we do not generate its usage, therefore, direct use/def or
+                // if a place contains a union, we do not generate its usage, therefore, direct use/def or
                 // dereferences of unions are treated as unsafe sources/sinks during infer
-                && !self.body.local_decls[place.local].ty.is_union()
+                && place_not_reachable_to_union(place, self.body)
+                && !self.call_arg_temps.contains(&place.local)
             {
                 // println!("defining {:?} at {:?}", place.local, location);
                 let consume = if place.is_indirect() {
@@ -316,24 +344,19 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
     }
 
     Vis {
+        call_arg_temps: &call_arg_temps,
         maybe_consume_sites: &mut maybe_consume_sites,
         consumes: &mut consumes,
         consumes_in_cur_stmt: SmallVec::default(),
         tcx,
         body,
-        crate_ctxt, // struct_topology,
-                    // basic_block: BasicBlock::from_u32(0),
+        crate_ctxt,
     }
     .visit_body(body);
 
     let mut maybe_owning = BitSet::new_empty(body.local_decls.len());
 
     for (local, local_decl) in body.local_decls.iter_enumerated() {
-        // let ty = local_decl.ty;
-        // let local_info = local_decl.local_info.as_deref();
-        // if crate_ctxt.ty_contains_ptr(ty) && !matches!(local_info, Some(LocalInfo::DerefTemp)) {
-        //     to_finalise.insert(local);
-        // }
         if local_has_non_zero_measure(local_decl, crate_ctxt) {
             maybe_owning.insert(local);
         }
@@ -345,5 +368,32 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
         consumes,
         maybe_consume_sites,
         maybe_owning,
+        call_arg_temps,
     }
+}
+
+fn place_not_reachable_to_union<'tcx>(place: &Place<'tcx>, body: &Body<'tcx>) -> bool {
+    let mut base_ty = body.local_decls[place.local].ty;
+    for projection_elem in place.projection {
+        match projection_elem {
+            rustc_middle::mir::ProjectionElem::Deref => {
+                base_ty = base_ty.builtin_deref(true).unwrap().ty;
+            }
+            rustc_middle::mir::ProjectionElem::Field(_, ty) => {
+                if let Some(adt_def) = base_ty.ty_adt_def() {
+                    if adt_def.is_union() {
+                        return false;
+                    }
+                };
+                base_ty = ty
+            }
+            rustc_middle::mir::ProjectionElem::Index(_) => {
+                base_ty = base_ty.builtin_index().unwrap();
+            }
+            rustc_middle::mir::ProjectionElem::ConstantIndex { .. } => unreachable!(),
+            rustc_middle::mir::ProjectionElem::Subslice { .. } => unreachable!(),
+            rustc_middle::mir::ProjectionElem::Downcast(_, _) => {}
+        }
+    }
+    true
 }

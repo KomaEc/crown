@@ -1,13 +1,13 @@
 use std::borrow::BorrowMut;
 
+use rustc_ast::Mutability;
 use rustc_data_structures::graph::WithSuccessors;
-use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
-        AggregateKind, BasicBlock, BasicBlockData, Body, CastKind, Local, Location,
+        AggregateKind, BasicBlock, BasicBlockData, Body, BorrowKind, CastKind, Local, Location,
         NonDivergingIntrinsic, Operand, Place, Rvalue, Statement, StatementKind, Terminator,
-        TerminatorKind, RETURN_PLACE,
+        TerminatorKind,
     },
     ty::Ty,
 };
@@ -24,13 +24,11 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     type LocalSig: Clone + std::fmt::Debug;
 
-    type CallArgs<T>: std::fmt::Debug
-    where
-        T: std::fmt::Debug;
+    type CallArgs: std::fmt::Debug;
 
-    fn collect_call_args(
-        call_args: impl Iterator<Item = Option<Consume<Self::LocalSig>>>,
-    ) -> Self::CallArgs<Option<Consume<Self::LocalSig>>>;
+    fn collect_call_args(infer_cx: &mut Self::Ctxt, args: &[Operand<'tcx>]) -> Self::CallArgs;
+
+    fn call_arg(infer_cx: &mut Self::Ctxt, temp: Local, arg: Consume<Self::LocalSig>, is_ref: bool);
 
     fn define_phi_node(infer_cx: &mut Self::Ctxt, local: Local, ty: Ty<'tcx>, def: SSAIdx);
 
@@ -65,6 +63,8 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
         Self::assume(infer_cx, consume.def, false);
     }
 
+    fn lend(infer_cx: &mut Self::Ctxt, consume: Consume<Self::LocalSig>);
+
     fn source(infer_cx: &mut Self::Ctxt, result: Consume<Self::LocalSig>) {
         Self::assume(infer_cx, result.r#use, false);
         Self::assume(infer_cx, result.def, true)
@@ -90,15 +90,22 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     fn assume(infer_cx: &mut Self::Ctxt, result: Self::LocalSig, value: bool);
 
-    fn finalize(infer_cx: &mut Self::Ctxt, local: Local, r#use: SSAIdx);
+    // fn finalize(infer_cx: &mut Self::Ctxt, local: Local, r#use: SSAIdx);
 
     fn call(
         infer_cx: &mut Self::Ctxt,
-        args: Self::CallArgs<Option<Consume<Self::LocalSig>>>,
+        destination: Option<Consume<Self::LocalSig>>,
+        args: Self::CallArgs,
         callee: &Operand,
     );
 
-    fn r#return(infer_cx: &mut Self::Ctxt, ssa_idx: Option<SSAIdx>, r#fn: DefId);
+    // fn r#return(infer_cx: &mut Self::Ctxt, ssa_idx: Option<SSAIdx>, r#fn: DefId);
+
+    fn r#return<'a>(
+        infer_cx: &mut Self::Ctxt,
+        locals: impl Iterator<Item = (Local, Option<SSAIdx>)> + 'a,
+        body: &'a Body<'tcx>,
+    );
 }
 #[derive(Debug)]
 pub enum Pure {}
@@ -107,11 +114,11 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
 
     type LocalSig = ();
 
-    type CallArgs<T> = () where T: std::fmt::Debug;
+    type CallArgs = ();
 
-    fn collect_call_args(call_args: impl Iterator<Item = Option<Consume<Self::LocalSig>>>) {
-        for _ in call_args {}
-    }
+    fn collect_call_args((): &mut Self::Ctxt, _: &[Operand<'tcx>]) -> Self::CallArgs {}
+
+    fn call_arg((): &mut Self::Ctxt, _: Local, _: Consume<Self::LocalSig>, _: bool) {}
 
     fn define_phi_node((): &mut Self::Ctxt, _: Local, _: Ty, _: SSAIdx) {}
 
@@ -153,11 +160,25 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
 
     fn assume((): &mut Self::Ctxt, (): Self::LocalSig, _: bool) {}
 
-    fn finalize((): &mut Self::Ctxt, _: Local, _: SSAIdx) {}
+    // fn finalize((): &mut Self::Ctxt, _: Local, _: SSAIdx) {}
 
-    fn call((): &mut Self::Ctxt, (): (), _: &Operand) {}
+    fn call(
+        (): &mut Self::Ctxt,
+        _: Option<Consume<Self::LocalSig>>,
+        _: Self::CallArgs,
+        _: &Operand,
+    ) {
+    }
 
-    fn r#return((): &mut Self::Ctxt, _: Option<SSAIdx>, _: DefId) {}
+    // fn r#return((): &mut Self::Ctxt, _: Option<SSAIdx>, _: DefId) {}
+
+    fn r#return<'a>(
+        (): &mut Self::Ctxt,
+        locals: impl Iterator<Item = (Local, Option<SSAIdx>)> + 'a,
+        _: &'a Body<'tcx>,
+    ) {
+        for _ in locals {}
+    }
 
     fn cast_to_c_void(
         (): &mut Self::Ctxt,
@@ -165,6 +186,8 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
     ) -> Consume<Self::LocalSig> {
         consume
     }
+
+    fn lend((): &mut Self::Ctxt, _: Consume<Self::LocalSig>) {}
 }
 
 pub struct Renamer<'rn, 'tcx> {
@@ -356,39 +379,51 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             } => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
 
-                let call_args = std::iter::once(Some(destination))
-                    .chain(args.iter().map(|arg| match arg {
-                        Operand::Move(arg) | Operand::Copy(arg) => Some(arg),
-                        Operand::Constant(..) => None,
-                    }))
-                    .map(|place| {
-                        place.and_then(|place| {
-                            consume_place_at::<Infer>(place, self.body, location, self, infer_cx)
-                        })
-                    });
+                // let call_args = std::iter::once(Some(destination))
+                //     .chain(args.iter().map(|arg| match arg {
+                //         Operand::Move(arg) | Operand::Copy(arg) => Some(arg),
+                //         Operand::Constant(..) => None,
+                //     }))
+                //     .map(|place| {
+                //         place.and_then(|place| {
+                //             consume_place_at::<Infer>(place, self.body, location, self, infer_cx)
+                //         })
+                //     });
 
-                let call_args = Infer::collect_call_args(call_args);
+                // let call_args = Infer::collect_call_args(call_args);
 
                 // println!("{:?}", self.body.source_info(location).span);
                 // println!("{:?}", fn_sig);
-                Infer::call(infer_cx, call_args, func);
+                let destination =
+                    consume_place_at::<Infer>(destination, self.body, location, self, infer_cx);
+                let args = Infer::collect_call_args(infer_cx, &args);
+                Infer::call(infer_cx, destination, args, func);
             }
             TerminatorKind::Return => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
 
                 Infer::r#return(
                     infer_cx,
-                    self.state.name_state.try_get_name(RETURN_PLACE),
-                    self.body.source.def_id(),
+                    self.body
+                        .local_decls
+                        .indices()
+                        .map(|local| (local, self.state.name_state.try_get_name(local))),
+                    self.body,
                 );
 
-                // finalize!
-                // note that return place should not be finalized!!
-                for local in self.state.consume_chain.to_finalize() {
-                    let r#use = self.state.name_state.get_name(local);
-                    tracing::debug!("finalizing {:?}~{:?}", local, r#use);
-                    Infer::finalize(infer_cx, local, r#use);
-                }
+                // Infer::r#return(
+                //     infer_cx,
+                //     self.state.name_state.try_get_name(RETURN_PLACE),
+                //     self.body.source.def_id(),
+                // );
+
+                // // finalize!
+                // // note that return place should not be finalized!!
+                // for local in self.state.consume_chain.to_finalize() {
+                //     let r#use = self.state.name_state.get_name(local);
+                //     tracing::debug!("finalizing {:?}~{:?}", local, r#use);
+                //     Infer::finalize(infer_cx, local, r#use);
+                // }
             }
             _ => {}
         }
@@ -451,7 +486,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     lhs_consume.is_none(),
                     "TODO: constant pointer {:?}",
                     constant
-                )
+                );
+                assert!(!self.state.consume_chain.call_arg_temps.contains(&lhs.local));
             }
 
             Rvalue::Use(operand @ Operand::Copy(rhs) | operand @ Operand::Move(rhs)) => {
@@ -462,7 +498,13 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
                 match (lhs_consume, rhs_consume) {
                     (None, None) => {}
-                    (None, Some(rhs_consume)) => Infer::unknown_sink(infer_cx, rhs_consume),
+                    (None, Some(rhs_consume)) => {
+                        if self.state.consume_chain.call_arg_temps.contains(&lhs.local) {
+                            Infer::call_arg(infer_cx, lhs.as_local().unwrap(), rhs_consume, false)
+                        } else {
+                            Infer::unknown_sink(infer_cx, rhs_consume)
+                        }
+                    }
                     (Some(lhs_consume), None) => Infer::unknown_source(infer_cx, lhs_consume),
                     (Some(lhs_consume), Some(rhs_consume)) => {
                         if operand.is_move() {
@@ -491,7 +533,13 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
                 match (lhs_consume, rhs_consume) {
                     (None, None) => {}
-                    (None, Some(rhs_consume)) => Infer::unknown_sink(infer_cx, rhs_consume),
+                    (None, Some(rhs_consume)) => {
+                        if self.state.consume_chain.call_arg_temps.contains(&lhs.local) {
+                            Infer::call_arg(infer_cx, lhs.as_local().unwrap(), rhs_consume, false)
+                        } else {
+                            Infer::unknown_sink(infer_cx, rhs_consume)
+                        }
+                    }
                     (Some(lhs_consume), None) => Infer::unknown_source(infer_cx, lhs_consume),
                     (Some(lhs_consume), Some(rhs_consume)) => {
                         if operand.is_move() {
@@ -513,13 +561,41 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 tracing::debug!("deref_copy is ignored")
             }
 
-            Rvalue::Ref(_, _, _) | Rvalue::AddressOf(_, _) => {
+            Rvalue::Ref(_, BorrowKind::Mut { .. }, rhs)
+            | Rvalue::AddressOf(Mutability::Mut, rhs) => {
+                let lhs_consume =
+                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
+                let rhs_consume =
+                    consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
+
+                if let Some(lhs_consume) = lhs_consume {
+                    Infer::borrow(infer_cx, lhs_consume);
+                    if let Some(rhs_consume) = rhs_consume {
+                        Infer::lend(infer_cx, rhs_consume);
+                    }
+                } else {
+                    assert!(self.state.consume_chain.call_arg_temps.contains(&lhs.local));
+                    if let Some(rhs_consume) = rhs_consume {
+                        Infer::call_arg(infer_cx, lhs.as_local().unwrap(), rhs_consume, true)
+                    }
+                }
+            }
+
+            Rvalue::Ref(_, _, rhs) | Rvalue::AddressOf(_, rhs) => {
+                // rhs is never a def, but it might be the case that deref_copy accumulateshu
+                let rhs_consume =
+                    consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
+
+                if let Some(rhs_consume) = rhs_consume {
+                    Infer::lend(infer_cx, rhs_consume);
+                }
+
                 if let Some(lhs_consume) =
                     consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx)
                 {
-                    /* TODO */
-                    // correctness???
                     Infer::borrow(infer_cx, lhs_consume)
+                } else {
+                    assert!(self.state.consume_chain.call_arg_temps.contains(&lhs.local));
                 }
             }
 

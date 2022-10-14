@@ -3,7 +3,7 @@ pub mod infer;
 use std::ops::Range;
 
 use anyhow::bail;
-use either::Either;
+use either::Either::{self, Left, Right};
 use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_hir::def_id::DefId;
 use rustc_middle::{
@@ -16,33 +16,16 @@ use crate::{
     call_graph::FnSig,
     ssa::{
         constraint::{
-            infer::{Pure, Renamer},
-            initialize_local, CadicalDatabase, Database, Gen, Var, Z3Database,
+            infer::Renamer, initialize_local, CadicalDatabase, Database, Gen, Var, Z3Database,
         },
         consume::{initial_definitions, Consume, Voidable},
         dom::compute_dominance_frontier,
         state::SSAState,
         AnalysisResults, FnResult,
     },
+    type_qualifier::noalias::NoAliasParams,
     CrateCtxt,
 };
-
-pub fn crash_me(crate_ctxt: &mut CrateCtxt) -> anyhow::Result<()> {
-    for &did in crate_ctxt.fns() {
-        println!("renaming {:?}", did);
-        let body = crate_ctxt.tcx.optimized_mir(did);
-        let dominance_frontier = compute_dominance_frontier(body);
-        let definitions = initial_definitions(body, &*crate_ctxt);
-        let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
-        let mut rn = Renamer::new(body, ssa_state);
-        rn.go::<Pure>(());
-        println!("completed");
-    }
-    StandAlone::analyze(crate_ctxt)?;
-    let results = WholeProgram::analyze(crate_ctxt)?;
-    results.trace(crate_ctxt.tcx);
-    Ok(())
-}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Ownership {
@@ -133,14 +116,17 @@ pub trait AnalysisKind<'analysis, 'db> {
     /// Interprocedural context
     type InterCtxt;
     type DB: Database;
-    fn analyze(crate_ctxt: &mut CrateCtxt) -> anyhow::Result<Self::Results>;
+    fn analyze(
+        crate_ctxt: &mut CrateCtxt,
+        noalias_params: &NoAliasParams,
+    ) -> anyhow::Result<Self::Results>;
 }
 pub enum Modular {}
 impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for Modular {
     type Results = ();
     type InterCtxt = ();
     type DB = ();
-    fn analyze(_: &mut CrateCtxt) -> anyhow::Result<Self::Results> {
+    fn analyze(_: &mut CrateCtxt, _: &NoAliasParams) -> anyhow::Result<Self::Results> {
         // TODO implement this
         anyhow::bail!("modular analysis is not implemented")
     }
@@ -150,21 +136,46 @@ pub enum WholeProgram {}
 impl WholeProgram {
     fn pre_generate_fn_sigs(
         crate_ctxt: &CrateCtxt,
+        noalias_params: &NoAliasParams,
         gen: &mut Gen,
         database: &mut Z3Database,
-    ) -> FxHashMap<DefId, FnSig<Option<Range<Var>>>> {
+    ) -> WholeProgramInterCtxt {
+        //FxHashMap<DefId, FnSig<Option<Range<Var>>>> {
         let mut fn_sigs = FxHashMap::default();
         fn_sigs.reserve(crate_ctxt.fns().len());
         for &did in crate_ctxt.call_graph.fns() {
+            let noalias_params = &noalias_params[&did];
             let body = crate_ctxt.tcx.optimized_mir(did);
             let fn_sig = {
-                let mut local_decls = body.local_decls.iter();
-                let return_local_decl = local_decls.next().unwrap();
-                let ret = initialize_local(return_local_decl, gen, database, crate_ctxt);
+                let mut local_decls = body.local_decls.iter_enumerated();
+                let (_, return_local_decl) = local_decls.next().unwrap();
+                let ret = initialize_local(return_local_decl, gen, database, crate_ctxt)
+                    .map(|sigs| Param::Normal(sigs));
 
                 let args = local_decls
                     .take(body.arg_count)
-                    .map(|local_decl| initialize_local(local_decl, gen, database, crate_ctxt))
+                    .map(|(local, local_decl)| {
+                        if noalias_params.contains(&local) {
+                            let r#use = initialize_local(local_decl, gen, database, crate_ctxt);
+                            let def = initialize_local(local_decl, gen, database, crate_ctxt);
+                            r#use.zip(def).map(|(r#use, def)| {
+                                database.push_assume::<crate::ssa::constraint::Debug>(
+                                    (),
+                                    r#use.start,
+                                    true,
+                                );
+                                database.push_assume::<crate::ssa::constraint::Debug>(
+                                    (),
+                                    def.start,
+                                    true,
+                                );
+                                Param::Output(Consume { r#use, def })
+                            })
+                        } else {
+                            initialize_local(local_decl, gen, database, crate_ctxt)
+                                .map(|sigs| Param::Normal(sigs))
+                        }
+                    })
                     .collect();
 
                 FnSig { ret, args }
@@ -216,7 +227,7 @@ impl WholeProgram {
 
     fn solve_crate(
         crate_ctxt: &mut CrateCtxt,
-        previous_results: Option<WholeProgramResults>,
+        previous_results: Either<&NoAliasParams, WholeProgramResults>, //Option<WholeProgramResults>,
     ) -> anyhow::Result<WholeProgramResults> {
         let mut gen = Gen::new();
 
@@ -227,40 +238,47 @@ impl WholeProgram {
         let mut fn_summaries = FxHashMap::default();
         fn_summaries.reserve(crate_ctxt.fns().len());
 
-        let fn_sigs = if let Some(previous_results) = previous_results {
-            crate_ctxt.struct_topology.next_stage(crate_ctxt.tcx);
-            let (inter_ctxt, fns) =
-                previous_results.next_stage(crate_ctxt, &mut gen, &mut database);
-            for (did, ssa_state) in fns {
-                let body = crate_ctxt.tcx.optimized_mir(did);
-                let fn_summary = WholeProgram::solve_body(
-                    body,
-                    ssa_state,
+        let fn_sigs = match previous_results {
+            Left(noalias_params) => {
+                let inter_ctxt = WholeProgram::pre_generate_fn_sigs(
                     crate_ctxt,
-                    &inter_ctxt,
+                    noalias_params,
                     &mut gen,
                     &mut database,
-                )?;
-                fn_summaries.insert(did, fn_summary);
+                );
+                for &did in crate_ctxt.call_graph.fns() {
+                    let body = crate_ctxt.tcx.optimized_mir(did);
+                    let ssa_state = WholeProgram::initial_state(crate_ctxt, body);
+                    let fn_summary = WholeProgram::solve_body(
+                        body,
+                        ssa_state,
+                        crate_ctxt,
+                        &inter_ctxt,
+                        &mut gen,
+                        &mut database,
+                    )?;
+                    fn_summaries.insert(did, fn_summary);
+                }
+                inter_ctxt
             }
-            inter_ctxt
-        } else {
-            let inter_ctxt =
-                WholeProgram::pre_generate_fn_sigs(crate_ctxt, &mut gen, &mut database);
-            for &did in crate_ctxt.call_graph.fns() {
-                let body = crate_ctxt.tcx.optimized_mir(did);
-                let ssa_state = WholeProgram::initial_state(crate_ctxt, body);
-                let fn_summary = WholeProgram::solve_body(
-                    body,
-                    ssa_state,
-                    crate_ctxt,
-                    &inter_ctxt,
-                    &mut gen,
-                    &mut database,
-                )?;
-                fn_summaries.insert(did, fn_summary);
+            Right(previous_results) => {
+                crate_ctxt.struct_topology.next_stage(crate_ctxt.tcx);
+                let (inter_ctxt, fns) =
+                    previous_results.next_stage(crate_ctxt, &mut gen, &mut database);
+                for (did, ssa_state) in fns {
+                    let body = crate_ctxt.tcx.optimized_mir(did);
+                    let fn_summary = WholeProgram::solve_body(
+                        body,
+                        ssa_state,
+                        crate_ctxt,
+                        &inter_ctxt,
+                        &mut gen,
+                        &mut database,
+                    )?;
+                    fn_summaries.insert(did, fn_summary);
+                }
+                inter_ctxt
             }
-            inter_ctxt
         };
 
         let model = WholeProgram::retrieve_model(database, gen);
@@ -387,7 +405,8 @@ impl WholeProgram {
 
 pub struct WholeProgramResults {
     model: Vec<Ownership>,
-    fn_sigs: FxHashMap<DefId, FnSig<Option<Range<Var>>>>,
+    // fn_sigs: FxHashMap<DefId, FnSig<Option<Range<Var>>>>,
+    fn_sigs: WholeProgramInterCtxt,
     fn_summaries: FxHashMap<DefId, FnSummary>,
 }
 
@@ -398,7 +417,7 @@ impl WholeProgramResults {
         gen: &mut Gen,
         database: &mut Z3Database,
     ) -> (
-        FxHashMap<DefId, FnSig<Option<Range<Var>>>>,
+        WholeProgramInterCtxt,
         impl Iterator<Item = (DefId, SSAState)> + 'tcx,
     ) {
         let mut inter_ctxt = FxHashMap::default();
@@ -406,39 +425,55 @@ impl WholeProgramResults {
 
         for (did, original) in self.fn_sigs.into_iter() {
             let body = crate_ctxt.tcx.optimized_mir(did);
-            let fn_sig = {
-                let mut local_decls = body.local_decls.iter();
-                let return_local_decl = local_decls.next().unwrap();
-                let ret = initialize_local(return_local_decl, gen, database, crate_ctxt);
 
-                let args = local_decls
-                    .take(body.arg_count)
-                    .map(|local_decl| initialize_local(local_decl, gen, database, crate_ctxt))
-                    .collect();
+            let fn_sig = original
+                .iter()
+                .zip(&body.local_decls)
+                .map(|(original, local_decl)| {
+                    let Some(original) = original else { return None; };
+                    match original {
+                        Param::Output(output_params) => {
+                            let r#use =
+                                initialize_local(local_decl, gen, database, crate_ctxt).unwrap();
+                            let def =
+                                initialize_local(local_decl, gen, database, crate_ctxt).unwrap();
 
-                FnSig { ret, args }
-            };
-
-            for (pre, now) in original.iter().zip(fn_sig.iter()) {
-                if let Some(pre) = pre.clone() {
-                    let now = now.clone().unwrap();
-                    assert!(
-                        pre.end.index() - pre.start.index() <= now.end.index() - now.start.index()
-                    );
-                    for (pre, now) in pre.zip(now) {
-                        match self.model[pre.index()] {
-                            Ownership::Owning => {
-                                database.push_assume::<crate::ssa::constraint::Debug>(
-                                    (),
-                                    now,
-                                    true,
-                                );
+                            for (pre, now) in output_params
+                                .r#use
+                                .clone()
+                                .zip(r#use.clone())
+                                .chain(output_params.def.clone().zip(def.clone()))
+                            {
+                                if let Ownership::Owning = self.model[pre.index()] {
+                                    database.push_assume::<crate::ssa::constraint::Debug>(
+                                        (),
+                                        now,
+                                        true,
+                                    );
+                                }
                             }
-                            Ownership::Transient | Ownership::Unknown => {}
+
+                            Some(Param::Output(Consume { r#use, def }))
+                        }
+                        Param::Normal(params) => {
+                            let now =
+                                initialize_local(local_decl, gen, database, crate_ctxt).unwrap();
+
+                            for (pre, now) in params.clone().zip(now.clone()) {
+                                if let Ownership::Owning = self.model[pre.index()] {
+                                    database.push_assume::<crate::ssa::constraint::Debug>(
+                                        (),
+                                        now,
+                                        true,
+                                    );
+                                }
+                            }
+
+                            Some(Param::Normal(now))
                         }
                     }
-                }
-            }
+                })
+                .collect();
 
             println!("generating signatures for {:?}: {:?}", did, fn_sig);
 
@@ -499,10 +534,12 @@ impl<'a> AnalysisResults<'a> for WholeProgramResults {
         let ret = fn_sigs
             .ret
             .as_ref()
+            .map(|sigs| sigs.clone().to_input())
             .map(|sigs| &self.model[sigs.start.index()..sigs.end.index()]);
 
         let args = fn_sigs.args.iter().map(|arg| {
             arg.as_ref()
+                .map(|sigs| sigs.clone().to_input())
                 .map(|sigs| &self.model[sigs.start.index()..sigs.end.index()])
         });
 
@@ -521,7 +558,7 @@ const _: () = assert!(std::mem::size_of::<Option<Param>>() == 16);
 
 impl Param {
     #[inline]
-    pub fn normal(&self) -> &Range<Var> {
+    pub fn normal(self) -> Range<Var> {
         match self {
             Param::Normal(sigs) => sigs,
             Param::Output(..) => panic!("expect normal parameter"),
@@ -529,7 +566,7 @@ impl Param {
     }
 
     #[inline]
-    pub fn output(&self) -> &Consume<Range<Var>> {
+    pub fn output(self) -> Consume<Range<Var>> {
         match self {
             Param::Output(consume) => consume,
             Param::Normal(..) => panic!("expect output parameter"),
@@ -537,10 +574,19 @@ impl Param {
     }
 
     #[inline]
-    pub fn to_normal(self) -> Range<Var> {
+    pub fn to_input(self) -> Range<Var> {
         match self {
             Param::Output(Consume { r#use, .. }) => r#use,
             Param::Normal(normal) => normal,
+        }
+    }
+
+    #[inline]
+    pub fn to_output(self) -> Option<Range<Var>> {
+        if let Param::Output(Consume { def, .. }) = self {
+            Some(def)
+        } else {
+            None
         }
     }
 }
@@ -550,17 +596,20 @@ pub type WholeProgramInterCtxt = FxHashMap<DefId, FnSig<Option<Param>>>;
 impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
     type Results = WholeProgramResults;
 
-    type InterCtxt = &'analysis FxHashMap<DefId, FnSig<Option<Range<Var>>>>;
+    type InterCtxt = &'analysis WholeProgramInterCtxt;
 
     type DB = Z3Database<'db>;
 
-    fn analyze(crate_ctxt: &mut CrateCtxt) -> anyhow::Result<Self::Results> {
+    fn analyze(
+        crate_ctxt: &mut CrateCtxt,
+        noalias_params: &NoAliasParams,
+    ) -> anyhow::Result<Self::Results> {
         // first stage
-        let mut results = WholeProgram::solve_crate(crate_ctxt, None)?;
+        let mut results = WholeProgram::solve_crate(crate_ctxt, Left(noalias_params))?;
 
         // second stage
         for _ in 0..2 {
-            results = WholeProgram::solve_crate(crate_ctxt, Some(results))?;
+            results = WholeProgram::solve_crate(crate_ctxt, Right(results))?;
         }
 
         Ok(results)
@@ -571,8 +620,8 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for StandAlone {
     type Results = ();
     type InterCtxt = ();
     type DB = CadicalDatabase;
-    fn analyze(crate_ctxt: &mut CrateCtxt) -> anyhow::Result<Self::Results> {
-        let mut databases = Vec::with_capacity(crate_ctxt.fns().len());
+    fn analyze(crate_ctxt: &mut CrateCtxt, _: &NoAliasParams) -> anyhow::Result<Self::Results> {
+        // let mut databases = Vec::with_capacity(crate_ctxt.fns().len());
         for &did in crate_ctxt.fns() {
             println!("solving {:?}", did);
             let body = crate_ctxt.tcx.optimized_mir(did);
@@ -587,12 +636,12 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for StandAlone {
             let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, ());
 
             rn.go::<Self>(&mut infer_cx);
-            match database.solver.solve() {
-                Some(true) => println!("succeeded"),
-                Some(false) => println!("failed"),
-                None => anyhow::bail!("timeout"),
-            }
-            databases.push(database);
+            //     match database.solver.solve() {
+            //         Some(true) => println!("succeeded"),
+            //         Some(false) => println!("failed"),
+            //         None => anyhow::bail!("timeout"),
+            //     }
+            //     databases.push(database);
         }
         Ok(())
     }
