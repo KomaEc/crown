@@ -1,5 +1,5 @@
 use common::data_structure::vec_array::{VecArray, VecArrayConstruction};
-use rustc_hash::FxHashSet;
+use rustc_data_structures::sso::SsoHashSet;
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
     mir::{
@@ -30,7 +30,7 @@ pub struct Definitions {
     pub maybe_consume_sites: IndexVec<Local, BitSet<BasicBlock>>,
     /// Caching the results of calling [local_has_non_zero_measure]
     pub maybe_owning: BitSet<Local>,
-    pub call_arg_temps: FxHashSet<Local>,
+    pub call_arg_temps: SsoHashSet<Local>,
 }
 
 /// [Voidable] types are only allowed to appear in the generic parameter of [`Consume`].
@@ -147,7 +147,7 @@ pub struct ConsumeChain {
     /// Those locals with empty entries definitely do not contain pointers
     pub locs: IndexVec<Local, IndexVec<SSAIdx, RichLocation>>,
 
-    pub call_arg_temps: FxHashSet<Local>,
+    pub call_arg_temps: SsoHashSet<Local>,
 }
 
 impl ConsumeChain {
@@ -187,14 +187,6 @@ impl ConsumeChain {
         }
     }
 
-    /// Note that return place is never finalised
-    pub fn to_finalize(&self) -> impl Iterator<Item = Local> + '_ {
-        self.locs
-            .iter_enumerated()
-            .skip(1)
-            .filter_map(|(local, locs)| (!locs.is_empty()).then_some(local))
-    }
-
     #[inline]
     pub fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume<SSAIdx>); 2]>] {
         &self.consumes[block.index()]
@@ -217,7 +209,7 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
         &body.local_decls,
     );
 
-    let mut call_arg_temps: FxHashSet<Local> = FxHashSet::default();
+    let mut call_arg_temps: SsoHashSet<Local> = SsoHashSet::default();
     for bb_data in body.basic_blocks.iter() {
         let Some(terminator) = &bb_data.terminator else { continue; };
         if let TerminatorKind::Call { args, .. } = &terminator.kind {
@@ -231,7 +223,7 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
     let mut consumes = VecArray::with_indices_capacity(body.basic_blocks.len());
 
     struct Vis<'me, 'tcx> {
-        call_arg_temps: &'me FxHashSet<Local>,
+        call_arg_temps: &'me SsoHashSet<Local>,
         maybe_consume_sites: &'me mut IndexVec<Local, BitSet<BasicBlock>>,
         consumes: &'me mut VecArrayConstruction<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
         consumes_in_cur_stmt: SmallVec<[(Local, Consume<SSAIdx>); 2]>,

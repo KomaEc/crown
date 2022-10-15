@@ -37,12 +37,6 @@ where
         params: impl Iterator<Item = Option<Range<Var>>>,
     );
 
-    // fn r#return(
-    //     infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
-    //     r#fn: DefId,
-    //     ret: Option<Range<Var>>,
-    // );
-
     fn r#return(
         inter_ctxt: &Self::InterCtxt,
         database: &mut Self::DB,
@@ -71,13 +65,6 @@ where
         _: impl Iterator<Item = Option<Range<Var>>>,
     ) {
     }
-
-    // default fn r#return(
-    //     _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
-    //     _: DefId,
-    //     _: Option<Range<Var>>,
-    // ) {
-    // }
 
     default fn r#return(
         _: &Self::InterCtxt,
@@ -212,26 +199,6 @@ where
             }
         }
     }
-
-    // fn r#return(
-    //     infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, WholeProgram>,
-    //     r#fn: DefId,
-    //     ret: Option<Range<Var>>,
-    // ) {
-    //     let fn_sig = &infer_cx.inter_ctxt[&r#fn];
-    //     let sigs = fn_sig.ret.clone();
-    //     match (ret, sigs) {
-    //         (Some(output), Some(sigs)) => {
-    //             for (output, ret) in output.zip(sigs.normal()) {
-    //                 infer_cx
-    //                     .database
-    //                     .push_equal::<crate::ssa::constraint::Debug>((), output, ret)
-    //             }
-    //         }
-    //         (None, None) => {}
-    //         _ => unreachable!(),
-    //     }
-    // }
 
     fn r#return(
         inter_ctxt: &Self::InterCtxt,

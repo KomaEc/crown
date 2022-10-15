@@ -37,7 +37,6 @@ where
                 match d.data {
                     rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "is_null" => {
                         self.call_is_null(args);
-                        // self.call_is_null(caller);
                         return;
                     }
                     _ => {}

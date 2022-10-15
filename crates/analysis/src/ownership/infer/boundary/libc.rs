@@ -24,8 +24,6 @@ where
         match callee.as_str() {
             "malloc" => self.call_malloc(destination),
             "free" => self.call_free(args),
-            // "malloc" => self.call_malloc(caller),
-            // "free" => self.call_free(caller),
             _ => {}
         }
     }

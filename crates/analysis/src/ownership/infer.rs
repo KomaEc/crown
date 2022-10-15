@@ -36,7 +36,6 @@ pub type FnBodySig<LocalSig> = IndexVec<Local, IndexVec<SSAIdx, LocalSig>>;
 pub struct FnSummary {
     pub fn_body_sig: FnBodySig<LocalSig>,
     pub ssa_state: SSAState,
-    // pub output_params: OutputParams,
 }
 
 impl FnSummary {
@@ -439,19 +438,6 @@ where
         }
     }
 
-    // #[inline]
-    // fn finalize(
-    //     infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
-    //     local: Local,
-    //     r#use: SSAIdx,
-    // ) {
-    //     for sig in infer_cx.fn_body_sig[local][r#use].clone() {
-    //         infer_cx
-    //             .database
-    //             .push_assume::<crate::ssa::constraint::Debug>((), sig, false)
-    //     }
-    // }
-
     fn call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         destination: Option<Consume<Self::LocalSig>>,
@@ -490,15 +476,6 @@ where
             /* TODO */
         }
     }
-
-    // fn r#return(
-    //     infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
-    //     ssa_idx: Option<SSAIdx>,
-    //     me: DefId,
-    // ) {
-    //     let output = ssa_idx.map(|ssa_idx| infer_cx.fn_body_sig[RETURN_PLACE][ssa_idx].clone());
-    //     <Analysis as Boundary>::r#return(infer_cx, me, output)
-    // }
 
     fn r#return<'a>(
         infer_cx: &mut Self::Ctxt,

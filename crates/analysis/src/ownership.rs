@@ -545,6 +545,41 @@ impl<'a> AnalysisResults<'a> for WholeProgramResults {
 
         std::iter::once(ret).chain(args)
     }
+
+    fn print_fn_sigs(&'a self, tcx: TyCtxt, fns: &[DefId]) {
+        fn display_value<Value: std::fmt::Display>(value: &[Value]) -> String {
+            value
+                .iter()
+                .map(|value| format!("{value}"))
+                .collect::<Vec<_>>()
+                .join(" ")
+        }
+        
+        for &did in fns {
+            let mut fn_sig = self.fn_sig(did);
+            let ret = fn_sig.next().unwrap();
+            let ret = if let Some(sig) = ret {
+                // format!("{:?}", sig)
+                display_value(sig)
+            } else {
+                "_".to_owned()
+            };
+            let args = fn_sig
+                .map(|sig| {
+                    if let Some(sig) = sig {
+                        // format!("{:?}", sig)
+                        display_value(sig)
+                    } else {
+                        "_".to_owned()
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join(", ");
+
+            let fn_path = tcx.def_path_str(did);
+            println!("{fn_path}: ({args}) -> {ret}")
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

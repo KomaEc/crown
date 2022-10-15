@@ -90,16 +90,12 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     fn assume(infer_cx: &mut Self::Ctxt, result: Self::LocalSig, value: bool);
 
-    // fn finalize(infer_cx: &mut Self::Ctxt, local: Local, r#use: SSAIdx);
-
     fn call(
         infer_cx: &mut Self::Ctxt,
         destination: Option<Consume<Self::LocalSig>>,
         args: Self::CallArgs,
         callee: &Operand,
     );
-
-    // fn r#return(infer_cx: &mut Self::Ctxt, ssa_idx: Option<SSAIdx>, r#fn: DefId);
 
     fn r#return<'a>(
         infer_cx: &mut Self::Ctxt,
@@ -160,8 +156,6 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
 
     fn assume((): &mut Self::Ctxt, (): Self::LocalSig, _: bool) {}
 
-    // fn finalize((): &mut Self::Ctxt, _: Local, _: SSAIdx) {}
-
     fn call(
         (): &mut Self::Ctxt,
         _: Option<Consume<Self::LocalSig>>,
@@ -169,8 +163,6 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
         _: &Operand,
     ) {
     }
-
-    // fn r#return((): &mut Self::Ctxt, _: Option<SSAIdx>, _: DefId) {}
 
     fn r#return<'a>(
         (): &mut Self::Ctxt,
@@ -379,21 +371,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             } => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
 
-                // let call_args = std::iter::once(Some(destination))
-                //     .chain(args.iter().map(|arg| match arg {
-                //         Operand::Move(arg) | Operand::Copy(arg) => Some(arg),
-                //         Operand::Constant(..) => None,
-                //     }))
-                //     .map(|place| {
-                //         place.and_then(|place| {
-                //             consume_place_at::<Infer>(place, self.body, location, self, infer_cx)
-                //         })
-                //     });
-
-                // let call_args = Infer::collect_call_args(call_args);
-
-                // println!("{:?}", self.body.source_info(location).span);
-                // println!("{:?}", fn_sig);
                 let destination =
                     consume_place_at::<Infer>(destination, self.body, location, self, infer_cx);
                 let args = Infer::collect_call_args(infer_cx, &args);
@@ -410,20 +387,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                         .map(|local| (local, self.state.name_state.try_get_name(local))),
                     self.body,
                 );
-
-                // Infer::r#return(
-                //     infer_cx,
-                //     self.state.name_state.try_get_name(RETURN_PLACE),
-                //     self.body.source.def_id(),
-                // );
-
-                // // finalize!
-                // // note that return place should not be finalized!!
-                // for local in self.state.consume_chain.to_finalize() {
-                //     let r#use = self.state.name_state.get_name(local);
-                //     tracing::debug!("finalizing {:?}~{:?}", local, r#use);
-                //     Infer::finalize(infer_cx, local, r#use);
-                // }
             }
             _ => {}
         }
