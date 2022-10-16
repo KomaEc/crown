@@ -23,7 +23,6 @@ extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_target;
 
-
 // pub struct PointerQualifier {
 //     mutability: mutability::Mutability,
 //     fatness: fatness::Fatness,

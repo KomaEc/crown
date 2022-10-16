@@ -64,7 +64,7 @@ impl<'a> FnResult<'a> for FnSummary {
     }
 
     #[inline]
-    fn location_result(&'a self, location: Location) -> Self::LocationResults {
+    fn location_results(&'a self, location: Location) -> Self::LocationResults {
         let consume_chain = &self.ssa_state.consume_chain;
         let consumes = consume_chain.of_location(location);
         consumes.iter().map(|(local, consume)| {

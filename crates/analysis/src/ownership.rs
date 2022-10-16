@@ -103,8 +103,8 @@ impl<'a> FnResult<'a> for (&'a FnSummary, &'a [Ownership]) {
     }
 
     #[inline]
-    fn location_result(&'a self, location: Location) -> Self::LocationResults {
-        self.0.location_result(location).map(|(local, result)| {
+    fn location_results(&'a self, location: Location) -> Self::LocationResults {
+        self.0.location_results(location).map(|(local, result)| {
             (
                 local,
                 result.map_valid(|sigs| &self.1[sigs.start.index()..sigs.end.index()]),
@@ -347,8 +347,8 @@ impl WholeProgram {
                     let StatementKind::Assign(box (_, _)) = &statement.kind else { unreachable!() };
 
                     let location_result = fn_result
-                        .location_result(base_location)
-                        .chain(fn_result.location_result(location));
+                        .location_results(base_location)
+                        .chain(fn_result.location_results(location));
                     for (_, result) in location_result {
                         if result.state_changed() {
                             state_changed_locations.insert(location);
@@ -360,7 +360,7 @@ impl WholeProgram {
                     continue;
                 }
 
-                let location_result = fn_result.location_result(location);
+                let location_result = fn_result.location_results(location);
                 for (_, result) in location_result {
                     if result.state_changed() {
                         state_changed_locations.insert(location);
@@ -508,7 +508,7 @@ impl WholeProgramResults {
                     let result = self
                         .fn_result(*did)
                         .unwrap()
-                        .location_result(location)
+                        .location_results(location)
                         .map(|(local, result)| format!("{:?}: {:?}", local, result))
                         .collect::<Vec<_>>()
                         .join(", ");

@@ -19,7 +19,7 @@ pub trait FnResult<'a> {
 
     fn local_result(&self, local: Local, location: Location) -> Option<Consume<Self::LocalResult>>;
 
-    fn location_result(&'a self, location: Location) -> Self::LocationResults;
+    fn location_results(&'a self, location: Location) -> Self::LocationResults;
 }
 
 pub trait AnalysisResults<'a> {
