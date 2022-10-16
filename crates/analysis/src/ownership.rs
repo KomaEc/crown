@@ -63,10 +63,13 @@ impl Voidable for &[Ownership] {
     }
 }
 
-pub trait OwnershipSchemes<'analysis>: AnalysisResults<'analysis, Value = Ownership> {}
+pub trait OwnershipSchemes<'analysis>:
+    AnalysisResults<'analysis, Value = Ownership, Param = Param<&'analysis [Ownership]>>
+{
+}
 
 impl<'analysis, Results> OwnershipSchemes<'analysis> for Results where
-    Results: AnalysisResults<'analysis, Value = Ownership>
+    Results: AnalysisResults<'analysis, Value = Ownership, Param = Param<&'analysis [Ownership]>>
 {
 }
 
@@ -520,7 +523,9 @@ impl WholeProgramResults {
 impl<'a> AnalysisResults<'a> for WholeProgramResults {
     type Value = Ownership;
 
-    type FnSig = impl Iterator<Item = Option<&'a [Ownership]>>;
+    type Param = Param<&'a [Ownership]>;
+
+    type FnSig = impl Iterator<Item = Option<Self::Param>>;
 
     type FnResult = (&'a FnSummary, &'a [Ownership]);
 
@@ -533,14 +538,12 @@ impl<'a> AnalysisResults<'a> for WholeProgramResults {
         let fn_sigs = &self.fn_sigs[&r#fn];
         let ret = fn_sigs
             .ret
-            .as_ref()
-            .map(|sigs| sigs.clone().to_input())
-            .map(|sigs| &self.model[sigs.start.index()..sigs.end.index()]);
+            .clone()
+            .map(|sigs| sigs.map(|sigs| &self.model[sigs.start.index()..sigs.end.index()]));
 
         let args = fn_sigs.args.iter().map(|arg| {
-            arg.as_ref()
-                .map(|sigs| sigs.clone().to_input())
-                .map(|sigs| &self.model[sigs.start.index()..sigs.end.index()])
+            arg.clone()
+                .map(|sigs| sigs.map(|sigs| &self.model[sigs.start.index()..sigs.end.index()]))
         });
 
         std::iter::once(ret).chain(args)
@@ -554,21 +557,28 @@ impl<'a> AnalysisResults<'a> for WholeProgramResults {
                 .collect::<Vec<_>>()
                 .join(" ")
         }
-        
+
         for &did in fns {
             let mut fn_sig = self.fn_sig(did);
             let ret = fn_sig.next().unwrap();
             let ret = if let Some(sig) = ret {
                 // format!("{:?}", sig)
-                display_value(sig)
+                display_value(sig.expect_normal())
             } else {
                 "_".to_owned()
             };
             let args = fn_sig
                 .map(|sig| {
                     if let Some(sig) = sig {
-                        // format!("{:?}", sig)
-                        display_value(sig)
+                        match sig {
+                            Param::Output(output_param) => {
+                                "&uniq ".to_owned()
+                                    + &display_value(&output_param.r#use[1..])
+                                    + " ↓ &uniq "
+                                    + &display_value(&output_param.def[1..])
+                            }
+                            Param::Normal(param) => display_value(param),
+                        }
                     } else {
                         "_".to_owned()
                     }
@@ -583,17 +593,25 @@ impl<'a> AnalysisResults<'a> for WholeProgramResults {
 }
 
 #[derive(Clone, Debug)]
-pub enum Param {
-    Output(Consume<Range<Var>>),
-    Normal(Range<Var>),
+pub enum Param<Var> {
+    Output(Consume<Var>),
+    Normal(Var),
 }
 
 #[cfg(not(debug_assertions))]
-const _: () = assert!(std::mem::size_of::<Option<Param>>() == 16);
+const _: () = assert!(std::mem::size_of::<Option<Param<Range<Var>>>>() == 16);
 
-impl Param {
+impl<Value> Param<Value> {
     #[inline]
-    pub fn normal(self) -> Range<Var> {
+    pub fn map<U>(self, f: impl Fn(Value) -> U) -> Param<U> {
+        match self {
+            Param::Output(output_param) => Param::Output(output_param.repack(f)),
+            Param::Normal(param) => Param::Normal(f(param)),
+        }
+    }
+
+    #[inline]
+    pub fn expect_normal(self) -> Value {
         match self {
             Param::Normal(sigs) => sigs,
             Param::Output(..) => panic!("expect normal parameter"),
@@ -601,7 +619,7 @@ impl Param {
     }
 
     #[inline]
-    pub fn output(self) -> Consume<Range<Var>> {
+    pub fn expect_output(self) -> Consume<Value> {
         match self {
             Param::Output(consume) => consume,
             Param::Normal(..) => panic!("expect output parameter"),
@@ -609,7 +627,7 @@ impl Param {
     }
 
     #[inline]
-    pub fn to_input(self) -> Range<Var> {
+    pub fn to_input(self) -> Value {
         match self {
             Param::Output(Consume { r#use, .. }) => r#use,
             Param::Normal(normal) => normal,
@@ -617,7 +635,7 @@ impl Param {
     }
 
     #[inline]
-    pub fn to_output(self) -> Option<Range<Var>> {
+    pub fn to_output(self) -> Option<Value> {
         if let Param::Output(Consume { def, .. }) = self {
             Some(def)
         } else {
@@ -626,7 +644,7 @@ impl Param {
     }
 }
 
-pub type WholeProgramInterCtxt = FxHashMap<DefId, FnSig<Option<Param>>>;
+pub type WholeProgramInterCtxt = FxHashMap<DefId, FnSig<Option<Param<Range<Var>>>>>;
 
 impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
     type Results = WholeProgramResults;
@@ -643,7 +661,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
         let mut results = WholeProgram::solve_crate(crate_ctxt, Left(noalias_params))?;
 
         // second stage
-        for _ in 0..2 {
+        for _ in 0..0 {
             results = WholeProgram::solve_crate(crate_ctxt, Right(results))?;
         }
 

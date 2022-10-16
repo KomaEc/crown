@@ -103,7 +103,7 @@ where
                 def: dest_def,
             }) = destination
             {
-                let ret = ret.normal();
+                let ret = ret.expect_normal();
                 for (ret, dest_use, dest_def) in izip!(ret, dest_use, dest_def) {
                     infer_cx
                         .database
@@ -212,7 +212,7 @@ where
         let ret_param = fn_sig.ret.clone();
 
         for (arg, param) in ret_arg.zip(ret_param) {
-            let param = param.normal();
+            let param = param.expect_normal();
             for (arg, param) in arg.zip(param) {
                 database.push_equal::<crate::ssa::constraint::Debug>((), arg, param);
             }

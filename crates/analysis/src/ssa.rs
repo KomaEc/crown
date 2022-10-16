@@ -23,8 +23,9 @@ pub trait FnResult<'a> {
 }
 
 pub trait AnalysisResults<'a> {
-    type Value: std::fmt::Display + 'a;
-    type FnSig: Iterator<Item = Option<&'a [Self::Value]>>;
+    type Value: 'a;
+    type Param: 'a;
+    type FnSig: Iterator<Item = Option<Self::Param>>;
     type FnResult: FnResult<'a, LocalResult = &'a [Self::Value]>;
 
     fn fn_result(&'a self, r#fn: DefId) -> Option<Self::FnResult>;
