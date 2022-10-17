@@ -211,7 +211,7 @@ where
         let ret_arg = args.next().unwrap();
         let ret_param = fn_sig.ret.clone();
 
-        for (arg, param) in ret_arg.zip(ret_param) {
+        if let Some((arg, param)) = ret_arg.zip(ret_param) {
             let param = param.expect_normal();
             for (arg, param) in arg.zip(param) {
                 database.push_equal::<crate::ssa::constraint::Debug>((), arg, param);

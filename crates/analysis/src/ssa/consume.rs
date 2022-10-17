@@ -5,7 +5,7 @@ use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
         BasicBlock, BasicBlockData, Body, CastKind, Local, LocalInfo, Location, Place, Rvalue,
-        TerminatorKind,
+        TerminatorKind, ProjectionElem
     },
     ty::TyCtxt,
 };
@@ -368,10 +368,10 @@ fn place_not_reachable_to_union<'tcx>(place: &Place<'tcx>, body: &Body<'tcx>) ->
     let mut base_ty = body.local_decls[place.local].ty;
     for projection_elem in place.projection {
         match projection_elem {
-            rustc_middle::mir::ProjectionElem::Deref => {
+            ProjectionElem::Deref => {
                 base_ty = base_ty.builtin_deref(true).unwrap().ty;
             }
-            rustc_middle::mir::ProjectionElem::Field(_, ty) => {
+            ProjectionElem::Field(_, ty) => {
                 if let Some(adt_def) = base_ty.ty_adt_def() {
                     if adt_def.is_union() {
                         return false;
@@ -379,12 +379,13 @@ fn place_not_reachable_to_union<'tcx>(place: &Place<'tcx>, body: &Body<'tcx>) ->
                 };
                 base_ty = ty
             }
-            rustc_middle::mir::ProjectionElem::Index(_) => {
+            ProjectionElem::Index(_) => {
                 base_ty = base_ty.builtin_index().unwrap();
             }
-            rustc_middle::mir::ProjectionElem::ConstantIndex { .. } => unreachable!(),
-            rustc_middle::mir::ProjectionElem::Subslice { .. } => unreachable!(),
-            rustc_middle::mir::ProjectionElem::Downcast(_, _) => {}
+            ProjectionElem::ConstantIndex { .. } => unreachable!(),
+            ProjectionElem::Subslice { .. } => unreachable!(),
+            ProjectionElem::OpaqueCast(_) => unreachable!("unexpected opaque cast"),
+            ProjectionElem::Downcast(_, _) => {}
         }
     }
     true

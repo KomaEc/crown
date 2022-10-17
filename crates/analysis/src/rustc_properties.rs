@@ -231,7 +231,7 @@ impl<'tcx> CrateCtxt<'tcx> {
                 body.basic_blocks
                     .iter()
                     .filter(
-                        |bb_data| bb_data.terminator.is_some_and(|terminator| matches!(
+                        |bb_data| bb_data.terminator.as_ref().is_some_and(|terminator| matches!(
                             terminator.kind,
                             TerminatorKind::Return
                         ))

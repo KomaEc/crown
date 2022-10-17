@@ -32,7 +32,7 @@ pub(crate) fn link_functions(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     for foreign_item in foreign_items(tcx)
         .filter(|foreign_item| matches!(foreign_item.kind, ForeignItemKind::Fn(..)))
     {
-        extern_def_to_symbol.insert(foreign_item.def_id, foreign_item.ident.name);
+        extern_def_to_symbol.insert(foreign_item.def_id.def_id, foreign_item.ident.name);
     }
 
     // (3) Adjust references to extern fns to refer to the `#[no_mangle]` definition instead.
@@ -57,7 +57,7 @@ pub(crate) fn link_functions(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         // println!("try erasing {}", foreign_item.ident);
         let did = foreign_item.def_id;
         // Drop any items that resolve to a symbol in another module.
-        if let Some(symbol) = extern_def_to_symbol.get(&did) {
+        if let Some(symbol) = extern_def_to_symbol.get(&did.def_id) {
             if symbol_to_def.contains_key(&symbol) {
                 let span = foreign_item.span;
                 rewriter.erase(tcx, span);

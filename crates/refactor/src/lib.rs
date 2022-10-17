@@ -2,7 +2,6 @@
 #![feature(array_windows)]
 #![feature(box_patterns)]
 #![feature(split_array)]
-#![feature(let_else)]
 
 // use analysis::{ownership::{OwnershipSchemes, self}, type_qualifier::flow_insensitive::{mutability::{MutabilityResult, self}, fatness::{self, FatnessResult}}};
 

@@ -2,8 +2,6 @@
 #![feature(step_trait)]
 #![feature(trusted_step)]
 #![feature(min_specialization)]
-#![feature(let_else)]
-#![feature(generic_associated_types)]
 #![feature(associated_type_defaults)]
 #![feature(split_array)]
 #![feature(array_windows)]

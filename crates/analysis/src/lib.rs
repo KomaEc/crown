@@ -2,13 +2,11 @@
 #![feature(box_patterns)]
 #![feature(min_specialization)]
 #![feature(split_array)]
-#![feature(generic_associated_types)]
 #![feature(step_trait)]
 #![feature(trusted_step)]
 #![feature(array_windows)]
-#![feature(let_else)]
 #![feature(let_chains)]
-#![feature(is_some_with)]
+#![feature(is_some_and)]
 #![feature(type_alias_impl_trait)]
 
 extern crate either;

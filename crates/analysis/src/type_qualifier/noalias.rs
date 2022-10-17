@@ -66,7 +66,7 @@ fn conservative_noalias_params(
                 && fn_result
                     .local_result(arg)
                     .first()
-                    .is_some_and(|&&mutability| mutability == Mutability::Mut)
+                    .is_some_and(|&mutability| mutability == Mutability::Mut)
         })
         .collect::<FxHashSet<Local>>();
 
@@ -83,7 +83,7 @@ fn conservative_noalias_params(
                 && fn_result
                     .local_result(Local::new(local))
                     .first()
-                    .is_some_and(|&&mutability| mutability == Mutability::Mut)
+                    .is_some_and(|&mutability| mutability == Mutability::Mut)
             {
                 noalias_params.remove(&Local::new(arg));
             }

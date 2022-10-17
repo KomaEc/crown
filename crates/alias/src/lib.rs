@@ -14,7 +14,6 @@
 #![feature(step_trait)]
 #![feature(trusted_step)]
 #![feature(min_specialization)]
-#![feature(let_else)]
 
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;

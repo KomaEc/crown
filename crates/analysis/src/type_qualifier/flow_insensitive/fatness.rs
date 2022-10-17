@@ -268,6 +268,7 @@ fn place_vars<'tcx>(
             }
             ProjectionElem::ConstantIndex { .. } => unreachable!("unexpected constant index"),
             ProjectionElem::Subslice { .. } => unreachable!("unexpected subslicing"),
+            ProjectionElem::OpaqueCast(_) => unreachable!("unexpected opaque cast"),
             ProjectionElem::Downcast(..) => {
                 // happens when asserting nonnullness of fn ptrs
                 assert!(place_vars.is_empty());

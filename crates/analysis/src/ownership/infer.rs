@@ -203,6 +203,7 @@ where
                 ProjectionElem::Subslice { .. } => {
                     unreachable!("unexpected subslicing")
                 }
+                ProjectionElem::OpaqueCast(_) => unreachable!("unexpected opaque cast"),
                 ProjectionElem::Downcast(..) => unreachable!("unexpected downcasting"),
             }
         }

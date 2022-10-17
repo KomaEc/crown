@@ -661,7 +661,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgram {
         let mut results = WholeProgram::solve_crate(crate_ctxt, Left(noalias_params))?;
 
         // second stage
-        for _ in 0..0 {
+        for _ in 0..2 {
             results = WholeProgram::solve_crate(crate_ctxt, Right(results))?;
         }
 

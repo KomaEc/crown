@@ -1,5 +1,4 @@
 #![feature(rustc_private)]
-#![feature(let_else)]
 
 mod linkage;
 mod signal_nullness;
