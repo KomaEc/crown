@@ -3,7 +3,8 @@
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, PlaceContext, Visitor},
-        Local, LocalInfo, LocalKind, Location, Operand, Place, Rvalue, Terminator, TerminatorKind,
+        Local, LocalInfo, LocalKind, Location, Operand, Place, Rvalue, Terminator,
+        TerminatorKind,
     },
     ty::TyCtxt,
 };
@@ -18,9 +19,8 @@ impl<'tcx> CrateCtxt<'tcx> {
         self.verify_args_are_all_locals();
         self.verify_stmt_regularity();
         self.verify_return_clause_unique();
-        #[cfg(debug_assertions)]
-        self.compute_max_num_scc();
         self.verify_projection_elem_intern();
+        self.print_max_deref_level()
     }
 
     fn verify_shape_of_place(&self) {
@@ -230,27 +230,13 @@ impl<'tcx> CrateCtxt<'tcx> {
             assert!(
                 body.basic_blocks
                     .iter()
-                    .filter(
-                        |bb_data| bb_data.terminator.as_ref().is_some_and(|terminator| matches!(
-                            terminator.kind,
-                            TerminatorKind::Return
-                        ))
-                    )
+                    .filter(|bb_data| bb_data.terminator.as_ref().is_some_and(
+                        |terminator| matches!(terminator.kind, TerminatorKind::Return)
+                    ))
                     .count()
                     <= 1
             );
         }
-    }
-
-    #[cfg(debug_assertions)]
-    fn compute_max_num_scc(&self) {
-        let max_num = self
-            .call_graph
-            .sccs()
-            .map(|scc| scc.len())
-            .reduce(std::cmp::max)
-            .unwrap();
-        println!("max scc: {max_num}")
     }
 
     fn verify_projection_elem_intern(&self) {
@@ -266,6 +252,15 @@ impl<'tcx> CrateCtxt<'tcx> {
         for did in self.fns().iter().copied() {
             let body = self.tcx.optimized_mir(did);
             Vis(self.tcx).visit_body(body);
+        }
+    }
+
+    fn print_max_deref_level(&self) {
+        let tcx = self.tcx;
+        for &did in self.fns() {
+            let body = tcx.optimized_mir(did);
+            let max_deref_level = crate::ownership::max_deref_level(body);
+            println!("@{}: {max_deref_level}", tcx.def_path_str(did));
         }
     }
 }

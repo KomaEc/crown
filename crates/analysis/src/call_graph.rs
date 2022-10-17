@@ -86,11 +86,6 @@ impl CallGraph {
     pub fn fns(&self) -> &[DefId] {
         self.post_order.everything()
     }
-
-    #[inline]
-    pub fn sccs(&self) -> impl Iterator<Item = &[DefId]> {
-        self.post_order.iter()
-    }
 }
 
 struct CallGraphConstruction<'me> {
@@ -130,6 +125,12 @@ mod test {
     use common::test::init_logger;
 
     use super::*;
+
+    impl CallGraph {
+        fn sccs(&self) -> impl Iterator<Item = &[DefId]> {
+            self.post_order.iter()
+        }
+    }
 
     const TEST_PROGRAMS: &'static str = "
         fn f() {

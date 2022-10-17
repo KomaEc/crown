@@ -4,8 +4,8 @@ use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-        BasicBlock, BasicBlockData, Body, CastKind, Local, LocalInfo, Location, Place, Rvalue,
-        TerminatorKind, ProjectionElem
+        BasicBlock, BasicBlockData, Body, CastKind, Local, LocalInfo, Location, Place,
+        ProjectionElem, Rvalue, TerminatorKind,
     },
     ty::TyCtxt,
 };

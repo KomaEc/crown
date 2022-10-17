@@ -137,13 +137,12 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for Modular {
 pub enum WholeProgram {}
 
 impl WholeProgram {
-    fn pre_generate_fn_sigs(
+    fn initial_inter_ctxt(
         crate_ctxt: &CrateCtxt,
         noalias_params: &NoAliasParams,
         gen: &mut Gen,
         database: &mut Z3Database,
     ) -> WholeProgramInterCtxt {
-        //FxHashMap<DefId, FnSig<Option<Range<Var>>>> {
         let mut fn_sigs = FxHashMap::default();
         fn_sigs.reserve(crate_ctxt.fns().len());
         for &did in crate_ctxt.call_graph.fns() {
@@ -243,7 +242,7 @@ impl WholeProgram {
 
         let fn_sigs = match previous_results {
             Left(noalias_params) => {
-                let inter_ctxt = WholeProgram::pre_generate_fn_sigs(
+                let inter_ctxt = WholeProgram::initial_inter_ctxt(
                     crate_ctxt,
                     noalias_params,
                     &mut gen,
@@ -317,9 +316,8 @@ impl WholeProgram {
         model
     }
 
-    /// This is incomplete at this moment
-    fn apply_model<'a, 'tcx>(
-        body: &'a Body<'tcx>,
+    fn refine_state(
+        body: &Body,
         fn_summary: FnSummary,
         model: &[Ownership],
     ) -> SSAState {
@@ -408,7 +406,6 @@ impl WholeProgram {
 
 pub struct WholeProgramResults {
     model: Vec<Ownership>,
-    // fn_sigs: FxHashMap<DefId, FnSig<Option<Range<Var>>>>,
     fn_sigs: WholeProgramInterCtxt,
     fn_summaries: FxHashMap<DefId, FnSummary>,
 }
@@ -488,7 +485,7 @@ impl WholeProgramResults {
         let state_iter = self.fn_summaries.into_iter().map(move |(did, fn_summary)| {
             (
                 did,
-                WholeProgram::apply_model(tcx.optimized_mir(did), fn_summary, &self.model[..]),
+                WholeProgram::refine_state(tcx.optimized_mir(did), fn_summary, &self.model[..]),
             )
         });
 
@@ -689,13 +686,30 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for StandAlone {
             let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, ());
 
             rn.go::<Self>(&mut infer_cx);
-            //     match database.solver.solve() {
-            //         Some(true) => println!("succeeded"),
-            //         Some(false) => println!("failed"),
-            //         None => anyhow::bail!("timeout"),
-            //     }
-            //     databases.push(database);
         }
         Ok(())
     }
+}
+
+pub fn max_deref_level(body: &Body) -> u8 {
+    let mut max_deref_level = 1;
+    for bb_data in body.basic_blocks.iter() {
+        let rustc_middle::mir::BasicBlockData {
+            statements,
+            terminator: _,
+            ..
+        } = bb_data;
+        let mut deref_level = None;
+        for statement in statements {
+            if let StatementKind::Assign(box (_, rvalue)) = &statement.kind
+                    && let Rvalue::CopyForDeref(_) = rvalue {
+                        let level = deref_level.take().unwrap_or(1u8) + 1;
+                        deref_level = Some(level);
+                    }
+            if let Some(deref_level) = deref_level.take() {
+                max_deref_level = std::cmp::max(max_deref_level, deref_level);
+            }
+        }
+    }
+    max_deref_level
 }
