@@ -5,7 +5,6 @@
 #![feature(step_trait)]
 #![feature(trusted_step)]
 #![feature(array_windows)]
-#![feature(let_chains)]
 #![feature(type_alias_impl_trait)]
 
 extern crate either;

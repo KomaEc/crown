@@ -329,8 +329,7 @@ impl WholeProgram {
                     block: bb,
                     statement_index: index,
                 };
-                if let StatementKind::Assign(box (_, rvalue)) = &statement.kind
-                    && let Rvalue::CopyForDeref(_) = rvalue
+                if matches!(&statement.kind, StatementKind::Assign(box (_, rvalue)) if matches!(rvalue, Rvalue::CopyForDeref(_)))
                 {
                     let base_location = deref_copy.take().or(Some(location));
                     deref_copy = base_location;
@@ -697,10 +696,10 @@ pub fn max_deref_level(body: &Body) -> u8 {
         } = bb_data;
         let mut deref_level = None;
         for statement in statements {
-            if let StatementKind::Assign(box (_, rvalue)) = &statement.kind
-                    && let Rvalue::CopyForDeref(_) = rvalue {
-                        *deref_level.get_or_insert(1) += 1;
-                    }
+            if matches!(&statement.kind, StatementKind::Assign(box (_, rvalue)) if matches!(rvalue, Rvalue::CopyForDeref(_)))
+            {
+                *deref_level.get_or_insert(1) += 1;
+            }
             if let Some(deref_level) = deref_level.take() {
                 max_deref_level = std::cmp::max(max_deref_level, deref_level);
             }

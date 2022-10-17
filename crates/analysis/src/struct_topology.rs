@@ -163,16 +163,14 @@ impl StructTopology {
                 let (ptr_depth, maybe_adt) = abstract_ty(field_ty);
                 if ptr_depth >= max_ptr_depth {
                     offset += max_ptr_depth;
-                } else if let Some(adt) = maybe_adt && let Some(&idx) = self.did_idx.get(&adt.did()) {
+                } else if let Some(&idx) = maybe_adt.and_then(|adt| self.did_idx.get(&adt.did())) {
                     if ptr_depth == 0 {
-                        offset += offset_of
-                            .get_constructed(idx)
-                            .last()
-                            .unwrap();
+                        offset += offset_of.get_constructed(idx).last().unwrap();
                     } else {
                         offset += ptr_depth
-                            + self.offset_of[(max_ptr_depth - ptr_depth - 1) as usize]
-                                [idx].last().unwrap();
+                            + self.offset_of[(max_ptr_depth - ptr_depth - 1) as usize][idx]
+                                .last()
+                                .unwrap();
                     }
                 } else {
                     offset += ptr_depth
