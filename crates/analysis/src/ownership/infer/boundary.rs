@@ -6,7 +6,7 @@ use rustc_middle::mir::Body;
 
 use super::InferCtxt;
 use crate::{
-    ownership::{AnalysisKind, WholeProgram},
+    ownership::{whole_program::WholeProgramAnalysis, AnalysisKind},
     ssa::{
         constraint::{infer::InferMode, Database, Var},
         consume::Consume,
@@ -75,7 +75,7 @@ where
     }
 }
 
-impl<'infercx, 'db, 'tcx> Boundary<'infercx, 'db, 'tcx> for WholeProgram
+impl<'infercx, 'db, 'tcx> Boundary<'infercx, 'db, 'tcx> for WholeProgramAnalysis
 where
     'tcx: 'infercx,
 {
@@ -180,8 +180,8 @@ where
     }
 
     fn params(
-        inter_ctxt: &<WholeProgram as AnalysisKind>::InterCtxt,
-        database: &mut <WholeProgram as AnalysisKind>::DB,
+        inter_ctxt: &<WholeProgramAnalysis as AnalysisKind>::InterCtxt,
+        database: &mut <WholeProgramAnalysis as AnalysisKind>::DB,
         body: &Body<'tcx>,
         params: impl Iterator<Item = Option<Range<Var>>>,
     ) {
