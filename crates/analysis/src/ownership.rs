@@ -316,11 +316,7 @@ impl WholeProgram {
         model
     }
 
-    fn refine_state(
-        body: &Body,
-        fn_summary: FnSummary,
-        model: &[Ownership],
-    ) -> SSAState {
+    fn refine_state(body: &Body, fn_summary: FnSummary, model: &[Ownership]) -> SSAState {
         let mut state_changed_locations: FxHashSet<Location> = FxHashSet::default();
         let fn_result = (&fn_summary, model);
 
@@ -703,8 +699,7 @@ pub fn max_deref_level(body: &Body) -> u8 {
         for statement in statements {
             if let StatementKind::Assign(box (_, rvalue)) = &statement.kind
                     && let Rvalue::CopyForDeref(_) = rvalue {
-                        let level = deref_level.take().unwrap_or(1u8) + 1;
-                        deref_level = Some(level);
+                        *deref_level.get_or_insert(1) += 1;
                     }
             if let Some(deref_level) = deref_level.take() {
                 max_deref_level = std::cmp::max(max_deref_level, deref_level);

@@ -6,6 +6,7 @@ members = [
     "crates/alias",
     "crates/empirical-study",
     "crates/refactor",
+    "crates/rustc-properties",
 ]
 
 [package]
@@ -21,6 +22,7 @@ common = { path = "crates/common" }
 preprocess = { path = "crates/preprocess" }
 analysis = { path = "crates/analysis" }
 alias = { path = "crates/alias" }
+rustc-properties = { path = "crates/rustc-properties" }
 empirical-study = { path = "crates/empirical-study" }
 clap = { version = "3.1.2", features = ["derive"] }
 tracing = "0.1.32"

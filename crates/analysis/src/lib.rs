@@ -34,7 +34,6 @@ extern crate rustc_type_ir;
 mod call_graph;
 pub mod ownership;
 mod ptr;
-mod rustc_properties;
 pub mod ssa;
 mod struct_topology;
 #[cfg(test)]

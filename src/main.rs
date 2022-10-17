@@ -242,10 +242,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             time("empirical study", || input.perform_empirical_study());
         }
         Command::VerifyRustcProperties => {
-            let program = time("construct call graph and struct topology", || {
-                CrateCtxt::from(input)
-            });
-            program.verify();
+            rustc_properties::verify(&input);
             println!("verification success");
         }
         Command::Taint => {
