@@ -5,7 +5,7 @@ use itertools::izip;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{Body, Local, Location, Operand, Place, PlaceElem, ProjectionElem},
-    ty::{Ty, TyKind},
+    ty::{Ty, TyCtxt, TyKind},
 };
 use rustc_type_ir::TyKind::FnDef;
 use smallvec::SmallVec;
@@ -24,7 +24,7 @@ use crate::{
         state::{SSAIdx, SSAState},
         FnResult,
     },
-    struct_topology::HasStructTopology,
+    struct_topology::StructTopology,
     CrateCtxt,
 };
 
@@ -76,6 +76,71 @@ impl<'a> FnResult<'a> for FnSummary {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct FnCtxt<'intra, 'tcx> {
+    struct_topology: &'intra StructTopology,
+    tcx: TyCtxt<'tcx>,
+    allowed_ptr_depth: u32,
+}
+
+impl<'intra, 'tcx> Measurable for FnCtxt<'intra, 'tcx> {
+    fn measure(&self, ty: Ty, ptr_chased: u32) -> crate::ptr::Measure {
+        let allowed = self.allowed_ptr_depth;
+        let maximum = self.struct_topology.max_ptr_depth();
+        if allowed >= maximum {
+            self.struct_topology.measure(ty, ptr_chased)
+        } else {
+            self.struct_topology
+                .measure(ty, maximum - allowed + ptr_chased)
+        }
+    }
+
+    fn measure_adt(
+        &self,
+        adt_def: rustc_middle::ty::AdtDef,
+        ptr_chased: u32,
+    ) -> crate::ptr::Measure {
+        let allowed = self.allowed_ptr_depth;
+        let maximum = self.struct_topology.max_ptr_depth();
+        if allowed >= maximum {
+            self.struct_topology.measure_adt(adt_def, ptr_chased)
+        } else {
+            self.struct_topology
+                .measure_adt(adt_def, maximum - allowed + ptr_chased)
+        }
+    }
+
+    fn measure_field_offset(
+        &self,
+        adt_def: rustc_middle::ty::AdtDef,
+        field: usize,
+        ptr_chased: u32,
+    ) -> crate::ptr::Measure {
+        let allowed = self.allowed_ptr_depth;
+        let maximum = self.struct_topology.max_ptr_depth();
+        if allowed >= maximum {
+            self.struct_topology
+                .measure_field_offset(adt_def, field, ptr_chased)
+        } else {
+            self.struct_topology.measure_field_offset(
+                adt_def,
+                field,
+                maximum - allowed + ptr_chased,
+            )
+        }
+    }
+}
+
+impl<'tcx> CrateCtxt<'tcx> {
+    pub fn with_allowed_depth(&self, allowed_ptr_depth: u32) -> FnCtxt<'_, 'tcx> {
+        FnCtxt {
+            struct_topology: &self.struct_topology,
+            tcx: self.tcx,
+            allowed_ptr_depth,
+        }
+    }
+}
+
 type CallArgs<Consume> = SmallVec<[Option<(Consume, bool)>; 4]>;
 
 pub struct InferCtxt<'infercx, 'db, 'tcx, Analysis>
@@ -86,7 +151,7 @@ where
     inter_ctxt: Analysis::InterCtxt,
     database: &'infercx mut Analysis::DB,
     gen: &'infercx mut Gen,
-    crate_ctxt: &'infercx CrateCtxt<'tcx>,
+    fn_ctxt: FnCtxt<'infercx, 'tcx>,
     fn_body_sig: FnBodySig<LocalSig>,
     deref_copy: Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>>,
     call_args: SmallVec<
@@ -106,7 +171,8 @@ where
     Analysis: AnalysisKind<'infercx, 'db>,
 {
     pub fn new(
-        crate_ctxt: &'infercx CrateCtxt<'tcx>,
+        // crate_ctxt: &'infercx CrateCtxt<'tcx>,
+        fn_ctxt: FnCtxt<'infercx, 'tcx>,
         body: &Body<'tcx>,
         database: &'infercx mut Analysis::DB,
         gen: &'infercx mut Gen,
@@ -115,7 +181,7 @@ where
         let mut fn_body_sig = IndexVec::with_capacity(body.local_decls.len());
 
         for local_decl in body.local_decls.iter() {
-            if let Some(sigs) = initialize_local(local_decl, gen, database, crate_ctxt) {
+            if let Some(sigs) = initialize_local(local_decl, gen, database, fn_ctxt) {
                 fn_body_sig.push(IndexVec::from_raw(vec![sigs]));
             } else {
                 fn_body_sig.push(IndexVec::default());
@@ -138,7 +204,7 @@ where
             inter_ctxt,
             database,
             gen,
-            crate_ctxt,
+            fn_ctxt,
             fn_body_sig,
             deref_copy: None,
             call_args: SmallVec::new(),
@@ -187,11 +253,15 @@ where
                 }
                 ProjectionElem::Field(field, ty) => {
                     let TyKind::Adt(adt_def, _) = base_ty.kind() else { unreachable!() };
-                    let Some(field_offsets) = infer_cx
-                        .crate_ctxt
-                        .struct_topology()
-                        .field_offsets(&adt_def.did(), ptr_chased) else { unreachable!() };
-                    proj_start_offset += field_offsets[field.index()];
+                    // let Some(field_offsets) = infer_cx
+                    //     .fn_ctxt
+                    //     .struct_topology()
+                    //     .field_offsets(&adt_def.did(), ptr_chased) else { unreachable!() };
+                    // proj_start_offset += field_offsets[field.index()];
+                    proj_start_offset +=
+                        infer_cx
+                            .fn_ctxt
+                            .measure_field_offset(*adt_def, field.index(), ptr_chased);
                     base_ty = *ty;
                     // adt_gated = true;
                 }
@@ -222,7 +292,7 @@ where
                 .push_equal::<crate::ssa::constraint::Debug>((), pre, post);
         }
 
-        let proj_end_offset = proj_start_offset + infer_cx.crate_ctxt.measure(base_ty, ptr_chased);
+        let proj_end_offset = proj_start_offset + infer_cx.fn_ctxt.measure(base_ty, ptr_chased);
 
         #[cfg(debug_assertions)]
         assert!(
@@ -296,7 +366,7 @@ where
         ty: Ty<'tcx>,
         def: SSAIdx,
     ) {
-        let measure = infer_cx.crate_ctxt.measure(ty, 0);
+        let measure = infer_cx.fn_ctxt.measure(ty, 0);
         let sigs = infer_cx.new_sigs(measure);
         assert_eq!(def, infer_cx.fn_body_sig[local].push(sigs));
     }
@@ -335,7 +405,7 @@ where
         let base_ty = body.local_decls[base].ty;
 
         let base = if let Some(consume) = consume {
-            let base_offset = infer_cx.crate_ctxt.measure(base_ty, 0);
+            let base_offset = infer_cx.fn_ctxt.measure(base_ty, 0);
 
             tracing::debug!("interpretting consume for {:?} with {:?}", place, consume);
 
@@ -450,7 +520,7 @@ where
             let &FnDef(callee, _) = ty.kind() else { unreachable!() };
             if let Some(local_did) = callee.as_local() {
                 match infer_cx
-                    .crate_ctxt
+                    .fn_ctxt
                     .tcx
                     .hir()
                     .find_by_def_id(local_did)

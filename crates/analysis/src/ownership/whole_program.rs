@@ -65,6 +65,7 @@ fn solve_body<'tcx>(
     body: &Body<'tcx>,
     ssa_state: SSAState,
     crate_ctxt: &CrateCtxt<'tcx>,
+    allowed_ptr_depth: u32,
     inter_ctxt: <WholeProgramAnalysis as AnalysisKind>::InterCtxt,
     gen: &mut Gen,
     database: &mut Z3Database,
@@ -73,7 +74,7 @@ fn solve_body<'tcx>(
 
     let mut rn = Renamer::new(body, ssa_state);
 
-    let mut infer_cx = InferCtxt::new(crate_ctxt, body, database, gen, inter_ctxt);
+    let mut infer_cx = InferCtxt::new(crate_ctxt.with_allowed_depth(allowed_ptr_depth), body, database, gen, inter_ctxt);
 
     rn.go::<WholeProgramAnalysis>(&mut infer_cx);
 
@@ -116,6 +117,8 @@ fn solve_crate(
                     body,
                     ssa_state,
                     crate_ctxt,
+                    // TODO
+                    100,
                     &inter_ctxt,
                     &mut gen,
                     &mut database,
@@ -134,6 +137,8 @@ fn solve_crate(
                     body,
                     ssa_state,
                     crate_ctxt,
+                    // TODO
+                    100,
                     &inter_ctxt,
                     &mut gen,
                     &mut database,
@@ -297,9 +302,11 @@ impl WholeProgramAnalysisResults {
                     match original {
                         Param::Output(output_params) => {
                             let r#use =
-                                initialize_local(local_decl, gen, database, crate_ctxt).unwrap();
+                            // TODO
+                                initialize_local(local_decl, gen, database, crate_ctxt.with_allowed_depth(100)).unwrap();
                             let def =
-                                initialize_local(local_decl, gen, database, crate_ctxt).unwrap();
+                            // TODO
+                                initialize_local(local_decl, gen, database, crate_ctxt.with_allowed_depth(100)).unwrap();
 
                             for (pre, now) in output_params
                                 .r#use
@@ -320,7 +327,8 @@ impl WholeProgramAnalysisResults {
                         }
                         Param::Normal(params) => {
                             let now =
-                                initialize_local(local_decl, gen, database, crate_ctxt).unwrap();
+                            // TODO
+                                initialize_local(local_decl, gen, database, crate_ctxt.with_allowed_depth(100)).unwrap();
 
                             for (pre, now) in params.clone().zip(now.clone()) {
                                 if let Ownership::Owning = self.model[pre.index()] {

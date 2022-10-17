@@ -85,12 +85,7 @@ where
         args: &<Self as InferMode<'infercx, 'db, 'tcx>>::CallArgs,
         callee: DefId,
     ) {
-        let c_variadic = infer_cx
-            .crate_ctxt
-            .tcx
-            .fn_sig(callee)
-            .skip_binder()
-            .c_variadic;
+        let c_variadic = infer_cx.fn_ctxt.tcx.fn_sig(callee).skip_binder().c_variadic;
 
         let mut params = infer_cx.inter_ctxt[&callee].iter();
 

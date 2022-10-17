@@ -7,31 +7,10 @@ use rustc_type_ir::TyKind::Adt;
 
 use crate::ptr::{abstract_ty, Measurable, Measure};
 
-pub trait HasStructTopology {
-    fn struct_topology(&self) -> &StructTopology;
-}
-
-impl HasStructTopology for StructTopology {
-    #[inline]
-    fn struct_topology(&self) -> &StructTopology {
-        self
-    }
-}
-
-impl<T> HasStructTopology for &T
-where
-    T: HasStructTopology,
-{
-    #[inline]
-    fn struct_topology(&self) -> &StructTopology {
-        (*self).struct_topology()
-    }
-}
-
-impl<T: HasStructTopology> Measurable for T {
+impl Measurable for StructTopology {
     #[inline]
     fn measure(&self, ty: rustc_middle::ty::Ty, ptr_chased: u32) -> Measure {
-        let max_ptr_depth = self.struct_topology().offset_of.len() as u32;
+        let max_ptr_depth = self.offset_of.len() as u32;
 
         let (ptr_depth, maybe_adt) = abstract_ty(ty);
 
@@ -46,9 +25,20 @@ impl<T: HasStructTopology> Measurable for T {
 
     #[inline]
     fn measure_adt(&self, adt_def: rustc_middle::ty::AdtDef, ptr_chased: u32) -> Measure {
-        self.struct_topology()
-            .struct_size(&adt_def.did(), ptr_chased)
+        self.struct_size(&adt_def.did(), ptr_chased)
             .unwrap_or_default()
+    }
+
+    #[inline]
+    fn measure_field_offset(
+        &self,
+        adt_def: rustc_middle::ty::AdtDef,
+        field: usize,
+        ptr_chased: u32,
+    ) -> Measure {
+        assert!(adt_def.is_struct());
+        let Some(field_offsets) = self.field_offsets(&adt_def.did(), ptr_chased) else { panic!() };
+        field_offsets[field]
     }
 }
 
@@ -118,31 +108,30 @@ impl StructTopology {
     #[inline]
     pub fn struct_size(&self, did: &DefId, ptr_chased: u32) -> Option<Measure> {
         let idx = self.did_idx.get(did).copied()?;
-        // let offset_of = self.offset_of.last().unwrap();
         if ptr_chased as usize >= self.offset_of.len() {
             return None;
         }
         let offset_of = &self.offset_of[self.offset_of.len() - 1 - ptr_chased as usize];
         Some(offset_of[idx].last().copied().unwrap())
-        // Some(self.offset_of_simple[idx].last().copied().unwrap())
     }
 
     #[inline]
     pub fn field_offsets(&self, did: &DefId, ptr_chased: u32) -> Option<&[Measure]> {
         let idx = self.did_idx.get(did).copied()?;
-        // let offset_of = self.offset_of.last().unwrap();
         if ptr_chased as usize >= self.offset_of.len() {
             return None;
         }
         let offset_of = &self.offset_of[self.offset_of.len() - 1 - ptr_chased as usize];
         Some(&offset_of[idx])
-        // Some(&self.offset_of_simple[idx])
+    }
+
+    #[inline]
+    pub fn max_ptr_depth(&self) -> u32 {
+        self.offset_of.len() as u32
     }
 
     #[inline]
     pub fn next_stage(&mut self, tcx: TyCtxt) {
-        // let max_ptr_chased = self.offset_of.len() as u32;
-        // assert!(allowed_derefs > 0);
         let max_ptr_depth = self.offset_of.len() as u32 + 1;
 
         let data_capacity = self

@@ -18,6 +18,25 @@ pub trait Measurable {
     fn measure(&self, ty: Ty, ptr_chased: u32) -> Measure;
 
     fn measure_adt(&self, adt_def: AdtDef, ptr_chased: u32) -> Measure;
+
+    fn measure_field_offset(&self, adt_def: AdtDef, field: usize, ptr_chased: u32) -> Measure;
+}
+
+impl<M: Measurable> Measurable for &M {
+    #[inline]
+    fn measure(&self, ty: Ty, ptr_chased: u32) -> Measure {
+        (*self).measure(ty, ptr_chased)
+    }
+
+    #[inline]
+    fn measure_adt(&self, adt_def: AdtDef, ptr_chased: u32) -> Measure {
+        (*self).measure_adt(adt_def, ptr_chased)
+    }
+
+    #[inline]
+    fn measure_field_offset(&self, adt_def: AdtDef, field: usize, ptr_chased: u32) -> Measure {
+        (*self).measure_field_offset(adt_def, field, ptr_chased)
+    }
 }
 
 /// Abstraction of types: `&..&Adt`

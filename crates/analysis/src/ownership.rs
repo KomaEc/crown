@@ -156,7 +156,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for IntraProcedural {
 
             let mut gen = Gen::new();
             let mut database = CadicalDatabase::new();
-            let mut infer_cx = InferCtxt::new(crate_ctxt, body, &mut database, &mut gen, ());
+            let mut infer_cx = InferCtxt::new(crate_ctxt.with_allowed_depth(0), body, &mut database, &mut gen, ());
 
             rn.go::<Self>(&mut infer_cx);
         }

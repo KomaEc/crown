@@ -32,15 +32,15 @@ pub(super) fn initial_inter_ctxt(
         let fn_sig = {
             let mut local_decls = body.local_decls.iter_enumerated();
             let (_, return_local_decl) = local_decls.next().unwrap();
-            let ret = initialize_local(return_local_decl, gen, database, crate_ctxt)
+            let ret = initialize_local(return_local_decl, gen, database, crate_ctxt.with_allowed_depth(1))
                 .map(|sigs| Param::Normal(sigs));
 
             let args = local_decls
                 .take(body.arg_count)
                 .map(|(local, local_decl)| {
                     if noalias_params.contains(&local) {
-                        let r#use = initialize_local(local_decl, gen, database, crate_ctxt);
-                        let def = initialize_local(local_decl, gen, database, crate_ctxt);
+                        let r#use = initialize_local(local_decl, gen, database, crate_ctxt.with_allowed_depth(1));
+                        let def = initialize_local(local_decl, gen, database, crate_ctxt.with_allowed_depth(1));
                         r#use.zip(def).map(|(r#use, def)| {
                             database.push_assume::<crate::ssa::constraint::Debug>(
                                 (),
@@ -55,7 +55,7 @@ pub(super) fn initial_inter_ctxt(
                             Param::Output(Consume { r#use, def })
                         })
                     } else {
-                        initialize_local(local_decl, gen, database, crate_ctxt)
+                        initialize_local(local_decl, gen, database, crate_ctxt.with_allowed_depth(1))
                             .map(|sigs| Param::Normal(sigs))
                     }
                 })

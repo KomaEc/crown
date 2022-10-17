@@ -316,7 +316,7 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
             let ty = place.ty(self.body, self.tcx).ty;
             let local_info = self.body.local_decls[place.local].local_info.as_deref();
 
-            if self.crate_ctxt.contains_ptr(ty)
+            if self.crate_ctxt.struct_topology.contains_ptr(ty)
                 && !matches!(local_info, Some(LocalInfo::DerefTemp))
                 // if a place contains a union, we do not generate its usage, therefore, direct use/def or
                 // dereferences of unions are treated as unsafe sources/sinks during infer
@@ -349,7 +349,7 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
     let mut maybe_owning = BitSet::new_empty(body.local_decls.len());
 
     for (local, local_decl) in body.local_decls.iter_enumerated() {
-        if local_has_non_zero_measure(local_decl, crate_ctxt) {
+        if local_has_non_zero_measure(local_decl, &crate_ctxt.struct_topology) {
             maybe_owning.insert(local);
         }
     }

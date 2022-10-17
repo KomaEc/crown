@@ -41,7 +41,7 @@ pub mod type_qualifier;
 use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
-use struct_topology::{HasStructTopology, StructTopology};
+use struct_topology::StructTopology;
 
 pub struct CrateCtxt<'tcx> {
     tcx: TyCtxt<'tcx>,
@@ -69,12 +69,5 @@ impl<'tcx> CrateCtxt<'tcx> {
     /// Return the set of top-level struct definitions in post order
     pub fn structs(&self) -> &[DefId] {
         self.struct_topology.structs_in_post_order()
-    }
-}
-
-impl<'tcx> HasStructTopology for CrateCtxt<'tcx> {
-    #[inline]
-    fn struct_topology(&self) -> &StructTopology {
-        &self.struct_topology
     }
 }

@@ -21,7 +21,7 @@ where
         args: &<Analysis as InferMode<'infercx, 'db, 'tcx>>::CallArgs,
         callee: DefId,
     ) {
-        let def_path = self.crate_ctxt.tcx.def_path(callee);
+        let def_path = self.fn_ctxt.tcx.def_path(callee);
         // if it is a library call in core::ptr
         if def_path
             .data
