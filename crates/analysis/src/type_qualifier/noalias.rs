@@ -63,10 +63,10 @@ fn conservative_noalias_params(
         .args_iter()
         .filter(|&arg| {
             !body.local_decls[arg].ty.is_primitive_ty()
-                && fn_result
+                && matches!(fn_result
                     .local_result(arg)
-                    .first()
-                    .is_some_and(|&mutability| mutability == Mutability::Mut)
+                    .first(),
+                    Some(&mutability) if mutability == Mutability::Mut)
         })
         .collect::<FxHashSet<Local>>();
 
@@ -80,10 +80,10 @@ fn conservative_noalias_params(
                 continue;
             }
             if alias_result.may_alias(location_of[arg], location_of[local])
-                && fn_result
+                && matches!(fn_result
                     .local_result(Local::new(local))
-                    .first()
-                    .is_some_and(|&mutability| mutability == Mutability::Mut)
+                    .first(),
+                    Some(&mutability) if mutability == Mutability::Mut)
             {
                 noalias_params.remove(&Local::new(arg));
             }

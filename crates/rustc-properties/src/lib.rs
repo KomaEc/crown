@@ -1,10 +1,9 @@
 //! Dynamically verify several assumptions we made on rustc.
 #![feature(rustc_private)]
 #![feature(box_patterns)]
-#![feature(is_some_and)]
 
-extern crate rustc_middle;
 extern crate rustc_index;
+extern crate rustc_middle;
 
 use rustc_middle::{
     mir::{
@@ -196,10 +195,10 @@ fn verify_return_clause_unique(krate: &common::CrateData) {
         assert!(
             body.basic_blocks
                 .iter()
-                .filter(|bb_data| bb_data
+                .filter(|bb_data| matches!(bb_data
                     .terminator
-                    .as_ref()
-                    .is_some_and(|terminator| matches!(terminator.kind, TerminatorKind::Return)))
+                    .as_ref(),
+                    Some(terminator) if matches!(terminator.kind, TerminatorKind::Return)))
                 .count()
                 <= 1
         );
