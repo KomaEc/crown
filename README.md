@@ -1,2 +1,2 @@
 # ORC
-This is a wip research project on translating C to Rust. It is open-sourced for the purpose of grant application.
+This is a wip research project on translating C to Rust. This is still under development and pre-release.
