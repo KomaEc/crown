@@ -37,7 +37,7 @@ impl Measurable for StructTopology {
         ptr_chased: u32,
     ) -> Measure {
         assert!(adt_def.is_struct());
-        let Some(field_offsets) = self.field_offsets(&adt_def.did(), ptr_chased) else { panic!() };
+        let Some(field_offsets) = self.field_offsets(&adt_def.did(), ptr_chased) else { return 0 };
         field_offsets[field]
     }
 }

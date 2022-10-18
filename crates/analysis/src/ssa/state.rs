@@ -65,6 +65,14 @@ impl SSAState {
             consume_chain,
         }
     }
+
+    pub fn mk_dummy(mut self) -> Self {
+        self.name_state.count.raw.clear();
+        self.name_state.stack.raw.clear();
+        self.join_points.data.raw.clear();
+        self.consume_chain.mk_dummy();
+        self
+    }
 }
 
 impl SSAState {

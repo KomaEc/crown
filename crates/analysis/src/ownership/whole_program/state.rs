@@ -6,7 +6,7 @@ use rustc_middle::mir::{BasicBlockData, Body, Location, Rvalue, StatementKind};
 use super::WholeProgramInterCtxt;
 use crate::{
     call_graph::FnSig,
-    ownership::{infer::FnSummary, Ownership, Param},
+    ownership::{infer::FnSummary, Ownership, Param, Precision},
     ssa::{
         constraint::{initialize_local, Database, Gen, Z3Database},
         consume::{initial_definitions, Consume},
@@ -24,6 +24,8 @@ pub(super) fn initial_inter_ctxt(
     gen: &mut Gen,
     database: &mut Z3Database,
 ) -> WholeProgramInterCtxt {
+    const INIT_PRECISION: Precision = 1;
+
     let mut fn_sigs = FxHashMap::default();
     fn_sigs.reserve(crate_ctxt.fns().len());
     for &did in crate_ctxt.call_graph.fns() {
@@ -32,15 +34,30 @@ pub(super) fn initial_inter_ctxt(
         let fn_sig = {
             let mut local_decls = body.local_decls.iter_enumerated();
             let (_, return_local_decl) = local_decls.next().unwrap();
-            let ret = initialize_local(return_local_decl, gen, database, crate_ctxt.with_allowed_depth(1))
-                .map(|sigs| Param::Normal(sigs));
+            let ret = initialize_local(
+                return_local_decl,
+                gen,
+                database,
+                crate_ctxt.with_precision(INIT_PRECISION),
+            )
+            .map(|sigs| Param::Normal(sigs));
 
             let args = local_decls
                 .take(body.arg_count)
                 .map(|(local, local_decl)| {
                     if noalias_params.contains(&local) {
-                        let r#use = initialize_local(local_decl, gen, database, crate_ctxt.with_allowed_depth(1));
-                        let def = initialize_local(local_decl, gen, database, crate_ctxt.with_allowed_depth(1));
+                        let r#use = initialize_local(
+                            local_decl,
+                            gen,
+                            database,
+                            crate_ctxt.with_precision(INIT_PRECISION),
+                        );
+                        let def = initialize_local(
+                            local_decl,
+                            gen,
+                            database,
+                            crate_ctxt.with_precision(INIT_PRECISION),
+                        );
                         r#use.zip(def).map(|(r#use, def)| {
                             database.push_assume::<crate::ssa::constraint::Debug>(
                                 (),
@@ -55,8 +72,13 @@ pub(super) fn initial_inter_ctxt(
                             Param::Output(Consume { r#use, def })
                         })
                     } else {
-                        initialize_local(local_decl, gen, database, crate_ctxt.with_allowed_depth(1))
-                            .map(|sigs| Param::Normal(sigs))
+                        initialize_local(
+                            local_decl,
+                            gen,
+                            database,
+                            crate_ctxt.with_precision(INIT_PRECISION),
+                        )
+                        .map(|sigs| Param::Normal(sigs))
                     }
                 })
                 .collect();

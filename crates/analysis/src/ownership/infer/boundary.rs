@@ -16,8 +16,6 @@ use crate::{
 pub mod libc;
 pub mod library;
 
-/// Bad abstraction
-/// TODO refactor
 pub trait Boundary<'infercx, 'db, 'tcx>: AnalysisKind<'infercx, 'db> + Sized
 where
     'tcx: 'infercx,
@@ -26,7 +24,6 @@ where
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         destination: Option<Consume<Range<Var>>>,
         args: &<Self as InferMode<'infercx, 'db, 'tcx>>::CallArgs,
-        // args: &FnSig<Option<Consume<Range<Var>>>>,
         callee: DefId,
     );
 
@@ -85,7 +82,7 @@ where
         args: &<Self as InferMode<'infercx, 'db, 'tcx>>::CallArgs,
         callee: DefId,
     ) {
-        let c_variadic = infer_cx.fn_ctxt.tcx.fn_sig(callee).skip_binder().c_variadic;
+        // let c_variadic = infer_cx.fn_ctxt.tcx.fn_sig(callee).skip_binder().c_variadic;
 
         let mut params = infer_cx.inter_ctxt[&callee].iter();
 
@@ -108,9 +105,10 @@ where
                         .push_equal::<crate::ssa::constraint::Debug>((), dest_def, ret);
                 }
             }
-        } else {
-            assert!(destination.is_none())
         }
+        // else {
+        //     assert!(destination.is_none())
+        // }
 
         let params_args = params.zip(args.iter());
 
@@ -168,9 +166,10 @@ where
                         }
                     }
                 }
-            } else {
-                assert!(c_variadic || arg.is_none(), "{:?}", callee)
             }
+            // else {
+            //     assert!(c_variadic || arg.is_none(), "{:?}", callee)
+            // }
         }
     }
 

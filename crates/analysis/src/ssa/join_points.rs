@@ -31,7 +31,7 @@ pub struct PhiNode {
 /// not necessary to construct a semi-pruned SSA
 #[derive(Clone, Debug)]
 pub struct JoinPoints<Payload> {
-    data: IndexVec<BasicBlock, BasicBlockNodes<Payload>>,
+    pub(crate) data: IndexVec<BasicBlock, BasicBlockNodes<Payload>>,
 }
 
 impl JoinPoints<PhiNode> {

@@ -11,7 +11,7 @@ use rustc_type_ir::TyKind::FnDef;
 use smallvec::SmallVec;
 
 use self::boundary::Boundary;
-use super::AnalysisKind;
+use super::{AnalysisKind, Precision};
 use crate::{
     ptr::Measurable,
     ssa::{
@@ -80,12 +80,12 @@ impl<'a> FnResult<'a> for FnSummary {
 pub struct FnCtxt<'intra, 'tcx> {
     struct_topology: &'intra StructTopology,
     tcx: TyCtxt<'tcx>,
-    allowed_ptr_depth: u32,
+    allowed_ptr_depth: Precision,
 }
 
 impl<'intra, 'tcx> Measurable for FnCtxt<'intra, 'tcx> {
     fn measure(&self, ty: Ty, ptr_chased: u32) -> crate::ptr::Measure {
-        let allowed = self.allowed_ptr_depth;
+        let allowed = self.allowed_ptr_depth as u32;
         let maximum = self.struct_topology.max_ptr_depth();
         if allowed >= maximum {
             self.struct_topology.measure(ty, ptr_chased)
@@ -100,7 +100,7 @@ impl<'intra, 'tcx> Measurable for FnCtxt<'intra, 'tcx> {
         adt_def: rustc_middle::ty::AdtDef,
         ptr_chased: u32,
     ) -> crate::ptr::Measure {
-        let allowed = self.allowed_ptr_depth;
+        let allowed = self.allowed_ptr_depth as u32;
         let maximum = self.struct_topology.max_ptr_depth();
         if allowed >= maximum {
             self.struct_topology.measure_adt(adt_def, ptr_chased)
@@ -116,7 +116,7 @@ impl<'intra, 'tcx> Measurable for FnCtxt<'intra, 'tcx> {
         field: usize,
         ptr_chased: u32,
     ) -> crate::ptr::Measure {
-        let allowed = self.allowed_ptr_depth;
+        let allowed = self.allowed_ptr_depth as u32;
         let maximum = self.struct_topology.max_ptr_depth();
         if allowed >= maximum {
             self.struct_topology
@@ -132,11 +132,11 @@ impl<'intra, 'tcx> Measurable for FnCtxt<'intra, 'tcx> {
 }
 
 impl<'tcx> CrateCtxt<'tcx> {
-    pub fn with_allowed_depth(&self, allowed_ptr_depth: u32) -> FnCtxt<'_, 'tcx> {
+    pub fn with_precision(&self, precision: Precision) -> FnCtxt<'_, 'tcx> {
         FnCtxt {
             struct_topology: &self.struct_topology,
             tcx: self.tcx,
-            allowed_ptr_depth,
+            allowed_ptr_depth: precision,
         }
     }
 }

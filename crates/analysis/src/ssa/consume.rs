@@ -187,6 +187,13 @@ impl ConsumeChain {
         }
     }
 
+    pub fn mk_dummy(&mut self) {
+        for consumes in self.consumes.everything_mut() {
+            consumes.clear()
+        }
+        self.locs = IndexVec::new();
+    }
+
     #[inline]
     pub fn of_block(&self, block: BasicBlock) -> &[SmallVec<[(Local, Consume<SSAIdx>); 2]>] {
         &self.consumes[block.index()]

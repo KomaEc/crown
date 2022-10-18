@@ -12,7 +12,7 @@ use rustc_middle::{
 };
 
 use self::state::{initial_inter_ctxt, initial_ssa_state, refine_state};
-use super::{AnalysisKind, Ownership};
+use super::{max_deref_level, AnalysisKind, Ownership, Precision};
 use crate::{
     call_graph::FnSig,
     ownership::{
@@ -43,11 +43,16 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgramAnalysis {
         crate_ctxt: &mut CrateCtxt,
         noalias_params: &NoAliasParams,
     ) -> anyhow::Result<Self::Results> {
+        let required_precision = crate_ctxt.fns().iter().copied().fold(0, |acc, did| {
+            let body = crate_ctxt.tcx.optimized_mir(did);
+            std::cmp::max(acc, max_deref_level(body) + 1)
+        });
+
         // first stage
         let mut results = solve_crate(crate_ctxt, Left(noalias_params))?;
 
         // second stage
-        for _ in 0..2 {
+        for _ in 1..required_precision {
             results = solve_crate(crate_ctxt, Right(results))?;
         }
 
@@ -58,23 +63,39 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgramAnalysis {
 pub struct WholeProgramAnalysisResults {
     model: Vec<Ownership>,
     fn_sigs: WholeProgramInterCtxt,
-    fn_summaries: FxHashMap<DefId, FnSummary>,
+    fn_summaries: FxHashMap<DefId, (FnSummary, Precision)>,
 }
 
 fn solve_body<'tcx>(
     body: &Body<'tcx>,
     ssa_state: SSAState,
     crate_ctxt: &CrateCtxt<'tcx>,
-    allowed_ptr_depth: u32,
+    precision: Precision,
     inter_ctxt: <WholeProgramAnalysis as AnalysisKind>::InterCtxt,
     gen: &mut Gen,
     database: &mut Z3Database,
-) -> anyhow::Result<FnSummary> {
+) -> anyhow::Result<(FnSummary, Precision)> {
+    if precision == 0 {
+        return Ok((
+            FnSummary {
+                fn_body_sig: rustc_index::vec::IndexVec::new(),
+                ssa_state: ssa_state.mk_dummy(),
+            },
+            precision,
+        ));
+    }
+
     database.solver.push();
 
     let mut rn = Renamer::new(body, ssa_state);
 
-    let mut infer_cx = InferCtxt::new(crate_ctxt.with_allowed_depth(allowed_ptr_depth), body, database, gen, inter_ctxt);
+    let mut infer_cx = InferCtxt::new(
+        crate_ctxt.with_precision(precision),
+        body,
+        database,
+        gen,
+        inter_ctxt,
+    );
 
     rn.go::<WholeProgramAnalysis>(&mut infer_cx);
 
@@ -85,12 +106,11 @@ fn solve_body<'tcx>(
             let fn_name = crate_ctxt.tcx.def_path_str(body.source.def_id());
             println!("failed: {fn_name}");
             database.solver.pop(1);
+            Ok((results, precision - 1))
         }
         z3::SatResult::Unknown => bail!("z3 status: unknown"),
-        z3::SatResult::Sat => {}
+        z3::SatResult::Sat => Ok((results, precision)),
     }
-
-    Ok(results)
 }
 
 fn solve_crate(
@@ -112,13 +132,14 @@ fn solve_crate(
                 initial_inter_ctxt(crate_ctxt, noalias_params, &mut gen, &mut database);
             for &did in crate_ctxt.call_graph.fns() {
                 let body = crate_ctxt.tcx.optimized_mir(did);
+                let max_ptr_depth = max_deref_level(body) + 1;
                 let ssa_state = initial_ssa_state(crate_ctxt, body);
                 let fn_summary = solve_body(
                     body,
                     ssa_state,
                     crate_ctxt,
                     // TODO
-                    100,
+                    max_ptr_depth,
                     &inter_ctxt,
                     &mut gen,
                     &mut database,
@@ -131,14 +152,14 @@ fn solve_crate(
             crate_ctxt.struct_topology.next_stage(crate_ctxt.tcx);
             let (inter_ctxt, fns) =
                 previous_results.next_stage(crate_ctxt, &mut gen, &mut database);
-            for (did, ssa_state) in fns {
+            for (did, ssa_state, precision) in fns {
                 let body = crate_ctxt.tcx.optimized_mir(did);
                 let fn_summary = solve_body(
                     body,
                     ssa_state,
                     crate_ctxt,
                     // TODO
-                    100,
+                    precision,
                     &inter_ctxt,
                     &mut gen,
                     &mut database,
@@ -192,7 +213,7 @@ impl<'a> AnalysisResults<'a> for WholeProgramAnalysisResults {
     type FnResult = (&'a FnSummary, &'a [Ownership]);
 
     fn fn_result(&'a self, r#fn: DefId) -> Option<Self::FnResult> {
-        let fn_summary = self.fn_summaries.get(&r#fn)?;
+        let (fn_summary, _) = self.fn_summaries.get(&r#fn)?;
         Some((fn_summary, &self.model[..]))
     }
 
@@ -286,27 +307,30 @@ impl WholeProgramAnalysisResults {
         database: &mut Z3Database,
     ) -> (
         WholeProgramInterCtxt,
-        impl Iterator<Item = (DefId, SSAState)> + 'tcx,
+        impl Iterator<Item = (DefId, SSAState, Precision)> + 'tcx,
     ) {
         let mut inter_ctxt = FxHashMap::default();
         inter_ctxt.reserve(self.fn_sigs.len());
 
         for (did, original) in self.fn_sigs.into_iter() {
             let body = crate_ctxt.tcx.optimized_mir(did);
+            let precision = self.fn_summaries[&did].1;
 
             let fn_sig = original
                 .iter()
                 .zip(&body.local_decls)
                 .map(|(original, local_decl)| {
-                    let Some(original) = original else { return None; };
+                    // let Some(original) = original else { return None; };
+                    // FIXME correctness?
+                    let original = original.as_ref()?;
                     match original {
                         Param::Output(output_params) => {
                             let r#use =
                             // TODO
-                                initialize_local(local_decl, gen, database, crate_ctxt.with_allowed_depth(100)).unwrap();
+                                initialize_local(local_decl, gen, database, crate_ctxt.with_precision(precision))?;
                             let def =
                             // TODO
-                                initialize_local(local_decl, gen, database, crate_ctxt.with_allowed_depth(100)).unwrap();
+                                initialize_local(local_decl, gen, database, crate_ctxt.with_precision(precision))?;
 
                             for (pre, now) in output_params
                                 .r#use
@@ -328,7 +352,7 @@ impl WholeProgramAnalysisResults {
                         Param::Normal(params) => {
                             let now =
                             // TODO
-                                initialize_local(local_decl, gen, database, crate_ctxt.with_allowed_depth(100)).unwrap();
+                                initialize_local(local_decl, gen, database, crate_ctxt.with_precision(precision))?;
 
                             for (pre, now) in params.clone().zip(now.clone()) {
                                 if let Ownership::Owning = self.model[pre.index()] {
@@ -353,12 +377,16 @@ impl WholeProgramAnalysisResults {
 
         let tcx = crate_ctxt.tcx;
 
-        let state_iter = self.fn_summaries.into_iter().map(move |(did, fn_summary)| {
-            (
-                did,
-                refine_state(tcx.optimized_mir(did), fn_summary, &self.model[..]),
-            )
-        });
+        let state_iter =
+            self.fn_summaries
+                .into_iter()
+                .map(move |(did, (fn_summary, precision))| {
+                    (
+                        did,
+                        refine_state(tcx.optimized_mir(did), fn_summary, &self.model[..]),
+                        precision,
+                    )
+                });
 
         (inter_ctxt, state_iter)
     }

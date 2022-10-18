@@ -127,6 +127,9 @@ pub trait AnalysisKind<'analysis, 'db> {
         noalias_params: &NoAliasParams,
     ) -> anyhow::Result<Self::Results>;
 }
+
+pub type Precision = u8;
+
 pub enum Modular {}
 impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for Modular {
     type Results = ();
@@ -156,7 +159,13 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for IntraProcedural {
 
             let mut gen = Gen::new();
             let mut database = CadicalDatabase::new();
-            let mut infer_cx = InferCtxt::new(crate_ctxt.with_allowed_depth(0), body, &mut database, &mut gen, ());
+            let mut infer_cx = InferCtxt::new(
+                crate_ctxt.with_precision(0),
+                body,
+                &mut database,
+                &mut gen,
+                (),
+            );
 
             rn.go::<Self>(&mut infer_cx);
         }
@@ -164,7 +173,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for IntraProcedural {
     }
 }
 
-pub fn max_deref_level(body: &Body) -> u8 {
+pub fn max_deref_level(body: &Body) -> Precision {
     let mut max_deref_level = 1;
     for bb_data in body.basic_blocks.iter() {
         let rustc_middle::mir::BasicBlockData {
@@ -177,6 +186,7 @@ pub fn max_deref_level(body: &Body) -> u8 {
             if matches!(&statement.kind, StatementKind::Assign(box (_, rvalue)) if matches!(rvalue, Rvalue::CopyForDeref(_)))
             {
                 *deref_level.get_or_insert(1) += 1;
+                continue;
             }
             if let Some(deref_level) = deref_level.take() {
                 max_deref_level = std::cmp::max(max_deref_level, deref_level);
