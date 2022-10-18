@@ -115,7 +115,7 @@ fn solve_body<'tcx>(
 
 fn solve_crate(
     crate_ctxt: &mut CrateCtxt,
-    previous_results: Either<&NoAliasParams, WholeProgramAnalysisResults>, //Option<WholeProgramResults>,
+    previous_results: Either<&NoAliasParams, WholeProgramAnalysisResults>,
 ) -> anyhow::Result<WholeProgramAnalysisResults> {
     let mut gen = Gen::new();
 
@@ -324,45 +324,41 @@ impl WholeProgramAnalysisResults {
                     // FIXME correctness?
                     let original = original.as_ref()?;
                     match original {
-                        Param::Output(output_params) => {
-                            let r#use =
-                            // TODO
-                                initialize_local(local_decl, gen, database, crate_ctxt.with_precision(precision))?;
-                            let def =
-                            // TODO
-                                initialize_local(local_decl, gen, database, crate_ctxt.with_precision(precision))?;
-
-                            for (pre, now) in output_params
-                                .r#use
-                                .clone()
-                                .zip(r#use.clone())
-                                .chain(output_params.def.clone().zip(def.clone()))
-                            {
-                                if let Ownership::Owning = self.model[pre.index()] {
-                                    database.push_assume::<crate::ssa::constraint::Debug>(
-                                        (),
-                                        now,
-                                        true,
-                                    );
-                                }
-                            }
+                        Param::Output(_) => {
+                            let r#use = initialize_local(
+                                local_decl,
+                                gen,
+                                database,
+                                crate_ctxt.with_precision(precision),
+                            )?;
+                            assert!(!r#use.is_empty());
+                            database.push_assume::<crate::ssa::constraint::Debug>(
+                                (),
+                                r#use.start,
+                                true,
+                            );
+                            let def = initialize_local(
+                                local_decl,
+                                gen,
+                                database,
+                                crate_ctxt.with_precision(precision),
+                            )?;
+                            assert!(!def.is_empty());
+                            database.push_assume::<crate::ssa::constraint::Debug>(
+                                (),
+                                def.start,
+                                true,
+                            );
 
                             Some(Param::Output(Consume { r#use, def }))
                         }
-                        Param::Normal(params) => {
-                            let now =
-                            // TODO
-                                initialize_local(local_decl, gen, database, crate_ctxt.with_precision(precision))?;
-
-                            for (pre, now) in params.clone().zip(now.clone()) {
-                                if let Ownership::Owning = self.model[pre.index()] {
-                                    database.push_assume::<crate::ssa::constraint::Debug>(
-                                        (),
-                                        now,
-                                        true,
-                                    );
-                                }
-                            }
+                        Param::Normal(_) => {
+                            let now = initialize_local(
+                                local_decl,
+                                gen,
+                                database,
+                                crate_ctxt.with_precision(precision),
+                            )?;
 
                             Some(Param::Normal(now))
                         }

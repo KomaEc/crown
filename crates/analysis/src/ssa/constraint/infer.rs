@@ -26,6 +26,8 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     type CallArgs: std::fmt::Debug;
 
+    type Interpretation: std::fmt::Debug;
+
     fn collect_call_args(infer_cx: &mut Self::Ctxt, args: &[Operand<'tcx>]) -> Self::CallArgs;
 
     fn call_arg(infer_cx: &mut Self::Ctxt, temp: Local, arg: Consume<Self::LocalSig>, is_ref: bool);
@@ -111,6 +113,8 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
     type LocalSig = ();
 
     type CallArgs = ();
+
+    type Interpretation = ();
 
     fn collect_call_args((): &mut Self::Ctxt, _: &[Operand<'tcx>]) -> Self::CallArgs {}
 

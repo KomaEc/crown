@@ -329,6 +329,8 @@ where
 
     type CallArgs = CallArgs<Consume<Self::LocalSig>>;
 
+    type Interpretation = (Consume<Self::LocalSig>, Precision);
+
     fn collect_call_args(infer_cx: &mut Self::Ctxt, args: &[Operand<'tcx>]) -> Self::CallArgs {
         let args = args
             .iter()
