@@ -585,11 +585,53 @@ where
     }
 }
 
-// pub fn zip_with_precision(
-//     sig1: LocalSig,
-//     precision1: Precision,
-//     sig2: LocalSig,
-//     precision2: Precision,
-// ) -> impl Iterator<Item = (Var, Var)> {
-//     std::iter::empty()
-// }
+
+pub struct Signature {
+    ptr: Range<Var>,
+    adt: Vec<Signature>,
+}
+
+impl Signature {
+    pub fn unfold(&self) -> Range<Var> {
+        let start = self.ptr.start;
+        let end = if self.adt.is_empty() {
+            self.ptr.end
+        } else {
+            self.adt.last().unwrap().unfold().end
+        };
+        Range { start, end }
+    }
+}
+
+pub struct Shape {
+    ptr: usize,
+    adt: Vec<Shape>,
+}
+
+impl Shape {
+    fn fold_aux(&self, vars: Range<Var>) -> (Signature, usize) {
+
+        let ptr = vars.start..vars.start + self.ptr;
+
+        
+        if self.adt.is_empty() {
+            return (Signature { ptr, adt: vec![] }, self.ptr)
+        }
+
+        let mut end = vars.start + self.ptr;
+
+        let adt = self.adt.iter().map(|shape| {
+            let (signature, size) = shape.fold_aux(end..vars.end);
+            end = end + size;
+            signature
+        }).collect();
+
+        assert_eq!(end, vars.end);
+
+        (Signature { ptr, adt }, vars.count())
+    }
+
+    pub fn fold(&self, vars: Range<Var>) -> Signature {
+        self.fold_aux(vars).0
+    }
+}
