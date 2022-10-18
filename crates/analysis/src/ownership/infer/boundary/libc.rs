@@ -23,6 +23,8 @@ where
     ) {
         match callee.as_str() {
             "malloc" => self.call_malloc(destination),
+            "realloc" => self.call_realloc(destination, args),
+            "calloc" => self.call_calloc(destination),
             "free" => self.call_free(args),
             _ => {}
         }
@@ -31,6 +33,23 @@ where
     fn call_malloc(&mut self, destination: Option<Consume<Range<Var>>>) {
         let destination = destination.as_ref().unwrap();
         <Analysis as InferMode>::source(self, destination.clone());
+    }
+
+    fn call_calloc(&mut self, destination: Option<Consume<Range<Var>>>) {
+        let destination = destination.as_ref().unwrap();
+        <Analysis as InferMode>::source(self, destination.clone());
+    }
+
+    fn call_realloc(
+        &mut self,
+        destination: Option<Consume<Range<Var>>>,
+        args: &<Analysis as InferMode<'infercx, 'db, 'tcx>>::CallArgs,
+    ) {
+        let destination = destination.as_ref().unwrap();
+        <Analysis as InferMode>::source(self, destination.clone());
+        let (arg, is_ref) = args[0].clone().unwrap();
+        assert!(!is_ref);
+        <Analysis as InferMode>::sink(self, arg);
     }
 
     fn call_free(&mut self, args: &<Analysis as InferMode<'infercx, 'db, 'tcx>>::CallArgs) {

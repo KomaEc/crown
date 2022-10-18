@@ -154,15 +154,13 @@ where
     fn_ctxt: FnCtxt<'infercx, 'tcx>,
     fn_body_sig: FnBodySig<LocalSig>,
     deref_copy: Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>>,
-    call_args: SmallVec<
-        [(
-            Local,
-            (
-                Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>,
-                bool,
-            ),
-        ); 4],
-    >,
+    call_args: Vec<(
+        Local,
+        (
+            Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>,
+            bool,
+        ),
+    )>,
 }
 
 impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
@@ -171,7 +169,6 @@ where
     Analysis: AnalysisKind<'infercx, 'db>,
 {
     pub fn new(
-        // crate_ctxt: &'infercx CrateCtxt<'tcx>,
         fn_ctxt: FnCtxt<'infercx, 'tcx>,
         body: &Body<'tcx>,
         database: &'infercx mut Analysis::DB,
@@ -207,7 +204,7 @@ where
             fn_ctxt,
             fn_body_sig,
             deref_copy: None,
-            call_args: SmallVec::new(),
+            call_args: Vec::new(),
         }
     }
 
@@ -344,8 +341,6 @@ where
             })
             .collect::<SmallVec<_>>();
 
-        infer_cx.call_args.clear();
-
         args
     }
 
@@ -441,6 +436,7 @@ where
         lhs_result: Consume<Self::LocalSig>,
         rhs_result: Consume<Self::LocalSig>,
     ) {
+        tracing::debug!("transfer relation: {:?} ~ {:?}", lhs_result, rhs_result);
         for (lhs_use, lhs_def, rhs_use, rhs_def) in izip!(
             lhs_result.r#use,
             lhs_result.def,
@@ -586,3 +582,12 @@ where
         })
     }
 }
+
+// pub fn zip_with_precision(
+//     sig1: LocalSig,
+//     precision1: Precision,
+//     sig2: LocalSig,
+//     precision2: Precision,
+// ) -> impl Iterator<Item = (Var, Var)> {
+//     std::iter::empty()
+// }
