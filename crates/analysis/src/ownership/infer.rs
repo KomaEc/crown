@@ -1,11 +1,10 @@
 use std::ops::Range;
 
-use common::data_structure::assoc::AssocExt;
-use itertools::izip;
+use common::data_structure::{assoc::AssocExt, vec_array::VecArray};
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{Body, Local, Location, Operand, Place, PlaceElem, ProjectionElem},
-    ty::{Ty, TyCtxt, TyKind},
+    ty::{AdtDef, Ty, TyCtxt, TyKind},
 };
 use rustc_type_ir::TyKind::FnDef;
 use smallvec::SmallVec;
@@ -13,7 +12,7 @@ use smallvec::SmallVec;
 use self::boundary::Boundary;
 use super::{AnalysisKind, Precision};
 use crate::{
-    ptr::Measurable,
+    ptr::{abstract_ty, Measurable},
     ssa::{
         constraint::{
             infer::{InferMode, Renamer},
@@ -78,12 +77,12 @@ impl<'a> FnResult<'a> for FnSummary {
 
 #[derive(Clone, Copy)]
 pub struct FnCtxt<'intra, 'tcx> {
-    struct_topology: &'intra StructTopology,
+    struct_topology: &'intra StructTopology<'tcx>,
     tcx: TyCtxt<'tcx>,
     allowed_ptr_depth: Precision,
 }
 
-impl<'intra, 'tcx> Measurable for FnCtxt<'intra, 'tcx> {
+impl<'intra, 'tcx> Measurable<'tcx> for FnCtxt<'intra, 'tcx> {
     fn measure(&self, ty: Ty, ptr_chased: u32) -> crate::ptr::Measure {
         let allowed = self.allowed_ptr_depth as u32;
         let maximum = self.struct_topology.max_precision() as u32;
@@ -131,11 +130,7 @@ impl<'intra, 'tcx> Measurable for FnCtxt<'intra, 'tcx> {
         std::cmp::min(self.allowed_ptr_depth, self.struct_topology.max_precision())
     }
 
-    fn leaf_nodes(
-        &self,
-        adt_def: rustc_middle::ty::AdtDef,
-        ptr_chased: u32,
-    ) -> Option<&[((rustc_hir::def_id::DefId, usize, u32), u32)]> {
+    fn leaf_nodes(&self, adt_def: rustc_middle::ty::AdtDef, ptr_chased: u32) -> &[(Ty<'tcx>, u32)] {
         let allowed = self.allowed_ptr_depth as u32;
         let maximum = self.struct_topology.max_precision() as u32;
         if allowed >= maximum {
@@ -177,6 +172,8 @@ where
             bool,
         ),
     )>,
+    // struct -> field -> [`Range<Var>`]
+    // struct_fields: VecArray<Range<Var>>,
 }
 
 impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
@@ -446,15 +443,13 @@ where
         infer_cx.deref_copy = consume
     }
 
-    /// Note that ownership dominance property gurantees uniqueness, so `*mut *mut T` can be treated
-    /// as two separate pointers. The inference allows transfers like `&move &move -> &&move`, but really
-    /// this doesn't happen because of [`finalize()`]
     fn transfer<const ENSURE_MOVE: bool>(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         ty: Ty,
         lhs_result: Consume<Self::LocalSig>,
         rhs_result: Consume<Self::LocalSig>,
     ) {
+        tracing::debug!("transfer relation: {:?} ~ {:?}", lhs_result, rhs_result);
         let lhs_measure = lhs_result.r#use.size_hint().1.unwrap() as u32;
         let rhs_measure = rhs_result.r#use.size_hint().1.unwrap() as u32;
 
@@ -462,35 +457,197 @@ where
         let rhs_precision = infer_cx.fn_ctxt.determine_precision(ty, rhs_measure);
 
         tracing::debug!("precision: lhs = {lhs_precision}, rhs = {rhs_precision}");
+        // println!("measure: lhs = {lhs_measure}, rhs = {rhs_measure}");
+        // println!("precision: lhs = {lhs_precision}, rhs = {rhs_precision}");
 
-        // for ty in ty.walk() {
-        //     let ty = ty.expect_ty();
-        // }
+        let (ptr_depth, adt_def) = abstract_ty(ty);
 
-        let mut lhs_consumes = lhs_result.clone().transpose();
-        let mut rhs_consumes = rhs_result.clone().transpose();
-
-        tracing::debug!("transfer relation: {:?} ~ {:?}", lhs_result, rhs_result);
-        for (lhs_use, lhs_def, rhs_use, rhs_def) in izip!(
-            lhs_result.r#use,
-            lhs_result.def,
-            rhs_result.r#use,
-            rhs_result.def
-        ) {
-            infer_cx
-                .database
-                .push_assume::<crate::ssa::constraint::Debug>((), lhs_use, false);
-            if ENSURE_MOVE {
+        if ptr_depth as u8 > lhs_precision
+            || ptr_depth as u8 > rhs_precision
+            || lhs_precision == rhs_precision
+        {
+            for (lhs, rhs) in lhs_result.transpose().zip(rhs_result.transpose()) {
                 infer_cx
                     .database
-                    .push_equal::<crate::ssa::constraint::Debug>((), lhs_def, rhs_use);
+                    .push_assume::<crate::ssa::constraint::Debug>((), lhs.r#use, false);
+                if ENSURE_MOVE {
+                    infer_cx
+                        .database
+                        .push_equal::<crate::ssa::constraint::Debug>((), lhs.def, rhs.r#use);
+                    infer_cx
+                        .database
+                        .push_assume::<crate::ssa::constraint::Debug>((), rhs.def, false);
+                } else {
+                    infer_cx
+                        .database
+                        .push_linear::<crate::ssa::constraint::Debug>(
+                            (),
+                            lhs.def,
+                            rhs.def,
+                            rhs.r#use,
+                        )
+                }
+            }
+        } else {
+            for (lhs, rhs) in lhs_result
+                .clone()
+                .transpose()
+                .zip(rhs_result.clone().transpose())
+                .take(ptr_depth as usize)
+            {
                 infer_cx
                     .database
-                    .push_assume::<crate::ssa::constraint::Debug>((), rhs_def, false);
+                    .push_assume::<crate::ssa::constraint::Debug>((), lhs.r#use, false);
+                if ENSURE_MOVE {
+                    infer_cx
+                        .database
+                        .push_equal::<crate::ssa::constraint::Debug>((), lhs.def, rhs.r#use);
+                    infer_cx
+                        .database
+                        .push_assume::<crate::ssa::constraint::Debug>((), rhs.def, false);
+                } else {
+                    infer_cx
+                        .database
+                        .push_linear::<crate::ssa::constraint::Debug>(
+                            (),
+                            lhs.def,
+                            rhs.def,
+                            rhs.r#use,
+                        )
+                }
+            }
+
+            let lhs_precision = lhs_precision - ptr_depth as u8;
+            let rhs_precision = rhs_precision - ptr_depth as u8;
+
+            // println!("ptr_depth: {ptr_depth}, lhs_precision = {lhs_precision}, rhs_precision = {rhs_precision}");
+
+            let lhs_result = lhs_result
+                .repack(|vars| vars.start + ptr_depth..vars.end)
+                .transpose();
+            let rhs_result = rhs_result
+                .repack(|vars| vars.start + ptr_depth..vars.end)
+                .transpose();
+
+            let delta = lhs_precision.abs_diff(rhs_precision);
+
+            let adt_def = adt_def.unwrap();
+            if lhs_precision < rhs_precision {
+                fit(
+                    adt_def,
+                    lhs_result,
+                    lhs_precision,
+                    rhs_result,
+                    delta,
+                    &infer_cx.fn_ctxt,
+                    infer_cx.database,
+                    |lhs, rhs, database| {
+                        database.push_assume::<crate::ssa::constraint::Debug>((), lhs.r#use, false);
+                        if ENSURE_MOVE {
+                            database.push_equal::<crate::ssa::constraint::Debug>(
+                                (),
+                                lhs.def,
+                                rhs.r#use,
+                            );
+                            database.push_assume::<crate::ssa::constraint::Debug>(
+                                (),
+                                rhs.def,
+                                false,
+                            );
+                        } else {
+                            database.push_linear::<crate::ssa::constraint::Debug>(
+                                (),
+                                lhs.def,
+                                rhs.def,
+                                rhs.r#use,
+                            )
+                        }
+                    },
+                );
+
+                // let lhs_ptr_chased = infer_cx.fn_ctxt.max_precision() - lhs_precision;
+
+                // // println!("lhs_ptr_chased = {lhs_ptr_chased}");
+                // let lhs_leaf_nodes = infer_cx.fn_ctxt.leaf_nodes(adt_def, lhs_ptr_chased as u32);
+
+                // let mut count = 0;
+                // // println!("lhs_leaf_nodes: {:?}", lhs_leaf_nodes);
+                // for &(leaf_ext_ty, offset) in lhs_leaf_nodes {
+                //     while count < offset {
+                //         let (Some(lhs), Some(rhs)) = (lhs_result.next(), rhs_result.next()) else { panic!() };
+                //         infer_cx
+                //             .database
+                //             .push_assume::<crate::ssa::constraint::Debug>((), lhs.r#use, false);
+                //         if ENSURE_MOVE {
+                //             infer_cx
+                //                 .database
+                //                 .push_equal::<crate::ssa::constraint::Debug>(
+                //                     (),
+                //                     lhs.def,
+                //                     rhs.r#use,
+                //                 );
+                //             infer_cx
+                //                 .database
+                //                 .push_assume::<crate::ssa::constraint::Debug>((), rhs.def, false);
+                //         } else {
+                //             infer_cx
+                //                 .database
+                //                 .push_linear::<crate::ssa::constraint::Debug>(
+                //                     (),
+                //                     lhs.def,
+                //                     rhs.def,
+                //                     rhs.r#use,
+                //                 )
+                //         }
+                //         count += 1;
+                //     }
+
+                //     let leaf_ext_measure = infer_cx.fn_ctxt.measure(
+                //         leaf_ext_ty,
+                //         infer_cx.fn_ctxt.max_precision() as u32 - delta as u32,
+                //     );
+
+                //     for _ in 0..leaf_ext_measure {
+                //         let _ = rhs_result.next().unwrap();
+                //     }
+                // }
+
+                // assert!(lhs_result.next().is_none());
+                // assert!(rhs_result.next().is_none());
             } else {
-                infer_cx
-                    .database
-                    .push_linear::<crate::ssa::constraint::Debug>((), lhs_def, rhs_def, rhs_use)
+                // lhs_precision > rhs_precision
+
+                fit(
+                    adt_def,
+                    rhs_result,
+                    rhs_precision,
+                    lhs_result,
+                    delta,
+                    &infer_cx.fn_ctxt,
+                    infer_cx.database,
+                    |rhs, lhs, database| {
+                        database.push_assume::<crate::ssa::constraint::Debug>((), lhs.r#use, false);
+                        if ENSURE_MOVE {
+                            database.push_equal::<crate::ssa::constraint::Debug>(
+                                (),
+                                lhs.def,
+                                rhs.r#use,
+                            );
+                            database.push_assume::<crate::ssa::constraint::Debug>(
+                                (),
+                                rhs.def,
+                                false,
+                            );
+                        } else {
+                            database.push_linear::<crate::ssa::constraint::Debug>(
+                                (),
+                                lhs.def,
+                                rhs.def,
+                                rhs.r#use,
+                            )
+                        }
+                    },
+                )
             }
         }
     }
@@ -620,4 +777,38 @@ where
             outter
         })
     }
+}
+
+fn fit<'tcx, T, DB>(
+    adt_def: AdtDef,
+    mut fitter: impl Iterator<Item = T>,
+    fitter_precision: Precision,
+    mut fittee: impl Iterator<Item = T>,
+    delta: Precision,
+    measure: impl Measurable<'tcx>,
+    database: &mut DB,
+    mut on_matched: impl FnMut(T, T, &mut DB),
+) {
+    let fitter_ptr_chased = measure.max_precision() - fitter_precision;
+
+    let fitter_leaf_nodes = measure.leaf_nodes(adt_def, fitter_ptr_chased as u32);
+
+    let mut count = 0;
+    for &(leaf_ext_ty, offset_to_be) in fitter_leaf_nodes {
+        while count < offset_to_be {
+            let (Some(fitter), Some(fittee)) = (fitter.next(), fittee.next()) else { panic!() };
+            on_matched(fitter, fittee, database);
+            count += 1;
+        }
+
+        let leaf_ext_measure =
+            measure.measure(leaf_ext_ty, (measure.max_precision() - delta) as u32);
+
+        for _ in 0..leaf_ext_measure {
+            let _ = fittee.next().unwrap();
+        }
+    }
+
+    assert!(fitter.next().is_none());
+    assert!(fittee.next().is_none());
 }

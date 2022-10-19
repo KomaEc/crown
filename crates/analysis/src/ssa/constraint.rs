@@ -46,13 +46,19 @@ impl std::ops::AddAssign<u32> for Var {
 }
 
 #[inline]
-pub fn local_has_non_zero_measure(local_decl: &LocalDecl, measurable: impl Measurable) -> bool {
+pub fn local_has_non_zero_measure<'tcx>(
+    local_decl: &LocalDecl,
+    measurable: impl Measurable<'tcx>,
+) -> bool {
     local_measure(local_decl, measurable).is_some()
 }
 
 /// test whether a local might be owning
 #[inline]
-pub fn local_measure(local_decl: &LocalDecl, measurable: impl Measurable) -> Option<NonZeroU32> {
+pub fn local_measure<'tcx>(
+    local_decl: &LocalDecl,
+    measurable: impl Measurable<'tcx>,
+) -> Option<NonZeroU32> {
     let ty = local_decl.ty;
     let measure = measurable.measure(ty, 0);
     (!matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp)))
@@ -61,11 +67,11 @@ pub fn local_measure(local_decl: &LocalDecl, measurable: impl Measurable) -> Opt
 }
 
 #[inline]
-pub fn initialize_local(
+pub fn initialize_local<'tcx>(
     local_decl: &LocalDecl,
     gen: &mut Gen,
     database: &mut impl Database,
-    measurable: impl Measurable,
+    measurable: impl Measurable<'tcx>,
 ) -> Option<Range<Var>> {
     local_measure(local_decl, measurable)
         .map(|measure| database.push_vars(gen.new_sigs(measure.get())))

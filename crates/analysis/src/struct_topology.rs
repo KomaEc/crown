@@ -2,7 +2,7 @@ use common::data_structure::vec_array::VecArray;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_middle::ty::{TyCtxt, TyKind};
+use rustc_middle::ty::{Ty, TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
 
 use crate::{
@@ -10,10 +10,11 @@ use crate::{
     ptr::{abstract_ty, Measurable, Measure},
 };
 
-impl Measurable for StructTopology {
+impl<'tcx> Measurable<'tcx> for StructTopology<'tcx> {
     #[inline]
     fn measure(&self, ty: rustc_middle::ty::Ty, ptr_chased: u32) -> Measure {
-        let max_ptr_depth = self.offset_of.len() as u32;
+        // let max_ptr_depth = self.offset_of.len() as u32;
+        let max_ptr_depth = self.max_precision() as u32;
 
         let (ptr_depth, maybe_adt) = abstract_ty(ty);
 
@@ -29,7 +30,6 @@ impl Measurable for StructTopology {
     #[inline]
     fn measure_adt(&self, adt_def: rustc_middle::ty::AdtDef, ptr_chased: u32) -> Measure {
         self.struct_size(&adt_def.did(), ptr_chased)
-            .unwrap_or_default()
     }
 
     #[inline]
@@ -46,24 +46,18 @@ impl Measurable for StructTopology {
 
     fn max_precision(&self) -> Precision {
         // self.max_ptr_depth()
-        self.offset_of.len() as Precision
+        (self.offset_of.len() - 1) as Precision
     }
 
-    fn leaf_nodes(
-        &self,
-        adt_def: rustc_middle::ty::AdtDef,
-        ptr_chased: u32,
-    ) -> Option<&[((rustc_hir::def_id::DefId, usize, u32), u32)]> {
-        let idx = self.did_idx.get(&adt_def.did()).copied()?;
-        if ptr_chased as usize >= self.leaf_nodes.len() {
-            return None;
-        }
-        let leaf_nodes = &self.leaf_nodes[self.offset_of.len() - 1 - ptr_chased as usize];
-        Some(&leaf_nodes[idx])
+    fn leaf_nodes(&self, adt_def: rustc_middle::ty::AdtDef, ptr_chased: u32) -> &[(Ty<'tcx>, u32)] {
+        let idx = self.did_idx[&adt_def.did()];
+        assert!(ptr_chased as usize <= self.offset_of.len());
+        let leaf_nodes = &self.leaf_nodes[self.leaf_nodes.len() - 1 - ptr_chased as usize];
+        &leaf_nodes[idx]
     }
 }
 
-pub struct StructTopology {
+pub struct StructTopology<'tcx> {
     /// Structs in post order of the dependency graph.
     /// Dependency graph encodes direct dependencies between user defined structs.
     /// For instance, in `struct S { f: T } struct T;`
@@ -72,15 +66,15 @@ pub struct StructTopology {
     /// `S` is not considered dependent on `T`
     pub post_order: Vec<DefId>,
     did_idx: FxHashMap<DefId, usize>,
-    /// (precision - 1) -> struct -> field -> aggregate offset start of this field
+    /// precision -> struct -> field -> aggregate offset start of this field
     offset_of: Vec<VecArray<u32>>,
-    /// (precision - 1) -> struct -> Vec<((struct, field, derefs), offset)>
-    leaf_nodes: Vec<VecArray<((DefId, usize, u32), u32)>>,
+    /// precision -> struct -> Vec<(Ty, offset_should_be)>
+    leaf_nodes: Vec<VecArray<(Ty<'tcx>, u32)>>,
 }
 
-impl StructTopology {
+impl<'tcx> StructTopology<'tcx> {
     // TODO refactor using `StructDependency`
-    pub fn new(tcx: TyCtxt, structs: &[DefId]) -> Self {
+    pub fn new(tcx: TyCtxt<'tcx>, structs: &[DefId]) -> Self {
         let mut graph = DiGraphMap::with_capacity(structs.len(), structs.len());
         structs.iter().for_each(|did| {
             graph.add_node(*did);
@@ -110,13 +104,30 @@ impl StructTopology {
             .map(|(idx, &did)| (did, idx))
             .collect();
 
-        let offset_of = vec![];
+        let mut offset_of = VecArray::with_indices_capacity(post_order.len());
+        let mut leaf_nodes = VecArray::with_indices_capacity(post_order.len());
+        for &did in &post_order {
+            let ty = tcx.type_of(did);
+            let Adt(adt_def, _) = ty.kind() else { unreachable!("impossible") };
+            assert!(adt_def.is_struct());
+
+            offset_of.add_item_to_array(0);
+            for _ in adt_def.all_fields() {
+                offset_of.add_item_to_array(0);
+            }
+            offset_of.done_with_array();
+
+            leaf_nodes.add_item_to_array((ty, 0));
+            leaf_nodes.done_with_array();
+        }
+        let offset_of = offset_of.done();
+        let leaf_nodes = leaf_nodes.done();
 
         let mut this = StructTopology {
             post_order,
             did_idx,
-            offset_of,
-            leaf_nodes: vec![],
+            offset_of: vec![offset_of],
+            leaf_nodes: vec![leaf_nodes],
         };
 
         this.increase_precision(tcx);
@@ -130,28 +141,24 @@ impl StructTopology {
     }
 
     #[inline]
-    pub fn struct_size(&self, did: &DefId, ptr_chased: u32) -> Option<Measure> {
-        let idx = self.did_idx.get(did).copied()?;
-        if ptr_chased as usize >= self.offset_of.len() {
-            return None;
-        }
+    pub fn struct_size(&self, did: &DefId, ptr_chased: u32) -> Measure {
+        let Some(idx) = self.did_idx.get(did).copied() else { return 0 };
+        // assert!(ptr_chased as usize <= self.offset_of.len());
         let offset_of = &self.offset_of[self.offset_of.len() - 1 - ptr_chased as usize];
-        Some(offset_of[idx].last().copied().unwrap())
+        offset_of[idx].last().copied().unwrap()
     }
 
     #[inline]
     pub fn field_offsets(&self, did: &DefId, ptr_chased: u32) -> Option<&[Measure]> {
         let idx = self.did_idx.get(did).copied()?;
-        if ptr_chased as usize >= self.offset_of.len() {
-            return None;
-        }
+        // assert!(ptr_chased as usize <= self.offset_of.len());
         let offset_of = &self.offset_of[self.offset_of.len() - 1 - ptr_chased as usize];
         Some(&offset_of[idx])
     }
 
     #[inline]
-    pub fn increase_precision(&mut self, tcx: TyCtxt) {
-        let max_ptr_depth = self.offset_of.len() as u32 + 1;
+    pub fn increase_precision(&mut self, tcx: TyCtxt<'tcx>) {
+        let max_ptr_depth = self.max_precision() as u32 + 1;
 
         let data_capacity = self
             .offset_of
@@ -167,36 +174,39 @@ impl StructTopology {
             let mut offset = 0;
             offset_of.add_item_to_array(offset);
 
-            for (field, field_def) in adt_def.all_fields().enumerate() {
+            for field_def in adt_def.all_fields() {
                 let field_ty = field_def.ty(tcx, subst_ref);
                 let (ptr_depth, maybe_adt) = abstract_ty(field_ty);
                 if ptr_depth >= max_ptr_depth {
-                    leaf_nodes.add_item_to_array((
-                        (did, field, max_ptr_depth - 1),
-                        offset + max_ptr_depth - 1,
-                    ));
+                    let mut leaf_ext_ty = field_ty;
+                    for _ in 0..max_ptr_depth {
+                        leaf_ext_ty = leaf_ext_ty.builtin_deref(true).unwrap().ty;
+                    }
+                    leaf_nodes.add_item_to_array((leaf_ext_ty, offset + max_ptr_depth));
                     offset += max_ptr_depth;
                 } else if let Some(&idx) = maybe_adt.and_then(|adt| self.did_idx.get(&adt.did())) {
                     if ptr_depth == 0 {
-                        for (ctxt, inner_offset) in leaf_nodes
+                        for (leaf_ext_ty, inner_offset) in leaf_nodes
                             .get_constructed(idx)
                             .iter()
                             .copied()
                             .collect::<smallvec::SmallVec<[_; 4]>>()
                         {
-                            leaf_nodes.add_item_to_array((ctxt, offset + inner_offset));
+                            leaf_nodes.add_item_to_array((leaf_ext_ty, offset + inner_offset));
                         }
 
                         offset += offset_of.get_constructed(idx).last().unwrap();
                     } else {
-                        let leaves =
-                            &self.leaf_nodes[(max_ptr_depth - ptr_depth - 1) as usize][idx];
-                        for &(ctxt, inner_offset) in leaves {
-                            leaf_nodes.add_item_to_array((ctxt, offset + ptr_depth + inner_offset));
+                        let leaves = &self.leaf_nodes[(max_ptr_depth - ptr_depth) as usize][idx];
+                        for &(leaf_ext_ty, inner_offset) in leaves {
+                            leaf_nodes.add_item_to_array((
+                                leaf_ext_ty,
+                                offset + ptr_depth + inner_offset,
+                            ));
                         }
 
                         offset += ptr_depth
-                            + self.offset_of[(max_ptr_depth - ptr_depth - 1) as usize][idx]
+                            + self.offset_of[(max_ptr_depth - ptr_depth) as usize][idx]
                                 .last()
                                 .unwrap();
                     }
@@ -318,21 +328,19 @@ mod tests {
             assert_eq!(
                 struct_topology
                     .leaf_nodes(node, 1)
-                    .unwrap()
                     .iter()
                     .map(|x| x.1)
                     .collect::<Vec<_>>(),
-                vec![1, 2, 4, 5]
+                vec![2, 3, 5, 6]
             );
 
             assert_eq!(
                 struct_topology
                     .leaf_nodes(node, 2)
-                    .unwrap()
                     .iter()
                     .map(|x| x.1)
                     .collect::<Vec<_>>(),
-                vec![0, 1]
+                vec![1, 2]
             );
         })
     }
@@ -356,31 +364,28 @@ mod tests {
             assert_eq!(
                 struct_topology
                     .leaf_nodes(node, 0)
-                    .unwrap()
                     .iter()
                     .map(|x| x.1)
                     .collect::<Vec<_>>(),
-                vec![0, 1]
+                vec![1, 2]
             );
             struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
                     .leaf_nodes(node, 0)
-                    .unwrap()
                     .iter()
                     .map(|x| x.1)
                     .collect::<Vec<_>>(),
-                vec![1, 3]
+                vec![2, 4]
             );
             struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
                     .leaf_nodes(node, 0)
-                    .unwrap()
                     .iter()
                     .map(|x| x.1)
                     .collect::<Vec<_>>(),
-                vec![2, 3, 6, 7]
+                vec![3, 4, 7, 8]
             );
         })
     }
@@ -403,32 +408,56 @@ mod tests {
             assert_eq!(
                 struct_topology
                     .leaf_nodes(node, 0)
-                    .unwrap()
                     .iter()
                     .map(|x| x.1)
                     .collect::<Vec<_>>(),
-                vec![0, 1]
+                vec![1, 2]
             );
             struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
                     .leaf_nodes(node, 0)
-                    .unwrap()
                     .iter()
                     .map(|x| x.1)
                     .collect::<Vec<_>>(),
-                vec![1, 2, 4]
+                vec![2, 3, 5]
             );
             struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
                     .leaf_nodes(node, 0)
-                    .unwrap()
                     .iter()
                     .map(|x| x.1)
                     .collect::<Vec<_>>(),
-                vec![2, 3, 5, 8, 9]
+                vec![3, 4, 6, 9, 10]
             );
         })
     }
+
+    // const TEXT5: &str = "struct S { f: *mut Data, g: *mut S } struct Data { f: i32 }";
+    // #[test]
+    // fn test5() {
+    //     common::test::run_compiler_with(TEXT5.into(), |tcx, _, structs| {
+    //         let mut struct_topology = StructTopology::new(tcx, &structs);
+    //         let &node = struct_topology
+    //             .post_order
+    //             .iter()
+    //             .find(|&&did| {
+    //                 let "S" = tcx.def_path_str(did).as_str() else { return false };
+    //                 true
+    //             })
+    //             .unwrap();
+    //         let node = tcx.adt_def(node);
+    //         println!("{:?}", struct_topology.leaf_nodes(node, 0).unwrap());
+    //         struct_topology.increase_precision(tcx);
+    //         println!("{:?}", struct_topology.leaf_nodes(node, 0).unwrap());
+    //         struct_topology.increase_precision(tcx);
+    //         println!("{:?}", struct_topology.leaf_nodes(node, 0).unwrap());
+    //         for &(leaf_ext_ty, _) in struct_topology.leaf_nodes(node, 0).unwrap() {
+    //             let delta = 1;
+    //             let leaf_ext_measure = struct_topology.measure(leaf_ext_ty, struct_topology.max_precision() as u32 - delta);
+    //             println!("leaf_ext_ty ~ {leaf_ext_measure}")
+    //         }
+    //     })
+    // }
 }

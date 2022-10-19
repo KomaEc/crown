@@ -46,7 +46,7 @@ use struct_topology::StructTopology;
 pub struct CrateCtxt<'tcx> {
     tcx: TyCtxt<'tcx>,
     call_graph: CallGraph,
-    struct_topology: StructTopology,
+    struct_topology: StructTopology<'tcx>,
 }
 
 impl<'tcx> From<common::CrateData<'tcx>> for CrateCtxt<'tcx> {

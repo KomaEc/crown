@@ -4,7 +4,7 @@ use crate::ownership::Precision;
 
 pub type Measure = u32;
 
-pub trait Measurable {
+pub trait Measurable<'tcx> {
     #[inline]
     fn contains_ptr(&self, ty: Ty) -> bool {
         // self.measure(ty, 0) > 0
@@ -23,12 +23,7 @@ pub trait Measurable {
 
     fn field_offset(&self, adt_def: AdtDef, field: usize, ptr_chased: u32) -> Measure;
 
-    // fn leaf_nodes(&self, adt_def: AdtDef, ptr_chased: u32) -> Option
-    fn leaf_nodes(
-        &self,
-        adt_def: AdtDef,
-        ptr_chased: u32,
-    ) -> Option<&[((rustc_hir::def_id::DefId, usize, u32), u32)]>;
+    fn leaf_nodes(&self, adt_def: AdtDef, ptr_chased: u32) -> &[(Ty<'tcx>, u32)];
 
     fn max_precision(&self) -> Precision;
 
@@ -47,7 +42,7 @@ pub trait Measurable {
     }
 }
 
-impl<M: Measurable> Measurable for &M {
+impl<'tcx, M: Measurable<'tcx>> Measurable<'tcx> for &M {
     #[inline]
     fn measure(&self, ty: Ty, ptr_chased: u32) -> Measure {
         (*self).measure(ty, ptr_chased)
@@ -68,11 +63,7 @@ impl<M: Measurable> Measurable for &M {
         (*self).max_precision()
     }
 
-    fn leaf_nodes(
-        &self,
-        adt_def: AdtDef,
-        ptr_chased: u32,
-    ) -> Option<&[((rustc_hir::def_id::DefId, usize, u32), u32)]> {
+    fn leaf_nodes(&self, adt_def: AdtDef, ptr_chased: u32) -> &[(Ty<'tcx>, u32)] {
         (*self).leaf_nodes(adt_def, ptr_chased)
     }
 }
