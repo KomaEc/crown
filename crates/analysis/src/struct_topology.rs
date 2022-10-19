@@ -106,7 +106,7 @@ impl StructTopology {
             leaf_nodes: vec![],
         };
 
-        this.next_stage(tcx);
+        this.increase_precision(tcx);
 
         this
     }
@@ -151,7 +151,7 @@ impl StructTopology {
     }
 
     #[inline]
-    pub fn next_stage(&mut self, tcx: TyCtxt) {
+    pub fn increase_precision(&mut self, tcx: TyCtxt) {
         let max_ptr_depth = self.offset_of.len() as u32 + 1;
 
         let data_capacity = self
@@ -313,8 +313,8 @@ mod tests {
                 })
                 .unwrap();
 
-            struct_topology.next_stage(tcx);
-            struct_topology.next_stage(tcx);
+            struct_topology.increase_precision(tcx);
+            struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
                     .leaf_nodes(&node, 1)
@@ -361,7 +361,7 @@ mod tests {
                     .collect::<Vec<_>>(),
                 vec![0, 1]
             );
-            struct_topology.next_stage(tcx);
+            struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
                     .leaf_nodes(&node, 0)
@@ -371,7 +371,7 @@ mod tests {
                     .collect::<Vec<_>>(),
                 vec![1, 3]
             );
-            struct_topology.next_stage(tcx);
+            struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
                     .leaf_nodes(&node, 0)
@@ -407,7 +407,7 @@ mod tests {
                     .collect::<Vec<_>>(),
                 vec![0, 1]
             );
-            struct_topology.next_stage(tcx);
+            struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
                     .leaf_nodes(&node, 0)
@@ -417,7 +417,7 @@ mod tests {
                     .collect::<Vec<_>>(),
                 vec![1, 2, 4]
             );
-            struct_topology.next_stage(tcx);
+            struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
                     .leaf_nodes(&node, 0)

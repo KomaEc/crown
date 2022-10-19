@@ -150,9 +150,9 @@ fn solve_crate(
             inter_ctxt
         }
         Right(previous_results) => {
-            crate_ctxt.struct_topology.next_stage(crate_ctxt.tcx);
+            crate_ctxt.struct_topology.increase_precision(crate_ctxt.tcx);
             let (inter_ctxt, fns) =
-                previous_results.next_stage(crate_ctxt, &mut gen, &mut database);
+                previous_results.increase_precision(crate_ctxt, &mut gen, &mut database);
             for (did, ssa_state, precision) in fns {
                 let body = crate_ctxt.tcx.optimized_mir(did);
                 let fn_summary = solve_body(
@@ -301,7 +301,7 @@ impl<'a> FnResult<'a> for (&'a FnSummary, &'a [Ownership]) {
 pub type WholeProgramInterCtxt = FxHashMap<DefId, FnSig<Option<Param<Range<Var>>>>>;
 
 impl WholeProgramAnalysisResults {
-    pub fn next_stage<'tcx>(
+    pub fn increase_precision<'tcx>(
         self,
         crate_ctxt: &CrateCtxt<'tcx>,
         gen: &mut Gen,
