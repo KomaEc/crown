@@ -123,6 +123,17 @@ impl Consume<SSAIdx> {
     }
 }
 
+impl<Iter, T> Consume<Iter>
+where
+    Iter: Iterator<Item = T>,
+{
+    pub fn transpose(self) -> impl Iterator<Item = Consume<T>> {
+        self.r#use
+            .zip(self.def)
+            .map(|(r#use, def)| Consume { r#use, def })
+    }
+}
+
 const _: () = assert!(0 == std::mem::size_of::<Consume<()>>());
 
 #[derive(Clone, Copy, Debug)]

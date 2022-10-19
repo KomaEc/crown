@@ -1,5 +1,7 @@
 use rustc_middle::ty::{AdtDef, Ty};
 
+use crate::ownership::Precision;
+
 pub type Measure = u32;
 
 pub trait Measurable {
@@ -20,6 +22,22 @@ pub trait Measurable {
     fn measure_adt(&self, adt_def: AdtDef, ptr_chased: u32) -> Measure;
 
     fn measure_field_offset(&self, adt_def: AdtDef, field: usize, ptr_chased: u32) -> Measure;
+
+    fn max_precision(&self) -> Precision;
+
+    /// [`determine_precision(ty, _)`] is the inverse of [`measure(ty, _)`]
+    fn determine_precision(&self, ty: Ty, measure: Measure) -> Precision {
+        let max_precision = self.max_precision();
+        assert!(max_precision > 0);
+        let mut ptr_chased = max_precision;
+        while self.measure(ty, ptr_chased as u32) < measure {
+            ptr_chased = ptr_chased.checked_sub(1).unwrap()
+        }
+
+        assert_eq!(self.measure(ty, ptr_chased as u32), measure);
+
+        max_precision - ptr_chased
+    }
 }
 
 impl<M: Measurable> Measurable for &M {
@@ -36,6 +54,11 @@ impl<M: Measurable> Measurable for &M {
     #[inline]
     fn measure_field_offset(&self, adt_def: AdtDef, field: usize, ptr_chased: u32) -> Measure {
         (*self).measure_field_offset(adt_def, field, ptr_chased)
+    }
+
+    #[inline]
+    fn max_precision(&self) -> Precision {
+        (*self).max_precision()
     }
 }
 

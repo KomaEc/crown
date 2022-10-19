@@ -52,7 +52,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgramAnalysis {
         let mut results = solve_crate(crate_ctxt, Left(noalias_params))?;
 
         // second stage
-        for _ in 1..required_precision {
+        for _ in 1..std::cmp::max(required_precision, 3) {
             results = solve_crate(crate_ctxt, Right(results))?;
         }
 
@@ -87,7 +87,7 @@ fn solve_body<'tcx>(
 
     database.solver.push();
 
-    let mut rn = Renamer::new(body, ssa_state);
+    let mut rn = Renamer::new(body, ssa_state, crate_ctxt.tcx);
 
     let mut infer_cx = InferCtxt::new(
         crate_ctxt.with_precision(precision),
@@ -140,6 +140,7 @@ fn solve_crate(
                     crate_ctxt,
                     // TODO
                     max_ptr_depth,
+                    // 2,
                     &inter_ctxt,
                     &mut gen,
                     &mut database,

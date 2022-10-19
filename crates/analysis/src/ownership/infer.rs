@@ -86,7 +86,7 @@ pub struct FnCtxt<'intra, 'tcx> {
 impl<'intra, 'tcx> Measurable for FnCtxt<'intra, 'tcx> {
     fn measure(&self, ty: Ty, ptr_chased: u32) -> crate::ptr::Measure {
         let allowed = self.allowed_ptr_depth as u32;
-        let maximum = self.struct_topology.max_ptr_depth();
+        let maximum = self.struct_topology.max_precision() as u32;
         if allowed >= maximum {
             self.struct_topology.measure(ty, ptr_chased)
         } else {
@@ -101,7 +101,7 @@ impl<'intra, 'tcx> Measurable for FnCtxt<'intra, 'tcx> {
         ptr_chased: u32,
     ) -> crate::ptr::Measure {
         let allowed = self.allowed_ptr_depth as u32;
-        let maximum = self.struct_topology.max_ptr_depth();
+        let maximum = self.struct_topology.max_precision() as u32;
         if allowed >= maximum {
             self.struct_topology.measure_adt(adt_def, ptr_chased)
         } else {
@@ -117,7 +117,7 @@ impl<'intra, 'tcx> Measurable for FnCtxt<'intra, 'tcx> {
         ptr_chased: u32,
     ) -> crate::ptr::Measure {
         let allowed = self.allowed_ptr_depth as u32;
-        let maximum = self.struct_topology.max_ptr_depth();
+        let maximum = self.struct_topology.max_precision() as u32;
         if allowed >= maximum {
             self.struct_topology
                 .measure_field_offset(adt_def, field, ptr_chased)
@@ -128,6 +128,10 @@ impl<'intra, 'tcx> Measurable for FnCtxt<'intra, 'tcx> {
                 maximum - allowed + ptr_chased,
             )
         }
+    }
+
+    fn max_precision(&self) -> Precision {
+        std::cmp::min(self.allowed_ptr_depth, self.struct_topology.max_precision())
     }
 }
 
@@ -435,9 +439,25 @@ where
     /// this doesn't happen because of [`finalize()`]
     fn transfer<const ENSURE_MOVE: bool>(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
+        ty: Ty,
         lhs_result: Consume<Self::LocalSig>,
         rhs_result: Consume<Self::LocalSig>,
     ) {
+        let lhs_measure = lhs_result.r#use.size_hint().1.unwrap() as u32;
+        let rhs_measure = rhs_result.r#use.size_hint().1.unwrap() as u32;
+
+        let lhs_precision = infer_cx.fn_ctxt.determine_precision(ty, lhs_measure);
+        let rhs_precision = infer_cx.fn_ctxt.determine_precision(ty, rhs_measure);
+
+        tracing::debug!("precision: lhs = {lhs_precision}, rhs = {rhs_precision}");
+
+        // for ty in ty.walk() {
+        //     let ty = ty.expect_ty();
+        // }
+
+        let mut lhs_consumes = lhs_result.clone().transpose();
+        let mut rhs_consumes = rhs_result.clone().transpose();
+
         tracing::debug!("transfer relation: {:?} ~ {:?}", lhs_result, rhs_result);
         for (lhs_use, lhs_def, rhs_use, rhs_def) in izip!(
             lhs_result.r#use,
@@ -465,12 +485,17 @@ where
 
     fn cast<const ENSURE_MOVE: bool>(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
+        ty: Ty,
         lhs: Consume<Self::LocalSig>,
         rhs: Consume<Self::LocalSig>,
     ) {
-        let lhs = lhs.repack(|sigs| sigs.start..sigs.start + 1u32);
-        let rhs = rhs.repack(|sigs| sigs.start..sigs.start + 1u32);
-        Self::transfer::<ENSURE_MOVE>(infer_cx, lhs, rhs)
+        if ty.is_unsafe_ptr() || ty.is_box() || ty.is_region_ptr() {
+            let lhs = lhs.repack(|sigs| sigs.start..sigs.start + 1u32);
+            let rhs = rhs.repack(|sigs| sigs.start..sigs.start + 1u32);
+            Self::transfer::<ENSURE_MOVE>(infer_cx, ty, lhs, rhs)
+        } else {
+            todo!("handling casts between structs are not supported")
+        }
     }
 
     #[inline]
@@ -582,56 +607,5 @@ where
             Self::assume(infer_cx, inner, false);
             outter
         })
-    }
-}
-
-
-pub struct Signature {
-    ptr: Range<Var>,
-    adt: Vec<Signature>,
-}
-
-impl Signature {
-    pub fn unfold(&self) -> Range<Var> {
-        let start = self.ptr.start;
-        let end = if self.adt.is_empty() {
-            self.ptr.end
-        } else {
-            self.adt.last().unwrap().unfold().end
-        };
-        Range { start, end }
-    }
-}
-
-pub struct Shape {
-    ptr: usize,
-    adt: Vec<Shape>,
-}
-
-impl Shape {
-    fn fold_aux(&self, vars: Range<Var>) -> (Signature, usize) {
-
-        let ptr = vars.start..vars.start + self.ptr;
-
-        
-        if self.adt.is_empty() {
-            return (Signature { ptr, adt: vec![] }, self.ptr)
-        }
-
-        let mut end = vars.start + self.ptr;
-
-        let adt = self.adt.iter().map(|shape| {
-            let (signature, size) = shape.fold_aux(end..vars.end);
-            end = end + size;
-            signature
-        }).collect();
-
-        assert_eq!(end, vars.end);
-
-        (Signature { ptr, adt }, vars.count())
-    }
-
-    pub fn fold(&self, vars: Range<Var>) -> Signature {
-        self.fold_aux(vars).0
     }
 }

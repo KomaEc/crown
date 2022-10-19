@@ -9,7 +9,7 @@ use rustc_middle::{
         NonDivergingIntrinsic, Operand, Place, Rvalue, Statement, StatementKind, Terminator,
         TerminatorKind,
     },
-    ty::Ty,
+    ty::{Ty, TyCtxt},
 };
 use rustc_type_ir::TyKind;
 
@@ -50,12 +50,14 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     fn transfer<const ENSURE_MOVE: bool>(
         infer_cx: &mut Self::Ctxt,
+        ty: Ty,
         lhs_result: Consume<Self::LocalSig>,
         rhs_result: Consume<Self::LocalSig>,
     );
 
     fn cast<const ENSURE_MOVE: bool>(
         infer_cx: &mut Self::Ctxt,
+        ty: Ty,
         lhs: Consume<Self::LocalSig>,
         rhs: Consume<Self::LocalSig>,
     );
@@ -143,6 +145,7 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
     #[inline]
     fn transfer<const ENSURE_MOVE: bool>(
         (): &mut Self::Ctxt,
+        _: Ty,
         Consume { r#use: (), def: () }: Consume<Self::LocalSig>,
         Consume { r#use: (), def: () }: Consume<Self::LocalSig>,
     ) {
@@ -151,6 +154,7 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
     #[inline]
     fn cast<const ENSURE_MOVE: bool>(
         (): &mut Self::Ctxt,
+        _: Ty,
         Consume { r#use: (), def: () }: Consume<Self::LocalSig>,
         Consume { r#use: (), def: () }: Consume<Self::LocalSig>,
     ) {
@@ -187,6 +191,7 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
 }
 
 pub struct Renamer<'rn, 'tcx> {
+    tcx: TyCtxt<'tcx>,
     body: &'rn Body<'tcx>,
     pub state: SSAState,
 }
@@ -208,8 +213,8 @@ where
 }
 
 impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
-    pub fn new(body: &'rn Body<'tcx>, state: SSAState) -> Self {
-        Renamer { body, state }
+    pub fn new(body: &'rn Body<'tcx>, state: SSAState, tcx: TyCtxt<'tcx>) -> Self {
+        Renamer { body, state, tcx }
     }
 
     pub fn go<'db, Infer>(&mut self, mut infer_cx: impl BorrowMut<Infer::Ctxt>)
@@ -410,6 +415,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         let lhs = place;
         let rhs = rvalue;
 
+        let stmt_ty = lhs.ty(self.body, self.tcx).ty;
+
         match rhs {
             Rvalue::Use(Operand::Constant(_)) => {
                 if let Some(lhs_consume) =
@@ -475,9 +482,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     (Some(lhs_consume), None) => Infer::unknown_source(infer_cx, lhs_consume),
                     (Some(lhs_consume), Some(rhs_consume)) => {
                         if operand.is_move() {
-                            Infer::transfer::<true>(infer_cx, lhs_consume, rhs_consume)
+                            Infer::transfer::<true>(infer_cx, stmt_ty, lhs_consume, rhs_consume)
                         } else {
-                            Infer::transfer::<false>(infer_cx, lhs_consume, rhs_consume)
+                            Infer::transfer::<false>(infer_cx, stmt_ty, lhs_consume, rhs_consume)
                         }
                     }
                 }
@@ -510,9 +517,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     (Some(lhs_consume), None) => Infer::unknown_source(infer_cx, lhs_consume),
                     (Some(lhs_consume), Some(rhs_consume)) => {
                         if operand.is_move() {
-                            Infer::cast::<true>(infer_cx, lhs_consume, rhs_consume)
+                            Infer::cast::<true>(infer_cx, stmt_ty, lhs_consume, rhs_consume)
                         } else {
-                            Infer::cast::<false>(infer_cx, lhs_consume, rhs_consume)
+                            Infer::cast::<false>(infer_cx, stmt_ty, lhs_consume, rhs_consume)
                         }
                     }
                 }

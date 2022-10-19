@@ -155,7 +155,7 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for IntraProcedural {
             let dominance_frontier = compute_dominance_frontier(body);
             let definitions = initial_definitions(body, crate_ctxt);
             let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
-            let mut rn = Renamer::new(body, ssa_state);
+            let mut rn = Renamer::new(body, ssa_state, crate_ctxt.tcx);
 
             let mut gen = Gen::new();
             let mut database = CadicalDatabase::new();

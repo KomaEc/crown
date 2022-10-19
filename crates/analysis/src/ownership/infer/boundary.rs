@@ -129,6 +129,7 @@ where
                                 r#use: mut param_use,
                                 def: mut param_def,
                             } = output_param;
+                            assert!(param_use.size_hint().1.unwrap() > 0);
                             if is_ref {
                                 param_use.start += 1;
                                 param_def.start += 1;
@@ -184,7 +185,9 @@ where
         for (input, sigs) in params.zip(fn_sig.iter().skip(1)) {
             match (input, sigs) {
                 (Some(input), Some(sigs)) => {
-                    for (input, sig) in input.zip(sigs.clone().to_input()) {
+                    let sigs = sigs.clone().to_input();
+                    assert_eq!(input.size_hint().1.unwrap(), sigs.size_hint().1.unwrap());
+                    for (input, sig) in input.zip(sigs) {
                         database.push_equal::<crate::ssa::constraint::Debug>((), input, sig)
                     }
                 }
@@ -207,6 +210,7 @@ where
 
         if let Some((arg, param)) = ret_arg.zip(ret_param) {
             let param = param.expect_normal();
+            assert_eq!(arg.size_hint().1.unwrap(), param.size_hint().1.unwrap());
             for (arg, param) in arg.zip(param) {
                 database.push_equal::<crate::ssa::constraint::Debug>((), arg, param);
             }
@@ -216,6 +220,7 @@ where
             if let Some((param, arg)) = param.zip(arg) {
                 if let Some(param) = param.to_output() {
                     // if output then output
+                    assert_eq!(arg.size_hint().1.unwrap(), param.size_hint().1.unwrap());
                     for (arg, param) in arg.zip(param) {
                         database.push_equal::<crate::ssa::constraint::Debug>((), arg, param);
                     }
