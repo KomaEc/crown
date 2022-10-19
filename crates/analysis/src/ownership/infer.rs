@@ -110,7 +110,7 @@ impl<'intra, 'tcx> Measurable for FnCtxt<'intra, 'tcx> {
         }
     }
 
-    fn measure_field_offset(
+    fn field_offset(
         &self,
         adt_def: rustc_middle::ty::AdtDef,
         field: usize,
@@ -120,18 +120,30 @@ impl<'intra, 'tcx> Measurable for FnCtxt<'intra, 'tcx> {
         let maximum = self.struct_topology.max_precision() as u32;
         if allowed >= maximum {
             self.struct_topology
-                .measure_field_offset(adt_def, field, ptr_chased)
+                .field_offset(adt_def, field, ptr_chased)
         } else {
-            self.struct_topology.measure_field_offset(
-                adt_def,
-                field,
-                maximum - allowed + ptr_chased,
-            )
+            self.struct_topology
+                .field_offset(adt_def, field, maximum - allowed + ptr_chased)
         }
     }
 
     fn max_precision(&self) -> Precision {
         std::cmp::min(self.allowed_ptr_depth, self.struct_topology.max_precision())
+    }
+
+    fn leaf_nodes(
+        &self,
+        adt_def: rustc_middle::ty::AdtDef,
+        ptr_chased: u32,
+    ) -> Option<&[((rustc_hir::def_id::DefId, usize, u32), u32)]> {
+        let allowed = self.allowed_ptr_depth as u32;
+        let maximum = self.struct_topology.max_precision() as u32;
+        if allowed >= maximum {
+            self.struct_topology.leaf_nodes(adt_def, ptr_chased)
+        } else {
+            self.struct_topology
+                .leaf_nodes(adt_def, maximum - allowed + ptr_chased)
+        }
     }
 }
 
@@ -262,7 +274,7 @@ where
                     proj_start_offset +=
                         infer_cx
                             .fn_ctxt
-                            .measure_field_offset(*adt_def, field.index(), ptr_chased);
+                            .field_offset(*adt_def, field.index(), ptr_chased);
                     base_ty = *ty;
                     // adt_gated = true;
                 }

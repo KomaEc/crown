@@ -33,7 +33,7 @@ impl Measurable for StructTopology {
     }
 
     #[inline]
-    fn measure_field_offset(
+    fn field_offset(
         &self,
         adt_def: rustc_middle::ty::AdtDef,
         field: usize,
@@ -47,6 +47,19 @@ impl Measurable for StructTopology {
     fn max_precision(&self) -> Precision {
         // self.max_ptr_depth()
         self.offset_of.len() as Precision
+    }
+
+    fn leaf_nodes(
+        &self,
+        adt_def: rustc_middle::ty::AdtDef,
+        ptr_chased: u32,
+    ) -> Option<&[((rustc_hir::def_id::DefId, usize, u32), u32)]> {
+        let idx = self.did_idx.get(&adt_def.did()).copied()?;
+        if ptr_chased as usize >= self.leaf_nodes.len() {
+            return None;
+        }
+        let leaf_nodes = &self.leaf_nodes[self.offset_of.len() - 1 - ptr_chased as usize];
+        Some(&leaf_nodes[idx])
     }
 }
 
@@ -137,20 +150,6 @@ impl StructTopology {
     }
 
     #[inline]
-    pub fn leaf_nodes(
-        &self,
-        did: &DefId,
-        ptr_chased: u32,
-    ) -> Option<&[((DefId, usize, u32), u32)]> {
-        let idx = self.did_idx.get(did).copied()?;
-        if ptr_chased as usize >= self.leaf_nodes.len() {
-            return None;
-        }
-        let leaf_nodes = &self.leaf_nodes[self.offset_of.len() - 1 - ptr_chased as usize];
-        Some(&leaf_nodes[idx])
-    }
-
-    #[inline]
     pub fn increase_precision(&mut self, tcx: TyCtxt) {
         let max_ptr_depth = self.offset_of.len() as u32 + 1;
 
@@ -224,7 +223,7 @@ mod tests {
     use common::CrateData;
 
     use super::StructTopology;
-    use crate::CrateCtxt;
+    use crate::{ptr::Measurable, CrateCtxt};
 
     const TEXT1: &str = "
     struct s {
@@ -312,12 +311,13 @@ mod tests {
                     true
                 })
                 .unwrap();
+            let node = tcx.adt_def(node);
 
             struct_topology.increase_precision(tcx);
             struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
-                    .leaf_nodes(&node, 1)
+                    .leaf_nodes(node, 1)
                     .unwrap()
                     .iter()
                     .map(|x| x.1)
@@ -327,7 +327,7 @@ mod tests {
 
             assert_eq!(
                 struct_topology
-                    .leaf_nodes(&node, 2)
+                    .leaf_nodes(node, 2)
                     .unwrap()
                     .iter()
                     .map(|x| x.1)
@@ -350,11 +350,12 @@ mod tests {
                     true
                 })
                 .unwrap();
+            let node = tcx.adt_def(node);
             // println!("{:?}", struct_topology.leaf_nodes(&node, 0).unwrap());
 
             assert_eq!(
                 struct_topology
-                    .leaf_nodes(&node, 0)
+                    .leaf_nodes(node, 0)
                     .unwrap()
                     .iter()
                     .map(|x| x.1)
@@ -364,7 +365,7 @@ mod tests {
             struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
-                    .leaf_nodes(&node, 0)
+                    .leaf_nodes(node, 0)
                     .unwrap()
                     .iter()
                     .map(|x| x.1)
@@ -374,7 +375,7 @@ mod tests {
             struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
-                    .leaf_nodes(&node, 0)
+                    .leaf_nodes(node, 0)
                     .unwrap()
                     .iter()
                     .map(|x| x.1)
@@ -397,10 +398,11 @@ mod tests {
                     true
                 })
                 .unwrap();
+            let node = tcx.adt_def(node);
             // println!("{:?}", struct_topology.leaf_nodes(&node, 0).unwrap());
             assert_eq!(
                 struct_topology
-                    .leaf_nodes(&node, 0)
+                    .leaf_nodes(node, 0)
                     .unwrap()
                     .iter()
                     .map(|x| x.1)
@@ -410,7 +412,7 @@ mod tests {
             struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
-                    .leaf_nodes(&node, 0)
+                    .leaf_nodes(node, 0)
                     .unwrap()
                     .iter()
                     .map(|x| x.1)
@@ -420,7 +422,7 @@ mod tests {
             struct_topology.increase_precision(tcx);
             assert_eq!(
                 struct_topology
-                    .leaf_nodes(&node, 0)
+                    .leaf_nodes(node, 0)
                     .unwrap()
                     .iter()
                     .map(|x| x.1)

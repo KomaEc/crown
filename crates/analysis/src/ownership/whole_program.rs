@@ -150,7 +150,9 @@ fn solve_crate(
             inter_ctxt
         }
         Right(previous_results) => {
-            crate_ctxt.struct_topology.increase_precision(crate_ctxt.tcx);
+            crate_ctxt
+                .struct_topology
+                .increase_precision(crate_ctxt.tcx);
             let (inter_ctxt, fns) =
                 previous_results.increase_precision(crate_ctxt, &mut gen, &mut database);
             for (did, ssa_state, precision) in fns {

@@ -21,7 +21,14 @@ pub trait Measurable {
 
     fn measure_adt(&self, adt_def: AdtDef, ptr_chased: u32) -> Measure;
 
-    fn measure_field_offset(&self, adt_def: AdtDef, field: usize, ptr_chased: u32) -> Measure;
+    fn field_offset(&self, adt_def: AdtDef, field: usize, ptr_chased: u32) -> Measure;
+
+    // fn leaf_nodes(&self, adt_def: AdtDef, ptr_chased: u32) -> Option
+    fn leaf_nodes(
+        &self,
+        adt_def: AdtDef,
+        ptr_chased: u32,
+    ) -> Option<&[((rustc_hir::def_id::DefId, usize, u32), u32)]>;
 
     fn max_precision(&self) -> Precision;
 
@@ -52,13 +59,21 @@ impl<M: Measurable> Measurable for &M {
     }
 
     #[inline]
-    fn measure_field_offset(&self, adt_def: AdtDef, field: usize, ptr_chased: u32) -> Measure {
-        (*self).measure_field_offset(adt_def, field, ptr_chased)
+    fn field_offset(&self, adt_def: AdtDef, field: usize, ptr_chased: u32) -> Measure {
+        (*self).field_offset(adt_def, field, ptr_chased)
     }
 
     #[inline]
     fn max_precision(&self) -> Precision {
         (*self).max_precision()
+    }
+
+    fn leaf_nodes(
+        &self,
+        adt_def: AdtDef,
+        ptr_chased: u32,
+    ) -> Option<&[((rustc_hir::def_id::DefId, usize, u32), u32)]> {
+        (*self).leaf_nodes(adt_def, ptr_chased)
     }
 }
 
