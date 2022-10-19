@@ -172,7 +172,10 @@ impl StructTopology {
                 let field_ty = field_def.ty(tcx, subst_ref);
                 let (ptr_depth, maybe_adt) = abstract_ty(field_ty);
                 if ptr_depth >= max_ptr_depth {
-                    leaf_nodes.add_item_to_array(((did, field, max_ptr_depth - 1), offset + max_ptr_depth - 1));
+                    leaf_nodes.add_item_to_array((
+                        (did, field, max_ptr_depth - 1),
+                        offset + max_ptr_depth - 1,
+                    ));
                     offset += max_ptr_depth;
                 } else if let Some(&idx) = maybe_adt.and_then(|adt| self.did_idx.get(&adt.did())) {
                     if ptr_depth == 0 {
@@ -294,23 +297,43 @@ mod tests {
         })
     }
 
-    const TEXT2: &str = "struct Node { left: *mut Node, right: *mut Node }";
+    const TEXT2: &str =
+        "struct Node { data: Data, left: *mut Node, right: *mut Node } struct Data;";
 
     #[test]
     fn test2() {
         common::test::run_compiler_with(TEXT2.into(), |tcx, _, structs| {
             let mut struct_topology = StructTopology::new(tcx, &structs);
-            let node = struct_topology.post_order[0];
-            // println!("{:?}", struct_topology.leaf_nodes(&node, 0).unwrap());
+            let &node = struct_topology
+                .post_order
+                .iter()
+                .find(|&&did| {
+                    let "Node" = tcx.def_path_str(did).as_str() else { return false };
+                    true
+                })
+                .unwrap();
 
             struct_topology.next_stage(tcx);
             struct_topology.next_stage(tcx);
-            // println!("{:?}", struct_topology.leaf_nodes(&node, 1).unwrap());
-            assert_eq!(struct_topology.leaf_nodes(&node, 1).unwrap().iter().map(|x| x.1).collect::<Vec<_>>(), vec![1, 2, 4, 5]);
+            assert_eq!(
+                struct_topology
+                    .leaf_nodes(&node, 1)
+                    .unwrap()
+                    .iter()
+                    .map(|x| x.1)
+                    .collect::<Vec<_>>(),
+                vec![1, 2, 4, 5]
+            );
 
-            // println!("{:?}", struct_topology.leaf_nodes(&node, 2).unwrap());
-            assert_eq!(struct_topology.leaf_nodes(&node, 2).unwrap().iter().map(|x| x.1).collect::<Vec<_>>(), vec![0, 1]);
-
+            assert_eq!(
+                struct_topology
+                    .leaf_nodes(&node, 2)
+                    .unwrap()
+                    .iter()
+                    .map(|x| x.1)
+                    .collect::<Vec<_>>(),
+                vec![0, 1]
+            );
         })
     }
 
@@ -319,15 +342,45 @@ mod tests {
     fn test3() {
         common::test::run_compiler_with(TEXT3.into(), |tcx, _, structs| {
             let mut struct_topology = StructTopology::new(tcx, &structs);
-            let node = struct_topology.post_order[0];
+            let &node = struct_topology
+                .post_order
+                .iter()
+                .find(|&&did| {
+                    let "S" = tcx.def_path_str(did).as_str() else { return false };
+                    true
+                })
+                .unwrap();
             // println!("{:?}", struct_topology.leaf_nodes(&node, 0).unwrap());
 
-            assert_eq!(struct_topology.leaf_nodes(&node, 0).unwrap().iter().map(|x| x.1).collect::<Vec<_>>(), vec![0, 1]);
+            assert_eq!(
+                struct_topology
+                    .leaf_nodes(&node, 0)
+                    .unwrap()
+                    .iter()
+                    .map(|x| x.1)
+                    .collect::<Vec<_>>(),
+                vec![0, 1]
+            );
             struct_topology.next_stage(tcx);
-            assert_eq!(struct_topology.leaf_nodes(&node, 0).unwrap().iter().map(|x| x.1).collect::<Vec<_>>(), vec![1, 3]);
+            assert_eq!(
+                struct_topology
+                    .leaf_nodes(&node, 0)
+                    .unwrap()
+                    .iter()
+                    .map(|x| x.1)
+                    .collect::<Vec<_>>(),
+                vec![1, 3]
+            );
             struct_topology.next_stage(tcx);
-            assert_eq!(struct_topology.leaf_nodes(&node, 0).unwrap().iter().map(|x| x.1).collect::<Vec<_>>(), vec![2, 3, 6, 7]);
-
+            assert_eq!(
+                struct_topology
+                    .leaf_nodes(&node, 0)
+                    .unwrap()
+                    .iter()
+                    .map(|x| x.1)
+                    .collect::<Vec<_>>(),
+                vec![2, 3, 6, 7]
+            );
         })
     }
 
@@ -336,14 +389,44 @@ mod tests {
     fn test4() {
         common::test::run_compiler_with(TEXT4.into(), |tcx, _, structs| {
             let mut struct_topology = StructTopology::new(tcx, &structs);
-            let node = struct_topology.post_order[0];
+            let &node = struct_topology
+                .post_order
+                .iter()
+                .find(|&&did| {
+                    let "S" = tcx.def_path_str(did).as_str() else { return false };
+                    true
+                })
+                .unwrap();
             // println!("{:?}", struct_topology.leaf_nodes(&node, 0).unwrap());
-            assert_eq!(struct_topology.leaf_nodes(&node, 0).unwrap().iter().map(|x| x.1).collect::<Vec<_>>(), vec![0, 1]);
+            assert_eq!(
+                struct_topology
+                    .leaf_nodes(&node, 0)
+                    .unwrap()
+                    .iter()
+                    .map(|x| x.1)
+                    .collect::<Vec<_>>(),
+                vec![0, 1]
+            );
             struct_topology.next_stage(tcx);
-            assert_eq!(struct_topology.leaf_nodes(&node, 0).unwrap().iter().map(|x| x.1).collect::<Vec<_>>(), vec![1, 2, 4]);
+            assert_eq!(
+                struct_topology
+                    .leaf_nodes(&node, 0)
+                    .unwrap()
+                    .iter()
+                    .map(|x| x.1)
+                    .collect::<Vec<_>>(),
+                vec![1, 2, 4]
+            );
             struct_topology.next_stage(tcx);
-            assert_eq!(struct_topology.leaf_nodes(&node, 0).unwrap().iter().map(|x| x.1).collect::<Vec<_>>(), vec![2, 3, 5, 8, 9]);
-
+            assert_eq!(
+                struct_topology
+                    .leaf_nodes(&node, 0)
+                    .unwrap()
+                    .iter()
+                    .map(|x| x.1)
+                    .collect::<Vec<_>>(),
+                vec![2, 3, 5, 8, 9]
+            );
         })
     }
 }
