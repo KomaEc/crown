@@ -228,8 +228,8 @@ where
         }
     }
 
-    pub fn new_sigs(&mut self, size: u32) -> Range<Var> {
-        self.database.push_vars(self.gen.new_sigs(size))
+    pub fn new_vars(&mut self, size: u32) -> Range<Var> {
+        self.database.new_vars(self.gen, size)
     }
 
     fn project_deeper(
@@ -238,12 +238,9 @@ where
         projection: &[PlaceElem<'tcx>],
         infer_cx: &mut Self,
     ) -> Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>> {
-        // assert!(!base.is_invalid());
-
         let mut base_ty = ty;
 
         let mut ptr_chased = 0;
-        // let mut adt_gated = false;
 
         let mut proj_start_offset = 0;
 
@@ -270,17 +267,11 @@ where
                 }
                 ProjectionElem::Field(field, ty) => {
                     let TyKind::Adt(adt_def, _) = base_ty.kind() else { unreachable!() };
-                    // let Some(field_offsets) = infer_cx
-                    //     .fn_ctxt
-                    //     .struct_topology()
-                    //     .field_offsets(&adt_def.did(), ptr_chased) else { unreachable!() };
-                    // proj_start_offset += field_offsets[field.index()];
                     proj_start_offset +=
                         infer_cx
                             .fn_ctxt
                             .field_offset(*adt_def, field.index(), ptr_chased);
                     base_ty = *ty;
-                    // adt_gated = true;
                 }
                 // [ty] is equivalent to ty
                 ProjectionElem::Index(_) => base_ty = base_ty.builtin_index().unwrap(),
@@ -365,7 +356,7 @@ where
         def: SSAIdx,
     ) {
         let measure = infer_cx.fn_ctxt.measure(ty, 0);
-        let sigs = infer_cx.new_sigs(measure);
+        let sigs = infer_cx.new_vars(measure);
         assert_eq!(def, infer_cx.fn_body_sig[local].push(sigs));
     }
 
@@ -408,7 +399,7 @@ where
             tracing::debug!("interpretting consume for {:?} with {:?}", place, consume);
 
             let r#use = infer_cx.fn_body_sig[base][consume.r#use].clone();
-            let def = infer_cx.new_sigs(base_offset);
+            let def = infer_cx.new_vars(base_offset);
             assert_eq!(base_offset, r#use.end.as_u32() - r#use.start.as_u32());
             assert_eq!(
                 infer_cx.fn_body_sig[base].push(def.start..def.end),

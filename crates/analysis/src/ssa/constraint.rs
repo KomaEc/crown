@@ -73,8 +73,7 @@ pub fn initialize_local<'tcx>(
     database: &mut impl Database,
     measurable: impl Measurable<'tcx>,
 ) -> Option<Range<Var>> {
-    local_measure(local_decl, measurable)
-        .map(|measure| database.push_vars(gen.new_sigs(measure.get())))
+    local_measure(local_decl, measurable).map(|measure| database.new_vars(gen, measure.get()))
 }
 
 impl Voidable for Range<Var> {
@@ -230,8 +229,8 @@ make_logging_mode!(Error);
 
 pub trait Database {
     #[inline]
-    fn push_vars(&mut self, sigs: Range<Var>) -> Range<Var> {
-        sigs
+    fn new_vars(&mut self, gen: &mut Gen, size: u32) -> Range<Var> {
+        gen.new_sigs(size as u32)
     }
 
     fn push_linear_impl(&mut self, x: Var, y: Var, z: Var);
@@ -352,7 +351,8 @@ impl<'z3> Z3Database<'z3> {
 }
 
 impl<'z3> Database for Z3Database<'z3> {
-    fn push_vars(&mut self, sigs: Range<Var>) -> Range<Var> {
+    fn new_vars(&mut self, gen: &mut Gen, size: u32) -> Range<Var> {
+        let sigs = gen.new_sigs(size);
         for sig in sigs.clone() {
             assert_eq!(
                 sig,
