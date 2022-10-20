@@ -1,10 +1,14 @@
 use std::{num::NonZeroU32, ops::Range};
 
+use common::data_structure::vec_array::VecArray;
 use rustc_index::vec::IndexVec;
-use rustc_middle::mir::{LocalDecl, LocalInfo};
+use rustc_middle::{
+    mir::{LocalDecl, LocalInfo},
+    ty::{TyCtxt, TyKind},
+};
 
 use super::consume::Voidable;
-use crate::ptr::Measurable;
+use crate::{ptr::Measurable, struct_topology::StructTopology};
 
 pub mod infer;
 // pub mod prune;
@@ -74,6 +78,52 @@ pub fn initialize_local<'tcx>(
     measurable: impl Measurable<'tcx>,
 ) -> Option<Range<Var>> {
     local_measure(local_decl, measurable).map(|measure| database.new_vars(gen, measure.get()))
+}
+
+pub struct GlobalAssumptions {
+    struct_fields: VecArray<Var>,
+}
+
+impl GlobalAssumptions {
+    pub fn new<'tcx>(
+        struct_topology: &StructTopology<'tcx>,
+        tcx: TyCtxt<'tcx>,
+        gen: &mut Gen,
+        database: &mut impl Database,
+    ) -> Self {
+        let mut struct_fields = VecArray::with_indices_capacity(struct_topology.post_order.len());
+
+        for &did in &struct_topology.post_order {
+            let ty = tcx.type_of(did);
+            let TyKind::Adt(adt_def, subst) = ty.kind() else { unreachable!() };
+            struct_fields.add_item_to_array(gen.next());
+            for field_def in adt_def.all_fields() {
+                let field_ty = field_def.ty(tcx, subst);
+                let ptr_depth = struct_topology.measure_ptr(field_ty);
+                database.new_vars(gen, ptr_depth);
+                struct_fields.add_item_to_array(gen.next());
+            }
+            struct_fields.done_with_array();
+        }
+
+        let struct_fields = struct_fields.done();
+
+        GlobalAssumptions { struct_fields }
+    }
+
+    pub fn show(&self, struct_topology: &StructTopology) {
+        for (&did, fields) in
+            itertools::izip!(struct_topology.post_order.iter(), self.struct_fields.iter())
+        {
+            let mut index = 0;
+            println!("{:?}: {{", did);
+            fields.array_windows().for_each(|&[start, end]| {
+                println!("  {index}: {:?}", Range { start, end });
+                index += 1;
+            });
+            println!("}}");
+        }
+    }
 }
 
 impl Voidable for Range<Var> {

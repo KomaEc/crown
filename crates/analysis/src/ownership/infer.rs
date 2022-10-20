@@ -16,7 +16,7 @@ use crate::{
     ssa::{
         constraint::{
             infer::{InferMode, Renamer},
-            initialize_local, Database, Gen, Var,
+            initialize_local, Database, Gen, GlobalAssumptions, Var,
         },
         consume::Consume,
         join_points::PhiNode,
@@ -179,8 +179,7 @@ where
             bool,
         ),
     )>,
-    // struct -> field -> [`Range<Var>`]
-    // struct_fields: VecArray<Range<Var>>,
+    global_assumptions: &'infercx GlobalAssumptions,
 }
 
 impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
@@ -194,6 +193,7 @@ where
         database: &'infercx mut Analysis::DB,
         gen: &'infercx mut Gen,
         inter_ctxt: Analysis::InterCtxt,
+        global_assumptions: &'infercx GlobalAssumptions,
     ) -> Self {
         let mut fn_body_sig = IndexVec::with_capacity(body.local_decls.len());
 
@@ -225,6 +225,7 @@ where
             fn_body_sig,
             deref_copy: None,
             call_args: Vec::new(),
+            global_assumptions,
         }
     }
 

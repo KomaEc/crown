@@ -20,7 +20,9 @@ use crate::{
         Param,
     },
     ssa::{
-        constraint::{infer::Renamer, initialize_local, Database, Gen, Var, Z3Database},
+        constraint::{
+            infer::Renamer, initialize_local, Database, Gen, GlobalAssumptions, Var, Z3Database,
+        },
         consume::Consume,
         state::SSAState,
         AnalysisResults, FnResult,
@@ -75,6 +77,7 @@ fn solve_body<'tcx>(
     crate_ctxt: &CrateCtxt<'tcx>,
     precision: Precision,
     inter_ctxt: <WholeProgramAnalysis as AnalysisKind>::InterCtxt,
+    global_assumptions: &GlobalAssumptions,
     gen: &mut Gen,
     database: &mut Z3Database,
 ) -> anyhow::Result<(FnSummary, Precision)> {
@@ -98,6 +101,7 @@ fn solve_body<'tcx>(
         database,
         gen,
         inter_ctxt,
+        global_assumptions,
     );
 
     rn.go::<WholeProgramAnalysis>(&mut infer_cx);
@@ -133,6 +137,13 @@ fn solve_crate(
         Left((noalias_params, required_precision)) => {
             let inter_ctxt =
                 initial_inter_ctxt(crate_ctxt, noalias_params, &mut gen, &mut database);
+            let global_assumptions = GlobalAssumptions::new(
+                &crate_ctxt.struct_topology,
+                crate_ctxt.tcx,
+                &mut gen,
+                &mut database,
+            );
+            global_assumptions.show(&crate_ctxt.struct_topology);
             for &did in crate_ctxt.call_graph.fns() {
                 let body = crate_ctxt.tcx.optimized_mir(did);
                 let ssa_state = initial_ssa_state(crate_ctxt, body);
@@ -140,10 +151,9 @@ fn solve_crate(
                     body,
                     ssa_state,
                     crate_ctxt,
-                    // TODO
                     required_precision,
-                    // 2,
                     &inter_ctxt,
+                    &global_assumptions,
                     &mut gen,
                     &mut database,
                 )?;
@@ -157,15 +167,22 @@ fn solve_crate(
                 .increase_precision(crate_ctxt.tcx);
             let (inter_ctxt, fns) =
                 previous_results.increase_precision(crate_ctxt, &mut gen, &mut database);
+            let global_assumptions = GlobalAssumptions::new(
+                &crate_ctxt.struct_topology,
+                crate_ctxt.tcx,
+                &mut gen,
+                &mut database,
+            );
+            global_assumptions.show(&crate_ctxt.struct_topology);
             for (did, ssa_state, precision) in fns {
                 let body = crate_ctxt.tcx.optimized_mir(did);
                 let fn_summary = solve_body(
                     body,
                     ssa_state,
                     crate_ctxt,
-                    // TODO
                     precision,
                     &inter_ctxt,
+                    &global_assumptions,
                     &mut gen,
                     &mut database,
                 )?;
