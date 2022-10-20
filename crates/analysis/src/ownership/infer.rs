@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use common::data_structure::{assoc::AssocExt, vec_array::VecArray};
+use common::data_structure::assoc::AssocExt;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{Body, Local, Location, Operand, Place, PlaceElem, ProjectionElem},
@@ -564,56 +564,6 @@ where
                         }
                     },
                 );
-
-                // let lhs_ptr_chased = infer_cx.fn_ctxt.max_precision() - lhs_precision;
-
-                // // println!("lhs_ptr_chased = {lhs_ptr_chased}");
-                // let lhs_leaf_nodes = infer_cx.fn_ctxt.leaf_nodes(adt_def, lhs_ptr_chased as u32);
-
-                // let mut count = 0;
-                // // println!("lhs_leaf_nodes: {:?}", lhs_leaf_nodes);
-                // for &(leaf_ext_ty, offset) in lhs_leaf_nodes {
-                //     while count < offset {
-                //         let (Some(lhs), Some(rhs)) = (lhs_result.next(), rhs_result.next()) else { panic!() };
-                //         infer_cx
-                //             .database
-                //             .push_assume::<crate::ssa::constraint::Debug>((), lhs.r#use, false);
-                //         if ENSURE_MOVE {
-                //             infer_cx
-                //                 .database
-                //                 .push_equal::<crate::ssa::constraint::Debug>(
-                //                     (),
-                //                     lhs.def,
-                //                     rhs.r#use,
-                //                 );
-                //             infer_cx
-                //                 .database
-                //                 .push_assume::<crate::ssa::constraint::Debug>((), rhs.def, false);
-                //         } else {
-                //             infer_cx
-                //                 .database
-                //                 .push_linear::<crate::ssa::constraint::Debug>(
-                //                     (),
-                //                     lhs.def,
-                //                     rhs.def,
-                //                     rhs.r#use,
-                //                 )
-                //         }
-                //         count += 1;
-                //     }
-
-                //     let leaf_ext_measure = infer_cx.fn_ctxt.measure(
-                //         leaf_ext_ty,
-                //         infer_cx.fn_ctxt.max_precision() as u32 - delta as u32,
-                //     );
-
-                //     for _ in 0..leaf_ext_measure {
-                //         let _ = rhs_result.next().unwrap();
-                //     }
-                // }
-
-                // assert!(lhs_result.next().is_none());
-                // assert!(rhs_result.next().is_none());
             } else {
                 // lhs_precision > rhs_precision
 
