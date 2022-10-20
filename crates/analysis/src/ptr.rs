@@ -25,7 +25,7 @@ pub trait Measurable<'tcx> {
 
     fn leaf_nodes(&self, adt_def: AdtDef, ptr_chased: u32) -> &[(Ty<'tcx>, u32)];
 
-    fn max_precision(&self) -> Precision;
+    fn max_ptr_chased(&self) -> Precision;
 
     /// [`absolute_precision(ty, _)`] is the inverse of [`measure(ty, _)`]
     fn absolute_precision(&self, ty: Ty, measure: Measure) -> Precision;
@@ -48,8 +48,8 @@ impl<'tcx, M: Measurable<'tcx>> Measurable<'tcx> for &M {
     }
 
     #[inline]
-    fn max_precision(&self) -> Precision {
-        (*self).max_precision()
+    fn max_ptr_chased(&self) -> Precision {
+        (*self).max_ptr_chased()
     }
 
     fn leaf_nodes(&self, adt_def: AdtDef, ptr_chased: u32) -> &[(Ty<'tcx>, u32)] {

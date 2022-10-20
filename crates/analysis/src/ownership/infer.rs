@@ -85,7 +85,7 @@ pub struct FnCtxt<'intra, 'tcx> {
 impl<'intra, 'tcx> Measurable<'tcx> for FnCtxt<'intra, 'tcx> {
     fn measure(&self, ty: Ty, ptr_chased: u32) -> crate::ptr::Measure {
         let allowed = self.allowed_ptr_depth as u32;
-        let maximum = self.struct_topology.max_precision() as u32;
+        let maximum = self.struct_topology.max_ptr_chased() as u32;
         if allowed >= maximum {
             self.struct_topology.measure(ty, ptr_chased)
         } else {
@@ -100,7 +100,7 @@ impl<'intra, 'tcx> Measurable<'tcx> for FnCtxt<'intra, 'tcx> {
         ptr_chased: u32,
     ) -> crate::ptr::Measure {
         let allowed = self.allowed_ptr_depth as u32;
-        let maximum = self.struct_topology.max_precision() as u32;
+        let maximum = self.struct_topology.max_ptr_chased() as u32;
         if allowed >= maximum {
             self.struct_topology.measure_adt(adt_def, ptr_chased)
         } else {
@@ -116,7 +116,7 @@ impl<'intra, 'tcx> Measurable<'tcx> for FnCtxt<'intra, 'tcx> {
         ptr_chased: u32,
     ) -> crate::ptr::Measure {
         let allowed = self.allowed_ptr_depth as u32;
-        let maximum = self.struct_topology.max_precision() as u32;
+        let maximum = self.struct_topology.max_ptr_chased() as u32;
         if allowed >= maximum {
             self.struct_topology
                 .field_offset(adt_def, field, ptr_chased)
@@ -126,13 +126,13 @@ impl<'intra, 'tcx> Measurable<'tcx> for FnCtxt<'intra, 'tcx> {
         }
     }
 
-    fn max_precision(&self) -> Precision {
-        std::cmp::min(self.allowed_ptr_depth, self.struct_topology.max_precision())
+    fn max_ptr_chased(&self) -> Precision {
+        std::cmp::min(self.allowed_ptr_depth, self.struct_topology.max_ptr_chased())
     }
 
     fn leaf_nodes(&self, adt_def: rustc_middle::ty::AdtDef, ptr_chased: u32) -> &[(Ty<'tcx>, u32)] {
         let allowed = self.allowed_ptr_depth as u32;
-        let maximum = self.struct_topology.max_precision() as u32;
+        let maximum = self.struct_topology.max_ptr_chased() as u32;
         if allowed >= maximum {
             self.struct_topology.leaf_nodes(adt_def, ptr_chased)
         } else {
@@ -609,7 +609,7 @@ fn fit<'tcx, T, U, DB>(
     database: &mut DB,
     mut on_matched: impl FnMut(T, U, &mut DB),
 ) {
-    let fitter_ptr_chased = measure.max_precision() - fitter_precision;
+    let fitter_ptr_chased = measure.max_ptr_chased() - fitter_precision;
 
     let fitter_leaf_nodes = measure.leaf_nodes(adt_def, fitter_ptr_chased as u32);
 
@@ -622,7 +622,7 @@ fn fit<'tcx, T, U, DB>(
         }
 
         let leaf_ext_measure =
-            measure.measure(leaf_ext_ty, (measure.max_precision() - delta) as u32);
+            measure.measure(leaf_ext_ty, (measure.max_ptr_chased() - delta) as u32);
 
         for _ in 0..leaf_ext_measure {
             let _ = fittee.next().unwrap();

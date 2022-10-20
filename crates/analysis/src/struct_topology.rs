@@ -14,7 +14,7 @@ impl<'tcx> Measurable<'tcx> for StructTopology<'tcx> {
     #[inline]
     fn measure(&self, ty: rustc_middle::ty::Ty, ptr_chased: u32) -> Measure {
         // let max_ptr_depth = self.offset_of.len() as u32;
-        let max_ptr_depth = self.max_precision() as u32;
+        let max_ptr_depth = self.max_ptr_chased() as u32;
 
         let (ptr_depth, maybe_adt) = abstract_ty(ty);
 
@@ -44,7 +44,7 @@ impl<'tcx> Measurable<'tcx> for StructTopology<'tcx> {
         field_offsets[field]
     }
 
-    fn max_precision(&self) -> Precision {
+    fn max_ptr_chased(&self) -> Precision {
         // self.max_ptr_depth()
         (self.offset_of.len() - 1) as Precision
     }
@@ -57,7 +57,7 @@ impl<'tcx> Measurable<'tcx> for StructTopology<'tcx> {
     }
 
     fn absolute_precision(&self, ty: Ty, measure: Measure) -> Precision {
-        let max_precision = self.max_precision();
+        let max_precision = self.max_ptr_chased();
         assert!(max_precision > 0);
         let mut ptr_chased = max_precision;
         while self.measure(ty, ptr_chased as u32) < measure {
@@ -171,7 +171,7 @@ impl<'tcx> StructTopology<'tcx> {
 
     #[inline]
     pub fn increase_precision(&mut self, tcx: TyCtxt<'tcx>) {
-        let max_ptr_depth = self.max_precision() as u32 + 1;
+        let max_ptr_depth = self.max_ptr_chased() as u32 + 1;
 
         let data_capacity = self
             .offset_of
