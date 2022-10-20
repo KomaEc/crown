@@ -3,7 +3,10 @@ use std::ops::Range;
 use rustc_hir::def_id::DefId;
 
 use crate::{
-    ownership::{infer::{InferCtxt, CallArgs}, AnalysisKind},
+    ownership::{
+        infer::{CallArgs, InferCtxt},
+        AnalysisKind,
+    },
     ssa::{
         constraint::{infer::InferMode, Var},
         consume::Consume,

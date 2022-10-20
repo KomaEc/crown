@@ -44,14 +44,14 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     fn transfer<const ENSURE_MOVE: bool>(
         infer_cx: &mut Self::Ctxt,
-        ty: Ty,
+        ty: Ty<'tcx>,
         lhs_result: Consume<Self::LocalSig>,
         rhs_result: Consume<Self::LocalSig>,
     );
 
     fn cast<const ENSURE_MOVE: bool>(
         infer_cx: &mut Self::Ctxt,
-        ty: Ty,
+        ty: Ty<'tcx>,
         lhs: Consume<Self::LocalSig>,
         rhs: Consume<Self::LocalSig>,
     );

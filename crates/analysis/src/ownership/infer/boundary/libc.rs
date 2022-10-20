@@ -3,7 +3,10 @@ use std::ops::Range;
 use rustc_span::symbol::Ident;
 
 use crate::{
-    ownership::{infer::{InferCtxt, CallArgs}, AnalysisKind},
+    ownership::{
+        infer::{CallArgs, InferCtxt},
+        AnalysisKind,
+    },
     ssa::{
         constraint::{infer::InferMode, Var},
         consume::Consume,
@@ -40,11 +43,7 @@ where
         <Analysis as InferMode>::source(self, destination.clone());
     }
 
-    fn call_realloc(
-        &mut self,
-        destination: Option<Consume<Range<Var>>>,
-        args: &CallArgs,
-    ) {
+    fn call_realloc(&mut self, destination: Option<Consume<Range<Var>>>, args: &CallArgs) {
         let destination = destination.as_ref().unwrap();
         <Analysis as InferMode>::source(self, destination.clone());
         let (arg, is_ref) = args[0].clone().unwrap();

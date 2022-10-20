@@ -55,6 +55,19 @@ impl<'tcx> Measurable<'tcx> for StructTopology<'tcx> {
         let leaf_nodes = &self.leaf_nodes[self.leaf_nodes.len() - 1 - ptr_chased as usize];
         &leaf_nodes[idx]
     }
+
+    fn absolute_precision(&self, ty: Ty, measure: Measure) -> Precision {
+        let max_precision = self.max_precision();
+        assert!(max_precision > 0);
+        let mut ptr_chased = max_precision;
+        while self.measure(ty, ptr_chased as u32) < measure {
+            ptr_chased = ptr_chased.checked_sub(1).unwrap()
+        }
+
+        assert_eq!(self.measure(ty, ptr_chased as u32), measure);
+
+        max_precision - ptr_chased
+    }
 }
 
 pub struct StructTopology<'tcx> {
@@ -180,6 +193,9 @@ impl<'tcx> StructTopology<'tcx> {
                 if ptr_depth >= max_ptr_depth {
                     let mut leaf_ext_ty = field_ty;
                     for _ in 0..max_ptr_depth {
+                        while let Some(ty) = leaf_ext_ty.builtin_index() {
+                            leaf_ext_ty = ty;
+                        }
                         leaf_ext_ty = leaf_ext_ty.builtin_deref(true).unwrap().ty;
                     }
                     leaf_nodes.add_item_to_array((leaf_ext_ty, offset + max_ptr_depth));

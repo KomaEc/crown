@@ -4,7 +4,7 @@ use itertools::izip;
 use rustc_hir::def_id::DefId;
 use rustc_middle::mir::Body;
 
-use super::{InferCtxt, CallArgs};
+use super::{matcher, CallArgs, InferCtxt};
 use crate::{
     ownership::{whole_program::WholeProgramAnalysis, AnalysisKind},
     ssa::{
@@ -82,7 +82,7 @@ where
         args: &CallArgs,
         callee: DefId,
     ) {
-        // let c_variadic = infer_cx.fn_ctxt.tcx.fn_sig(callee).skip_binder().c_variadic;
+        let fn_sig = infer_cx.fn_ctxt.tcx.fn_sig(callee);
 
         let mut params = infer_cx.inter_ctxt[&callee].iter();
 
@@ -90,87 +90,89 @@ where
 
         // dest = ret ~> rho(dest) = 0, rho(dest') = rho(ret)
         if let Some(ret) = ret.clone() {
-            if let Some(Consume {
-                r#use: dest_use,
-                def: dest_def,
-            }) = destination
-            {
+            if let Some(dest) = destination {
+                let output_ty = fn_sig.output().skip_binder();
+
                 let ret = ret.expect_normal();
-                for (ret, dest_use, dest_def) in izip!(ret, dest_use, dest_def) {
-                    infer_cx
-                        .database
-                        .push_assume::<crate::ssa::constraint::Debug>((), dest_use, false);
-                    infer_cx
-                        .database
-                        .push_equal::<crate::ssa::constraint::Debug>((), dest_def, ret);
-                }
+
+                matcher(
+                    output_ty,
+                    dest.transpose(),
+                    ret,
+                    &infer_cx.fn_ctxt.struct_topology,
+                    infer_cx.database,
+                    |dest, ret, database| {
+                        database.push_assume::<crate::ssa::constraint::Debug>(
+                            (),
+                            dest.r#use,
+                            false,
+                        );
+                        database.push_equal::<crate::ssa::constraint::Debug>((), dest.def, ret);
+                    },
+                );
             }
         }
-        // else {
-        //     assert!(destination.is_none())
-        // }
 
-        let params_args = params.zip(args.iter());
+        let params_args = izip!(params, args, fn_sig.inputs().skip_binder()); // params.zip(args.iter());
 
         // para = arg ~> rho(para') + rho(arg') = rho(arg)
-        for (param, arg) in params_args {
+        for (param, arg, &ty) in params_args {
             if let Some(param) = param.clone() {
-                if let Some((
-                    Consume {
-                        r#use: arg_use,
-                        def: arg_def,
-                    },
-                    is_ref,
-                )) = arg.clone()
-                {
+                if let Some((arg, is_ref)) = arg.clone() {
                     match param {
                         crate::ownership::Param::Output(output_param) => {
-                            let Consume {
-                                r#use: mut param_use,
-                                def: mut param_def,
-                            } = output_param;
-                            assert!(param_use.size_hint().1.unwrap() > 0);
+                            let mut output_param = output_param.transpose();
+                            assert!(output_param.size_hint().1.unwrap() > 0);
                             if is_ref {
-                                param_use.start += 1;
-                                param_def.start += 1;
+                                let _ = output_param.next().unwrap();
                             }
-                            for (param_use, param_def, arg_use, arg_def) in
-                                izip!(param_use, param_def, arg_use, arg_def)
-                            {
-                                infer_cx
-                                    .database
-                                    .push_equal::<crate::ssa::constraint::Debug>(
+                            let arg = arg.transpose();
+
+                            matcher(
+                                ty,
+                                output_param,
+                                arg,
+                                &infer_cx.fn_ctxt.struct_topology,
+                                infer_cx.database,
+                                |param, arg, database| {
+                                    database.push_equal::<crate::ssa::constraint::Debug>(
                                         (),
-                                        param_use,
-                                        arg_use,
+                                        param.r#use,
+                                        arg.r#use,
                                     );
-                                infer_cx
-                                    .database
-                                    .push_equal::<crate::ssa::constraint::Debug>(
+                                    database.push_equal::<crate::ssa::constraint::Debug>(
                                         (),
-                                        param_def,
-                                        arg_def,
+                                        param.def,
+                                        arg.def,
                                     );
-                            }
+                                },
+                            );
                         }
                         crate::ownership::Param::Normal(param) => {
-                            for (param, arg_use, arg_def) in izip!(param, arg_use, arg_def) {
-                                infer_cx
-                                    .database
+                            println!("param = {:?}, arg = {:?}", param, arg);
+
+                            let arg = arg.transpose();
+
+                            matcher(
+                                ty,
+                                param,
+                                arg,
+                                &infer_cx.fn_ctxt.struct_topology,
+                                infer_cx.database,
+                                |param, arg, database| {
+                                    database
                                     .push_linear::<crate::ssa::constraint::Debug>(
                                         (),
                                         param,
-                                        arg_def,
-                                        arg_use,
+                                        arg.def,
+                                        arg.r#use,
                                     );
-                            }
+                                },
+                            );
                         }
                     }
                 }
             }
-            // else {
-            //     assert!(c_variadic || arg.is_none(), "{:?}", callee)
-            // }
         }
     }
 

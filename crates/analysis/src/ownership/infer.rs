@@ -140,6 +140,10 @@ impl<'intra, 'tcx> Measurable<'tcx> for FnCtxt<'intra, 'tcx> {
                 .leaf_nodes(adt_def, maximum - allowed + ptr_chased)
         }
     }
+
+    fn absolute_precision(&self, ty: Ty, measure: u32) -> Precision {
+        self.struct_topology.absolute_precision(ty, measure)
+    }
 }
 
 impl<'tcx> CrateCtxt<'tcx> {
@@ -426,166 +430,38 @@ where
 
     fn transfer<const ENSURE_MOVE: bool>(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
-        ty: Ty,
+        ty: Ty<'tcx>,
         lhs_result: Consume<Self::LocalSig>,
         rhs_result: Consume<Self::LocalSig>,
     ) {
         tracing::debug!("transfer relation: {:?} ~ {:?}", lhs_result, rhs_result);
-        let lhs_measure = lhs_result.r#use.size_hint().1.unwrap() as u32;
-        let rhs_measure = rhs_result.r#use.size_hint().1.unwrap() as u32;
 
-        let lhs_precision = infer_cx.fn_ctxt.determine_precision(ty, lhs_measure);
-        let rhs_precision = infer_cx.fn_ctxt.determine_precision(ty, rhs_measure);
-
-        tracing::debug!("precision: lhs = {lhs_precision}, rhs = {rhs_precision}");
-        // println!("measure: lhs = {lhs_measure}, rhs = {rhs_measure}");
-        // println!("precision: lhs = {lhs_precision}, rhs = {rhs_precision}");
-
-        let (ptr_depth, adt_def) = abstract_ty(ty);
-
-        if ptr_depth as u8 > lhs_precision
-            || ptr_depth as u8 > rhs_precision
-            || lhs_precision == rhs_precision
-        {
-            for (lhs, rhs) in lhs_result.transpose().zip(rhs_result.transpose()) {
-                infer_cx
-                    .database
-                    .push_assume::<crate::ssa::constraint::Debug>((), lhs.r#use, false);
+        matcher(
+            ty,
+            lhs_result.transpose(),
+            rhs_result.transpose(),
+            &infer_cx.fn_ctxt,
+            infer_cx.database,
+            |lhs, rhs, database| {
+                database.push_assume::<crate::ssa::constraint::Debug>((), lhs.r#use, false);
                 if ENSURE_MOVE {
-                    infer_cx
-                        .database
-                        .push_equal::<crate::ssa::constraint::Debug>((), lhs.def, rhs.r#use);
-                    infer_cx
-                        .database
-                        .push_assume::<crate::ssa::constraint::Debug>((), rhs.def, false);
+                    database.push_equal::<crate::ssa::constraint::Debug>((), lhs.def, rhs.r#use);
+                    database.push_assume::<crate::ssa::constraint::Debug>((), rhs.def, false);
                 } else {
-                    infer_cx
-                        .database
-                        .push_linear::<crate::ssa::constraint::Debug>(
-                            (),
-                            lhs.def,
-                            rhs.def,
-                            rhs.r#use,
-                        )
+                    database.push_linear::<crate::ssa::constraint::Debug>(
+                        (),
+                        lhs.def,
+                        rhs.def,
+                        rhs.r#use,
+                    )
                 }
-            }
-        } else {
-            for (lhs, rhs) in lhs_result
-                .clone()
-                .transpose()
-                .zip(rhs_result.clone().transpose())
-                .take(ptr_depth as usize)
-            {
-                infer_cx
-                    .database
-                    .push_assume::<crate::ssa::constraint::Debug>((), lhs.r#use, false);
-                if ENSURE_MOVE {
-                    infer_cx
-                        .database
-                        .push_equal::<crate::ssa::constraint::Debug>((), lhs.def, rhs.r#use);
-                    infer_cx
-                        .database
-                        .push_assume::<crate::ssa::constraint::Debug>((), rhs.def, false);
-                } else {
-                    infer_cx
-                        .database
-                        .push_linear::<crate::ssa::constraint::Debug>(
-                            (),
-                            lhs.def,
-                            rhs.def,
-                            rhs.r#use,
-                        )
-                }
-            }
-
-            let lhs_precision = lhs_precision - ptr_depth as u8;
-            let rhs_precision = rhs_precision - ptr_depth as u8;
-
-            // println!("ptr_depth: {ptr_depth}, lhs_precision = {lhs_precision}, rhs_precision = {rhs_precision}");
-
-            let lhs_result = lhs_result
-                .repack(|vars| vars.start + ptr_depth..vars.end)
-                .transpose();
-            let rhs_result = rhs_result
-                .repack(|vars| vars.start + ptr_depth..vars.end)
-                .transpose();
-
-            let delta = lhs_precision.abs_diff(rhs_precision);
-
-            let adt_def = adt_def.unwrap();
-            if lhs_precision < rhs_precision {
-                fit(
-                    adt_def,
-                    lhs_result,
-                    lhs_precision,
-                    rhs_result,
-                    delta,
-                    &infer_cx.fn_ctxt,
-                    infer_cx.database,
-                    |lhs, rhs, database| {
-                        database.push_assume::<crate::ssa::constraint::Debug>((), lhs.r#use, false);
-                        if ENSURE_MOVE {
-                            database.push_equal::<crate::ssa::constraint::Debug>(
-                                (),
-                                lhs.def,
-                                rhs.r#use,
-                            );
-                            database.push_assume::<crate::ssa::constraint::Debug>(
-                                (),
-                                rhs.def,
-                                false,
-                            );
-                        } else {
-                            database.push_linear::<crate::ssa::constraint::Debug>(
-                                (),
-                                lhs.def,
-                                rhs.def,
-                                rhs.r#use,
-                            )
-                        }
-                    },
-                );
-            } else {
-                // lhs_precision > rhs_precision
-
-                fit(
-                    adt_def,
-                    rhs_result,
-                    rhs_precision,
-                    lhs_result,
-                    delta,
-                    &infer_cx.fn_ctxt,
-                    infer_cx.database,
-                    |rhs, lhs, database| {
-                        database.push_assume::<crate::ssa::constraint::Debug>((), lhs.r#use, false);
-                        if ENSURE_MOVE {
-                            database.push_equal::<crate::ssa::constraint::Debug>(
-                                (),
-                                lhs.def,
-                                rhs.r#use,
-                            );
-                            database.push_assume::<crate::ssa::constraint::Debug>(
-                                (),
-                                rhs.def,
-                                false,
-                            );
-                        } else {
-                            database.push_linear::<crate::ssa::constraint::Debug>(
-                                (),
-                                lhs.def,
-                                rhs.def,
-                                rhs.r#use,
-                            )
-                        }
-                    },
-                )
-            }
-        }
+            },
+        )
     }
 
     fn cast<const ENSURE_MOVE: bool>(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
-        ty: Ty,
+        ty: Ty<'tcx>,
         lhs: Consume<Self::LocalSig>,
         rhs: Consume<Self::LocalSig>,
     ) {
@@ -648,7 +524,6 @@ where
                     .cloned()
             })
             .collect::<SmallVec<_>>();
-
 
         if let Some(func) = callee.constant() {
             let ty = func.ty();
@@ -722,15 +597,17 @@ where
     }
 }
 
-fn fit<'tcx, T, DB>(
+/// [`measure`] could be either [`FnCtxt`] or [`StructTopology`]. This is because
+/// ptr_chased is relative but precision is absolute.
+fn fit<'tcx, T, U, DB>(
     adt_def: AdtDef,
     mut fitter: impl Iterator<Item = T>,
     fitter_precision: Precision,
-    mut fittee: impl Iterator<Item = T>,
+    mut fittee: impl Iterator<Item = U>,
     delta: Precision,
     measure: impl Measurable<'tcx>,
     database: &mut DB,
-    mut on_matched: impl FnMut(T, T, &mut DB),
+    mut on_matched: impl FnMut(T, U, &mut DB),
 ) {
     let fitter_ptr_chased = measure.max_precision() - fitter_precision;
 
@@ -754,4 +631,70 @@ fn fit<'tcx, T, DB>(
 
     assert!(fitter.next().is_none());
     assert!(fittee.next().is_none());
+}
+
+fn matcher<'tcx, T, U, DB>(
+    ty: Ty<'tcx>,
+    mut lhs_result: impl Iterator<Item = T>,
+    mut rhs_result: impl Iterator<Item = U>,
+    measure: impl Measurable<'tcx>,
+    database: &mut DB,
+    mut on_matched: impl FnMut(T, U, &mut DB),
+) {
+    let lhs_measure = lhs_result.size_hint().1.unwrap() as u32;
+    let rhs_measure = rhs_result.size_hint().1.unwrap() as u32;
+
+    let lhs_precision = measure.absolute_precision(ty, lhs_measure);
+    let rhs_precision = measure.absolute_precision(ty, rhs_measure);
+
+    tracing::debug!("precision: lhs = {lhs_precision}, rhs = {rhs_precision}");
+
+    let (ptr_depth, adt_def) = abstract_ty(ty);
+
+    if ptr_depth as u8 > lhs_precision
+        || ptr_depth as u8 > rhs_precision
+        || lhs_precision == rhs_precision
+    {
+        for (lhs, rhs) in lhs_result.zip(rhs_result) {
+            on_matched(lhs, rhs, database);
+        }
+    } else {
+        for (lhs, rhs) in lhs_result
+            .by_ref()
+            .zip(rhs_result.by_ref())
+            .take(ptr_depth as usize)
+        {
+            on_matched(lhs, rhs, database);
+        }
+
+        let lhs_precision = lhs_precision - ptr_depth as u8;
+        let rhs_precision = rhs_precision - ptr_depth as u8;
+
+        let delta = lhs_precision.abs_diff(rhs_precision);
+
+        let adt_def = adt_def.unwrap();
+        if lhs_precision < rhs_precision {
+            fit(
+                adt_def,
+                lhs_result,
+                lhs_precision,
+                rhs_result,
+                delta,
+                measure,
+                database,
+                on_matched,
+            )
+        } else {
+            fit(
+                adt_def,
+                rhs_result,
+                rhs_precision,
+                lhs_result,
+                delta,
+                measure,
+                database,
+                |rhs, lhs, database| on_matched(lhs, rhs, database),
+            )
+        }
+    }
 }
