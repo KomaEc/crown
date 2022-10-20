@@ -2,15 +2,20 @@ use std::ops::Range;
 
 use itertools::izip;
 use rustc_hir::def_id::DefId;
-use rustc_middle::mir::Body;
+use rustc_middle::{
+    mir::Body,
+    ty::{Ty, TyCtxt, TyKind},
+};
 
 use super::{matcher, CallArgs, InferCtxt};
 use crate::{
     ownership::{whole_program::WholeProgramAnalysis, AnalysisKind},
+    ptr::Measurable,
     ssa::{
-        constraint::{Database, Var},
+        constraint::{Database, GlobalAssumptions, Var},
         consume::Consume,
     },
+    struct_topology::StructTopology,
 };
 
 pub mod libc;
@@ -28,7 +33,10 @@ where
     );
 
     fn params(
+        tcx: TyCtxt<'tcx>,
         inter_ctxt: &Self::InterCtxt,
+        global_assumptions: &GlobalAssumptions,
+        struct_topology: &StructTopology,
         database: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
         body: &Body<'tcx>,
         params: impl Iterator<Item = Option<Range<Var>>>,
@@ -56,7 +64,10 @@ where
     }
 
     default fn params(
+        _: TyCtxt,
         _: &Analysis::InterCtxt,
+        _: &GlobalAssumptions,
+        _: &StructTopology,
         _: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
         _: &Body<'tcx>,
         _: impl Iterator<Item = Option<Range<Var>>>,
@@ -174,21 +185,109 @@ where
     }
 
     fn params(
+        tcx: TyCtxt<'tcx>,
         inter_ctxt: &<WholeProgramAnalysis as AnalysisKind>::InterCtxt,
+        global_assumptions: &GlobalAssumptions,
+        struct_topology: &StructTopology,
         database: &mut <WholeProgramAnalysis as AnalysisKind>::DB,
         body: &Body<'tcx>,
         params: impl Iterator<Item = Option<Range<Var>>>,
     ) {
         let fn_sig = &inter_ctxt[&body.source.def_id()];
 
-        for (input, sigs) in params.zip(fn_sig.iter().skip(1)) {
+        for (input, sigs, ty) in itertools::izip!(
+            params,
+            fn_sig.iter().skip(1),
+            body.args_iter().map(|local| body.local_decls[local].ty)
+        ) {
             match (input, sigs) {
                 (Some(input), Some(sigs)) => {
                     let sigs = sigs.clone().to_input();
                     assert_eq!(input.size_hint().1.unwrap(), sigs.size_hint().1.unwrap());
-                    for (input, sig) in input.zip(sigs) {
+                    let measure = input.size_hint().1.unwrap() as u32;
+                    let precision = struct_topology.absolute_precision(ty, measure);
+
+                    for (input, sig) in input.clone().zip(sigs) {
                         database.push_equal::<crate::ssa::constraint::Debug>((), input, sig)
                     }
+
+                    fn initialize<'tcx>(
+                        ty: Ty<'tcx>,
+                        field_ctxt: &mut dyn Iterator<Item = Var>,
+                        input: &mut dyn Iterator<Item = Var>,
+                        global_assumptions: &GlobalAssumptions,
+                        struct_topology: &StructTopology,
+                        database: &mut <WholeProgramAnalysis as AnalysisKind>::DB,
+                        tcx: TyCtxt<'tcx>,
+                        mut precision: u8,
+                    ) {
+                        if precision == 0 {
+                            return;
+                        }
+
+                        let mut ty = ty;
+                        loop {
+                            if let Some(inner_ty) = ty.builtin_index() {
+                                ty = inner_ty;
+                                continue;
+                            }
+                            if let Some(ty_mut) = ty.builtin_deref(true) {
+                                let input = input.next().unwrap();
+                                if let Some(field) = field_ctxt.next() {
+                                    database.push_equal::<crate::ssa::constraint::Debug>(
+                                        (),
+                                        input,
+                                        field,
+                                    )
+                                }
+                                precision -= 1;
+                                if precision == 0 {
+                                    return;
+                                }
+                                ty = ty_mut.ty;
+                                continue;
+                            }
+                            break;
+                        }
+
+                        if let TyKind::Adt(adt_def, subst) = ty.kind() {
+                            assert!(field_ctxt.next().is_none());
+                            if struct_topology.is_struct_of_concerned(&adt_def.did())
+                                && struct_topology.measure_adt(*adt_def, 0) > 0
+                            {
+                                let fields =
+                                    global_assumptions.fields(struct_topology, &adt_def.did());
+                                for (mut field_ctxt, field_def) in
+                                    itertools::izip!(fields, adt_def.all_fields())
+                                {
+                                    let field_ty = field_def.ty(tcx, subst);
+                                    initialize(
+                                        field_ty,
+                                        &mut field_ctxt,
+                                        input,
+                                        global_assumptions,
+                                        struct_topology,
+                                        database,
+                                        tcx,
+                                        precision,
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    let mut input = input;
+
+                    initialize(
+                        ty,
+                        &mut std::iter::empty(),
+                        &mut input,
+                        global_assumptions,
+                        struct_topology,
+                        database,
+                        tcx,
+                        precision,
+                    );
                 }
                 (None, None) => {}
                 _ => unreachable!(),

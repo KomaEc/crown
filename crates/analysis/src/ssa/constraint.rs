@@ -1,6 +1,7 @@
 use std::{num::NonZeroU32, ops::Range};
 
 use common::data_structure::vec_array::VecArray;
+use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{LocalDecl, LocalInfo},
@@ -111,6 +112,17 @@ impl GlobalAssumptions {
         GlobalAssumptions { struct_fields }
     }
 
+    pub fn fields(
+        &self,
+        struct_topology: &StructTopology,
+        did: &DefId,
+    ) -> impl Iterator<Item = Range<Var>> + '_ {
+        let idx = struct_topology.did_idx(did);
+        self.struct_fields[idx]
+            .array_windows()
+            .map(|&[start, end]| start..end)
+    }
+
     pub fn show(&self, struct_topology: &StructTopology) {
         for (&did, fields) in
             itertools::izip!(struct_topology.post_order.iter(), self.struct_fields.iter())
@@ -118,7 +130,7 @@ impl GlobalAssumptions {
             let mut index = 0;
             println!("{:?}: {{", did);
             fields.array_windows().for_each(|&[start, end]| {
-                println!("  {index}: {:?}", Range { start, end });
+                println!("  {index}: {:?}", start..end);
                 index += 1;
             });
             println!("}}");

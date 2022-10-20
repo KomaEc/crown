@@ -143,7 +143,7 @@ fn solve_crate(
                 &mut gen,
                 &mut database,
             );
-            global_assumptions.show(&crate_ctxt.struct_topology);
+            // global_assumptions.show(&crate_ctxt.struct_topology);
             for &did in crate_ctxt.call_graph.fns() {
                 let body = crate_ctxt.tcx.optimized_mir(did);
                 let ssa_state = initial_ssa_state(crate_ctxt, body);
@@ -173,7 +173,7 @@ fn solve_crate(
                 &mut gen,
                 &mut database,
             );
-            global_assumptions.show(&crate_ctxt.struct_topology);
+            // global_assumptions.show(&crate_ctxt.struct_topology);
             for (did, ssa_state, precision) in fns {
                 let body = crate_ctxt.tcx.optimized_mir(did);
                 let fn_summary = solve_body(

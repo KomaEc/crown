@@ -148,6 +148,14 @@ impl<'tcx> StructTopology<'tcx> {
         this
     }
 
+    pub fn is_struct_of_concerned(&self, did: &DefId) -> bool {
+        self.did_idx.contains_key(did)
+    }
+
+    pub fn did_idx(&self, did: &DefId) -> usize {
+        self.did_idx[did]
+    }
+
     #[inline]
     pub fn structs_in_post_order(&self) -> &[DefId] {
         &self.post_order[..]
