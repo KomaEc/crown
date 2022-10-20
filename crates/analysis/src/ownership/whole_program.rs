@@ -43,16 +43,19 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgramAnalysis {
         crate_ctxt: &mut CrateCtxt,
         noalias_params: &NoAliasParams,
     ) -> anyhow::Result<Self::Results> {
-        let required_precision = crate_ctxt.fns().iter().copied().fold(0, |acc, did| {
-            let body = crate_ctxt.tcx.optimized_mir(did);
-            std::cmp::max(acc, max_deref_level(body) + 1)
-        });
+        let required_precision = std::cmp::max(
+            crate_ctxt.fns().iter().copied().fold(0, |acc, did| {
+                let body = crate_ctxt.tcx.optimized_mir(did);
+                std::cmp::max(acc, max_deref_level(body) + 1)
+            }),
+            3,
+        );
 
         // first stage
-        let mut results = solve_crate(crate_ctxt, Left(noalias_params))?;
+        let mut results = solve_crate(crate_ctxt, Left((noalias_params, required_precision)))?;
 
         // second stage
-        for _ in 1..std::cmp::max(required_precision, 3) {
+        for _ in 1..2 * required_precision {
             results = solve_crate(crate_ctxt, Right(results))?;
         }
 
@@ -115,7 +118,7 @@ fn solve_body<'tcx>(
 
 fn solve_crate(
     crate_ctxt: &mut CrateCtxt,
-    previous_results: Either<&NoAliasParams, WholeProgramAnalysisResults>,
+    previous_results: Either<(&NoAliasParams, Precision), WholeProgramAnalysisResults>,
 ) -> anyhow::Result<WholeProgramAnalysisResults> {
     let mut gen = Gen::new();
 
@@ -127,19 +130,18 @@ fn solve_crate(
     fn_summaries.reserve(crate_ctxt.fns().len());
 
     let fn_sigs = match previous_results {
-        Left(noalias_params) => {
+        Left((noalias_params, required_precision)) => {
             let inter_ctxt =
                 initial_inter_ctxt(crate_ctxt, noalias_params, &mut gen, &mut database);
             for &did in crate_ctxt.call_graph.fns() {
                 let body = crate_ctxt.tcx.optimized_mir(did);
-                let max_ptr_depth = max_deref_level(body) + 1;
                 let ssa_state = initial_ssa_state(crate_ctxt, body);
                 let fn_summary = solve_body(
                     body,
                     ssa_state,
                     crate_ctxt,
                     // TODO
-                    max_ptr_depth,
+                    required_precision,
                     // 2,
                     &inter_ctxt,
                     &mut gen,

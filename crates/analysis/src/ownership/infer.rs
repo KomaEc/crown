@@ -127,7 +127,10 @@ impl<'intra, 'tcx> Measurable<'tcx> for FnCtxt<'intra, 'tcx> {
     }
 
     fn max_ptr_chased(&self) -> Precision {
-        std::cmp::min(self.allowed_ptr_depth, self.struct_topology.max_ptr_chased())
+        std::cmp::min(
+            self.allowed_ptr_depth,
+            self.struct_topology.max_ptr_chased(),
+        )
     }
 
     fn leaf_nodes(&self, adt_def: rustc_middle::ty::AdtDef, ptr_chased: u32) -> &[(Ty<'tcx>, u32)] {
