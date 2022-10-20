@@ -152,7 +152,7 @@ impl<'tcx> CrateCtxt<'tcx> {
     }
 }
 
-type CallArgs<Consume> = SmallVec<[Option<(Consume, bool)>; 4]>;
+type CallArgs = SmallVec<[Option<(Consume<LocalSig>, bool)>; 4]>;
 
 pub struct InferCtxt<'infercx, 'db, 'tcx, Analysis>
 where
@@ -339,25 +339,6 @@ where
     type Ctxt = InferCtxt<'infercx, 'db, 'tcx, Analysis>;
 
     type LocalSig = LocalSig;
-
-    type CallArgs = CallArgs<Consume<Self::LocalSig>>;
-
-    type Interpretation = (Consume<Self::LocalSig>, Precision);
-
-    fn collect_call_args(infer_cx: &mut Self::Ctxt, args: &[Operand<'tcx>]) -> Self::CallArgs {
-        let args = args
-            .iter()
-            .map(|operand| {
-                operand
-                    .place()
-                    .and_then(|operand| operand.as_local())
-                    .and_then(|operand| infer_cx.call_args.get_by_key(&operand))
-                    .cloned()
-            })
-            .collect::<SmallVec<_>>();
-
-        args
-    }
 
     #[inline]
     fn call_arg(
@@ -654,9 +635,21 @@ where
     fn call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         destination: Option<Consume<Self::LocalSig>>,
-        args: Self::CallArgs,
+        args: &[Operand],
         callee: &Operand,
     ) {
+        let args = args
+            .iter()
+            .map(|operand| {
+                operand
+                    .place()
+                    .and_then(|operand| operand.as_local())
+                    .and_then(|operand| infer_cx.call_args.get_by_key(&operand))
+                    .cloned()
+            })
+            .collect::<SmallVec<_>>();
+
+
         if let Some(func) = callee.constant() {
             let ty = func.ty();
             let &FnDef(callee, _) = ty.kind() else { unreachable!() };

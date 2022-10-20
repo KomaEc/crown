@@ -24,12 +24,6 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
 
     type LocalSig: Clone + std::fmt::Debug;
 
-    type CallArgs: std::fmt::Debug;
-
-    type Interpretation: std::fmt::Debug;
-
-    fn collect_call_args(infer_cx: &mut Self::Ctxt, args: &[Operand<'tcx>]) -> Self::CallArgs;
-
     fn call_arg(infer_cx: &mut Self::Ctxt, temp: Local, arg: Consume<Self::LocalSig>, is_ref: bool);
 
     fn define_phi_node(infer_cx: &mut Self::Ctxt, local: Local, ty: Ty<'tcx>, def: SSAIdx);
@@ -97,7 +91,8 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
     fn call(
         infer_cx: &mut Self::Ctxt,
         destination: Option<Consume<Self::LocalSig>>,
-        args: Self::CallArgs,
+        // args: Self::CallArgs,
+        args: &[Operand<'tcx>],
         callee: &Operand,
     );
 
@@ -113,12 +108,6 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
     type Ctxt = ();
 
     type LocalSig = ();
-
-    type CallArgs = ();
-
-    type Interpretation = ();
-
-    fn collect_call_args((): &mut Self::Ctxt, _: &[Operand<'tcx>]) -> Self::CallArgs {}
 
     fn call_arg((): &mut Self::Ctxt, _: Local, _: Consume<Self::LocalSig>, _: bool) {}
 
@@ -167,7 +156,8 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
     fn call(
         (): &mut Self::Ctxt,
         _: Option<Consume<Self::LocalSig>>,
-        _: Self::CallArgs,
+        // _: Self::CallArgs,
+        _: &[Operand],
         _: &Operand,
     ) {
     }
@@ -382,7 +372,6 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
                 let destination =
                     consume_place_at::<Infer>(destination, self.body, location, self, infer_cx);
-                let args = Infer::collect_call_args(infer_cx, &args);
                 Infer::call(infer_cx, destination, args, func);
             }
             TerminatorKind::Return => {

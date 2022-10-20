@@ -4,11 +4,11 @@ use itertools::izip;
 use rustc_hir::def_id::DefId;
 use rustc_middle::mir::Body;
 
-use super::InferCtxt;
+use super::{InferCtxt, CallArgs};
 use crate::{
     ownership::{whole_program::WholeProgramAnalysis, AnalysisKind},
     ssa::{
-        constraint::{infer::InferMode, Database, Var},
+        constraint::{Database, Var},
         consume::Consume,
     },
 };
@@ -23,7 +23,7 @@ where
     fn call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         destination: Option<Consume<Range<Var>>>,
-        args: &<Self as InferMode<'infercx, 'db, 'tcx>>::CallArgs,
+        args: &CallArgs,
         callee: DefId,
     );
 
@@ -50,7 +50,7 @@ where
     default fn call(
         _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         _: Option<Consume<Range<Var>>>,
-        _: &<Self as InferMode<'infercx, 'db, 'tcx>>::CallArgs,
+        _: &CallArgs,
         _: DefId,
     ) {
     }
@@ -79,7 +79,7 @@ where
     fn call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
         destination: Option<Consume<Range<Var>>>,
-        args: &<Self as InferMode<'infercx, 'db, 'tcx>>::CallArgs,
+        args: &CallArgs,
         callee: DefId,
     ) {
         // let c_variadic = infer_cx.fn_ctxt.tcx.fn_sig(callee).skip_binder().c_variadic;

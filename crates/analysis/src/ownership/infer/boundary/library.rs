@@ -3,7 +3,7 @@ use std::ops::Range;
 use rustc_hir::def_id::DefId;
 
 use crate::{
-    ownership::{infer::InferCtxt, AnalysisKind},
+    ownership::{infer::{InferCtxt, CallArgs}, AnalysisKind},
     ssa::{
         constraint::{infer::InferMode, Var},
         consume::Consume,
@@ -18,7 +18,7 @@ where
     pub fn library_call(
         &mut self,
         _destination: Option<Consume<Range<Var>>>,
-        args: &<Analysis as InferMode<'infercx, 'db, 'tcx>>::CallArgs,
+        args: &CallArgs,
         callee: DefId,
     ) {
         let def_path = self.fn_ctxt.tcx.def_path(callee);
@@ -45,7 +45,7 @@ where
         }
     }
 
-    pub fn call_is_null(&mut self, args: &<Analysis as InferMode<'infercx, 'db, 'tcx>>::CallArgs) {
+    pub fn call_is_null(&mut self, args: &CallArgs) {
         assert_eq!(args.len(), 1);
         if let Some((arg, is_ref)) = args[0].clone() {
             assert!(!is_ref);
