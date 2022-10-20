@@ -149,8 +149,6 @@ where
                             );
                         }
                         crate::ownership::Param::Normal(param) => {
-                            println!("param = {:?}, arg = {:?}", param, arg);
-
                             let arg = arg.transpose();
 
                             matcher(
@@ -160,8 +158,7 @@ where
                                 &infer_cx.fn_ctxt.struct_topology,
                                 infer_cx.database,
                                 |param, arg, database| {
-                                    database
-                                    .push_linear::<crate::ssa::constraint::Debug>(
+                                    database.push_linear::<crate::ssa::constraint::Debug>(
                                         (),
                                         param,
                                         arg.def,
