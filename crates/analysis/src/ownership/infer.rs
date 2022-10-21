@@ -276,7 +276,15 @@ where
                 if struct_topology.is_struct_of_concerned(&adt_def.did()) {
                     for field_def in adt_def.all_fields() {
                         let field_ty = field_def.ty(tcx, subst);
-                        dominate(field_ty, dom, vars, precision, database, struct_topology, tcx)
+                        dominate(
+                            field_ty,
+                            dom,
+                            vars,
+                            precision,
+                            database,
+                            struct_topology,
+                            tcx,
+                        )
                     }
                 }
             }

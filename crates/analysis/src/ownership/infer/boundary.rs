@@ -211,74 +211,9 @@ where
                         database.push_equal::<crate::ssa::constraint::Debug>((), input, sig)
                     }
 
-                    fn initialize<'tcx>(
-                        ty: Ty<'tcx>,
-                        field_ctxt: &mut dyn Iterator<Item = Var>,
-                        input: &mut impl Iterator<Item = Var>,
-                        global_assumptions: &GlobalAssumptions,
-                        struct_topology: &StructTopology,
-                        database: &mut <WholeProgramAnalysis as AnalysisKind>::DB,
-                        tcx: TyCtxt<'tcx>,
-                        mut precision: u8,
-                    ) {
-                        if precision == 0 {
-                            return;
-                        }
-
-                        let mut ty = ty;
-                        loop {
-                            if let Some(inner_ty) = ty.builtin_index() {
-                                ty = inner_ty;
-                                continue;
-                            }
-                            if let Some(ty_mut) = ty.builtin_deref(true) {
-                                let input = input.next().unwrap();
-                                if let Some(field) = field_ctxt.next() {
-                                    database.push_equal::<crate::ssa::constraint::Debug>(
-                                        (),
-                                        input,
-                                        field,
-                                    )
-                                }
-                                precision -= 1;
-                                if precision == 0 {
-                                    return;
-                                }
-                                ty = ty_mut.ty;
-                                continue;
-                            }
-                            break;
-                        }
-
-                        if let TyKind::Adt(adt_def, subst) = ty.kind() {
-                            assert!(field_ctxt.next().is_none());
-                            if struct_topology.is_struct_of_concerned(&adt_def.did())
-                                && struct_topology.measure_adt(*adt_def, 0) > 0
-                            {
-                                let fields =
-                                    global_assumptions.fields(struct_topology, &adt_def.did());
-                                for (mut field_ctxt, field_def) in
-                                    itertools::izip!(fields, adt_def.all_fields())
-                                {
-                                    let field_ty = field_def.ty(tcx, subst);
-                                    initialize(
-                                        field_ty,
-                                        &mut field_ctxt,
-                                        input,
-                                        global_assumptions,
-                                        struct_topology,
-                                        database,
-                                        tcx,
-                                        precision,
-                                    )
-                                }
-                            }
-                        }
-                    }
-
                     let mut input = input;
 
-                    initialize(
+                    apply_global_assumptions(
                         ty,
                         &mut std::iter::empty(),
                         &mut input,
@@ -328,6 +263,64 @@ where
                         database.push_assume::<crate::ssa::constraint::Debug>((), arg, false);
                     }
                 }
+            }
+        }
+    }
+}
+
+fn apply_global_assumptions<'tcx>(
+    ty: Ty<'tcx>,
+    field_ctxt: &mut dyn Iterator<Item = Var>,
+    input: &mut impl Iterator<Item = Var>,
+    global_assumptions: &GlobalAssumptions,
+    struct_topology: &StructTopology,
+    database: &mut impl Database,
+    tcx: TyCtxt<'tcx>,
+    mut precision: u8,
+) {
+    if precision == 0 {
+        return;
+    }
+
+    let mut ty = ty;
+    loop {
+        if let Some(inner_ty) = ty.builtin_index() {
+            ty = inner_ty;
+            continue;
+        }
+        if let Some(ty_mut) = ty.builtin_deref(true) {
+            let input = input.next().unwrap();
+            if let Some(field) = field_ctxt.next() {
+                database.push_equal::<crate::ssa::constraint::Debug>((), input, field)
+            }
+            precision -= 1;
+            if precision == 0 {
+                return;
+            }
+            ty = ty_mut.ty;
+            continue;
+        }
+        break;
+    }
+
+    if let TyKind::Adt(adt_def, subst) = ty.kind() {
+        assert!(field_ctxt.next().is_none());
+        if struct_topology.is_struct_of_concerned(&adt_def.did())
+            && struct_topology.measure_adt(*adt_def, 0) > 0
+        {
+            let fields = global_assumptions.fields(struct_topology, &adt_def.did());
+            for (mut field_ctxt, field_def) in itertools::izip!(fields, adt_def.all_fields()) {
+                let field_ty = field_def.ty(tcx, subst);
+                apply_global_assumptions(
+                    field_ty,
+                    &mut field_ctxt,
+                    input,
+                    global_assumptions,
+                    struct_topology,
+                    database,
+                    tcx,
+                    precision,
+                )
             }
         }
     }
