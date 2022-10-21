@@ -106,7 +106,9 @@ impl<'tcx> WholeProgramResults<'tcx> {
     pub fn trace(&self, tcx: TyCtxt) {
         for &did in &self.struct_topology.post_order {
             tracing::debug!("{}: {{", tcx.def_path_str(did));
-            for (field_def, field_results) in itertools::izip!(tcx.adt_def(did).all_fields(), self.fields(&did)) {
+            for (field_def, field_results) in
+                itertools::izip!(tcx.adt_def(did).all_fields(), self.fields(&did))
+            {
                 tracing::debug!("   {}: {:?}", field_def.ident(tcx), field_results);
             }
             tracing::debug!("}}");
