@@ -310,7 +310,6 @@ fn apply_global_assumptions<'tcx>(
         if let Some(ty_mut) = ty.builtin_deref(true) {
             let input = input.next().unwrap();
             if let Some((field, dom)) = field_ctxt.next().zip(dom) {
-                // database.push_less_equal::<crate::ssa::constraint::Debug>((), input, field)
                 database.push_eq_min::<crate::ssa::constraint::Debug>((), input, field, dom);
             }
             dom = Some(input);

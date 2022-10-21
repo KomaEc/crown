@@ -260,6 +260,9 @@ macro_rules! tracing_for {
     (Error, $args:tt) => {
         tracing::error!($args)
     };
+    (Print, $args:tt) => {
+        println!($args)
+    }
 }
 
 macro_rules! make_logging_mode {
@@ -302,6 +305,7 @@ make_logging_mode!(Debug);
 make_logging_mode!(Info);
 make_logging_mode!(Warn);
 make_logging_mode!(Error);
+make_logging_mode!(Print);
 
 pub trait Database {
     #[inline]
@@ -337,7 +341,7 @@ pub trait Database {
 
     fn push_eq_min_impl(&mut self, x: Var, y: Var, z: Var);
     fn push_eq_min<Infer: Mode>(&mut self, store: Infer::Store<'_>, x: Var, y: Var, z: Var) {
-        self.push_linear_impl(x, y, z);
+        self.push_eq_min_impl(x, y, z);
         Infer::store_eq_min(store, x, y, z);
     }
 }
