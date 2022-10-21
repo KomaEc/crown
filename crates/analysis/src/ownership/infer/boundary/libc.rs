@@ -1,5 +1,6 @@
 use std::ops::Range;
 
+use rustc_hir::def_id::DefId;
 use rustc_span::symbol::Ident;
 
 use crate::{
@@ -22,15 +23,19 @@ where
         &mut self,
         destination: Option<Consume<Range<Var>>>,
         args: &CallArgs,
-        callee: Ident,
+        callee: DefId,
+        callee_name: Ident,
     ) {
-        match callee.as_str() {
-            "malloc" => self.call_malloc(destination),
-            "realloc" => self.call_realloc(destination, args),
-            "calloc" => self.call_calloc(destination),
-            "free" => self.call_free(args),
+        match callee_name.as_str() {
+            "malloc" => return self.call_malloc(destination),
+            "realloc" => return self.call_realloc(destination, args),
+            "calloc" => return self.call_calloc(destination),
+            "free" => return self.call_free(args),
+            "memset" => return self.call_memset(destination, args, callee),
             _ => {}
         }
+
+        self.unknown_call(destination, args)
     }
 
     fn call_malloc(&mut self, destination: Option<Consume<Range<Var>>>) {
@@ -56,5 +61,25 @@ where
         let (arg, is_ref) = args[0].clone().unwrap();
         assert!(!is_ref);
         <Analysis as InferMode>::sink(self, arg);
+    }
+
+    fn call_memset(
+        &mut self,
+        destination: Option<Consume<Range<Var>>>,
+        args: &CallArgs,
+        callee: DefId,
+    ) {
+        let fn_sig = self.fn_ctxt.tcx.fn_sig(callee);
+        let dest_ty = fn_sig.output().skip_binder();
+        let arg_ty = fn_sig.inputs().skip_binder()[0];
+        assert_eq!(dest_ty, arg_ty);
+        let ty = dest_ty;
+
+        let destination = destination.as_ref().cloned().unwrap();
+        // <Analysis as InferMode>::source(self, destination.clone());
+        let (arg, is_ref) = args[0].clone().unwrap();
+        assert!(!is_ref);
+        // <Analysis as InferMode>::sink(self, arg);
+        <Analysis as InferMode>::transfer::<false>(self, ty, destination, arg)
     }
 }

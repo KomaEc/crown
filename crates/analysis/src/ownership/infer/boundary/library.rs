@@ -20,7 +20,7 @@ where
 {
     pub fn library_call(
         &mut self,
-        _destination: Option<Consume<Range<Var>>>,
+        destination: Option<Consume<Range<Var>>>,
         args: &CallArgs,
         callee: DefId,
     ) {
@@ -46,6 +46,8 @@ where
                 }
             }
         }
+
+        self.unknown_call(destination, args)
     }
 
     pub fn call_is_null(&mut self, args: &CallArgs) {

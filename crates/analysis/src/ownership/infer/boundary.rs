@@ -12,7 +12,7 @@ use crate::{
     ownership::{whole_program::WholeProgramAnalysis, AnalysisKind},
     ptr::Measurable,
     ssa::{
-        constraint::{Database, GlobalAssumptions, Var},
+        constraint::{Database, GlobalAssumptions, Var, infer::InferMode},
         consume::Consume,
     },
     struct_topology::StructTopology,
@@ -215,6 +215,7 @@ where
 
                     apply_global_assumptions(
                         ty,
+                        None,
                         &mut std::iter::empty(),
                         &mut input,
                         global_assumptions,
@@ -268,8 +269,26 @@ where
     }
 }
 
+impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
+where
+    'tcx: 'infercx,
+    Analysis: AnalysisKind<'infercx, 'db>,
+{
+    fn unknown_call(&mut self, destination: Option<Consume<Range<Var>>>, args: &CallArgs) {
+        if let Some(dest) = destination {
+            <Analysis as InferMode>::borrow(self, dest);
+        }
+        for arg in args {
+            if let Some((arg, _)) = arg.clone() {
+                <Analysis as InferMode>::lend(self, arg);
+            }
+        }
+    }
+}
+
 fn apply_global_assumptions<'tcx>(
     ty: Ty<'tcx>,
+    mut dom: Option<Var>,
     field_ctxt: &mut dyn Iterator<Item = Var>,
     input: &mut impl Iterator<Item = Var>,
     global_assumptions: &GlobalAssumptions,
@@ -290,9 +309,11 @@ fn apply_global_assumptions<'tcx>(
         }
         if let Some(ty_mut) = ty.builtin_deref(true) {
             let input = input.next().unwrap();
-            if let Some(field) = field_ctxt.next() {
-                database.push_equal::<crate::ssa::constraint::Debug>((), input, field)
+            if let Some((field, dom)) = field_ctxt.next().zip(dom) {
+                // database.push_less_equal::<crate::ssa::constraint::Debug>((), input, field)
+                database.push_eq_min::<crate::ssa::constraint::Debug>((), input, field, dom);
             }
+            dom = Some(input);
             precision -= 1;
             if precision == 0 {
                 return;
@@ -313,6 +334,7 @@ fn apply_global_assumptions<'tcx>(
                 let field_ty = field_def.ty(tcx, subst);
                 apply_global_assumptions(
                     field_ty,
+                    dom,
                     &mut field_ctxt,
                     input,
                     global_assumptions,

@@ -608,7 +608,7 @@ where
                     }
                     // extern
                     rustc_hir::Node::ForeignItem(foreign_item) => {
-                        infer_cx.libc_call(destination, &args, foreign_item.ident)
+                        infer_cx.libc_call(destination, &args, callee, foreign_item.ident)
                     }
                     // in libxml2.rust/src/xmlschemastypes.rs/{} impl_xmlSchemaValDate/set_mon
                     rustc_hir::Node::ImplItem(_) => { /* TODO */ }

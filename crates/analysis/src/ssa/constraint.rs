@@ -185,6 +185,8 @@ pub enum Constraint {
     Equal { x: Var, y: Var },
     /// x <= y
     LessEqual { x: Var, y: Var },
+    /// x = y and z
+    EqMin { x: Var, y: Var, z: Var },
 }
 
 impl std::fmt::Display for Constraint {
@@ -196,6 +198,7 @@ impl std::fmt::Display for Constraint {
                 .unwrap_or_else(|| f.write_fmt(format_args!("{x} = 0"))),
             Constraint::Equal { x, y } => f.write_fmt(format_args!("{x} = {y}")),
             Constraint::LessEqual { x, y } => f.write_fmt(format_args!("{x} <= {y}")),
+            Constraint::EqMin { x, y, z } => f.write_fmt(format_args!("{x} = min({y}, {z})")),
         }
     }
 }
@@ -213,6 +216,8 @@ pub trait Mode {
     fn store_equal(store: Self::Store<'_>, x: Var, y: Var);
 
     fn store_less_equal(store: Self::Store<'_>, x: Var, y: Var);
+
+    fn store_eq_min(store: Self::Store<'_>, x: Var, y: Var, z: Var);
 }
 
 pub struct Emit;
@@ -235,6 +240,10 @@ impl Mode for Emit {
 
     fn store_less_equal(store: Self::Store<'_>, x: Var, y: Var) {
         store.push(Constraint::LessEqual { x, y })
+    }
+
+    fn store_eq_min(store: Self::Store<'_>, x: Var, y: Var, z: Var) {
+        store.push(Constraint::EqMin { x, y, z })
     }
 }
 
@@ -280,6 +289,11 @@ macro_rules! make_logging_mode {
                 let constraint = Constraint::LessEqual { x, y };
                 tracing_for!($level, "emitting constraint: {constraint}")
             }
+
+            fn store_eq_min((): Self::Store<'_>, x: Var, y: Var, z: Var) {
+                let constraint = Constraint::EqMin { x, y, z };
+                tracing_for!($level, "emitting constraint: {constraint}")
+            }
         }
     };
 }
@@ -320,6 +334,12 @@ pub trait Database {
         self.push_approx_linear_impl(x, y, z);
         Infer::store_linear(store, x, y, z);
     }
+
+    fn push_eq_min_impl(&mut self, x: Var, y: Var, z: Var);
+    fn push_eq_min<Infer: Mode>(&mut self, store: Infer::Store<'_>, x: Var, y: Var, z: Var) {
+        self.push_linear_impl(x, y, z);
+        Infer::store_eq_min(store, x, y, z);
+    }
 }
 
 impl Database for () {
@@ -332,6 +352,8 @@ impl Database for () {
     fn push_less_equal_impl(&mut self, _: Var, _: Var) {}
 
     fn push_approx_linear_impl(&mut self, _: Var, _: Var, _: Var) {}
+
+    fn push_eq_min_impl(&mut self, _: Var, _: Var, _: Var) {}
 }
 
 pub struct CadicalDatabase {
@@ -391,6 +413,15 @@ impl Database for CadicalDatabase {
             .add_clause([-x.into_lit(), z.into_lit()].into_iter());
         self.solver
             .add_clause([-y.into_lit(), z.into_lit()].into_iter());
+    }
+
+    fn push_eq_min_impl(&mut self, x: Var, y: Var, z: Var) {
+        self.solver
+            .add_clause([-x.into_lit(), y.into_lit()].into_iter());
+        self.solver
+            .add_clause([-x.into_lit(), z.into_lit()].into_iter());
+        self.solver
+            .add_clause([x.into_lit(), -y.into_lit(), -z.into_lit()].into_iter());
     }
 }
 
@@ -458,5 +489,13 @@ impl<'z3> Database for Z3Database<'z3> {
             .assert(&z3::ast::Bool::or(self.ctx, &[&!x, &!y]));
         self.solver.assert(&z3::ast::Bool::or(self.ctx, &[&!x, z]));
         self.solver.assert(&z3::ast::Bool::or(self.ctx, &[&!y, z]));
+    }
+
+    fn push_eq_min_impl(&mut self, x: Var, y: Var, z: Var) {
+        let [x, y, z] = [x, y, z].map(|sig| &self.z3_ast[sig]);
+        self.solver.assert(&z3::ast::Bool::or(self.ctx, &[&!x, &y]));
+        self.solver.assert(&z3::ast::Bool::or(self.ctx, &[&!x, z]));
+        self.solver
+            .assert(&z3::ast::Bool::or(self.ctx, &[x, &!y, &!z]));
     }
 }
