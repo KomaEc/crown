@@ -87,17 +87,11 @@ pub struct WholeProgramResults<'tcx> {
     struct_topology: StructTopology<'tcx>,
 }
 
-// why so ugly
-mod private {
-    pub trait Captures<'a> {}
-    impl<'a, T: ?Sized> Captures<'a> for T {}
-}
-
 impl<'tcx> WholeProgramResults<'tcx> {
     pub fn fields<'a>(
         &'a self,
         r#struct: &DefId,
-    ) -> impl Iterator<Item = &'a [Ownership]> + 'a + private::Captures<'tcx> {
+    ) -> impl Iterator<Item = &'a [Ownership]> + 'a + common::captures::Captures<'tcx> {
         self.struct_fields
             .fields(&self.struct_topology, r#struct)
             .map(|range| &self.model[range.start.index()..range.end.index()])
