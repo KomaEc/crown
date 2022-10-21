@@ -12,7 +12,7 @@ use crate::{
     ownership::{whole_program::WholeProgramAnalysis, AnalysisKind},
     ptr::Measurable,
     ssa::{
-        constraint::{Database, GlobalAssumptions, Var, infer::InferMode},
+        constraint::{infer::InferMode, Database, GlobalAssumptions, Var},
         consume::Consume,
     },
     struct_topology::StructTopology,

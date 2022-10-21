@@ -262,7 +262,7 @@ macro_rules! tracing_for {
     };
     (Print, $args:tt) => {
         println!($args)
-    }
+    };
 }
 
 macro_rules! make_logging_mode {

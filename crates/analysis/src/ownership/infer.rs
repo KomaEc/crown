@@ -325,9 +325,12 @@ where
 
                     let ptr = base.r#use.start + proj_start_offset;
                     if ptr < base.r#use.end {
-                        infer_cx
-                            .database
-                            .push_assume::<crate::ssa::constraint::Debug>((), ptr, true);
+                        // if analysis precision is 1, there is no need to enforce ownership dominance property
+                        if infer_cx.fn_ctxt.max_ptr_chased() > 1 {
+                            infer_cx
+                                .database
+                                .push_assume::<crate::ssa::constraint::Debug>((), ptr, true);
+                        }
                     } else {
                         break;
                     }
