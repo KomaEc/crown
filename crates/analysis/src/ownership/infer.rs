@@ -230,8 +230,69 @@ where
         }
     }
 
-    pub fn new_vars(&mut self, size: u32) -> Range<Var> {
-        self.database.new_vars(self.gen, size)
+    /// Dominance property
+    fn new_vars(&mut self, ty: Ty<'tcx>) -> Range<Var> {
+        let measure = self.fn_ctxt.measure(ty, 0);
+        let vars = self.database.new_vars(self.gen, measure);
+        let precision = self.fn_ctxt.max_ptr_chased();
+        fn dominate<'tcx>(
+            ty: Ty<'tcx>,
+            mut dom: Option<Var>,
+            vars: &mut Range<Var>,
+            mut precision: u8,
+            database: &mut impl Database,
+            struct_topology: &StructTopology,
+            tcx: TyCtxt<'tcx>,
+        ) {
+            if precision == 0 {
+                return;
+            }
+
+            let mut ty = ty;
+            loop {
+                if let Some(inner_ty) = ty.builtin_index() {
+                    ty = inner_ty;
+                    continue;
+                }
+                if let Some(ty_mut) = ty.builtin_deref(true) {
+                    let var = vars.next().unwrap();
+                    if let Some(dom) = dom {
+                        database.push_less_equal::<crate::ssa::constraint::Debug>((), var, dom)
+                    }
+
+                    dom = Some(var);
+
+                    precision -= 1;
+                    if precision == 0 {
+                        return;
+                    }
+                    ty = ty_mut.ty;
+                    continue;
+                }
+                break;
+            }
+
+            if let TyKind::Adt(adt_def, subst) = ty.kind() {
+                if struct_topology.is_struct_of_concerned(&adt_def.did()) {
+                    for field_def in adt_def.all_fields() {
+                        let field_ty = field_def.ty(tcx, subst);
+                        dominate(field_ty, dom, vars, precision, database, struct_topology, tcx)
+                    }
+                }
+            }
+        }
+
+        dominate(
+            ty,
+            None,
+            vars.clone().by_ref(),
+            precision,
+            self.database,
+            self.fn_ctxt.struct_topology,
+            self.fn_ctxt.tcx,
+        );
+
+        vars
     }
 
     fn project_deeper(
@@ -357,8 +418,9 @@ where
         ty: Ty<'tcx>,
         def: SSAIdx,
     ) {
-        let measure = infer_cx.fn_ctxt.measure(ty, 0);
-        let sigs = infer_cx.new_vars(measure);
+        // let measure = infer_cx.fn_ctxt.measure(ty, 0);
+        // let sigs = infer_cx.new_vars(measure);
+        let sigs = infer_cx.new_vars(ty);
         assert_eq!(def, infer_cx.fn_body_sig[local].push(sigs));
     }
 
@@ -401,7 +463,7 @@ where
             tracing::debug!("interpretting consume for {:?} with {:?}", place, consume);
 
             let r#use = infer_cx.fn_body_sig[base][consume.r#use].clone();
-            let def = infer_cx.new_vars(base_offset);
+            let def = infer_cx.new_vars(base_ty);
             assert_eq!(base_offset, r#use.end.as_u32() - r#use.start.as_u32());
             assert_eq!(
                 infer_cx.fn_body_sig[base].push(def.start..def.end),

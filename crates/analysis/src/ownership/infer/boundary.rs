@@ -214,7 +214,7 @@ where
                     fn initialize<'tcx>(
                         ty: Ty<'tcx>,
                         field_ctxt: &mut dyn Iterator<Item = Var>,
-                        input: &mut dyn Iterator<Item = Var>,
+                        input: &mut impl Iterator<Item = Var>,
                         global_assumptions: &GlobalAssumptions,
                         struct_topology: &StructTopology,
                         database: &mut <WholeProgramAnalysis as AnalysisKind>::DB,
