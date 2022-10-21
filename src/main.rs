@@ -282,10 +282,10 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 &alias_result,
                 &mutability_result,
             );
-            let mut crate_ctxt = CrateCtxt::from(input);
+            let crate_ctxt = CrateCtxt::from(input);
             let ownership_schemes = time("construct ownership scheme", || {
                 analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
-                    &mut crate_ctxt,
+                    crate_ctxt,
                     &noalias_params,
                 )
             })?;
@@ -302,10 +302,10 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 &alias_result,
                 &mutability_result,
             );
-            let mut crate_ctxt = CrateCtxt::from(input);
+            let crate_ctxt = CrateCtxt::from(input);
             let ownership_schemes =
                 analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
-                    &mut crate_ctxt,
+                    crate_ctxt,
                     &noalias_params,
                 )?;
 

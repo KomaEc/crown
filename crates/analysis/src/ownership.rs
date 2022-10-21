@@ -116,14 +116,14 @@ impl<Value> Param<Value> {
     }
 }
 
-pub trait AnalysisKind<'analysis, 'db> {
+pub trait AnalysisKind<'analysis, 'db, 'tcx> {
     /// Analysis results
     type Results;
     /// Interprocedural context
     type InterCtxt;
     type DB: Database;
     fn analyze(
-        crate_ctxt: &mut CrateCtxt,
+        crate_ctxt: CrateCtxt<'tcx>,
         noalias_params: &NoAliasParams,
     ) -> anyhow::Result<Self::Results>;
 }
@@ -131,29 +131,29 @@ pub trait AnalysisKind<'analysis, 'db> {
 pub type Precision = u8;
 
 pub enum Modular {}
-impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for Modular {
+impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for Modular {
     type Results = ();
     type InterCtxt = ();
     type DB = ();
-    fn analyze(_: &mut CrateCtxt, _: &NoAliasParams) -> anyhow::Result<Self::Results> {
+    fn analyze(_: CrateCtxt, _: &NoAliasParams) -> anyhow::Result<Self::Results> {
         // TODO implement this
         anyhow::bail!("modular analysis is not implemented")
     }
 }
 
 pub enum IntraProcedural {}
-impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for IntraProcedural {
+impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for IntraProcedural {
     type Results = ();
     type InterCtxt = ();
     type DB = CadicalDatabase;
-    fn analyze(crate_ctxt: &mut CrateCtxt, _: &NoAliasParams) -> anyhow::Result<Self::Results> {
+    fn analyze(crate_ctxt: CrateCtxt, _: &NoAliasParams) -> anyhow::Result<Self::Results> {
         // let mut databases = Vec::with_capacity(crate_ctxt.fns().len());
         for &did in crate_ctxt.fns() {
             println!("solving {:?}", did);
             let body = crate_ctxt.tcx.optimized_mir(did);
 
             let dominance_frontier = compute_dominance_frontier(body);
-            let definitions = initial_definitions(body, crate_ctxt);
+            let definitions = initial_definitions(body, &crate_ctxt);
             let ssa_state = SSAState::new(body, &dominance_frontier, definitions);
             let mut rn = Renamer::new(body, ssa_state, crate_ctxt.tcx);
 

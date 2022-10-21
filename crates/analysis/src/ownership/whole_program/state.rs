@@ -3,7 +3,7 @@ use rustc_data_structures::sso::SsoHashSet;
 use rustc_hash::FxHashMap;
 use rustc_middle::mir::{BasicBlockData, Body, Location, Rvalue, StatementKind};
 
-use super::WholeProgramInterCtxt;
+use super::InterCtxt;
 use crate::{
     call_graph::FnSig,
     ownership::{infer::FnSummary, Ownership, Param, Precision},
@@ -23,7 +23,7 @@ pub(super) fn initial_inter_ctxt(
     noalias_params: &NoAliasParams,
     gen: &mut Gen,
     database: &mut Z3Database,
-) -> WholeProgramInterCtxt {
+) -> InterCtxt {
     const INIT_PRECISION: Precision = 1;
 
     let mut fn_sigs = FxHashMap::default();

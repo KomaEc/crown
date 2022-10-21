@@ -27,6 +27,7 @@ use crate::{
         state::SSAState,
         AnalysisResults, FnResult,
     },
+    struct_topology::StructTopology,
     type_qualifier::noalias::NoAliasParams,
     CrateCtxt,
 };
@@ -34,15 +35,15 @@ use crate::{
 /// whole program analysis
 pub enum WholeProgramAnalysis {}
 
-impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgramAnalysis {
-    type Results = WholeProgramAnalysisResults;
+impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for WholeProgramAnalysis {
+    type Results = WholeProgramResults<'tcx>;
 
-    type InterCtxt = &'analysis WholeProgramInterCtxt;
+    type InterCtxt = &'analysis InterCtxt;
 
     type DB = Z3Database<'db>;
 
     fn analyze(
-        crate_ctxt: &mut CrateCtxt,
+        mut crate_ctxt: CrateCtxt<'tcx>,
         noalias_params: &NoAliasParams,
     ) -> anyhow::Result<Self::Results> {
         let required_precision = std::cmp::max(
@@ -54,21 +55,85 @@ impl<'analysis, 'db> AnalysisKind<'analysis, 'db> for WholeProgramAnalysis {
         );
 
         // first stage
-        let mut results = solve_crate(crate_ctxt, Left((noalias_params, required_precision)))?;
+        let mut results = solve_crate(&mut crate_ctxt, Left((noalias_params, required_precision)))?;
 
         // second stage
         for _ in 1..2 * required_precision {
-            results = solve_crate(crate_ctxt, Right(results))?;
+            results = solve_crate(&mut crate_ctxt, Right(results))?;
         }
 
-        Ok(results)
+        let (model, fn_locals, struct_fields) = results;
+
+        Ok(WholeProgramResults {
+            model,
+            fn_locals,
+            struct_fields,
+            struct_topology: crate_ctxt.struct_topology,
+        })
     }
 }
 
-pub struct WholeProgramAnalysisResults {
-    model: Vec<Ownership>,
-    fn_sigs: WholeProgramInterCtxt,
+pub struct FnLocals {
+    fn_sigs: InterCtxt,
     fn_summaries: FxHashMap<DefId, (FnSummary, Precision)>,
+}
+
+pub type IntermediateResults = (Vec<Ownership>, FnLocals, GlobalAssumptions);
+
+pub struct WholeProgramResults<'tcx> {
+    model: Vec<Ownership>,
+    fn_locals: FnLocals,
+    struct_fields: GlobalAssumptions,
+    struct_topology: StructTopology<'tcx>,
+}
+
+// why so ugly
+mod private {
+    pub trait Captures<'a> {}
+    impl<'a, T: ?Sized> Captures<'a> for T {}
+}
+
+impl<'tcx> WholeProgramResults<'tcx> {
+    pub fn fields<'a>(
+        &'a self,
+        r#struct: &DefId,
+    ) -> impl Iterator<Item = &'a [Ownership]> + 'a + private::Captures<'tcx> {
+        self.struct_fields
+            .fields(&self.struct_topology, r#struct)
+            .map(|range| &self.model[range.start.index()..range.end.index()])
+    }
+
+    pub fn trace(&self, tcx: TyCtxt) {
+        for &did in &self.struct_topology.post_order {
+            tracing::debug!("{}: {{", tcx.def_path_str(did));
+            for (field_def, field_results) in itertools::izip!(tcx.adt_def(did).all_fields(), self.fields(&did)) {
+                tracing::debug!("   {}: {:?}", field_def.ident(tcx), field_results);
+            }
+            tracing::debug!("}}");
+        }
+
+        for did in self.fn_locals.fn_summaries.keys() {
+            let body = tcx.optimized_mir(did);
+            tracing::debug!("@{}", tcx.def_path_str(*did));
+            for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
+                for index in 0..bb_data.statements.len() + bb_data.terminator.iter().count() {
+                    let location = Location {
+                        block: bb,
+                        statement_index: index,
+                    };
+                    let result = self
+                        .fn_result(*did)
+                        .unwrap()
+                        .location_results(location)
+                        .map(|(local, result)| format!("{:?}: {:?}", local, result))
+                        .collect::<Vec<_>>()
+                        .join(", ");
+
+                    tracing::debug!("@{:?}: {result}", location);
+                }
+            }
+        }
+    }
 }
 
 fn solve_body<'tcx>(
@@ -122,13 +187,20 @@ fn solve_body<'tcx>(
 
 fn solve_crate(
     crate_ctxt: &mut CrateCtxt,
-    previous_results: Either<(&NoAliasParams, Precision), WholeProgramAnalysisResults>,
-) -> anyhow::Result<WholeProgramAnalysisResults> {
+    previous_results: Either<(&NoAliasParams, Precision), IntermediateResults>,
+) -> anyhow::Result<IntermediateResults> {
     let mut gen = Gen::new();
 
     let config = z3::Config::new();
     let ctx = z3::Context::new(&config);
     let mut database = <WholeProgramAnalysis as AnalysisKind>::DB::new(&ctx);
+
+    let global_assumptions = GlobalAssumptions::new(
+        &crate_ctxt.struct_topology,
+        crate_ctxt.tcx,
+        &mut gen,
+        &mut database,
+    );
 
     let mut fn_summaries = FxHashMap::default();
     fn_summaries.reserve(crate_ctxt.fns().len());
@@ -137,13 +209,6 @@ fn solve_crate(
         Left((noalias_params, required_precision)) => {
             let inter_ctxt =
                 initial_inter_ctxt(crate_ctxt, noalias_params, &mut gen, &mut database);
-            let global_assumptions = GlobalAssumptions::new(
-                &crate_ctxt.struct_topology,
-                crate_ctxt.tcx,
-                &mut gen,
-                &mut database,
-            );
-            // global_assumptions.show(&crate_ctxt.struct_topology);
             for &did in crate_ctxt.call_graph.fns() {
                 let body = crate_ctxt.tcx.optimized_mir(did);
                 let ssa_state = initial_ssa_state(crate_ctxt, body);
@@ -166,14 +231,9 @@ fn solve_crate(
                 .struct_topology
                 .increase_precision(crate_ctxt.tcx);
             let (inter_ctxt, fns) =
-                previous_results.increase_precision(crate_ctxt, &mut gen, &mut database);
-            let global_assumptions = GlobalAssumptions::new(
-                &crate_ctxt.struct_topology,
-                crate_ctxt.tcx,
-                &mut gen,
-                &mut database,
-            );
-            // global_assumptions.show(&crate_ctxt.struct_topology);
+                previous_results
+                    .1
+                    .refine(previous_results.0, crate_ctxt, &mut gen, &mut database);
             for (did, ssa_state, precision) in fns {
                 let body = crate_ctxt.tcx.optimized_mir(did);
                 let fn_summary = solve_body(
@@ -194,15 +254,20 @@ fn solve_crate(
 
     let model = retrieve_model(database, gen);
 
-    let results = WholeProgramAnalysisResults {
-        model,
+    let fn_locals = FnLocals {
         fn_sigs,
         fn_summaries,
     };
 
-    results.print_fn_sigs(crate_ctxt.tcx, crate_ctxt.fns());
+    let intermediate_results = (model, fn_locals, global_assumptions);
+    show_fn_sigs(
+        &intermediate_results.0,
+        &intermediate_results.1,
+        crate_ctxt.tcx,
+        crate_ctxt.fns(),
+    );
 
-    Ok(results)
+    Ok(intermediate_results)
 }
 
 fn retrieve_model(database: Z3Database, gen: Gen) -> Vec<Ownership> {
@@ -225,75 +290,89 @@ fn retrieve_model(database: Z3Database, gen: Gen) -> Vec<Ownership> {
     model
 }
 
-impl<'a> AnalysisResults<'a> for WholeProgramAnalysisResults {
+impl<'analysis_results, 'tcx: 'analysis_results> AnalysisResults<'analysis_results>
+    for WholeProgramResults<'tcx>
+{
     type Value = Ownership;
 
-    type Param = Param<&'a [Ownership]>;
+    type Param = Param<&'analysis_results [Ownership]>;
 
     type FnSig = impl Iterator<Item = Option<Self::Param>>;
 
-    type FnResult = (&'a FnSummary, &'a [Ownership]);
+    type FnResult = (&'analysis_results FnSummary, &'analysis_results [Ownership]);
 
-    fn fn_result(&'a self, r#fn: DefId) -> Option<Self::FnResult> {
-        let (fn_summary, _) = self.fn_summaries.get(&r#fn)?;
+    fn fn_result(&'analysis_results self, r#fn: DefId) -> Option<Self::FnResult> {
+        let (fn_summary, _) = self.fn_locals.fn_summaries.get(&r#fn)?;
         Some((fn_summary, &self.model[..]))
     }
 
-    fn fn_sig(&'a self, r#fn: DefId) -> Self::FnSig {
-        let fn_sigs = &self.fn_sigs[&r#fn];
-        let ret = fn_sigs
-            .ret
-            .clone()
-            .map(|sigs| sigs.map(|sigs| &self.model[sigs.start.index()..sigs.end.index()]));
-
-        let args = fn_sigs.args.iter().map(|arg| {
-            arg.clone()
-                .map(|sigs| sigs.map(|sigs| &self.model[sigs.start.index()..sigs.end.index()]))
-        });
-
-        std::iter::once(ret).chain(args)
+    fn fn_sig(&'analysis_results self, r#fn: DefId) -> Self::FnSig {
+        get_fn_sig(&self.model, &self.fn_locals, r#fn)
     }
 
-    fn print_fn_sigs(&'a self, tcx: TyCtxt, fns: &[DefId]) {
-        fn display_value<Value: std::fmt::Display>(value: &[Value]) -> String {
-            value
-                .iter()
-                .map(|value| format!("{value}"))
-                .collect::<Vec<_>>()
-                .join(" ")
-        }
+    fn print_fn_sigs(&'analysis_results self, tcx: TyCtxt, fns: &[DefId]) {
+        show_fn_sigs(&self.model, &self.fn_locals, tcx, fns);
+    }
+}
 
-        for &did in fns {
-            let mut fn_sig = self.fn_sig(did);
-            let ret = fn_sig.next().unwrap();
-            let ret = if let Some(sig) = ret {
-                // format!("{:?}", sig)
-                display_value(sig.expect_normal())
-            } else {
-                "_".to_owned()
-            };
-            let args = fn_sig
-                .map(|sig| {
-                    if let Some(sig) = sig {
-                        match sig {
-                            Param::Output(output_param) => {
-                                "&uniq ".to_owned()
-                                    + &display_value(&output_param.r#use[1..])
-                                    + " ↓ &uniq "
-                                    + &display_value(&output_param.def[1..])
-                            }
-                            Param::Normal(param) => display_value(param),
+fn get_fn_sig<'a>(
+    model: &'a [Ownership],
+    fn_locals: &'a FnLocals,
+    r#fn: DefId,
+) -> impl Iterator<Item = Option<Param<&[Ownership]>>> + 'a {
+    let fn_sigs = &fn_locals.fn_sigs[&r#fn];
+    let ret = fn_sigs
+        .ret
+        .clone()
+        .map(|sigs| sigs.map(|sigs| &model[sigs.start.index()..sigs.end.index()]));
+
+    let args = fn_sigs.args.iter().map(|arg| {
+        arg.clone()
+            .map(|sigs| sigs.map(|sigs| &model[sigs.start.index()..sigs.end.index()]))
+    });
+
+    std::iter::once(ret).chain(args)
+}
+
+fn show_fn_sigs(model: &[Ownership], fn_locals: &FnLocals, tcx: TyCtxt, fns: &[DefId]) {
+    fn display_value<Value: std::fmt::Display>(value: &[Value]) -> String {
+        value
+            .iter()
+            .map(|value| format!("{value}"))
+            .collect::<Vec<_>>()
+            .join(" ")
+    }
+
+    for &did in fns {
+        let mut fn_sig = get_fn_sig(model, fn_locals, did);
+        let ret = fn_sig.next().unwrap();
+        let ret = if let Some(sig) = ret {
+            // format!("{:?}", sig)
+            display_value(sig.expect_normal())
+        } else {
+            "_".to_owned()
+        };
+        let args = fn_sig
+            .map(|sig| {
+                if let Some(sig) = sig {
+                    match sig {
+                        Param::Output(output_param) => {
+                            "&uniq ".to_owned()
+                                + &display_value(&output_param.r#use[1..])
+                                + " ↓ &uniq "
+                                + &display_value(&output_param.def[1..])
                         }
-                    } else {
-                        "_".to_owned()
+                        Param::Normal(param) => display_value(param),
                     }
-                })
-                .collect::<Vec<_>>()
-                .join(", ");
+                } else {
+                    "_".to_owned()
+                }
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
 
-            let fn_path = tcx.def_path_str(did);
-            println!("{fn_path}: ({args}) -> {ret}")
-        }
+        let fn_path = tcx.def_path_str(did);
+        println!("{fn_path}: ({args}) -> {ret}")
     }
 }
 
@@ -319,16 +398,17 @@ impl<'a> FnResult<'a> for (&'a FnSummary, &'a [Ownership]) {
     }
 }
 
-pub type WholeProgramInterCtxt = FxHashMap<DefId, FnSig<Option<Param<Range<Var>>>>>;
+pub type InterCtxt = FxHashMap<DefId, FnSig<Option<Param<Range<Var>>>>>;
 
-impl WholeProgramAnalysisResults {
-    pub fn increase_precision<'tcx>(
+impl FnLocals {
+    pub fn refine<'tcx>(
         self,
+        model: Vec<Ownership>,
         crate_ctxt: &CrateCtxt<'tcx>,
         gen: &mut Gen,
         database: &mut Z3Database,
     ) -> (
-        WholeProgramInterCtxt,
+        InterCtxt,
         impl Iterator<Item = (DefId, SSAState, Precision)> + 'tcx,
     ) {
         let mut inter_ctxt = FxHashMap::default();
@@ -401,35 +481,11 @@ impl WholeProgramAnalysisResults {
                 .map(move |(did, (fn_summary, precision))| {
                     (
                         did,
-                        refine_state(tcx.optimized_mir(did), fn_summary, &self.model[..]),
+                        refine_state(tcx.optimized_mir(did), fn_summary, &model),
                         precision,
                     )
                 });
 
         (inter_ctxt, state_iter)
-    }
-
-    pub fn trace(&self, tcx: TyCtxt) {
-        for did in self.fn_summaries.keys() {
-            let body = tcx.optimized_mir(did);
-            tracing::debug!("@{}", tcx.def_path_str(*did));
-            for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
-                for index in 0..bb_data.statements.len() + bb_data.terminator.iter().count() {
-                    let location = Location {
-                        block: bb,
-                        statement_index: index,
-                    };
-                    let result = self
-                        .fn_result(*did)
-                        .unwrap()
-                        .location_results(location)
-                        .map(|(local, result)| format!("{:?}: {:?}", local, result))
-                        .collect::<Vec<_>>()
-                        .join(", ");
-
-                    tracing::debug!("@{:?}: {result}", location);
-                }
-            }
-        }
     }
 }

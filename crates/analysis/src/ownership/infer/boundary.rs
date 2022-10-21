@@ -21,7 +21,7 @@ use crate::{
 pub mod libc;
 pub mod library;
 
-pub trait Boundary<'infercx, 'db, 'tcx>: AnalysisKind<'infercx, 'db> + Sized
+pub trait Boundary<'infercx, 'db, 'tcx>: AnalysisKind<'infercx, 'db, 'tcx> + Sized
 where
     'tcx: 'infercx,
 {
@@ -37,7 +37,7 @@ where
         inter_ctxt: &Self::InterCtxt,
         global_assumptions: &GlobalAssumptions,
         struct_topology: &StructTopology,
-        database: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
+        database: &mut <Self as AnalysisKind<'infercx, 'db, 'tcx>>::DB,
         body: &Body<'tcx>,
         params: impl Iterator<Item = Option<Range<Var>>>,
     );
@@ -53,7 +53,7 @@ where
 impl<'infercx, 'db, 'tcx, Analysis> Boundary<'infercx, 'db, 'tcx> for Analysis
 where
     'tcx: 'infercx,
-    Analysis: AnalysisKind<'infercx, 'db>,
+    Analysis: AnalysisKind<'infercx, 'db, 'tcx>,
 {
     default fn call(
         _: &mut InferCtxt<'infercx, 'db, 'tcx, Self>,
@@ -68,7 +68,7 @@ where
         _: &Analysis::InterCtxt,
         _: &GlobalAssumptions,
         _: &StructTopology,
-        _: &mut <Self as AnalysisKind<'infercx, 'db>>::DB,
+        _: &mut <Self as AnalysisKind<'infercx, 'db, 'tcx>>::DB,
         _: &Body<'tcx>,
         _: impl Iterator<Item = Option<Range<Var>>>,
     ) {
@@ -272,7 +272,7 @@ where
 impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
 where
     'tcx: 'infercx,
-    Analysis: AnalysisKind<'infercx, 'db>,
+    Analysis: AnalysisKind<'infercx, 'db, 'tcx>,
 {
     fn unknown_call(&mut self, destination: Option<Consume<Range<Var>>>, args: &CallArgs) {
         if let Some(dest) = destination {

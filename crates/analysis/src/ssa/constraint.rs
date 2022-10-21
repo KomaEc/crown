@@ -112,11 +112,11 @@ impl GlobalAssumptions {
         GlobalAssumptions { struct_fields }
     }
 
-    pub fn fields(
-        &self,
-        struct_topology: &StructTopology,
+    pub fn fields<'a, 'tcx>(
+        &'a self,
+        struct_topology: &'a StructTopology<'tcx>,
         did: &DefId,
-    ) -> impl Iterator<Item = Range<Var>> + '_ {
+    ) -> impl Iterator<Item = Range<Var>> + 'a {
         let idx = struct_topology.did_idx(did);
         self.struct_fields[idx]
             .array_windows()

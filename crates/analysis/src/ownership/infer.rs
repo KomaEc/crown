@@ -38,9 +38,9 @@ pub struct FnSummary {
 }
 
 impl FnSummary {
-    pub fn new<'analysis, 'db, Kind: AnalysisKind<'analysis, 'db>>(
+    pub fn new<'analysis, 'db, 'tcx, Kind: AnalysisKind<'analysis, 'db, 'tcx>>(
         rn: Renamer,
-        infer_cx: InferCtxt<'analysis, 'db, '_, Kind>,
+        infer_cx: InferCtxt<'analysis, 'db, 'tcx, Kind>,
     ) -> Self {
         FnSummary {
             fn_body_sig: infer_cx.fn_body_sig,
@@ -164,7 +164,7 @@ type CallArgs = SmallVec<[Option<(Consume<LocalSig>, bool)>; 4]>;
 pub struct InferCtxt<'infercx, 'db, 'tcx, Analysis>
 where
     'tcx: 'infercx,
-    Analysis: AnalysisKind<'infercx, 'db>,
+    Analysis: AnalysisKind<'infercx, 'db, 'tcx>,
 {
     inter_ctxt: Analysis::InterCtxt,
     database: &'infercx mut Analysis::DB,
@@ -184,7 +184,7 @@ where
 impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
 where
     'tcx: 'infercx,
-    Analysis: AnalysisKind<'infercx, 'db>,
+    Analysis: AnalysisKind<'infercx, 'db, 'tcx>,
 {
     pub fn new(
         fn_ctxt: FnCtxt<'infercx, 'tcx>,
@@ -405,8 +405,8 @@ where
 impl<'infercx, 'db, 'tcx, Analysis> InferMode<'infercx, 'db, 'tcx> for Analysis
 where
     'tcx: 'infercx,
-    Analysis: AnalysisKind<'infercx, 'db>,
-    <Analysis as AnalysisKind<'infercx, 'db>>::DB: 'infercx,
+    Analysis: AnalysisKind<'infercx, 'db, 'tcx>,
+    <Analysis as AnalysisKind<'infercx, 'db, 'tcx>>::DB: 'infercx,
 {
     type Ctxt = InferCtxt<'infercx, 'db, 'tcx, Analysis>;
 

@@ -17,7 +17,7 @@ use crate::{
 impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
 where
     'tcx: 'infercx,
-    Analysis: AnalysisKind<'infercx, 'db>,
+    Analysis: AnalysisKind<'infercx, 'db, 'tcx>,
 {
     pub fn libc_call(
         &mut self,
