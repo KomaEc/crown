@@ -318,7 +318,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 mutability_result,
                 fatness_result,
             );
-            refactor::refactor(&input, &analysis_results);
+            refactor::refactor(&input, &analysis_results)?;
         }
         Command::Rewrite => {
             let alias_result = alias::alias_results(&input);
@@ -346,7 +346,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 mutability_result,
                 fatness_result,
             );
-            refactor::refactor(&input, &analysis_results);
+            refactor::refactor(&input, &analysis_results)?;
         }
     }
     Ok(())

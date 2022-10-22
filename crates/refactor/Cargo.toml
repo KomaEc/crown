@@ -13,6 +13,7 @@ rustfix = "0.6"
 tracing = "0.1"
 itertools = "0.10"
 smallvec = { version = "1.8.0", features = ["union", "const_generics"] }
+anyhow = "1.0"
 common = { path = "../common" }
 analysis = { path = "../analysis" }
 alias = { path = "../alias" }

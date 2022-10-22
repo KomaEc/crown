@@ -13,10 +13,10 @@ use analysis::{
         mutability::{Mutability, MutabilityResult},
     },
 };
-use common::{data_structure::vec_vec::VecVec, rewrite::Rewrite, CrateData};
+use common::{data_structure::vec_vec::VecVec, CrateData, rewrite::{Rewrite, RewriteMode}};
+use rewrite_ty::rewrite_structs;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_middle::ty::{Ty, TyCtxt};
 use smallvec::SmallVec;
 
 extern crate rustc_ast;
@@ -36,9 +36,15 @@ extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_target;
 
-pub fn refactor<'tcx>(crate_data: &CrateData<'tcx>, analysis: &Analysis<'tcx>) {
+pub fn refactor<'tcx>(crate_data: &CrateData<'tcx>, analysis: &Analysis<'tcx>) -> anyhow::Result<()> {
     let struct_decision = StructDecision::new(crate_data, analysis);
-    println!("{:?}", struct_decision);
+    let mut rewriter = vec![];
+    rewrite_structs(&crate_data.structs, &struct_decision, &mut rewriter, crate_data.tcx)?;
+
+
+    rewriter.write(RewriteMode::Diff);
+
+    Ok(())
 }
 
 pub struct Analysis<'tcx> {
@@ -67,12 +73,18 @@ impl<'tcx> Analysis<'tcx> {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum PointerKind {
     Move,
     Mut,
     Shr,
     Raw,
+}
+
+impl PointerKind {
+    fn is_raw(&self) -> bool {
+        *self == PointerKind::Raw
+    }
 }
 
 pub struct PointerData {
@@ -201,14 +213,23 @@ impl<'me, 'hir> Iterator for HirPtrTypeWalker<'me, 'hir> {
     type Item = &'me rustc_hir::Ty<'hir>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let rustc_hir::TyKind::Ptr(inner) = &self.ty.kind {
-            let ptr_ty = self.ty;
+        let ty = peel_arrs(self.ty);
+        if let rustc_hir::TyKind::Ptr(inner) = &ty.kind {
+            let ptr_ty = ty;
             self.ty = inner.ty;
             Some(ptr_ty)
         } else {
             None
         }
     }
+}
+
+pub fn peel_arrs<'a, 'hir>(ty: &'a rustc_hir::Ty<'hir>) -> &'a rustc_hir::Ty<'hir> {
+    let mut final_ty = ty;
+    while let rustc_hir::TyKind::Array(ty, _) | rustc_hir::TyKind::Slice(ty) = &final_ty.kind {
+        final_ty = &ty;
+    }
+    final_ty
 }
 
 trait HirExt<'hir> {
