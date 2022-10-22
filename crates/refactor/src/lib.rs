@@ -3,7 +3,8 @@
 #![feature(box_patterns)]
 #![feature(split_array)]
 
-pub mod rewrite_ty;
+mod rewrite_fn;
+mod rewrite_ty;
 
 use alias::{AliasResult, TaintResult};
 use analysis::{
@@ -13,7 +14,11 @@ use analysis::{
         mutability::{Mutability, MutabilityResult},
     },
 };
-use common::{data_structure::vec_vec::VecVec, CrateData, rewrite::{Rewrite, RewriteMode}};
+use common::{
+    data_structure::vec_vec::VecVec,
+    rewrite::{Rewrite, RewriteMode},
+    CrateData,
+};
 use rewrite_ty::rewrite_structs;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -36,11 +41,18 @@ extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_target;
 
-pub fn refactor<'tcx>(crate_data: &CrateData<'tcx>, analysis: &Analysis<'tcx>) -> anyhow::Result<()> {
+pub fn refactor<'tcx>(
+    crate_data: &CrateData<'tcx>,
+    analysis: &Analysis<'tcx>,
+) -> anyhow::Result<()> {
     let struct_decision = StructDecision::new(crate_data, analysis);
     let mut rewriter = vec![];
-    rewrite_structs(&crate_data.structs, &struct_decision, &mut rewriter, crate_data.tcx)?;
-
+    rewrite_structs(
+        &crate_data.structs,
+        &struct_decision,
+        &mut rewriter,
+        crate_data.tcx,
+    )?;
 
     rewriter.write(RewriteMode::Diff);
 
@@ -202,8 +214,6 @@ impl std::fmt::Debug for StructDecision {
         Ok(())
     }
 }
-
-pub struct FnDecision {}
 
 struct HirPtrTypeWalker<'me, 'hir> {
     ty: &'me rustc_hir::Ty<'hir>,
