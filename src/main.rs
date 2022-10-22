@@ -347,7 +347,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 fatness_result,
             );
             refactor::refactor(&input, &analysis_results);
-        },
+        }
     }
     Ok(())
 }
