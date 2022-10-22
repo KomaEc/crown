@@ -11,7 +11,7 @@ use analysis::{
         mutability::{Mutability, MutabilityResult},
     },
 };
-use common::{data_structure::vec_array::VecArray, CrateData};
+use common::{data_structure::vec_vec::VecVec, CrateData};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use smallvec::SmallVec;
@@ -84,7 +84,7 @@ pub struct MetaData {
 
 pub struct StructDecision {
     did_idx: FxHashMap<DefId, usize>,
-    struct_fields: VecArray<SmallVec<[PointerData; 3]>>,
+    struct_fields: VecVec<SmallVec<[PointerData; 3]>>,
 }
 
 impl StructDecision {
@@ -98,7 +98,7 @@ impl StructDecision {
     pub fn new<'tcx>(crate_data: &CrateData<'tcx>, analysis: &Analysis<'tcx>) -> Self {
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.structs.len());
-        let mut struct_fields = VecArray::with_capacity(
+        let mut struct_fields = VecVec::with_capacity(
             crate_data.structs.len(),
             crate_data.structs.iter().fold(0, |acc, did| {
                 let adt_def = crate_data.tcx.adt_def(*did);
@@ -149,10 +149,10 @@ impl StructDecision {
                         meta_data,
                     });
                 }
-                struct_fields.add_item_to_array(field);
+                struct_fields.push_inner(field);
             }
 
-            struct_fields.done_with_array();
+            struct_fields.push();
 
             did_idx.insert(*did, idx);
         }

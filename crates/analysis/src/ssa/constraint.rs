@@ -1,6 +1,6 @@
 use std::{num::NonZeroU32, ops::Range};
 
-use common::data_structure::vec_array::VecArray;
+use common::data_structure::vec_vec::VecVec;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
@@ -82,7 +82,7 @@ pub fn initialize_local<'tcx>(
 }
 
 pub struct GlobalAssumptions {
-    struct_fields: VecArray<Var>,
+    struct_fields: VecVec<Var>,
 }
 
 impl GlobalAssumptions {
@@ -92,19 +92,19 @@ impl GlobalAssumptions {
         gen: &mut Gen,
         database: &mut impl Database,
     ) -> Self {
-        let mut struct_fields = VecArray::with_indices_capacity(struct_topology.post_order.len());
+        let mut struct_fields = VecVec::with_indices_capacity(struct_topology.post_order.len());
 
         for &did in &struct_topology.post_order {
             let ty = tcx.type_of(did);
             let TyKind::Adt(adt_def, subst) = ty.kind() else { unreachable!() };
-            struct_fields.add_item_to_array(gen.next());
+            struct_fields.push_inner(gen.next());
             for field_def in adt_def.all_fields() {
                 let field_ty = field_def.ty(tcx, subst);
                 let ptr_depth = struct_topology.measure_ptr(field_ty);
                 database.new_vars(gen, ptr_depth);
-                struct_fields.add_item_to_array(gen.next());
+                struct_fields.push_inner(gen.next());
             }
-            struct_fields.done_with_array();
+            struct_fields.push();
         }
 
         let struct_fields = struct_fields.done();

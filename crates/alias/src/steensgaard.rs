@@ -2,7 +2,7 @@ pub mod constraint;
 #[cfg(test)]
 mod test;
 
-use common::data_structure::vec_array::VecArray;
+use common::data_structure::vec_vec::VecVec;
 use petgraph::unionfind::UnionFind;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -130,7 +130,7 @@ impl FieldStrategy for FieldFocused {
 /// stored for every [`DefId`].
 pub struct MemoryLocationGroup<Item> {
     pub(crate) did_idx: FxHashMap<DefId, usize>,
-    pub(crate) locations: VecArray<AbstractLocation>,
+    pub(crate) locations: VecVec<AbstractLocation>,
     _marker: std::marker::PhantomData<*const Item>,
 }
 
@@ -180,35 +180,35 @@ impl Steensgaard<FieldFocused> {
             pts.push(this);
         }
 
-        let mut struct_fields = VecArray::with_capacity(input.structs.len(), n_struct_fields);
+        let mut struct_fields = VecVec::with_capacity(input.structs.len(), n_struct_fields);
         let mut struct_idx = FxHashMap::default();
         struct_idx.reserve(input.structs.len());
         for (idx, did) in input.structs.iter().enumerate() {
             let r#struct = input.tcx.adt_def(*did);
             for _ in r#struct.all_fields() {
                 let field = pts.next_index();
-                struct_fields.add_item_to_array(field);
+                struct_fields.push_inner(field);
                 let field_pt =
                     AbstractLocation::from_u32(field.as_u32() - (n_struct_fields as u32));
                 pts.push(field_pt);
             }
-            struct_fields.add_item_to_array(pts.next_index());
-            struct_fields.done_with_array();
+            struct_fields.push_inner(pts.next_index());
+            struct_fields.push();
             struct_idx.insert(*did, idx);
         }
         let struct_fields = struct_fields.done();
 
-        let mut fn_locals = VecArray::with_capacity(input.fns.len(), input.fns.len() * 20);
+        let mut fn_locals = VecVec::with_capacity(input.fns.len(), input.fns.len() * 20);
         let mut fn_idx = FxHashMap::default();
         fn_idx.reserve(input.fns.len());
         for (idx, did) in input.fns.iter().enumerate() {
             let r#fn = input.tcx.optimized_mir(*did);
             for _ in &r#fn.local_decls {
                 let local = pts.next_index();
-                fn_locals.add_item_to_array(local);
+                fn_locals.push_inner(local);
                 assert_eq!(pts.push(AbstractLocation::NULL), local);
             }
-            fn_locals.done_with_array();
+            fn_locals.push();
             fn_idx.insert(*did, idx);
         }
         let fn_locals = fn_locals.done();
@@ -298,7 +298,7 @@ impl Steensgaard<FieldInsensitive> {
             pts.push(AbstractLocation::NULL);
         }
 
-        let mut fn_locals = VecArray::with_capacity(input.fns.len(), input.fns.len() * 20);
+        let mut fn_locals = VecVec::with_capacity(input.fns.len(), input.fns.len() * 20);
         let mut fn_idx = FxHashMap::default();
         fn_idx.reserve(input.fns.len());
         for (idx, did) in input.fns.iter().enumerate() {
@@ -306,10 +306,10 @@ impl Steensgaard<FieldInsensitive> {
             for _ in &r#fn.local_decls {
                 let local: AbstractLocation = pts.next_index();
                 let local_pt = AbstractLocation::from_u32(local.as_u32() - n_fn_locals as u32);
-                fn_locals.add_item_to_array(local);
+                fn_locals.push_inner(local);
                 assert_eq!(pts.push(local_pt), local);
             }
-            fn_locals.done_with_array();
+            fn_locals.push();
             fn_idx.insert(*did, idx);
         }
         let fn_locals = fn_locals.done();

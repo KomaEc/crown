@@ -1,4 +1,4 @@
-use common::data_structure::vec_array::{VecArray, VecArrayConstruction};
+use common::data_structure::vec_vec::{VecVec, VecVecConstruction};
 use rustc_data_structures::sso::SsoHashSet;
 use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
@@ -26,7 +26,7 @@ pub struct Definitions {
     ///
     /// We've made an assumption that a local can only be used or defined
     /// once in a statement/terminator
-    consumes: VecArray<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
+    consumes: VecVec<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
     pub maybe_consume_sites: IndexVec<Local, BitSet<BasicBlock>>,
     /// Caching the results of calling [local_has_non_zero_measure]
     pub maybe_owning: BitSet<Local>,
@@ -152,7 +152,7 @@ impl From<Location> for RichLocation {
 /// In ownership analysis, use happens only at definition
 pub struct ConsumeChain {
     /// ssa index for each consumption
-    pub consumes: VecArray<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
+    pub consumes: VecVec<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
     /// location of each definition
     ///
     /// Those locals with empty entries definitely do not contain pointers
@@ -238,12 +238,12 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
         }
     }
 
-    let mut consumes = VecArray::with_indices_capacity(body.basic_blocks.len());
+    let mut consumes = VecVec::with_indices_capacity(body.basic_blocks.len());
 
     struct Vis<'me, 'tcx> {
         call_arg_temps: &'me SsoHashSet<Local>,
         maybe_consume_sites: &'me mut IndexVec<Local, BitSet<BasicBlock>>,
-        consumes: &'me mut VecArrayConstruction<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
+        consumes: &'me mut VecVecConstruction<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
         consumes_in_cur_stmt: SmallVec<[(Local, Consume<SSAIdx>); 2]>,
         body: &'me Body<'tcx>,
         tcx: TyCtxt<'tcx>,
@@ -272,7 +272,7 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
                 };
                 self.visit_statement(statement, location);
                 let defs_in_cur_stmt = std::mem::take(&mut self.consumes_in_cur_stmt);
-                self.consumes.add_item_to_array(defs_in_cur_stmt);
+                self.consumes.push_inner(defs_in_cur_stmt);
                 index += 1;
             }
 
@@ -283,9 +283,9 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
                 };
                 self.visit_terminator(terminator, location);
                 let defs_in_cur_stmt = std::mem::take(&mut self.consumes_in_cur_stmt);
-                self.consumes.add_item_to_array(defs_in_cur_stmt);
+                self.consumes.push_inner(defs_in_cur_stmt);
             }
-            self.consumes.done_with_array();
+            self.consumes.push();
         }
 
         fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, location: Location) {

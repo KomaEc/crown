@@ -3,4 +3,4 @@
 //! indices.
 
 pub mod assoc;
-pub mod vec_array;
+pub mod vec_vec;

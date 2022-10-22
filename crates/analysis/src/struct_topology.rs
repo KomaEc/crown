@@ -1,4 +1,4 @@
-use common::data_structure::vec_array::VecArray;
+use common::data_structure::vec_vec::VecVec;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -80,9 +80,9 @@ pub struct StructTopology<'tcx> {
     pub post_order: Vec<DefId>,
     did_idx: FxHashMap<DefId, usize>,
     /// precision -> struct -> field -> aggregate offset start of this field
-    offset_of: Vec<VecArray<u32>>,
+    offset_of: Vec<VecVec<u32>>,
     /// precision -> struct -> Vec<(Ty, offset_should_be)>
-    leaf_nodes: Vec<VecArray<(Ty<'tcx>, u32)>>,
+    leaf_nodes: Vec<VecVec<(Ty<'tcx>, u32)>>,
 }
 
 impl<'tcx> StructTopology<'tcx> {
@@ -117,21 +117,21 @@ impl<'tcx> StructTopology<'tcx> {
             .map(|(idx, &did)| (did, idx))
             .collect();
 
-        let mut offset_of = VecArray::with_indices_capacity(post_order.len());
-        let mut leaf_nodes = VecArray::with_indices_capacity(post_order.len());
+        let mut offset_of = VecVec::with_indices_capacity(post_order.len());
+        let mut leaf_nodes = VecVec::with_indices_capacity(post_order.len());
         for &did in &post_order {
             let ty = tcx.type_of(did);
             let Adt(adt_def, _) = ty.kind() else { unreachable!("impossible") };
             assert!(adt_def.is_struct());
 
-            offset_of.add_item_to_array(0);
+            offset_of.push_inner(0);
             for _ in adt_def.all_fields() {
-                offset_of.add_item_to_array(0);
+                offset_of.push_inner(0);
             }
-            offset_of.done_with_array();
+            offset_of.push();
 
-            leaf_nodes.add_item_to_array((ty, 0));
-            leaf_nodes.done_with_array();
+            leaf_nodes.push_inner((ty, 0));
+            leaf_nodes.push();
         }
         let offset_of = offset_of.done();
         let leaf_nodes = leaf_nodes.done();
@@ -186,14 +186,14 @@ impl<'tcx> StructTopology<'tcx> {
             .last()
             .map(|offset_of| offset_of.everything().len())
             .unwrap_or_default();
-        let mut offset_of = VecArray::with_capacity(self.post_order.len(), data_capacity);
-        let mut leaf_nodes = VecArray::with_capacity(self.post_order.len(), data_capacity);
+        let mut offset_of = VecVec::with_capacity(self.post_order.len(), data_capacity);
+        let mut leaf_nodes = VecVec::with_capacity(self.post_order.len(), data_capacity);
         for &did in &self.post_order {
             let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };
             assert!(adt_def.is_struct());
 
             let mut offset = 0;
-            offset_of.add_item_to_array(offset);
+            offset_of.push_inner(offset);
 
             for field_def in adt_def.all_fields() {
                 let field_ty = field_def.ty(tcx, subst_ref);
@@ -206,7 +206,7 @@ impl<'tcx> StructTopology<'tcx> {
                         }
                         leaf_ext_ty = leaf_ext_ty.builtin_deref(true).unwrap().ty;
                     }
-                    leaf_nodes.add_item_to_array((leaf_ext_ty, offset + max_ptr_depth));
+                    leaf_nodes.push_inner((leaf_ext_ty, offset + max_ptr_depth));
                     offset += max_ptr_depth;
                 } else if let Some(&idx) = maybe_adt.and_then(|adt| self.did_idx.get(&adt.did())) {
                     if ptr_depth == 0 {
@@ -216,14 +216,14 @@ impl<'tcx> StructTopology<'tcx> {
                             .copied()
                             .collect::<smallvec::SmallVec<[_; 4]>>()
                         {
-                            leaf_nodes.add_item_to_array((leaf_ext_ty, offset + inner_offset));
+                            leaf_nodes.push_inner((leaf_ext_ty, offset + inner_offset));
                         }
 
                         offset += offset_of.get_constructed(idx).last().unwrap();
                     } else {
                         let leaves = &self.leaf_nodes[(max_ptr_depth - ptr_depth) as usize][idx];
                         for &(leaf_ext_ty, inner_offset) in leaves {
-                            leaf_nodes.add_item_to_array((
+                            leaf_nodes.push_inner((
                                 leaf_ext_ty,
                                 offset + ptr_depth + inner_offset,
                             ));
@@ -237,10 +237,10 @@ impl<'tcx> StructTopology<'tcx> {
                 } else {
                     offset += ptr_depth
                 }
-                offset_of.add_item_to_array(offset);
+                offset_of.push_inner(offset);
             }
-            offset_of.done_with_array();
-            leaf_nodes.done_with_array();
+            offset_of.push();
+            leaf_nodes.push();
         }
 
         let offset_of = offset_of.done();

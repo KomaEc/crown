@@ -1,4 +1,4 @@
-use common::data_structure::vec_array::VecArray;
+use common::data_structure::vec_vec::VecVec;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hir::def_id::DefId;
 use rustc_middle::{
@@ -58,7 +58,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for FnSig<T> {
 }
 
 pub struct CallGraph {
-    post_order: VecArray<DefId>,
+    post_order: VecVec<DefId>,
 }
 
 impl CallGraph {
@@ -76,8 +76,8 @@ impl CallGraph {
         }
 
         let mut tarjan_scc = TarjanScc::new();
-        let mut post_order = VecArray::with_indices_capacity(functions.len());
-        tarjan_scc.run(&graph, |nodes| post_order.push_array(nodes.iter().copied()));
+        let mut post_order = VecVec::with_indices_capacity(functions.len());
+        tarjan_scc.run(&graph, |nodes| post_order.push_vec(nodes.iter().copied()));
         let post_order = post_order.done();
         CallGraph { post_order }
     }

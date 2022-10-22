@@ -1,4 +1,4 @@
-use common::data_structure::vec_array::VecArray;
+use common::data_structure::vec_vec::VecVec;
 use petgraph::{algo::TarjanScc, graph::NodeIndex};
 use rustc_index::vec::{Idx, IndexVec};
 
@@ -6,7 +6,7 @@ use super::{BooleanLattice, ConstraintSystem, Var};
 
 pub struct BooleanSystem<Value: BooleanLattice> {
     constraint_graph: petgraph::graph::DiGraph<(), ()>,
-    solved: once_cell::unsync::OnceCell<VecArray<Var>>,
+    solved: once_cell::unsync::OnceCell<VecVec<Var>>,
     _lattice: std::marker::PhantomData<*const Value>,
 }
 
@@ -34,12 +34,12 @@ impl<Value: BooleanLattice> BooleanSystem<Value> {
         system
     }
 
-    pub fn solve(&self) -> &VecArray<Var> {
+    pub fn solve(&self) -> &VecVec<Var> {
         self.solved.get_or_init(|| {
             let mut tarjan_scc = TarjanScc::new();
-            let mut vars = VecArray::with_capacity(1, self.constraint_graph.node_count());
+            let mut vars = VecVec::with_capacity(1, self.constraint_graph.node_count());
             tarjan_scc.run(&self.constraint_graph, |nodes| {
-                vars.push_array(nodes.iter().map(|node| Var::new(node.index())))
+                vars.push_vec(nodes.iter().map(|node| Var::new(node.index())))
             });
             vars.done()
         })

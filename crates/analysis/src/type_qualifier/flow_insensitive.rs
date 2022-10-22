@@ -6,7 +6,7 @@ pub mod mutability;
 
 use std::ops::Range;
 
-use common::data_structure::vec_array::VecArray;
+use common::data_structure::vec_vec::VecVec;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
@@ -132,7 +132,7 @@ where
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.structs.len());
         let mut vars =
-            VecArray::with_capacity(crate_data.structs.len(), crate_data.structs.len() * 4);
+            VecVec::with_capacity(crate_data.structs.len(), crate_data.structs.len() * 4);
         for (idx, r#struct) in crate_data.structs.iter().enumerate() {
             did_idx.insert(*r#struct, idx);
             let struct_ty = tcx.type_of(*r#struct);
@@ -141,12 +141,12 @@ where
                 let field_ty = field_def.ty(tcx, substs);
                 let ptr_count = count_ptr(field_ty);
                 model.extend(std::iter::repeat(Domain::BOTTOM).take(ptr_count));
-                vars.add_item_to_array(next);
+                vars.push_inner(next);
                 next = next + ptr_count;
                 assert_eq!(model.next_index(), next);
             }
-            vars.add_item_to_array(next);
-            vars.done_with_array();
+            vars.push_inner(next);
+            vars.push();
         }
         let vars = vars.done();
         let struct_fields = StructFieldsVars {
@@ -156,7 +156,7 @@ where
         };
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.fns.len());
-        let mut vars = VecArray::with_capacity(crate_data.fns.len(), crate_data.fns.len() * 15);
+        let mut vars = VecVec::with_capacity(crate_data.fns.len(), crate_data.fns.len() * 15);
         for (idx, r#fn) in crate_data.fns.iter().enumerate() {
             did_idx.insert(*r#fn, idx);
             let body = tcx.optimized_mir(*r#fn);
@@ -164,12 +164,12 @@ where
                 let ty = local_decl.ty;
                 let ptr_count = count_ptr(ty);
                 model.extend(std::iter::repeat(Domain::BOTTOM).take(ptr_count));
-                vars.add_item_to_array(next);
+                vars.push_inner(next);
                 next = next + ptr_count;
                 assert_eq!(model.next_index(), next);
             }
-            vars.add_item_to_array(next);
-            vars.done_with_array();
+            vars.push_inner(next);
+            vars.push();
         }
         let vars = vars.done();
         let fn_locals = FnLocalsVars {
@@ -223,7 +223,7 @@ impl MirGroup for FnLocals {}
 pub struct VarGroup<Group: MirGroup> {
     pub(super) did_idx: FxHashMap<DefId, usize>,
     /// [`DefId`] -> entity -> [`std::ops::Range<Var>`]
-    pub(super) vars: VecArray<Var>,
+    pub(super) vars: VecVec<Var>,
     _group: std::marker::PhantomData<*const Group>,
 }
 
