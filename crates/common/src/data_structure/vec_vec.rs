@@ -109,9 +109,7 @@ impl<I, A: Allocator + Copy> VecVec<I, A> {
             .array_windows()
             .map(|&[start, end]| &self.data[start..end])
     }
-
 }
-
 
 #[derive(Debug)]
 pub struct VecVecConstruction<I, A: Allocator = Global> {

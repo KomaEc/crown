@@ -223,10 +223,7 @@ impl<'tcx> StructTopology<'tcx> {
                     } else {
                         let leaves = &self.leaf_nodes[(max_ptr_depth - ptr_depth) as usize][idx];
                         for &(leaf_ext_ty, inner_offset) in leaves {
-                            leaf_nodes.push_inner((
-                                leaf_ext_ty,
-                                offset + ptr_depth + inner_offset,
-                            ));
+                            leaf_nodes.push_inner((leaf_ext_ty, offset + ptr_depth + inner_offset));
                         }
 
                         offset += ptr_depth
