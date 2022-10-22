@@ -88,6 +88,13 @@ pub struct StructDecision {
 }
 
 impl StructDecision {
+    pub fn fields_data(&self, did: &DefId) -> &[SmallVec<[PointerData; 3]>] {
+        let idx = self.did_idx[did];
+        &self.struct_fields[idx]
+    }
+}
+
+impl StructDecision {
     pub fn new<'tcx>(crate_data: &CrateData<'tcx>, analysis: &Analysis<'tcx>) -> Self {
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.structs.len());
@@ -101,28 +108,14 @@ impl StructDecision {
 
         for (idx, did) in crate_data.structs.iter().enumerate() {
             let fields_ownership = analysis.ownership_schemes.fields(did).collect::<Vec<_>>();
-            let fields_mutability = analysis
-                .mutability_result
-                .struct_results(did)
-                .collect::<Vec<_>>();
-            let fields_fatness = analysis
-                .fatness_result
-                .struct_results(did)
-                .collect::<Vec<_>>();
+            let fields_mutability = analysis.mutability_result.struct_results(did);
+            let fields_fatness = analysis.fatness_result.struct_results(did);
             let fields_aliases = analysis.taint_result.fields_aliases(did);
-
-            // println!("{:?}", fields_ownership);
-            // println!("{:?}", fields_mutability);
-            // println!("{:?}", fields_fatness);
-            // for aliases in fields_aliases.iter() {
-            //     print!("{:?} ", aliases)
-            // }
-            // println!("");
 
             for (ownership, mutability, fatness, aliases) in itertools::izip!(
                 fields_ownership.iter().copied(),
-                fields_mutability.iter().copied(),
-                fields_fatness.iter().copied(),
+                fields_mutability,
+                fields_fatness,
                 fields_aliases.iter()
             ) {
                 assert_eq!(ownership.len(), mutability.len());
@@ -184,7 +177,7 @@ impl std::fmt::Debug for StructDecision {
                     .collect::<Vec<_>>()
                     .join(" ");
 
-                writeln!(f, " {index}: {field_str}")?;
+                writeln!(f, "   {index}: {field_str}")?;
 
                 index += 1;
             }
