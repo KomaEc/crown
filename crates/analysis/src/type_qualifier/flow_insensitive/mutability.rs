@@ -23,11 +23,23 @@ pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResult {
     MutabilityResult::new(crate_data)
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 /// [`Mutability::Mut`] ⊑ [`Mutability::Imm`]
 pub enum Mutability {
     Imm,
     Mut,
+}
+
+impl Mutability {
+    #[inline]
+    pub fn is_mutable(&self) -> bool {
+        *self == Mutability::Mut
+    }
+
+    #[inline]
+    pub fn is_immutable(&self) -> bool {
+        *self == Mutability::Imm
+    }
 }
 
 impl std::fmt::Display for Mutability {

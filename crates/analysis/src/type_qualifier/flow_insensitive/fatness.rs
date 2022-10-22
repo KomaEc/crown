@@ -21,11 +21,23 @@ pub fn fatness_analysis(crate_data: &common::CrateData) -> FatnessResult {
     FatnessResult::new(crate_data)
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 /// [`Fatness::Arr`] ⊑ [`Fatness::Ptr`]
 pub enum Fatness {
     Arr,
     Ptr,
+}
+
+impl Fatness {
+    #[inline]
+    pub fn is_arr(&self) -> bool {
+        *self == Fatness::Arr
+    }
+
+    #[inline]
+    pub fn is_ptr(&self) -> bool {
+        *self == Fatness::Ptr
+    }
 }
 
 impl std::fmt::Display for Fatness {

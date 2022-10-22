@@ -287,7 +287,7 @@ mod tests {
     fn test1() {
         common::test::run_compiler_with(TEXT1.into(), |tcx, functions, structs| {
             let crate_data = CrateData::new(tcx, functions, structs);
-            let program = CrateCtxt::from(crate_data);
+            let program = CrateCtxt::new(&crate_data);
             macro_rules! define_structs {
                 ($( $x: ident ),*) => {
                     $(

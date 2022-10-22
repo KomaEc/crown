@@ -14,7 +14,9 @@
 #![feature(step_trait)]
 #![feature(trusted_step)]
 #![feature(min_specialization)]
+#![feature(array_windows)]
 
+use common::data_structure::vec_array::VecArray;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use steensgaard::{FieldFocused, FieldInsensitive, Steensgaard};
@@ -77,6 +79,29 @@ impl TaintResult {
                 )
             })
             .collect()
+    }
+
+    pub fn fields_aliases(&self, did: &DefId) -> VecArray<usize> {
+        let idx = self.struct_fields.did_idx[did];
+        let fields_locations = &self.struct_fields.locations[idx];
+        let mut aliases = VecArray::with_indices_capacity(fields_locations.len());
+        let start = fields_locations.first().copied().unwrap();
+        for &[f_start, f_end] in fields_locations.array_windows() {
+            assert_eq!(f_start + 1usize, f_end);
+            let f = f_start;
+            for &[g_start, g_end] in fields_locations.array_windows() {
+                assert_eq!(g_start + 1usize, g_end);
+                let g = g_start;
+                if f == g {
+                    continue;
+                }
+                if self.may_alias(f, g) {
+                    aliases.add_item_to_array(g.index() - start.index());
+                }
+            }
+            aliases.done_with_array();
+        }
+        aliases.done()
     }
 
     pub fn maybe_owning_fields(&self) -> FxHashMap<DefId, Vec<usize>> {

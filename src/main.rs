@@ -62,6 +62,7 @@ enum Command {
     Mutability,
     Fatness,
     Refactor,
+    Rewrite,
     VerifyRustcProperties,
     /// Perform empirical studies and show results.
     EmpiricalStudy,
@@ -282,7 +283,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 &alias_result,
                 &mutability_result,
             );
-            let crate_ctxt = CrateCtxt::from(input);
+            let crate_ctxt = CrateCtxt::new(&input);
             let ownership_schemes = time("construct ownership scheme", || {
                 analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
                     crate_ctxt,
@@ -293,6 +294,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         }
         Command::Refactor => {
             let alias_result = alias::alias_results(&input);
+            let taint_result = alias::taint_results(&input);
             let mutability_result =
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
             let fatness_result =
@@ -302,21 +304,50 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 &alias_result,
                 &mutability_result,
             );
-            let crate_ctxt = CrateCtxt::from(input);
+            let crate_ctxt = CrateCtxt::new(&input);
             let ownership_schemes =
                 analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
                     crate_ctxt,
                     &noalias_params,
                 )?;
 
-            let _ = (
+            let analysis_results = refactor::Analysis::new(
                 alias_result,
+                taint_result,
+                ownership_schemes,
                 mutability_result,
                 fatness_result,
-                ownership_schemes,
             );
-            todo!();
+            refactor::refactor(&input, &analysis_results);
         }
+        Command::Rewrite => {
+            let alias_result = alias::alias_results(&input);
+            let taint_result = alias::taint_results(&input);
+            let mutability_result =
+                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
+            let fatness_result =
+                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input);
+            let noalias_params = analysis::type_qualifier::noalias::compute_noalias_params(
+                &input,
+                &alias_result,
+                &mutability_result,
+            );
+            let crate_ctxt = CrateCtxt::new(&input);
+            let ownership_schemes =
+                analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
+                    crate_ctxt,
+                    &noalias_params,
+                )?;
+
+            let analysis_results = refactor::Analysis::new(
+                alias_result,
+                taint_result,
+                ownership_schemes,
+                mutability_result,
+                fatness_result,
+            );
+            refactor::refactor(&input, &analysis_results);
+        },
     }
     Ok(())
 }

@@ -33,6 +33,13 @@ pub enum Ownership {
     Unknown,
 }
 
+impl Ownership {
+    #[inline]
+    pub fn is_owning(&self) -> bool {
+        *self == Ownership::Owning
+    }
+}
+
 impl From<Option<bool>> for Ownership {
     fn from(value: Option<bool>) -> Self {
         match value {

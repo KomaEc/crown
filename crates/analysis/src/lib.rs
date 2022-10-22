@@ -49,17 +49,15 @@ pub struct CrateCtxt<'tcx> {
     struct_topology: StructTopology<'tcx>,
 }
 
-impl<'tcx> From<common::CrateData<'tcx>> for CrateCtxt<'tcx> {
-    fn from(krate: common::CrateData<'tcx>) -> Self {
+impl<'tcx> CrateCtxt<'tcx> {
+    pub fn new(crate_data: &common::CrateData<'tcx>) -> Self {
         CrateCtxt {
-            tcx: krate.tcx,
-            call_graph: CallGraph::new(krate.tcx, &krate.fns),
-            struct_topology: StructTopology::new(krate.tcx, &krate.structs),
+            tcx: crate_data.tcx,
+            call_graph: CallGraph::new(crate_data.tcx, &crate_data.fns),
+            struct_topology: StructTopology::new(crate_data.tcx, &crate_data.structs),
         }
     }
-}
 
-impl<'tcx> CrateCtxt<'tcx> {
     #[inline]
     pub fn fns(&self) -> &[DefId] {
         self.call_graph.fns()

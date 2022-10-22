@@ -22,6 +22,7 @@ common = { path = "crates/common" }
 preprocess = { path = "crates/preprocess" }
 analysis = { path = "crates/analysis" }
 alias = { path = "crates/alias" }
+refactor = { path = "crates/refactor" }
 rustc-properties = { path = "crates/rustc-properties" }
 empirical-study = { path = "crates/empirical-study" }
 clap = { version = "3.1.2", features = ["derive"] }
