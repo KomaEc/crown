@@ -3,6 +3,8 @@
 #![feature(box_patterns)]
 #![feature(split_array)]
 
+pub mod rewrite_ty;
+
 use alias::{AliasResult, TaintResult};
 use analysis::{
     ownership::{whole_program::WholeProgramResults, Ownership},
@@ -11,9 +13,10 @@ use analysis::{
         mutability::{Mutability, MutabilityResult},
     },
 };
-use common::{data_structure::vec_vec::VecVec, CrateData};
+use common::{data_structure::vec_vec::VecVec, rewrite::Rewrite, CrateData};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
+use rustc_middle::ty::{Ty, TyCtxt};
 use smallvec::SmallVec;
 
 extern crate rustc_ast;
@@ -68,6 +71,7 @@ impl<'tcx> Analysis<'tcx> {
 pub enum PointerKind {
     Move,
     Mut,
+    Shr,
     Raw,
 }
 
@@ -188,3 +192,31 @@ impl std::fmt::Debug for StructDecision {
 }
 
 pub struct FnDecision {}
+
+struct HirPtrTypeWalker<'me, 'hir> {
+    ty: &'me rustc_hir::Ty<'hir>,
+}
+
+impl<'me, 'hir> Iterator for HirPtrTypeWalker<'me, 'hir> {
+    type Item = &'me rustc_hir::Ty<'hir>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let rustc_hir::TyKind::Ptr(inner) = &self.ty.kind {
+            let ptr_ty = self.ty;
+            self.ty = inner.ty;
+            Some(ptr_ty)
+        } else {
+            None
+        }
+    }
+}
+
+trait HirExt<'hir> {
+    fn walk_ptr(&self) -> HirPtrTypeWalker;
+}
+
+impl<'hir> HirExt<'hir> for rustc_hir::Ty<'hir> {
+    fn walk_ptr(&self) -> HirPtrTypeWalker {
+        HirPtrTypeWalker { ty: self }
+    }
+}
