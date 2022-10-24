@@ -242,11 +242,11 @@ pub fn peel_arrs<'a, 'hir>(ty: &'a rustc_hir::Ty<'hir>) -> &'a rustc_hir::Ty<'hi
     final_ty
 }
 
-trait HirExt<'hir> {
+trait HirTyExt<'hir> {
     fn walk_ptr(&self) -> HirPtrTypeWalker;
 }
 
-impl<'hir> HirExt<'hir> for rustc_hir::Ty<'hir> {
+impl<'hir> HirTyExt<'hir> for rustc_hir::Ty<'hir> {
     fn walk_ptr(&self) -> HirPtrTypeWalker {
         HirPtrTypeWalker { ty: self }
     }

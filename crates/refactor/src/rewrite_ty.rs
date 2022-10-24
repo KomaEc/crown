@@ -3,7 +3,7 @@ use rustc_hir::{def_id::DefId, Item, ItemKind};
 use rustc_middle::ty::TyCtxt;
 use smallvec::SmallVec;
 
-use crate::{HirExt, PointerData, PointerKind, StructDecision};
+use crate::{HirTyExt, PointerData, PointerKind, StructDecision};
 
 pub fn rewrite_structs(
     structs: &[DefId],
@@ -42,9 +42,7 @@ pub fn rewrite_struct(
 
     let ItemKind::Struct(variant_data, _generics) = &r#struct.kind else { panic!() };
     for (field, decision) in itertools::izip!(variant_data.fields(), decision) {
-        for (raw_ptr_ty, decision) in itertools::izip!(field.ty.walk_ptr(), decision) {
-            rewrite_raw_ptr(raw_ptr_ty, decision.pointer_kind, rewriter, tcx);
-        }
+        rewrite_ptr_ty(field.ty, decision, rewriter, tcx);
 
         if let rustc_hir::TyKind::Ptr(pointee) = &field.ty.kind {
             let decision = decision.first().unwrap();
@@ -68,7 +66,7 @@ pub fn rewrite_struct(
     Ok(())
 }
 
-pub fn rewrite_raw_ptr(
+pub fn rewrite_outermost_ptr_ty(
     ty: &rustc_hir::Ty,
     decision: PointerKind,
     rewriter: &mut impl Rewrite,
@@ -96,5 +94,16 @@ pub fn rewrite_raw_ptr(
             rewriter.replace(tcx, end_span, ">".to_owned());
         }
         PointerKind::Raw => {}
+    }
+}
+
+pub fn rewrite_ptr_ty(
+    ty: &rustc_hir::Ty,
+    decision: &[PointerData],
+    rewriter: &mut impl Rewrite,
+    tcx: TyCtxt,
+) {
+    for (raw_ptr_ty, decision) in itertools::izip!(ty.walk_ptr(), decision) {
+        rewrite_outermost_ptr_ty(raw_ptr_ty, decision.pointer_kind, rewriter, tcx);
     }
 }
