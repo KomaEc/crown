@@ -179,6 +179,7 @@ where
             bool,
         ),
     )>,
+    global_assumptions: &'infercx GlobalAssumptions,
 }
 
 impl<'infercx, 'db, 'tcx, Analysis> InferCtxt<'infercx, 'db, 'tcx, Analysis>
@@ -192,7 +193,7 @@ where
         database: &'infercx mut Analysis::DB,
         gen: &'infercx mut Gen,
         inter_ctxt: Analysis::InterCtxt,
-        global_assumptions: &GlobalAssumptions,
+        global_assumptions: &'infercx GlobalAssumptions,
     ) -> Self {
         let mut fn_body_sig = IndexVec::with_capacity(body.local_decls.len());
 
@@ -227,6 +228,7 @@ where
             fn_body_sig,
             deref_copy: None,
             call_args: Vec::new(),
+            global_assumptions,
         }
     }
 
@@ -637,7 +639,10 @@ where
         });
 
         <Analysis as Boundary>::r#return(
+            infer_cx.fn_ctxt.tcx,
             &infer_cx.inter_ctxt,
+            infer_cx.global_assumptions,
+            infer_cx.fn_ctxt.struct_topology,
             &mut infer_cx.database,
             body,
             locals.by_ref().take(body.arg_count + 1),

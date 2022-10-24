@@ -43,7 +43,10 @@ where
     );
 
     fn r#return(
+        tcx: TyCtxt<'tcx>,
         inter_ctxt: &Self::InterCtxt,
+        global_assumptions: &GlobalAssumptions,
+        struct_topology: &StructTopology,
         database: &mut Self::DB,
         body: &Body<'tcx>,
         args: impl Iterator<Item = Option<Range<Var>>>,
@@ -75,7 +78,10 @@ where
     }
 
     default fn r#return(
+        _: TyCtxt<'tcx>,
         _: &Self::InterCtxt,
+        _: &GlobalAssumptions,
+        _: &StructTopology,
         _: &mut Self::DB,
         _: &Body<'tcx>,
         _: impl Iterator<Item = Option<Range<Var>>>,
@@ -232,7 +238,10 @@ where
     }
 
     fn r#return(
+        tcx: TyCtxt<'tcx>,
         inter_ctxt: &Self::InterCtxt,
+        global_assumptions: &GlobalAssumptions,
+        struct_topology: &StructTopology,
         database: &mut Self::DB,
         body: &Body<'tcx>,
         mut args: impl Iterator<Item = Option<Range<Var>>>,
@@ -245,9 +254,26 @@ where
         if let Some((arg, param)) = ret_arg.zip(ret_param) {
             let param = param.expect_normal();
             assert_eq!(arg.size_hint().1.unwrap(), param.size_hint().1.unwrap());
-            for (arg, param) in arg.zip(param) {
+            for (arg, param) in arg.zip(param.clone()) {
                 database.push_equal::<crate::ssa::constraint::Debug>((), arg, param);
             }
+
+            let mut param = param;
+            let ty = body.return_ty();
+            let measure = param.size_hint().1.unwrap() as u32;
+            let precision = struct_topology.absolute_precision(ty, measure);
+
+            apply_global_assumptions(
+                ty,
+                None,
+                &mut std::iter::empty(),
+                &mut param,
+                global_assumptions,
+                struct_topology,
+                database,
+                tcx,
+                precision,
+            )
         }
 
         for (param, arg) in fn_sig.args.iter().cloned().zip(args) {
