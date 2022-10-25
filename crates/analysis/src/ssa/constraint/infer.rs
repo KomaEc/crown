@@ -5,7 +5,7 @@ use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
-        AggregateKind, BasicBlock, BasicBlockData, Body, BorrowKind, CastKind, Local, Location,
+        BasicBlock, BasicBlockData, Body, BorrowKind, CastKind, Local, Location,
         NonDivergingIntrinsic, Operand, Place, Rvalue, Statement, StatementKind, Terminator,
         TerminatorKind,
     },
@@ -562,17 +562,10 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 }
             }
 
-            Rvalue::Repeat(Operand::Copy(rhs) | Operand::Move(rhs), _) => {
-                let _ = consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
-                let _ = consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
-
-                /* TODO */
-            }
-
-            Rvalue::Aggregate(box AggregateKind::Array(_), rhs_vec) => {
+            Rvalue::Aggregate(_, rhs) => {
                 let _ = consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
 
-                for rhs in rhs_vec {
+                for rhs in rhs {
                     let Some(rhs) = rhs.place() else { continue };
                     let _ = consume_place_at::<Infer>(&rhs, self.body, location, self, infer_cx);
                 }
@@ -580,7 +573,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 /* TODO */
             }
 
-            Rvalue::Repeat(..) | Rvalue::Aggregate(..) => {
+            Rvalue::Repeat(operand, _) => {
                 // handle cases like _1 = [0 as *mut _; 50] or _1 = [move _12, move _13]
 
                 // TODO note that vars in those rvalues are not counted as
@@ -588,35 +581,43 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 // of, logic in initial_definition needs to be taken care of
                 // as well
 
-                let lhs_consume =
-                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
-                if let Some(_) = lhs_consume { /* TODO */ }
+                let _ = consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
+                if let Some(rhs) = operand.place() {
+                    let _ = consume_place_at::<Infer>(&rhs, self.body, location, self, infer_cx);
+                }
             }
 
             Rvalue::BinaryOp(_, box (left, right))
             | Rvalue::CheckedBinaryOp(_, box (left, right)) => {
-                let lhs_consume = self.state.try_consume_at(lhs.local, location);
+                let lhs_consume =
+                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
                 assert!(lhs_consume.is_none());
                 for operand in [left, right] {
                     if let Some(rhs) = operand.place() {
-                        let _ = self.state.try_consume_at(rhs.local, location);
+                        let _ =
+                            consume_place_at::<Infer>(&rhs, self.body, location, self, infer_cx);
                     }
                 }
             }
             Rvalue::UnaryOp(_, operand) => {
-                let lhs_consume = self.state.try_consume_at(lhs.local, location);
+                let lhs_consume =
+                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
                 assert!(lhs_consume.is_none());
                 if let Some(rhs) = operand.place() {
-                    let _ = self.state.try_consume_at(rhs.local, location);
+                    let _ = consume_place_at::<Infer>(&rhs, self.body, location, self, infer_cx);
                 }
             }
+            Rvalue::Discriminant(rhs) => {
+                let lhs_consume =
+                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
+                assert!(lhs_consume.is_none());
+                let _ = consume_place_at::<Infer>(&rhs, self.body, location, self, infer_cx);
+            }
             Rvalue::NullaryOp(_, _)
-            | Rvalue::Discriminant(_)
             | Rvalue::Len(_)
             | Rvalue::ShallowInitBox(_, _)
             | Rvalue::ThreadLocalRef(_) => {
-                let lhs_consume = self.state.try_consume_at(lhs.local, location);
-                assert!(lhs_consume.is_none());
+                todo!();
             }
         }
     }
