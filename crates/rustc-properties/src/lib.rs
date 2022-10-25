@@ -8,7 +8,7 @@ extern crate rustc_middle;
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, PlaceContext, Visitor},
-        Local, LocalInfo, LocalKind, Location, Operand, Place, Rvalue, Terminator, TerminatorKind,
+        Local, LocalInfo, LocalKind, Location, Operand, Place, Rvalue, Terminator, TerminatorKind, Body,
     },
     ty::TyCtxt,
 };
@@ -58,8 +58,8 @@ fn verify_shape_of_place(krate: &common::CrateData) {
 }
 
 fn verify_place_regularity(krate: &common::CrateData) {
-    struct Vis;
-    impl<'tcx> Visitor<'tcx> for Vis {
+    struct Vis<'me, 'tcx>(&'me Body<'tcx>, TyCtxt<'tcx>);
+    impl<'me, 'tcx> Visitor<'tcx> for Vis<'me, 'tcx> {
         fn visit_assign(
             &mut self,
             place: &Place<'tcx>,
@@ -67,10 +67,19 @@ fn verify_place_regularity(krate: &common::CrateData) {
             _location: Location,
         ) {
             // we only have the following cases:
-            // place = use(operand)
+            // local = use(operand)
+            // place = use(local)
+            // local = cast(local)
             // local = &place
             // local = deref_copy place
             match rvalue {
+                Rvalue::Use(operand) => {
+                    if !place.ty(self.0, self.1).ty.is_primitive() {
+                        assert!(place.as_local().is_some()
+                            || operand.constant().is_some()
+                            || operand.place().and_then(|place| place.as_local()).is_some())
+                    }
+                }
                 Rvalue::Cast(_, operand, _) => {
                     assert!(
                         operand.place().and_then(|place| place.as_local()).is_some()
@@ -96,7 +105,7 @@ fn verify_place_regularity(krate: &common::CrateData) {
 
     for &did in &krate.fns {
         let body = krate.tcx.optimized_mir(did);
-        Vis.visit_body(body);
+        Vis(body, krate.tcx).visit_body(body);
     }
 }
 
