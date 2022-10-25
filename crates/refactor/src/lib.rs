@@ -2,6 +2,9 @@
 #![feature(array_windows)]
 #![feature(box_patterns)]
 #![feature(split_array)]
+#![feature(step_trait)]
+#![feature(trusted_step)]
+#![feature(min_specialization)]
 
 mod rewrite_fn;
 mod rewrite_ty;

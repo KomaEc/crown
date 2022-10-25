@@ -8,7 +8,8 @@ extern crate rustc_middle;
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, PlaceContext, Visitor},
-        Local, LocalInfo, LocalKind, Location, Operand, Place, Rvalue, Terminator, TerminatorKind, Body,
+        Body, Local, LocalInfo, LocalKind, Location, Operand, Place, Rvalue, Terminator,
+        TerminatorKind,
     },
     ty::TyCtxt,
 };
@@ -75,9 +76,11 @@ fn verify_place_regularity(krate: &common::CrateData) {
             match rvalue {
                 Rvalue::Use(operand) => {
                     if !place.ty(self.0, self.1).ty.is_primitive() {
-                        assert!(place.as_local().is_some()
-                            || operand.constant().is_some()
-                            || operand.place().and_then(|place| place.as_local()).is_some())
+                        assert!(
+                            place.as_local().is_some()
+                                || operand.constant().is_some()
+                                || operand.place().and_then(|place| place.as_local()).is_some()
+                        )
                     }
                 }
                 Rvalue::Cast(_, operand, _) => {
