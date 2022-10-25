@@ -13,8 +13,6 @@ use rustc_middle::{
 use rustc_span::{Span, Symbol};
 use smallvec::{smallvec, SmallVec};
 
-
-
 pub fn rewrite_fn(body: &Body, rewriter: &mut impl Rewrite, tcx: TyCtxt) {
     let user_idents = body
         .var_debug_info

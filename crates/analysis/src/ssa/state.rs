@@ -55,9 +55,8 @@ impl SSAState {
         dominance_frontier: &DominanceFrontier,
         definitions: Definitions,
     ) -> Self {
-        let name_state = NameState::new(body, &definitions.maybe_owning);
-        let join_points =
-            JoinPoints::new(body, dominance_frontier, &definitions.maybe_consume_sites);
+        let name_state = NameState::new(body, &definitions.locals_with_defs);
+        let join_points = JoinPoints::new(body, dominance_frontier, &definitions.def_sites);
         let consume_chain = ConsumeChain::new(body, definitions);
         SSAState {
             name_state,

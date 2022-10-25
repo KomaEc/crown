@@ -593,9 +593,22 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 if let Some(_) = lhs_consume { /* TODO */ }
             }
 
-            Rvalue::BinaryOp(_, _) | Rvalue::CheckedBinaryOp(_, _) | Rvalue::UnaryOp(_, _) => {
+            Rvalue::BinaryOp(_, box (left, right))
+            | Rvalue::CheckedBinaryOp(_, box (left, right)) => {
                 let lhs_consume = self.state.try_consume_at(lhs.local, location);
                 assert!(lhs_consume.is_none());
+                for operand in [left, right] {
+                    if let Some(rhs) = operand.place() {
+                        let _ = self.state.try_consume_at(rhs.local, location);
+                    }
+                }
+            }
+            Rvalue::UnaryOp(_, operand) => {
+                let lhs_consume = self.state.try_consume_at(lhs.local, location);
+                assert!(lhs_consume.is_none());
+                if let Some(rhs) = operand.place() {
+                    let _ = self.state.try_consume_at(rhs.local, location);
+                }
             }
             Rvalue::NullaryOp(_, _)
             | Rvalue::Discriminant(_)

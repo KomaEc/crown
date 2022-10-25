@@ -27,9 +27,9 @@ pub struct Definitions {
     /// We've made an assumption that a local can only be used or defined
     /// once in a statement/terminator
     consumes: VecVec<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
-    pub maybe_consume_sites: IndexVec<Local, BitSet<BasicBlock>>,
+    pub def_sites: IndexVec<Local, BitSet<BasicBlock>>,
     /// Caching the results of calling [local_has_non_zero_measure]
-    pub maybe_owning: BitSet<Local>,
+    pub locals_with_defs: BitSet<Local>,
     pub call_arg_temps: SsoHashSet<Local>,
 }
 
@@ -165,7 +165,7 @@ impl ConsumeChain {
     pub fn new(body: &Body, definitions: Definitions) -> Self {
         let Definitions {
             consumes,
-            maybe_owning,
+            locals_with_defs: maybe_owning,
             call_arg_temps,
             ..
         } = definitions;
@@ -376,8 +376,8 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
 
     Definitions {
         consumes,
-        maybe_consume_sites,
-        maybe_owning,
+        def_sites: maybe_consume_sites,
+        locals_with_defs: maybe_owning,
         call_arg_temps,
     }
 }
