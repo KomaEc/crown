@@ -374,6 +374,13 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
                 let destination =
                     consume_place_at::<Infer>(destination, self.body, location, self, infer_cx);
+                // FIXME bad design! call args couple too much with rename
+                for arg in args {
+                    if let Some(arg) = arg.place() {
+                        let _ =
+                            consume_place_at::<Infer>(&arg, self.body, location, self, infer_cx);
+                    }
+                }
                 Infer::call(infer_cx, destination, args, func);
             }
             TerminatorKind::Return => {
@@ -387,6 +394,11 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                         .map(|local| (local, self.state.name_state.try_get_name(local))),
                     self.body,
                 );
+            }
+            TerminatorKind::SwitchInt { discr, .. } => {
+                if let Some(discr) = discr.place() {
+                    let _ = consume_place_at::<Infer>(&discr, self.body, location, self, infer_cx);
+                }
             }
             _ => {}
         }
@@ -523,7 +535,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             Rvalue::CopyForDeref(rhs) => {
                 /* TODO */
                 // let lhs_consume = self.state.try_consume_at(lhs.local, location);
-                let lhs_consume = consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
+                let lhs_consume =
+                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
                 assert!(lhs_consume.is_none());
                 let rhs_consume =
                     consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
