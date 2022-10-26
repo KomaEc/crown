@@ -46,6 +46,8 @@ extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_target;
 
+extern crate either;
+
 pub fn refactor<'tcx>(
     crate_data: &CrateData<'tcx>,
     analysis: &Analysis<'tcx>,

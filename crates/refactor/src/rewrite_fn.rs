@@ -1,15 +1,14 @@
 mod location_map;
 
-use std::ops::Range;
-
 use analysis::use_def::{def_use_chain, DefUseChain};
 use common::rewrite::Rewrite;
+use either::Either::{Left, Right};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_middle::{
     mir::{
-        BasicBlock, Body, Local, LocalInfo, Location, Rvalue, StatementKind, TerminatorKind,
-        VarDebugInfoContents, NonDivergingIntrinsic,
+        Body, Local, LocalInfo, Location, NonDivergingIntrinsic, Rvalue, StatementKind,
+        TerminatorKind, VarDebugInfoContents,
     },
     ty::TyCtxt,
 };
@@ -66,7 +65,7 @@ fn rewrite_fn<'tcx>(body: &Body<'tcx>, rewriter: &mut impl Rewrite, tcx: TyCtxt<
                 StatementKind::Intrinsic(box NonDivergingIntrinsic::Assume(operand)) => {
                     // rewrite point: assume
                 }
-                _ => todo!()
+                _ => todo!(),
             }
 
             statement_index += 1;
@@ -97,7 +96,6 @@ fn rewrite_fn<'tcx>(body: &Body<'tcx>, rewriter: &mut impl Rewrite, tcx: TyCtxt<
     }
 }
 
-
 #[derive(Clone, Copy, Debug)]
 pub enum ExprRewriteResult {
     Expr(Span),
@@ -105,7 +103,48 @@ pub enum ExprRewriteResult {
 
 pub type RewriteCache = LocationMap<Option<ExprRewriteResult>>;
 
-fn rewrite_expr() {}
+fn rewrite_use<'tcx>(
+    body: &Body<'tcx>,
+    location: Location,
+    user_idents: &FxHashMap<Local, Symbol>,
+    def_use_chain: &DefUseChain,
+    rewrite_cache: &RewriteCache,
+    rewriter: &mut impl Rewrite,
+    tcx: TyCtxt<'tcx>,
+) -> ExprRewriteResult {
+
+    match body.stmt_at(location) {
+        Left(statement) => {
+            match &statement.kind {
+                StatementKind::Assign(box (place, rvalue)) => {
+                    match rvalue {
+                        Rvalue::Use(_) => todo!(),
+                        Rvalue::Repeat(_, _) => todo!(),
+                        Rvalue::Ref(_, _, _) => todo!(),
+                        Rvalue::ThreadLocalRef(_) => todo!(),
+                        Rvalue::AddressOf(_, _) => todo!(),
+                        Rvalue::Len(_) => todo!(),
+                        Rvalue::Cast(_, _, _) => todo!(),
+                        Rvalue::BinaryOp(_, _) => todo!(),
+                        Rvalue::CheckedBinaryOp(_, _) => todo!(),
+                        Rvalue::NullaryOp(_, _) => todo!(),
+                        Rvalue::UnaryOp(_, _) => todo!(),
+                        Rvalue::Discriminant(_) => todo!(),
+                        Rvalue::Aggregate(_, _) => todo!(),
+                        Rvalue::ShallowInitBox(_, _) => todo!(),
+                        Rvalue::CopyForDeref(_) => todo!(),
+                    }
+                }
+                StatementKind::Intrinsic(box NonDivergingIntrinsic::Assume(operand)) => {
+                }
+                _ => todo!(),
+            }
+        },
+        Right(terminator) => todo!(),
+    }
+
+    todo!()
+}
 
 fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
     println!("@{:?}", body.source.def_id());
