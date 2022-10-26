@@ -319,6 +319,9 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
                 context,
                 PlaceContext::NonMutatingUse(
                     NonMutatingUseContext::Copy | NonMutatingUseContext::Move
+                    // FIXME this is dangerouse. Need better way to categorise definition context
+                    // this works if only [`Rvalue::Len`] never appears
+                    | NonMutatingUseContext::Inspect
                 ) | PlaceContext::MutatingUse(
                     MutatingUseContext::Call
                         | MutatingUseContext::Store

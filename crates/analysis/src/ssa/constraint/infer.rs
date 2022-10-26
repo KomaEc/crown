@@ -533,11 +533,11 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             }
 
             Rvalue::CopyForDeref(rhs) => {
-                /* TODO */
-                // let lhs_consume = self.state.try_consume_at(lhs.local, location);
-                let lhs_consume =
-                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
-                assert!(lhs_consume.is_none());
+                // dest of deref_copy is never interpretted
+                let _ = self.state.try_consume_at(lhs.local, location);
+                // let lhs_consume =
+                    // consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
+                // assert!(lhs_consume.is_none(), "{:?}", lhs_consume.unwrap());
                 let rhs_consume =
                     consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
                 Infer::copy_for_deref(infer_cx, rhs_consume);
