@@ -17,16 +17,14 @@ use crate::{
     CrateCtxt,
 };
 
-/// TODO
-/// 1. `def_sites` -> `maybe_consume_sites`. This is to avoid rebuild phi node join
-/// points.
-/// 2. `short_live_range: IndexVec<Local, Option<BasicBlock>>`
+/// This is a bad design. [`Definitions`] should hold information generic to
+/// analysis tasks. [`call_arg_temps`] is too specific to ownership analysis
 pub struct Definitions {
     /// BasicBlock -> statement_index -> possible definitions
     ///
     /// We've made an assumption that a local can only be used or defined
     /// once in a statement/terminator
-    consumes: VecVec<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
+    pub consumes: VecVec<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
     pub def_sites: IndexVec<Local, BitSet<BasicBlock>>,
     /// Caching the results of calling [local_has_non_zero_measure]
     pub locals_with_defs: BitSet<Local>,

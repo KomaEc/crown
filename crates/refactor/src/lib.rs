@@ -22,6 +22,7 @@ use common::{
     rewrite::{Rewrite, RewriteMode},
     CrateData,
 };
+use rewrite_fn::rewrite_fns;
 use rewrite_ty::rewrite_structs;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -56,6 +57,8 @@ pub fn refactor<'tcx>(
         &mut rewriter,
         crate_data.tcx,
     )?;
+
+    rewrite_fns(&crate_data.fns, &mut rewriter, crate_data.tcx);
 
     rewriter.write(RewriteMode::Diff);
 

@@ -112,7 +112,7 @@ pub struct NameState {
 }
 
 impl NameState {
-    fn new<'tcx>(body: &Body<'tcx>, maybe_owned: &BitSet<Local>) -> Self {
+    fn new<'tcx>(body: &Body<'tcx>, has_def: &BitSet<Local>) -> Self {
         let count = IndexVec::from_elem(SSAIdx::INIT, &body.local_decls);
 
         // Notice: this has to be in accordance with ConsumeChain.locs
@@ -120,7 +120,7 @@ impl NameState {
             .local_decls
             .indices()
             .map(|local| {
-                maybe_owned
+                has_def
                     .contains(local)
                     .then(|| vec![SSAIdx::INIT])
                     .unwrap_or_default()

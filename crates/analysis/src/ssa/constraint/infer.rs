@@ -332,10 +332,12 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             StatementKind::Assign(box (place, rvalue)) => {
                 self.go_assign::<Infer>(infer_cx, place, rvalue, location)
             }
-            StatementKind::SetDiscriminant { .. } => {
+            StatementKind::SetDiscriminant { box place, .. } => {
+                let _ = consume_place_at::<Infer>(place, self.body, location, self, infer_cx);
                 tracing::debug!("ignoring SetDiscriminant statement {:?}", statement)
             }
-            StatementKind::Deinit(..) => {
+            StatementKind::Deinit(box place) => {
+                let _ = consume_place_at::<Infer>(place, self.body, location, self, infer_cx);
                 tracing::debug!("ignoring Deinit statement {:?}", statement)
             }
             StatementKind::Intrinsic(box intrinsic) => {
@@ -432,7 +434,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 Operand::Copy(rhs) | Operand::Move(rhs),
                 _,
             ) => {
-                let lhs_consume = self.state.try_consume_at(lhs.local, location);
+                // let lhs_consume = self.state.try_consume_at(lhs.local, location);
+                let lhs_consume =
+                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
                 assert!(lhs_consume.is_none());
                 if let Some(rhs_consume) =
                     consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx)
@@ -444,7 +448,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             }
 
             Rvalue::Cast(_, Operand::Constant(box constant), _) => {
-                let lhs_consume = self.state.try_consume_at(lhs.local, location);
+                // let lhs_consume = self.state.try_consume_at(lhs.local, location);
+                let lhs_consume =
+                    consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
                 assert!(
                     lhs_consume.is_none(),
                     "TODO: constant pointer {:?}",
@@ -516,7 +522,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
 
             Rvalue::CopyForDeref(rhs) => {
                 /* TODO */
-                let lhs_consume = self.state.try_consume_at(lhs.local, location);
+                // let lhs_consume = self.state.try_consume_at(lhs.local, location);
+                let lhs_consume = consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
                 assert!(lhs_consume.is_none());
                 let rhs_consume =
                     consume_place_at::<Infer>(rhs, self.body, location, self, infer_cx);
@@ -537,9 +544,11 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                         Infer::lend(infer_cx, rhs_consume);
                     }
                 } else {
-                    assert!(self.state.consume_chain.call_arg_temps.contains(&lhs.local));
-                    if let Some(rhs_consume) = rhs_consume {
-                        Infer::call_arg(infer_cx, lhs.as_local().unwrap(), rhs_consume, true)
+                    // assert!(self.state.consume_chain.call_arg_temps.contains(&lhs.local));
+                    if self.state.consume_chain.call_arg_temps.contains(&lhs.local) {
+                        if let Some(rhs_consume) = rhs_consume {
+                            Infer::call_arg(infer_cx, lhs.as_local().unwrap(), rhs_consume, true)
+                        }
                     }
                 }
             }
@@ -557,9 +566,10 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx)
                 {
                     Infer::borrow(infer_cx, lhs_consume)
-                } else {
-                    assert!(self.state.consume_chain.call_arg_temps.contains(&lhs.local));
                 }
+                // else {
+                //     assert!(self.state.consume_chain.call_arg_temps.contains(&lhs.local));
+                // }
             }
 
             Rvalue::Aggregate(_, rhs) => {
