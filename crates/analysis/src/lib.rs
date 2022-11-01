@@ -33,7 +33,7 @@ mod call_graph;
 pub mod ownership;
 mod ptr;
 pub mod ssa;
-mod struct_topology;
+mod struct_ctxt;
 #[cfg(test)]
 mod test;
 pub mod type_qualifier;
@@ -42,31 +42,31 @@ pub mod use_def;
 use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
-use struct_topology::StructTopology;
+use struct_ctxt::StructCtxt;
 
 pub struct CrateCtxt<'tcx> {
     tcx: TyCtxt<'tcx>,
-    call_graph: CallGraph,
-    struct_topology: StructTopology<'tcx>,
+    fn_ctxt: CallGraph,
+    struct_ctxt: StructCtxt<'tcx>,
 }
 
 impl<'tcx> CrateCtxt<'tcx> {
     pub fn new(crate_data: &common::CrateData<'tcx>) -> Self {
         CrateCtxt {
             tcx: crate_data.tcx,
-            call_graph: CallGraph::new(crate_data.tcx, &crate_data.fns),
-            struct_topology: StructTopology::new(crate_data.tcx, &crate_data.structs),
+            fn_ctxt: CallGraph::new(crate_data.tcx, &crate_data.fns),
+            struct_ctxt: StructCtxt::new(crate_data.tcx, &crate_data.structs),
         }
     }
 
     #[inline]
     pub fn fns(&self) -> &[DefId] {
-        self.call_graph.fns()
+        self.fn_ctxt.fns()
     }
 
     #[inline]
     /// Return the set of top-level struct definitions in post order
     pub fn structs(&self) -> &[DefId] {
-        self.struct_topology.structs_in_post_order()
+        self.struct_ctxt.structs_in_post_order()
     }
 }

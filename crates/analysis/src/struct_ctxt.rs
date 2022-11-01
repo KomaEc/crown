@@ -7,16 +7,16 @@ use rustc_type_ir::TyKind::Adt;
 
 use crate::{
     ownership::Precision,
-    ptr::{abstract_ty, Measurable, Measure},
+    ptr::{decompose_ty, Measurable, Measure},
 };
 
-impl<'tcx> Measurable<'tcx> for StructTopology<'tcx> {
+impl<'tcx> Measurable<'tcx> for StructCtxt<'tcx> {
     #[inline]
     fn measure(&self, ty: rustc_middle::ty::Ty, ptr_chased: u32) -> Measure {
         // let max_ptr_depth = self.offset_of.len() as u32;
         let max_ptr_depth = self.max_ptr_chased() as u32;
 
-        let (ptr_depth, maybe_adt) = abstract_ty(ty);
+        let (ptr_depth, maybe_adt) = decompose_ty(ty);
 
         if ptr_depth + ptr_chased >= max_ptr_depth {
             max_ptr_depth - ptr_chased
@@ -70,7 +70,7 @@ impl<'tcx> Measurable<'tcx> for StructTopology<'tcx> {
     }
 }
 
-pub struct StructTopology<'tcx> {
+pub struct StructCtxt<'tcx> {
     /// Structs in post order of the dependency graph.
     /// Dependency graph encodes direct dependencies between user defined structs.
     /// For instance, in `struct S { f: T } struct T;`
@@ -85,7 +85,7 @@ pub struct StructTopology<'tcx> {
     leaf_nodes: Vec<VecVec<(Ty<'tcx>, u32)>>,
 }
 
-impl<'tcx> StructTopology<'tcx> {
+impl<'tcx> StructCtxt<'tcx> {
     // TODO refactor using `StructDependency`
     pub fn new(tcx: TyCtxt<'tcx>, structs: &[DefId]) -> Self {
         let mut graph = DiGraphMap::with_capacity(structs.len(), structs.len());
@@ -136,7 +136,7 @@ impl<'tcx> StructTopology<'tcx> {
         let offset_of = offset_of.done();
         let leaf_nodes = leaf_nodes.done();
 
-        let mut this = StructTopology {
+        let mut this = StructCtxt {
             post_order,
             did_idx,
             offset_of: vec![offset_of],
@@ -197,7 +197,7 @@ impl<'tcx> StructTopology<'tcx> {
 
             for field_def in adt_def.all_fields() {
                 let field_ty = field_def.ty(tcx, subst_ref);
-                let (ptr_depth, maybe_adt) = abstract_ty(field_ty);
+                let (ptr_depth, maybe_adt) = decompose_ty(field_ty);
                 if ptr_depth >= max_ptr_depth {
                     let mut leaf_ext_ty = field_ty;
                     for _ in 0..max_ptr_depth {
@@ -249,11 +249,89 @@ impl<'tcx> StructTopology<'tcx> {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct RestrictedStructCtxt<'intra, 'tcx> {
+    pub(crate) unrestricted: &'intra StructCtxt<'tcx>,
+    allowed_ptr_depth: Precision,
+}
+
+impl<'tcx> StructCtxt<'tcx> {
+    pub fn with_precision(&self, precision: Precision) -> RestrictedStructCtxt<'_, 'tcx> {
+        RestrictedStructCtxt {
+            unrestricted: self,
+            allowed_ptr_depth: precision,
+        }
+    }
+}
+
+impl<'intra, 'tcx> Measurable<'tcx> for RestrictedStructCtxt<'intra, 'tcx> {
+    fn measure(&self, ty: Ty, ptr_chased: u32) -> crate::ptr::Measure {
+        let allowed = self.allowed_ptr_depth as u32;
+        let maximum = self.unrestricted.max_ptr_chased() as u32;
+        if allowed >= maximum {
+            self.unrestricted.measure(ty, ptr_chased)
+        } else {
+            self.unrestricted
+                .measure(ty, maximum - allowed + ptr_chased)
+        }
+    }
+
+    fn measure_adt(
+        &self,
+        adt_def: rustc_middle::ty::AdtDef,
+        ptr_chased: u32,
+    ) -> crate::ptr::Measure {
+        let allowed = self.allowed_ptr_depth as u32;
+        let maximum = self.unrestricted.max_ptr_chased() as u32;
+        if allowed >= maximum {
+            self.unrestricted.measure_adt(adt_def, ptr_chased)
+        } else {
+            self.unrestricted
+                .measure_adt(adt_def, maximum - allowed + ptr_chased)
+        }
+    }
+
+    fn field_offset(
+        &self,
+        adt_def: rustc_middle::ty::AdtDef,
+        field: usize,
+        ptr_chased: u32,
+    ) -> crate::ptr::Measure {
+        let allowed = self.allowed_ptr_depth as u32;
+        let maximum = self.unrestricted.max_ptr_chased() as u32;
+        if allowed >= maximum {
+            self.unrestricted.field_offset(adt_def, field, ptr_chased)
+        } else {
+            self.unrestricted
+                .field_offset(adt_def, field, maximum - allowed + ptr_chased)
+        }
+    }
+
+    fn max_ptr_chased(&self) -> Precision {
+        std::cmp::min(self.allowed_ptr_depth, self.unrestricted.max_ptr_chased())
+    }
+
+    fn leaf_nodes(&self, adt_def: rustc_middle::ty::AdtDef, ptr_chased: u32) -> &[(Ty<'tcx>, u32)] {
+        let allowed = self.allowed_ptr_depth as u32;
+        let maximum = self.unrestricted.max_ptr_chased() as u32;
+        if allowed >= maximum {
+            self.unrestricted.leaf_nodes(adt_def, ptr_chased)
+        } else {
+            self.unrestricted
+                .leaf_nodes(adt_def, maximum - allowed + ptr_chased)
+        }
+    }
+
+    fn absolute_precision(&self, ty: Ty, measure: u32) -> Precision {
+        self.unrestricted.absolute_precision(ty, measure)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use common::CrateData;
 
-    use super::StructTopology;
+    use super::StructCtxt;
     use crate::{ptr::Measurable, CrateCtxt};
 
     const TEXT1: &str = "
@@ -301,27 +379,27 @@ mod tests {
             }
             define_structs!(s, t, u, v, w, x);
             assert_eq!(
-                program.struct_topology.field_offsets(&s, 0).unwrap(),
+                program.struct_ctxt.field_offsets(&s, 0).unwrap(),
                 [0, 2, 3, 4] //.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology.field_offsets(&t, 0).unwrap(),
+                program.struct_ctxt.field_offsets(&t, 0).unwrap(),
                 [0, 1, 2] //.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology.field_offsets(&u, 0).unwrap(),
+                program.struct_ctxt.field_offsets(&u, 0).unwrap(),
                 [0, 0, 1, 1] //.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology.field_offsets(&v, 0).unwrap(),
+                program.struct_ctxt.field_offsets(&v, 0).unwrap(),
                 [0, 0] //.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology.field_offsets(&w, 0).unwrap(),
+                program.struct_ctxt.field_offsets(&w, 0).unwrap(),
                 [0, 1] //.map(|x| Offset::from_u32(x))
             );
             assert_eq!(
-                program.struct_topology.field_offsets(&x, 0).unwrap(),
+                program.struct_ctxt.field_offsets(&x, 0).unwrap(),
                 [0] //.map(|x| Offset::from_u32(x))
             );
         })
@@ -333,8 +411,8 @@ mod tests {
     #[test]
     fn test2() {
         common::test::run_compiler_with(TEXT2.into(), |tcx, _, structs| {
-            let mut struct_topology = StructTopology::new(tcx, &structs);
-            let &node = struct_topology
+            let mut struct_ctxt = StructCtxt::new(tcx, &structs);
+            let &node = struct_ctxt
                 .post_order
                 .iter()
                 .find(|&&did| {
@@ -344,10 +422,10 @@ mod tests {
                 .unwrap();
             let node = tcx.adt_def(node);
 
-            struct_topology.increase_precision(tcx);
-            struct_topology.increase_precision(tcx);
+            struct_ctxt.increase_precision(tcx);
+            struct_ctxt.increase_precision(tcx);
             assert_eq!(
-                struct_topology
+                struct_ctxt
                     .leaf_nodes(node, 1)
                     .iter()
                     .map(|x| x.1)
@@ -356,7 +434,7 @@ mod tests {
             );
 
             assert_eq!(
-                struct_topology
+                struct_ctxt
                     .leaf_nodes(node, 2)
                     .iter()
                     .map(|x| x.1)
@@ -370,8 +448,8 @@ mod tests {
     #[test]
     fn test3() {
         common::test::run_compiler_with(TEXT3.into(), |tcx, _, structs| {
-            let mut struct_topology = StructTopology::new(tcx, &structs);
-            let &node = struct_topology
+            let mut struct_ctxt = StructCtxt::new(tcx, &structs);
+            let &node = struct_ctxt
                 .post_order
                 .iter()
                 .find(|&&did| {
@@ -380,28 +458,28 @@ mod tests {
                 })
                 .unwrap();
             let node = tcx.adt_def(node);
-            // println!("{:?}", struct_topology.leaf_nodes(&node, 0).unwrap());
+            // println!("{:?}", struct_ctxt.leaf_nodes(&node, 0).unwrap());
 
             assert_eq!(
-                struct_topology
+                struct_ctxt
                     .leaf_nodes(node, 0)
                     .iter()
                     .map(|x| x.1)
                     .collect::<Vec<_>>(),
                 vec![1, 2]
             );
-            struct_topology.increase_precision(tcx);
+            struct_ctxt.increase_precision(tcx);
             assert_eq!(
-                struct_topology
+                struct_ctxt
                     .leaf_nodes(node, 0)
                     .iter()
                     .map(|x| x.1)
                     .collect::<Vec<_>>(),
                 vec![2, 4]
             );
-            struct_topology.increase_precision(tcx);
+            struct_ctxt.increase_precision(tcx);
             assert_eq!(
-                struct_topology
+                struct_ctxt
                     .leaf_nodes(node, 0)
                     .iter()
                     .map(|x| x.1)
@@ -415,8 +493,8 @@ mod tests {
     #[test]
     fn test4() {
         common::test::run_compiler_with(TEXT4.into(), |tcx, _, structs| {
-            let mut struct_topology = StructTopology::new(tcx, &structs);
-            let &node = struct_topology
+            let mut struct_ctxt = StructCtxt::new(tcx, &structs);
+            let &node = struct_ctxt
                 .post_order
                 .iter()
                 .find(|&&did| {
@@ -425,27 +503,27 @@ mod tests {
                 })
                 .unwrap();
             let node = tcx.adt_def(node);
-            // println!("{:?}", struct_topology.leaf_nodes(&node, 0).unwrap());
+            // println!("{:?}", struct_ctxt.leaf_nodes(&node, 0).unwrap());
             assert_eq!(
-                struct_topology
+                struct_ctxt
                     .leaf_nodes(node, 0)
                     .iter()
                     .map(|x| x.1)
                     .collect::<Vec<_>>(),
                 vec![1, 2]
             );
-            struct_topology.increase_precision(tcx);
+            struct_ctxt.increase_precision(tcx);
             assert_eq!(
-                struct_topology
+                struct_ctxt
                     .leaf_nodes(node, 0)
                     .iter()
                     .map(|x| x.1)
                     .collect::<Vec<_>>(),
                 vec![2, 3, 5]
             );
-            struct_topology.increase_precision(tcx);
+            struct_ctxt.increase_precision(tcx);
             assert_eq!(
-                struct_topology
+                struct_ctxt
                     .leaf_nodes(node, 0)
                     .iter()
                     .map(|x| x.1)
@@ -459,8 +537,8 @@ mod tests {
     // #[test]
     // fn test5() {
     //     common::test::run_compiler_with(TEXT5.into(), |tcx, _, structs| {
-    //         let mut struct_topology = StructTopology::new(tcx, &structs);
-    //         let &node = struct_topology
+    //         let mut struct_ctxt = StructTopology::new(tcx, &structs);
+    //         let &node = struct_ctxt
     //             .post_order
     //             .iter()
     //             .find(|&&did| {
@@ -469,14 +547,14 @@ mod tests {
     //             })
     //             .unwrap();
     //         let node = tcx.adt_def(node);
-    //         println!("{:?}", struct_topology.leaf_nodes(node, 0).unwrap());
-    //         struct_topology.increase_precision(tcx);
-    //         println!("{:?}", struct_topology.leaf_nodes(node, 0).unwrap());
-    //         struct_topology.increase_precision(tcx);
-    //         println!("{:?}", struct_topology.leaf_nodes(node, 0).unwrap());
-    //         for &(leaf_ext_ty, _) in struct_topology.leaf_nodes(node, 0).unwrap() {
+    //         println!("{:?}", struct_ctxt.leaf_nodes(node, 0).unwrap());
+    //         struct_ctxt.increase_precision(tcx);
+    //         println!("{:?}", struct_ctxt.leaf_nodes(node, 0).unwrap());
+    //         struct_ctxt.increase_precision(tcx);
+    //         println!("{:?}", struct_ctxt.leaf_nodes(node, 0).unwrap());
+    //         for &(leaf_ext_ty, _) in struct_ctxt.leaf_nodes(node, 0).unwrap() {
     //             let delta = 1;
-    //             let leaf_ext_measure = struct_topology.measure(leaf_ext_ty, struct_topology.max_precision() as u32 - delta);
+    //             let leaf_ext_measure = struct_ctxt.measure(leaf_ext_ty, struct_ctxt.max_precision() as u32 - delta);
     //             println!("leaf_ext_ty ~ {leaf_ext_measure}")
     //         }
     //     })

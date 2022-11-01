@@ -27,7 +27,7 @@ use crate::{
         state::SSAState,
         AnalysisResults, FnResult,
     },
-    struct_topology::StructTopology,
+    struct_ctxt::StructCtxt,
     type_qualifier::noalias::NoAliasParams,
     CrateCtxt,
 };
@@ -68,7 +68,7 @@ impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for WholeProgramAn
             model,
             fn_locals,
             struct_fields,
-            struct_topology: crate_ctxt.struct_topology,
+            struct_ctxt: crate_ctxt.struct_ctxt,
         })
     }
 }
@@ -84,7 +84,7 @@ pub struct WholeProgramResults<'tcx> {
     model: Vec<Ownership>,
     fn_locals: FnLocals,
     struct_fields: GlobalAssumptions,
-    struct_topology: StructTopology<'tcx>,
+    struct_ctxt: StructCtxt<'tcx>,
 }
 
 impl<'tcx> WholeProgramResults<'tcx> {
@@ -93,12 +93,12 @@ impl<'tcx> WholeProgramResults<'tcx> {
         r#struct: &DefId,
     ) -> impl Iterator<Item = &'a [Ownership]> + 'a + common::captures::Captures<'tcx> {
         self.struct_fields
-            .fields(&self.struct_topology, r#struct)
+            .fields(&self.struct_ctxt, r#struct)
             .map(|range| &self.model[range.start.index()..range.end.index()])
     }
 
     pub fn trace(&self, tcx: TyCtxt) {
-        for &did in &self.struct_topology.post_order {
+        for &did in &self.struct_ctxt.post_order {
             tracing::debug!("{}: {{", tcx.def_path_str(did));
             for (field_def, field_results) in
                 itertools::izip!(tcx.adt_def(did).all_fields(), self.fields(&did))
@@ -157,7 +157,8 @@ fn solve_body<'tcx>(
     let mut rn = Renamer::new(body, ssa_state, crate_ctxt.tcx);
 
     let mut infer_cx = InferCtxt::new(
-        crate_ctxt.with_precision(precision),
+        crate_ctxt.tcx,
+        crate_ctxt.struct_ctxt.with_precision(precision),
         body,
         database,
         gen,
@@ -192,7 +193,7 @@ fn solve_crate(
     let mut database = <WholeProgramAnalysis as AnalysisKind>::DB::new(&ctx);
 
     let global_assumptions = GlobalAssumptions::new(
-        &crate_ctxt.struct_topology,
+        &crate_ctxt.struct_ctxt,
         crate_ctxt.tcx,
         &mut gen,
         &mut database,
@@ -205,7 +206,7 @@ fn solve_crate(
         Left((noalias_params, required_precision)) => {
             let inter_ctxt =
                 initial_inter_ctxt(crate_ctxt, noalias_params, &mut gen, &mut database);
-            for &did in crate_ctxt.call_graph.fns() {
+            for &did in crate_ctxt.fn_ctxt.fns() {
                 let body = crate_ctxt.tcx.optimized_mir(did);
                 let ssa_state = initial_ssa_state(crate_ctxt, body);
                 let fn_summary = solve_body(
@@ -223,9 +224,7 @@ fn solve_crate(
             inter_ctxt
         }
         Right(previous_results) => {
-            crate_ctxt
-                .struct_topology
-                .increase_precision(crate_ctxt.tcx);
+            crate_ctxt.struct_ctxt.increase_precision(crate_ctxt.tcx);
             let (inter_ctxt, fns) =
                 previous_results
                     .1
@@ -427,7 +426,7 @@ impl FnLocals {
                                 local_decl,
                                 gen,
                                 database,
-                                crate_ctxt.with_precision(precision),
+                                crate_ctxt.struct_ctxt.with_precision(precision),
                             )?;
                             assert!(!r#use.is_empty());
                             database.push_assume::<crate::ssa::constraint::Debug>(
@@ -439,7 +438,7 @@ impl FnLocals {
                                 local_decl,
                                 gen,
                                 database,
-                                crate_ctxt.with_precision(precision),
+                                crate_ctxt.struct_ctxt.with_precision(precision),
                             )?;
                             assert!(!def.is_empty());
                             database.push_assume::<crate::ssa::constraint::Debug>(
@@ -455,7 +454,7 @@ impl FnLocals {
                                 local_decl,
                                 gen,
                                 database,
-                                crate_ctxt.with_precision(precision),
+                                crate_ctxt.struct_ctxt.with_precision(precision),
                             )?;
 
                             Some(Param::Normal(now))

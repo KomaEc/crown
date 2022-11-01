@@ -12,7 +12,7 @@ use smallvec::SmallVec;
 use self::boundary::Boundary;
 use super::{AnalysisKind, Precision};
 use crate::{
-    ptr::{abstract_ty, Measurable},
+    ptr::{decompose_ty, Measurable},
     ssa::{
         constraint::{
             infer::{InferMode, Renamer},
@@ -23,8 +23,7 @@ use crate::{
         state::{SSAIdx, SSAState},
         FnResult,
     },
-    struct_topology::StructTopology,
-    CrateCtxt,
+    struct_ctxt::{RestrictedStructCtxt, StructCtxt},
 };
 
 pub mod boundary;
@@ -75,90 +74,6 @@ impl<'a> FnResult<'a> for FnSummary {
     }
 }
 
-#[derive(Clone, Copy)]
-pub struct FnCtxt<'intra, 'tcx> {
-    struct_topology: &'intra StructTopology<'tcx>,
-    tcx: TyCtxt<'tcx>,
-    allowed_ptr_depth: Precision,
-}
-
-impl<'intra, 'tcx> Measurable<'tcx> for FnCtxt<'intra, 'tcx> {
-    fn measure(&self, ty: Ty, ptr_chased: u32) -> crate::ptr::Measure {
-        let allowed = self.allowed_ptr_depth as u32;
-        let maximum = self.struct_topology.max_ptr_chased() as u32;
-        if allowed >= maximum {
-            self.struct_topology.measure(ty, ptr_chased)
-        } else {
-            self.struct_topology
-                .measure(ty, maximum - allowed + ptr_chased)
-        }
-    }
-
-    fn measure_adt(
-        &self,
-        adt_def: rustc_middle::ty::AdtDef,
-        ptr_chased: u32,
-    ) -> crate::ptr::Measure {
-        let allowed = self.allowed_ptr_depth as u32;
-        let maximum = self.struct_topology.max_ptr_chased() as u32;
-        if allowed >= maximum {
-            self.struct_topology.measure_adt(adt_def, ptr_chased)
-        } else {
-            self.struct_topology
-                .measure_adt(adt_def, maximum - allowed + ptr_chased)
-        }
-    }
-
-    fn field_offset(
-        &self,
-        adt_def: rustc_middle::ty::AdtDef,
-        field: usize,
-        ptr_chased: u32,
-    ) -> crate::ptr::Measure {
-        let allowed = self.allowed_ptr_depth as u32;
-        let maximum = self.struct_topology.max_ptr_chased() as u32;
-        if allowed >= maximum {
-            self.struct_topology
-                .field_offset(adt_def, field, ptr_chased)
-        } else {
-            self.struct_topology
-                .field_offset(adt_def, field, maximum - allowed + ptr_chased)
-        }
-    }
-
-    fn max_ptr_chased(&self) -> Precision {
-        std::cmp::min(
-            self.allowed_ptr_depth,
-            self.struct_topology.max_ptr_chased(),
-        )
-    }
-
-    fn leaf_nodes(&self, adt_def: rustc_middle::ty::AdtDef, ptr_chased: u32) -> &[(Ty<'tcx>, u32)] {
-        let allowed = self.allowed_ptr_depth as u32;
-        let maximum = self.struct_topology.max_ptr_chased() as u32;
-        if allowed >= maximum {
-            self.struct_topology.leaf_nodes(adt_def, ptr_chased)
-        } else {
-            self.struct_topology
-                .leaf_nodes(adt_def, maximum - allowed + ptr_chased)
-        }
-    }
-
-    fn absolute_precision(&self, ty: Ty, measure: u32) -> Precision {
-        self.struct_topology.absolute_precision(ty, measure)
-    }
-}
-
-impl<'tcx> CrateCtxt<'tcx> {
-    pub fn with_precision(&self, precision: Precision) -> FnCtxt<'_, 'tcx> {
-        FnCtxt {
-            struct_topology: &self.struct_topology,
-            tcx: self.tcx,
-            allowed_ptr_depth: precision,
-        }
-    }
-}
-
 type CallArgs = SmallVec<[Option<(Consume<LocalSig>, bool)>; 4]>;
 
 pub struct InferCtxt<'infercx, 'db, 'tcx, Analysis>
@@ -166,10 +81,11 @@ where
     'tcx: 'infercx,
     Analysis: AnalysisKind<'infercx, 'db, 'tcx>,
 {
+    tcx: TyCtxt<'tcx>,
     inter_ctxt: Analysis::InterCtxt,
     database: &'infercx mut Analysis::DB,
     gen: &'infercx mut Gen,
-    fn_ctxt: FnCtxt<'infercx, 'tcx>,
+    struct_ctxt: RestrictedStructCtxt<'infercx, 'tcx>,
     fn_body_sig: FnBodySig<LocalSig>,
     deref_copy: Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>>,
     call_args: Vec<(
@@ -188,7 +104,8 @@ where
     Analysis: AnalysisKind<'infercx, 'db, 'tcx>,
 {
     pub fn new(
-        fn_ctxt: FnCtxt<'infercx, 'tcx>,
+        tcx: TyCtxt<'tcx>,
+        struct_ctxt: RestrictedStructCtxt<'infercx, 'tcx>,
         body: &Body<'tcx>,
         database: &'infercx mut Analysis::DB,
         gen: &'infercx mut Gen,
@@ -198,7 +115,7 @@ where
         let mut fn_body_sig = IndexVec::with_capacity(body.local_decls.len());
 
         for local_decl in body.local_decls.iter() {
-            if let Some(sigs) = initialize_local(local_decl, gen, database, fn_ctxt) {
+            if let Some(sigs) = initialize_local(local_decl, gen, database, struct_ctxt) {
                 fn_body_sig.push(IndexVec::from_raw(vec![sigs]));
             } else {
                 fn_body_sig.push(IndexVec::default());
@@ -207,10 +124,10 @@ where
 
         <Analysis as Boundary>::params(
             // crate_ctxt,
-            fn_ctxt.tcx,
+            tcx,
             &inter_ctxt,
             global_assumptions,
-            fn_ctxt.struct_topology,
+            struct_ctxt.unrestricted,
             database,
             body,
             fn_body_sig
@@ -221,10 +138,11 @@ where
         );
 
         InferCtxt {
+            tcx,
             inter_ctxt,
             database,
             gen,
-            fn_ctxt,
+            struct_ctxt,
             fn_body_sig,
             deref_copy: None,
             call_args: Vec::new(),
@@ -234,16 +152,16 @@ where
 
     /// Dominance property
     fn new_vars(&mut self, ty: Ty<'tcx>) -> Range<Var> {
-        let measure = self.fn_ctxt.measure(ty, 0);
+        let measure = self.struct_ctxt.measure(ty, 0);
         let vars = self.database.new_vars(self.gen, measure);
-        let precision = self.fn_ctxt.max_ptr_chased();
+        let precision = self.struct_ctxt.max_ptr_chased();
         fn dominate<'tcx>(
             ty: Ty<'tcx>,
             mut dom: Option<Var>,
             vars: &mut Range<Var>,
             mut precision: u8,
             database: &mut impl Database,
-            struct_topology: &StructTopology,
+            struct_ctxt: &StructCtxt,
             tcx: TyCtxt<'tcx>,
         ) {
             if precision == 0 {
@@ -275,18 +193,10 @@ where
             }
 
             if let TyKind::Adt(adt_def, subst) = ty.kind() {
-                if struct_topology.is_struct_of_concerned(&adt_def.did()) {
+                if struct_ctxt.is_struct_of_concerned(&adt_def.did()) {
                     for field_def in adt_def.all_fields() {
                         let field_ty = field_def.ty(tcx, subst);
-                        dominate(
-                            field_ty,
-                            dom,
-                            vars,
-                            precision,
-                            database,
-                            struct_topology,
-                            tcx,
-                        )
+                        dominate(field_ty, dom, vars, precision, database, struct_ctxt, tcx)
                     }
                 }
             }
@@ -298,8 +208,8 @@ where
             vars.clone().by_ref(),
             precision,
             self.database,
-            self.fn_ctxt.struct_topology,
-            self.fn_ctxt.tcx,
+            self.struct_ctxt.unrestricted,
+            self.tcx,
         );
 
         vars
@@ -328,7 +238,7 @@ where
                     let ptr = base.r#use.start + proj_start_offset;
                     if ptr < base.r#use.end {
                         // if analysis precision is 1, there is no need to enforce ownership dominance property
-                        if infer_cx.fn_ctxt.max_ptr_chased() > 1 {
+                        if infer_cx.struct_ctxt.max_ptr_chased() > 1 {
                             infer_cx
                                 .database
                                 .push_assume::<crate::ssa::constraint::Debug>((), ptr, true);
@@ -345,7 +255,7 @@ where
                     let TyKind::Adt(adt_def, _) = base_ty.kind() else { unreachable!() };
                     proj_start_offset +=
                         infer_cx
-                            .fn_ctxt
+                            .struct_ctxt
                             .field_offset(*adt_def, field.index(), ptr_chased);
                     base_ty = *ty;
                 }
@@ -376,7 +286,7 @@ where
                 .push_equal::<crate::ssa::constraint::Debug>((), pre, post);
         }
 
-        let proj_end_offset = proj_start_offset + infer_cx.fn_ctxt.measure(base_ty, ptr_chased);
+        let proj_end_offset = proj_start_offset + infer_cx.struct_ctxt.measure(base_ty, ptr_chased);
 
         #[cfg(debug_assertions)]
         assert!(
@@ -471,7 +381,7 @@ where
         let base_ty = body.local_decls[base].ty;
 
         let base = if let Some(consume) = consume {
-            let base_offset = infer_cx.fn_ctxt.measure(base_ty, 0);
+            let base_offset = infer_cx.struct_ctxt.measure(base_ty, 0);
 
             tracing::debug!("interpretting consume for {:?} with {:?}", place, consume);
 
@@ -511,7 +421,7 @@ where
             ty,
             lhs_result.transpose(),
             rhs_result.transpose(),
-            &infer_cx.fn_ctxt,
+            &infer_cx.struct_ctxt,
             infer_cx.database,
             |lhs, rhs, database| {
                 database.push_assume::<crate::ssa::constraint::Debug>((), lhs.r#use, false);
@@ -600,13 +510,7 @@ where
             let ty = func.ty();
             let &FnDef(callee, _) = ty.kind() else { unreachable!() };
             if let Some(local_did) = callee.as_local() {
-                match infer_cx
-                    .fn_ctxt
-                    .tcx
-                    .hir()
-                    .find_by_def_id(local_did)
-                    .unwrap()
-                {
+                match infer_cx.tcx.hir().find_by_def_id(local_did).unwrap() {
                     // this crate
                     rustc_hir::Node::Item(_) => {
                         <Analysis as Boundary>::call(infer_cx, destination, &args, callee)
@@ -639,10 +543,10 @@ where
         });
 
         <Analysis as Boundary>::r#return(
-            infer_cx.fn_ctxt.tcx,
+            infer_cx.tcx,
             &infer_cx.inter_ctxt,
             infer_cx.global_assumptions,
-            infer_cx.fn_ctxt.struct_topology,
+            infer_cx.struct_ctxt.unrestricted,
             &mut infer_cx.database,
             body,
             locals.by_ref().take(body.arg_count + 1),
@@ -679,13 +583,13 @@ fn fit<'tcx, T, U, DB>(
     fitter_precision: Precision,
     mut fittee: impl Iterator<Item = U>,
     delta: Precision,
-    measure: impl Measurable<'tcx>,
+    measurable: impl Measurable<'tcx>,
     database: &mut DB,
     mut on_matched: impl FnMut(T, U, &mut DB),
 ) {
-    let fitter_ptr_chased = measure.max_ptr_chased() - fitter_precision;
+    let fitter_ptr_chased = measurable.max_ptr_chased() - fitter_precision;
 
-    let fitter_leaf_nodes = measure.leaf_nodes(adt_def, fitter_ptr_chased as u32);
+    let fitter_leaf_nodes = measurable.leaf_nodes(adt_def, fitter_ptr_chased as u32);
 
     let mut count = 0;
     for &(leaf_ext_ty, offset_to_be) in fitter_leaf_nodes {
@@ -696,7 +600,7 @@ fn fit<'tcx, T, U, DB>(
         }
 
         let leaf_ext_measure =
-            measure.measure(leaf_ext_ty, (measure.max_ptr_chased() - delta) as u32);
+            measurable.measure(leaf_ext_ty, (measurable.max_ptr_chased() - delta) as u32);
 
         for _ in 0..leaf_ext_measure {
             let _ = fittee.next().unwrap();
@@ -711,19 +615,19 @@ fn matcher<'tcx, T, U, DB>(
     ty: Ty<'tcx>,
     mut lhs_result: impl Iterator<Item = T>,
     mut rhs_result: impl Iterator<Item = U>,
-    measure: impl Measurable<'tcx>,
+    measurable: impl Measurable<'tcx>,
     database: &mut DB,
     mut on_matched: impl FnMut(T, U, &mut DB),
 ) {
     let lhs_measure = lhs_result.size_hint().1.unwrap() as u32;
     let rhs_measure = rhs_result.size_hint().1.unwrap() as u32;
 
-    let lhs_precision = measure.absolute_precision(ty, lhs_measure);
-    let rhs_precision = measure.absolute_precision(ty, rhs_measure);
+    let lhs_precision = measurable.absolute_precision(ty, lhs_measure);
+    let rhs_precision = measurable.absolute_precision(ty, rhs_measure);
 
     tracing::debug!("precision: lhs = {lhs_precision}, rhs = {rhs_precision}");
 
-    let (ptr_depth, adt_def) = abstract_ty(ty);
+    let (ptr_depth, adt_def) = decompose_ty(ty);
 
     if ptr_depth as u8 > lhs_precision
         || ptr_depth as u8 > rhs_precision
@@ -754,7 +658,7 @@ fn matcher<'tcx, T, U, DB>(
                 lhs_precision,
                 rhs_result,
                 delta,
-                measure,
+                measurable,
                 database,
                 on_matched,
             )
@@ -765,7 +669,7 @@ fn matcher<'tcx, T, U, DB>(
                 rhs_precision,
                 lhs_result,
                 delta,
-                measure,
+                measurable,
                 database,
                 |rhs, lhs, database| on_matched(lhs, rhs, database),
             )

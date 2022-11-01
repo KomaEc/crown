@@ -13,7 +13,7 @@ pub trait Measurable<'tcx> {
 
     #[inline]
     fn measure_ptr(&self, ty: Ty) -> Measure {
-        let (ptr_measure, _) = abstract_ty(ty);
+        let (ptr_measure, _) = decompose_ty(ty);
         ptr_measure
     }
 
@@ -27,7 +27,6 @@ pub trait Measurable<'tcx> {
 
     fn max_ptr_chased(&self) -> Precision;
 
-    /// [`absolute_precision(ty, _)`] is the inverse of [`measure(ty, _)`]
     fn absolute_precision(&self, ty: Ty, measure: Measure) -> Precision;
 }
 
@@ -61,9 +60,8 @@ impl<'tcx, M: Measurable<'tcx>> Measurable<'tcx> for &M {
     }
 }
 
-/// Abstraction of types: `&..&Adt`
 #[inline]
-pub fn abstract_ty(ty: Ty) -> (Measure, Option<AdtDef>) {
+pub fn decompose_ty(ty: Ty) -> (Measure, Option<AdtDef>) {
     let mut ty = ty;
 
     let mut ptr_measure = 0;

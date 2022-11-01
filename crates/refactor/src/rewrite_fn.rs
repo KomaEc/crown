@@ -112,33 +112,27 @@ fn rewrite_use<'tcx>(
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt<'tcx>,
 ) -> ExprRewriteResult {
-
     match body.stmt_at(location) {
-        Left(statement) => {
-            match &statement.kind {
-                StatementKind::Assign(box (place, rvalue)) => {
-                    match rvalue {
-                        Rvalue::Use(_) => todo!(),
-                        Rvalue::Repeat(_, _) => todo!(),
-                        Rvalue::Ref(_, _, _) => todo!(),
-                        Rvalue::ThreadLocalRef(_) => todo!(),
-                        Rvalue::AddressOf(_, _) => todo!(),
-                        Rvalue::Len(_) => todo!(),
-                        Rvalue::Cast(_, _, _) => todo!(),
-                        Rvalue::BinaryOp(_, _) => todo!(),
-                        Rvalue::CheckedBinaryOp(_, _) => todo!(),
-                        Rvalue::NullaryOp(_, _) => todo!(),
-                        Rvalue::UnaryOp(_, _) => todo!(),
-                        Rvalue::Discriminant(_) => todo!(),
-                        Rvalue::Aggregate(_, _) => todo!(),
-                        Rvalue::ShallowInitBox(_, _) => todo!(),
-                        Rvalue::CopyForDeref(_) => todo!(),
-                    }
-                }
-                StatementKind::Intrinsic(box NonDivergingIntrinsic::Assume(operand)) => {
-                }
-                _ => todo!(),
-            }
+        Left(statement) => match &statement.kind {
+            StatementKind::Assign(box (place, rvalue)) => match rvalue {
+                Rvalue::Use(_) => todo!(),
+                Rvalue::Repeat(_, _) => todo!(),
+                Rvalue::Ref(_, _, _) => todo!(),
+                Rvalue::ThreadLocalRef(_) => todo!(),
+                Rvalue::AddressOf(_, _) => todo!(),
+                Rvalue::Len(_) => todo!(),
+                Rvalue::Cast(_, _, _) => todo!(),
+                Rvalue::BinaryOp(_, _) => todo!(),
+                Rvalue::CheckedBinaryOp(_, _) => todo!(),
+                Rvalue::NullaryOp(_, _) => todo!(),
+                Rvalue::UnaryOp(_, _) => todo!(),
+                Rvalue::Discriminant(_) => todo!(),
+                Rvalue::Aggregate(_, _) => todo!(),
+                Rvalue::ShallowInitBox(_, _) => todo!(),
+                Rvalue::CopyForDeref(_) => todo!(),
+            },
+            StatementKind::Intrinsic(box NonDivergingIntrinsic::Assume(operand)) => {}
+            _ => todo!(),
         },
         Right(terminator) => todo!(),
     }

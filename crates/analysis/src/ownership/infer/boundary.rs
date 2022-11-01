@@ -15,7 +15,7 @@ use crate::{
         constraint::{infer::InferMode, Database, GlobalAssumptions, Var},
         consume::Consume,
     },
-    struct_topology::StructTopology,
+    struct_ctxt::StructCtxt,
 };
 
 pub mod libc;
@@ -36,7 +36,7 @@ where
         tcx: TyCtxt<'tcx>,
         inter_ctxt: &Self::InterCtxt,
         global_assumptions: &GlobalAssumptions,
-        struct_topology: &StructTopology,
+        struct_ctxt: &StructCtxt,
         database: &mut <Self as AnalysisKind<'infercx, 'db, 'tcx>>::DB,
         body: &Body<'tcx>,
         params: impl Iterator<Item = Option<Range<Var>>>,
@@ -46,7 +46,7 @@ where
         tcx: TyCtxt<'tcx>,
         inter_ctxt: &Self::InterCtxt,
         global_assumptions: &GlobalAssumptions,
-        struct_topology: &StructTopology,
+        struct_ctxt: &StructCtxt,
         database: &mut Self::DB,
         body: &Body<'tcx>,
         args: impl Iterator<Item = Option<Range<Var>>>,
@@ -70,7 +70,7 @@ where
         _: TyCtxt,
         _: &Analysis::InterCtxt,
         _: &GlobalAssumptions,
-        _: &StructTopology,
+        _: &StructCtxt,
         _: &mut <Self as AnalysisKind<'infercx, 'db, 'tcx>>::DB,
         _: &Body<'tcx>,
         _: impl Iterator<Item = Option<Range<Var>>>,
@@ -81,7 +81,7 @@ where
         _: TyCtxt<'tcx>,
         _: &Self::InterCtxt,
         _: &GlobalAssumptions,
-        _: &StructTopology,
+        _: &StructCtxt,
         _: &mut Self::DB,
         _: &Body<'tcx>,
         _: impl Iterator<Item = Option<Range<Var>>>,
@@ -99,7 +99,7 @@ where
         args: &CallArgs,
         callee: DefId,
     ) {
-        let fn_sig = infer_cx.fn_ctxt.tcx.fn_sig(callee);
+        let fn_sig = infer_cx.tcx.fn_sig(callee);
 
         let mut params = infer_cx.inter_ctxt[&callee].iter();
 
@@ -116,7 +116,7 @@ where
                     output_ty,
                     dest.transpose(),
                     ret,
-                    &infer_cx.fn_ctxt.struct_topology,
+                    &infer_cx.struct_ctxt.unrestricted,
                     infer_cx.database,
                     |dest, ret, database| {
                         database.push_assume::<crate::ssa::constraint::Debug>(
@@ -149,7 +149,7 @@ where
                                 ty,
                                 output_param,
                                 arg,
-                                &infer_cx.fn_ctxt.struct_topology,
+                                &infer_cx.struct_ctxt.unrestricted,
                                 infer_cx.database,
                                 |param, arg, database| {
                                     database.push_equal::<crate::ssa::constraint::Debug>(
@@ -172,7 +172,7 @@ where
                                 ty,
                                 param,
                                 arg,
-                                &infer_cx.fn_ctxt.struct_topology,
+                                &infer_cx.struct_ctxt.unrestricted,
                                 infer_cx.database,
                                 |param, arg, database| {
                                     database.push_linear::<crate::ssa::constraint::Debug>(
@@ -194,7 +194,7 @@ where
         tcx: TyCtxt<'tcx>,
         inter_ctxt: &<WholeProgramAnalysis as AnalysisKind>::InterCtxt,
         global_assumptions: &GlobalAssumptions,
-        struct_topology: &StructTopology,
+        struct_ctxt: &StructCtxt,
         database: &mut <WholeProgramAnalysis as AnalysisKind>::DB,
         body: &Body<'tcx>,
         params: impl Iterator<Item = Option<Range<Var>>>,
@@ -211,7 +211,7 @@ where
                     let sigs = sigs.clone().to_input();
                     assert_eq!(input.size_hint().1.unwrap(), sigs.size_hint().1.unwrap());
                     let measure = input.size_hint().1.unwrap() as u32;
-                    let precision = struct_topology.absolute_precision(ty, measure);
+                    let precision = struct_ctxt.absolute_precision(ty, measure);
 
                     for (input, sig) in input.clone().zip(sigs) {
                         database.push_equal::<crate::ssa::constraint::Debug>((), input, sig)
@@ -225,7 +225,7 @@ where
                         &mut std::iter::empty(),
                         &mut input,
                         global_assumptions,
-                        struct_topology,
+                        struct_ctxt,
                         database,
                         tcx,
                         precision,
@@ -241,7 +241,7 @@ where
         tcx: TyCtxt<'tcx>,
         inter_ctxt: &Self::InterCtxt,
         global_assumptions: &GlobalAssumptions,
-        struct_topology: &StructTopology,
+        struct_ctxt: &StructCtxt,
         database: &mut Self::DB,
         body: &Body<'tcx>,
         mut args: impl Iterator<Item = Option<Range<Var>>>,
@@ -261,7 +261,7 @@ where
             let mut param = param;
             let ty = body.return_ty();
             let measure = param.size_hint().1.unwrap() as u32;
-            let precision = struct_topology.absolute_precision(ty, measure);
+            let precision = struct_ctxt.absolute_precision(ty, measure);
 
             apply_global_assumptions(
                 ty,
@@ -269,7 +269,7 @@ where
                 &mut std::iter::empty(),
                 &mut param,
                 global_assumptions,
-                struct_topology,
+                struct_ctxt,
                 database,
                 tcx,
                 precision,
@@ -318,7 +318,7 @@ fn apply_global_assumptions<'tcx>(
     field_ctxt: &mut dyn Iterator<Item = Var>,
     input: &mut impl Iterator<Item = Var>,
     global_assumptions: &GlobalAssumptions,
-    struct_topology: &StructTopology,
+    struct_ctxt: &StructCtxt,
     database: &mut impl Database,
     tcx: TyCtxt<'tcx>,
     mut precision: u8,
@@ -351,10 +351,10 @@ fn apply_global_assumptions<'tcx>(
 
     if let TyKind::Adt(adt_def, subst) = ty.kind() {
         assert!(field_ctxt.next().is_none());
-        if struct_topology.is_struct_of_concerned(&adt_def.did())
-            && struct_topology.measure_adt(*adt_def, 0) > 0
+        if struct_ctxt.is_struct_of_concerned(&adt_def.did())
+            && struct_ctxt.measure_adt(*adt_def, 0) > 0
         {
-            let fields = global_assumptions.fields(struct_topology, &adt_def.did());
+            let fields = global_assumptions.fields(struct_ctxt, &adt_def.did());
             for (mut field_ctxt, field_def) in itertools::izip!(fields, adt_def.all_fields()) {
                 let field_ty = field_def.ty(tcx, subst);
                 apply_global_assumptions(
@@ -363,7 +363,7 @@ fn apply_global_assumptions<'tcx>(
                     &mut field_ctxt,
                     input,
                     global_assumptions,
-                    struct_topology,
+                    struct_ctxt,
                     database,
                     tcx,
                     precision,

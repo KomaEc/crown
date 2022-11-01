@@ -9,7 +9,7 @@ use rustc_middle::{
 };
 
 use super::consume::Voidable;
-use crate::{ptr::Measurable, struct_topology::StructTopology};
+use crate::{ptr::Measurable, struct_ctxt::StructCtxt};
 
 pub mod infer;
 // pub mod prune;
@@ -87,20 +87,20 @@ pub struct GlobalAssumptions {
 
 impl GlobalAssumptions {
     pub fn new<'tcx>(
-        struct_topology: &StructTopology<'tcx>,
+        struct_ctxt: &StructCtxt<'tcx>,
         tcx: TyCtxt<'tcx>,
         gen: &mut Gen,
         database: &mut impl Database,
     ) -> Self {
-        let mut struct_fields = VecVec::with_indices_capacity(struct_topology.post_order.len());
+        let mut struct_fields = VecVec::with_indices_capacity(struct_ctxt.post_order.len());
 
-        for &did in &struct_topology.post_order {
+        for &did in &struct_ctxt.post_order {
             let ty = tcx.type_of(did);
             let TyKind::Adt(adt_def, subst) = ty.kind() else { unreachable!() };
             struct_fields.push_inner(gen.next());
             for field_def in adt_def.all_fields() {
                 let field_ty = field_def.ty(tcx, subst);
-                let ptr_depth = struct_topology.measure_ptr(field_ty);
+                let ptr_depth = struct_ctxt.measure_ptr(field_ty);
                 database.new_vars(gen, ptr_depth);
                 struct_fields.push_inner(gen.next());
             }
@@ -114,18 +114,18 @@ impl GlobalAssumptions {
 
     pub fn fields<'a, 'tcx>(
         &'a self,
-        struct_topology: &'a StructTopology<'tcx>,
+        struct_ctxt: &'a StructCtxt<'tcx>,
         did: &DefId,
     ) -> impl Iterator<Item = Range<Var>> + 'a {
-        let idx = struct_topology.did_idx(did);
+        let idx = struct_ctxt.did_idx(did);
         self.struct_fields[idx]
             .array_windows()
             .map(|&[start, end]| start..end)
     }
 
-    pub fn show(&self, struct_topology: &StructTopology) {
+    pub fn show(&self, struct_ctxt: &StructCtxt) {
         for (&did, fields) in
-            itertools::izip!(struct_topology.post_order.iter(), self.struct_fields.iter())
+            itertools::izip!(struct_ctxt.post_order.iter(), self.struct_fields.iter())
         {
             let mut index = 0;
             println!("{:?}: {{", did);

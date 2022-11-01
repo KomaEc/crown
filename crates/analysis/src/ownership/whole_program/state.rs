@@ -28,7 +28,7 @@ pub(super) fn initial_inter_ctxt(
 
     let mut fn_sigs = FxHashMap::default();
     fn_sigs.reserve(crate_ctxt.fns().len());
-    for &did in crate_ctxt.call_graph.fns() {
+    for &did in crate_ctxt.fn_ctxt.fns() {
         let noalias_params = &noalias_params[&did];
         let body = crate_ctxt.tcx.optimized_mir(did);
         let fn_sig = {
@@ -38,7 +38,7 @@ pub(super) fn initial_inter_ctxt(
                 return_local_decl,
                 gen,
                 database,
-                crate_ctxt.with_precision(INIT_PRECISION),
+                crate_ctxt.struct_ctxt.with_precision(INIT_PRECISION),
             )
             .map(|sigs| Param::Normal(sigs));
 
@@ -50,13 +50,13 @@ pub(super) fn initial_inter_ctxt(
                             local_decl,
                             gen,
                             database,
-                            crate_ctxt.with_precision(INIT_PRECISION),
+                            crate_ctxt.struct_ctxt.with_precision(INIT_PRECISION),
                         );
                         let def = initialize_local(
                             local_decl,
                             gen,
                             database,
-                            crate_ctxt.with_precision(INIT_PRECISION),
+                            crate_ctxt.struct_ctxt.with_precision(INIT_PRECISION),
                         );
                         r#use.zip(def).map(|(r#use, def)| {
                             database.push_assume::<crate::ssa::constraint::Debug>(
@@ -76,7 +76,7 @@ pub(super) fn initial_inter_ctxt(
                             local_decl,
                             gen,
                             database,
-                            crate_ctxt.with_precision(INIT_PRECISION),
+                            crate_ctxt.struct_ctxt.with_precision(INIT_PRECISION),
                         )
                         .map(|sigs| Param::Normal(sigs))
                     }

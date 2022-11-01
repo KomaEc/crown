@@ -69,7 +69,7 @@ where
         args: &CallArgs,
         callee: DefId,
     ) {
-        let fn_sig = self.fn_ctxt.tcx.fn_sig(callee);
+        let fn_sig = self.tcx.fn_sig(callee);
         let dest_ty = fn_sig.output().skip_binder();
         let arg_ty = fn_sig.inputs().skip_binder()[0];
         assert_eq!(dest_ty, arg_ty);
