@@ -314,7 +314,7 @@ fn get_fn_sig<'a>(
     model: &'a [Ownership],
     fn_locals: &'a FnLocals,
     r#fn: DefId,
-) -> impl Iterator<Item = Option<Param<&[Ownership]>>> + 'a {
+) -> impl Iterator<Item = Option<Param<&'a [Ownership]>>> + 'a {
     let fn_sigs = &fn_locals.fn_sigs[&r#fn];
     let ret = fn_sigs
         .ret

@@ -17,13 +17,13 @@ pub(crate) fn link_functions(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         let hir_id = item.hir_id();
         let attrs = tcx.hir().attrs(hir_id);
         if attrs.iter().any(|attr| attr.has_name(sym::no_mangle)) {
-            symbol_to_def.insert(item.ident.name, item.def_id);
+            symbol_to_def.insert(item.ident.name, item.owner_id.def_id);
         } else if let Some(name) = attrs
             .iter()
             .find(|attr| attr.has_name(sym::export_name))
             .and_then(|attr| attr.value_str())
         {
-            symbol_to_def.insert(name, item.def_id);
+            symbol_to_def.insert(name, item.owner_id.def_id);
         }
     }
 
@@ -32,7 +32,7 @@ pub(crate) fn link_functions(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     for foreign_item in foreign_items(tcx)
         .filter(|foreign_item| matches!(foreign_item.kind, ForeignItemKind::Fn(..)))
     {
-        extern_def_to_symbol.insert(foreign_item.def_id.def_id, foreign_item.ident.name);
+        extern_def_to_symbol.insert(foreign_item.owner_id.def_id, foreign_item.ident.name);
     }
 
     // (3) Adjust references to extern fns to refer to the `#[no_mangle]` definition instead.
@@ -55,9 +55,9 @@ pub(crate) fn link_functions(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         .filter(|foreign_item| matches!(foreign_item.kind, ForeignItemKind::Fn(..)))
     {
         // println!("try erasing {}", foreign_item.ident);
-        let did = foreign_item.def_id;
+        let did = foreign_item.owner_id.def_id;
         // Drop any items that resolve to a symbol in another module.
-        if let Some(symbol) = extern_def_to_symbol.get(&did.def_id) {
+        if let Some(symbol) = extern_def_to_symbol.get(&did) {
             if symbol_to_def.contains_key(&symbol) {
                 let span = foreign_item.span;
                 rewriter.erase(tcx, span);
@@ -90,7 +90,7 @@ pub(crate) fn link_incomplete_types(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         };
 
         if complete {
-            let def_id = item.def_id.to_def_id();
+            let def_id = item.owner_id.def_id.to_def_id();
             name_to_complete
                 .entry(item.ident.name)
                 .or_insert_with(Vec::new)
@@ -106,7 +106,7 @@ pub(crate) fn link_incomplete_types(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         };
 
         if incomplete {
-            let def_id = foreign_item.def_id.to_def_id();
+            let def_id = foreign_item.owner_id.def_id.to_def_id();
             let name = foreign_item.ident.name;
             incomplete_to_name.insert(def_id, name);
         }
@@ -166,7 +166,7 @@ pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         .filter(|item| matches!(item.kind, ItemKind::Struct(..) | ItemKind::Union(..)))
         .enumerate()
     {
-        let did = item.def_id.to_def_id();
+        let did = item.owner_id.def_id.to_def_id();
         struct_idx.insert(did, idx);
         structs.push(did);
     }
@@ -197,7 +197,7 @@ pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         items(tcx).filter(|item| matches!(item.kind, ItemKind::Struct(..) | ItemKind::Union(..)))
     {
         // println!("try erasing {}", item.ident);
-        let struct_idx = struct_idx[&item.def_id.to_def_id()];
+        let struct_idx = struct_idx[&item.owner_id.def_id.to_def_id()];
         if equivalent_classes[struct_idx] == struct_idx {
             continue;
         }
@@ -243,7 +243,7 @@ pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
 
         // skip erased structs
         if matches!(item.kind, ItemKind::Struct(..) | ItemKind::Union(..)) {
-            let struct_idx = struct_idx[&item.def_id.to_def_id()];
+            let struct_idx = struct_idx[&item.owner_id.def_id.to_def_id()];
             if equivalent_classes[struct_idx] != struct_idx {
                 continue;
             }

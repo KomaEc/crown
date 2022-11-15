@@ -169,7 +169,6 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
         output_dir: None,
         output_file: None,
         file_loader: None,
-        diagnostic_output: rustc_session::DiagnosticOutput::Default,
         lint_caps: rustc_hash::FxHashMap::default(),
         parse_sess_created: None,
         register_lints: None,
@@ -198,8 +197,8 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         let Some(owner) = maybe_owner.as_owner() else { continue };
         let OwnerNode::Item(item) = owner.node() else { continue };
         match item.kind {
-            ItemKind::Fn(..) => fns.push(item.def_id.to_def_id()),
-            ItemKind::Struct(..) => structs.push(item.def_id.to_def_id()),
+            ItemKind::Fn(..) => fns.push(item.owner_id.def_id.to_def_id()),
+            ItemKind::Struct(..) => structs.push(item.owner_id.def_id.to_def_id()),
             _ => {}
         };
     }

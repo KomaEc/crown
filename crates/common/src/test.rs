@@ -59,7 +59,6 @@ pub fn run_compiler_with(
             ..config::Options::default()
         },
         input: input.into(),
-        diagnostic_output: rustc_session::DiagnosticOutput::Default,
         crate_cfg: rustc_hash::FxHashSet::default(),
         input_path: None,
         output_dir: None,
@@ -83,8 +82,8 @@ pub fn run_compiler_with(
                     let Some(owner) = maybe_owner.as_owner() else { continue };
                     let OwnerNode::Item(item) = owner.node() else { continue };
                     match item.kind {
-                        ItemKind::Fn(..) => functions.push(item.def_id.to_def_id()),
-                        ItemKind::Struct(..) => structs.push(item.def_id.to_def_id()),
+                        ItemKind::Fn(..) => functions.push(item.owner_id.def_id.to_def_id()),
+                        ItemKind::Struct(..) => structs.push(item.owner_id.def_id.to_def_id()),
                         _ => {}
                     };
                 }
