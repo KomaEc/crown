@@ -1,7 +1,6 @@
 use either::Either;
-use rustc_data_structures::sso::SsoHashSet;
 use rustc_hash::FxHashMap;
-use rustc_middle::mir::{BasicBlockData, Body, Location, Rvalue, StatementKind};
+use rustc_middle::mir::{Body, Location};
 
 use super::InterCtxt;
 use crate::{
@@ -12,7 +11,6 @@ use crate::{
         consume::{initial_definitions, Consume},
         dom::compute_dominance_frontier,
         state::SSAState,
-        FnResults,
     },
     type_qualifier::noalias::NoAliasParams,
     CrateCtxt,
@@ -100,8 +98,8 @@ pub(super) fn initial_ssa_state<'tcx>(crate_ctxt: &CrateCtxt<'tcx>, body: &Body<
 }
 
 pub(super) fn refine_state(body: &Body, fn_summary: FnSummary, model: &[Ownership]) -> SSAState {
-    let ownership_transferred_locations =
-        compute_ownership_transferred_locations(body, &fn_summary, model);
+    // let ownership_transferred_locations =
+    //     compute_ownership_transferred_locations(body, &fn_summary, model);
 
     let FnSummary {
         fn_body_sig,
@@ -122,9 +120,7 @@ pub(super) fn refine_state(body: &Body, fn_summary: FnSummary, model: &[Ownershi
                         unreachable!("function args and return are assumed to be local. rustc changes this property somehow")
                     };
                     let outter_most = fn_body_sig[local][consume.r#use].start;
-                    if matches!(model[outter_most.index()], Ownership::Owning)
-                        || ownership_transferred_locations.contains(&location)
-                    {
+                    if matches!(model[outter_most.index()], Ownership::Owning) {
                         consume.enable_def();
                     }
                 }
@@ -137,69 +133,69 @@ pub(super) fn refine_state(body: &Body, fn_summary: FnSummary, model: &[Ownershi
     ssa_state
 }
 
-pub fn compute_ownership_transferred_locations(
-    body: &Body,
-    fn_summary: &FnSummary,
-    model: &[Ownership],
-) -> SsoHashSet<Location> {
-    fn ownership_transferred(consume: Consume<&[Ownership]>) -> bool {
-        for (&r#use, &def) in consume.r#use.iter().zip(consume.def.iter()) {
-            if r#use == def {
-                continue;
-            }
-            if r#use == Ownership::Owning || def == Ownership::Owning {
-                return true;
-            }
-        }
-        false
-    }
+// pub fn compute_ownership_transferred_locations(
+//     body: &Body,
+//     fn_summary: &FnSummary,
+//     model: &[Ownership],
+// ) -> SsoHashSet<Location> {
+//     fn ownership_transferred(consume: Consume<&[Ownership]>) -> bool {
+//         for (&r#use, &def) in consume.r#use.iter().zip(consume.def.iter()) {
+//             if r#use == def {
+//                 continue;
+//             }
+//             if r#use == Ownership::Owning || def == Ownership::Owning {
+//                 return true;
+//             }
+//         }
+//         false
+//     }
 
-    let mut ownership_transferred_locations: SsoHashSet<Location> = SsoHashSet::default();
-    let fn_result = (fn_summary, model);
+//     let mut ownership_transferred_locations: SsoHashSet<Location> = SsoHashSet::default();
+//     let fn_result = (fn_summary, model);
 
-    for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
-        let BasicBlockData { statements, .. } = bb_data;
-        let mut index = 0;
-        let mut deref_copy: Option<Location> = None;
-        for statement in statements {
-            let location = Location {
-                block: bb,
-                statement_index: index,
-            };
-            if matches!(&statement.kind, StatementKind::Assign(box (_, rvalue)) if matches!(rvalue, Rvalue::CopyForDeref(_)))
-            {
-                let base_location = deref_copy.take().or(Some(location));
-                deref_copy = base_location;
-                index += 1;
-                continue;
-            }
-            if let Some(base_location) = deref_copy.take() {
-                let StatementKind::Assign(box (_, _)) = &statement.kind else { unreachable!() };
+//     for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
+//         let BasicBlockData { statements, .. } = bb_data;
+//         let mut index = 0;
+//         let mut deref_copy: Option<Location> = None;
+//         for statement in statements {
+//             let location = Location {
+//                 block: bb,
+//                 statement_index: index,
+//             };
+//             if matches!(&statement.kind, StatementKind::Assign(box (_, rvalue)) if matches!(rvalue, Rvalue::CopyForDeref(_)))
+//             {
+//                 let base_location = deref_copy.take().or(Some(location));
+//                 deref_copy = base_location;
+//                 index += 1;
+//                 continue;
+//             }
+//             if let Some(base_location) = deref_copy.take() {
+//                 let StatementKind::Assign(box (_, _)) = &statement.kind else { unreachable!() };
 
-                let location_result = fn_result
-                    .location_results(base_location)
-                    .chain(fn_result.location_results(location));
-                for (_, ownership_status) in location_result {
-                    if ownership_transferred(ownership_status) {
-                        ownership_transferred_locations.insert(location);
-                        ownership_transferred_locations.insert(base_location);
-                    }
-                }
+//                 let location_result = fn_result
+//                     .location_results(base_location)
+//                     .chain(fn_result.location_results(location));
+//                 for (_, ownership_status) in location_result {
+//                     if ownership_transferred(ownership_status) {
+//                         ownership_transferred_locations.insert(location);
+//                         ownership_transferred_locations.insert(base_location);
+//                     }
+//                 }
 
-                index += 1;
-                continue;
-            }
+//                 index += 1;
+//                 continue;
+//             }
 
-            let location_result = fn_result.location_results(location);
-            for (_, ownership_status) in location_result {
-                if ownership_transferred(ownership_status) {
-                    ownership_transferred_locations.insert(location);
-                }
-            }
+//             let location_result = fn_result.location_results(location);
+//             for (_, ownership_status) in location_result {
+//                 if ownership_transferred(ownership_status) {
+//                     ownership_transferred_locations.insert(location);
+//                 }
+//             }
 
-            index += 1;
-        }
-    }
+//             index += 1;
+//         }
+//     }
 
-    ownership_transferred_locations
-}
+//     ownership_transferred_locations
+// }
