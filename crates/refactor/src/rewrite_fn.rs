@@ -65,7 +65,8 @@ fn rewrite_fn<'tcx>(body: &Body<'tcx>, rewriter: &mut impl Rewrite, tcx: TyCtxt<
                 StatementKind::Intrinsic(box NonDivergingIntrinsic::Assume(_)) => {
                     // rewrite point: assume
                     let without_semi_span = statement.source_info.span;
-                    let span = without_semi_span.with_hi(without_semi_span.hi() + rustc_span::BytePos(1));
+                    let span =
+                        without_semi_span.with_hi(without_semi_span.hi() + rustc_span::BytePos(1));
                     rewriter.erase(tcx, span);
                 }
                 _ => todo!(),

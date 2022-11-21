@@ -119,6 +119,23 @@ fn definitions<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Definitions {
             self.consumes.push();
         }
 
+        // for return terminator
+        fn visit_local(&mut self, local: Local, context: PlaceContext, location: Location) {
+            match DefUse::for_place(Place::from(local), context) {
+                Some(DefUse::Def) => {
+                    let consume = Consume::new();
+                    self.def_sites[local].insert(location.block);
+                    self.consumes_in_cur_stmt.push((local, consume));
+                }
+                Some(DefUse::Use) => {
+                    let consume = Consume::pure_use();
+                    self.def_sites[local].insert(location.block);
+                    self.consumes_in_cur_stmt.push((local, consume));
+                }
+                None => {}
+            }
+        }
+
         fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
             match DefUse::for_place(*place, context) {
                 Some(DefUse::Def) => {

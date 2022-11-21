@@ -7,7 +7,7 @@ use rustc_middle::{
     mir::{
         BasicBlock, BasicBlockData, Body, BorrowKind, CastKind, Local, Location,
         NonDivergingIntrinsic, Operand, Place, Rvalue, Statement, StatementKind, Terminator,
-        TerminatorKind,
+        TerminatorKind, RETURN_PLACE,
     },
     ty::{Ty, TyCtxt},
 };
@@ -385,6 +385,8 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             }
             TerminatorKind::Return => {
                 tracing::debug!("processing terminator {:?}", terminator.kind);
+
+                assert!(self.state.try_consume_at(RETURN_PLACE, location).is_none());
 
                 Infer::r#return(
                     infer_cx,
