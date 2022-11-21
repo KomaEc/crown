@@ -12,7 +12,7 @@ use crate::{
         consume::{initial_definitions, Consume},
         dom::compute_dominance_frontier,
         state::SSAState,
-        FnResult,
+        FnResults,
     },
     type_qualifier::noalias::NoAliasParams,
     CrateCtxt,

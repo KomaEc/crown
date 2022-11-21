@@ -52,7 +52,7 @@ pub fn refactor<'tcx>(
     crate_data: &CrateData<'tcx>,
     analysis: &Analysis<'tcx>,
 ) -> anyhow::Result<()> {
-    let struct_decision = StructDecision::new(crate_data, analysis);
+    let struct_decision = StructFields::new(crate_data, analysis);
     let mut rewriter = vec![];
     rewrite_structs(
         &crate_data.structs,
@@ -119,19 +119,21 @@ pub struct MetaData {
     fatness: Fatness,
 }
 
-pub struct StructDecision {
+pub struct Decision {
     did_idx: FxHashMap<DefId, usize>,
-    struct_fields: VecVec<SmallVec<[PointerData; 3]>>,
+    data: VecVec<SmallVec<[PointerData; 3]>>,
 }
 
-impl StructDecision {
-    pub fn fields_data(&self, did: &DefId) -> &[SmallVec<[PointerData; 3]>] {
-        let idx = self.did_idx[did];
-        &self.struct_fields[idx]
+pub struct StructFields(Decision);
+
+impl StructFields {
+    pub fn get(&self, did: &DefId) -> &[SmallVec<[PointerData; 3]>] {
+        let idx = self.0.did_idx[did];
+        &self.0.data[idx]
     }
 }
 
-impl StructDecision {
+impl StructFields {
     pub fn new<'tcx>(crate_data: &CrateData<'tcx>, analysis: &Analysis<'tcx>) -> Self {
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.structs.len());
@@ -195,19 +197,19 @@ impl StructDecision {
         }
 
         let struct_fields = struct_fields.done();
-        StructDecision {
+        StructFields(Decision {
             did_idx,
-            struct_fields,
-        }
+            data: struct_fields,
+        })
     }
 }
 
-impl std::fmt::Debug for StructDecision {
+impl std::fmt::Debug for StructFields {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (did, &idx) in self.did_idx.iter() {
+        for (did, &idx) in self.0.did_idx.iter() {
             let mut index = 0;
             writeln!(f, "@{:?}: {{", did)?;
-            for field in self.struct_fields[idx].iter() {
+            for field in self.0.data[idx].iter() {
                 let field_str = field
                     .iter()
                     .map(|pointer_data| format!("{:?}", pointer_data.pointer_kind))
@@ -223,6 +225,37 @@ impl std::fmt::Debug for StructDecision {
         Ok(())
     }
 }
+
+pub struct FnLocals(Decision);
+
+impl FnLocals {
+    pub fn get(&self, did: &DefId) -> &[SmallVec<[PointerData; 3]>] {
+        let idx = self.0.did_idx[did];
+        &self.0.data[idx]
+    }
+}
+
+// impl std::fmt::Debug for FnLocals {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         for (did, &idx) in self.0.did_idx.iter() {
+//             let mut index = 0;
+//             writeln!(f, "@{:?}: {{", did)?;
+//             for field in self.0.data[idx].iter() {
+//                 let field_str = field
+//                     .iter()
+//                     .map(|pointer_data| format!("{:?}", pointer_data.pointer_kind))
+//                     .collect::<Vec<_>>()
+//                     .join(" ");
+
+//                 writeln!(f, "   {index}: {field_str}")?;
+
+//                 index += 1;
+//             }
+//             writeln!(f, "}}")?;
+//         }
+//         Ok(())
+//     }
+// }
 
 struct HirPtrTypeWalker<'me, 'hir> {
     ty: &'me rustc_hir::Ty<'hir>,

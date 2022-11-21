@@ -36,7 +36,7 @@ fn display_value<Value: std::fmt::Display>(value: &[Value]) -> String {
 }
 
 impl<I: Infer> AnalysisResult<I> {
-    pub fn fn_result(&self, r#fn: &DefId) -> FnResult<I> {
+    pub fn fn_results(&self, r#fn: &DefId) -> FnResult<I> {
         let locals = &self.fn_locals.vars[self.fn_locals.did_idx[r#fn]];
         FnResult {
             locals,
@@ -58,7 +58,7 @@ impl<I: Infer> AnalysisResult<I> {
         r#fn: &DefId,
         tcx: TyCtxt,
     ) -> impl Iterator<Item = &[<<I as Infer>::L as ConstraintSystem>::Domain]> {
-        let fn_result = self.fn_result(r#fn);
+        let fn_result = self.fn_results(r#fn);
         let body = tcx.optimized_mir(*r#fn);
         fn_result.results().take(body.arg_count + 1)
     }

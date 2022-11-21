@@ -25,7 +25,7 @@ use crate::{
         },
         consume::Consume,
         state::SSAState,
-        AnalysisResults, FnResult,
+        AnalysisResults, FnResults,
     },
     struct_ctxt::StructCtxt,
     type_qualifier::noalias::NoAliasParams,
@@ -118,7 +118,7 @@ impl<'tcx> WholeProgramResults<'tcx> {
                         statement_index: index,
                     };
                     let result = self
-                        .fn_result(*did)
+                        .fn_results(*did)
                         .unwrap()
                         .location_results(location)
                         .map(|(local, result)| format!("{:?}: {:?}", local, result))
@@ -294,9 +294,9 @@ impl<'analysis_results, 'tcx: 'analysis_results> AnalysisResults<'analysis_resul
 
     type FnSig = impl Iterator<Item = Option<Self::Param>>;
 
-    type FnResult = (&'analysis_results FnSummary, &'analysis_results [Ownership]);
+    type FnResults = (&'analysis_results FnSummary, &'analysis_results [Ownership]);
 
-    fn fn_result(&'analysis_results self, r#fn: DefId) -> Option<Self::FnResult> {
+    fn fn_results(&'analysis_results self, r#fn: DefId) -> Option<Self::FnResults> {
         let (fn_summary, _) = self.fn_locals.fn_summaries.get(&r#fn)?;
         Some((fn_summary, &self.model[..]))
     }
@@ -371,7 +371,7 @@ fn show_fn_sigs(model: &[Ownership], fn_locals: &FnLocals, tcx: TyCtxt, fns: &[D
     }
 }
 
-impl<'a> FnResult<'a> for (&'a FnSummary, &'a [Ownership]) {
+impl<'a> FnResults<'a> for (&'a FnSummary, &'a [Ownership]) {
     type LocalResult = &'a [Ownership];
 
     type LocationResults = impl Iterator<Item = (Local, Consume<&'a [Ownership]>)>;

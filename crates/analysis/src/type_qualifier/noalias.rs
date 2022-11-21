@@ -57,7 +57,7 @@ fn conservative_noalias_params(
     mutability_result: &MutabilityResult,
 ) -> FxHashSet<Local> {
     let location_of = alias_result.local_locations(&body.source.def_id());
-    let fn_result = mutability_result.fn_result(&body.source.def_id());
+    let fn_result = mutability_result.fn_results(&body.source.def_id());
 
     let mut noalias_params = body
         .args_iter()

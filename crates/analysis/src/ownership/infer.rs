@@ -21,7 +21,7 @@ use crate::{
         consume::Consume,
         join_points::PhiNode,
         state::{SSAIdx, SSAState},
-        FnResult,
+        FnResults,
     },
     struct_ctxt::{RestrictedStructCtxt, StructCtxt},
 };
@@ -48,7 +48,7 @@ impl FnSummary {
     }
 }
 
-impl<'a> FnResult<'a> for FnSummary {
+impl<'a> FnResults<'a> for FnSummary {
     type LocalResult = LocalSig;
 
     type LocationResults = impl Iterator<Item = (Local, Consume<LocalSig>)> + 'a;

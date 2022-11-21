@@ -13,7 +13,7 @@ pub mod dom;
 pub mod join_points;
 pub mod state;
 
-pub trait FnResult<'a> {
+pub trait FnResults<'a> {
     type LocalResult;
     type LocationResults: Iterator<Item = (Local, Consume<Self::LocalResult>)>;
 
@@ -26,9 +26,9 @@ pub trait AnalysisResults<'a> {
     type Value: 'a;
     type Param: 'a;
     type FnSig: Iterator<Item = Option<Self::Param>>;
-    type FnResult: FnResult<'a, LocalResult = &'a [Self::Value]>;
+    type FnResults: FnResults<'a, LocalResult = &'a [Self::Value]>;
 
-    fn fn_result(&'a self, r#fn: DefId) -> Option<Self::FnResult>;
+    fn fn_results(&'a self, r#fn: DefId) -> Option<Self::FnResults>;
 
     fn fn_sig(&'a self, r#fn: DefId) -> Self::FnSig;
     fn print_fn_sigs(&'a self, tcx: TyCtxt, fns: &[DefId]);

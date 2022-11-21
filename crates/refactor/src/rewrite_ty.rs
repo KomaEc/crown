@@ -3,17 +3,17 @@ use rustc_hir::{def_id::DefId, Item, ItemKind};
 use rustc_middle::ty::TyCtxt;
 use smallvec::SmallVec;
 
-use crate::{HirTyExt, PointerData, PointerKind, StructDecision};
+use crate::{HirTyExt, PointerData, PointerKind, StructFields};
 
 pub fn rewrite_structs(
     structs: &[DefId],
-    struct_decision: &StructDecision,
+    struct_decision: &StructFields,
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt,
 ) -> anyhow::Result<()> {
     use std::fmt::Write;
     for did in structs {
-        let fields_data = struct_decision.fields_data(did);
+        let fields_data = struct_decision.get(did);
         let item = tcx.hir().expect_item(did.expect_local());
         let mut default_impl_block = String::new();
         writeln!(
