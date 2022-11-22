@@ -13,7 +13,7 @@ pub fn rewrite_structs(
 ) -> anyhow::Result<()> {
     use std::fmt::Write;
     for did in structs {
-        let fields_data = struct_decision.get(did);
+        let fields_data = struct_decision.field_data(did);
         let item = tcx.hir().expect_item(did.expect_local());
         let mut default_impl_block = String::new();
         writeln!(
@@ -83,13 +83,13 @@ pub fn rewrite_outermost_ptr_ty(
         }
         PointerKind::Mut => {
             let qualifier_span = ty.span.until(pointee.ty.span);
-            rewriter.replace(tcx, qualifier_span, "Option<&mut".to_owned());
+            rewriter.replace(tcx, qualifier_span, "Option<&mut ".to_owned());
             let end_span = ty.span.shrink_to_hi();
             rewriter.replace(tcx, end_span, ">".to_owned());
         }
         PointerKind::Shr => {
             let qualifier_span = ty.span.until(pointee.ty.span);
-            rewriter.replace(tcx, qualifier_span, "Option<&".to_owned());
+            rewriter.replace(tcx, qualifier_span, "Option<& ".to_owned());
             let end_span = ty.span.shrink_to_hi();
             rewriter.replace(tcx, end_span, ">".to_owned());
         }

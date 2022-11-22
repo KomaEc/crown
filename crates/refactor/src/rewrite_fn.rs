@@ -4,7 +4,7 @@ use analysis::use_def::{def_use_chain, DefUseChain};
 use common::rewrite::Rewrite;
 use either::Either::{Left, Right};
 use rustc_hash::FxHashMap;
-use rustc_hir::def_id::DefId;
+use rustc_hir::{def_id::DefId, ItemKind};
 use rustc_middle::{
     mir::{
         Body, Local, LocalInfo, Location, NonDivergingIntrinsic, Rvalue, StatementKind,
@@ -13,13 +13,40 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use rustc_span::{Span, Symbol};
+use smallvec::SmallVec;
 
 use self::location_map::LocationMap;
+use crate::{rewrite_ty::rewrite_ptr_ty, FnParams, PointerData};
 
-pub fn rewrite_fns(fns: &[DefId], rewriter: &mut impl Rewrite, tcx: TyCtxt) {
+pub fn rewrite_fns(
+    fns: &[DefId],
+    fn_decision: &FnParams,
+    rewriter: &mut impl Rewrite,
+    tcx: TyCtxt,
+) {
     for &did in fns {
+        let param_data = fn_decision.param_data(&did);
         let body = tcx.optimized_mir(did);
+        rewrite_fn_sig(body, param_data, rewriter, tcx);
         rewrite_fn(body, rewriter, tcx);
+    }
+}
+
+fn rewrite_fn_sig<'tcx>(
+    body: &Body<'tcx>,
+    decision: &[SmallVec<[PointerData; 3]>],
+    rewriter: &mut impl Rewrite,
+    tcx: TyCtxt<'tcx>,
+) {
+    let fn_item = tcx.hir().expect_item(body.source.def_id().expect_local());
+    let ItemKind::Fn(fn_sig, _, _) = &fn_item.kind else { unreachable!() };
+
+    if let rustc_hir::FnRetTy::Return(ret_ty) = fn_sig.decl.output {
+        rewrite_ptr_ty(ret_ty, &decision[0], rewriter, tcx);
+    }
+
+    for (ty, decision) in itertools::izip!(fn_sig.decl.inputs, &decision[1..]) {
+        rewrite_ptr_ty(ty, decision, rewriter, tcx);
     }
 }
 
