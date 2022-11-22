@@ -16,7 +16,7 @@ use rustc_span::{Span, Symbol};
 use smallvec::SmallVec;
 
 use self::location_map::LocationMap;
-use crate::{rewrite_ty::rewrite_ptr_ty, FnParams, PointerData};
+use crate::{rewrite_ty::rewrite_hir_ty, FnParams, PointerData};
 
 pub fn rewrite_fns(
     fns: &[DefId],
@@ -42,11 +42,11 @@ fn rewrite_fn_sig<'tcx>(
     let ItemKind::Fn(fn_sig, _, _) = &fn_item.kind else { unreachable!() };
 
     if let rustc_hir::FnRetTy::Return(ret_ty) = fn_sig.decl.output {
-        rewrite_ptr_ty(ret_ty, &decision[0], rewriter, tcx);
+        rewrite_hir_ty(ret_ty, &decision[0], rewriter, tcx);
     }
 
     for (ty, decision) in itertools::izip!(fn_sig.decl.inputs, &decision[1..]) {
-        rewrite_ptr_ty(ty, decision, rewriter, tcx);
+        rewrite_hir_ty(ty, decision, rewriter, tcx);
     }
 }
 

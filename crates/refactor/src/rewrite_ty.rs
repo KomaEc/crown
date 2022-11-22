@@ -42,7 +42,7 @@ pub fn rewrite_struct(
 
     let ItemKind::Struct(variant_data, _generics) = &r#struct.kind else { panic!() };
     for (field, decision) in itertools::izip!(variant_data.fields(), decision) {
-        rewrite_ptr_ty(field.ty, decision, rewriter, tcx);
+        rewrite_hir_ty(field.ty, decision, rewriter, tcx);
 
         if let rustc_hir::TyKind::Ptr(pointee) = &field.ty.kind {
             let decision = decision.first().unwrap();
@@ -97,7 +97,7 @@ pub fn rewrite_outermost_ptr_ty(
     }
 }
 
-pub fn rewrite_ptr_ty(
+pub fn rewrite_hir_ty(
     ty: &rustc_hir::Ty,
     decision: &[PointerData],
     rewriter: &mut impl Rewrite,
