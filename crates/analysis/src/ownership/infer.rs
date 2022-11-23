@@ -3,7 +3,7 @@ use std::ops::Range;
 use common::data_structure::assoc::AssocExt;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{Body, Local, Location, Operand, Place, PlaceElem, ProjectionElem},
+    mir::{Body, Local, LocalInfo, Location, Operand, Place, PlaceElem, ProjectionElem},
     ty::{AdtDef, Ty, TyCtxt, TyKind},
 };
 use rustc_type_ir::TyKind::FnDef;
@@ -223,9 +223,19 @@ where
     ) -> Option<Consume<<Analysis as InferMode<'infercx, 'db, 'tcx>>::LocalSig>> {
         let mut base_ty = ty;
 
-        let mut ptr_chased = 0;
+        let base_measure = base.r#use.size_hint().1.unwrap() as u32;
+        // if base_measure == 0 { return None; }
+        let precision = infer_cx
+            .struct_ctxt
+            .absolute_precision(base_ty, base_measure) as u32;
+        let max_ptr_chased = infer_cx.struct_ctxt.max_ptr_chased() as u32;
+
+        // let mut ptr_chased = 0;
+        let mut ptr_chased = max_ptr_chased - precision;
 
         let mut proj_start_offset = 0;
+
+        let mut deref_var = None;
 
         for projection_elem in projection {
             match projection_elem {
@@ -236,13 +246,14 @@ where
                     // Furthermore, mir places contain only at most one indirection.
 
                     let ptr = base.r#use.start + proj_start_offset;
-                    if ptr < base.r#use.end {
-                        infer_cx
-                            .database
-                            .push_assume::<crate::ssa::constraint::Debug>((), ptr, true);
-                    } else {
-                        break;
-                    }
+                    // if ptr < base.r#use.end {
+                    //     infer_cx
+                    //         .database
+                    //         .push_assume::<crate::ssa::constraint::Debug>((), ptr, true);
+                    // } else {
+                    //     break;
+                    // }
+                    deref_var = Some(ptr);
 
                     proj_start_offset += 1;
                     base_ty = base_ty.builtin_deref(true).unwrap().ty;
@@ -271,6 +282,17 @@ where
 
         if base.r#use.start + proj_start_offset >= base.r#use.end {
             return None;
+        }
+
+
+        // FIXME: this is currently buggy. What we really want to do is to enable consumption only
+        // for pointers that are known to be owning. However, here we enforce a stricter constraint,
+        // that once outtermost pointer is proven to be owning, not only does its consumption is
+        // enabled, but also every further dereferences are enforced to be owning.
+        if let Some(ptr) = deref_var {
+            infer_cx
+                .database
+                .push_assume::<crate::ssa::constraint::Debug>((), ptr, true);
         }
 
         // TODO if proj to invalid, should the following constraints be emitted?
@@ -392,8 +414,15 @@ where
 
             // let base = Consume { r#use, def };
             Consume { r#use, def }
-        } else if let Some(consume) = infer_cx.deref_copy.take() {
-            consume
+        } else if matches!(
+            body.local_decls[base].local_info,
+            Some(box LocalInfo::DerefTemp)
+        ) {
+            if let Some(consume) = infer_cx.deref_copy.take() {
+                consume
+            } else {
+                return None;
+            }
         } else {
             return None;
         };
