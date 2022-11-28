@@ -63,7 +63,13 @@ pub fn refactor<'tcx>(
         crate_data.tcx,
     )?;
 
-    rewrite_fns(&crate_data.fns, &fn_decision, &mut rewriter, crate_data.tcx);
+    rewrite_fns(
+        &crate_data.fns,
+        &fn_decision,
+        &struct_decision,
+        &mut rewriter,
+        crate_data.tcx,
+    );
 
     rewriter.write(RewriteMode::Diff);
 
@@ -108,6 +114,18 @@ impl PointerKind {
     fn is_raw(&self) -> bool {
         *self == PointerKind::Raw
     }
+
+    // fn is_mut(&self) -> bool {
+    //     *self == PointerKind::Mut
+    // }
+
+    // fn is_move(&self) -> bool {
+    //     *self == PointerKind::Move
+    // }
+
+    // fn is_shr(&self) -> bool {
+    //     *self == PointerKind::Shr
+    // }
 }
 
 // #[derive(Clone, Copy, PartialEq, Eq, Debug)]
