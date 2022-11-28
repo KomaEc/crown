@@ -16,7 +16,7 @@ use rustc_span::{Span, Symbol};
 use smallvec::SmallVec;
 
 use self::location_map::LocationMap;
-use crate::{rewrite_ty::rewrite_hir_ty, FnLocals, PointerData};
+use crate::{rewrite_ty::rewrite_hir_ty, FnLocals, PointerKind};
 
 pub fn rewrite_fns(
     fns: &[DefId],
@@ -34,7 +34,7 @@ pub fn rewrite_fns(
 
 fn rewrite_fn_sig<'tcx>(
     body: &Body<'tcx>,
-    decision: &[SmallVec<[PointerData; 3]>],
+    decision: &[SmallVec<[PointerKind; 3]>],
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt<'tcx>,
 ) {
@@ -132,7 +132,16 @@ fn rewrite_fn<'tcx>(body: &Body<'tcx>, rewriter: &mut impl Rewrite, tcx: TyCtxt<
     }
 }
 
-fn rewrite_place_at(place: Place, location: Location, span: Span, def_use: &DefUseChain) {}
+fn rewrite_place_at(
+    place: Place,
+    location: Location,
+    span: Span,
+    def_use: &DefUseChain,
+    user_idents: &FxHashMap<Local, Symbol>,
+    ctxt: (),
+) {
+
+}
 
 #[derive(Clone, Copy, Debug)]
 pub enum ExprRewriteResult {
