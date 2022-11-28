@@ -341,7 +341,13 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 tracing::debug!("ignoring Deinit statement {:?}", statement)
             }
             StatementKind::Intrinsic(box intrinsic) => {
-                assert!(matches!(intrinsic, NonDivergingIntrinsic::Assume(..)))
+                // assert!(matches!(intrinsic, NonDivergingIntrinsic::Assume(..)))
+                let NonDivergingIntrinsic::Assume(operand) = intrinsic else { unreachable!() };
+                let place = operand.place().unwrap();
+                assert!(
+                    consume_place_at::<Infer>(&place, self.body, location, self, infer_cx)
+                        .is_none()
+                );
             }
             StatementKind::AscribeUserType(_, _)
             | StatementKind::StorageLive(_)

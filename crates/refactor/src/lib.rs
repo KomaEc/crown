@@ -487,7 +487,9 @@ impl FnLocals {
                 {
                     if fatness.is_arr() {
                         (*ptr_data).pointer_kind = PointerKind::Raw;
-                    } else if mutability.is_immutable() && ((*ptr_data).pointer_kind == PointerKind::Move) {
+                    } else if mutability.is_immutable()
+                        && ((*ptr_data).pointer_kind == PointerKind::Move)
+                    {
                         (*ptr_data).pointer_kind = PointerKind::Shr;
                     }
                 }

@@ -7,8 +7,8 @@ use rustc_hash::FxHashMap;
 use rustc_hir::{def_id::DefId, ItemKind};
 use rustc_middle::{
     mir::{
-        Body, Local, LocalInfo, Location, NonDivergingIntrinsic, Rvalue, StatementKind,
-        TerminatorKind, VarDebugInfoContents, Place,
+        Body, Local, LocalInfo, Location, NonDivergingIntrinsic, Place, Rvalue, StatementKind,
+        TerminatorKind, VarDebugInfoContents,
     },
     ty::TyCtxt,
 };
@@ -16,7 +16,7 @@ use rustc_span::{Span, Symbol};
 use smallvec::SmallVec;
 
 use self::location_map::LocationMap;
-use crate::{rewrite_ty::rewrite_hir_ty, PointerData, FnLocals};
+use crate::{rewrite_ty::rewrite_hir_ty, FnLocals, PointerData};
 
 pub fn rewrite_fns(
     fns: &[DefId],
@@ -121,19 +121,18 @@ fn rewrite_fn<'tcx>(body: &Body<'tcx>, rewriter: &mut impl Rewrite, tcx: TyCtxt<
                 } => {
                     // rewrite point: call
                 }
-                _ => {}
+                TerminatorKind::Return => {
+                    // rewrite point: return
+                }
+                TerminatorKind::Goto { .. } => {}
+                TerminatorKind::Assert { .. } => {}
+                _ => todo!(),
             }
         }
     }
 }
 
-
-fn rewrite_place_at(
-    place: Place,
-    location: Location,
-    span: Span,
-    def_use: &DefUseChain,
-) {}
+fn rewrite_place_at(place: Place, location: Location, span: Span, def_use: &DefUseChain) {}
 
 #[derive(Clone, Copy, Debug)]
 pub enum ExprRewriteResult {
