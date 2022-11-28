@@ -13,10 +13,7 @@ use alias::{AliasResult, TaintResult};
 use analysis::{
     ownership::{whole_program::WholeProgramResults, Ownership, Param},
     ssa::{AnalysisResults, FnResults},
-    type_qualifier::flow_insensitive::{
-        fatness::FatnessResult,
-        mutability::MutabilityResult,
-    },
+    type_qualifier::flow_insensitive::{fatness::FatnessResult, mutability::MutabilityResult},
 };
 use common::{
     data_structure::vec_vec::VecVec,
@@ -185,9 +182,7 @@ impl StructFields {
                 });
                 let mut field = SmallVec::with_capacity(ownership.len());
 
-                for (&ownership, _, &fatness) in
-                    itertools::izip!(ownership, mutability, fatness)
-                {
+                for (&ownership, _, &fatness) in itertools::izip!(ownership, mutability, fatness) {
                     let pointer_kind = if ownership.is_owning()
                         && !fatness.is_arr()
                         && !aliasing_nonowning_field
@@ -298,7 +293,6 @@ impl FnLocals {
                 let mut param: SmallVec<[PointerKind; 3]> =
                     itertools::izip!(ownership, mutability, fatness)
                         .map(|(ownership, &mutability, &fatness)| {
-
                             let pointer_kind = if fatness.is_arr() {
                                 PointerKind::Raw
                             } else if ownership.is_owning() {
@@ -363,9 +357,7 @@ impl FnLocals {
                 {
                     if fatness.is_arr() {
                         *ptr_kind = PointerKind::Raw;
-                    } else if mutability.is_immutable()
-                        && (*ptr_kind == PointerKind::Move)
-                    {
+                    } else if mutability.is_immutable() && (*ptr_kind == PointerKind::Move) {
                         *ptr_kind = PointerKind::Shr;
                     }
                 }

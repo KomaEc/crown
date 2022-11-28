@@ -140,7 +140,6 @@ fn rewrite_place_at(
     user_idents: &FxHashMap<Local, Symbol>,
     ctxt: (),
 ) {
-
 }
 
 #[derive(Clone, Copy, Debug)]
