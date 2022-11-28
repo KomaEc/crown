@@ -12,7 +12,7 @@ mod rewrite_ty;
 use alias::{AliasResult, TaintResult};
 use analysis::{
     ownership::{whole_program::WholeProgramResults, Ownership, Param},
-    ssa::AnalysisResults,
+    ssa::{AnalysisResults, FnResults},
     type_qualifier::flow_insensitive::{
         fatness::{Fatness, FatnessResult},
         mutability::{Mutability, MutabilityResult},
@@ -28,6 +28,7 @@ use rewrite_fn::rewrite_fns;
 use rewrite_ty::rewrite_structs;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
+use rustc_middle::mir::Location;
 use smallvec::SmallVec;
 
 extern crate rustc_ast;
@@ -55,7 +56,8 @@ pub fn refactor<'tcx>(
     analysis: &Analysis<'tcx>,
 ) -> anyhow::Result<()> {
     let struct_decision = StructFields::new(crate_data, analysis);
-    let fn_decision = FnParams::new(crate_data, analysis);
+    // let fn_decision = FnParams::new(crate_data, analysis);
+    let fn_decision = FnLocals::new(crate_data, analysis);
     let mut rewriter = vec![];
     rewrite_structs(
         &crate_data.structs,
@@ -111,11 +113,26 @@ impl PointerKind {
     }
 }
 
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct PointerData {
     pointer_kind: PointerKind,
     meta_data: MetaData,
 }
 
+impl PointerData {
+    fn raw() -> Self {
+        PointerData {
+            pointer_kind: PointerKind::Raw,
+            meta_data: MetaData {
+                ownership: Ownership::Unknown,
+                mutability: Mutability::Mut,
+                fatness: Fatness::Ptr,
+            },
+        }
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub struct MetaData {
     ownership: Ownership,
     mutability: Mutability,
@@ -134,9 +151,7 @@ impl StructFields {
         let idx = self.0.did_idx[did];
         &self.0.data[idx]
     }
-}
 
-impl StructFields {
     pub fn new<'tcx>(crate_data: &CrateData<'tcx>, analysis: &Analysis<'tcx>) -> Self {
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.structs.len());
@@ -229,44 +244,147 @@ impl std::fmt::Debug for StructFields {
     }
 }
 
-pub struct FnParams(Decision);
+// pub struct FnParams(Decision);
 
-impl FnParams {
-    pub fn param_data(&self, did: &DefId) -> &[SmallVec<[PointerData; 3]>] {
+// impl FnParams {
+//     pub fn param_data(&self, did: &DefId) -> &[SmallVec<[PointerData; 3]>] {
+//         let idx = self.0.did_idx[did];
+//         &self.0.data[idx]
+//     }
+
+//     pub fn new<'tcx>(crate_data: &CrateData<'tcx>, analysis: &Analysis<'tcx>) -> Self {
+//         let mut did_idx = FxHashMap::default();
+//         did_idx.reserve(crate_data.fns.len());
+//         let mut fn_params = VecVec::with_capacity(
+//             crate_data.fns.len(),
+//             crate_data.fns.iter().fold(0, |acc, did| {
+//                 let r#fn = crate_data.tcx.optimized_mir(*did);
+//                 acc + r#fn.arg_count + 1
+//             }),
+//         );
+
+//         for (idx, did) in crate_data.fns.iter().enumerate() {
+//             let r#fn = crate_data.tcx.optimized_mir(*did);
+//             let sig_size = r#fn.arg_count + 1;
+//             let ownership_sig = analysis.ownership_schemes.fn_sig(*did);
+//             let mutability_sig = analysis
+//                 .mutability_result
+//                 .fn_results(did)
+//                 .results()
+//                 .take(sig_size);
+//             let fatness_sig = analysis
+//                 .fatness_result
+//                 .fn_results(did)
+//                 .results()
+//                 .take(sig_size);
+
+//             for (ownership, mutability, fatness) in
+//                 itertools::izip!(ownership_sig, mutability_sig, fatness_sig)
+//             {
+//                 let mut is_output_param = false;
+//                 let ownership = match ownership {
+//                     Some(ownership) => Left(match ownership {
+//                         Param::Output(ownership) => {
+//                             is_output_param = true;
+//                             Left(
+//                                 itertools::izip!(
+//                                     ownership.r#use.iter().copied(),
+//                                     ownership.def.iter().copied()
+//                                 )
+//                                 .map(|(r#in, out)| {
+//                                     if r#in.is_owning() || out.is_owning() {
+//                                         Ownership::Owning
+//                                     } else {
+//                                         r#in
+//                                     }
+//                                 }),
+//                             )
+//                         }
+//                         Param::Normal(ownership) => Right(ownership.iter().copied()),
+//                     }),
+//                     None => Right(std::iter::empty()),
+//                 }
+//                 .chain(std::iter::repeat(Ownership::Unknown));
+
+//                 let mut param: SmallVec<[PointerData; 3]> =
+//                     itertools::izip!(ownership, mutability, fatness)
+//                         .map(|(ownership, &mutability, &fatness)| {
+//                             let meta_data = MetaData {
+//                                 ownership,
+//                                 mutability,
+//                                 fatness,
+//                             };
+
+//                             let pointer_kind = if fatness.is_arr() {
+//                                 PointerKind::Raw
+//                             } else if ownership.is_owning() {
+//                                 PointerKind::Move
+//                             } else if mutability.is_immutable() {
+//                                 PointerKind::Shr
+//                             } else {
+//                                 PointerKind::Raw
+//                             };
+
+//                             PointerData {
+//                                 pointer_kind,
+//                                 meta_data,
+//                             }
+//                         })
+//                         .collect();
+
+//                 if is_output_param {
+//                     param[0].pointer_kind = PointerKind::Mut;
+//                 }
+
+//                 fn_params.push_inner(param);
+//             }
+
+//             fn_params.push();
+
+//             did_idx.insert(*did, idx);
+//         }
+
+//         let fn_params = fn_params.done();
+//         FnParams(Decision {
+//             did_idx,
+//             data: fn_params,
+//         })
+//     }
+// }
+
+pub struct FnLocals(Decision);
+
+impl FnLocals {
+    pub fn local_data(&self, did: &DefId) -> &[SmallVec<[PointerData; 3]>] {
         let idx = self.0.did_idx[did];
         &self.0.data[idx]
     }
-}
 
-impl FnParams {
     pub fn new<'tcx>(crate_data: &CrateData<'tcx>, analysis: &Analysis<'tcx>) -> Self {
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.fns.len());
-        let mut fn_params = VecVec::with_capacity(
+        let mut fn_locals = VecVec::with_capacity(
             crate_data.fns.len(),
             crate_data.fns.iter().fold(0, |acc, did| {
                 let r#fn = crate_data.tcx.optimized_mir(*did);
-                acc + r#fn.arg_count + 1
+                acc + r#fn.local_decls.len()
             }),
         );
 
         for (idx, did) in crate_data.fns.iter().enumerate() {
             let r#fn = crate_data.tcx.optimized_mir(*did);
+
+            // parameters
+
             let sig_size = r#fn.arg_count + 1;
             let ownership_sig = analysis.ownership_schemes.fn_sig(*did);
-            let mutability_sig = analysis
-                .mutability_result
-                .fn_results(did)
-                .results()
-                .take(sig_size);
-            let fatness_sig = analysis
-                .fatness_result
-                .fn_results(did)
-                .results()
-                .take(sig_size);
+            let mut mutability = analysis.mutability_result.fn_results(did).results();
+            // .take(sig_size);
+            let mut fatness = analysis.fatness_result.fn_results(did).results();
+            // .take(sig_size);
 
             for (ownership, mutability, fatness) in
-                itertools::izip!(ownership_sig, mutability_sig, fatness_sig)
+                itertools::izip!(ownership_sig, mutability.by_ref(), fatness.by_ref())
             {
                 let mut is_output_param = false;
                 let ownership = match ownership {
@@ -323,18 +441,71 @@ impl FnParams {
                     param[0].pointer_kind = PointerKind::Mut;
                 }
 
-                fn_params.push_inner(param);
+                fn_locals.push_inner(param);
             }
 
-            fn_params.push();
+            // other locals
+            let mut other_locals = Vec::with_capacity(r#fn.local_decls.len() - sig_size);
+            for local_decl in r#fn.local_decls.iter().skip(sig_size) {
+                let ptr_depth = mir_ty_ptr_count(local_decl.ty);
+                // fn_locals.push_inner(smallvec::smallvec![PointerData::raw(); ptr_depth]);
+                other_locals.push(smallvec::smallvec![PointerData::raw(); ptr_depth]);
+            }
+
+            let ownership_scheme = analysis.ownership_schemes.fn_results(*did).unwrap();
+
+            for (bb, bb_data) in r#fn.basic_blocks.iter_enumerated() {
+                for statement_index in
+                    0usize..(bb_data.statements.len() + bb_data.terminator.is_some() as usize)
+                {
+                    let location = Location {
+                        block: bb,
+                        statement_index,
+                    };
+
+                    let location_results = ownership_scheme.location_results(location);
+                    for (local, consume) in location_results {
+                        if local.as_usize() >= sig_size {
+                            let ptr_data: &mut SmallVec<[PointerData; 3]> =
+                                &mut other_locals[local.as_usize() - sig_size];
+                            for (ptr_data, ownership) in ptr_data.iter_mut().zip(consume.def.iter())
+                            {
+                                if ownership.is_owning() {
+                                    (*ptr_data).pointer_kind = PointerKind::Move;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (local, mutability, fatness) in
+                itertools::izip!(other_locals.iter_mut(), mutability, fatness)
+            {
+                for (ptr_data, &mutability, &fatness) in
+                    itertools::izip!(local, mutability, fatness)
+                {
+                    if fatness.is_arr() {
+                        (*ptr_data).pointer_kind = PointerKind::Raw;
+                    } else if mutability.is_immutable() && ((*ptr_data).pointer_kind == PointerKind::Move) {
+                        (*ptr_data).pointer_kind = PointerKind::Shr;
+                    }
+                }
+            }
+
+            for local in other_locals {
+                fn_locals.push_inner(local);
+            }
+
+            fn_locals.push();
 
             did_idx.insert(*did, idx);
         }
 
-        let fn_params = fn_params.done();
-        FnParams(Decision {
+        let fn_locals = fn_locals.done();
+        FnLocals(Decision {
             did_idx,
-            data: fn_params,
+            data: fn_locals,
         })
     }
 }
@@ -374,4 +545,21 @@ impl<'hir> HirTyExt<'hir> for rustc_hir::Ty<'hir> {
     fn walk_ptr(&self) -> HirPtrTypeWalker {
         HirPtrTypeWalker { ty: self }
     }
+}
+
+fn mir_ty_ptr_count(mut ty: rustc_middle::ty::Ty) -> usize {
+    let mut cnt = 0;
+    loop {
+        if let Some(inner) = ty.builtin_index() {
+            ty = inner;
+            continue;
+        }
+        if let Some(inner_mut) = ty.builtin_deref(true) {
+            ty = inner_mut.ty;
+            cnt += 1;
+            continue;
+        }
+        break;
+    }
+    cnt
 }

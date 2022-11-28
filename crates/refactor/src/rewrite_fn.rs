@@ -8,7 +8,7 @@ use rustc_hir::{def_id::DefId, ItemKind};
 use rustc_middle::{
     mir::{
         Body, Local, LocalInfo, Location, NonDivergingIntrinsic, Rvalue, StatementKind,
-        TerminatorKind, VarDebugInfoContents,
+        TerminatorKind, VarDebugInfoContents, Place,
     },
     ty::TyCtxt,
 };
@@ -16,18 +16,18 @@ use rustc_span::{Span, Symbol};
 use smallvec::SmallVec;
 
 use self::location_map::LocationMap;
-use crate::{rewrite_ty::rewrite_hir_ty, FnParams, PointerData};
+use crate::{rewrite_ty::rewrite_hir_ty, PointerData, FnLocals};
 
 pub fn rewrite_fns(
     fns: &[DefId],
-    fn_decision: &FnParams,
+    fn_decision: &FnLocals,
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt,
 ) {
     for &did in fns {
-        let param_data = fn_decision.param_data(&did);
+        let local_data = fn_decision.local_data(&did);
         let body = tcx.optimized_mir(did);
-        rewrite_fn_sig(body, param_data, rewriter, tcx);
+        rewrite_fn_sig(body, local_data, rewriter, tcx);
         rewrite_fn(body, rewriter, tcx);
     }
 }
@@ -126,6 +126,14 @@ fn rewrite_fn<'tcx>(body: &Body<'tcx>, rewriter: &mut impl Rewrite, tcx: TyCtxt<
         }
     }
 }
+
+
+fn rewrite_place_at(
+    place: Place,
+    location: Location,
+    span: Span,
+    def_use: &DefUseChain,
+) {}
 
 #[derive(Clone, Copy, Debug)]
 pub enum ExprRewriteResult {

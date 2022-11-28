@@ -284,7 +284,6 @@ where
             return None;
         }
 
-
         // FIXME: this is currently buggy. What we really want to do is to enable consumption only
         // for pointers that are known to be owning. However, here we enforce a stricter constraint,
         // that once outtermost pointer is proven to be owning, not only does its consumption is
