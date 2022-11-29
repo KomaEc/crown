@@ -120,13 +120,13 @@ impl PointerKind {
     //     *self == PointerKind::Mut
     // }
 
-    // fn is_move(&self) -> bool {
-    //     *self == PointerKind::Move
-    // }
+    fn is_move(&self) -> bool {
+        *self == PointerKind::Move
+    }
 
-    // fn is_shr(&self) -> bool {
-    //     *self == PointerKind::Shr
-    // }
+    fn is_shr(&self) -> bool {
+        *self == PointerKind::Shr
+    }
 }
 
 // #[derive(Clone, Copy, PartialEq, Eq, Debug)]

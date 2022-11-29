@@ -34,9 +34,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 let Some(local) = place.as_local() else { panic!() };
                 let def_loc = def_use_chain.def_loc(local, location);
                 let RichLocation::Mir(def_loc) = def_loc else { panic!() };
-                let Left(stmt) = body.stmt_at(def_loc) else { 
+                let Left(stmt) = body.stmt_at(def_loc) else {
                     // TODO correctness?
-                    return 
+                    return
                 };
                 let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
                 self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, ctxt, rewriter);

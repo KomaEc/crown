@@ -119,7 +119,11 @@ fn rewrite_fn<'tcx>(
 
                         // println!("rewrite {:?} @ {:?}, {:?}", place, location, span);
 
-                        if let Some(assign_pos) = source_text.find("+=").or(source_text.find("+=")).or(source_text.find("=")) {
+                        if let Some(assign_pos) = source_text
+                            .find("+=")
+                            .or(source_text.find("+="))
+                            .or(source_text.find("="))
+                        {
                             // lhs needs to be rewritten
 
                             assert!(assign_pos > 0);
@@ -323,7 +327,23 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             tcx,
         } = *self;
 
-        let mut replacement = if let Some(replacement) = user_idents.get(&place.local).map(|symbol| symbol.to_string()) {
+        // incomplete ctxt summary
+        let is_readonly = if load_ctxt.is_empty() {
+            true
+        } else {
+            load_ctxt[0].is_shr()
+        };
+        let is_raw = load_ctxt.contains(&PointerKind::Raw);
+        let is_move = if load_ctxt.is_empty() {
+            false
+        } else {
+            load_ctxt[0].is_move()
+        };
+
+        let mut replacement = if let Some(replacement) = user_idents
+            .get(&place.local)
+            .map(|symbol| symbol.to_string())
+        {
             replacement
         } else if place.as_local().is_none() {
             "todo_static_addr".to_string()
@@ -358,16 +378,19 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 rustc_middle::mir::ProjectionElem::Deref => {
                     let base_ptr_kind = ptr_kinds.next().unwrap();
 
-                    // match base_ptr_kind {
-                    //     PointerKind::Raw => replacement = format!("*{replacement}"),
-                    //     PointerKind::Shr => replacement = format!("*{replacement}.clone().unwrap()"),
-                    //     _ => replacement = format!("*{replacement}.as_deref_mut().unwrap()"),
-                    // }
-
                     if base_ptr_kind.is_raw() {
                         replacement = format!("*{replacement}");
                     } else {
-                        replacement = format!("*{replacement}.as_deref_mut().unwrap()");
+                        let usage = if is_readonly {
+                            if base_ptr_kind.is_shr() {
+                                "clone"
+                            } else {
+                                "as_deref"
+                            }
+                        } else {
+                            "as_deref_mut"
+                        };
+                        replacement = format!("*{replacement}.{usage}().unwrap()");
                     }
 
                     need_paren = true;
@@ -376,7 +399,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 rustc_middle::mir::ProjectionElem::Field(f, field_ty) => {
                     assert!(ptr_kinds.next().is_none());
 
-                    let Some(adt_def) = ty.ty_adt_def() else { 
+                    let Some(adt_def) = ty.ty_adt_def() else {
                         // this happens in checked add. no rewrite for this case
                         return;
                     };
@@ -392,6 +415,28 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 }
                 rustc_middle::mir::ProjectionElem::Index(_) => todo!(),
                 _ => unreachable!(),
+            }
+        }
+
+        if !load_ctxt.is_empty() {
+            if is_move && place.is_indirect() {
+                if need_paren {
+                    replacement = format!("({replacement})");
+                }
+                replacement += ".take()";
+            } else if is_readonly {
+                if need_paren {
+                    replacement = format!("({replacement})");
+                }
+                replacement += ".as_deref()";
+            } else {
+                if need_paren {
+                    replacement = format!("({replacement})");
+                }
+                replacement += ".as_deref_mut()";
+            }
+            if is_raw {
+                replacement = format!("core::mem::transmute({replacement})")
             }
         }
 
@@ -434,15 +479,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         load_ctxt: &[PointerKind],
         rewriter: &mut impl Rewrite,
     ) {
-        // let FnRewriteCtxt {
-        //     local_decision,
-        //     struct_decision,
-        //     body,
-        //     def_use_chain,
-        //     user_idents,
-        //     tcx,
-        // } = *self;
-
         match rvalue {
             Rvalue::Use(operand) => {
                 self.rewrite_operand_at(operand, location, span, load_ctxt, rewriter)
@@ -484,7 +520,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 match self.tcx.hir().find_by_def_id(local_did).unwrap() {
                     // this crate
                     rustc_hir::Node::Item(_) => {
-                        self.rewrite_boundary(callee, args, destination, fn_span, location, fn_decision, rewriter);
+                        self.rewrite_boundary(
+                            callee,
+                            args,
+                            destination,
+                            fn_span,
+                            location,
+                            fn_decision,
+                            rewriter,
+                        );
                     }
                     // extern
                     rustc_hir::Node::ForeignItem(foreign_item) => {}
