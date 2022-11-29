@@ -1,7 +1,6 @@
 mod boundary;
 mod libc_call;
 mod library_call;
-mod location_map;
 
 use analysis::{
     ssa::consume::RichLocation,
