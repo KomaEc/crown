@@ -1,5 +1,6 @@
 mod boundary;
 mod libc_call;
+mod library_call;
 mod location_map;
 
 use analysis::{
@@ -132,10 +133,12 @@ fn rewrite_fn<'tcx>(
                             let lhs_span =
                                 span.with_hi(span.lo() + rustc_span::BytePos(assign_pos as u32));
 
-                            let ctxt = rewrite_ctxt.rewrite_place_store(place, lhs_span, rewriter);
-
-                            rewrite_ctxt.rewrite_rvalue_at(rvalue, location, span, ctxt, rewriter);
+                            rewrite_ctxt.rewrite_place_store(place, lhs_span, rewriter);
                         } // otherwise let-binding
+
+                        let ctxt = rewrite_ctxt.acquire_place_info(&place);
+
+                        rewrite_ctxt.rewrite_rvalue_at(rvalue, location, span, ctxt, rewriter);
                     }
                 }
                 StatementKind::Intrinsic(box NonDivergingIntrinsic::Assume(_)) => {
@@ -233,12 +236,40 @@ pub struct FnRewriteCtxt<'tcx, 'me> {
 }
 
 impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
-    fn rewrite_place_store(
-        &self,
-        place: Place<'tcx>,
-        span: Span,
-        rewriter: &mut impl Rewrite,
-    ) -> &'me [PointerKind] {
+    fn acquire_place_info(&self, place: &Place<'tcx>) -> &'me [PointerKind] {
+        let FnRewriteCtxt {
+            local_decision,
+            struct_decision,
+            body,
+            def_use_chain: _,
+            ..
+        } = *self;
+
+        let mut ptr_kinds = &local_decision[place.local.as_usize()][..];
+        let mut ptr_kinds_index = 0;
+        let mut ty = body.local_decls[place.local].ty;
+        for proj in place.projection {
+            match proj {
+                rustc_middle::mir::ProjectionElem::Deref => {
+                    ptr_kinds_index += 1;
+                    ty = ty.builtin_deref(true).unwrap().ty;
+                }
+                rustc_middle::mir::ProjectionElem::Field(f, field_ty) => {
+                    assert_eq!(ptr_kinds_index, ptr_kinds.len());
+                    let adt_def = ty.ty_adt_def().unwrap();
+                    ptr_kinds = &struct_decision.field_data(&adt_def.did())[f.index()][..];
+                    ptr_kinds_index = 0;
+                    ty = field_ty;
+                }
+                rustc_middle::mir::ProjectionElem::Index(_) => todo!(),
+                _ => unreachable!(),
+            }
+        }
+
+        &ptr_kinds[ptr_kinds_index..]
+    }
+
+    fn rewrite_place_store(&self, place: Place<'tcx>, span: Span, rewriter: &mut impl Rewrite) {
         let FnRewriteCtxt {
             local_decision,
             struct_decision,
@@ -261,8 +292,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 "todo_static_addr".to_string()
             });
 
-        let mut ptr_kinds = &local_decision[place.local.as_usize()][..];
-        let mut ptr_kinds_index = 0;
+        let mut ptr_kinds = local_decision[place.local.as_usize()].iter().copied();
         let mut ty = body.local_decls[place.local].ty;
         let mut need_paren = false;
 
@@ -276,8 +306,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             // perform projection
             match proj {
                 rustc_middle::mir::ProjectionElem::Deref => {
-                    let base_ptr_kind = ptr_kinds[ptr_kinds_index];
-                    ptr_kinds_index += 1;
+                    let base_ptr_kind = ptr_kinds.next().unwrap();
 
                     if base_ptr_kind.is_raw() {
                         replacement = format!("*{replacement}");
@@ -289,7 +318,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     ty = ty.builtin_deref(true).unwrap().ty;
                 }
                 rustc_middle::mir::ProjectionElem::Field(f, field_ty) => {
-                    assert_eq!(ptr_kinds_index, ptr_kinds.len());
+                    assert!(ptr_kinds.next().is_none());
 
                     let adt_def = ty.ty_adt_def().unwrap();
                     let field_name = &adt_def.variants()[0usize.into()].fields[f.index()]
@@ -298,8 +327,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     replacement = replacement + "." + field_name;
                     ty = field_ty;
 
-                    ptr_kinds = &struct_decision.field_data(&adt_def.did())[f.index()][..];
-                    ptr_kinds_index = 0;
+                    ptr_kinds = struct_decision.field_data(&adt_def.did())[f.index()]
+                        .iter()
+                        .copied();
                 }
                 rustc_middle::mir::ProjectionElem::Index(_) => todo!(),
                 _ => unreachable!(),
@@ -308,7 +338,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         rewriter.replace(tcx, span, replacement);
 
-        &ptr_kinds[ptr_kinds_index..]
+        // &ptr_kinds[ptr_kinds_index..]
     }
 
     fn rewrite_place_load_at(
@@ -351,16 +381,38 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         } else {
             assert!(place.as_local().is_some());
             let def_loc = def_use_chain.def_loc(place.local, location);
-            let RichLocation::Mir(def_loc) = def_loc else {
-                // println!("{:?} @ {:?}, {:?}", place, location, span);
-                // TODO
-                return;
-             };
-            // call terminator is already rewritten
-            let Left(stmt) = body.stmt_at(def_loc) else { return };
-            let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-            self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, load_ctxt, rewriter);
-            return;
+
+            match def_loc {
+                RichLocation::Entry => todo!(),
+                RichLocation::Phi(block) => {
+                    // FIXME correctness? recursive?
+                    for def_loc in def_use_chain.phi_def_locs(place.local, block) {
+                        let RichLocation::Mir(def_loc) = def_loc else { todo!() };
+                        let Left(stmt) = body.stmt_at(def_loc) else { return };
+                        let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                        self.rewrite_rvalue_at(
+                            rvalue,
+                            def_loc,
+                            stmt.source_info.span,
+                            load_ctxt,
+                            rewriter,
+                        );
+                    }
+                    return;
+                }
+                RichLocation::Mir(def_loc) => {
+                    let Left(stmt) = body.stmt_at(def_loc) else { return };
+                    let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                    self.rewrite_rvalue_at(
+                        rvalue,
+                        def_loc,
+                        stmt.source_info.span,
+                        load_ctxt,
+                        rewriter,
+                    );
+                    return;
+                }
+            }
         };
 
         let mut ptr_kinds = local_decision[place.local.as_usize()].iter().copied();
