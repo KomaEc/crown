@@ -43,13 +43,16 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 if let rustc_hir::definitions::DefPathData::ValueNs(s) = d.data {
                     match s.as_str() {
                         "is_null" => {
-                            self.rewrite_is_null(args, destination, fn_span, location, rewriter)
+                            self.rewrite_is_null(args, destination, fn_span, location, rewriter);
+                            return
                         }
                         _ => {}
                     }
                 }
             }
         }
+
+        self.rewrite_call_default(callee, args, destination, fn_span, location, rewriter);
     }
 
     fn rewrite_is_null(

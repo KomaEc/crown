@@ -499,9 +499,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 if is_move {
                     replacement = format!("Some(Box::from_raw({replacement}))")
                 } else if is_readonly {
-                    replacement = format!("Some(&* {replacement})")
+                    if need_paren {
+                        replacement = format!("({replacement})");
+                    }
+                    replacement = format!("{replacement}.as_ref()");
                 } else {
-                    replacement = format!("Some(&mut* {replacement})")
+                    if need_paren {
+                        replacement = format!("({replacement})");
+                    }
+                    replacement = format!("{replacement}.as_mut()");
                 }
             }
         }
