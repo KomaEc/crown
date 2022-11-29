@@ -19,10 +19,11 @@ use crate::ssa::{
     constraint::infer::{Pure, Renamer},
     consume::{Consume, ConsumeChain, Definitions, RichLocation},
     dom::compute_dominance_frontier,
+    join_points::{JoinPoints, PhiNode},
     state::{SSAIdx, SSAState},
 };
 
-pub struct DefUseChain(ConsumeChain);
+pub struct DefUseChain(ConsumeChain, JoinPoints<PhiNode>);
 
 impl DefUseChain {
     pub fn uses(&self, location: Location) -> impl Iterator<Item = Local> + '_ {
@@ -39,6 +40,21 @@ impl DefUseChain {
         let ssa_idx = consume.r#use;
         self.0.locs[local][ssa_idx]
     }
+
+    pub fn phi_def_locs(
+        &self,
+        local: Local,
+        block: BasicBlock,
+    ) -> impl Iterator<Item = RichLocation> + '_ {
+        let phi_node = &self.1[block].data.get_by_key(&local).unwrap();
+
+        phi_node
+            .rhs
+            .iter()
+            .copied()
+            .filter(|&ssa_idx| ssa_idx != phi_node.lhs)
+            .map(move |ssa_idx| self.0.locs[local][ssa_idx])
+    }
 }
 
 pub fn def_use_chain<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> DefUseChain {
@@ -49,7 +65,7 @@ pub fn def_use_chain<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> DefUseChain 
 
     rn.go::<Pure>(());
 
-    DefUseChain(rn.state.consume_chain)
+    DefUseChain(rn.state.consume_chain, rn.state.join_points)
 }
 
 fn definitions<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Definitions {
