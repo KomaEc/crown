@@ -614,10 +614,50 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 }
             } else {
                 // library
+                self.rewrite_library_call(callee, args, destination, fn_span, location, rewriter);
             }
         } else {
             // closure or fn ptr
             /* TODO */
+        }
+    }
+
+    fn rewrite_call_default(
+        &self,
+        callee: DefId,
+        args: &Vec<Operand<'tcx>>,
+        destination: Place<'tcx>,
+        fn_span: Span,
+        location: Location,
+        rewriter: &mut impl Rewrite,
+    ) {
+        let FnRewriteCtxt {
+            local_decision,
+            struct_decision,
+            body,
+            def_use_chain,
+            user_idents,
+            tcx,
+        } = *self;
+
+        let fn_sig = tcx.fn_sig(callee).skip_binder();
+        for (arg, ty) in itertools::izip!(args, fn_sig.inputs()) {
+            let ctxt: &[_] = if ty.is_unsafe_ptr() {
+                &[PointerKind::Raw]
+            } else {
+                &[]
+            };
+            if let Some(place) = arg.place() {
+                let Some(local) = place.as_local() else { panic!() };
+                let def_loc = def_use_chain.def_loc(local, location);
+                let RichLocation::Mir(def_loc) = def_loc else { panic!() };
+                let Left(stmt) = body.stmt_at(def_loc) else {
+                    // TODO correctness?
+                    return
+                };
+                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, ctxt, rewriter);
+            }
         }
     }
 }
