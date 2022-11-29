@@ -1,5 +1,6 @@
 mod boundary;
 mod location_map;
+mod libc;
 
 use analysis::{
     ssa::consume::RichLocation,
@@ -419,22 +420,24 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         }
 
         if !load_ctxt.is_empty() {
-            if is_move && place.is_indirect() {
-                if need_paren {
-                    replacement = format!("({replacement})");
-                }
-                replacement += ".take()";
-            } else if is_readonly {
-                if need_paren {
-                    replacement = format!("({replacement})");
-                }
-                replacement += ".as_deref()";
-            } else {
-                if need_paren {
-                    replacement = format!("({replacement})");
-                }
-                replacement += ".as_deref_mut()";
+            let ptr_kind = ptr_kinds.next().unwrap();
+
+            if need_paren {
+                replacement = format!("({replacement})");
             }
+
+            let usage = if is_move && place.is_indirect() {
+                "take"
+            } else if is_readonly {
+                if ptr_kind.is_shr() {
+                    "clone"
+                } else {
+                    "as_deref"
+                }
+            } else {
+                "as_deref_mut"
+            };
+            replacement = replacement + "." + usage + "()";
             if is_raw {
                 replacement = format!("core::mem::transmute({replacement})")
             }
