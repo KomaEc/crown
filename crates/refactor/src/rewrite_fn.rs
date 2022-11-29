@@ -1,3 +1,4 @@
+mod boundary;
 mod location_map;
 
 use analysis::{
@@ -16,9 +17,9 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use rustc_span::{Span, Symbol};
+use rustc_type_ir::TyKind::FnDef;
 use smallvec::SmallVec;
 
-use self::location_map::LocationMap;
 use crate::{rewrite_ty::rewrite_hir_ty, FnLocals, PointerKind, StructFields};
 
 pub fn rewrite_fns(
@@ -35,6 +36,7 @@ pub fn rewrite_fns(
         rewrite_fn(
             body,
             fn_decision.local_data(&did),
+            fn_decision,
             struct_decision,
             rewriter,
             tcx,
@@ -63,6 +65,7 @@ fn rewrite_fn_sig<'tcx>(
 fn rewrite_fn<'tcx>(
     body: &Body<'tcx>,
     local_decision: &[SmallVec<[PointerKind; 3]>],
+    fn_decision: &FnLocals,
     struct_decision: &StructFields,
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt<'tcx>,
@@ -116,7 +119,7 @@ fn rewrite_fn<'tcx>(
 
                         // println!("rewrite {:?} @ {:?}, {:?}", place, location, span);
 
-                        if let Some(assign_pos) = source_text.chars().position(|c| c == '=') {
+                        if let Some(assign_pos) = source_text.find("+=").or(source_text.find("+=")).or(source_text.find("=")) {
                             // lhs needs to be rewritten
 
                             assert!(assign_pos > 0);
@@ -169,6 +172,15 @@ fn rewrite_fn<'tcx>(
                     ..
                 } => {
                     // rewrite point: call
+                    rewrite_ctxt.rewrite_call(
+                        func,
+                        args,
+                        *destination,
+                        *fn_span,
+                        location,
+                        fn_decision,
+                        rewriter,
+                    );
                 }
                 TerminatorKind::Return => {
                     // rewrite point: return
@@ -241,7 +253,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 // let RichLocation::Mir(def_loc) = def_use.def_loc(place.local, location) else { unreachable!() };
                 // let Left(stmt) = body.stmt_at(def_loc) else { panic!() };
                 // let StatementKind::Assign(box (_, Rvalue::Use(Operand::Constant(..)))) = &stmt.kind else { panic!() };
-                "todo_static_var".to_string()
+                "todo_static_addr".to_string()
             });
 
         let mut ptr_kinds = &local_decision[place.local.as_usize()][..];
@@ -272,7 +284,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     ty = ty.builtin_deref(true).unwrap().ty;
                 }
                 rustc_middle::mir::ProjectionElem::Field(f, field_ty) => {
-                    // assert!(ptr_kinds.next().is_none());
                     assert_eq!(ptr_kinds_index, ptr_kinds.len());
 
                     let adt_def = ty.ty_adt_def().unwrap();
@@ -312,11 +323,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             tcx,
         } = *self;
 
-        let Some(mut replacement) = user_idents.get(&place.local).map(|symbol| symbol.to_string()) else {
+        let mut replacement = if let Some(replacement) = user_idents.get(&place.local).map(|symbol| symbol.to_string()) {
+            replacement
+        } else if place.as_local().is_none() {
+            "todo_static_addr".to_string()
+        } else {
             assert!(place.as_local().is_some());
-            // println!("{:?} @ {:?}, {:?}", place, span, location);
             let def_loc = def_use_chain.def_loc(place.local, location);
             let RichLocation::Mir(def_loc) = def_loc else {
+                // println!("{:?} @ {:?}, {:?}", place, location, span);
                 // TODO
                 return;
              };
@@ -361,7 +376,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 rustc_middle::mir::ProjectionElem::Field(f, field_ty) => {
                     assert!(ptr_kinds.next().is_none());
 
-                    let adt_def = ty.ty_adt_def().unwrap();
+                    let Some(adt_def) = ty.ty_adt_def() else { 
+                        // this happens in checked add. no rewrite for this case
+                        return;
+                    };
                     let field_name = &adt_def.variants()[0usize.into()].fields[f.index()]
                         .name
                         .as_str();
@@ -399,7 +417,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         match operand {
             Operand::Copy(place) | Operand::Move(place) => {
-                self.rewrite_place_load_at(*place, location, span, load_ctxt, rewriter)
+                let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
+                self.rewrite_place_load_at(place, location, span, load_ctxt, rewriter)
             }
             Operand::Constant(_) => {
                 // TODO
@@ -415,14 +434,14 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         load_ctxt: &[PointerKind],
         rewriter: &mut impl Rewrite,
     ) {
-        let FnRewriteCtxt {
-            local_decision,
-            struct_decision,
-            body,
-            def_use_chain,
-            user_idents,
-            tcx,
-        } = *self;
+        // let FnRewriteCtxt {
+        //     local_decision,
+        //     struct_decision,
+        //     body,
+        //     def_use_chain,
+        //     user_idents,
+        //     tcx,
+        // } = *self;
 
         match rvalue {
             Rvalue::Use(operand) => {
@@ -445,6 +464,40 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 // TODO
             }
             _ => todo!(),
+        }
+    }
+
+    fn rewrite_call(
+        &self,
+        func: &Operand<'tcx>,
+        args: &Vec<Operand<'tcx>>,
+        destination: Place<'tcx>,
+        fn_span: Span,
+        location: Location,
+        fn_decision: &FnLocals,
+        rewriter: &mut impl Rewrite,
+    ) {
+        if let Some(func) = func.constant() {
+            let ty = func.ty();
+            let &FnDef(callee, _) = ty.kind() else { unreachable!() };
+            if let Some(local_did) = callee.as_local() {
+                match self.tcx.hir().find_by_def_id(local_did).unwrap() {
+                    // this crate
+                    rustc_hir::Node::Item(_) => {
+                        self.rewrite_boundary(callee, args, destination, fn_span, location, fn_decision, rewriter);
+                    }
+                    // extern
+                    rustc_hir::Node::ForeignItem(foreign_item) => {}
+                    // in libxml2.rust/src/xmlschemastypes.rs/{} impl_xmlSchemaValDate/set_mon
+                    rustc_hir::Node::ImplItem(_) => { /* TODO */ }
+                    _ => unreachable!(),
+                }
+            } else {
+                // library
+            }
+        } else {
+            // closure or fn ptr
+            /* TODO */
         }
     }
 }

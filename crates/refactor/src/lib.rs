@@ -45,6 +45,7 @@ extern crate rustc_passes;
 extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_target;
+extern crate rustc_type_ir;
 
 extern crate either;
 
@@ -375,7 +376,7 @@ impl FnLocals {
                 {
                     if fatness.is_arr() {
                         *ptr_kind = PointerKind::Raw;
-                    } else if mutability.is_immutable() && (*ptr_kind == PointerKind::Move) {
+                    } else if mutability.is_immutable() {
                         *ptr_kind = PointerKind::Shr;
                     }
                 }
