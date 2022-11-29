@@ -116,9 +116,9 @@ impl PointerKind {
         *self == PointerKind::Raw
     }
 
-    // fn is_mut(&self) -> bool {
-    //     *self == PointerKind::Mut
-    // }
+    fn is_mut(&self) -> bool {
+        *self == PointerKind::Mut
+    }
 
     fn is_move(&self) -> bool {
         *self == PointerKind::Move
@@ -126,6 +126,10 @@ impl PointerKind {
 
     fn is_shr(&self) -> bool {
         *self == PointerKind::Shr
+    }
+
+    fn is_safe(&self) -> bool {
+        !self.is_raw()
     }
 }
 

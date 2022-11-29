@@ -122,7 +122,7 @@ fn rewrite_fn<'tcx>(
 
                         if let Some(assign_pos) = source_text
                             .find("+=")
-                            .or(source_text.find("+="))
+                            .or(source_text.find("-="))
                             .or(source_text.find("="))
                         {
                             // lhs needs to be rewritten
@@ -419,27 +419,39 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
         }
 
+        // incomplete usage rewrites
         if !load_ctxt.is_empty() {
             let ptr_kind = ptr_kinds.next().unwrap();
 
-            if need_paren {
-                replacement = format!("({replacement})");
-            }
-
-            let usage = if is_move && place.is_indirect() {
-                "take"
-            } else if is_readonly {
-                if ptr_kind.is_shr() {
-                    "clone"
-                } else {
-                    "as_deref"
+            if ptr_kind.is_safe() {
+                if need_paren {
+                    replacement = format!("({replacement})");
                 }
-            } else {
-                "as_deref_mut"
-            };
-            replacement = replacement + "." + usage + "()";
-            if is_raw {
-                replacement = format!("core::mem::transmute({replacement})")
+
+                if is_move {
+                    if place.is_indirect() {
+                        replacement += ".take()";
+                    }
+                } else if is_readonly {
+                    if ptr_kind.is_shr() {
+                        replacement += ".clone()";
+                    } else {
+                        replacement += ".as_deref()";
+                    }
+                } else {
+                    replacement += ".as_deref_mut()"
+                };
+                if is_raw {
+                    replacement = format!("core::mem::transmute({replacement})")
+                }
+            } else if !is_raw {
+                if is_move {
+                    replacement = format!("Some(Box::from_raw({replacement}))")
+                } else if is_readonly {
+                    replacement = format!("Some(&* {replacement})")
+                } else {
+                    replacement = format!("Some(&mut* {replacement})")
+                }
             }
         }
 
