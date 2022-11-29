@@ -1,6 +1,6 @@
 mod boundary;
+mod libc_call;
 mod location_map;
-mod libc;
 
 use analysis::{
     ssa::consume::RichLocation,
@@ -534,7 +534,16 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         );
                     }
                     // extern
-                    rustc_hir::Node::ForeignItem(foreign_item) => {}
+                    rustc_hir::Node::ForeignItem(foreign_item) => {
+                        self.rewrite_libc_call(
+                            foreign_item,
+                            args,
+                            destination,
+                            fn_span,
+                            location,
+                            rewriter,
+                        );
+                    }
                     // in libxml2.rust/src/xmlschemastypes.rs/{} impl_xmlSchemaValDate/set_mon
                     rustc_hir::Node::ImplItem(_) => { /* TODO */ }
                     _ => unreachable!(),
