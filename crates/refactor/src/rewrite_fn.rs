@@ -7,13 +7,13 @@ use analysis::{
     use_def::{def_use_chain, DefUseChain},
 };
 use common::rewrite::Rewrite;
-use either::Either::{Left, Right};
+use either::Either::Left;
 use rustc_hash::FxHashMap;
 use rustc_hir::{def_id::DefId, ItemKind};
 use rustc_middle::{
     mir::{
-        Body, CastKind, Local, LocalInfo, Location, NonDivergingIntrinsic, Operand, Place, Rvalue,
-        StatementKind, TerminatorKind, VarDebugInfoContents, RETURN_PLACE,
+        Body, Local, LocalInfo, Location, NonDivergingIntrinsic, Operand, Place, Rvalue,
+        StatementKind, TerminatorKind, VarDebugInfoContents, RETURN_PLACE, Constant,
     },
     ty::TyCtxt,
 };
@@ -193,12 +193,26 @@ fn rewrite_fn<'tcx>(
                     // rewrite point: return
                     if !user_idents.contains_key(&RETURN_PLACE) {
                         let def_loc = def_use_chain.def_loc(RETURN_PLACE, location);
-                        if let RichLocation::Phi(block) = def_loc {
-                            for def_loc in def_use_chain.phi_def_locs(RETURN_PLACE, block) {
-                                let RichLocation::Mir(def_loc) = def_loc else { todo!() };
+                        let return_ctxt = &rewrite_ctxt.local_decision[0];
+                        match def_loc {
+                            RichLocation::Entry => {},
+                            RichLocation::Phi(block) => {
+                                for def_loc in def_use_chain.phi_def_locs(RETURN_PLACE, block) {
+                                    let RichLocation::Mir(def_loc) = def_loc else { todo!() };
+                                    let Left(stmt) = body.stmt_at(def_loc) else { return };
+                                    let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                                    rewrite_ctxt.rewrite_rvalue_at(
+                                        rvalue,
+                                        def_loc,
+                                        stmt.source_info.span,
+                                        return_ctxt,
+                                        rewriter,
+                                    );
+                                }
+                            }
+                            RichLocation::Mir(def_loc) => {
                                 let Left(stmt) = body.stmt_at(def_loc) else { return };
                                 let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-                                let return_ctxt = &rewrite_ctxt.local_decision[0];
                                 rewrite_ctxt.rewrite_rvalue_at(
                                     rvalue,
                                     def_loc,
@@ -542,12 +556,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt {
-            local_decision,
-            struct_decision,
             body,
             def_use_chain,
-            user_idents,
             tcx,
+            ..
         } = *self;
 
         match operand {
@@ -555,8 +567,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
                 self.rewrite_place_load_at(place, location, span, load_ctxt, rewriter)
             }
-            Operand::Constant(_) => {
-                // TODO
+            Operand::Constant(constant) => {
+                self.try_rewrite_null_constant(constant, span, load_ctxt, rewriter);
             }
         }
     }
@@ -570,12 +582,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt {
-            local_decision,
-            struct_decision,
-            body,
-            def_use_chain,
-            user_idents,
             tcx,
+            ..
         } = *self;
 
         match rvalue {
@@ -612,6 +620,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         }
                     }
                     Err(()) => {
+                        if let Some(constant) = operand.constant() {
+                            self.try_rewrite_null_constant(constant, span, load_ctxt, rewriter);
+                        }
                     }
                 }
             }
@@ -675,8 +686,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         &self,
         callee: DefId,
         args: &Vec<Operand<'tcx>>,
-        destination: Place<'tcx>,
-        fn_span: Span,
+        _destination: Place<'tcx>,
+        _fn_span: Span,
         location: Location,
         rewriter: &mut impl Rewrite,
     ) {
@@ -704,6 +715,30 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 };
                 let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
                 self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, ctxt, rewriter);
+            }
+        }
+    }
+
+    fn try_rewrite_null_constant(
+        &self,
+        constant: &Constant<'tcx>,
+        stmt_span: Span,
+        load_ctxt: &[PointerKind],
+        rewriter: &mut impl Rewrite
+    ) {
+        let FnRewriteCtxt {
+            tcx,
+            ..
+        } = *self;
+
+        if let Some(scalar) = constant.literal.try_to_scalar_int() {
+            if scalar.is_null() {
+                if let Some(ptr_kind) = load_ctxt.first() {
+                    let span = constant.span.until(stmt_span.shrink_to_hi());
+                    if ptr_kind.is_safe() {
+                        rewriter.replace(tcx, span, "None".to_owned());
+                    }
+                }
             }
         }
     }

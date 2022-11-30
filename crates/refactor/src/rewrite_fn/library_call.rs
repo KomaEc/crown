@@ -51,7 +51,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     fn rewrite_is_null(
         &self,
         args: &Vec<Operand<'tcx>>,
-        destination: Place<'tcx>,
+        _destination: Place<'tcx>,
         fn_span: Span,
         location: Location,
         rewriter: &mut impl Rewrite,

@@ -1,13 +1,12 @@
 use analysis::ssa::consume::RichLocation;
 use common::rewrite::Rewrite;
 use either::Either::{Left, Right};
-use rustc_hir::{def_id::DefId, ForeignItem};
+use rustc_hir::ForeignItem;
 use rustc_middle::mir::{Location, Operand, Place, StatementKind, TerminatorKind};
 use rustc_span::Span;
 use rustc_type_ir::TyKind::FnDef;
 
 use super::FnRewriteCtxt;
-use crate::PointerKind;
 
 impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     pub fn rewrite_libc_call(

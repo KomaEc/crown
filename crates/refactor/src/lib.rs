@@ -116,10 +116,6 @@ impl PointerKind {
         *self == PointerKind::Raw
     }
 
-    fn is_mut(&self) -> bool {
-        *self == PointerKind::Mut
-    }
-
     fn is_move(&self) -> bool {
         *self == PointerKind::Move
     }
@@ -132,32 +128,6 @@ impl PointerKind {
         !self.is_raw()
     }
 }
-
-// #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-// pub struct PointerData {
-//     pointer_kind: PointerKind,
-//     meta_data: MetaData,
-// }
-
-// impl PointerData {
-//     fn raw() -> Self {
-//         PointerData {
-//             pointer_kind: PointerKind::Raw,
-//             meta_data: MetaData {
-//                 ownership: Ownership::Unknown,
-//                 mutability: Mutability::Mut,
-//                 fatness: Fatness::Ptr,
-//             },
-//         }
-//     }
-// }
-
-// #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-// pub struct MetaData {
-//     ownership: Ownership,
-//     mutability: Mutability,
-//     fatness: Fatness,
-// }
 
 pub struct Decision {
     did_idx: FxHashMap<DefId, usize>,
