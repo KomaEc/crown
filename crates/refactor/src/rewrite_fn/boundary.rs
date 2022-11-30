@@ -20,12 +20,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt {
-            local_decision,
-            struct_decision,
             body,
             def_use_chain,
-            user_idents,
-            tcx,
+            ..
         } = *self;
 
         let callee_decision = fn_decision.local_data(&callee);

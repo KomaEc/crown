@@ -30,7 +30,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         match callee.ident.as_str() {
             "malloc" => {}
             "free" => {}
-            "printf" => {}
+            "printf" => self.rewrite_printf(args, location, rewriter),
             _ => self.rewrite_call_default(
                 callee.owner_id.to_def_id(),
                 args,
@@ -39,6 +39,33 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 location,
                 rewriter,
             ),
+        }
+    }
+
+    fn rewrite_printf(
+        &self,
+        args: &Vec<Operand<'tcx>>,
+        location: Location,
+        rewriter: &mut impl Rewrite,
+    ) {
+        let FnRewriteCtxt {
+            body,
+            def_use_chain,
+            ..
+        } = *self;
+
+        for arg in args.iter().skip(1) {
+            if let Some(place) = arg.place() {
+                let Some(local) = place.as_local() else { panic!() };
+                let def_loc = def_use_chain.def_loc(local, location);
+                let RichLocation::Mir(def_loc) = def_loc else { panic!() };
+                let Left(stmt) = body.stmt_at(def_loc) else {
+                    // TODO correctness?
+                    return
+                };
+                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, &[], rewriter);
+            }
         }
     }
 }

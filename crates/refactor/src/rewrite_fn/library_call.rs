@@ -18,14 +18,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         location: Location,
         rewriter: &mut impl Rewrite,
     ) {
-        let FnRewriteCtxt {
-            local_decision,
-            struct_decision,
-            body,
-            def_use_chain,
-            user_idents,
-            tcx,
-        } = *self;
+        let FnRewriteCtxt { tcx, .. } = *self;
 
         let def_path = tcx.def_path(callee);
         // if it is a library call in core::ptr
@@ -64,12 +57,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt {
-            local_decision,
-            struct_decision,
             body,
             def_use_chain,
-            user_idents,
             tcx,
+            ..
         } = *self;
 
         assert_eq!(args.len(), 1);
