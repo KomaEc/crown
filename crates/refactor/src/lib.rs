@@ -52,6 +52,7 @@ extern crate either;
 pub fn refactor<'tcx>(
     crate_data: &CrateData<'tcx>,
     analysis: &Analysis<'tcx>,
+    rewrite_mode: RewriteMode,
 ) -> anyhow::Result<()> {
     let struct_decision = StructFields::new(crate_data, analysis);
     // let fn_decision = FnParams::new(crate_data, analysis);
@@ -72,7 +73,7 @@ pub fn refactor<'tcx>(
         crate_data.tcx,
     );
 
-    rewriter.write(RewriteMode::Diff);
+    rewriter.write(rewrite_mode);
 
     Ok(())
 }

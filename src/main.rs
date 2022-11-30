@@ -62,7 +62,10 @@ enum Command {
     Mutability,
     Fatness,
     Refactor,
-    Rewrite,
+    Rewrite {
+        #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
+        rewrite_mode: RewriteMode,
+    },
     VerifyRustcProperties,
     /// Perform empirical studies and show results.
     EmpiricalStudy,
@@ -316,9 +319,9 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 mutability_result,
                 fatness_result,
             );
-            refactor::refactor(&input, &analysis_results)?;
+            refactor::refactor(&input, &analysis_results, RewriteMode::InPlace)?;
         }
-        Command::Rewrite => {
+        Command::Rewrite { rewrite_mode } => {
             let alias_result = alias::alias_results(&input);
             let taint_result = alias::taint_results(&input);
             let mutability_result =
@@ -343,7 +346,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 mutability_result,
                 fatness_result,
             );
-            refactor::refactor(&input, &analysis_results)?;
+            refactor::refactor(&input, &analysis_results, rewrite_mode)?;
         }
     }
     Ok(())
