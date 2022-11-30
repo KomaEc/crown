@@ -9,7 +9,7 @@
 mod rewrite_fn;
 mod rewrite_ty;
 
-use alias::{AliasResult, TaintResult};
+use alias::TaintResult;
 use analysis::{
     ownership::{whole_program::WholeProgramResults, Ownership, Param},
     ssa::{AnalysisResults, FnResults},
@@ -78,7 +78,6 @@ pub fn refactor<'tcx>(
 }
 
 pub struct Analysis<'tcx> {
-    alias_result: AliasResult,
     taint_result: TaintResult,
     ownership_schemes: WholeProgramResults<'tcx>,
     mutability_result: MutabilityResult,
@@ -87,14 +86,12 @@ pub struct Analysis<'tcx> {
 
 impl<'tcx> Analysis<'tcx> {
     pub fn new(
-        alias_result: AliasResult,
         taint_result: TaintResult,
         ownership_schemes: WholeProgramResults<'tcx>,
         mutability_result: MutabilityResult,
         fatness_result: FatnessResult,
     ) -> Self {
         Analysis {
-            alias_result,
             taint_result,
             ownership_schemes,
             mutability_result,

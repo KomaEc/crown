@@ -311,7 +311,6 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 )?;
 
             let analysis_results = refactor::Analysis::new(
-                alias_result,
                 taint_result,
                 ownership_schemes,
                 mutability_result,
@@ -339,7 +338,6 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 )?;
 
             let analysis_results = refactor::Analysis::new(
-                alias_result,
                 taint_result,
                 ownership_schemes,
                 mutability_result,

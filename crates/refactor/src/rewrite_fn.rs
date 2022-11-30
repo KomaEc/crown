@@ -12,8 +12,8 @@ use rustc_hash::FxHashMap;
 use rustc_hir::{def_id::DefId, ItemKind};
 use rustc_middle::{
     mir::{
-        Body, Local, LocalInfo, Location, NonDivergingIntrinsic, Operand, Place, Rvalue,
-        StatementKind, TerminatorKind, VarDebugInfoContents, RETURN_PLACE, Constant,
+        Body, Constant, Local, LocalInfo, Location, NonDivergingIntrinsic, Operand, Place, Rvalue,
+        StatementKind, TerminatorKind, VarDebugInfoContents, RETURN_PLACE,
     },
     ty::TyCtxt,
 };
@@ -195,7 +195,7 @@ fn rewrite_fn<'tcx>(
                         let def_loc = def_use_chain.def_loc(RETURN_PLACE, location);
                         let return_ctxt = &rewrite_ctxt.local_decision[0];
                         match def_loc {
-                            RichLocation::Entry => {},
+                            RichLocation::Entry => {}
                             RichLocation::Phi(block) => {
                                 for def_loc in def_use_chain.phi_def_locs(RETURN_PLACE, block) {
                                     let RichLocation::Mir(def_loc) = def_loc else { todo!() };
@@ -581,10 +581,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         load_ctxt: &[PointerKind],
         rewriter: &mut impl Rewrite,
     ) {
-        let FnRewriteCtxt {
-            tcx,
-            ..
-        } = *self;
+        let FnRewriteCtxt { tcx, .. } = *self;
 
         match rvalue {
             Rvalue::Use(operand) => {
@@ -724,12 +721,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         constant: &Constant<'tcx>,
         stmt_span: Span,
         load_ctxt: &[PointerKind],
-        rewriter: &mut impl Rewrite
+        rewriter: &mut impl Rewrite,
     ) {
-        let FnRewriteCtxt {
-            tcx,
-            ..
-        } = *self;
+        let FnRewriteCtxt { tcx, .. } = *self;
 
         if let Some(scalar) = constant.literal.try_to_scalar_int() {
             if scalar.is_null() {
