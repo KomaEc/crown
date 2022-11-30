@@ -13,7 +13,7 @@ use rustc_hir::{def_id::DefId, ItemKind};
 use rustc_middle::{
     mir::{
         Body, CastKind, Local, LocalInfo, Location, NonDivergingIntrinsic, Operand, Place, Rvalue,
-        StatementKind, TerminatorKind, VarDebugInfoContents,
+        StatementKind, TerminatorKind, VarDebugInfoContents, RETURN_PLACE,
     },
     ty::TyCtxt,
 };
@@ -191,6 +191,24 @@ fn rewrite_fn<'tcx>(
                 }
                 TerminatorKind::Return => {
                     // rewrite point: return
+                    if !user_idents.contains_key(&RETURN_PLACE) {
+                        let def_loc = def_use_chain.def_loc(RETURN_PLACE, location);
+                        if let RichLocation::Phi(block) = def_loc {
+                            for def_loc in def_use_chain.phi_def_locs(RETURN_PLACE, block) {
+                                let RichLocation::Mir(def_loc) = def_loc else { todo!() };
+                                let Left(stmt) = body.stmt_at(def_loc) else { return };
+                                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                                let return_ctxt = &rewrite_ctxt.local_decision[0];
+                                rewrite_ctxt.rewrite_rvalue_at(
+                                    rvalue,
+                                    def_loc,
+                                    stmt.source_info.span,
+                                    return_ctxt,
+                                    rewriter,
+                                );
+                            }
+                        }
+                    }
                 }
                 TerminatorKind::Goto { .. } => {}
                 TerminatorKind::Assert { .. } => {}
@@ -571,7 +589,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             Rvalue::Cast(_, operand, _) => {
                 // TODO
             }
-            _ => todo!(),
+            _ => todo!("{:?} is not supported", rvalue),
         }
     }
 

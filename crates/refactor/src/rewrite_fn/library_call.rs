@@ -44,7 +44,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     match s.as_str() {
                         "is_null" => {
                             self.rewrite_is_null(args, destination, fn_span, location, rewriter);
-                            return
+                            return;
                         }
                         _ => {}
                     }
