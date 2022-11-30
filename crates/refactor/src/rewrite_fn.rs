@@ -569,6 +569,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         load_ctxt: &[PointerKind],
         rewriter: &mut impl Rewrite,
     ) {
+        let FnRewriteCtxt {
+            local_decision,
+            struct_decision,
+            body,
+            def_use_chain,
+            user_idents,
+            tcx,
+        } = *self;
+
         match rvalue {
             Rvalue::Use(operand) => {
                 self.rewrite_operand_at(operand, location, span, load_ctxt, rewriter)
@@ -583,11 +592,28 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 self.rewrite_operand_at(operand, location, span, &[], rewriter)
             }
             Rvalue::CopyForDeref(_) => unreachable!(),
-            Rvalue::Cast(CastKind::PointerFromExposedAddress, _, _) => {
-                // TODO
-            }
-            Rvalue::Cast(_, operand, _) => {
-                // TODO
+            Rvalue::Cast(_, operand, ty) => {
+                match self.try_rewrite_malloc_from_dest(
+                    operand,
+                    location,
+                    matches!(load_ctxt.first(), Some(PointerKind::Move)),
+                    rewriter,
+                ) {
+                    Ok(result) => {
+                        if let Some(malloc_span) = result {
+                            let replacement = if load_ctxt.len() > 1 {
+                                "Some(Box::new(None))".to_owned()
+                            } else {
+                                let ty = ty.builtin_deref(true).unwrap().ty;
+                                format!("Some(Box::new(<{ty} as Default>::default()))")
+                            };
+                            rewriter.replace(tcx, malloc_span, replacement);
+                            rewriter.erase(tcx, malloc_span.between(span.shrink_to_hi()));
+                        }
+                    }
+                    Err(()) => {
+                    }
+                }
             }
             _ => todo!("{:?} is not supported", rvalue),
         }
@@ -655,12 +681,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt {
-            local_decision,
-            struct_decision,
             body,
             def_use_chain,
-            user_idents,
             tcx,
+            ..
         } = *self;
 
         let fn_sig = tcx.fn_sig(callee).skip_binder();
