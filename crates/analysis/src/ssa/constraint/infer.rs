@@ -186,6 +186,18 @@ pub struct Renamer<'rn, 'tcx> {
     pub state: SSAState,
 }
 
+
+// TODO implement this:
+// pub enum ConsumeResult<'infercx, 'db, 'tcx: 'infercx, Infer: InferMode<'infercx, 'db, 'tcx>> {
+//     SpecialTreatment(Infer::Error),
+//     Res(Consume<Infer::LocalSig>),
+// }
+
+/// TODO return [`Option<ConsumeResult<Infer>>`]
+/// 
+/// [`interpret_consume`] should takes argument of type [`Consume<Infer::LocalSig>`] rather than [`Option<..>`]
+/// 
+/// Purpose: rm [`call_arg_temps`] from [`ConsumeChain`]
 #[inline]
 pub fn consume_place_at<'rn, 'db, 'tcx, Infer>(
     place: &Place<'tcx>,
