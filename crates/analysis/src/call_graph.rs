@@ -59,6 +59,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for FnSig<T> {
 
 pub struct CallGraph {
     post_order: VecVec<DefId>,
+    ranked_by_n_alloc_deallocs: Vec<DefId>,
 }
 
 impl CallGraph {
@@ -79,12 +80,58 @@ impl CallGraph {
         let mut post_order = VecVec::with_indices_capacity(functions.len());
         tarjan_scc.run(&graph, |nodes| post_order.push_vec(nodes.iter().copied()));
         let post_order = post_order.done();
-        CallGraph { post_order }
+
+        // FIXME not enough. The orders in wholeprogram analysis is wrong, and the reason is that
+        // hashmap is unordered (waht a terrible mistake!)
+
+        let mut n_alloc_deallocs = rustc_hash::FxHashMap::default();
+        n_alloc_deallocs.reserve(functions.len());
+        for did in functions {
+            struct Vis<'tcx>(TyCtxt<'tcx>, usize);
+            impl<'tcx> Visitor<'tcx> for Vis<'tcx> {
+                fn visit_terminator(
+                    &mut self,
+                    terminator: &Terminator<'tcx>,
+                    _: rustc_middle::mir::Location,
+                ) {
+                    let tcx = self.0;
+                    let TerminatorKind::Call { func, .. } = &terminator.kind else { return };
+                    if let Some(func) = func.constant() {
+                        let ty = func.ty();
+                        let &FnDef(callee, _) = ty.kind() else { unreachable!() };
+                        if let Some(local_did) = callee.as_local() {
+                            if let rustc_hir::Node::ForeignItem(foreign_item) =
+                                tcx.hir().find_by_def_id(local_did).unwrap()
+                            {
+                                match foreign_item.ident.as_str() {
+                                    "free" => self.1 += 10,
+                                    "malloc" | "calloc" | "realloc" => self.1 += 1,
+                                    _ => {}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            let mut vis = Vis(tcx, 0);
+            let body = tcx.optimized_mir(*did);
+            vis.visit_body(body);
+            n_alloc_deallocs.insert(*did, vis.1);
+        }
+        let mut ranked_by_n_alloc_deallocs = functions.to_vec();
+        ranked_by_n_alloc_deallocs
+            .sort_by(|f, g| n_alloc_deallocs[f].cmp(&n_alloc_deallocs[g]).reverse());
+
+        CallGraph {
+            post_order,
+            ranked_by_n_alloc_deallocs,
+        }
     }
 
     #[inline]
     pub fn fns(&self) -> &[DefId] {
-        self.post_order.everything()
+        // self.post_order.everything()
+        &self.ranked_by_n_alloc_deallocs
     }
 }
 
