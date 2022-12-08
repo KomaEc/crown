@@ -235,7 +235,7 @@ where
 
         let mut proj_start_offset = 0;
 
-        let mut deref_var = None;
+        // let mut deref_var = None;
 
         for projection_elem in projection {
             match projection_elem {
@@ -245,7 +245,7 @@ where
                     // only if definitions contain them, which happen in phases where threshold.
                     // Furthermore, mir places contain only at most one indirection.
 
-                    let ptr = base.r#use.start + proj_start_offset;
+                    // let ptr = base.r#use.start + proj_start_offset;
                     // if ptr < base.r#use.end {
                     //     infer_cx
                     //         .database
@@ -253,7 +253,7 @@ where
                     // } else {
                     //     break;
                     // }
-                    deref_var = Some(ptr);
+                    // deref_var = Some(ptr);
 
                     proj_start_offset += 1;
                     base_ty = base_ty.builtin_deref(true).unwrap().ty;
@@ -281,6 +281,11 @@ where
         }
 
         if base.r#use.start + proj_start_offset >= base.r#use.end {
+            for (pre, post) in base.r#use.zip(base.def) {
+                infer_cx
+                    .database
+                    .push_equal::<crate::ssa::constraint::Debug>((), pre, post);
+            }
             return None;
         }
 
@@ -288,11 +293,11 @@ where
         // for pointers that are known to be owning. However, here we enforce a stricter constraint,
         // that once outtermost pointer is proven to be owning, not only does its consumption is
         // enabled, but also every further dereferences are enforced to be owning.
-        if let Some(ptr) = deref_var {
-            infer_cx
-                .database
-                .push_assume::<crate::ssa::constraint::Debug>((), ptr, true);
-        }
+        // if let Some(ptr) = deref_var {
+        //     infer_cx
+        //         .database
+        //         .push_assume::<crate::ssa::constraint::Debug>((), ptr, true);
+        // }
 
         // TODO if proj to invalid, should the following constraints be emitted?
 
