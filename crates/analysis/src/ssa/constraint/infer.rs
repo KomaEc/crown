@@ -633,7 +633,10 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             | Rvalue::CheckedBinaryOp(_, box (left, right)) => {
                 let lhs_consume =
                     consume_place_at::<Infer>(lhs, self.body, location, self, infer_cx);
-                assert!(lhs_consume.is_none());
+                // assert!(lhs_consume.is_none(), "{:?} = {:?} @ {:?}", lhs, rhs, location);
+                if let Some(lhs_consume) = lhs_consume {
+                    Infer::lend(infer_cx, lhs_consume);
+                }
                 for operand in [left, right] {
                     if let Some(rhs) = operand.place() {
                         let _ =
