@@ -1,6 +1,7 @@
 use std::ops::Range;
 
 use rustc_hir::def_id::DefId;
+use rustc_middle::ty::SubstsRef;
 
 use crate::{
     ownership::{
@@ -23,6 +24,7 @@ where
         destination: Option<Consume<Range<Var>>>,
         args: &CallArgs,
         callee: DefId,
+        _substs: SubstsRef<'tcx>,
     ) {
         let def_path = self.tcx.def_path(callee);
         // if it is a library call in core::ptr
@@ -42,6 +44,10 @@ where
                         self.call_is_null(args);
                         return;
                     }
+                    rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "offset" => {
+                        self.call_offset(destination, args);
+                        return;
+                    }
                     _ => {}
                 }
             }
@@ -56,5 +62,21 @@ where
             assert!(!is_ref);
             <Analysis as InferMode>::lend(self, arg)
         }
+    }
+
+    /// limitation!!!
+    /// TODO special casing offset. If a call to [`offset`] is followed immediately by
+    /// a dereference, then this call is guaranteed to be a short-time borrow!!
+    pub fn call_offset(&mut self, destination: Option<Consume<Range<Var>>>, args: &CallArgs) {
+        let Some(dest) = destination else { return };
+        let Some((arg, is_ref)) = args[0].clone() else { return };
+        assert!(!is_ref, "offset(&mut x) is not supported");
+
+
+        // let fn_sig = self.tcx.fn_sig(offset_did);
+        // let ty = EarlyBinder(fn_sig.output().skip_binder()).subst(self.tcx, substs);
+
+        <Analysis as InferMode>::lend(self, arg);
+        <Analysis as InferMode>::borrow(self, dest);
     }
 }

@@ -522,8 +522,8 @@ where
     fn call(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,
         destination: Option<Consume<Self::LocalSig>>,
-        args: &[Operand],
-        callee: &Operand,
+        args: &[Operand<'tcx>],
+        callee: &Operand<'tcx>,
     ) {
         let args = args
             .iter()
@@ -538,7 +538,7 @@ where
 
         if let Some(func) = callee.constant() {
             let ty = func.ty();
-            let &FnDef(callee, _) = ty.kind() else { unreachable!() };
+            let &FnDef(callee, substs) = ty.kind() else { unreachable!() };
             if let Some(local_did) = callee.as_local() {
                 match infer_cx.tcx.hir().find_by_def_id(local_did).unwrap() {
                     // this crate
@@ -555,7 +555,7 @@ where
                 }
             } else {
                 // library
-                infer_cx.library_call(destination, &args, callee)
+                infer_cx.library_call(destination, &args, callee, substs)
             }
         } else {
             // closure or fn ptr

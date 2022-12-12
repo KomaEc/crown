@@ -93,7 +93,7 @@ pub trait InferMode<'infercx, 'db, 'tcx> {
         destination: Option<Consume<Self::LocalSig>>,
         // args: Self::CallArgs,
         args: &[Operand<'tcx>],
-        callee: &Operand,
+        callee: &Operand<'tcx>,
     );
 
     fn r#return<'a>(
@@ -157,8 +157,8 @@ impl<'infercx, 'db, 'tcx: 'infercx> InferMode<'infercx, 'db, 'tcx> for Pure {
         (): &mut Self::Ctxt,
         _: Option<Consume<Self::LocalSig>>,
         // _: Self::CallArgs,
-        _: &[Operand],
-        _: &Operand,
+        _: &[Operand<'tcx>],
+        _: &Operand<'tcx>,
     ) {
     }
 
