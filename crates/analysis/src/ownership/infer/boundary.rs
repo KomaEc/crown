@@ -140,9 +140,12 @@ where
                         crate::ownership::Param::Output(output_param) => {
                             let mut output_param = output_param.transpose();
                             assert!(output_param.size_hint().1.unwrap() > 0);
-                            if is_ref {
+                            let ty = if is_ref {
                                 let _ = output_param.next().unwrap();
-                            }
+                                ty.builtin_deref(true).unwrap().ty
+                            } else {
+                                ty
+                            };
                             let arg = arg.transpose();
 
                             matcher(
