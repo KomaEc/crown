@@ -17,7 +17,8 @@ use rustc_hir::{Item, OwnerNode};
 use rustc_middle::ty::TyCtxt;
 use signal_nullness::signal_nullness;
 
-pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] = &[phase_1, phase_2, phase_3, phase_4];
+pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] =
+    &[phase_1, phase_2, phase_3, phase_4];
 
 fn phase_1(tcx: TyCtxt, mode: RewriteMode) {
     let mut rewriter = Vec::new();

@@ -26,6 +26,7 @@ use anyhow::{bail, Context, Result};
 use clap::Parser;
 use common::rewrite::RewriteMode;
 use empirical_study::EmpiricalStudy;
+use refactor::RefactorOptions;
 use rustc_errors::registry;
 use rustc_hir::{ItemKind, OwnerNode};
 use rustc_interface::Config;
@@ -65,10 +66,12 @@ enum Command {
     NoAliasParams,
     Mutability,
     Fatness,
-    Refactor,
+    // Refactor,
     Rewrite {
         #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
+        #[clap(long, short)]
+        type_only: bool,
     },
     VerifyRustcProperties,
     /// Perform empirical studies and show results.
@@ -119,9 +122,9 @@ fn main() -> Result<()> {
         preprocess(&args.path, rewrite_mode)?;
         return Ok(());
     }
-    if let Command::Refactor = args.cmd {
-        preprocess(&args.path, RewriteMode::InPlace)?;
-    }
+    // if let Command::Refactor = args.cmd {
+    //     preprocess(&args.path, RewriteMode::InPlace)?;
+    // }
     run_compiler(compiler_config(args.path)?, |tcx| run(&args.cmd, tcx))
 }
 
@@ -298,7 +301,37 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             })?;
             ownership_schemes.trace(tcx);
         }
-        Command::Refactor => {
+        // Command::Refactor => {
+        //     let alias_result = alias::alias_results(&input);
+        //     let taint_result = alias::taint_results(&input);
+        //     let mutability_result =
+        //         analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
+        //     let fatness_result =
+        //         analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input);
+        //     let noalias_params = analysis::type_qualifier::noalias::compute_noalias_params(
+        //         &input,
+        //         &alias_result,
+        //         &mutability_result,
+        //     );
+        //     let crate_ctxt = CrateCtxt::new(&input);
+        //     let ownership_schemes =
+        //         analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
+        //             crate_ctxt,
+        //             &noalias_params,
+        //         )?;
+
+        //     let analysis_results = refactor::Analysis::new(
+        //         taint_result,
+        //         ownership_schemes,
+        //         mutability_result,
+        //         fatness_result,
+        //     );
+        //     refactor::refactor(&input, &analysis_results, RewriteMode::InPlace)?;
+        // }
+        Command::Rewrite {
+            rewrite_mode,
+            type_only,
+        } => {
             let alias_result = alias::alias_results(&input);
             let taint_result = alias::taint_results(&input);
             let mutability_result =
@@ -323,34 +356,8 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 mutability_result,
                 fatness_result,
             );
-            refactor::refactor(&input, &analysis_results, RewriteMode::InPlace)?;
-        }
-        Command::Rewrite { rewrite_mode } => {
-            let alias_result = alias::alias_results(&input);
-            let taint_result = alias::taint_results(&input);
-            let mutability_result =
-                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
-            let fatness_result =
-                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input);
-            let noalias_params = analysis::type_qualifier::noalias::compute_noalias_params(
-                &input,
-                &alias_result,
-                &mutability_result,
-            );
-            let crate_ctxt = CrateCtxt::new(&input);
-            let ownership_schemes =
-                analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
-                    crate_ctxt,
-                    &noalias_params,
-                )?;
-
-            let analysis_results = refactor::Analysis::new(
-                taint_result,
-                ownership_schemes,
-                mutability_result,
-                fatness_result,
-            );
-            refactor::refactor(&input, &analysis_results, rewrite_mode)?;
+            let refactor_options = RefactorOptions { type_only };
+            refactor::refactor(&input, &analysis_results, rewrite_mode, refactor_options)?;
         }
         Command::FoldLetRefMut { rewrite_mode } => preprocess::fold_let_ref_mut(tcx, rewrite_mode),
     }

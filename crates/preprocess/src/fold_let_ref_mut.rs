@@ -43,7 +43,9 @@ pub fn fold_let_ref_mut(tcx: TyCtxt, mode: RewriteMode) {
                 let lhs = &caps["lhs"];
                 let rhs = &caps["rhs"];
 
-                let rhs = regex::Regex::new(&expr_fresh).unwrap().replace_all(rhs, lhs);
+                let rhs = regex::Regex::new(&expr_fresh)
+                    .unwrap()
+                    .replace_all(rhs, lhs);
 
                 lhs.to_owned() + " = " + &rhs + ";"
             })

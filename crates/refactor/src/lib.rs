@@ -49,10 +49,15 @@ extern crate rustc_type_ir;
 
 extern crate either;
 
+pub struct RefactorOptions {
+    pub type_only: bool,
+}
+
 pub fn refactor<'tcx>(
     crate_data: &CrateData<'tcx>,
     analysis: &Analysis<'tcx>,
     rewrite_mode: RewriteMode,
+    options: RefactorOptions,
 ) -> anyhow::Result<()> {
     let struct_decision = StructFields::new(crate_data, analysis);
     // let fn_decision = FnParams::new(crate_data, analysis);
@@ -71,6 +76,7 @@ pub fn refactor<'tcx>(
         &struct_decision,
         &mut rewriter,
         crate_data.tcx,
+        options.type_only,
     );
 
     rewriter.write(rewrite_mode);

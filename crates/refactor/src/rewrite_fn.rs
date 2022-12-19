@@ -29,19 +29,22 @@ pub fn rewrite_fns(
     struct_decision: &StructFields,
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt,
+    type_only: bool,
 ) {
     for &did in fns {
         let local_data = fn_decision.local_data(&did);
         let body = tcx.optimized_mir(did);
         rewrite_fn_sig(body, local_data, rewriter, tcx);
-        rewrite_fn(
-            body,
-            fn_decision.local_data(&did),
-            fn_decision,
-            struct_decision,
-            rewriter,
-            tcx,
-        );
+        if !type_only {
+            rewrite_fn(
+                body,
+                fn_decision.local_data(&did),
+                fn_decision,
+                struct_decision,
+                rewriter,
+                tcx,
+            );
+        }
     }
 }
 
