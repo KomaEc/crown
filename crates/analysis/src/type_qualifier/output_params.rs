@@ -82,7 +82,6 @@ fn conservative_output_params(
                     .first(),
                     Some(&mutability) if mutability == Mutability::Mut)
             {
-                println!("@{:?}: {:?} removed because it aliases {:?}, which is mutable", body.source.def_id(), &Local::new(arg), &Local::new(local));
                 this_output_params.remove(&Local::new(arg));
             }
         }
