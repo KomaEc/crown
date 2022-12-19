@@ -12,7 +12,7 @@ use crate::{
         state::SSAState,
         AnalysisResults,
     },
-    type_qualifier::noalias::NoAliasParams,
+    type_qualifier::output_params::OutputParams,
     CrateCtxt,
 };
 
@@ -131,7 +131,7 @@ pub trait AnalysisKind<'analysis, 'db, 'tcx> {
     type DB: Database;
     fn analyze(
         crate_ctxt: CrateCtxt<'tcx>,
-        noalias_params: &NoAliasParams,
+        output_params: &OutputParams,
     ) -> anyhow::Result<Self::Results>;
 }
 
@@ -142,7 +142,7 @@ impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for Modular {
     type Results = ();
     type InterCtxt = ();
     type DB = ();
-    fn analyze(_: CrateCtxt, _: &NoAliasParams) -> anyhow::Result<Self::Results> {
+    fn analyze(_: CrateCtxt, _: &OutputParams) -> anyhow::Result<Self::Results> {
         // TODO implement this
         anyhow::bail!("modular analysis is not implemented")
     }
@@ -153,7 +153,7 @@ impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for IntraProcedura
     type Results = ();
     type InterCtxt = ();
     type DB = CadicalDatabase;
-    fn analyze(crate_ctxt: CrateCtxt, _: &NoAliasParams) -> anyhow::Result<Self::Results> {
+    fn analyze(crate_ctxt: CrateCtxt, _: &OutputParams) -> anyhow::Result<Self::Results> {
         // let mut databases = Vec::with_capacity(crate_ctxt.fns().len());
         for &did in crate_ctxt.fns() {
             println!("solving {:?}", did);

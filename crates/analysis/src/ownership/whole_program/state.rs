@@ -12,13 +12,14 @@ use crate::{
         dom::compute_dominance_frontier,
         state::SSAState,
     },
-    type_qualifier::noalias::NoAliasParams,
+    type_qualifier::output_params::OutputParams,
     CrateCtxt,
 };
 
 pub(super) fn initial_inter_ctxt(
     crate_ctxt: &CrateCtxt,
-    noalias_params: &NoAliasParams,
+    // noalias_params: &NoAliasParams,
+    output_params: &OutputParams,
     gen: &mut Gen,
     database: &mut Z3Database,
 ) -> InterCtxt {
@@ -27,7 +28,8 @@ pub(super) fn initial_inter_ctxt(
     let mut fn_sigs = FxHashMap::default();
     fn_sigs.reserve(crate_ctxt.fns().len());
     for &did in crate_ctxt.fn_ctxt.fns() {
-        let noalias_params = &noalias_params[&did];
+        // let noalias_params = &noalias_params[&did];
+        let output_params = &output_params[&did];
         let body = crate_ctxt.tcx.optimized_mir(did);
         let fn_sig = {
             let mut local_decls = body.local_decls.iter_enumerated();
@@ -43,7 +45,7 @@ pub(super) fn initial_inter_ctxt(
             let args = local_decls
                 .take(body.arg_count)
                 .map(|(local, local_decl)| {
-                    if noalias_params.contains(&local) {
+                    if output_params.contains(&local) {
                         let r#use = initialize_local(
                             local_decl,
                             gen,

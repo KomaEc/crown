@@ -28,7 +28,7 @@ use crate::{
         AnalysisResults, FnResults,
     },
     struct_ctxt::StructCtxt,
-    type_qualifier::noalias::NoAliasParams,
+    type_qualifier::output_params::OutputParams,
     CrateCtxt,
 };
 
@@ -44,7 +44,7 @@ impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for WholeProgramAn
 
     fn analyze(
         mut crate_ctxt: CrateCtxt<'tcx>,
-        noalias_params: &NoAliasParams,
+        output_params: &OutputParams,
     ) -> anyhow::Result<Self::Results> {
         let required_precision = std::cmp::max(
             crate_ctxt.fns().iter().copied().fold(0, |acc, did| {
@@ -55,7 +55,7 @@ impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for WholeProgramAn
         );
 
         // first stage
-        let mut results = solve_crate(&mut crate_ctxt, Left((noalias_params, required_precision)))?;
+        let mut results = solve_crate(&mut crate_ctxt, Left((output_params, required_precision)))?;
 
         // second stage
         for _ in 1..2 * required_precision {
@@ -184,7 +184,7 @@ fn solve_body<'tcx>(
 
 fn solve_crate(
     crate_ctxt: &mut CrateCtxt,
-    previous_results: Either<(&NoAliasParams, Precision), IntermediateResults>,
+    previous_results: Either<(&OutputParams, Precision), IntermediateResults>,
 ) -> anyhow::Result<IntermediateResults> {
     let mut gen = Gen::new();
 

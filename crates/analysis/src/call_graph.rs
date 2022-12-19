@@ -133,6 +133,11 @@ impl CallGraph {
         // self.post_order.everything()
         &self.ranked_by_n_alloc_deallocs
     }
+
+    #[inline]
+    pub fn post_order(&self) -> &[DefId] {
+        self.post_order.everything()
+    }
 }
 
 struct CallGraphConstruction<'me> {

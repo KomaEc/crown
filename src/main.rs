@@ -63,7 +63,6 @@ enum Command {
     Analyse,
     Taint,
     Alias,
-    NoAliasParams,
     Mutability,
     Fatness,
     // Refactor,
@@ -263,16 +262,16 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             let alias = alias::alias_results(&input);
             alias.print_results();
         }
-        Command::NoAliasParams => {
-            let alias_result = alias::alias_results(&input);
-            let mutability_result =
-                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
-            analysis::type_qualifier::noalias::show_noalias_params(
-                &input,
-                &alias_result,
-                &mutability_result,
-            );
-        }
+        // Command::NoAliasParams => {
+        //     let alias_result = alias::alias_results(&input);
+        //     let mutability_result =
+        //         analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
+        //     analysis::type_qualifier::noalias::show_noalias_params(
+        //         &input,
+        //         &alias_result,
+        //         &mutability_result,
+        //     );
+        // }
         Command::Mutability => {
             let mutability_result =
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
@@ -287,7 +286,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             let alias_result = alias::alias_results(&input);
             let mutability_result =
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
-            let noalias_params = analysis::type_qualifier::noalias::compute_noalias_params(
+            let output_params = analysis::type_qualifier::output_params::compute_output_params(
                 &input,
                 &alias_result,
                 &mutability_result,
@@ -296,7 +295,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             let ownership_schemes = time("construct ownership scheme", || {
                 analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
                     crate_ctxt,
-                    &noalias_params,
+                    &output_params,
                 )
             })?;
             ownership_schemes.trace(tcx);
@@ -338,7 +337,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
             let fatness_result =
                 analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input);
-            let noalias_params = analysis::type_qualifier::noalias::compute_noalias_params(
+            let output_params = analysis::type_qualifier::output_params::compute_output_params(
                 &input,
                 &alias_result,
                 &mutability_result,
@@ -347,7 +346,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             let ownership_schemes =
                 analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
                     crate_ctxt,
-                    &noalias_params,
+                    &output_params,
                 )?;
 
             let analysis_results = refactor::Analysis::new(
