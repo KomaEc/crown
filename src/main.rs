@@ -34,12 +34,6 @@ use rustc_middle::ty::TyCtxt;
 use rustc_session::config;
 use tracing_subscriber::EnvFilter;
 
-// // Set up Jemalloc
-// use jemallocator::Jemalloc;
-
-// #[global_allocator]
-// static GLOBAL: Jemalloc = Jemalloc;
-
 #[derive(Parser)]
 struct Cli {
     #[clap(subcommand)]
@@ -57,6 +51,10 @@ enum Command {
         rewrite_mode: RewriteMode,
     },
     FoldLetRefMut {
+        #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
+        rewrite_mode: RewriteMode,
+    },
+    ExplicitAddr {
         #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
     },
@@ -121,9 +119,6 @@ fn main() -> Result<()> {
         preprocess(&args.path, rewrite_mode)?;
         return Ok(());
     }
-    // if let Command::Refactor = args.cmd {
-    //     preprocess(&args.path, RewriteMode::InPlace)?;
-    // }
     run_compiler(compiler_config(args.path)?, |tcx| run(&args.cmd, tcx))
 }
 
@@ -262,16 +257,6 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             let alias = alias::alias_results(&input);
             alias.print_results();
         }
-        // Command::NoAliasParams => {
-        //     let alias_result = alias::alias_results(&input);
-        //     let mutability_result =
-        //         analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
-        //     analysis::type_qualifier::noalias::show_noalias_params(
-        //         &input,
-        //         &alias_result,
-        //         &mutability_result,
-        //     );
-        // }
         Command::Mutability => {
             let mutability_result =
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
@@ -300,33 +285,6 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             })?;
             ownership_schemes.trace(tcx);
         }
-        // Command::Refactor => {
-        //     let alias_result = alias::alias_results(&input);
-        //     let taint_result = alias::taint_results(&input);
-        //     let mutability_result =
-        //         analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
-        //     let fatness_result =
-        //         analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input);
-        //     let noalias_params = analysis::type_qualifier::noalias::compute_noalias_params(
-        //         &input,
-        //         &alias_result,
-        //         &mutability_result,
-        //     );
-        //     let crate_ctxt = CrateCtxt::new(&input);
-        //     let ownership_schemes =
-        //         analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
-        //             crate_ctxt,
-        //             &noalias_params,
-        //         )?;
-
-        //     let analysis_results = refactor::Analysis::new(
-        //         taint_result,
-        //         ownership_schemes,
-        //         mutability_result,
-        //         fatness_result,
-        //     );
-        //     refactor::refactor(&input, &analysis_results, RewriteMode::InPlace)?;
-        // }
         Command::Rewrite {
             rewrite_mode,
             type_only,
@@ -359,6 +317,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             refactor::refactor(&input, &analysis_results, rewrite_mode, refactor_options)?;
         }
         Command::FoldLetRefMut { rewrite_mode } => preprocess::fold_let_ref_mut(tcx, rewrite_mode),
+        Command::ExplicitAddr { rewrite_mode } => preprocess::use_explicit_addr(tcx, rewrite_mode),
     }
     Ok(())
 }
