@@ -12,3 +12,5 @@ rustc_private = true
 rustfix = "0.6"
 petgraph = "0.6"
 common = { path = "../common" }
+regex = "1.7"
+similar = "2.2"

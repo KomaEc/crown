@@ -55,6 +55,10 @@ enum Command {
         #[clap(arg_enum, default_value_t = RewriteMode::Print)]
         rewrite_mode: RewriteMode,
     },
+    FoldLetRefMut {
+        #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
+        rewrite_mode: RewriteMode,
+    },
     Analyse,
     Taint,
     Alias,
@@ -348,6 +352,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             );
             refactor::refactor(&input, &analysis_results, rewrite_mode)?;
         }
+        Command::FoldLetRefMut { rewrite_mode } => preprocess::fold_let_ref_mut(tcx, rewrite_mode),
     }
     Ok(())
 }

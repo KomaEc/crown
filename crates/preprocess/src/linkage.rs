@@ -4,16 +4,18 @@ use rustc_hash::FxHashMap;
 use rustc_hir::{
     def::{DefKind, Res},
     intravisit::{self, Visitor},
-    Expr, ExprKind, ForeignItem, ForeignItemKind, Item, ItemKind, Node, OwnerNode, Pat, PatKind,
-    Path, QPath, Ty,
+    Expr, ExprKind, ForeignItem, ForeignItemKind, ItemKind, Node, OwnerNode, Pat, PatKind, Path,
+    QPath, Ty,
 };
 use rustc_middle::{hir::nested_filter::OnlyBodies, ty::TyCtxt};
 use rustc_span::sym;
 
+use crate::owner_items;
+
 pub(crate) fn link_functions(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     // (1) Find all `#[no_mangle]` or `#[export_name=...]` functions, and index them by symbol.
     let mut symbol_to_def = FxHashMap::default();
-    for item in items(tcx).filter(|item| matches!(item.kind, ItemKind::Fn(..))) {
+    for item in owner_items(tcx).filter(|item| matches!(item.kind, ItemKind::Fn(..))) {
         let hir_id = item.hir_id();
         let attrs = tcx.hir().attrs(hir_id);
         if attrs.iter().any(|attr| attr.has_name(sym::no_mangle)) {
@@ -46,7 +48,7 @@ pub(crate) fn link_functions(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         let replacement = "crate::".to_owned() + &tcx.def_path_str(did.to_def_id());
         rewriter.replace(tcx, span, replacement)
     });
-    for item in items(tcx) {
+    for item in owner_items(tcx) {
         vis.visit_item(item);
     }
 
@@ -80,7 +82,7 @@ pub(crate) fn link_incomplete_types(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     let mut incomplete_to_name = FxHashMap::default();
 
     // (1) Find complete type definitions, and index them by name.
-    for item in items(tcx) {
+    for item in owner_items(tcx) {
         let complete = match item.kind {
             ItemKind::Struct(..) => true,
             ItemKind::Union(..) => true,
@@ -150,7 +152,7 @@ pub(crate) fn link_incomplete_types(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
             }
         }
     });
-    for item in items(tcx) {
+    for item in owner_items(tcx) {
         vis.visit_item(item)
     }
     for foreign_item in foreign_items(tcx) {
@@ -162,7 +164,7 @@ pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     // (1) Compute equivalent classes by name
     let mut structs = Vec::new();
     let mut struct_idx = FxHashMap::default();
-    for (idx, item) in items(tcx)
+    for (idx, item) in owner_items(tcx)
         .filter(|item| matches!(item.kind, ItemKind::Struct(..) | ItemKind::Union(..)))
         .enumerate()
     {
@@ -193,8 +195,8 @@ pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
 
     // (3) Erase non-canonical structs
     let mut version = 0;
-    for item in
-        items(tcx).filter(|item| matches!(item.kind, ItemKind::Struct(..) | ItemKind::Union(..)))
+    for item in owner_items(tcx)
+        .filter(|item| matches!(item.kind, ItemKind::Struct(..) | ItemKind::Union(..)))
     {
         // println!("try erasing {}", item.ident);
         let struct_idx = struct_idx[&item.owner_id.def_id.to_def_id()];
@@ -230,7 +232,7 @@ pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         let replacement = "crate::".to_owned() + &tcx.def_path_str(rep_did);
         rewriter.replace(tcx, span, replacement)
     });
-    for item in items(tcx) {
+    for item in owner_items(tcx) {
         // skip automatically derived items
         let hir_id = item.hir_id();
         let attrs = tcx.hir().attrs(hir_id);
@@ -253,143 +255,6 @@ pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     for foreign_item in foreign_items(tcx) {
         vis.visit_foreign_item(foreign_item)
     }
-
-    // let structs = items(tcx)
-    //     .filter_map(|item| {
-    //         matches!(item.kind, ItemKind::Struct(..)).then_some(item.def_id.to_def_id())
-    //     })
-    //     .collect::<Vec<_>>();
-
-    // // (1) Build struct dependency
-    // let struct_dependency = StructDependency::new(
-    //     tcx,
-    //     &structs[..],
-    //     |field_ty, graph| {
-    //         let mut ty = field_ty;
-    //         loop {
-    //             let index = ty.builtin_index();
-    //             let deref = ty.builtin_deref(true).map(|ty_and_mut| ty_and_mut.ty);
-
-    //             if let Some(inner_ty) = index.or(deref) {
-    //                 ty = inner_ty
-    //             } else {
-    //                 break;
-    //             }
-    //         }
-    //         if let TyKind::Adt(inner_adt_def, _) = ty.kind() {
-    //             if graph.contains_node(inner_adt_def.did()) {
-    //                 return Some(inner_adt_def.did());
-    //             }
-    //         }
-    //         None
-    //     },
-    //     |field_def| field_def.ident(tcx),
-    // );
-
-    // // (2) Compute equivalent struct classes
-    // let mut sccs = VecArray::with_data_capacity(structs.len());
-    // TarjanScc::new().run(struct_dependency.graph(), |nodes| {
-    //     println!("{:?}", nodes);
-    //     sccs.push_array(nodes.iter().copied().map(|did| (did, tcx.item_name(did))))
-    // });
-    // let sccs = sccs.done();
-
-    // let mut scc_idx = FxHashMap::default();
-    // for (idx, scc) in sccs.iter().enumerate() {
-    //     for &(did, _) in scc {
-    //         scc_idx.insert(did, idx);
-    //     }
-    // }
-    // let scc_idx = scc_idx;
-
-    // let mut equivalent_classes = UnionFind::new(sccs.array_count());
-    // for (idx1, scc1) in sccs.iter().enumerate() {
-    //     for idx2 in idx1 + 1..sccs.array_count() {
-    //         let scc2 = &sccs[idx2];
-    //         if scc1.len() == scc2.len()
-    //             && scc1
-    //                 .iter()
-    //                 .map(|(_, s)| s)
-    //                 .zip(scc2.iter().map(|(_, s)| s))
-    //                 .all(|(f, g)| *f == *g)
-    //         {
-    //             equivalent_classes.union(idx1, idx2);
-    //         }
-    //     }
-    // }
-    // let equivalent_classes = equivalent_classes.into_labeling();
-
-    // // (3) Erase non-canonical structs
-    // let mut version = 0;
-    // for item in items(tcx).filter(|item| matches!(item.kind, ItemKind::Struct(..))) {
-    //     // println!("try erasing {}", item.ident);
-    //     let Some(&scc_idx) = scc_idx.get(&item.def_id.to_def_id()) else { unreachable!() };
-    //     let rep_idx = equivalent_classes[scc_idx];
-    //     if rep_idx == scc_idx {
-    //         continue;
-    //     }
-    //     let span = item.span;
-    //     // println!("erased: {:?}", span);
-    //     // rewriter.erase(tcx, span);
-    //     rewriter.replace(tcx, span, format!("struct OrcGeneratedXXX{version};"));
-    //     version += 1;
-
-    //     let hir_id = item.hir_id();
-    //     let attrs = tcx.hir().attrs(hir_id);
-    //     for attr in attrs {
-    //         let span = attr.span;
-    //         rewriter.erase(tcx, span)
-    //     }
-    // }
-
-    // // (4) Rewrite references to canonical one
-    // let mut vis = resolved_path_visitor(tcx, |path| {
-    //     let Res::Def(DefKind::Struct, did) = path.res else { return };
-    //     let Some(&scc_idx) = scc_idx.get(&did) else { return };
-    //     let rep_idx = equivalent_classes[scc_idx];
-    //     if rep_idx == scc_idx {
-    //         return;
-    //     }
-
-    //     let name = tcx.item_name(did);
-    //     let &rep_did = sccs[rep_idx]
-    //         .iter()
-    //         .find_map(|(did, symbol)| (*symbol == name).then_some(did))
-    //         .unwrap();
-
-    //     let span = path.span;
-    //     let replacement = "crate::".to_owned() + &tcx.def_path_str(rep_did);
-    //     rewriter.replace(tcx, span, replacement)
-    // });
-    // for item in items(tcx).filter(|item| !matches!(item.kind, ItemKind::Struct(..))) {
-    //     // skip automatically derived items
-    //     let hir_id = item.hir_id();
-    //     let attrs = tcx.hir().attrs(hir_id);
-    //     if attrs.iter().any(|attr| attr.has_name(sym::automatically_derived)) {
-    //         continue
-    //     }
-    //     vis.visit_item(item)
-    // }
-    // for foreign_item in foreign_items(tcx) {
-    //     vis.visit_foreign_item(foreign_item)
-    // }
-
-    // let names = sccs.repack(|(did, ident)| ident);
-}
-
-fn items(tcx: TyCtxt) -> impl Iterator<Item = &'_ Item<'_>> {
-    tcx.hir()
-        .krate()
-        .owners
-        .iter()
-        .filter_map(|maybe_owner| maybe_owner.as_owner())
-        .filter_map(|owner| {
-            if let OwnerNode::Item(item) = owner.node() {
-                Some(item)
-            } else {
-                None
-            }
-        })
 }
 
 fn foreign_items(tcx: TyCtxt) -> impl Iterator<Item = &'_ ForeignItem<'_>> {

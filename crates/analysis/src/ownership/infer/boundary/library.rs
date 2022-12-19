@@ -72,7 +72,6 @@ where
         let Some((arg, is_ref)) = args[0].clone() else { return };
         assert!(!is_ref, "offset(&mut x) is not supported");
 
-
         // let fn_sig = self.tcx.fn_sig(offset_did);
         // let ty = EarlyBinder(fn_sig.output().skip_binder()).subst(self.tcx, substs);
 
