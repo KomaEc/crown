@@ -791,7 +791,7 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy> Visitor<'tcx>
                     // special-casing free function
                     if foreign_item.ident.as_str() == "free" {
                         D::handle_dealloc_arg(self, args.first().unwrap());
-                        return
+                        return;
                     }
                 }
             }

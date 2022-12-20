@@ -13,7 +13,6 @@ use crate::call_graph::CallGraph;
 
 pub type OutputParams = FxHashMap<DefId, FxHashSet<Local>>;
 
-
 pub fn show_output_params(
     crate_data: &common::CrateData,
     alias_result: &AliasResult,
@@ -88,12 +87,12 @@ fn conservative_output_params(
             if local_decl.ty.is_primitive_ty() {
                 continue;
             }
-            if let Some(&(callee, idx)) = call_args_mapping.get(&local) {
-                if let Some(facts) = known_facts.get(&callee) {
-                    if facts.contains(&Local::new(idx + 1)) {
-                        continue;
-                    }
-                }
+            if let Some(&(_callee, _idx)) = call_args_mapping.get(&local) {
+                // if let Some(facts) = known_facts.get(&callee) {
+                // if facts.contains(&Local::new(idx + 1)) {
+                continue;
+                // }
+                // }
             }
             let local = local.index();
             if local == arg {
