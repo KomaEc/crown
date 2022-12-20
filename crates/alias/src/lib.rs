@@ -19,7 +19,7 @@
 use common::data_structure::vec_vec::VecVec;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use steensgaard::{FieldFocused, FieldInsensitive, Steensgaard};
+use steensgaard::{FieldFocused, FieldInsensitive, MergeDeallocArg, NopDeallocArg, Steensgaard};
 
 extern crate rustc_arena;
 extern crate rustc_ast;
@@ -41,8 +41,8 @@ extern crate rustc_type_ir;
 
 mod steensgaard;
 
-pub type TaintResult = Steensgaard<FieldFocused>;
-pub type AliasResult = Steensgaard<FieldInsensitive>;
+pub type TaintResult = Steensgaard<FieldFocused, MergeDeallocArg>;
+pub type AliasResult = Steensgaard<FieldInsensitive, NopDeallocArg>;
 
 pub fn taint_results(input: &common::CrateData) -> TaintResult {
     Steensgaard::field_based(input)
@@ -117,7 +117,7 @@ impl TaintResult {
                     );
                     (start..end)
                         .filter_map(|f| {
-                            self.may_alias(f, self.arg_free)
+                            self.may_alias(f, self.dealloc_arg)
                                 .then(|| f.index() - start.index())
                         })
                         .collect()

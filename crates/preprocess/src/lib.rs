@@ -1,9 +1,9 @@
 #![feature(rustc_private)]
 
+mod explicit_addr;
 mod fold_let_ref_mut;
 mod linkage;
 mod signal_nullness;
-mod explicit_addr;
 
 extern crate rustc_ast;
 extern crate rustc_hash;
@@ -13,11 +13,11 @@ extern crate rustc_middle;
 extern crate rustc_span;
 
 use common::rewrite::{Rewrite, RewriteMode};
+use explicit_addr::explicit_addr;
 use linkage::{canonicalize_structs, link_functions, link_incomplete_types};
 use rustc_hir::{Item, OwnerNode};
 use rustc_middle::ty::TyCtxt;
 use signal_nullness::signal_nullness;
-use explicit_addr::explicit_addr;
 
 pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] =
     &[phase_1, phase_2, phase_3, phase_4];
@@ -58,16 +58,13 @@ fn phase_4(tcx: TyCtxt, mode: RewriteMode) {
     rewriter.write(mode)
 }
 
-
 pub use fold_let_ref_mut::fold_let_ref_mut;
 
 pub fn use_explicit_addr(tcx: TyCtxt, mode: RewriteMode) {
-
     let mut rewriter = Vec::new();
     explicit_addr(tcx, &mut rewriter);
     rewriter.write(mode)
 }
-
 
 fn owner_items(tcx: TyCtxt) -> impl Iterator<Item = &'_ Item<'_>> {
     tcx.hir()

@@ -171,7 +171,7 @@ where
                         crate::ownership::Param::Normal(param) => {
                             if is_ref {
                                 tracing::error!("bad output parameter analysis!");
-                                return
+                                return;
                             }
                             let arg = arg.transpose();
 

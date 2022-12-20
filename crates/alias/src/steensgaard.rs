@@ -124,6 +124,48 @@ impl FieldStrategy for FieldFocused {
     }
 }
 
+pub trait DeallocArgStrategy: Sized {
+    type Arg;
+
+    fn handle_dealloc_arg<'cg, 'tcx, F: FieldStrategy>(
+        cg: &mut ConstraintGeneration<'cg, 'tcx, F, Self>,
+        dealloc_arg: &Operand<'tcx>,
+    );
+}
+
+pub enum MergeDeallocArg {}
+pub enum NopDeallocArg {}
+
+impl DeallocArgStrategy for MergeDeallocArg {
+    type Arg = AbstractLocation;
+
+    fn handle_dealloc_arg<'cg, 'tcx, F: FieldStrategy>(
+        cg: &mut ConstraintGeneration<'cg, 'tcx, F, Self>,
+        dealloc_arg: &Operand<'tcx>,
+    ) {
+        let Some(dealloc_arg) = dealloc_arg.place() else { return };
+        let ty = dealloc_arg.ty(cg.body, cg.tcx).ty;
+        assert!(ty.is_unsafe_ptr() || ty.is_region_ptr());
+        let Some(arg_loc) = cg.place_location(dealloc_arg) else { return };
+        let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
+        let param_loc = cg.steensgaard.dealloc_arg;
+        let constraint_idx = cg.constraints.len();
+        cg.constraints
+            .push(Constraint::new(ConstraintKind::Assign, param_loc, arg_loc));
+        cg.resolve_assign(param_loc, arg_loc, constraint_idx)
+    }
+}
+
+impl DeallocArgStrategy for NopDeallocArg {
+    type Arg = ();
+
+    fn handle_dealloc_arg<'cg, 'tcx, F: FieldStrategy>(
+        _: &mut ConstraintGeneration<'cg, 'tcx, F, Self>,
+        _: &Operand<'tcx>,
+    ) {
+    }
+}
+
 /// A set of memory locations for mir [`Item`]s, which belong to a group of [`DefId`]s.
 /// [`MemoryLocationGroup<Item>`] is essentially a map [`DefId`] -> [`Item`] -> [AbstractLocation]
 /// or [`DefId`] -> [`Item`] -> [std::ops::Range<AbstractLocation>] if an additional index is
@@ -148,7 +190,7 @@ type StructFields = MemoryLocationGroup<rustc_middle::mir::Field>;
 type FnLocals = MemoryLocationGroup<rustc_middle::mir::Local>;
 
 #[derive(Debug)]
-pub struct Steensgaard<F: FieldStrategy> {
+pub struct Steensgaard<F: FieldStrategy, D: DeallocArgStrategy> {
     /// struct -> field -> [std::ops::Range<AbstractLocation>]
     pub(crate) struct_fields: F::StructFields,
 
@@ -156,14 +198,15 @@ pub struct Steensgaard<F: FieldStrategy> {
     pub(crate) fn_locals: FnLocals,
 
     /// Argument of free
-    pub(crate) arg_free: AbstractLocation,
+    pub(crate) dealloc_arg: D::Arg,
+    // pub(crate) arg_free: AbstractLocation,
     pub(crate) pts_targets: UnionFind<AbstractLocation>,
     /// Steensgaard's analysis tracks for sinlge points-to relation for an
     /// abstract location, thus pts graph can be simplified as a vector.
     pub(crate) pts: IndexVec<AbstractLocation, AbstractLocation>,
 }
 
-impl Steensgaard<FieldFocused> {
+impl Steensgaard<FieldFocused, MergeDeallocArg> {
     pub fn field_based(input: &common::CrateData) -> Self {
         let n_struct_fields = input.structs.iter().fold(0usize, |acc, did| {
             acc + input.tcx.adt_def(*did).all_fields().count()
@@ -228,7 +271,7 @@ impl Steensgaard<FieldFocused> {
                 locations: fn_locals,
                 _marker: std::marker::PhantomData,
             },
-            arg_free,
+            dealloc_arg: arg_free,
             pts_targets,
             pts,
         };
@@ -282,7 +325,7 @@ impl Steensgaard<FieldFocused> {
     }
 }
 
-impl Steensgaard<FieldInsensitive> {
+impl Steensgaard<FieldInsensitive, NopDeallocArg> {
     pub fn field_insensitive(input: &common::CrateData) -> Self {
         let n_fn_locals = input.fns.iter().fold(0usize, |acc, did| {
             acc + input.tcx.optimized_mir(*did).local_decls.len()
@@ -314,8 +357,6 @@ impl Steensgaard<FieldInsensitive> {
         }
         let fn_locals = fn_locals.done();
 
-        let arg_free = pts.push(AbstractLocation::NULL);
-
         let pts_targets = UnionFind::new(pts.len());
 
         let mut steensgaard = Steensgaard {
@@ -325,7 +366,7 @@ impl Steensgaard<FieldInsensitive> {
                 locations: fn_locals,
                 _marker: std::marker::PhantomData,
             },
-            arg_free,
+            dealloc_arg: (),
             pts_targets,
             pts,
         };
@@ -364,7 +405,7 @@ impl Steensgaard<FieldInsensitive> {
     }
 }
 
-impl<F: FieldStrategy> Steensgaard<F> {
+impl<F: FieldStrategy, D: DeallocArgStrategy> Steensgaard<F, D> {
     #[inline]
     pub fn node_count(&self) -> usize {
         self.pts.len()
@@ -493,8 +534,8 @@ impl<'me> Iterator for WatcherListIter<'me> {
     }
 }
 
-struct ConstraintGeneration<'me, 'tcx, F: FieldStrategy> {
-    steensgaard: &'me mut Steensgaard<F>,
+pub struct ConstraintGeneration<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy> {
+    steensgaard: &'me mut Steensgaard<F, D>,
     body: &'me Body<'tcx>,
     tcx: TyCtxt<'tcx>,
     constraints: &'me mut Vec<Constraint>,
@@ -508,7 +549,7 @@ pub enum PlaceLocation {
     Deref(AbstractLocation),
 }
 
-impl<'me, 'tcx, F: FieldStrategy> ConstraintGeneration<'me, 'tcx, F> {
+impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy> ConstraintGeneration<'me, 'tcx, F, D> {
     pub(crate) fn notify(&mut self, p: AbstractLocation, buffer: &mut Vec<usize>) {
         buffer.clear();
         buffer.extend(self.watchers.get_list(p).iter());
@@ -637,18 +678,18 @@ impl<'me, 'tcx, F: FieldStrategy> ConstraintGeneration<'me, 'tcx, F> {
         self.resolve_assign(p, q, constraint_idx)
     }
 
-    pub(crate) fn handle_free(&mut self, free_arg: &Operand<'tcx>) {
-        let Some(free_arg) = free_arg.place() else { return };
-        let ty = free_arg.ty(self.body, self.tcx).ty;
-        assert!(ty.is_unsafe_ptr() || ty.is_region_ptr());
-        let Some(arg_loc) = self.place_location(free_arg) else { return };
-        let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
-        let param_loc = self.steensgaard.arg_free;
-        let constraint_idx = self.constraints.len();
-        self.constraints
-            .push(Constraint::new(ConstraintKind::Assign, param_loc, arg_loc));
-        self.resolve_assign(param_loc, arg_loc, constraint_idx)
-    }
+    // pub(crate) fn handle_free(&mut self, free_arg: &Operand<'tcx>) {
+    //     let Some(free_arg) = free_arg.place() else { return };
+    //     let ty = free_arg.ty(self.body, self.tcx).ty;
+    //     assert!(ty.is_unsafe_ptr() || ty.is_region_ptr());
+    //     let Some(arg_loc) = self.place_location(free_arg) else { return };
+    //     let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
+    //     let param_loc = self.steensgaard.arg_free;
+    //     let constraint_idx = self.constraints.len();
+    //     self.constraints
+    //         .push(Constraint::new(ConstraintKind::Assign, param_loc, arg_loc));
+    //     self.resolve_assign(param_loc, arg_loc, constraint_idx)
+    // }
 
     #[inline]
     fn place_location(&self, place: Place<'tcx>) -> Option<PlaceLocation> {
@@ -662,7 +703,9 @@ impl<'me, 'tcx, F: FieldStrategy> ConstraintGeneration<'me, 'tcx, F> {
     }
 }
 
-impl<'me, 'tcx, F: FieldStrategy> Visitor<'tcx> for ConstraintGeneration<'me, 'tcx, F> {
+impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy> Visitor<'tcx>
+    for ConstraintGeneration<'me, 'tcx, F, D>
+{
     fn visit_assign(
         &mut self,
         place: &Place<'tcx>,
@@ -738,7 +781,7 @@ impl<'me, 'tcx, F: FieldStrategy> Visitor<'tcx> for ConstraintGeneration<'me, 't
                     self.tcx.hir().find_by_def_id(local_did).unwrap()
                 {
                     if foreign_item.ident.as_str() == "free" {
-                        self.handle_free(args.first().unwrap())
+                        D::handle_dealloc_arg(self, args.first().unwrap())
                     }
                 }
             }
