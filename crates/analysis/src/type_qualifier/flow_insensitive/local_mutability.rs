@@ -11,6 +11,10 @@ use super::{
     AnalysisResult, FnLocalsVars, Infer, StructFieldsVars, Var,
 };
 
+pub fn local_mutability_analysis(crate_data: &common::CrateData) -> LocalMutabilityResult {
+    LocalMutabilityResult::new(crate_data)
+}
+
 pub type LocalMutabilityResult = AnalysisResult<LocalMutabilityAnalysis>;
 
 pub struct LocalMutabilityAnalysis;

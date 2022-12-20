@@ -1,7 +1,7 @@
 use rustc_middle::mir::{HasLocalDecls, Operand, Place};
 use rustc_span::symbol::Ident;
 
-use super::{conservative_call, EnsureNoDeref, MutabilityAnalysis, MutabilityLikeAnalysis};
+use super::{conservative_call, EnsureNoDeref, MutabilityLikeAnalysis};
 use crate::type_qualifier::flow_insensitive::{
     mutability::{place_vars, MutCtxt},
     ConstraintSystem, Infer, StructFieldsVars, Var,
@@ -87,10 +87,40 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
                 database,
             )
         }
+        "strchr" => {
+            return call_strchr::<M>(
+                destination,
+                args,
+                local_decls,
+                locals,
+                struct_fields,
+                database,
+            )
+        }
+        "strrchr" => {
+            return call_strrchr::<M>(
+                destination,
+                args,
+                local_decls,
+                locals,
+                struct_fields,
+                database,
+            )
+        }
+        "strncmp" => {
+            return call_strncmp::<M>(
+                destination,
+                args,
+                local_decls,
+                locals,
+                struct_fields,
+                database,
+            )
+        }
         _ => {}
     }
 
-    conservative_call::<MutabilityAnalysis>(
+    conservative_call::<M>(
         destination,
         args,
         local_decls,
@@ -246,4 +276,63 @@ fn call_memset<'tcx, M: MutabilityLikeAnalysis>(
         struct_fields,
         database,
     )
+}
+
+fn call_strchr<'tcx, M: MutabilityLikeAnalysis>(
+    destination: &Place<'tcx>,
+    args: &Vec<Operand<'tcx>>,
+    local_decls: &impl HasLocalDecls<'tcx>,
+    locals: &[Var],
+    struct_fields: &StructFieldsVars,
+    database: &mut <M as Infer>::L,
+) {
+    call_strrchr::<M>(
+        destination,
+        args,
+        local_decls,
+        locals,
+        struct_fields,
+        database,
+    )
+}
+
+fn call_strrchr<'tcx, M: MutabilityLikeAnalysis>(
+    destination: &Place<'tcx>,
+    args: &Vec<Operand<'tcx>>,
+    local_decls: &impl HasLocalDecls<'tcx>,
+    locals: &[Var],
+    struct_fields: &StructFieldsVars,
+    database: &mut <M as Infer>::L,
+) {
+    let dest_vars =
+        place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
+
+    if let Some(arg) = args[0].place() {
+        let arg_vars =
+            place_vars::<EnsureNoDeref>(&arg, local_decls, locals, struct_fields, &mut ());
+        let mut dest_arg = dest_vars.zip(arg_vars);
+
+        if let Some((dest, arg)) = dest_arg.next() {
+            database.guard(dest, arg)
+        }
+        for (dest, arg) in dest_arg {
+            database.guard(arg, dest);
+            database.guard(dest, arg);
+        }
+    }
+}
+
+fn call_strncmp<'tcx, M: MutabilityLikeAnalysis>(
+    destination: &Place<'tcx>,
+    args: &Vec<Operand<'tcx>>,
+    local_decls: &impl HasLocalDecls<'tcx>,
+    locals: &[Var],
+    struct_fields: &StructFieldsVars,
+    database: &mut <M as Infer>::L,
+) {
+    let dest_vars =
+        place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
+    assert!(dest_vars.is_empty());
+    // no constraint on args
+    let _ = args;
 }
