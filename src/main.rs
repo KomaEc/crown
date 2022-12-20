@@ -58,6 +58,7 @@ enum Command {
         #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
     },
+    OutputParams,
     Analyse,
     Taint,
     Alias,
@@ -318,6 +319,16 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         }
         Command::FoldLetRefMut { rewrite_mode } => preprocess::fold_let_ref_mut(tcx, rewrite_mode),
         Command::ExplicitAddr { rewrite_mode } => preprocess::use_explicit_addr(tcx, rewrite_mode),
+        Command::OutputParams => {
+            let alias_result = alias::alias_results(&input);
+            let mutability_result =
+                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
+            analysis::type_qualifier::output_params::show_output_params(
+                &input,
+                &alias_result,
+                &mutability_result,
+            );
+        }
     }
     Ok(())
 }

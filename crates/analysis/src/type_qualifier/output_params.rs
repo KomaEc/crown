@@ -13,6 +13,29 @@ use crate::call_graph::CallGraph;
 
 pub type OutputParams = FxHashMap<DefId, FxHashSet<Local>>;
 
+
+pub fn show_output_params(
+    crate_data: &common::CrateData,
+    alias_result: &AliasResult,
+    mutability_result: &MutabilityResult,
+) {
+    fn show_set<T: std::fmt::Debug>(set: impl Iterator<Item = T>) -> String {
+        set.map(|x| format!("{:?}", x))
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+
+    let output_params = compute_output_params(crate_data, alias_result, mutability_result);
+
+    for (did, noalias_params) in output_params {
+        let noalias_params_str = show_set(noalias_params.into_iter());
+        println!(
+            "@{}: {noalias_params_str}",
+            crate_data.tcx.def_path_str(did)
+        );
+    }
+}
+
 pub fn compute_output_params(
     crate_data: &common::CrateData,
     alias_result: &AliasResult,
