@@ -687,6 +687,29 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy> ConstraintGeneration<'m
             self.tcx,
         )
     }
+
+    fn handle_unknown_call(&mut self, destination: &Place<'tcx>, args: &Vec<Operand<'tcx>>) {
+        let dest_ty = destination.ty(self.body, self.tcx).ty;
+        if !dest_ty.is_unsafe_ptr() && !dest_ty.is_region_ptr() {
+            return;
+        }
+        let Some(dest_loc) = self.place_location(*destination) else { return };
+        let PlaceLocation::Plain(dest_loc) = dest_loc else { unreachable!("destination place contains derefs") };
+
+        for arg in args.iter() {
+            let Some(place) = arg.place() else { continue };
+            let place_ty = place.ty(self.body, self.tcx).ty;
+            if !place_ty.is_unsafe_ptr() && !place_ty.is_region_ptr() {
+                continue;
+            }
+            let Some(arg_loc) = self.place_location(place) else { continue };
+            let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
+            let constraint_idx = self.constraints.len();
+            self.constraints
+                .push(Constraint::new(ConstraintKind::Assign, dest_loc, arg_loc));
+            self.resolve_assign(dest_loc, arg_loc, constraint_idx)
+        }
+    }
 }
 
 impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy> Visitor<'tcx>
@@ -761,16 +784,20 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy> Visitor<'tcx>
         let &FnDef(callee_did, _generic_args) = func.ty().kind() else { return };
 
         if !self.steensgaard.fn_locals.did_idx.contains_key(&callee_did) {
-            // special-casing free function
             if let Some(local_did) = callee_did.as_local() {
                 if let rustc_hir::Node::ForeignItem(foreign_item) =
                     self.tcx.hir().find_by_def_id(local_did).unwrap()
                 {
+                    // special-casing free function
                     if foreign_item.ident.as_str() == "free" {
-                        D::handle_dealloc_arg(self, args.first().unwrap())
+                        D::handle_dealloc_arg(self, args.first().unwrap());
+                        return
                     }
                 }
             }
+
+            // handle unknown calls
+            self.handle_unknown_call(destination, args);
 
             return;
         }
