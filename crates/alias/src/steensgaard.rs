@@ -199,7 +199,6 @@ pub struct Steensgaard<F: FieldStrategy, D: DeallocArgStrategy> {
 
     /// Argument of free
     pub(crate) dealloc_arg: D::Arg,
-    // pub(crate) arg_free: AbstractLocation,
     pub(crate) pts_targets: UnionFind<AbstractLocation>,
     /// Steensgaard's analysis tracks for sinlge points-to relation for an
     /// abstract location, thus pts graph can be simplified as a vector.
@@ -677,19 +676,6 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy> ConstraintGeneration<'m
         // .push(Constraint::new(ConstraintKind::Assign, p, q));
         self.resolve_assign(p, q, constraint_idx)
     }
-
-    // pub(crate) fn handle_free(&mut self, free_arg: &Operand<'tcx>) {
-    //     let Some(free_arg) = free_arg.place() else { return };
-    //     let ty = free_arg.ty(self.body, self.tcx).ty;
-    //     assert!(ty.is_unsafe_ptr() || ty.is_region_ptr());
-    //     let Some(arg_loc) = self.place_location(free_arg) else { return };
-    //     let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
-    //     let param_loc = self.steensgaard.arg_free;
-    //     let constraint_idx = self.constraints.len();
-    //     self.constraints
-    //         .push(Constraint::new(ConstraintKind::Assign, param_loc, arg_loc));
-    //     self.resolve_assign(param_loc, arg_loc, constraint_idx)
-    // }
 
     #[inline]
     fn place_location(&self, place: Place<'tcx>) -> Option<PlaceLocation> {
