@@ -169,6 +169,10 @@ where
                             );
                         }
                         crate::ownership::Param::Normal(param) => {
+                            if is_ref {
+                                tracing::error!("bad output parameter analysis!");
+                                return
+                            }
                             let arg = arg.transpose();
 
                             matcher(
