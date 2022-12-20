@@ -79,10 +79,14 @@ impl BooleanLattice for Mutability {}
 
 pub struct MutabilityAnalysis;
 
-impl Infer for MutabilityAnalysis {
+pub trait MutabilityLikeAnalysis {}
+
+impl MutabilityLikeAnalysis for MutabilityAnalysis {}
+
+impl<M: MutabilityLikeAnalysis> Infer for M {
     type L = BooleanSystem<Mutability>;
 
-    fn infer_assign<'tcx>(
+    default fn infer_assign<'tcx>(
         place: &Place<'tcx>,
         rvalue: &Rvalue<'tcx>,
         _location: Location,
@@ -170,7 +174,7 @@ impl Infer for MutabilityAnalysis {
         }
     }
 
-    fn infer_terminator<'tcx>(
+    default fn infer_terminator<'tcx>(
         terminator: &Terminator<'tcx>,
         _location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,
@@ -247,7 +251,7 @@ impl Infer for MutabilityAnalysis {
                         }
                         // extern
                         rustc_hir::Node::ForeignItem(foreign_item) => {
-                            libc_call(
+                            libc_call::<Self>(
                                 destination,
                                 args,
                                 foreign_item.ident,
@@ -263,7 +267,7 @@ impl Infer for MutabilityAnalysis {
                         _ => unreachable!(),
                     }
                 } else {
-                    library_call(
+                    library_call::<Self>(
                         destination,
                         args,
                         callee,
@@ -278,7 +282,7 @@ impl Infer for MutabilityAnalysis {
             }
 
             // conservative catch all
-            conservative_call(
+            conservative_call::<Self>(
                 destination,
                 args,
                 local_decls,
@@ -386,13 +390,13 @@ fn place_vars<'tcx, Ctxt: PlaceContext>(
     place_vars
 }
 
-fn conservative_call<'tcx>(
+pub(crate) fn conservative_call<'tcx, M: MutabilityLikeAnalysis>(
     destination: &Place<'tcx>,
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFieldsVars,
-    database: &mut <MutabilityAnalysis as Infer>::L,
+    database: &mut <M as Infer>::L,
 ) {
     let dest_var = place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
 

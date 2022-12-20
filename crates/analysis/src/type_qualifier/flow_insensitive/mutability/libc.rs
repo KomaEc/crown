@@ -1,24 +1,24 @@
 use rustc_middle::mir::{HasLocalDecls, Operand, Place};
 use rustc_span::symbol::Ident;
 
-use super::{conservative_call, EnsureNoDeref, MutabilityAnalysis};
+use super::{conservative_call, EnsureNoDeref, MutabilityAnalysis, MutabilityLikeAnalysis};
 use crate::type_qualifier::flow_insensitive::{
     mutability::{place_vars, MutCtxt},
     ConstraintSystem, Infer, StructFieldsVars, Var,
 };
 
-pub fn libc_call<'tcx>(
+pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
     destination: &Place<'tcx>,
     args: &Vec<Operand<'tcx>>,
     callee: Ident,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFieldsVars,
-    database: &mut <MutabilityAnalysis as Infer>::L,
+    database: &mut <M as Infer>::L,
 ) {
     match callee.as_str() {
         "strlen" => {
-            return call_strlen(
+            return call_strlen::<M>(
                 destination,
                 args,
                 local_decls,
@@ -28,7 +28,7 @@ pub fn libc_call<'tcx>(
             )
         }
         "strstr" => {
-            return call_strstr(
+            return call_strstr::<M>(
                 destination,
                 args,
                 local_decls,
@@ -38,7 +38,7 @@ pub fn libc_call<'tcx>(
             )
         }
         "strcmp" => {
-            return call_strcmp(
+            return call_strcmp::<M>(
                 destination,
                 args,
                 local_decls,
@@ -48,7 +48,7 @@ pub fn libc_call<'tcx>(
             )
         }
         "strncat" => {
-            return call_strncat(
+            return call_strncat::<M>(
                 destination,
                 args,
                 local_decls,
@@ -58,7 +58,7 @@ pub fn libc_call<'tcx>(
             )
         }
         "memcpy" => {
-            return call_memcpy(
+            return call_memcpy::<M>(
                 destination,
                 args,
                 local_decls,
@@ -68,7 +68,7 @@ pub fn libc_call<'tcx>(
             )
         }
         "memmove" => {
-            return call_memmove(
+            return call_memmove::<M>(
                 destination,
                 args,
                 local_decls,
@@ -78,7 +78,7 @@ pub fn libc_call<'tcx>(
             )
         }
         "memset" => {
-            return call_memset(
+            return call_memset::<M>(
                 destination,
                 args,
                 local_decls,
@@ -90,7 +90,7 @@ pub fn libc_call<'tcx>(
         _ => {}
     }
 
-    conservative_call(
+    conservative_call::<MutabilityAnalysis>(
         destination,
         args,
         local_decls,
@@ -100,13 +100,13 @@ pub fn libc_call<'tcx>(
     );
 }
 
-fn call_strlen<'tcx>(
+fn call_strlen<'tcx, M: MutabilityLikeAnalysis>(
     destination: &Place<'tcx>,
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFieldsVars,
-    database: &mut <MutabilityAnalysis as Infer>::L,
+    database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -115,13 +115,13 @@ fn call_strlen<'tcx>(
     let _ = args;
 }
 
-fn call_strcmp<'tcx>(
+fn call_strcmp<'tcx, M: MutabilityLikeAnalysis>(
     destination: &Place<'tcx>,
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFieldsVars,
-    database: &mut <MutabilityAnalysis as Infer>::L,
+    database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -130,15 +130,15 @@ fn call_strcmp<'tcx>(
     let _ = args;
 }
 
-fn call_strncat<'tcx>(
+fn call_strncat<'tcx, M: MutabilityLikeAnalysis>(
     destination: &Place<'tcx>,
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFieldsVars,
-    database: &mut <MutabilityAnalysis as Infer>::L,
+    database: &mut <M as Infer>::L,
 ) {
-    call_memcpy(
+    call_memcpy::<M>(
         destination,
         args,
         local_decls,
@@ -148,13 +148,13 @@ fn call_strncat<'tcx>(
     );
 }
 
-fn call_strstr<'tcx>(
+fn call_strstr<'tcx, M: MutabilityLikeAnalysis>(
     destination: &Place<'tcx>,
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFieldsVars,
-    database: &mut <MutabilityAnalysis as Infer>::L,
+    database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -181,13 +181,13 @@ fn call_strstr<'tcx>(
     }
 }
 
-fn call_memcpy<'tcx>(
+fn call_memcpy<'tcx, M: MutabilityLikeAnalysis>(
     destination: &Place<'tcx>,
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFieldsVars,
-    database: &mut <MutabilityAnalysis as Infer>::L,
+    database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -212,15 +212,15 @@ fn call_memcpy<'tcx>(
     }
 }
 
-fn call_memmove<'tcx>(
+fn call_memmove<'tcx, M: MutabilityLikeAnalysis>(
     destination: &Place<'tcx>,
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFieldsVars,
-    database: &mut <MutabilityAnalysis as Infer>::L,
+    database: &mut <M as Infer>::L,
 ) {
-    call_memcpy(
+    call_memcpy::<M>(
         destination,
         args,
         local_decls,
@@ -230,15 +230,15 @@ fn call_memmove<'tcx>(
     )
 }
 
-fn call_memset<'tcx>(
+fn call_memset<'tcx, M: MutabilityLikeAnalysis>(
     destination: &Place<'tcx>,
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFieldsVars,
-    database: &mut <MutabilityAnalysis as Infer>::L,
+    database: &mut <M as Infer>::L,
 ) {
-    call_memcpy(
+    call_memcpy::<M>(
         destination,
         args,
         local_decls,

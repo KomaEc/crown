@@ -2,6 +2,7 @@
 
 pub mod boolean_system;
 pub mod fatness;
+pub mod local_mutability;
 pub mod mutability;
 
 use std::ops::Range;
