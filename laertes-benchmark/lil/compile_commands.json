@@ -1,0 +1,40 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-g3",
+            "-std=c99",
+            "-pedantic",
+            "-Wall",
+            "-Wextra",
+            "-Wno-format",
+            "-Wno-long-long",
+            "-Wno-unused-parameter",
+            "-o",
+            "lil.o",
+            "lil.c"
+        ],
+        "directory": "/Users/emre/lab/c2rust/examples/lil/repo",
+        "file": "lil.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-g3",
+            "-std=c99",
+            "-pedantic",
+            "-Wall",
+            "-Wextra",
+            "-Wno-format",
+            "-Wno-long-long",
+            "-Wno-unused-parameter",
+            "-o",
+            "main.o",
+            "main.c"
+        ],
+        "directory": "/Users/emre/lab/c2rust/examples/lil/repo",
+        "file": "main.c"
+    }
+]

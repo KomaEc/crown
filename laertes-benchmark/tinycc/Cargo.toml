@@ -1,0 +1,17 @@
+[package]
+name = "c2rust_out"
+authors = ["C2Rust"]
+version = "0.0.0"
+publish = false
+edition = "2018"
+autobins = false
+
+[[bin]]
+name = "tcc"
+path = "c2rust-lib.rs"
+# crate-type = ["staticlib", "rlib"]
+
+[dependencies]
+f128 = "0.2"
+num-traits = "0.2"
+

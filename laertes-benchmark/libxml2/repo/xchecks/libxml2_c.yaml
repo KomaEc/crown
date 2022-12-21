@@ -1,0 +1,180 @@
+# Cross-check configuration for C libxml2
+---
+# System header
+- file: "**/__stddef_max_align_t.h"
+  items:
+    - item: defaults
+      disable_xchecks: true
+
+- file: "/usr/include/python*/**"
+  items:
+    - item: defaults
+      disable_xchecks: true
+
+# libxml2 files
+- file: "xmlschemastypes.c"
+  items:
+    - item: struct
+      name: _xmlSchemaValDate
+      custom_hash: "xcheck_hash_xmlSchemaValDate"
+
+    - item: struct
+      name: _xmlSchemaValDecimal
+      custom_hash: "xcheck_hash_xmlSchemaValDecimal"
+
+- file: "xmlsave.c"
+  items:
+    - item: struct
+      name: _xmlSaveCtxt
+      fields:
+          indent: disabled
+
+- file: "debugXML.c"
+  items:
+    - item: struct
+      name: _xmlDebugCtxt
+      fields:
+          shift: disabled
+
+- file: "dict.c"
+  items:
+      # These fields may point past the end of the allocated structure
+      - item: struct
+        name: _xmlDictStrings
+        fields:
+            free: disabled
+            array: disabled
+            end: disabled
+
+- file: "relaxng.c"
+  items:
+      - item: struct
+        name: _xmlRelaxNGDefine
+        fields:
+            # attrs might contain a `xmlSchemaVal` instead
+            attrs: disabled
+
+      - item: struct
+        name: _xmlRelaxNGValidState
+        fields:
+            # These fields may point to free'd structures
+            node: disabled
+            seq: disabled
+            value: disabled
+            endvalue: disabled
+            attrs: disabled
+
+- file: "xmlmemory.c"
+  items:
+    # We get a divergence on the value of `xmlMemUsed` because
+    # we allocate more memory for `_xmlSchemaVal`:
+    # the structure takes 48 bytes in C, but 56 in Rust
+    - item: function
+      name: "xmlMemUsed"
+      return: disabled
+
+# libxml2 headers
+- file: "**/include/libxml/parser.h"
+  items:
+    - item: struct
+      name: _xmlParserCtxt
+      fields:
+          inputTab: disabled
+          space: disabled
+          nodeInfo: disabled
+
+- file: "**/include/libxml/tree.h"
+  items:
+    # Node fields outside common part
+    - item: struct
+      name: _xmlDoc
+      custom_hash: "xcheck_hash_xmlDoc"
+
+    - item: struct
+      name: _xmlDtd
+      custom_hash: "xcheck_hash_xmlDtd"
+
+    - item: struct
+      name: _xmlNode
+      custom_hash: "xcheck_hash_xmlNode"
+
+    - item: struct
+      name: _xmlAttr
+      custom_hash: "xcheck_hash_xmlAttr"
+
+    - item: struct
+      name: _xmlAttribute
+      custom_hash: "xcheck_hash_xmlAttribute"
+
+    - item: struct
+      name: _xmlElement
+      custom_hash: "xcheck_hash_xmlElement"
+
+    - item: struct
+      name: _xmlNs
+      custom_hash: "xcheck_hash_xmlNs"
+
+- file: "**/include/libxml/schemasInternals.h"
+  items:
+    # These all overlap with each other in memory,
+    # but have different layouts
+    - item: struct
+      name: _xmlSchemaType
+      custom_hash: "xcheck_hash_xmlSchemaType"
+
+    - item: struct
+      name: _xmlSchemaAttribute
+      custom_hash: "xcheck_hash_xmlSchemaAttribute"
+
+    - item: struct
+      name: _xmlSchemaWildcard
+      custom_hash: "xcheck_hash_xmlSchemaWildcard"
+
+    - item: struct
+      name: _xmlSchemaAttributeGroup
+      custom_hash: "xcheck_hash_xmlSchemaAttributeGroup"
+
+    - item: struct
+      name: _xmlSchemaElement
+      custom_hash: "xcheck_hash_xmlSchemaElement"
+
+    - item: struct
+      name: _xmlSchemaFacet
+      custom_hash: "xcheck_hash_xmlSchemaFacet"
+
+    - item: struct
+      name: _xmlSchemaNotation
+      custom_hash: "xcheck_hash_xmlSchemaNotation"
+
+- file: "**/include/libxml/xmlerror.h"
+  items:
+    # xmlLastError fields sometimes point to free'd data
+    - item: struct
+      name: _xmlError
+      fields:
+          str1: disabled
+          str2: disabled
+          str3: disabled
+          ctxt: disabled
+          node: disabled
+          # int1 would normally be fine, except `xmlXPathErr` sets it to
+          # `ctxt->cur - ctxt->base` which would normally be fine, since
+          # `ctxt->cur` should be equal to `ctxt->base + D` for some small
+          # offset `D`. However, the `xmlXPtrEvalXPtrPart` function in
+          # `xpointer.c` manually sets `ctxt->cur` to another pointer without
+          # updating `ctxt->base`, so `int1` here sometimes becomes the
+          # difference between 2 completely unrelated pointers.
+          int1: disabled
+
+# Our files
+- file: "variadic.c"
+  items:
+    - item: defaults
+      disable_xchecks: true
+
+- file: "xchecks/xchecks.c"
+  items:
+    - item: defaults
+      disable_xchecks: true
+
+...

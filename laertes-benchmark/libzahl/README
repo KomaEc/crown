@@ -1,0 +1,36 @@
+NAME
+	libzahl - Big integer library
+
+ETYMOLOGY
+	The bold uppercase 'Z' which represents the set of
+	all integers is derived from the german word 'Zahlen',
+	whose singular is 'Zahl'.
+
+DESCRIPTION
+	libzahl is a C library for arbitrary size integers,
+	that aims to be usable for robust programs, and be
+	fast.
+
+	libzahl will accomplish this by using long jumps
+	when an error is detected, rather than letting the
+	caller also perform a check. This shall make the
+	code in the user program cleaner too. libzahl will
+	use dedicated temporary bignum integers whether
+	possible, and necessary, for its internal calculations.
+	libzahl will not deallocate allocations, but rather
+	cache them for reuse.
+
+	With the exception of functions working with strings,
+	all output parameters are before the input parameters.
+
+RATIONALE
+	GMP MP cannot be used for robust programs. LibTomMath
+	is too slow, probably because of all memory allocations,
+	and has a nonintuitive API. TomsFastMath has an a
+	nonintuitive API, has limited precision (selected at
+	compile-time), and has limited functionality. All the
+	above are also bloated. Hebimath is promising, but I
+	think it can be done better.
+
+NOTES
+	libzahl is currently not thread-safe.
