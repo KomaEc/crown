@@ -20,7 +20,7 @@ use rustc_middle::ty::TyCtxt;
 use signal_nullness::signal_nullness;
 
 pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] =
-    &[phase_1, phase_2, phase_3, phase_4];
+    &[fold_let_ref_mut, phase_1, phase_2, phase_3];
 
 fn phase_1(tcx: TyCtxt, mode: RewriteMode) {
     let mut rewriter = Vec::new();
@@ -50,13 +50,14 @@ fn phase_3(tcx: TyCtxt, mode: RewriteMode) {
     rewriter.write(mode)
 }
 
-fn phase_4(tcx: TyCtxt, mode: RewriteMode) {
-    fold_let_ref_mut(tcx, mode);
+// fn phase_4(tcx: TyCtxt, mode: RewriteMode) {
 
-    let mut rewriter = Vec::new();
-    explicit_addr(tcx, &mut rewriter);
-    rewriter.write(mode)
-}
+//     fold_let_ref_mut(tcx, mode);
+
+//     // let mut rewriter = Vec::new();
+//     // explicit_addr(tcx, &mut rewriter);
+//     // rewriter.write(mode)
+// }
 
 pub use fold_let_ref_mut::fold_let_ref_mut;
 
