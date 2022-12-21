@@ -215,6 +215,7 @@ where
         ) {
             match (input, sigs) {
                 (Some(input), Some(sigs)) => {
+                    let is_output = sigs.is_output();
                     let sigs = sigs.clone().to_input();
                     assert_eq!(input.size_hint().1.unwrap(), sigs.size_hint().1.unwrap());
                     let measure = input.size_hint().1.unwrap() as u32;
@@ -224,19 +225,21 @@ where
                         database.push_equal::<crate::ssa::constraint::Debug>((), input, sig)
                     }
 
-                    let mut input = input;
+                    if !is_output {
+                        let mut input = input;
 
-                    apply_global_assumptions(
-                        ty,
-                        None,
-                        &mut std::iter::empty(),
-                        &mut input,
-                        global_assumptions,
-                        struct_ctxt,
-                        database,
-                        tcx,
-                        precision,
-                    );
+                        apply_global_assumptions(
+                            ty,
+                            None,
+                            &mut std::iter::empty(),
+                            &mut input,
+                            global_assumptions,
+                            struct_ctxt,
+                            database,
+                            tcx,
+                            precision,
+                        );
+                    }
                 }
                 (None, None) => {}
                 _ => unreachable!(),
