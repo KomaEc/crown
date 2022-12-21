@@ -1,9 +1,8 @@
-
 pub const PATTERNS: &[Pattern] = &[
     VALUE_ASSIGN_AS_ASSIGNER,
     VALUE_ASSIGN_IN_CONDITION,
-    ASSIGN_TWO_LINES, 
-    PTR_INCR_FOUR_LINES
+    ASSIGN_TWO_LINES,
+    PTR_INCR_FOUR_LINES,
 ];
 
 pub struct Pattern {
@@ -32,10 +31,13 @@ fn value_assign_as_assigner(caps: &regex::Captures<'_>) -> String {
     let version4 = &caps["version4"];
     let version5 = &caps["version5"];
 
-    if !(version1 == version2 && version1 != version3 && version3 == version4 && version1 == version5) {
+    if !(version1 == version2
+        && version1 != version3
+        && version3 == version4
+        && version1 == version5)
+    {
         return original.to_owned();
     }
-
 
     // let expr1 = regex::Regex::new(&(r"\*fresh".to_owned() + version1)).unwrap();
     // let expr2 = regex::Regex::new(&(r"\*fresh".to_owned() + version3)).unwrap();
@@ -43,7 +45,6 @@ fn value_assign_as_assigner(caps: &regex::Captures<'_>) -> String {
     let lhs1 = &caps["lhs1"];
     let lhs2 = &caps["lhs2"];
     let rhs = &caps["rhs"];
-
 
     lhs1.to_string() + " = " + rhs + "; " + lhs2 + " = " + lhs1 + ";"
 }
@@ -120,7 +121,6 @@ const PTR_INCR_FOUR_LINES: Pattern = Pattern {
     ),
     replacer: ptr_incr_four_lines,
 };
-
 
 fn ptr_incr_four_lines(caps: &regex::Captures<'_>) -> String {
     let original = &caps[0];

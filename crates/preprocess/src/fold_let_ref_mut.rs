@@ -11,8 +11,6 @@ use rustc_middle::ty::TyCtxt;
 
 use crate::owner_items;
 
-
-
 pub fn fold_let_ref_mut(tcx: TyCtxt, mode: RewriteMode) {
     // awkward but whatever
     let user_files = owner_items(tcx)
@@ -26,14 +24,12 @@ pub fn fold_let_ref_mut(tcx: TyCtxt, mode: RewriteMode) {
     for file_name in user_files.iter() {
         let source = fs::read_to_string(file_name).unwrap();
 
-
         let mut replacement = source.clone();
 
         for pattern in pattern::PATTERNS {
             let re = regex::Regex::new(pattern.pattern).unwrap();
             replacement = re.replace_all(&replacement, pattern.replacer).to_string()
         }
-
 
         match mode {
             RewriteMode::InPlace => fs::write(file_name, replacement).unwrap(),

@@ -1,4 +1,4 @@
-use common::rewrite::Rewrite;
+use common::rewrite::{Rewrite, RewriteMode};
 use petgraph::unionfind::UnionFind;
 use rustc_hash::FxHashMap;
 use rustc_hir::{
@@ -10,9 +10,13 @@ use rustc_hir::{
 use rustc_middle::{hir::nested_filter::OnlyBodies, ty::TyCtxt};
 use rustc_span::sym;
 
-use crate::owner_items;
+use crate::{owner_items, perform_rewrite};
 
-pub(crate) fn link_functions(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
+pub fn link_functions(tcx: TyCtxt, mode: RewriteMode) {
+    perform_rewrite(link_functions_internal, tcx, mode)
+}
+
+fn link_functions_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     // (1) Find all `#[no_mangle]` or `#[export_name=...]` functions, and index them by symbol.
     let mut symbol_to_def = FxHashMap::default();
     for item in owner_items(tcx).filter(|item| matches!(item.kind, ItemKind::Fn(..))) {
@@ -77,7 +81,11 @@ pub(crate) fn link_functions(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     // todo!()
 }
 
-pub(crate) fn link_incomplete_types(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
+pub fn link_incomplete_types(tcx: TyCtxt, mode: RewriteMode) {
+    perform_rewrite(link_incomplete_types_internal, tcx, mode)
+}
+
+fn link_incomplete_types_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     let mut name_to_complete = FxHashMap::default();
     let mut incomplete_to_name = FxHashMap::default();
 
@@ -160,7 +168,11 @@ pub(crate) fn link_incomplete_types(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     }
 }
 
-pub(crate) fn canonicalize_structs(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
+pub fn canonicalize_structs(tcx: TyCtxt, mode: RewriteMode) {
+    perform_rewrite(canonicalize_structs_internal, tcx, mode)
+}
+
+fn canonicalize_structs_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     // (1) Compute equivalent classes by name
     let mut structs = Vec::new();
     let mut struct_idx = FxHashMap::default();

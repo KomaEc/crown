@@ -17,53 +17,31 @@ use explicit_addr::explicit_addr;
 use linkage::{canonicalize_structs, link_functions, link_incomplete_types};
 use rustc_hir::{Item, OwnerNode};
 use rustc_middle::ty::TyCtxt;
-use signal_nullness::signal_nullness;
 
-pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] =
-    &[fold_let_ref_mut, phase_1, phase_2, phase_3];
+use crate::signal_nullness::signal_nullness;
 
-fn phase_1(tcx: TyCtxt, mode: RewriteMode) {
-    let mut rewriter = Vec::new();
-
-    signal_nullness(tcx, &mut rewriter);
-
-    link_incomplete_types(tcx, &mut rewriter);
-
-    rewriter.write(mode)
-}
-
-fn phase_2(tcx: TyCtxt, mode: RewriteMode) {
-    let mut rewriter = Vec::new();
-
-    canonicalize_structs(tcx, &mut rewriter);
-
-    rewriter.write(mode)
-}
-
-fn phase_3(tcx: TyCtxt, mode: RewriteMode) {
-    let mut rewriter = Vec::new();
-
-    // TODO link_statics
-
-    link_functions(tcx, &mut rewriter);
-
-    rewriter.write(mode)
-}
-
-// fn phase_4(tcx: TyCtxt, mode: RewriteMode) {
-
-//     fold_let_ref_mut(tcx, mode);
-
-//     // let mut rewriter = Vec::new();
-//     // explicit_addr(tcx, &mut rewriter);
-//     // rewriter.write(mode)
-// }
+pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] = &[
+    fold_let_ref_mut,
+    signal_nullness,
+    link_incomplete_types,
+    canonicalize_structs,
+    link_functions,
+];
 
 pub use fold_let_ref_mut::fold_let_ref_mut;
 
 pub fn use_explicit_addr(tcx: TyCtxt, mode: RewriteMode) {
     let mut rewriter = Vec::new();
     explicit_addr(tcx, &mut rewriter);
+    rewriter.write(mode)
+}
+
+fn perform_rewrite<F>(mut f: F, tcx: TyCtxt, mode: RewriteMode)
+where
+    F: FnMut(TyCtxt<'_>, &mut Vec<rustfix::Suggestion>),
+{
+    let mut rewriter = Vec::new();
+    f(tcx, &mut rewriter);
     rewriter.write(mode)
 }
 

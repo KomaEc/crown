@@ -1,4 +1,4 @@
-use common::rewrite::Rewrite;
+use common::rewrite::{Rewrite, RewriteMode};
 use rustc_hir::{
     intravisit::{self, Visitor},
     Expr, ExprKind, ItemKind, LoopSource, OwnerNode, UnOp,
@@ -6,7 +6,13 @@ use rustc_hir::{
 use rustc_middle::ty::TyCtxt;
 use rustc_span::BytePos;
 
-pub(crate) fn signal_nullness(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
+use crate::perform_rewrite;
+
+pub fn signal_nullness(tcx: TyCtxt, mode: RewriteMode) {
+    perform_rewrite(signal_nullness_internal, tcx, mode)
+}
+
+fn signal_nullness_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     // let mut rewriter = Vec::new(); //Rewriter::default();
 
     for maybe_owner in tcx.hir().krate().owners.iter() {
