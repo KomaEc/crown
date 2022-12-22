@@ -19,6 +19,18 @@ pub fn library_call<'tcx, M: MutabilityLikeAnalysis>(
 ) {
     let def_path = tcx.def_path(callee);
 
+    if let [DefPathData::TypeNs(cmp), _, DefPathData::ValueNs(eq), ..] = &def_path
+        .data
+        .iter()
+        .map(|data| data.data)
+        .collect::<smallvec::SmallVec<[_; 4]>>()[..]
+    {
+        if cmp.as_str() == "cmp" && eq.as_str() == "eq" {
+            // unconstrained call
+            return;
+        }
+    }
+
     if let [DefPathData::TypeNs(slice), _, DefPathData::ValueNs(as_mut_ptr), ..] = &def_path
         .data
         .iter()

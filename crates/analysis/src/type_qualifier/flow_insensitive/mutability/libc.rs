@@ -117,6 +117,26 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
                 database,
             )
         }
+        "printf" => {
+            return call_printf::<M>(
+                destination,
+                args,
+                local_decls,
+                locals,
+                struct_fields,
+                database,
+            )
+        }
+        "fprintf" => {
+            return call_fprintf::<M>(
+                destination,
+                args,
+                local_decls,
+                locals,
+                struct_fields,
+                database,
+            )
+        }
         _ => {}
     }
 
@@ -335,4 +355,42 @@ fn call_strncmp<'tcx, M: MutabilityLikeAnalysis>(
     assert!(dest_vars.is_empty());
     // no constraint on args
     let _ = args;
+}
+
+fn call_printf<'tcx, M: MutabilityLikeAnalysis>(
+    destination: &Place<'tcx>,
+    args: &Vec<Operand<'tcx>>,
+    local_decls: &impl HasLocalDecls<'tcx>,
+    locals: &[Var],
+    struct_fields: &StructFieldsVars,
+    database: &mut <M as Infer>::L,
+) {
+    let dest_vars =
+        place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
+    assert!(dest_vars.is_empty());
+    // no constraint on args
+    let _ = args;
+}
+
+fn call_fprintf<'tcx, M: MutabilityLikeAnalysis>(
+    destination: &Place<'tcx>,
+    args: &Vec<Operand<'tcx>>,
+    local_decls: &impl HasLocalDecls<'tcx>,
+    locals: &[Var],
+    struct_fields: &StructFieldsVars,
+    database: &mut <M as Infer>::L,
+) {
+    let dest_vars =
+        place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
+    assert!(dest_vars.is_empty());
+    // no constraint on args
+    let _ = args;
+    // for arg in args {
+    //     let Some(arg) = arg.place() else { continue };
+    //     let arg_vars =
+    //         place_vars::<EnsureNoDeref>(&arg, local_decls, locals, struct_fields, &mut ());
+    //     for var in arg_vars {
+    //         database.top(var)
+    //     }
+    // }
 }
