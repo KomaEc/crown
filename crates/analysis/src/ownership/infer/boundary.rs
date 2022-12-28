@@ -171,7 +171,10 @@ where
                         crate::ownership::Param::Normal(param) => {
                             let mut param = param;
                             let ty = if is_ref {
-                                tracing::error!("bad output parameter analysis for {}!", infer_cx.tcx.def_path_str(callee));
+                                tracing::error!(
+                                    "bad output parameter analysis for {}!",
+                                    infer_cx.tcx.def_path_str(callee)
+                                );
                                 let _ = param.next().unwrap();
                                 ty.builtin_deref(true).unwrap().ty
                             } else {
