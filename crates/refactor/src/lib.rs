@@ -304,7 +304,7 @@ impl FnLocals {
                         })
                         .collect();
 
-                if is_output_param {
+                if is_output_param && param[0].is_move() {
                     param[0] = PointerKind::Mut;
                 }
 
