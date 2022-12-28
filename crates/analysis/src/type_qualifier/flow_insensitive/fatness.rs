@@ -49,7 +49,7 @@ impl std::fmt::Display for Fatness {
     }
 }
 
-pub type FatnessResult = AnalysisResult<FatnessAnalysis>;
+pub type FatnessResult = AnalysisResult<Fatness>;
 
 impl From<Fatness> for bool {
     fn from(fatness: Fatness) -> Self {

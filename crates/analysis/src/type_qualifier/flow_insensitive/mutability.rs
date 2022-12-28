@@ -51,7 +51,7 @@ impl std::fmt::Display for Mutability {
     }
 }
 
-pub type MutabilityResult = AnalysisResult<MutabilityAnalysis>;
+pub type MutabilityResult = AnalysisResult<Mutability>;
 
 impl From<Mutability> for bool {
     fn from(mutability: Mutability) -> Self {

@@ -22,10 +22,10 @@ use rustc_type_ir::TyKind;
 
 use self::boolean_system::BooleanSystem;
 
-pub struct AnalysisResult<I: Infer> {
+pub struct AnalysisResult<Domain> {
     struct_fields: StructFieldsVars,
     fn_locals: FnLocalsVars,
-    model: IndexVec<Var, <<I as Infer>::L as ConstraintSystem>::Domain>,
+    model: IndexVec<Var, Domain>,
 }
 
 fn display_value<Value: std::fmt::Display>(value: &[Value]) -> String {
@@ -36,8 +36,8 @@ fn display_value<Value: std::fmt::Display>(value: &[Value]) -> String {
         .join(" ")
 }
 
-impl<I: Infer> AnalysisResult<I> {
-    pub fn fn_results(&self, r#fn: &DefId) -> FnResult<I> {
+impl<Domain> AnalysisResult<Domain> {
+    pub fn fn_results(&self, r#fn: &DefId) -> FnResult<Domain> {
         let locals = &self.fn_locals.vars[self.fn_locals.did_idx[r#fn]];
         FnResult {
             locals,
@@ -45,20 +45,13 @@ impl<I: Infer> AnalysisResult<I> {
         }
     }
 
-    pub fn struct_results(
-        &self,
-        r#struct: &DefId,
-    ) -> impl Iterator<Item = &[<<I as Infer>::L as ConstraintSystem>::Domain]> {
+    pub fn struct_results(&self, r#struct: &DefId) -> impl Iterator<Item = &[Domain]> {
         self.struct_fields
             .fields(r#struct)
             .map(|Range { start, end }| &self.model.raw[start.index()..end.index()])
     }
 
-    pub fn fn_sig(
-        &self,
-        r#fn: &DefId,
-        tcx: TyCtxt,
-    ) -> impl Iterator<Item = &[<<I as Infer>::L as ConstraintSystem>::Domain]> {
+    pub fn fn_sig(&self, r#fn: &DefId, tcx: TyCtxt) -> impl Iterator<Item = &[Domain]> {
         let fn_result = self.fn_results(r#fn);
         let body = tcx.optimized_mir(*r#fn);
         fn_result.results().take(body.arg_count + 1)
@@ -66,7 +59,7 @@ impl<I: Infer> AnalysisResult<I> {
 
     pub fn print_fn_sigs(&self, tcx: TyCtxt, fns: &[DefId])
     where
-        <<I as Infer>::L as ConstraintSystem>::Domain: std::fmt::Display,
+        Domain: std::fmt::Display,
     {
         for did in fns {
             let mut fn_sig = self.fn_sig(did, tcx);
@@ -81,21 +74,19 @@ impl<I: Infer> AnalysisResult<I> {
 }
 
 #[derive(Clone, Copy)]
-pub struct FnResult<'me, I: Infer> {
+pub struct FnResult<'me, Domain> {
     locals: &'me [Var],
-    model: &'me IndexVec<Var, <<I as Infer>::L as ConstraintSystem>::Domain>,
+    model: &'me IndexVec<Var, Domain>,
 }
 
-impl<'me, I: Infer> FnResult<'me, I> {
-    pub fn results(
-        self,
-    ) -> impl Iterator<Item = &'me [<<I as Infer>::L as ConstraintSystem>::Domain]> {
+impl<'me, Domain> FnResult<'me, Domain> {
+    pub fn results(self) -> impl Iterator<Item = &'me [Domain]> {
         self.locals
             .array_windows()
             .map(|&[start, end]| &self.model.raw[start.index()..end.index()])
     }
 
-    pub fn local_result(&self, local: Local) -> &[<<I as Infer>::L as ConstraintSystem>::Domain] {
+    pub fn local_result(&self, local: Local) -> &[Domain] {
         let (start, end) = (self.locals[local.index()], self.locals[local.index() + 1]);
         &self.model.raw[start.index()..end.index()]
     }
@@ -117,13 +108,15 @@ fn count_ptr(mut ty: Ty) -> usize {
     }
 }
 
-impl<Domain, I> AnalysisResult<I>
+impl<Domain> AnalysisResult<Domain>
 where
     Domain: BooleanLattice,
-    I: Infer<L = BooleanSystem<Domain>>,
-    <I as Infer>::L: ConstraintSystem<Domain = Domain>,
 {
-    pub fn new(mut infer: I, crate_data: &common::CrateData) -> Self {
+    pub fn new<I>(mut infer: I, crate_data: &common::CrateData) -> Self
+    where
+        I: Infer<L = BooleanSystem<Domain>>,
+        <I as Infer>::L: ConstraintSystem<Domain = Domain>,
+    {
         let mut model = IndexVec::new();
         // not necessary, but need initialization anyway
         model.push(Domain::TOP);
