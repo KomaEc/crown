@@ -170,7 +170,7 @@ where
                         }
                         crate::ownership::Param::Normal(param) => {
                             if is_ref {
-                                tracing::error!("bad output parameter analysis!");
+                                tracing::error!("bad output parameter analysis for {}!", infer_cx.tcx.def_path_str(callee));
                                 return;
                             }
                             let arg = arg.transpose();
