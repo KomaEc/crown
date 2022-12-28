@@ -169,10 +169,15 @@ where
                             );
                         }
                         crate::ownership::Param::Normal(param) => {
-                            if is_ref {
+                            let mut param = param;
+                            let ty = if is_ref {
                                 tracing::error!("bad output parameter analysis for {}!", infer_cx.tcx.def_path_str(callee));
-                                return;
-                            }
+                                let _ = param.next().unwrap();
+                                ty.builtin_deref(true).unwrap().ty
+                            } else {
+                                ty
+                            };
+
                             let arg = arg.transpose();
 
                             matcher(
