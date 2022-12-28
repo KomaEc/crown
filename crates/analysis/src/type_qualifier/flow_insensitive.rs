@@ -2,7 +2,7 @@
 
 pub mod boolean_system;
 pub mod fatness;
-pub mod local_mutability;
+// pub mod local_mutability;
 pub mod mutability;
 
 use std::ops::Range;
@@ -123,7 +123,7 @@ where
     I: Infer<L = BooleanSystem<Domain>>,
     <I as Infer>::L: ConstraintSystem<Domain = Domain>,
 {
-    pub fn new(crate_data: &common::CrateData) -> Self {
+    pub fn new(mut infer: I, crate_data: &common::CrateData) -> Self {
         let mut model = IndexVec::new();
         // not necessary, but need initialization anyway
         model.push(Domain::TOP);
@@ -187,7 +187,7 @@ where
                 let idx = fn_locals.did_idx[r#fn];
                 &fn_locals.vars[idx]
             };
-            infer_body::<I>(body, locals, &fn_locals, &struct_fields, &mut database, tcx);
+            infer.infer_body(body, locals, &fn_locals, &struct_fields, &mut database, tcx);
         }
 
         database.greatest_model(&mut model);
@@ -269,6 +269,7 @@ pub trait ConstraintSystem {
 pub trait Infer {
     type L: ConstraintSystem;
     fn infer_assign<'tcx>(
+        &mut self,
         place: &Place<'tcx>,
         rvalue: &Rvalue<'tcx>,
         location: Location,
@@ -279,6 +280,7 @@ pub trait Infer {
     );
 
     fn infer_terminator<'tcx>(
+        &mut self,
         terminator: &Terminator<'tcx>,
         location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,
@@ -288,120 +290,123 @@ pub trait Infer {
         database: &mut <Self as Infer>::L,
         tcx: TyCtxt<'tcx>,
     );
-}
 
-fn infer_body<'tcx, I: Infer>(
-    body: &Body<'tcx>,
-    locals: &[Var],
-    fn_locals: &FnLocalsVars,
-    struct_fields: &StructFieldsVars,
-    database: &mut I::L,
-    tcx: TyCtxt<'tcx>,
-) {
-    for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
-        infer_basic_block::<I>(
-            bb,
-            bb_data,
-            &body.local_decls,
-            locals,
-            fn_locals,
-            struct_fields,
-            database,
-            tcx,
-        )
-    }
-}
-
-fn infer_basic_block<'tcx, I: Infer>(
-    bb: BasicBlock,
-    bb_data: &BasicBlockData<'tcx>,
-    local_decls: &impl HasLocalDecls<'tcx>,
-    locals: &[Var],
-    fn_locals: &FnLocalsVars,
-    struct_fields: &StructFieldsVars,
-    database: &mut I::L,
-    tcx: TyCtxt<'tcx>,
-) {
-    let BasicBlockData {
-        statements,
-        terminator,
-        is_cleanup: _,
-    } = bb_data;
-
-    let mut index = 0;
-    for statement in statements {
-        let location = Location {
-            block: bb,
-            statement_index: index,
-        };
-        infer_statement::<I>(
-            statement,
-            location,
-            local_decls,
-            locals,
-            struct_fields,
-            database,
-        );
-        index += 1;
+    fn infer_body<'tcx>(
+        &mut self,
+        body: &Body<'tcx>,
+        locals: &[Var],
+        fn_locals: &FnLocalsVars,
+        struct_fields: &StructFieldsVars,
+        database: &mut <Self as Infer>::L,
+        tcx: TyCtxt<'tcx>,
+    ) {
+        for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
+            self.infer_basic_block(
+                bb,
+                bb_data,
+                &body.local_decls,
+                locals,
+                fn_locals,
+                struct_fields,
+                database,
+                tcx,
+            )
+        }
     }
 
-    if let Some(terminator) = terminator {
-        let location = Location {
-            block: bb,
-            statement_index: index,
-        };
-
-        I::infer_terminator(
+    fn infer_basic_block<'tcx>(
+        &mut self,
+        bb: BasicBlock,
+        bb_data: &BasicBlockData<'tcx>,
+        local_decls: &impl HasLocalDecls<'tcx>,
+        locals: &[Var],
+        fn_locals: &FnLocalsVars,
+        struct_fields: &StructFieldsVars,
+        database: &mut <Self as Infer>::L,
+        tcx: TyCtxt<'tcx>,
+    ) {
+        let BasicBlockData {
+            statements,
             terminator,
-            location,
-            local_decls,
-            locals,
-            fn_locals,
-            struct_fields,
-            database,
-            tcx,
-        );
-    }
-}
+            is_cleanup: _,
+        } = bb_data;
 
-fn infer_statement<'tcx, I: Infer>(
-    statement: &Statement<'tcx>,
-    location: Location,
-    local_decls: &impl HasLocalDecls<'tcx>,
-    locals: &[Var],
-    struct_fields: &StructFieldsVars,
-    database: &mut I::L,
-) {
-    tracing::debug!("infering statement {:?}", statement);
-    match &statement.kind {
-        StatementKind::Assign(box (place, rvalue)) => {
-            I::infer_assign(
-                place,
-                rvalue,
+        let mut index = 0;
+        for statement in statements {
+            let location = Location {
+                block: bb,
+                statement_index: index,
+            };
+            self.infer_statement(
+                statement,
                 location,
                 local_decls,
                 locals,
                 struct_fields,
                 database,
             );
+            index += 1;
         }
-        StatementKind::SetDiscriminant { .. } => {
-            tracing::debug!("ignoring SetDiscriminant statement {:?}", statement)
+
+        if let Some(terminator) = terminator {
+            let location = Location {
+                block: bb,
+                statement_index: index,
+            };
+
+            self.infer_terminator(
+                terminator,
+                location,
+                local_decls,
+                locals,
+                fn_locals,
+                struct_fields,
+                database,
+                tcx,
+            );
         }
-        StatementKind::Deinit(..) => {
-            tracing::debug!("ignoring Deinit statement {:?}", statement)
-        }
-        StatementKind::Intrinsic(box intrinsic) => {
-            assert!(matches!(intrinsic, NonDivergingIntrinsic::Assume(..)))
-        }
-        StatementKind::AscribeUserType(_, _)
-        | StatementKind::StorageLive(_)
-        | StatementKind::StorageDead(_)
-        | StatementKind::Retag(_, _)
-        | StatementKind::FakeRead(_)
-        | StatementKind::Coverage(_)
-        | StatementKind::Nop => {
-            unreachable!("statement {:?} is not assumed to appear", statement)
+    }
+
+    fn infer_statement<'tcx>(
+        &mut self,
+        statement: &Statement<'tcx>,
+        location: Location,
+        local_decls: &impl HasLocalDecls<'tcx>,
+        locals: &[Var],
+        struct_fields: &StructFieldsVars,
+        database: &mut <Self as Infer>::L,
+    ) {
+        tracing::debug!("infering statement {:?}", statement);
+        match &statement.kind {
+            StatementKind::Assign(box (place, rvalue)) => {
+                self.infer_assign(
+                    place,
+                    rvalue,
+                    location,
+                    local_decls,
+                    locals,
+                    struct_fields,
+                    database,
+                );
+            }
+            StatementKind::SetDiscriminant { .. } => {
+                tracing::debug!("ignoring SetDiscriminant statement {:?}", statement)
+            }
+            StatementKind::Deinit(..) => {
+                tracing::debug!("ignoring Deinit statement {:?}", statement)
+            }
+            StatementKind::Intrinsic(box intrinsic) => {
+                assert!(matches!(intrinsic, NonDivergingIntrinsic::Assume(..)))
+            }
+            StatementKind::AscribeUserType(_, _)
+            | StatementKind::StorageLive(_)
+            | StatementKind::StorageDead(_)
+            | StatementKind::Retag(_, _)
+            | StatementKind::FakeRead(_)
+            | StatementKind::Coverage(_)
+            | StatementKind::Nop => {
+                unreachable!("statement {:?} is not assumed to appear", statement)
+            }
         }
     }
 }

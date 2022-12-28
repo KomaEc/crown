@@ -18,7 +18,7 @@ use super::{
 };
 
 pub fn fatness_analysis(crate_data: &common::CrateData) -> FatnessResult {
-    FatnessResult::new(crate_data)
+    FatnessResult::new(FatnessAnalysis, crate_data)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -81,6 +81,7 @@ impl Infer for FatnessAnalysis {
     type L = BooleanSystem<Fatness>;
 
     fn infer_assign<'tcx>(
+        &mut self,
         place: &Place<'tcx>,
         rvalue: &Rvalue<'tcx>,
         _location: Location,
@@ -138,6 +139,7 @@ impl Infer for FatnessAnalysis {
     }
 
     fn infer_terminator<'tcx>(
+        &mut self,
         terminator: &Terminator<'tcx>,
         _location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,

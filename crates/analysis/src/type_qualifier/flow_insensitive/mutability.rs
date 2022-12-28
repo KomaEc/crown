@@ -20,7 +20,7 @@ use super::{
 use crate::type_qualifier::flow_insensitive::ConstraintSystem;
 
 pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResult {
-    MutabilityResult::new(crate_data)
+    MutabilityResult::new(MutabilityAnalysis, crate_data)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -87,6 +87,7 @@ impl<M: MutabilityLikeAnalysis> Infer for M {
     type L = BooleanSystem<Mutability>;
 
     default fn infer_assign<'tcx>(
+        &mut self,
         place: &Place<'tcx>,
         rvalue: &Rvalue<'tcx>,
         _location: Location,
@@ -176,6 +177,7 @@ impl<M: MutabilityLikeAnalysis> Infer for M {
     }
 
     default fn infer_terminator<'tcx>(
+        &mut self,
         terminator: &Terminator<'tcx>,
         _location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,
