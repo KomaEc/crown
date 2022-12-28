@@ -162,7 +162,8 @@ impl<M: MutabilityLikeAnalysis> Infer for M {
                     place_vars::<EnsureNoDeref>(lhs, local_decls, locals, struct_fields, &mut ());
                 let rhs =
                     place_vars::<UnknownCtxt>(rhs, local_decls, locals, struct_fields, &mut None);
-                database.top(lhs.start);
+                // this is not necessary, and may introduce hard-to-understand results when inconsistent
+                // database.top(lhs.start);
                 for (lhs, rhs) in lhs.skip(1).zip(rhs) {
                     database.guard(lhs, rhs);
                     database.guard(rhs, lhs);
