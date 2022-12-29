@@ -5,7 +5,7 @@ use rustc_middle::{
 };
 
 use super::{conservative_call, place_vars, EnsureNoDeref, MutCtxt, MutabilityLikeAnalysis};
-use crate::type_qualifier::flow_insensitive::{ConstraintSystem, Infer, StructFieldsVars, Var};
+use crate::type_qualifier::flow_insensitive::{ConstraintSystem, Infer, StructFields, Var};
 
 pub fn library_call<'tcx, M: MutabilityLikeAnalysis>(
     destination: &Place<'tcx>,
@@ -13,7 +13,7 @@ pub fn library_call<'tcx, M: MutabilityLikeAnalysis>(
     callee: DefId,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
     tcx: TyCtxt<'tcx>,
 ) {
@@ -114,7 +114,7 @@ fn call_is_null<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
@@ -129,7 +129,7 @@ fn call_offset<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
@@ -154,7 +154,7 @@ fn call_offset_from<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
@@ -169,7 +169,7 @@ fn call_as_mut_ptr<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     let dest_vars =

@@ -14,8 +14,8 @@ use rustc_type_ir::TyKind::{self, FnDef};
 
 use self::{libc::libc_call, library::library_call};
 use super::{
-    boolean_system::BooleanSystem, AnalysisResult, BooleanLattice, FnLocalsVars, Infer, Lattice,
-    StructFieldsVars, Var,
+    boolean_system::BooleanSystem, TypeQualifiers, BooleanLattice, FnLocals, Infer, Lattice,
+    StructFields, Var,
 };
 use crate::type_qualifier::flow_insensitive::ConstraintSystem;
 
@@ -51,7 +51,7 @@ impl std::fmt::Display for Mutability {
     }
 }
 
-pub type MutabilityResult = AnalysisResult<Mutability>;
+pub type MutabilityResult = TypeQualifiers<Mutability>;
 
 impl From<Mutability> for bool {
     fn from(mutability: Mutability) -> Self {
@@ -93,7 +93,7 @@ impl<M: MutabilityLikeAnalysis> Infer for M {
         _location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
-        struct_fields: &StructFieldsVars,
+        struct_fields: &StructFields,
         database: &mut Self::L,
     ) {
         let lhs = place;
@@ -182,8 +182,8 @@ impl<M: MutabilityLikeAnalysis> Infer for M {
         _location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
-        fn_locals: &FnLocalsVars,
-        struct_fields: &StructFieldsVars,
+        fn_locals: &FnLocals,
+        struct_fields: &StructFields,
         database: &mut <Self as Infer>::L,
         tcx: TyCtxt<'tcx>,
     ) {
@@ -338,7 +338,7 @@ fn place_vars<'tcx, Ctxt: PlaceContext>(
     place: &Place<'tcx>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     deref_store: &mut Ctxt::DerefStore,
 ) -> Range<Var> {
     let mut place_vars = Range {
@@ -398,7 +398,7 @@ pub(crate) fn conservative_call<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     let dest_var = place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);

@@ -5,7 +5,7 @@ use rustc_middle::{
 };
 
 use super::{place_vars, FatnessAnalysis};
-use crate::type_qualifier::flow_insensitive::{ConstraintSystem, Infer, StructFieldsVars, Var};
+use crate::type_qualifier::flow_insensitive::{ConstraintSystem, Infer, StructFields, Var};
 
 pub fn library_call<'tcx>(
     destination: &Place<'tcx>,
@@ -13,7 +13,7 @@ pub fn library_call<'tcx>(
     callee: DefId,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <FatnessAnalysis as Infer>::L,
     tcx: TyCtxt<'tcx>,
 ) {
@@ -64,7 +64,7 @@ fn call_offset<'tcx>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
@@ -87,7 +87,7 @@ fn call_offset_from<'tcx>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);

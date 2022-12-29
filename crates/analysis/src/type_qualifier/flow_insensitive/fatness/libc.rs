@@ -2,7 +2,7 @@ use rustc_middle::mir::{HasLocalDecls, Operand, Place};
 use rustc_span::symbol::Ident;
 
 use super::{place_vars, FatnessAnalysis};
-use crate::type_qualifier::flow_insensitive::{ConstraintSystem, Infer, StructFieldsVars, Var};
+use crate::type_qualifier::flow_insensitive::{ConstraintSystem, Infer, StructFields, Var};
 
 pub fn libc_call<'tcx>(
     destination: &Place<'tcx>,
@@ -10,7 +10,7 @@ pub fn libc_call<'tcx>(
     callee: Ident,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
     match callee.as_str() {
@@ -114,7 +114,7 @@ fn call_calloc<'tcx>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
@@ -128,7 +128,7 @@ fn call_realloc<'tcx>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
@@ -147,7 +147,7 @@ fn call_strlen<'tcx>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
     let _ = destination;
@@ -164,7 +164,7 @@ fn call_strstr<'tcx>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
@@ -183,7 +183,7 @@ fn call_strcmp<'tcx>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
     let _ = destination;
@@ -200,7 +200,7 @@ fn call_strncat<'tcx>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
@@ -219,7 +219,7 @@ fn call_memcpy<'tcx>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
     call_strncat(
@@ -237,7 +237,7 @@ fn call_memmove<'tcx>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
     call_memcpy(
@@ -255,7 +255,7 @@ fn call_memset<'tcx>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <FatnessAnalysis as Infer>::L,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);

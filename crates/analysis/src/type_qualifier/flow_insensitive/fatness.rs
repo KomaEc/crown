@@ -13,8 +13,8 @@ use rustc_type_ir::TyKind::{self, FnDef};
 
 use self::{libc::libc_call, library::library_call};
 use super::{
-    boolean_system::BooleanSystem, AnalysisResult, BooleanLattice, ConstraintSystem, FnLocalsVars,
-    Infer, Lattice, StructFieldsVars, Var,
+    boolean_system::BooleanSystem, TypeQualifiers, BooleanLattice, ConstraintSystem, FnLocals,
+    Infer, Lattice, StructFields, Var,
 };
 
 pub fn fatness_analysis(crate_data: &common::CrateData) -> FatnessResult {
@@ -49,7 +49,7 @@ impl std::fmt::Display for Fatness {
     }
 }
 
-pub type FatnessResult = AnalysisResult<Fatness>;
+pub type FatnessResult = TypeQualifiers<Fatness>;
 
 impl From<Fatness> for bool {
     fn from(fatness: Fatness) -> Self {
@@ -87,7 +87,7 @@ impl Infer for FatnessAnalysis {
         _location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
-        struct_fields: &StructFieldsVars,
+        struct_fields: &StructFields,
         database: &mut Self::L,
     ) {
         let lhs = place;
@@ -144,8 +144,8 @@ impl Infer for FatnessAnalysis {
         _location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
-        fn_locals: &FnLocalsVars,
-        struct_fields: &StructFieldsVars,
+        fn_locals: &FnLocals,
+        struct_fields: &StructFields,
         database: &mut <Self as Infer>::L,
         tcx: TyCtxt<'tcx>,
     ) {
@@ -241,7 +241,7 @@ fn place_vars<'tcx>(
     place: &Place<'tcx>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
 ) -> Range<Var> {
     let mut place_vars = Range {
         start: locals[place.local.index()],

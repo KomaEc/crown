@@ -4,7 +4,7 @@ use rustc_span::symbol::Ident;
 use super::{conservative_call, EnsureNoDeref, MutabilityLikeAnalysis};
 use crate::type_qualifier::flow_insensitive::{
     mutability::{place_vars, MutCtxt},
-    ConstraintSystem, Infer, StructFieldsVars, Var,
+    ConstraintSystem, Infer, StructFields, Var,
 };
 
 pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
@@ -13,7 +13,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
     callee: Ident,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     match callee.as_str() {
@@ -155,7 +155,7 @@ fn call_strlen<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
@@ -170,7 +170,7 @@ fn call_strcmp<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
@@ -185,7 +185,7 @@ fn call_strncat<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     call_memcpy::<M>(
@@ -203,7 +203,7 @@ fn call_strstr<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
@@ -236,7 +236,7 @@ fn call_memcpy<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
@@ -267,7 +267,7 @@ fn call_memmove<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     call_memcpy::<M>(
@@ -285,7 +285,7 @@ fn call_memset<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     call_memcpy::<M>(
@@ -303,7 +303,7 @@ fn call_strchr<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     call_strrchr::<M>(
@@ -321,7 +321,7 @@ fn call_strrchr<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
@@ -347,7 +347,7 @@ fn call_strncmp<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
@@ -362,7 +362,7 @@ fn call_printf<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     let dest_vars =
@@ -377,7 +377,7 @@ fn call_fprintf<'tcx, M: MutabilityLikeAnalysis>(
     args: &Vec<Operand<'tcx>>,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
-    struct_fields: &StructFieldsVars,
+    struct_fields: &StructFields,
     database: &mut <M as Infer>::L,
 ) {
     let dest_vars =

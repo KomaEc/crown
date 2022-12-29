@@ -22,10 +22,10 @@ use rustc_type_ir::TyKind;
 
 use self::boolean_system::BooleanSystem;
 
-pub struct AnalysisResult<Domain> {
-    struct_fields: StructFieldsVars,
-    fn_locals: FnLocalsVars,
-    model: IndexVec<Var, Domain>,
+pub struct TypeQualifiers<Qualifier> {
+    struct_fields: StructFields,
+    fn_locals: FnLocals,
+    model: IndexVec<Var, Qualifier>,
 }
 
 fn display_value<Value: std::fmt::Display>(value: &[Value]) -> String {
@@ -36,7 +36,7 @@ fn display_value<Value: std::fmt::Display>(value: &[Value]) -> String {
         .join(" ")
 }
 
-impl<Domain> AnalysisResult<Domain> {
+impl<Domain> TypeQualifiers<Domain> {
     pub fn fn_results(&self, r#fn: &DefId) -> FnResult<Domain> {
         let locals = &self.fn_locals.vars[self.fn_locals.did_idx[r#fn]];
         FnResult {
@@ -108,7 +108,7 @@ fn count_ptr(mut ty: Ty) -> usize {
     }
 }
 
-impl<Domain> AnalysisResult<Domain>
+impl<Domain> TypeQualifiers<Domain>
 where
     Domain: BooleanLattice,
 {
@@ -143,10 +143,9 @@ where
             vars.push();
         }
         let vars = vars.done();
-        let struct_fields = StructFieldsVars {
+        let struct_fields = StructFields {
             did_idx,
             vars,
-            _group: std::marker::PhantomData,
         };
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.fns.len());
@@ -166,10 +165,9 @@ where
             vars.push();
         }
         let vars = vars.done();
-        let fn_locals = FnLocalsVars {
+        let fn_locals = FnLocals {
             did_idx,
             vars,
-            _group: std::marker::PhantomData,
         };
 
         let mut database = BooleanSystem::new(&model);
@@ -206,22 +204,13 @@ common::macros::newtype_index! {
     }
 }
 
-/// A group of [`DefId`]s, with each a set of entities of concerned
-pub trait MirGroup {}
-pub enum StructFields {}
-pub enum FnLocals {}
-
-impl MirGroup for StructFields {}
-impl MirGroup for FnLocals {}
-
-pub struct VarGroup<Group: MirGroup> {
-    pub(super) did_idx: FxHashMap<DefId, usize>,
+pub struct VarMap<Var> {
+    pub did_idx: FxHashMap<DefId, usize>,
     /// [`DefId`] -> entity -> [`std::ops::Range<Var>`]
-    pub(super) vars: VecVec<Var>,
-    _group: std::marker::PhantomData<*const Group>,
+    pub vars: VecVec<Var>,
 }
 
-impl<Group: MirGroup> VarGroup<Group> {
+impl<Var: Copy> VarMap<Var> {
     #[inline]
     pub fn vars(&self, did: &DefId) -> impl Iterator<Item = Range<Var>> + '_ {
         let idx = self.did_idx[did];
@@ -231,17 +220,17 @@ impl<Group: MirGroup> VarGroup<Group> {
     }
 }
 
-pub type StructFieldsVars = VarGroup<StructFields>;
-pub type FnLocalsVars = VarGroup<FnLocals>;
+pub type StructFields = VarMap<Var>;
+pub type FnLocals = VarMap<Var>;
 
-impl StructFieldsVars {
+impl StructFields {
     /// [`fields()`] returns a slice of [`Range<Var>`] that is in lock-step with [`all_fields()`]
     pub fn fields(&self, did: &DefId) -> impl Iterator<Item = Range<Var>> + '_ {
         self.vars(did)
     }
 }
 
-impl FnLocalsVars {
+impl FnLocals {
     /// [`locals()`] returns a slice of [`Range<Var>`] that is in lock-step with [`local_decls`]
     pub fn locals(&self, did: &DefId) -> impl Iterator<Item = Range<Var>> + '_ {
         self.vars(did)
@@ -268,7 +257,7 @@ pub trait Infer {
         location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
-        struct_fields: &StructFieldsVars,
+        struct_fields: &StructFields,
         database: &mut Self::L,
     );
 
@@ -278,8 +267,8 @@ pub trait Infer {
         location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
-        fn_locals: &FnLocalsVars,
-        struct_fields: &StructFieldsVars,
+        fn_locals: &FnLocals,
+        struct_fields: &StructFields,
         database: &mut <Self as Infer>::L,
         tcx: TyCtxt<'tcx>,
     );
@@ -288,8 +277,8 @@ pub trait Infer {
         &mut self,
         body: &Body<'tcx>,
         locals: &[Var],
-        fn_locals: &FnLocalsVars,
-        struct_fields: &StructFieldsVars,
+        fn_locals: &FnLocals,
+        struct_fields: &StructFields,
         database: &mut <Self as Infer>::L,
         tcx: TyCtxt<'tcx>,
     ) {
@@ -313,8 +302,8 @@ pub trait Infer {
         bb_data: &BasicBlockData<'tcx>,
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
-        fn_locals: &FnLocalsVars,
-        struct_fields: &StructFieldsVars,
+        fn_locals: &FnLocals,
+        struct_fields: &StructFields,
         database: &mut <Self as Infer>::L,
         tcx: TyCtxt<'tcx>,
     ) {
@@ -366,7 +355,7 @@ pub trait Infer {
         location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
-        struct_fields: &StructFieldsVars,
+        struct_fields: &StructFields,
         database: &mut <Self as Infer>::L,
     ) {
         tracing::debug!("infering statement {:?}", statement);
