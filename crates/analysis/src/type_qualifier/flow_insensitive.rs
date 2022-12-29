@@ -7,7 +7,10 @@ pub mod mutability;
 
 use std::ops::Range;
 
-use common::data_structure::vec_vec::VecVec;
+use common::{
+    data_structure::vec_vec::VecVec,
+    discretization::{self, Discretization},
+};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
@@ -21,6 +24,9 @@ use rustc_middle::{
 use rustc_type_ir::TyKind;
 
 use self::boolean_system::BooleanSystem;
+
+pub type StructFields = discretization::StructFields<Var>;
+pub type FnLocals = discretization::FnLocals<Var>;
 
 pub struct TypeQualifiers<Qualifier> {
     struct_fields: StructFields,
@@ -38,7 +44,7 @@ fn display_value<Value: std::fmt::Display>(value: &[Value]) -> String {
 
 impl<Domain> TypeQualifiers<Domain> {
     pub fn fn_results(&self, r#fn: &DefId) -> FnResult<Domain> {
-        let locals = &self.fn_locals.vars[self.fn_locals.did_idx[r#fn]];
+        let locals = &self.fn_locals.0.contents[self.fn_locals.0.did_idx[r#fn]];
         FnResult {
             locals,
             model: &self.model,
@@ -143,10 +149,10 @@ where
             vars.push();
         }
         let vars = vars.done();
-        let struct_fields = StructFields {
+        let struct_fields = discretization::StructFields(Discretization {
             did_idx,
-            vars,
-        };
+            contents: vars,
+        });
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.fns.len());
         let mut vars = VecVec::with_capacity(crate_data.fns.len(), crate_data.fns.len() * 15);
@@ -165,18 +171,18 @@ where
             vars.push();
         }
         let vars = vars.done();
-        let fn_locals = FnLocals {
+        let fn_locals = discretization::FnLocals(Discretization {
             did_idx,
-            vars,
-        };
+            contents: vars,
+        });
 
         let mut database = BooleanSystem::new(&model);
 
         for r#fn in &crate_data.fns {
             let body = tcx.optimized_mir(*r#fn);
             let locals = {
-                let idx = fn_locals.did_idx[r#fn];
-                &fn_locals.vars[idx]
+                let idx = fn_locals.0.did_idx[r#fn];
+                &fn_locals.0.contents[idx]
             };
             infer.infer_body(body, locals, &fn_locals, &struct_fields, &mut database, tcx);
         }
@@ -201,39 +207,6 @@ pub trait BooleanLattice: Copy + PartialEq + Eq + From<bool> + Into<bool> + Latt
 common::macros::newtype_index! {
     pub struct Var {
         DEBUG_FORMAT = "{}"
-    }
-}
-
-pub struct VarMap<Var> {
-    pub did_idx: FxHashMap<DefId, usize>,
-    /// [`DefId`] -> entity -> [`std::ops::Range<Var>`]
-    pub vars: VecVec<Var>,
-}
-
-impl<Var: Copy> VarMap<Var> {
-    #[inline]
-    pub fn vars(&self, did: &DefId) -> impl Iterator<Item = Range<Var>> + '_ {
-        let idx = self.did_idx[did];
-        self.vars[idx]
-            .array_windows()
-            .map(|&[start, end]| Range { start, end })
-    }
-}
-
-pub type StructFields = VarMap<Var>;
-pub type FnLocals = VarMap<Var>;
-
-impl StructFields {
-    /// [`fields()`] returns a slice of [`Range<Var>`] that is in lock-step with [`all_fields()`]
-    pub fn fields(&self, did: &DefId) -> impl Iterator<Item = Range<Var>> + '_ {
-        self.vars(did)
-    }
-}
-
-impl FnLocals {
-    /// [`locals()`] returns a slice of [`Range<Var>`] that is in lock-step with [`local_decls`]
-    pub fn locals(&self, did: &DefId) -> impl Iterator<Item = Range<Var>> + '_ {
-        self.vars(did)
     }
 }
 

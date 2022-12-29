@@ -20,6 +20,7 @@ extern crate rustc_type_ir;
 
 pub mod captures;
 pub mod data_structure;
+pub mod discretization;
 pub mod macros;
 pub mod rewrite;
 pub mod struct_dependency;

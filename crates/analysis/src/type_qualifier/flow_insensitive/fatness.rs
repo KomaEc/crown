@@ -13,8 +13,8 @@ use rustc_type_ir::TyKind::{self, FnDef};
 
 use self::{libc::libc_call, library::library_call};
 use super::{
-    boolean_system::BooleanSystem, TypeQualifiers, BooleanLattice, ConstraintSystem, FnLocals,
-    Infer, Lattice, StructFields, Var,
+    boolean_system::BooleanSystem, BooleanLattice, ConstraintSystem, FnLocals, Infer, Lattice,
+    StructFields, TypeQualifiers, Var,
 };
 
 pub fn fatness_analysis(crate_data: &common::CrateData) -> FatnessResult {
@@ -164,8 +164,10 @@ impl Infer for FatnessAnalysis {
                         // this crate
                         rustc_hir::Node::Item(_) => {
                             let callee_body = tcx.optimized_mir(callee);
-                            let mut callee_vars =
-                                fn_locals.vars(&callee).take(callee_body.arg_count + 1);
+                            let mut callee_vars = fn_locals
+                                .0
+                                .contents(&callee)
+                                .take(callee_body.arg_count + 1);
 
                             let dest = place_vars(destination, local_decls, locals, struct_fields);
                             let ret = callee_vars.next().unwrap();
