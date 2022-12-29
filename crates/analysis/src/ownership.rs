@@ -1,4 +1,5 @@
 pub mod infer;
+pub mod solidify;
 pub mod whole_program;
 
 use rustc_middle::mir::{Body, Rvalue, StatementKind};
