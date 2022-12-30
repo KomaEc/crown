@@ -5,7 +5,10 @@ use common::{
 };
 use rustc_hash::FxHashMap;
 use rustc_index::vec::IndexVec;
-use rustc_middle::mir::Location;
+use rustc_middle::mir::{
+    visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
+    Body, Local, Location, Place, Rvalue,
+};
 
 use super::{whole_program::WholeProgramResults, Ownership};
 use crate::{
@@ -16,7 +19,13 @@ use crate::{
 pub type SolidifiedOwnershipSchemes = TypeQualifiers<Ownership>;
 
 impl<'tcx> WholeProgramResults<'tcx> {
-    pub fn solidify(&self, crate_data: &CrateData) -> SolidifiedOwnershipSchemes {
+    fn sanity_check(&self) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    pub fn solidify(&self, crate_data: &CrateData) -> anyhow::Result<SolidifiedOwnershipSchemes> {
+        self.sanity_check()?;
+
         let mut model = IndexVec::new();
         let mut next: Var = model.next_index();
         let mut did_idx = FxHashMap::default();
@@ -114,6 +123,59 @@ impl<'tcx> WholeProgramResults<'tcx> {
             contents: vars,
         });
 
-        TypeQualifiers::new(struct_fields, fn_locals, model)
+        Ok(TypeQualifiers::new(struct_fields, fn_locals, model))
+    }
+}
+
+struct SanityCheck<'me, 'tcx> {
+    ownership_schemes: &'me <WholeProgramResults<'tcx> as AnalysisResults<'me>>::FnResults,
+    solidifed: &'me SolidifiedOwnershipSchemes,
+    body: &'me Body<'tcx>,
+}
+
+impl<'me, 'tcx> Visitor<'tcx> for SanityCheck<'me, 'tcx> {
+    fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, location: Location) {
+        if let Rvalue::CopyForDeref(place) = rvalue {
+            if self
+                .solidifed
+                .place_result(self.body, place)
+                .first()
+                .copied()
+                .unwrap()
+                .is_owning()
+            {
+                if let Some(flowing) = self.ownership_schemes.local_result(place.local, location) {
+                    if flowing.r#use.len() >= 2
+                        && !(flowing.r#use[1].is_owning() && flowing.def[1].is_owning())
+                    {
+                        // err
+                    }
+                }
+            }
+        }
+
+        self.super_rvalue(rvalue, location)
+    }
+
+    fn visit_local(&mut self, local: Local, context: PlaceContext, location: Location) {
+        if self
+            .solidifed
+            .place_result(self.body, &Place::from(local))
+            .first()
+            .copied()
+            .unwrap()
+            .is_owning()
+            && matches!(
+                context,
+                PlaceContext::MutatingUse(MutatingUseContext::Projection)
+                    | PlaceContext::NonMutatingUse(NonMutatingUseContext::Projection)
+            )
+        {
+            if let Some(flowing) = self.ownership_schemes.local_result(local, location) {
+                if !(flowing.r#use[0].is_owning() && flowing.def[0].is_owning()) {
+                    // err
+                }
+            }
+        }
     }
 }

@@ -27,7 +27,7 @@ use crate::{
         state::SSAState,
         AnalysisResults, FnResults,
     },
-    struct_ctxt::StructCtxt,
+    struct_ctxt::{RestrictedStructCtxt, StructCtxt},
     type_qualifier::output_params::OutputParams,
     CrateCtxt,
 };
@@ -294,11 +294,19 @@ impl<'analysis_results, 'tcx: 'analysis_results> AnalysisResults<'analysis_resul
 
     type FnSig = impl Iterator<Item = Option<Self::Param>>;
 
-    type FnResults = (&'analysis_results FnSummary, &'analysis_results [Ownership]);
+    type FnResults = (
+        &'analysis_results FnSummary,
+        &'analysis_results [Ownership],
+        RestrictedStructCtxt<'analysis_results, 'tcx>,
+    );
 
     fn fn_results(&'analysis_results self, r#fn: DefId) -> Option<Self::FnResults> {
-        let (fn_summary, _) = self.fn_locals.fn_summaries.get(&r#fn)?;
-        Some((fn_summary, &self.model[..]))
+        let (fn_summary, precision) = self.fn_locals.fn_summaries.get(&r#fn)?;
+        Some((
+            fn_summary,
+            &self.model[..],
+            self.struct_ctxt.with_precision(*precision),
+        ))
     }
 
     fn fn_sig(&'analysis_results self, r#fn: DefId) -> Self::FnSig {
@@ -371,7 +379,13 @@ fn show_fn_sigs(model: &[Ownership], fn_locals: &FnLocals, tcx: TyCtxt, fns: &[D
     }
 }
 
-impl<'a> FnResults<'a> for (&'a FnSummary, &'a [Ownership]) {
+impl<'a, 'tcx> FnResults<'a>
+    for (
+        &'a FnSummary,
+        &'a [Ownership],
+        RestrictedStructCtxt<'a, 'tcx>,
+    )
+{
     type LocalResult = &'a [Ownership];
 
     type LocationResults = impl Iterator<Item = (Local, Consume<&'a [Ownership]>)>;
