@@ -20,7 +20,7 @@ use super::{
 use crate::type_qualifier::flow_insensitive::ConstraintSystem;
 
 pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResult {
-    MutabilityResult::new(MutabilityAnalysis, crate_data)
+    MutabilityResult::from_inter(MutabilityAnalysis, crate_data)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

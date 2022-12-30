@@ -261,12 +261,12 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         Command::Mutability => {
             let mutability_result =
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
-            mutability_result.print_fn_sigs(tcx, &input.fns)
+            mutability_result.print_results(&input)
         }
         Command::Fatness => {
             let fatness_result =
                 analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input);
-            fatness_result.print_fn_sigs(tcx, &input.fns)
+            fatness_result.print_results(&input)
         }
         Command::Analyse => {
             let alias_result = alias::alias_results(&input);
@@ -285,6 +285,9 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 )
             })?;
             ownership_schemes.trace(tcx);
+
+            let ownership_result = ownership_schemes.solidify(&input);
+            ownership_result.print_results(&input);
         }
         Command::Rewrite {
             rewrite_mode,

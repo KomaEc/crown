@@ -42,8 +42,20 @@ fn display_value<Value: std::fmt::Display>(value: &[Value]) -> String {
         .join(" ")
 }
 
-impl<Domain> TypeQualifiers<Domain> {
-    pub fn fn_results(&self, r#fn: &DefId) -> FnResult<Domain> {
+impl<Qualifier> TypeQualifiers<Qualifier> {
+    pub fn new(
+        struct_fields: StructFields,
+        fn_locals: FnLocals,
+        model: IndexVec<Var, Qualifier>,
+    ) -> Self {
+        Self {
+            struct_fields,
+            fn_locals,
+            model,
+        }
+    }
+
+    pub fn fn_results(&self, r#fn: &DefId) -> FnResult<Qualifier> {
         let locals = &self.fn_locals.0.contents[self.fn_locals.0.did_idx[r#fn]];
         FnResult {
             locals,
@@ -51,21 +63,21 @@ impl<Domain> TypeQualifiers<Domain> {
         }
     }
 
-    pub fn struct_results(&self, r#struct: &DefId) -> impl Iterator<Item = &[Domain]> {
+    pub fn struct_results(&self, r#struct: &DefId) -> impl Iterator<Item = &[Qualifier]> {
         self.struct_fields
             .fields(r#struct)
             .map(|Range { start, end }| &self.model.raw[start.index()..end.index()])
     }
 
-    pub fn fn_sig(&self, r#fn: &DefId, tcx: TyCtxt) -> impl Iterator<Item = &[Domain]> {
+    pub fn fn_sig(&self, r#fn: &DefId, tcx: TyCtxt) -> impl Iterator<Item = &[Qualifier]> {
         let fn_result = self.fn_results(r#fn);
         let body = tcx.optimized_mir(*r#fn);
         fn_result.results().take(body.arg_count + 1)
     }
 
-    pub fn print_fn_sigs(&self, tcx: TyCtxt, fns: &[DefId])
+    fn print_fn_sigs(&self, tcx: TyCtxt, fns: &[DefId])
     where
-        Domain: std::fmt::Display,
+        Qualifier: std::fmt::Display,
     {
         for did in fns {
             let mut fn_sig = self.fn_sig(did, tcx);
@@ -76,6 +88,30 @@ impl<Domain> TypeQualifiers<Domain> {
             let fn_path = tcx.def_path_str(*did);
             println!("{fn_path}: ({args}) -> {ret}")
         }
+    }
+
+    fn print_struct_sigs(&self, tcx: TyCtxt, structs: &[DefId])
+    where
+        Qualifier: std::fmt::Display
+    {
+        for did in structs {
+            let struct_results = self.struct_results(did);
+            let struct_ty = tcx.type_of(*did);
+            let TyKind::Adt(adt_def, _) = struct_ty.kind() else { unreachable!() };
+            println!("{} {{", tcx.def_path_str(*did));
+            for (field_def, qualifiers) in adt_def.all_fields().zip(struct_results) {
+                println!("  {}: {},", field_def.ident(tcx).as_str(), display_value(qualifiers));
+            }
+            println!("}}");
+        }
+    }
+
+    pub fn print_results(&self, crate_data: &common::CrateData)
+    where
+        Qualifier: std::fmt::Display
+    {
+        self.print_struct_sigs(crate_data.tcx, &crate_data.structs);
+        self.print_fn_sigs(crate_data.tcx, &crate_data.fns);
     }
 }
 
@@ -118,7 +154,7 @@ impl<Domain> TypeQualifiers<Domain>
 where
     Domain: BooleanLattice,
 {
-    pub fn new<I>(mut infer: I, crate_data: &common::CrateData) -> Self
+    pub fn from_inter<I>(mut infer: I, crate_data: &common::CrateData) -> Self
     where
         I: Infer<L = BooleanSystem<Domain>>,
         <I as Infer>::L: ConstraintSystem<Domain = Domain>,

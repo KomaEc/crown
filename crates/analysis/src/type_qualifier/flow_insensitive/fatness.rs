@@ -18,7 +18,7 @@ use super::{
 };
 
 pub fn fatness_analysis(crate_data: &common::CrateData) -> FatnessResult {
-    FatnessResult::new(FatnessAnalysis, crate_data)
+    FatnessResult::from_inter(FatnessAnalysis, crate_data)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
