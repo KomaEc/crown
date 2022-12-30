@@ -166,7 +166,7 @@ impl Infer for FatnessAnalysis {
                             let callee_body = tcx.optimized_mir(callee);
                             let mut callee_vars = fn_locals
                                 .0
-                                .contents(&callee)
+                                .contents_iter(&callee)
                                 .take(callee_body.arg_count + 1);
 
                             let dest = place_vars(destination, local_decls, locals, struct_fields);

@@ -55,7 +55,7 @@ impl<Qualifier> TypeQualifiers<Qualifier> {
         }
     }
 
-    pub fn fn_results(&self, r#fn: &DefId) -> FnResult<Qualifier> {
+    pub fn fn_results<'me>(&'me self, r#fn: &DefId) -> FnResult<'me, Qualifier> {
         let locals = &self.fn_locals.0.contents[self.fn_locals.0.did_idx[r#fn]];
         FnResult {
             locals,
@@ -67,6 +67,11 @@ impl<Qualifier> TypeQualifiers<Qualifier> {
         self.struct_fields
             .fields(r#struct)
             .map(|Range { start, end }| &self.model.raw[start.index()..end.index()])
+    }
+
+    pub fn struct_field_result(&self, r#struct: &DefId, f: usize) -> &[Qualifier] {
+        let Range { start, end } = self.struct_fields.field(r#struct, f);
+        &self.model.raw[start.index()..end.index()]
     }
 
     pub fn fn_sig(&self, r#fn: &DefId, tcx: TyCtxt) -> impl Iterator<Item = &[Qualifier]> {
@@ -92,7 +97,7 @@ impl<Qualifier> TypeQualifiers<Qualifier> {
 
     fn print_struct_sigs(&self, tcx: TyCtxt, structs: &[DefId])
     where
-        Qualifier: std::fmt::Display
+        Qualifier: std::fmt::Display,
     {
         for did in structs {
             let struct_results = self.struct_results(did);
@@ -100,7 +105,11 @@ impl<Qualifier> TypeQualifiers<Qualifier> {
             let TyKind::Adt(adt_def, _) = struct_ty.kind() else { unreachable!() };
             println!("{} {{", tcx.def_path_str(*did));
             for (field_def, qualifiers) in adt_def.all_fields().zip(struct_results) {
-                println!("  {}: {},", field_def.ident(tcx).as_str(), display_value(qualifiers));
+                println!(
+                    "  {}: {},",
+                    field_def.ident(tcx).as_str(),
+                    display_value(qualifiers)
+                );
             }
             println!("}}");
         }
@@ -108,10 +117,37 @@ impl<Qualifier> TypeQualifiers<Qualifier> {
 
     pub fn print_results(&self, crate_data: &common::CrateData)
     where
-        Qualifier: std::fmt::Display
+        Qualifier: std::fmt::Display,
     {
         self.print_struct_sigs(crate_data.tcx, &crate_data.structs);
         self.print_fn_sigs(crate_data.tcx, &crate_data.fns);
+    }
+
+    pub fn place_result<'tcx>(&self, body: &Body<'tcx>, place: &Place<'tcx>) -> &[Qualifier] {
+        let mut ptr_kinds = &self
+            .fn_results(&body.source.def_id())
+            .local_result(place.local)[..];
+        let mut ptr_kinds_index = 0;
+        let mut ty = body.local_decls[place.local].ty;
+        for proj in place.projection {
+            match proj {
+                rustc_middle::mir::ProjectionElem::Deref => {
+                    ptr_kinds_index += 1;
+                    ty = ty.builtin_deref(true).unwrap().ty;
+                }
+                rustc_middle::mir::ProjectionElem::Field(f, field_ty) => {
+                    assert_eq!(ptr_kinds_index, ptr_kinds.len());
+                    let adt_def = ty.ty_adt_def().unwrap();
+                    ptr_kinds = self.struct_field_result(&adt_def.did(), f.index());
+                    ptr_kinds_index = 0;
+                    ty = field_ty;
+                }
+                rustc_middle::mir::ProjectionElem::Index(_) => todo!(),
+                _ => unreachable!(),
+            }
+        }
+
+        &ptr_kinds[ptr_kinds_index..]
     }
 }
 
@@ -128,7 +164,7 @@ impl<'me, Domain> FnResult<'me, Domain> {
             .map(|&[start, end]| &self.model.raw[start.index()..end.index()])
     }
 
-    pub fn local_result(&self, local: Local) -> &[Domain] {
+    pub fn local_result(self, local: Local) -> &'me [Domain] {
         let (start, end) = (self.locals[local.index()], self.locals[local.index() + 1]);
         &self.model.raw[start.index()..end.index()]
     }
