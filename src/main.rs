@@ -286,7 +286,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             })?;
             ownership_schemes.trace(tcx);
 
-            let ownership_result = ownership_schemes.solidify(&input)?;
+            let ownership_result = ownership_schemes.solidify(&input);
             ownership_result.print_results(&input);
         }
         Command::Rewrite {

@@ -19,13 +19,7 @@ use crate::{
 pub type SolidifiedOwnershipSchemes = TypeQualifiers<Ownership>;
 
 impl<'tcx> WholeProgramResults<'tcx> {
-    fn sanity_check(&self) -> anyhow::Result<()> {
-        Ok(())
-    }
-
-    pub fn solidify(&self, crate_data: &CrateData) -> anyhow::Result<SolidifiedOwnershipSchemes> {
-        self.sanity_check()?;
-
+    pub fn solidify(&self, crate_data: &CrateData<'tcx>) -> SolidifiedOwnershipSchemes {
         let mut model = IndexVec::new();
         let mut next: Var = model.next_index();
         let mut did_idx = FxHashMap::default();
@@ -123,32 +117,70 @@ impl<'tcx> WholeProgramResults<'tcx> {
             contents: vars,
         });
 
-        Ok(TypeQualifiers::new(struct_fields, fn_locals, model))
+        let solidified = TypeQualifiers::new(struct_fields, fn_locals, model);
+
+        sanity_check(self, &solidified, crate_data);
+
+        solidified
     }
 }
 
+fn sanity_check<'tcx>(
+    ownership_schemes: &WholeProgramResults<'tcx>,
+    solidifed_ownership_schemes: &SolidifiedOwnershipSchemes,
+    crate_data: &CrateData<'tcx>,
+) {
+    for r#fn in &crate_data.fns {
+        let body = crate_data.tcx.optimized_mir(*r#fn);
+
+        let ownership_schemes = ownership_schemes.fn_results(*r#fn).unwrap();
+
+        let mut sanity_checker = SanityCheck {
+            ownership_schemes: &ownership_schemes,
+            solidifed: solidifed_ownership_schemes,
+            body,
+            err_locations: Vec::new(),
+        };
+
+        sanity_checker.visit_body(body);
+
+        let err_locations = sanity_checker.err_locations;
+
+        for location in err_locations {
+            let stmt = body.stmt_at(location);
+            let span = match stmt {
+                either::Either::Left(stmt) => stmt.source_info.span,
+                either::Either::Right(term) => term.source_info.span,
+            };
+
+            tracing::error!("semantics changed @ {:?}", span)
+        }
+    }
+}
+
+/// This does not work for more than two dereferences
 struct SanityCheck<'me, 'tcx> {
     ownership_schemes: &'me <WholeProgramResults<'tcx> as AnalysisResults<'me>>::FnResults,
     solidifed: &'me SolidifiedOwnershipSchemes,
     body: &'me Body<'tcx>,
+    err_locations: Vec<Location>,
 }
 
 impl<'me, 'tcx> Visitor<'tcx> for SanityCheck<'me, 'tcx> {
     fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, location: Location) {
         if let Rvalue::CopyForDeref(place) = rvalue {
-            if self
+            if matches!(self
                 .solidifed
-                .place_result(self.body, place)
-                .first()
-                .copied()
-                .unwrap()
-                .is_owning()
+                .place_result(self.body, &Place::from(place.local))
+                .chunks(2)
+                .next(),
+                Some(&[ownership1, ownership2]) if ownership1.is_owning() && ownership2.is_owning())
             {
                 if let Some(flowing) = self.ownership_schemes.local_result(place.local, location) {
                     if flowing.r#use.len() >= 2
                         && !(flowing.r#use[1].is_owning() && flowing.def[1].is_owning())
                     {
-                        // err
+                        self.err_locations.push(location);
                     }
                 }
             }
@@ -158,13 +190,11 @@ impl<'me, 'tcx> Visitor<'tcx> for SanityCheck<'me, 'tcx> {
     }
 
     fn visit_local(&mut self, local: Local, context: PlaceContext, location: Location) {
-        if self
+        if matches!(self
             .solidifed
             .place_result(self.body, &Place::from(local))
             .first()
-            .copied()
-            .unwrap()
-            .is_owning()
+            .copied(), Some(ownership) if ownership.is_owning())
             && matches!(
                 context,
                 PlaceContext::MutatingUse(MutatingUseContext::Projection)
@@ -173,7 +203,7 @@ impl<'me, 'tcx> Visitor<'tcx> for SanityCheck<'me, 'tcx> {
         {
             if let Some(flowing) = self.ownership_schemes.local_result(local, location) {
                 if !(flowing.r#use[0].is_owning() && flowing.def[0].is_owning()) {
-                    // err
+                    self.err_locations.push(location);
                 }
             }
         }
