@@ -70,65 +70,6 @@ impl Voidable for &[Ownership] {
     }
 }
 
-// pub fn project_deeper<'base, 'tcx>(
-//     base: Consume<&'base [Ownership]>,
-//     ty: rustc_middle::ty::Ty<'tcx>,
-//     projection: &[rustc_middle::mir::PlaceElem<'tcx>],
-//     restricted_struct_ctxt: RestrictedStructCtxt<'_, 'tcx>,
-//     mut on_deref: impl FnMut(&Ownership),
-// ) -> Option<Consume<&'base [Ownership]>> {
-//     let mut base_ty = ty;
-//     let mut ptr_chased = 0;
-//     let mut proj_start_offset = 0;
-
-//     for projection_elem in projection {
-//         match projection_elem {
-//             // do not track pointers behind dereferences for now
-//             rustc_middle::mir::ProjectionElem::Deref => {
-//                 on_deref(&base.r#use[proj_start_offset]);
-//                 proj_start_offset += 1;
-//                 base_ty = base_ty.builtin_deref(true).unwrap().ty;
-//                 ptr_chased += 1;
-//             }
-//             rustc_middle::mir::ProjectionElem::Field(field, ty) => {
-//                 let rustc_middle::ty::TyKind::Adt(adt_def, _) = base_ty.kind() else { unreachable!() };
-//                 proj_start_offset +=
-//                     restricted_struct_ctxt.field_offset(*adt_def, field.index(), ptr_chased)
-//                         as usize;
-//                 base_ty = *ty;
-//             }
-//             // [ty] is equivalent to ty
-//             rustc_middle::mir::ProjectionElem::Index(_) => {
-//                 base_ty = base_ty.builtin_index().unwrap()
-//             }
-//             rustc_middle::mir::ProjectionElem::ConstantIndex { .. } => {
-//                 unreachable!("unexpected constant index");
-//             }
-//             rustc_middle::mir::ProjectionElem::Subslice { .. } => {
-//                 unreachable!("unexpected subslicing")
-//             }
-//             rustc_middle::mir::ProjectionElem::OpaqueCast(_) => {
-//                 unreachable!("unexpected opaque cast")
-//             }
-//             rustc_middle::mir::ProjectionElem::Downcast(..) => {
-//                 unreachable!("unexpected downcasting")
-//             }
-//         }
-//     }
-
-//     if proj_start_offset >= base.r#use.len() {
-//         return None;
-//     }
-
-//     let proj_end_offset =
-//         proj_start_offset + restricted_struct_ctxt.measure(base_ty, ptr_chased) as usize;
-
-//     Some(Consume {
-//         r#use: &base.r#use[proj_start_offset..proj_end_offset],
-//         def: &base.def[proj_start_offset..proj_end_offset],
-//     })
-// }
-
 #[derive(Clone, Debug)]
 pub enum Param<Var> {
     Output(Consume<Var>),
