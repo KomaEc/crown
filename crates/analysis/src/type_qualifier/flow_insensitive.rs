@@ -190,10 +190,10 @@ impl<Domain> TypeQualifiers<Domain>
 where
     Domain: BooleanLattice,
 {
-    pub fn from_inter<I>(mut infer: I, crate_data: &common::CrateData) -> Self
+    pub fn from_infer<'tcx, I>(mut infer: I, crate_data: &common::CrateData<'tcx>) -> Self
     where
-        I: Infer<L = BooleanSystem<Domain>>,
-        <I as Infer>::L: ConstraintSystem<Domain = Domain>,
+        I: Infer<'tcx, L = BooleanSystem<Domain>>,
+        <I as Infer<'tcx>>::L: ConstraintSystem<Domain = Domain>,
     {
         let mut model = IndexVec::new();
         // not necessary, but need initialization anyway
@@ -293,9 +293,9 @@ pub trait ConstraintSystem {
     fn guard(&mut self, guard: Var, guarded: Var);
 }
 
-pub trait Infer {
+pub trait Infer<'tcx> {
     type L: ConstraintSystem;
-    fn infer_assign<'tcx>(
+    fn infer_assign(
         &mut self,
         place: &Place<'tcx>,
         rvalue: &Rvalue<'tcx>,
@@ -306,7 +306,7 @@ pub trait Infer {
         database: &mut Self::L,
     );
 
-    fn infer_terminator<'tcx>(
+    fn infer_terminator(
         &mut self,
         terminator: &Terminator<'tcx>,
         location: Location,
@@ -314,17 +314,17 @@ pub trait Infer {
         locals: &[Var],
         fn_locals: &FnLocals,
         struct_fields: &StructFields,
-        database: &mut <Self as Infer>::L,
+        database: &mut <Self as Infer<'tcx>>::L,
         tcx: TyCtxt<'tcx>,
     );
 
-    fn infer_body<'tcx>(
+    fn infer_body(
         &mut self,
         body: &Body<'tcx>,
         locals: &[Var],
         fn_locals: &FnLocals,
         struct_fields: &StructFields,
-        database: &mut <Self as Infer>::L,
+        database: &mut <Self as Infer<'tcx>>::L,
         tcx: TyCtxt<'tcx>,
     ) {
         for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
@@ -341,7 +341,7 @@ pub trait Infer {
         }
     }
 
-    fn infer_basic_block<'tcx>(
+    fn infer_basic_block(
         &mut self,
         bb: BasicBlock,
         bb_data: &BasicBlockData<'tcx>,
@@ -349,7 +349,7 @@ pub trait Infer {
         locals: &[Var],
         fn_locals: &FnLocals,
         struct_fields: &StructFields,
-        database: &mut <Self as Infer>::L,
+        database: &mut <Self as Infer<'tcx>>::L,
         tcx: TyCtxt<'tcx>,
     ) {
         let BasicBlockData {
@@ -394,14 +394,14 @@ pub trait Infer {
         }
     }
 
-    fn infer_statement<'tcx>(
+    fn infer_statement(
         &mut self,
         statement: &Statement<'tcx>,
         location: Location,
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
         struct_fields: &StructFields,
-        database: &mut <Self as Infer>::L,
+        database: &mut <Self as Infer<'tcx>>::L,
     ) {
         tracing::debug!("infering statement {:?}", statement);
         match &statement.kind {

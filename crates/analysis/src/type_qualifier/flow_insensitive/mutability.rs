@@ -20,7 +20,7 @@ use super::{
 use crate::type_qualifier::flow_insensitive::ConstraintSystem;
 
 pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResult {
-    MutabilityResult::from_inter(MutabilityAnalysis, crate_data)
+    MutabilityResult::from_infer(MutabilityAnalysis, crate_data)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -83,10 +83,10 @@ pub trait MutabilityLikeAnalysis {}
 
 impl MutabilityLikeAnalysis for MutabilityAnalysis {}
 
-impl<M: MutabilityLikeAnalysis> Infer for M {
+impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
     type L = BooleanSystem<Mutability>;
 
-    default fn infer_assign<'tcx>(
+    default fn infer_assign(
         &mut self,
         place: &Place<'tcx>,
         rvalue: &Rvalue<'tcx>,
@@ -176,7 +176,7 @@ impl<M: MutabilityLikeAnalysis> Infer for M {
         }
     }
 
-    default fn infer_terminator<'tcx>(
+    default fn infer_terminator(
         &mut self,
         terminator: &Terminator<'tcx>,
         _location: Location,
@@ -308,9 +308,10 @@ trait PlaceContext {
 enum MutCtxt {}
 
 impl PlaceContext for MutCtxt {
-    type DerefStore = <MutabilityAnalysis as Infer>::L;
+    // <MutabilityAnalysis as Infer<'_>>::L
+    type DerefStore = BooleanSystem<Mutability>;
 
-    fn on_deref(var: Var, database: &mut <MutabilityAnalysis as Infer>::L) {
+    fn on_deref(var: Var, database: &mut Self::DerefStore) {
         database.bottom(var);
     }
 }
@@ -320,7 +321,7 @@ enum UnknownCtxt {}
 impl PlaceContext for UnknownCtxt {
     type DerefStore = Option<Var>;
 
-    fn on_deref(var: Var, deref_var: &mut Option<Var>) {
+    fn on_deref(var: Var, deref_var: &mut Self::DerefStore) {
         assert!(deref_var.is_none());
         *deref_var = Some(var);
     }

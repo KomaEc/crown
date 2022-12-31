@@ -18,7 +18,7 @@ use super::{
 };
 
 pub fn fatness_analysis(crate_data: &common::CrateData) -> FatnessResult {
-    FatnessResult::from_inter(FatnessAnalysis, crate_data)
+    FatnessResult::from_infer(FatnessAnalysis, crate_data)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -77,10 +77,10 @@ impl BooleanLattice for Fatness {}
 
 pub struct FatnessAnalysis;
 
-impl Infer for FatnessAnalysis {
+impl<'tcx> Infer<'tcx> for FatnessAnalysis {
     type L = BooleanSystem<Fatness>;
 
-    fn infer_assign<'tcx>(
+    fn infer_assign(
         &mut self,
         place: &Place<'tcx>,
         rvalue: &Rvalue<'tcx>,
@@ -138,7 +138,7 @@ impl Infer for FatnessAnalysis {
         }
     }
 
-    fn infer_terminator<'tcx>(
+    fn infer_terminator(
         &mut self,
         terminator: &Terminator<'tcx>,
         _location: Location,
