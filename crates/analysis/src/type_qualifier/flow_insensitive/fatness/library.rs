@@ -5,7 +5,9 @@ use rustc_middle::{
 };
 
 use super::{place_vars, FatnessAnalysis};
-use crate::type_qualifier::flow_insensitive::{ConstraintSystem, Infer, StructFields, Var};
+use crate::type_qualifier::flow_insensitive::{
+    ConstraintSystem, StructFields, Var, WithConstraintSystem,
+};
 
 pub fn library_call<'tcx>(
     destination: &Place<'tcx>,
@@ -14,7 +16,7 @@ pub fn library_call<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <FatnessAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
     tcx: TyCtxt<'tcx>,
 ) {
     let def_path = tcx.def_path(callee);
@@ -65,7 +67,7 @@ fn call_offset<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <FatnessAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
     if let Some(arg) = args[0].place() {
@@ -88,7 +90,7 @@ fn call_offset_from<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <FatnessAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
     assert!(dest_vars.is_empty());

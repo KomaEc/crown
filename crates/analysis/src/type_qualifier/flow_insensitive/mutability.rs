@@ -15,7 +15,7 @@ use rustc_type_ir::TyKind::{self, FnDef};
 use self::{libc::libc_call, library::library_call};
 use super::{
     boolean_system::BooleanSystem, BooleanLattice, FnLocals, Infer, Lattice, StructFields,
-    TypeQualifiers, Var,
+    TypeQualifiers, Var, WithConstraintSystem,
 };
 use crate::type_qualifier::flow_insensitive::ConstraintSystem;
 
@@ -83,9 +83,11 @@ pub trait MutabilityLikeAnalysis {}
 
 impl MutabilityLikeAnalysis for MutabilityAnalysis {}
 
-impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
-    type L = BooleanSystem<Mutability>;
+impl<M: MutabilityLikeAnalysis> WithConstraintSystem for M {
+    type DB = BooleanSystem<Mutability>;
+}
 
+impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
     default fn infer_assign(
         &mut self,
         place: &Place<'tcx>,
@@ -94,7 +96,7 @@ impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
         struct_fields: &StructFields,
-        database: &mut Self::L,
+        database: &mut Self::DB,
     ) {
         let lhs = place;
         let rhs = rvalue;
@@ -184,7 +186,7 @@ impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
         locals: &[Var],
         fn_locals: &FnLocals,
         struct_fields: &StructFields,
-        database: &mut <Self as Infer>::L,
+        database: &mut Self::DB,
         tcx: TyCtxt<'tcx>,
     ) {
         if let TerminatorKind::Call {
@@ -402,7 +404,7 @@ pub(crate) fn conservative_call<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_var = place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
 

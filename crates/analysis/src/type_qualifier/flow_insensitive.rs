@@ -186,14 +186,79 @@ fn count_ptr(mut ty: Ty) -> usize {
     }
 }
 
+
+// pub fn infer(crate_data: &common::CrateData)
+
 impl<Domain> TypeQualifiers<Domain>
 where
     Domain: BooleanLattice,
 {
+    /// construct a new `TypeQualifiers` instance with no constraints added
+    pub fn new_empty(crate_data: &common::CrateData) -> Self {
+        let mut model = IndexVec::new();
+        // not necessary, but need initialization anyway
+        model.push(Domain::TOP);
+        model.push(Domain::BOTTOM);
+        let mut next: Var = model.next_index();
+        let tcx = crate_data.tcx;
+        let mut did_idx = FxHashMap::default();
+        did_idx.reserve(crate_data.structs.len());
+        let mut vars =
+            VecVec::with_capacity(crate_data.structs.len(), crate_data.structs.len() * 4);
+        for (idx, r#struct) in crate_data.structs.iter().enumerate() {
+            did_idx.insert(*r#struct, idx);
+            let struct_ty = tcx.type_of(*r#struct);
+            let TyKind::Adt(adt_def, substs) = struct_ty.kind() else { unreachable!() };
+            for field_def in adt_def.all_fields() {
+                let field_ty = field_def.ty(tcx, substs);
+                let ptr_count = count_ptr(field_ty);
+                model.extend(std::iter::repeat(Domain::BOTTOM).take(ptr_count));
+                vars.push_inner(next);
+                next = next + ptr_count;
+                assert_eq!(model.next_index(), next);
+            }
+            vars.push_inner(next);
+            vars.push();
+        }
+        let vars = vars.done();
+        let struct_fields = discretization::StructFields(Discretization {
+            did_idx,
+            contents: vars,
+        });
+        let mut did_idx = FxHashMap::default();
+        did_idx.reserve(crate_data.fns.len());
+        let mut vars = VecVec::with_capacity(crate_data.fns.len(), crate_data.fns.len() * 15);
+        for (idx, r#fn) in crate_data.fns.iter().enumerate() {
+            did_idx.insert(*r#fn, idx);
+            let body = tcx.optimized_mir(*r#fn);
+            for local_decl in &body.local_decls {
+                let ty = local_decl.ty;
+                let ptr_count = count_ptr(ty);
+                model.extend(std::iter::repeat(Domain::BOTTOM).take(ptr_count));
+                vars.push_inner(next);
+                next = next + ptr_count;
+                assert_eq!(model.next_index(), next);
+            }
+            vars.push_inner(next);
+            vars.push();
+        }
+        let vars = vars.done();
+        let fn_locals = discretization::FnLocals(Discretization {
+            did_idx,
+            contents: vars,
+        });
+
+        Self {
+            struct_fields,
+            fn_locals,
+            model,
+        }
+    }
+
     pub fn from_infer<'tcx, I>(mut infer: I, crate_data: &common::CrateData<'tcx>) -> Self
     where
-        I: Infer<'tcx, L = BooleanSystem<Domain>>,
-        <I as Infer<'tcx>>::L: ConstraintSystem<Domain = Domain>,
+        I: Infer<'tcx, DB = BooleanSystem<Domain>>,
+        <I as WithConstraintSystem>::DB: ConstraintSystem<Domain = Domain>,
     {
         let mut model = IndexVec::new();
         // not necessary, but need initialization anyway
@@ -293,8 +358,11 @@ pub trait ConstraintSystem {
     fn guard(&mut self, guard: Var, guarded: Var);
 }
 
-pub trait Infer<'tcx> {
-    type L: ConstraintSystem;
+pub trait WithConstraintSystem {
+    type DB: ConstraintSystem;
+}
+
+pub trait Infer<'tcx>: WithConstraintSystem {
     fn infer_assign(
         &mut self,
         place: &Place<'tcx>,
@@ -303,7 +371,7 @@ pub trait Infer<'tcx> {
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
         struct_fields: &StructFields,
-        database: &mut Self::L,
+        database: &mut Self::DB,
     );
 
     fn infer_terminator(
@@ -314,7 +382,7 @@ pub trait Infer<'tcx> {
         locals: &[Var],
         fn_locals: &FnLocals,
         struct_fields: &StructFields,
-        database: &mut <Self as Infer<'tcx>>::L,
+        database: &mut Self::DB,
         tcx: TyCtxt<'tcx>,
     );
 
@@ -324,7 +392,7 @@ pub trait Infer<'tcx> {
         locals: &[Var],
         fn_locals: &FnLocals,
         struct_fields: &StructFields,
-        database: &mut <Self as Infer<'tcx>>::L,
+        database: &mut Self::DB,
         tcx: TyCtxt<'tcx>,
     ) {
         for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
@@ -349,7 +417,7 @@ pub trait Infer<'tcx> {
         locals: &[Var],
         fn_locals: &FnLocals,
         struct_fields: &StructFields,
-        database: &mut <Self as Infer<'tcx>>::L,
+        database: &mut Self::DB,
         tcx: TyCtxt<'tcx>,
     ) {
         let BasicBlockData {
@@ -401,7 +469,7 @@ pub trait Infer<'tcx> {
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
         struct_fields: &StructFields,
-        database: &mut <Self as Infer<'tcx>>::L,
+        database: &mut Self::DB,
     ) {
         tracing::debug!("infering statement {:?}", statement);
         match &statement.kind {

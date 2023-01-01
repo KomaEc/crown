@@ -14,7 +14,7 @@ use rustc_type_ir::TyKind::{self, FnDef};
 use self::{libc::libc_call, library::library_call};
 use super::{
     boolean_system::BooleanSystem, BooleanLattice, ConstraintSystem, FnLocals, Infer, Lattice,
-    StructFields, TypeQualifiers, Var,
+    StructFields, TypeQualifiers, Var, WithConstraintSystem,
 };
 
 pub fn fatness_analysis(crate_data: &common::CrateData) -> FatnessResult {
@@ -77,9 +77,11 @@ impl BooleanLattice for Fatness {}
 
 pub struct FatnessAnalysis;
 
-impl<'tcx> Infer<'tcx> for FatnessAnalysis {
-    type L = BooleanSystem<Fatness>;
+impl WithConstraintSystem for FatnessAnalysis {
+    type DB = BooleanSystem<Fatness>;
+}
 
+impl<'tcx> Infer<'tcx> for FatnessAnalysis {
     fn infer_assign(
         &mut self,
         place: &Place<'tcx>,
@@ -88,7 +90,7 @@ impl<'tcx> Infer<'tcx> for FatnessAnalysis {
         local_decls: &impl HasLocalDecls<'tcx>,
         locals: &[Var],
         struct_fields: &StructFields,
-        database: &mut Self::L,
+        database: &mut Self::DB,
     ) {
         let lhs = place;
         let rhs = rvalue;
@@ -146,7 +148,7 @@ impl<'tcx> Infer<'tcx> for FatnessAnalysis {
         locals: &[Var],
         fn_locals: &FnLocals,
         struct_fields: &StructFields,
-        database: &mut <Self as Infer>::L,
+        database: &mut Self::DB,
         tcx: TyCtxt<'tcx>,
     ) {
         if let TerminatorKind::Call {

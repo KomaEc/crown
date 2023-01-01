@@ -5,7 +5,9 @@ use rustc_middle::{
 };
 
 use super::{conservative_call, place_vars, EnsureNoDeref, MutCtxt, MutabilityLikeAnalysis};
-use crate::type_qualifier::flow_insensitive::{ConstraintSystem, Infer, StructFields, Var};
+use crate::type_qualifier::flow_insensitive::{
+    ConstraintSystem, StructFields, Var, WithConstraintSystem,
+};
 
 pub fn library_call<'tcx, M: MutabilityLikeAnalysis>(
     destination: &Place<'tcx>,
@@ -14,7 +16,7 @@ pub fn library_call<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
     tcx: TyCtxt<'tcx>,
 ) {
     let def_path = tcx.def_path(callee);
@@ -115,7 +117,7 @@ fn call_is_null<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -130,7 +132,7 @@ fn call_offset<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -155,7 +157,7 @@ fn call_offset_from<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -170,7 +172,7 @@ fn call_as_mut_ptr<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);

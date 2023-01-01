@@ -4,7 +4,7 @@ use rustc_span::symbol::Ident;
 use super::{conservative_call, EnsureNoDeref, MutabilityLikeAnalysis};
 use crate::type_qualifier::flow_insensitive::{
     mutability::{place_vars, MutCtxt},
-    ConstraintSystem, Infer, StructFields, Var,
+    ConstraintSystem, StructFields, Var, WithConstraintSystem,
 };
 
 pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
@@ -14,7 +14,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     match callee.as_str() {
         "strlen" => {
@@ -156,7 +156,7 @@ fn call_strlen<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -171,7 +171,7 @@ fn call_strcmp<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -186,7 +186,7 @@ fn call_strncat<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     call_memcpy::<M>(
         destination,
@@ -204,7 +204,7 @@ fn call_strstr<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -237,7 +237,7 @@ fn call_memcpy<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -268,7 +268,7 @@ fn call_memmove<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     call_memcpy::<M>(
         destination,
@@ -286,7 +286,7 @@ fn call_memset<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     call_memcpy::<M>(
         destination,
@@ -304,7 +304,7 @@ fn call_strchr<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     call_strrchr::<M>(
         destination,
@@ -322,7 +322,7 @@ fn call_strrchr<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -348,7 +348,7 @@ fn call_strncmp<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -363,7 +363,7 @@ fn call_printf<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -378,7 +378,7 @@ fn call_fprintf<'tcx, M: MutabilityLikeAnalysis>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as Infer>::L,
+    database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);

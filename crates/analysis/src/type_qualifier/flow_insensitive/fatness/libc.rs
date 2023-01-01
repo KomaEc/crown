@@ -2,7 +2,9 @@ use rustc_middle::mir::{HasLocalDecls, Operand, Place};
 use rustc_span::symbol::Ident;
 
 use super::{place_vars, FatnessAnalysis};
-use crate::type_qualifier::flow_insensitive::{ConstraintSystem, Infer, StructFields, Var};
+use crate::type_qualifier::flow_insensitive::{
+    ConstraintSystem, StructFields, Var, WithConstraintSystem,
+};
 
 pub fn libc_call<'tcx>(
     destination: &Place<'tcx>,
@@ -11,7 +13,7 @@ pub fn libc_call<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <FatnessAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
 ) {
     match callee.as_str() {
         // malloc is skipped
@@ -115,7 +117,7 @@ fn call_calloc<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <FatnessAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
     assert!(dest_vars.end > dest_vars.start);
@@ -129,7 +131,7 @@ fn call_realloc<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <FatnessAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
     assert!(!dest_vars.is_empty());
@@ -148,7 +150,7 @@ fn call_strlen<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <FatnessAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
 ) {
     let _ = destination;
     let ptr = &args[0];
@@ -165,7 +167,7 @@ fn call_strstr<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <FatnessAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
     assert!(dest_vars.end > dest_vars.start);
@@ -184,7 +186,7 @@ fn call_strcmp<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <FatnessAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
 ) {
     let _ = destination;
 
@@ -201,7 +203,7 @@ fn call_strncat<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <FatnessAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
     assert!(dest_vars.end > dest_vars.start);
@@ -220,7 +222,7 @@ fn call_memcpy<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <FatnessAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
 ) {
     call_strncat(
         destination,
@@ -238,7 +240,7 @@ fn call_memmove<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <FatnessAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
 ) {
     call_memcpy(
         destination,
@@ -256,7 +258,7 @@ fn call_memset<'tcx>(
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <FatnessAnalysis as Infer>::L,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
     assert!(dest_vars.end > dest_vars.start);
