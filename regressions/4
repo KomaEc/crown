@@ -317,19 +317,26 @@ generating signatures for DefId(0:79 ~ lib[f7f0]::src::kdtree::clear_results): (
 failed: src::kdtree::kd_nearest_rangef
 failed: src::kdtree::kd_insertf
 failed: src::kdtree::kd_nearestf
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::kdtree::insert_rec!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::kdtree::insert_rec!
+failed: src::kdtree::insert_rec
+failed: src::kdtree::kd_nearest_range
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::kdtree::insert_rec!
+failed: src::kdtree::kd_insert
+failed: src::kdtree::alloc_resnode
 src::kdtree::hyperrect_create: (_, &, &) -> &move &move &move
 src::kdtree::hyperrect_free: (&move &move &move) -> _
 src::kdtree::clear_rec: (&move &move & &move &move, _) -> _
-src::kdtree::insert_rec: (& &, &, &, _, _) -> _
+src::kdtree::insert_rec: (&any &any, &any, &any, _, _) -> _
 src::kdtree::kd_insertf: (&any &any &any, &any, &any) -> _
-src::kdtree::kd_nearest: (& & &, &) -> &move & &move &
+src::kdtree::kd_nearest: (& & &, &) -> &move & & &
 src::kdtree::kd_nearestf: (&any &any &any, &any) -> &any &any &any &any
-src::kdtree::kd_nearest_range: (& & &, &, _) -> &move & &move &
+src::kdtree::kd_nearest_range: (& & &, &, _) -> & & & &
 src::kdtree::kd_nearest_rangef: (&any &any &any, &any, _) -> &any &any &any &any
 src::kdtree::kd_free: (&move &move &move) -> _
-src::kdtree::kd_res_free: (&move & &move &) -> _
+src::kdtree::kd_res_free: (&move & & &) -> _
 src::kdtree::kd_create: (_) -> &move &move &move
-src::kdtree::alloc_resnode: () -> &move & &
+src::kdtree::alloc_resnode: () -> & & &
 src::kdtree::kd_clear: (&uniq &move &move ↓ &uniq & &) -> _
 src::kdtree::kd_data_destructor: (&uniq & & ↓ &uniq & &, _) -> _
 src::kdtree::kd_insert: (& & &, &, &) -> _
@@ -337,12 +344,12 @@ src::kdtree::kd_insert3: (& & &, _, _, _, &) -> _
 src::kdtree::kd_insert3f: (& & &, _, _, _, &) -> _
 src::kdtree::find_nearest: (& & & & &, &, _, &uniq & & ↓ &uniq & &, _, _) -> _
 src::kdtree::kd_nearest_i: (& & & & &, &, &uniq & ↓ &uniq &, &uniq  ↓ &uniq , & & &) -> _
-src::kdtree::kd_nearest3: (& & &, _, _, _) -> &move & &move &
-src::kdtree::kd_nearest3f: (& & &, _, _, _) -> &move & &move &
-src::kdtree::kd_nearest_range3: (& & &, _, _, _, _) -> &move & &move &
-src::kdtree::kd_nearest_range3f: (& & &, _, _, _, _) -> &move & &move &
+src::kdtree::kd_nearest3: (& & &, _, _, _) -> &move & & &
+src::kdtree::kd_nearest3f: (& & &, _, _, _) -> &move & & &
+src::kdtree::kd_nearest_range3: (& & &, _, _, _, _) -> & & & &
+src::kdtree::kd_nearest_range3f: (& & &, _, _, _, _) -> & & & &
 src::kdtree::kd_res_size: (& & & &) -> _
-src::kdtree::kd_res_rewind: (&uniq & &move & ↓ &uniq & &move &) -> _
+src::kdtree::kd_res_rewind: (&uniq & & & ↓ &uniq & & &) -> _
 src::kdtree::kd_res_end: (& & & &) -> _
 src::kdtree::kd_res_next: (&uniq & & & ↓ &uniq & & &) -> _
 src::kdtree::kd_res_item: (& & & &, &) -> &
@@ -353,9 +360,9 @@ src::kdtree::kd_res_item_data: (& & & &) -> &
 src::kdtree::hyperrect_duplicate: (& & &) -> &move &move &move
 src::kdtree::hyperrect_extend: (&uniq & & ↓ &uniq & &, &) -> _
 src::kdtree::hyperrect_dist_sq: (& & &, &) -> _
-src::kdtree::free_resnode: (&move & &) -> _
+src::kdtree::free_resnode: (& & &) -> _
 src::kdtree::rlist_insert: (& & &, & & & & &, _) -> _
-src::kdtree::clear_results: (&uniq & &move & ↓ &uniq & &move &) -> _
+src::kdtree::clear_results: (&uniq & & & ↓ &uniq & & &) -> _
 generating signatures for DefId(0:69 ~ lib[f7f0]::src::kdtree::hyperrect_create): (None, Some(Normal(19..20)), Some(Normal(20..21))) -> Some(Normal(16..19))
 generating signatures for DefId(0:70 ~ lib[f7f0]::src::kdtree::hyperrect_free): (Some(Normal(21..24))) -> None
 generating signatures for DefId(0:20 ~ lib[f7f0]::src::kdtree::clear_rec): (Some(Normal(24..37)), None) -> None
@@ -398,20 +405,26 @@ generating signatures for DefId(0:79 ~ lib[f7f0]::src::kdtree::clear_results): (
 failed: src::kdtree::kd_nearest_rangef
 failed: src::kdtree::kd_insertf
 failed: src::kdtree::kd_nearestf
-failed: src::kdtree::clear_results
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::kdtree::insert_rec!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::kdtree::insert_rec!
+failed: src::kdtree::insert_rec
+failed: src::kdtree::kd_nearest_range
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::kdtree::insert_rec!
+failed: src::kdtree::kd_insert
+failed: src::kdtree::alloc_resnode
 src::kdtree::hyperrect_create: (_, &, &) -> &move &move &move
 src::kdtree::hyperrect_free: (&move &move &move) -> _
 src::kdtree::clear_rec: (&move &move & &move &move & &move &move &move &move & &move &move, _) -> _
-src::kdtree::insert_rec: (& & & & & &, &, &, _, _) -> _
+src::kdtree::insert_rec: (&any &any &any &any &any &any, &any, &any, _, _) -> _
 src::kdtree::kd_insertf: (&any &any &any, &any, &any) -> _
-src::kdtree::kd_nearest: (& & & & & & & & &, &) -> &move & & & &move & & & & &
+src::kdtree::kd_nearest: (& & & & & & & & &, &) -> &move & & & & & & & & &
 src::kdtree::kd_nearestf: (&any &any &any, &any) -> &any &any &any &any
-src::kdtree::kd_nearest_range: (& & & & & & & & &, &, _) -> &move & & & &move & & & & &
+src::kdtree::kd_nearest_range: (& & & & & & & & &, &, _) -> & & & & & & & & & &
 src::kdtree::kd_nearest_rangef: (&any &any &any, &any, _) -> &any &any &any &any
 src::kdtree::kd_free: (&move &move &move & &move &move &move &move &move) -> _
-src::kdtree::kd_res_free: (&move & & & &move & & & & &) -> _
+src::kdtree::kd_res_free: (&move & & & & & & & & &) -> _
 src::kdtree::kd_create: (_) -> &move &move &move & &move &move &move &move &move
-src::kdtree::alloc_resnode: () -> &move & & & & & & & &
+src::kdtree::alloc_resnode: () -> & & & & & & & & &
 src::kdtree::kd_clear: (&uniq &move &move & &move &move &move &move &move ↓ &uniq & & & & & & & &) -> _
 src::kdtree::kd_data_destructor: (&uniq & & & & & & & & ↓ &uniq & & & & & & & &, _) -> _
 src::kdtree::kd_insert: (& & & & & & & & &, &, &) -> _
@@ -419,12 +432,12 @@ src::kdtree::kd_insert3: (& & & & & & & & &, _, _, _, &) -> _
 src::kdtree::kd_insert3f: (& & & & & & & & &, _, _, _, &) -> _
 src::kdtree::find_nearest: (& & & & & & & & & & & & &, &, _, &uniq & & & & & & & & ↓ &uniq & & & & & & & &, _, _) -> _
 src::kdtree::kd_nearest_i: (& & & & & & & & & & & & &, &, &uniq & & & & & ↓ &uniq & & & & &, &uniq  ↓ &uniq , & & &) -> _
-src::kdtree::kd_nearest3: (& & & & & & & & &, _, _, _) -> &move & & & &move & & & & &
-src::kdtree::kd_nearest3f: (& & & & & & & & &, _, _, _) -> &move & & & &move & & & & &
-src::kdtree::kd_nearest_range3: (& & & & & & & & &, _, _, _, _) -> &move & & & &move & & & & &
-src::kdtree::kd_nearest_range3f: (& & & & & & & & &, _, _, _, _) -> &move & & & &move & & & & &
+src::kdtree::kd_nearest3: (& & & & & & & & &, _, _, _) -> &move & & & & & & & & &
+src::kdtree::kd_nearest3f: (& & & & & & & & &, _, _, _) -> &move & & & & & & & & &
+src::kdtree::kd_nearest_range3: (& & & & & & & & &, _, _, _, _) -> & & & & & & & & & &
+src::kdtree::kd_nearest_range3f: (& & & & & & & & &, _, _, _, _) -> & & & & & & & & & &
 src::kdtree::kd_res_size: (& & & & & & & & & &) -> _
-src::kdtree::kd_res_rewind: (&uniq & & & &move & & & & & ↓ &uniq & & & &move & & & & &) -> _
+src::kdtree::kd_res_rewind: (&uniq & & & & & & & & & ↓ &uniq & & & & & & & & &) -> _
 src::kdtree::kd_res_end: (& & & & & & & & & &) -> _
 src::kdtree::kd_res_next: (&uniq & & & & & & & & & ↓ &uniq & & & & & & & & &) -> _
 src::kdtree::kd_res_item: (& & & & & & & & & &, &) -> &
@@ -437,76 +450,82 @@ src::kdtree::hyperrect_extend: (&uniq & & ↓ &uniq & &, &) -> _
 src::kdtree::hyperrect_dist_sq: (& & &, &) -> _
 src::kdtree::free_resnode: (& & & & & & & & &) -> _
 src::kdtree::rlist_insert: (& & & & & & & & &, & & & & & & & & & & & & &, _) -> _
-src::kdtree::clear_results: (&uniq & & & &move & & & & & ↓ &uniq & & & & & & & & &) -> _
+src::kdtree::clear_results: (&uniq & & & & & & & & & ↓ &uniq & & & & & & & & &) -> _
 generating signatures for DefId(0:69 ~ lib[f7f0]::src::kdtree::hyperrect_create): (None, Some(Normal(19..20)), Some(Normal(20..21))) -> Some(Normal(16..19))
 generating signatures for DefId(0:70 ~ lib[f7f0]::src::kdtree::hyperrect_free): (Some(Normal(21..24))) -> None
 generating signatures for DefId(0:20 ~ lib[f7f0]::src::kdtree::clear_rec): (Some(Normal(24..53)), None) -> None
-generating signatures for DefId(0:23 ~ lib[f7f0]::src::kdtree::insert_rec): (Some(Normal(53..67)), Some(Normal(67..68)), Some(Normal(68..69)), None, None) -> None
-generating signatures for DefId(0:25 ~ lib[f7f0]::src::kdtree::kd_insertf): (Some(Normal(69..70)), Some(Normal(70..71)), Some(Normal(71..72))) -> None
-generating signatures for DefId(0:37 ~ lib[f7f0]::src::kdtree::kd_nearest): (Some(Normal(100..117)), Some(Normal(117..118))) -> Some(Normal(72..100))
-generating signatures for DefId(0:38 ~ lib[f7f0]::src::kdtree::kd_nearestf): (Some(Normal(119..120)), Some(Normal(120..121))) -> Some(Normal(118..119))
-generating signatures for DefId(0:48 ~ lib[f7f0]::src::kdtree::kd_nearest_range): (Some(Normal(149..166)), Some(Normal(166..167)), None) -> Some(Normal(121..149))
-generating signatures for DefId(0:49 ~ lib[f7f0]::src::kdtree::kd_nearest_rangef): (Some(Normal(168..169)), Some(Normal(169..170)), None) -> Some(Normal(167..168))
-generating signatures for DefId(0:19 ~ lib[f7f0]::src::kdtree::kd_free): (Some(Normal(170..187))) -> None
-generating signatures for DefId(0:59 ~ lib[f7f0]::src::kdtree::kd_res_free): (Some(Normal(187..215))) -> None
-generating signatures for DefId(0:18 ~ lib[f7f0]::src::kdtree::kd_create): (None) -> Some(Normal(215..232))
-generating signatures for DefId(0:76 ~ lib[f7f0]::src::kdtree::alloc_resnode): () -> Some(Normal(232..255))
-generating signatures for DefId(0:21 ~ lib[f7f0]::src::kdtree::kd_clear): (Some(Output(Consume { use: 255..272, def: 272..289 }))) -> None
-generating signatures for DefId(0:22 ~ lib[f7f0]::src::kdtree::kd_data_destructor): (Some(Output(Consume { use: 289..306, def: 306..323 })), None) -> None
-generating signatures for DefId(0:24 ~ lib[f7f0]::src::kdtree::kd_insert): (Some(Normal(323..340)), Some(Normal(340..341)), Some(Normal(341..342))) -> None
-generating signatures for DefId(0:29 ~ lib[f7f0]::src::kdtree::kd_insert3): (Some(Normal(342..359)), None, None, None, Some(Normal(359..360))) -> None
-generating signatures for DefId(0:32 ~ lib[f7f0]::src::kdtree::kd_insert3f): (Some(Normal(360..377)), None, None, None, Some(Normal(377..378))) -> None
-generating signatures for DefId(0:35 ~ lib[f7f0]::src::kdtree::find_nearest): (Some(Normal(378..407)), Some(Normal(407..408)), None, Some(Output(Consume { use: 408..431, def: 431..454 })), None, None) -> None
-generating signatures for DefId(0:36 ~ lib[f7f0]::src::kdtree::kd_nearest_i): (Some(Normal(454..483)), Some(Normal(483..484)), Some(Output(Consume { use: 484..498, def: 498..512 })), Some(Output(Consume { use: 512..513, def: 513..514 })), Some(Normal(514..517))) -> None
-generating signatures for DefId(0:42 ~ lib[f7f0]::src::kdtree::kd_nearest3): (Some(Normal(545..562)), None, None, None) -> Some(Normal(517..545))
-generating signatures for DefId(0:45 ~ lib[f7f0]::src::kdtree::kd_nearest3f): (Some(Normal(590..607)), None, None, None) -> Some(Normal(562..590))
-generating signatures for DefId(0:53 ~ lib[f7f0]::src::kdtree::kd_nearest_range3): (Some(Normal(635..652)), None, None, None, None) -> Some(Normal(607..635))
-generating signatures for DefId(0:56 ~ lib[f7f0]::src::kdtree::kd_nearest_range3f): (Some(Normal(680..697)), None, None, None, None) -> Some(Normal(652..680))
-generating signatures for DefId(0:60 ~ lib[f7f0]::src::kdtree::kd_res_size): (Some(Normal(697..725))) -> None
-generating signatures for DefId(0:61 ~ lib[f7f0]::src::kdtree::kd_res_rewind): (Some(Output(Consume { use: 725..753, def: 753..781 }))) -> None
-generating signatures for DefId(0:62 ~ lib[f7f0]::src::kdtree::kd_res_end): (Some(Normal(781..809))) -> None
-generating signatures for DefId(0:63 ~ lib[f7f0]::src::kdtree::kd_res_next): (Some(Output(Consume { use: 809..837, def: 837..865 }))) -> None
-generating signatures for DefId(0:64 ~ lib[f7f0]::src::kdtree::kd_res_item): (Some(Normal(866..894)), Some(Normal(894..895))) -> Some(Normal(865..866))
-generating signatures for DefId(0:65 ~ lib[f7f0]::src::kdtree::kd_res_itemf): (Some(Normal(896..924)), Some(Normal(924..925))) -> Some(Normal(895..896))
-generating signatures for DefId(0:66 ~ lib[f7f0]::src::kdtree::kd_res_item3): (Some(Normal(926..954)), Some(Output(Consume { use: 954..955, def: 955..956 })), Some(Output(Consume { use: 956..957, def: 957..958 })), Some(Output(Consume { use: 958..959, def: 959..960 }))) -> Some(Normal(925..926))
-generating signatures for DefId(0:67 ~ lib[f7f0]::src::kdtree::kd_res_item3f): (Some(Normal(961..989)), Some(Output(Consume { use: 989..990, def: 990..991 })), Some(Output(Consume { use: 991..992, def: 992..993 })), Some(Output(Consume { use: 993..994, def: 994..995 }))) -> Some(Normal(960..961))
-generating signatures for DefId(0:68 ~ lib[f7f0]::src::kdtree::kd_res_item_data): (Some(Normal(996..1024))) -> Some(Normal(995..996))
-generating signatures for DefId(0:71 ~ lib[f7f0]::src::kdtree::hyperrect_duplicate): (Some(Normal(1027..1030))) -> Some(Normal(1024..1027))
-generating signatures for DefId(0:72 ~ lib[f7f0]::src::kdtree::hyperrect_extend): (Some(Output(Consume { use: 1030..1033, def: 1033..1036 })), Some(Normal(1036..1037))) -> None
-generating signatures for DefId(0:73 ~ lib[f7f0]::src::kdtree::hyperrect_dist_sq): (Some(Normal(1037..1040)), Some(Normal(1040..1041))) -> None
-generating signatures for DefId(0:77 ~ lib[f7f0]::src::kdtree::free_resnode): (Some(Normal(1041..1064))) -> None
-generating signatures for DefId(0:78 ~ lib[f7f0]::src::kdtree::rlist_insert): (Some(Normal(1064..1087)), Some(Normal(1087..1116)), None) -> None
-generating signatures for DefId(0:79 ~ lib[f7f0]::src::kdtree::clear_results): (Some(Output(Consume { use: 1116..1126, def: 1126..1136 }))) -> None
+generating signatures for DefId(0:23 ~ lib[f7f0]::src::kdtree::insert_rec): (Some(Normal(53..55)), Some(Normal(55..56)), Some(Normal(56..57)), None, None) -> None
+generating signatures for DefId(0:25 ~ lib[f7f0]::src::kdtree::kd_insertf): (Some(Normal(57..58)), Some(Normal(58..59)), Some(Normal(59..60))) -> None
+generating signatures for DefId(0:37 ~ lib[f7f0]::src::kdtree::kd_nearest): (Some(Normal(88..105)), Some(Normal(105..106))) -> Some(Normal(60..88))
+generating signatures for DefId(0:38 ~ lib[f7f0]::src::kdtree::kd_nearestf): (Some(Normal(107..108)), Some(Normal(108..109))) -> Some(Normal(106..107))
+generating signatures for DefId(0:48 ~ lib[f7f0]::src::kdtree::kd_nearest_range): (Some(Normal(113..116)), Some(Normal(116..117)), None) -> Some(Normal(109..113))
+generating signatures for DefId(0:49 ~ lib[f7f0]::src::kdtree::kd_nearest_rangef): (Some(Normal(118..119)), Some(Normal(119..120)), None) -> Some(Normal(117..118))
+generating signatures for DefId(0:19 ~ lib[f7f0]::src::kdtree::kd_free): (Some(Normal(120..137))) -> None
+generating signatures for DefId(0:59 ~ lib[f7f0]::src::kdtree::kd_res_free): (Some(Normal(137..165))) -> None
+generating signatures for DefId(0:18 ~ lib[f7f0]::src::kdtree::kd_create): (None) -> Some(Normal(165..182))
+generating signatures for DefId(0:76 ~ lib[f7f0]::src::kdtree::alloc_resnode): () -> Some(Normal(182..185))
+generating signatures for DefId(0:21 ~ lib[f7f0]::src::kdtree::kd_clear): (Some(Output(Consume { use: 185..202, def: 202..219 }))) -> None
+generating signatures for DefId(0:22 ~ lib[f7f0]::src::kdtree::kd_data_destructor): (Some(Output(Consume { use: 219..236, def: 236..253 })), None) -> None
+generating signatures for DefId(0:24 ~ lib[f7f0]::src::kdtree::kd_insert): (Some(Normal(253..256)), Some(Normal(256..257)), Some(Normal(257..258))) -> None
+generating signatures for DefId(0:29 ~ lib[f7f0]::src::kdtree::kd_insert3): (Some(Normal(258..275)), None, None, None, Some(Normal(275..276))) -> None
+generating signatures for DefId(0:32 ~ lib[f7f0]::src::kdtree::kd_insert3f): (Some(Normal(276..293)), None, None, None, Some(Normal(293..294))) -> None
+generating signatures for DefId(0:35 ~ lib[f7f0]::src::kdtree::find_nearest): (Some(Normal(294..323)), Some(Normal(323..324)), None, Some(Output(Consume { use: 324..347, def: 347..370 })), None, None) -> None
+generating signatures for DefId(0:36 ~ lib[f7f0]::src::kdtree::kd_nearest_i): (Some(Normal(370..399)), Some(Normal(399..400)), Some(Output(Consume { use: 400..414, def: 414..428 })), Some(Output(Consume { use: 428..429, def: 429..430 })), Some(Normal(430..433))) -> None
+generating signatures for DefId(0:42 ~ lib[f7f0]::src::kdtree::kd_nearest3): (Some(Normal(461..478)), None, None, None) -> Some(Normal(433..461))
+generating signatures for DefId(0:45 ~ lib[f7f0]::src::kdtree::kd_nearest3f): (Some(Normal(506..523)), None, None, None) -> Some(Normal(478..506))
+generating signatures for DefId(0:53 ~ lib[f7f0]::src::kdtree::kd_nearest_range3): (Some(Normal(551..568)), None, None, None, None) -> Some(Normal(523..551))
+generating signatures for DefId(0:56 ~ lib[f7f0]::src::kdtree::kd_nearest_range3f): (Some(Normal(596..613)), None, None, None, None) -> Some(Normal(568..596))
+generating signatures for DefId(0:60 ~ lib[f7f0]::src::kdtree::kd_res_size): (Some(Normal(613..641))) -> None
+generating signatures for DefId(0:61 ~ lib[f7f0]::src::kdtree::kd_res_rewind): (Some(Output(Consume { use: 641..669, def: 669..697 }))) -> None
+generating signatures for DefId(0:62 ~ lib[f7f0]::src::kdtree::kd_res_end): (Some(Normal(697..725))) -> None
+generating signatures for DefId(0:63 ~ lib[f7f0]::src::kdtree::kd_res_next): (Some(Output(Consume { use: 725..753, def: 753..781 }))) -> None
+generating signatures for DefId(0:64 ~ lib[f7f0]::src::kdtree::kd_res_item): (Some(Normal(782..810)), Some(Normal(810..811))) -> Some(Normal(781..782))
+generating signatures for DefId(0:65 ~ lib[f7f0]::src::kdtree::kd_res_itemf): (Some(Normal(812..840)), Some(Normal(840..841))) -> Some(Normal(811..812))
+generating signatures for DefId(0:66 ~ lib[f7f0]::src::kdtree::kd_res_item3): (Some(Normal(842..870)), Some(Output(Consume { use: 870..871, def: 871..872 })), Some(Output(Consume { use: 872..873, def: 873..874 })), Some(Output(Consume { use: 874..875, def: 875..876 }))) -> Some(Normal(841..842))
+generating signatures for DefId(0:67 ~ lib[f7f0]::src::kdtree::kd_res_item3f): (Some(Normal(877..905)), Some(Output(Consume { use: 905..906, def: 906..907 })), Some(Output(Consume { use: 907..908, def: 908..909 })), Some(Output(Consume { use: 909..910, def: 910..911 }))) -> Some(Normal(876..877))
+generating signatures for DefId(0:68 ~ lib[f7f0]::src::kdtree::kd_res_item_data): (Some(Normal(912..940))) -> Some(Normal(911..912))
+generating signatures for DefId(0:71 ~ lib[f7f0]::src::kdtree::hyperrect_duplicate): (Some(Normal(943..946))) -> Some(Normal(940..943))
+generating signatures for DefId(0:72 ~ lib[f7f0]::src::kdtree::hyperrect_extend): (Some(Output(Consume { use: 946..949, def: 949..952 })), Some(Normal(952..953))) -> None
+generating signatures for DefId(0:73 ~ lib[f7f0]::src::kdtree::hyperrect_dist_sq): (Some(Normal(953..956)), Some(Normal(956..957))) -> None
+generating signatures for DefId(0:77 ~ lib[f7f0]::src::kdtree::free_resnode): (Some(Normal(957..980))) -> None
+generating signatures for DefId(0:78 ~ lib[f7f0]::src::kdtree::rlist_insert): (Some(Normal(980..1003)), Some(Normal(1003..1032)), None) -> None
+generating signatures for DefId(0:79 ~ lib[f7f0]::src::kdtree::clear_results): (Some(Output(Consume { use: 1032..1060, def: 1060..1088 }))) -> None
 failed: src::kdtree::kd_nearest_rangef
 failed: src::kdtree::kd_insertf
 failed: src::kdtree::kd_nearestf
-failed: src::kdtree::clear_results
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::kdtree::insert_rec!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::kdtree::insert_rec!
+failed: src::kdtree::insert_rec
+failed: src::kdtree::kd_nearest_range
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::kdtree::insert_rec!
+failed: src::kdtree::kd_insert
+failed: src::kdtree::alloc_resnode
 src::kdtree::hyperrect_create: (_, &, &) -> &move &move &move
 src::kdtree::hyperrect_free: (&move &move &move) -> _
 src::kdtree::clear_rec: (&move &move & &move &move & &move &move & &move &move &move &move & &move &move &move &move & &move &move & &move &move &move &move & &move &move, _) -> _
-src::kdtree::insert_rec: (& & & & & & & & & & & & & &, &, &, _, _) -> _
+src::kdtree::insert_rec: (&any &any, &any, &any, _, _) -> _
 src::kdtree::kd_insertf: (&any, &any, &any) -> _
-src::kdtree::kd_nearest: (& & & & & & & & & & & & & & & & &, &) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest: (& & & & & & & & & & & & & & & & &, &) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
 src::kdtree::kd_nearestf: (&any, &any) -> &any
-src::kdtree::kd_nearest_range: (& & & & & & & & & & & & & & & & &, &, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range: (& & &, &, _) -> & & & &
 src::kdtree::kd_nearest_rangef: (&any, &any, _) -> &any
 src::kdtree::kd_free: (&move &move &move & &move &move & &move &move &move &move & &move &move &move &move &move) -> _
-src::kdtree::kd_res_free: (&move & & & & & & & & & &move & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::kd_res_free: (&move & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_create: (_) -> &move &move &move & &move &move & &move &move &move &move & &move &move &move &move &move
-src::kdtree::alloc_resnode: () -> &move & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::alloc_resnode: () -> & & &
 src::kdtree::kd_clear: (&uniq &move &move & &move &move & &move &move &move &move & &move &move &move &move &move ↓ &uniq & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_data_destructor: (&uniq & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & &, _) -> _
-src::kdtree::kd_insert: (& & & & & & & & & & & & & & & & &, &, &) -> _
+src::kdtree::kd_insert: (& & &, &, &) -> _
 src::kdtree::kd_insert3: (& & & & & & & & & & & & & & & & &, _, _, _, &) -> _
 src::kdtree::kd_insert3f: (& & & & & & & & & & & & & & & & &, _, _, _, &) -> _
 src::kdtree::find_nearest: (& & & & & & & & & & & & & & & & & & & & & & & & & & & & &, &, _, &uniq & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & &, _, _) -> _
 src::kdtree::kd_nearest_i: (& & & & & & & & & & & & & & & & & & & & & & & & & & & & &, &, &uniq & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & &, &uniq  ↓ &uniq , & & &) -> _
-src::kdtree::kd_nearest3: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest3f: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest_range3: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest_range3f: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest3: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest3f: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range3: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> & & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range3f: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> & & & & & & & & & & & & & & & & & & & & & & & & & & & &
 src::kdtree::kd_res_size: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
-src::kdtree::kd_res_rewind: (&uniq & & & & & & & & & &move & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & &move & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::kd_res_rewind: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_end: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_next: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_item: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &, &) -> &
@@ -519,72 +538,73 @@ src::kdtree::hyperrect_extend: (&uniq & & ↓ &uniq & &, &) -> _
 src::kdtree::hyperrect_dist_sq: (& & &, &) -> _
 src::kdtree::free_resnode: (& & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::rlist_insert: (& & & & & & & & & & & & & & & & & & & & & & &, & & & & & & & & & & & & & & & & & & & & & & & & & & & & &, _) -> _
-src::kdtree::clear_results: (&uniq & & & &move & & & & & ↓ &uniq & & & & & & & & &) -> _
+src::kdtree::clear_results: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 generating signatures for DefId(0:69 ~ lib[f7f0]::src::kdtree::hyperrect_create): (None, Some(Normal(19..20)), Some(Normal(20..21))) -> Some(Normal(16..19))
 generating signatures for DefId(0:70 ~ lib[f7f0]::src::kdtree::hyperrect_free): (Some(Normal(21..24))) -> None
 generating signatures for DefId(0:20 ~ lib[f7f0]::src::kdtree::clear_rec): (Some(Normal(24..53)), None) -> None
-generating signatures for DefId(0:23 ~ lib[f7f0]::src::kdtree::insert_rec): (Some(Normal(53..67)), Some(Normal(67..68)), Some(Normal(68..69)), None, None) -> None
+generating signatures for DefId(0:23 ~ lib[f7f0]::src::kdtree::insert_rec): (Some(Normal(53..54)), Some(Normal(54..55)), Some(Normal(55..56)), None, None) -> None
 generating signatures for DefId(0:25 ~ lib[f7f0]::src::kdtree::kd_insertf): (None, None, None) -> None
-generating signatures for DefId(0:37 ~ lib[f7f0]::src::kdtree::kd_nearest): (Some(Normal(97..114)), Some(Normal(114..115))) -> Some(Normal(69..97))
+generating signatures for DefId(0:37 ~ lib[f7f0]::src::kdtree::kd_nearest): (Some(Normal(84..101)), Some(Normal(101..102))) -> Some(Normal(56..84))
 generating signatures for DefId(0:38 ~ lib[f7f0]::src::kdtree::kd_nearestf): (None, None) -> None
-generating signatures for DefId(0:48 ~ lib[f7f0]::src::kdtree::kd_nearest_range): (Some(Normal(143..160)), Some(Normal(160..161)), None) -> Some(Normal(115..143))
+generating signatures for DefId(0:48 ~ lib[f7f0]::src::kdtree::kd_nearest_range): (Some(Normal(103..104)), Some(Normal(104..105)), None) -> Some(Normal(102..103))
 generating signatures for DefId(0:49 ~ lib[f7f0]::src::kdtree::kd_nearest_rangef): (None, None, None) -> None
-generating signatures for DefId(0:19 ~ lib[f7f0]::src::kdtree::kd_free): (Some(Normal(161..178))) -> None
-generating signatures for DefId(0:59 ~ lib[f7f0]::src::kdtree::kd_res_free): (Some(Normal(178..206))) -> None
-generating signatures for DefId(0:18 ~ lib[f7f0]::src::kdtree::kd_create): (None) -> Some(Normal(206..223))
-generating signatures for DefId(0:76 ~ lib[f7f0]::src::kdtree::alloc_resnode): () -> Some(Normal(223..246))
-generating signatures for DefId(0:21 ~ lib[f7f0]::src::kdtree::kd_clear): (Some(Output(Consume { use: 246..263, def: 263..280 }))) -> None
-generating signatures for DefId(0:22 ~ lib[f7f0]::src::kdtree::kd_data_destructor): (Some(Output(Consume { use: 280..297, def: 297..314 })), None) -> None
-generating signatures for DefId(0:24 ~ lib[f7f0]::src::kdtree::kd_insert): (Some(Normal(314..331)), Some(Normal(331..332)), Some(Normal(332..333))) -> None
-generating signatures for DefId(0:29 ~ lib[f7f0]::src::kdtree::kd_insert3): (Some(Normal(333..350)), None, None, None, Some(Normal(350..351))) -> None
-generating signatures for DefId(0:32 ~ lib[f7f0]::src::kdtree::kd_insert3f): (Some(Normal(351..368)), None, None, None, Some(Normal(368..369))) -> None
-generating signatures for DefId(0:35 ~ lib[f7f0]::src::kdtree::find_nearest): (Some(Normal(369..398)), Some(Normal(398..399)), None, Some(Output(Consume { use: 399..422, def: 422..445 })), None, None) -> None
-generating signatures for DefId(0:36 ~ lib[f7f0]::src::kdtree::kd_nearest_i): (Some(Normal(445..474)), Some(Normal(474..475)), Some(Output(Consume { use: 475..489, def: 489..503 })), Some(Output(Consume { use: 503..504, def: 504..505 })), Some(Normal(505..508))) -> None
-generating signatures for DefId(0:42 ~ lib[f7f0]::src::kdtree::kd_nearest3): (Some(Normal(536..553)), None, None, None) -> Some(Normal(508..536))
-generating signatures for DefId(0:45 ~ lib[f7f0]::src::kdtree::kd_nearest3f): (Some(Normal(581..598)), None, None, None) -> Some(Normal(553..581))
-generating signatures for DefId(0:53 ~ lib[f7f0]::src::kdtree::kd_nearest_range3): (Some(Normal(626..643)), None, None, None, None) -> Some(Normal(598..626))
-generating signatures for DefId(0:56 ~ lib[f7f0]::src::kdtree::kd_nearest_range3f): (Some(Normal(671..688)), None, None, None, None) -> Some(Normal(643..671))
-generating signatures for DefId(0:60 ~ lib[f7f0]::src::kdtree::kd_res_size): (Some(Normal(688..716))) -> None
-generating signatures for DefId(0:61 ~ lib[f7f0]::src::kdtree::kd_res_rewind): (Some(Output(Consume { use: 716..744, def: 744..772 }))) -> None
-generating signatures for DefId(0:62 ~ lib[f7f0]::src::kdtree::kd_res_end): (Some(Normal(772..800))) -> None
-generating signatures for DefId(0:63 ~ lib[f7f0]::src::kdtree::kd_res_next): (Some(Output(Consume { use: 800..828, def: 828..856 }))) -> None
-generating signatures for DefId(0:64 ~ lib[f7f0]::src::kdtree::kd_res_item): (Some(Normal(857..885)), Some(Normal(885..886))) -> Some(Normal(856..857))
-generating signatures for DefId(0:65 ~ lib[f7f0]::src::kdtree::kd_res_itemf): (Some(Normal(887..915)), Some(Normal(915..916))) -> Some(Normal(886..887))
-generating signatures for DefId(0:66 ~ lib[f7f0]::src::kdtree::kd_res_item3): (Some(Normal(917..945)), Some(Output(Consume { use: 945..946, def: 946..947 })), Some(Output(Consume { use: 947..948, def: 948..949 })), Some(Output(Consume { use: 949..950, def: 950..951 }))) -> Some(Normal(916..917))
-generating signatures for DefId(0:67 ~ lib[f7f0]::src::kdtree::kd_res_item3f): (Some(Normal(952..980)), Some(Output(Consume { use: 980..981, def: 981..982 })), Some(Output(Consume { use: 982..983, def: 983..984 })), Some(Output(Consume { use: 984..985, def: 985..986 }))) -> Some(Normal(951..952))
-generating signatures for DefId(0:68 ~ lib[f7f0]::src::kdtree::kd_res_item_data): (Some(Normal(987..1015))) -> Some(Normal(986..987))
-generating signatures for DefId(0:71 ~ lib[f7f0]::src::kdtree::hyperrect_duplicate): (Some(Normal(1018..1021))) -> Some(Normal(1015..1018))
-generating signatures for DefId(0:72 ~ lib[f7f0]::src::kdtree::hyperrect_extend): (Some(Output(Consume { use: 1021..1024, def: 1024..1027 })), Some(Normal(1027..1028))) -> None
-generating signatures for DefId(0:73 ~ lib[f7f0]::src::kdtree::hyperrect_dist_sq): (Some(Normal(1028..1031)), Some(Normal(1031..1032))) -> None
-generating signatures for DefId(0:77 ~ lib[f7f0]::src::kdtree::free_resnode): (Some(Normal(1032..1055))) -> None
-generating signatures for DefId(0:78 ~ lib[f7f0]::src::kdtree::rlist_insert): (Some(Normal(1055..1078)), Some(Normal(1078..1107)), None) -> None
-generating signatures for DefId(0:79 ~ lib[f7f0]::src::kdtree::clear_results): (Some(Output(Consume { use: 1107..1111, def: 1111..1115 }))) -> None
+generating signatures for DefId(0:19 ~ lib[f7f0]::src::kdtree::kd_free): (Some(Normal(105..122))) -> None
+generating signatures for DefId(0:59 ~ lib[f7f0]::src::kdtree::kd_res_free): (Some(Normal(122..150))) -> None
+generating signatures for DefId(0:18 ~ lib[f7f0]::src::kdtree::kd_create): (None) -> Some(Normal(150..167))
+generating signatures for DefId(0:76 ~ lib[f7f0]::src::kdtree::alloc_resnode): () -> Some(Normal(167..168))
+generating signatures for DefId(0:21 ~ lib[f7f0]::src::kdtree::kd_clear): (Some(Output(Consume { use: 168..185, def: 185..202 }))) -> None
+generating signatures for DefId(0:22 ~ lib[f7f0]::src::kdtree::kd_data_destructor): (Some(Output(Consume { use: 202..219, def: 219..236 })), None) -> None
+generating signatures for DefId(0:24 ~ lib[f7f0]::src::kdtree::kd_insert): (Some(Normal(236..237)), Some(Normal(237..238)), Some(Normal(238..239))) -> None
+generating signatures for DefId(0:29 ~ lib[f7f0]::src::kdtree::kd_insert3): (Some(Normal(239..256)), None, None, None, Some(Normal(256..257))) -> None
+generating signatures for DefId(0:32 ~ lib[f7f0]::src::kdtree::kd_insert3f): (Some(Normal(257..274)), None, None, None, Some(Normal(274..275))) -> None
+generating signatures for DefId(0:35 ~ lib[f7f0]::src::kdtree::find_nearest): (Some(Normal(275..304)), Some(Normal(304..305)), None, Some(Output(Consume { use: 305..328, def: 328..351 })), None, None) -> None
+generating signatures for DefId(0:36 ~ lib[f7f0]::src::kdtree::kd_nearest_i): (Some(Normal(351..380)), Some(Normal(380..381)), Some(Output(Consume { use: 381..395, def: 395..409 })), Some(Output(Consume { use: 409..410, def: 410..411 })), Some(Normal(411..414))) -> None
+generating signatures for DefId(0:42 ~ lib[f7f0]::src::kdtree::kd_nearest3): (Some(Normal(442..459)), None, None, None) -> Some(Normal(414..442))
+generating signatures for DefId(0:45 ~ lib[f7f0]::src::kdtree::kd_nearest3f): (Some(Normal(487..504)), None, None, None) -> Some(Normal(459..487))
+generating signatures for DefId(0:53 ~ lib[f7f0]::src::kdtree::kd_nearest_range3): (Some(Normal(532..549)), None, None, None, None) -> Some(Normal(504..532))
+generating signatures for DefId(0:56 ~ lib[f7f0]::src::kdtree::kd_nearest_range3f): (Some(Normal(577..594)), None, None, None, None) -> Some(Normal(549..577))
+generating signatures for DefId(0:60 ~ lib[f7f0]::src::kdtree::kd_res_size): (Some(Normal(594..622))) -> None
+generating signatures for DefId(0:61 ~ lib[f7f0]::src::kdtree::kd_res_rewind): (Some(Output(Consume { use: 622..650, def: 650..678 }))) -> None
+generating signatures for DefId(0:62 ~ lib[f7f0]::src::kdtree::kd_res_end): (Some(Normal(678..706))) -> None
+generating signatures for DefId(0:63 ~ lib[f7f0]::src::kdtree::kd_res_next): (Some(Output(Consume { use: 706..734, def: 734..762 }))) -> None
+generating signatures for DefId(0:64 ~ lib[f7f0]::src::kdtree::kd_res_item): (Some(Normal(763..791)), Some(Normal(791..792))) -> Some(Normal(762..763))
+generating signatures for DefId(0:65 ~ lib[f7f0]::src::kdtree::kd_res_itemf): (Some(Normal(793..821)), Some(Normal(821..822))) -> Some(Normal(792..793))
+generating signatures for DefId(0:66 ~ lib[f7f0]::src::kdtree::kd_res_item3): (Some(Normal(823..851)), Some(Output(Consume { use: 851..852, def: 852..853 })), Some(Output(Consume { use: 853..854, def: 854..855 })), Some(Output(Consume { use: 855..856, def: 856..857 }))) -> Some(Normal(822..823))
+generating signatures for DefId(0:67 ~ lib[f7f0]::src::kdtree::kd_res_item3f): (Some(Normal(858..886)), Some(Output(Consume { use: 886..887, def: 887..888 })), Some(Output(Consume { use: 888..889, def: 889..890 })), Some(Output(Consume { use: 890..891, def: 891..892 }))) -> Some(Normal(857..858))
+generating signatures for DefId(0:68 ~ lib[f7f0]::src::kdtree::kd_res_item_data): (Some(Normal(893..921))) -> Some(Normal(892..893))
+generating signatures for DefId(0:71 ~ lib[f7f0]::src::kdtree::hyperrect_duplicate): (Some(Normal(924..927))) -> Some(Normal(921..924))
+generating signatures for DefId(0:72 ~ lib[f7f0]::src::kdtree::hyperrect_extend): (Some(Output(Consume { use: 927..930, def: 930..933 })), Some(Normal(933..934))) -> None
+generating signatures for DefId(0:73 ~ lib[f7f0]::src::kdtree::hyperrect_dist_sq): (Some(Normal(934..937)), Some(Normal(937..938))) -> None
+generating signatures for DefId(0:77 ~ lib[f7f0]::src::kdtree::free_resnode): (Some(Normal(938..961))) -> None
+generating signatures for DefId(0:78 ~ lib[f7f0]::src::kdtree::rlist_insert): (Some(Normal(961..984)), Some(Normal(984..1013)), None) -> None
+generating signatures for DefId(0:79 ~ lib[f7f0]::src::kdtree::clear_results): (Some(Output(Consume { use: 1013..1041, def: 1041..1069 }))) -> None
+failed: src::kdtree::alloc_resnode
 src::kdtree::hyperrect_create: (_, &, &) -> &move &move &move
 src::kdtree::hyperrect_free: (&move &move &move) -> _
 src::kdtree::clear_rec: (&move &move & &move &move & &move &move & &move &move &move &move & &move &move &move &move & &move &move & &move &move &move &move & &move &move, _) -> _
-src::kdtree::insert_rec: (& & & & & & & & & & & & & &, &, &, _, _) -> _
+src::kdtree::insert_rec: (&, &, &, _, _) -> _
 src::kdtree::kd_insertf: (_, _, _) -> _
-src::kdtree::kd_nearest: (& & & & & & & & & & & & & & & & &, &) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest: (& & & & & & & & & & & & & & & & &, &) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
 src::kdtree::kd_nearestf: (_, _) -> _
-src::kdtree::kd_nearest_range: (& & & & & & & & & & & & & & & & &, &, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range: (&, &, _) -> &move
 src::kdtree::kd_nearest_rangef: (_, _, _) -> _
 src::kdtree::kd_free: (&move &move &move & &move &move & &move &move &move &move & &move &move &move &move &move) -> _
-src::kdtree::kd_res_free: (&move & & & & & & & & & &move & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::kd_res_free: (&move & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_create: (_) -> &move &move &move & &move &move & &move &move &move &move & &move &move &move &move &move
-src::kdtree::alloc_resnode: () -> &move & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::alloc_resnode: () -> &
 src::kdtree::kd_clear: (&uniq &move &move & &move &move & &move &move &move &move & &move &move &move &move &move ↓ &uniq & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_data_destructor: (&uniq & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & &, _) -> _
-src::kdtree::kd_insert: (& & & & & & & & & & & & & & & & &, &, &) -> _
+src::kdtree::kd_insert: (&, &, &) -> _
 src::kdtree::kd_insert3: (& & & & & & & & & & & & & & & & &, _, _, _, &) -> _
 src::kdtree::kd_insert3f: (& & & & & & & & & & & & & & & & &, _, _, _, &) -> _
 src::kdtree::find_nearest: (& & & & & & & & & & & & & & & & & & & & & & & & & & & & &, &, _, &uniq & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & &, _, _) -> _
 src::kdtree::kd_nearest_i: (& & & & & & & & & & & & & & & & & & & & & & & & & & & & &, &, &uniq & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & &, &uniq  ↓ &uniq , & & &) -> _
-src::kdtree::kd_nearest3: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest3f: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest_range3: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest_range3f: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest3: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest3f: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range3: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range3f: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
 src::kdtree::kd_res_size: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
-src::kdtree::kd_res_rewind: (&uniq & & & & & & & & & &move & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & &move & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::kd_res_rewind: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_end: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_next: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_item: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &, &) -> &
@@ -595,74 +615,74 @@ src::kdtree::kd_res_item_data: (& & & & & & & & & & & & & & & & & & & & & & & & 
 src::kdtree::hyperrect_duplicate: (& & &) -> &move &move &move
 src::kdtree::hyperrect_extend: (&uniq & & ↓ &uniq & &, &) -> _
 src::kdtree::hyperrect_dist_sq: (& & &, &) -> _
-src::kdtree::free_resnode: (&move & & & & & & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::free_resnode: (& & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::rlist_insert: (& & & & & & & & & & & & & & & & & & & & & & &, & & & & & & & & & & & & & & & & & & & & & & & & & & & & &, _) -> _
-src::kdtree::clear_results: (&uniq & &move & ↓ &uniq & &move &) -> _
+src::kdtree::clear_results: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 generating signatures for DefId(0:69 ~ lib[f7f0]::src::kdtree::hyperrect_create): (None, Some(Normal(19..20)), Some(Normal(20..21))) -> Some(Normal(16..19))
 generating signatures for DefId(0:70 ~ lib[f7f0]::src::kdtree::hyperrect_free): (Some(Normal(21..24))) -> None
 generating signatures for DefId(0:20 ~ lib[f7f0]::src::kdtree::clear_rec): (Some(Normal(24..53)), None) -> None
-generating signatures for DefId(0:23 ~ lib[f7f0]::src::kdtree::insert_rec): (Some(Normal(53..67)), Some(Normal(67..68)), Some(Normal(68..69)), None, None) -> None
+generating signatures for DefId(0:23 ~ lib[f7f0]::src::kdtree::insert_rec): (Some(Normal(53..54)), Some(Normal(54..55)), Some(Normal(55..56)), None, None) -> None
 generating signatures for DefId(0:25 ~ lib[f7f0]::src::kdtree::kd_insertf): (None, None, None) -> None
-generating signatures for DefId(0:37 ~ lib[f7f0]::src::kdtree::kd_nearest): (Some(Normal(97..114)), Some(Normal(114..115))) -> Some(Normal(69..97))
+generating signatures for DefId(0:37 ~ lib[f7f0]::src::kdtree::kd_nearest): (Some(Normal(84..101)), Some(Normal(101..102))) -> Some(Normal(56..84))
 generating signatures for DefId(0:38 ~ lib[f7f0]::src::kdtree::kd_nearestf): (None, None) -> None
-generating signatures for DefId(0:48 ~ lib[f7f0]::src::kdtree::kd_nearest_range): (Some(Normal(143..160)), Some(Normal(160..161)), None) -> Some(Normal(115..143))
+generating signatures for DefId(0:48 ~ lib[f7f0]::src::kdtree::kd_nearest_range): (Some(Normal(103..104)), Some(Normal(104..105)), None) -> Some(Normal(102..103))
 generating signatures for DefId(0:49 ~ lib[f7f0]::src::kdtree::kd_nearest_rangef): (None, None, None) -> None
-generating signatures for DefId(0:19 ~ lib[f7f0]::src::kdtree::kd_free): (Some(Normal(161..178))) -> None
-generating signatures for DefId(0:59 ~ lib[f7f0]::src::kdtree::kd_res_free): (Some(Normal(178..206))) -> None
-generating signatures for DefId(0:18 ~ lib[f7f0]::src::kdtree::kd_create): (None) -> Some(Normal(206..223))
-generating signatures for DefId(0:76 ~ lib[f7f0]::src::kdtree::alloc_resnode): () -> Some(Normal(223..246))
-generating signatures for DefId(0:21 ~ lib[f7f0]::src::kdtree::kd_clear): (Some(Output(Consume { use: 246..263, def: 263..280 }))) -> None
-generating signatures for DefId(0:22 ~ lib[f7f0]::src::kdtree::kd_data_destructor): (Some(Output(Consume { use: 280..297, def: 297..314 })), None) -> None
-generating signatures for DefId(0:24 ~ lib[f7f0]::src::kdtree::kd_insert): (Some(Normal(314..331)), Some(Normal(331..332)), Some(Normal(332..333))) -> None
-generating signatures for DefId(0:29 ~ lib[f7f0]::src::kdtree::kd_insert3): (Some(Normal(333..350)), None, None, None, Some(Normal(350..351))) -> None
-generating signatures for DefId(0:32 ~ lib[f7f0]::src::kdtree::kd_insert3f): (Some(Normal(351..368)), None, None, None, Some(Normal(368..369))) -> None
-generating signatures for DefId(0:35 ~ lib[f7f0]::src::kdtree::find_nearest): (Some(Normal(369..398)), Some(Normal(398..399)), None, Some(Output(Consume { use: 399..422, def: 422..445 })), None, None) -> None
-generating signatures for DefId(0:36 ~ lib[f7f0]::src::kdtree::kd_nearest_i): (Some(Normal(445..474)), Some(Normal(474..475)), Some(Output(Consume { use: 475..489, def: 489..503 })), Some(Output(Consume { use: 503..504, def: 504..505 })), Some(Normal(505..508))) -> None
-generating signatures for DefId(0:42 ~ lib[f7f0]::src::kdtree::kd_nearest3): (Some(Normal(536..553)), None, None, None) -> Some(Normal(508..536))
-generating signatures for DefId(0:45 ~ lib[f7f0]::src::kdtree::kd_nearest3f): (Some(Normal(581..598)), None, None, None) -> Some(Normal(553..581))
-generating signatures for DefId(0:53 ~ lib[f7f0]::src::kdtree::kd_nearest_range3): (Some(Normal(626..643)), None, None, None, None) -> Some(Normal(598..626))
-generating signatures for DefId(0:56 ~ lib[f7f0]::src::kdtree::kd_nearest_range3f): (Some(Normal(671..688)), None, None, None, None) -> Some(Normal(643..671))
-generating signatures for DefId(0:60 ~ lib[f7f0]::src::kdtree::kd_res_size): (Some(Normal(688..716))) -> None
-generating signatures for DefId(0:61 ~ lib[f7f0]::src::kdtree::kd_res_rewind): (Some(Output(Consume { use: 716..744, def: 744..772 }))) -> None
-generating signatures for DefId(0:62 ~ lib[f7f0]::src::kdtree::kd_res_end): (Some(Normal(772..800))) -> None
-generating signatures for DefId(0:63 ~ lib[f7f0]::src::kdtree::kd_res_next): (Some(Output(Consume { use: 800..828, def: 828..856 }))) -> None
-generating signatures for DefId(0:64 ~ lib[f7f0]::src::kdtree::kd_res_item): (Some(Normal(857..885)), Some(Normal(885..886))) -> Some(Normal(856..857))
-generating signatures for DefId(0:65 ~ lib[f7f0]::src::kdtree::kd_res_itemf): (Some(Normal(887..915)), Some(Normal(915..916))) -> Some(Normal(886..887))
-generating signatures for DefId(0:66 ~ lib[f7f0]::src::kdtree::kd_res_item3): (Some(Normal(917..945)), Some(Output(Consume { use: 945..946, def: 946..947 })), Some(Output(Consume { use: 947..948, def: 948..949 })), Some(Output(Consume { use: 949..950, def: 950..951 }))) -> Some(Normal(916..917))
-generating signatures for DefId(0:67 ~ lib[f7f0]::src::kdtree::kd_res_item3f): (Some(Normal(952..980)), Some(Output(Consume { use: 980..981, def: 981..982 })), Some(Output(Consume { use: 982..983, def: 983..984 })), Some(Output(Consume { use: 984..985, def: 985..986 }))) -> Some(Normal(951..952))
-generating signatures for DefId(0:68 ~ lib[f7f0]::src::kdtree::kd_res_item_data): (Some(Normal(987..1015))) -> Some(Normal(986..987))
-generating signatures for DefId(0:71 ~ lib[f7f0]::src::kdtree::hyperrect_duplicate): (Some(Normal(1018..1021))) -> Some(Normal(1015..1018))
-generating signatures for DefId(0:72 ~ lib[f7f0]::src::kdtree::hyperrect_extend): (Some(Output(Consume { use: 1021..1024, def: 1024..1027 })), Some(Normal(1027..1028))) -> None
-generating signatures for DefId(0:73 ~ lib[f7f0]::src::kdtree::hyperrect_dist_sq): (Some(Normal(1028..1031)), Some(Normal(1031..1032))) -> None
-generating signatures for DefId(0:77 ~ lib[f7f0]::src::kdtree::free_resnode): (Some(Normal(1032..1055))) -> None
-generating signatures for DefId(0:78 ~ lib[f7f0]::src::kdtree::rlist_insert): (Some(Normal(1055..1078)), Some(Normal(1078..1107)), None) -> None
-generating signatures for DefId(0:79 ~ lib[f7f0]::src::kdtree::clear_results): (Some(Output(Consume { use: 1107..1111, def: 1111..1115 }))) -> None
+generating signatures for DefId(0:19 ~ lib[f7f0]::src::kdtree::kd_free): (Some(Normal(105..122))) -> None
+generating signatures for DefId(0:59 ~ lib[f7f0]::src::kdtree::kd_res_free): (Some(Normal(122..150))) -> None
+generating signatures for DefId(0:18 ~ lib[f7f0]::src::kdtree::kd_create): (None) -> Some(Normal(150..167))
+generating signatures for DefId(0:76 ~ lib[f7f0]::src::kdtree::alloc_resnode): () -> None
+generating signatures for DefId(0:21 ~ lib[f7f0]::src::kdtree::kd_clear): (Some(Output(Consume { use: 167..184, def: 184..201 }))) -> None
+generating signatures for DefId(0:22 ~ lib[f7f0]::src::kdtree::kd_data_destructor): (Some(Output(Consume { use: 201..218, def: 218..235 })), None) -> None
+generating signatures for DefId(0:24 ~ lib[f7f0]::src::kdtree::kd_insert): (Some(Normal(235..236)), Some(Normal(236..237)), Some(Normal(237..238))) -> None
+generating signatures for DefId(0:29 ~ lib[f7f0]::src::kdtree::kd_insert3): (Some(Normal(238..255)), None, None, None, Some(Normal(255..256))) -> None
+generating signatures for DefId(0:32 ~ lib[f7f0]::src::kdtree::kd_insert3f): (Some(Normal(256..273)), None, None, None, Some(Normal(273..274))) -> None
+generating signatures for DefId(0:35 ~ lib[f7f0]::src::kdtree::find_nearest): (Some(Normal(274..303)), Some(Normal(303..304)), None, Some(Output(Consume { use: 304..327, def: 327..350 })), None, None) -> None
+generating signatures for DefId(0:36 ~ lib[f7f0]::src::kdtree::kd_nearest_i): (Some(Normal(350..379)), Some(Normal(379..380)), Some(Output(Consume { use: 380..394, def: 394..408 })), Some(Output(Consume { use: 408..409, def: 409..410 })), Some(Normal(410..413))) -> None
+generating signatures for DefId(0:42 ~ lib[f7f0]::src::kdtree::kd_nearest3): (Some(Normal(441..458)), None, None, None) -> Some(Normal(413..441))
+generating signatures for DefId(0:45 ~ lib[f7f0]::src::kdtree::kd_nearest3f): (Some(Normal(486..503)), None, None, None) -> Some(Normal(458..486))
+generating signatures for DefId(0:53 ~ lib[f7f0]::src::kdtree::kd_nearest_range3): (Some(Normal(531..548)), None, None, None, None) -> Some(Normal(503..531))
+generating signatures for DefId(0:56 ~ lib[f7f0]::src::kdtree::kd_nearest_range3f): (Some(Normal(576..593)), None, None, None, None) -> Some(Normal(548..576))
+generating signatures for DefId(0:60 ~ lib[f7f0]::src::kdtree::kd_res_size): (Some(Normal(593..621))) -> None
+generating signatures for DefId(0:61 ~ lib[f7f0]::src::kdtree::kd_res_rewind): (Some(Output(Consume { use: 621..649, def: 649..677 }))) -> None
+generating signatures for DefId(0:62 ~ lib[f7f0]::src::kdtree::kd_res_end): (Some(Normal(677..705))) -> None
+generating signatures for DefId(0:63 ~ lib[f7f0]::src::kdtree::kd_res_next): (Some(Output(Consume { use: 705..733, def: 733..761 }))) -> None
+generating signatures for DefId(0:64 ~ lib[f7f0]::src::kdtree::kd_res_item): (Some(Normal(762..790)), Some(Normal(790..791))) -> Some(Normal(761..762))
+generating signatures for DefId(0:65 ~ lib[f7f0]::src::kdtree::kd_res_itemf): (Some(Normal(792..820)), Some(Normal(820..821))) -> Some(Normal(791..792))
+generating signatures for DefId(0:66 ~ lib[f7f0]::src::kdtree::kd_res_item3): (Some(Normal(822..850)), Some(Output(Consume { use: 850..851, def: 851..852 })), Some(Output(Consume { use: 852..853, def: 853..854 })), Some(Output(Consume { use: 854..855, def: 855..856 }))) -> Some(Normal(821..822))
+generating signatures for DefId(0:67 ~ lib[f7f0]::src::kdtree::kd_res_item3f): (Some(Normal(857..885)), Some(Output(Consume { use: 885..886, def: 886..887 })), Some(Output(Consume { use: 887..888, def: 888..889 })), Some(Output(Consume { use: 889..890, def: 890..891 }))) -> Some(Normal(856..857))
+generating signatures for DefId(0:68 ~ lib[f7f0]::src::kdtree::kd_res_item_data): (Some(Normal(892..920))) -> Some(Normal(891..892))
+generating signatures for DefId(0:71 ~ lib[f7f0]::src::kdtree::hyperrect_duplicate): (Some(Normal(923..926))) -> Some(Normal(920..923))
+generating signatures for DefId(0:72 ~ lib[f7f0]::src::kdtree::hyperrect_extend): (Some(Output(Consume { use: 926..929, def: 929..932 })), Some(Normal(932..933))) -> None
+generating signatures for DefId(0:73 ~ lib[f7f0]::src::kdtree::hyperrect_dist_sq): (Some(Normal(933..936)), Some(Normal(936..937))) -> None
+generating signatures for DefId(0:77 ~ lib[f7f0]::src::kdtree::free_resnode): (Some(Normal(937..960))) -> None
+generating signatures for DefId(0:78 ~ lib[f7f0]::src::kdtree::rlist_insert): (Some(Normal(960..983)), Some(Normal(983..1012)), None) -> None
+generating signatures for DefId(0:79 ~ lib[f7f0]::src::kdtree::clear_results): (Some(Output(Consume { use: 1012..1040, def: 1040..1068 }))) -> None
 src::kdtree::hyperrect_create: (_, &, &) -> &move &move &move
 src::kdtree::hyperrect_free: (&move &move &move) -> _
 src::kdtree::clear_rec: (&move &move & &move &move & &move &move & &move &move &move &move & &move &move &move &move & &move &move & &move &move &move &move & &move &move, _) -> _
-src::kdtree::insert_rec: (& & & & & & & & & & & & & &, &, &, _, _) -> _
+src::kdtree::insert_rec: (&, &, &, _, _) -> _
 src::kdtree::kd_insertf: (_, _, _) -> _
-src::kdtree::kd_nearest: (& & & & & & & & & & & & & & & & &, &) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest: (& & & & & & & & & & & & & & & & &, &) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
 src::kdtree::kd_nearestf: (_, _) -> _
-src::kdtree::kd_nearest_range: (& & & & & & & & & & & & & & & & &, &, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range: (&, &, _) -> &move
 src::kdtree::kd_nearest_rangef: (_, _, _) -> _
 src::kdtree::kd_free: (&move &move &move & &move &move & &move &move &move &move & &move &move &move &move &move) -> _
-src::kdtree::kd_res_free: (&move & & & & & & & & & &move & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::kd_res_free: (&move & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_create: (_) -> &move &move &move & &move &move & &move &move &move &move & &move &move &move &move &move
-src::kdtree::alloc_resnode: () -> &move & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::alloc_resnode: () -> _
 src::kdtree::kd_clear: (&uniq &move &move & &move &move & &move &move &move &move & &move &move &move &move &move ↓ &uniq & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_data_destructor: (&uniq & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & &, _) -> _
-src::kdtree::kd_insert: (& & & & & & & & & & & & & & & & &, &, &) -> _
+src::kdtree::kd_insert: (&, &, &) -> _
 src::kdtree::kd_insert3: (& & & & & & & & & & & & & & & & &, _, _, _, &) -> _
 src::kdtree::kd_insert3f: (& & & & & & & & & & & & & & & & &, _, _, _, &) -> _
 src::kdtree::find_nearest: (& & & & & & & & & & & & & & & & & & & & & & & & & & & & &, &, _, &uniq & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & &, _, _) -> _
 src::kdtree::kd_nearest_i: (& & & & & & & & & & & & & & & & & & & & & & & & & & & & &, &, &uniq & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & &, &uniq  ↓ &uniq , & & &) -> _
-src::kdtree::kd_nearest3: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest3f: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest_range3: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest_range3f: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest3: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest3f: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range3: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range3f: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
 src::kdtree::kd_res_size: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
-src::kdtree::kd_res_rewind: (&uniq & & & & & & & & & &move & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & &move & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::kd_res_rewind: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_end: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_next: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_item: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &, &) -> &
@@ -673,74 +693,74 @@ src::kdtree::kd_res_item_data: (& & & & & & & & & & & & & & & & & & & & & & & & 
 src::kdtree::hyperrect_duplicate: (& & &) -> &move &move &move
 src::kdtree::hyperrect_extend: (&uniq & & ↓ &uniq & &, &) -> _
 src::kdtree::hyperrect_dist_sq: (& & &, &) -> _
-src::kdtree::free_resnode: (&move & & & & & & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::free_resnode: (& & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::rlist_insert: (& & & & & & & & & & & & & & & & & & & & & & &, & & & & & & & & & & & & & & & & & & & & & & & & & & & & &, _) -> _
-src::kdtree::clear_results: (&uniq & &move & ↓ &uniq & &move &) -> _
+src::kdtree::clear_results: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 generating signatures for DefId(0:69 ~ lib[f7f0]::src::kdtree::hyperrect_create): (None, Some(Normal(19..20)), Some(Normal(20..21))) -> Some(Normal(16..19))
 generating signatures for DefId(0:70 ~ lib[f7f0]::src::kdtree::hyperrect_free): (Some(Normal(21..24))) -> None
 generating signatures for DefId(0:20 ~ lib[f7f0]::src::kdtree::clear_rec): (Some(Normal(24..53)), None) -> None
-generating signatures for DefId(0:23 ~ lib[f7f0]::src::kdtree::insert_rec): (Some(Normal(53..67)), Some(Normal(67..68)), Some(Normal(68..69)), None, None) -> None
+generating signatures for DefId(0:23 ~ lib[f7f0]::src::kdtree::insert_rec): (Some(Normal(53..54)), Some(Normal(54..55)), Some(Normal(55..56)), None, None) -> None
 generating signatures for DefId(0:25 ~ lib[f7f0]::src::kdtree::kd_insertf): (None, None, None) -> None
-generating signatures for DefId(0:37 ~ lib[f7f0]::src::kdtree::kd_nearest): (Some(Normal(97..114)), Some(Normal(114..115))) -> Some(Normal(69..97))
+generating signatures for DefId(0:37 ~ lib[f7f0]::src::kdtree::kd_nearest): (Some(Normal(84..101)), Some(Normal(101..102))) -> Some(Normal(56..84))
 generating signatures for DefId(0:38 ~ lib[f7f0]::src::kdtree::kd_nearestf): (None, None) -> None
-generating signatures for DefId(0:48 ~ lib[f7f0]::src::kdtree::kd_nearest_range): (Some(Normal(143..160)), Some(Normal(160..161)), None) -> Some(Normal(115..143))
+generating signatures for DefId(0:48 ~ lib[f7f0]::src::kdtree::kd_nearest_range): (Some(Normal(103..104)), Some(Normal(104..105)), None) -> Some(Normal(102..103))
 generating signatures for DefId(0:49 ~ lib[f7f0]::src::kdtree::kd_nearest_rangef): (None, None, None) -> None
-generating signatures for DefId(0:19 ~ lib[f7f0]::src::kdtree::kd_free): (Some(Normal(161..178))) -> None
-generating signatures for DefId(0:59 ~ lib[f7f0]::src::kdtree::kd_res_free): (Some(Normal(178..206))) -> None
-generating signatures for DefId(0:18 ~ lib[f7f0]::src::kdtree::kd_create): (None) -> Some(Normal(206..223))
-generating signatures for DefId(0:76 ~ lib[f7f0]::src::kdtree::alloc_resnode): () -> Some(Normal(223..246))
-generating signatures for DefId(0:21 ~ lib[f7f0]::src::kdtree::kd_clear): (Some(Output(Consume { use: 246..263, def: 263..280 }))) -> None
-generating signatures for DefId(0:22 ~ lib[f7f0]::src::kdtree::kd_data_destructor): (Some(Output(Consume { use: 280..297, def: 297..314 })), None) -> None
-generating signatures for DefId(0:24 ~ lib[f7f0]::src::kdtree::kd_insert): (Some(Normal(314..331)), Some(Normal(331..332)), Some(Normal(332..333))) -> None
-generating signatures for DefId(0:29 ~ lib[f7f0]::src::kdtree::kd_insert3): (Some(Normal(333..350)), None, None, None, Some(Normal(350..351))) -> None
-generating signatures for DefId(0:32 ~ lib[f7f0]::src::kdtree::kd_insert3f): (Some(Normal(351..368)), None, None, None, Some(Normal(368..369))) -> None
-generating signatures for DefId(0:35 ~ lib[f7f0]::src::kdtree::find_nearest): (Some(Normal(369..398)), Some(Normal(398..399)), None, Some(Output(Consume { use: 399..422, def: 422..445 })), None, None) -> None
-generating signatures for DefId(0:36 ~ lib[f7f0]::src::kdtree::kd_nearest_i): (Some(Normal(445..474)), Some(Normal(474..475)), Some(Output(Consume { use: 475..489, def: 489..503 })), Some(Output(Consume { use: 503..504, def: 504..505 })), Some(Normal(505..508))) -> None
-generating signatures for DefId(0:42 ~ lib[f7f0]::src::kdtree::kd_nearest3): (Some(Normal(536..553)), None, None, None) -> Some(Normal(508..536))
-generating signatures for DefId(0:45 ~ lib[f7f0]::src::kdtree::kd_nearest3f): (Some(Normal(581..598)), None, None, None) -> Some(Normal(553..581))
-generating signatures for DefId(0:53 ~ lib[f7f0]::src::kdtree::kd_nearest_range3): (Some(Normal(626..643)), None, None, None, None) -> Some(Normal(598..626))
-generating signatures for DefId(0:56 ~ lib[f7f0]::src::kdtree::kd_nearest_range3f): (Some(Normal(671..688)), None, None, None, None) -> Some(Normal(643..671))
-generating signatures for DefId(0:60 ~ lib[f7f0]::src::kdtree::kd_res_size): (Some(Normal(688..716))) -> None
-generating signatures for DefId(0:61 ~ lib[f7f0]::src::kdtree::kd_res_rewind): (Some(Output(Consume { use: 716..744, def: 744..772 }))) -> None
-generating signatures for DefId(0:62 ~ lib[f7f0]::src::kdtree::kd_res_end): (Some(Normal(772..800))) -> None
-generating signatures for DefId(0:63 ~ lib[f7f0]::src::kdtree::kd_res_next): (Some(Output(Consume { use: 800..828, def: 828..856 }))) -> None
-generating signatures for DefId(0:64 ~ lib[f7f0]::src::kdtree::kd_res_item): (Some(Normal(857..885)), Some(Normal(885..886))) -> Some(Normal(856..857))
-generating signatures for DefId(0:65 ~ lib[f7f0]::src::kdtree::kd_res_itemf): (Some(Normal(887..915)), Some(Normal(915..916))) -> Some(Normal(886..887))
-generating signatures for DefId(0:66 ~ lib[f7f0]::src::kdtree::kd_res_item3): (Some(Normal(917..945)), Some(Output(Consume { use: 945..946, def: 946..947 })), Some(Output(Consume { use: 947..948, def: 948..949 })), Some(Output(Consume { use: 949..950, def: 950..951 }))) -> Some(Normal(916..917))
-generating signatures for DefId(0:67 ~ lib[f7f0]::src::kdtree::kd_res_item3f): (Some(Normal(952..980)), Some(Output(Consume { use: 980..981, def: 981..982 })), Some(Output(Consume { use: 982..983, def: 983..984 })), Some(Output(Consume { use: 984..985, def: 985..986 }))) -> Some(Normal(951..952))
-generating signatures for DefId(0:68 ~ lib[f7f0]::src::kdtree::kd_res_item_data): (Some(Normal(987..1015))) -> Some(Normal(986..987))
-generating signatures for DefId(0:71 ~ lib[f7f0]::src::kdtree::hyperrect_duplicate): (Some(Normal(1018..1021))) -> Some(Normal(1015..1018))
-generating signatures for DefId(0:72 ~ lib[f7f0]::src::kdtree::hyperrect_extend): (Some(Output(Consume { use: 1021..1024, def: 1024..1027 })), Some(Normal(1027..1028))) -> None
-generating signatures for DefId(0:73 ~ lib[f7f0]::src::kdtree::hyperrect_dist_sq): (Some(Normal(1028..1031)), Some(Normal(1031..1032))) -> None
-generating signatures for DefId(0:77 ~ lib[f7f0]::src::kdtree::free_resnode): (Some(Normal(1032..1055))) -> None
-generating signatures for DefId(0:78 ~ lib[f7f0]::src::kdtree::rlist_insert): (Some(Normal(1055..1078)), Some(Normal(1078..1107)), None) -> None
-generating signatures for DefId(0:79 ~ lib[f7f0]::src::kdtree::clear_results): (Some(Output(Consume { use: 1107..1111, def: 1111..1115 }))) -> None
+generating signatures for DefId(0:19 ~ lib[f7f0]::src::kdtree::kd_free): (Some(Normal(105..122))) -> None
+generating signatures for DefId(0:59 ~ lib[f7f0]::src::kdtree::kd_res_free): (Some(Normal(122..150))) -> None
+generating signatures for DefId(0:18 ~ lib[f7f0]::src::kdtree::kd_create): (None) -> Some(Normal(150..167))
+generating signatures for DefId(0:76 ~ lib[f7f0]::src::kdtree::alloc_resnode): () -> None
+generating signatures for DefId(0:21 ~ lib[f7f0]::src::kdtree::kd_clear): (Some(Output(Consume { use: 167..184, def: 184..201 }))) -> None
+generating signatures for DefId(0:22 ~ lib[f7f0]::src::kdtree::kd_data_destructor): (Some(Output(Consume { use: 201..218, def: 218..235 })), None) -> None
+generating signatures for DefId(0:24 ~ lib[f7f0]::src::kdtree::kd_insert): (Some(Normal(235..236)), Some(Normal(236..237)), Some(Normal(237..238))) -> None
+generating signatures for DefId(0:29 ~ lib[f7f0]::src::kdtree::kd_insert3): (Some(Normal(238..255)), None, None, None, Some(Normal(255..256))) -> None
+generating signatures for DefId(0:32 ~ lib[f7f0]::src::kdtree::kd_insert3f): (Some(Normal(256..273)), None, None, None, Some(Normal(273..274))) -> None
+generating signatures for DefId(0:35 ~ lib[f7f0]::src::kdtree::find_nearest): (Some(Normal(274..303)), Some(Normal(303..304)), None, Some(Output(Consume { use: 304..327, def: 327..350 })), None, None) -> None
+generating signatures for DefId(0:36 ~ lib[f7f0]::src::kdtree::kd_nearest_i): (Some(Normal(350..379)), Some(Normal(379..380)), Some(Output(Consume { use: 380..394, def: 394..408 })), Some(Output(Consume { use: 408..409, def: 409..410 })), Some(Normal(410..413))) -> None
+generating signatures for DefId(0:42 ~ lib[f7f0]::src::kdtree::kd_nearest3): (Some(Normal(441..458)), None, None, None) -> Some(Normal(413..441))
+generating signatures for DefId(0:45 ~ lib[f7f0]::src::kdtree::kd_nearest3f): (Some(Normal(486..503)), None, None, None) -> Some(Normal(458..486))
+generating signatures for DefId(0:53 ~ lib[f7f0]::src::kdtree::kd_nearest_range3): (Some(Normal(531..548)), None, None, None, None) -> Some(Normal(503..531))
+generating signatures for DefId(0:56 ~ lib[f7f0]::src::kdtree::kd_nearest_range3f): (Some(Normal(576..593)), None, None, None, None) -> Some(Normal(548..576))
+generating signatures for DefId(0:60 ~ lib[f7f0]::src::kdtree::kd_res_size): (Some(Normal(593..621))) -> None
+generating signatures for DefId(0:61 ~ lib[f7f0]::src::kdtree::kd_res_rewind): (Some(Output(Consume { use: 621..649, def: 649..677 }))) -> None
+generating signatures for DefId(0:62 ~ lib[f7f0]::src::kdtree::kd_res_end): (Some(Normal(677..705))) -> None
+generating signatures for DefId(0:63 ~ lib[f7f0]::src::kdtree::kd_res_next): (Some(Output(Consume { use: 705..733, def: 733..761 }))) -> None
+generating signatures for DefId(0:64 ~ lib[f7f0]::src::kdtree::kd_res_item): (Some(Normal(762..790)), Some(Normal(790..791))) -> Some(Normal(761..762))
+generating signatures for DefId(0:65 ~ lib[f7f0]::src::kdtree::kd_res_itemf): (Some(Normal(792..820)), Some(Normal(820..821))) -> Some(Normal(791..792))
+generating signatures for DefId(0:66 ~ lib[f7f0]::src::kdtree::kd_res_item3): (Some(Normal(822..850)), Some(Output(Consume { use: 850..851, def: 851..852 })), Some(Output(Consume { use: 852..853, def: 853..854 })), Some(Output(Consume { use: 854..855, def: 855..856 }))) -> Some(Normal(821..822))
+generating signatures for DefId(0:67 ~ lib[f7f0]::src::kdtree::kd_res_item3f): (Some(Normal(857..885)), Some(Output(Consume { use: 885..886, def: 886..887 })), Some(Output(Consume { use: 887..888, def: 888..889 })), Some(Output(Consume { use: 889..890, def: 890..891 }))) -> Some(Normal(856..857))
+generating signatures for DefId(0:68 ~ lib[f7f0]::src::kdtree::kd_res_item_data): (Some(Normal(892..920))) -> Some(Normal(891..892))
+generating signatures for DefId(0:71 ~ lib[f7f0]::src::kdtree::hyperrect_duplicate): (Some(Normal(923..926))) -> Some(Normal(920..923))
+generating signatures for DefId(0:72 ~ lib[f7f0]::src::kdtree::hyperrect_extend): (Some(Output(Consume { use: 926..929, def: 929..932 })), Some(Normal(932..933))) -> None
+generating signatures for DefId(0:73 ~ lib[f7f0]::src::kdtree::hyperrect_dist_sq): (Some(Normal(933..936)), Some(Normal(936..937))) -> None
+generating signatures for DefId(0:77 ~ lib[f7f0]::src::kdtree::free_resnode): (Some(Normal(937..960))) -> None
+generating signatures for DefId(0:78 ~ lib[f7f0]::src::kdtree::rlist_insert): (Some(Normal(960..983)), Some(Normal(983..1012)), None) -> None
+generating signatures for DefId(0:79 ~ lib[f7f0]::src::kdtree::clear_results): (Some(Output(Consume { use: 1012..1040, def: 1040..1068 }))) -> None
 src::kdtree::hyperrect_create: (_, &, &) -> &move &move &move
 src::kdtree::hyperrect_free: (&move &move &move) -> _
 src::kdtree::clear_rec: (&move &move & &move &move & &move &move & &move &move &move &move & &move &move &move &move & &move &move & &move &move &move &move & &move &move, _) -> _
-src::kdtree::insert_rec: (& & & & & & & & & & & & & &, &, &, _, _) -> _
+src::kdtree::insert_rec: (&, &, &, _, _) -> _
 src::kdtree::kd_insertf: (_, _, _) -> _
-src::kdtree::kd_nearest: (& & & & & & & & & & & & & & & & &, &) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest: (& & & & & & & & & & & & & & & & &, &) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
 src::kdtree::kd_nearestf: (_, _) -> _
-src::kdtree::kd_nearest_range: (& & & & & & & & & & & & & & & & &, &, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range: (&, &, _) -> &move
 src::kdtree::kd_nearest_rangef: (_, _, _) -> _
 src::kdtree::kd_free: (&move &move &move & &move &move & &move &move &move &move & &move &move &move &move &move) -> _
-src::kdtree::kd_res_free: (&move & & & & & & & & & &move & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::kd_res_free: (&move & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_create: (_) -> &move &move &move & &move &move & &move &move &move &move & &move &move &move &move &move
-src::kdtree::alloc_resnode: () -> &move & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::alloc_resnode: () -> _
 src::kdtree::kd_clear: (&uniq &move &move & &move &move & &move &move &move &move & &move &move &move &move &move ↓ &uniq & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_data_destructor: (&uniq & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & &, _) -> _
-src::kdtree::kd_insert: (& & & & & & & & & & & & & & & & &, &, &) -> _
+src::kdtree::kd_insert: (&, &, &) -> _
 src::kdtree::kd_insert3: (& & & & & & & & & & & & & & & & &, _, _, _, &) -> _
 src::kdtree::kd_insert3f: (& & & & & & & & & & & & & & & & &, _, _, _, &) -> _
 src::kdtree::find_nearest: (& & & & & & & & & & & & & & & & & & & & & & & & & & & & &, &, _, &uniq & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & &, _, _) -> _
 src::kdtree::kd_nearest_i: (& & & & & & & & & & & & & & & & & & & & & & & & & & & & &, &, &uniq & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & &, &uniq  ↓ &uniq , & & &) -> _
-src::kdtree::kd_nearest3: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest3f: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest_range3: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest_range3f: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest3: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest3f: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range3: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range3f: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
 src::kdtree::kd_res_size: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
-src::kdtree::kd_res_rewind: (&uniq & & & & & & & & & &move & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & &move & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::kd_res_rewind: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_end: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_next: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_item: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &, &) -> &
@@ -751,74 +771,74 @@ src::kdtree::kd_res_item_data: (& & & & & & & & & & & & & & & & & & & & & & & & 
 src::kdtree::hyperrect_duplicate: (& & &) -> &move &move &move
 src::kdtree::hyperrect_extend: (&uniq & & ↓ &uniq & &, &) -> _
 src::kdtree::hyperrect_dist_sq: (& & &, &) -> _
-src::kdtree::free_resnode: (&move & & & & & & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::free_resnode: (& & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::rlist_insert: (& & & & & & & & & & & & & & & & & & & & & & &, & & & & & & & & & & & & & & & & & & & & & & & & & & & & &, _) -> _
-src::kdtree::clear_results: (&uniq & &move & ↓ &uniq & &move &) -> _
+src::kdtree::clear_results: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 generating signatures for DefId(0:69 ~ lib[f7f0]::src::kdtree::hyperrect_create): (None, Some(Normal(19..20)), Some(Normal(20..21))) -> Some(Normal(16..19))
 generating signatures for DefId(0:70 ~ lib[f7f0]::src::kdtree::hyperrect_free): (Some(Normal(21..24))) -> None
 generating signatures for DefId(0:20 ~ lib[f7f0]::src::kdtree::clear_rec): (Some(Normal(24..53)), None) -> None
-generating signatures for DefId(0:23 ~ lib[f7f0]::src::kdtree::insert_rec): (Some(Normal(53..67)), Some(Normal(67..68)), Some(Normal(68..69)), None, None) -> None
+generating signatures for DefId(0:23 ~ lib[f7f0]::src::kdtree::insert_rec): (Some(Normal(53..54)), Some(Normal(54..55)), Some(Normal(55..56)), None, None) -> None
 generating signatures for DefId(0:25 ~ lib[f7f0]::src::kdtree::kd_insertf): (None, None, None) -> None
-generating signatures for DefId(0:37 ~ lib[f7f0]::src::kdtree::kd_nearest): (Some(Normal(97..114)), Some(Normal(114..115))) -> Some(Normal(69..97))
+generating signatures for DefId(0:37 ~ lib[f7f0]::src::kdtree::kd_nearest): (Some(Normal(84..101)), Some(Normal(101..102))) -> Some(Normal(56..84))
 generating signatures for DefId(0:38 ~ lib[f7f0]::src::kdtree::kd_nearestf): (None, None) -> None
-generating signatures for DefId(0:48 ~ lib[f7f0]::src::kdtree::kd_nearest_range): (Some(Normal(143..160)), Some(Normal(160..161)), None) -> Some(Normal(115..143))
+generating signatures for DefId(0:48 ~ lib[f7f0]::src::kdtree::kd_nearest_range): (Some(Normal(103..104)), Some(Normal(104..105)), None) -> Some(Normal(102..103))
 generating signatures for DefId(0:49 ~ lib[f7f0]::src::kdtree::kd_nearest_rangef): (None, None, None) -> None
-generating signatures for DefId(0:19 ~ lib[f7f0]::src::kdtree::kd_free): (Some(Normal(161..178))) -> None
-generating signatures for DefId(0:59 ~ lib[f7f0]::src::kdtree::kd_res_free): (Some(Normal(178..206))) -> None
-generating signatures for DefId(0:18 ~ lib[f7f0]::src::kdtree::kd_create): (None) -> Some(Normal(206..223))
-generating signatures for DefId(0:76 ~ lib[f7f0]::src::kdtree::alloc_resnode): () -> Some(Normal(223..246))
-generating signatures for DefId(0:21 ~ lib[f7f0]::src::kdtree::kd_clear): (Some(Output(Consume { use: 246..263, def: 263..280 }))) -> None
-generating signatures for DefId(0:22 ~ lib[f7f0]::src::kdtree::kd_data_destructor): (Some(Output(Consume { use: 280..297, def: 297..314 })), None) -> None
-generating signatures for DefId(0:24 ~ lib[f7f0]::src::kdtree::kd_insert): (Some(Normal(314..331)), Some(Normal(331..332)), Some(Normal(332..333))) -> None
-generating signatures for DefId(0:29 ~ lib[f7f0]::src::kdtree::kd_insert3): (Some(Normal(333..350)), None, None, None, Some(Normal(350..351))) -> None
-generating signatures for DefId(0:32 ~ lib[f7f0]::src::kdtree::kd_insert3f): (Some(Normal(351..368)), None, None, None, Some(Normal(368..369))) -> None
-generating signatures for DefId(0:35 ~ lib[f7f0]::src::kdtree::find_nearest): (Some(Normal(369..398)), Some(Normal(398..399)), None, Some(Output(Consume { use: 399..422, def: 422..445 })), None, None) -> None
-generating signatures for DefId(0:36 ~ lib[f7f0]::src::kdtree::kd_nearest_i): (Some(Normal(445..474)), Some(Normal(474..475)), Some(Output(Consume { use: 475..489, def: 489..503 })), Some(Output(Consume { use: 503..504, def: 504..505 })), Some(Normal(505..508))) -> None
-generating signatures for DefId(0:42 ~ lib[f7f0]::src::kdtree::kd_nearest3): (Some(Normal(536..553)), None, None, None) -> Some(Normal(508..536))
-generating signatures for DefId(0:45 ~ lib[f7f0]::src::kdtree::kd_nearest3f): (Some(Normal(581..598)), None, None, None) -> Some(Normal(553..581))
-generating signatures for DefId(0:53 ~ lib[f7f0]::src::kdtree::kd_nearest_range3): (Some(Normal(626..643)), None, None, None, None) -> Some(Normal(598..626))
-generating signatures for DefId(0:56 ~ lib[f7f0]::src::kdtree::kd_nearest_range3f): (Some(Normal(671..688)), None, None, None, None) -> Some(Normal(643..671))
-generating signatures for DefId(0:60 ~ lib[f7f0]::src::kdtree::kd_res_size): (Some(Normal(688..716))) -> None
-generating signatures for DefId(0:61 ~ lib[f7f0]::src::kdtree::kd_res_rewind): (Some(Output(Consume { use: 716..744, def: 744..772 }))) -> None
-generating signatures for DefId(0:62 ~ lib[f7f0]::src::kdtree::kd_res_end): (Some(Normal(772..800))) -> None
-generating signatures for DefId(0:63 ~ lib[f7f0]::src::kdtree::kd_res_next): (Some(Output(Consume { use: 800..828, def: 828..856 }))) -> None
-generating signatures for DefId(0:64 ~ lib[f7f0]::src::kdtree::kd_res_item): (Some(Normal(857..885)), Some(Normal(885..886))) -> Some(Normal(856..857))
-generating signatures for DefId(0:65 ~ lib[f7f0]::src::kdtree::kd_res_itemf): (Some(Normal(887..915)), Some(Normal(915..916))) -> Some(Normal(886..887))
-generating signatures for DefId(0:66 ~ lib[f7f0]::src::kdtree::kd_res_item3): (Some(Normal(917..945)), Some(Output(Consume { use: 945..946, def: 946..947 })), Some(Output(Consume { use: 947..948, def: 948..949 })), Some(Output(Consume { use: 949..950, def: 950..951 }))) -> Some(Normal(916..917))
-generating signatures for DefId(0:67 ~ lib[f7f0]::src::kdtree::kd_res_item3f): (Some(Normal(952..980)), Some(Output(Consume { use: 980..981, def: 981..982 })), Some(Output(Consume { use: 982..983, def: 983..984 })), Some(Output(Consume { use: 984..985, def: 985..986 }))) -> Some(Normal(951..952))
-generating signatures for DefId(0:68 ~ lib[f7f0]::src::kdtree::kd_res_item_data): (Some(Normal(987..1015))) -> Some(Normal(986..987))
-generating signatures for DefId(0:71 ~ lib[f7f0]::src::kdtree::hyperrect_duplicate): (Some(Normal(1018..1021))) -> Some(Normal(1015..1018))
-generating signatures for DefId(0:72 ~ lib[f7f0]::src::kdtree::hyperrect_extend): (Some(Output(Consume { use: 1021..1024, def: 1024..1027 })), Some(Normal(1027..1028))) -> None
-generating signatures for DefId(0:73 ~ lib[f7f0]::src::kdtree::hyperrect_dist_sq): (Some(Normal(1028..1031)), Some(Normal(1031..1032))) -> None
-generating signatures for DefId(0:77 ~ lib[f7f0]::src::kdtree::free_resnode): (Some(Normal(1032..1055))) -> None
-generating signatures for DefId(0:78 ~ lib[f7f0]::src::kdtree::rlist_insert): (Some(Normal(1055..1078)), Some(Normal(1078..1107)), None) -> None
-generating signatures for DefId(0:79 ~ lib[f7f0]::src::kdtree::clear_results): (Some(Output(Consume { use: 1107..1111, def: 1111..1115 }))) -> None
+generating signatures for DefId(0:19 ~ lib[f7f0]::src::kdtree::kd_free): (Some(Normal(105..122))) -> None
+generating signatures for DefId(0:59 ~ lib[f7f0]::src::kdtree::kd_res_free): (Some(Normal(122..150))) -> None
+generating signatures for DefId(0:18 ~ lib[f7f0]::src::kdtree::kd_create): (None) -> Some(Normal(150..167))
+generating signatures for DefId(0:76 ~ lib[f7f0]::src::kdtree::alloc_resnode): () -> None
+generating signatures for DefId(0:21 ~ lib[f7f0]::src::kdtree::kd_clear): (Some(Output(Consume { use: 167..184, def: 184..201 }))) -> None
+generating signatures for DefId(0:22 ~ lib[f7f0]::src::kdtree::kd_data_destructor): (Some(Output(Consume { use: 201..218, def: 218..235 })), None) -> None
+generating signatures for DefId(0:24 ~ lib[f7f0]::src::kdtree::kd_insert): (Some(Normal(235..236)), Some(Normal(236..237)), Some(Normal(237..238))) -> None
+generating signatures for DefId(0:29 ~ lib[f7f0]::src::kdtree::kd_insert3): (Some(Normal(238..255)), None, None, None, Some(Normal(255..256))) -> None
+generating signatures for DefId(0:32 ~ lib[f7f0]::src::kdtree::kd_insert3f): (Some(Normal(256..273)), None, None, None, Some(Normal(273..274))) -> None
+generating signatures for DefId(0:35 ~ lib[f7f0]::src::kdtree::find_nearest): (Some(Normal(274..303)), Some(Normal(303..304)), None, Some(Output(Consume { use: 304..327, def: 327..350 })), None, None) -> None
+generating signatures for DefId(0:36 ~ lib[f7f0]::src::kdtree::kd_nearest_i): (Some(Normal(350..379)), Some(Normal(379..380)), Some(Output(Consume { use: 380..394, def: 394..408 })), Some(Output(Consume { use: 408..409, def: 409..410 })), Some(Normal(410..413))) -> None
+generating signatures for DefId(0:42 ~ lib[f7f0]::src::kdtree::kd_nearest3): (Some(Normal(441..458)), None, None, None) -> Some(Normal(413..441))
+generating signatures for DefId(0:45 ~ lib[f7f0]::src::kdtree::kd_nearest3f): (Some(Normal(486..503)), None, None, None) -> Some(Normal(458..486))
+generating signatures for DefId(0:53 ~ lib[f7f0]::src::kdtree::kd_nearest_range3): (Some(Normal(531..548)), None, None, None, None) -> Some(Normal(503..531))
+generating signatures for DefId(0:56 ~ lib[f7f0]::src::kdtree::kd_nearest_range3f): (Some(Normal(576..593)), None, None, None, None) -> Some(Normal(548..576))
+generating signatures for DefId(0:60 ~ lib[f7f0]::src::kdtree::kd_res_size): (Some(Normal(593..621))) -> None
+generating signatures for DefId(0:61 ~ lib[f7f0]::src::kdtree::kd_res_rewind): (Some(Output(Consume { use: 621..649, def: 649..677 }))) -> None
+generating signatures for DefId(0:62 ~ lib[f7f0]::src::kdtree::kd_res_end): (Some(Normal(677..705))) -> None
+generating signatures for DefId(0:63 ~ lib[f7f0]::src::kdtree::kd_res_next): (Some(Output(Consume { use: 705..733, def: 733..761 }))) -> None
+generating signatures for DefId(0:64 ~ lib[f7f0]::src::kdtree::kd_res_item): (Some(Normal(762..790)), Some(Normal(790..791))) -> Some(Normal(761..762))
+generating signatures for DefId(0:65 ~ lib[f7f0]::src::kdtree::kd_res_itemf): (Some(Normal(792..820)), Some(Normal(820..821))) -> Some(Normal(791..792))
+generating signatures for DefId(0:66 ~ lib[f7f0]::src::kdtree::kd_res_item3): (Some(Normal(822..850)), Some(Output(Consume { use: 850..851, def: 851..852 })), Some(Output(Consume { use: 852..853, def: 853..854 })), Some(Output(Consume { use: 854..855, def: 855..856 }))) -> Some(Normal(821..822))
+generating signatures for DefId(0:67 ~ lib[f7f0]::src::kdtree::kd_res_item3f): (Some(Normal(857..885)), Some(Output(Consume { use: 885..886, def: 886..887 })), Some(Output(Consume { use: 887..888, def: 888..889 })), Some(Output(Consume { use: 889..890, def: 890..891 }))) -> Some(Normal(856..857))
+generating signatures for DefId(0:68 ~ lib[f7f0]::src::kdtree::kd_res_item_data): (Some(Normal(892..920))) -> Some(Normal(891..892))
+generating signatures for DefId(0:71 ~ lib[f7f0]::src::kdtree::hyperrect_duplicate): (Some(Normal(923..926))) -> Some(Normal(920..923))
+generating signatures for DefId(0:72 ~ lib[f7f0]::src::kdtree::hyperrect_extend): (Some(Output(Consume { use: 926..929, def: 929..932 })), Some(Normal(932..933))) -> None
+generating signatures for DefId(0:73 ~ lib[f7f0]::src::kdtree::hyperrect_dist_sq): (Some(Normal(933..936)), Some(Normal(936..937))) -> None
+generating signatures for DefId(0:77 ~ lib[f7f0]::src::kdtree::free_resnode): (Some(Normal(937..960))) -> None
+generating signatures for DefId(0:78 ~ lib[f7f0]::src::kdtree::rlist_insert): (Some(Normal(960..983)), Some(Normal(983..1012)), None) -> None
+generating signatures for DefId(0:79 ~ lib[f7f0]::src::kdtree::clear_results): (Some(Output(Consume { use: 1012..1040, def: 1040..1068 }))) -> None
 src::kdtree::hyperrect_create: (_, &, &) -> &move &move &move
 src::kdtree::hyperrect_free: (&move &move &move) -> _
 src::kdtree::clear_rec: (&move &move & &move &move & &move &move & &move &move &move &move & &move &move &move &move & &move &move & &move &move &move &move & &move &move, _) -> _
-src::kdtree::insert_rec: (& & & & & & & & & & & & & &, &, &, _, _) -> _
+src::kdtree::insert_rec: (&, &, &, _, _) -> _
 src::kdtree::kd_insertf: (_, _, _) -> _
-src::kdtree::kd_nearest: (& & & & & & & & & & & & & & & & &, &) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest: (& & & & & & & & & & & & & & & & &, &) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
 src::kdtree::kd_nearestf: (_, _) -> _
-src::kdtree::kd_nearest_range: (& & & & & & & & & & & & & & & & &, &, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range: (&, &, _) -> &move
 src::kdtree::kd_nearest_rangef: (_, _, _) -> _
 src::kdtree::kd_free: (&move &move &move & &move &move & &move &move &move &move & &move &move &move &move &move) -> _
-src::kdtree::kd_res_free: (&move & & & & & & & & & &move & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::kd_res_free: (&move & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_create: (_) -> &move &move &move & &move &move & &move &move &move &move & &move &move &move &move &move
-src::kdtree::alloc_resnode: () -> &move & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::alloc_resnode: () -> _
 src::kdtree::kd_clear: (&uniq &move &move & &move &move & &move &move &move &move & &move &move &move &move &move ↓ &uniq & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_data_destructor: (&uniq & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & &, _) -> _
-src::kdtree::kd_insert: (& & & & & & & & & & & & & & & & &, &, &) -> _
+src::kdtree::kd_insert: (&, &, &) -> _
 src::kdtree::kd_insert3: (& & & & & & & & & & & & & & & & &, _, _, _, &) -> _
 src::kdtree::kd_insert3f: (& & & & & & & & & & & & & & & & &, _, _, _, &) -> _
 src::kdtree::find_nearest: (& & & & & & & & & & & & & & & & & & & & & & & & & & & & &, &, _, &uniq & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & &, _, _) -> _
 src::kdtree::kd_nearest_i: (& & & & & & & & & & & & & & & & & & & & & & & & & & & & &, &, &uniq & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & &, &uniq  ↓ &uniq , & & &) -> _
-src::kdtree::kd_nearest3: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest3f: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest_range3: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
-src::kdtree::kd_nearest_range3f: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & &move & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest3: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest3f: (& & & & & & & & & & & & & & & & &, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range3: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
+src::kdtree::kd_nearest_range3f: (& & & & & & & & & & & & & & & & &, _, _, _, _) -> &move & & & & & & & & & & & & & & & & & & & & & & & & & & &
 src::kdtree::kd_res_size: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
-src::kdtree::kd_res_rewind: (&uniq & & & & & & & & & &move & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & &move & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::kd_res_rewind: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_end: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_next: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::kd_res_item: (& & & & & & & & & & & & & & & & & & & & & & & & & & & &, &) -> &
@@ -829,11 +849,10 @@ src::kdtree::kd_res_item_data: (& & & & & & & & & & & & & & & & & & & & & & & & 
 src::kdtree::hyperrect_duplicate: (& & &) -> &move &move &move
 src::kdtree::hyperrect_extend: (&uniq & & ↓ &uniq & &, &) -> _
 src::kdtree::hyperrect_dist_sq: (& & &, &) -> _
-src::kdtree::free_resnode: (&move & & & & & & & & & & & & & & & & & & & & & &) -> _
+src::kdtree::free_resnode: (& & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::rlist_insert: (& & & & & & & & & & & & & & & & & & & & & & &, & & & & & & & & & & & & & & & & & & & & & & & & & & & & &, _) -> _
-src::kdtree::clear_results: (&uniq & &move & ↓ &uniq & &move &) -> _
+src::kdtree::clear_results: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
 [31mERROR[0m [2manalysis::ownership::solidify[0m[2m:[0m semantics changed @ workspace/kdtree/src/kdtree.rs:167:45: 167:58 (#0)
-[31mERROR[0m [2manalysis::ownership::solidify[0m[2m:[0m semantics changed @ workspace/kdtree/src/kdtree.rs:900:16: 900:28 (#0)
 src::kdtree::__pthread_internal_list {
   __prev: &any,
   __next: &any,
@@ -868,14 +887,14 @@ src::kdtree::kdnode {
 }
 src::kdtree::kdres {
   tree: &,
-  rlist: &move,
+  rlist: &,
   riter: &,
   size: ,
 }
 src::kdtree::res_node {
-  item: &,
+  item: &any,
   dist_sq: ,
-  next: &,
+  next: &any,
 }
 src::kdtree::kd_create: () -> &move
 src::kdtree::kd_free: (&move) -> 
@@ -912,7 +931,7 @@ src::kdtree::hyperrect_free: (&move) ->
 src::kdtree::hyperrect_duplicate: (&) -> &move
 src::kdtree::hyperrect_extend: (&move, &) -> 
 src::kdtree::hyperrect_dist_sq: (&, &) -> 
-src::kdtree::alloc_resnode: () -> &move
-src::kdtree::free_resnode: (&move) -> 
+src::kdtree::alloc_resnode: () -> &
+src::kdtree::free_resnode: (&) -> 
 src::kdtree::rlist_insert: (&, &, ) -> 
 src::kdtree::clear_results: (&move) -> 

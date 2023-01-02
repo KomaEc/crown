@@ -1999,17 +1999,35 @@ generating signatures for DefId(0:467 ~ c2rust_lib[a757]::huffman::BZ2_hbMakeCod
 generating signatures for DefId(0:474 ~ c2rust_lib[a757]::huffman::BZ2_hbAssignCodes): (Some(Normal(589..590)), Some(Normal(590..591)), None, None, None) -> None
 generating signatures for DefId(0:475 ~ c2rust_lib[a757]::huffman::BZ2_hbCreateDecodeTables): (Some(Normal(591..592)), Some(Normal(592..593)), Some(Normal(593..594)), Some(Normal(594..595)), None, None, None) -> None
 generating signatures for DefId(0:926 ~ c2rust_lib[a757]::bzip2recover::main): () -> None
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
 failed: bzlib::BZ2_bzReadClose
 failed: decompress::BZ2_decompress
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressInit!
 failed: bzlib::BZ2_bzWriteOpen
+failed: bzip2::snocString
 failed: bzip2::main_0
 failed: compress::BZ2_compressBlock
 failed: bzlib::handle_compress
 failed: compress::generateMTFValues
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressInit!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
 failed: bzlib::BZ2_bzCompressInit
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressInit!
 failed: bzlib::BZ2_bzReadOpen
-failed: bzip2::mkCell
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
 failed: bzip2recover::main_0
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressInit!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
 failed: bzlib::BZ2_bzWriteClose64
 failed: bzlib::BZ2_bzclose
 bzip2::main_0: (_, &any &any) -> _
@@ -2075,8 +2093,8 @@ bzip2::license: () -> _
 bzip2::usage: (&) -> _
 bzip2::redundant: (&) -> _
 bzip2::mkCell: () -> &move & &
-bzip2::snocString: (&move &move &, &) -> &move &move &
-bzip2::addFlagsFromEnvVar: (&uniq &move ↓ &uniq &move, &) -> _
+bzip2::snocString: (& &any &any, &any) -> & & &
+bzip2::addFlagsFromEnvVar: (&uniq & ↓ &uniq &, &) -> _
 bzip2recover::readError: () -> _
 bzip2recover::writeError: () -> _
 bzip2recover::mallocFail: (_) -> _
@@ -2094,7 +2112,7 @@ bzlib::bz_config_ok: () -> _
 bzlib::prepare_new_block: (&uniq & & & & & & & & ↓ &uniq & & & & & & & &) -> _
 bzlib::init_RL: (&uniq & & & & & & & & ↓ &uniq & & & & & & & &) -> _
 bzlib::isempty_RL: (& & & & & & & & &) -> _
-bzlib::BZ2_bzCompressInit: (&any &any &any &any &any, _, _, _) -> _
+bzlib::BZ2_bzCompressInit: (&any & & & &, _, _, _) -> _
 bzlib::add_pair_to_block: (& & & & & & & & &) -> _
 bzlib::flush_RL: (&uniq & & & & & & & & ↓ &uniq & & & & & & & &) -> _
 bzlib::copy_input_until_stop: (& & & & & & & & &) -> _
@@ -2266,17 +2284,35 @@ generating signatures for DefId(0:467 ~ c2rust_lib[a757]::huffman::BZ2_hbMakeCod
 generating signatures for DefId(0:474 ~ c2rust_lib[a757]::huffman::BZ2_hbAssignCodes): (Some(Normal(769..770)), Some(Normal(770..771)), None, None, None) -> None
 generating signatures for DefId(0:475 ~ c2rust_lib[a757]::huffman::BZ2_hbCreateDecodeTables): (Some(Normal(771..772)), Some(Normal(772..773)), Some(Normal(773..774)), Some(Normal(774..775)), None, None, None) -> None
 generating signatures for DefId(0:926 ~ c2rust_lib[a757]::bzip2recover::main): () -> None
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
 failed: bzlib::BZ2_bzReadClose
 failed: decompress::BZ2_decompress
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressInit!
 failed: bzlib::BZ2_bzWriteOpen
+failed: bzip2::snocString
 failed: bzip2::main_0
 failed: compress::BZ2_compressBlock
 failed: bzlib::handle_compress
 failed: compress::generateMTFValues
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressInit!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
 failed: bzlib::BZ2_bzCompressInit
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressInit!
 failed: bzlib::BZ2_bzReadOpen
-failed: bzip2::mkCell
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
 failed: bzip2recover::main_0
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressInit!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
 failed: bzlib::BZ2_bzWriteClose64
 failed: bzlib::BZ2_bzclose
 bzip2::main_0: (_, &any &any) -> _
@@ -2342,8 +2378,8 @@ bzip2::license: () -> _
 bzip2::usage: (&) -> _
 bzip2::redundant: (&) -> _
 bzip2::mkCell: () -> &move & & & &
-bzip2::snocString: (&move &move & & &, &) -> &move &move & & &
-bzip2::addFlagsFromEnvVar: (&uniq &move &move & ↓ &uniq &move &move &, &) -> _
+bzip2::snocString: (& & & &any &any, &any) -> & & & & &
+bzip2::addFlagsFromEnvVar: (&uniq & & & ↓ &uniq & & &, &) -> _
 bzip2recover::readError: () -> _
 bzip2recover::writeError: () -> _
 bzip2recover::mallocFail: (_) -> _
@@ -2361,7 +2397,7 @@ bzlib::bz_config_ok: () -> _
 bzlib::prepare_new_block: (&uniq & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & &) -> _
 bzlib::init_RL: (&uniq & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & &) -> _
 bzlib::isempty_RL: (& & & & & & & & & & & & &) -> _
-bzlib::BZ2_bzCompressInit: (&any &any &any &any &any, _, _, _) -> _
+bzlib::BZ2_bzCompressInit: (&any & & & &, _, _, _) -> _
 bzlib::add_pair_to_block: (& & & & & & & & & & & & &) -> _
 bzlib::flush_RL: (&uniq & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & &) -> _
 bzlib::copy_input_until_stop: (& & & & & & & & & & & & &) -> _
@@ -2468,82 +2504,95 @@ generating signatures for DefId(0:239 ~ c2rust_lib[a757]::bzip2::testf): (Some(N
 generating signatures for DefId(0:241 ~ c2rust_lib[a757]::bzip2::license): () -> None
 generating signatures for DefId(0:242 ~ c2rust_lib[a757]::bzip2::usage): (Some(Normal(217..218))) -> None
 generating signatures for DefId(0:243 ~ c2rust_lib[a757]::bzip2::redundant): (Some(Normal(218..219))) -> None
-generating signatures for DefId(0:245 ~ c2rust_lib[a757]::bzip2::mkCell): () -> Some(Normal(219..222))
-generating signatures for DefId(0:246 ~ c2rust_lib[a757]::bzip2::snocString): (Some(Normal(229..236)), Some(Normal(236..237))) -> Some(Normal(222..229))
-generating signatures for DefId(0:247 ~ c2rust_lib[a757]::bzip2::addFlagsFromEnvVar): (Some(Output(Consume { use: 237..243, def: 243..249 })), Some(Normal(249..250))) -> None
+generating signatures for DefId(0:245 ~ c2rust_lib[a757]::bzip2::mkCell): () -> Some(Normal(219..226))
+generating signatures for DefId(0:246 ~ c2rust_lib[a757]::bzip2::snocString): (Some(Normal(229..232)), Some(Normal(232..233))) -> Some(Normal(226..229))
+generating signatures for DefId(0:247 ~ c2rust_lib[a757]::bzip2::addFlagsFromEnvVar): (Some(Output(Consume { use: 233..239, def: 239..245 })), Some(Normal(245..246))) -> None
 generating signatures for DefId(0:290 ~ c2rust_lib[a757]::bzip2recover::readError): () -> None
 generating signatures for DefId(0:291 ~ c2rust_lib[a757]::bzip2recover::writeError): () -> None
 generating signatures for DefId(0:292 ~ c2rust_lib[a757]::bzip2recover::mallocFail): (None) -> None
 generating signatures for DefId(0:293 ~ c2rust_lib[a757]::bzip2recover::tooManyBlocks): (None) -> None
-generating signatures for DefId(0:296 ~ c2rust_lib[a757]::bzip2recover::bsPutBit): (Some(Output(Consume { use: 250..258, def: 258..266 })), None) -> None
-generating signatures for DefId(0:297 ~ c2rust_lib[a757]::bzip2recover::bsGetBit): (Some(Output(Consume { use: 266..274, def: 274..282 }))) -> None
-generating signatures for DefId(0:299 ~ c2rust_lib[a757]::bzip2recover::bsPutUChar): (Some(Output(Consume { use: 282..290, def: 290..298 })), None) -> None
-generating signatures for DefId(0:300 ~ c2rust_lib[a757]::bzip2recover::bsPutUInt32): (Some(Output(Consume { use: 298..306, def: 306..314 })), None) -> None
-generating signatures for DefId(0:301 ~ c2rust_lib[a757]::bzip2recover::endsInBz2): (Some(Normal(314..315))) -> None
-generating signatures for DefId(0:314 ~ c2rust_lib[a757]::bzip2recover::main_0): (None, Some(Normal(315..316))) -> None
+generating signatures for DefId(0:296 ~ c2rust_lib[a757]::bzip2recover::bsPutBit): (Some(Output(Consume { use: 246..254, def: 254..262 })), None) -> None
+generating signatures for DefId(0:297 ~ c2rust_lib[a757]::bzip2recover::bsGetBit): (Some(Output(Consume { use: 262..270, def: 270..278 }))) -> None
+generating signatures for DefId(0:299 ~ c2rust_lib[a757]::bzip2recover::bsPutUChar): (Some(Output(Consume { use: 278..286, def: 286..294 })), None) -> None
+generating signatures for DefId(0:300 ~ c2rust_lib[a757]::bzip2recover::bsPutUInt32): (Some(Output(Consume { use: 294..302, def: 302..310 })), None) -> None
+generating signatures for DefId(0:301 ~ c2rust_lib[a757]::bzip2recover::endsInBz2): (Some(Normal(310..311))) -> None
+generating signatures for DefId(0:314 ~ c2rust_lib[a757]::bzip2recover::main_0): (None, Some(Normal(311..312))) -> None
 generating signatures for DefId(0:356 ~ c2rust_lib[a757]::bzlib::__isctype): (None, None) -> None
 generating signatures for DefId(0:357 ~ c2rust_lib[a757]::bzlib::isdigit): (None) -> None
 generating signatures for DefId(0:358 ~ c2rust_lib[a757]::bzlib::BZ2_bz__AssertH__fail): (None) -> None
 generating signatures for DefId(0:359 ~ c2rust_lib[a757]::bzlib::bz_config_ok): () -> None
-generating signatures for DefId(0:362 ~ c2rust_lib[a757]::bzlib::prepare_new_block): (Some(Output(Consume { use: 316..329, def: 329..342 }))) -> None
-generating signatures for DefId(0:363 ~ c2rust_lib[a757]::bzlib::init_RL): (Some(Output(Consume { use: 342..355, def: 355..368 }))) -> None
-generating signatures for DefId(0:364 ~ c2rust_lib[a757]::bzlib::isempty_RL): (Some(Normal(368..381))) -> None
-generating signatures for DefId(0:365 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressInit): (Some(Normal(381..382)), None, None, None) -> None
-generating signatures for DefId(0:366 ~ c2rust_lib[a757]::bzlib::add_pair_to_block): (Some(Normal(382..395))) -> None
-generating signatures for DefId(0:367 ~ c2rust_lib[a757]::bzlib::flush_RL): (Some(Output(Consume { use: 395..408, def: 408..421 }))) -> None
-generating signatures for DefId(0:368 ~ c2rust_lib[a757]::bzlib::copy_input_until_stop): (Some(Normal(421..434))) -> None
-generating signatures for DefId(0:369 ~ c2rust_lib[a757]::bzlib::copy_output_until_stop): (Some(Normal(434..447))) -> None
-generating signatures for DefId(0:370 ~ c2rust_lib[a757]::bzlib::handle_compress): (Some(Normal(447..448))) -> None
-generating signatures for DefId(0:371 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompress): (Some(Normal(448..453)), None) -> None
-generating signatures for DefId(0:372 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressEnd): (Some(Normal(453..458))) -> None
-generating signatures for DefId(0:373 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressInit): (Some(Normal(458..463)), None, None) -> None
-generating signatures for DefId(0:374 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_FAST): (Some(Normal(463..475))) -> None
-generating signatures for DefId(0:375 ~ c2rust_lib[a757]::bzlib::BZ2_indexIntoF): (None, Some(Normal(475..476))) -> None
-generating signatures for DefId(0:376 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_SMALL): (Some(Normal(476..488))) -> None
-generating signatures for DefId(0:377 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompress): (Some(Normal(488..493))) -> None
-generating signatures for DefId(0:378 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressEnd): (Some(Normal(493..498))) -> None
-generating signatures for DefId(0:379 ~ c2rust_lib[a757]::bzlib::myfeof): (Some(Normal(498..505))) -> None
-generating signatures for DefId(0:381 ~ c2rust_lib[a757]::bzlib::BZ2_bzWrite): (Some(Output(Consume { use: 505..506, def: 506..507 })), Some(Normal(507..508)), Some(Normal(508..509)), None) -> None
-generating signatures for DefId(0:382 ~ c2rust_lib[a757]::bzlib::BZ2_bzWriteClose): (Some(Output(Consume { use: 509..510, def: 510..511 })), Some(Output(Consume { use: 511..512, def: 512..513 })), None, Some(Output(Consume { use: 513..514, def: 514..515 })), Some(Output(Consume { use: 515..516, def: 516..517 }))) -> None
-generating signatures for DefId(0:386 ~ c2rust_lib[a757]::bzlib::BZ2_bzRead): (Some(Output(Consume { use: 517..518, def: 518..519 })), Some(Normal(519..520)), Some(Normal(520..521)), None) -> None
-generating signatures for DefId(0:387 ~ c2rust_lib[a757]::bzlib::BZ2_bzReadGetUnused): (Some(Output(Consume { use: 521..522, def: 522..523 })), Some(Normal(523..524)), Some(Output(Consume { use: 524..526, def: 526..528 })), Some(Output(Consume { use: 528..529, def: 529..530 }))) -> None
-generating signatures for DefId(0:388 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffCompress): (Some(Normal(530..531)), Some(Output(Consume { use: 531..532, def: 532..533 })), Some(Normal(533..534)), None, None, None, None) -> None
-generating signatures for DefId(0:389 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffDecompress): (Some(Normal(534..535)), Some(Output(Consume { use: 535..536, def: 536..537 })), Some(Normal(537..538)), None, None, None) -> None
-generating signatures for DefId(0:390 ~ c2rust_lib[a757]::bzlib::BZ2_bzlibVersion): () -> Some(Normal(538..539))
-generating signatures for DefId(0:391 ~ c2rust_lib[a757]::bzlib::bzopen_or_bzdopen): (Some(Normal(540..541)), None, Some(Normal(541..542)), None) -> Some(Normal(539..540))
-generating signatures for DefId(0:397 ~ c2rust_lib[a757]::bzlib::BZ2_bzopen): (Some(Output(Consume { use: 543..544, def: 544..545 })), Some(Normal(545..546))) -> Some(Normal(542..543))
-generating signatures for DefId(0:398 ~ c2rust_lib[a757]::bzlib::BZ2_bzdopen): (None, Some(Normal(547..548))) -> Some(Normal(546..547))
-generating signatures for DefId(0:399 ~ c2rust_lib[a757]::bzlib::BZ2_bzread): (Some(Normal(548..549)), Some(Normal(549..550)), None) -> None
-generating signatures for DefId(0:400 ~ c2rust_lib[a757]::bzlib::BZ2_bzwrite): (Some(Output(Consume { use: 550..551, def: 551..552 })), Some(Normal(552..553)), None) -> None
-generating signatures for DefId(0:401 ~ c2rust_lib[a757]::bzlib::BZ2_bzflush): (Some(Normal(553..554))) -> None
-generating signatures for DefId(0:402 ~ c2rust_lib[a757]::bzlib::BZ2_bzclose): (Some(Normal(554..555))) -> None
-generating signatures for DefId(0:405 ~ c2rust_lib[a757]::bzlib::BZ2_bzerror): (Some(Normal(556..557)), Some(Output(Consume { use: 557..558, def: 558..559 }))) -> Some(Normal(555..556))
-generating signatures for DefId(0:419 ~ c2rust_lib[a757]::compress::BZ2_bsInitWrite): (Some(Output(Consume { use: 559..572, def: 572..585 }))) -> None
-generating signatures for DefId(0:420 ~ c2rust_lib[a757]::compress::bsFinishWrite): (Some(Normal(585..598))) -> None
-generating signatures for DefId(0:421 ~ c2rust_lib[a757]::compress::bsW): (Some(Normal(598..611)), None, None) -> None
-generating signatures for DefId(0:422 ~ c2rust_lib[a757]::compress::bsPutUInt32): (Some(Output(Consume { use: 611..624, def: 624..637 })), None) -> None
-generating signatures for DefId(0:423 ~ c2rust_lib[a757]::compress::bsPutUChar): (Some(Output(Consume { use: 637..650, def: 650..663 })), None) -> None
-generating signatures for DefId(0:424 ~ c2rust_lib[a757]::compress::makeMaps_e): (Some(Output(Consume { use: 663..676, def: 676..689 }))) -> None
-generating signatures for DefId(0:425 ~ c2rust_lib[a757]::compress::generateMTFValues): (Some(Normal(689..690))) -> None
-generating signatures for DefId(0:428 ~ c2rust_lib[a757]::compress::sendMTFValues): (Some(Normal(690..703))) -> None
-generating signatures for DefId(0:437 ~ c2rust_lib[a757]::compress::BZ2_compressBlock): (Some(Normal(703..704)), None) -> None
-generating signatures for DefId(0:458 ~ c2rust_lib[a757]::decompress::makeMaps_d): (Some(Output(Consume { use: 704..716, def: 716..728 }))) -> None
-generating signatures for DefId(0:459 ~ c2rust_lib[a757]::decompress::BZ2_decompress): (Some(Normal(728..729))) -> None
-generating signatures for DefId(0:467 ~ c2rust_lib[a757]::huffman::BZ2_hbMakeCodeLengths): (Some(Normal(729..730)), Some(Normal(730..731)), None, None) -> None
-generating signatures for DefId(0:474 ~ c2rust_lib[a757]::huffman::BZ2_hbAssignCodes): (Some(Normal(731..732)), Some(Normal(732..733)), None, None, None) -> None
-generating signatures for DefId(0:475 ~ c2rust_lib[a757]::huffman::BZ2_hbCreateDecodeTables): (Some(Normal(733..734)), Some(Normal(734..735)), Some(Normal(735..736)), Some(Normal(736..737)), None, None, None) -> None
+generating signatures for DefId(0:362 ~ c2rust_lib[a757]::bzlib::prepare_new_block): (Some(Output(Consume { use: 312..325, def: 325..338 }))) -> None
+generating signatures for DefId(0:363 ~ c2rust_lib[a757]::bzlib::init_RL): (Some(Output(Consume { use: 338..351, def: 351..364 }))) -> None
+generating signatures for DefId(0:364 ~ c2rust_lib[a757]::bzlib::isempty_RL): (Some(Normal(364..377))) -> None
+generating signatures for DefId(0:365 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressInit): (Some(Normal(377..378)), None, None, None) -> None
+generating signatures for DefId(0:366 ~ c2rust_lib[a757]::bzlib::add_pair_to_block): (Some(Normal(378..391))) -> None
+generating signatures for DefId(0:367 ~ c2rust_lib[a757]::bzlib::flush_RL): (Some(Output(Consume { use: 391..404, def: 404..417 }))) -> None
+generating signatures for DefId(0:368 ~ c2rust_lib[a757]::bzlib::copy_input_until_stop): (Some(Normal(417..430))) -> None
+generating signatures for DefId(0:369 ~ c2rust_lib[a757]::bzlib::copy_output_until_stop): (Some(Normal(430..443))) -> None
+generating signatures for DefId(0:370 ~ c2rust_lib[a757]::bzlib::handle_compress): (Some(Normal(443..444))) -> None
+generating signatures for DefId(0:371 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompress): (Some(Normal(444..449)), None) -> None
+generating signatures for DefId(0:372 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressEnd): (Some(Normal(449..454))) -> None
+generating signatures for DefId(0:373 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressInit): (Some(Normal(454..459)), None, None) -> None
+generating signatures for DefId(0:374 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_FAST): (Some(Normal(459..471))) -> None
+generating signatures for DefId(0:375 ~ c2rust_lib[a757]::bzlib::BZ2_indexIntoF): (None, Some(Normal(471..472))) -> None
+generating signatures for DefId(0:376 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_SMALL): (Some(Normal(472..484))) -> None
+generating signatures for DefId(0:377 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompress): (Some(Normal(484..489))) -> None
+generating signatures for DefId(0:378 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressEnd): (Some(Normal(489..494))) -> None
+generating signatures for DefId(0:379 ~ c2rust_lib[a757]::bzlib::myfeof): (Some(Normal(494..501))) -> None
+generating signatures for DefId(0:381 ~ c2rust_lib[a757]::bzlib::BZ2_bzWrite): (Some(Output(Consume { use: 501..502, def: 502..503 })), Some(Normal(503..504)), Some(Normal(504..505)), None) -> None
+generating signatures for DefId(0:382 ~ c2rust_lib[a757]::bzlib::BZ2_bzWriteClose): (Some(Output(Consume { use: 505..506, def: 506..507 })), Some(Output(Consume { use: 507..508, def: 508..509 })), None, Some(Output(Consume { use: 509..510, def: 510..511 })), Some(Output(Consume { use: 511..512, def: 512..513 }))) -> None
+generating signatures for DefId(0:386 ~ c2rust_lib[a757]::bzlib::BZ2_bzRead): (Some(Output(Consume { use: 513..514, def: 514..515 })), Some(Normal(515..516)), Some(Normal(516..517)), None) -> None
+generating signatures for DefId(0:387 ~ c2rust_lib[a757]::bzlib::BZ2_bzReadGetUnused): (Some(Output(Consume { use: 517..518, def: 518..519 })), Some(Normal(519..520)), Some(Output(Consume { use: 520..522, def: 522..524 })), Some(Output(Consume { use: 524..525, def: 525..526 }))) -> None
+generating signatures for DefId(0:388 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffCompress): (Some(Normal(526..527)), Some(Output(Consume { use: 527..528, def: 528..529 })), Some(Normal(529..530)), None, None, None, None) -> None
+generating signatures for DefId(0:389 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffDecompress): (Some(Normal(530..531)), Some(Output(Consume { use: 531..532, def: 532..533 })), Some(Normal(533..534)), None, None, None) -> None
+generating signatures for DefId(0:390 ~ c2rust_lib[a757]::bzlib::BZ2_bzlibVersion): () -> Some(Normal(534..535))
+generating signatures for DefId(0:391 ~ c2rust_lib[a757]::bzlib::bzopen_or_bzdopen): (Some(Normal(536..537)), None, Some(Normal(537..538)), None) -> Some(Normal(535..536))
+generating signatures for DefId(0:397 ~ c2rust_lib[a757]::bzlib::BZ2_bzopen): (Some(Output(Consume { use: 539..540, def: 540..541 })), Some(Normal(541..542))) -> Some(Normal(538..539))
+generating signatures for DefId(0:398 ~ c2rust_lib[a757]::bzlib::BZ2_bzdopen): (None, Some(Normal(543..544))) -> Some(Normal(542..543))
+generating signatures for DefId(0:399 ~ c2rust_lib[a757]::bzlib::BZ2_bzread): (Some(Normal(544..545)), Some(Normal(545..546)), None) -> None
+generating signatures for DefId(0:400 ~ c2rust_lib[a757]::bzlib::BZ2_bzwrite): (Some(Output(Consume { use: 546..547, def: 547..548 })), Some(Normal(548..549)), None) -> None
+generating signatures for DefId(0:401 ~ c2rust_lib[a757]::bzlib::BZ2_bzflush): (Some(Normal(549..550))) -> None
+generating signatures for DefId(0:402 ~ c2rust_lib[a757]::bzlib::BZ2_bzclose): (Some(Normal(550..551))) -> None
+generating signatures for DefId(0:405 ~ c2rust_lib[a757]::bzlib::BZ2_bzerror): (Some(Normal(552..553)), Some(Output(Consume { use: 553..554, def: 554..555 }))) -> Some(Normal(551..552))
+generating signatures for DefId(0:419 ~ c2rust_lib[a757]::compress::BZ2_bsInitWrite): (Some(Output(Consume { use: 555..568, def: 568..581 }))) -> None
+generating signatures for DefId(0:420 ~ c2rust_lib[a757]::compress::bsFinishWrite): (Some(Normal(581..594))) -> None
+generating signatures for DefId(0:421 ~ c2rust_lib[a757]::compress::bsW): (Some(Normal(594..607)), None, None) -> None
+generating signatures for DefId(0:422 ~ c2rust_lib[a757]::compress::bsPutUInt32): (Some(Output(Consume { use: 607..620, def: 620..633 })), None) -> None
+generating signatures for DefId(0:423 ~ c2rust_lib[a757]::compress::bsPutUChar): (Some(Output(Consume { use: 633..646, def: 646..659 })), None) -> None
+generating signatures for DefId(0:424 ~ c2rust_lib[a757]::compress::makeMaps_e): (Some(Output(Consume { use: 659..672, def: 672..685 }))) -> None
+generating signatures for DefId(0:425 ~ c2rust_lib[a757]::compress::generateMTFValues): (Some(Normal(685..686))) -> None
+generating signatures for DefId(0:428 ~ c2rust_lib[a757]::compress::sendMTFValues): (Some(Normal(686..699))) -> None
+generating signatures for DefId(0:437 ~ c2rust_lib[a757]::compress::BZ2_compressBlock): (Some(Normal(699..700)), None) -> None
+generating signatures for DefId(0:458 ~ c2rust_lib[a757]::decompress::makeMaps_d): (Some(Output(Consume { use: 700..712, def: 712..724 }))) -> None
+generating signatures for DefId(0:459 ~ c2rust_lib[a757]::decompress::BZ2_decompress): (Some(Normal(724..725))) -> None
+generating signatures for DefId(0:467 ~ c2rust_lib[a757]::huffman::BZ2_hbMakeCodeLengths): (Some(Normal(725..726)), Some(Normal(726..727)), None, None) -> None
+generating signatures for DefId(0:474 ~ c2rust_lib[a757]::huffman::BZ2_hbAssignCodes): (Some(Normal(727..728)), Some(Normal(728..729)), None, None, None) -> None
+generating signatures for DefId(0:475 ~ c2rust_lib[a757]::huffman::BZ2_hbCreateDecodeTables): (Some(Normal(729..730)), Some(Normal(730..731)), Some(Normal(731..732)), Some(Normal(732..733)), None, None, None) -> None
 generating signatures for DefId(0:926 ~ c2rust_lib[a757]::bzip2recover::main): () -> None
 failed: bzlib::BZ2_bzReadClose
 failed: decompress::BZ2_decompress
 failed: bzlib::BZ2_bzWriteOpen
+failed: bzip2::snocString
 failed: bzip2::main_0
 failed: compress::BZ2_compressBlock
 failed: bzlib::handle_compress
 failed: compress::generateMTFValues
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressInit!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
 failed: bzlib::BZ2_bzCompressInit
 failed: bzlib::BZ2_bzReadOpen
-failed: bzip2::mkCell
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
 failed: bzip2recover::main_0
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressInit!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
 failed: bzlib::BZ2_bzWriteClose64
 failed: bzlib::BZ2_bzclose
 bzip2::main_0: (_, &any &any) -> _
@@ -2608,9 +2657,9 @@ bzip2::testf: (&) -> _
 bzip2::license: () -> _
 bzip2::usage: (&) -> _
 bzip2::redundant: (&) -> _
-bzip2::mkCell: () -> &move & &
-bzip2::snocString: (&move &move & & & & &, &) -> &move &move & & & & &
-bzip2::addFlagsFromEnvVar: (&uniq &move &move & & & ↓ &uniq &move &move & & &, &) -> _
+bzip2::mkCell: () -> &move & & & & & &
+bzip2::snocString: (& & &, &any) -> & & &
+bzip2::addFlagsFromEnvVar: (&uniq & & & & & ↓ &uniq & & & & &, &) -> _
 bzip2recover::readError: () -> _
 bzip2recover::writeError: () -> _
 bzip2recover::mallocFail: (_) -> _
@@ -2735,71 +2784,83 @@ generating signatures for DefId(0:239 ~ c2rust_lib[a757]::bzip2::testf): (Some(N
 generating signatures for DefId(0:241 ~ c2rust_lib[a757]::bzip2::license): () -> None
 generating signatures for DefId(0:242 ~ c2rust_lib[a757]::bzip2::usage): (Some(Normal(193..194))) -> None
 generating signatures for DefId(0:243 ~ c2rust_lib[a757]::bzip2::redundant): (Some(Normal(194..195))) -> None
-generating signatures for DefId(0:245 ~ c2rust_lib[a757]::bzip2::mkCell): () -> Some(Normal(195..196))
-generating signatures for DefId(0:246 ~ c2rust_lib[a757]::bzip2::snocString): (Some(Normal(203..210)), Some(Normal(210..211))) -> Some(Normal(196..203))
-generating signatures for DefId(0:247 ~ c2rust_lib[a757]::bzip2::addFlagsFromEnvVar): (Some(Output(Consume { use: 211..217, def: 217..223 })), Some(Normal(223..224))) -> None
+generating signatures for DefId(0:245 ~ c2rust_lib[a757]::bzip2::mkCell): () -> Some(Normal(195..202))
+generating signatures for DefId(0:246 ~ c2rust_lib[a757]::bzip2::snocString): (Some(Normal(203..204)), Some(Normal(204..205))) -> Some(Normal(202..203))
+generating signatures for DefId(0:247 ~ c2rust_lib[a757]::bzip2::addFlagsFromEnvVar): (Some(Output(Consume { use: 205..211, def: 211..217 })), Some(Normal(217..218))) -> None
 generating signatures for DefId(0:290 ~ c2rust_lib[a757]::bzip2recover::readError): () -> None
 generating signatures for DefId(0:291 ~ c2rust_lib[a757]::bzip2recover::writeError): () -> None
 generating signatures for DefId(0:292 ~ c2rust_lib[a757]::bzip2recover::mallocFail): (None) -> None
 generating signatures for DefId(0:293 ~ c2rust_lib[a757]::bzip2recover::tooManyBlocks): (None) -> None
-generating signatures for DefId(0:296 ~ c2rust_lib[a757]::bzip2recover::bsPutBit): (Some(Output(Consume { use: 224..232, def: 232..240 })), None) -> None
-generating signatures for DefId(0:297 ~ c2rust_lib[a757]::bzip2recover::bsGetBit): (Some(Output(Consume { use: 240..248, def: 248..256 }))) -> None
-generating signatures for DefId(0:299 ~ c2rust_lib[a757]::bzip2recover::bsPutUChar): (Some(Output(Consume { use: 256..264, def: 264..272 })), None) -> None
-generating signatures for DefId(0:300 ~ c2rust_lib[a757]::bzip2recover::bsPutUInt32): (Some(Output(Consume { use: 272..280, def: 280..288 })), None) -> None
-generating signatures for DefId(0:301 ~ c2rust_lib[a757]::bzip2recover::endsInBz2): (Some(Normal(288..289))) -> None
+generating signatures for DefId(0:296 ~ c2rust_lib[a757]::bzip2recover::bsPutBit): (Some(Output(Consume { use: 218..226, def: 226..234 })), None) -> None
+generating signatures for DefId(0:297 ~ c2rust_lib[a757]::bzip2recover::bsGetBit): (Some(Output(Consume { use: 234..242, def: 242..250 }))) -> None
+generating signatures for DefId(0:299 ~ c2rust_lib[a757]::bzip2recover::bsPutUChar): (Some(Output(Consume { use: 250..258, def: 258..266 })), None) -> None
+generating signatures for DefId(0:300 ~ c2rust_lib[a757]::bzip2recover::bsPutUInt32): (Some(Output(Consume { use: 266..274, def: 274..282 })), None) -> None
+generating signatures for DefId(0:301 ~ c2rust_lib[a757]::bzip2recover::endsInBz2): (Some(Normal(282..283))) -> None
 generating signatures for DefId(0:314 ~ c2rust_lib[a757]::bzip2recover::main_0): (None, None) -> None
 generating signatures for DefId(0:356 ~ c2rust_lib[a757]::bzlib::__isctype): (None, None) -> None
 generating signatures for DefId(0:357 ~ c2rust_lib[a757]::bzlib::isdigit): (None) -> None
 generating signatures for DefId(0:358 ~ c2rust_lib[a757]::bzlib::BZ2_bz__AssertH__fail): (None) -> None
 generating signatures for DefId(0:359 ~ c2rust_lib[a757]::bzlib::bz_config_ok): () -> None
-generating signatures for DefId(0:362 ~ c2rust_lib[a757]::bzlib::prepare_new_block): (Some(Output(Consume { use: 289..302, def: 302..315 }))) -> None
-generating signatures for DefId(0:363 ~ c2rust_lib[a757]::bzlib::init_RL): (Some(Output(Consume { use: 315..328, def: 328..341 }))) -> None
-generating signatures for DefId(0:364 ~ c2rust_lib[a757]::bzlib::isempty_RL): (Some(Normal(341..354))) -> None
+generating signatures for DefId(0:362 ~ c2rust_lib[a757]::bzlib::prepare_new_block): (Some(Output(Consume { use: 283..296, def: 296..309 }))) -> None
+generating signatures for DefId(0:363 ~ c2rust_lib[a757]::bzlib::init_RL): (Some(Output(Consume { use: 309..322, def: 322..335 }))) -> None
+generating signatures for DefId(0:364 ~ c2rust_lib[a757]::bzlib::isempty_RL): (Some(Normal(335..348))) -> None
 generating signatures for DefId(0:365 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressInit): (None, None, None, None) -> None
-generating signatures for DefId(0:366 ~ c2rust_lib[a757]::bzlib::add_pair_to_block): (Some(Normal(354..367))) -> None
-generating signatures for DefId(0:367 ~ c2rust_lib[a757]::bzlib::flush_RL): (Some(Output(Consume { use: 367..380, def: 380..393 }))) -> None
-generating signatures for DefId(0:368 ~ c2rust_lib[a757]::bzlib::copy_input_until_stop): (Some(Normal(393..406))) -> None
-generating signatures for DefId(0:369 ~ c2rust_lib[a757]::bzlib::copy_output_until_stop): (Some(Normal(406..419))) -> None
+generating signatures for DefId(0:366 ~ c2rust_lib[a757]::bzlib::add_pair_to_block): (Some(Normal(348..361))) -> None
+generating signatures for DefId(0:367 ~ c2rust_lib[a757]::bzlib::flush_RL): (Some(Output(Consume { use: 361..374, def: 374..387 }))) -> None
+generating signatures for DefId(0:368 ~ c2rust_lib[a757]::bzlib::copy_input_until_stop): (Some(Normal(387..400))) -> None
+generating signatures for DefId(0:369 ~ c2rust_lib[a757]::bzlib::copy_output_until_stop): (Some(Normal(400..413))) -> None
 generating signatures for DefId(0:370 ~ c2rust_lib[a757]::bzlib::handle_compress): (None) -> None
-generating signatures for DefId(0:371 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompress): (Some(Normal(419..424)), None) -> None
-generating signatures for DefId(0:372 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressEnd): (Some(Normal(424..429))) -> None
-generating signatures for DefId(0:373 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressInit): (Some(Normal(429..434)), None, None) -> None
-generating signatures for DefId(0:374 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_FAST): (Some(Normal(434..446))) -> None
-generating signatures for DefId(0:375 ~ c2rust_lib[a757]::bzlib::BZ2_indexIntoF): (None, Some(Normal(446..447))) -> None
-generating signatures for DefId(0:376 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_SMALL): (Some(Normal(447..459))) -> None
-generating signatures for DefId(0:377 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompress): (Some(Normal(459..464))) -> None
-generating signatures for DefId(0:378 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressEnd): (Some(Normal(464..469))) -> None
-generating signatures for DefId(0:379 ~ c2rust_lib[a757]::bzlib::myfeof): (Some(Normal(469..476))) -> None
-generating signatures for DefId(0:381 ~ c2rust_lib[a757]::bzlib::BZ2_bzWrite): (Some(Output(Consume { use: 476..477, def: 477..478 })), Some(Normal(478..479)), Some(Normal(479..480)), None) -> None
-generating signatures for DefId(0:382 ~ c2rust_lib[a757]::bzlib::BZ2_bzWriteClose): (Some(Output(Consume { use: 480..481, def: 481..482 })), Some(Output(Consume { use: 482..483, def: 483..484 })), None, Some(Output(Consume { use: 484..485, def: 485..486 })), Some(Output(Consume { use: 486..487, def: 487..488 }))) -> None
-generating signatures for DefId(0:386 ~ c2rust_lib[a757]::bzlib::BZ2_bzRead): (Some(Output(Consume { use: 488..489, def: 489..490 })), Some(Normal(490..491)), Some(Normal(491..492)), None) -> None
-generating signatures for DefId(0:387 ~ c2rust_lib[a757]::bzlib::BZ2_bzReadGetUnused): (Some(Output(Consume { use: 492..493, def: 493..494 })), Some(Normal(494..495)), Some(Output(Consume { use: 495..497, def: 497..499 })), Some(Output(Consume { use: 499..500, def: 500..501 }))) -> None
-generating signatures for DefId(0:388 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffCompress): (Some(Normal(501..502)), Some(Output(Consume { use: 502..503, def: 503..504 })), Some(Normal(504..505)), None, None, None, None) -> None
-generating signatures for DefId(0:389 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffDecompress): (Some(Normal(505..506)), Some(Output(Consume { use: 506..507, def: 507..508 })), Some(Normal(508..509)), None, None, None) -> None
-generating signatures for DefId(0:390 ~ c2rust_lib[a757]::bzlib::BZ2_bzlibVersion): () -> Some(Normal(509..510))
-generating signatures for DefId(0:391 ~ c2rust_lib[a757]::bzlib::bzopen_or_bzdopen): (Some(Normal(511..512)), None, Some(Normal(512..513)), None) -> Some(Normal(510..511))
-generating signatures for DefId(0:397 ~ c2rust_lib[a757]::bzlib::BZ2_bzopen): (Some(Output(Consume { use: 514..515, def: 515..516 })), Some(Normal(516..517))) -> Some(Normal(513..514))
-generating signatures for DefId(0:398 ~ c2rust_lib[a757]::bzlib::BZ2_bzdopen): (None, Some(Normal(518..519))) -> Some(Normal(517..518))
-generating signatures for DefId(0:399 ~ c2rust_lib[a757]::bzlib::BZ2_bzread): (Some(Normal(519..520)), Some(Normal(520..521)), None) -> None
-generating signatures for DefId(0:400 ~ c2rust_lib[a757]::bzlib::BZ2_bzwrite): (Some(Output(Consume { use: 521..522, def: 522..523 })), Some(Normal(523..524)), None) -> None
-generating signatures for DefId(0:401 ~ c2rust_lib[a757]::bzlib::BZ2_bzflush): (Some(Normal(524..525))) -> None
+generating signatures for DefId(0:371 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompress): (Some(Normal(413..418)), None) -> None
+generating signatures for DefId(0:372 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressEnd): (Some(Normal(418..423))) -> None
+generating signatures for DefId(0:373 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressInit): (Some(Normal(423..428)), None, None) -> None
+generating signatures for DefId(0:374 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_FAST): (Some(Normal(428..440))) -> None
+generating signatures for DefId(0:375 ~ c2rust_lib[a757]::bzlib::BZ2_indexIntoF): (None, Some(Normal(440..441))) -> None
+generating signatures for DefId(0:376 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_SMALL): (Some(Normal(441..453))) -> None
+generating signatures for DefId(0:377 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompress): (Some(Normal(453..458))) -> None
+generating signatures for DefId(0:378 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressEnd): (Some(Normal(458..463))) -> None
+generating signatures for DefId(0:379 ~ c2rust_lib[a757]::bzlib::myfeof): (Some(Normal(463..470))) -> None
+generating signatures for DefId(0:381 ~ c2rust_lib[a757]::bzlib::BZ2_bzWrite): (Some(Output(Consume { use: 470..471, def: 471..472 })), Some(Normal(472..473)), Some(Normal(473..474)), None) -> None
+generating signatures for DefId(0:382 ~ c2rust_lib[a757]::bzlib::BZ2_bzWriteClose): (Some(Output(Consume { use: 474..475, def: 475..476 })), Some(Output(Consume { use: 476..477, def: 477..478 })), None, Some(Output(Consume { use: 478..479, def: 479..480 })), Some(Output(Consume { use: 480..481, def: 481..482 }))) -> None
+generating signatures for DefId(0:386 ~ c2rust_lib[a757]::bzlib::BZ2_bzRead): (Some(Output(Consume { use: 482..483, def: 483..484 })), Some(Normal(484..485)), Some(Normal(485..486)), None) -> None
+generating signatures for DefId(0:387 ~ c2rust_lib[a757]::bzlib::BZ2_bzReadGetUnused): (Some(Output(Consume { use: 486..487, def: 487..488 })), Some(Normal(488..489)), Some(Output(Consume { use: 489..491, def: 491..493 })), Some(Output(Consume { use: 493..494, def: 494..495 }))) -> None
+generating signatures for DefId(0:388 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffCompress): (Some(Normal(495..496)), Some(Output(Consume { use: 496..497, def: 497..498 })), Some(Normal(498..499)), None, None, None, None) -> None
+generating signatures for DefId(0:389 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffDecompress): (Some(Normal(499..500)), Some(Output(Consume { use: 500..501, def: 501..502 })), Some(Normal(502..503)), None, None, None) -> None
+generating signatures for DefId(0:390 ~ c2rust_lib[a757]::bzlib::BZ2_bzlibVersion): () -> Some(Normal(503..504))
+generating signatures for DefId(0:391 ~ c2rust_lib[a757]::bzlib::bzopen_or_bzdopen): (Some(Normal(505..506)), None, Some(Normal(506..507)), None) -> Some(Normal(504..505))
+generating signatures for DefId(0:397 ~ c2rust_lib[a757]::bzlib::BZ2_bzopen): (Some(Output(Consume { use: 508..509, def: 509..510 })), Some(Normal(510..511))) -> Some(Normal(507..508))
+generating signatures for DefId(0:398 ~ c2rust_lib[a757]::bzlib::BZ2_bzdopen): (None, Some(Normal(512..513))) -> Some(Normal(511..512))
+generating signatures for DefId(0:399 ~ c2rust_lib[a757]::bzlib::BZ2_bzread): (Some(Normal(513..514)), Some(Normal(514..515)), None) -> None
+generating signatures for DefId(0:400 ~ c2rust_lib[a757]::bzlib::BZ2_bzwrite): (Some(Output(Consume { use: 515..516, def: 516..517 })), Some(Normal(517..518)), None) -> None
+generating signatures for DefId(0:401 ~ c2rust_lib[a757]::bzlib::BZ2_bzflush): (Some(Normal(518..519))) -> None
 generating signatures for DefId(0:402 ~ c2rust_lib[a757]::bzlib::BZ2_bzclose): (None) -> None
-generating signatures for DefId(0:405 ~ c2rust_lib[a757]::bzlib::BZ2_bzerror): (Some(Normal(526..527)), Some(Output(Consume { use: 527..528, def: 528..529 }))) -> Some(Normal(525..526))
-generating signatures for DefId(0:419 ~ c2rust_lib[a757]::compress::BZ2_bsInitWrite): (Some(Output(Consume { use: 529..542, def: 542..555 }))) -> None
-generating signatures for DefId(0:420 ~ c2rust_lib[a757]::compress::bsFinishWrite): (Some(Normal(555..568))) -> None
-generating signatures for DefId(0:421 ~ c2rust_lib[a757]::compress::bsW): (Some(Normal(568..581)), None, None) -> None
-generating signatures for DefId(0:422 ~ c2rust_lib[a757]::compress::bsPutUInt32): (Some(Output(Consume { use: 581..594, def: 594..607 })), None) -> None
-generating signatures for DefId(0:423 ~ c2rust_lib[a757]::compress::bsPutUChar): (Some(Output(Consume { use: 607..620, def: 620..633 })), None) -> None
-generating signatures for DefId(0:424 ~ c2rust_lib[a757]::compress::makeMaps_e): (Some(Output(Consume { use: 633..646, def: 646..659 }))) -> None
+generating signatures for DefId(0:405 ~ c2rust_lib[a757]::bzlib::BZ2_bzerror): (Some(Normal(520..521)), Some(Output(Consume { use: 521..522, def: 522..523 }))) -> Some(Normal(519..520))
+generating signatures for DefId(0:419 ~ c2rust_lib[a757]::compress::BZ2_bsInitWrite): (Some(Output(Consume { use: 523..536, def: 536..549 }))) -> None
+generating signatures for DefId(0:420 ~ c2rust_lib[a757]::compress::bsFinishWrite): (Some(Normal(549..562))) -> None
+generating signatures for DefId(0:421 ~ c2rust_lib[a757]::compress::bsW): (Some(Normal(562..575)), None, None) -> None
+generating signatures for DefId(0:422 ~ c2rust_lib[a757]::compress::bsPutUInt32): (Some(Output(Consume { use: 575..588, def: 588..601 })), None) -> None
+generating signatures for DefId(0:423 ~ c2rust_lib[a757]::compress::bsPutUChar): (Some(Output(Consume { use: 601..614, def: 614..627 })), None) -> None
+generating signatures for DefId(0:424 ~ c2rust_lib[a757]::compress::makeMaps_e): (Some(Output(Consume { use: 627..640, def: 640..653 }))) -> None
 generating signatures for DefId(0:425 ~ c2rust_lib[a757]::compress::generateMTFValues): (None) -> None
-generating signatures for DefId(0:428 ~ c2rust_lib[a757]::compress::sendMTFValues): (Some(Normal(659..672))) -> None
+generating signatures for DefId(0:428 ~ c2rust_lib[a757]::compress::sendMTFValues): (Some(Normal(653..666))) -> None
 generating signatures for DefId(0:437 ~ c2rust_lib[a757]::compress::BZ2_compressBlock): (None, None) -> None
-generating signatures for DefId(0:458 ~ c2rust_lib[a757]::decompress::makeMaps_d): (Some(Output(Consume { use: 672..684, def: 684..696 }))) -> None
+generating signatures for DefId(0:458 ~ c2rust_lib[a757]::decompress::makeMaps_d): (Some(Output(Consume { use: 666..678, def: 678..690 }))) -> None
 generating signatures for DefId(0:459 ~ c2rust_lib[a757]::decompress::BZ2_decompress): (None) -> None
-generating signatures for DefId(0:467 ~ c2rust_lib[a757]::huffman::BZ2_hbMakeCodeLengths): (Some(Normal(696..697)), Some(Normal(697..698)), None, None) -> None
-generating signatures for DefId(0:474 ~ c2rust_lib[a757]::huffman::BZ2_hbAssignCodes): (Some(Normal(698..699)), Some(Normal(699..700)), None, None, None) -> None
-generating signatures for DefId(0:475 ~ c2rust_lib[a757]::huffman::BZ2_hbCreateDecodeTables): (Some(Normal(700..701)), Some(Normal(701..702)), Some(Normal(702..703)), Some(Normal(703..704)), None, None, None) -> None
+generating signatures for DefId(0:467 ~ c2rust_lib[a757]::huffman::BZ2_hbMakeCodeLengths): (Some(Normal(690..691)), Some(Normal(691..692)), None, None) -> None
+generating signatures for DefId(0:474 ~ c2rust_lib[a757]::huffman::BZ2_hbAssignCodes): (Some(Normal(692..693)), Some(Normal(693..694)), None, None, None) -> None
+generating signatures for DefId(0:475 ~ c2rust_lib[a757]::huffman::BZ2_hbCreateDecodeTables): (Some(Normal(694..695)), Some(Normal(695..696)), Some(Normal(696..697)), Some(Normal(697..698)), None, None, None) -> None
 generating signatures for DefId(0:926 ~ c2rust_lib[a757]::bzip2recover::main): () -> None
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressInit!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
 bzip2::main_0: (_, &) -> _
 bzlib::BZ2_bzWriteOpen: (_, _, _, _, _) -> _
 bzlib::BZ2_bzReadOpen: (_, _, _, _, _, _) -> _
@@ -2862,9 +2923,9 @@ bzip2::testf: (&) -> _
 bzip2::license: () -> _
 bzip2::usage: (&) -> _
 bzip2::redundant: (&) -> _
-bzip2::mkCell: () -> &move
-bzip2::snocString: (&move &move & & & & &, &) -> &move &move & & & & &
-bzip2::addFlagsFromEnvVar: (&uniq &move &move & & & ↓ &uniq &move &move & & &, &) -> _
+bzip2::mkCell: () -> &move & & & & & &
+bzip2::snocString: (&move, &) -> &move
+bzip2::addFlagsFromEnvVar: (&uniq &move & & & & ↓ &uniq &move & & & &, &) -> _
 bzip2recover::readError: () -> _
 bzip2recover::writeError: () -> _
 bzip2recover::mallocFail: (_) -> _
@@ -2989,71 +3050,83 @@ generating signatures for DefId(0:239 ~ c2rust_lib[a757]::bzip2::testf): (Some(N
 generating signatures for DefId(0:241 ~ c2rust_lib[a757]::bzip2::license): () -> None
 generating signatures for DefId(0:242 ~ c2rust_lib[a757]::bzip2::usage): (Some(Normal(193..194))) -> None
 generating signatures for DefId(0:243 ~ c2rust_lib[a757]::bzip2::redundant): (Some(Normal(194..195))) -> None
-generating signatures for DefId(0:245 ~ c2rust_lib[a757]::bzip2::mkCell): () -> Some(Normal(195..196))
-generating signatures for DefId(0:246 ~ c2rust_lib[a757]::bzip2::snocString): (Some(Normal(203..210)), Some(Normal(210..211))) -> Some(Normal(196..203))
-generating signatures for DefId(0:247 ~ c2rust_lib[a757]::bzip2::addFlagsFromEnvVar): (Some(Output(Consume { use: 211..217, def: 217..223 })), Some(Normal(223..224))) -> None
+generating signatures for DefId(0:245 ~ c2rust_lib[a757]::bzip2::mkCell): () -> Some(Normal(195..202))
+generating signatures for DefId(0:246 ~ c2rust_lib[a757]::bzip2::snocString): (Some(Normal(203..204)), Some(Normal(204..205))) -> Some(Normal(202..203))
+generating signatures for DefId(0:247 ~ c2rust_lib[a757]::bzip2::addFlagsFromEnvVar): (Some(Output(Consume { use: 205..211, def: 211..217 })), Some(Normal(217..218))) -> None
 generating signatures for DefId(0:290 ~ c2rust_lib[a757]::bzip2recover::readError): () -> None
 generating signatures for DefId(0:291 ~ c2rust_lib[a757]::bzip2recover::writeError): () -> None
 generating signatures for DefId(0:292 ~ c2rust_lib[a757]::bzip2recover::mallocFail): (None) -> None
 generating signatures for DefId(0:293 ~ c2rust_lib[a757]::bzip2recover::tooManyBlocks): (None) -> None
-generating signatures for DefId(0:296 ~ c2rust_lib[a757]::bzip2recover::bsPutBit): (Some(Output(Consume { use: 224..232, def: 232..240 })), None) -> None
-generating signatures for DefId(0:297 ~ c2rust_lib[a757]::bzip2recover::bsGetBit): (Some(Output(Consume { use: 240..248, def: 248..256 }))) -> None
-generating signatures for DefId(0:299 ~ c2rust_lib[a757]::bzip2recover::bsPutUChar): (Some(Output(Consume { use: 256..264, def: 264..272 })), None) -> None
-generating signatures for DefId(0:300 ~ c2rust_lib[a757]::bzip2recover::bsPutUInt32): (Some(Output(Consume { use: 272..280, def: 280..288 })), None) -> None
-generating signatures for DefId(0:301 ~ c2rust_lib[a757]::bzip2recover::endsInBz2): (Some(Normal(288..289))) -> None
+generating signatures for DefId(0:296 ~ c2rust_lib[a757]::bzip2recover::bsPutBit): (Some(Output(Consume { use: 218..226, def: 226..234 })), None) -> None
+generating signatures for DefId(0:297 ~ c2rust_lib[a757]::bzip2recover::bsGetBit): (Some(Output(Consume { use: 234..242, def: 242..250 }))) -> None
+generating signatures for DefId(0:299 ~ c2rust_lib[a757]::bzip2recover::bsPutUChar): (Some(Output(Consume { use: 250..258, def: 258..266 })), None) -> None
+generating signatures for DefId(0:300 ~ c2rust_lib[a757]::bzip2recover::bsPutUInt32): (Some(Output(Consume { use: 266..274, def: 274..282 })), None) -> None
+generating signatures for DefId(0:301 ~ c2rust_lib[a757]::bzip2recover::endsInBz2): (Some(Normal(282..283))) -> None
 generating signatures for DefId(0:314 ~ c2rust_lib[a757]::bzip2recover::main_0): (None, None) -> None
 generating signatures for DefId(0:356 ~ c2rust_lib[a757]::bzlib::__isctype): (None, None) -> None
 generating signatures for DefId(0:357 ~ c2rust_lib[a757]::bzlib::isdigit): (None) -> None
 generating signatures for DefId(0:358 ~ c2rust_lib[a757]::bzlib::BZ2_bz__AssertH__fail): (None) -> None
 generating signatures for DefId(0:359 ~ c2rust_lib[a757]::bzlib::bz_config_ok): () -> None
-generating signatures for DefId(0:362 ~ c2rust_lib[a757]::bzlib::prepare_new_block): (Some(Output(Consume { use: 289..302, def: 302..315 }))) -> None
-generating signatures for DefId(0:363 ~ c2rust_lib[a757]::bzlib::init_RL): (Some(Output(Consume { use: 315..328, def: 328..341 }))) -> None
-generating signatures for DefId(0:364 ~ c2rust_lib[a757]::bzlib::isempty_RL): (Some(Normal(341..354))) -> None
+generating signatures for DefId(0:362 ~ c2rust_lib[a757]::bzlib::prepare_new_block): (Some(Output(Consume { use: 283..296, def: 296..309 }))) -> None
+generating signatures for DefId(0:363 ~ c2rust_lib[a757]::bzlib::init_RL): (Some(Output(Consume { use: 309..322, def: 322..335 }))) -> None
+generating signatures for DefId(0:364 ~ c2rust_lib[a757]::bzlib::isempty_RL): (Some(Normal(335..348))) -> None
 generating signatures for DefId(0:365 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressInit): (None, None, None, None) -> None
-generating signatures for DefId(0:366 ~ c2rust_lib[a757]::bzlib::add_pair_to_block): (Some(Normal(354..367))) -> None
-generating signatures for DefId(0:367 ~ c2rust_lib[a757]::bzlib::flush_RL): (Some(Output(Consume { use: 367..380, def: 380..393 }))) -> None
-generating signatures for DefId(0:368 ~ c2rust_lib[a757]::bzlib::copy_input_until_stop): (Some(Normal(393..406))) -> None
-generating signatures for DefId(0:369 ~ c2rust_lib[a757]::bzlib::copy_output_until_stop): (Some(Normal(406..419))) -> None
+generating signatures for DefId(0:366 ~ c2rust_lib[a757]::bzlib::add_pair_to_block): (Some(Normal(348..361))) -> None
+generating signatures for DefId(0:367 ~ c2rust_lib[a757]::bzlib::flush_RL): (Some(Output(Consume { use: 361..374, def: 374..387 }))) -> None
+generating signatures for DefId(0:368 ~ c2rust_lib[a757]::bzlib::copy_input_until_stop): (Some(Normal(387..400))) -> None
+generating signatures for DefId(0:369 ~ c2rust_lib[a757]::bzlib::copy_output_until_stop): (Some(Normal(400..413))) -> None
 generating signatures for DefId(0:370 ~ c2rust_lib[a757]::bzlib::handle_compress): (None) -> None
-generating signatures for DefId(0:371 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompress): (Some(Normal(419..424)), None) -> None
-generating signatures for DefId(0:372 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressEnd): (Some(Normal(424..429))) -> None
-generating signatures for DefId(0:373 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressInit): (Some(Normal(429..434)), None, None) -> None
-generating signatures for DefId(0:374 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_FAST): (Some(Normal(434..446))) -> None
-generating signatures for DefId(0:375 ~ c2rust_lib[a757]::bzlib::BZ2_indexIntoF): (None, Some(Normal(446..447))) -> None
-generating signatures for DefId(0:376 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_SMALL): (Some(Normal(447..459))) -> None
-generating signatures for DefId(0:377 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompress): (Some(Normal(459..464))) -> None
-generating signatures for DefId(0:378 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressEnd): (Some(Normal(464..469))) -> None
-generating signatures for DefId(0:379 ~ c2rust_lib[a757]::bzlib::myfeof): (Some(Normal(469..476))) -> None
-generating signatures for DefId(0:381 ~ c2rust_lib[a757]::bzlib::BZ2_bzWrite): (Some(Output(Consume { use: 476..477, def: 477..478 })), Some(Normal(478..479)), Some(Normal(479..480)), None) -> None
-generating signatures for DefId(0:382 ~ c2rust_lib[a757]::bzlib::BZ2_bzWriteClose): (Some(Output(Consume { use: 480..481, def: 481..482 })), Some(Output(Consume { use: 482..483, def: 483..484 })), None, Some(Output(Consume { use: 484..485, def: 485..486 })), Some(Output(Consume { use: 486..487, def: 487..488 }))) -> None
-generating signatures for DefId(0:386 ~ c2rust_lib[a757]::bzlib::BZ2_bzRead): (Some(Output(Consume { use: 488..489, def: 489..490 })), Some(Normal(490..491)), Some(Normal(491..492)), None) -> None
-generating signatures for DefId(0:387 ~ c2rust_lib[a757]::bzlib::BZ2_bzReadGetUnused): (Some(Output(Consume { use: 492..493, def: 493..494 })), Some(Normal(494..495)), Some(Output(Consume { use: 495..497, def: 497..499 })), Some(Output(Consume { use: 499..500, def: 500..501 }))) -> None
-generating signatures for DefId(0:388 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffCompress): (Some(Normal(501..502)), Some(Output(Consume { use: 502..503, def: 503..504 })), Some(Normal(504..505)), None, None, None, None) -> None
-generating signatures for DefId(0:389 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffDecompress): (Some(Normal(505..506)), Some(Output(Consume { use: 506..507, def: 507..508 })), Some(Normal(508..509)), None, None, None) -> None
-generating signatures for DefId(0:390 ~ c2rust_lib[a757]::bzlib::BZ2_bzlibVersion): () -> Some(Normal(509..510))
-generating signatures for DefId(0:391 ~ c2rust_lib[a757]::bzlib::bzopen_or_bzdopen): (Some(Normal(511..512)), None, Some(Normal(512..513)), None) -> Some(Normal(510..511))
-generating signatures for DefId(0:397 ~ c2rust_lib[a757]::bzlib::BZ2_bzopen): (Some(Output(Consume { use: 514..515, def: 515..516 })), Some(Normal(516..517))) -> Some(Normal(513..514))
-generating signatures for DefId(0:398 ~ c2rust_lib[a757]::bzlib::BZ2_bzdopen): (None, Some(Normal(518..519))) -> Some(Normal(517..518))
-generating signatures for DefId(0:399 ~ c2rust_lib[a757]::bzlib::BZ2_bzread): (Some(Normal(519..520)), Some(Normal(520..521)), None) -> None
-generating signatures for DefId(0:400 ~ c2rust_lib[a757]::bzlib::BZ2_bzwrite): (Some(Output(Consume { use: 521..522, def: 522..523 })), Some(Normal(523..524)), None) -> None
-generating signatures for DefId(0:401 ~ c2rust_lib[a757]::bzlib::BZ2_bzflush): (Some(Normal(524..525))) -> None
+generating signatures for DefId(0:371 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompress): (Some(Normal(413..418)), None) -> None
+generating signatures for DefId(0:372 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressEnd): (Some(Normal(418..423))) -> None
+generating signatures for DefId(0:373 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressInit): (Some(Normal(423..428)), None, None) -> None
+generating signatures for DefId(0:374 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_FAST): (Some(Normal(428..440))) -> None
+generating signatures for DefId(0:375 ~ c2rust_lib[a757]::bzlib::BZ2_indexIntoF): (None, Some(Normal(440..441))) -> None
+generating signatures for DefId(0:376 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_SMALL): (Some(Normal(441..453))) -> None
+generating signatures for DefId(0:377 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompress): (Some(Normal(453..458))) -> None
+generating signatures for DefId(0:378 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressEnd): (Some(Normal(458..463))) -> None
+generating signatures for DefId(0:379 ~ c2rust_lib[a757]::bzlib::myfeof): (Some(Normal(463..470))) -> None
+generating signatures for DefId(0:381 ~ c2rust_lib[a757]::bzlib::BZ2_bzWrite): (Some(Output(Consume { use: 470..471, def: 471..472 })), Some(Normal(472..473)), Some(Normal(473..474)), None) -> None
+generating signatures for DefId(0:382 ~ c2rust_lib[a757]::bzlib::BZ2_bzWriteClose): (Some(Output(Consume { use: 474..475, def: 475..476 })), Some(Output(Consume { use: 476..477, def: 477..478 })), None, Some(Output(Consume { use: 478..479, def: 479..480 })), Some(Output(Consume { use: 480..481, def: 481..482 }))) -> None
+generating signatures for DefId(0:386 ~ c2rust_lib[a757]::bzlib::BZ2_bzRead): (Some(Output(Consume { use: 482..483, def: 483..484 })), Some(Normal(484..485)), Some(Normal(485..486)), None) -> None
+generating signatures for DefId(0:387 ~ c2rust_lib[a757]::bzlib::BZ2_bzReadGetUnused): (Some(Output(Consume { use: 486..487, def: 487..488 })), Some(Normal(488..489)), Some(Output(Consume { use: 489..491, def: 491..493 })), Some(Output(Consume { use: 493..494, def: 494..495 }))) -> None
+generating signatures for DefId(0:388 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffCompress): (Some(Normal(495..496)), Some(Output(Consume { use: 496..497, def: 497..498 })), Some(Normal(498..499)), None, None, None, None) -> None
+generating signatures for DefId(0:389 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffDecompress): (Some(Normal(499..500)), Some(Output(Consume { use: 500..501, def: 501..502 })), Some(Normal(502..503)), None, None, None) -> None
+generating signatures for DefId(0:390 ~ c2rust_lib[a757]::bzlib::BZ2_bzlibVersion): () -> Some(Normal(503..504))
+generating signatures for DefId(0:391 ~ c2rust_lib[a757]::bzlib::bzopen_or_bzdopen): (Some(Normal(505..506)), None, Some(Normal(506..507)), None) -> Some(Normal(504..505))
+generating signatures for DefId(0:397 ~ c2rust_lib[a757]::bzlib::BZ2_bzopen): (Some(Output(Consume { use: 508..509, def: 509..510 })), Some(Normal(510..511))) -> Some(Normal(507..508))
+generating signatures for DefId(0:398 ~ c2rust_lib[a757]::bzlib::BZ2_bzdopen): (None, Some(Normal(512..513))) -> Some(Normal(511..512))
+generating signatures for DefId(0:399 ~ c2rust_lib[a757]::bzlib::BZ2_bzread): (Some(Normal(513..514)), Some(Normal(514..515)), None) -> None
+generating signatures for DefId(0:400 ~ c2rust_lib[a757]::bzlib::BZ2_bzwrite): (Some(Output(Consume { use: 515..516, def: 516..517 })), Some(Normal(517..518)), None) -> None
+generating signatures for DefId(0:401 ~ c2rust_lib[a757]::bzlib::BZ2_bzflush): (Some(Normal(518..519))) -> None
 generating signatures for DefId(0:402 ~ c2rust_lib[a757]::bzlib::BZ2_bzclose): (None) -> None
-generating signatures for DefId(0:405 ~ c2rust_lib[a757]::bzlib::BZ2_bzerror): (Some(Normal(526..527)), Some(Output(Consume { use: 527..528, def: 528..529 }))) -> Some(Normal(525..526))
-generating signatures for DefId(0:419 ~ c2rust_lib[a757]::compress::BZ2_bsInitWrite): (Some(Output(Consume { use: 529..542, def: 542..555 }))) -> None
-generating signatures for DefId(0:420 ~ c2rust_lib[a757]::compress::bsFinishWrite): (Some(Normal(555..568))) -> None
-generating signatures for DefId(0:421 ~ c2rust_lib[a757]::compress::bsW): (Some(Normal(568..581)), None, None) -> None
-generating signatures for DefId(0:422 ~ c2rust_lib[a757]::compress::bsPutUInt32): (Some(Output(Consume { use: 581..594, def: 594..607 })), None) -> None
-generating signatures for DefId(0:423 ~ c2rust_lib[a757]::compress::bsPutUChar): (Some(Output(Consume { use: 607..620, def: 620..633 })), None) -> None
-generating signatures for DefId(0:424 ~ c2rust_lib[a757]::compress::makeMaps_e): (Some(Output(Consume { use: 633..646, def: 646..659 }))) -> None
+generating signatures for DefId(0:405 ~ c2rust_lib[a757]::bzlib::BZ2_bzerror): (Some(Normal(520..521)), Some(Output(Consume { use: 521..522, def: 522..523 }))) -> Some(Normal(519..520))
+generating signatures for DefId(0:419 ~ c2rust_lib[a757]::compress::BZ2_bsInitWrite): (Some(Output(Consume { use: 523..536, def: 536..549 }))) -> None
+generating signatures for DefId(0:420 ~ c2rust_lib[a757]::compress::bsFinishWrite): (Some(Normal(549..562))) -> None
+generating signatures for DefId(0:421 ~ c2rust_lib[a757]::compress::bsW): (Some(Normal(562..575)), None, None) -> None
+generating signatures for DefId(0:422 ~ c2rust_lib[a757]::compress::bsPutUInt32): (Some(Output(Consume { use: 575..588, def: 588..601 })), None) -> None
+generating signatures for DefId(0:423 ~ c2rust_lib[a757]::compress::bsPutUChar): (Some(Output(Consume { use: 601..614, def: 614..627 })), None) -> None
+generating signatures for DefId(0:424 ~ c2rust_lib[a757]::compress::makeMaps_e): (Some(Output(Consume { use: 627..640, def: 640..653 }))) -> None
 generating signatures for DefId(0:425 ~ c2rust_lib[a757]::compress::generateMTFValues): (None) -> None
-generating signatures for DefId(0:428 ~ c2rust_lib[a757]::compress::sendMTFValues): (Some(Normal(659..672))) -> None
+generating signatures for DefId(0:428 ~ c2rust_lib[a757]::compress::sendMTFValues): (Some(Normal(653..666))) -> None
 generating signatures for DefId(0:437 ~ c2rust_lib[a757]::compress::BZ2_compressBlock): (None, None) -> None
-generating signatures for DefId(0:458 ~ c2rust_lib[a757]::decompress::makeMaps_d): (Some(Output(Consume { use: 672..684, def: 684..696 }))) -> None
+generating signatures for DefId(0:458 ~ c2rust_lib[a757]::decompress::makeMaps_d): (Some(Output(Consume { use: 666..678, def: 678..690 }))) -> None
 generating signatures for DefId(0:459 ~ c2rust_lib[a757]::decompress::BZ2_decompress): (None) -> None
-generating signatures for DefId(0:467 ~ c2rust_lib[a757]::huffman::BZ2_hbMakeCodeLengths): (Some(Normal(696..697)), Some(Normal(697..698)), None, None) -> None
-generating signatures for DefId(0:474 ~ c2rust_lib[a757]::huffman::BZ2_hbAssignCodes): (Some(Normal(698..699)), Some(Normal(699..700)), None, None, None) -> None
-generating signatures for DefId(0:475 ~ c2rust_lib[a757]::huffman::BZ2_hbCreateDecodeTables): (Some(Normal(700..701)), Some(Normal(701..702)), Some(Normal(702..703)), Some(Normal(703..704)), None, None, None) -> None
+generating signatures for DefId(0:467 ~ c2rust_lib[a757]::huffman::BZ2_hbMakeCodeLengths): (Some(Normal(690..691)), Some(Normal(691..692)), None, None) -> None
+generating signatures for DefId(0:474 ~ c2rust_lib[a757]::huffman::BZ2_hbAssignCodes): (Some(Normal(692..693)), Some(Normal(693..694)), None, None, None) -> None
+generating signatures for DefId(0:475 ~ c2rust_lib[a757]::huffman::BZ2_hbCreateDecodeTables): (Some(Normal(694..695)), Some(Normal(695..696)), Some(Normal(696..697)), Some(Normal(697..698)), None, None, None) -> None
 generating signatures for DefId(0:926 ~ c2rust_lib[a757]::bzip2recover::main): () -> None
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressInit!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
 bzip2::main_0: (_, &) -> _
 bzlib::BZ2_bzWriteOpen: (_, _, _, _, _) -> _
 bzlib::BZ2_bzReadOpen: (_, _, _, _, _, _) -> _
@@ -3116,9 +3189,9 @@ bzip2::testf: (&) -> _
 bzip2::license: () -> _
 bzip2::usage: (&) -> _
 bzip2::redundant: (&) -> _
-bzip2::mkCell: () -> &move
-bzip2::snocString: (&move &move & & & & &, &) -> &move &move & & & & &
-bzip2::addFlagsFromEnvVar: (&uniq &move &move & & & ↓ &uniq &move &move & & &, &) -> _
+bzip2::mkCell: () -> &move & & & & & &
+bzip2::snocString: (&move, &) -> &move
+bzip2::addFlagsFromEnvVar: (&uniq &move & & & & ↓ &uniq &move & & & &, &) -> _
 bzip2recover::readError: () -> _
 bzip2recover::writeError: () -> _
 bzip2recover::mallocFail: (_) -> _
@@ -3243,71 +3316,83 @@ generating signatures for DefId(0:239 ~ c2rust_lib[a757]::bzip2::testf): (Some(N
 generating signatures for DefId(0:241 ~ c2rust_lib[a757]::bzip2::license): () -> None
 generating signatures for DefId(0:242 ~ c2rust_lib[a757]::bzip2::usage): (Some(Normal(193..194))) -> None
 generating signatures for DefId(0:243 ~ c2rust_lib[a757]::bzip2::redundant): (Some(Normal(194..195))) -> None
-generating signatures for DefId(0:245 ~ c2rust_lib[a757]::bzip2::mkCell): () -> Some(Normal(195..196))
-generating signatures for DefId(0:246 ~ c2rust_lib[a757]::bzip2::snocString): (Some(Normal(203..210)), Some(Normal(210..211))) -> Some(Normal(196..203))
-generating signatures for DefId(0:247 ~ c2rust_lib[a757]::bzip2::addFlagsFromEnvVar): (Some(Output(Consume { use: 211..217, def: 217..223 })), Some(Normal(223..224))) -> None
+generating signatures for DefId(0:245 ~ c2rust_lib[a757]::bzip2::mkCell): () -> Some(Normal(195..202))
+generating signatures for DefId(0:246 ~ c2rust_lib[a757]::bzip2::snocString): (Some(Normal(203..204)), Some(Normal(204..205))) -> Some(Normal(202..203))
+generating signatures for DefId(0:247 ~ c2rust_lib[a757]::bzip2::addFlagsFromEnvVar): (Some(Output(Consume { use: 205..211, def: 211..217 })), Some(Normal(217..218))) -> None
 generating signatures for DefId(0:290 ~ c2rust_lib[a757]::bzip2recover::readError): () -> None
 generating signatures for DefId(0:291 ~ c2rust_lib[a757]::bzip2recover::writeError): () -> None
 generating signatures for DefId(0:292 ~ c2rust_lib[a757]::bzip2recover::mallocFail): (None) -> None
 generating signatures for DefId(0:293 ~ c2rust_lib[a757]::bzip2recover::tooManyBlocks): (None) -> None
-generating signatures for DefId(0:296 ~ c2rust_lib[a757]::bzip2recover::bsPutBit): (Some(Output(Consume { use: 224..232, def: 232..240 })), None) -> None
-generating signatures for DefId(0:297 ~ c2rust_lib[a757]::bzip2recover::bsGetBit): (Some(Output(Consume { use: 240..248, def: 248..256 }))) -> None
-generating signatures for DefId(0:299 ~ c2rust_lib[a757]::bzip2recover::bsPutUChar): (Some(Output(Consume { use: 256..264, def: 264..272 })), None) -> None
-generating signatures for DefId(0:300 ~ c2rust_lib[a757]::bzip2recover::bsPutUInt32): (Some(Output(Consume { use: 272..280, def: 280..288 })), None) -> None
-generating signatures for DefId(0:301 ~ c2rust_lib[a757]::bzip2recover::endsInBz2): (Some(Normal(288..289))) -> None
+generating signatures for DefId(0:296 ~ c2rust_lib[a757]::bzip2recover::bsPutBit): (Some(Output(Consume { use: 218..226, def: 226..234 })), None) -> None
+generating signatures for DefId(0:297 ~ c2rust_lib[a757]::bzip2recover::bsGetBit): (Some(Output(Consume { use: 234..242, def: 242..250 }))) -> None
+generating signatures for DefId(0:299 ~ c2rust_lib[a757]::bzip2recover::bsPutUChar): (Some(Output(Consume { use: 250..258, def: 258..266 })), None) -> None
+generating signatures for DefId(0:300 ~ c2rust_lib[a757]::bzip2recover::bsPutUInt32): (Some(Output(Consume { use: 266..274, def: 274..282 })), None) -> None
+generating signatures for DefId(0:301 ~ c2rust_lib[a757]::bzip2recover::endsInBz2): (Some(Normal(282..283))) -> None
 generating signatures for DefId(0:314 ~ c2rust_lib[a757]::bzip2recover::main_0): (None, None) -> None
 generating signatures for DefId(0:356 ~ c2rust_lib[a757]::bzlib::__isctype): (None, None) -> None
 generating signatures for DefId(0:357 ~ c2rust_lib[a757]::bzlib::isdigit): (None) -> None
 generating signatures for DefId(0:358 ~ c2rust_lib[a757]::bzlib::BZ2_bz__AssertH__fail): (None) -> None
 generating signatures for DefId(0:359 ~ c2rust_lib[a757]::bzlib::bz_config_ok): () -> None
-generating signatures for DefId(0:362 ~ c2rust_lib[a757]::bzlib::prepare_new_block): (Some(Output(Consume { use: 289..302, def: 302..315 }))) -> None
-generating signatures for DefId(0:363 ~ c2rust_lib[a757]::bzlib::init_RL): (Some(Output(Consume { use: 315..328, def: 328..341 }))) -> None
-generating signatures for DefId(0:364 ~ c2rust_lib[a757]::bzlib::isempty_RL): (Some(Normal(341..354))) -> None
+generating signatures for DefId(0:362 ~ c2rust_lib[a757]::bzlib::prepare_new_block): (Some(Output(Consume { use: 283..296, def: 296..309 }))) -> None
+generating signatures for DefId(0:363 ~ c2rust_lib[a757]::bzlib::init_RL): (Some(Output(Consume { use: 309..322, def: 322..335 }))) -> None
+generating signatures for DefId(0:364 ~ c2rust_lib[a757]::bzlib::isempty_RL): (Some(Normal(335..348))) -> None
 generating signatures for DefId(0:365 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressInit): (None, None, None, None) -> None
-generating signatures for DefId(0:366 ~ c2rust_lib[a757]::bzlib::add_pair_to_block): (Some(Normal(354..367))) -> None
-generating signatures for DefId(0:367 ~ c2rust_lib[a757]::bzlib::flush_RL): (Some(Output(Consume { use: 367..380, def: 380..393 }))) -> None
-generating signatures for DefId(0:368 ~ c2rust_lib[a757]::bzlib::copy_input_until_stop): (Some(Normal(393..406))) -> None
-generating signatures for DefId(0:369 ~ c2rust_lib[a757]::bzlib::copy_output_until_stop): (Some(Normal(406..419))) -> None
+generating signatures for DefId(0:366 ~ c2rust_lib[a757]::bzlib::add_pair_to_block): (Some(Normal(348..361))) -> None
+generating signatures for DefId(0:367 ~ c2rust_lib[a757]::bzlib::flush_RL): (Some(Output(Consume { use: 361..374, def: 374..387 }))) -> None
+generating signatures for DefId(0:368 ~ c2rust_lib[a757]::bzlib::copy_input_until_stop): (Some(Normal(387..400))) -> None
+generating signatures for DefId(0:369 ~ c2rust_lib[a757]::bzlib::copy_output_until_stop): (Some(Normal(400..413))) -> None
 generating signatures for DefId(0:370 ~ c2rust_lib[a757]::bzlib::handle_compress): (None) -> None
-generating signatures for DefId(0:371 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompress): (Some(Normal(419..424)), None) -> None
-generating signatures for DefId(0:372 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressEnd): (Some(Normal(424..429))) -> None
-generating signatures for DefId(0:373 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressInit): (Some(Normal(429..434)), None, None) -> None
-generating signatures for DefId(0:374 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_FAST): (Some(Normal(434..446))) -> None
-generating signatures for DefId(0:375 ~ c2rust_lib[a757]::bzlib::BZ2_indexIntoF): (None, Some(Normal(446..447))) -> None
-generating signatures for DefId(0:376 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_SMALL): (Some(Normal(447..459))) -> None
-generating signatures for DefId(0:377 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompress): (Some(Normal(459..464))) -> None
-generating signatures for DefId(0:378 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressEnd): (Some(Normal(464..469))) -> None
-generating signatures for DefId(0:379 ~ c2rust_lib[a757]::bzlib::myfeof): (Some(Normal(469..476))) -> None
-generating signatures for DefId(0:381 ~ c2rust_lib[a757]::bzlib::BZ2_bzWrite): (Some(Output(Consume { use: 476..477, def: 477..478 })), Some(Normal(478..479)), Some(Normal(479..480)), None) -> None
-generating signatures for DefId(0:382 ~ c2rust_lib[a757]::bzlib::BZ2_bzWriteClose): (Some(Output(Consume { use: 480..481, def: 481..482 })), Some(Output(Consume { use: 482..483, def: 483..484 })), None, Some(Output(Consume { use: 484..485, def: 485..486 })), Some(Output(Consume { use: 486..487, def: 487..488 }))) -> None
-generating signatures for DefId(0:386 ~ c2rust_lib[a757]::bzlib::BZ2_bzRead): (Some(Output(Consume { use: 488..489, def: 489..490 })), Some(Normal(490..491)), Some(Normal(491..492)), None) -> None
-generating signatures for DefId(0:387 ~ c2rust_lib[a757]::bzlib::BZ2_bzReadGetUnused): (Some(Output(Consume { use: 492..493, def: 493..494 })), Some(Normal(494..495)), Some(Output(Consume { use: 495..497, def: 497..499 })), Some(Output(Consume { use: 499..500, def: 500..501 }))) -> None
-generating signatures for DefId(0:388 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffCompress): (Some(Normal(501..502)), Some(Output(Consume { use: 502..503, def: 503..504 })), Some(Normal(504..505)), None, None, None, None) -> None
-generating signatures for DefId(0:389 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffDecompress): (Some(Normal(505..506)), Some(Output(Consume { use: 506..507, def: 507..508 })), Some(Normal(508..509)), None, None, None) -> None
-generating signatures for DefId(0:390 ~ c2rust_lib[a757]::bzlib::BZ2_bzlibVersion): () -> Some(Normal(509..510))
-generating signatures for DefId(0:391 ~ c2rust_lib[a757]::bzlib::bzopen_or_bzdopen): (Some(Normal(511..512)), None, Some(Normal(512..513)), None) -> Some(Normal(510..511))
-generating signatures for DefId(0:397 ~ c2rust_lib[a757]::bzlib::BZ2_bzopen): (Some(Output(Consume { use: 514..515, def: 515..516 })), Some(Normal(516..517))) -> Some(Normal(513..514))
-generating signatures for DefId(0:398 ~ c2rust_lib[a757]::bzlib::BZ2_bzdopen): (None, Some(Normal(518..519))) -> Some(Normal(517..518))
-generating signatures for DefId(0:399 ~ c2rust_lib[a757]::bzlib::BZ2_bzread): (Some(Normal(519..520)), Some(Normal(520..521)), None) -> None
-generating signatures for DefId(0:400 ~ c2rust_lib[a757]::bzlib::BZ2_bzwrite): (Some(Output(Consume { use: 521..522, def: 522..523 })), Some(Normal(523..524)), None) -> None
-generating signatures for DefId(0:401 ~ c2rust_lib[a757]::bzlib::BZ2_bzflush): (Some(Normal(524..525))) -> None
+generating signatures for DefId(0:371 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompress): (Some(Normal(413..418)), None) -> None
+generating signatures for DefId(0:372 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressEnd): (Some(Normal(418..423))) -> None
+generating signatures for DefId(0:373 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressInit): (Some(Normal(423..428)), None, None) -> None
+generating signatures for DefId(0:374 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_FAST): (Some(Normal(428..440))) -> None
+generating signatures for DefId(0:375 ~ c2rust_lib[a757]::bzlib::BZ2_indexIntoF): (None, Some(Normal(440..441))) -> None
+generating signatures for DefId(0:376 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_SMALL): (Some(Normal(441..453))) -> None
+generating signatures for DefId(0:377 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompress): (Some(Normal(453..458))) -> None
+generating signatures for DefId(0:378 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressEnd): (Some(Normal(458..463))) -> None
+generating signatures for DefId(0:379 ~ c2rust_lib[a757]::bzlib::myfeof): (Some(Normal(463..470))) -> None
+generating signatures for DefId(0:381 ~ c2rust_lib[a757]::bzlib::BZ2_bzWrite): (Some(Output(Consume { use: 470..471, def: 471..472 })), Some(Normal(472..473)), Some(Normal(473..474)), None) -> None
+generating signatures for DefId(0:382 ~ c2rust_lib[a757]::bzlib::BZ2_bzWriteClose): (Some(Output(Consume { use: 474..475, def: 475..476 })), Some(Output(Consume { use: 476..477, def: 477..478 })), None, Some(Output(Consume { use: 478..479, def: 479..480 })), Some(Output(Consume { use: 480..481, def: 481..482 }))) -> None
+generating signatures for DefId(0:386 ~ c2rust_lib[a757]::bzlib::BZ2_bzRead): (Some(Output(Consume { use: 482..483, def: 483..484 })), Some(Normal(484..485)), Some(Normal(485..486)), None) -> None
+generating signatures for DefId(0:387 ~ c2rust_lib[a757]::bzlib::BZ2_bzReadGetUnused): (Some(Output(Consume { use: 486..487, def: 487..488 })), Some(Normal(488..489)), Some(Output(Consume { use: 489..491, def: 491..493 })), Some(Output(Consume { use: 493..494, def: 494..495 }))) -> None
+generating signatures for DefId(0:388 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffCompress): (Some(Normal(495..496)), Some(Output(Consume { use: 496..497, def: 497..498 })), Some(Normal(498..499)), None, None, None, None) -> None
+generating signatures for DefId(0:389 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffDecompress): (Some(Normal(499..500)), Some(Output(Consume { use: 500..501, def: 501..502 })), Some(Normal(502..503)), None, None, None) -> None
+generating signatures for DefId(0:390 ~ c2rust_lib[a757]::bzlib::BZ2_bzlibVersion): () -> Some(Normal(503..504))
+generating signatures for DefId(0:391 ~ c2rust_lib[a757]::bzlib::bzopen_or_bzdopen): (Some(Normal(505..506)), None, Some(Normal(506..507)), None) -> Some(Normal(504..505))
+generating signatures for DefId(0:397 ~ c2rust_lib[a757]::bzlib::BZ2_bzopen): (Some(Output(Consume { use: 508..509, def: 509..510 })), Some(Normal(510..511))) -> Some(Normal(507..508))
+generating signatures for DefId(0:398 ~ c2rust_lib[a757]::bzlib::BZ2_bzdopen): (None, Some(Normal(512..513))) -> Some(Normal(511..512))
+generating signatures for DefId(0:399 ~ c2rust_lib[a757]::bzlib::BZ2_bzread): (Some(Normal(513..514)), Some(Normal(514..515)), None) -> None
+generating signatures for DefId(0:400 ~ c2rust_lib[a757]::bzlib::BZ2_bzwrite): (Some(Output(Consume { use: 515..516, def: 516..517 })), Some(Normal(517..518)), None) -> None
+generating signatures for DefId(0:401 ~ c2rust_lib[a757]::bzlib::BZ2_bzflush): (Some(Normal(518..519))) -> None
 generating signatures for DefId(0:402 ~ c2rust_lib[a757]::bzlib::BZ2_bzclose): (None) -> None
-generating signatures for DefId(0:405 ~ c2rust_lib[a757]::bzlib::BZ2_bzerror): (Some(Normal(526..527)), Some(Output(Consume { use: 527..528, def: 528..529 }))) -> Some(Normal(525..526))
-generating signatures for DefId(0:419 ~ c2rust_lib[a757]::compress::BZ2_bsInitWrite): (Some(Output(Consume { use: 529..542, def: 542..555 }))) -> None
-generating signatures for DefId(0:420 ~ c2rust_lib[a757]::compress::bsFinishWrite): (Some(Normal(555..568))) -> None
-generating signatures for DefId(0:421 ~ c2rust_lib[a757]::compress::bsW): (Some(Normal(568..581)), None, None) -> None
-generating signatures for DefId(0:422 ~ c2rust_lib[a757]::compress::bsPutUInt32): (Some(Output(Consume { use: 581..594, def: 594..607 })), None) -> None
-generating signatures for DefId(0:423 ~ c2rust_lib[a757]::compress::bsPutUChar): (Some(Output(Consume { use: 607..620, def: 620..633 })), None) -> None
-generating signatures for DefId(0:424 ~ c2rust_lib[a757]::compress::makeMaps_e): (Some(Output(Consume { use: 633..646, def: 646..659 }))) -> None
+generating signatures for DefId(0:405 ~ c2rust_lib[a757]::bzlib::BZ2_bzerror): (Some(Normal(520..521)), Some(Output(Consume { use: 521..522, def: 522..523 }))) -> Some(Normal(519..520))
+generating signatures for DefId(0:419 ~ c2rust_lib[a757]::compress::BZ2_bsInitWrite): (Some(Output(Consume { use: 523..536, def: 536..549 }))) -> None
+generating signatures for DefId(0:420 ~ c2rust_lib[a757]::compress::bsFinishWrite): (Some(Normal(549..562))) -> None
+generating signatures for DefId(0:421 ~ c2rust_lib[a757]::compress::bsW): (Some(Normal(562..575)), None, None) -> None
+generating signatures for DefId(0:422 ~ c2rust_lib[a757]::compress::bsPutUInt32): (Some(Output(Consume { use: 575..588, def: 588..601 })), None) -> None
+generating signatures for DefId(0:423 ~ c2rust_lib[a757]::compress::bsPutUChar): (Some(Output(Consume { use: 601..614, def: 614..627 })), None) -> None
+generating signatures for DefId(0:424 ~ c2rust_lib[a757]::compress::makeMaps_e): (Some(Output(Consume { use: 627..640, def: 640..653 }))) -> None
 generating signatures for DefId(0:425 ~ c2rust_lib[a757]::compress::generateMTFValues): (None) -> None
-generating signatures for DefId(0:428 ~ c2rust_lib[a757]::compress::sendMTFValues): (Some(Normal(659..672))) -> None
+generating signatures for DefId(0:428 ~ c2rust_lib[a757]::compress::sendMTFValues): (Some(Normal(653..666))) -> None
 generating signatures for DefId(0:437 ~ c2rust_lib[a757]::compress::BZ2_compressBlock): (None, None) -> None
-generating signatures for DefId(0:458 ~ c2rust_lib[a757]::decompress::makeMaps_d): (Some(Output(Consume { use: 672..684, def: 684..696 }))) -> None
+generating signatures for DefId(0:458 ~ c2rust_lib[a757]::decompress::makeMaps_d): (Some(Output(Consume { use: 666..678, def: 678..690 }))) -> None
 generating signatures for DefId(0:459 ~ c2rust_lib[a757]::decompress::BZ2_decompress): (None) -> None
-generating signatures for DefId(0:467 ~ c2rust_lib[a757]::huffman::BZ2_hbMakeCodeLengths): (Some(Normal(696..697)), Some(Normal(697..698)), None, None) -> None
-generating signatures for DefId(0:474 ~ c2rust_lib[a757]::huffman::BZ2_hbAssignCodes): (Some(Normal(698..699)), Some(Normal(699..700)), None, None, None) -> None
-generating signatures for DefId(0:475 ~ c2rust_lib[a757]::huffman::BZ2_hbCreateDecodeTables): (Some(Normal(700..701)), Some(Normal(701..702)), Some(Normal(702..703)), Some(Normal(703..704)), None, None, None) -> None
+generating signatures for DefId(0:467 ~ c2rust_lib[a757]::huffman::BZ2_hbMakeCodeLengths): (Some(Normal(690..691)), Some(Normal(691..692)), None, None) -> None
+generating signatures for DefId(0:474 ~ c2rust_lib[a757]::huffman::BZ2_hbAssignCodes): (Some(Normal(692..693)), Some(Normal(693..694)), None, None, None) -> None
+generating signatures for DefId(0:475 ~ c2rust_lib[a757]::huffman::BZ2_hbCreateDecodeTables): (Some(Normal(694..695)), Some(Normal(695..696)), Some(Normal(696..697)), Some(Normal(697..698)), None, None, None) -> None
 generating signatures for DefId(0:926 ~ c2rust_lib[a757]::bzip2recover::main): () -> None
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressInit!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
 bzip2::main_0: (_, &) -> _
 bzlib::BZ2_bzWriteOpen: (_, _, _, _, _) -> _
 bzlib::BZ2_bzReadOpen: (_, _, _, _, _, _) -> _
@@ -3370,9 +3455,9 @@ bzip2::testf: (&) -> _
 bzip2::license: () -> _
 bzip2::usage: (&) -> _
 bzip2::redundant: (&) -> _
-bzip2::mkCell: () -> &move
-bzip2::snocString: (&move &move & & & & &, &) -> &move &move & & & & &
-bzip2::addFlagsFromEnvVar: (&uniq &move &move & & & ↓ &uniq &move &move & & &, &) -> _
+bzip2::mkCell: () -> &move & & & & & &
+bzip2::snocString: (&move, &) -> &move
+bzip2::addFlagsFromEnvVar: (&uniq &move & & & & ↓ &uniq &move & & & &, &) -> _
 bzip2recover::readError: () -> _
 bzip2recover::writeError: () -> _
 bzip2recover::mallocFail: (_) -> _
@@ -3497,71 +3582,83 @@ generating signatures for DefId(0:239 ~ c2rust_lib[a757]::bzip2::testf): (Some(N
 generating signatures for DefId(0:241 ~ c2rust_lib[a757]::bzip2::license): () -> None
 generating signatures for DefId(0:242 ~ c2rust_lib[a757]::bzip2::usage): (Some(Normal(193..194))) -> None
 generating signatures for DefId(0:243 ~ c2rust_lib[a757]::bzip2::redundant): (Some(Normal(194..195))) -> None
-generating signatures for DefId(0:245 ~ c2rust_lib[a757]::bzip2::mkCell): () -> Some(Normal(195..196))
-generating signatures for DefId(0:246 ~ c2rust_lib[a757]::bzip2::snocString): (Some(Normal(203..210)), Some(Normal(210..211))) -> Some(Normal(196..203))
-generating signatures for DefId(0:247 ~ c2rust_lib[a757]::bzip2::addFlagsFromEnvVar): (Some(Output(Consume { use: 211..217, def: 217..223 })), Some(Normal(223..224))) -> None
+generating signatures for DefId(0:245 ~ c2rust_lib[a757]::bzip2::mkCell): () -> Some(Normal(195..202))
+generating signatures for DefId(0:246 ~ c2rust_lib[a757]::bzip2::snocString): (Some(Normal(203..204)), Some(Normal(204..205))) -> Some(Normal(202..203))
+generating signatures for DefId(0:247 ~ c2rust_lib[a757]::bzip2::addFlagsFromEnvVar): (Some(Output(Consume { use: 205..211, def: 211..217 })), Some(Normal(217..218))) -> None
 generating signatures for DefId(0:290 ~ c2rust_lib[a757]::bzip2recover::readError): () -> None
 generating signatures for DefId(0:291 ~ c2rust_lib[a757]::bzip2recover::writeError): () -> None
 generating signatures for DefId(0:292 ~ c2rust_lib[a757]::bzip2recover::mallocFail): (None) -> None
 generating signatures for DefId(0:293 ~ c2rust_lib[a757]::bzip2recover::tooManyBlocks): (None) -> None
-generating signatures for DefId(0:296 ~ c2rust_lib[a757]::bzip2recover::bsPutBit): (Some(Output(Consume { use: 224..232, def: 232..240 })), None) -> None
-generating signatures for DefId(0:297 ~ c2rust_lib[a757]::bzip2recover::bsGetBit): (Some(Output(Consume { use: 240..248, def: 248..256 }))) -> None
-generating signatures for DefId(0:299 ~ c2rust_lib[a757]::bzip2recover::bsPutUChar): (Some(Output(Consume { use: 256..264, def: 264..272 })), None) -> None
-generating signatures for DefId(0:300 ~ c2rust_lib[a757]::bzip2recover::bsPutUInt32): (Some(Output(Consume { use: 272..280, def: 280..288 })), None) -> None
-generating signatures for DefId(0:301 ~ c2rust_lib[a757]::bzip2recover::endsInBz2): (Some(Normal(288..289))) -> None
+generating signatures for DefId(0:296 ~ c2rust_lib[a757]::bzip2recover::bsPutBit): (Some(Output(Consume { use: 218..226, def: 226..234 })), None) -> None
+generating signatures for DefId(0:297 ~ c2rust_lib[a757]::bzip2recover::bsGetBit): (Some(Output(Consume { use: 234..242, def: 242..250 }))) -> None
+generating signatures for DefId(0:299 ~ c2rust_lib[a757]::bzip2recover::bsPutUChar): (Some(Output(Consume { use: 250..258, def: 258..266 })), None) -> None
+generating signatures for DefId(0:300 ~ c2rust_lib[a757]::bzip2recover::bsPutUInt32): (Some(Output(Consume { use: 266..274, def: 274..282 })), None) -> None
+generating signatures for DefId(0:301 ~ c2rust_lib[a757]::bzip2recover::endsInBz2): (Some(Normal(282..283))) -> None
 generating signatures for DefId(0:314 ~ c2rust_lib[a757]::bzip2recover::main_0): (None, None) -> None
 generating signatures for DefId(0:356 ~ c2rust_lib[a757]::bzlib::__isctype): (None, None) -> None
 generating signatures for DefId(0:357 ~ c2rust_lib[a757]::bzlib::isdigit): (None) -> None
 generating signatures for DefId(0:358 ~ c2rust_lib[a757]::bzlib::BZ2_bz__AssertH__fail): (None) -> None
 generating signatures for DefId(0:359 ~ c2rust_lib[a757]::bzlib::bz_config_ok): () -> None
-generating signatures for DefId(0:362 ~ c2rust_lib[a757]::bzlib::prepare_new_block): (Some(Output(Consume { use: 289..302, def: 302..315 }))) -> None
-generating signatures for DefId(0:363 ~ c2rust_lib[a757]::bzlib::init_RL): (Some(Output(Consume { use: 315..328, def: 328..341 }))) -> None
-generating signatures for DefId(0:364 ~ c2rust_lib[a757]::bzlib::isempty_RL): (Some(Normal(341..354))) -> None
+generating signatures for DefId(0:362 ~ c2rust_lib[a757]::bzlib::prepare_new_block): (Some(Output(Consume { use: 283..296, def: 296..309 }))) -> None
+generating signatures for DefId(0:363 ~ c2rust_lib[a757]::bzlib::init_RL): (Some(Output(Consume { use: 309..322, def: 322..335 }))) -> None
+generating signatures for DefId(0:364 ~ c2rust_lib[a757]::bzlib::isempty_RL): (Some(Normal(335..348))) -> None
 generating signatures for DefId(0:365 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressInit): (None, None, None, None) -> None
-generating signatures for DefId(0:366 ~ c2rust_lib[a757]::bzlib::add_pair_to_block): (Some(Normal(354..367))) -> None
-generating signatures for DefId(0:367 ~ c2rust_lib[a757]::bzlib::flush_RL): (Some(Output(Consume { use: 367..380, def: 380..393 }))) -> None
-generating signatures for DefId(0:368 ~ c2rust_lib[a757]::bzlib::copy_input_until_stop): (Some(Normal(393..406))) -> None
-generating signatures for DefId(0:369 ~ c2rust_lib[a757]::bzlib::copy_output_until_stop): (Some(Normal(406..419))) -> None
+generating signatures for DefId(0:366 ~ c2rust_lib[a757]::bzlib::add_pair_to_block): (Some(Normal(348..361))) -> None
+generating signatures for DefId(0:367 ~ c2rust_lib[a757]::bzlib::flush_RL): (Some(Output(Consume { use: 361..374, def: 374..387 }))) -> None
+generating signatures for DefId(0:368 ~ c2rust_lib[a757]::bzlib::copy_input_until_stop): (Some(Normal(387..400))) -> None
+generating signatures for DefId(0:369 ~ c2rust_lib[a757]::bzlib::copy_output_until_stop): (Some(Normal(400..413))) -> None
 generating signatures for DefId(0:370 ~ c2rust_lib[a757]::bzlib::handle_compress): (None) -> None
-generating signatures for DefId(0:371 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompress): (Some(Normal(419..424)), None) -> None
-generating signatures for DefId(0:372 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressEnd): (Some(Normal(424..429))) -> None
-generating signatures for DefId(0:373 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressInit): (Some(Normal(429..434)), None, None) -> None
-generating signatures for DefId(0:374 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_FAST): (Some(Normal(434..446))) -> None
-generating signatures for DefId(0:375 ~ c2rust_lib[a757]::bzlib::BZ2_indexIntoF): (None, Some(Normal(446..447))) -> None
-generating signatures for DefId(0:376 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_SMALL): (Some(Normal(447..459))) -> None
-generating signatures for DefId(0:377 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompress): (Some(Normal(459..464))) -> None
-generating signatures for DefId(0:378 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressEnd): (Some(Normal(464..469))) -> None
-generating signatures for DefId(0:379 ~ c2rust_lib[a757]::bzlib::myfeof): (Some(Normal(469..476))) -> None
-generating signatures for DefId(0:381 ~ c2rust_lib[a757]::bzlib::BZ2_bzWrite): (Some(Output(Consume { use: 476..477, def: 477..478 })), Some(Normal(478..479)), Some(Normal(479..480)), None) -> None
-generating signatures for DefId(0:382 ~ c2rust_lib[a757]::bzlib::BZ2_bzWriteClose): (Some(Output(Consume { use: 480..481, def: 481..482 })), Some(Output(Consume { use: 482..483, def: 483..484 })), None, Some(Output(Consume { use: 484..485, def: 485..486 })), Some(Output(Consume { use: 486..487, def: 487..488 }))) -> None
-generating signatures for DefId(0:386 ~ c2rust_lib[a757]::bzlib::BZ2_bzRead): (Some(Output(Consume { use: 488..489, def: 489..490 })), Some(Normal(490..491)), Some(Normal(491..492)), None) -> None
-generating signatures for DefId(0:387 ~ c2rust_lib[a757]::bzlib::BZ2_bzReadGetUnused): (Some(Output(Consume { use: 492..493, def: 493..494 })), Some(Normal(494..495)), Some(Output(Consume { use: 495..497, def: 497..499 })), Some(Output(Consume { use: 499..500, def: 500..501 }))) -> None
-generating signatures for DefId(0:388 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffCompress): (Some(Normal(501..502)), Some(Output(Consume { use: 502..503, def: 503..504 })), Some(Normal(504..505)), None, None, None, None) -> None
-generating signatures for DefId(0:389 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffDecompress): (Some(Normal(505..506)), Some(Output(Consume { use: 506..507, def: 507..508 })), Some(Normal(508..509)), None, None, None) -> None
-generating signatures for DefId(0:390 ~ c2rust_lib[a757]::bzlib::BZ2_bzlibVersion): () -> Some(Normal(509..510))
-generating signatures for DefId(0:391 ~ c2rust_lib[a757]::bzlib::bzopen_or_bzdopen): (Some(Normal(511..512)), None, Some(Normal(512..513)), None) -> Some(Normal(510..511))
-generating signatures for DefId(0:397 ~ c2rust_lib[a757]::bzlib::BZ2_bzopen): (Some(Output(Consume { use: 514..515, def: 515..516 })), Some(Normal(516..517))) -> Some(Normal(513..514))
-generating signatures for DefId(0:398 ~ c2rust_lib[a757]::bzlib::BZ2_bzdopen): (None, Some(Normal(518..519))) -> Some(Normal(517..518))
-generating signatures for DefId(0:399 ~ c2rust_lib[a757]::bzlib::BZ2_bzread): (Some(Normal(519..520)), Some(Normal(520..521)), None) -> None
-generating signatures for DefId(0:400 ~ c2rust_lib[a757]::bzlib::BZ2_bzwrite): (Some(Output(Consume { use: 521..522, def: 522..523 })), Some(Normal(523..524)), None) -> None
-generating signatures for DefId(0:401 ~ c2rust_lib[a757]::bzlib::BZ2_bzflush): (Some(Normal(524..525))) -> None
+generating signatures for DefId(0:371 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompress): (Some(Normal(413..418)), None) -> None
+generating signatures for DefId(0:372 ~ c2rust_lib[a757]::bzlib::BZ2_bzCompressEnd): (Some(Normal(418..423))) -> None
+generating signatures for DefId(0:373 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressInit): (Some(Normal(423..428)), None, None) -> None
+generating signatures for DefId(0:374 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_FAST): (Some(Normal(428..440))) -> None
+generating signatures for DefId(0:375 ~ c2rust_lib[a757]::bzlib::BZ2_indexIntoF): (None, Some(Normal(440..441))) -> None
+generating signatures for DefId(0:376 ~ c2rust_lib[a757]::bzlib::unRLE_obuf_to_output_SMALL): (Some(Normal(441..453))) -> None
+generating signatures for DefId(0:377 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompress): (Some(Normal(453..458))) -> None
+generating signatures for DefId(0:378 ~ c2rust_lib[a757]::bzlib::BZ2_bzDecompressEnd): (Some(Normal(458..463))) -> None
+generating signatures for DefId(0:379 ~ c2rust_lib[a757]::bzlib::myfeof): (Some(Normal(463..470))) -> None
+generating signatures for DefId(0:381 ~ c2rust_lib[a757]::bzlib::BZ2_bzWrite): (Some(Output(Consume { use: 470..471, def: 471..472 })), Some(Normal(472..473)), Some(Normal(473..474)), None) -> None
+generating signatures for DefId(0:382 ~ c2rust_lib[a757]::bzlib::BZ2_bzWriteClose): (Some(Output(Consume { use: 474..475, def: 475..476 })), Some(Output(Consume { use: 476..477, def: 477..478 })), None, Some(Output(Consume { use: 478..479, def: 479..480 })), Some(Output(Consume { use: 480..481, def: 481..482 }))) -> None
+generating signatures for DefId(0:386 ~ c2rust_lib[a757]::bzlib::BZ2_bzRead): (Some(Output(Consume { use: 482..483, def: 483..484 })), Some(Normal(484..485)), Some(Normal(485..486)), None) -> None
+generating signatures for DefId(0:387 ~ c2rust_lib[a757]::bzlib::BZ2_bzReadGetUnused): (Some(Output(Consume { use: 486..487, def: 487..488 })), Some(Normal(488..489)), Some(Output(Consume { use: 489..491, def: 491..493 })), Some(Output(Consume { use: 493..494, def: 494..495 }))) -> None
+generating signatures for DefId(0:388 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffCompress): (Some(Normal(495..496)), Some(Output(Consume { use: 496..497, def: 497..498 })), Some(Normal(498..499)), None, None, None, None) -> None
+generating signatures for DefId(0:389 ~ c2rust_lib[a757]::bzlib::BZ2_bzBuffToBuffDecompress): (Some(Normal(499..500)), Some(Output(Consume { use: 500..501, def: 501..502 })), Some(Normal(502..503)), None, None, None) -> None
+generating signatures for DefId(0:390 ~ c2rust_lib[a757]::bzlib::BZ2_bzlibVersion): () -> Some(Normal(503..504))
+generating signatures for DefId(0:391 ~ c2rust_lib[a757]::bzlib::bzopen_or_bzdopen): (Some(Normal(505..506)), None, Some(Normal(506..507)), None) -> Some(Normal(504..505))
+generating signatures for DefId(0:397 ~ c2rust_lib[a757]::bzlib::BZ2_bzopen): (Some(Output(Consume { use: 508..509, def: 509..510 })), Some(Normal(510..511))) -> Some(Normal(507..508))
+generating signatures for DefId(0:398 ~ c2rust_lib[a757]::bzlib::BZ2_bzdopen): (None, Some(Normal(512..513))) -> Some(Normal(511..512))
+generating signatures for DefId(0:399 ~ c2rust_lib[a757]::bzlib::BZ2_bzread): (Some(Normal(513..514)), Some(Normal(514..515)), None) -> None
+generating signatures for DefId(0:400 ~ c2rust_lib[a757]::bzlib::BZ2_bzwrite): (Some(Output(Consume { use: 515..516, def: 516..517 })), Some(Normal(517..518)), None) -> None
+generating signatures for DefId(0:401 ~ c2rust_lib[a757]::bzlib::BZ2_bzflush): (Some(Normal(518..519))) -> None
 generating signatures for DefId(0:402 ~ c2rust_lib[a757]::bzlib::BZ2_bzclose): (None) -> None
-generating signatures for DefId(0:405 ~ c2rust_lib[a757]::bzlib::BZ2_bzerror): (Some(Normal(526..527)), Some(Output(Consume { use: 527..528, def: 528..529 }))) -> Some(Normal(525..526))
-generating signatures for DefId(0:419 ~ c2rust_lib[a757]::compress::BZ2_bsInitWrite): (Some(Output(Consume { use: 529..542, def: 542..555 }))) -> None
-generating signatures for DefId(0:420 ~ c2rust_lib[a757]::compress::bsFinishWrite): (Some(Normal(555..568))) -> None
-generating signatures for DefId(0:421 ~ c2rust_lib[a757]::compress::bsW): (Some(Normal(568..581)), None, None) -> None
-generating signatures for DefId(0:422 ~ c2rust_lib[a757]::compress::bsPutUInt32): (Some(Output(Consume { use: 581..594, def: 594..607 })), None) -> None
-generating signatures for DefId(0:423 ~ c2rust_lib[a757]::compress::bsPutUChar): (Some(Output(Consume { use: 607..620, def: 620..633 })), None) -> None
-generating signatures for DefId(0:424 ~ c2rust_lib[a757]::compress::makeMaps_e): (Some(Output(Consume { use: 633..646, def: 646..659 }))) -> None
+generating signatures for DefId(0:405 ~ c2rust_lib[a757]::bzlib::BZ2_bzerror): (Some(Normal(520..521)), Some(Output(Consume { use: 521..522, def: 522..523 }))) -> Some(Normal(519..520))
+generating signatures for DefId(0:419 ~ c2rust_lib[a757]::compress::BZ2_bsInitWrite): (Some(Output(Consume { use: 523..536, def: 536..549 }))) -> None
+generating signatures for DefId(0:420 ~ c2rust_lib[a757]::compress::bsFinishWrite): (Some(Normal(549..562))) -> None
+generating signatures for DefId(0:421 ~ c2rust_lib[a757]::compress::bsW): (Some(Normal(562..575)), None, None) -> None
+generating signatures for DefId(0:422 ~ c2rust_lib[a757]::compress::bsPutUInt32): (Some(Output(Consume { use: 575..588, def: 588..601 })), None) -> None
+generating signatures for DefId(0:423 ~ c2rust_lib[a757]::compress::bsPutUChar): (Some(Output(Consume { use: 601..614, def: 614..627 })), None) -> None
+generating signatures for DefId(0:424 ~ c2rust_lib[a757]::compress::makeMaps_e): (Some(Output(Consume { use: 627..640, def: 640..653 }))) -> None
 generating signatures for DefId(0:425 ~ c2rust_lib[a757]::compress::generateMTFValues): (None) -> None
-generating signatures for DefId(0:428 ~ c2rust_lib[a757]::compress::sendMTFValues): (Some(Normal(659..672))) -> None
+generating signatures for DefId(0:428 ~ c2rust_lib[a757]::compress::sendMTFValues): (Some(Normal(653..666))) -> None
 generating signatures for DefId(0:437 ~ c2rust_lib[a757]::compress::BZ2_compressBlock): (None, None) -> None
-generating signatures for DefId(0:458 ~ c2rust_lib[a757]::decompress::makeMaps_d): (Some(Output(Consume { use: 672..684, def: 684..696 }))) -> None
+generating signatures for DefId(0:458 ~ c2rust_lib[a757]::decompress::makeMaps_d): (Some(Output(Consume { use: 666..678, def: 678..690 }))) -> None
 generating signatures for DefId(0:459 ~ c2rust_lib[a757]::decompress::BZ2_decompress): (None) -> None
-generating signatures for DefId(0:467 ~ c2rust_lib[a757]::huffman::BZ2_hbMakeCodeLengths): (Some(Normal(696..697)), Some(Normal(697..698)), None, None) -> None
-generating signatures for DefId(0:474 ~ c2rust_lib[a757]::huffman::BZ2_hbAssignCodes): (Some(Normal(698..699)), Some(Normal(699..700)), None, None, None) -> None
-generating signatures for DefId(0:475 ~ c2rust_lib[a757]::huffman::BZ2_hbCreateDecodeTables): (Some(Normal(700..701)), Some(Normal(701..702)), Some(Normal(702..703)), Some(Normal(703..704)), None, None, None) -> None
+generating signatures for DefId(0:467 ~ c2rust_lib[a757]::huffman::BZ2_hbMakeCodeLengths): (Some(Normal(690..691)), Some(Normal(691..692)), None, None) -> None
+generating signatures for DefId(0:474 ~ c2rust_lib[a757]::huffman::BZ2_hbAssignCodes): (Some(Normal(692..693)), Some(Normal(693..694)), None, None, None) -> None
+generating signatures for DefId(0:475 ~ c2rust_lib[a757]::huffman::BZ2_hbCreateDecodeTables): (Some(Normal(694..695)), Some(Normal(695..696)), Some(Normal(696..697)), Some(Normal(697..698)), None, None, None) -> None
 generating signatures for DefId(0:926 ~ c2rust_lib[a757]::bzip2recover::main): () -> None
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressInit!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzDecompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompress!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for bzlib::BZ2_bzCompressEnd!
 bzip2::main_0: (_, &) -> _
 bzlib::BZ2_bzWriteOpen: (_, _, _, _, _) -> _
 bzlib::BZ2_bzReadOpen: (_, _, _, _, _, _) -> _
@@ -3624,9 +3721,9 @@ bzip2::testf: (&) -> _
 bzip2::license: () -> _
 bzip2::usage: (&) -> _
 bzip2::redundant: (&) -> _
-bzip2::mkCell: () -> &move
-bzip2::snocString: (&move &move & & & & &, &) -> &move &move & & & & &
-bzip2::addFlagsFromEnvVar: (&uniq &move &move & & & ↓ &uniq &move &move & & &, &) -> _
+bzip2::mkCell: () -> &move & & & & & &
+bzip2::snocString: (&move, &) -> &move
+bzip2::addFlagsFromEnvVar: (&uniq &move & & & & ↓ &uniq &move & & & &, &) -> _
 bzip2recover::readError: () -> _
 bzip2recover::writeError: () -> _
 bzip2recover::mallocFail: (_) -> _
@@ -3884,7 +3981,7 @@ bzip2::UInt64 {
   b: ,
 }
 bzip2::zzzz {
-  name: &move,
+  name: &,
   link: &,
 }
 bzip2recover::OrcGeneratedXXX2 {

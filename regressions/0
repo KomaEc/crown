@@ -94,6 +94,7 @@ generating signatures for DefId(0:32 ~ lib[f7f0]::src::rbtree::move_red_to_right
 generating signatures for DefId(0:35 ~ lib[f7f0]::src::rbtree::remove_key): (Some(Normal(78..81)), None) -> Some(Normal(75..78))
 failed: src::rbtree::remove_it
 failed: src::rbtree::remove_min
+failed: src::rbtree::insert
 src::rbtree::remove_min: (&any &any &any) -> &any &any &any
 src::rbtree::remove_it: (& & &, _) -> & & &
 src::rbtree::erase_tree: (&move &move &move) -> & & &
@@ -130,6 +131,7 @@ generating signatures for DefId(0:32 ~ lib[f7f0]::src::rbtree::move_red_to_right
 generating signatures for DefId(0:35 ~ lib[f7f0]::src::rbtree::remove_key): (Some(Normal(162..169)), None) -> Some(Normal(155..162))
 failed: src::rbtree::remove_it
 failed: src::rbtree::remove_min
+failed: src::rbtree::insert
 src::rbtree::remove_min: (&any &any &any) -> &any &any &any
 src::rbtree::remove_it: (& & &, _) -> & & &
 src::rbtree::erase_tree: (&move &move &move &move &move &move &move) -> & & & & & & &

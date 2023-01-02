@@ -253,84 +253,31 @@ where
             model,
         }
     }
+}
 
-    pub fn from_infer<'tcx, I>(mut infer: I, crate_data: &common::CrateData<'tcx>) -> Self
-    where
-        I: Infer<'tcx, DB = BooleanSystem<Domain>>,
-        <I as WithConstraintSystem>::DB: ConstraintSystem<Domain = Domain>,
-    {
-        let mut model = IndexVec::new();
-        // not necessary, but need initialization anyway
-        model.push(Domain::TOP);
-        model.push(Domain::BOTTOM);
-        let mut next: Var = model.next_index();
-        let tcx = crate_data.tcx;
-        let mut did_idx = FxHashMap::default();
-        did_idx.reserve(crate_data.structs.len());
-        let mut vars =
-            VecVec::with_capacity(crate_data.structs.len(), crate_data.structs.len() * 4);
-        for (idx, r#struct) in crate_data.structs.iter().enumerate() {
-            did_idx.insert(*r#struct, idx);
-            let struct_ty = tcx.type_of(*r#struct);
-            let TyKind::Adt(adt_def, substs) = struct_ty.kind() else { unreachable!() };
-            for field_def in adt_def.all_fields() {
-                let field_ty = field_def.ty(tcx, substs);
-                let ptr_count = count_ptr(field_ty);
-                model.extend(std::iter::repeat(Domain::BOTTOM).take(ptr_count));
-                vars.push_inner(next);
-                next = next + ptr_count;
-                assert_eq!(model.next_index(), next);
-            }
-            vars.push_inner(next);
-            vars.push();
-        }
-        let vars = vars.done();
-        let struct_fields = discretization::StructFields(Discretization {
-            did_idx,
-            contents: vars,
-        });
-        let mut did_idx = FxHashMap::default();
-        did_idx.reserve(crate_data.fns.len());
-        let mut vars = VecVec::with_capacity(crate_data.fns.len(), crate_data.fns.len() * 15);
-        for (idx, r#fn) in crate_data.fns.iter().enumerate() {
-            did_idx.insert(*r#fn, idx);
-            let body = tcx.optimized_mir(*r#fn);
-            for local_decl in &body.local_decls {
-                let ty = local_decl.ty;
-                let ptr_count = count_ptr(ty);
-                model.extend(std::iter::repeat(Domain::BOTTOM).take(ptr_count));
-                vars.push_inner(next);
-                next = next + ptr_count;
-                assert_eq!(model.next_index(), next);
-            }
-            vars.push_inner(next);
-            vars.push();
-        }
-        let vars = vars.done();
-        let fn_locals = discretization::FnLocals(Discretization {
-            did_idx,
-            contents: vars,
-        });
-
-        let mut database = BooleanSystem::new(&model);
-
-        for r#fn in &crate_data.fns {
-            let body = tcx.optimized_mir(*r#fn);
-            let locals = {
-                let idx = fn_locals.0.did_idx[r#fn];
-                &fn_locals.0.contents[idx]
-            };
-            infer.infer_body(body, locals, &fn_locals, &struct_fields, &mut database, tcx);
-        }
-
-        database.greatest_model(&mut model);
-
-        Self {
-            struct_fields,
-            fn_locals,
-            model,
-        }
-    }
+pub fn resolve_body<'tcx, I, Domain>(
+    database: &mut I::DB,
+    result: &mut TypeQualifiers<Domain>,
+    mut infer: I,
+    body: &Body<'tcx>,
+    tcx: TyCtxt<'tcx>,
+) where
+    Domain: BooleanLattice,
+    I: Infer<'tcx, DB = BooleanSystem<Domain>>,
+    <I as WithConstraintSystem>::DB: ConstraintSystem<Domain = Domain>,
+{
+    let locals = {
+        let idx = result.fn_locals.0.did_idx[&body.source.def_id()];
+        &result.fn_locals.0.contents[idx]
+    };
+    infer.infer_body(
+        body,
+        locals,
+        &result.fn_locals,
+        &result.struct_fields,
+        database,
+        tcx,
+    );
 }
 
 pub trait Lattice: Clone {

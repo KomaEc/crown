@@ -13,12 +13,25 @@ use rustc_type_ir::TyKind::{self, FnDef};
 
 use self::{libc::libc_call, library::library_call};
 use super::{
-    boolean_system::BooleanSystem, BooleanLattice, ConstraintSystem, FnLocals, Infer, Lattice,
-    StructFields, TypeQualifiers, Var, WithConstraintSystem,
+    boolean_system::BooleanSystem, resolve_body, BooleanLattice, ConstraintSystem, FnLocals, Infer,
+    Lattice, StructFields, TypeQualifiers, Var, WithConstraintSystem,
 };
 
 pub fn fatness_analysis(crate_data: &common::CrateData) -> FatnessResult {
-    FatnessResult::from_infer(FatnessAnalysis, crate_data)
+    let mut result = FatnessResult::new_empty(crate_data);
+    let mut database = BooleanSystem::new(&result.model);
+    for r#fn in &crate_data.fns {
+        let body = crate_data.tcx.optimized_mir(*r#fn);
+        resolve_body(
+            &mut database,
+            &mut result,
+            FatnessAnalysis,
+            body,
+            crate_data.tcx,
+        );
+    }
+    database.greatest_model(&mut result.model);
+    result
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

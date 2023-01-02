@@ -99,10 +99,7 @@ pub(super) fn refine_state(_body: &Body, fn_summary: FnSummary, _model: &[Owners
     // let ownership_transferred_locations =
     //     compute_ownership_transferred_locations(body, &fn_summary, model);
 
-    let FnSummary {
-        mut ssa_state,
-        ..
-    } = fn_summary;
+    let FnSummary { mut ssa_state, .. } = fn_summary;
 
     ssa_state.name_state.reset();
     ssa_state.join_points.reset();

@@ -1934,29 +1934,32 @@ failed: src::zsetu::zsetu
 failed: src::zsub::zsub_unsigned
 failed: src::zsqr::zsqr
 failed: src::zpow::zpow
+failed: src::zunsetup::zunsetup
 failed: src::zgcd::zgcd
+failed: src::allocator::libzahl_realloc
 failed: src::zsub::zsub
 failed: src::zstr::zstr
+failed: src::zfree::zfree
 failed: src::znot::znot
 failed: src::zrand::zrand
 failed: src::zsplit::zsplit
 src::zunsetup::zunsetup: () -> _
-src::zfree::zfree: (&uniq &move ↓ &uniq &) -> _
+src::zfree::zfree: (&uniq &any ↓ &uniq &any) -> _
 src::zstr::zstr: (&any &any, &any) -> &any
-src::allocator::libzahl_realloc: (&uniq &move ↓ &uniq &move, _) -> _
+src::allocator::libzahl_realloc: (&uniq & ↓ &uniq &, _) -> _
 src::zabs::zzero: (& &) -> _
-src::zabs::zabs: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zabs::zabs: (&uniq & ↓ &uniq &, & &) -> _
 src::zadd::zzero: (& &) -> _
 src::zadd::zsignum: (& &) -> _
-src::zadd::zadd_unsigned: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zadd::zadd_unsigned: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zadd::zadd: (& &, & &, &any &any) -> _
 src::zand::zsignum: (& &) -> _
 src::zand::zzero: (& &) -> _
-src::zand::zand: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zand::zand: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zbits::zzero: (& &) -> _
 src::zbits::zbits: (&uniq & ↓ &uniq &) -> _
 src::zbset::zzero: (& &) -> _
-src::zbset::zbset: (&uniq &move ↓ &uniq &move, & &, _, _) -> _
+src::zbset::zbset: (&uniq & ↓ &uniq &, & &, _, _) -> _
 src::zbtest::zzero: (& &) -> _
 src::zbtest::zbtest: (& &, _) -> _
 src::zcmp::zsignum: (& &) -> _
@@ -1977,12 +1980,12 @@ src::zgcd::zzero: (& &) -> _
 src::zgcd::zsignum: (& &) -> _
 src::zgcd::zgcd: (&any &any, &any &any, &any &any) -> _
 src::zload::zzero: (& &) -> _
-src::zload::zload: (&uniq &move ↓ &uniq &move, &) -> _
+src::zload::zload: (&uniq & ↓ &uniq &, &) -> _
 src::zlsb::zzero: (& &) -> _
 src::zlsb::zlsb: (& &) -> _
 src::zlsh::zsignum: (& &) -> _
 src::zlsh::zzero: (& &) -> _
-src::zlsh::zlsh: (&uniq &move ↓ &uniq &move, & &, _) -> _
+src::zlsh::zlsh: (&uniq & ↓ &uniq &, & &, _) -> _
 src::zmod::zmod: (& &, & &, & &) -> _
 src::zmodmul::zmodmul: (& &, & &, & &, & &) -> _
 src::zmodpow::zzero: (& &) -> _
@@ -1995,13 +1998,13 @@ src::zmul::zinit: (&uniq & ↓ &uniq &) -> _
 src::zmul::zsignum: (& &) -> _
 src::zmul::zmul: (& &, & &, & &) -> _
 src::zneg::zsignum: (& &) -> _
-src::zneg::zneg: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zneg::zneg: (&uniq & ↓ &uniq &, & &) -> _
 src::znot::zsignum: (& &) -> _
 src::znot::zzero: (& &) -> _
 src::znot::znot: (&any &any, &any &any) -> _
 src::zor::zsignum: (& &) -> _
 src::zor::zzero: (& &) -> _
-src::zor::zor: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zor::zor: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zperror::zperror: (&) -> _
 src::zpow::zzero: (& &) -> _
 src::zpow::zsignum: (& &) -> _
@@ -2012,7 +2015,7 @@ src::zptest::zeven: (& &) -> _
 src::zptest::zptest: (&any &any, &any &any, _) -> _
 src::zrand::zsignum: (& &) -> _
 src::zrand::zzero: (& &) -> _
-src::zrand::zrand_get_random_bits: (&uniq &move ↓ &uniq &move, _, _) -> _
+src::zrand::zrand_get_random_bits: (&uniq & ↓ &uniq &, _, _) -> _
 src::zrand::zrand: (&any &any, _, _, &any &any) -> _
 src::zrsh::zsignum: (& &) -> _
 src::zrsh::zzero: (& &) -> _
@@ -2020,7 +2023,7 @@ src::zrsh::zrsh: (&any &any, &any &any, _) -> _
 src::zsave::zzero: (& &) -> _
 src::zsave::zsave: (& &, &) -> _
 src::zset::zzero: (& &) -> _
-src::zset::zset: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zset::zset: (&uniq & ↓ &uniq &, & &) -> _
 src::zseti::zseti: (&uniq & ↓ &uniq &, _) -> _
 src::zsets::zsignum: (& &) -> _
 src::zsets::zsets: (& &, &) -> _
@@ -2044,10 +2047,10 @@ src::zsub::zsub_unsigned: (&any &any, &any &any, &any &any) -> _
 src::zsub::zsub: (&any &any, &any &any, &any &any) -> _
 src::zswap::zswap: (&uniq & ↓ &uniq &, &uniq & ↓ &uniq &) -> _
 src::ztrunc::zzero: (& &) -> _
-src::ztrunc::ztrunc: (&uniq &move ↓ &uniq &move, & &, _) -> _
+src::ztrunc::ztrunc: (&uniq & ↓ &uniq &, & &, _) -> _
 src::zxor::zsignum: (& &) -> _
 src::zxor::zzero: (& &) -> _
-src::zxor::zxor: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zxor::zxor: (&uniq & ↓ &uniq &, & &, & &) -> _
 generating signatures for DefId(0:887 ~ lib[f7f0]::src::zunsetup::zunsetup): () -> None
 generating signatures for DefId(0:219 ~ lib[f7f0]::src::zfree::zfree): (Some(Output(Consume { use: 2..4, def: 4..6 }))) -> None
 generating signatures for DefId(0:779 ~ lib[f7f0]::src::zstr::zstr): (Some(Normal(7..8)), Some(Normal(8..9))) -> Some(Normal(6..7))
@@ -2165,30 +2168,33 @@ failed: src::zsetu::zsetu
 failed: src::zsub::zsub_unsigned
 failed: src::zsqr::zsqr
 failed: src::zpow::zpow
+failed: src::zunsetup::zunsetup
 failed: src::zgcd::zgcd
+failed: src::allocator::libzahl_realloc
 failed: src::zsub::zsub
 failed: src::zstr::zstr
+failed: src::zfree::zfree
 failed: src::znot::znot
 failed: src::zrand::zrand
 failed: src::zsplit::zsplit
 failed: src::zmodpow::zmodpow
 src::zunsetup::zunsetup: () -> _
-src::zfree::zfree: (&uniq &move ↓ &uniq &) -> _
+src::zfree::zfree: (&uniq &any ↓ &uniq &any) -> _
 src::zstr::zstr: (&any, &any) -> &any
-src::allocator::libzahl_realloc: (&uniq &move ↓ &uniq &move, _) -> _
+src::allocator::libzahl_realloc: (&uniq & ↓ &uniq &, _) -> _
 src::zabs::zzero: (& &) -> _
-src::zabs::zabs: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zabs::zabs: (&uniq & ↓ &uniq &, & &) -> _
 src::zadd::zzero: (& &) -> _
 src::zadd::zsignum: (& &) -> _
-src::zadd::zadd_unsigned: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zadd::zadd_unsigned: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zadd::zadd: (&, &, &any) -> _
 src::zand::zsignum: (& &) -> _
 src::zand::zzero: (& &) -> _
-src::zand::zand: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zand::zand: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zbits::zzero: (& &) -> _
 src::zbits::zbits: (&uniq & ↓ &uniq &) -> _
 src::zbset::zzero: (& &) -> _
-src::zbset::zbset: (&uniq &move ↓ &uniq &move, & &, _, _) -> _
+src::zbset::zbset: (&uniq & ↓ &uniq &, & &, _, _) -> _
 src::zbtest::zzero: (& &) -> _
 src::zbtest::zbtest: (& &, _) -> _
 src::zcmp::zsignum: (& &) -> _
@@ -2209,12 +2215,12 @@ src::zgcd::zzero: (& &) -> _
 src::zgcd::zsignum: (& &) -> _
 src::zgcd::zgcd: (&any, &any, &any) -> _
 src::zload::zzero: (& &) -> _
-src::zload::zload: (&uniq &move ↓ &uniq &move, &) -> _
+src::zload::zload: (&uniq & ↓ &uniq &, &) -> _
 src::zlsb::zzero: (& &) -> _
 src::zlsb::zlsb: (& &) -> _
 src::zlsh::zsignum: (& &) -> _
 src::zlsh::zzero: (& &) -> _
-src::zlsh::zlsh: (&uniq &move ↓ &uniq &move, & &, _) -> _
+src::zlsh::zlsh: (&uniq & ↓ &uniq &, & &, _) -> _
 src::zmod::zmod: (& &, & &, & &) -> _
 src::zmodmul::zmodmul: (& &, & &, & &, & &) -> _
 src::zmodpow::zzero: (& &) -> _
@@ -2227,13 +2233,13 @@ src::zmul::zinit: (&uniq & ↓ &uniq &) -> _
 src::zmul::zsignum: (& &) -> _
 src::zmul::zmul: (&, &, &) -> _
 src::zneg::zsignum: (& &) -> _
-src::zneg::zneg: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zneg::zneg: (&uniq & ↓ &uniq &, & &) -> _
 src::znot::zsignum: (& &) -> _
 src::znot::zzero: (& &) -> _
 src::znot::znot: (&any, &any) -> _
 src::zor::zsignum: (& &) -> _
 src::zor::zzero: (& &) -> _
-src::zor::zor: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zor::zor: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zperror::zperror: (&) -> _
 src::zpow::zzero: (& &) -> _
 src::zpow::zsignum: (& &) -> _
@@ -2244,7 +2250,7 @@ src::zptest::zeven: (& &) -> _
 src::zptest::zptest: (&any, &any, _) -> _
 src::zrand::zsignum: (& &) -> _
 src::zrand::zzero: (& &) -> _
-src::zrand::zrand_get_random_bits: (&uniq &move ↓ &uniq &move, _, _) -> _
+src::zrand::zrand_get_random_bits: (&uniq & ↓ &uniq &, _, _) -> _
 src::zrand::zrand: (&any, _, _, &any) -> _
 src::zrsh::zsignum: (& &) -> _
 src::zrsh::zzero: (& &) -> _
@@ -2252,7 +2258,7 @@ src::zrsh::zrsh: (&any, &any, _) -> _
 src::zsave::zzero: (& &) -> _
 src::zsave::zsave: (& &, &) -> _
 src::zset::zzero: (& &) -> _
-src::zset::zset: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zset::zset: (&uniq & ↓ &uniq &, & &) -> _
 src::zseti::zseti: (&uniq & ↓ &uniq &, _) -> _
 src::zsets::zsignum: (& &) -> _
 src::zsets::zsets: (& &, &) -> _
@@ -2276,135 +2282,135 @@ src::zsub::zsub_unsigned: (&any, &any, &any) -> _
 src::zsub::zsub: (&any, &any, &any) -> _
 src::zswap::zswap: (&uniq & ↓ &uniq &, &uniq & ↓ &uniq &) -> _
 src::ztrunc::zzero: (& &) -> _
-src::ztrunc::ztrunc: (&uniq &move ↓ &uniq &move, & &, _) -> _
+src::ztrunc::ztrunc: (&uniq & ↓ &uniq &, & &, _) -> _
 src::zxor::zsignum: (& &) -> _
 src::zxor::zzero: (& &) -> _
-src::zxor::zxor: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zxor::zxor: (&uniq & ↓ &uniq &, & &, & &) -> _
 generating signatures for DefId(0:887 ~ lib[f7f0]::src::zunsetup::zunsetup): () -> None
-generating signatures for DefId(0:219 ~ lib[f7f0]::src::zfree::zfree): (Some(Output(Consume { use: 2..4, def: 4..6 }))) -> None
+generating signatures for DefId(0:219 ~ lib[f7f0]::src::zfree::zfree): (Some(Output(Consume { use: 2..3, def: 3..4 }))) -> None
 generating signatures for DefId(0:779 ~ lib[f7f0]::src::zstr::zstr): (None, None) -> None
-generating signatures for DefId(0:28 ~ lib[f7f0]::src::allocator::libzahl_realloc): (Some(Output(Consume { use: 6..8, def: 8..10 })), None) -> None
-generating signatures for DefId(0:38 ~ lib[f7f0]::src::zabs::zzero): (Some(Normal(10..12))) -> None
-generating signatures for DefId(0:39 ~ lib[f7f0]::src::zabs::zabs): (Some(Output(Consume { use: 12..14, def: 14..16 })), Some(Normal(16..18))) -> None
-generating signatures for DefId(0:51 ~ lib[f7f0]::src::zadd::zzero): (Some(Normal(18..20))) -> None
-generating signatures for DefId(0:52 ~ lib[f7f0]::src::zadd::zsignum): (Some(Normal(20..22))) -> None
-generating signatures for DefId(0:53 ~ lib[f7f0]::src::zadd::zadd_unsigned): (Some(Output(Consume { use: 22..24, def: 24..26 })), Some(Normal(26..28)), Some(Normal(28..30))) -> None
+generating signatures for DefId(0:28 ~ lib[f7f0]::src::allocator::libzahl_realloc): (Some(Output(Consume { use: 4..5, def: 5..6 })), None) -> None
+generating signatures for DefId(0:38 ~ lib[f7f0]::src::zabs::zzero): (Some(Normal(6..8))) -> None
+generating signatures for DefId(0:39 ~ lib[f7f0]::src::zabs::zabs): (Some(Output(Consume { use: 8..10, def: 10..12 })), Some(Normal(12..14))) -> None
+generating signatures for DefId(0:51 ~ lib[f7f0]::src::zadd::zzero): (Some(Normal(14..16))) -> None
+generating signatures for DefId(0:52 ~ lib[f7f0]::src::zadd::zsignum): (Some(Normal(16..18))) -> None
+generating signatures for DefId(0:53 ~ lib[f7f0]::src::zadd::zadd_unsigned): (Some(Output(Consume { use: 18..20, def: 20..22 })), Some(Normal(22..24)), Some(Normal(24..26))) -> None
 generating signatures for DefId(0:55 ~ lib[f7f0]::src::zadd::zadd): (None, None, None) -> None
-generating signatures for DefId(0:66 ~ lib[f7f0]::src::zand::zsignum): (Some(Normal(30..32))) -> None
-generating signatures for DefId(0:67 ~ lib[f7f0]::src::zand::zzero): (Some(Normal(32..34))) -> None
-generating signatures for DefId(0:68 ~ lib[f7f0]::src::zand::zand): (Some(Output(Consume { use: 34..36, def: 36..38 })), Some(Normal(38..40)), Some(Normal(40..42))) -> None
-generating signatures for DefId(0:77 ~ lib[f7f0]::src::zbits::zzero): (Some(Normal(42..44))) -> None
-generating signatures for DefId(0:78 ~ lib[f7f0]::src::zbits::zbits): (Some(Output(Consume { use: 44..46, def: 46..48 }))) -> None
-generating signatures for DefId(0:89 ~ lib[f7f0]::src::zbset::zzero): (Some(Normal(48..50))) -> None
-generating signatures for DefId(0:90 ~ lib[f7f0]::src::zbset::zbset): (Some(Output(Consume { use: 50..52, def: 52..54 })), Some(Normal(54..56)), None, None) -> None
-generating signatures for DefId(0:99 ~ lib[f7f0]::src::zbtest::zzero): (Some(Normal(56..58))) -> None
-generating signatures for DefId(0:100 ~ lib[f7f0]::src::zbtest::zbtest): (Some(Normal(58..60)), None) -> None
-generating signatures for DefId(0:110 ~ lib[f7f0]::src::zcmp::zsignum): (Some(Normal(60..62))) -> None
-generating signatures for DefId(0:111 ~ lib[f7f0]::src::zcmp::zcmp): (Some(Normal(62..64)), Some(Normal(64..66))) -> None
-generating signatures for DefId(0:124 ~ lib[f7f0]::src::zcmpi::zzero): (Some(Normal(66..68))) -> None
-generating signatures for DefId(0:125 ~ lib[f7f0]::src::zcmpi::zsignum): (Some(Normal(68..70))) -> None
-generating signatures for DefId(0:126 ~ lib[f7f0]::src::zcmpi::zcmpi): (Some(Normal(70..72)), None) -> None
-generating signatures for DefId(0:135 ~ lib[f7f0]::src::zcmpmag::zzero): (Some(Normal(72..74))) -> None
-generating signatures for DefId(0:136 ~ lib[f7f0]::src::zcmpmag::zcmpmag): (Some(Normal(74..76)), Some(Normal(76..78))) -> None
-generating signatures for DefId(0:149 ~ lib[f7f0]::src::zcmpu::zsignum): (Some(Normal(78..80))) -> None
-generating signatures for DefId(0:150 ~ lib[f7f0]::src::zcmpu::zcmpu): (Some(Normal(80..82)), None) -> None
-generating signatures for DefId(0:163 ~ lib[f7f0]::src::zdiv::zdiv): (Some(Normal(82..84)), Some(Normal(84..86)), Some(Normal(86..88))) -> None
-generating signatures for DefId(0:187 ~ lib[f7f0]::src::zdivmod::zzero): (Some(Normal(88..90))) -> None
-generating signatures for DefId(0:188 ~ lib[f7f0]::src::zdivmod::zsignum): (Some(Normal(90..92))) -> None
+generating signatures for DefId(0:66 ~ lib[f7f0]::src::zand::zsignum): (Some(Normal(26..28))) -> None
+generating signatures for DefId(0:67 ~ lib[f7f0]::src::zand::zzero): (Some(Normal(28..30))) -> None
+generating signatures for DefId(0:68 ~ lib[f7f0]::src::zand::zand): (Some(Output(Consume { use: 30..32, def: 32..34 })), Some(Normal(34..36)), Some(Normal(36..38))) -> None
+generating signatures for DefId(0:77 ~ lib[f7f0]::src::zbits::zzero): (Some(Normal(38..40))) -> None
+generating signatures for DefId(0:78 ~ lib[f7f0]::src::zbits::zbits): (Some(Output(Consume { use: 40..42, def: 42..44 }))) -> None
+generating signatures for DefId(0:89 ~ lib[f7f0]::src::zbset::zzero): (Some(Normal(44..46))) -> None
+generating signatures for DefId(0:90 ~ lib[f7f0]::src::zbset::zbset): (Some(Output(Consume { use: 46..48, def: 48..50 })), Some(Normal(50..52)), None, None) -> None
+generating signatures for DefId(0:99 ~ lib[f7f0]::src::zbtest::zzero): (Some(Normal(52..54))) -> None
+generating signatures for DefId(0:100 ~ lib[f7f0]::src::zbtest::zbtest): (Some(Normal(54..56)), None) -> None
+generating signatures for DefId(0:110 ~ lib[f7f0]::src::zcmp::zsignum): (Some(Normal(56..58))) -> None
+generating signatures for DefId(0:111 ~ lib[f7f0]::src::zcmp::zcmp): (Some(Normal(58..60)), Some(Normal(60..62))) -> None
+generating signatures for DefId(0:124 ~ lib[f7f0]::src::zcmpi::zzero): (Some(Normal(62..64))) -> None
+generating signatures for DefId(0:125 ~ lib[f7f0]::src::zcmpi::zsignum): (Some(Normal(64..66))) -> None
+generating signatures for DefId(0:126 ~ lib[f7f0]::src::zcmpi::zcmpi): (Some(Normal(66..68)), None) -> None
+generating signatures for DefId(0:135 ~ lib[f7f0]::src::zcmpmag::zzero): (Some(Normal(68..70))) -> None
+generating signatures for DefId(0:136 ~ lib[f7f0]::src::zcmpmag::zcmpmag): (Some(Normal(70..72)), Some(Normal(72..74))) -> None
+generating signatures for DefId(0:149 ~ lib[f7f0]::src::zcmpu::zsignum): (Some(Normal(74..76))) -> None
+generating signatures for DefId(0:150 ~ lib[f7f0]::src::zcmpu::zcmpu): (Some(Normal(76..78)), None) -> None
+generating signatures for DefId(0:163 ~ lib[f7f0]::src::zdiv::zdiv): (Some(Normal(78..80)), Some(Normal(80..82)), Some(Normal(82..84))) -> None
+generating signatures for DefId(0:187 ~ lib[f7f0]::src::zdivmod::zzero): (Some(Normal(84..86))) -> None
+generating signatures for DefId(0:188 ~ lib[f7f0]::src::zdivmod::zsignum): (Some(Normal(86..88))) -> None
 generating signatures for DefId(0:189 ~ lib[f7f0]::src::zdivmod::zdivmod): (None, None, None, None) -> None
-generating signatures for DefId(0:201 ~ lib[f7f0]::src::zerror::zerror): (Some(Output(Consume { use: 92..94, def: 94..96 }))) -> None
-generating signatures for DefId(0:233 ~ lib[f7f0]::src::zgcd::zzero): (Some(Normal(96..98))) -> None
-generating signatures for DefId(0:234 ~ lib[f7f0]::src::zgcd::zsignum): (Some(Normal(98..100))) -> None
+generating signatures for DefId(0:201 ~ lib[f7f0]::src::zerror::zerror): (Some(Output(Consume { use: 88..90, def: 90..92 }))) -> None
+generating signatures for DefId(0:233 ~ lib[f7f0]::src::zgcd::zzero): (Some(Normal(92..94))) -> None
+generating signatures for DefId(0:234 ~ lib[f7f0]::src::zgcd::zsignum): (Some(Normal(94..96))) -> None
 generating signatures for DefId(0:235 ~ lib[f7f0]::src::zgcd::zgcd): (None, None, None) -> None
-generating signatures for DefId(0:246 ~ lib[f7f0]::src::zload::zzero): (Some(Normal(100..102))) -> None
-generating signatures for DefId(0:247 ~ lib[f7f0]::src::zload::zload): (Some(Output(Consume { use: 102..104, def: 104..106 })), Some(Normal(106..107))) -> None
-generating signatures for DefId(0:256 ~ lib[f7f0]::src::zlsb::zzero): (Some(Normal(107..109))) -> None
-generating signatures for DefId(0:257 ~ lib[f7f0]::src::zlsb::zlsb): (Some(Normal(109..111))) -> None
-generating signatures for DefId(0:270 ~ lib[f7f0]::src::zlsh::zsignum): (Some(Normal(111..113))) -> None
-generating signatures for DefId(0:271 ~ lib[f7f0]::src::zlsh::zzero): (Some(Normal(113..115))) -> None
-generating signatures for DefId(0:272 ~ lib[f7f0]::src::zlsh::zlsh): (Some(Output(Consume { use: 115..117, def: 117..119 })), Some(Normal(119..121)), None) -> None
-generating signatures for DefId(0:286 ~ lib[f7f0]::src::zmod::zmod): (Some(Normal(121..123)), Some(Normal(123..125)), Some(Normal(125..127))) -> None
-generating signatures for DefId(0:299 ~ lib[f7f0]::src::zmodmul::zmodmul): (Some(Normal(127..129)), Some(Normal(129..131)), Some(Normal(131..133)), Some(Normal(133..135))) -> None
-generating signatures for DefId(0:321 ~ lib[f7f0]::src::zmodpow::zzero): (Some(Normal(135..137))) -> None
-generating signatures for DefId(0:322 ~ lib[f7f0]::src::zmodpow::zsignum): (Some(Normal(137..139))) -> None
+generating signatures for DefId(0:246 ~ lib[f7f0]::src::zload::zzero): (Some(Normal(96..98))) -> None
+generating signatures for DefId(0:247 ~ lib[f7f0]::src::zload::zload): (Some(Output(Consume { use: 98..100, def: 100..102 })), Some(Normal(102..103))) -> None
+generating signatures for DefId(0:256 ~ lib[f7f0]::src::zlsb::zzero): (Some(Normal(103..105))) -> None
+generating signatures for DefId(0:257 ~ lib[f7f0]::src::zlsb::zlsb): (Some(Normal(105..107))) -> None
+generating signatures for DefId(0:270 ~ lib[f7f0]::src::zlsh::zsignum): (Some(Normal(107..109))) -> None
+generating signatures for DefId(0:271 ~ lib[f7f0]::src::zlsh::zzero): (Some(Normal(109..111))) -> None
+generating signatures for DefId(0:272 ~ lib[f7f0]::src::zlsh::zlsh): (Some(Output(Consume { use: 111..113, def: 113..115 })), Some(Normal(115..117)), None) -> None
+generating signatures for DefId(0:286 ~ lib[f7f0]::src::zmod::zmod): (Some(Normal(117..119)), Some(Normal(119..121)), Some(Normal(121..123))) -> None
+generating signatures for DefId(0:299 ~ lib[f7f0]::src::zmodmul::zmodmul): (Some(Normal(123..125)), Some(Normal(125..127)), Some(Normal(127..129)), Some(Normal(129..131))) -> None
+generating signatures for DefId(0:321 ~ lib[f7f0]::src::zmodpow::zzero): (Some(Normal(131..133))) -> None
+generating signatures for DefId(0:322 ~ lib[f7f0]::src::zmodpow::zsignum): (Some(Normal(133..135))) -> None
 generating signatures for DefId(0:323 ~ lib[f7f0]::src::zmodpow::zmodpow): (None, None, None, None) -> None
-generating signatures for DefId(0:344 ~ lib[f7f0]::src::zmodpowu::zzero): (Some(Normal(139..141))) -> None
-generating signatures for DefId(0:345 ~ lib[f7f0]::src::zmodpowu::zmodpowu): (Some(Normal(141..143)), Some(Normal(143..145)), None, Some(Normal(145..147))) -> None
-generating signatures for DefId(0:358 ~ lib[f7f0]::src::zmodsqr::zmodsqr): (Some(Normal(147..149)), Some(Normal(149..151)), Some(Normal(151..153))) -> None
-generating signatures for DefId(0:370 ~ lib[f7f0]::src::zmul::zinit): (Some(Output(Consume { use: 153..155, def: 155..157 }))) -> None
-generating signatures for DefId(0:371 ~ lib[f7f0]::src::zmul::zsignum): (Some(Normal(157..159))) -> None
+generating signatures for DefId(0:344 ~ lib[f7f0]::src::zmodpowu::zzero): (Some(Normal(135..137))) -> None
+generating signatures for DefId(0:345 ~ lib[f7f0]::src::zmodpowu::zmodpowu): (Some(Normal(137..139)), Some(Normal(139..141)), None, Some(Normal(141..143))) -> None
+generating signatures for DefId(0:358 ~ lib[f7f0]::src::zmodsqr::zmodsqr): (Some(Normal(143..145)), Some(Normal(145..147)), Some(Normal(147..149))) -> None
+generating signatures for DefId(0:370 ~ lib[f7f0]::src::zmul::zinit): (Some(Output(Consume { use: 149..151, def: 151..153 }))) -> None
+generating signatures for DefId(0:371 ~ lib[f7f0]::src::zmul::zsignum): (Some(Normal(153..155))) -> None
 generating signatures for DefId(0:372 ~ lib[f7f0]::src::zmul::zmul): (None, None, None) -> None
-generating signatures for DefId(0:389 ~ lib[f7f0]::src::zneg::zsignum): (Some(Normal(159..161))) -> None
-generating signatures for DefId(0:390 ~ lib[f7f0]::src::zneg::zneg): (Some(Output(Consume { use: 161..163, def: 163..165 })), Some(Normal(165..167))) -> None
-generating signatures for DefId(0:400 ~ lib[f7f0]::src::znot::zsignum): (Some(Normal(167..169))) -> None
-generating signatures for DefId(0:401 ~ lib[f7f0]::src::znot::zzero): (Some(Normal(169..171))) -> None
+generating signatures for DefId(0:389 ~ lib[f7f0]::src::zneg::zsignum): (Some(Normal(155..157))) -> None
+generating signatures for DefId(0:390 ~ lib[f7f0]::src::zneg::zneg): (Some(Output(Consume { use: 157..159, def: 159..161 })), Some(Normal(161..163))) -> None
+generating signatures for DefId(0:400 ~ lib[f7f0]::src::znot::zsignum): (Some(Normal(163..165))) -> None
+generating signatures for DefId(0:401 ~ lib[f7f0]::src::znot::zzero): (Some(Normal(165..167))) -> None
 generating signatures for DefId(0:402 ~ lib[f7f0]::src::znot::znot): (None, None) -> None
-generating signatures for DefId(0:413 ~ lib[f7f0]::src::zor::zsignum): (Some(Normal(171..173))) -> None
-generating signatures for DefId(0:414 ~ lib[f7f0]::src::zor::zzero): (Some(Normal(173..175))) -> None
-generating signatures for DefId(0:415 ~ lib[f7f0]::src::zor::zor): (Some(Output(Consume { use: 175..177, def: 177..179 })), Some(Normal(179..181)), Some(Normal(181..183))) -> None
-generating signatures for DefId(0:425 ~ lib[f7f0]::src::zperror::zperror): (Some(Normal(183..184))) -> None
-generating signatures for DefId(0:446 ~ lib[f7f0]::src::zpow::zzero): (Some(Normal(184..186))) -> None
-generating signatures for DefId(0:447 ~ lib[f7f0]::src::zpow::zsignum): (Some(Normal(186..188))) -> None
+generating signatures for DefId(0:413 ~ lib[f7f0]::src::zor::zsignum): (Some(Normal(167..169))) -> None
+generating signatures for DefId(0:414 ~ lib[f7f0]::src::zor::zzero): (Some(Normal(169..171))) -> None
+generating signatures for DefId(0:415 ~ lib[f7f0]::src::zor::zor): (Some(Output(Consume { use: 171..173, def: 173..175 })), Some(Normal(175..177)), Some(Normal(177..179))) -> None
+generating signatures for DefId(0:425 ~ lib[f7f0]::src::zperror::zperror): (Some(Normal(179..180))) -> None
+generating signatures for DefId(0:446 ~ lib[f7f0]::src::zpow::zzero): (Some(Normal(180..182))) -> None
+generating signatures for DefId(0:447 ~ lib[f7f0]::src::zpow::zsignum): (Some(Normal(182..184))) -> None
 generating signatures for DefId(0:448 ~ lib[f7f0]::src::zpow::zpow): (None, None, None) -> None
-generating signatures for DefId(0:468 ~ lib[f7f0]::src::zpowu::zzero): (Some(Normal(188..190))) -> None
-generating signatures for DefId(0:469 ~ lib[f7f0]::src::zpowu::zpowu): (Some(Normal(190..192)), Some(Normal(192..194)), None) -> None
-generating signatures for DefId(0:499 ~ lib[f7f0]::src::zptest::zeven): (Some(Normal(194..196))) -> None
+generating signatures for DefId(0:468 ~ lib[f7f0]::src::zpowu::zzero): (Some(Normal(184..186))) -> None
+generating signatures for DefId(0:469 ~ lib[f7f0]::src::zpowu::zpowu): (Some(Normal(186..188)), Some(Normal(188..190)), None) -> None
+generating signatures for DefId(0:499 ~ lib[f7f0]::src::zptest::zeven): (Some(Normal(190..192))) -> None
 generating signatures for DefId(0:500 ~ lib[f7f0]::src::zptest::zptest): (None, None, None) -> None
-generating signatures for DefId(0:533 ~ lib[f7f0]::src::zrand::zsignum): (Some(Normal(196..198))) -> None
-generating signatures for DefId(0:534 ~ lib[f7f0]::src::zrand::zzero): (Some(Normal(198..200))) -> None
-generating signatures for DefId(0:535 ~ lib[f7f0]::src::zrand::zrand_get_random_bits): (Some(Output(Consume { use: 200..202, def: 202..204 })), None, None) -> None
+generating signatures for DefId(0:533 ~ lib[f7f0]::src::zrand::zsignum): (Some(Normal(192..194))) -> None
+generating signatures for DefId(0:534 ~ lib[f7f0]::src::zrand::zzero): (Some(Normal(194..196))) -> None
+generating signatures for DefId(0:535 ~ lib[f7f0]::src::zrand::zrand_get_random_bits): (Some(Output(Consume { use: 196..198, def: 198..200 })), None, None) -> None
 generating signatures for DefId(0:536 ~ lib[f7f0]::src::zrand::zrand): (None, None, None, None) -> None
-generating signatures for DefId(0:548 ~ lib[f7f0]::src::zrsh::zsignum): (Some(Normal(204..206))) -> None
-generating signatures for DefId(0:549 ~ lib[f7f0]::src::zrsh::zzero): (Some(Normal(206..208))) -> None
+generating signatures for DefId(0:548 ~ lib[f7f0]::src::zrsh::zsignum): (Some(Normal(200..202))) -> None
+generating signatures for DefId(0:549 ~ lib[f7f0]::src::zrsh::zzero): (Some(Normal(202..204))) -> None
 generating signatures for DefId(0:550 ~ lib[f7f0]::src::zrsh::zrsh): (None, None, None) -> None
-generating signatures for DefId(0:561 ~ lib[f7f0]::src::zsave::zzero): (Some(Normal(208..210))) -> None
-generating signatures for DefId(0:562 ~ lib[f7f0]::src::zsave::zsave): (Some(Normal(210..212)), Some(Normal(212..213))) -> None
-generating signatures for DefId(0:573 ~ lib[f7f0]::src::zset::zzero): (Some(Normal(213..215))) -> None
-generating signatures for DefId(0:574 ~ lib[f7f0]::src::zset::zset): (Some(Output(Consume { use: 215..217, def: 217..219 })), Some(Normal(219..221))) -> None
-generating signatures for DefId(0:584 ~ lib[f7f0]::src::zseti::zseti): (Some(Output(Consume { use: 221..223, def: 223..225 })), None) -> None
-generating signatures for DefId(0:613 ~ lib[f7f0]::src::zsets::zsignum): (Some(Normal(225..227))) -> None
-generating signatures for DefId(0:614 ~ lib[f7f0]::src::zsets::zsets): (Some(Normal(227..229)), Some(Normal(229..230))) -> None
+generating signatures for DefId(0:561 ~ lib[f7f0]::src::zsave::zzero): (Some(Normal(204..206))) -> None
+generating signatures for DefId(0:562 ~ lib[f7f0]::src::zsave::zsave): (Some(Normal(206..208)), Some(Normal(208..209))) -> None
+generating signatures for DefId(0:573 ~ lib[f7f0]::src::zset::zzero): (Some(Normal(209..211))) -> None
+generating signatures for DefId(0:574 ~ lib[f7f0]::src::zset::zset): (Some(Output(Consume { use: 211..213, def: 213..215 })), Some(Normal(215..217))) -> None
+generating signatures for DefId(0:584 ~ lib[f7f0]::src::zseti::zseti): (Some(Output(Consume { use: 217..219, def: 219..221 })), None) -> None
+generating signatures for DefId(0:613 ~ lib[f7f0]::src::zsets::zsignum): (Some(Normal(221..223))) -> None
+generating signatures for DefId(0:614 ~ lib[f7f0]::src::zsets::zsets): (Some(Normal(223..225)), Some(Normal(225..226))) -> None
 generating signatures for DefId(0:624 ~ lib[f7f0]::src::zsetu::zsetu): (None, None) -> None
-generating signatures for DefId(0:641 ~ lib[f7f0]::src::zsetup::zinit): (Some(Output(Consume { use: 230..232, def: 232..234 }))) -> None
-generating signatures for DefId(0:717 ~ lib[f7f0]::src::zsetup::zsetup): (Some(Normal(234..235))) -> None
-generating signatures for DefId(0:730 ~ lib[f7f0]::src::zsplit::zzero): (Some(Normal(235..237))) -> None
+generating signatures for DefId(0:641 ~ lib[f7f0]::src::zsetup::zinit): (Some(Output(Consume { use: 226..228, def: 228..230 }))) -> None
+generating signatures for DefId(0:717 ~ lib[f7f0]::src::zsetup::zsetup): (Some(Normal(230..231))) -> None
+generating signatures for DefId(0:730 ~ lib[f7f0]::src::zsplit::zzero): (Some(Normal(231..233))) -> None
 generating signatures for DefId(0:731 ~ lib[f7f0]::src::zsplit::zsplit): (None, None, None, None) -> None
-generating signatures for DefId(0:743 ~ lib[f7f0]::src::zsqr::zinit): (Some(Output(Consume { use: 237..239, def: 239..241 }))) -> None
-generating signatures for DefId(0:744 ~ lib[f7f0]::src::zsqr::zsignum): (Some(Normal(241..243))) -> None
-generating signatures for DefId(0:745 ~ lib[f7f0]::src::zsqr::zzero): (Some(Normal(243..245))) -> None
+generating signatures for DefId(0:743 ~ lib[f7f0]::src::zsqr::zinit): (Some(Output(Consume { use: 233..235, def: 235..237 }))) -> None
+generating signatures for DefId(0:744 ~ lib[f7f0]::src::zsqr::zsignum): (Some(Normal(237..239))) -> None
+generating signatures for DefId(0:745 ~ lib[f7f0]::src::zsqr::zzero): (Some(Normal(239..241))) -> None
 generating signatures for DefId(0:746 ~ lib[f7f0]::src::zsqr::zsqr): (None, None) -> None
-generating signatures for DefId(0:777 ~ lib[f7f0]::src::zstr::zzero): (Some(Normal(245..247))) -> None
-generating signatures for DefId(0:778 ~ lib[f7f0]::src::zstr::zsignum): (Some(Normal(247..249))) -> None
-generating signatures for DefId(0:796 ~ lib[f7f0]::src::zstr_length::zsignum): (Some(Normal(249..251))) -> None
-generating signatures for DefId(0:797 ~ lib[f7f0]::src::zstr_length::zzero): (Some(Normal(251..253))) -> None
-generating signatures for DefId(0:798 ~ lib[f7f0]::src::zstr_length::zstr_length): (Some(Normal(253..255)), None) -> None
-generating signatures for DefId(0:811 ~ lib[f7f0]::src::zsub::zzero): (Some(Normal(255..257))) -> None
-generating signatures for DefId(0:812 ~ lib[f7f0]::src::zsub::zsignum): (Some(Normal(257..259))) -> None
+generating signatures for DefId(0:777 ~ lib[f7f0]::src::zstr::zzero): (Some(Normal(241..243))) -> None
+generating signatures for DefId(0:778 ~ lib[f7f0]::src::zstr::zsignum): (Some(Normal(243..245))) -> None
+generating signatures for DefId(0:796 ~ lib[f7f0]::src::zstr_length::zsignum): (Some(Normal(245..247))) -> None
+generating signatures for DefId(0:797 ~ lib[f7f0]::src::zstr_length::zzero): (Some(Normal(247..249))) -> None
+generating signatures for DefId(0:798 ~ lib[f7f0]::src::zstr_length::zstr_length): (Some(Normal(249..251)), None) -> None
+generating signatures for DefId(0:811 ~ lib[f7f0]::src::zsub::zzero): (Some(Normal(251..253))) -> None
+generating signatures for DefId(0:812 ~ lib[f7f0]::src::zsub::zsignum): (Some(Normal(253..255))) -> None
 generating signatures for DefId(0:813 ~ lib[f7f0]::src::zsub::zsub_unsigned): (None, None, None) -> None
 generating signatures for DefId(0:815 ~ lib[f7f0]::src::zsub::zsub): (None, None, None) -> None
-generating signatures for DefId(0:826 ~ lib[f7f0]::src::zswap::zswap): (Some(Output(Consume { use: 259..261, def: 261..263 })), Some(Output(Consume { use: 263..265, def: 265..267 }))) -> None
-generating signatures for DefId(0:838 ~ lib[f7f0]::src::ztrunc::zzero): (Some(Normal(267..269))) -> None
-generating signatures for DefId(0:839 ~ lib[f7f0]::src::ztrunc::ztrunc): (Some(Output(Consume { use: 269..271, def: 271..273 })), Some(Normal(273..275)), None) -> None
-generating signatures for DefId(0:899 ~ lib[f7f0]::src::zxor::zsignum): (Some(Normal(275..277))) -> None
-generating signatures for DefId(0:900 ~ lib[f7f0]::src::zxor::zzero): (Some(Normal(277..279))) -> None
-generating signatures for DefId(0:901 ~ lib[f7f0]::src::zxor::zxor): (Some(Output(Consume { use: 279..281, def: 281..283 })), Some(Normal(283..285)), Some(Normal(285..287))) -> None
+generating signatures for DefId(0:826 ~ lib[f7f0]::src::zswap::zswap): (Some(Output(Consume { use: 255..257, def: 257..259 })), Some(Output(Consume { use: 259..261, def: 261..263 }))) -> None
+generating signatures for DefId(0:838 ~ lib[f7f0]::src::ztrunc::zzero): (Some(Normal(263..265))) -> None
+generating signatures for DefId(0:839 ~ lib[f7f0]::src::ztrunc::ztrunc): (Some(Output(Consume { use: 265..267, def: 267..269 })), Some(Normal(269..271)), None) -> None
+generating signatures for DefId(0:899 ~ lib[f7f0]::src::zxor::zsignum): (Some(Normal(271..273))) -> None
+generating signatures for DefId(0:900 ~ lib[f7f0]::src::zxor::zzero): (Some(Normal(273..275))) -> None
+generating signatures for DefId(0:901 ~ lib[f7f0]::src::zxor::zxor): (Some(Output(Consume { use: 275..277, def: 277..279 })), Some(Normal(279..281)), Some(Normal(281..283))) -> None
 src::zunsetup::zunsetup: () -> _
-src::zfree::zfree: (&uniq &move ↓ &uniq &) -> _
+src::zfree::zfree: (&uniq  ↓ &uniq ) -> _
 src::zstr::zstr: (_, _) -> _
-src::allocator::libzahl_realloc: (&uniq &move ↓ &uniq &move, _) -> _
+src::allocator::libzahl_realloc: (&uniq  ↓ &uniq , _) -> _
 src::zabs::zzero: (& &) -> _
-src::zabs::zabs: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zabs::zabs: (&uniq & ↓ &uniq &, & &) -> _
 src::zadd::zzero: (& &) -> _
 src::zadd::zsignum: (& &) -> _
-src::zadd::zadd_unsigned: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zadd::zadd_unsigned: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zadd::zadd: (_, _, _) -> _
 src::zand::zsignum: (& &) -> _
 src::zand::zzero: (& &) -> _
-src::zand::zand: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zand::zand: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zbits::zzero: (& &) -> _
 src::zbits::zbits: (&uniq & ↓ &uniq &) -> _
 src::zbset::zzero: (& &) -> _
-src::zbset::zbset: (&uniq &move ↓ &uniq &move, & &, _, _) -> _
+src::zbset::zbset: (&uniq & ↓ &uniq &, & &, _, _) -> _
 src::zbtest::zzero: (& &) -> _
 src::zbtest::zbtest: (& &, _) -> _
 src::zcmp::zsignum: (& &) -> _
@@ -2425,12 +2431,12 @@ src::zgcd::zzero: (& &) -> _
 src::zgcd::zsignum: (& &) -> _
 src::zgcd::zgcd: (_, _, _) -> _
 src::zload::zzero: (& &) -> _
-src::zload::zload: (&uniq &move ↓ &uniq &move, &) -> _
+src::zload::zload: (&uniq & ↓ &uniq &, &) -> _
 src::zlsb::zzero: (& &) -> _
 src::zlsb::zlsb: (& &) -> _
 src::zlsh::zsignum: (& &) -> _
 src::zlsh::zzero: (& &) -> _
-src::zlsh::zlsh: (&uniq &move ↓ &uniq &move, & &, _) -> _
+src::zlsh::zlsh: (&uniq & ↓ &uniq &, & &, _) -> _
 src::zmod::zmod: (& &, & &, & &) -> _
 src::zmodmul::zmodmul: (& &, & &, & &, & &) -> _
 src::zmodpow::zzero: (& &) -> _
@@ -2443,13 +2449,13 @@ src::zmul::zinit: (&uniq & ↓ &uniq &) -> _
 src::zmul::zsignum: (& &) -> _
 src::zmul::zmul: (_, _, _) -> _
 src::zneg::zsignum: (& &) -> _
-src::zneg::zneg: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zneg::zneg: (&uniq & ↓ &uniq &, & &) -> _
 src::znot::zsignum: (& &) -> _
 src::znot::zzero: (& &) -> _
 src::znot::znot: (_, _) -> _
 src::zor::zsignum: (& &) -> _
 src::zor::zzero: (& &) -> _
-src::zor::zor: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zor::zor: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zperror::zperror: (&) -> _
 src::zpow::zzero: (& &) -> _
 src::zpow::zsignum: (& &) -> _
@@ -2460,7 +2466,7 @@ src::zptest::zeven: (& &) -> _
 src::zptest::zptest: (_, _, _) -> _
 src::zrand::zsignum: (& &) -> _
 src::zrand::zzero: (& &) -> _
-src::zrand::zrand_get_random_bits: (&uniq &move ↓ &uniq &move, _, _) -> _
+src::zrand::zrand_get_random_bits: (&uniq & ↓ &uniq &, _, _) -> _
 src::zrand::zrand: (_, _, _, _) -> _
 src::zrsh::zsignum: (& &) -> _
 src::zrsh::zzero: (& &) -> _
@@ -2468,7 +2474,7 @@ src::zrsh::zrsh: (_, _, _) -> _
 src::zsave::zzero: (& &) -> _
 src::zsave::zsave: (& &, &) -> _
 src::zset::zzero: (& &) -> _
-src::zset::zset: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zset::zset: (&uniq & ↓ &uniq &, & &) -> _
 src::zseti::zseti: (&uniq & ↓ &uniq &, _) -> _
 src::zsets::zsignum: (& &) -> _
 src::zsets::zsets: (& &, &) -> _
@@ -2492,135 +2498,135 @@ src::zsub::zsub_unsigned: (_, _, _) -> _
 src::zsub::zsub: (_, _, _) -> _
 src::zswap::zswap: (&uniq & ↓ &uniq &, &uniq & ↓ &uniq &) -> _
 src::ztrunc::zzero: (& &) -> _
-src::ztrunc::ztrunc: (&uniq &move ↓ &uniq &move, & &, _) -> _
+src::ztrunc::ztrunc: (&uniq & ↓ &uniq &, & &, _) -> _
 src::zxor::zsignum: (& &) -> _
 src::zxor::zzero: (& &) -> _
-src::zxor::zxor: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zxor::zxor: (&uniq & ↓ &uniq &, & &, & &) -> _
 generating signatures for DefId(0:887 ~ lib[f7f0]::src::zunsetup::zunsetup): () -> None
-generating signatures for DefId(0:219 ~ lib[f7f0]::src::zfree::zfree): (Some(Output(Consume { use: 2..4, def: 4..6 }))) -> None
+generating signatures for DefId(0:219 ~ lib[f7f0]::src::zfree::zfree): (Some(Output(Consume { use: 2..3, def: 3..4 }))) -> None
 generating signatures for DefId(0:779 ~ lib[f7f0]::src::zstr::zstr): (None, None) -> None
-generating signatures for DefId(0:28 ~ lib[f7f0]::src::allocator::libzahl_realloc): (Some(Output(Consume { use: 6..8, def: 8..10 })), None) -> None
-generating signatures for DefId(0:38 ~ lib[f7f0]::src::zabs::zzero): (Some(Normal(10..12))) -> None
-generating signatures for DefId(0:39 ~ lib[f7f0]::src::zabs::zabs): (Some(Output(Consume { use: 12..14, def: 14..16 })), Some(Normal(16..18))) -> None
-generating signatures for DefId(0:51 ~ lib[f7f0]::src::zadd::zzero): (Some(Normal(18..20))) -> None
-generating signatures for DefId(0:52 ~ lib[f7f0]::src::zadd::zsignum): (Some(Normal(20..22))) -> None
-generating signatures for DefId(0:53 ~ lib[f7f0]::src::zadd::zadd_unsigned): (Some(Output(Consume { use: 22..24, def: 24..26 })), Some(Normal(26..28)), Some(Normal(28..30))) -> None
+generating signatures for DefId(0:28 ~ lib[f7f0]::src::allocator::libzahl_realloc): (Some(Output(Consume { use: 4..5, def: 5..6 })), None) -> None
+generating signatures for DefId(0:38 ~ lib[f7f0]::src::zabs::zzero): (Some(Normal(6..8))) -> None
+generating signatures for DefId(0:39 ~ lib[f7f0]::src::zabs::zabs): (Some(Output(Consume { use: 8..10, def: 10..12 })), Some(Normal(12..14))) -> None
+generating signatures for DefId(0:51 ~ lib[f7f0]::src::zadd::zzero): (Some(Normal(14..16))) -> None
+generating signatures for DefId(0:52 ~ lib[f7f0]::src::zadd::zsignum): (Some(Normal(16..18))) -> None
+generating signatures for DefId(0:53 ~ lib[f7f0]::src::zadd::zadd_unsigned): (Some(Output(Consume { use: 18..20, def: 20..22 })), Some(Normal(22..24)), Some(Normal(24..26))) -> None
 generating signatures for DefId(0:55 ~ lib[f7f0]::src::zadd::zadd): (None, None, None) -> None
-generating signatures for DefId(0:66 ~ lib[f7f0]::src::zand::zsignum): (Some(Normal(30..32))) -> None
-generating signatures for DefId(0:67 ~ lib[f7f0]::src::zand::zzero): (Some(Normal(32..34))) -> None
-generating signatures for DefId(0:68 ~ lib[f7f0]::src::zand::zand): (Some(Output(Consume { use: 34..36, def: 36..38 })), Some(Normal(38..40)), Some(Normal(40..42))) -> None
-generating signatures for DefId(0:77 ~ lib[f7f0]::src::zbits::zzero): (Some(Normal(42..44))) -> None
-generating signatures for DefId(0:78 ~ lib[f7f0]::src::zbits::zbits): (Some(Output(Consume { use: 44..46, def: 46..48 }))) -> None
-generating signatures for DefId(0:89 ~ lib[f7f0]::src::zbset::zzero): (Some(Normal(48..50))) -> None
-generating signatures for DefId(0:90 ~ lib[f7f0]::src::zbset::zbset): (Some(Output(Consume { use: 50..52, def: 52..54 })), Some(Normal(54..56)), None, None) -> None
-generating signatures for DefId(0:99 ~ lib[f7f0]::src::zbtest::zzero): (Some(Normal(56..58))) -> None
-generating signatures for DefId(0:100 ~ lib[f7f0]::src::zbtest::zbtest): (Some(Normal(58..60)), None) -> None
-generating signatures for DefId(0:110 ~ lib[f7f0]::src::zcmp::zsignum): (Some(Normal(60..62))) -> None
-generating signatures for DefId(0:111 ~ lib[f7f0]::src::zcmp::zcmp): (Some(Normal(62..64)), Some(Normal(64..66))) -> None
-generating signatures for DefId(0:124 ~ lib[f7f0]::src::zcmpi::zzero): (Some(Normal(66..68))) -> None
-generating signatures for DefId(0:125 ~ lib[f7f0]::src::zcmpi::zsignum): (Some(Normal(68..70))) -> None
-generating signatures for DefId(0:126 ~ lib[f7f0]::src::zcmpi::zcmpi): (Some(Normal(70..72)), None) -> None
-generating signatures for DefId(0:135 ~ lib[f7f0]::src::zcmpmag::zzero): (Some(Normal(72..74))) -> None
-generating signatures for DefId(0:136 ~ lib[f7f0]::src::zcmpmag::zcmpmag): (Some(Normal(74..76)), Some(Normal(76..78))) -> None
-generating signatures for DefId(0:149 ~ lib[f7f0]::src::zcmpu::zsignum): (Some(Normal(78..80))) -> None
-generating signatures for DefId(0:150 ~ lib[f7f0]::src::zcmpu::zcmpu): (Some(Normal(80..82)), None) -> None
-generating signatures for DefId(0:163 ~ lib[f7f0]::src::zdiv::zdiv): (Some(Normal(82..84)), Some(Normal(84..86)), Some(Normal(86..88))) -> None
-generating signatures for DefId(0:187 ~ lib[f7f0]::src::zdivmod::zzero): (Some(Normal(88..90))) -> None
-generating signatures for DefId(0:188 ~ lib[f7f0]::src::zdivmod::zsignum): (Some(Normal(90..92))) -> None
+generating signatures for DefId(0:66 ~ lib[f7f0]::src::zand::zsignum): (Some(Normal(26..28))) -> None
+generating signatures for DefId(0:67 ~ lib[f7f0]::src::zand::zzero): (Some(Normal(28..30))) -> None
+generating signatures for DefId(0:68 ~ lib[f7f0]::src::zand::zand): (Some(Output(Consume { use: 30..32, def: 32..34 })), Some(Normal(34..36)), Some(Normal(36..38))) -> None
+generating signatures for DefId(0:77 ~ lib[f7f0]::src::zbits::zzero): (Some(Normal(38..40))) -> None
+generating signatures for DefId(0:78 ~ lib[f7f0]::src::zbits::zbits): (Some(Output(Consume { use: 40..42, def: 42..44 }))) -> None
+generating signatures for DefId(0:89 ~ lib[f7f0]::src::zbset::zzero): (Some(Normal(44..46))) -> None
+generating signatures for DefId(0:90 ~ lib[f7f0]::src::zbset::zbset): (Some(Output(Consume { use: 46..48, def: 48..50 })), Some(Normal(50..52)), None, None) -> None
+generating signatures for DefId(0:99 ~ lib[f7f0]::src::zbtest::zzero): (Some(Normal(52..54))) -> None
+generating signatures for DefId(0:100 ~ lib[f7f0]::src::zbtest::zbtest): (Some(Normal(54..56)), None) -> None
+generating signatures for DefId(0:110 ~ lib[f7f0]::src::zcmp::zsignum): (Some(Normal(56..58))) -> None
+generating signatures for DefId(0:111 ~ lib[f7f0]::src::zcmp::zcmp): (Some(Normal(58..60)), Some(Normal(60..62))) -> None
+generating signatures for DefId(0:124 ~ lib[f7f0]::src::zcmpi::zzero): (Some(Normal(62..64))) -> None
+generating signatures for DefId(0:125 ~ lib[f7f0]::src::zcmpi::zsignum): (Some(Normal(64..66))) -> None
+generating signatures for DefId(0:126 ~ lib[f7f0]::src::zcmpi::zcmpi): (Some(Normal(66..68)), None) -> None
+generating signatures for DefId(0:135 ~ lib[f7f0]::src::zcmpmag::zzero): (Some(Normal(68..70))) -> None
+generating signatures for DefId(0:136 ~ lib[f7f0]::src::zcmpmag::zcmpmag): (Some(Normal(70..72)), Some(Normal(72..74))) -> None
+generating signatures for DefId(0:149 ~ lib[f7f0]::src::zcmpu::zsignum): (Some(Normal(74..76))) -> None
+generating signatures for DefId(0:150 ~ lib[f7f0]::src::zcmpu::zcmpu): (Some(Normal(76..78)), None) -> None
+generating signatures for DefId(0:163 ~ lib[f7f0]::src::zdiv::zdiv): (Some(Normal(78..80)), Some(Normal(80..82)), Some(Normal(82..84))) -> None
+generating signatures for DefId(0:187 ~ lib[f7f0]::src::zdivmod::zzero): (Some(Normal(84..86))) -> None
+generating signatures for DefId(0:188 ~ lib[f7f0]::src::zdivmod::zsignum): (Some(Normal(86..88))) -> None
 generating signatures for DefId(0:189 ~ lib[f7f0]::src::zdivmod::zdivmod): (None, None, None, None) -> None
-generating signatures for DefId(0:201 ~ lib[f7f0]::src::zerror::zerror): (Some(Output(Consume { use: 92..94, def: 94..96 }))) -> None
-generating signatures for DefId(0:233 ~ lib[f7f0]::src::zgcd::zzero): (Some(Normal(96..98))) -> None
-generating signatures for DefId(0:234 ~ lib[f7f0]::src::zgcd::zsignum): (Some(Normal(98..100))) -> None
+generating signatures for DefId(0:201 ~ lib[f7f0]::src::zerror::zerror): (Some(Output(Consume { use: 88..90, def: 90..92 }))) -> None
+generating signatures for DefId(0:233 ~ lib[f7f0]::src::zgcd::zzero): (Some(Normal(92..94))) -> None
+generating signatures for DefId(0:234 ~ lib[f7f0]::src::zgcd::zsignum): (Some(Normal(94..96))) -> None
 generating signatures for DefId(0:235 ~ lib[f7f0]::src::zgcd::zgcd): (None, None, None) -> None
-generating signatures for DefId(0:246 ~ lib[f7f0]::src::zload::zzero): (Some(Normal(100..102))) -> None
-generating signatures for DefId(0:247 ~ lib[f7f0]::src::zload::zload): (Some(Output(Consume { use: 102..104, def: 104..106 })), Some(Normal(106..107))) -> None
-generating signatures for DefId(0:256 ~ lib[f7f0]::src::zlsb::zzero): (Some(Normal(107..109))) -> None
-generating signatures for DefId(0:257 ~ lib[f7f0]::src::zlsb::zlsb): (Some(Normal(109..111))) -> None
-generating signatures for DefId(0:270 ~ lib[f7f0]::src::zlsh::zsignum): (Some(Normal(111..113))) -> None
-generating signatures for DefId(0:271 ~ lib[f7f0]::src::zlsh::zzero): (Some(Normal(113..115))) -> None
-generating signatures for DefId(0:272 ~ lib[f7f0]::src::zlsh::zlsh): (Some(Output(Consume { use: 115..117, def: 117..119 })), Some(Normal(119..121)), None) -> None
-generating signatures for DefId(0:286 ~ lib[f7f0]::src::zmod::zmod): (Some(Normal(121..123)), Some(Normal(123..125)), Some(Normal(125..127))) -> None
-generating signatures for DefId(0:299 ~ lib[f7f0]::src::zmodmul::zmodmul): (Some(Normal(127..129)), Some(Normal(129..131)), Some(Normal(131..133)), Some(Normal(133..135))) -> None
-generating signatures for DefId(0:321 ~ lib[f7f0]::src::zmodpow::zzero): (Some(Normal(135..137))) -> None
-generating signatures for DefId(0:322 ~ lib[f7f0]::src::zmodpow::zsignum): (Some(Normal(137..139))) -> None
+generating signatures for DefId(0:246 ~ lib[f7f0]::src::zload::zzero): (Some(Normal(96..98))) -> None
+generating signatures for DefId(0:247 ~ lib[f7f0]::src::zload::zload): (Some(Output(Consume { use: 98..100, def: 100..102 })), Some(Normal(102..103))) -> None
+generating signatures for DefId(0:256 ~ lib[f7f0]::src::zlsb::zzero): (Some(Normal(103..105))) -> None
+generating signatures for DefId(0:257 ~ lib[f7f0]::src::zlsb::zlsb): (Some(Normal(105..107))) -> None
+generating signatures for DefId(0:270 ~ lib[f7f0]::src::zlsh::zsignum): (Some(Normal(107..109))) -> None
+generating signatures for DefId(0:271 ~ lib[f7f0]::src::zlsh::zzero): (Some(Normal(109..111))) -> None
+generating signatures for DefId(0:272 ~ lib[f7f0]::src::zlsh::zlsh): (Some(Output(Consume { use: 111..113, def: 113..115 })), Some(Normal(115..117)), None) -> None
+generating signatures for DefId(0:286 ~ lib[f7f0]::src::zmod::zmod): (Some(Normal(117..119)), Some(Normal(119..121)), Some(Normal(121..123))) -> None
+generating signatures for DefId(0:299 ~ lib[f7f0]::src::zmodmul::zmodmul): (Some(Normal(123..125)), Some(Normal(125..127)), Some(Normal(127..129)), Some(Normal(129..131))) -> None
+generating signatures for DefId(0:321 ~ lib[f7f0]::src::zmodpow::zzero): (Some(Normal(131..133))) -> None
+generating signatures for DefId(0:322 ~ lib[f7f0]::src::zmodpow::zsignum): (Some(Normal(133..135))) -> None
 generating signatures for DefId(0:323 ~ lib[f7f0]::src::zmodpow::zmodpow): (None, None, None, None) -> None
-generating signatures for DefId(0:344 ~ lib[f7f0]::src::zmodpowu::zzero): (Some(Normal(139..141))) -> None
-generating signatures for DefId(0:345 ~ lib[f7f0]::src::zmodpowu::zmodpowu): (Some(Normal(141..143)), Some(Normal(143..145)), None, Some(Normal(145..147))) -> None
-generating signatures for DefId(0:358 ~ lib[f7f0]::src::zmodsqr::zmodsqr): (Some(Normal(147..149)), Some(Normal(149..151)), Some(Normal(151..153))) -> None
-generating signatures for DefId(0:370 ~ lib[f7f0]::src::zmul::zinit): (Some(Output(Consume { use: 153..155, def: 155..157 }))) -> None
-generating signatures for DefId(0:371 ~ lib[f7f0]::src::zmul::zsignum): (Some(Normal(157..159))) -> None
+generating signatures for DefId(0:344 ~ lib[f7f0]::src::zmodpowu::zzero): (Some(Normal(135..137))) -> None
+generating signatures for DefId(0:345 ~ lib[f7f0]::src::zmodpowu::zmodpowu): (Some(Normal(137..139)), Some(Normal(139..141)), None, Some(Normal(141..143))) -> None
+generating signatures for DefId(0:358 ~ lib[f7f0]::src::zmodsqr::zmodsqr): (Some(Normal(143..145)), Some(Normal(145..147)), Some(Normal(147..149))) -> None
+generating signatures for DefId(0:370 ~ lib[f7f0]::src::zmul::zinit): (Some(Output(Consume { use: 149..151, def: 151..153 }))) -> None
+generating signatures for DefId(0:371 ~ lib[f7f0]::src::zmul::zsignum): (Some(Normal(153..155))) -> None
 generating signatures for DefId(0:372 ~ lib[f7f0]::src::zmul::zmul): (None, None, None) -> None
-generating signatures for DefId(0:389 ~ lib[f7f0]::src::zneg::zsignum): (Some(Normal(159..161))) -> None
-generating signatures for DefId(0:390 ~ lib[f7f0]::src::zneg::zneg): (Some(Output(Consume { use: 161..163, def: 163..165 })), Some(Normal(165..167))) -> None
-generating signatures for DefId(0:400 ~ lib[f7f0]::src::znot::zsignum): (Some(Normal(167..169))) -> None
-generating signatures for DefId(0:401 ~ lib[f7f0]::src::znot::zzero): (Some(Normal(169..171))) -> None
+generating signatures for DefId(0:389 ~ lib[f7f0]::src::zneg::zsignum): (Some(Normal(155..157))) -> None
+generating signatures for DefId(0:390 ~ lib[f7f0]::src::zneg::zneg): (Some(Output(Consume { use: 157..159, def: 159..161 })), Some(Normal(161..163))) -> None
+generating signatures for DefId(0:400 ~ lib[f7f0]::src::znot::zsignum): (Some(Normal(163..165))) -> None
+generating signatures for DefId(0:401 ~ lib[f7f0]::src::znot::zzero): (Some(Normal(165..167))) -> None
 generating signatures for DefId(0:402 ~ lib[f7f0]::src::znot::znot): (None, None) -> None
-generating signatures for DefId(0:413 ~ lib[f7f0]::src::zor::zsignum): (Some(Normal(171..173))) -> None
-generating signatures for DefId(0:414 ~ lib[f7f0]::src::zor::zzero): (Some(Normal(173..175))) -> None
-generating signatures for DefId(0:415 ~ lib[f7f0]::src::zor::zor): (Some(Output(Consume { use: 175..177, def: 177..179 })), Some(Normal(179..181)), Some(Normal(181..183))) -> None
-generating signatures for DefId(0:425 ~ lib[f7f0]::src::zperror::zperror): (Some(Normal(183..184))) -> None
-generating signatures for DefId(0:446 ~ lib[f7f0]::src::zpow::zzero): (Some(Normal(184..186))) -> None
-generating signatures for DefId(0:447 ~ lib[f7f0]::src::zpow::zsignum): (Some(Normal(186..188))) -> None
+generating signatures for DefId(0:413 ~ lib[f7f0]::src::zor::zsignum): (Some(Normal(167..169))) -> None
+generating signatures for DefId(0:414 ~ lib[f7f0]::src::zor::zzero): (Some(Normal(169..171))) -> None
+generating signatures for DefId(0:415 ~ lib[f7f0]::src::zor::zor): (Some(Output(Consume { use: 171..173, def: 173..175 })), Some(Normal(175..177)), Some(Normal(177..179))) -> None
+generating signatures for DefId(0:425 ~ lib[f7f0]::src::zperror::zperror): (Some(Normal(179..180))) -> None
+generating signatures for DefId(0:446 ~ lib[f7f0]::src::zpow::zzero): (Some(Normal(180..182))) -> None
+generating signatures for DefId(0:447 ~ lib[f7f0]::src::zpow::zsignum): (Some(Normal(182..184))) -> None
 generating signatures for DefId(0:448 ~ lib[f7f0]::src::zpow::zpow): (None, None, None) -> None
-generating signatures for DefId(0:468 ~ lib[f7f0]::src::zpowu::zzero): (Some(Normal(188..190))) -> None
-generating signatures for DefId(0:469 ~ lib[f7f0]::src::zpowu::zpowu): (Some(Normal(190..192)), Some(Normal(192..194)), None) -> None
-generating signatures for DefId(0:499 ~ lib[f7f0]::src::zptest::zeven): (Some(Normal(194..196))) -> None
+generating signatures for DefId(0:468 ~ lib[f7f0]::src::zpowu::zzero): (Some(Normal(184..186))) -> None
+generating signatures for DefId(0:469 ~ lib[f7f0]::src::zpowu::zpowu): (Some(Normal(186..188)), Some(Normal(188..190)), None) -> None
+generating signatures for DefId(0:499 ~ lib[f7f0]::src::zptest::zeven): (Some(Normal(190..192))) -> None
 generating signatures for DefId(0:500 ~ lib[f7f0]::src::zptest::zptest): (None, None, None) -> None
-generating signatures for DefId(0:533 ~ lib[f7f0]::src::zrand::zsignum): (Some(Normal(196..198))) -> None
-generating signatures for DefId(0:534 ~ lib[f7f0]::src::zrand::zzero): (Some(Normal(198..200))) -> None
-generating signatures for DefId(0:535 ~ lib[f7f0]::src::zrand::zrand_get_random_bits): (Some(Output(Consume { use: 200..202, def: 202..204 })), None, None) -> None
+generating signatures for DefId(0:533 ~ lib[f7f0]::src::zrand::zsignum): (Some(Normal(192..194))) -> None
+generating signatures for DefId(0:534 ~ lib[f7f0]::src::zrand::zzero): (Some(Normal(194..196))) -> None
+generating signatures for DefId(0:535 ~ lib[f7f0]::src::zrand::zrand_get_random_bits): (Some(Output(Consume { use: 196..198, def: 198..200 })), None, None) -> None
 generating signatures for DefId(0:536 ~ lib[f7f0]::src::zrand::zrand): (None, None, None, None) -> None
-generating signatures for DefId(0:548 ~ lib[f7f0]::src::zrsh::zsignum): (Some(Normal(204..206))) -> None
-generating signatures for DefId(0:549 ~ lib[f7f0]::src::zrsh::zzero): (Some(Normal(206..208))) -> None
+generating signatures for DefId(0:548 ~ lib[f7f0]::src::zrsh::zsignum): (Some(Normal(200..202))) -> None
+generating signatures for DefId(0:549 ~ lib[f7f0]::src::zrsh::zzero): (Some(Normal(202..204))) -> None
 generating signatures for DefId(0:550 ~ lib[f7f0]::src::zrsh::zrsh): (None, None, None) -> None
-generating signatures for DefId(0:561 ~ lib[f7f0]::src::zsave::zzero): (Some(Normal(208..210))) -> None
-generating signatures for DefId(0:562 ~ lib[f7f0]::src::zsave::zsave): (Some(Normal(210..212)), Some(Normal(212..213))) -> None
-generating signatures for DefId(0:573 ~ lib[f7f0]::src::zset::zzero): (Some(Normal(213..215))) -> None
-generating signatures for DefId(0:574 ~ lib[f7f0]::src::zset::zset): (Some(Output(Consume { use: 215..217, def: 217..219 })), Some(Normal(219..221))) -> None
-generating signatures for DefId(0:584 ~ lib[f7f0]::src::zseti::zseti): (Some(Output(Consume { use: 221..223, def: 223..225 })), None) -> None
-generating signatures for DefId(0:613 ~ lib[f7f0]::src::zsets::zsignum): (Some(Normal(225..227))) -> None
-generating signatures for DefId(0:614 ~ lib[f7f0]::src::zsets::zsets): (Some(Normal(227..229)), Some(Normal(229..230))) -> None
+generating signatures for DefId(0:561 ~ lib[f7f0]::src::zsave::zzero): (Some(Normal(204..206))) -> None
+generating signatures for DefId(0:562 ~ lib[f7f0]::src::zsave::zsave): (Some(Normal(206..208)), Some(Normal(208..209))) -> None
+generating signatures for DefId(0:573 ~ lib[f7f0]::src::zset::zzero): (Some(Normal(209..211))) -> None
+generating signatures for DefId(0:574 ~ lib[f7f0]::src::zset::zset): (Some(Output(Consume { use: 211..213, def: 213..215 })), Some(Normal(215..217))) -> None
+generating signatures for DefId(0:584 ~ lib[f7f0]::src::zseti::zseti): (Some(Output(Consume { use: 217..219, def: 219..221 })), None) -> None
+generating signatures for DefId(0:613 ~ lib[f7f0]::src::zsets::zsignum): (Some(Normal(221..223))) -> None
+generating signatures for DefId(0:614 ~ lib[f7f0]::src::zsets::zsets): (Some(Normal(223..225)), Some(Normal(225..226))) -> None
 generating signatures for DefId(0:624 ~ lib[f7f0]::src::zsetu::zsetu): (None, None) -> None
-generating signatures for DefId(0:641 ~ lib[f7f0]::src::zsetup::zinit): (Some(Output(Consume { use: 230..232, def: 232..234 }))) -> None
-generating signatures for DefId(0:717 ~ lib[f7f0]::src::zsetup::zsetup): (Some(Normal(234..235))) -> None
-generating signatures for DefId(0:730 ~ lib[f7f0]::src::zsplit::zzero): (Some(Normal(235..237))) -> None
+generating signatures for DefId(0:641 ~ lib[f7f0]::src::zsetup::zinit): (Some(Output(Consume { use: 226..228, def: 228..230 }))) -> None
+generating signatures for DefId(0:717 ~ lib[f7f0]::src::zsetup::zsetup): (Some(Normal(230..231))) -> None
+generating signatures for DefId(0:730 ~ lib[f7f0]::src::zsplit::zzero): (Some(Normal(231..233))) -> None
 generating signatures for DefId(0:731 ~ lib[f7f0]::src::zsplit::zsplit): (None, None, None, None) -> None
-generating signatures for DefId(0:743 ~ lib[f7f0]::src::zsqr::zinit): (Some(Output(Consume { use: 237..239, def: 239..241 }))) -> None
-generating signatures for DefId(0:744 ~ lib[f7f0]::src::zsqr::zsignum): (Some(Normal(241..243))) -> None
-generating signatures for DefId(0:745 ~ lib[f7f0]::src::zsqr::zzero): (Some(Normal(243..245))) -> None
+generating signatures for DefId(0:743 ~ lib[f7f0]::src::zsqr::zinit): (Some(Output(Consume { use: 233..235, def: 235..237 }))) -> None
+generating signatures for DefId(0:744 ~ lib[f7f0]::src::zsqr::zsignum): (Some(Normal(237..239))) -> None
+generating signatures for DefId(0:745 ~ lib[f7f0]::src::zsqr::zzero): (Some(Normal(239..241))) -> None
 generating signatures for DefId(0:746 ~ lib[f7f0]::src::zsqr::zsqr): (None, None) -> None
-generating signatures for DefId(0:777 ~ lib[f7f0]::src::zstr::zzero): (Some(Normal(245..247))) -> None
-generating signatures for DefId(0:778 ~ lib[f7f0]::src::zstr::zsignum): (Some(Normal(247..249))) -> None
-generating signatures for DefId(0:796 ~ lib[f7f0]::src::zstr_length::zsignum): (Some(Normal(249..251))) -> None
-generating signatures for DefId(0:797 ~ lib[f7f0]::src::zstr_length::zzero): (Some(Normal(251..253))) -> None
-generating signatures for DefId(0:798 ~ lib[f7f0]::src::zstr_length::zstr_length): (Some(Normal(253..255)), None) -> None
-generating signatures for DefId(0:811 ~ lib[f7f0]::src::zsub::zzero): (Some(Normal(255..257))) -> None
-generating signatures for DefId(0:812 ~ lib[f7f0]::src::zsub::zsignum): (Some(Normal(257..259))) -> None
+generating signatures for DefId(0:777 ~ lib[f7f0]::src::zstr::zzero): (Some(Normal(241..243))) -> None
+generating signatures for DefId(0:778 ~ lib[f7f0]::src::zstr::zsignum): (Some(Normal(243..245))) -> None
+generating signatures for DefId(0:796 ~ lib[f7f0]::src::zstr_length::zsignum): (Some(Normal(245..247))) -> None
+generating signatures for DefId(0:797 ~ lib[f7f0]::src::zstr_length::zzero): (Some(Normal(247..249))) -> None
+generating signatures for DefId(0:798 ~ lib[f7f0]::src::zstr_length::zstr_length): (Some(Normal(249..251)), None) -> None
+generating signatures for DefId(0:811 ~ lib[f7f0]::src::zsub::zzero): (Some(Normal(251..253))) -> None
+generating signatures for DefId(0:812 ~ lib[f7f0]::src::zsub::zsignum): (Some(Normal(253..255))) -> None
 generating signatures for DefId(0:813 ~ lib[f7f0]::src::zsub::zsub_unsigned): (None, None, None) -> None
 generating signatures for DefId(0:815 ~ lib[f7f0]::src::zsub::zsub): (None, None, None) -> None
-generating signatures for DefId(0:826 ~ lib[f7f0]::src::zswap::zswap): (Some(Output(Consume { use: 259..261, def: 261..263 })), Some(Output(Consume { use: 263..265, def: 265..267 }))) -> None
-generating signatures for DefId(0:838 ~ lib[f7f0]::src::ztrunc::zzero): (Some(Normal(267..269))) -> None
-generating signatures for DefId(0:839 ~ lib[f7f0]::src::ztrunc::ztrunc): (Some(Output(Consume { use: 269..271, def: 271..273 })), Some(Normal(273..275)), None) -> None
-generating signatures for DefId(0:899 ~ lib[f7f0]::src::zxor::zsignum): (Some(Normal(275..277))) -> None
-generating signatures for DefId(0:900 ~ lib[f7f0]::src::zxor::zzero): (Some(Normal(277..279))) -> None
-generating signatures for DefId(0:901 ~ lib[f7f0]::src::zxor::zxor): (Some(Output(Consume { use: 279..281, def: 281..283 })), Some(Normal(283..285)), Some(Normal(285..287))) -> None
+generating signatures for DefId(0:826 ~ lib[f7f0]::src::zswap::zswap): (Some(Output(Consume { use: 255..257, def: 257..259 })), Some(Output(Consume { use: 259..261, def: 261..263 }))) -> None
+generating signatures for DefId(0:838 ~ lib[f7f0]::src::ztrunc::zzero): (Some(Normal(263..265))) -> None
+generating signatures for DefId(0:839 ~ lib[f7f0]::src::ztrunc::ztrunc): (Some(Output(Consume { use: 265..267, def: 267..269 })), Some(Normal(269..271)), None) -> None
+generating signatures for DefId(0:899 ~ lib[f7f0]::src::zxor::zsignum): (Some(Normal(271..273))) -> None
+generating signatures for DefId(0:900 ~ lib[f7f0]::src::zxor::zzero): (Some(Normal(273..275))) -> None
+generating signatures for DefId(0:901 ~ lib[f7f0]::src::zxor::zxor): (Some(Output(Consume { use: 275..277, def: 277..279 })), Some(Normal(279..281)), Some(Normal(281..283))) -> None
 src::zunsetup::zunsetup: () -> _
-src::zfree::zfree: (&uniq &move ↓ &uniq &) -> _
+src::zfree::zfree: (&uniq  ↓ &uniq ) -> _
 src::zstr::zstr: (_, _) -> _
-src::allocator::libzahl_realloc: (&uniq &move ↓ &uniq &move, _) -> _
+src::allocator::libzahl_realloc: (&uniq  ↓ &uniq , _) -> _
 src::zabs::zzero: (& &) -> _
-src::zabs::zabs: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zabs::zabs: (&uniq & ↓ &uniq &, & &) -> _
 src::zadd::zzero: (& &) -> _
 src::zadd::zsignum: (& &) -> _
-src::zadd::zadd_unsigned: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zadd::zadd_unsigned: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zadd::zadd: (_, _, _) -> _
 src::zand::zsignum: (& &) -> _
 src::zand::zzero: (& &) -> _
-src::zand::zand: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zand::zand: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zbits::zzero: (& &) -> _
 src::zbits::zbits: (&uniq & ↓ &uniq &) -> _
 src::zbset::zzero: (& &) -> _
-src::zbset::zbset: (&uniq &move ↓ &uniq &move, & &, _, _) -> _
+src::zbset::zbset: (&uniq & ↓ &uniq &, & &, _, _) -> _
 src::zbtest::zzero: (& &) -> _
 src::zbtest::zbtest: (& &, _) -> _
 src::zcmp::zsignum: (& &) -> _
@@ -2641,12 +2647,12 @@ src::zgcd::zzero: (& &) -> _
 src::zgcd::zsignum: (& &) -> _
 src::zgcd::zgcd: (_, _, _) -> _
 src::zload::zzero: (& &) -> _
-src::zload::zload: (&uniq &move ↓ &uniq &move, &) -> _
+src::zload::zload: (&uniq & ↓ &uniq &, &) -> _
 src::zlsb::zzero: (& &) -> _
 src::zlsb::zlsb: (& &) -> _
 src::zlsh::zsignum: (& &) -> _
 src::zlsh::zzero: (& &) -> _
-src::zlsh::zlsh: (&uniq &move ↓ &uniq &move, & &, _) -> _
+src::zlsh::zlsh: (&uniq & ↓ &uniq &, & &, _) -> _
 src::zmod::zmod: (& &, & &, & &) -> _
 src::zmodmul::zmodmul: (& &, & &, & &, & &) -> _
 src::zmodpow::zzero: (& &) -> _
@@ -2659,13 +2665,13 @@ src::zmul::zinit: (&uniq & ↓ &uniq &) -> _
 src::zmul::zsignum: (& &) -> _
 src::zmul::zmul: (_, _, _) -> _
 src::zneg::zsignum: (& &) -> _
-src::zneg::zneg: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zneg::zneg: (&uniq & ↓ &uniq &, & &) -> _
 src::znot::zsignum: (& &) -> _
 src::znot::zzero: (& &) -> _
 src::znot::znot: (_, _) -> _
 src::zor::zsignum: (& &) -> _
 src::zor::zzero: (& &) -> _
-src::zor::zor: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zor::zor: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zperror::zperror: (&) -> _
 src::zpow::zzero: (& &) -> _
 src::zpow::zsignum: (& &) -> _
@@ -2676,7 +2682,7 @@ src::zptest::zeven: (& &) -> _
 src::zptest::zptest: (_, _, _) -> _
 src::zrand::zsignum: (& &) -> _
 src::zrand::zzero: (& &) -> _
-src::zrand::zrand_get_random_bits: (&uniq &move ↓ &uniq &move, _, _) -> _
+src::zrand::zrand_get_random_bits: (&uniq & ↓ &uniq &, _, _) -> _
 src::zrand::zrand: (_, _, _, _) -> _
 src::zrsh::zsignum: (& &) -> _
 src::zrsh::zzero: (& &) -> _
@@ -2684,7 +2690,7 @@ src::zrsh::zrsh: (_, _, _) -> _
 src::zsave::zzero: (& &) -> _
 src::zsave::zsave: (& &, &) -> _
 src::zset::zzero: (& &) -> _
-src::zset::zset: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zset::zset: (&uniq & ↓ &uniq &, & &) -> _
 src::zseti::zseti: (&uniq & ↓ &uniq &, _) -> _
 src::zsets::zsignum: (& &) -> _
 src::zsets::zsets: (& &, &) -> _
@@ -2708,135 +2714,135 @@ src::zsub::zsub_unsigned: (_, _, _) -> _
 src::zsub::zsub: (_, _, _) -> _
 src::zswap::zswap: (&uniq & ↓ &uniq &, &uniq & ↓ &uniq &) -> _
 src::ztrunc::zzero: (& &) -> _
-src::ztrunc::ztrunc: (&uniq &move ↓ &uniq &move, & &, _) -> _
+src::ztrunc::ztrunc: (&uniq & ↓ &uniq &, & &, _) -> _
 src::zxor::zsignum: (& &) -> _
 src::zxor::zzero: (& &) -> _
-src::zxor::zxor: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zxor::zxor: (&uniq & ↓ &uniq &, & &, & &) -> _
 generating signatures for DefId(0:887 ~ lib[f7f0]::src::zunsetup::zunsetup): () -> None
-generating signatures for DefId(0:219 ~ lib[f7f0]::src::zfree::zfree): (Some(Output(Consume { use: 2..4, def: 4..6 }))) -> None
+generating signatures for DefId(0:219 ~ lib[f7f0]::src::zfree::zfree): (Some(Output(Consume { use: 2..3, def: 3..4 }))) -> None
 generating signatures for DefId(0:779 ~ lib[f7f0]::src::zstr::zstr): (None, None) -> None
-generating signatures for DefId(0:28 ~ lib[f7f0]::src::allocator::libzahl_realloc): (Some(Output(Consume { use: 6..8, def: 8..10 })), None) -> None
-generating signatures for DefId(0:38 ~ lib[f7f0]::src::zabs::zzero): (Some(Normal(10..12))) -> None
-generating signatures for DefId(0:39 ~ lib[f7f0]::src::zabs::zabs): (Some(Output(Consume { use: 12..14, def: 14..16 })), Some(Normal(16..18))) -> None
-generating signatures for DefId(0:51 ~ lib[f7f0]::src::zadd::zzero): (Some(Normal(18..20))) -> None
-generating signatures for DefId(0:52 ~ lib[f7f0]::src::zadd::zsignum): (Some(Normal(20..22))) -> None
-generating signatures for DefId(0:53 ~ lib[f7f0]::src::zadd::zadd_unsigned): (Some(Output(Consume { use: 22..24, def: 24..26 })), Some(Normal(26..28)), Some(Normal(28..30))) -> None
+generating signatures for DefId(0:28 ~ lib[f7f0]::src::allocator::libzahl_realloc): (Some(Output(Consume { use: 4..5, def: 5..6 })), None) -> None
+generating signatures for DefId(0:38 ~ lib[f7f0]::src::zabs::zzero): (Some(Normal(6..8))) -> None
+generating signatures for DefId(0:39 ~ lib[f7f0]::src::zabs::zabs): (Some(Output(Consume { use: 8..10, def: 10..12 })), Some(Normal(12..14))) -> None
+generating signatures for DefId(0:51 ~ lib[f7f0]::src::zadd::zzero): (Some(Normal(14..16))) -> None
+generating signatures for DefId(0:52 ~ lib[f7f0]::src::zadd::zsignum): (Some(Normal(16..18))) -> None
+generating signatures for DefId(0:53 ~ lib[f7f0]::src::zadd::zadd_unsigned): (Some(Output(Consume { use: 18..20, def: 20..22 })), Some(Normal(22..24)), Some(Normal(24..26))) -> None
 generating signatures for DefId(0:55 ~ lib[f7f0]::src::zadd::zadd): (None, None, None) -> None
-generating signatures for DefId(0:66 ~ lib[f7f0]::src::zand::zsignum): (Some(Normal(30..32))) -> None
-generating signatures for DefId(0:67 ~ lib[f7f0]::src::zand::zzero): (Some(Normal(32..34))) -> None
-generating signatures for DefId(0:68 ~ lib[f7f0]::src::zand::zand): (Some(Output(Consume { use: 34..36, def: 36..38 })), Some(Normal(38..40)), Some(Normal(40..42))) -> None
-generating signatures for DefId(0:77 ~ lib[f7f0]::src::zbits::zzero): (Some(Normal(42..44))) -> None
-generating signatures for DefId(0:78 ~ lib[f7f0]::src::zbits::zbits): (Some(Output(Consume { use: 44..46, def: 46..48 }))) -> None
-generating signatures for DefId(0:89 ~ lib[f7f0]::src::zbset::zzero): (Some(Normal(48..50))) -> None
-generating signatures for DefId(0:90 ~ lib[f7f0]::src::zbset::zbset): (Some(Output(Consume { use: 50..52, def: 52..54 })), Some(Normal(54..56)), None, None) -> None
-generating signatures for DefId(0:99 ~ lib[f7f0]::src::zbtest::zzero): (Some(Normal(56..58))) -> None
-generating signatures for DefId(0:100 ~ lib[f7f0]::src::zbtest::zbtest): (Some(Normal(58..60)), None) -> None
-generating signatures for DefId(0:110 ~ lib[f7f0]::src::zcmp::zsignum): (Some(Normal(60..62))) -> None
-generating signatures for DefId(0:111 ~ lib[f7f0]::src::zcmp::zcmp): (Some(Normal(62..64)), Some(Normal(64..66))) -> None
-generating signatures for DefId(0:124 ~ lib[f7f0]::src::zcmpi::zzero): (Some(Normal(66..68))) -> None
-generating signatures for DefId(0:125 ~ lib[f7f0]::src::zcmpi::zsignum): (Some(Normal(68..70))) -> None
-generating signatures for DefId(0:126 ~ lib[f7f0]::src::zcmpi::zcmpi): (Some(Normal(70..72)), None) -> None
-generating signatures for DefId(0:135 ~ lib[f7f0]::src::zcmpmag::zzero): (Some(Normal(72..74))) -> None
-generating signatures for DefId(0:136 ~ lib[f7f0]::src::zcmpmag::zcmpmag): (Some(Normal(74..76)), Some(Normal(76..78))) -> None
-generating signatures for DefId(0:149 ~ lib[f7f0]::src::zcmpu::zsignum): (Some(Normal(78..80))) -> None
-generating signatures for DefId(0:150 ~ lib[f7f0]::src::zcmpu::zcmpu): (Some(Normal(80..82)), None) -> None
-generating signatures for DefId(0:163 ~ lib[f7f0]::src::zdiv::zdiv): (Some(Normal(82..84)), Some(Normal(84..86)), Some(Normal(86..88))) -> None
-generating signatures for DefId(0:187 ~ lib[f7f0]::src::zdivmod::zzero): (Some(Normal(88..90))) -> None
-generating signatures for DefId(0:188 ~ lib[f7f0]::src::zdivmod::zsignum): (Some(Normal(90..92))) -> None
+generating signatures for DefId(0:66 ~ lib[f7f0]::src::zand::zsignum): (Some(Normal(26..28))) -> None
+generating signatures for DefId(0:67 ~ lib[f7f0]::src::zand::zzero): (Some(Normal(28..30))) -> None
+generating signatures for DefId(0:68 ~ lib[f7f0]::src::zand::zand): (Some(Output(Consume { use: 30..32, def: 32..34 })), Some(Normal(34..36)), Some(Normal(36..38))) -> None
+generating signatures for DefId(0:77 ~ lib[f7f0]::src::zbits::zzero): (Some(Normal(38..40))) -> None
+generating signatures for DefId(0:78 ~ lib[f7f0]::src::zbits::zbits): (Some(Output(Consume { use: 40..42, def: 42..44 }))) -> None
+generating signatures for DefId(0:89 ~ lib[f7f0]::src::zbset::zzero): (Some(Normal(44..46))) -> None
+generating signatures for DefId(0:90 ~ lib[f7f0]::src::zbset::zbset): (Some(Output(Consume { use: 46..48, def: 48..50 })), Some(Normal(50..52)), None, None) -> None
+generating signatures for DefId(0:99 ~ lib[f7f0]::src::zbtest::zzero): (Some(Normal(52..54))) -> None
+generating signatures for DefId(0:100 ~ lib[f7f0]::src::zbtest::zbtest): (Some(Normal(54..56)), None) -> None
+generating signatures for DefId(0:110 ~ lib[f7f0]::src::zcmp::zsignum): (Some(Normal(56..58))) -> None
+generating signatures for DefId(0:111 ~ lib[f7f0]::src::zcmp::zcmp): (Some(Normal(58..60)), Some(Normal(60..62))) -> None
+generating signatures for DefId(0:124 ~ lib[f7f0]::src::zcmpi::zzero): (Some(Normal(62..64))) -> None
+generating signatures for DefId(0:125 ~ lib[f7f0]::src::zcmpi::zsignum): (Some(Normal(64..66))) -> None
+generating signatures for DefId(0:126 ~ lib[f7f0]::src::zcmpi::zcmpi): (Some(Normal(66..68)), None) -> None
+generating signatures for DefId(0:135 ~ lib[f7f0]::src::zcmpmag::zzero): (Some(Normal(68..70))) -> None
+generating signatures for DefId(0:136 ~ lib[f7f0]::src::zcmpmag::zcmpmag): (Some(Normal(70..72)), Some(Normal(72..74))) -> None
+generating signatures for DefId(0:149 ~ lib[f7f0]::src::zcmpu::zsignum): (Some(Normal(74..76))) -> None
+generating signatures for DefId(0:150 ~ lib[f7f0]::src::zcmpu::zcmpu): (Some(Normal(76..78)), None) -> None
+generating signatures for DefId(0:163 ~ lib[f7f0]::src::zdiv::zdiv): (Some(Normal(78..80)), Some(Normal(80..82)), Some(Normal(82..84))) -> None
+generating signatures for DefId(0:187 ~ lib[f7f0]::src::zdivmod::zzero): (Some(Normal(84..86))) -> None
+generating signatures for DefId(0:188 ~ lib[f7f0]::src::zdivmod::zsignum): (Some(Normal(86..88))) -> None
 generating signatures for DefId(0:189 ~ lib[f7f0]::src::zdivmod::zdivmod): (None, None, None, None) -> None
-generating signatures for DefId(0:201 ~ lib[f7f0]::src::zerror::zerror): (Some(Output(Consume { use: 92..94, def: 94..96 }))) -> None
-generating signatures for DefId(0:233 ~ lib[f7f0]::src::zgcd::zzero): (Some(Normal(96..98))) -> None
-generating signatures for DefId(0:234 ~ lib[f7f0]::src::zgcd::zsignum): (Some(Normal(98..100))) -> None
+generating signatures for DefId(0:201 ~ lib[f7f0]::src::zerror::zerror): (Some(Output(Consume { use: 88..90, def: 90..92 }))) -> None
+generating signatures for DefId(0:233 ~ lib[f7f0]::src::zgcd::zzero): (Some(Normal(92..94))) -> None
+generating signatures for DefId(0:234 ~ lib[f7f0]::src::zgcd::zsignum): (Some(Normal(94..96))) -> None
 generating signatures for DefId(0:235 ~ lib[f7f0]::src::zgcd::zgcd): (None, None, None) -> None
-generating signatures for DefId(0:246 ~ lib[f7f0]::src::zload::zzero): (Some(Normal(100..102))) -> None
-generating signatures for DefId(0:247 ~ lib[f7f0]::src::zload::zload): (Some(Output(Consume { use: 102..104, def: 104..106 })), Some(Normal(106..107))) -> None
-generating signatures for DefId(0:256 ~ lib[f7f0]::src::zlsb::zzero): (Some(Normal(107..109))) -> None
-generating signatures for DefId(0:257 ~ lib[f7f0]::src::zlsb::zlsb): (Some(Normal(109..111))) -> None
-generating signatures for DefId(0:270 ~ lib[f7f0]::src::zlsh::zsignum): (Some(Normal(111..113))) -> None
-generating signatures for DefId(0:271 ~ lib[f7f0]::src::zlsh::zzero): (Some(Normal(113..115))) -> None
-generating signatures for DefId(0:272 ~ lib[f7f0]::src::zlsh::zlsh): (Some(Output(Consume { use: 115..117, def: 117..119 })), Some(Normal(119..121)), None) -> None
-generating signatures for DefId(0:286 ~ lib[f7f0]::src::zmod::zmod): (Some(Normal(121..123)), Some(Normal(123..125)), Some(Normal(125..127))) -> None
-generating signatures for DefId(0:299 ~ lib[f7f0]::src::zmodmul::zmodmul): (Some(Normal(127..129)), Some(Normal(129..131)), Some(Normal(131..133)), Some(Normal(133..135))) -> None
-generating signatures for DefId(0:321 ~ lib[f7f0]::src::zmodpow::zzero): (Some(Normal(135..137))) -> None
-generating signatures for DefId(0:322 ~ lib[f7f0]::src::zmodpow::zsignum): (Some(Normal(137..139))) -> None
+generating signatures for DefId(0:246 ~ lib[f7f0]::src::zload::zzero): (Some(Normal(96..98))) -> None
+generating signatures for DefId(0:247 ~ lib[f7f0]::src::zload::zload): (Some(Output(Consume { use: 98..100, def: 100..102 })), Some(Normal(102..103))) -> None
+generating signatures for DefId(0:256 ~ lib[f7f0]::src::zlsb::zzero): (Some(Normal(103..105))) -> None
+generating signatures for DefId(0:257 ~ lib[f7f0]::src::zlsb::zlsb): (Some(Normal(105..107))) -> None
+generating signatures for DefId(0:270 ~ lib[f7f0]::src::zlsh::zsignum): (Some(Normal(107..109))) -> None
+generating signatures for DefId(0:271 ~ lib[f7f0]::src::zlsh::zzero): (Some(Normal(109..111))) -> None
+generating signatures for DefId(0:272 ~ lib[f7f0]::src::zlsh::zlsh): (Some(Output(Consume { use: 111..113, def: 113..115 })), Some(Normal(115..117)), None) -> None
+generating signatures for DefId(0:286 ~ lib[f7f0]::src::zmod::zmod): (Some(Normal(117..119)), Some(Normal(119..121)), Some(Normal(121..123))) -> None
+generating signatures for DefId(0:299 ~ lib[f7f0]::src::zmodmul::zmodmul): (Some(Normal(123..125)), Some(Normal(125..127)), Some(Normal(127..129)), Some(Normal(129..131))) -> None
+generating signatures for DefId(0:321 ~ lib[f7f0]::src::zmodpow::zzero): (Some(Normal(131..133))) -> None
+generating signatures for DefId(0:322 ~ lib[f7f0]::src::zmodpow::zsignum): (Some(Normal(133..135))) -> None
 generating signatures for DefId(0:323 ~ lib[f7f0]::src::zmodpow::zmodpow): (None, None, None, None) -> None
-generating signatures for DefId(0:344 ~ lib[f7f0]::src::zmodpowu::zzero): (Some(Normal(139..141))) -> None
-generating signatures for DefId(0:345 ~ lib[f7f0]::src::zmodpowu::zmodpowu): (Some(Normal(141..143)), Some(Normal(143..145)), None, Some(Normal(145..147))) -> None
-generating signatures for DefId(0:358 ~ lib[f7f0]::src::zmodsqr::zmodsqr): (Some(Normal(147..149)), Some(Normal(149..151)), Some(Normal(151..153))) -> None
-generating signatures for DefId(0:370 ~ lib[f7f0]::src::zmul::zinit): (Some(Output(Consume { use: 153..155, def: 155..157 }))) -> None
-generating signatures for DefId(0:371 ~ lib[f7f0]::src::zmul::zsignum): (Some(Normal(157..159))) -> None
+generating signatures for DefId(0:344 ~ lib[f7f0]::src::zmodpowu::zzero): (Some(Normal(135..137))) -> None
+generating signatures for DefId(0:345 ~ lib[f7f0]::src::zmodpowu::zmodpowu): (Some(Normal(137..139)), Some(Normal(139..141)), None, Some(Normal(141..143))) -> None
+generating signatures for DefId(0:358 ~ lib[f7f0]::src::zmodsqr::zmodsqr): (Some(Normal(143..145)), Some(Normal(145..147)), Some(Normal(147..149))) -> None
+generating signatures for DefId(0:370 ~ lib[f7f0]::src::zmul::zinit): (Some(Output(Consume { use: 149..151, def: 151..153 }))) -> None
+generating signatures for DefId(0:371 ~ lib[f7f0]::src::zmul::zsignum): (Some(Normal(153..155))) -> None
 generating signatures for DefId(0:372 ~ lib[f7f0]::src::zmul::zmul): (None, None, None) -> None
-generating signatures for DefId(0:389 ~ lib[f7f0]::src::zneg::zsignum): (Some(Normal(159..161))) -> None
-generating signatures for DefId(0:390 ~ lib[f7f0]::src::zneg::zneg): (Some(Output(Consume { use: 161..163, def: 163..165 })), Some(Normal(165..167))) -> None
-generating signatures for DefId(0:400 ~ lib[f7f0]::src::znot::zsignum): (Some(Normal(167..169))) -> None
-generating signatures for DefId(0:401 ~ lib[f7f0]::src::znot::zzero): (Some(Normal(169..171))) -> None
+generating signatures for DefId(0:389 ~ lib[f7f0]::src::zneg::zsignum): (Some(Normal(155..157))) -> None
+generating signatures for DefId(0:390 ~ lib[f7f0]::src::zneg::zneg): (Some(Output(Consume { use: 157..159, def: 159..161 })), Some(Normal(161..163))) -> None
+generating signatures for DefId(0:400 ~ lib[f7f0]::src::znot::zsignum): (Some(Normal(163..165))) -> None
+generating signatures for DefId(0:401 ~ lib[f7f0]::src::znot::zzero): (Some(Normal(165..167))) -> None
 generating signatures for DefId(0:402 ~ lib[f7f0]::src::znot::znot): (None, None) -> None
-generating signatures for DefId(0:413 ~ lib[f7f0]::src::zor::zsignum): (Some(Normal(171..173))) -> None
-generating signatures for DefId(0:414 ~ lib[f7f0]::src::zor::zzero): (Some(Normal(173..175))) -> None
-generating signatures for DefId(0:415 ~ lib[f7f0]::src::zor::zor): (Some(Output(Consume { use: 175..177, def: 177..179 })), Some(Normal(179..181)), Some(Normal(181..183))) -> None
-generating signatures for DefId(0:425 ~ lib[f7f0]::src::zperror::zperror): (Some(Normal(183..184))) -> None
-generating signatures for DefId(0:446 ~ lib[f7f0]::src::zpow::zzero): (Some(Normal(184..186))) -> None
-generating signatures for DefId(0:447 ~ lib[f7f0]::src::zpow::zsignum): (Some(Normal(186..188))) -> None
+generating signatures for DefId(0:413 ~ lib[f7f0]::src::zor::zsignum): (Some(Normal(167..169))) -> None
+generating signatures for DefId(0:414 ~ lib[f7f0]::src::zor::zzero): (Some(Normal(169..171))) -> None
+generating signatures for DefId(0:415 ~ lib[f7f0]::src::zor::zor): (Some(Output(Consume { use: 171..173, def: 173..175 })), Some(Normal(175..177)), Some(Normal(177..179))) -> None
+generating signatures for DefId(0:425 ~ lib[f7f0]::src::zperror::zperror): (Some(Normal(179..180))) -> None
+generating signatures for DefId(0:446 ~ lib[f7f0]::src::zpow::zzero): (Some(Normal(180..182))) -> None
+generating signatures for DefId(0:447 ~ lib[f7f0]::src::zpow::zsignum): (Some(Normal(182..184))) -> None
 generating signatures for DefId(0:448 ~ lib[f7f0]::src::zpow::zpow): (None, None, None) -> None
-generating signatures for DefId(0:468 ~ lib[f7f0]::src::zpowu::zzero): (Some(Normal(188..190))) -> None
-generating signatures for DefId(0:469 ~ lib[f7f0]::src::zpowu::zpowu): (Some(Normal(190..192)), Some(Normal(192..194)), None) -> None
-generating signatures for DefId(0:499 ~ lib[f7f0]::src::zptest::zeven): (Some(Normal(194..196))) -> None
+generating signatures for DefId(0:468 ~ lib[f7f0]::src::zpowu::zzero): (Some(Normal(184..186))) -> None
+generating signatures for DefId(0:469 ~ lib[f7f0]::src::zpowu::zpowu): (Some(Normal(186..188)), Some(Normal(188..190)), None) -> None
+generating signatures for DefId(0:499 ~ lib[f7f0]::src::zptest::zeven): (Some(Normal(190..192))) -> None
 generating signatures for DefId(0:500 ~ lib[f7f0]::src::zptest::zptest): (None, None, None) -> None
-generating signatures for DefId(0:533 ~ lib[f7f0]::src::zrand::zsignum): (Some(Normal(196..198))) -> None
-generating signatures for DefId(0:534 ~ lib[f7f0]::src::zrand::zzero): (Some(Normal(198..200))) -> None
-generating signatures for DefId(0:535 ~ lib[f7f0]::src::zrand::zrand_get_random_bits): (Some(Output(Consume { use: 200..202, def: 202..204 })), None, None) -> None
+generating signatures for DefId(0:533 ~ lib[f7f0]::src::zrand::zsignum): (Some(Normal(192..194))) -> None
+generating signatures for DefId(0:534 ~ lib[f7f0]::src::zrand::zzero): (Some(Normal(194..196))) -> None
+generating signatures for DefId(0:535 ~ lib[f7f0]::src::zrand::zrand_get_random_bits): (Some(Output(Consume { use: 196..198, def: 198..200 })), None, None) -> None
 generating signatures for DefId(0:536 ~ lib[f7f0]::src::zrand::zrand): (None, None, None, None) -> None
-generating signatures for DefId(0:548 ~ lib[f7f0]::src::zrsh::zsignum): (Some(Normal(204..206))) -> None
-generating signatures for DefId(0:549 ~ lib[f7f0]::src::zrsh::zzero): (Some(Normal(206..208))) -> None
+generating signatures for DefId(0:548 ~ lib[f7f0]::src::zrsh::zsignum): (Some(Normal(200..202))) -> None
+generating signatures for DefId(0:549 ~ lib[f7f0]::src::zrsh::zzero): (Some(Normal(202..204))) -> None
 generating signatures for DefId(0:550 ~ lib[f7f0]::src::zrsh::zrsh): (None, None, None) -> None
-generating signatures for DefId(0:561 ~ lib[f7f0]::src::zsave::zzero): (Some(Normal(208..210))) -> None
-generating signatures for DefId(0:562 ~ lib[f7f0]::src::zsave::zsave): (Some(Normal(210..212)), Some(Normal(212..213))) -> None
-generating signatures for DefId(0:573 ~ lib[f7f0]::src::zset::zzero): (Some(Normal(213..215))) -> None
-generating signatures for DefId(0:574 ~ lib[f7f0]::src::zset::zset): (Some(Output(Consume { use: 215..217, def: 217..219 })), Some(Normal(219..221))) -> None
-generating signatures for DefId(0:584 ~ lib[f7f0]::src::zseti::zseti): (Some(Output(Consume { use: 221..223, def: 223..225 })), None) -> None
-generating signatures for DefId(0:613 ~ lib[f7f0]::src::zsets::zsignum): (Some(Normal(225..227))) -> None
-generating signatures for DefId(0:614 ~ lib[f7f0]::src::zsets::zsets): (Some(Normal(227..229)), Some(Normal(229..230))) -> None
+generating signatures for DefId(0:561 ~ lib[f7f0]::src::zsave::zzero): (Some(Normal(204..206))) -> None
+generating signatures for DefId(0:562 ~ lib[f7f0]::src::zsave::zsave): (Some(Normal(206..208)), Some(Normal(208..209))) -> None
+generating signatures for DefId(0:573 ~ lib[f7f0]::src::zset::zzero): (Some(Normal(209..211))) -> None
+generating signatures for DefId(0:574 ~ lib[f7f0]::src::zset::zset): (Some(Output(Consume { use: 211..213, def: 213..215 })), Some(Normal(215..217))) -> None
+generating signatures for DefId(0:584 ~ lib[f7f0]::src::zseti::zseti): (Some(Output(Consume { use: 217..219, def: 219..221 })), None) -> None
+generating signatures for DefId(0:613 ~ lib[f7f0]::src::zsets::zsignum): (Some(Normal(221..223))) -> None
+generating signatures for DefId(0:614 ~ lib[f7f0]::src::zsets::zsets): (Some(Normal(223..225)), Some(Normal(225..226))) -> None
 generating signatures for DefId(0:624 ~ lib[f7f0]::src::zsetu::zsetu): (None, None) -> None
-generating signatures for DefId(0:641 ~ lib[f7f0]::src::zsetup::zinit): (Some(Output(Consume { use: 230..232, def: 232..234 }))) -> None
-generating signatures for DefId(0:717 ~ lib[f7f0]::src::zsetup::zsetup): (Some(Normal(234..235))) -> None
-generating signatures for DefId(0:730 ~ lib[f7f0]::src::zsplit::zzero): (Some(Normal(235..237))) -> None
+generating signatures for DefId(0:641 ~ lib[f7f0]::src::zsetup::zinit): (Some(Output(Consume { use: 226..228, def: 228..230 }))) -> None
+generating signatures for DefId(0:717 ~ lib[f7f0]::src::zsetup::zsetup): (Some(Normal(230..231))) -> None
+generating signatures for DefId(0:730 ~ lib[f7f0]::src::zsplit::zzero): (Some(Normal(231..233))) -> None
 generating signatures for DefId(0:731 ~ lib[f7f0]::src::zsplit::zsplit): (None, None, None, None) -> None
-generating signatures for DefId(0:743 ~ lib[f7f0]::src::zsqr::zinit): (Some(Output(Consume { use: 237..239, def: 239..241 }))) -> None
-generating signatures for DefId(0:744 ~ lib[f7f0]::src::zsqr::zsignum): (Some(Normal(241..243))) -> None
-generating signatures for DefId(0:745 ~ lib[f7f0]::src::zsqr::zzero): (Some(Normal(243..245))) -> None
+generating signatures for DefId(0:743 ~ lib[f7f0]::src::zsqr::zinit): (Some(Output(Consume { use: 233..235, def: 235..237 }))) -> None
+generating signatures for DefId(0:744 ~ lib[f7f0]::src::zsqr::zsignum): (Some(Normal(237..239))) -> None
+generating signatures for DefId(0:745 ~ lib[f7f0]::src::zsqr::zzero): (Some(Normal(239..241))) -> None
 generating signatures for DefId(0:746 ~ lib[f7f0]::src::zsqr::zsqr): (None, None) -> None
-generating signatures for DefId(0:777 ~ lib[f7f0]::src::zstr::zzero): (Some(Normal(245..247))) -> None
-generating signatures for DefId(0:778 ~ lib[f7f0]::src::zstr::zsignum): (Some(Normal(247..249))) -> None
-generating signatures for DefId(0:796 ~ lib[f7f0]::src::zstr_length::zsignum): (Some(Normal(249..251))) -> None
-generating signatures for DefId(0:797 ~ lib[f7f0]::src::zstr_length::zzero): (Some(Normal(251..253))) -> None
-generating signatures for DefId(0:798 ~ lib[f7f0]::src::zstr_length::zstr_length): (Some(Normal(253..255)), None) -> None
-generating signatures for DefId(0:811 ~ lib[f7f0]::src::zsub::zzero): (Some(Normal(255..257))) -> None
-generating signatures for DefId(0:812 ~ lib[f7f0]::src::zsub::zsignum): (Some(Normal(257..259))) -> None
+generating signatures for DefId(0:777 ~ lib[f7f0]::src::zstr::zzero): (Some(Normal(241..243))) -> None
+generating signatures for DefId(0:778 ~ lib[f7f0]::src::zstr::zsignum): (Some(Normal(243..245))) -> None
+generating signatures for DefId(0:796 ~ lib[f7f0]::src::zstr_length::zsignum): (Some(Normal(245..247))) -> None
+generating signatures for DefId(0:797 ~ lib[f7f0]::src::zstr_length::zzero): (Some(Normal(247..249))) -> None
+generating signatures for DefId(0:798 ~ lib[f7f0]::src::zstr_length::zstr_length): (Some(Normal(249..251)), None) -> None
+generating signatures for DefId(0:811 ~ lib[f7f0]::src::zsub::zzero): (Some(Normal(251..253))) -> None
+generating signatures for DefId(0:812 ~ lib[f7f0]::src::zsub::zsignum): (Some(Normal(253..255))) -> None
 generating signatures for DefId(0:813 ~ lib[f7f0]::src::zsub::zsub_unsigned): (None, None, None) -> None
 generating signatures for DefId(0:815 ~ lib[f7f0]::src::zsub::zsub): (None, None, None) -> None
-generating signatures for DefId(0:826 ~ lib[f7f0]::src::zswap::zswap): (Some(Output(Consume { use: 259..261, def: 261..263 })), Some(Output(Consume { use: 263..265, def: 265..267 }))) -> None
-generating signatures for DefId(0:838 ~ lib[f7f0]::src::ztrunc::zzero): (Some(Normal(267..269))) -> None
-generating signatures for DefId(0:839 ~ lib[f7f0]::src::ztrunc::ztrunc): (Some(Output(Consume { use: 269..271, def: 271..273 })), Some(Normal(273..275)), None) -> None
-generating signatures for DefId(0:899 ~ lib[f7f0]::src::zxor::zsignum): (Some(Normal(275..277))) -> None
-generating signatures for DefId(0:900 ~ lib[f7f0]::src::zxor::zzero): (Some(Normal(277..279))) -> None
-generating signatures for DefId(0:901 ~ lib[f7f0]::src::zxor::zxor): (Some(Output(Consume { use: 279..281, def: 281..283 })), Some(Normal(283..285)), Some(Normal(285..287))) -> None
+generating signatures for DefId(0:826 ~ lib[f7f0]::src::zswap::zswap): (Some(Output(Consume { use: 255..257, def: 257..259 })), Some(Output(Consume { use: 259..261, def: 261..263 }))) -> None
+generating signatures for DefId(0:838 ~ lib[f7f0]::src::ztrunc::zzero): (Some(Normal(263..265))) -> None
+generating signatures for DefId(0:839 ~ lib[f7f0]::src::ztrunc::ztrunc): (Some(Output(Consume { use: 265..267, def: 267..269 })), Some(Normal(269..271)), None) -> None
+generating signatures for DefId(0:899 ~ lib[f7f0]::src::zxor::zsignum): (Some(Normal(271..273))) -> None
+generating signatures for DefId(0:900 ~ lib[f7f0]::src::zxor::zzero): (Some(Normal(273..275))) -> None
+generating signatures for DefId(0:901 ~ lib[f7f0]::src::zxor::zxor): (Some(Output(Consume { use: 275..277, def: 277..279 })), Some(Normal(279..281)), Some(Normal(281..283))) -> None
 src::zunsetup::zunsetup: () -> _
-src::zfree::zfree: (&uniq &move ↓ &uniq &) -> _
+src::zfree::zfree: (&uniq  ↓ &uniq ) -> _
 src::zstr::zstr: (_, _) -> _
-src::allocator::libzahl_realloc: (&uniq &move ↓ &uniq &move, _) -> _
+src::allocator::libzahl_realloc: (&uniq  ↓ &uniq , _) -> _
 src::zabs::zzero: (& &) -> _
-src::zabs::zabs: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zabs::zabs: (&uniq & ↓ &uniq &, & &) -> _
 src::zadd::zzero: (& &) -> _
 src::zadd::zsignum: (& &) -> _
-src::zadd::zadd_unsigned: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zadd::zadd_unsigned: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zadd::zadd: (_, _, _) -> _
 src::zand::zsignum: (& &) -> _
 src::zand::zzero: (& &) -> _
-src::zand::zand: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zand::zand: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zbits::zzero: (& &) -> _
 src::zbits::zbits: (&uniq & ↓ &uniq &) -> _
 src::zbset::zzero: (& &) -> _
-src::zbset::zbset: (&uniq &move ↓ &uniq &move, & &, _, _) -> _
+src::zbset::zbset: (&uniq & ↓ &uniq &, & &, _, _) -> _
 src::zbtest::zzero: (& &) -> _
 src::zbtest::zbtest: (& &, _) -> _
 src::zcmp::zsignum: (& &) -> _
@@ -2857,12 +2863,12 @@ src::zgcd::zzero: (& &) -> _
 src::zgcd::zsignum: (& &) -> _
 src::zgcd::zgcd: (_, _, _) -> _
 src::zload::zzero: (& &) -> _
-src::zload::zload: (&uniq &move ↓ &uniq &move, &) -> _
+src::zload::zload: (&uniq & ↓ &uniq &, &) -> _
 src::zlsb::zzero: (& &) -> _
 src::zlsb::zlsb: (& &) -> _
 src::zlsh::zsignum: (& &) -> _
 src::zlsh::zzero: (& &) -> _
-src::zlsh::zlsh: (&uniq &move ↓ &uniq &move, & &, _) -> _
+src::zlsh::zlsh: (&uniq & ↓ &uniq &, & &, _) -> _
 src::zmod::zmod: (& &, & &, & &) -> _
 src::zmodmul::zmodmul: (& &, & &, & &, & &) -> _
 src::zmodpow::zzero: (& &) -> _
@@ -2875,13 +2881,13 @@ src::zmul::zinit: (&uniq & ↓ &uniq &) -> _
 src::zmul::zsignum: (& &) -> _
 src::zmul::zmul: (_, _, _) -> _
 src::zneg::zsignum: (& &) -> _
-src::zneg::zneg: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zneg::zneg: (&uniq & ↓ &uniq &, & &) -> _
 src::znot::zsignum: (& &) -> _
 src::znot::zzero: (& &) -> _
 src::znot::znot: (_, _) -> _
 src::zor::zsignum: (& &) -> _
 src::zor::zzero: (& &) -> _
-src::zor::zor: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zor::zor: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::zperror::zperror: (&) -> _
 src::zpow::zzero: (& &) -> _
 src::zpow::zsignum: (& &) -> _
@@ -2892,7 +2898,7 @@ src::zptest::zeven: (& &) -> _
 src::zptest::zptest: (_, _, _) -> _
 src::zrand::zsignum: (& &) -> _
 src::zrand::zzero: (& &) -> _
-src::zrand::zrand_get_random_bits: (&uniq &move ↓ &uniq &move, _, _) -> _
+src::zrand::zrand_get_random_bits: (&uniq & ↓ &uniq &, _, _) -> _
 src::zrand::zrand: (_, _, _, _) -> _
 src::zrsh::zsignum: (& &) -> _
 src::zrsh::zzero: (& &) -> _
@@ -2900,7 +2906,7 @@ src::zrsh::zrsh: (_, _, _) -> _
 src::zsave::zzero: (& &) -> _
 src::zsave::zsave: (& &, &) -> _
 src::zset::zzero: (& &) -> _
-src::zset::zset: (&uniq &move ↓ &uniq &move, & &) -> _
+src::zset::zset: (&uniq & ↓ &uniq &, & &) -> _
 src::zseti::zseti: (&uniq & ↓ &uniq &, _) -> _
 src::zsets::zsignum: (& &) -> _
 src::zsets::zsets: (& &, &) -> _
@@ -2924,10 +2930,10 @@ src::zsub::zsub_unsigned: (_, _, _) -> _
 src::zsub::zsub: (_, _, _) -> _
 src::zswap::zswap: (&uniq & ↓ &uniq &, &uniq & ↓ &uniq &) -> _
 src::ztrunc::zzero: (& &) -> _
-src::ztrunc::ztrunc: (&uniq &move ↓ &uniq &move, & &, _) -> _
+src::ztrunc::ztrunc: (&uniq & ↓ &uniq &, & &, _) -> _
 src::zxor::zsignum: (& &) -> _
 src::zxor::zzero: (& &) -> _
-src::zxor::zxor: (&uniq &move ↓ &uniq &move, & &, & &) -> _
+src::zxor::zxor: (&uniq & ↓ &uniq &, & &, & &) -> _
 src::allocator::__sigset_t {
   __val: ,
 }

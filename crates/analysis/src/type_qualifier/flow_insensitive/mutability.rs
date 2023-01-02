@@ -14,13 +14,26 @@ use rustc_type_ir::TyKind::{self, FnDef};
 
 use self::{libc::libc_call, library::library_call};
 use super::{
-    boolean_system::BooleanSystem, BooleanLattice, FnLocals, Infer, Lattice, StructFields,
-    TypeQualifiers, Var, WithConstraintSystem,
+    boolean_system::BooleanSystem, resolve_body, BooleanLattice, FnLocals, Infer, Lattice,
+    StructFields, TypeQualifiers, Var, WithConstraintSystem,
 };
 use crate::type_qualifier::flow_insensitive::ConstraintSystem;
 
 pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResult {
-    MutabilityResult::from_infer(MutabilityAnalysis, crate_data)
+    let mut result = MutabilityResult::new_empty(crate_data);
+    let mut database = BooleanSystem::new(&result.model);
+    for r#fn in &crate_data.fns {
+        let body = crate_data.tcx.optimized_mir(*r#fn);
+        resolve_body(
+            &mut database,
+            &mut result,
+            MutabilityAnalysis,
+            body,
+            crate_data.tcx,
+        );
+    }
+    database.greatest_model(&mut result.model);
+    result
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

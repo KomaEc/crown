@@ -487,11 +487,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     "TODO: constant pointer {:?}",
                     constant
                 );
-                assert!(!self
-                    .state
-                    .consume_chain
-                    .call_arg_temps
-                    .contains(&lhs.local));
+                assert!(!self.state.consume_chain.call_arg_temps.contains(&lhs.local));
             }
 
             Rvalue::Use(operand @ Operand::Copy(rhs) | operand @ Operand::Move(rhs)) => {
@@ -503,12 +499,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 match (lhs_consume, rhs_consume) {
                     (None, None) => {}
                     (None, Some(rhs_consume)) => {
-                        if self
-                            .state
-                            .consume_chain
-                            .call_arg_temps
-                            .contains(&lhs.local)
-                        {
+                        if self.state.consume_chain.call_arg_temps.contains(&lhs.local) {
                             Infer::call_arg(infer_cx, lhs.as_local().unwrap(), rhs_consume, false)
                         } else {
                             Infer::unknown_sink(infer_cx, rhs_consume)
@@ -543,12 +534,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 match (lhs_consume, rhs_consume) {
                     (None, None) => {}
                     (None, Some(rhs_consume)) => {
-                        if self
-                            .state
-                            .consume_chain
-                            .call_arg_temps
-                            .contains(&lhs.local)
-                        {
+                        if self.state.consume_chain.call_arg_temps.contains(&lhs.local) {
                             Infer::call_arg(infer_cx, lhs.as_local().unwrap(), rhs_consume, false)
                         } else {
                             Infer::unknown_sink(infer_cx, rhs_consume)
@@ -591,12 +577,7 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     }
                 } else {
                     // assert!(self.state.consume_chain.call_arg_temps.contains(&lhs.local));
-                    if self
-                        .state
-                        .consume_chain
-                        .call_arg_temps
-                        .contains(&lhs.local)
-                    {
+                    if self.state.consume_chain.call_arg_temps.contains(&lhs.local) {
                         if let Some(rhs_consume) = rhs_consume {
                             Infer::call_arg(infer_cx, lhs.as_local().unwrap(), rhs_consume, true)
                         }
