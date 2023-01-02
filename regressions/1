@@ -1,0 +1,57 @@
+generating signatures for DefId(0:19 ~ lib[f7f0]::src::llist::deleteFirst): (Some(Output(Consume { use: 2..3, def: 3..4 }))) -> None
+generating signatures for DefId(0:16 ~ lib[f7f0]::src::llist::push): (Some(Output(Consume { use: 4..5, def: 5..6 })), None) -> None
+generating signatures for DefId(0:17 ~ lib[f7f0]::src::llist::insertAfter): (Some(Output(Consume { use: 6..7, def: 7..8 })), None) -> None
+generating signatures for DefId(0:18 ~ lib[f7f0]::src::llist::append): (Some(Output(Consume { use: 8..9, def: 9..10 })), None) -> None
+src::llist::deleteFirst: (&uniq  ↓ &uniq ) -> _
+src::llist::push: (&uniq  ↓ &uniq , _) -> _
+src::llist::insertAfter: (&uniq  ↓ &uniq , _) -> _
+src::llist::append: (&uniq  ↓ &uniq , _) -> _
+generating signatures for DefId(0:19 ~ lib[f7f0]::src::llist::deleteFirst): (Some(Output(Consume { use: 2..4, def: 4..6 }))) -> None
+generating signatures for DefId(0:16 ~ lib[f7f0]::src::llist::push): (Some(Output(Consume { use: 6..8, def: 8..10 })), None) -> None
+generating signatures for DefId(0:17 ~ lib[f7f0]::src::llist::insertAfter): (Some(Output(Consume { use: 10..12, def: 12..14 })), None) -> None
+generating signatures for DefId(0:18 ~ lib[f7f0]::src::llist::append): (Some(Output(Consume { use: 14..16, def: 16..18 })), None) -> None
+src::llist::deleteFirst: (&uniq &move ↓ &uniq &) -> _
+src::llist::push: (&uniq & ↓ &uniq &move, _) -> _
+src::llist::insertAfter: (&uniq &move ↓ &uniq &move, _) -> _
+src::llist::append: (&uniq &move ↓ &uniq &move, _) -> _
+generating signatures for DefId(0:19 ~ lib[f7f0]::src::llist::deleteFirst): (Some(Output(Consume { use: 2..5, def: 5..8 }))) -> None
+generating signatures for DefId(0:16 ~ lib[f7f0]::src::llist::push): (Some(Output(Consume { use: 8..11, def: 11..14 })), None) -> None
+generating signatures for DefId(0:17 ~ lib[f7f0]::src::llist::insertAfter): (Some(Output(Consume { use: 14..17, def: 17..20 })), None) -> None
+generating signatures for DefId(0:18 ~ lib[f7f0]::src::llist::append): (Some(Output(Consume { use: 20..23, def: 23..26 })), None) -> None
+src::llist::deleteFirst: (&uniq &move & ↓ &uniq & &) -> _
+src::llist::push: (&uniq & & ↓ &uniq &move &, _) -> _
+src::llist::insertAfter: (&uniq &move &move ↓ &uniq &move &move, _) -> _
+src::llist::append: (&uniq &move & ↓ &uniq &move &, _) -> _
+generating signatures for DefId(0:19 ~ lib[f7f0]::src::llist::deleteFirst): (Some(Output(Consume { use: 2..5, def: 5..8 }))) -> None
+generating signatures for DefId(0:16 ~ lib[f7f0]::src::llist::push): (Some(Output(Consume { use: 8..11, def: 11..14 })), None) -> None
+generating signatures for DefId(0:17 ~ lib[f7f0]::src::llist::insertAfter): (Some(Output(Consume { use: 14..17, def: 17..20 })), None) -> None
+generating signatures for DefId(0:18 ~ lib[f7f0]::src::llist::append): (Some(Output(Consume { use: 20..23, def: 23..26 })), None) -> None
+src::llist::deleteFirst: (&uniq &move & ↓ &uniq & &) -> _
+src::llist::push: (&uniq & & ↓ &uniq &move &, _) -> _
+src::llist::insertAfter: (&uniq &move &move ↓ &uniq &move &move, _) -> _
+src::llist::append: (&uniq &move & ↓ &uniq &move &, _) -> _
+generating signatures for DefId(0:19 ~ lib[f7f0]::src::llist::deleteFirst): (Some(Output(Consume { use: 2..5, def: 5..8 }))) -> None
+generating signatures for DefId(0:16 ~ lib[f7f0]::src::llist::push): (Some(Output(Consume { use: 8..11, def: 11..14 })), None) -> None
+generating signatures for DefId(0:17 ~ lib[f7f0]::src::llist::insertAfter): (Some(Output(Consume { use: 14..17, def: 17..20 })), None) -> None
+generating signatures for DefId(0:18 ~ lib[f7f0]::src::llist::append): (Some(Output(Consume { use: 20..23, def: 23..26 })), None) -> None
+src::llist::deleteFirst: (&uniq &move & ↓ &uniq & &) -> _
+src::llist::push: (&uniq & & ↓ &uniq &move &, _) -> _
+src::llist::insertAfter: (&uniq &move &move ↓ &uniq &move &move, _) -> _
+src::llist::append: (&uniq &move & ↓ &uniq &move &, _) -> _
+generating signatures for DefId(0:19 ~ lib[f7f0]::src::llist::deleteFirst): (Some(Output(Consume { use: 2..5, def: 5..8 }))) -> None
+generating signatures for DefId(0:16 ~ lib[f7f0]::src::llist::push): (Some(Output(Consume { use: 8..11, def: 11..14 })), None) -> None
+generating signatures for DefId(0:17 ~ lib[f7f0]::src::llist::insertAfter): (Some(Output(Consume { use: 14..17, def: 17..20 })), None) -> None
+generating signatures for DefId(0:18 ~ lib[f7f0]::src::llist::append): (Some(Output(Consume { use: 20..23, def: 23..26 })), None) -> None
+src::llist::deleteFirst: (&uniq &move & ↓ &uniq & &) -> _
+src::llist::push: (&uniq & & ↓ &uniq &move &, _) -> _
+src::llist::insertAfter: (&uniq &move &move ↓ &uniq &move &move, _) -> _
+src::llist::append: (&uniq &move & ↓ &uniq &move &, _) -> _
+[31mERROR[0m [2manalysis::ownership::solidify[0m[2m:[0m semantics changed @ workspace/llist/src/llist.rs:80:9: 80:26 (#0)
+src::llist::Node {
+  data: ,
+  next: &any,
+}
+src::llist::push: (&move &move, ) -> 
+src::llist::insertAfter: (&move, ) -> 
+src::llist::append: (&move &move, ) -> 
+src::llist::deleteFirst: (&move &move) -> 

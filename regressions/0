@@ -1,0 +1,275 @@
+@DefId(0:22 ~ lib[f7f0]::src::rbtree::flip_color): _1 removed because it aliases _15, which is mutable
+@DefId(0:22 ~ lib[f7f0]::src::rbtree::flip_color): _1 removed because it aliases _17, which is mutable
+@DefId(0:23 ~ lib[f7f0]::src::rbtree::rotate_left): _1 removed because it aliases _0, which is mutable
+@DefId(0:23 ~ lib[f7f0]::src::rbtree::rotate_left): _1 removed because it aliases _2, which is mutable
+@DefId(0:23 ~ lib[f7f0]::src::rbtree::rotate_left): _1 removed because it aliases _8, which is mutable
+@DefId(0:23 ~ lib[f7f0]::src::rbtree::rotate_left): _1 removed because it aliases _9, which is mutable
+@DefId(0:23 ~ lib[f7f0]::src::rbtree::rotate_left): _1 removed because it aliases _10, which is mutable
+@DefId(0:24 ~ lib[f7f0]::src::rbtree::rotate_right): _1 removed because it aliases _0, which is mutable
+@DefId(0:24 ~ lib[f7f0]::src::rbtree::rotate_right): _1 removed because it aliases _2, which is mutable
+@DefId(0:24 ~ lib[f7f0]::src::rbtree::rotate_right): _1 removed because it aliases _8, which is mutable
+@DefId(0:24 ~ lib[f7f0]::src::rbtree::rotate_right): _1 removed because it aliases _9, which is mutable
+@DefId(0:24 ~ lib[f7f0]::src::rbtree::rotate_right): _1 removed because it aliases _10, which is mutable
+@DefId(0:26 ~ lib[f7f0]::src::rbtree::insert_this): _1 removed because it aliases _0, which is mutable
+@DefId(0:26 ~ lib[f7f0]::src::rbtree::insert_this): _1 removed because it aliases _22, which is mutable
+@DefId(0:26 ~ lib[f7f0]::src::rbtree::insert_this): _1 removed because it aliases _26, which is mutable
+@DefId(0:26 ~ lib[f7f0]::src::rbtree::insert_this): _1 removed because it aliases _36, which is mutable
+@DefId(0:26 ~ lib[f7f0]::src::rbtree::insert_this): _1 removed because it aliases _44, which is mutable
+@DefId(0:30 ~ lib[f7f0]::src::rbtree::balance_me_that): _1 removed because it aliases _0, which is mutable
+@DefId(0:30 ~ lib[f7f0]::src::rbtree::balance_me_that): _1 removed because it aliases _4, which is mutable
+@DefId(0:30 ~ lib[f7f0]::src::rbtree::balance_me_that): _1 removed because it aliases _12, which is mutable
+@DefId(0:31 ~ lib[f7f0]::src::rbtree::move_red_to_left): _1 removed because it aliases _0, which is mutable
+@DefId(0:31 ~ lib[f7f0]::src::rbtree::move_red_to_left): _1 removed because it aliases _15, which is mutable
+@DefId(0:31 ~ lib[f7f0]::src::rbtree::move_red_to_left): _1 removed because it aliases _17, which is mutable
+@DefId(0:32 ~ lib[f7f0]::src::rbtree::move_red_to_right): _1 removed because it aliases _0, which is mutable
+@DefId(0:32 ~ lib[f7f0]::src::rbtree::move_red_to_right): _1 removed because it aliases _15, which is mutable
+@DefId(0:33 ~ lib[f7f0]::src::rbtree::remove_min): _1 removed because it aliases _0, which is mutable
+@DefId(0:33 ~ lib[f7f0]::src::rbtree::remove_min): _1 removed because it aliases _13, which is mutable
+@DefId(0:33 ~ lib[f7f0]::src::rbtree::remove_min): _1 removed because it aliases _14, which is mutable
+@DefId(0:33 ~ lib[f7f0]::src::rbtree::remove_min): _1 removed because it aliases _21, which is mutable
+@DefId(0:33 ~ lib[f7f0]::src::rbtree::remove_min): _1 removed because it aliases _23, which is mutable
+@DefId(0:35 ~ lib[f7f0]::src::rbtree::remove_key): _1 removed because it aliases _0, which is mutable
+@DefId(0:35 ~ lib[f7f0]::src::rbtree::remove_key): _1 removed because it aliases _3, which is mutable
+@DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): _1 removed because it aliases _0, which is mutable
+@DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): _1 removed because it aliases _23, which is mutable
+@DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): _1 removed because it aliases _25, which is mutable
+@DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): _1 removed because it aliases _33, which is mutable
+@DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): _1 removed because it aliases _42, which is mutable
+@DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): _1 removed because it aliases _43, which is mutable
+@DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): _1 removed because it aliases _53, which is mutable
+@DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): _1 removed because it aliases _62, which is mutable
+@DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): _1 removed because it aliases _64, which is mutable
+@DefId(0:36 ~ lib[f7f0]::src::rbtree::erase_tree): _1 removed because it aliases _22, which is mutable
+@DefId(0:36 ~ lib[f7f0]::src::rbtree::erase_tree): _1 removed because it aliases _23, which is mutable
+generating signatures for DefId(0:33 ~ lib[f7f0]::src::rbtree::remove_min): (Some(Normal(4..5))) -> Some(Normal(3..4))
+generating signatures for DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): (Some(Normal(6..7)), None) -> Some(Normal(5..6))
+generating signatures for DefId(0:36 ~ lib[f7f0]::src::rbtree::erase_tree): (Some(Normal(8..9))) -> Some(Normal(7..8))
+generating signatures for DefId(0:25 ~ lib[f7f0]::src::rbtree::create_node): (None, None) -> Some(Normal(9..10))
+generating signatures for DefId(0:20 ~ lib[f7f0]::src::rbtree::is_red): (Some(Normal(10..11))) -> None
+generating signatures for DefId(0:21 ~ lib[f7f0]::src::rbtree::my_compare): (None, None) -> None
+generating signatures for DefId(0:22 ~ lib[f7f0]::src::rbtree::flip_color): (Some(Normal(11..12))) -> None
+generating signatures for DefId(0:23 ~ lib[f7f0]::src::rbtree::rotate_left): (Some(Normal(13..14))) -> Some(Normal(12..13))
+generating signatures for DefId(0:24 ~ lib[f7f0]::src::rbtree::rotate_right): (Some(Normal(15..16))) -> Some(Normal(14..15))
+generating signatures for DefId(0:26 ~ lib[f7f0]::src::rbtree::insert_this): (Some(Normal(17..18)), None, None) -> Some(Normal(16..17))
+generating signatures for DefId(0:27 ~ lib[f7f0]::src::rbtree::insert): (None, None) -> None
+generating signatures for DefId(0:28 ~ lib[f7f0]::src::rbtree::get_key): (Some(Normal(18..19)), None) -> None
+generating signatures for DefId(0:29 ~ lib[f7f0]::src::rbtree::min): (Some(Normal(20..21))) -> Some(Normal(19..20))
+generating signatures for DefId(0:30 ~ lib[f7f0]::src::rbtree::balance_me_that): (Some(Normal(22..23))) -> Some(Normal(21..22))
+generating signatures for DefId(0:31 ~ lib[f7f0]::src::rbtree::move_red_to_left): (Some(Normal(24..25))) -> Some(Normal(23..24))
+generating signatures for DefId(0:32 ~ lib[f7f0]::src::rbtree::move_red_to_right): (Some(Normal(26..27))) -> Some(Normal(25..26))
+generating signatures for DefId(0:35 ~ lib[f7f0]::src::rbtree::remove_key): (Some(Normal(28..29)), None) -> Some(Normal(27..28))
+src::rbtree::remove_min: (&move) -> &move
+src::rbtree::remove_it: (&move, _) -> &move
+src::rbtree::erase_tree: (&move) -> &
+src::rbtree::create_node: (_, _) -> &move
+src::rbtree::is_red: (&) -> _
+src::rbtree::my_compare: (_, _) -> _
+src::rbtree::flip_color: (&) -> _
+src::rbtree::rotate_left: (&move) -> &move
+src::rbtree::rotate_right: (&move) -> &move
+src::rbtree::insert_this: (&move, _, _) -> &move
+src::rbtree::insert: (_, _) -> _
+src::rbtree::get_key: (&, _) -> _
+src::rbtree::min: (&) -> &
+src::rbtree::balance_me_that: (&move) -> &move
+src::rbtree::move_red_to_left: (&move) -> &move
+src::rbtree::move_red_to_right: (&move) -> &move
+src::rbtree::remove_key: (&move, _) -> &move
+generating signatures for DefId(0:33 ~ lib[f7f0]::src::rbtree::remove_min): (Some(Normal(6..9))) -> Some(Normal(3..6))
+generating signatures for DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): (Some(Normal(12..15)), None) -> Some(Normal(9..12))
+generating signatures for DefId(0:36 ~ lib[f7f0]::src::rbtree::erase_tree): (Some(Normal(18..21))) -> Some(Normal(15..18))
+generating signatures for DefId(0:25 ~ lib[f7f0]::src::rbtree::create_node): (None, None) -> Some(Normal(21..24))
+generating signatures for DefId(0:20 ~ lib[f7f0]::src::rbtree::is_red): (Some(Normal(24..27))) -> None
+generating signatures for DefId(0:21 ~ lib[f7f0]::src::rbtree::my_compare): (None, None) -> None
+generating signatures for DefId(0:22 ~ lib[f7f0]::src::rbtree::flip_color): (Some(Normal(27..30))) -> None
+generating signatures for DefId(0:23 ~ lib[f7f0]::src::rbtree::rotate_left): (Some(Normal(33..36))) -> Some(Normal(30..33))
+generating signatures for DefId(0:24 ~ lib[f7f0]::src::rbtree::rotate_right): (Some(Normal(39..42))) -> Some(Normal(36..39))
+generating signatures for DefId(0:26 ~ lib[f7f0]::src::rbtree::insert_this): (Some(Normal(45..48)), None, None) -> Some(Normal(42..45))
+generating signatures for DefId(0:27 ~ lib[f7f0]::src::rbtree::insert): (None, None) -> None
+generating signatures for DefId(0:28 ~ lib[f7f0]::src::rbtree::get_key): (Some(Normal(48..51)), None) -> None
+generating signatures for DefId(0:29 ~ lib[f7f0]::src::rbtree::min): (Some(Normal(54..57))) -> Some(Normal(51..54))
+generating signatures for DefId(0:30 ~ lib[f7f0]::src::rbtree::balance_me_that): (Some(Normal(60..63))) -> Some(Normal(57..60))
+generating signatures for DefId(0:31 ~ lib[f7f0]::src::rbtree::move_red_to_left): (Some(Normal(66..69))) -> Some(Normal(63..66))
+generating signatures for DefId(0:32 ~ lib[f7f0]::src::rbtree::move_red_to_right): (Some(Normal(72..75))) -> Some(Normal(69..72))
+generating signatures for DefId(0:35 ~ lib[f7f0]::src::rbtree::remove_key): (Some(Normal(78..81)), None) -> Some(Normal(75..78))
+failed: src::rbtree::remove_it
+failed: src::rbtree::remove_min
+src::rbtree::remove_min: (&any &any &any) -> &any &any &any
+src::rbtree::remove_it: (& & &, _) -> & & &
+src::rbtree::erase_tree: (&move &move &move) -> & & &
+src::rbtree::create_node: (_, _) -> &move &move &move
+src::rbtree::is_red: (& & &) -> _
+src::rbtree::my_compare: (_, _) -> _
+src::rbtree::flip_color: (& & &) -> _
+src::rbtree::rotate_left: (&move &move &move) -> &move &move &move
+src::rbtree::rotate_right: (&move &move &move) -> &move &move &move
+src::rbtree::insert_this: (&move &move &move, _, _) -> &move &move &move
+src::rbtree::insert: (_, _) -> _
+src::rbtree::get_key: (& & &, _) -> _
+src::rbtree::min: (& & &) -> & & &
+src::rbtree::balance_me_that: (&move &move &move) -> &move &move &move
+src::rbtree::move_red_to_left: (&move &move &move) -> &move &move &move
+src::rbtree::move_red_to_right: (&move &move &move) -> &move &move &move
+src::rbtree::remove_key: (& & &, _) -> & & &
+generating signatures for DefId(0:33 ~ lib[f7f0]::src::rbtree::remove_min): (Some(Normal(6..9))) -> Some(Normal(3..6))
+generating signatures for DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): (Some(Normal(12..15)), None) -> Some(Normal(9..12))
+generating signatures for DefId(0:36 ~ lib[f7f0]::src::rbtree::erase_tree): (Some(Normal(22..29))) -> Some(Normal(15..22))
+generating signatures for DefId(0:25 ~ lib[f7f0]::src::rbtree::create_node): (None, None) -> Some(Normal(29..36))
+generating signatures for DefId(0:20 ~ lib[f7f0]::src::rbtree::is_red): (Some(Normal(36..43))) -> None
+generating signatures for DefId(0:21 ~ lib[f7f0]::src::rbtree::my_compare): (None, None) -> None
+generating signatures for DefId(0:22 ~ lib[f7f0]::src::rbtree::flip_color): (Some(Normal(43..50))) -> None
+generating signatures for DefId(0:23 ~ lib[f7f0]::src::rbtree::rotate_left): (Some(Normal(57..64))) -> Some(Normal(50..57))
+generating signatures for DefId(0:24 ~ lib[f7f0]::src::rbtree::rotate_right): (Some(Normal(71..78))) -> Some(Normal(64..71))
+generating signatures for DefId(0:26 ~ lib[f7f0]::src::rbtree::insert_this): (Some(Normal(85..92)), None, None) -> Some(Normal(78..85))
+generating signatures for DefId(0:27 ~ lib[f7f0]::src::rbtree::insert): (None, None) -> None
+generating signatures for DefId(0:28 ~ lib[f7f0]::src::rbtree::get_key): (Some(Normal(92..99)), None) -> None
+generating signatures for DefId(0:29 ~ lib[f7f0]::src::rbtree::min): (Some(Normal(106..113))) -> Some(Normal(99..106))
+generating signatures for DefId(0:30 ~ lib[f7f0]::src::rbtree::balance_me_that): (Some(Normal(120..127))) -> Some(Normal(113..120))
+generating signatures for DefId(0:31 ~ lib[f7f0]::src::rbtree::move_red_to_left): (Some(Normal(134..141))) -> Some(Normal(127..134))
+generating signatures for DefId(0:32 ~ lib[f7f0]::src::rbtree::move_red_to_right): (Some(Normal(148..155))) -> Some(Normal(141..148))
+generating signatures for DefId(0:35 ~ lib[f7f0]::src::rbtree::remove_key): (Some(Normal(162..169)), None) -> Some(Normal(155..162))
+failed: src::rbtree::remove_it
+failed: src::rbtree::remove_min
+src::rbtree::remove_min: (&any &any &any) -> &any &any &any
+src::rbtree::remove_it: (& & &, _) -> & & &
+src::rbtree::erase_tree: (&move &move &move &move &move &move &move) -> & & & & & & &
+src::rbtree::create_node: (_, _) -> &move &move &move &move &move &move &move
+src::rbtree::is_red: (& & & & & & &) -> _
+src::rbtree::my_compare: (_, _) -> _
+src::rbtree::flip_color: (& & & & & & &) -> _
+src::rbtree::rotate_left: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::rotate_right: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::insert_this: (&move &move &move &move &move &move &move, _, _) -> &move &move &move &move &move &move &move
+src::rbtree::insert: (_, _) -> _
+src::rbtree::get_key: (& & & & & & &, _) -> _
+src::rbtree::min: (& & & & & & &) -> & & & & & & &
+src::rbtree::balance_me_that: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::move_red_to_left: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::move_red_to_right: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::remove_key: (& & & & & & &, _) -> & & & & & & &
+generating signatures for DefId(0:33 ~ lib[f7f0]::src::rbtree::remove_min): (Some(Normal(4..5))) -> Some(Normal(3..4))
+generating signatures for DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): (Some(Normal(6..7)), None) -> Some(Normal(5..6))
+generating signatures for DefId(0:36 ~ lib[f7f0]::src::rbtree::erase_tree): (Some(Normal(14..21))) -> Some(Normal(7..14))
+generating signatures for DefId(0:25 ~ lib[f7f0]::src::rbtree::create_node): (None, None) -> Some(Normal(21..28))
+generating signatures for DefId(0:20 ~ lib[f7f0]::src::rbtree::is_red): (Some(Normal(28..35))) -> None
+generating signatures for DefId(0:21 ~ lib[f7f0]::src::rbtree::my_compare): (None, None) -> None
+generating signatures for DefId(0:22 ~ lib[f7f0]::src::rbtree::flip_color): (Some(Normal(35..42))) -> None
+generating signatures for DefId(0:23 ~ lib[f7f0]::src::rbtree::rotate_left): (Some(Normal(49..56))) -> Some(Normal(42..49))
+generating signatures for DefId(0:24 ~ lib[f7f0]::src::rbtree::rotate_right): (Some(Normal(63..70))) -> Some(Normal(56..63))
+generating signatures for DefId(0:26 ~ lib[f7f0]::src::rbtree::insert_this): (Some(Normal(77..84)), None, None) -> Some(Normal(70..77))
+generating signatures for DefId(0:27 ~ lib[f7f0]::src::rbtree::insert): (None, None) -> None
+generating signatures for DefId(0:28 ~ lib[f7f0]::src::rbtree::get_key): (Some(Normal(84..91)), None) -> None
+generating signatures for DefId(0:29 ~ lib[f7f0]::src::rbtree::min): (Some(Normal(98..105))) -> Some(Normal(91..98))
+generating signatures for DefId(0:30 ~ lib[f7f0]::src::rbtree::balance_me_that): (Some(Normal(112..119))) -> Some(Normal(105..112))
+generating signatures for DefId(0:31 ~ lib[f7f0]::src::rbtree::move_red_to_left): (Some(Normal(126..133))) -> Some(Normal(119..126))
+generating signatures for DefId(0:32 ~ lib[f7f0]::src::rbtree::move_red_to_right): (Some(Normal(140..147))) -> Some(Normal(133..140))
+generating signatures for DefId(0:35 ~ lib[f7f0]::src::rbtree::remove_key): (Some(Normal(154..161)), None) -> Some(Normal(147..154))
+src::rbtree::remove_min: (&move) -> &move
+src::rbtree::remove_it: (&move, _) -> &move
+src::rbtree::erase_tree: (&move &move &move &move &move &move &move) -> & & & & & & &
+src::rbtree::create_node: (_, _) -> &move &move &move &move &move &move &move
+src::rbtree::is_red: (& & & & & & &) -> _
+src::rbtree::my_compare: (_, _) -> _
+src::rbtree::flip_color: (& & & & & & &) -> _
+src::rbtree::rotate_left: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::rotate_right: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::insert_this: (&move &move &move &move &move &move &move, _, _) -> &move &move &move &move &move &move &move
+src::rbtree::insert: (_, _) -> _
+src::rbtree::get_key: (& & & & & & &, _) -> _
+src::rbtree::min: (& & & & & & &) -> & & & & & & &
+src::rbtree::balance_me_that: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::move_red_to_left: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::move_red_to_right: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::remove_key: (&move &move &move &move &move &move &move, _) -> &move &move &move &move &move &move &move
+generating signatures for DefId(0:33 ~ lib[f7f0]::src::rbtree::remove_min): (Some(Normal(4..5))) -> Some(Normal(3..4))
+generating signatures for DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): (Some(Normal(6..7)), None) -> Some(Normal(5..6))
+generating signatures for DefId(0:36 ~ lib[f7f0]::src::rbtree::erase_tree): (Some(Normal(14..21))) -> Some(Normal(7..14))
+generating signatures for DefId(0:25 ~ lib[f7f0]::src::rbtree::create_node): (None, None) -> Some(Normal(21..28))
+generating signatures for DefId(0:20 ~ lib[f7f0]::src::rbtree::is_red): (Some(Normal(28..35))) -> None
+generating signatures for DefId(0:21 ~ lib[f7f0]::src::rbtree::my_compare): (None, None) -> None
+generating signatures for DefId(0:22 ~ lib[f7f0]::src::rbtree::flip_color): (Some(Normal(35..42))) -> None
+generating signatures for DefId(0:23 ~ lib[f7f0]::src::rbtree::rotate_left): (Some(Normal(49..56))) -> Some(Normal(42..49))
+generating signatures for DefId(0:24 ~ lib[f7f0]::src::rbtree::rotate_right): (Some(Normal(63..70))) -> Some(Normal(56..63))
+generating signatures for DefId(0:26 ~ lib[f7f0]::src::rbtree::insert_this): (Some(Normal(77..84)), None, None) -> Some(Normal(70..77))
+generating signatures for DefId(0:27 ~ lib[f7f0]::src::rbtree::insert): (None, None) -> None
+generating signatures for DefId(0:28 ~ lib[f7f0]::src::rbtree::get_key): (Some(Normal(84..91)), None) -> None
+generating signatures for DefId(0:29 ~ lib[f7f0]::src::rbtree::min): (Some(Normal(98..105))) -> Some(Normal(91..98))
+generating signatures for DefId(0:30 ~ lib[f7f0]::src::rbtree::balance_me_that): (Some(Normal(112..119))) -> Some(Normal(105..112))
+generating signatures for DefId(0:31 ~ lib[f7f0]::src::rbtree::move_red_to_left): (Some(Normal(126..133))) -> Some(Normal(119..126))
+generating signatures for DefId(0:32 ~ lib[f7f0]::src::rbtree::move_red_to_right): (Some(Normal(140..147))) -> Some(Normal(133..140))
+generating signatures for DefId(0:35 ~ lib[f7f0]::src::rbtree::remove_key): (Some(Normal(154..161)), None) -> Some(Normal(147..154))
+src::rbtree::remove_min: (&move) -> &move
+src::rbtree::remove_it: (&move, _) -> &move
+src::rbtree::erase_tree: (&move &move &move &move &move &move &move) -> & & & & & & &
+src::rbtree::create_node: (_, _) -> &move &move &move &move &move &move &move
+src::rbtree::is_red: (& & & & & & &) -> _
+src::rbtree::my_compare: (_, _) -> _
+src::rbtree::flip_color: (& & & & & & &) -> _
+src::rbtree::rotate_left: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::rotate_right: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::insert_this: (&move &move &move &move &move &move &move, _, _) -> &move &move &move &move &move &move &move
+src::rbtree::insert: (_, _) -> _
+src::rbtree::get_key: (& & & & & & &, _) -> _
+src::rbtree::min: (& & & & & & &) -> & & & & & & &
+src::rbtree::balance_me_that: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::move_red_to_left: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::move_red_to_right: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::remove_key: (&move &move &move &move &move &move &move, _) -> &move &move &move &move &move &move &move
+generating signatures for DefId(0:33 ~ lib[f7f0]::src::rbtree::remove_min): (Some(Normal(4..5))) -> Some(Normal(3..4))
+generating signatures for DefId(0:34 ~ lib[f7f0]::src::rbtree::remove_it): (Some(Normal(6..7)), None) -> Some(Normal(5..6))
+generating signatures for DefId(0:36 ~ lib[f7f0]::src::rbtree::erase_tree): (Some(Normal(14..21))) -> Some(Normal(7..14))
+generating signatures for DefId(0:25 ~ lib[f7f0]::src::rbtree::create_node): (None, None) -> Some(Normal(21..28))
+generating signatures for DefId(0:20 ~ lib[f7f0]::src::rbtree::is_red): (Some(Normal(28..35))) -> None
+generating signatures for DefId(0:21 ~ lib[f7f0]::src::rbtree::my_compare): (None, None) -> None
+generating signatures for DefId(0:22 ~ lib[f7f0]::src::rbtree::flip_color): (Some(Normal(35..42))) -> None
+generating signatures for DefId(0:23 ~ lib[f7f0]::src::rbtree::rotate_left): (Some(Normal(49..56))) -> Some(Normal(42..49))
+generating signatures for DefId(0:24 ~ lib[f7f0]::src::rbtree::rotate_right): (Some(Normal(63..70))) -> Some(Normal(56..63))
+generating signatures for DefId(0:26 ~ lib[f7f0]::src::rbtree::insert_this): (Some(Normal(77..84)), None, None) -> Some(Normal(70..77))
+generating signatures for DefId(0:27 ~ lib[f7f0]::src::rbtree::insert): (None, None) -> None
+generating signatures for DefId(0:28 ~ lib[f7f0]::src::rbtree::get_key): (Some(Normal(84..91)), None) -> None
+generating signatures for DefId(0:29 ~ lib[f7f0]::src::rbtree::min): (Some(Normal(98..105))) -> Some(Normal(91..98))
+generating signatures for DefId(0:30 ~ lib[f7f0]::src::rbtree::balance_me_that): (Some(Normal(112..119))) -> Some(Normal(105..112))
+generating signatures for DefId(0:31 ~ lib[f7f0]::src::rbtree::move_red_to_left): (Some(Normal(126..133))) -> Some(Normal(119..126))
+generating signatures for DefId(0:32 ~ lib[f7f0]::src::rbtree::move_red_to_right): (Some(Normal(140..147))) -> Some(Normal(133..140))
+generating signatures for DefId(0:35 ~ lib[f7f0]::src::rbtree::remove_key): (Some(Normal(154..161)), None) -> Some(Normal(147..154))
+src::rbtree::remove_min: (&move) -> &move
+src::rbtree::remove_it: (&move, _) -> &move
+src::rbtree::erase_tree: (&move &move &move &move &move &move &move) -> & & & & & & &
+src::rbtree::create_node: (_, _) -> &move &move &move &move &move &move &move
+src::rbtree::is_red: (& & & & & & &) -> _
+src::rbtree::my_compare: (_, _) -> _
+src::rbtree::flip_color: (& & & & & & &) -> _
+src::rbtree::rotate_left: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::rotate_right: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::insert_this: (&move &move &move &move &move &move &move, _, _) -> &move &move &move &move &move &move &move
+src::rbtree::insert: (_, _) -> _
+src::rbtree::get_key: (& & & & & & &, _) -> _
+src::rbtree::min: (& & & & & & &) -> & & & & & & &
+src::rbtree::balance_me_that: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::move_red_to_left: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::move_red_to_right: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
+src::rbtree::remove_key: (&move &move &move &move &move &move &move, _) -> &move &move &move &move &move &move &move
+src::rbtree::s_rbnode {
+  key: ,
+  value: ,
+  color: ,
+  left: &move,
+  right: &move,
+}
+src::rbtree::is_red: (&) -> 
+src::rbtree::my_compare: (, ) -> 
+src::rbtree::flip_color: (&) -> 
+src::rbtree::rotate_left: (&move) -> &move
+src::rbtree::rotate_right: (&move) -> &move
+src::rbtree::create_node: (, ) -> &move
+src::rbtree::insert_this: (&move, , ) -> &move
+src::rbtree::insert: (, ) -> 
+src::rbtree::get_key: (&, ) -> 
+src::rbtree::min: (&) -> &
+src::rbtree::balance_me_that: (&move) -> &move
+src::rbtree::move_red_to_left: (&move) -> &move
+src::rbtree::move_red_to_right: (&move) -> &move
+src::rbtree::remove_min: (&move) -> &move
+src::rbtree::remove_it: (&move, ) -> &move
+src::rbtree::remove_key: (&move, ) -> &move
+src::rbtree::erase_tree: (&move) -> &

@@ -1,0 +1,1211 @@
+@DefId(0:96 ~ lib[f7f0]::src::libtree::stat): _1 removed because it aliases _4, which is mutable
+@DefId(0:96 ~ lib[f7f0]::src::libtree::stat): _2 removed because it aliases _5, which is mutable
+@DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): _1 removed because it aliases _3, which is mutable
+@DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): _1 removed because it aliases _4, which is mutable
+@DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): _1 removed because it aliases _5, which is mutable
+@DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): _1 removed because it aliases _6, which is mutable
+@DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): _1 removed because it aliases _45, which is mutable
+@DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): _1 removed because it aliases _46, which is mutable
+@DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): _1 removed because it aliases _50, which is mutable
+@DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): _1 removed because it aliases _51, which is mutable
+@DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): _1 removed because it aliases _61, which is mutable
+@DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): _1 removed because it aliases _62, which is mutable
+@DefId(0:100 ~ lib[f7f0]::src::libtree::small_vec_u64_init): _1 removed because it aliases _3, which is mutable
+@DefId(0:100 ~ lib[f7f0]::src::libtree::small_vec_u64_init): _1 removed because it aliases _4, which is mutable
+@DefId(0:100 ~ lib[f7f0]::src::libtree::small_vec_u64_init): _1 removed because it aliases _8, which is mutable
+@DefId(0:100 ~ lib[f7f0]::src::libtree::small_vec_u64_init): _1 removed because it aliases _9, which is mutable
+@DefId(0:100 ~ lib[f7f0]::src::libtree::small_vec_u64_init): _1 removed because it aliases _10, which is mutable
+@DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): _1 removed because it aliases _10, which is mutable
+@DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): _1 removed because it aliases _11, which is mutable
+@DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): _1 removed because it aliases _18, which is mutable
+@DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): _1 removed because it aliases _31, which is mutable
+@DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): _1 removed because it aliases _32, which is mutable
+@DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): _1 removed because it aliases _47, which is mutable
+@DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): _1 removed because it aliases _48, which is mutable
+@DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): _1 removed because it aliases _49, which is mutable
+@DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): _1 removed because it aliases _50, which is mutable
+@DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): _1 removed because it aliases _62, which is mutable
+@DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): _1 removed because it aliases _67, which is mutable
+@DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): _1 removed because it aliases _68, which is mutable
+@DefId(0:102 ~ lib[f7f0]::src::libtree::small_vec_u64_free): _1 removed because it aliases _6, which is mutable
+@DefId(0:102 ~ lib[f7f0]::src::libtree::small_vec_u64_free): _1 removed because it aliases _7, which is mutable
+@DefId(0:106 ~ lib[f7f0]::src::libtree::string_table_store): _2 removed because it aliases _11, which is mutable
+@DefId(0:106 ~ lib[f7f0]::src::libtree::string_table_store): _2 removed because it aliases _12, which is mutable
+@DefId(0:106 ~ lib[f7f0]::src::libtree::string_table_store): _2 removed because it aliases _13, which is mutable
+@DefId(0:107 ~ lib[f7f0]::src::libtree::string_table_copy_from_file): _2 removed because it aliases _5, which is mutable
+@DefId(0:107 ~ lib[f7f0]::src::libtree::string_table_copy_from_file): _2 removed because it aliases _21, which is mutable
+@DefId(0:107 ~ lib[f7f0]::src::libtree::string_table_copy_from_file): _2 removed because it aliases _22, which is mutable
+@DefId(0:107 ~ lib[f7f0]::src::libtree::string_table_copy_from_file): _2 removed because it aliases _32, which is mutable
+@DefId(0:107 ~ lib[f7f0]::src::libtree::string_table_copy_from_file): _2 removed because it aliases _33, which is mutable
+@DefId(0:111 ~ lib[f7f0]::src::libtree::apply_exclude_list): _2 removed because it aliases _29, which is mutable
+@DefId(0:111 ~ lib[f7f0]::src::libtree::apply_exclude_list): _2 removed because it aliases _30, which is mutable
+@DefId(0:111 ~ lib[f7f0]::src::libtree::apply_exclude_list): _2 removed because it aliases _36, which is mutable
+@DefId(0:111 ~ lib[f7f0]::src::libtree::apply_exclude_list): _2 removed because it aliases _37, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _2 removed because it aliases _11, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _2 removed because it aliases _18, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _2 removed because it aliases _19, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _2 removed because it aliases _20, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _2 removed because it aliases _30, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _2 removed because it aliases _31, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _2 removed because it aliases _49, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _2 removed because it aliases _50, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _2 removed because it aliases _51, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _2 removed because it aliases _62, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _2 removed because it aliases _63, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _3 removed because it aliases _44, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _3 removed because it aliases _45, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _3 removed because it aliases _57, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _3 removed because it aliases _58, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _4 removed because it aliases _25, which is mutable
+@DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): _4 removed because it aliases _26, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _1 removed because it aliases _6, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _45, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _46, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _63, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _64, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _81, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _82, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _99, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _100, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _118, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _119, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _151, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _152, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _153, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _154, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _159, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _160, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _169, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _170, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _171, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _172, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _196, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _197, which is mutable
+@DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): _3 removed because it aliases _198, which is mutable
+@DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): _1 removed because it aliases _8, which is mutable
+@DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): _1 removed because it aliases _9, which is mutable
+@DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): _1 removed because it aliases _15, which is mutable
+@DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): _1 removed because it aliases _16, which is mutable
+@DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): _1 removed because it aliases _34, which is mutable
+@DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): _1 removed because it aliases _36, which is mutable
+@DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): _1 removed because it aliases _37, which is mutable
+@DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): _1 removed because it aliases _53, which is mutable
+@DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): _1 removed because it aliases _54, which is mutable
+@DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): _2 removed because it aliases _18, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _3 removed because it aliases _4, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _3 removed because it aliases _35, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _3 removed because it aliases _36, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _3 removed because it aliases _37, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _3 removed because it aliases _284, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _3 removed because it aliases _285, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _3 removed because it aliases _334, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _3 removed because it aliases _335, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _3 removed because it aliases _381, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _3 removed because it aliases _421, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _3 removed because it aliases _422, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _3 removed because it aliases _461, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _3 removed because it aliases _462, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _4 removed because it aliases _35, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _4 removed because it aliases _36, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _4 removed because it aliases _37, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _4 removed because it aliases _284, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _4 removed because it aliases _285, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _4 removed because it aliases _334, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _4 removed because it aliases _335, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _4 removed because it aliases _381, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _4 removed because it aliases _421, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _4 removed because it aliases _422, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _4 removed because it aliases _461, which is mutable
+@DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): _4 removed because it aliases _462, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _52, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _53, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _54, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _79, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _80, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _81, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _99, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _100, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _101, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _103, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _127, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _128, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _151, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _152, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _181, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _182, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _188, which is mutable
+@DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): _4 removed because it aliases _189, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _6, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _7, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _8, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _9, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _10, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _11, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _12, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _26, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _29, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _54, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _67, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _80, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _100, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _105, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _119, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _122, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _133, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _143, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _146, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _152, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _160, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _163, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _174, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _184, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _187, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _193, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _198, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _201, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _223, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _226, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _258, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _261, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _288, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _292, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _324, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _333, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _340, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _346, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _358, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _377, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _380, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _397, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _400, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _426, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _437, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _485, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _494, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _534, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _541, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _585, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _603, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _604, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _605, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _606, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _619, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _620, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _621, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _622, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _627, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _644, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _653, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _682, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _691, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _708, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _720, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _733, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _744, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _745, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _752, which is mutable
+@DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): _1 removed because it aliases _910, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _54, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _55, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _56, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _57, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _90, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _91, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _130, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _131, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _132, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _133, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _169, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _170, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _176, which is mutable
+@DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): _2 removed because it aliases _177, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _3, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _4, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _5, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _6, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _7, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _8, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _9, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _23, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _48, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _49, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _50, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _51, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _52, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _53, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _54, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _67, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _68, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _69, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _70, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _71, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _83, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _84, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _99, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _100, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _127, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _128, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _140, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _141, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _182, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _183, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _184, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _185, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _195, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _196, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _197, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _198, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _199, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _200, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _216, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _217, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _218, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _227, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _228, which is mutable
+@DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): _2 removed because it aliases _234, which is mutable
+@DefId(0:142 ~ lib[f7f0]::src::libtree::ld_conf_globbing): _2 removed because it aliases _4, which is mutable
+@DefId(0:142 ~ lib[f7f0]::src::libtree::ld_conf_globbing): _2 removed because it aliases _17, which is mutable
+@DefId(0:142 ~ lib[f7f0]::src::libtree::ld_conf_globbing): _2 removed because it aliases _18, which is mutable
+@DefId(0:142 ~ lib[f7f0]::src::libtree::ld_conf_globbing): _2 removed because it aliases _34, which is mutable
+@DefId(0:142 ~ lib[f7f0]::src::libtree::ld_conf_globbing): _2 removed because it aliases _35, which is mutable
+@DefId(0:148 ~ lib[f7f0]::src::libtree::parse_ld_so_conf): _1 removed because it aliases _2, which is mutable
+@DefId(0:153 ~ lib[f7f0]::src::libtree::print_tree): _2 removed because it aliases _18, which is mutable
+@DefId(0:153 ~ lib[f7f0]::src::libtree::print_tree): _2 removed because it aliases _19, which is mutable
+@DefId(0:153 ~ lib[f7f0]::src::libtree::print_tree): _2 removed because it aliases _45, which is mutable
+@DefId(0:153 ~ lib[f7f0]::src::libtree::print_tree): _2 removed because it aliases _46, which is mutable
+@DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): _2 removed because it aliases _78, which is mutable
+@DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): _2 removed because it aliases _79, which is mutable
+@DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): _2 removed because it aliases _100, which is mutable
+@DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): _2 removed because it aliases _101, which is mutable
+@DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): _2 removed because it aliases _178, which is mutable
+@DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): _2 removed because it aliases _179, which is mutable
+@DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): _2 removed because it aliases _209, which is mutable
+@DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): _2 removed because it aliases _210, which is mutable
+@DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): _2 removed because it aliases _268, which is mutable
+@DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): _2 removed because it aliases _269, which is mutable
+generating signatures for DefId(0:152 ~ lib[f7f0]::src::libtree::libtree_state_free): (Some(Output(Consume { use: 31..32, def: 32..33 }))) -> None
+generating signatures for DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): (None, None, Some(Normal(33..34)), Some(Normal(34..35)), Some(Output(Consume { use: 35..36, def: 36..37 })), None) -> None
+generating signatures for DefId(0:102 ~ lib[f7f0]::src::libtree::small_vec_u64_free): (Some(Normal(37..38))) -> None
+generating signatures for DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): (Some(Normal(38..39)), None) -> None
+generating signatures for DefId(0:151 ~ lib[f7f0]::src::libtree::libtree_state_init): (Some(Output(Consume { use: 39..40, def: 40..41 }))) -> None
+generating signatures for DefId(0:105 ~ lib[f7f0]::src::libtree::string_table_maybe_grow): (Some(Output(Consume { use: 41..42, def: 42..43 })), None) -> None
+generating signatures for DefId(0:130 ~ lib[f7f0]::src::libtree::visited_files_append): (Some(Output(Consume { use: 43..44, def: 44..45 })), Some(Normal(45..46))) -> None
+generating signatures for DefId(0:95 ~ lib[f7f0]::src::libtree::putchar): (None) -> None
+generating signatures for DefId(0:96 ~ lib[f7f0]::src::libtree::stat): (Some(Normal(46..47)), Some(Normal(47..48))) -> None
+generating signatures for DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): (Some(Normal(48..49)), None) -> None
+generating signatures for DefId(0:100 ~ lib[f7f0]::src::libtree::small_vec_u64_init): (Some(Normal(49..50))) -> None
+generating signatures for DefId(0:103 ~ lib[f7f0]::src::libtree::host_is_little_endian): () -> None
+generating signatures for DefId(0:104 ~ lib[f7f0]::src::libtree::is_ascending_order): (Some(Normal(50..51)), None) -> None
+generating signatures for DefId(0:106 ~ lib[f7f0]::src::libtree::string_table_store): (Some(Output(Consume { use: 51..52, def: 52..53 })), Some(Normal(53..54))) -> None
+generating signatures for DefId(0:107 ~ lib[f7f0]::src::libtree::string_table_copy_from_file): (Some(Output(Consume { use: 54..55, def: 55..56 })), Some(Normal(56..57))) -> None
+generating signatures for DefId(0:108 ~ lib[f7f0]::src::libtree::is_in_exclude_list): (Some(Normal(57..58))) -> None
+generating signatures for DefId(0:110 ~ lib[f7f0]::src::libtree::tree_preamble): (Some(Normal(58..59)), None) -> None
+generating signatures for DefId(0:111 ~ lib[f7f0]::src::libtree::apply_exclude_list): (Some(Output(Consume { use: 59..60, def: 60..61 })), Some(Normal(61..62)), Some(Normal(62..63))) -> None
+generating signatures for DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): (Some(Output(Consume { use: 63..64, def: 64..65 })), Some(Normal(65..66)), None, Some(Output(Consume { use: 66..67, def: 67..68 })), None) -> None
+generating signatures for DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): (None, None, Some(Output(Consume { use: 68..69, def: 69..70 })), Some(Normal(70..71)), None, Some(Output(Consume { use: 71..72, def: 72..73 })), None) -> None
+generating signatures for DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): (Some(Normal(73..74)), None, Some(Normal(74..75))) -> None
+generating signatures for DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): (Some(Normal(75..76)), Some(Normal(76..77))) -> None
+generating signatures for DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): (None, Some(Normal(77..78)), Some(Normal(78..79)), Some(Normal(79..80)), None, None, Some(Output(Consume { use: 80..81, def: 81..82 }))) -> None
+generating signatures for DefId(0:129 ~ lib[f7f0]::src::libtree::visited_files_contains): (Some(Output(Consume { use: 82..83, def: 83..84 })), Some(Normal(84..85))) -> None
+generating signatures for DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): (Some(Normal(85..86)), None, Some(Output(Consume { use: 86..87, def: 87..88 })), None, None) -> None
+generating signatures for DefId(0:142 ~ lib[f7f0]::src::libtree::ld_conf_globbing): (Some(Output(Consume { use: 88..89, def: 89..90 })), Some(Normal(90..91))) -> None
+generating signatures for DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): (Some(Output(Consume { use: 91..92, def: 92..93 })), Some(Normal(93..94))) -> None
+generating signatures for DefId(0:148 ~ lib[f7f0]::src::libtree::parse_ld_so_conf): (Some(Normal(94..95))) -> None
+generating signatures for DefId(0:149 ~ lib[f7f0]::src::libtree::parse_ld_library_path): (Some(Output(Consume { use: 95..96, def: 96..97 }))) -> None
+generating signatures for DefId(0:150 ~ lib[f7f0]::src::libtree::set_default_paths): (Some(Output(Consume { use: 97..98, def: 98..99 }))) -> None
+generating signatures for DefId(0:153 ~ lib[f7f0]::src::libtree::print_tree): (None, Some(Normal(99..100)), Some(Output(Consume { use: 100..101, def: 101..102 }))) -> None
+generating signatures for DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): (None, Some(Normal(102..103))) -> None
+failed: src::libtree::interpolate_variables
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::apply_exclude_list!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_absolute_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::print_error!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+failed: src::libtree::parse_ld_so_conf
+src::libtree::libtree_state_free: (&uniq  ↓ &uniq ) -> _
+src::libtree::print_error: (_, _, &, &, &uniq  ↓ &uniq , _) -> _
+src::libtree::small_vec_u64_free: (&) -> _
+src::libtree::small_vec_u64_append: (&, _) -> _
+src::libtree::libtree_state_init: (&uniq  ↓ &uniq ) -> _
+src::libtree::string_table_maybe_grow: (&uniq  ↓ &uniq , _) -> _
+src::libtree::visited_files_append: (&uniq  ↓ &uniq , &) -> _
+src::libtree::putchar: (_) -> _
+src::libtree::stat: (&, &) -> _
+src::libtree::utoa: (&, _) -> _
+src::libtree::small_vec_u64_init: (&) -> _
+src::libtree::host_is_little_endian: () -> _
+src::libtree::is_ascending_order: (&, _) -> _
+src::libtree::string_table_store: (&uniq  ↓ &uniq , &) -> _
+src::libtree::string_table_copy_from_file: (&uniq  ↓ &uniq , &) -> _
+src::libtree::is_in_exclude_list: (&) -> _
+src::libtree::tree_preamble: (&, _) -> _
+src::libtree::apply_exclude_list: (&uniq  ↓ &uniq , &, &) -> _
+src::libtree::check_absolute_paths: (&uniq  ↓ &uniq , &, _, &uniq  ↓ &uniq , _) -> _
+src::libtree::check_search_paths: (_, _, &uniq  ↓ &uniq , &, _, &uniq  ↓ &uniq , _) -> _
+src::libtree::interpolate_variables: (&, _, &) -> _
+src::libtree::print_colon_delimited_paths: (&, &) -> _
+src::libtree::print_line: (_, &, &, &, _, _, &uniq  ↓ &uniq ) -> _
+src::libtree::visited_files_contains: (&uniq  ↓ &uniq , &) -> _
+src::libtree::recurse: (&, _, &uniq  ↓ &uniq , _, _) -> _
+src::libtree::ld_conf_globbing: (&uniq  ↓ &uniq , &) -> _
+src::libtree::parse_ld_config_file: (&uniq  ↓ &uniq , &) -> _
+src::libtree::parse_ld_so_conf: (&) -> _
+src::libtree::parse_ld_library_path: (&uniq  ↓ &uniq ) -> _
+src::libtree::set_default_paths: (&uniq  ↓ &uniq ) -> _
+src::libtree::print_tree: (_, &, &uniq  ↓ &uniq ) -> _
+src::libtree::main_0: (_, &) -> _
+generating signatures for DefId(0:152 ~ lib[f7f0]::src::libtree::libtree_state_free): (Some(Output(Consume { use: 31..39, def: 39..47 }))) -> None
+generating signatures for DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): (None, None, Some(Normal(47..49)), Some(Normal(49..50)), Some(Output(Consume { use: 50..58, def: 58..66 })), None) -> None
+generating signatures for DefId(0:102 ~ lib[f7f0]::src::libtree::small_vec_u64_free): (Some(Normal(66..68))) -> None
+generating signatures for DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): (Some(Normal(68..70)), None) -> None
+generating signatures for DefId(0:151 ~ lib[f7f0]::src::libtree::libtree_state_init): (Some(Output(Consume { use: 70..78, def: 78..86 }))) -> None
+generating signatures for DefId(0:105 ~ lib[f7f0]::src::libtree::string_table_maybe_grow): (Some(Output(Consume { use: 86..88, def: 88..90 })), None) -> None
+generating signatures for DefId(0:130 ~ lib[f7f0]::src::libtree::visited_files_append): (Some(Output(Consume { use: 90..92, def: 92..94 })), Some(Normal(94..95))) -> None
+generating signatures for DefId(0:95 ~ lib[f7f0]::src::libtree::putchar): (None) -> None
+generating signatures for DefId(0:96 ~ lib[f7f0]::src::libtree::stat): (Some(Normal(95..96)), Some(Normal(96..97))) -> None
+generating signatures for DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): (Some(Normal(97..98)), None) -> None
+generating signatures for DefId(0:100 ~ lib[f7f0]::src::libtree::small_vec_u64_init): (Some(Normal(98..100))) -> None
+generating signatures for DefId(0:103 ~ lib[f7f0]::src::libtree::host_is_little_endian): () -> None
+generating signatures for DefId(0:104 ~ lib[f7f0]::src::libtree::is_ascending_order): (Some(Normal(100..101)), None) -> None
+generating signatures for DefId(0:106 ~ lib[f7f0]::src::libtree::string_table_store): (Some(Output(Consume { use: 101..103, def: 103..105 })), Some(Normal(105..106))) -> None
+generating signatures for DefId(0:107 ~ lib[f7f0]::src::libtree::string_table_copy_from_file): (Some(Output(Consume { use: 106..108, def: 108..110 })), Some(Normal(110..129))) -> None
+generating signatures for DefId(0:108 ~ lib[f7f0]::src::libtree::is_in_exclude_list): (Some(Normal(129..130))) -> None
+generating signatures for DefId(0:110 ~ lib[f7f0]::src::libtree::tree_preamble): (Some(Normal(130..138)), None) -> None
+generating signatures for DefId(0:111 ~ lib[f7f0]::src::libtree::apply_exclude_list): (Some(Output(Consume { use: 138..139, def: 139..140 })), Some(Normal(140..142)), Some(Normal(142..150))) -> None
+generating signatures for DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): (Some(Output(Consume { use: 150..151, def: 151..152 })), Some(Normal(152..154)), None, Some(Output(Consume { use: 154..162, def: 162..170 })), None) -> None
+generating signatures for DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): (None, None, Some(Output(Consume { use: 170..171, def: 171..172 })), Some(Normal(172..174)), None, Some(Output(Consume { use: 174..182, def: 182..190 })), None) -> None
+generating signatures for DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): (Some(Normal(190..198)), None, Some(Normal(198..199))) -> None
+generating signatures for DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): (Some(Normal(199..200)), Some(Normal(200..201))) -> None
+generating signatures for DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): (None, Some(Normal(201..202)), Some(Normal(202..203)), Some(Normal(203..204)), None, None, Some(Output(Consume { use: 204..212, def: 212..220 }))) -> None
+generating signatures for DefId(0:129 ~ lib[f7f0]::src::libtree::visited_files_contains): (Some(Output(Consume { use: 220..222, def: 222..224 })), Some(Normal(224..225))) -> None
+generating signatures for DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): (Some(Normal(225..226)), None, Some(Output(Consume { use: 226..234, def: 234..242 })), None, None) -> None
+generating signatures for DefId(0:142 ~ lib[f7f0]::src::libtree::ld_conf_globbing): (Some(Output(Consume { use: 242..244, def: 244..246 })), Some(Normal(246..247))) -> None
+generating signatures for DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): (Some(Output(Consume { use: 247..249, def: 249..251 })), Some(Normal(251..252))) -> None
+generating signatures for DefId(0:148 ~ lib[f7f0]::src::libtree::parse_ld_so_conf): (Some(Normal(252..260))) -> None
+generating signatures for DefId(0:149 ~ lib[f7f0]::src::libtree::parse_ld_library_path): (Some(Output(Consume { use: 260..268, def: 268..276 }))) -> None
+generating signatures for DefId(0:150 ~ lib[f7f0]::src::libtree::set_default_paths): (Some(Output(Consume { use: 276..284, def: 284..292 }))) -> None
+generating signatures for DefId(0:153 ~ lib[f7f0]::src::libtree::print_tree): (None, Some(Normal(292..294)), Some(Output(Consume { use: 294..302, def: 302..310 }))) -> None
+generating signatures for DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): (None, Some(Normal(310..312))) -> None
+failed: src::libtree::parse_ld_so_conf
+failed: src::libtree::interpolate_variables
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::apply_exclude_list!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_absolute_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::print_error!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+src::libtree::libtree_state_free: (&uniq & &move &move & & & & ↓ &uniq & & & & & & &) -> _
+src::libtree::print_error: (_, _, & &, &, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::small_vec_u64_free: (& &) -> _
+src::libtree::small_vec_u64_append: (& &, _) -> _
+src::libtree::libtree_state_init: (&uniq & & & & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::string_table_maybe_grow: (&uniq &move ↓ &uniq &move, _) -> _
+src::libtree::visited_files_append: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::putchar: (_) -> _
+src::libtree::stat: (&, &) -> _
+src::libtree::utoa: (&, _) -> _
+src::libtree::small_vec_u64_init: (& &) -> _
+src::libtree::host_is_little_endian: () -> _
+src::libtree::is_ascending_order: (&, _) -> _
+src::libtree::string_table_store: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::string_table_copy_from_file: (&uniq &move ↓ &uniq &move, & & & & & & & & & & & & & & & & & & &) -> _
+src::libtree::is_in_exclude_list: (&) -> _
+src::libtree::tree_preamble: (& & & & & & & &, _) -> _
+src::libtree::apply_exclude_list: (&uniq  ↓ &uniq , & &, & & & & & & & &) -> _
+src::libtree::check_absolute_paths: (&uniq  ↓ &uniq , & &, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::check_search_paths: (_, _, &uniq  ↓ &uniq , & &, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::interpolate_variables: (& & & & & & & &, _, &) -> _
+src::libtree::print_colon_delimited_paths: (&, &) -> _
+src::libtree::print_line: (_, &, &, &, _, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::visited_files_contains: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::recurse: (&, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _, _) -> _
+src::libtree::ld_conf_globbing: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::parse_ld_config_file: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::parse_ld_so_conf: (& & & & & & & &) -> _
+src::libtree::parse_ld_library_path: (&uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::set_default_paths: (&uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::print_tree: (_, & &, &uniq & & & & & & & ↓ &uniq & & & & & & &) -> _
+src::libtree::main_0: (_, & &) -> _
+generating signatures for DefId(0:152 ~ lib[f7f0]::src::libtree::libtree_state_free): (Some(Output(Consume { use: 31..39, def: 39..47 }))) -> None
+generating signatures for DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): (None, None, Some(Normal(47..49)), Some(Normal(49..50)), Some(Output(Consume { use: 50..58, def: 58..66 })), None) -> None
+generating signatures for DefId(0:102 ~ lib[f7f0]::src::libtree::small_vec_u64_free): (Some(Normal(66..68))) -> None
+generating signatures for DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): (Some(Normal(68..70)), None) -> None
+generating signatures for DefId(0:151 ~ lib[f7f0]::src::libtree::libtree_state_init): (Some(Output(Consume { use: 70..78, def: 78..86 }))) -> None
+generating signatures for DefId(0:105 ~ lib[f7f0]::src::libtree::string_table_maybe_grow): (Some(Output(Consume { use: 86..88, def: 88..90 })), None) -> None
+generating signatures for DefId(0:130 ~ lib[f7f0]::src::libtree::visited_files_append): (Some(Output(Consume { use: 90..92, def: 92..94 })), Some(Normal(94..95))) -> None
+generating signatures for DefId(0:95 ~ lib[f7f0]::src::libtree::putchar): (None) -> None
+generating signatures for DefId(0:96 ~ lib[f7f0]::src::libtree::stat): (Some(Normal(95..96)), Some(Normal(96..97))) -> None
+generating signatures for DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): (Some(Normal(97..98)), None) -> None
+generating signatures for DefId(0:100 ~ lib[f7f0]::src::libtree::small_vec_u64_init): (Some(Normal(98..100))) -> None
+generating signatures for DefId(0:103 ~ lib[f7f0]::src::libtree::host_is_little_endian): () -> None
+generating signatures for DefId(0:104 ~ lib[f7f0]::src::libtree::is_ascending_order): (Some(Normal(100..101)), None) -> None
+generating signatures for DefId(0:106 ~ lib[f7f0]::src::libtree::string_table_store): (Some(Output(Consume { use: 101..103, def: 103..105 })), Some(Normal(105..106))) -> None
+generating signatures for DefId(0:107 ~ lib[f7f0]::src::libtree::string_table_copy_from_file): (Some(Output(Consume { use: 106..108, def: 108..110 })), Some(Normal(110..149))) -> None
+generating signatures for DefId(0:108 ~ lib[f7f0]::src::libtree::is_in_exclude_list): (Some(Normal(149..150))) -> None
+generating signatures for DefId(0:110 ~ lib[f7f0]::src::libtree::tree_preamble): (Some(Normal(150..158)), None) -> None
+generating signatures for DefId(0:111 ~ lib[f7f0]::src::libtree::apply_exclude_list): (Some(Output(Consume { use: 158..159, def: 159..160 })), Some(Normal(160..162)), Some(Normal(162..170))) -> None
+generating signatures for DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): (Some(Output(Consume { use: 170..171, def: 171..172 })), Some(Normal(172..174)), None, Some(Output(Consume { use: 174..182, def: 182..190 })), None) -> None
+generating signatures for DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): (None, None, Some(Output(Consume { use: 190..191, def: 191..192 })), Some(Normal(192..194)), None, Some(Output(Consume { use: 194..202, def: 202..210 })), None) -> None
+generating signatures for DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): (Some(Normal(210..211)), None, Some(Normal(211..212))) -> None
+generating signatures for DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): (Some(Normal(212..213)), Some(Normal(213..214))) -> None
+generating signatures for DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): (None, Some(Normal(214..215)), Some(Normal(215..216)), Some(Normal(216..217)), None, None, Some(Output(Consume { use: 217..225, def: 225..233 }))) -> None
+generating signatures for DefId(0:129 ~ lib[f7f0]::src::libtree::visited_files_contains): (Some(Output(Consume { use: 233..235, def: 235..237 })), Some(Normal(237..238))) -> None
+generating signatures for DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): (Some(Normal(238..239)), None, Some(Output(Consume { use: 239..247, def: 247..255 })), None, None) -> None
+generating signatures for DefId(0:142 ~ lib[f7f0]::src::libtree::ld_conf_globbing): (Some(Output(Consume { use: 255..257, def: 257..259 })), Some(Normal(259..260))) -> None
+generating signatures for DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): (Some(Output(Consume { use: 260..262, def: 262..264 })), Some(Normal(264..265))) -> None
+generating signatures for DefId(0:148 ~ lib[f7f0]::src::libtree::parse_ld_so_conf): (Some(Normal(265..266))) -> None
+generating signatures for DefId(0:149 ~ lib[f7f0]::src::libtree::parse_ld_library_path): (Some(Output(Consume { use: 266..274, def: 274..282 }))) -> None
+generating signatures for DefId(0:150 ~ lib[f7f0]::src::libtree::set_default_paths): (Some(Output(Consume { use: 282..290, def: 290..298 }))) -> None
+generating signatures for DefId(0:153 ~ lib[f7f0]::src::libtree::print_tree): (None, Some(Normal(298..300)), Some(Output(Consume { use: 300..308, def: 308..316 }))) -> None
+generating signatures for DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): (None, Some(Normal(316..318))) -> None
+failed: src::libtree::parse_ld_so_conf
+failed: src::libtree::interpolate_variables
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::apply_exclude_list!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_absolute_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::print_error!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+src::libtree::libtree_state_free: (&uniq & &move &move & & & & ↓ &uniq & & & & & & &) -> _
+src::libtree::print_error: (_, _, & &, &, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::small_vec_u64_free: (& &) -> _
+src::libtree::small_vec_u64_append: (& &, _) -> _
+src::libtree::libtree_state_init: (&uniq & & & & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::string_table_maybe_grow: (&uniq &move ↓ &uniq &move, _) -> _
+src::libtree::visited_files_append: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::putchar: (_) -> _
+src::libtree::stat: (&, &) -> _
+src::libtree::utoa: (&, _) -> _
+src::libtree::small_vec_u64_init: (& &) -> _
+src::libtree::host_is_little_endian: () -> _
+src::libtree::is_ascending_order: (&, _) -> _
+src::libtree::string_table_store: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::string_table_copy_from_file: (&uniq &move ↓ &uniq &move, & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
+src::libtree::is_in_exclude_list: (&) -> _
+src::libtree::tree_preamble: (& & & & & & & &, _) -> _
+src::libtree::apply_exclude_list: (&uniq  ↓ &uniq , & &, & & & & & & & &) -> _
+src::libtree::check_absolute_paths: (&uniq  ↓ &uniq , & &, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::check_search_paths: (_, _, &uniq  ↓ &uniq , & &, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::interpolate_variables: (&, _, &) -> _
+src::libtree::print_colon_delimited_paths: (&, &) -> _
+src::libtree::print_line: (_, &, &, &, _, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::visited_files_contains: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::recurse: (&, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _, _) -> _
+src::libtree::ld_conf_globbing: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::parse_ld_config_file: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::parse_ld_so_conf: (&) -> _
+src::libtree::parse_ld_library_path: (&uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::set_default_paths: (&uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::print_tree: (_, & &, &uniq & & & & & & & ↓ &uniq & & & & & & &) -> _
+src::libtree::main_0: (_, & &) -> _
+generating signatures for DefId(0:152 ~ lib[f7f0]::src::libtree::libtree_state_free): (Some(Output(Consume { use: 31..39, def: 39..47 }))) -> None
+generating signatures for DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): (None, None, Some(Normal(47..49)), Some(Normal(49..50)), Some(Output(Consume { use: 50..58, def: 58..66 })), None) -> None
+generating signatures for DefId(0:102 ~ lib[f7f0]::src::libtree::small_vec_u64_free): (Some(Normal(66..68))) -> None
+generating signatures for DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): (Some(Normal(68..70)), None) -> None
+generating signatures for DefId(0:151 ~ lib[f7f0]::src::libtree::libtree_state_init): (Some(Output(Consume { use: 70..78, def: 78..86 }))) -> None
+generating signatures for DefId(0:105 ~ lib[f7f0]::src::libtree::string_table_maybe_grow): (Some(Output(Consume { use: 86..88, def: 88..90 })), None) -> None
+generating signatures for DefId(0:130 ~ lib[f7f0]::src::libtree::visited_files_append): (Some(Output(Consume { use: 90..92, def: 92..94 })), Some(Normal(94..95))) -> None
+generating signatures for DefId(0:95 ~ lib[f7f0]::src::libtree::putchar): (None) -> None
+generating signatures for DefId(0:96 ~ lib[f7f0]::src::libtree::stat): (Some(Normal(95..96)), Some(Normal(96..97))) -> None
+generating signatures for DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): (Some(Normal(97..98)), None) -> None
+generating signatures for DefId(0:100 ~ lib[f7f0]::src::libtree::small_vec_u64_init): (Some(Normal(98..100))) -> None
+generating signatures for DefId(0:103 ~ lib[f7f0]::src::libtree::host_is_little_endian): () -> None
+generating signatures for DefId(0:104 ~ lib[f7f0]::src::libtree::is_ascending_order): (Some(Normal(100..101)), None) -> None
+generating signatures for DefId(0:106 ~ lib[f7f0]::src::libtree::string_table_store): (Some(Output(Consume { use: 101..103, def: 103..105 })), Some(Normal(105..106))) -> None
+generating signatures for DefId(0:107 ~ lib[f7f0]::src::libtree::string_table_copy_from_file): (Some(Output(Consume { use: 106..108, def: 108..110 })), Some(Normal(110..149))) -> None
+generating signatures for DefId(0:108 ~ lib[f7f0]::src::libtree::is_in_exclude_list): (Some(Normal(149..150))) -> None
+generating signatures for DefId(0:110 ~ lib[f7f0]::src::libtree::tree_preamble): (Some(Normal(150..158)), None) -> None
+generating signatures for DefId(0:111 ~ lib[f7f0]::src::libtree::apply_exclude_list): (Some(Output(Consume { use: 158..159, def: 159..160 })), Some(Normal(160..162)), Some(Normal(162..170))) -> None
+generating signatures for DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): (Some(Output(Consume { use: 170..171, def: 171..172 })), Some(Normal(172..174)), None, Some(Output(Consume { use: 174..182, def: 182..190 })), None) -> None
+generating signatures for DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): (None, None, Some(Output(Consume { use: 190..191, def: 191..192 })), Some(Normal(192..194)), None, Some(Output(Consume { use: 194..202, def: 202..210 })), None) -> None
+generating signatures for DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): (None, None, None) -> None
+generating signatures for DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): (Some(Normal(210..211)), Some(Normal(211..212))) -> None
+generating signatures for DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): (None, Some(Normal(212..213)), Some(Normal(213..214)), Some(Normal(214..215)), None, None, Some(Output(Consume { use: 215..223, def: 223..231 }))) -> None
+generating signatures for DefId(0:129 ~ lib[f7f0]::src::libtree::visited_files_contains): (Some(Output(Consume { use: 231..233, def: 233..235 })), Some(Normal(235..236))) -> None
+generating signatures for DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): (Some(Normal(236..237)), None, Some(Output(Consume { use: 237..245, def: 245..253 })), None, None) -> None
+generating signatures for DefId(0:142 ~ lib[f7f0]::src::libtree::ld_conf_globbing): (Some(Output(Consume { use: 253..255, def: 255..257 })), Some(Normal(257..258))) -> None
+generating signatures for DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): (Some(Output(Consume { use: 258..260, def: 260..262 })), Some(Normal(262..263))) -> None
+generating signatures for DefId(0:148 ~ lib[f7f0]::src::libtree::parse_ld_so_conf): (None) -> None
+generating signatures for DefId(0:149 ~ lib[f7f0]::src::libtree::parse_ld_library_path): (Some(Output(Consume { use: 263..271, def: 271..279 }))) -> None
+generating signatures for DefId(0:150 ~ lib[f7f0]::src::libtree::set_default_paths): (Some(Output(Consume { use: 279..287, def: 287..295 }))) -> None
+generating signatures for DefId(0:153 ~ lib[f7f0]::src::libtree::print_tree): (None, Some(Normal(295..297)), Some(Output(Consume { use: 297..305, def: 305..313 }))) -> None
+generating signatures for DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): (None, Some(Normal(313..315))) -> None
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::apply_exclude_list!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_absolute_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::print_error!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+src::libtree::libtree_state_free: (&uniq & &move &move & & & & ↓ &uniq & & & & & & &) -> _
+src::libtree::print_error: (_, _, & &, &, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::small_vec_u64_free: (& &) -> _
+src::libtree::small_vec_u64_append: (& &, _) -> _
+src::libtree::libtree_state_init: (&uniq & & & & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::string_table_maybe_grow: (&uniq &move ↓ &uniq &move, _) -> _
+src::libtree::visited_files_append: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::putchar: (_) -> _
+src::libtree::stat: (&, &) -> _
+src::libtree::utoa: (&, _) -> _
+src::libtree::small_vec_u64_init: (& &) -> _
+src::libtree::host_is_little_endian: () -> _
+src::libtree::is_ascending_order: (&, _) -> _
+src::libtree::string_table_store: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::string_table_copy_from_file: (&uniq &move ↓ &uniq &move, & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
+src::libtree::is_in_exclude_list: (&) -> _
+src::libtree::tree_preamble: (& & & & & & & &, _) -> _
+src::libtree::apply_exclude_list: (&uniq  ↓ &uniq , & &, & & & & & & & &) -> _
+src::libtree::check_absolute_paths: (&uniq  ↓ &uniq , & &, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::check_search_paths: (_, _, &uniq  ↓ &uniq , & &, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::interpolate_variables: (_, _, _) -> _
+src::libtree::print_colon_delimited_paths: (&, &) -> _
+src::libtree::print_line: (_, &, &, &, _, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::visited_files_contains: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::recurse: (&, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _, _) -> _
+src::libtree::ld_conf_globbing: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::parse_ld_config_file: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::parse_ld_so_conf: (_) -> _
+src::libtree::parse_ld_library_path: (&uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::set_default_paths: (&uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::print_tree: (_, & &, &uniq & & & & & & & ↓ &uniq & & & & & & &) -> _
+src::libtree::main_0: (_, & &) -> _
+generating signatures for DefId(0:152 ~ lib[f7f0]::src::libtree::libtree_state_free): (Some(Output(Consume { use: 31..39, def: 39..47 }))) -> None
+generating signatures for DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): (None, None, Some(Normal(47..49)), Some(Normal(49..50)), Some(Output(Consume { use: 50..58, def: 58..66 })), None) -> None
+generating signatures for DefId(0:102 ~ lib[f7f0]::src::libtree::small_vec_u64_free): (Some(Normal(66..68))) -> None
+generating signatures for DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): (Some(Normal(68..70)), None) -> None
+generating signatures for DefId(0:151 ~ lib[f7f0]::src::libtree::libtree_state_init): (Some(Output(Consume { use: 70..78, def: 78..86 }))) -> None
+generating signatures for DefId(0:105 ~ lib[f7f0]::src::libtree::string_table_maybe_grow): (Some(Output(Consume { use: 86..88, def: 88..90 })), None) -> None
+generating signatures for DefId(0:130 ~ lib[f7f0]::src::libtree::visited_files_append): (Some(Output(Consume { use: 90..92, def: 92..94 })), Some(Normal(94..95))) -> None
+generating signatures for DefId(0:95 ~ lib[f7f0]::src::libtree::putchar): (None) -> None
+generating signatures for DefId(0:96 ~ lib[f7f0]::src::libtree::stat): (Some(Normal(95..96)), Some(Normal(96..97))) -> None
+generating signatures for DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): (Some(Normal(97..98)), None) -> None
+generating signatures for DefId(0:100 ~ lib[f7f0]::src::libtree::small_vec_u64_init): (Some(Normal(98..100))) -> None
+generating signatures for DefId(0:103 ~ lib[f7f0]::src::libtree::host_is_little_endian): () -> None
+generating signatures for DefId(0:104 ~ lib[f7f0]::src::libtree::is_ascending_order): (Some(Normal(100..101)), None) -> None
+generating signatures for DefId(0:106 ~ lib[f7f0]::src::libtree::string_table_store): (Some(Output(Consume { use: 101..103, def: 103..105 })), Some(Normal(105..106))) -> None
+generating signatures for DefId(0:107 ~ lib[f7f0]::src::libtree::string_table_copy_from_file): (Some(Output(Consume { use: 106..108, def: 108..110 })), Some(Normal(110..149))) -> None
+generating signatures for DefId(0:108 ~ lib[f7f0]::src::libtree::is_in_exclude_list): (Some(Normal(149..150))) -> None
+generating signatures for DefId(0:110 ~ lib[f7f0]::src::libtree::tree_preamble): (Some(Normal(150..158)), None) -> None
+generating signatures for DefId(0:111 ~ lib[f7f0]::src::libtree::apply_exclude_list): (Some(Output(Consume { use: 158..159, def: 159..160 })), Some(Normal(160..162)), Some(Normal(162..170))) -> None
+generating signatures for DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): (Some(Output(Consume { use: 170..171, def: 171..172 })), Some(Normal(172..174)), None, Some(Output(Consume { use: 174..182, def: 182..190 })), None) -> None
+generating signatures for DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): (None, None, Some(Output(Consume { use: 190..191, def: 191..192 })), Some(Normal(192..194)), None, Some(Output(Consume { use: 194..202, def: 202..210 })), None) -> None
+generating signatures for DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): (None, None, None) -> None
+generating signatures for DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): (Some(Normal(210..211)), Some(Normal(211..212))) -> None
+generating signatures for DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): (None, Some(Normal(212..213)), Some(Normal(213..214)), Some(Normal(214..215)), None, None, Some(Output(Consume { use: 215..223, def: 223..231 }))) -> None
+generating signatures for DefId(0:129 ~ lib[f7f0]::src::libtree::visited_files_contains): (Some(Output(Consume { use: 231..233, def: 233..235 })), Some(Normal(235..236))) -> None
+generating signatures for DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): (Some(Normal(236..237)), None, Some(Output(Consume { use: 237..245, def: 245..253 })), None, None) -> None
+generating signatures for DefId(0:142 ~ lib[f7f0]::src::libtree::ld_conf_globbing): (Some(Output(Consume { use: 253..255, def: 255..257 })), Some(Normal(257..258))) -> None
+generating signatures for DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): (Some(Output(Consume { use: 258..260, def: 260..262 })), Some(Normal(262..263))) -> None
+generating signatures for DefId(0:148 ~ lib[f7f0]::src::libtree::parse_ld_so_conf): (None) -> None
+generating signatures for DefId(0:149 ~ lib[f7f0]::src::libtree::parse_ld_library_path): (Some(Output(Consume { use: 263..271, def: 271..279 }))) -> None
+generating signatures for DefId(0:150 ~ lib[f7f0]::src::libtree::set_default_paths): (Some(Output(Consume { use: 279..287, def: 287..295 }))) -> None
+generating signatures for DefId(0:153 ~ lib[f7f0]::src::libtree::print_tree): (None, Some(Normal(295..297)), Some(Output(Consume { use: 297..305, def: 305..313 }))) -> None
+generating signatures for DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): (None, Some(Normal(313..315))) -> None
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::apply_exclude_list!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_absolute_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::print_error!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+src::libtree::libtree_state_free: (&uniq & &move &move & & & & ↓ &uniq & & & & & & &) -> _
+src::libtree::print_error: (_, _, & &, &, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::small_vec_u64_free: (& &) -> _
+src::libtree::small_vec_u64_append: (& &, _) -> _
+src::libtree::libtree_state_init: (&uniq & & & & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::string_table_maybe_grow: (&uniq &move ↓ &uniq &move, _) -> _
+src::libtree::visited_files_append: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::putchar: (_) -> _
+src::libtree::stat: (&, &) -> _
+src::libtree::utoa: (&, _) -> _
+src::libtree::small_vec_u64_init: (& &) -> _
+src::libtree::host_is_little_endian: () -> _
+src::libtree::is_ascending_order: (&, _) -> _
+src::libtree::string_table_store: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::string_table_copy_from_file: (&uniq &move ↓ &uniq &move, & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
+src::libtree::is_in_exclude_list: (&) -> _
+src::libtree::tree_preamble: (& & & & & & & &, _) -> _
+src::libtree::apply_exclude_list: (&uniq  ↓ &uniq , & &, & & & & & & & &) -> _
+src::libtree::check_absolute_paths: (&uniq  ↓ &uniq , & &, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::check_search_paths: (_, _, &uniq  ↓ &uniq , & &, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::interpolate_variables: (_, _, _) -> _
+src::libtree::print_colon_delimited_paths: (&, &) -> _
+src::libtree::print_line: (_, &, &, &, _, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::visited_files_contains: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::recurse: (&, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _, _) -> _
+src::libtree::ld_conf_globbing: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::parse_ld_config_file: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::parse_ld_so_conf: (_) -> _
+src::libtree::parse_ld_library_path: (&uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::set_default_paths: (&uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::print_tree: (_, & &, &uniq & & & & & & & ↓ &uniq & & & & & & &) -> _
+src::libtree::main_0: (_, & &) -> _
+generating signatures for DefId(0:152 ~ lib[f7f0]::src::libtree::libtree_state_free): (Some(Output(Consume { use: 31..39, def: 39..47 }))) -> None
+generating signatures for DefId(0:123 ~ lib[f7f0]::src::libtree::print_error): (None, None, Some(Normal(47..49)), Some(Normal(49..50)), Some(Output(Consume { use: 50..58, def: 58..66 })), None) -> None
+generating signatures for DefId(0:102 ~ lib[f7f0]::src::libtree::small_vec_u64_free): (Some(Normal(66..68))) -> None
+generating signatures for DefId(0:101 ~ lib[f7f0]::src::libtree::small_vec_u64_append): (Some(Normal(68..70)), None) -> None
+generating signatures for DefId(0:151 ~ lib[f7f0]::src::libtree::libtree_state_init): (Some(Output(Consume { use: 70..78, def: 78..86 }))) -> None
+generating signatures for DefId(0:105 ~ lib[f7f0]::src::libtree::string_table_maybe_grow): (Some(Output(Consume { use: 86..88, def: 88..90 })), None) -> None
+generating signatures for DefId(0:130 ~ lib[f7f0]::src::libtree::visited_files_append): (Some(Output(Consume { use: 90..92, def: 92..94 })), Some(Normal(94..95))) -> None
+generating signatures for DefId(0:95 ~ lib[f7f0]::src::libtree::putchar): (None) -> None
+generating signatures for DefId(0:96 ~ lib[f7f0]::src::libtree::stat): (Some(Normal(95..96)), Some(Normal(96..97))) -> None
+generating signatures for DefId(0:99 ~ lib[f7f0]::src::libtree::utoa): (Some(Normal(97..98)), None) -> None
+generating signatures for DefId(0:100 ~ lib[f7f0]::src::libtree::small_vec_u64_init): (Some(Normal(98..100))) -> None
+generating signatures for DefId(0:103 ~ lib[f7f0]::src::libtree::host_is_little_endian): () -> None
+generating signatures for DefId(0:104 ~ lib[f7f0]::src::libtree::is_ascending_order): (Some(Normal(100..101)), None) -> None
+generating signatures for DefId(0:106 ~ lib[f7f0]::src::libtree::string_table_store): (Some(Output(Consume { use: 101..103, def: 103..105 })), Some(Normal(105..106))) -> None
+generating signatures for DefId(0:107 ~ lib[f7f0]::src::libtree::string_table_copy_from_file): (Some(Output(Consume { use: 106..108, def: 108..110 })), Some(Normal(110..149))) -> None
+generating signatures for DefId(0:108 ~ lib[f7f0]::src::libtree::is_in_exclude_list): (Some(Normal(149..150))) -> None
+generating signatures for DefId(0:110 ~ lib[f7f0]::src::libtree::tree_preamble): (Some(Normal(150..158)), None) -> None
+generating signatures for DefId(0:111 ~ lib[f7f0]::src::libtree::apply_exclude_list): (Some(Output(Consume { use: 158..159, def: 159..160 })), Some(Normal(160..162)), Some(Normal(162..170))) -> None
+generating signatures for DefId(0:112 ~ lib[f7f0]::src::libtree::check_absolute_paths): (Some(Output(Consume { use: 170..171, def: 171..172 })), Some(Normal(172..174)), None, Some(Output(Consume { use: 174..182, def: 182..190 })), None) -> None
+generating signatures for DefId(0:115 ~ lib[f7f0]::src::libtree::check_search_paths): (None, None, Some(Output(Consume { use: 190..191, def: 191..192 })), Some(Normal(192..194)), None, Some(Output(Consume { use: 194..202, def: 202..210 })), None) -> None
+generating signatures for DefId(0:118 ~ lib[f7f0]::src::libtree::interpolate_variables): (None, None, None) -> None
+generating signatures for DefId(0:119 ~ lib[f7f0]::src::libtree::print_colon_delimited_paths): (Some(Normal(210..211)), Some(Normal(211..212))) -> None
+generating signatures for DefId(0:120 ~ lib[f7f0]::src::libtree::print_line): (None, Some(Normal(212..213)), Some(Normal(213..214)), Some(Normal(214..215)), None, None, Some(Output(Consume { use: 215..223, def: 223..231 }))) -> None
+generating signatures for DefId(0:129 ~ lib[f7f0]::src::libtree::visited_files_contains): (Some(Output(Consume { use: 231..233, def: 233..235 })), Some(Normal(235..236))) -> None
+generating signatures for DefId(0:131 ~ lib[f7f0]::src::libtree::recurse): (Some(Normal(236..237)), None, Some(Output(Consume { use: 237..245, def: 245..253 })), None, None) -> None
+generating signatures for DefId(0:142 ~ lib[f7f0]::src::libtree::ld_conf_globbing): (Some(Output(Consume { use: 253..255, def: 255..257 })), Some(Normal(257..258))) -> None
+generating signatures for DefId(0:143 ~ lib[f7f0]::src::libtree::parse_ld_config_file): (Some(Output(Consume { use: 258..260, def: 260..262 })), Some(Normal(262..263))) -> None
+generating signatures for DefId(0:148 ~ lib[f7f0]::src::libtree::parse_ld_so_conf): (None) -> None
+generating signatures for DefId(0:149 ~ lib[f7f0]::src::libtree::parse_ld_library_path): (Some(Output(Consume { use: 263..271, def: 271..279 }))) -> None
+generating signatures for DefId(0:150 ~ lib[f7f0]::src::libtree::set_default_paths): (Some(Output(Consume { use: 279..287, def: 287..295 }))) -> None
+generating signatures for DefId(0:153 ~ lib[f7f0]::src::libtree::print_tree): (None, Some(Normal(295..297)), Some(Output(Consume { use: 297..305, def: 305..313 }))) -> None
+generating signatures for DefId(0:154 ~ lib[f7f0]::src::libtree::main_0): (None, Some(Normal(313..315))) -> None
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_init!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_append!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::apply_exclude_list!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_absolute_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::check_search_paths!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::print_error!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+[31mERROR[0m [2manalysis::ownership::infer::boundary[0m[2m:[0m bad output parameter analysis for src::libtree::small_vec_u64_free!
+src::libtree::libtree_state_free: (&uniq & &move &move & & & & ↓ &uniq & & & & & & &) -> _
+src::libtree::print_error: (_, _, & &, &, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::small_vec_u64_free: (& &) -> _
+src::libtree::small_vec_u64_append: (& &, _) -> _
+src::libtree::libtree_state_init: (&uniq & & & & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::string_table_maybe_grow: (&uniq &move ↓ &uniq &move, _) -> _
+src::libtree::visited_files_append: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::putchar: (_) -> _
+src::libtree::stat: (&, &) -> _
+src::libtree::utoa: (&, _) -> _
+src::libtree::small_vec_u64_init: (& &) -> _
+src::libtree::host_is_little_endian: () -> _
+src::libtree::is_ascending_order: (&, _) -> _
+src::libtree::string_table_store: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::string_table_copy_from_file: (&uniq &move ↓ &uniq &move, & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
+src::libtree::is_in_exclude_list: (&) -> _
+src::libtree::tree_preamble: (& & & & & & & &, _) -> _
+src::libtree::apply_exclude_list: (&uniq  ↓ &uniq , & &, & & & & & & & &) -> _
+src::libtree::check_absolute_paths: (&uniq  ↓ &uniq , & &, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::check_search_paths: (_, _, &uniq  ↓ &uniq , & &, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _) -> _
+src::libtree::interpolate_variables: (_, _, _) -> _
+src::libtree::print_colon_delimited_paths: (&, &) -> _
+src::libtree::print_line: (_, &, &, &, _, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::visited_files_contains: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::recurse: (&, _, &uniq & &move &move & & & & ↓ &uniq & &move &move & & & &, _, _) -> _
+src::libtree::ld_conf_globbing: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::parse_ld_config_file: (&uniq &move ↓ &uniq &move, &) -> _
+src::libtree::parse_ld_so_conf: (_) -> _
+src::libtree::parse_ld_library_path: (&uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::set_default_paths: (&uniq & &move &move & & & & ↓ &uniq & &move &move & & & &) -> _
+src::libtree::print_tree: (_, & &, &uniq & & & & & & & ↓ &uniq & & & & & & &) -> _
+src::libtree::main_0: (_, & &) -> _
+src::libtree::_IO_FILE {
+  _flags: ,
+  _IO_read_ptr: &any,
+  _IO_read_end: &any,
+  _IO_read_base: &any,
+  _IO_write_base: &any,
+  _IO_write_ptr: &any,
+  _IO_write_end: &any,
+  _IO_buf_base: &any,
+  _IO_buf_end: &any,
+  _IO_save_base: &any,
+  _IO_backup_base: &any,
+  _IO_save_end: &any,
+  _markers: &any,
+  _chain: &any,
+  _fileno: ,
+  _flags2: ,
+  _old_offset: ,
+  _cur_column: ,
+  _vtable_offset: ,
+  _shortbuf: ,
+  _lock: &any,
+  _offset: ,
+  __pad1: &any,
+  __pad2: &any,
+  __pad3: &any,
+  __pad4: &any,
+  __pad5: ,
+  _mode: ,
+  _unused2: ,
+}
+src::libtree::_IO_marker {
+  _next: &any,
+  _sbuf: &any,
+  _pos: ,
+}
+src::libtree::glob_t {
+  gl_pathc: ,
+  gl_pathv: &any &any,
+  gl_offs: ,
+  gl_flags: ,
+  gl_closedir: ,
+  gl_readdir: ,
+  gl_opendir: ,
+  gl_lstat: ,
+  gl_stat: ,
+}
+src::libtree::stat {
+  st_dev: ,
+  st_ino: ,
+  st_nlink: ,
+  st_mode: ,
+  st_uid: ,
+  st_gid: ,
+  __pad0: ,
+  st_rdev: ,
+  st_size: ,
+  st_blksize: ,
+  st_blocks: ,
+  st_atime: ,
+  st_atimensec: ,
+  st_mtime: ,
+  st_mtimensec: ,
+  st_ctime: ,
+  st_ctimensec: ,
+  __glibc_reserved: ,
+}
+src::libtree::utsname {
+  sysname: ,
+  nodename: ,
+  release: ,
+  version: ,
+  machine: ,
+  __domainname: ,
+}
+src::libtree::header_64_t {
+  e_type: ,
+  e_machine: ,
+  e_version: ,
+  e_entry: ,
+  e_phoff: ,
+  e_shoff: ,
+  e_flags: ,
+  e_ehsize: ,
+  e_phentsize: ,
+  e_phnum: ,
+  e_shentsize: ,
+  e_shnum: ,
+  e_shstrndx: ,
+}
+src::libtree::header_32_t {
+  e_type: ,
+  e_machine: ,
+  e_version: ,
+  e_entry: ,
+  e_phoff: ,
+  e_shoff: ,
+  e_flags: ,
+  e_ehsize: ,
+  e_phentsize: ,
+  e_phnum: ,
+  e_shentsize: ,
+  e_shnum: ,
+  e_shstrndx: ,
+}
+src::libtree::prog_64_t {
+  p_type: ,
+  p_flags: ,
+  p_offset: ,
+  p_vaddr: ,
+  p_paddr: ,
+  p_filesz: ,
+  p_memsz: ,
+  p_align: ,
+}
+src::libtree::prog_32_t {
+  p_type: ,
+  p_offset: ,
+  p_vaddr: ,
+  p_paddr: ,
+  p_filesz: ,
+  p_memsz: ,
+  p_flags: ,
+  p_align: ,
+}
+src::libtree::dyn_64_t {
+  d_tag: ,
+  d_val: ,
+}
+src::libtree::dyn_32_t {
+  d_tag: ,
+  d_val: ,
+}
+src::libtree::compat_t {
+  any: ,
+  class: ,
+  machine: ,
+}
+src::libtree::found_t {
+  how: ,
+  depth: ,
+}
+src::libtree::string_table_t {
+  arr: &any,
+  n: ,
+  capacity: ,
+}
+src::libtree::visited_file_t {
+  st_dev: ,
+  st_ino: ,
+}
+src::libtree::visited_file_array_t {
+  arr: &any,
+  n: ,
+  capacity: ,
+}
+src::libtree::libtree_state_t {
+  verbosity: ,
+  path: ,
+  color: ,
+  ld_conf_file: &any,
+  max_depth: ,
+  string_table: ,
+  visited: ,
+  PLATFORM: &any,
+  LIB: &any,
+  OSNAME: &any,
+  OSREL: &any,
+  rpath_offsets: ,
+  ld_library_path_offset: ,
+  default_paths_offset: ,
+  ld_so_conf_offset: ,
+  found_all_needed: ,
+}
+src::libtree::small_vec_u64_t {
+  buf: ,
+  p: &any,
+  n: ,
+  capacity: ,
+}
+src::libtree::putchar: () -> 
+src::libtree::stat: (&, &) -> 
+src::libtree::utoa: (&, ) -> 
+src::libtree::small_vec_u64_init: (&) -> 
+src::libtree::small_vec_u64_append: (&, ) -> 
+src::libtree::small_vec_u64_free: (&) -> 
+src::libtree::host_is_little_endian: () -> 
+src::libtree::is_ascending_order: (&, ) -> 
+src::libtree::string_table_maybe_grow: (&move, ) -> 
+src::libtree::string_table_store: (&move, &) -> 
+src::libtree::string_table_copy_from_file: (&move, &) -> 
+src::libtree::is_in_exclude_list: (&) -> 
+src::libtree::tree_preamble: (&, ) -> 
+src::libtree::apply_exclude_list: (&, &, &) -> 
+src::libtree::check_absolute_paths: (&, &, , &move, ) -> 
+src::libtree::check_search_paths: (, , &, &, , &move, ) -> 
+src::libtree::interpolate_variables: (&, , &) -> 
+src::libtree::print_colon_delimited_paths: (&, &) -> 
+src::libtree::print_line: (, &, &, &, , , &move) -> 
+src::libtree::print_error: (, , &, &, &move, ) -> 
+src::libtree::visited_files_contains: (&move, &) -> 
+src::libtree::visited_files_append: (&move, &) -> 
+src::libtree::recurse: (&, , &move, , ) -> 
+src::libtree::ld_conf_globbing: (&move, &) -> 
+src::libtree::parse_ld_config_file: (&move, &) -> 
+src::libtree::parse_ld_so_conf: (&) -> 
+src::libtree::parse_ld_library_path: (&move) -> 
+src::libtree::set_default_paths: (&move) -> 
+src::libtree::libtree_state_init: (&move) -> 
+src::libtree::libtree_state_free: (&move) -> 
+src::libtree::print_tree: (, & &, &move) -> 
+src::libtree::main_0: (, & &) -> 

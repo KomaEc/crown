@@ -1,0 +1,8 @@
+workspace/rbtree/lib.rs
+workspace/llist/lib.rs
+workspace/genann/c2rust-lib.rs
+workspace/bzip2/rust/c2rust-lib.rs
+workspace/kdtree/lib.rs
+workspace/libtree/lib.rs
+workspace/buffer/lib.rs
+workspace/bst/lib.rs
