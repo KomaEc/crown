@@ -186,7 +186,6 @@ fn count_ptr(mut ty: Ty) -> usize {
     }
 }
 
-
 // pub fn infer(crate_data: &common::CrateData)
 
 impl<Domain> TypeQualifiers<Domain>
