@@ -1,0 +1,467 @@
+@DefId(0:25 ~ c2rust_lib[a757]::libcsv::csv_free): _1 removed because it aliases _12, which is mutable
+@DefId(0:26 ~ c2rust_lib[a757]::libcsv::csv_fini): _4 removed because it aliases _75, which is mutable
+@DefId(0:26 ~ c2rust_lib[a757]::libcsv::csv_fini): _4 removed because it aliases _86, which is mutable
+@DefId(0:26 ~ c2rust_lib[a757]::libcsv::csv_fini): _4 removed because it aliases _95, which is mutable
+@DefId(0:41 ~ c2rust_lib[a757]::libcsv::csv_increase_buffer): _1 removed because it aliases _8, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _147, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _148, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _181, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _182, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _223, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _224, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _257, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _258, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _270, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _271, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _284, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _285, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _303, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _304, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _317, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _318, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _330, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _331, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _364, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _365, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _395, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _396, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _429, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _430, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _447, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _448, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _475, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _476, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _485, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _486, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _508, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _509, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _542, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _543, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _577, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _578, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _611, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _612, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _646, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _647, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _673, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _674, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _692, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _4 removed because it aliases _693, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _147, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _148, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _181, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _182, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _223, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _224, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _257, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _258, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _270, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _271, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _284, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _285, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _303, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _304, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _317, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _318, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _330, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _331, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _364, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _365, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _395, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _396, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _429, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _430, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _447, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _448, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _475, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _476, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _485, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _486, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _508, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _509, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _542, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _543, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _577, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _578, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _611, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _612, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _646, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _647, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _673, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _674, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _692, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _5 removed because it aliases _693, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _173, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _184, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _194, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _208, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _249, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _260, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _356, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _367, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _421, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _432, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _442, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _534, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _545, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _603, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _614, which is mutable
+@DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): _6 removed because it aliases _624, which is mutable
+@DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): _1 removed because it aliases _6, which is mutable
+@DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): _1 removed because it aliases _7, which is mutable
+@DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): _1 removed because it aliases _24, which is mutable
+@DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): _1 removed because it aliases _25, which is mutable
+@DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): _1 removed because it aliases _26, which is mutable
+@DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): _1 removed because it aliases _39, which is mutable
+@DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): _1 removed because it aliases _40, which is mutable
+@DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): _1 removed because it aliases _41, which is mutable
+@DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): _1 removed because it aliases _51, which is mutable
+@DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): _1 removed because it aliases _52, which is mutable
+@DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): _1 removed because it aliases _53, which is mutable
+@DefId(0:48 ~ c2rust_lib[a757]::libcsv::csv_fwrite2): _1 removed because it aliases _16, which is mutable
+@DefId(0:48 ~ c2rust_lib[a757]::libcsv::csv_fwrite2): _1 removed because it aliases _28, which is mutable
+@DefId(0:48 ~ c2rust_lib[a757]::libcsv::csv_fwrite2): _1 removed because it aliases _34, which is mutable
+@DefId(0:48 ~ c2rust_lib[a757]::libcsv::csv_fwrite2): _1 removed because it aliases _44, which is mutable
+generating signatures for DefId(0:18 ~ c2rust_lib[a757]::libcsv::csv_error): (Some(Normal(6..7))) -> None
+generating signatures for DefId(0:21 ~ c2rust_lib[a757]::libcsv::csv_strerror): (None) -> Some(Normal(7..8))
+generating signatures for DefId(0:22 ~ c2rust_lib[a757]::libcsv::csv_get_opts): (Some(Normal(8..9))) -> None
+generating signatures for DefId(0:23 ~ c2rust_lib[a757]::libcsv::csv_set_opts): (Some(Output(Consume { use: 9..10, def: 10..11 })), None) -> None
+generating signatures for DefId(0:24 ~ c2rust_lib[a757]::libcsv::csv_init): (Some(Output(Consume { use: 11..12, def: 12..13 })), None) -> None
+generating signatures for DefId(0:25 ~ c2rust_lib[a757]::libcsv::csv_free): (Some(Normal(13..14))) -> None
+generating signatures for DefId(0:26 ~ c2rust_lib[a757]::libcsv::csv_fini): (Some(Output(Consume { use: 14..15, def: 15..16 })), None, None, Some(Normal(16..17))) -> None
+generating signatures for DefId(0:27 ~ c2rust_lib[a757]::libcsv::csv_set_delim): (Some(Output(Consume { use: 17..18, def: 18..19 })), None) -> None
+generating signatures for DefId(0:28 ~ c2rust_lib[a757]::libcsv::csv_set_quote): (Some(Output(Consume { use: 19..20, def: 20..21 })), None) -> None
+generating signatures for DefId(0:29 ~ c2rust_lib[a757]::libcsv::csv_get_delim): (Some(Normal(21..22))) -> None
+generating signatures for DefId(0:32 ~ c2rust_lib[a757]::libcsv::csv_get_quote): (Some(Normal(22..23))) -> None
+generating signatures for DefId(0:35 ~ c2rust_lib[a757]::libcsv::csv_set_space_func): (Some(Output(Consume { use: 23..24, def: 24..25 })), None) -> None
+generating signatures for DefId(0:36 ~ c2rust_lib[a757]::libcsv::csv_set_term_func): (Some(Output(Consume { use: 25..26, def: 26..27 })), None) -> None
+generating signatures for DefId(0:37 ~ c2rust_lib[a757]::libcsv::csv_set_realloc_func): (Some(Output(Consume { use: 27..28, def: 28..29 })), None) -> None
+generating signatures for DefId(0:38 ~ c2rust_lib[a757]::libcsv::csv_set_free_func): (Some(Output(Consume { use: 29..30, def: 30..31 })), None) -> None
+generating signatures for DefId(0:39 ~ c2rust_lib[a757]::libcsv::csv_set_blk_size): (Some(Output(Consume { use: 31..32, def: 32..33 })), None) -> None
+generating signatures for DefId(0:40 ~ c2rust_lib[a757]::libcsv::csv_get_buffer_size): (Some(Normal(33..34))) -> None
+generating signatures for DefId(0:41 ~ c2rust_lib[a757]::libcsv::csv_increase_buffer): (Some(Normal(34..35))) -> None
+generating signatures for DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): (Some(Output(Consume { use: 35..36, def: 36..37 })), Some(Normal(37..38)), None, None, None, Some(Normal(38..39))) -> None
+generating signatures for DefId(0:45 ~ c2rust_lib[a757]::libcsv::csv_write): (Some(Output(Consume { use: 39..40, def: 40..41 })), None, Some(Normal(41..42)), None) -> None
+generating signatures for DefId(0:46 ~ c2rust_lib[a757]::libcsv::csv_fwrite): (Some(Output(Consume { use: 42..43, def: 43..44 })), Some(Normal(44..45)), None) -> None
+generating signatures for DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): (Some(Normal(45..46)), None, Some(Normal(46..47)), None, None) -> None
+generating signatures for DefId(0:48 ~ c2rust_lib[a757]::libcsv::csv_fwrite2): (Some(Normal(47..48)), Some(Normal(48..49)), None, None) -> None
+libcsv::csv_error: (&) -> _
+libcsv::csv_strerror: (_) -> &
+libcsv::csv_get_opts: (&) -> _
+libcsv::csv_set_opts: (&uniq  ↓ &uniq , _) -> _
+libcsv::csv_init: (&uniq  ↓ &uniq , _) -> _
+libcsv::csv_free: (&) -> _
+libcsv::csv_fini: (&uniq  ↓ &uniq , _, _, &) -> _
+libcsv::csv_set_delim: (&uniq  ↓ &uniq , _) -> _
+libcsv::csv_set_quote: (&uniq  ↓ &uniq , _) -> _
+libcsv::csv_get_delim: (&) -> _
+libcsv::csv_get_quote: (&) -> _
+libcsv::csv_set_space_func: (&uniq  ↓ &uniq , _) -> _
+libcsv::csv_set_term_func: (&uniq  ↓ &uniq , _) -> _
+libcsv::csv_set_realloc_func: (&uniq  ↓ &uniq , _) -> _
+libcsv::csv_set_free_func: (&uniq  ↓ &uniq , _) -> _
+libcsv::csv_set_blk_size: (&uniq  ↓ &uniq , _) -> _
+libcsv::csv_get_buffer_size: (&) -> _
+libcsv::csv_increase_buffer: (&) -> _
+libcsv::csv_parse: (&uniq  ↓ &uniq , &, _, _, _, &) -> _
+libcsv::csv_write: (&uniq  ↓ &uniq , _, &, _) -> _
+libcsv::csv_fwrite: (&uniq  ↓ &uniq , &, _) -> _
+libcsv::csv_write2: (&, _, &, _, _) -> _
+libcsv::csv_fwrite2: (&, &, _, _) -> _
+generating signatures for DefId(0:18 ~ c2rust_lib[a757]::libcsv::csv_error): (Some(Normal(6..8))) -> None
+generating signatures for DefId(0:21 ~ c2rust_lib[a757]::libcsv::csv_strerror): (None) -> Some(Normal(8..9))
+generating signatures for DefId(0:22 ~ c2rust_lib[a757]::libcsv::csv_get_opts): (Some(Normal(9..11))) -> None
+generating signatures for DefId(0:23 ~ c2rust_lib[a757]::libcsv::csv_set_opts): (Some(Output(Consume { use: 11..13, def: 13..15 })), None) -> None
+generating signatures for DefId(0:24 ~ c2rust_lib[a757]::libcsv::csv_init): (Some(Output(Consume { use: 15..17, def: 17..19 })), None) -> None
+generating signatures for DefId(0:25 ~ c2rust_lib[a757]::libcsv::csv_free): (Some(Normal(19..21))) -> None
+generating signatures for DefId(0:26 ~ c2rust_lib[a757]::libcsv::csv_fini): (Some(Output(Consume { use: 21..23, def: 23..25 })), None, None, Some(Normal(25..26))) -> None
+generating signatures for DefId(0:27 ~ c2rust_lib[a757]::libcsv::csv_set_delim): (Some(Output(Consume { use: 26..28, def: 28..30 })), None) -> None
+generating signatures for DefId(0:28 ~ c2rust_lib[a757]::libcsv::csv_set_quote): (Some(Output(Consume { use: 30..32, def: 32..34 })), None) -> None
+generating signatures for DefId(0:29 ~ c2rust_lib[a757]::libcsv::csv_get_delim): (Some(Normal(34..36))) -> None
+generating signatures for DefId(0:32 ~ c2rust_lib[a757]::libcsv::csv_get_quote): (Some(Normal(36..38))) -> None
+generating signatures for DefId(0:35 ~ c2rust_lib[a757]::libcsv::csv_set_space_func): (Some(Output(Consume { use: 38..40, def: 40..42 })), None) -> None
+generating signatures for DefId(0:36 ~ c2rust_lib[a757]::libcsv::csv_set_term_func): (Some(Output(Consume { use: 42..44, def: 44..46 })), None) -> None
+generating signatures for DefId(0:37 ~ c2rust_lib[a757]::libcsv::csv_set_realloc_func): (Some(Output(Consume { use: 46..48, def: 48..50 })), None) -> None
+generating signatures for DefId(0:38 ~ c2rust_lib[a757]::libcsv::csv_set_free_func): (Some(Output(Consume { use: 50..52, def: 52..54 })), None) -> None
+generating signatures for DefId(0:39 ~ c2rust_lib[a757]::libcsv::csv_set_blk_size): (Some(Output(Consume { use: 54..56, def: 56..58 })), None) -> None
+generating signatures for DefId(0:40 ~ c2rust_lib[a757]::libcsv::csv_get_buffer_size): (Some(Normal(58..60))) -> None
+generating signatures for DefId(0:41 ~ c2rust_lib[a757]::libcsv::csv_increase_buffer): (Some(Normal(60..62))) -> None
+generating signatures for DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): (Some(Output(Consume { use: 62..64, def: 64..66 })), Some(Normal(66..67)), None, None, None, Some(Normal(67..68))) -> None
+generating signatures for DefId(0:45 ~ c2rust_lib[a757]::libcsv::csv_write): (Some(Output(Consume { use: 68..69, def: 69..70 })), None, Some(Normal(70..71)), None) -> None
+generating signatures for DefId(0:46 ~ c2rust_lib[a757]::libcsv::csv_fwrite): (Some(Output(Consume { use: 71..78, def: 78..85 })), Some(Normal(85..86)), None) -> None
+generating signatures for DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): (Some(Normal(86..87)), None, Some(Normal(87..88)), None, None) -> None
+generating signatures for DefId(0:48 ~ c2rust_lib[a757]::libcsv::csv_fwrite2): (Some(Normal(88..95)), Some(Normal(95..96)), None, None) -> None
+libcsv::csv_error: (& &) -> _
+libcsv::csv_strerror: (_) -> &
+libcsv::csv_get_opts: (& &) -> _
+libcsv::csv_set_opts: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_init: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_free: (& &) -> _
+libcsv::csv_fini: (&uniq & ↓ &uniq &, _, _, &) -> _
+libcsv::csv_set_delim: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_quote: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_get_delim: (& &) -> _
+libcsv::csv_get_quote: (& &) -> _
+libcsv::csv_set_space_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_term_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_realloc_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_free_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_blk_size: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_get_buffer_size: (& &) -> _
+libcsv::csv_increase_buffer: (& &) -> _
+libcsv::csv_parse: (&uniq & ↓ &uniq &, &, _, _, _, &) -> _
+libcsv::csv_write: (&uniq  ↓ &uniq , _, &, _) -> _
+libcsv::csv_fwrite: (&uniq & & & & & & ↓ &uniq & & & & & &, &, _) -> _
+libcsv::csv_write2: (&, _, &, _, _) -> _
+libcsv::csv_fwrite2: (& & & & & & &, &, _, _) -> _
+generating signatures for DefId(0:18 ~ c2rust_lib[a757]::libcsv::csv_error): (Some(Normal(6..8))) -> None
+generating signatures for DefId(0:21 ~ c2rust_lib[a757]::libcsv::csv_strerror): (None) -> Some(Normal(8..9))
+generating signatures for DefId(0:22 ~ c2rust_lib[a757]::libcsv::csv_get_opts): (Some(Normal(9..11))) -> None
+generating signatures for DefId(0:23 ~ c2rust_lib[a757]::libcsv::csv_set_opts): (Some(Output(Consume { use: 11..13, def: 13..15 })), None) -> None
+generating signatures for DefId(0:24 ~ c2rust_lib[a757]::libcsv::csv_init): (Some(Output(Consume { use: 15..17, def: 17..19 })), None) -> None
+generating signatures for DefId(0:25 ~ c2rust_lib[a757]::libcsv::csv_free): (Some(Normal(19..21))) -> None
+generating signatures for DefId(0:26 ~ c2rust_lib[a757]::libcsv::csv_fini): (Some(Output(Consume { use: 21..23, def: 23..25 })), None, None, Some(Normal(25..26))) -> None
+generating signatures for DefId(0:27 ~ c2rust_lib[a757]::libcsv::csv_set_delim): (Some(Output(Consume { use: 26..28, def: 28..30 })), None) -> None
+generating signatures for DefId(0:28 ~ c2rust_lib[a757]::libcsv::csv_set_quote): (Some(Output(Consume { use: 30..32, def: 32..34 })), None) -> None
+generating signatures for DefId(0:29 ~ c2rust_lib[a757]::libcsv::csv_get_delim): (Some(Normal(34..36))) -> None
+generating signatures for DefId(0:32 ~ c2rust_lib[a757]::libcsv::csv_get_quote): (Some(Normal(36..38))) -> None
+generating signatures for DefId(0:35 ~ c2rust_lib[a757]::libcsv::csv_set_space_func): (Some(Output(Consume { use: 38..40, def: 40..42 })), None) -> None
+generating signatures for DefId(0:36 ~ c2rust_lib[a757]::libcsv::csv_set_term_func): (Some(Output(Consume { use: 42..44, def: 44..46 })), None) -> None
+generating signatures for DefId(0:37 ~ c2rust_lib[a757]::libcsv::csv_set_realloc_func): (Some(Output(Consume { use: 46..48, def: 48..50 })), None) -> None
+generating signatures for DefId(0:38 ~ c2rust_lib[a757]::libcsv::csv_set_free_func): (Some(Output(Consume { use: 50..52, def: 52..54 })), None) -> None
+generating signatures for DefId(0:39 ~ c2rust_lib[a757]::libcsv::csv_set_blk_size): (Some(Output(Consume { use: 54..56, def: 56..58 })), None) -> None
+generating signatures for DefId(0:40 ~ c2rust_lib[a757]::libcsv::csv_get_buffer_size): (Some(Normal(58..60))) -> None
+generating signatures for DefId(0:41 ~ c2rust_lib[a757]::libcsv::csv_increase_buffer): (Some(Normal(60..62))) -> None
+generating signatures for DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): (Some(Output(Consume { use: 62..64, def: 64..66 })), Some(Normal(66..67)), None, None, None, Some(Normal(67..68))) -> None
+generating signatures for DefId(0:45 ~ c2rust_lib[a757]::libcsv::csv_write): (Some(Output(Consume { use: 68..69, def: 69..70 })), None, Some(Normal(70..71)), None) -> None
+generating signatures for DefId(0:46 ~ c2rust_lib[a757]::libcsv::csv_fwrite): (Some(Output(Consume { use: 71..78, def: 78..85 })), Some(Normal(85..86)), None) -> None
+generating signatures for DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): (Some(Normal(86..87)), None, Some(Normal(87..88)), None, None) -> None
+generating signatures for DefId(0:48 ~ c2rust_lib[a757]::libcsv::csv_fwrite2): (Some(Normal(88..95)), Some(Normal(95..96)), None, None) -> None
+libcsv::csv_error: (& &) -> _
+libcsv::csv_strerror: (_) -> &
+libcsv::csv_get_opts: (& &) -> _
+libcsv::csv_set_opts: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_init: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_free: (& &) -> _
+libcsv::csv_fini: (&uniq & ↓ &uniq &, _, _, &) -> _
+libcsv::csv_set_delim: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_quote: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_get_delim: (& &) -> _
+libcsv::csv_get_quote: (& &) -> _
+libcsv::csv_set_space_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_term_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_realloc_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_free_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_blk_size: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_get_buffer_size: (& &) -> _
+libcsv::csv_increase_buffer: (& &) -> _
+libcsv::csv_parse: (&uniq & ↓ &uniq &, &, _, _, _, &) -> _
+libcsv::csv_write: (&uniq  ↓ &uniq , _, &, _) -> _
+libcsv::csv_fwrite: (&uniq & & & & & & ↓ &uniq & & & & & &, &, _) -> _
+libcsv::csv_write2: (&, _, &, _, _) -> _
+libcsv::csv_fwrite2: (& & & & & & &, &, _, _) -> _
+generating signatures for DefId(0:18 ~ c2rust_lib[a757]::libcsv::csv_error): (Some(Normal(6..8))) -> None
+generating signatures for DefId(0:21 ~ c2rust_lib[a757]::libcsv::csv_strerror): (None) -> Some(Normal(8..9))
+generating signatures for DefId(0:22 ~ c2rust_lib[a757]::libcsv::csv_get_opts): (Some(Normal(9..11))) -> None
+generating signatures for DefId(0:23 ~ c2rust_lib[a757]::libcsv::csv_set_opts): (Some(Output(Consume { use: 11..13, def: 13..15 })), None) -> None
+generating signatures for DefId(0:24 ~ c2rust_lib[a757]::libcsv::csv_init): (Some(Output(Consume { use: 15..17, def: 17..19 })), None) -> None
+generating signatures for DefId(0:25 ~ c2rust_lib[a757]::libcsv::csv_free): (Some(Normal(19..21))) -> None
+generating signatures for DefId(0:26 ~ c2rust_lib[a757]::libcsv::csv_fini): (Some(Output(Consume { use: 21..23, def: 23..25 })), None, None, Some(Normal(25..26))) -> None
+generating signatures for DefId(0:27 ~ c2rust_lib[a757]::libcsv::csv_set_delim): (Some(Output(Consume { use: 26..28, def: 28..30 })), None) -> None
+generating signatures for DefId(0:28 ~ c2rust_lib[a757]::libcsv::csv_set_quote): (Some(Output(Consume { use: 30..32, def: 32..34 })), None) -> None
+generating signatures for DefId(0:29 ~ c2rust_lib[a757]::libcsv::csv_get_delim): (Some(Normal(34..36))) -> None
+generating signatures for DefId(0:32 ~ c2rust_lib[a757]::libcsv::csv_get_quote): (Some(Normal(36..38))) -> None
+generating signatures for DefId(0:35 ~ c2rust_lib[a757]::libcsv::csv_set_space_func): (Some(Output(Consume { use: 38..40, def: 40..42 })), None) -> None
+generating signatures for DefId(0:36 ~ c2rust_lib[a757]::libcsv::csv_set_term_func): (Some(Output(Consume { use: 42..44, def: 44..46 })), None) -> None
+generating signatures for DefId(0:37 ~ c2rust_lib[a757]::libcsv::csv_set_realloc_func): (Some(Output(Consume { use: 46..48, def: 48..50 })), None) -> None
+generating signatures for DefId(0:38 ~ c2rust_lib[a757]::libcsv::csv_set_free_func): (Some(Output(Consume { use: 50..52, def: 52..54 })), None) -> None
+generating signatures for DefId(0:39 ~ c2rust_lib[a757]::libcsv::csv_set_blk_size): (Some(Output(Consume { use: 54..56, def: 56..58 })), None) -> None
+generating signatures for DefId(0:40 ~ c2rust_lib[a757]::libcsv::csv_get_buffer_size): (Some(Normal(58..60))) -> None
+generating signatures for DefId(0:41 ~ c2rust_lib[a757]::libcsv::csv_increase_buffer): (Some(Normal(60..62))) -> None
+generating signatures for DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): (Some(Output(Consume { use: 62..64, def: 64..66 })), Some(Normal(66..67)), None, None, None, Some(Normal(67..68))) -> None
+generating signatures for DefId(0:45 ~ c2rust_lib[a757]::libcsv::csv_write): (Some(Output(Consume { use: 68..69, def: 69..70 })), None, Some(Normal(70..71)), None) -> None
+generating signatures for DefId(0:46 ~ c2rust_lib[a757]::libcsv::csv_fwrite): (Some(Output(Consume { use: 71..78, def: 78..85 })), Some(Normal(85..86)), None) -> None
+generating signatures for DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): (Some(Normal(86..87)), None, Some(Normal(87..88)), None, None) -> None
+generating signatures for DefId(0:48 ~ c2rust_lib[a757]::libcsv::csv_fwrite2): (Some(Normal(88..95)), Some(Normal(95..96)), None, None) -> None
+libcsv::csv_error: (& &) -> _
+libcsv::csv_strerror: (_) -> &
+libcsv::csv_get_opts: (& &) -> _
+libcsv::csv_set_opts: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_init: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_free: (& &) -> _
+libcsv::csv_fini: (&uniq & ↓ &uniq &, _, _, &) -> _
+libcsv::csv_set_delim: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_quote: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_get_delim: (& &) -> _
+libcsv::csv_get_quote: (& &) -> _
+libcsv::csv_set_space_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_term_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_realloc_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_free_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_blk_size: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_get_buffer_size: (& &) -> _
+libcsv::csv_increase_buffer: (& &) -> _
+libcsv::csv_parse: (&uniq & ↓ &uniq &, &, _, _, _, &) -> _
+libcsv::csv_write: (&uniq  ↓ &uniq , _, &, _) -> _
+libcsv::csv_fwrite: (&uniq & & & & & & ↓ &uniq & & & & & &, &, _) -> _
+libcsv::csv_write2: (&, _, &, _, _) -> _
+libcsv::csv_fwrite2: (& & & & & & &, &, _, _) -> _
+generating signatures for DefId(0:18 ~ c2rust_lib[a757]::libcsv::csv_error): (Some(Normal(6..8))) -> None
+generating signatures for DefId(0:21 ~ c2rust_lib[a757]::libcsv::csv_strerror): (None) -> Some(Normal(8..9))
+generating signatures for DefId(0:22 ~ c2rust_lib[a757]::libcsv::csv_get_opts): (Some(Normal(9..11))) -> None
+generating signatures for DefId(0:23 ~ c2rust_lib[a757]::libcsv::csv_set_opts): (Some(Output(Consume { use: 11..13, def: 13..15 })), None) -> None
+generating signatures for DefId(0:24 ~ c2rust_lib[a757]::libcsv::csv_init): (Some(Output(Consume { use: 15..17, def: 17..19 })), None) -> None
+generating signatures for DefId(0:25 ~ c2rust_lib[a757]::libcsv::csv_free): (Some(Normal(19..21))) -> None
+generating signatures for DefId(0:26 ~ c2rust_lib[a757]::libcsv::csv_fini): (Some(Output(Consume { use: 21..23, def: 23..25 })), None, None, Some(Normal(25..26))) -> None
+generating signatures for DefId(0:27 ~ c2rust_lib[a757]::libcsv::csv_set_delim): (Some(Output(Consume { use: 26..28, def: 28..30 })), None) -> None
+generating signatures for DefId(0:28 ~ c2rust_lib[a757]::libcsv::csv_set_quote): (Some(Output(Consume { use: 30..32, def: 32..34 })), None) -> None
+generating signatures for DefId(0:29 ~ c2rust_lib[a757]::libcsv::csv_get_delim): (Some(Normal(34..36))) -> None
+generating signatures for DefId(0:32 ~ c2rust_lib[a757]::libcsv::csv_get_quote): (Some(Normal(36..38))) -> None
+generating signatures for DefId(0:35 ~ c2rust_lib[a757]::libcsv::csv_set_space_func): (Some(Output(Consume { use: 38..40, def: 40..42 })), None) -> None
+generating signatures for DefId(0:36 ~ c2rust_lib[a757]::libcsv::csv_set_term_func): (Some(Output(Consume { use: 42..44, def: 44..46 })), None) -> None
+generating signatures for DefId(0:37 ~ c2rust_lib[a757]::libcsv::csv_set_realloc_func): (Some(Output(Consume { use: 46..48, def: 48..50 })), None) -> None
+generating signatures for DefId(0:38 ~ c2rust_lib[a757]::libcsv::csv_set_free_func): (Some(Output(Consume { use: 50..52, def: 52..54 })), None) -> None
+generating signatures for DefId(0:39 ~ c2rust_lib[a757]::libcsv::csv_set_blk_size): (Some(Output(Consume { use: 54..56, def: 56..58 })), None) -> None
+generating signatures for DefId(0:40 ~ c2rust_lib[a757]::libcsv::csv_get_buffer_size): (Some(Normal(58..60))) -> None
+generating signatures for DefId(0:41 ~ c2rust_lib[a757]::libcsv::csv_increase_buffer): (Some(Normal(60..62))) -> None
+generating signatures for DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): (Some(Output(Consume { use: 62..64, def: 64..66 })), Some(Normal(66..67)), None, None, None, Some(Normal(67..68))) -> None
+generating signatures for DefId(0:45 ~ c2rust_lib[a757]::libcsv::csv_write): (Some(Output(Consume { use: 68..69, def: 69..70 })), None, Some(Normal(70..71)), None) -> None
+generating signatures for DefId(0:46 ~ c2rust_lib[a757]::libcsv::csv_fwrite): (Some(Output(Consume { use: 71..78, def: 78..85 })), Some(Normal(85..86)), None) -> None
+generating signatures for DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): (Some(Normal(86..87)), None, Some(Normal(87..88)), None, None) -> None
+generating signatures for DefId(0:48 ~ c2rust_lib[a757]::libcsv::csv_fwrite2): (Some(Normal(88..95)), Some(Normal(95..96)), None, None) -> None
+libcsv::csv_error: (& &) -> _
+libcsv::csv_strerror: (_) -> &
+libcsv::csv_get_opts: (& &) -> _
+libcsv::csv_set_opts: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_init: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_free: (& &) -> _
+libcsv::csv_fini: (&uniq & ↓ &uniq &, _, _, &) -> _
+libcsv::csv_set_delim: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_quote: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_get_delim: (& &) -> _
+libcsv::csv_get_quote: (& &) -> _
+libcsv::csv_set_space_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_term_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_realloc_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_free_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_blk_size: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_get_buffer_size: (& &) -> _
+libcsv::csv_increase_buffer: (& &) -> _
+libcsv::csv_parse: (&uniq & ↓ &uniq &, &, _, _, _, &) -> _
+libcsv::csv_write: (&uniq  ↓ &uniq , _, &, _) -> _
+libcsv::csv_fwrite: (&uniq & & & & & & ↓ &uniq & & & & & &, &, _) -> _
+libcsv::csv_write2: (&, _, &, _, _) -> _
+libcsv::csv_fwrite2: (& & & & & & &, &, _, _) -> _
+generating signatures for DefId(0:18 ~ c2rust_lib[a757]::libcsv::csv_error): (Some(Normal(6..8))) -> None
+generating signatures for DefId(0:21 ~ c2rust_lib[a757]::libcsv::csv_strerror): (None) -> Some(Normal(8..9))
+generating signatures for DefId(0:22 ~ c2rust_lib[a757]::libcsv::csv_get_opts): (Some(Normal(9..11))) -> None
+generating signatures for DefId(0:23 ~ c2rust_lib[a757]::libcsv::csv_set_opts): (Some(Output(Consume { use: 11..13, def: 13..15 })), None) -> None
+generating signatures for DefId(0:24 ~ c2rust_lib[a757]::libcsv::csv_init): (Some(Output(Consume { use: 15..17, def: 17..19 })), None) -> None
+generating signatures for DefId(0:25 ~ c2rust_lib[a757]::libcsv::csv_free): (Some(Normal(19..21))) -> None
+generating signatures for DefId(0:26 ~ c2rust_lib[a757]::libcsv::csv_fini): (Some(Output(Consume { use: 21..23, def: 23..25 })), None, None, Some(Normal(25..26))) -> None
+generating signatures for DefId(0:27 ~ c2rust_lib[a757]::libcsv::csv_set_delim): (Some(Output(Consume { use: 26..28, def: 28..30 })), None) -> None
+generating signatures for DefId(0:28 ~ c2rust_lib[a757]::libcsv::csv_set_quote): (Some(Output(Consume { use: 30..32, def: 32..34 })), None) -> None
+generating signatures for DefId(0:29 ~ c2rust_lib[a757]::libcsv::csv_get_delim): (Some(Normal(34..36))) -> None
+generating signatures for DefId(0:32 ~ c2rust_lib[a757]::libcsv::csv_get_quote): (Some(Normal(36..38))) -> None
+generating signatures for DefId(0:35 ~ c2rust_lib[a757]::libcsv::csv_set_space_func): (Some(Output(Consume { use: 38..40, def: 40..42 })), None) -> None
+generating signatures for DefId(0:36 ~ c2rust_lib[a757]::libcsv::csv_set_term_func): (Some(Output(Consume { use: 42..44, def: 44..46 })), None) -> None
+generating signatures for DefId(0:37 ~ c2rust_lib[a757]::libcsv::csv_set_realloc_func): (Some(Output(Consume { use: 46..48, def: 48..50 })), None) -> None
+generating signatures for DefId(0:38 ~ c2rust_lib[a757]::libcsv::csv_set_free_func): (Some(Output(Consume { use: 50..52, def: 52..54 })), None) -> None
+generating signatures for DefId(0:39 ~ c2rust_lib[a757]::libcsv::csv_set_blk_size): (Some(Output(Consume { use: 54..56, def: 56..58 })), None) -> None
+generating signatures for DefId(0:40 ~ c2rust_lib[a757]::libcsv::csv_get_buffer_size): (Some(Normal(58..60))) -> None
+generating signatures for DefId(0:41 ~ c2rust_lib[a757]::libcsv::csv_increase_buffer): (Some(Normal(60..62))) -> None
+generating signatures for DefId(0:42 ~ c2rust_lib[a757]::libcsv::csv_parse): (Some(Output(Consume { use: 62..64, def: 64..66 })), Some(Normal(66..67)), None, None, None, Some(Normal(67..68))) -> None
+generating signatures for DefId(0:45 ~ c2rust_lib[a757]::libcsv::csv_write): (Some(Output(Consume { use: 68..69, def: 69..70 })), None, Some(Normal(70..71)), None) -> None
+generating signatures for DefId(0:46 ~ c2rust_lib[a757]::libcsv::csv_fwrite): (Some(Output(Consume { use: 71..78, def: 78..85 })), Some(Normal(85..86)), None) -> None
+generating signatures for DefId(0:47 ~ c2rust_lib[a757]::libcsv::csv_write2): (Some(Normal(86..87)), None, Some(Normal(87..88)), None, None) -> None
+generating signatures for DefId(0:48 ~ c2rust_lib[a757]::libcsv::csv_fwrite2): (Some(Normal(88..95)), Some(Normal(95..96)), None, None) -> None
+libcsv::csv_error: (& &) -> _
+libcsv::csv_strerror: (_) -> &
+libcsv::csv_get_opts: (& &) -> _
+libcsv::csv_set_opts: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_init: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_free: (& &) -> _
+libcsv::csv_fini: (&uniq & ↓ &uniq &, _, _, &) -> _
+libcsv::csv_set_delim: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_quote: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_get_delim: (& &) -> _
+libcsv::csv_get_quote: (& &) -> _
+libcsv::csv_set_space_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_term_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_realloc_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_free_func: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_set_blk_size: (&uniq & ↓ &uniq &, _) -> _
+libcsv::csv_get_buffer_size: (& &) -> _
+libcsv::csv_increase_buffer: (& &) -> _
+libcsv::csv_parse: (&uniq & ↓ &uniq &, &, _, _, _, &) -> _
+libcsv::csv_write: (&uniq  ↓ &uniq , _, &, _) -> _
+libcsv::csv_fwrite: (&uniq & & & & & & ↓ &uniq & & & & & &, &, _) -> _
+libcsv::csv_write2: (&, _, &, _, _) -> _
+libcsv::csv_fwrite2: (& & & & & & &, &, _, _) -> _
+libcsv::__sbuf {
+  _base: &any,
+  _size: ,
+}
+libcsv::__sFILE {
+  _p: &any,
+  _r: ,
+  _w: ,
+  _flags: ,
+  _file: ,
+  _bf: ,
+  _lbfsize: ,
+  _cookie: &any,
+  _close: ,
+  _read: ,
+  _seek: ,
+  _write: ,
+  _ub: ,
+  _extra: &any,
+  _ur: ,
+  _ubuf: ,
+  _nbuf: ,
+  _lb: ,
+  _blksize: ,
+  _offset: ,
+}
+libcsv::csv_parser {
+  pstate: ,
+  quoted: ,
+  spaces: ,
+  entry_buf: &any,
+  entry_pos: ,
+  entry_size: ,
+  status: ,
+  options: ,
+  quote_char: ,
+  delim_char: ,
+  is_space: ,
+  is_term: ,
+  blk_size: ,
+  malloc_func: ,
+  realloc_func: ,
+  free_func: ,
+}
+libcsv::csv_error: (&) -> 
+libcsv::csv_strerror: () -> &
+libcsv::csv_get_opts: (&) -> 
+libcsv::csv_set_opts: (&move, ) -> 
+libcsv::csv_init: (&move, ) -> 
+libcsv::csv_free: (&) -> 
+libcsv::csv_fini: (&move, , , &) -> 
+libcsv::csv_set_delim: (&move, ) -> 
+libcsv::csv_set_quote: (&move, ) -> 
+libcsv::csv_get_delim: (&) -> 
+libcsv::csv_get_quote: (&) -> 
+libcsv::csv_set_space_func: (&move, ) -> 
+libcsv::csv_set_term_func: (&move, ) -> 
+libcsv::csv_set_realloc_func: (&move, ) -> 
+libcsv::csv_set_free_func: (&move, ) -> 
+libcsv::csv_set_blk_size: (&move, ) -> 
+libcsv::csv_get_buffer_size: (&) -> 
+libcsv::csv_increase_buffer: (&) -> 
+libcsv::csv_parse: (&move, &, , , , &) -> 
+libcsv::csv_write: (&move, , &, ) -> 
+libcsv::csv_fwrite: (&move, &, ) -> 
+libcsv::csv_write2: (&, , &, , ) -> 
+libcsv::csv_fwrite2: (&, &, , ) -> 

@@ -72,9 +72,7 @@ impl SSAState {
         self.consume_chain.mk_dummy();
         self
     }
-}
 
-impl SSAState {
     /// Try find valid consume at `location`
     #[inline]
     pub fn try_consume_at(&mut self, local: Local, location: Location) -> Option<Consume<SSAIdx>> {
@@ -103,6 +101,46 @@ impl SSAState {
         );
         Some(consume)
     }
+
+    // /// Try find valid consume at `location`
+    // #[inline]
+    // pub fn try_consume_at(&mut self, local: Local, location: Location) -> Option<Consume<SSAIdx>> {
+    //     // tracing::debug!("consume chain before: {:?}", &self.consume_chain.consumes[location.block.index()]);
+    //     let consume = self.consume_chain.consumes[location.block.index()][location.statement_index]
+    //         .get_by_key_mut(&local)?;
+    //     let old_ssa_idx = self.name_state.get_name(local);
+    //     if self.consume_chain.proxy_temporaries.contains(&local) {
+    //         if old_ssa_idx == SSAIdx::INIT {
+    //             consume.r#use = old_ssa_idx;
+    //             let new_ssa_idx = self.name_state.generate_fresh_name(local);
+    //             consume.def = new_ssa_idx;
+    //         } else {
+    //             assert_eq!(old_ssa_idx, SSAIdx::INIT + 1);
+    //             consume.r#use = SSAIdx::INIT;
+    //             consume.def = SSAIdx::INIT + 1;
+    //         }
+    //     }
+    //     consume.r#use = old_ssa_idx;
+    //     if consume.is_use() {
+    //         return None;
+    //     }
+    //     let new_ssa_idx = self.name_state.generate_fresh_name(local);
+    //     tracing::debug!(
+    //         "consuming {:?} at {:?}, use: {:?}, def: {:?}",
+    //         local,
+    //         location,
+    //         old_ssa_idx,
+    //         new_ssa_idx
+    //     );
+    //     consume.def = new_ssa_idx;
+    //     let consume = *consume;
+    //     // tracing::debug!("consume chain before: {:?}", &self.consume_chain.consumes[location.block.index()]);
+    //     assert_eq!(
+    //         new_ssa_idx,
+    //         self.consume_chain.locs[local].push(location.into())
+    //     );
+    //     Some(consume)
+    // }
 }
 
 #[derive(Clone, Debug)]

@@ -1,5 +1,4 @@
-use either::Either;
-use rustc_middle::mir::{Body, Location};
+use rustc_middle::mir::Body;
 
 use super::InterCtxt;
 use crate::{
@@ -96,36 +95,15 @@ pub(super) fn initial_ssa_state<'tcx>(crate_ctxt: &CrateCtxt<'tcx>, body: &Body<
     SSAState::new(body, &dominance_frontier, definitions)
 }
 
-pub(super) fn refine_state(body: &Body, fn_summary: FnSummary, model: &[Ownership]) -> SSAState {
+pub(super) fn refine_state(_body: &Body, fn_summary: FnSummary, _model: &[Ownership]) -> SSAState {
     // let ownership_transferred_locations =
     //     compute_ownership_transferred_locations(body, &fn_summary, model);
 
     let FnSummary {
-        fn_body_sig,
         mut ssa_state,
+        ..
     } = fn_summary;
 
-    let consumes = &mut ssa_state.consume_chain.consumes;
-    // we have to do this awkwardly as lending iterator is not ready
-    for bb in 0..consumes.len() {
-        for (statement_index, consumes) in consumes[bb].iter_mut().enumerate() {
-            for &mut (local, ref mut consume) in consumes.iter_mut() {
-                if consume.is_use() {
-                    let location = Location {
-                        block: bb.into(),
-                        statement_index,
-                    };
-                    let Either::Left(_) = body.stmt_at(location) else {
-                        unreachable!("function args and return are assumed to be local. rustc changes this property somehow")
-                    };
-                    let outter_most = fn_body_sig[local][consume.r#use].start;
-                    if matches!(model[outter_most.index()], Ownership::Owning) {
-                        consume.enable_def();
-                    }
-                }
-            }
-        }
-    }
     ssa_state.name_state.reset();
     ssa_state.join_points.reset();
     ssa_state.consume_chain.reset();

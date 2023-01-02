@@ -114,11 +114,6 @@ impl Consume<SSAIdx> {
             def: SSAIdx::VOID,
         }
     }
-
-    #[inline]
-    pub fn enable_def(&mut self) {
-        self.def = SSAIdx::INIT;
-    }
 }
 
 impl<Iter, T> Consume<Iter>
@@ -343,11 +338,7 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
                 && !self.call_arg_temps.contains(&place.local)
             {
                 // println!("defining {:?} at {:?}", place.local, location);
-                let consume = if place.is_indirect() {
-                    Consume::pure_use()
-                } else {
-                    Consume::new()
-                };
+                let consume = Consume::new();
                 self.maybe_consume_sites[place.local].insert(location.block);
                 self.consumes_in_cur_stmt.push((place.local, consume));
             }

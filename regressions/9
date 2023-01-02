@@ -1,0 +1,551 @@
+@DefId(0:16 ~ test[2575]::strdup): _1 removed because it aliases _0, which is mutable
+@DefId(0:16 ~ test[2575]::strdup): _1 removed because it aliases _7, which is mutable
+@DefId(0:16 ~ test[2575]::strdup): _1 removed because it aliases _13, which is mutable
+@DefId(0:16 ~ test[2575]::strdup): _1 removed because it aliases _14, which is mutable
+@DefId(0:16 ~ test[2575]::strdup): _1 removed because it aliases _15, which is mutable
+@DefId(0:21 ~ test[2575]::url_get_protocol): _1 removed because it aliases _0, which is mutable
+@DefId(0:21 ~ test[2575]::url_get_protocol): _1 removed because it aliases _2, which is mutable
+@DefId(0:21 ~ test[2575]::url_get_protocol): _1 removed because it aliases _3, which is mutable
+@DefId(0:21 ~ test[2575]::url_get_protocol): _1 removed because it aliases _14, which is mutable
+@DefId(0:21 ~ test[2575]::url_get_protocol): _1 removed because it aliases _15, which is mutable
+@DefId(0:21 ~ test[2575]::url_get_protocol): _1 removed because it aliases _20, which is mutable
+@DefId(0:26 ~ test[2575]::url_is_ssh): _1 removed because it aliases _2, which is mutable
+@DefId(0:26 ~ test[2575]::url_is_ssh): _1 removed because it aliases _4, which is mutable
+@DefId(0:26 ~ test[2575]::url_is_ssh): _1 removed because it aliases _25, which is mutable
+@DefId(0:26 ~ test[2575]::url_is_ssh): _1 removed because it aliases _26, which is mutable
+@DefId(0:20 ~ test[2575]::strff): _1 removed because it aliases _0, which is mutable
+@DefId(0:20 ~ test[2575]::strff): _1 removed because it aliases _9, which is mutable
+@DefId(0:20 ~ test[2575]::strff): _1 removed because it aliases _10, which is mutable
+@DefId(0:20 ~ test[2575]::strff): _1 removed because it aliases _14, which is mutable
+@DefId(0:25 ~ test[2575]::strrwd): _1 removed because it aliases _0, which is mutable
+@DefId(0:25 ~ test[2575]::strrwd): _1 removed because it aliases _9, which is mutable
+@DefId(0:25 ~ test[2575]::strrwd): _1 removed because it aliases _10, which is mutable
+@DefId(0:25 ~ test[2575]::strrwd): _1 removed because it aliases _14, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _0, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _5, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _6, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _9, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _11, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _12, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _14, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _15, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _16, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _30, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _31, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _32, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _33, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _34, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _35, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _36, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _37, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _38, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _39, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _40, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _41, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _42, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _46, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _47, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _49, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _57, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _59, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _60, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _64, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _65, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _67, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _68, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _70, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _1 removed because it aliases _71, which is mutable
+@DefId(0:24 ~ test[2575]::get_part): _2 removed because it aliases _48, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _13, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _15, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _17, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _31, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _34, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _35, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _45, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _49, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _69, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _70, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _71, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _101, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _103, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _104, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _105, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _106, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _114, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _115, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _120, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _130, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _131, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _132, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _159, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _160, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _183, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _186, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _187, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _189, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _190, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _191, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _192, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _200, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _201, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _202, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _203, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _204, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _205, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _206, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _208, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _210, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _211, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _216, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _221, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _222, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _223, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _231, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _234, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _235, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _236, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _237, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _238, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _239, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _241, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _242, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _247, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _248, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _254, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _255, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _256, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _257, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _266, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _267, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _272, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _273, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _274, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _275, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _283, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _289, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _290, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _291, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _292, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _293, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _294, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _296, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _297, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _302, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _303, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _305, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _306, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _307, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _308, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _316, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _323, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _324, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _329, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _332, which is mutable
+@DefId(0:19 ~ test[2575]::url_parse): _1 removed because it aliases _333, which is mutable
+@DefId(0:27 ~ test[2575]::url_get_auth): _1 removed because it aliases _0, which is mutable
+@DefId(0:28 ~ test[2575]::url_get_hostname): _1 removed because it aliases _0, which is mutable
+@DefId(0:28 ~ test[2575]::url_get_hostname): _1 removed because it aliases _3, which is mutable
+@DefId(0:28 ~ test[2575]::url_get_hostname): _1 removed because it aliases _5, which is mutable
+@DefId(0:28 ~ test[2575]::url_get_hostname): _1 removed because it aliases _7, which is mutable
+@DefId(0:28 ~ test[2575]::url_get_hostname): _1 removed because it aliases _8, which is mutable
+@DefId(0:28 ~ test[2575]::url_get_hostname): _1 removed because it aliases _34, which is mutable
+@DefId(0:28 ~ test[2575]::url_get_hostname): _1 removed because it aliases _35, which is mutable
+@DefId(0:28 ~ test[2575]::url_get_hostname): _1 removed because it aliases _45, which is mutable
+@DefId(0:28 ~ test[2575]::url_get_hostname): _1 removed because it aliases _46, which is mutable
+@DefId(0:28 ~ test[2575]::url_get_hostname): _1 removed because it aliases _47, which is mutable
+@DefId(0:28 ~ test[2575]::url_get_hostname): _1 removed because it aliases _64, which is mutable
+@DefId(0:28 ~ test[2575]::url_get_hostname): _1 removed because it aliases _65, which is mutable
+@DefId(0:29 ~ test[2575]::url_get_host): _1 removed because it aliases _6, which is mutable
+@DefId(0:29 ~ test[2575]::url_get_host): _1 removed because it aliases _14, which is mutable
+@DefId(0:29 ~ test[2575]::url_get_host): _1 removed because it aliases _15, which is mutable
+@DefId(0:29 ~ test[2575]::url_get_host): _1 removed because it aliases _22, which is mutable
+@DefId(0:29 ~ test[2575]::url_get_host): _1 removed because it aliases _23, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _0, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _3, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _4, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _6, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _8, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _42, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _67, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _68, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _76, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _79, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _84, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _85, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _90, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _91, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _93, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _94, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _96, which is mutable
+@DefId(0:31 ~ test[2575]::url_get_path): _1 removed because it aliases _97, which is mutable
+@DefId(0:30 ~ test[2575]::url_get_pathname): _1 removed because it aliases _2, which is mutable
+@DefId(0:30 ~ test[2575]::url_get_pathname): _1 removed because it aliases _20, which is mutable
+@DefId(0:30 ~ test[2575]::url_get_pathname): _1 removed because it aliases _21, which is mutable
+@DefId(0:30 ~ test[2575]::url_get_pathname): _1 removed because it aliases _28, which is mutable
+@DefId(0:30 ~ test[2575]::url_get_pathname): _1 removed because it aliases _29, which is mutable
+@DefId(0:32 ~ test[2575]::url_get_search): _1 removed because it aliases _2, which is mutable
+@DefId(0:32 ~ test[2575]::url_get_search): _1 removed because it aliases _15, which is mutable
+@DefId(0:32 ~ test[2575]::url_get_search): _1 removed because it aliases _28, which is mutable
+@DefId(0:32 ~ test[2575]::url_get_search): _1 removed because it aliases _29, which is mutable
+@DefId(0:32 ~ test[2575]::url_get_search): _1 removed because it aliases _35, which is mutable
+@DefId(0:32 ~ test[2575]::url_get_search): _1 removed because it aliases _42, which is mutable
+@DefId(0:32 ~ test[2575]::url_get_search): _1 removed because it aliases _43, which is mutable
+@DefId(0:34 ~ test[2575]::url_get_hash): _1 removed because it aliases _11, which is mutable
+@DefId(0:34 ~ test[2575]::url_get_hash): _1 removed because it aliases _35, which is mutable
+@DefId(0:34 ~ test[2575]::url_get_hash): _1 removed because it aliases _48, which is mutable
+@DefId(0:34 ~ test[2575]::url_get_hash): _1 removed because it aliases _49, which is mutable
+@DefId(0:34 ~ test[2575]::url_get_hash): _1 removed because it aliases _55, which is mutable
+@DefId(0:34 ~ test[2575]::url_get_hash): _1 removed because it aliases _62, which is mutable
+@DefId(0:34 ~ test[2575]::url_get_hash): _1 removed because it aliases _63, which is mutable
+@DefId(0:34 ~ test[2575]::url_get_hash): _1 removed because it aliases _68, which is mutable
+@DefId(0:34 ~ test[2575]::url_get_hash): _1 removed because it aliases _69, which is mutable
+@DefId(0:35 ~ test[2575]::url_get_port): _1 removed because it aliases _6, which is mutable
+@DefId(0:35 ~ test[2575]::url_get_port): _1 removed because it aliases _15, which is mutable
+@DefId(0:35 ~ test[2575]::url_get_port): _1 removed because it aliases _24, which is mutable
+@DefId(0:35 ~ test[2575]::url_get_port): _1 removed because it aliases _25, which is mutable
+@DefId(0:35 ~ test[2575]::url_get_port): _1 removed because it aliases _32, which is mutable
+@DefId(0:35 ~ test[2575]::url_get_port): _1 removed because it aliases _33, which is mutable
+@DefId(0:35 ~ test[2575]::url_get_port): _1 removed because it aliases _35, which is mutable
+@DefId(0:35 ~ test[2575]::url_get_port): _1 removed because it aliases _36, which is mutable
+generating signatures for DefId(0:36 ~ test[2575]::url_free): (Some(Output(Consume { use: 12..13, def: 13..14 }))) -> None
+generating signatures for DefId(0:19 ~ test[2575]::url_parse): (Some(Normal(15..16))) -> Some(Normal(14..15))
+generating signatures for DefId(0:31 ~ test[2575]::url_get_path): (Some(Normal(17..18))) -> Some(Normal(16..17))
+generating signatures for DefId(0:34 ~ test[2575]::url_get_hash): (Some(Normal(19..20))) -> Some(Normal(18..19))
+generating signatures for DefId(0:24 ~ test[2575]::get_part): (Some(Normal(21..22)), Some(Normal(22..23)), None) -> Some(Normal(20..21))
+generating signatures for DefId(0:28 ~ test[2575]::url_get_hostname): (Some(Normal(24..25))) -> Some(Normal(23..24))
+generating signatures for DefId(0:32 ~ test[2575]::url_get_search): (Some(Normal(26..27))) -> Some(Normal(25..26))
+generating signatures for DefId(0:35 ~ test[2575]::url_get_port): (Some(Normal(28..29))) -> Some(Normal(27..28))
+generating signatures for DefId(0:29 ~ test[2575]::url_get_host): (Some(Normal(30..31))) -> Some(Normal(29..30))
+generating signatures for DefId(0:30 ~ test[2575]::url_get_pathname): (Some(Normal(32..33))) -> Some(Normal(31..32))
+generating signatures for DefId(0:33 ~ test[2575]::url_get_query): (Some(Output(Consume { use: 34..35, def: 35..36 }))) -> Some(Normal(33..34))
+generating signatures for DefId(0:26 ~ test[2575]::url_is_ssh): (Some(Normal(36..37))) -> None
+generating signatures for DefId(0:16 ~ test[2575]::strdup): (Some(Normal(38..39))) -> Some(Normal(37..38))
+generating signatures for DefId(0:21 ~ test[2575]::url_get_protocol): (Some(Normal(40..41))) -> Some(Normal(39..40))
+generating signatures for DefId(0:20 ~ test[2575]::strff): (Some(Normal(42..43)), None) -> Some(Normal(41..42))
+generating signatures for DefId(0:22 ~ test[2575]::url_is_protocol): (Some(Normal(43..44))) -> None
+generating signatures for DefId(0:25 ~ test[2575]::strrwd): (Some(Normal(45..46)), None) -> Some(Normal(44..45))
+generating signatures for DefId(0:27 ~ test[2575]::url_get_auth): (Some(Normal(47..48))) -> Some(Normal(46..47))
+generating signatures for DefId(0:37 ~ test[2575]::url_inspect): (Some(Output(Consume { use: 48..49, def: 49..50 }))) -> None
+generating signatures for DefId(0:38 ~ test[2575]::url_data_inspect): (Some(Normal(50..51))) -> None
+generating signatures for DefId(0:39 ~ test[2575]::main_0): () -> None
+generating signatures for DefId(0:126 ~ test[2575]::main): () -> None
+failed: url_parse
+failed: url_get_path
+failed: url_get_hash
+failed: get_part
+failed: url_get_hostname
+failed: url_get_search
+failed: url_get_port
+failed: url_get_host
+failed: url_get_pathname
+failed: url_get_query
+failed: url_is_ssh
+failed: url_is_protocol
+failed: main_0
+url_free: (&uniq  ↓ &uniq ) -> _
+url_parse: (&) -> &any
+url_get_path: (&any) -> &any
+url_get_hash: (&any) -> &any
+get_part: (&, &, _) -> &
+url_get_hostname: (&any) -> &any
+url_get_search: (&any) -> &any
+url_get_port: (&any) -> &any
+url_get_host: (&any) -> &any
+url_get_pathname: (&any) -> &any
+url_get_query: (&uniq  ↓ &uniq ) -> &any
+url_is_ssh: (&any) -> _
+strdup: (&) -> &move
+url_get_protocol: (&) -> &
+strff: (&, _) -> &move
+url_is_protocol: (&move) -> _
+strrwd: (&, _) -> &move
+url_get_auth: (&) -> &
+url_inspect: (&uniq  ↓ &uniq ) -> _
+url_data_inspect: (&) -> _
+main_0: () -> _
+main: () -> _
+generating signatures for DefId(0:36 ~ test[2575]::url_free): (Some(Output(Consume { use: 12..24, def: 24..36 }))) -> None
+generating signatures for DefId(0:19 ~ test[2575]::url_parse): (Some(Normal(48..49))) -> Some(Normal(36..48))
+generating signatures for DefId(0:31 ~ test[2575]::url_get_path): (Some(Normal(50..51))) -> Some(Normal(49..50))
+generating signatures for DefId(0:34 ~ test[2575]::url_get_hash): (Some(Normal(52..53))) -> Some(Normal(51..52))
+generating signatures for DefId(0:24 ~ test[2575]::get_part): (Some(Normal(54..55)), Some(Normal(55..56)), None) -> Some(Normal(53..54))
+generating signatures for DefId(0:28 ~ test[2575]::url_get_hostname): (Some(Normal(57..58))) -> Some(Normal(56..57))
+generating signatures for DefId(0:32 ~ test[2575]::url_get_search): (Some(Normal(59..60))) -> Some(Normal(58..59))
+generating signatures for DefId(0:35 ~ test[2575]::url_get_port): (Some(Normal(61..62))) -> Some(Normal(60..61))
+generating signatures for DefId(0:29 ~ test[2575]::url_get_host): (Some(Normal(63..64))) -> Some(Normal(62..63))
+generating signatures for DefId(0:30 ~ test[2575]::url_get_pathname): (Some(Normal(65..66))) -> Some(Normal(64..65))
+generating signatures for DefId(0:33 ~ test[2575]::url_get_query): (Some(Output(Consume { use: 67..68, def: 68..69 }))) -> Some(Normal(66..67))
+generating signatures for DefId(0:26 ~ test[2575]::url_is_ssh): (Some(Normal(69..70))) -> None
+generating signatures for DefId(0:16 ~ test[2575]::strdup): (Some(Normal(71..72))) -> Some(Normal(70..71))
+generating signatures for DefId(0:21 ~ test[2575]::url_get_protocol): (Some(Normal(73..74))) -> Some(Normal(72..73))
+generating signatures for DefId(0:20 ~ test[2575]::strff): (Some(Normal(75..76)), None) -> Some(Normal(74..75))
+generating signatures for DefId(0:22 ~ test[2575]::url_is_protocol): (Some(Normal(76..77))) -> None
+generating signatures for DefId(0:25 ~ test[2575]::strrwd): (Some(Normal(78..79)), None) -> Some(Normal(77..78))
+generating signatures for DefId(0:27 ~ test[2575]::url_get_auth): (Some(Normal(80..81))) -> Some(Normal(79..80))
+generating signatures for DefId(0:37 ~ test[2575]::url_inspect): (Some(Output(Consume { use: 81..82, def: 82..83 }))) -> None
+generating signatures for DefId(0:38 ~ test[2575]::url_data_inspect): (Some(Normal(83..95))) -> None
+generating signatures for DefId(0:39 ~ test[2575]::main_0): () -> None
+generating signatures for DefId(0:126 ~ test[2575]::main): () -> None
+failed: url_get_search
+failed: url_get_host
+failed: url_is_ssh
+failed: url_get_hash
+failed: url_get_path
+failed: url_get_hostname
+failed: url_parse
+failed: main_0
+failed: url_free
+failed: url_get_query
+failed: url_get_pathname
+failed: get_part
+failed: url_get_protocol
+failed: url_get_port
+url_free: (&uniq &any &any &any &any &any &any &any &any &any &any &any ↓ &uniq &any &any &any &any &any &any &any &any &any &any &any) -> _
+url_parse: (&) -> &any &any &any &any &any &any &any &any &any &any &any &any
+url_get_path: (&any) -> &any
+url_get_hash: (&any) -> &any
+get_part: (&, &, _) -> &
+url_get_hostname: (&any) -> &any
+url_get_search: (&any) -> &any
+url_get_port: (&any) -> &any
+url_get_host: (&any) -> &any
+url_get_pathname: (&any) -> &any
+url_get_query: (&uniq  ↓ &uniq ) -> &any
+url_is_ssh: (&any) -> _
+strdup: (&) -> &move
+url_get_protocol: (&) -> &
+strff: (&, _) -> &move
+url_is_protocol: (&) -> _
+strrwd: (&, _) -> &move
+url_get_auth: (&) -> &
+url_inspect: (&uniq  ↓ &uniq ) -> _
+url_data_inspect: (& & & & & & & & & & & &) -> _
+main_0: () -> _
+main: () -> _
+generating signatures for DefId(0:36 ~ test[2575]::url_free): (Some(Output(Consume { use: 12..24, def: 24..36 }))) -> None
+generating signatures for DefId(0:19 ~ test[2575]::url_parse): (Some(Normal(37..38))) -> Some(Normal(36..37))
+generating signatures for DefId(0:31 ~ test[2575]::url_get_path): (Some(Normal(39..40))) -> Some(Normal(38..39))
+generating signatures for DefId(0:34 ~ test[2575]::url_get_hash): (Some(Normal(41..42))) -> Some(Normal(40..41))
+generating signatures for DefId(0:24 ~ test[2575]::get_part): (Some(Normal(43..44)), Some(Normal(44..45)), None) -> Some(Normal(42..43))
+generating signatures for DefId(0:28 ~ test[2575]::url_get_hostname): (Some(Normal(46..47))) -> Some(Normal(45..46))
+generating signatures for DefId(0:32 ~ test[2575]::url_get_search): (Some(Normal(48..49))) -> Some(Normal(47..48))
+generating signatures for DefId(0:35 ~ test[2575]::url_get_port): (Some(Normal(50..51))) -> Some(Normal(49..50))
+generating signatures for DefId(0:29 ~ test[2575]::url_get_host): (Some(Normal(52..53))) -> Some(Normal(51..52))
+generating signatures for DefId(0:30 ~ test[2575]::url_get_pathname): (Some(Normal(54..55))) -> Some(Normal(53..54))
+generating signatures for DefId(0:33 ~ test[2575]::url_get_query): (Some(Output(Consume { use: 56..57, def: 57..58 }))) -> Some(Normal(55..56))
+generating signatures for DefId(0:26 ~ test[2575]::url_is_ssh): (Some(Normal(58..59))) -> None
+generating signatures for DefId(0:16 ~ test[2575]::strdup): (Some(Normal(60..61))) -> Some(Normal(59..60))
+generating signatures for DefId(0:21 ~ test[2575]::url_get_protocol): (Some(Normal(62..63))) -> Some(Normal(61..62))
+generating signatures for DefId(0:20 ~ test[2575]::strff): (Some(Normal(64..65)), None) -> Some(Normal(63..64))
+generating signatures for DefId(0:22 ~ test[2575]::url_is_protocol): (Some(Normal(65..66))) -> None
+generating signatures for DefId(0:25 ~ test[2575]::strrwd): (Some(Normal(67..68)), None) -> Some(Normal(66..67))
+generating signatures for DefId(0:27 ~ test[2575]::url_get_auth): (Some(Normal(69..70))) -> Some(Normal(68..69))
+generating signatures for DefId(0:37 ~ test[2575]::url_inspect): (Some(Output(Consume { use: 70..71, def: 71..72 }))) -> None
+generating signatures for DefId(0:38 ~ test[2575]::url_data_inspect): (Some(Normal(72..84))) -> None
+generating signatures for DefId(0:39 ~ test[2575]::main_0): () -> None
+generating signatures for DefId(0:126 ~ test[2575]::main): () -> None
+failed: url_get_search
+failed: url_get_host
+failed: url_is_ssh
+failed: url_get_hash
+failed: url_get_path
+failed: url_get_hostname
+failed: url_parse
+failed: main_0
+failed: url_free
+failed: url_get_query
+failed: url_get_pathname
+failed: get_part
+failed: url_get_protocol
+failed: url_get_port
+url_free: (&uniq &any &any &any &any &any &any &any &any &any &any &any ↓ &uniq &any &any &any &any &any &any &any &any &any &any &any) -> _
+url_parse: (&) -> &any
+url_get_path: (&any) -> &any
+url_get_hash: (&any) -> &any
+get_part: (&, &, _) -> &
+url_get_hostname: (&any) -> &any
+url_get_search: (&any) -> &any
+url_get_port: (&any) -> &any
+url_get_host: (&any) -> &any
+url_get_pathname: (&any) -> &any
+url_get_query: (&uniq  ↓ &uniq ) -> &any
+url_is_ssh: (&any) -> _
+strdup: (&) -> &move
+url_get_protocol: (&) -> &
+strff: (&, _) -> &move
+url_is_protocol: (&) -> _
+strrwd: (&, _) -> &move
+url_get_auth: (&) -> &
+url_inspect: (&uniq  ↓ &uniq ) -> _
+url_data_inspect: (& & & & & & & & & & & &) -> _
+main_0: () -> _
+main: () -> _
+generating signatures for DefId(0:36 ~ test[2575]::url_free): (Some(Output(Consume { use: 12..13, def: 13..14 }))) -> None
+generating signatures for DefId(0:19 ~ test[2575]::url_parse): (None) -> None
+generating signatures for DefId(0:31 ~ test[2575]::url_get_path): (None) -> None
+generating signatures for DefId(0:34 ~ test[2575]::url_get_hash): (None) -> None
+generating signatures for DefId(0:24 ~ test[2575]::get_part): (None, None, None) -> None
+generating signatures for DefId(0:28 ~ test[2575]::url_get_hostname): (None) -> None
+generating signatures for DefId(0:32 ~ test[2575]::url_get_search): (None) -> None
+generating signatures for DefId(0:35 ~ test[2575]::url_get_port): (None) -> None
+generating signatures for DefId(0:29 ~ test[2575]::url_get_host): (None) -> None
+generating signatures for DefId(0:30 ~ test[2575]::url_get_pathname): (None) -> None
+generating signatures for DefId(0:33 ~ test[2575]::url_get_query): (None) -> None
+generating signatures for DefId(0:26 ~ test[2575]::url_is_ssh): (None) -> None
+generating signatures for DefId(0:16 ~ test[2575]::strdup): (Some(Normal(15..16))) -> Some(Normal(14..15))
+generating signatures for DefId(0:21 ~ test[2575]::url_get_protocol): (Some(Normal(17..18))) -> Some(Normal(16..17))
+generating signatures for DefId(0:20 ~ test[2575]::strff): (Some(Normal(19..20)), None) -> Some(Normal(18..19))
+generating signatures for DefId(0:22 ~ test[2575]::url_is_protocol): (Some(Normal(20..21))) -> None
+generating signatures for DefId(0:25 ~ test[2575]::strrwd): (Some(Normal(22..23)), None) -> Some(Normal(21..22))
+generating signatures for DefId(0:27 ~ test[2575]::url_get_auth): (Some(Normal(24..25))) -> Some(Normal(23..24))
+generating signatures for DefId(0:37 ~ test[2575]::url_inspect): (Some(Output(Consume { use: 25..26, def: 26..27 }))) -> None
+generating signatures for DefId(0:38 ~ test[2575]::url_data_inspect): (Some(Normal(27..39))) -> None
+generating signatures for DefId(0:39 ~ test[2575]::main_0): () -> None
+generating signatures for DefId(0:126 ~ test[2575]::main): () -> None
+failed: url_get_protocol
+url_free: (&uniq  ↓ &uniq ) -> _
+url_parse: (_) -> _
+url_get_path: (_) -> _
+url_get_hash: (_) -> _
+get_part: (_, _, _) -> _
+url_get_hostname: (_) -> _
+url_get_search: (_) -> _
+url_get_port: (_) -> _
+url_get_host: (_) -> _
+url_get_pathname: (_) -> _
+url_get_query: (_) -> _
+url_is_ssh: (_) -> _
+strdup: (&) -> &move
+url_get_protocol: (&) -> &
+strff: (&, _) -> &move
+url_is_protocol: (&) -> _
+strrwd: (&, _) -> &move
+url_get_auth: (&) -> &
+url_inspect: (&uniq  ↓ &uniq ) -> _
+url_data_inspect: (& & & & & & & & & & & &) -> _
+main_0: () -> _
+main: () -> _
+generating signatures for DefId(0:36 ~ test[2575]::url_free): (Some(Output(Consume { use: 12..13, def: 13..14 }))) -> None
+generating signatures for DefId(0:19 ~ test[2575]::url_parse): (None) -> None
+generating signatures for DefId(0:31 ~ test[2575]::url_get_path): (None) -> None
+generating signatures for DefId(0:34 ~ test[2575]::url_get_hash): (None) -> None
+generating signatures for DefId(0:24 ~ test[2575]::get_part): (None, None, None) -> None
+generating signatures for DefId(0:28 ~ test[2575]::url_get_hostname): (None) -> None
+generating signatures for DefId(0:32 ~ test[2575]::url_get_search): (None) -> None
+generating signatures for DefId(0:35 ~ test[2575]::url_get_port): (None) -> None
+generating signatures for DefId(0:29 ~ test[2575]::url_get_host): (None) -> None
+generating signatures for DefId(0:30 ~ test[2575]::url_get_pathname): (None) -> None
+generating signatures for DefId(0:33 ~ test[2575]::url_get_query): (None) -> None
+generating signatures for DefId(0:26 ~ test[2575]::url_is_ssh): (None) -> None
+generating signatures for DefId(0:16 ~ test[2575]::strdup): (Some(Normal(15..16))) -> Some(Normal(14..15))
+generating signatures for DefId(0:21 ~ test[2575]::url_get_protocol): (None) -> None
+generating signatures for DefId(0:20 ~ test[2575]::strff): (Some(Normal(17..18)), None) -> Some(Normal(16..17))
+generating signatures for DefId(0:22 ~ test[2575]::url_is_protocol): (Some(Normal(18..19))) -> None
+generating signatures for DefId(0:25 ~ test[2575]::strrwd): (Some(Normal(20..21)), None) -> Some(Normal(19..20))
+generating signatures for DefId(0:27 ~ test[2575]::url_get_auth): (Some(Normal(22..23))) -> Some(Normal(21..22))
+generating signatures for DefId(0:37 ~ test[2575]::url_inspect): (Some(Output(Consume { use: 23..24, def: 24..25 }))) -> None
+generating signatures for DefId(0:38 ~ test[2575]::url_data_inspect): (Some(Normal(25..37))) -> None
+generating signatures for DefId(0:39 ~ test[2575]::main_0): () -> None
+generating signatures for DefId(0:126 ~ test[2575]::main): () -> None
+url_free: (&uniq  ↓ &uniq ) -> _
+url_parse: (_) -> _
+url_get_path: (_) -> _
+url_get_hash: (_) -> _
+get_part: (_, _, _) -> _
+url_get_hostname: (_) -> _
+url_get_search: (_) -> _
+url_get_port: (_) -> _
+url_get_host: (_) -> _
+url_get_pathname: (_) -> _
+url_get_query: (_) -> _
+url_is_ssh: (_) -> _
+strdup: (&) -> &move
+url_get_protocol: (_) -> _
+strff: (&, _) -> &move
+url_is_protocol: (&) -> _
+strrwd: (&, _) -> &move
+url_get_auth: (&) -> &
+url_inspect: (&uniq  ↓ &uniq ) -> _
+url_data_inspect: (& & & & & & & & & & & &) -> _
+main_0: () -> _
+main: () -> _
+generating signatures for DefId(0:36 ~ test[2575]::url_free): (Some(Output(Consume { use: 12..13, def: 13..14 }))) -> None
+generating signatures for DefId(0:19 ~ test[2575]::url_parse): (None) -> None
+generating signatures for DefId(0:31 ~ test[2575]::url_get_path): (None) -> None
+generating signatures for DefId(0:34 ~ test[2575]::url_get_hash): (None) -> None
+generating signatures for DefId(0:24 ~ test[2575]::get_part): (None, None, None) -> None
+generating signatures for DefId(0:28 ~ test[2575]::url_get_hostname): (None) -> None
+generating signatures for DefId(0:32 ~ test[2575]::url_get_search): (None) -> None
+generating signatures for DefId(0:35 ~ test[2575]::url_get_port): (None) -> None
+generating signatures for DefId(0:29 ~ test[2575]::url_get_host): (None) -> None
+generating signatures for DefId(0:30 ~ test[2575]::url_get_pathname): (None) -> None
+generating signatures for DefId(0:33 ~ test[2575]::url_get_query): (None) -> None
+generating signatures for DefId(0:26 ~ test[2575]::url_is_ssh): (None) -> None
+generating signatures for DefId(0:16 ~ test[2575]::strdup): (Some(Normal(15..16))) -> Some(Normal(14..15))
+generating signatures for DefId(0:21 ~ test[2575]::url_get_protocol): (None) -> None
+generating signatures for DefId(0:20 ~ test[2575]::strff): (Some(Normal(17..18)), None) -> Some(Normal(16..17))
+generating signatures for DefId(0:22 ~ test[2575]::url_is_protocol): (Some(Normal(18..19))) -> None
+generating signatures for DefId(0:25 ~ test[2575]::strrwd): (Some(Normal(20..21)), None) -> Some(Normal(19..20))
+generating signatures for DefId(0:27 ~ test[2575]::url_get_auth): (Some(Normal(22..23))) -> Some(Normal(21..22))
+generating signatures for DefId(0:37 ~ test[2575]::url_inspect): (Some(Output(Consume { use: 23..24, def: 24..25 }))) -> None
+generating signatures for DefId(0:38 ~ test[2575]::url_data_inspect): (Some(Normal(25..37))) -> None
+generating signatures for DefId(0:39 ~ test[2575]::main_0): () -> None
+generating signatures for DefId(0:126 ~ test[2575]::main): () -> None
+url_free: (&uniq  ↓ &uniq ) -> _
+url_parse: (_) -> _
+url_get_path: (_) -> _
+url_get_hash: (_) -> _
+get_part: (_, _, _) -> _
+url_get_hostname: (_) -> _
+url_get_search: (_) -> _
+url_get_port: (_) -> _
+url_get_host: (_) -> _
+url_get_pathname: (_) -> _
+url_get_query: (_) -> _
+url_is_ssh: (_) -> _
+strdup: (&) -> &move
+url_get_protocol: (_) -> _
+strff: (&, _) -> &move
+url_is_protocol: (&) -> _
+strrwd: (&, _) -> &move
+url_get_auth: (&) -> &
+url_inspect: (&uniq  ↓ &uniq ) -> _
+url_data_inspect: (& & & & & & & & & & & &) -> _
+main_0: () -> _
+main: () -> _
+url_data {
+  href: &any,
+  protocol: &any,
+  host: &any,
+  auth: &any,
+  hostname: &any,
+  pathname: &any,
+  search: &any,
+  path: &any,
+  hash: &any,
+  query: &any,
+  port: &any,
+}
+strdup: (&) -> &move
+url_parse: (&) -> &
+strff: (&, ) -> &move
+url_get_protocol: (&) -> &
+url_is_protocol: (&) -> 
+get_part: (&, &, ) -> &
+strrwd: (&, ) -> &move
+url_is_ssh: (&) -> 
+url_get_auth: (&) -> &
+url_get_hostname: (&) -> &
+url_get_host: (&) -> &
+url_get_pathname: (&) -> &
+url_get_path: (&) -> &
+url_get_search: (&) -> &
+url_get_query: (&) -> &
+url_get_hash: (&) -> &
+url_get_port: (&) -> &
+url_free: (&move) -> 
+url_inspect: (&move) -> 
+url_data_inspect: (&) -> 
+main_0: () -> 
+main: () -> 
