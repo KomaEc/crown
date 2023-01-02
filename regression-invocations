@@ -6,3 +6,6 @@ workspace/kdtree/lib.rs
 workspace/libtree/lib.rs
 workspace/buffer/lib.rs
 workspace/bst/lib.rs
+workspace/libzahl/lib.rs
+workspace/urlparser/test.rs
+workspace/libcsv/rust/c2rust-lib.rs
