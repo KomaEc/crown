@@ -5,11 +5,13 @@ use std::ops::Range;
 
 use rustc_middle::{
     mir::{
-        HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind,
+        HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind, Body,
     },
     ty::TyCtxt,
 };
 use rustc_type_ir::TyKind::{self, FnDef};
+
+use crate::ownership::solidify::SolidifiedOwnershipSchemes;
 
 use self::{libc::libc_call, library::library_call};
 use super::{
@@ -17,7 +19,7 @@ use super::{
     Lattice, StructFields, TypeQualifiers, Var, WithConstraintSystem,
 };
 
-pub fn fatness_analysis(crate_data: &common::CrateData) -> FatnessResult {
+pub fn fatness_analysis(crate_data: &common::CrateData, solidified: &SolidifiedOwnershipSchemes) -> FatnessResult {
     let mut result = FatnessResult::new_empty(crate_data);
     let mut database = BooleanSystem::new(&result.model);
     for r#fn in &crate_data.fns {
@@ -25,7 +27,10 @@ pub fn fatness_analysis(crate_data: &common::CrateData) -> FatnessResult {
         resolve_body(
             &mut database,
             &mut result,
-            FatnessAnalysis,
+            FatnessAnalysis {
+                body,
+                solidified,
+            },
             body,
             crate_data.tcx,
         );
@@ -88,13 +93,16 @@ impl Lattice for Fatness {
 
 impl BooleanLattice for Fatness {}
 
-pub struct FatnessAnalysis;
+pub struct FatnessAnalysis<'me, 'tcx> {
+    body: &'me Body<'tcx>,
+    solidified: &'me SolidifiedOwnershipSchemes,
+}
 
-impl WithConstraintSystem for FatnessAnalysis {
+impl<'me, 'tcx> WithConstraintSystem for FatnessAnalysis<'me, 'tcx> {
     type DB = BooleanSystem<Fatness>;
 }
 
-impl<'tcx> Infer<'tcx> for FatnessAnalysis {
+impl<'me, 'tcx> Infer<'tcx> for FatnessAnalysis<'me, 'tcx> {
     fn infer_assign(
         &mut self,
         place: &Place<'tcx>,
@@ -121,7 +129,12 @@ impl<'tcx> Infer<'tcx> for FatnessAnalysis {
 
                 let mut lhs_rhs = lhs.zip(rhs);
                 if let Some((lhs, rhs)) = lhs_rhs.next() {
-                    database.guard(lhs, rhs)
+                    database.guard(lhs, rhs);
+
+                    let lhs_ownership = self.solidified.place_result(self.body, place);
+                    if matches!(lhs_ownership.first().copied(), Some(ownership) if ownership.is_owning()) {
+                        database.guard(rhs, lhs);
+                    }
                 }
                 for (lhs, rhs) in lhs_rhs {
                     database.guard(lhs, rhs);
@@ -135,7 +148,12 @@ impl<'tcx> Infer<'tcx> for FatnessAnalysis {
 
                 let mut lhs_rhs = lhs.zip(rhs);
                 if let Some((lhs, rhs)) = lhs_rhs.next() {
-                    database.guard(lhs, rhs)
+                    database.guard(lhs, rhs);
+
+                    let lhs_ownership = self.solidified.place_result(self.body, place);
+                    if matches!(lhs_ownership.first().copied(), Some(ownership) if ownership.is_owning()) {
+                        database.guard(rhs, lhs);
+                    }
                 }
             }
             Rvalue::Ref(_, _, rhs) | Rvalue::AddressOf(_, rhs) => {

@@ -264,8 +264,28 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             mutability_result.print_results(&input)
         }
         Command::Fatness => {
+            let alias_result = alias::alias_results(&input);
+            let mutability_result =
+                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
+            let output_params = analysis::type_qualifier::output_params::compute_output_params(
+                &input,
+                &alias_result,
+                &mutability_result,
+            );
+            let crate_ctxt = CrateCtxt::new(&input);
+            let ownership_schemes = time("construct ownership scheme", || {
+                analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
+                    crate_ctxt,
+                    &output_params,
+                )
+            })?;
+            ownership_schemes.trace(tcx);
+
+            let ownership_result = ownership_schemes.solidify(&input);
+            ownership_result.print_results(&input);
+
             let fatness_result =
-                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input);
+                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input, &ownership_result);
             fatness_result.print_results(&input)
         }
         Command::Analyse => {
@@ -297,8 +317,6 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             let taint_result = alias::taint_results(&input);
             let mutability_result =
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
-            let fatness_result =
-                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input);
             let output_params = analysis::type_qualifier::output_params::compute_output_params(
                 &input,
                 &alias_result,
@@ -310,6 +328,11 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                     crate_ctxt,
                     &output_params,
                 )?;
+
+            let ownership_result = ownership_schemes.solidify(&input);
+
+            let fatness_result =
+                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input, &ownership_result);
 
             let analysis_results = refactor::Analysis::new(
                 taint_result,
