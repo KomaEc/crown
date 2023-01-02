@@ -407,7 +407,7 @@ impl<'a, 'tcx> FnResults<'a>
     }
 }
 
-pub type InterCtxt = FxHashMap<DefId, FnSig<Option<Param<Range<Var>>>>>;
+pub type InterCtxt = indexmap::IndexMap<DefId, FnSig<Option<Param<Range<Var>>>>>;
 
 impl FnLocals {
     pub fn refine<'tcx>(
@@ -420,7 +420,7 @@ impl FnLocals {
         InterCtxt,
         impl Iterator<Item = (DefId, SSAState, Precision)> + 'tcx,
     ) {
-        let mut inter_ctxt = FxHashMap::default();
+        let mut inter_ctxt = indexmap::IndexMap::default();
         inter_ctxt.reserve(self.fn_sigs.len());
 
         for (did, original) in self.fn_sigs.into_iter() {

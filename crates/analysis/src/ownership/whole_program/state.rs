@@ -1,5 +1,4 @@
 use either::Either;
-use rustc_hash::FxHashMap;
 use rustc_middle::mir::{Body, Location};
 
 use super::InterCtxt;
@@ -18,17 +17,15 @@ use crate::{
 
 pub(super) fn initial_inter_ctxt(
     crate_ctxt: &CrateCtxt,
-    // noalias_params: &NoAliasParams,
     output_params: &OutputParams,
     gen: &mut Gen,
     database: &mut Z3Database,
 ) -> InterCtxt {
     const INIT_PRECISION: Precision = 1;
 
-    let mut fn_sigs = FxHashMap::default();
+    let mut fn_sigs = indexmap::IndexMap::default();
     fn_sigs.reserve(crate_ctxt.fns().len());
     for &did in crate_ctxt.fn_ctxt.fns() {
-        // let noalias_params = &noalias_params[&did];
         let output_params = &output_params[&did];
         let body = crate_ctxt.tcx.optimized_mir(did);
         let fn_sig = {
