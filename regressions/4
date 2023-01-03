@@ -852,7 +852,10 @@ src::kdtree::hyperrect_dist_sq: (& & &, &) -> _
 src::kdtree::free_resnode: (& & & & & & & & & & & & & & & & & & & & & & &) -> _
 src::kdtree::rlist_insert: (& & & & & & & & & & & & & & & & & & & & & & &, & & & & & & & & & & & & & & & & & & & & & & & & & & & & &, _) -> _
 src::kdtree::clear_results: (&uniq & & & & & & & & & & & & & & & & & & & & & & & & & & & ↓ &uniq & & & & & & & & & & & & & & & & & & & & & & & & & & &) -> _
+[31mERROR[0m [2manalysis::ownership::solidify[0m[2m:[0m semantics changed @ workspace/kdtree/src/kdtree.rs:166:16: 166:27 (#0)
+[31mERROR[0m [2manalysis::ownership::solidify[0m[2m:[0m semantics changed @ workspace/kdtree/src/kdtree.rs:167:20: 167:31 (#0)
 [31mERROR[0m [2manalysis::ownership::solidify[0m[2m:[0m semantics changed @ workspace/kdtree/src/kdtree.rs:167:45: 167:58 (#0)
+[31mERROR[0m [2manalysis::ownership::solidify[0m[2m:[0m semantics changed @ workspace/kdtree/src/kdtree.rs:167:66: 167:77 (#0)
 src::kdtree::__pthread_internal_list {
   __prev: &any,
   __next: &any,

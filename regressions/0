@@ -251,6 +251,10 @@ src::rbtree::balance_me_that: (&move &move &move &move &move &move &move) -> &mo
 src::rbtree::move_red_to_left: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
 src::rbtree::move_red_to_right: (&move &move &move &move &move &move &move) -> &move &move &move &move &move &move &move
 src::rbtree::remove_key: (&move &move &move &move &move &move &move, _) -> &move &move &move &move &move &move &move
+[31mERROR[0m [2manalysis::ownership::solidify[0m[2m:[0m semantics changed @ workspace/rbtree/src/rbtree.rs:61:22: 61:35 (#0)
+[31mERROR[0m [2manalysis::ownership::solidify[0m[2m:[0m semantics changed @ workspace/rbtree/src/rbtree.rs:62:5: 62:24 (#0)
+[31mERROR[0m [2manalysis::ownership::solidify[0m[2m:[0m semantics changed @ workspace/rbtree/src/rbtree.rs:78:21: 78:35 (#0)
+[31mERROR[0m [2manalysis::ownership::solidify[0m[2m:[0m semantics changed @ workspace/rbtree/src/rbtree.rs:79:5: 79:25 (#0)
 src::rbtree::s_rbnode {
   key: ,
   value: ,

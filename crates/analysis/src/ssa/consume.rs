@@ -330,15 +330,23 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
             let ty = place.ty(self.body, self.tcx).ty;
             let local_info = self.body.local_decls[place.local].local_info.as_deref();
 
-            if self.crate_ctxt.struct_ctxt.contains_ptr(ty)
+            // generate consumes with base local non-empty
+            if self
+                .crate_ctxt
+                .struct_ctxt
+                .contains_ptr(self.body.local_decls[place.local].ty)
                 && !matches!(local_info, Some(LocalInfo::DerefTemp))
-                // if a place contains a union, we do not generate its usage, therefore, direct use/def or
-                // dereferences of unions are treated as unsafe sources/sinks during infer
-                && place_not_reachable_to_union(place, self.body)
                 && !self.call_arg_temps.contains(&place.local)
             {
-                // println!("defining {:?} at {:?}", place.local, location);
-                let consume = Consume::new();
+                let consume = if self.crate_ctxt.struct_ctxt.contains_ptr(ty)
+                    && place_not_reachable_to_union(place, self.body)
+                {
+                    Consume::new()
+                } else {
+                    // For places that do not contain pointer, we generate pure use. This is useful
+                    // for sanity check
+                    Consume::pure_use()
+                };
                 self.maybe_consume_sites[place.local].insert(location.block);
                 self.consumes_in_cur_stmt.push((place.local, consume));
             }

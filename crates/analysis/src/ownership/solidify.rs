@@ -141,7 +141,7 @@ impl<'tcx> WholeProgramResults<'tcx> {
 
                         let mut ownership: &[Ownership] = &locals[rplace.local.index()][..];
                         if ownership.is_empty() {
-                            continue
+                            continue;
                         }
                         let mut index = 0;
                         let mut ty = body.local_decls[rplace.local].ty;
@@ -154,7 +154,7 @@ impl<'tcx> WholeProgramResults<'tcx> {
                                 }
                                 rustc_middle::mir::ProjectionElem::Field(f, field_ty) => {
                                     assert_eq!(index, ownership.len());
-                                    let Some(adt_def) = ty.ty_adt_def() else { 
+                                    let Some(adt_def) = ty.ty_adt_def() else {
                                         // tuple
                                         continue
                                     };
@@ -166,7 +166,7 @@ impl<'tcx> WholeProgramResults<'tcx> {
                                 }
                                 rustc_middle::mir::ProjectionElem::Index(_) => {
                                     ty = ty.builtin_index().unwrap();
-                                },
+                                }
                                 _ => unreachable!(),
                             }
                         }
@@ -183,7 +183,6 @@ impl<'tcx> WholeProgramResults<'tcx> {
                         for (proxy, ownership) in proxy_temporary.iter_mut().zip(ownership) {
                             *proxy = ownership
                         }
-
                     }
                 }
             }
@@ -288,7 +287,10 @@ impl<'me, 'tcx> Visitor<'tcx> for SanityCheck<'me, 'tcx> {
             )
         {
             if let Some(flowing) = self.ownership_schemes.local_result(local, location) {
-                if !(flowing.r#use[0].is_owning() && flowing.def[0].is_owning()) {
+                if flowing.is_use() && !flowing.r#use[0].is_owning()
+                    || !flowing.is_use()
+                        && !(flowing.r#use[0].is_owning() && flowing.def[0].is_owning())
+                {
                     self.err_locations.push(location);
                 }
             }
