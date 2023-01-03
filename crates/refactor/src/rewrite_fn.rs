@@ -145,7 +145,10 @@ fn rewrite_fn<'tcx>(
                 }
                 StatementKind::Intrinsic(box NonDivergingIntrinsic::Assume(_)) => {
                     // rewrite point: assume
-                    rewriter.replace(tcx, statement.source_info.span, "()".to_owned())
+                    let without_semi_span = statement.source_info.span;
+                    let span =
+                        without_semi_span.with_hi(without_semi_span.hi() + rustc_span::BytePos(1));
+                    rewriter.erase(tcx, span);
                 }
                 _ => todo!(),
             }
@@ -610,7 +613,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                                 "Some(Box::new(None))".to_owned()
                             } else {
                                 let ty = ty.builtin_deref(true).unwrap().ty;
-                                format!("Some(Box::new(<crate::{ty} as Default>::default()))")
+                                format!("Some(Box::new(<{ty} as Default>::default()))")
                             };
                             rewriter.replace(tcx, malloc_span, replacement);
                             rewriter.erase(tcx, malloc_span.between(span.shrink_to_hi()));
