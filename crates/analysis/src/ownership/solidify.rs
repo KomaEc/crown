@@ -123,17 +123,26 @@ impl<'tcx> WholeProgramResults<'tcx> {
                     let StatementKind::Assign(box (place, rvalue)) = &stmt.kind else { continue };
                     if matches!(place.as_local(), Some(local) if proxy_temporaries.contains(&local))
                     {
+                        let mut by_ref = false;
                         let rplace = match rvalue {
-                            Rvalue::AddressOf(_, rplace) | Rvalue::Ref(_, _, rplace) => rplace,
+                            Rvalue::AddressOf(_, rplace) | Rvalue::Ref(_, _, rplace) => {
+                                by_ref = true;
+                                rplace
+                            }
                             Rvalue::Cast(_, Operand::Copy(rplace) | Operand::Move(rplace), _) => {
                                 rplace
                             }
                             Rvalue::Use(Operand::Copy(rplace) | Operand::Move(rplace)) => rplace,
                             Rvalue::CopyForDeref(rplace) => rplace,
-                            _ => unimplemented!(),
+                            // Rvalue::Cast(_, Operand::Constant(..), _) | Rvalue::Use(Operand::Constant(..)) => { continue }
+                            // _ => unimplemented!("{:?}", rvalue),
+                            _ => continue,
                         };
 
                         let mut ownership: &[Ownership] = &locals[rplace.local.index()][..];
+                        if ownership.is_empty() {
+                            continue
+                        }
                         let mut index = 0;
                         let mut ty = body.local_decls[rplace.local].ty;
 
@@ -145,14 +154,19 @@ impl<'tcx> WholeProgramResults<'tcx> {
                                 }
                                 rustc_middle::mir::ProjectionElem::Field(f, field_ty) => {
                                     assert_eq!(index, ownership.len());
-                                    let adt_def = ty.ty_adt_def().unwrap();
+                                    let Some(adt_def) = ty.ty_adt_def() else { 
+                                        // tuple
+                                        continue
+                                    };
                                     let Range { start, end } =
                                         struct_fields.field(&adt_def.did(), f.index());
                                     ownership = &model.raw[start.index()..end.index()];
                                     index = 0;
                                     ty = field_ty;
                                 }
-                                rustc_middle::mir::ProjectionElem::Index(_) => todo!(),
+                                rustc_middle::mir::ProjectionElem::Index(_) => {
+                                    ty = ty.builtin_index().unwrap();
+                                },
                                 _ => unreachable!(),
                             }
                         }
@@ -160,7 +174,16 @@ impl<'tcx> WholeProgramResults<'tcx> {
                         let ownership =
                             smallvec::SmallVec::<[_; 2]>::from_slice(&ownership[index..]);
 
-                        locals[place.local.index()].copy_from_slice(&ownership);
+                        let proxy_temporary = if by_ref {
+                            &mut locals[place.local.index()][1..]
+                        } else {
+                            &mut locals[place.local.index()]
+                        };
+
+                        for (proxy, ownership) in proxy_temporary.iter_mut().zip(ownership) {
+                            *proxy = ownership
+                        }
+
                     }
                 }
             }

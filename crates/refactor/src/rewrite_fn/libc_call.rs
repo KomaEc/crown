@@ -20,7 +20,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     ) {
         match callee.ident.as_str() {
             "malloc" => {}
-            "free" => {}
+            "free" => self.rewrite_free(args, fn_span, location, rewriter),
             "printf" => self.rewrite_printf(args, location, rewriter),
             _ => self.rewrite_call_default(
                 callee.owner_id.to_def_id(),
@@ -30,6 +30,26 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 location,
                 rewriter,
             ),
+        }
+    }
+
+    /// Currently buggy
+    fn rewrite_free(
+        &self,
+        args: &Vec<Operand<'tcx>>,
+        fn_span: Span,
+        _location: Location,
+        rewriter: &mut impl Rewrite,
+    ) {
+        let FnRewriteCtxt { local_decision, .. } = *self;
+        let arg = &args[0];
+        let Some(arg) = arg.place().and_then(|place| place.as_local()) else { unreachable!() };
+
+        // println!("{:?}: {:?}", arg, local_decision[arg.index()]);
+        // panic!();
+
+        if matches!(local_decision[arg.index()].first(), Some(ptr_kind) if ptr_kind.is_move()) {
+            rewriter.erase(self.tcx, fn_span)
         }
     }
 

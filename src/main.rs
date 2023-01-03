@@ -285,7 +285,10 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             ownership_result.print_results(&input);
 
             let fatness_result =
-                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input, &ownership_result);
+                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(
+                    &input,
+                    &ownership_result,
+                );
             fatness_result.print_results(&input)
         }
         Command::Analyse => {
@@ -332,7 +335,10 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             let ownership_result = ownership_schemes.solidify(&input);
 
             let fatness_result =
-                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(&input, &ownership_result);
+                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(
+                    &input,
+                    &ownership_result,
+                );
 
             let analysis_results = refactor::Analysis::new(
                 taint_result,

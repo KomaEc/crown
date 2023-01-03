@@ -5,21 +5,24 @@ use std::ops::Range;
 
 use rustc_middle::{
     mir::{
-        HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind, Body,
+        Body, HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator,
+        TerminatorKind,
     },
     ty::TyCtxt,
 };
 use rustc_type_ir::TyKind::{self, FnDef};
-
-use crate::ownership::solidify::SolidifiedOwnershipSchemes;
 
 use self::{libc::libc_call, library::library_call};
 use super::{
     boolean_system::BooleanSystem, resolve_body, BooleanLattice, ConstraintSystem, FnLocals, Infer,
     Lattice, StructFields, TypeQualifiers, Var, WithConstraintSystem,
 };
+use crate::ownership::solidify::SolidifiedOwnershipSchemes;
 
-pub fn fatness_analysis(crate_data: &common::CrateData, solidified: &SolidifiedOwnershipSchemes) -> FatnessResult {
+pub fn fatness_analysis(
+    crate_data: &common::CrateData,
+    solidified: &SolidifiedOwnershipSchemes,
+) -> FatnessResult {
     let mut result = FatnessResult::new_empty(crate_data);
     let mut database = BooleanSystem::new(&result.model);
     for r#fn in &crate_data.fns {
@@ -27,10 +30,7 @@ pub fn fatness_analysis(crate_data: &common::CrateData, solidified: &SolidifiedO
         resolve_body(
             &mut database,
             &mut result,
-            FatnessAnalysis {
-                body,
-                solidified,
-            },
+            FatnessAnalysis { body, solidified },
             body,
             crate_data.tcx,
         );
@@ -132,7 +132,8 @@ impl<'me, 'tcx> Infer<'tcx> for FatnessAnalysis<'me, 'tcx> {
                     database.guard(lhs, rhs);
 
                     let lhs_ownership = self.solidified.place_result(self.body, place);
-                    if matches!(lhs_ownership.first().copied(), Some(ownership) if ownership.is_owning()) {
+                    if matches!(lhs_ownership.first().copied(), Some(ownership) if ownership.is_owning())
+                    {
                         database.guard(rhs, lhs);
                     }
                 }
@@ -151,7 +152,8 @@ impl<'me, 'tcx> Infer<'tcx> for FatnessAnalysis<'me, 'tcx> {
                     database.guard(lhs, rhs);
 
                     let lhs_ownership = self.solidified.place_result(self.body, place);
-                    if matches!(lhs_ownership.first().copied(), Some(ownership) if ownership.is_owning()) {
+                    if matches!(lhs_ownership.first().copied(), Some(ownership) if ownership.is_owning())
+                    {
                         database.guard(rhs, lhs);
                     }
                 }
