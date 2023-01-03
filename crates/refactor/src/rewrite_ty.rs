@@ -102,13 +102,13 @@ pub fn rewrite_outermost_ptr_ty(
             let end_span = ty.span.shrink_to_hi();
             rewriter.replace(tcx, end_span, ">".to_owned());
         }
-        PointerKind::Shr => {
+        PointerKind::Const => {
             let qualifier_span = ty.span.until(pointee.ty.span);
             rewriter.replace(tcx, qualifier_span, "Option<& ".to_owned());
             let end_span = ty.span.shrink_to_hi();
             rewriter.replace(tcx, end_span, ">".to_owned());
         }
-        PointerKind::Raw => {}
+        PointerKind::Raw(..) => {}
     }
 }
 

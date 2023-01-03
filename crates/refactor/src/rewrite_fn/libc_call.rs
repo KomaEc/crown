@@ -37,15 +37,28 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         &self,
         args: &Vec<Operand<'tcx>>,
         fn_span: Span,
-        _location: Location,
+        location: Location,
         rewriter: &mut impl Rewrite,
     ) {
-        let FnRewriteCtxt { local_decision, .. } = *self;
+        let FnRewriteCtxt {
+            local_decision,
+            body,
+            def_use_chain,
+            ..
+        } = *self;
         let arg = &args[0];
         let Some(arg) = arg.place().and_then(|place| place.as_local()) else { unreachable!() };
 
         if matches!(local_decision[arg.index()].first(), Some(ptr_kind) if ptr_kind.is_move()) {
             rewriter.replace(self.tcx, fn_span, "()".to_owned())
+        } else {
+            let def_loc = def_use_chain.def_loc(arg, location);
+            let RichLocation::Mir(def_loc) = def_loc else { panic!() };
+            let Left(stmt) = body.stmt_at(def_loc) else {
+                    unimplemented!()
+                };
+            let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+            self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, &[], rewriter);
         }
     }
 

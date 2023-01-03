@@ -6,7 +6,7 @@ use rustc_middle::mir::{Location, Operand, Place, Rvalue, StatementKind};
 use rustc_span::Span;
 
 use super::FnRewriteCtxt;
-use crate::PointerKind;
+use crate::{PointerKind, RawMeta};
 
 impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     pub fn rewrite_library_call(
@@ -81,7 +81,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         rvalue,
                         def_loc,
                         stmt.source_info.span,
-                        &[PointerKind::Shr],
+                        &[PointerKind::Const],
                         rewriter,
                     );
                     return;
@@ -93,7 +93,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             rvalue,
             def_loc,
             stmt.source_info.span,
-            &[PointerKind::Raw],
+            &[PointerKind::Raw(RawMeta::Mut)],
             rewriter,
         );
     }

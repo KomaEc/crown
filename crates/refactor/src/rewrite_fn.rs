@@ -90,7 +90,7 @@ fn rewrite_fn<'tcx>(
 
     let def_use_chain = def_use_chain(body, tcx);
 
-    show_def_use_chain(body, &def_use_chain);
+    // show_def_use_chain(body, &def_use_chain);
 
     let rewrite_ctxt = FnRewriteCtxt {
         local_decision,
@@ -390,12 +390,13 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         } = *self;
 
         // incomplete ctxt summary
-        let is_readonly = if load_ctxt.is_empty() {
+        // NOTE context is different from pointer kind
+        let is_const = if load_ctxt.is_empty() {
             true
         } else {
-            load_ctxt[0].is_shr()
+            load_ctxt[0].is_const() || load_ctxt[0].is_raw_const()
         };
-        let is_raw = load_ctxt.contains(&PointerKind::Raw);
+        let is_raw = load_ctxt.iter().any(|ptr_kind| ptr_kind.is_raw());
         let is_move = if load_ctxt.is_empty() {
             false
         } else {
@@ -465,8 +466,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     if base_ptr_kind.is_raw() {
                         replacement = format!("*{replacement}");
                     } else {
-                        let usage = if is_readonly {
-                            if base_ptr_kind.is_shr() {
+                        let usage = if is_const {
+                            if base_ptr_kind.is_const() {
                                 "clone"
                             } else {
                                 "as_deref"
@@ -515,8 +516,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     if place.is_indirect() {
                         replacement += ".take()";
                     }
-                } else if is_readonly {
-                    if ptr_kind.is_shr() {
+                } else if is_const {
+                    if ptr_kind.is_const() {
                         replacement += ".clone()";
                     } else {
                         replacement += ".as_deref()";
@@ -530,7 +531,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             } else if !is_raw {
                 if is_move {
                     replacement = format!("Some(Box::from_raw({replacement}))")
-                } else if is_readonly {
+                } else if is_const {
                     if need_paren {
                         replacement = format!("({replacement})");
                     }
@@ -617,9 +618,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         }
                     }
                     Err(()) => {
-                        if let Some(constant) = operand.constant() {
-                            self.try_rewrite_null_constant(constant, span, load_ctxt, rewriter);
-                        }
+                        // if let Some(constant) = operand.constant() {
+                        //     self.try_rewrite_null_constant(constant, span, load_ctxt, rewriter);
+                        // }
+                        self.rewrite_operand_at(operand, location, span, load_ctxt, rewriter);
                     }
                 }
             }
@@ -695,10 +697,16 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             ..
         } = *self;
 
+        println!("rewrite call {} by default", self.tcx.def_path_str(callee));
+
         let fn_sig = tcx.fn_sig(callee).skip_binder();
         for (arg, ty) in itertools::izip!(args, fn_sig.inputs()) {
             let ctxt: &[_] = if ty.is_unsafe_ptr() {
-                &[PointerKind::Raw]
+                if ty.is_mutable_ptr() {
+                    &[PointerKind::Raw(crate::RawMeta::Mut)]
+                } else {
+                    &[PointerKind::Raw(crate::RawMeta::Const)]
+                }
             } else {
                 &[]
             };

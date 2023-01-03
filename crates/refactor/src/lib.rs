@@ -112,26 +112,37 @@ impl<'tcx> Analysis<'tcx> {
 pub enum PointerKind {
     Move,
     Mut,
-    Shr,
-    Raw,
+    Const,
+    Raw(RawMeta),
 }
 
 impl PointerKind {
     fn is_raw(&self) -> bool {
-        *self == PointerKind::Raw
+        matches!(*self, PointerKind::Raw(..))
     }
 
     fn is_move(&self) -> bool {
         *self == PointerKind::Move
     }
 
-    fn is_shr(&self) -> bool {
-        *self == PointerKind::Shr
+    fn is_const(&self) -> bool {
+        *self == PointerKind::Const
     }
 
     fn is_safe(&self) -> bool {
         !self.is_raw()
     }
+
+    fn is_raw_const(&self) -> bool {
+        matches!(*self, PointerKind::Raw(RawMeta::Const))
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum RawMeta {
+    Move,
+    Const,
+    Mut,
 }
 
 /// TODO use [`common::discretization::Descretization`]
@@ -184,15 +195,28 @@ impl StructFields {
                 });
                 let mut field = SmallVec::with_capacity(ownership.len());
 
-                for (&ownership, _, &fatness) in itertools::izip!(ownership, mutability, fatness) {
-                    let pointer_kind = if ownership.is_owning()
-                        && !fatness.is_arr()
-                        && !aliasing_nonowning_field
-                    {
-                        PointerKind::Move
+                for (&ownership, &mutability, &fatness) in
+                    itertools::izip!(ownership, mutability, fatness)
+                {
+                    let pointer_kind = if ownership.is_owning() {
+                        if fatness.is_arr() || aliasing_nonowning_field {
+                            PointerKind::Raw(RawMeta::Move)
+                        } else {
+                            PointerKind::Move
+                        }
+                    } else if mutability.is_immutable() {
+                        PointerKind::Raw(RawMeta::Const)
                     } else {
-                        PointerKind::Raw
+                        PointerKind::Raw(RawMeta::Mut)
                     };
+                    // let pointer_kind = if ownership.is_owning()
+                    //     && !fatness.is_arr()
+                    //     && !aliasing_nonowning_field
+                    // {
+                    //     PointerKind::Move
+                    // } else {
+                    //     PointerKind::Raw
+                    // };
                     field.push(pointer_kind);
                 }
                 struct_fields.push_inner(field);
@@ -269,15 +293,31 @@ impl FnLocals {
                 for (&ownership, &mutability, &fatness) in
                     itertools::izip!(ownership, mutability, fatness)
                 {
-                    let pointer_kind = if fatness.is_arr() {
-                        PointerKind::Raw
-                    } else if ownership.is_owning() {
-                        PointerKind::Move
+                    let pointer_kind = if ownership.is_owning() {
+                        if fatness.is_arr() {
+                            PointerKind::Raw(RawMeta::Move)
+                        } else {
+                            PointerKind::Move
+                        }
                     } else if mutability.is_immutable() {
-                        PointerKind::Shr
+                        // TODO correctness?
+                        if fatness.is_arr() {
+                            PointerKind::Raw(RawMeta::Const)
+                        } else {
+                            PointerKind::Const
+                        }
                     } else {
-                        PointerKind::Raw
+                        PointerKind::Raw(RawMeta::Mut)
                     };
+                    // let pointer_kind = if fatness.is_arr() {
+                    //     PointerKind::Raw
+                    // } else if ownership.is_owning() {
+                    //     PointerKind::Move
+                    // } else if mutability.is_immutable() {
+                    //     PointerKind::Const
+                    // } else {
+                    //     PointerKind::Raw
+                    // };
                     local.push(pointer_kind);
                 }
                 if is_output_param {
