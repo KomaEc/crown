@@ -1,0 +1,3 @@
+[submodule "orc-benchmark"]
+	path = benchmark
+	url = https://github.com/KomaEc/orc-benchmark

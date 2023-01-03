@@ -1,7 +1,0 @@
-*~
-*.o
-*.su
-*.a
-*.so
-/test
-/test-random.c
