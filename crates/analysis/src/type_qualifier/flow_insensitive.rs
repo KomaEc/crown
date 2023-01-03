@@ -142,7 +142,9 @@ impl<Qualifier> TypeQualifiers<Qualifier> {
                     ptr_kinds_index = 0;
                     ty = field_ty;
                 }
-                rustc_middle::mir::ProjectionElem::Index(_) => todo!(),
+                rustc_middle::mir::ProjectionElem::Index(_) => {
+                    ty = ty.builtin_index().unwrap();
+                }
                 _ => unreachable!(),
             }
         }
