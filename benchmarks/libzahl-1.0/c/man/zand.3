@@ -1,0 +1,32 @@
+.TH ZAND 3 libzahl
+.SH NAME
+zand - Calculate the bitwise AND of two big integers
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zand(z_t \fIa\fP, z_t \fIb\fP, z_t \fIc\fP);
+.fi
+.SH DESCRIPTION
+.B zand
+calculates the bitwise AND of
+.I b
+and
+.IR c ,
+and stores the result in
+.IR a .
+.P
+It is safe to call
+.B zand
+with non-unique parameters.
+.SH SEE ALSO
+.BR zor (3),
+.BR zxor (3),
+.BR znot (3),
+.BR zlsh (3),
+.BR zrsh (3),
+.BR zsplit (3),
+.BR zbtest (3),
+.BR zbset (3),
+.BR zlsb (3),
+.BR zbits (3)

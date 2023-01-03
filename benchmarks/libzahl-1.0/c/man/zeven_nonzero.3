@@ -1,0 +1,29 @@
+.TH ZEVEN_NONZERO 3 libzahl
+.SH NAME
+zeven_nonzero - Check whether a non-zero big integer is even
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+int zeven_nonzero(z_t \fIa\fP);
+.fi
+.SH DESCRIPTION
+.B zeven_nonzero
+checks whether
+.I a
+is even.
+.P
+Undefined behaviour is invoked if
+.I a
+is zero.
+.SH RETURN VALUE
+.B zeven_nonzero
+returns 1 if
+.I a
+is even, and 0 otherwise.
+.SH SEE ALSO
+.BR zeven (3),
+.BR zodd_nonzero (3),
+.BR zzero (3),
+.BR zsignum (3),
+.BR zcmp (3)

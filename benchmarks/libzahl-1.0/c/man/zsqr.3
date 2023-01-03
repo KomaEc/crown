@@ -1,0 +1,38 @@
+.TH ZSQR 3 libzahl
+.SH NAME
+zsqr - Calculate the square of a big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zsqr(z_t \fIsquare\fP, z_t \fIinteger\fP);
+.fi
+.SH DESCRIPTION
+.B zsqr
+calculates the square of an
+.IR integer ,
+and stores the result in
+.IR square .
+That is,
+.I square
+gets
+.IR integer ².
+.P
+It is safe to call
+.B zsqr
+with non-unique parameters.
+.SH RATIONALE
+Multiplication algorithm can be optimised if
+we know that the multiplier and the multiplicand
+are equal.
+.SH SEE ALSO
+.BR zmodmul (3),
+.BR zmodpow (3),
+.BR zstr (3),
+.BR zadd (3),
+.BR zsub (3),
+.BR zdiv (3),
+.BR zmod (3),
+.BR zneg (3),
+.BR zabs (3),
+.BR zpow (3)

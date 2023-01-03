@@ -1,0 +1,29 @@
+.TH ZSIGNUM 3 libzahl
+.SH NAME
+zsignum - Get the sign of a big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+int zsignum(z_t \fIa\fP);
+.fi
+.SH DESCRIPTION
+.B zsignum
+returns signum of
+.I
+a ;
+the sign.
+.SH RETURN VALUE
+.B zsignum
+returns -1 if
+.I a
+is negative, 0 if
+.I a
+is zero, and +1 if
+.I a
+is positive.
+.SH SEE ALSO
+.BR zzero (3),
+.BR zeven (3),
+.BR zodd (3),
+.BR zcmp (3)

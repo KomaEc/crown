@@ -1,0 +1,33 @@
+.TH ZRSH 3 libzahl
+.SH NAME
+zrsh - Perform a right shift on a big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zrsh(z_t \fIa\fP, z_t \fIb\fP, size_t \fIn\fP);
+.fi
+.SH DESCRIPTION
+.B zrsh
+shifts
+.I b
+.I n
+bits to the right and stores the result in
+.IR a .
+.P
+It is safe to call
+.B zrsh
+with
+.IR "(a==b)" .
+.SH SEE ALSO
+.BR zand (3),
+.BR zor (3),
+.BR zxor (3),
+.BR znot (3),
+.BR zlsh (3),
+.BR ztrunc (3),
+.BR zsplit (3),
+.BR zbtest (3),
+.BR zbset (3),
+.BR zlsb (3),
+.BR zbits (3)

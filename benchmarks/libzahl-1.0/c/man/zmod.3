@@ -1,0 +1,52 @@
+.TH ZMOD 3 libzahl
+.SH NAME
+zmod - Calculate the modulus of two big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zmod(z_t \fIremainder\fP, z_t \fIdividend\fP, z_t \fIdivisor\fP);
+.fi
+.SH DESCRIPTION
+.B zmod
+calculates the remainder of a
+.I dividend
+and a
+.IR divisor ,
+and stores the result in
+.IR remainder .
+That is,
+.I remainder
+gets
+.I dividend
+Mod
+.IR divisor .
+.P
+The result
+.RI ( remainder )
+is always non-negative. To be more precise,
+a Mod b = |a| Mod |b| for all integers a
+and b.
+.P
+It is safe to call
+.B zmod
+with non-unique parameters.
+.SH RATIONALE
+There are many ways to define modulus with
+negative integers. You have to select how the
+signness is selected, and when to invert
+(in respect to modulated addition) the remainder.
+The simplest way to implement modulus is to
+ignore the sign of the operands. This solution
+also makes it very easy for those that which
+to write a wrapper that changes the definition.
+.SH SEE ALSO
+.BR zdivmod (3),
+.BR zstr (3),
+.BR zadd (3),
+.BR zsub (3),
+.BR zmul (3),
+.BR zdiv (3),
+.BR zneg (3),
+.BR zabs (3),
+.BR zpow (3)

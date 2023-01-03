@@ -1,0 +1,32 @@
+.TH ZXOR 3 libzahl
+.SH NAME
+zxor - Calculate the bitwise exclusive OR (XOR) of two big integers
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zxor(z_t \fIa\fP, z_t \fIb\fP, z_t \fIc\fP);
+.fi
+.SH DESCRIPTION
+.B zxor
+calculates the bitwise XOR of
+.I b
+and
+.IR c ,
+and stores the result in
+.IR a .
+.P
+It is safe to call
+.B zxor
+with non-unique parameters.
+.SH SEE ALSO
+.BR zand (3),
+.BR zor (3),
+.BR znot (3),
+.BR zlsh (3),
+.BR zrsh (3),
+.BR zsplit (3),
+.BR zbtest (3),
+.BR zbset (3),
+.BR zlsb (3),
+.BR zbits (3)

@@ -1,0 +1,33 @@
+.TH ZLSB 3 libzahl
+.SH NAME
+zlsb - Get the least set bit.
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+size_t zlsb(z_t \fIa\fP);
+.fi
+.SH DESCRIPTION
+.B zlsb
+gets the index of the bit of
+lowest value that is set in
+.IR a .
+If
+.I a
+is zero,
+.B SIZE_MAX
+is returned.
+.SH RETURN VALUE
+The index of the least set bit in
+.IR a ,
+or
+.B SIZE_MAX
+if
+.I a
+is zero.
+.SH SEE ALSO
+.BR zbits (3),
+.BR zbtest (3),
+.BR zbset (3),
+.BR znot (3),
+.BR zrsh (3)

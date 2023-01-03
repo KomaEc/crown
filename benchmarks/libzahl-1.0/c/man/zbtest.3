@@ -1,0 +1,29 @@
+.TH ZBTEST 3 libzahl
+.SH NAME
+zbtest - Test a bit in a big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+int zbtest(z_t \fIa\fP, size_t \fIindex\fP);
+.fi
+.SH DESCRIPTION
+.B zbtest
+returns whether the bit with the specified
+.I index
+is set in
+.IR a .
+.SH RETURN VALUE
+.B zbtest
+returns 1 if the bit is set, or 0 otherwise.
+.SH SEE ALSO
+.BR zbset (3),
+.BR zand (3),
+.BR zor (3),
+.BR zxor (3),
+.BR znot (3),
+.BR zlsh (3),
+.BR zrsh (3),
+.BR zsplit (3),
+.BR zlsb (3),
+.BR zbits (3)

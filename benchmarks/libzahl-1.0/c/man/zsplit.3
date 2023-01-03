@@ -1,0 +1,48 @@
+.TH ZSPLIT 3 libzahl
+.SH NAME
+zsplit - Split a big integer in two parts
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zsplit(z_t \fIhigh\fP, z_t \fIlow\fP, z_t \fIa\fP, size_t \fIn\fP);
+.fi
+.SH DESCRIPTION
+.B zsplits
+splits
+.I a
+into two parts. The lowest
+.I n
+bits are stored in
+.IR low ,
+and the rest of the bits are
+stored in
+.IR high .
+The result stored in
+.I high
+is shifted
+.I n
+bits to the right. Both
+.I high
+and
+.I low
+will have the same sign as
+.IR a .
+.P
+It is safe to call
+.B zsplit
+with
+.I "(high==a)"
+and
+.IR "(low==a)" .
+.SH RATIONALE
+Splitting big integers in the described way is useful
+for divide-and-conquer algorithms.
+.SH SEE ALSO
+.BR zand (3),
+.BR zor (3),
+.BR zxor (3),
+.BR znot (3),
+.BR zlsh (3),
+.BR zrsh (3),
+.BR zbits (3)

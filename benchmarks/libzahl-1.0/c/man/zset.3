@@ -1,0 +1,29 @@
+.TH ZSET 3 libzahl
+.SH NAME
+zset - Copy the value of a big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zset(z_t \fIa\fP, z_t \fIb\fP);
+.fi
+.SH DESCRIPTION
+.B zset
+stores the value of
+.I b
+into
+.IR a .
+.I a
+must already be initialized with
+.BR zinit (3).
+The value of
+.I b
+remains unchanged.
+.SH SEE ALSO
+.BR zseti (3),
+.BR zsetu (3),
+.BR zsets (3),
+.BR zswap (3),
+.BR zabs (3),
+.BR zneg (3),
+.BR ztrunc (3)

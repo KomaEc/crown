@@ -1,0 +1,54 @@
+.TH ZRAND 3 libzahl
+.SH NAME
+zrand - Generate random a number
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zrand(z_t \fIr\fP, enum zranddev \fIdev\fP, enum zranddist \fIdist\fP, z_t \fImax\fP);
+.fi
+.SH DESCRIPTION
+.B zrand
+generates a random number and stores it in
+.IR r .
+.P
+.I dev
+selects the device
+.B zrand
+uses to generate random bits.
+This value may be either of:
+.TP
+.B FAST_RANDOM
+The fast, non-blocking random number generator.
+This is /dev/urandom on Linux.
+.TP
+.B SECURE_RANDOM
+The secure, blocking random number generator.
+This is /dev/random on Linux.
+.P
+.I dist
+selects the probably distribution of the
+output
+.IR r :
+.TP
+.B QUASIUNIFORM
+Use the method of generation that is often
+recommended for generating uniformally random
+integers. This method has unnecessary
+computational overhead and is not properly
+uniform, but is is guaranteed to run in
+constant time assuming the underlying device
+for random bit generation does.
+
+The generated number if be in the inclusive
+range [0,
+.IR max ].
+.TP
+.B UNIFORM
+Generate a integer in the range [0,
+.IR max ]
+uniformally random.
+.P
+It is safe to call
+.B zrand
+with non-unique parameters.

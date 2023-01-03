@@ -1,0 +1,33 @@
+.TH ZCMP 3 libzahl
+.SH NAME
+zcmp - Compare two big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+int zcmp(z_t \fIa\fP, z_t \fIb\fP);
+.fi
+.SH DESCRIPTION
+.B zcmp
+compares
+.I a
+and
+.IR b .
+.SH RETURN VALUE
+.B zcmp
+returns -1 if
+.I a
+is less than
+.IR b ,
+0 if
+.I a
+is equal to
+.IR b ,
+and +1 if
+.I a
+is greater than
+.IR b .
+.SH SEE ALSO
+.BR zcmpi (3),
+.BR zcmpu (3),
+.BR zcmpmag (3)

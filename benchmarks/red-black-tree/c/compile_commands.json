@@ -1,0 +1,11 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "rbtree.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/red-black-tree/c",
+        "file": "rbtree.c"
+    }
+]

@@ -1,0 +1,21 @@
+.TH ZPERROR 3 libzahl
+.SH NAME
+zperror - Print a libzahl error message
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zperror(const char *\fIprefix\fP);
+.fi
+.SH DESCRIPTION
+.B zperror
+prints a libzahl error message to standard error.
+Unless
+.I prefix
+is
+.B 0
+or an empty string, the message is prefixed by
+.IR prefix ,
+a colon and a blank space.
+.SH SEE ALSO
+.BR zerror (3)

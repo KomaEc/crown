@@ -153,9 +153,13 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
         "-L",
         "dependency=./deps",
         "--extern",
+        // "c2rust_bitfields",
         "c2rust_bitfields=./deps/libc2rust_bitfields-9912e7b3bbb08750.rlib",
         "--extern",
+        // "libc",
         "libc=./deps/liblibc-224625194917b41f.rlib",
+        // "libc=/Users/pd21541/.rustup/toolchains/nightly-2022-11-14-aarch64-apple-darwin/lib/rustlib/aarch64-apple-darwin/lib/liblibc-1432fbf85665684e.rlib"
+        // "libc=/Users/pd21541/.rustup/toolchains/nightly-2022-11-14-aarch64-apple-darwin/lib/rustlib/aarch64-apple-darwin/lib/liblibc-e911fc20c9a57b8c.rlib"
     ]
     .map(|s| s.to_owned());
 
