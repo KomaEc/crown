@@ -33,7 +33,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         }
     }
 
-    /// Currently buggy
     fn rewrite_free(
         &self,
         args: &Vec<Operand<'tcx>>,
@@ -45,11 +44,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let arg = &args[0];
         let Some(arg) = arg.place().and_then(|place| place.as_local()) else { unreachable!() };
 
-        // println!("{:?}: {:?}", arg, local_decision[arg.index()]);
-        // panic!();
-
         if matches!(local_decision[arg.index()].first(), Some(ptr_kind) if ptr_kind.is_move()) {
-            rewriter.erase(self.tcx, fn_span)
+            rewriter.replace(self.tcx, fn_span, "()".to_owned())
         }
     }
 

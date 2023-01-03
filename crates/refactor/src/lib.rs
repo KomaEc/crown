@@ -134,6 +134,7 @@ impl PointerKind {
     }
 }
 
+/// TODO use [`common::discretization::Descretization`]
 pub struct Decision {
     did_idx: FxHashMap<DefId, usize>,
     data: VecVec<SmallVec<[PointerKind; 3]>>,
