@@ -17,8 +17,9 @@ use crate::{
     CrateCtxt,
 };
 
-/// This is a bad design. [`Definitions`] should hold information generic to
-/// analysis tasks. [`call_arg_temps`] is too specific to ownership analysis
+
+/// TODO unify call argument temporaries and deref copy temporaries as proxy
+/// temporaries
 pub struct Definitions {
     /// BasicBlock -> statement_index -> possible definitions
     ///
