@@ -1,13 +1,16 @@
+use std::ops::Range;
+
 use common::{
     data_structure::vec_vec::VecVec,
     discretization::{self, Discretization},
     CrateData,
 };
-use rustc_hash::FxHashMap;
+use either::Either::Left;
+use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_index::vec::IndexVec;
 use rustc_middle::mir::{
     visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-    Body, Local, Location, Place, Rvalue,
+    Body, Local, LocalInfo, Location, Operand, Place, Rvalue, StatementKind, TerminatorKind,
 };
 
 use super::{whole_program::WholeProgramResults, Ownership};
@@ -78,6 +81,22 @@ impl<'tcx> WholeProgramResults<'tcx> {
 
             let ownership_scheme = self.fn_results(*r#fn).unwrap();
 
+            let mut proxy_temporaries = FxHashSet::default();
+            for bb_data in body.basic_blocks.iter() {
+                let Some(terminator) = &bb_data.terminator else { continue; };
+                if let TerminatorKind::Call { args, .. } = &terminator.kind {
+                    proxy_temporaries.extend(
+                        args.iter()
+                            .filter_map(|arg| arg.place().and_then(|arg| arg.as_local())),
+                    )
+                }
+            }
+            for (local, local_decl) in body.local_decls.iter_enumerated() {
+                if matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp)) {
+                    proxy_temporaries.insert(local);
+                }
+            }
+
             for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
                 for statement_index in
                     0usize..(bb_data.statements.len() + bb_data.terminator.is_some() as usize)
@@ -98,6 +117,50 @@ impl<'tcx> WholeProgramResults<'tcx> {
                                 *solidified_ownership = Ownership::Owning;
                             }
                         }
+                    }
+
+                    let Left(stmt) = body.stmt_at(location) else { continue };
+                    let StatementKind::Assign(box (place, rvalue)) = &stmt.kind else { continue };
+                    if matches!(place.as_local(), Some(local) if proxy_temporaries.contains(&local))
+                    {
+                        let rplace = match rvalue {
+                            Rvalue::AddressOf(_, rplace) | Rvalue::Ref(_, _, rplace) => rplace,
+                            Rvalue::Cast(_, Operand::Copy(rplace) | Operand::Move(rplace), _) => {
+                                rplace
+                            }
+                            Rvalue::Use(Operand::Copy(rplace) | Operand::Move(rplace)) => rplace,
+                            Rvalue::CopyForDeref(rplace) => rplace,
+                            _ => unimplemented!(),
+                        };
+
+                        let mut ownership: &[Ownership] = &locals[rplace.local.index()][..];
+                        let mut index = 0;
+                        let mut ty = body.local_decls[rplace.local].ty;
+
+                        for proj in rplace.projection {
+                            match proj {
+                                rustc_middle::mir::ProjectionElem::Deref => {
+                                    index += 1;
+                                    ty = ty.builtin_deref(true).unwrap().ty;
+                                }
+                                rustc_middle::mir::ProjectionElem::Field(f, field_ty) => {
+                                    assert_eq!(index, ownership.len());
+                                    let adt_def = ty.ty_adt_def().unwrap();
+                                    let Range { start, end } =
+                                        struct_fields.field(&adt_def.did(), f.index());
+                                    ownership = &model.raw[start.index()..end.index()];
+                                    index = 0;
+                                    ty = field_ty;
+                                }
+                                rustc_middle::mir::ProjectionElem::Index(_) => todo!(),
+                                _ => unreachable!(),
+                            }
+                        }
+
+                        let ownership =
+                            smallvec::SmallVec::<[_; 2]>::from_slice(&ownership[index..]);
+
+                        locals[place.local.index()].copy_from_slice(&ownership);
                     }
                 }
             }
