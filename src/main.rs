@@ -343,6 +343,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             let analysis_results = refactor::Analysis::new(
                 taint_result,
                 ownership_schemes,
+                ownership_result,
                 mutability_result,
                 fatness_result,
             );
