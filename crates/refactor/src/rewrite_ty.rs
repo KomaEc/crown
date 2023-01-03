@@ -12,6 +12,9 @@ pub fn rewrite_structs(
     tcx: TyCtxt,
 ) -> anyhow::Result<()> {
     use std::fmt::Write;
+
+    let mut erased_version = 0;
+
     for did in structs {
         let fields_data = struct_decision.field_data(did);
         let item = tcx.hir().expect_item(did.expect_local());
@@ -27,6 +30,18 @@ pub fn rewrite_structs(
 
         let struct_span = item.span;
         rewriter.replace(tcx, struct_span.shrink_to_hi(), default_impl_block);
+
+        let is_owning = fields_data
+            .iter()
+            .any(|field| field.iter().any(|ptr_kind| ptr_kind.is_move()));
+        if is_owning {
+            rewriter.replace(
+                tcx,
+                struct_span.shrink_to_lo(),
+                format!("struct ErasedByRefactorer{erased_version};\n#[repr(C)]\n"),
+            );
+            erased_version += 1;
+        }
     }
     Ok(())
 }

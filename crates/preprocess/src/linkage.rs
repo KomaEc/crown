@@ -218,7 +218,7 @@ fn canonicalize_structs_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         let span = item.span;
         // println!("erased: {:?}", span);
         // rewriter.erase(tcx, span);
-        rewriter.replace(tcx, span, format!("struct ErasedByOrc{version};"));
+        rewriter.replace(tcx, span, format!("struct ErasedByPreprocessor{version};"));
         version += 1;
 
         let hir_id = item.hir_id();

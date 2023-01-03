@@ -17,7 +17,6 @@ use crate::{
     CrateCtxt,
 };
 
-
 /// TODO unify call argument temporaries and deref copy temporaries as proxy
 /// temporaries
 pub struct Definitions {
