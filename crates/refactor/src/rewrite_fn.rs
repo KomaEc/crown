@@ -715,8 +715,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 let def_loc = def_use_chain.def_loc(local, location);
                 let RichLocation::Mir(def_loc) = def_loc else { panic!() };
                 let Left(stmt) = body.stmt_at(def_loc) else {
-                    // TODO correctness?
-                    return
+                    unreachable!()
                 };
                 let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
                 self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, ctxt, rewriter);
@@ -742,45 +741,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     }
                 }
             }
-        }
-    }
-}
-
-fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
-    println!("@{:?}", body.source.def_id());
-    for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
-        println!("{:?}:", bb);
-        let mut statement_index = 0;
-        for statement in bb_data.statements.iter() {
-            println!("  {:?}", statement);
-
-            let location = Location {
-                block: bb,
-                statement_index,
-            };
-            let uses = def_use_chain
-                .uses(location)
-                .map(|local| (local, def_use_chain.def_loc(local, location)))
-                .map(|(local, loc)| format!("{:?}@{:?}", local, loc))
-                .collect::<Vec<_>>()
-                .join(", ");
-            println!("  using: {uses}");
-
-            statement_index += 1;
-        }
-        if let Some(terminator) = &bb_data.terminator {
-            println!("  {:?}", terminator.kind);
-            let location = Location {
-                block: bb,
-                statement_index,
-            };
-            let uses = def_use_chain
-                .uses(location)
-                .map(|local| (local, def_use_chain.def_loc(local, location)))
-                .map(|(local, loc)| format!("{:?}@{:?}", local, loc))
-                .collect::<Vec<_>>()
-                .join(", ");
-            println!("  using: {uses}");
         }
     }
 }
