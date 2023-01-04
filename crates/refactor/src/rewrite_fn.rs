@@ -530,19 +530,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
         };
 
-        // incomplete ctxt summary
-        // NOTE context is different from pointer kind
-        // let is_const = if load_ctxt.is_empty() {
-        //     true
-        // } else {
-        //     load_ctxt[0].is_const() || load_ctxt[0].is_raw_const()
-        // };
-        // let is_raw = load_ctxt.iter().any(|ptr_kind| ptr_kind.is_raw());
-        // let is_move = if load_ctxt.is_empty() {
-        //     false
-        // } else {
-        //     load_ctxt[0].is_move()
-        // };
+        let produced = self.acquire_place_info(&place);
 
         let mut ptr_kinds = local_decision[place.local.as_usize()].iter().copied();
         let mut ty = body.local_decls[place.local].ty;
@@ -563,7 +551,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     if base_ptr_kind.is_raw() {
                         replacement = format!("*{replacement}");
                     } else {
-                        let usage = if required.is_copy_obj(self) {
+                        let usage = if required.is_copy_obj(self) || produced.is_copy_obj(self) {
                             if base_ptr_kind.is_const() {
                                 "clone"
                             } else {
