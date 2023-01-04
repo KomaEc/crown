@@ -343,11 +343,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             .map(|symbol| symbol.to_string())
             .unwrap_or_else(|| {
                 assert!(place.as_local().is_none());
-                // TODO extend [`user_idents`] to include global static variables
-                // below does not work because copy_derefs have been accumulated.
-                // let RichLocation::Mir(def_loc) = def_use.def_loc(place.local, location) else { unreachable!() };
-                // let Left(stmt) = body.stmt_at(def_loc) else { panic!() };
-                // let StatementKind::Assign(box (_, Rvalue::Use(Operand::Constant(..)))) = &stmt.kind else { panic!() };
                 unimplemented!("rewrite immediate value, could be static, func call return")
             });
 
@@ -425,8 +420,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             replacement
         } else if place.as_local().is_none() {
             unimplemented!("rewrite immediate value, could be static, func call return")
-            // panic!("{:?} @ {:?}, {:?}", place, location, span);
-            // "todo_static_addr".to_string()
         } else {
             assert!(place.as_local().is_some());
             let def_loc = def_use_chain.def_loc(place.local, location);
