@@ -13,7 +13,7 @@ use rustc_hir::{def_id::DefId, ItemKind};
 use rustc_middle::{
     mir::{
         Body, Constant, Local, LocalInfo, Location, NonDivergingIntrinsic, Operand, Place, Rvalue,
-        StatementKind, TerminatorKind, VarDebugInfoContents, RETURN_PLACE,
+        StatementKind, TerminatorKind, VarDebugInfoContents, RETURN_PLACE, Statement, Terminator,
     },
     ty::TyCtxt,
 };
@@ -94,6 +94,7 @@ fn rewrite_fn<'tcx>(
 
     let rewrite_ctxt = FnRewriteCtxt {
         local_decision,
+        fn_decision,
         struct_decision,
         body,
         def_use_chain: &def_use_chain,
@@ -109,46 +110,7 @@ fn rewrite_fn<'tcx>(
                 statement_index,
             };
 
-            match &statement.kind {
-                StatementKind::Assign(box (place, rvalue)) => {
-                    // rewrite point: non-temporary place
-                    // this includes 1. place of which base local is a user defined variable
-                    // 2. place of which base local is a deref tmp, and the rvalue is not another deref tmp
-                    if user_idents.contains_key(&place.local)
-                        || matches!(body.local_decls[place.local].local_info, Some(box LocalInfo::DerefTemp) if !matches!(rvalue, Rvalue::CopyForDeref(..)))
-                    {
-                        let place = accum_deref_copies(*place, location, &def_use_chain, body, tcx);
-                        let span = statement.source_info.span;
-                        let source_text = tcx.sess.source_map().span_to_snippet(span).unwrap();
-
-                        // println!("rewrite {:?} @ {:?}, {:?}", place, location, span);
-
-                        if let Some(assign_pos) = source_text
-                            .find("+=")
-                            .or(source_text.find("-="))
-                            .or(source_text.find("="))
-                        {
-                            // lhs needs to be rewritten
-
-                            assert!(assign_pos > 0);
-
-                            let lhs_span =
-                                span.with_hi(span.lo() + rustc_span::BytePos(assign_pos as u32));
-
-                            rewrite_ctxt.rewrite_place_store(place, lhs_span, rewriter);
-                        } // otherwise let-binding
-
-                        let ctxt = rewrite_ctxt.acquire_place_info(&place);
-
-                        rewrite_ctxt.rewrite_rvalue_at(rvalue, location, span, ctxt, rewriter);
-                    }
-                }
-                StatementKind::Intrinsic(box NonDivergingIntrinsic::Assume(_)) => {
-                    // rewrite point: assume
-                    rewriter.replace(tcx, statement.source_info.span, "()".to_owned())
-                }
-                _ => todo!(),
-            }
+            rewrite_ctxt.rewrite_statement(statement, location, rewriter);
 
             statement_index += 1;
         }
@@ -159,75 +121,7 @@ fn rewrite_fn<'tcx>(
                 statement_index,
             };
 
-            match &terminator.kind {
-                TerminatorKind::SwitchInt { discr, .. } => {
-                    // rewrite point: if expr
-                    let place = discr.place().unwrap();
-                    rewrite_ctxt.rewrite_place_load_at(
-                        place,
-                        location,
-                        terminator.source_info.span,
-                        &[],
-                        rewriter,
-                    );
-                }
-                TerminatorKind::Call {
-                    func,
-                    args,
-                    destination,
-                    fn_span,
-                    ..
-                } => {
-                    // rewrite point: call
-                    rewrite_ctxt.rewrite_call(
-                        func,
-                        args,
-                        *destination,
-                        *fn_span,
-                        location,
-                        fn_decision,
-                        rewriter,
-                    );
-                }
-                TerminatorKind::Return => {
-                    // rewrite point: return
-                    if !user_idents.contains_key(&RETURN_PLACE) {
-                        let def_loc = def_use_chain.def_loc(RETURN_PLACE, location);
-                        let return_ctxt = &rewrite_ctxt.local_decision[0];
-                        match def_loc {
-                            RichLocation::Entry => {}
-                            RichLocation::Phi(block) => {
-                                for def_loc in def_use_chain.phi_def_locs(RETURN_PLACE, block) {
-                                    let RichLocation::Mir(def_loc) = def_loc else { todo!() };
-                                    let Left(stmt) = body.stmt_at(def_loc) else { return };
-                                    let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-                                    rewrite_ctxt.rewrite_rvalue_at(
-                                        rvalue,
-                                        def_loc,
-                                        stmt.source_info.span,
-                                        return_ctxt,
-                                        rewriter,
-                                    );
-                                }
-                            }
-                            RichLocation::Mir(def_loc) => {
-                                let Left(stmt) = body.stmt_at(def_loc) else { return };
-                                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-                                rewrite_ctxt.rewrite_rvalue_at(
-                                    rvalue,
-                                    def_loc,
-                                    stmt.source_info.span,
-                                    return_ctxt,
-                                    rewriter,
-                                );
-                            }
-                        }
-                    }
-                }
-                TerminatorKind::Goto { .. } => {}
-                TerminatorKind::Assert { .. } => {}
-                _ => todo!(),
-            }
+            rewrite_ctxt.rewrite_terminator(terminator, location, rewriter);
         }
     }
 }
@@ -259,6 +153,7 @@ fn accum_deref_copies<'tcx>(
 
 pub struct FnRewriteCtxt<'tcx, 'me> {
     local_decision: &'me [SmallVec<[PointerKind; 3]>],
+    fn_decision: &'me FnLocals,
     struct_decision: &'me StructFields,
     body: &'me Body<'tcx>,
     def_use_chain: &'me DefUseChain,
@@ -300,6 +195,138 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         &ptr_kinds[ptr_kinds_index..]
     }
 
+    fn rewrite_statement(&self, statement: &Statement<'tcx>, location: Location, rewriter: &mut impl Rewrite) {
+        let FnRewriteCtxt {
+            body,
+            def_use_chain,
+            user_idents,
+            tcx,
+            ..
+        } = *self;
+
+        match &statement.kind {
+            StatementKind::Assign(box (place, rvalue)) => {
+                // rewrite point: non-temporary place
+                // this includes 1. place of which base local is a user defined variable
+                // 2. place of which base local is a deref tmp, and the rvalue is not another deref tmp
+                if user_idents.contains_key(&place.local)
+                    || matches!(body.local_decls[place.local].local_info, Some(box LocalInfo::DerefTemp) if !matches!(rvalue, Rvalue::CopyForDeref(..)))
+                {
+                    let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
+                    let span = statement.source_info.span;
+                    let source_text = tcx.sess.source_map().span_to_snippet(span).unwrap();
+
+                    // println!("rewrite {:?} @ {:?}, {:?}", place, location, span);
+
+                    if let Some(assign_pos) = source_text
+                        .find("+=")
+                        .or(source_text.find("-="))
+                        .or(source_text.find("="))
+                    {
+                        // lhs needs to be rewritten
+
+                        assert!(assign_pos > 0);
+
+                        let lhs_span =
+                            span.with_hi(span.lo() + rustc_span::BytePos(assign_pos as u32));
+
+                        self.rewrite_place_store(place, lhs_span, rewriter);
+                    } // otherwise let-binding
+
+                    let ctxt = self.acquire_place_info(&place);
+
+                    self.rewrite_rvalue_at(rvalue, location, span, ctxt, rewriter);
+                }
+            }
+            StatementKind::Intrinsic(box NonDivergingIntrinsic::Assume(_)) => {
+                // rewrite point: assume
+                rewriter.replace(tcx, statement.source_info.span, "()".to_owned())
+            }
+            _ => todo!(),
+        }
+    }
+
+    fn rewrite_terminator(&self, terminator: &Terminator<'tcx>, location: Location, rewriter: &mut impl Rewrite) {
+        let FnRewriteCtxt {
+            fn_decision,
+            body,
+            def_use_chain,
+            user_idents,
+            ..
+        } = *self;
+
+        match &terminator.kind {
+            TerminatorKind::SwitchInt { discr, .. } => {
+                // rewrite point: if expr
+                let place = discr.place().unwrap();
+                self.rewrite_place_load_at(
+                    place,
+                    location,
+                    terminator.source_info.span,
+                    &[],
+                    rewriter,
+                );
+            }
+            TerminatorKind::Call {
+                func,
+                args,
+                destination,
+                fn_span,
+                ..
+            } => {
+                // rewrite point: call
+                self.rewrite_call(
+                    func,
+                    args,
+                    *destination,
+                    *fn_span,
+                    location,
+                    fn_decision,
+                    rewriter,
+                );
+            }
+            TerminatorKind::Return => {
+                // rewrite point: return
+                if !user_idents.contains_key(&RETURN_PLACE) {
+                    let def_loc = def_use_chain.def_loc(RETURN_PLACE, location);
+                    let return_ctxt = &self.local_decision[0];
+                    match def_loc {
+                        RichLocation::Entry => {}
+                        RichLocation::Phi(block) => {
+                            for def_loc in def_use_chain.phi_def_locs(RETURN_PLACE, block) {
+                                let RichLocation::Mir(def_loc) = def_loc else { todo!() };
+                                let Left(stmt) = body.stmt_at(def_loc) else { return };
+                                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                                self.rewrite_rvalue_at(
+                                    rvalue,
+                                    def_loc,
+                                    stmt.source_info.span,
+                                    return_ctxt,
+                                    rewriter,
+                                );
+                            }
+                        }
+                        RichLocation::Mir(def_loc) => {
+                            let Left(stmt) = body.stmt_at(def_loc) else { return };
+                            let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                            self.rewrite_rvalue_at(
+                                rvalue,
+                                def_loc,
+                                stmt.source_info.span,
+                                return_ctxt,
+                                rewriter,
+                            );
+                        }
+                    }
+                }
+            }
+            TerminatorKind::Goto { .. } => {}
+            TerminatorKind::Assert { .. } => {}
+            _ => todo!(),
+        }
+
+    }
+
     fn rewrite_place_store(&self, place: Place<'tcx>, span: Span, rewriter: &mut impl Rewrite) {
         let FnRewriteCtxt {
             local_decision,
@@ -308,6 +335,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             def_use_chain: _,
             user_idents,
             tcx,
+            ..
         } = *self;
 
         let mut replacement = user_idents
@@ -320,7 +348,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 // let RichLocation::Mir(def_loc) = def_use.def_loc(place.local, location) else { unreachable!() };
                 // let Left(stmt) = body.stmt_at(def_loc) else { panic!() };
                 // let StatementKind::Assign(box (_, Rvalue::Use(Operand::Constant(..)))) = &stmt.kind else { panic!() };
-                "todo_static_addr".to_string()
+                unimplemented!("rewrite immediate value, could be static, func call return")
             });
 
         let mut ptr_kinds = local_decision[place.local.as_usize()].iter().copied();
@@ -387,21 +415,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             def_use_chain,
             user_idents,
             tcx,
+            ..
         } = *self;
-
-        // incomplete ctxt summary
-        // NOTE context is different from pointer kind
-        let is_const = if load_ctxt.is_empty() {
-            true
-        } else {
-            load_ctxt[0].is_const() || load_ctxt[0].is_raw_const()
-        };
-        let is_raw = load_ctxt.iter().any(|ptr_kind| ptr_kind.is_raw());
-        let is_move = if load_ctxt.is_empty() {
-            false
-        } else {
-            load_ctxt[0].is_move()
-        };
 
         let mut replacement = if let Some(replacement) = user_idents
             .get(&place.local)
@@ -409,7 +424,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         {
             replacement
         } else if place.as_local().is_none() {
-            "todo_static_addr".to_string()
+            unimplemented!("rewrite immediate value, could be static, func call return")
+            // panic!("{:?} @ {:?}, {:?}", place, location, span);
+            // "todo_static_addr".to_string()
         } else {
             assert!(place.as_local().is_some());
             let def_loc = def_use_chain.def_loc(place.local, location);
@@ -445,6 +462,20 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     return;
                 }
             }
+        };
+
+        // incomplete ctxt summary
+        // NOTE context is different from pointer kind
+        let is_const = if load_ctxt.is_empty() {
+            true
+        } else {
+            load_ctxt[0].is_const() || load_ctxt[0].is_raw_const()
+        };
+        let is_raw = load_ctxt.iter().any(|ptr_kind| ptr_kind.is_raw());
+        let is_move = if load_ctxt.is_empty() {
+            false
+        } else {
+            load_ctxt[0].is_move()
         };
 
         let mut ptr_kinds = local_decision[place.local.as_usize()].iter().copied();
@@ -714,8 +745,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 let Some(local) = place.as_local() else { panic!() };
                 let def_loc = def_use_chain.def_loc(local, location);
                 let RichLocation::Mir(def_loc) = def_loc else { panic!() };
+
                 let Left(stmt) = body.stmt_at(def_loc) else {
-                    unreachable!()
+                    // terminator is rewritten
+                    return
                 };
                 let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
                 self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, ctxt, rewriter);
