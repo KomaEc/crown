@@ -136,6 +136,10 @@ impl PointerKind {
     fn is_raw_const(&self) -> bool {
         matches!(*self, PointerKind::Raw(RawMeta::Const))
     }
+
+    fn is_raw_move(&self) -> bool {
+        matches!(*self, PointerKind::Raw(RawMeta::Move))
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -209,14 +213,6 @@ impl StructFields {
                     } else {
                         PointerKind::Raw(RawMeta::Mut)
                     };
-                    // let pointer_kind = if ownership.is_owning()
-                    //     && !fatness.is_arr()
-                    //     && !aliasing_nonowning_field
-                    // {
-                    //     PointerKind::Move
-                    // } else {
-                    //     PointerKind::Raw
-                    // };
                     field.push(pointer_kind);
                 }
                 struct_fields.push_inner(field);
@@ -309,15 +305,6 @@ impl FnLocals {
                     } else {
                         PointerKind::Raw(RawMeta::Mut)
                     };
-                    // let pointer_kind = if fatness.is_arr() {
-                    //     PointerKind::Raw
-                    // } else if ownership.is_owning() {
-                    //     PointerKind::Move
-                    // } else if mutability.is_immutable() {
-                    //     PointerKind::Const
-                    // } else {
-                    //     PointerKind::Raw
-                    // };
                     local.push(pointer_kind);
                 }
                 if is_output_param {

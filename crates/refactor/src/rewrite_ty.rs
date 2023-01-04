@@ -29,11 +29,12 @@ pub fn rewrite_structs(
         writeln!(default_impl_block, "}}}}}}").unwrap();
 
         let struct_span = item.span;
-        rewriter.replace(tcx, struct_span.shrink_to_hi(), default_impl_block);
 
-        let is_owning = fields_data
-            .iter()
-            .any(|field| field.iter().any(|ptr_kind| ptr_kind.is_move()));
+        let is_owning = fields_data.iter().any(|field| {
+            field
+                .iter()
+                .any(|ptr_kind| ptr_kind.is_move() || ptr_kind.is_raw_move())
+        });
         if is_owning {
             rewriter.replace(
                 tcx,
@@ -41,7 +42,16 @@ pub fn rewrite_structs(
                 format!("struct ErasedByRefactorer{erased_version};\n#[repr(C)]\n"),
             );
             erased_version += 1;
+
+            writeln!(
+                default_impl_block,
+                "impl {} {{pub fn take(&mut self) -> Self {{core::mem::take(self)}}}}",
+                item.ident
+            )
+            .unwrap();
         }
+
+        rewriter.replace(tcx, struct_span.shrink_to_hi(), default_impl_block);
     }
     Ok(())
 }

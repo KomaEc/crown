@@ -13,7 +13,7 @@ use rustc_hir::{def_id::DefId, ItemKind};
 use rustc_middle::{
     mir::{
         Body, Constant, Local, LocalInfo, Location, NonDivergingIntrinsic, Operand, Place, Rvalue,
-        StatementKind, TerminatorKind, VarDebugInfoContents, RETURN_PLACE, Statement, Terminator,
+        Statement, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents, RETURN_PLACE,
     },
     ty::TyCtxt,
 };
@@ -195,7 +195,12 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         &ptr_kinds[ptr_kinds_index..]
     }
 
-    fn rewrite_statement(&self, statement: &Statement<'tcx>, location: Location, rewriter: &mut impl Rewrite) {
+    fn rewrite_statement(
+        &self,
+        statement: &Statement<'tcx>,
+        location: Location,
+        rewriter: &mut impl Rewrite,
+    ) {
         let FnRewriteCtxt {
             body,
             def_use_chain,
@@ -246,7 +251,12 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         }
     }
 
-    fn rewrite_terminator(&self, terminator: &Terminator<'tcx>, location: Location, rewriter: &mut impl Rewrite) {
+    fn rewrite_terminator(
+        &self,
+        terminator: &Terminator<'tcx>,
+        location: Location,
+        rewriter: &mut impl Rewrite,
+    ) {
         let FnRewriteCtxt {
             fn_decision,
             body,
@@ -324,7 +334,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             TerminatorKind::Assert { .. } => {}
             _ => todo!(),
         }
-
     }
 
     fn rewrite_place_store(&self, place: Place<'tcx>, span: Span, rewriter: &mut impl Rewrite) {
