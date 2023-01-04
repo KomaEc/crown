@@ -6,9 +6,8 @@ use rustc_middle::mir::{Location, Operand, Place, StatementKind, TerminatorKind}
 use rustc_span::Span;
 use rustc_type_ir::TyKind::FnDef;
 
-use crate::{PointerKind, RawMeta};
-
 use super::{FnRewriteCtxt, ValueType};
+use crate::{PointerKind, RawMeta};
 
 impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     pub fn rewrite_libc_call(
@@ -60,7 +59,13 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     unimplemented!()
                 };
             let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-            self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, ValueType::Ptr(&[PointerKind::Raw(RawMeta::Mut)]), rewriter);
+            self.rewrite_rvalue_at(
+                rvalue,
+                def_loc,
+                stmt.source_info.span,
+                ValueType::Ptr(&[PointerKind::Raw(RawMeta::Mut)]),
+                rewriter,
+            );
         }
     }
 

@@ -15,13 +15,13 @@ use rustc_middle::{
         Body, Constant, Local, LocalInfo, Location, NonDivergingIntrinsic, Operand, Place, Rvalue,
         Statement, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents, RETURN_PLACE,
     },
-    ty::{TyCtxt, TyKind, Ty},
+    ty::{Ty, TyCtxt, TyKind},
 };
 use rustc_span::{Span, Symbol};
 use rustc_type_ir::TyKind::FnDef;
 use smallvec::SmallVec;
 
-use crate::{rewrite_ty::rewrite_hir_ty, FnLocals, PointerKind, StructFields, RawMeta};
+use crate::{rewrite_ty::rewrite_hir_ty, FnLocals, PointerKind, RawMeta, StructFields};
 
 pub fn rewrite_fns(
     fns: &[DefId],
@@ -166,7 +166,7 @@ pub struct FnRewriteCtxt<'tcx, 'me> {
 enum ValueType<'me> {
     Ptr(&'me [PointerKind]),
     Struct(DefId),
-    Irrelavent
+    Irrelavent,
 }
 
 impl<'me> ValueType<'me> {
@@ -174,7 +174,7 @@ impl<'me> ValueType<'me> {
         if ctxt.is_empty() {
             if let TyKind::Adt(adt_def, _) = ty.kind() {
                 if adt_def.is_struct() {
-                    return ValueType::Struct(adt_def.did())
+                    return ValueType::Struct(adt_def.did());
                 }
             }
             ValueType::Irrelavent
@@ -191,7 +191,7 @@ impl<'me> ValueType<'me> {
         match self {
             ValueType::Ptr(ptr_kinds) => {
                 matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_move() || ptr_kind.is_raw_move())
-            },
+            }
             ValueType::Struct(did) => {
                 let fields_data = rewrite_ctxt.struct_decision.field_data(did);
                 fields_data.iter().any(|field| {
@@ -199,7 +199,7 @@ impl<'me> ValueType<'me> {
                         .iter()
                         .any(|ptr_kind| ptr_kind.is_move() || ptr_kind.is_raw_move())
                 })
-            },
+            }
             ValueType::Irrelavent => false,
         }
     }
@@ -208,7 +208,7 @@ impl<'me> ValueType<'me> {
         match self {
             ValueType::Ptr(ptr_kinds) => {
                 matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_copy())
-            },
+            }
             ValueType::Struct(_) => !self.is_move_obj(rewrite_ctxt),
             ValueType::Irrelavent => true,
         }
@@ -363,7 +363,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 // rewrite point: return
                 if !user_idents.contains_key(&RETURN_PLACE) {
                     let def_loc = def_use_chain.def_loc(RETURN_PLACE, location);
-                    let return_ctxt = ValueType::from_ptr_ctxt(self.body.return_ty(), &self.local_decision[0]);
+                    let return_ctxt =
+                        ValueType::from_ptr_ctxt(self.body.return_ty(), &self.local_decision[0]);
                     match def_loc {
                         RichLocation::Entry => {}
                         RichLocation::Phi(block) => {
@@ -613,7 +614,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 if required.is_raw_ptr() {
                     replacement = format!("core::mem::transmute({replacement})")
                 }
-            } else if !required.is_raw_ptr(){
+            } else if !required.is_raw_ptr() {
                 if required.is_move_obj(self) {
                     replacement = format!("Some(Box::from_raw({replacement}))")
                 } else if required.is_copy_obj(self) {
@@ -785,11 +786,14 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let fn_sig = tcx.fn_sig(callee).skip_binder();
         for (arg, ty) in itertools::izip!(args, fn_sig.inputs()) {
             let ctxt = if ty.is_unsafe_ptr() {
-                ValueType::from_ptr_ctxt(*ty, if ty.is_mutable_ptr() {
-                    &[PointerKind::Raw(RawMeta::Mut)]
-                } else {
-                    &[PointerKind::Raw(RawMeta::Const)]
-                })
+                ValueType::from_ptr_ctxt(
+                    *ty,
+                    if ty.is_mutable_ptr() {
+                        &[PointerKind::Raw(RawMeta::Mut)]
+                    } else {
+                        &[PointerKind::Raw(RawMeta::Const)]
+                    },
+                )
             } else {
                 ValueType::Irrelavent
             };
