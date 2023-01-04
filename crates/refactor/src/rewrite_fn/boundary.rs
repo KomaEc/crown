@@ -5,7 +5,7 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::mir::{Location, Operand, Place, StatementKind};
 use rustc_span::Span;
 
-use super::FnRewriteCtxt;
+use super::{FnRewriteCtxt, ValueType};
 use crate::FnLocals;
 
 impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
@@ -36,7 +36,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     return
                 };
                 let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-                self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, ctxt, rewriter);
+                let ty = self.body.local_decls[local].ty;
+                let required = ValueType::from_ptr_ctxt(ty, ctxt);
+                self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, required, rewriter);
             }
         }
     }

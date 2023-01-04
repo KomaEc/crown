@@ -15,13 +15,13 @@ use rustc_middle::{
         Body, Constant, Local, LocalInfo, Location, NonDivergingIntrinsic, Operand, Place, Rvalue,
         Statement, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents, RETURN_PLACE,
     },
-    ty::TyCtxt,
+    ty::{TyCtxt, TyKind, Ty},
 };
 use rustc_span::{Span, Symbol};
 use rustc_type_ir::TyKind::FnDef;
 use smallvec::SmallVec;
 
-use crate::{rewrite_ty::rewrite_hir_ty, FnLocals, PointerKind, StructFields};
+use crate::{rewrite_ty::rewrite_hir_ty, FnLocals, PointerKind, StructFields, RawMeta};
 
 pub fn rewrite_fns(
     fns: &[DefId],
@@ -161,8 +161,70 @@ pub struct FnRewriteCtxt<'tcx, 'me> {
     tcx: TyCtxt<'tcx>,
 }
 
+/// Information of a lvalue/rvalue coming from a place
+#[derive(Clone, Copy)]
+enum ValueType<'me> {
+    Ptr(&'me [PointerKind]),
+    Struct(DefId),
+    Irrelavent
+}
+
+impl<'me> ValueType<'me> {
+    fn from_ptr_ctxt(ty: Ty, ctxt: &'me [PointerKind]) -> Self {
+        if ctxt.is_empty() {
+            if let TyKind::Adt(adt_def, _) = ty.kind() {
+                if adt_def.is_struct() {
+                    return ValueType::Struct(adt_def.did())
+                }
+            }
+            ValueType::Irrelavent
+        } else {
+            ValueType::Ptr(ctxt)
+        }
+    }
+
+    fn is_ptr(self) -> bool {
+        matches!(self, Self::Ptr(..))
+    }
+
+    fn is_move_obj<'tcx>(&self, rewrite_ctxt: &FnRewriteCtxt<'tcx, 'me>) -> bool {
+        match self {
+            ValueType::Ptr(ptr_kinds) => {
+                matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_move() || ptr_kind.is_raw_move())
+            },
+            ValueType::Struct(did) => {
+                let fields_data = rewrite_ctxt.struct_decision.field_data(did);
+                fields_data.iter().any(|field| {
+                    field
+                        .iter()
+                        .any(|ptr_kind| ptr_kind.is_move() || ptr_kind.is_raw_move())
+                })
+            },
+            ValueType::Irrelavent => false,
+        }
+    }
+
+    fn is_copy_obj<'tcx>(&self, rewrite_ctxt: &FnRewriteCtxt<'tcx, 'me>) -> bool {
+        match self {
+            ValueType::Ptr(ptr_kinds) => {
+                matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_copy())
+            },
+            ValueType::Struct(_) => !self.is_move_obj(rewrite_ctxt),
+            ValueType::Irrelavent => true,
+        }
+    }
+
+    // fn is_mut_borrow<'tcx>(&self, rewrite_ctxt: &FnRewriteCtxt<'tcx, 'me>) -> bool {
+    //     !self.is_copy_obj(rewrite_ctxt) && !self.is_move_obj(rewrite_ctxt)
+    // }
+
+    fn is_raw_ptr(self) -> bool {
+        matches!(self, ValueType::Ptr(ptr_kinds) if matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_raw()))
+    }
+}
+
 impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
-    fn acquire_place_info(&self, place: &Place<'tcx>) -> &'me [PointerKind] {
+    fn acquire_place_info(&self, place: &Place<'tcx>) -> ValueType<'me> {
         let FnRewriteCtxt {
             local_decision,
             struct_decision,
@@ -192,7 +254,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
         }
 
-        &ptr_kinds[ptr_kinds_index..]
+        let ptr = &ptr_kinds[ptr_kinds_index..];
+
+        ValueType::from_ptr_ctxt(ty, ptr)
     }
 
     fn rewrite_statement(
@@ -273,7 +337,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     place,
                     location,
                     terminator.source_info.span,
-                    &[],
+                    ValueType::Irrelavent,
                     rewriter,
                 );
             }
@@ -299,7 +363,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 // rewrite point: return
                 if !user_idents.contains_key(&RETURN_PLACE) {
                     let def_loc = def_use_chain.def_loc(RETURN_PLACE, location);
-                    let return_ctxt = &self.local_decision[0];
+                    let return_ctxt = ValueType::from_ptr_ctxt(self.body.return_ty(), &self.local_decision[0]);
                     match def_loc {
                         RichLocation::Entry => {}
                         RichLocation::Phi(block) => {
@@ -409,7 +473,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         place: Place<'tcx>,
         location: Location,
         span: Span,
-        load_ctxt: &[PointerKind],
+        required: ValueType,
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt {
@@ -445,7 +509,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                             rvalue,
                             def_loc,
                             stmt.source_info.span,
-                            load_ctxt,
+                            required,
                             rewriter,
                         );
                     }
@@ -458,7 +522,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         rvalue,
                         def_loc,
                         stmt.source_info.span,
-                        load_ctxt,
+                        required,
                         rewriter,
                     );
                     return;
@@ -468,17 +532,17 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         // incomplete ctxt summary
         // NOTE context is different from pointer kind
-        let is_const = if load_ctxt.is_empty() {
-            true
-        } else {
-            load_ctxt[0].is_const() || load_ctxt[0].is_raw_const()
-        };
-        let is_raw = load_ctxt.iter().any(|ptr_kind| ptr_kind.is_raw());
-        let is_move = if load_ctxt.is_empty() {
-            false
-        } else {
-            load_ctxt[0].is_move()
-        };
+        // let is_const = if load_ctxt.is_empty() {
+        //     true
+        // } else {
+        //     load_ctxt[0].is_const() || load_ctxt[0].is_raw_const()
+        // };
+        // let is_raw = load_ctxt.iter().any(|ptr_kind| ptr_kind.is_raw());
+        // let is_move = if load_ctxt.is_empty() {
+        //     false
+        // } else {
+        //     load_ctxt[0].is_move()
+        // };
 
         let mut ptr_kinds = local_decision[place.local.as_usize()].iter().copied();
         let mut ty = body.local_decls[place.local].ty;
@@ -499,7 +563,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     if base_ptr_kind.is_raw() {
                         replacement = format!("*{replacement}");
                     } else {
-                        let usage = if is_const {
+                        let usage = if required.is_copy_obj(self) {
                             if base_ptr_kind.is_const() {
                                 "clone"
                             } else {
@@ -537,7 +601,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         }
 
         // incomplete usage rewrites
-        if !load_ctxt.is_empty() {
+        if required.is_ptr() {
             let ptr_kind = ptr_kinds.next().unwrap();
 
             if ptr_kind.is_safe() {
@@ -545,11 +609,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     replacement = format!("({replacement})");
                 }
 
-                if is_move {
+                if required.is_move_obj(self) {
                     if place.is_indirect() {
                         replacement += ".take()";
                     }
-                } else if is_const {
+                } else if required.is_copy_obj(self) {
                     if ptr_kind.is_const() {
                         replacement += ".clone()";
                     } else {
@@ -558,13 +622,13 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 } else {
                     replacement += ".as_deref_mut()"
                 };
-                if is_raw {
+                if required.is_raw_ptr() {
                     replacement = format!("core::mem::transmute({replacement})")
                 }
-            } else if !is_raw {
-                if is_move {
+            } else if !required.is_raw_ptr(){
+                if required.is_move_obj(self) {
                     replacement = format!("Some(Box::from_raw({replacement}))")
-                } else if is_const {
+                } else if required.is_copy_obj(self) {
                     if need_paren {
                         replacement = format!("({replacement})");
                     }
@@ -586,7 +650,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         operand: &Operand<'tcx>,
         location: Location,
         span: Span,
-        load_ctxt: &[PointerKind],
+        required: ValueType,
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt {
@@ -599,10 +663,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         match operand {
             Operand::Copy(place) | Operand::Move(place) => {
                 let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
-                self.rewrite_place_load_at(place, location, span, load_ctxt, rewriter)
+                self.rewrite_place_load_at(place, location, span, required, rewriter)
             }
             Operand::Constant(constant) => {
-                self.try_rewrite_null_constant(constant, span, load_ctxt, rewriter);
+                self.try_rewrite_null_constant(constant, span, required, rewriter);
             }
         }
     }
@@ -612,37 +676,35 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rvalue: &Rvalue<'tcx>,
         location: Location,
         span: Span,
-        load_ctxt: &[PointerKind],
+        required: ValueType,
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt { tcx, .. } = *self;
 
         match rvalue {
             Rvalue::Use(operand) => {
-                self.rewrite_operand_at(operand, location, span, load_ctxt, rewriter)
+                self.rewrite_operand_at(operand, location, span, required, rewriter)
             }
             Rvalue::AddressOf(_, _) => todo!(),
             Rvalue::BinaryOp(_, box (operand1, operand2))
             | Rvalue::CheckedBinaryOp(_, box (operand1, operand2)) => {
-                self.rewrite_operand_at(operand1, location, span, &[], rewriter);
-                self.rewrite_operand_at(operand2, location, span, &[], rewriter);
+                self.rewrite_operand_at(operand1, location, span, ValueType::Irrelavent, rewriter);
+                self.rewrite_operand_at(operand2, location, span, ValueType::Irrelavent, rewriter);
             }
             Rvalue::UnaryOp(_, operand) => {
-                self.rewrite_operand_at(operand, location, span, &[], rewriter)
+                self.rewrite_operand_at(operand, location, span, ValueType::Irrelavent, rewriter)
             }
             Rvalue::CopyForDeref(_) => unreachable!(),
             Rvalue::Cast(_, operand, ty) => {
                 match self.try_rewrite_malloc_from_dest(
                     operand,
                     location,
-                    matches!(load_ctxt.first(), Some(PointerKind::Move)),
+                    required.is_move_obj(self),
                     rewriter,
                 ) {
                     Ok(result) => {
                         if let Some(malloc_span) = result {
-                            let replacement = if load_ctxt.len() > 1 {
-                                "Some(Box::new(None))".to_owned()
-                            } else {
+                            let replacement = {
                                 let ty = ty.builtin_deref(true).unwrap().ty;
                                 format!("Some(Box::new(<crate::{ty} as Default>::default()))")
                             };
@@ -654,7 +716,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         // if let Some(constant) = operand.constant() {
                         //     self.try_rewrite_null_constant(constant, span, load_ctxt, rewriter);
                         // }
-                        self.rewrite_operand_at(operand, location, span, load_ctxt, rewriter);
+                        self.rewrite_operand_at(operand, location, span, required, rewriter);
                     }
                 }
             }
@@ -734,14 +796,14 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         let fn_sig = tcx.fn_sig(callee).skip_binder();
         for (arg, ty) in itertools::izip!(args, fn_sig.inputs()) {
-            let ctxt: &[_] = if ty.is_unsafe_ptr() {
-                if ty.is_mutable_ptr() {
-                    &[PointerKind::Raw(crate::RawMeta::Mut)]
+            let ctxt = if ty.is_unsafe_ptr() {
+                ValueType::from_ptr_ctxt(*ty, if ty.is_mutable_ptr() {
+                    &[PointerKind::Raw(RawMeta::Mut)]
                 } else {
-                    &[PointerKind::Raw(crate::RawMeta::Const)]
-                }
+                    &[PointerKind::Raw(RawMeta::Const)]
+                })
             } else {
-                &[]
+                ValueType::Irrelavent
             };
             if let Some(place) = arg.place() {
                 let Some(local) = place.as_local() else { panic!() };
@@ -762,14 +824,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         &self,
         constant: &Constant<'tcx>,
         stmt_span: Span,
-        load_ctxt: &[PointerKind],
+        required: ValueType,
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt { tcx, .. } = *self;
 
         if let Some(scalar) = constant.literal.try_to_scalar_int() {
             if scalar.is_null() {
-                if let Some(ptr_kind) = load_ctxt.first() {
+                if let ValueType::Ptr(ptr_kinds) = required {
+                    let ptr_kind = ptr_kinds[0];
                     let span = constant.span.until(stmt_span.shrink_to_hi());
                     if ptr_kind.is_safe() {
                         rewriter.replace(tcx, span, "None".to_owned());

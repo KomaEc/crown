@@ -6,7 +6,7 @@ use rustc_middle::mir::{Location, Operand, Place, Rvalue, StatementKind};
 use rustc_span::Span;
 
 use super::FnRewriteCtxt;
-use crate::{PointerKind, RawMeta};
+use crate::{PointerKind, RawMeta, rewrite_fn::ValueType};
 
 impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     pub fn rewrite_library_call(
@@ -74,14 +74,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
         if let Rvalue::Use(operand) = rvalue {
             if let Some(place) = operand.place() {
-                let ctxt = self.acquire_place_info(&place);
-                if matches!(ctxt.first(), Some(ptr_kind) if ptr_kind.is_safe()) {
+                let produced = self.acquire_place_info(&place);
+                assert!(produced.is_ptr());
+                if !produced.is_raw_ptr() {
                     rewriter.replace(tcx, fn_span, "is_none()".to_string());
                     self.rewrite_rvalue_at(
                         rvalue,
                         def_loc,
                         stmt.source_info.span,
-                        &[PointerKind::Const],
+                        ValueType::Ptr(&[PointerKind::Const]),
                         rewriter,
                     );
                     return;
@@ -89,11 +90,18 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
         }
 
+        let ty = self.body.local_decls[arg].ty;
+        let required = ValueType::from_ptr_ctxt(ty, if ty.is_mutable_ptr() {
+            &[PointerKind::Raw(RawMeta::Mut)]
+        } else {
+            &[PointerKind::Raw(RawMeta::Const)]
+        });
+
         self.rewrite_rvalue_at(
             rvalue,
             def_loc,
             stmt.source_info.span,
-            &[PointerKind::Raw(RawMeta::Mut)],
+            required,
             rewriter,
         );
     }

@@ -133,12 +133,15 @@ impl PointerKind {
         !self.is_raw()
     }
 
-    fn is_raw_const(&self) -> bool {
-        matches!(*self, PointerKind::Raw(RawMeta::Const))
-    }
-
     fn is_raw_move(&self) -> bool {
         matches!(*self, PointerKind::Raw(RawMeta::Move))
+    }
+
+    fn is_copy(&self) -> bool {
+        matches!(
+            *self,
+            PointerKind::Raw(RawMeta::Const | RawMeta::Mut) | PointerKind::Const
+        )
     }
 }
 
