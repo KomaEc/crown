@@ -14,7 +14,7 @@ pub trait Rewrite {
 
     #[inline]
     fn replace(&mut self, tcx: TyCtxt, span: Span, replacement: String) {
-        self.replace_with_msg(tcx, span, format!("replace @ {:?} with [{replacement}]", span), replacement)
+        self.replace_with_msg(tcx, span, format!("replace @ {:?} with '{replacement}'", span), replacement)
     }
 
     fn replace_with_msg(&mut self, tcx: TyCtxt, span: Span, message: String, replacement: String);
