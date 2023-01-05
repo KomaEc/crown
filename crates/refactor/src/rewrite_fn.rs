@@ -636,6 +636,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         .copied();
                 }
                 rustc_middle::mir::ProjectionElem::Index(index) => {
+                    println!("rewrite index at {:?} {:?}", location, span);
                     let index_rewrite = self.rewrite_index_at(index, location);
                     replacement = replacement + "[" + &index_rewrite + "]";
                     ty = ty.builtin_index().unwrap();
@@ -785,7 +786,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     }
 
     fn rewrite_index_at(&self, index: Local, location: Location) -> String {
-        println!("rewrite index at {:?}", location);
         let FnRewriteCtxt {
             body,
             def_use_chain,
@@ -916,6 +916,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         *place, location, span, required, rewriter,
                     );
                 } else {
+                    return;
                     unimplemented!();
                 }
             }
@@ -926,6 +927,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         *place, location, span, required, rewriter,
                     );
                 } else {
+                    return;
                     unimplemented!();
                 }
             }
@@ -1060,7 +1062,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     }
 }
 
-/// this is a hack
+/// woops, this hack does not work
 #[derive(Debug)]
 struct DelayedOnceRewrite {
     rewrite: once_cell::unsync::OnceCell<String>,
