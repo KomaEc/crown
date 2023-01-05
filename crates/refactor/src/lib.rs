@@ -292,7 +292,8 @@ impl FnLocals {
             for (is_output_param, ownership, mutability, fatness) in
                 itertools::izip!(local_kind, ownership, mutability, fatness)
             {
-                let mut local = SmallVec::with_capacity(ownership.len());
+                let mut local: SmallVec<[PointerKind; 3]> =
+                    SmallVec::with_capacity(ownership.len());
                 for (&ownership, &mutability, &fatness) in
                     itertools::izip!(ownership, mutability, fatness)
                 {
@@ -314,7 +315,7 @@ impl FnLocals {
                     };
                     local.push(pointer_kind);
                 }
-                if is_output_param {
+                if is_output_param && local[0].is_move() {
                     local[0] = PointerKind::Mut
                 }
                 fn_locals.push_inner(local);

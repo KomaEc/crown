@@ -204,12 +204,39 @@ impl<'me> PlaceValueType<'me> {
         }
     }
 
+    fn is_rustc_move_obj<'tcx>(&self, rewrite_ctxt: &FnRewriteCtxt<'tcx, 'me>) -> bool {
+        match self {
+            PlaceValueType::Ptr(ptr_kinds) => {
+                matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_move())
+            }
+            PlaceValueType::Struct(did) => {
+                let fields_data = rewrite_ctxt.struct_decision.field_data(did);
+                fields_data.iter().any(|field| {
+                    field
+                        .iter()
+                        .any(|ptr_kind| ptr_kind.is_move() || ptr_kind.is_raw_move())
+                })
+            }
+            PlaceValueType::Irrelavent => false,
+        }
+    }
+
     fn is_copy_obj<'tcx>(&self, rewrite_ctxt: &FnRewriteCtxt<'tcx, 'me>) -> bool {
         match self {
             PlaceValueType::Ptr(ptr_kinds) => {
                 matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_copy())
             }
             PlaceValueType::Struct(_) => !self.is_move_obj(rewrite_ctxt),
+            PlaceValueType::Irrelavent => true,
+        }
+    }
+
+    fn is_rustc_copy_obj<'tcx>(&self, rewrite_ctxt: &FnRewriteCtxt<'tcx, 'me>) -> bool {
+        match self {
+            PlaceValueType::Ptr(ptr_kinds) => {
+                matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_raw() || ptr_kind.is_const())
+            }
+            PlaceValueType::Struct(_) => !self.is_rustc_move_obj(rewrite_ctxt),
             PlaceValueType::Irrelavent => true,
         }
     }
@@ -615,45 +642,81 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         assert_eq!(PLACE_LOAD_MODE, PlaceLoadMode::ByValue as u8);
 
-        // incomplete usage rewrites
-        if required.is_ptr() {
-            let ptr_kind = ptr_kinds.next().unwrap();
-
-            if ptr_kind.is_safe() {
+        if required.is_rustc_move_obj(self) {
+            if produced.is_rustc_move_obj(self) {
                 if need_paren {
                     replacement = format!("({replacement})");
                 }
 
-                if required.is_move_obj(self) {
-                    if place.is_indirect() {
-                        replacement += ".take()";
-                    }
-                } else if required.is_copy_obj(self) {
-                    if ptr_kind.is_const() {
-                        replacement += ".clone()";
-                    } else {
-                        replacement += ".as_deref()";
-                    }
-                } else {
-                    replacement += ".as_deref_mut()"
-                };
-                if required.is_raw_ptr() {
-                    replacement = format!("core::mem::transmute({replacement})")
+                if place.is_indirect() {
+                    replacement += ".take()";
                 }
-            } else if !required.is_raw_ptr() {
-                if required.is_move_obj(self) {
-                    replacement = format!("Some(Box::from_raw({replacement}))")
-                } else if required.is_copy_obj(self) {
+            } else {
+                assert!(required.is_ptr());
+                assert!(produced.is_raw_ptr());
+                replacement = format!("Some(Box::from_raw({replacement}))")
+            }
+        } else if required.is_rustc_copy_obj(self) {
+            if required.is_move_obj(self) {
+                // raw move
+                assert!(required.is_raw_ptr());
+                // we can not have the assertion below because of lacking precision
+                // assert!(produced.is_move_obj(self));
+                if produced.is_rustc_move_obj(self) {
+                    assert!(produced.is_ptr());
+                    // Box to raw (move)
+                    replacement = format!("Box::into_raw({replacement})");
+                } else {
+                    assert!(produced.is_raw_ptr());
+                    // nothing to be done here
+                }
+            } else if required.is_raw_ptr() {
+                // raw mut or raw const
+                if produced.is_rustc_move_obj(self) {
+                    assert!(produced.is_ptr(), "leaks from this type are not supported");
+                    // Box to raw (borrow)
+                    let pointee_ty = ty.builtin_deref(true).unwrap().ty;
+                    let pointee_ty_str = if pointee_ty.is_primitive() {
+                        format!("{pointee_ty}")
+                    } else {
+                        format!("crate::{pointee_ty}")
+                    };
+                    replacement =
+                        format!("core::mem::transmute::<_, *mut {pointee_ty_str}>({replacement})")
+                }
+            } else if required.is_ptr() {
+                // const ref
+                if produced.is_raw_ptr() {
                     if need_paren {
                         replacement = format!("({replacement})");
                     }
                     replacement = format!("{replacement}.as_ref()");
+                } else if !produced.is_rustc_copy_obj(self) {
+                    if need_paren {
+                        replacement = format!("({replacement})");
+                    }
+                    replacement = format!("{replacement}.as_deref()");
                 } else {
                     if need_paren {
                         replacement = format!("({replacement})");
                     }
-                    replacement = format!("{replacement}.as_mut()");
+                    replacement = format!("{replacement}.clone()");
                 }
+            }
+            // else copyable structs, or primitive, directly copy, nothing to do here
+        } else {
+            // mut borrows
+            assert!(produced.is_ptr());
+            if produced.is_raw_ptr() {
+                if need_paren {
+                    replacement = format!("({replacement})");
+                }
+                replacement += ".as_mut()"
+            } else {
+                if need_paren {
+                    replacement = format!("({replacement})");
+                }
+                replacement += ".as_deref_mut()"
             }
         }
 
