@@ -6,7 +6,7 @@ use rustc_middle::mir::{Location, Operand, Place, StatementKind, TerminatorKind}
 use rustc_span::Span;
 use rustc_type_ir::TyKind::FnDef;
 
-use super::{FnRewriteCtxt, ValueType};
+use super::{FnRewriteCtxt, PlaceValueType};
 use crate::{PointerKind, RawMeta};
 
 impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
@@ -63,7 +63,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 rvalue,
                 def_loc,
                 stmt.source_info.span,
-                ValueType::Ptr(&[PointerKind::Raw(RawMeta::Mut)]),
+                PlaceValueType::Ptr(&[PointerKind::Raw(RawMeta::Mut)]),
                 rewriter,
             );
         }
@@ -93,9 +93,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
                 let ty = self.body.local_decls[local].ty;
                 let required = if ty.is_unsafe_ptr() {
-                    ValueType::Ptr(&[PointerKind::Raw(RawMeta::Const)])
+                    PlaceValueType::Ptr(&[PointerKind::Raw(RawMeta::Const)])
                 } else {
-                    ValueType::Irrelavent
+                    PlaceValueType::Irrelavent
                 };
                 self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, required, rewriter);
             }

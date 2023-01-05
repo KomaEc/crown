@@ -125,6 +125,10 @@ impl PointerKind {
         *self == PointerKind::Move
     }
 
+    fn is_mut(&self) -> bool {
+        *self == PointerKind::Mut
+    }
+
     fn is_const(&self) -> bool {
         *self == PointerKind::Const
     }
