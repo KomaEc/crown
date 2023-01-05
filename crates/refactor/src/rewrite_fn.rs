@@ -90,7 +90,7 @@ fn rewrite_fn<'tcx>(
 
     let def_use_chain = def_use_chain(body, tcx);
 
-    // show_def_use_chain(body, &def_use_chain);
+    analysis::use_def::show_def_use_chain(body, &def_use_chain);
 
     let rewrite_ctxt = FnRewriteCtxt {
         local_decision,
@@ -795,7 +795,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 match self.try_rewrite_malloc_from_dest(
                     operand,
                     location,
-                    required.is_move_obj(self),
+                    required.is_rustc_move_obj(self),
                     rewriter,
                 ) {
                     Ok(result) => {

@@ -133,7 +133,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             if needs_erase {
                 Ok(Some(*fn_span))
             } else {
-                self.rewrite_call_default(callee, args, *destination, *fn_span, location, rewriter);
+                self.rewrite_call_default(callee, args, *destination, *fn_span, def_loc, rewriter);
                 Ok(None)
             }
         } else {
