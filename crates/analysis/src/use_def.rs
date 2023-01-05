@@ -166,6 +166,9 @@ fn definitions<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Definitions {
                 }
                 None => {}
             }
+
+            // call super_projection so that index operators are visited
+            self.super_projection(place.as_ref(), context, location);
         }
     }
 

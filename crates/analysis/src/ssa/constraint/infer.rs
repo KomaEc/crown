@@ -7,7 +7,7 @@ use rustc_middle::{
     mir::{
         BasicBlock, BasicBlockData, Body, BorrowKind, CastKind, Local, Location,
         NonDivergingIntrinsic, Operand, Place, Rvalue, Statement, StatementKind, Terminator,
-        TerminatorKind, RETURN_PLACE,
+        TerminatorKind, RETURN_PLACE, ProjectionElem,
     },
     ty::{Ty, TyCtxt},
 };
@@ -210,6 +210,10 @@ where
     Infer: InferMode<'rn, 'db, 'tcx>,
 {
     let consume = rn.state.try_consume_at(place.local, location);
+    for elem in place.projection {
+        let ProjectionElem::Index(idx) = elem else { continue };
+        let _ = rn.state.try_consume_at(idx, location);
+    }
     Infer::interpret_consume(infer_cx, body, place, consume)
 }
 
