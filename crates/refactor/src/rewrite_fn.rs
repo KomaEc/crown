@@ -741,6 +741,49 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rewriter.replace(tcx, span, replacement);
     }
 
+    fn rewrite_temporary(
+        &self,
+        local: Local,
+        location: Location,
+        required: PlaceValueType,
+        rewriter: &mut impl Rewrite,
+    ) {
+        let FnRewriteCtxt {
+            body,
+            def_use_chain,
+            user_idents,
+            ..
+        } = *self;
+        assert!(!user_idents.contains_key(&local));
+        let def_loc = def_use_chain.def_loc(local, location);
+
+        match def_loc {
+            RichLocation::Entry => todo!(),
+            RichLocation::Phi(block) => {
+                // FIXME correctness? recursive?
+                for def_loc in def_use_chain.phi_def_locs(local, block) {
+                    let RichLocation::Mir(def_loc) = def_loc else { todo!() };
+                    let Left(stmt) = body.stmt_at(def_loc) else { return };
+                    let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                    self.rewrite_rvalue_at(
+                        rvalue,
+                        def_loc,
+                        stmt.source_info.span,
+                        required,
+                        rewriter,
+                    );
+                }
+                return;
+            }
+            RichLocation::Mir(def_loc) => {
+                let Left(stmt) = body.stmt_at(def_loc) else { return };
+                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, required, rewriter);
+                return;
+            }
+        }
+    }
+
     fn rewrite_index_at(&self, index: Local, location: Location) -> String {
         println!("rewrite index at {:?}", location);
         let FnRewriteCtxt {
@@ -958,7 +1001,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             ..
         } = *self;
 
-        println!("rewrite call {} by default", self.tcx.def_path_str(callee));
+        println!(
+            "rewrite call {} @ {:?} by default",
+            self.tcx.def_path_str(callee),
+            _fn_span
+        );
 
         let fn_sig = tcx.fn_sig(callee).skip_binder();
         for (arg, ty) in itertools::izip!(args, fn_sig.inputs()) {
@@ -976,15 +1023,16 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             };
             if let Some(place) = arg.place() {
                 let Some(local) = place.as_local() else { panic!() };
-                let def_loc = def_use_chain.def_loc(local, location);
-                let RichLocation::Mir(def_loc) = def_loc else { panic!() };
+                self.rewrite_temporary(local, location, ctxt, rewriter);
+                // let def_loc = def_use_chain.def_loc(local, location);
+                // let RichLocation::Mir(def_loc) = def_loc else { panic!() };
 
-                let Left(stmt) = body.stmt_at(def_loc) else {
-                    // terminator is rewritten
-                    return
-                };
-                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-                self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, ctxt, rewriter);
+                // let Left(stmt) = body.stmt_at(def_loc) else {
+                //     // terminator is rewritten
+                //     return
+                // };
+                // let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                // self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, ctxt, rewriter);
             }
         }
     }
