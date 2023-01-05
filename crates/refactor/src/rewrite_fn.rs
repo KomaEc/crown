@@ -284,7 +284,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     ptr_kinds_index = 0;
                     ty = field_ty;
                 }
-                rustc_middle::mir::ProjectionElem::Index(_) => todo!(),
+                rustc_middle::mir::ProjectionElem::Index(_) => {
+                    ty = ty.builtin_index().unwrap()
+                },
                 _ => unreachable!(),
             }
         }
@@ -334,7 +336,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         let lhs_span =
                             span.with_hi(span.lo() + rustc_span::BytePos(assign_pos as u32));
 
-                        self.rewrite_place_store(place, lhs_span, rewriter);
+                        self.rewrite_place_store(place, location, lhs_span, rewriter);
                     } // otherwise let-binding
 
                     let ctxt = self.acquire_place_info(&place);
@@ -438,7 +440,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         }
     }
 
-    fn rewrite_place_store(&self, place: Place<'tcx>, span: Span, rewriter: &mut impl Rewrite) {
+    fn rewrite_place_store(&self, place: Place<'tcx>, location: Location, span: Span, rewriter: &mut impl Rewrite) {
         let FnRewriteCtxt {
             local_decision,
             struct_decision,
@@ -496,7 +498,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         .iter()
                         .copied();
                 }
-                rustc_middle::mir::ProjectionElem::Index(_) => todo!(),
+                rustc_middle::mir::ProjectionElem::Index(index) => {
+                    let index_rewrite = self.rewrite_index_at(index, location);
+                    replacement = replacement + "[" + &index_rewrite + "]";
+                    ty = ty.builtin_index().unwrap();
+                },
                 _ => unreachable!(),
             }
         }
@@ -622,7 +628,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         .iter()
                         .copied();
                 }
-                rustc_middle::mir::ProjectionElem::Index(_) => todo!(),
+                rustc_middle::mir::ProjectionElem::Index(index) => {
+                    let index_rewrite = self.rewrite_index_at(index, location);
+                    replacement = replacement + "[" + &index_rewrite + "]";
+                    ty = ty.builtin_index().unwrap();
+                },
                 _ => unreachable!(),
             }
         }
@@ -722,6 +732,44 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         }
 
         rewriter.replace(tcx, span, replacement);
+    }
+
+    fn rewrite_index_at(
+        &self,
+        index: Local,
+        location: Location,
+    ) -> String {
+        println!("rewrite index at {:?}", location);
+        let FnRewriteCtxt {
+            body,
+            def_use_chain,
+            user_idents,
+            ..
+        } = *self;
+
+        assert!(!user_idents.contains_key(&index));
+
+        let def_loc = def_use_chain.def_loc(index, location);
+
+        let mut rewrite = DelayedOnceRewrite::new();
+
+        match def_loc {
+            RichLocation::Entry => todo!(),
+            RichLocation::Phi(_) => todo!(),
+            RichLocation::Mir(def_loc) => {
+                let Left(stmt) = body.stmt_at(def_loc) else { unimplemented!() };
+                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                self.rewrite_rvalue_at(
+                    rvalue,
+                    def_loc,
+                    stmt.source_info.span,
+                    PlaceValueType::Irrelavent,
+                    &mut rewrite,
+                );
+            }
+        }
+
+        rewrite.get()
     }
 
     fn rewrite_operand_at(
@@ -958,5 +1006,33 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 }
             }
         }
+    }
+}
+
+
+/// this is a hack
+#[derive(Debug)]
+struct DelayedOnceRewrite {
+    rewrite: once_cell::unsync::OnceCell<String>
+}
+
+impl DelayedOnceRewrite {
+    fn new() -> Self {
+        Self {
+            rewrite: once_cell::unsync::OnceCell::new()
+        }
+    }
+
+    fn get(mut self) -> String {
+        self.rewrite.take().expect("should be rewritten")
+    }
+}
+
+impl Rewrite for DelayedOnceRewrite {
+    fn replace_with_msg(&mut self, _tcx: TyCtxt, _span: Span, _message: String, replacement: String) {
+        self.rewrite.set(replacement).unwrap_or_else(|_| panic!("only allow rewrite once"))
+    }
+
+    fn write(self, _: common::rewrite::RewriteMode) {
     }
 }

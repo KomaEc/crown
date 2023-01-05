@@ -17,3 +17,4 @@ anyhow = "1.0"
 common = { path = "../common" }
 analysis = { path = "../analysis" }
 alias = { path = "../alias" }
+once_cell = "1"
