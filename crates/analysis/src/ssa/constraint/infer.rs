@@ -6,8 +6,8 @@ use rustc_index::vec::IndexVec;
 use rustc_middle::{
     mir::{
         BasicBlock, BasicBlockData, Body, BorrowKind, CastKind, Local, Location,
-        NonDivergingIntrinsic, Operand, Place, Rvalue, Statement, StatementKind, Terminator,
-        TerminatorKind, RETURN_PLACE, ProjectionElem,
+        NonDivergingIntrinsic, Operand, Place, ProjectionElem, Rvalue, Statement, StatementKind,
+        Terminator, TerminatorKind, RETURN_PLACE,
     },
     ty::{Ty, TyCtxt},
 };

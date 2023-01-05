@@ -284,9 +284,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     ptr_kinds_index = 0;
                     ty = field_ty;
                 }
-                rustc_middle::mir::ProjectionElem::Index(_) => {
-                    ty = ty.builtin_index().unwrap()
-                },
+                rustc_middle::mir::ProjectionElem::Index(_) => ty = ty.builtin_index().unwrap(),
                 _ => unreachable!(),
             }
         }
@@ -440,7 +438,13 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         }
     }
 
-    fn rewrite_place_store(&self, place: Place<'tcx>, location: Location, span: Span, rewriter: &mut impl Rewrite) {
+    fn rewrite_place_store(
+        &self,
+        place: Place<'tcx>,
+        location: Location,
+        span: Span,
+        rewriter: &mut impl Rewrite,
+    ) {
         let FnRewriteCtxt {
             local_decision,
             struct_decision,
@@ -502,7 +506,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     let index_rewrite = self.rewrite_index_at(index, location);
                     replacement = replacement + "[" + &index_rewrite + "]";
                     ty = ty.builtin_index().unwrap();
-                },
+                }
                 _ => unreachable!(),
             }
         }
@@ -536,7 +540,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         {
             replacement
         } else if place.as_local().is_none() {
-            tracing::warn!("rewrite immediate value, could be static, func call return @ {:?}", span);
+            tracing::warn!(
+                "rewrite immediate value, could be static, func call return @ {:?}",
+                span
+            );
             return;
         } else {
             assert!(place.as_local().is_some());
@@ -632,7 +639,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     let index_rewrite = self.rewrite_index_at(index, location);
                     replacement = replacement + "[" + &index_rewrite + "]";
                     ty = ty.builtin_index().unwrap();
-                },
+                }
                 _ => unreachable!(),
             }
         }
@@ -734,11 +741,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rewriter.replace(tcx, span, replacement);
     }
 
-    fn rewrite_index_at(
-        &self,
-        index: Local,
-        location: Location,
-    ) -> String {
+    fn rewrite_index_at(&self, index: Local, location: Location) -> String {
         println!("rewrite index at {:?}", location);
         let FnRewriteCtxt {
             body,
@@ -1009,17 +1012,16 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     }
 }
 
-
 /// this is a hack
 #[derive(Debug)]
 struct DelayedOnceRewrite {
-    rewrite: once_cell::unsync::OnceCell<String>
+    rewrite: once_cell::unsync::OnceCell<String>,
 }
 
 impl DelayedOnceRewrite {
     fn new() -> Self {
         Self {
-            rewrite: once_cell::unsync::OnceCell::new()
+            rewrite: once_cell::unsync::OnceCell::new(),
         }
     }
 
@@ -1029,10 +1031,17 @@ impl DelayedOnceRewrite {
 }
 
 impl Rewrite for DelayedOnceRewrite {
-    fn replace_with_msg(&mut self, _tcx: TyCtxt, _span: Span, _message: String, replacement: String) {
-        self.rewrite.set(replacement).unwrap_or_else(|_| panic!("only allow rewrite once"))
+    fn replace_with_msg(
+        &mut self,
+        _tcx: TyCtxt,
+        _span: Span,
+        _message: String,
+        replacement: String,
+    ) {
+        self.rewrite
+            .set(replacement)
+            .unwrap_or_else(|_| panic!("only allow rewrite once"))
     }
 
-    fn write(self, _: common::rewrite::RewriteMode) {
-    }
+    fn write(self, _: common::rewrite::RewriteMode) {}
 }
