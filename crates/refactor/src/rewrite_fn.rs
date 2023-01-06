@@ -280,6 +280,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 rustc_middle::mir::ProjectionElem::Field(f, field_ty) => {
                     assert_eq!(ptr_kinds_index, ptr_kinds.len());
                     let adt_def = ty.ty_adt_def().unwrap();
+                    if adt_def.is_union() {
+                        return PlaceValueType::Irrelavent
+                    }
                     ptr_kinds = &struct_decision.field_data(&adt_def.did())[f.index()][..];
                     ptr_kinds_index = 0;
                     ty = field_ty;
@@ -571,7 +574,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 }
                 RichLocation::Mir(def_loc) => {
                     let Left(stmt) = body.stmt_at(def_loc) else { return };
-                    let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                    let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!("{:?}", stmt) };
                     self.rewrite_rvalue_at(
                         rvalue,
                         def_loc,
