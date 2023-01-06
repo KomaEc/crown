@@ -9,7 +9,7 @@ use rustc_index::{bit_set::BitSet, vec::IndexVec};
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-        BasicBlock, BasicBlockData, Body, Local, Location, Place, TerminatorKind, Rvalue,
+        BasicBlock, BasicBlockData, Body, Local, Location, Place, Rvalue, TerminatorKind,
     },
     ty::TyCtxt,
 };
@@ -171,16 +171,19 @@ fn definitions<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Definitions {
             self.super_projection(place.as_ref(), context, location);
         }
 
-        fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location,) {
+        fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
             if let Rvalue::BinaryOp(_, box (operand1, operand2)) = rvalue {
-                if let Some((lhs, operand1)) = place.as_local().zip(operand1.place().and_then(|place| place.as_local())) {
+                if let Some((lhs, operand1)) = place
+                    .as_local()
+                    .zip(operand1.place().and_then(|place| place.as_local()))
+                {
                     if lhs == operand1 {
                         // special casing statements like _1 = BitAnd(_1, _3)
                         // in this case, we do not generate usage for the right _1
                         self.visit_place(
                             place,
                             PlaceContext::MutatingUse(MutatingUseContext::Store),
-                            location
+                            location,
                         );
                         self.visit_operand(operand2, location);
                         return;

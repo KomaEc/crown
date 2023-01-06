@@ -816,7 +816,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
             RichLocation::Mir(def_loc) => {
                 let Left(stmt) = body.stmt_at(def_loc) else { return };
-                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { 
+                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else {
                     if let StatementKind::Deinit(..) = &stmt.kind {
                         // happens only when S { f: T { g: .. } }
                         return;
