@@ -574,7 +574,14 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 }
                 RichLocation::Mir(def_loc) => {
                     let Left(stmt) = body.stmt_at(def_loc) else { return };
-                    let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!("{:?}", stmt) };
+                    let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else {
+                        if let StatementKind::Deinit(..) = &stmt.kind {
+                            // happens only when S { f: T { g: .. } }
+                            return;
+                        } else {
+                            unreachable!()
+                        }
+                    };
                     self.rewrite_rvalue_at(
                         rvalue,
                         def_loc,
@@ -637,6 +644,12 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         .as_str();
                     replacement = replacement + "." + field_name;
                     ty = field_ty;
+
+                    if adt_def.is_union() {
+                        // FIXME
+                        ptr_kinds = (&[]).iter().copied();
+                        continue;
+                    }
 
                     ptr_kinds = struct_decision.field_data(&adt_def.did())[f.index()]
                         .iter()
@@ -803,7 +816,14 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
             RichLocation::Mir(def_loc) => {
                 let Left(stmt) = body.stmt_at(def_loc) else { return };
-                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { 
+                    if let StatementKind::Deinit(..) = &stmt.kind {
+                        // happens only when S { f: T { g: .. } }
+                        return;
+                    } else {
+                        unreachable!()
+                    }
+                };
                 self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, required, rewriter);
                 return;
             }
