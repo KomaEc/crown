@@ -281,7 +281,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     assert_eq!(ptr_kinds_index, ptr_kinds.len());
                     let adt_def = ty.ty_adt_def().unwrap();
                     if adt_def.is_union() {
-                        return PlaceValueType::Irrelavent
+                        return PlaceValueType::Irrelavent;
                     }
                     ptr_kinds = &struct_decision.field_data(&adt_def.did())[f.index()][..];
                     ptr_kinds_index = 0;
@@ -870,7 +870,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         required: PlaceValueType,
         rewriter: &mut impl Rewrite,
     ) {
-        let FnRewriteCtxt { tcx, def_use_chain , .. } = *self;
+        let FnRewriteCtxt {
+            tcx, def_use_chain, ..
+        } = *self;
 
         match rvalue {
             Rvalue::Use(operand) => {
@@ -879,7 +881,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             Rvalue::BinaryOp(_, box (operand1, operand2))
             | Rvalue::CheckedBinaryOp(_, box (operand1, operand2)) => {
                 if let Some(operand1) = operand1.place().and_then(|place| place.as_local()) {
-                    if def_use_chain.uses(location).find(|&local| local == operand1).is_none() {
+                    if def_use_chain
+                        .uses(location)
+                        .find(|&local| local == operand1)
+                        .is_none()
+                    {
                         // special case
                         self.rewrite_operand_at(
                             operand2,
@@ -888,7 +894,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                             PlaceValueType::Irrelavent,
                             rewriter,
                         );
-                        return
+                        return;
                     }
                 }
                 self.rewrite_operand_at(
@@ -1091,12 +1097,16 @@ fn rewrite_place(
     index_spans: &[Span],
     rewriter: &mut impl Rewrite,
 ) {
-    let mut rest = span;
-    let replacements = replacement.split(INDEX_SEPARATOR);
-    for (replacement, &index) in replacements.zip(index_spans) {
-        let part = rest.until(index);
-        rewriter.replace(tcx, part, replacement.to_owned());
-        rest = index.between(rest.shrink_to_hi());
+    if replacement.find(INDEX_SEPARATOR).is_none() {
+        rewriter.replace(tcx, span, replacement)
+    } else {
+        let mut rest = span;
+        let replacements = replacement.split(INDEX_SEPARATOR);
+        for (replacement, &index) in replacements.zip(index_spans) {
+            let part = rest.until(index);
+            rewriter.replace(tcx, part, replacement.to_owned());
+            rest = index.between(rest.shrink_to_hi());
+        }
     }
 }
 
