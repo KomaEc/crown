@@ -847,7 +847,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         required: PlaceValueType,
         rewriter: &mut impl Rewrite,
     ) {
-        let FnRewriteCtxt { tcx, .. } = *self;
+        let FnRewriteCtxt { tcx, def_use_chain , .. } = *self;
 
         match rvalue {
             Rvalue::Use(operand) => {
@@ -855,6 +855,19 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
             Rvalue::BinaryOp(_, box (operand1, operand2))
             | Rvalue::CheckedBinaryOp(_, box (operand1, operand2)) => {
+                if let Some(operand1) = operand1.place().and_then(|place| place.as_local()) {
+                    if def_use_chain.uses(location).find(|&local| local == operand1).is_none() {
+                        // special case
+                        self.rewrite_operand_at(
+                            operand2,
+                            location,
+                            span,
+                            PlaceValueType::Irrelavent,
+                            rewriter,
+                        );
+                        return
+                    }
+                }
                 self.rewrite_operand_at(
                     operand1,
                     location,
