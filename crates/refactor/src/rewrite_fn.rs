@@ -7,7 +7,7 @@ use analysis::{
     use_def::{def_use_chain, DefUseChain},
 };
 use common::rewrite::Rewrite;
-use either::Either::Left;
+use either::Either::{Left, Right};
 use rustc_hash::FxHashMap;
 use rustc_hir::{def_id::DefId, ItemKind};
 use rustc_middle::{
@@ -346,7 +346,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 // rewrite point: assume
                 rewriter.replace(tcx, statement.source_info.span, "()".to_owned())
             }
-            _ => todo!(),
+            _ => tracing::error!("{:?} is ignored", statement),
         }
     }
 
@@ -463,6 +463,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 unimplemented!("rewrite immediate value, could be static, func call return")
             });
 
+        let mut index_spans: SmallVec<[Span; 1]> = smallvec::smallvec![];
+
         let mut ptr_kinds = local_decision[place.local.as_usize()].iter().copied();
         let mut ty = body.local_decls[place.local].ty;
         let mut need_paren = false;
@@ -503,17 +505,17 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         .copied();
                 }
                 rustc_middle::mir::ProjectionElem::Index(index) => {
-                    let index_rewrite = self.rewrite_index_at(index, location);
-                    replacement = replacement + "[" + &index_rewrite + "]";
+                    replacement = replacement + "[" + INDEX_SEPARATOR + "]";
+                    self.rewrite_index_at(index, location, rewriter);
+                    let index_span = self.get_temporary_def_span(index, location);
+                    index_spans.push(index_span);
                     ty = ty.builtin_index().unwrap();
                 }
                 _ => unreachable!(),
             }
         }
 
-        rewriter.replace(tcx, span, replacement);
-
-        // &ptr_kinds[ptr_kinds_index..]
+        rewrite_place(tcx, span, replacement, &index_spans, rewriter)
     }
 
     fn rewrite_place_load_at<const PLACE_LOAD_MODE: u8>(
@@ -582,6 +584,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
         };
 
+        let mut index_spans: SmallVec<[Span; 1]> = smallvec::smallvec![];
+
         let produced = self.acquire_place_info(&place);
 
         let mut ptr_kinds = local_decision[place.local.as_usize()].iter().copied();
@@ -636,9 +640,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         .copied();
                 }
                 rustc_middle::mir::ProjectionElem::Index(index) => {
-                    println!("rewrite index at {:?} {:?}", location, span);
-                    let index_rewrite = self.rewrite_index_at(index, location);
-                    replacement = replacement + "[" + &index_rewrite + "]";
+                    replacement = replacement + "[" + INDEX_SEPARATOR + "]";
+                    self.rewrite_index_at(index, location, rewriter);
+                    let index_span = self.get_temporary_def_span(index, location);
+                    index_spans.push(index_span);
                     ty = ty.builtin_index().unwrap();
                 }
                 _ => unreachable!(),
@@ -739,7 +744,24 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
         }
 
-        rewriter.replace(tcx, span, replacement);
+        rewrite_place(tcx, span, replacement, &index_spans, rewriter)
+    }
+
+    fn get_temporary_def_span(&self, local: Local, location: Location) -> Span {
+        let FnRewriteCtxt {
+            body,
+            def_use_chain,
+            user_idents,
+            ..
+        } = *self;
+        assert!(!user_idents.contains_key(&local));
+        let def_loc = def_use_chain.def_loc(local, location);
+
+        let RichLocation::Mir(def_loc) = def_loc else { unreachable!() };
+        match body.stmt_at(def_loc) {
+            Left(stmt) => stmt.source_info.span,
+            Right(term) => term.source_info.span,
+        }
     }
 
     fn rewrite_temporary(
@@ -785,37 +807,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         }
     }
 
-    fn rewrite_index_at(&self, index: Local, location: Location) -> String {
-        let FnRewriteCtxt {
-            body,
-            def_use_chain,
-            user_idents,
-            ..
-        } = *self;
-
-        assert!(!user_idents.contains_key(&index));
-
-        let def_loc = def_use_chain.def_loc(index, location);
-
-        let mut rewrite = DelayedOnceRewrite::new();
-
-        match def_loc {
-            RichLocation::Entry => todo!(),
-            RichLocation::Phi(_) => todo!(),
-            RichLocation::Mir(def_loc) => {
-                let Left(stmt) = body.stmt_at(def_loc) else { unimplemented!() };
-                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-                self.rewrite_rvalue_at(
-                    rvalue,
-                    def_loc,
-                    stmt.source_info.span,
-                    PlaceValueType::Irrelavent,
-                    &mut rewrite,
-                );
-            }
-        }
-
-        rewrite.get()
+    fn rewrite_index_at(&self, index: Local, location: Location, rewriter: &mut impl Rewrite) {
+        self.rewrite_temporary(index, location, PlaceValueType::Irrelavent, rewriter)
     }
 
     fn rewrite_operand_at(
@@ -916,8 +909,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         *place, location, span, required, rewriter,
                     );
                 } else {
-                    return;
-                    unimplemented!();
+                    tracing::error!("const addr is ignored")
                 }
             }
             Rvalue::Ref(_, borrow_kind, place) => {
@@ -927,11 +919,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         *place, location, span, required, rewriter,
                     );
                 } else {
-                    return;
-                    unimplemented!();
+                    tracing::error!("const reference is ignored")
                 }
             }
-            _ => todo!("{:?} is not supported", rvalue),
+            _ => tracing::error!("{:?} is not supported", rvalue), // _ => todo!("{:?} is not supported", rvalue),
         }
     }
 
@@ -996,12 +987,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         location: Location,
         rewriter: &mut impl Rewrite,
     ) {
-        let FnRewriteCtxt {
-            body,
-            def_use_chain,
-            tcx,
-            ..
-        } = *self;
+        let FnRewriteCtxt { tcx, .. } = *self;
 
         println!(
             "rewrite call {} @ {:?} by default",
@@ -1062,36 +1048,22 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     }
 }
 
-/// woops, this hack does not work
-#[derive(Debug)]
-struct DelayedOnceRewrite {
-    rewrite: once_cell::unsync::OnceCell<String>,
-}
-
-impl DelayedOnceRewrite {
-    fn new() -> Self {
-        Self {
-            rewrite: once_cell::unsync::OnceCell::new(),
-        }
-    }
-
-    fn get(mut self) -> String {
-        self.rewrite.take().expect("should be rewritten")
+fn rewrite_place(
+    tcx: TyCtxt,
+    span: Span,
+    replacement: String,
+    index_spans: &[Span],
+    rewriter: &mut impl Rewrite,
+) {
+    let mut rest = span;
+    let replacements = replacement.split(INDEX_SEPARATOR);
+    for (replacement, &index) in replacements.zip(index_spans) {
+        let part = rest.until(index);
+        rewriter.replace(tcx, part, replacement.to_owned());
+        rest = index.between(rest.shrink_to_hi());
     }
 }
 
-impl Rewrite for DelayedOnceRewrite {
-    fn replace_with_msg(
-        &mut self,
-        _tcx: TyCtxt,
-        _span: Span,
-        _message: String,
-        replacement: String,
-    ) {
-        self.rewrite
-            .set(replacement)
-            .unwrap_or_else(|_| panic!("only allow rewrite once"))
-    }
-
-    fn write(self, _: common::rewrite::RewriteMode) {}
-}
+/// Although Chinese is a popular language, I believe the following word does not appear too
+/// frequently in legacy C code
+const INDEX_SEPARATOR: &str = "索引";
