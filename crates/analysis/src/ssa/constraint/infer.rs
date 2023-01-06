@@ -643,6 +643,11 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 }
                 for operand in [left, right] {
                     if let Some(rhs) = operand.place() {
+                        // NOTE special-casing Rvalues like BitAnd. Sometimes rustc generates
+                        // _1 = BitAnd(_1, _3), which breaks the assumption that a local appears
+                        // only once in a statement, which is really annoying
+                        // Here we generate only one definition for _1
+                        if rhs == *lhs { continue }
                         let _ =
                             consume_place_at::<Infer>(&rhs, self.body, location, self, infer_cx);
                     }
