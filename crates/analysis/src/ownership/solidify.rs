@@ -79,6 +79,12 @@ impl<'tcx> WholeProgramResults<'tcx> {
                 locals.push(smallvec::smallvec![Ownership::Transient; ptr_depth]);
             }
 
+            for (param, ownership) in  self.fn_sig(*r#fn).zip(&mut locals) {
+                if matches!(param, Some(param) if param.is_output()) {
+                    ownership[0] = Ownership::Owning
+                }
+            }
+
             let ownership_scheme = self.fn_results(*r#fn).unwrap();
 
             let mut proxy_temporaries = FxHashSet::default();
