@@ -10,7 +10,7 @@ members = [
 ]
 
 [package]
-name = "orc"
+name = "crown"
 version = "0.0.1"
 edition = "2021"
 
