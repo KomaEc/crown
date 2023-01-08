@@ -644,7 +644,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     if base_ptr_kind.is_raw() {
                         replacement = format!("*{replacement}");
                     } else {
-                        let usage = if required.is_copy_obj(self) || produced.is_copy_obj(self) {
+                        let usage = if required.is_copy_obj(self)
+                            || (produced.is_copy_obj(self)
+                                && PLACE_LOAD_MODE == PlaceLoadMode::ByValue as u8)
+                        {
                             if base_ptr_kind.is_const() {
                                 "clone"
                             } else {
@@ -759,6 +762,17 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     };
                     replacement =
                         format!("core::mem::transmute::<_, *mut {pointee_ty_str}>({replacement})")
+                } else if produced.is_ptr() && !produced.is_raw_ptr() {
+                    // &mut to *mut or & to *const
+                    let pointee_ty = ty.builtin_deref(true).unwrap().ty;
+                    let pointee_ty_str = if pointee_ty.is_primitive() {
+                        format!("{pointee_ty}")
+                    } else {
+                        format!("crate::{pointee_ty}")
+                    };
+                    let usage = "as_deref_mut";
+                    replacement =
+                        format!("core::mem::transmute::<_, *mut {pointee_ty_str}>({replacement}.{usage}())")
                 }
             } else if required.is_ptr() {
                 // const ref
