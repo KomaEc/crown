@@ -52,6 +52,8 @@ pub struct RefactorOptions {
     pub type_only: bool,
     /// show detailed rewrite trace
     pub verbose: bool,
+    /// attempt to rewrite const reference
+    pub const_reference: bool,
 }
 
 pub fn refactor<'tcx>(
@@ -61,7 +63,7 @@ pub fn refactor<'tcx>(
     options: RefactorOptions,
 ) -> anyhow::Result<()> {
     let struct_decision = StructFields::new(crate_data, analysis);
-    let fn_decision = FnLocals::new(crate_data, analysis);
+    let fn_decision = FnLocals::new(crate_data, analysis, options.const_reference);
 
     if options.verbose {
         let mut rewriter = VerboseRewriter { rewriter: vec![] };
@@ -302,7 +304,7 @@ impl FnLocals {
         &self.0.data[idx]
     }
 
-    pub fn new(crate_data: &CrateData, analysis: &Analysis) -> Self {
+    pub fn new(crate_data: &CrateData, analysis: &Analysis, const_reference: bool) -> Self {
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.fns.len());
         let mut fn_locals = VecVec::with_capacity(
@@ -338,11 +340,14 @@ impl FnLocals {
                             PointerKind::Move
                         }
                     } else if mutability.is_immutable() {
-                        // TODO correctness?
-                        if fatness.is_arr() {
-                            PointerKind::Raw(RawMeta::Const)
+                        if const_reference {
+                            if fatness.is_arr() {
+                                PointerKind::Raw(RawMeta::Const)
+                            } else {
+                                PointerKind::Const
+                            }
                         } else {
-                            PointerKind::Const
+                            PointerKind::Raw(RawMeta::Const)
                         }
                     } else {
                         PointerKind::Raw(RawMeta::Mut)
