@@ -709,7 +709,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         } else if PLACE_LOAD_MODE == PlaceLoadMode::ByAddr as u8 {
             if matches!(required, PlaceValueType::Ptr(ptr_kinds) if ptr_kinds[0].is_mut()) {
                 replacement = format!("Some(&mut {replacement})");
-            } else if matches!(required, PlaceValueType::Ptr(ptr_kinds) if ptr_kinds[0].is_const()) {
+            } else if matches!(required, PlaceValueType::Ptr(ptr_kinds) if ptr_kinds[0].is_const())
+            {
                 replacement = format!("Some(& {replacement})");
             } else {
                 replacement = format!("core::ptr::addr_of_mut!({replacement})");
