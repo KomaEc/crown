@@ -383,17 +383,25 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             body,
             def_use_chain,
             user_idents,
+            tcx,
             ..
         } = *self;
 
         match &terminator.kind {
             TerminatorKind::SwitchInt { discr, .. } => {
-                // rewrite point: if expr
+                // rewrite point: if expr, match expr
+                let mut span = terminator.source_info.span;
+                let source_text = common::rewrite::get_snippet(tcx, span).text.1;
+                if source_text.starts_with("match") {
+                    let match_span = span.with_hi(span.lo() + rustc_span::BytePos(5));
+                    rewriter.replace(tcx, match_span, "match ".to_owned());
+                    span = span.with_lo(span.lo() + rustc_span::BytePos(5));
+                }
                 let place = discr.place().unwrap();
                 self.rewrite_place_load_at::<{ PlaceLoadMode::ByValue as u8 }>(
                     place,
                     location,
-                    terminator.source_info.span,
+                    span,
                     PlaceValueType::Irrelavent,
                     rewriter,
                 );
@@ -685,12 +693,24 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
         }
 
+        if need_paren {
+            replacement = format!("({replacement})");
+        }
+
         if PLACE_LOAD_MODE == PlaceLoadMode::ByRef as u8 {
-            rewriter.replace(tcx, span, replacement);
+            let source_text = common::rewrite::get_snippet(tcx, span).text.1;
+            if source_text.contains("as_mut_ptr()") {
+                replacement += ".as_mut_ptr()";
+                rewriter.replace(tcx, span, replacement);
+            } else {
+                unimplemented!()
+            }
             return;
         } else if PLACE_LOAD_MODE == PlaceLoadMode::ByAddr as u8 {
             if matches!(required, PlaceValueType::Ptr(ptr_kinds) if ptr_kinds[0].is_mut()) {
                 replacement = format!("Some(&mut {replacement})");
+            } else if matches!(required, PlaceValueType::Ptr(ptr_kinds) if ptr_kinds[0].is_const()) {
+                replacement = format!("Some(& {replacement})");
             } else {
                 replacement = format!("core::ptr::addr_of_mut!({replacement})");
             }
@@ -703,10 +723,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         if required.is_rustc_move_obj(self) {
             if produced.is_rustc_move_obj(self) {
-                if need_paren {
-                    replacement = format!("({replacement})");
-                }
-
                 if place.is_indirect() {
                     replacement += ".take()";
                 }
@@ -746,19 +762,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             } else if required.is_ptr() {
                 // const ref
                 if produced.is_raw_ptr() {
-                    if need_paren {
-                        replacement = format!("({replacement})");
-                    }
                     replacement = format!("{replacement}.as_ref()");
                 } else if !produced.is_rustc_copy_obj(self) {
-                    if need_paren {
-                        replacement = format!("({replacement})");
-                    }
                     replacement = format!("{replacement}.as_deref()");
                 } else {
-                    if need_paren {
-                        replacement = format!("({replacement})");
-                    }
                     replacement = format!("{replacement}.clone()");
                 }
             }
@@ -767,14 +774,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             // mut borrows
             assert!(produced.is_ptr());
             if produced.is_raw_ptr() {
-                if need_paren {
-                    replacement = format!("({replacement})");
-                }
                 replacement += ".as_mut()"
             } else {
-                if need_paren {
-                    replacement = format!("({replacement})");
-                }
                 replacement += ".as_deref_mut()"
             }
         }
