@@ -771,8 +771,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         format!("crate::{pointee_ty}")
                     };
                     let usage = "as_deref_mut";
-                    replacement =
-                        format!("core::mem::transmute::<_, *mut {pointee_ty_str}>({replacement}.{usage}())")
+                    replacement = format!(
+                        "core::mem::transmute::<_, *mut {pointee_ty_str}>({replacement}.{usage}())"
+                    )
                 }
             } else if required.is_ptr() {
                 // const ref
