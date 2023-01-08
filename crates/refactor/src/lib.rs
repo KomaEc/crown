@@ -48,7 +48,10 @@ extern crate rustc_type_ir;
 extern crate either;
 
 pub struct RefactorOptions {
+    /// rewrite struct definitions and function signatures only
     pub type_only: bool,
+    /// show detailed rewrite trace
+    pub verbose: bool,
 }
 
 pub fn refactor<'tcx>(
@@ -58,13 +61,46 @@ pub fn refactor<'tcx>(
     options: RefactorOptions,
 ) -> anyhow::Result<()> {
     let struct_decision = StructFields::new(crate_data, analysis);
-    // let fn_decision = FnParams::new(crate_data, analysis);
     let fn_decision = FnLocals::new(crate_data, analysis);
-    let mut rewriter = vec![];
+
+    if options.verbose {
+        let mut rewriter = VerboseRewriter { rewriter: vec![] };
+        rewrite(
+            crate_data,
+            &fn_decision,
+            &struct_decision,
+            options.type_only,
+            &mut rewriter,
+        )?;
+        rewriter.write(rewrite_mode);
+    } else {
+        let mut rewriter = vec![];
+
+        rewrite(
+            crate_data,
+            &fn_decision,
+            &struct_decision,
+            options.type_only,
+            &mut rewriter,
+        )?;
+
+        rewriter.write(rewrite_mode);
+    }
+
+    Ok(())
+}
+
+fn rewrite(
+    crate_data: &CrateData,
+    fn_decision: &FnLocals,
+    struct_decision: &StructFields,
+    type_only: bool,
+    rewriter: &mut impl Rewrite,
+) -> anyhow::Result<()> {
     rewrite_structs(
         &crate_data.structs,
         &struct_decision,
-        &mut rewriter,
+        rewriter,
         crate_data.tcx,
     )?;
 
@@ -72,12 +108,10 @@ pub fn refactor<'tcx>(
         &crate_data.fns,
         &fn_decision,
         &struct_decision,
-        &mut rewriter,
+        rewriter,
         crate_data.tcx,
-        options.type_only,
+        type_only,
     );
-
-    rewriter.write(rewrite_mode);
 
     Ok(())
 }
@@ -368,5 +402,36 @@ trait HirTyExt<'hir> {
 impl<'hir> HirTyExt<'hir> for rustc_hir::Ty<'hir> {
     fn walk_ptr(&self) -> HirPtrTypeWalker {
         HirPtrTypeWalker { ty: self }
+    }
+}
+
+pub struct VerboseRewriter<R> {
+    rewriter: R,
+}
+
+impl<R> Rewrite for VerboseRewriter<R>
+where
+    R: Rewrite,
+{
+    fn replace_with_msg(
+        &mut self,
+        tcx: rustc_middle::ty::TyCtxt,
+        span: rustc_span::Span,
+        message: String,
+        replacement: String,
+    ) {
+        let original = common::rewrite::get_snippet(tcx, span).text.1;
+        println!(
+            "replacing {} with {} @ {:?}",
+            original,
+            replacement.clone(),
+            span
+        );
+        self.rewriter
+            .replace_with_msg(tcx, span, message, replacement);
+    }
+
+    fn write(self, mode: RewriteMode) {
+        self.rewriter.write(mode)
     }
 }

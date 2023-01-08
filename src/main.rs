@@ -70,6 +70,8 @@ enum Command {
         rewrite_mode: RewriteMode,
         #[clap(long, short)]
         type_only: bool,
+        #[clap(long, short)]
+        verbose: bool,
     },
     VerifyRustcProperties,
     /// Perform empirical studies and show results.
@@ -315,6 +317,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         Command::Rewrite {
             rewrite_mode,
             type_only,
+            verbose,
         } => {
             let alias_result = alias::alias_results(&input);
             let taint_result = alias::taint_results(&input);
@@ -347,7 +350,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 mutability_result,
                 fatness_result,
             );
-            let refactor_options = RefactorOptions { type_only };
+            let refactor_options = RefactorOptions { type_only, verbose };
             refactor::refactor(&input, &analysis_results, rewrite_mode, refactor_options)?;
         }
         Command::FoldLetRefMut { rewrite_mode } => preprocess::fold_let_ref_mut(tcx, rewrite_mode),

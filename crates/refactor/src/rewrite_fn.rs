@@ -671,7 +671,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             return;
         } else if PLACE_LOAD_MODE == PlaceLoadMode::ByAddr as u8 {
             if matches!(required, PlaceValueType::Ptr(ptr_kinds) if ptr_kinds[0].is_mut()) {
-                replacement = format!("&mut {replacement}");
+                replacement = format!("Some(&mut {replacement})");
             } else {
                 replacement = format!("core::ptr::addr_of_mut!({replacement})");
             }

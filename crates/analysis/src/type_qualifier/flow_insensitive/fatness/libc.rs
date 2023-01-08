@@ -107,7 +107,31 @@ pub fn libc_call<'tcx>(
             struct_fields,
             database,
         ),
+        fn_name if fn_name.starts_with("str") => call_str_general(
+            destination,
+            args,
+            local_decls,
+            locals,
+            struct_fields,
+            database,
+        ),
         _ => {}
+    }
+}
+
+fn call_str_general<'tcx>(
+    _destination: &Place<'tcx>,
+    args: &Vec<Operand<'tcx>>,
+    local_decls: &impl HasLocalDecls<'tcx>,
+    locals: &[Var],
+    struct_fields: &StructFields,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
+) {
+    for ptr in args.iter().filter_map(|arg| arg.place()) {
+        let ptr_vars = place_vars(&ptr, local_decls, locals, struct_fields);
+        if !ptr_vars.is_empty() {
+            database.bottom(ptr_vars.start);
+        }
     }
 }
 
