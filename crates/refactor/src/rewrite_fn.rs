@@ -337,7 +337,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
                     let source_token_stream =
                         proc_macro2::TokenStream::from_str(&source_text).unwrap();
-                    let parsed_expr = syn::parse2::<syn::Expr>(source_token_stream).unwrap();
+                    let parsed_expr =
+                        syn::parse2::<syn::Expr>(source_token_stream).expect(&source_text);
 
                     let mut assign_op_pos = None;
 
