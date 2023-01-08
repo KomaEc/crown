@@ -186,6 +186,13 @@ impl<'me> PlaceValueType<'me> {
         }
     }
 
+    fn expect_ptr(self) -> &'me [PointerKind] {
+        match self {
+            PlaceValueType::Ptr(ptr_kinds) => ptr_kinds,
+            _ => unreachable!(),
+        }
+    }
+
     fn is_ptr(self) -> bool {
         matches!(self, Self::Ptr(..))
     }
@@ -710,11 +717,13 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
             return;
         } else if PLACE_LOAD_MODE == PlaceLoadMode::ByAddr as u8 {
-            if matches!(required, PlaceValueType::Ptr(ptr_kinds) if ptr_kinds[0].is_mut()) {
+            let required_ptr_kind = required.expect_ptr()[0];
+            if required_ptr_kind.is_mut() {
                 replacement = format!("Some(&mut {replacement})");
-            } else if matches!(required, PlaceValueType::Ptr(ptr_kinds) if ptr_kinds[0].is_const())
-            {
+            } else if required_ptr_kind.is_const() {
                 replacement = format!("Some(& {replacement})");
+            } else if required_ptr_kind.is_raw_const() {
+                replacement = format!("core::ptr::addr_of!({replacement})");
             } else {
                 replacement = format!("core::ptr::addr_of_mut!({replacement})");
             }
@@ -751,29 +760,35 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 }
             } else if required.is_raw_ptr() {
                 // raw mut or raw const
-                if produced.is_rustc_move_obj(self) {
-                    assert!(produced.is_ptr(), "leaks from this type are not supported");
-                    // Box to raw (borrow)
-                    let pointee_ty = ty.builtin_deref(true).unwrap().ty;
-                    let pointee_ty_str = if pointee_ty.is_primitive() {
-                        format!("{pointee_ty}")
+                assert!(produced.is_ptr());
+                let pointee_ty = ty.builtin_deref(true).unwrap().ty;
+                let pointee_ty_str = if pointee_ty.is_primitive() {
+                    format!("{pointee_ty}")
+                } else {
+                    format!("crate::{pointee_ty}")
+                };
+                if !produced.is_raw_ptr() {
+                    // &mut to *mut *const,  or & to *const
+                    let (usage, target_ty) = if required.expect_ptr()[0].is_raw_const() {
+                        (
+                            if produced.expect_ptr()[0].is_const() {
+                                "clone"
+                            } else {
+                                "as_deref"
+                            },
+                            "const",
+                        )
                     } else {
-                        format!("crate::{pointee_ty}")
+                        ("as_deref_mut", "mut")
                     };
-                    replacement =
-                        format!("core::mem::transmute::<_, *mut {pointee_ty_str}>({replacement})")
-                } else if produced.is_ptr() && !produced.is_raw_ptr() {
-                    // &mut to *mut or & to *const
-                    let pointee_ty = ty.builtin_deref(true).unwrap().ty;
-                    let pointee_ty_str = if pointee_ty.is_primitive() {
-                        format!("{pointee_ty}")
-                    } else {
-                        format!("crate::{pointee_ty}")
-                    };
-                    let usage = "as_deref_mut";
                     replacement = format!(
-                        "core::mem::transmute::<_, *mut {pointee_ty_str}>({replacement}.{usage}())"
+                        "core::mem::transmute::<_, *{target_ty} {pointee_ty_str}>({replacement}.{usage}())"
                     )
+                } else if required.expect_ptr()[0].is_raw_const()
+                    && produced.expect_ptr()[0].is_raw_mut()
+                {
+                    // *mut to *const
+                    replacement = format!("{replacement} as *const {pointee_ty_str}");
                 }
             } else if required.is_ptr() {
                 // const ref
@@ -1061,7 +1076,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         callee: DefId,
         args: &Vec<Operand<'tcx>>,
         _destination: Place<'tcx>,
-        _fn_span: Span,
+        fn_span: Span,
         location: Location,
         rewriter: &mut impl Rewrite,
     ) {
@@ -1070,7 +1085,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         println!(
             "rewrite call {} @ {:?} by default",
             self.tcx.def_path_str(callee),
-            _fn_span
+            fn_span
         );
 
         let fn_sig = tcx.fn_sig(callee).skip_binder();
@@ -1090,15 +1105,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             if let Some(place) = arg.place() {
                 let Some(local) = place.as_local() else { panic!() };
                 self.rewrite_temporary(local, location, ctxt, rewriter);
-                // let def_loc = def_use_chain.def_loc(local, location);
-                // let RichLocation::Mir(def_loc) = def_loc else { panic!() };
-
-                // let Left(stmt) = body.stmt_at(def_loc) else {
-                //     // terminator is rewritten
-                //     return
-                // };
-                // let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-                // self.rewrite_rvalue_at(rvalue, def_loc, stmt.source_info.span, ctxt, rewriter);
             }
         }
     }

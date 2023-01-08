@@ -3,7 +3,7 @@ use rustc_hir::{def_id::DefId, Item, ItemKind};
 use rustc_middle::ty::TyCtxt;
 use smallvec::SmallVec;
 
-use crate::{HirTyExt, PointerKind, StructFields};
+use crate::{HirTyExt, PointerKind, RawMeta, StructFields};
 
 pub fn rewrite_structs(
     structs: &[DefId],
@@ -117,6 +117,10 @@ pub fn rewrite_outermost_ptr_ty(
             rewriter.replace(tcx, qualifier_span, "Option<& ".to_owned());
             let end_span = ty.span.shrink_to_hi();
             rewriter.replace(tcx, end_span, ">".to_owned());
+        }
+        PointerKind::Raw(RawMeta::Const) => {
+            let qualifier_span = ty.span.until(pointee.ty.span);
+            rewriter.replace(tcx, qualifier_span, "*const ".to_owned());
         }
         PointerKind::Raw(..) => {}
     }
