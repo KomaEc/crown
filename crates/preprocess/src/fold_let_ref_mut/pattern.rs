@@ -1,6 +1,6 @@
 pub const PATTERNS: &[Pattern] = &[
-    VALUE_ASSIGN_AS_ASSIGNER,
-    VALUE_ASSIGN_IN_CONDITION,
+    ASSIGN_VALUE_AS_ASSIGNER,
+    ASSIGN_VALUE_IN_CONDITION,
     ASSIGN_TWO_LINES,
     PTR_INCR_FOUR_LINES,
 ];
@@ -13,17 +13,17 @@ pub struct Pattern {
 /// ```c
 /// x = y = value;
 /// ```
-const VALUE_ASSIGN_AS_ASSIGNER: Pattern = Pattern {
+const ASSIGN_VALUE_AS_ASSIGNER: Pattern = Pattern {
     pattern: concat!(
         r"let ref mut fresh(?P<version1>[0-9]+)[\s|\n]*=[\s|\n]*(?P<lhs1>[^;]+);[\s|\n]*",
         r"\*fresh(?P<version2>[0-9]+)[\s|\n]*=[\s|\n]*(?P<rhs>[^;]+);[\s|\n]*",
         r"let ref mut fresh(?P<version3>[0-9]+)[\s|\n]*=[\s|\n]*(?P<lhs2>[^;]+);[\s|\n]*",
         r"\*fresh(?P<version4>[0-9]+)[\s|\n]*=[\s|\n]*\*fresh(?P<version5>[0-9]+)[\s|\n]*;",
     ),
-    replacer: value_assign_as_assigner,
+    replacer: assign_value_as_assigner,
 };
 
-fn value_assign_as_assigner(caps: &regex::Captures<'_>) -> String {
+fn assign_value_as_assigner(caps: &regex::Captures<'_>) -> String {
     let original = &caps[0];
     let version1 = &caps["version1"];
     let version2 = &caps["version2"];
@@ -52,16 +52,16 @@ fn value_assign_as_assigner(caps: &regex::Captures<'_>) -> String {
 /// ```c
 /// if ((x = value))
 /// ```
-const VALUE_ASSIGN_IN_CONDITION: Pattern = Pattern {
+const ASSIGN_VALUE_IN_CONDITION: Pattern = Pattern {
     pattern: concat!(
         r"let ref mut fresh(?P<version1>[0-9]+)[\s|\n]*=[\s|\n]*(?P<lhs>[^;]+);",
         r"[\s|\n]*\*fresh(?P<version2>[0-9]+)[\s|\n]*=[\s|\n]*(?P<rhs>[^;]+);",
         r"(?P<line3>[\s|\n]*if[\s|\n]*\(\*fresh(?P<version3>[0-9]+)\).is_null\(\))"
     ),
-    replacer: value_assign_in_condition,
+    replacer: assign_value_in_condition,
 };
 
-fn value_assign_in_condition(caps: &regex::Captures<'_>) -> String {
+fn assign_value_in_condition(caps: &regex::Captures<'_>) -> String {
     let original = &caps[0];
     let version1 = &caps["version1"];
     let version2 = &caps["version2"];
@@ -87,7 +87,7 @@ fn value_assign_in_condition(caps: &regex::Captures<'_>) -> String {
 const ASSIGN_TWO_LINES: Pattern = Pattern {
     pattern: concat!(
         r"let ref mut fresh(?P<version1>[0-9]+)[\s|\n]*=[\s|\n]*(?P<lhs>[^;]+);",
-        r"[\s|\n]*\*fresh(?P<version2>[0-9]+)[\s|\n]*=[\s|\n]*(?P<rhs>[^;]+);"
+        r"[\s|\n]*\*fresh(?P<version2>[0-9]+)[\s|\n]*(?P<assignop>[&|\^|\+|-|\*|/|%|\|]*=)[\s|\n]*(?P<rhs>[^;]+);"
     ),
     replacer: assign_two_lines,
 };
@@ -105,12 +105,13 @@ fn assign_two_lines(caps: &regex::Captures<'_>) -> String {
 
     let lhs = &caps["lhs"];
     let rhs = &caps["rhs"];
+    let assign_op = &caps["assignop"];
 
     let rhs = regex::Regex::new(&expr_fresh)
         .unwrap()
         .replace_all(rhs, lhs);
 
-    lhs.to_owned() + " = " + &rhs + ";"
+    lhs.to_owned() + " " + assign_op + " " + &rhs + ";"
 }
 
 const PTR_INCR_FOUR_LINES: Pattern = Pattern {
