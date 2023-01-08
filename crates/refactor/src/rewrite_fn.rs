@@ -2,6 +2,8 @@ mod boundary;
 mod libc_call;
 mod library_call;
 
+use std::str::FromStr;
+
 use analysis::{
     ssa::consume::RichLocation,
     use_def::{def_use_chain, DefUseChain},
@@ -20,6 +22,7 @@ use rustc_middle::{
 use rustc_span::{Span, Symbol};
 use rustc_type_ir::TyKind::FnDef;
 use smallvec::SmallVec;
+use syn::__private::ToTokens;
 
 use crate::{rewrite_ty::rewrite_hir_ty, FnLocals, PointerKind, RawMeta, StructFields};
 
@@ -325,12 +328,28 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
                     // println!("rewrite {:?} @ {:?}, {:?}", place, location, span);
 
-                    if let Some(assign_pos) = source_text
-                        .find("+=")
-                        .or(source_text.find("-="))
-                        .or(source_text.find("="))
-                    {
-                        // lhs needs to be rewritten
+                    let source_token_stream =
+                        proc_macro2::TokenStream::from_str(&source_text).unwrap();
+                    let parsed_expr = syn::parse2::<syn::Expr>(source_token_stream).unwrap();
+
+                    let mut assign_op_pos = None;
+
+                    match parsed_expr {
+                        syn::Expr::Assign(assign) => {
+                            let assign_op_str = format!("{}", assign.eq_token.to_token_stream());
+                            assign_op_pos = source_text.find(&assign_op_str);
+                            assert!(assign_op_pos.is_some());
+                        }
+                        syn::Expr::AssignOp(assign) => {
+                            let assign_op_str = format!("{}", assign.op.to_token_stream());
+                            assign_op_pos = source_text.find(&assign_op_str);
+                            assert!(assign_op_pos.is_some());
+                        }
+                        _ => {}
+                    }
+
+                    if let Some(assign_pos) = assign_op_pos {
+                        // lhs needs to be rewritten for assignment statement
 
                         assert!(assign_pos > 0);
 
@@ -338,7 +357,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                             span.with_hi(span.lo() + rustc_span::BytePos(assign_pos as u32));
 
                         self.rewrite_place_store(place, location, lhs_span, rewriter);
-                    } // otherwise let-binding
+                    }
 
                     let ctxt = self.acquire_place_info(&place);
 
