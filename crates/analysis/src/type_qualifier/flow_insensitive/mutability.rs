@@ -5,8 +5,7 @@ use std::ops::Range;
 
 use rustc_middle::{
     mir::{
-        BorrowKind, HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator,
-        TerminatorKind,
+        HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind,
     },
     ty::TyCtxt,
 };
@@ -164,23 +163,32 @@ impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
                     }
                 }
             }
-            Rvalue::Ref(_, BorrowKind::Mut { .. }, rhs) | Rvalue::AddressOf(_, rhs) => {
-                let lhs =
+            // We don't do this because mutable borrow does not necessarily means being mutable!
+            // Rvalue::Ref(_, BorrowKind::Mut { .. }, rhs) | Rvalue::AddressOf(_, rhs) => {
+            //     let lhs =
+            //         place_vars::<EnsureNoDeref>(lhs, local_decls, locals, struct_fields, &mut ());
+            //     let rhs = place_vars::<MutCtxt>(rhs, local_decls, locals, struct_fields, database);
+            //     for (lhs, rhs) in lhs.skip(1).zip(rhs) {
+            //         database.guard(lhs, rhs);
+            //         database.guard(rhs, lhs);
+            //     }
+            // }
+            Rvalue::Ref(_, _, rhs) | Rvalue::AddressOf(_, rhs) => {
+                let mut lhs =
                     place_vars::<EnsureNoDeref>(lhs, local_decls, locals, struct_fields, &mut ());
-                let rhs = place_vars::<MutCtxt>(rhs, local_decls, locals, struct_fields, database);
-                for (lhs, rhs) in lhs.skip(1).zip(rhs) {
-                    database.guard(lhs, rhs);
-                    database.guard(rhs, lhs);
+                let mut rhs_deref = None;
+                let rhs = place_vars::<UnknownCtxt>(
+                    rhs,
+                    local_decls,
+                    locals,
+                    struct_fields,
+                    &mut rhs_deref,
+                );
+                let lhs_ref = lhs.next().unwrap();
+                if let Some(rhs_deref) = rhs_deref {
+                    database.guard(lhs_ref, rhs_deref);
                 }
-            }
-            Rvalue::Ref(_, _, rhs) => {
-                let lhs =
-                    place_vars::<EnsureNoDeref>(lhs, local_decls, locals, struct_fields, &mut ());
-                let rhs =
-                    place_vars::<UnknownCtxt>(rhs, local_decls, locals, struct_fields, &mut None);
-                // this is not necessary, and may introduce hard-to-understand results when inconsistent
-                // database.top(lhs.start);
-                for (lhs, rhs) in lhs.skip(1).zip(rhs) {
+                for (lhs, rhs) in lhs.zip(rhs) {
                     database.guard(lhs, rhs);
                     database.guard(rhs, lhs);
                 }
