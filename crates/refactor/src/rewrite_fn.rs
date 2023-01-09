@@ -711,14 +711,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         if PLACE_LOAD_MODE == PlaceLoadMode::ByRef as u8 {
             let source_text = common::rewrite::get_snippet(tcx, span).text.1;
             assert!(source_text.contains("as_mut_ptr()"));
-            let required_ptr_kind = required.expect_ptr()[0];
-            if required_ptr_kind.is_mut() {
-                // requiring mutable ref in array context, this happens in libzahl
-                // erase as_mut_ptr()
-                replacement += ".first_mut()";
-            } else {
-                replacement += ".as_mut_ptr()";
-            }
+            // let required_ptr_kind = required.expect_ptr()[0];
+            // if required_ptr_kind.is_mut() {
+            //     // requiring mutable ref in array context, this happens in libzahl
+            //     // erase as_mut_ptr()
+            //     replacement += ".first_mut()";
+            // } else {
+            //     replacement += ".as_mut_ptr()";
+            // }
+            replacement += ".as_mut_ptr()";
             rewriter.replace(tcx, span, replacement);
             return;
         } else if PLACE_LOAD_MODE == PlaceLoadMode::ByAddr as u8 {
@@ -1107,7 +1108,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             } else if ty.is_region_ptr() {
                 PlaceValueType::from_ptr_ctxt(
                     *ty,
-                    if matches!(ty.ref_mutability(), Some(rustc_ast::Mutability::Mut)) {
+                    if ty.is_mutable_ptr() {
                         &[PointerKind::Mut]
                     } else {
                         &[PointerKind::Const]
