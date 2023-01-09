@@ -258,6 +258,10 @@ impl<'me> PlaceValueType<'me> {
     fn is_raw_ptr(self) -> bool {
         matches!(self, PlaceValueType::Ptr(ptr_kinds) if matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_raw()))
     }
+
+    fn is_irrelavent(self) -> bool {
+        matches!(self, Self::Irrelavent)
+    }
 }
 
 #[derive(PartialEq, Eq)]
@@ -804,6 +808,12 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     replacement = format!("{replacement}.as_deref()");
                 } else {
                     replacement = format!("{replacement}.clone()");
+                }
+            } else if required.is_irrelavent() {
+                if produced.is_ptr() && !produced.is_raw_ptr() {
+                    // irrelavent context, cast expr into raw pointer
+                    // this happens when comparing addr
+                    replacement = format!("{replacement}.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())");
                 }
             }
             // else copyable structs, or primitive, directly copy, nothing to do here
