@@ -3,8 +3,8 @@ RUSTC_PATH=$(rustc --print sysroot)/lib
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # add rustc lib to dyld path
-    if [ -d "$RUSTC_PATH" ] && [[ ":$DYLD_LIBRARY_PATH:" != *":$RUSTC_PATH:"* ]]; then
-        export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH:+"$DYLD_LIBRARY_PATH:"}$RUSTC_PATH"
+    if [ -d "$RUSTC_PATH" ] && [[ ":$DYLD_FALLBACK_LIBRARY_PATH:" != *":$RUSTC_PATH:"* ]]; then
+        export DYLD_FALLBACK_LIBRARY_PATH="${DYLD_FALLBACK_LIBRARY_PATH:+"$DYLD_FALLBACK_LIBRARY_PATH:"}$RUSTC_PATH"
     fi
 fi
 
