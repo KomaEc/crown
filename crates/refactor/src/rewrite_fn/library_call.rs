@@ -1,7 +1,7 @@
 use analysis::ssa::consume::RichLocation;
 use common::rewrite::Rewrite;
 use either::Either::Left;
-use rustc_hir::def_id::DefId;
+use rustc_hir::{def_id::DefId, definitions::DefPathData};
 use rustc_middle::mir::{Location, Operand, Place, Rvalue, StatementKind};
 use rustc_span::Span;
 
@@ -21,6 +21,19 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let FnRewriteCtxt { tcx, .. } = *self;
 
         let def_path = tcx.def_path(callee);
+
+        if let [DefPathData::TypeNs(slice), _, DefPathData::ValueNs(as_mut_ptr), ..] = &def_path
+            .data
+            .iter()
+            .map(|data| data.data)
+            .collect::<smallvec::SmallVec<[_; 4]>>()[..]
+        {
+            if slice.as_str() == "slice" && as_mut_ptr.as_str() == "as_mut_ptr" {
+                self.rewrite_as_mut_ptr(args, destination, fn_span, location, rewriter);
+                return;
+            }
+        }
+
         // if it is a library call in core::ptr
         if def_path
             .data
@@ -46,6 +59,22 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         }
 
         self.rewrite_call_default(callee, args, destination, fn_span, location, rewriter);
+    }
+
+    fn rewrite_as_mut_ptr(
+        &self,
+        args: &Vec<Operand<'tcx>>,
+        destination: Place<'tcx>,
+        _fn_span: Span,
+        location: Location,
+        rewriter: &mut impl Rewrite,
+    ) {
+        let required = self.acquire_place_info(&destination);
+        let arg = &args[0];
+        if let Some(arg) = arg.place() {
+            let local = arg.as_local().unwrap();
+            self.rewrite_temporary(local, location, required, rewriter);
+        }
     }
 
     fn rewrite_is_null(

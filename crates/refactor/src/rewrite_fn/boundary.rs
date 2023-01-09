@@ -23,6 +23,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 let Some(local) = place.as_local() else { panic!() };
                 let ty = self.body.local_decls[local].ty;
                 let required = PlaceValueType::from_ptr_ctxt(ty, ctxt);
+                // println!("arg of {:?} {:?}: {:?}", callee, local, ctxt);
+                assert_eq!(required, self.acquire_place_info(&place));
                 self.rewrite_temporary(local, location, required, rewriter);
             }
         }

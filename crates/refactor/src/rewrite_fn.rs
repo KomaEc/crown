@@ -165,7 +165,7 @@ pub struct FnRewriteCtxt<'tcx, 'me> {
 }
 
 /// Information of a lvalue/rvalue coming from a place
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum PlaceValueType<'me> {
     Ptr(&'me [PointerKind]),
     Struct(DefId),
@@ -719,6 +719,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             } else {
                 replacement += ".as_mut_ptr()";
             }
+            // replacement += ".as_mut_ptr()";
             rewriter.replace(tcx, span, replacement);
             return;
         } else if PLACE_LOAD_MODE == PlaceLoadMode::ByAddr as u8 {
