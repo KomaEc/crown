@@ -152,14 +152,17 @@ const SYSROOT_PATH: once_cell::unsync::OnceCell<PathBuf> = once_cell::unsync::On
 fn compiler_config(input_path: PathBuf) -> Result<Config> {
     let sysroot_path = SYSROOT_PATH.get_or_try_init(|| rustc_sysroot())?.to_owned();
 
+    let project_dir = PathBuf::from(std::env!("CARGO_MANIFEST_DIR"));
+    let extra_deps_dir = project_dir.join("extra_deps");
+
     let args = [
         "rustc",
         "-L",
-        "dependency=./deps",
+        extra_deps_dir.to_str().unwrap(),
         "--extern",
-        "c2rust_bitfields=./deps/libc2rust_bitfields-9912e7b3bbb08750.rlib",
-        "--extern",
-        "libc=./deps/liblibc-224625194917b41f.rlib",
+        "c2rust_bitfields",
+        "c2rust_bitfields_derive",
+        "libc",
     ]
     .map(|s| s.to_owned());
 
