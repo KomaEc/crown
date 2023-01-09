@@ -36,30 +36,18 @@ pub use rustc_index::newtype_index;
 macro_rules! newtype_index {
     // ---- public rules ----
 
-    // Use default constants
-    ($(#[$attrs:meta])* $v:vis struct $name:ident { .. }) => (
-        $crate::newtype_index!(
-            // Leave out derives marker so we can use its absence to ensure it comes first
-            @attrs        [$(#[$attrs])*]
-            @type         [$name]
-            // shave off 256 indices at the end to allow space for packing these indices into enums
-            @max          [0xFFFF_FF00]
-            @vis          [$v]
-            @debug_format ["{}"]);
-    );
+// Use default constants
+($(#[$attrs:meta])* $v:vis struct $name:ident {  }) => (
+    $crate::newtype_index!(
+        // Ignore everything
+        @attrs        []
+        @type         [$name]
+        // shave off 256 indices at the end to allow space for packing these indices into enums
+        @max          [0xFFFF_FF00]
+        @vis          [$v]
+        @debug_format ["{}"]);
+);
 
-    // Define any constants
-    ($(#[$attrs:meta])* $v:vis struct $name:ident { $($tokens:tt)+ }) => (
-        $crate::newtype_index!(
-            // Leave out derives marker so we can use its absence to ensure it comes first
-            @attrs        [$(#[$attrs])*]
-            @type         [$name]
-            // shave off 256 indices at the end to allow space for packing these indices into enums
-            @max          [0xFFFF_FF00]
-            @vis          [$v]
-            @debug_format ["{}"]
-                          $($tokens)+);
-    );
 
     // ---- private rules ----
 
@@ -475,28 +463,28 @@ macro_rules! newtype_index {
 #[cfg(debug_assertions)]
 pub use newtype_index;
 
-#[macro_export]
-macro_rules! orc_index {
-    ($name:ident) => {
-        #[cfg(debug_assertions)]
-        $crate::newtype_index! {
-            pub struct $name {
-                DEBUG_FORMAT = "{}"
-            }
-        }
-        #[cfg(not(debug_assertions))]
-        rustc_index::newtype_index! {
-            pub struct $name {
-                DEBUG_FORMAT = "{}"
-            }
-        }
-        impl Default for $name {
-            fn default() -> Self {
-                Self::from_u32(0)
-            }
-        }
-        $crate::petgraph_index! {$name}
-    };
-}
+// #[macro_export]
+// macro_rules! orc_index {
+//     ($name:ident) => {
+//         #[cfg(debug_assertions)]
+//         $crate::newtype_index! {
+//             pub struct $name {
+//                 DEBUG_FORMAT = "{}"
+//             }
+//         }
+//         #[cfg(not(debug_assertions))]
+//         rustc_index::newtype_index! {
+//             pub struct $name {
+//                 DEBUG_FORMAT = "{}"
+//             }
+//         }
+//         impl Default for $name {
+//             fn default() -> Self {
+//                 Self::from_u32(0)
+//             }
+//         }
+//         $crate::petgraph_index! {$name}
+//     };
+// }
 
-pub use orc_index;
+// pub use orc_index;

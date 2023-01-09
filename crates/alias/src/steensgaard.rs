@@ -17,7 +17,19 @@ use rustc_type_ir::TyKind::FnDef;
 
 use self::constraint::{Constraint, ConstraintKind};
 
-common::macros::orc_index!(AbstractLocation);
+// common::macros::orc_index!(AbstractLocation);
+common::macros::newtype_index! {
+    #[debug_format = "{}"]
+    pub struct AbstractLocation {
+
+    }
+}
+impl Default for AbstractLocation {
+    fn default() -> Self {
+        Self::from_u32(0)
+    }
+}
+common::macros::petgraph_index!(AbstractLocation);
 
 impl AbstractLocation {
     pub const NULL: Self = AbstractLocation::from_u32(0);

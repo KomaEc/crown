@@ -15,8 +15,9 @@ pub mod infer;
 // pub mod prune;
 
 common::macros::newtype_index! {
+    #[debug_format = "{}"]
     pub struct Var {
-        DEBUG_FORMAT = "{}"// "𝕆({})"
+        // DEBUG_FORMAT = "{}"// "𝕆({})"
     }
 }
 

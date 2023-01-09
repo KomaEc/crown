@@ -290,8 +290,9 @@ pub trait Lattice: Clone {
 pub trait BooleanLattice: Copy + PartialEq + Eq + From<bool> + Into<bool> + Lattice {}
 
 common::macros::newtype_index! {
+    #[debug_format = "{}"]
     pub struct Var {
-        DEBUG_FORMAT = "{}"
+        // DEBUG_FORMAT = "{}"
     }
 }
 

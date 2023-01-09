@@ -12,8 +12,9 @@ use crate::ssa::{
 };
 
 common::macros::newtype_index! {
+    #[debug_format = "{}"]
     pub struct SSAIdx {
-        DEBUG_FORMAT = "{}"
+        // DEBUG_FORMAT = "{}"
     }
 }
 
