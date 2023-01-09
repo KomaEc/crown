@@ -163,6 +163,10 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
         "c2rust_bitfields",
         "c2rust_bitfields_derive",
         "libc",
+        #[cfg(target_arch = "x86_64")]
+        "f128",
+        #[cfg(target_arch = "x86_64")]
+        "f128_internal",
     ]
     .map(|s| s.to_owned());
 
