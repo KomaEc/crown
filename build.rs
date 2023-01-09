@@ -4,8 +4,8 @@ const C2RUST_DEPENDENCIES: &[(&str, &str)] = &[
     ("libc2rust_bitfields", "rlib"),
     ("libc2rust_bitfields_derive", "dylib"),
     ("liblibc", "rlib"),
+    ("libf128_internal", "rlib"),
     ("libf128", "rlib"),
-    ("libf128_internal", "rlib")
 ];
 
 fn main() {
