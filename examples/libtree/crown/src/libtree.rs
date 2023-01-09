@@ -640,7 +640,7 @@ unsafe extern "C" fn small_vec_u64_free(mut v: *mut small_vec_u64_t) {
 #[inline]
 unsafe extern "C" fn host_is_little_endian() -> libc::c_int {
     let mut test = 1 as libc::c_int;
-    let mut bytes = core::ptr::addr_of!(test) as *mut libc::c_int as *mut libc::c_char;
+    let mut bytes = &mut test as *mut libc::c_int as *mut libc::c_char;
     return (*bytes.offset(0 as libc::c_int as isize) as libc::c_int == 1 as libc::c_int)
         as libc::c_int;
 }
@@ -785,7 +785,7 @@ unsafe extern "C" fn check_absolute_paths(
     let mut exit_code = 0 as libc::c_int;
     let mut i = 0 as libc::c_int as size_t;
     while i < (*needed_not_found.as_deref().unwrap()) {
-        let mut st: *const string_table_t = core::ptr::addr_of!((*s.as_deref().unwrap()).string_table);
+        let mut st: *const string_table_t = &(*s.as_deref().unwrap()).string_table;
         if (strchr(
             (*st).arr.offset(*(*needed_buf_offsets).p.offset(i as isize) as isize),
             '/' as i32,
@@ -879,7 +879,7 @@ unsafe extern "C" fn check_search_paths(
     let mut exit_code = 0 as libc::c_int;
     let mut path: [libc::c_char; 4096] = [0; 4096];
     let mut path_end = path.as_mut_ptr().offset(4096 as libc::c_int as isize);
-    let mut st: *const string_table_t = core::ptr::addr_of!((*s.as_deref().unwrap()).string_table);
+    let mut st: *const string_table_t = &(*s.as_deref().unwrap()).string_table;
     while *(*st).arr.offset(offset as isize) as libc::c_int != '\0' as i32 {
         while *(*st).arr.offset(offset as isize) as libc::c_int == ':' as i32
             && *(*st).arr.offset(offset as isize) as libc::c_int != '\0' as i32
@@ -960,7 +960,7 @@ unsafe extern "C" fn interpolate_variables(
 ) -> libc::c_int {
     let mut prev_src = src;
     let mut curr_src = src;
-    let mut st: *mut string_table_t = core::ptr::addr_of_mut!((*s).string_table);
+    let mut st: *mut string_table_t = &mut (*s).string_table;
     loop {
         let mut dollar = strchr((*st).arr.offset(curr_src as isize), '$' as i32);
         if dollar.is_null() {
@@ -1450,7 +1450,7 @@ unsafe extern "C" fn recurse(
     let mut old_buf_size = (*s.as_deref().unwrap()).string_table.n;
     let mut e_ident: [libc::c_char; 16] = [0; 16];
     if fread(
-        core::ptr::addr_of_mut!(e_ident) as *mut [libc::c_char; 16] as *mut libc::c_void,
+        &mut e_ident as *mut [libc::c_char; 16] as *mut libc::c_void,
         16 as libc::c_int as size_t,
         1 as libc::c_int as size_t,
         fptr,
@@ -1516,7 +1516,7 @@ unsafe extern "C" fn recurse(
     };
     if curr_type.class as libc::c_int == 2 as libc::c_int {
         if fread(
-            core::ptr::addr_of_mut!(header.h64) as *mut header_64_t as *mut libc::c_void,
+            &mut header.h64 as *mut header_64_t as *mut libc::c_void,
             ::std::mem::size_of::<header_64_t>() as libc::c_ulong,
             1 as libc::c_int as size_t,
             fptr,
@@ -1542,7 +1542,7 @@ unsafe extern "C" fn recurse(
         }
     } else {
         if fread(
-            core::ptr::addr_of_mut!(header.h32) as *mut header_32_t as *mut libc::c_void,
+            &mut header.h32 as *mut header_32_t as *mut libc::c_void,
             ::std::mem::size_of::<header_32_t>() as libc::c_ulong,
             1 as libc::c_int as size_t,
             fptr,
@@ -1591,27 +1591,27 @@ unsafe extern "C" fn recurse(
         n: 0,
         capacity: 0,
     };
-    small_vec_u64_init(core::ptr::addr_of_mut!(pt_load_offset));
-    small_vec_u64_init(core::ptr::addr_of_mut!(pt_load_vaddr));
+    small_vec_u64_init(&mut pt_load_offset);
+    small_vec_u64_init(&mut pt_load_vaddr);
     let mut p_offset = 0xffffffffffffffff as libc::c_ulong;
     if curr_type.class as libc::c_int == 2 as libc::c_int {
         let mut i = 0 as libc::c_int as uint64_t;
         while i < header.h64.e_phnum as libc::c_ulong {
             if fread(
-                core::ptr::addr_of_mut!(prog.p64) as *mut prog_64_t as *mut libc::c_void,
+                &mut prog.p64 as *mut prog_64_t as *mut libc::c_void,
                 ::std::mem::size_of::<prog_64_t>() as libc::c_ulong,
                 1 as libc::c_int as size_t,
                 fptr,
             ) != 1 as libc::c_int as libc::c_ulong
             {
                 fclose(fptr);
-                small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_offset));
-                small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_vaddr));
+                small_vec_u64_free(&mut pt_load_offset);
+                small_vec_u64_free(&mut pt_load_vaddr);
                 return 19 as libc::c_int;
             }
             if prog.p64.p_type == 1 as libc::c_int as libc::c_uint {
-                small_vec_u64_append(core::ptr::addr_of_mut!(pt_load_offset), prog.p64.p_offset);
-                small_vec_u64_append(core::ptr::addr_of_mut!(pt_load_vaddr), prog.p64.p_vaddr);
+                small_vec_u64_append(&mut pt_load_offset, prog.p64.p_offset);
+                small_vec_u64_append(&mut pt_load_vaddr, prog.p64.p_vaddr);
             } else if prog.p64.p_type == 2 as libc::c_int as libc::c_uint {
                 p_offset= prog.p64.p_offset;
             }
@@ -1621,20 +1621,20 @@ unsafe extern "C" fn recurse(
         let mut i_0 = 0 as libc::c_int as uint32_t;
         while i_0 < header.h32.e_phnum as libc::c_uint {
             if fread(
-                core::ptr::addr_of_mut!(prog.p32) as *mut prog_32_t as *mut libc::c_void,
+                &mut prog.p32 as *mut prog_32_t as *mut libc::c_void,
                 ::std::mem::size_of::<prog_32_t>() as libc::c_ulong,
                 1 as libc::c_int as size_t,
                 fptr,
             ) != 1 as libc::c_int as libc::c_ulong
             {
                 fclose(fptr);
-                small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_offset));
-                small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_vaddr));
+                small_vec_u64_free(&mut pt_load_offset);
+                small_vec_u64_free(&mut pt_load_vaddr);
                 return 19 as libc::c_int;
             }
             if prog.p32.p_type == 1 as libc::c_int as libc::c_uint {
-                small_vec_u64_append(core::ptr::addr_of_mut!(pt_load_offset), prog.p32.p_offset as uint64_t);
-                small_vec_u64_append(core::ptr::addr_of_mut!(pt_load_vaddr), prog.p32.p_vaddr as uint64_t);
+                small_vec_u64_append(&mut pt_load_offset, prog.p32.p_offset as uint64_t);
+                small_vec_u64_append(&mut pt_load_vaddr, prog.p32.p_vaddr as uint64_t);
             } else if prog.p32.p_type == 2 as libc::c_int as libc::c_uint {
                 p_offset= prog.p32.p_offset as uint64_t;
             }
@@ -1661,15 +1661,15 @@ unsafe extern "C" fn recurse(
         st_ctimensec: 0,
         __glibc_reserved: [0; 3],
     };
-    if stat(current_file, core::ptr::addr_of_mut!(finfo)) != 0 as libc::c_int {
+    if stat(current_file, &mut finfo) != 0 as libc::c_int {
         fclose(fptr);
-        small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_offset));
-        small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_vaddr));
+        small_vec_u64_free(&mut pt_load_offset);
+        small_vec_u64_free(&mut pt_load_vaddr);
         return 20 as libc::c_int;
     }
-    let mut seen_before = visited_files_contains(core::ptr::addr_of!((*s.as_deref().unwrap()).visited), core::ptr::addr_of!(finfo));
+    let mut seen_before = visited_files_contains(&(*s.as_deref().unwrap()).visited, &finfo);
     if seen_before == 0 {
-        visited_files_append(Some(&mut (*s.as_deref_mut().unwrap()).visited), core::ptr::addr_of!(finfo));
+        visited_files_append(Some(&mut (*s.as_deref_mut().unwrap()).visited), &finfo);
     }
     if p_offset == 0xffffffffffffffff as libc::c_ulong {
         print_line(
@@ -1682,20 +1682,20 @@ unsafe extern "C" fn recurse(
             s.as_deref_mut(),
         );
         fclose(fptr);
-        small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_offset));
-        small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_vaddr));
+        small_vec_u64_free(&mut pt_load_offset);
+        small_vec_u64_free(&mut pt_load_vaddr);
         return 0 as libc::c_int;
     }
     if pt_load_offset.n == 0 as libc::c_int as libc::c_ulong {
         fclose(fptr);
-        small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_offset));
-        small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_vaddr));
+        small_vec_u64_free(&mut pt_load_offset);
+        small_vec_u64_free(&mut pt_load_vaddr);
         return 29 as libc::c_int;
     }
     if fseek(fptr, p_offset as libc::c_long, 0 as libc::c_int) != 0 as libc::c_int {
         fclose(fptr);
-        small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_offset));
-        small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_vaddr));
+        small_vec_u64_free(&mut pt_load_offset);
+        small_vec_u64_free(&mut pt_load_vaddr);
         return 21 as libc::c_int;
     }
     let mut no_def_lib = 0 as libc::c_int;
@@ -1709,7 +1709,7 @@ unsafe extern "C" fn recurse(
         n: 0,
         capacity: 0,
     };
-    small_vec_u64_init(core::ptr::addr_of_mut!(needed));
+    small_vec_u64_init(&mut needed);
     let mut cont = 1 as libc::c_int;
     while cont != 0 {
         let mut d_tag: uint64_t = 0;
@@ -1717,16 +1717,16 @@ unsafe extern "C" fn recurse(
         if curr_type.class as libc::c_int == 2 as libc::c_int {
             let mut dyn_0 = dyn_64_t { d_tag: 0, d_val: 0 };
             if fread(
-                core::ptr::addr_of_mut!(dyn_0) as *mut dyn_64_t as *mut libc::c_void,
+                &mut dyn_0 as *mut dyn_64_t as *mut libc::c_void,
                 ::std::mem::size_of::<dyn_64_t>() as libc::c_ulong,
                 1 as libc::c_int as size_t,
                 fptr,
             ) != 1 as libc::c_int as libc::c_ulong
             {
                 fclose(fptr);
-                small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_offset));
-                small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_vaddr));
-                small_vec_u64_free(core::ptr::addr_of_mut!(needed));
+                small_vec_u64_free(&mut pt_load_offset);
+                small_vec_u64_free(&mut pt_load_vaddr);
+                small_vec_u64_free(&mut needed);
                 return 22 as libc::c_int;
             }
             d_tag= dyn_0.d_tag as uint64_t;
@@ -1734,16 +1734,16 @@ unsafe extern "C" fn recurse(
         } else {
             let mut dyn_1 = dyn_32_t { d_tag: 0, d_val: 0 };
             if fread(
-                core::ptr::addr_of_mut!(dyn_1) as *mut dyn_32_t as *mut libc::c_void,
+                &mut dyn_1 as *mut dyn_32_t as *mut libc::c_void,
                 ::std::mem::size_of::<dyn_32_t>() as libc::c_ulong,
                 1 as libc::c_int as size_t,
                 fptr,
             ) != 1 as libc::c_int as libc::c_ulong
             {
                 fclose(fptr);
-                small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_offset));
-                small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_vaddr));
-                small_vec_u64_free(core::ptr::addr_of_mut!(needed));
+                small_vec_u64_free(&mut pt_load_offset);
+                small_vec_u64_free(&mut pt_load_vaddr);
+                small_vec_u64_free(&mut needed);
                 return 22 as libc::c_int;
             }
             d_tag= dyn_1.d_tag as uint64_t;
@@ -1763,7 +1763,7 @@ unsafe extern "C" fn recurse(
                 runpath= d_val;
             }
             1 => {
-                small_vec_u64_append(core::ptr::addr_of_mut!(needed), d_val);
+                small_vec_u64_append(&mut needed, d_val);
             }
             14 => {
                 soname= d_val;
@@ -1778,16 +1778,16 @@ unsafe extern "C" fn recurse(
     }
     if strtab == 0xffffffffffffffff as libc::c_ulong {
         fclose(fptr);
-        small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_offset));
-        small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_vaddr));
-        small_vec_u64_free(core::ptr::addr_of_mut!(needed));
+        small_vec_u64_free(&mut pt_load_offset);
+        small_vec_u64_free(&mut pt_load_vaddr);
+        small_vec_u64_free(&mut needed);
         return 23 as libc::c_int;
     }
     if is_ascending_order(pt_load_vaddr.p, pt_load_vaddr.n) == 0 {
         fclose(fptr);
-        small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_vaddr));
-        small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_offset));
-        small_vec_u64_free(core::ptr::addr_of_mut!(needed));
+        small_vec_u64_free(&mut pt_load_vaddr);
+        small_vec_u64_free(&mut pt_load_offset);
+        small_vec_u64_free(&mut needed);
         return 30 as libc::c_int;
     }
     let mut vaddr_idx = 0 as libc::c_int as size_t;
@@ -1801,8 +1801,8 @@ unsafe extern "C" fn recurse(
     let mut strtab_offset = (*pt_load_offset.p.offset(vaddr_idx as isize))
         .wrapping_add(strtab)
         .wrapping_sub(*pt_load_vaddr.p.offset(vaddr_idx as isize));
-    small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_vaddr));
-    small_vec_u64_free(core::ptr::addr_of_mut!(pt_load_offset));
+    small_vec_u64_free(&mut pt_load_vaddr);
+    small_vec_u64_free(&mut pt_load_offset);
     let mut soname_buf_offset = (*s.as_deref().unwrap()).string_table.n;
     if soname != 0xffffffffffffffff as libc::c_ulong {
         if fseek(
@@ -1813,7 +1813,7 @@ unsafe extern "C" fn recurse(
         {
             (*s.as_deref_mut().unwrap()).string_table.n= old_buf_size;
             fclose(fptr);
-            small_vec_u64_free(core::ptr::addr_of_mut!(needed));
+            small_vec_u64_free(&mut needed);
             return 24 as libc::c_int;
         }
         string_table_copy_from_file(Some(&mut (*s.as_deref_mut().unwrap()).string_table), fptr);
@@ -1857,7 +1857,7 @@ unsafe extern "C" fn recurse(
         );
         (*s.as_deref_mut().unwrap()).string_table.n= old_buf_size;
         fclose(fptr);
-        small_vec_u64_free(core::ptr::addr_of_mut!(needed));
+        small_vec_u64_free(&mut needed);
         return 0 as libc::c_int;
     }
     let mut origin: [libc::c_char; 4096] = [0; 4096];
@@ -1890,7 +1890,7 @@ unsafe extern "C" fn recurse(
         {
             (*s.as_deref_mut().unwrap()).string_table.n= old_buf_size;
             fclose(fptr);
-            small_vec_u64_free(core::ptr::addr_of_mut!(needed));
+            small_vec_u64_free(&mut needed);
             return 25 as libc::c_int;
         }
         string_table_copy_from_file(Some(&mut (*s.as_deref_mut().unwrap()).string_table), fptr);
@@ -1909,7 +1909,7 @@ unsafe extern "C" fn recurse(
         {
             (*s.as_deref_mut().unwrap()).string_table.n= old_buf_size;
             fclose(fptr);
-            small_vec_u64_free(core::ptr::addr_of_mut!(needed));
+            small_vec_u64_free(&mut needed);
             return 26 as libc::c_int;
         }
         string_table_copy_from_file(Some(&mut (*s.as_deref_mut().unwrap()).string_table), fptr);
@@ -1924,10 +1924,10 @@ unsafe extern "C" fn recurse(
         n: 0,
         capacity: 0,
     };
-    small_vec_u64_init(core::ptr::addr_of_mut!(needed_buf_offsets));
+    small_vec_u64_init(&mut needed_buf_offsets);
     let mut i_1 = 0 as libc::c_int as size_t;
     while i_1 < needed.n {
-        small_vec_u64_append(core::ptr::addr_of_mut!(needed_buf_offsets), (*s.as_deref().unwrap()).string_table.n);
+        small_vec_u64_append(&mut needed_buf_offsets, (*s.as_deref().unwrap()).string_table.n);
         if fseek(
             fptr,
             strtab_offset.wrapping_add(*needed.p.offset(i_1 as isize)) as libc::c_long,
@@ -1936,8 +1936,8 @@ unsafe extern "C" fn recurse(
         {
             (*s.as_deref_mut().unwrap()).string_table.n= old_buf_size;
             fclose(fptr);
-            small_vec_u64_free(core::ptr::addr_of_mut!(needed_buf_offsets));
-            small_vec_u64_free(core::ptr::addr_of_mut!(needed));
+            small_vec_u64_free(&mut needed_buf_offsets);
+            small_vec_u64_free(&mut needed);
             return 27 as libc::c_int;
         }
         string_table_copy_from_file(Some(&mut (*s.as_deref_mut().unwrap()).string_table), fptr);
@@ -1976,12 +1976,12 @@ unsafe extern "C" fn recurse(
     let mut exit_code = 0 as libc::c_int;
     let mut needed_not_found = needed_buf_offsets.n;
     if needed_not_found != 0 && (*s.as_deref().unwrap()).verbosity == 0 as libc::c_int {
-        apply_exclude_list(Some(&mut needed_not_found), core::ptr::addr_of_mut!(needed_buf_offsets), core::mem::transmute::<_, *const crate::src::libtree::libtree_state_t>(s.as_deref()));
+        apply_exclude_list(Some(&mut needed_not_found), &mut needed_buf_offsets, core::mem::transmute::<_, *const crate::src::libtree::libtree_state_t>(s.as_deref()));
     }
     if needed_not_found != 0 {
         exit_code|= check_absolute_paths(
             Some(&mut needed_not_found),
-            core::ptr::addr_of_mut!(needed_buf_offsets),
+            &mut needed_buf_offsets,
             depth,
             s.as_deref_mut(),
             curr_type,
@@ -2001,7 +2001,7 @@ unsafe extern "C" fn recurse(
                     },
                     (*s.as_deref().unwrap()).rpath_offsets[j as usize],
                     Some(&mut needed_not_found),
-                    core::ptr::addr_of_mut!(needed_buf_offsets),
+                    &mut needed_buf_offsets,
                     depth,
                     s.as_deref_mut(),
                     curr_type,
@@ -2022,7 +2022,7 @@ unsafe extern "C" fn recurse(
             },
             (*s.as_deref().unwrap()).ld_library_path_offset,
             Some(&mut needed_not_found),
-            core::ptr::addr_of_mut!(needed_buf_offsets),
+            &mut needed_buf_offsets,
             depth,
             s.as_deref_mut(),
             curr_type,
@@ -2039,7 +2039,7 @@ unsafe extern "C" fn recurse(
             },
             runpath_buf_offset,
             Some(&mut needed_not_found),
-            core::ptr::addr_of_mut!(needed_buf_offsets),
+            &mut needed_buf_offsets,
             depth,
             s.as_deref_mut(),
             curr_type,
@@ -2056,7 +2056,7 @@ unsafe extern "C" fn recurse(
             },
             (*s.as_deref().unwrap()).ld_so_conf_offset,
             Some(&mut needed_not_found),
-            core::ptr::addr_of_mut!(needed_buf_offsets),
+            &mut needed_buf_offsets,
             depth,
             s.as_deref_mut(),
             curr_type,
@@ -2073,7 +2073,7 @@ unsafe extern "C" fn recurse(
             },
             (*s.as_deref().unwrap()).default_paths_offset,
             Some(&mut needed_not_found),
-            core::ptr::addr_of_mut!(needed_buf_offsets),
+            &mut needed_buf_offsets,
             depth,
             s.as_deref_mut(),
             curr_type,
@@ -2083,7 +2083,7 @@ unsafe extern "C" fn recurse(
         print_error(
             depth,
             needed_not_found,
-            core::ptr::addr_of!(needed_buf_offsets),
+            &needed_buf_offsets,
             if runpath == 0xffffffffffffffff as libc::c_ulong {
                 0 as *mut libc::c_char
             } else {
@@ -2093,13 +2093,13 @@ unsafe extern "C" fn recurse(
             no_def_lib,
         );
         (*s.as_deref_mut().unwrap()).string_table.n= old_buf_size;
-        small_vec_u64_free(core::ptr::addr_of_mut!(needed_buf_offsets));
-        small_vec_u64_free(core::ptr::addr_of_mut!(needed));
+        small_vec_u64_free(&mut needed_buf_offsets);
+        small_vec_u64_free(&mut needed);
         return 28 as libc::c_int;
     }
     (*s.as_deref_mut().unwrap()).string_table.n= old_buf_size;
-    small_vec_u64_free(core::ptr::addr_of_mut!(needed_buf_offsets));
-    small_vec_u64_free(core::ptr::addr_of_mut!(needed));
+    small_vec_u64_free(&mut needed_buf_offsets);
+    small_vec_u64_free(&mut needed);
     return exit_code;
 }
 unsafe extern "C" fn ld_conf_globbing(
@@ -2118,18 +2118,18 @@ unsafe extern "C" fn ld_conf_globbing(
         gl_stat: None,
     };
     memset(
-        core::ptr::addr_of_mut!(result) as *mut glob_t as *mut libc::c_void,
+        &mut result as *mut glob_t as *mut libc::c_void,
         0 as libc::c_int,
         ::std::mem::size_of::<glob_t>() as libc::c_ulong,
     );
-    let mut status = glob(pattern, 0 as libc::c_int, None, core::ptr::addr_of_mut!(result));
+    let mut status = glob(pattern, 0 as libc::c_int, None, &mut result);
     match status {
         1 | 2 => {
-            globfree(core::ptr::addr_of_mut!(result));
+            globfree(&mut result);
             return 1 as libc::c_int;
         }
         3 => {
-            globfree(core::ptr::addr_of_mut!(result));
+            globfree(&mut result);
             return 0 as libc::c_int;
         }
         _ => {}
@@ -2140,7 +2140,7 @@ unsafe extern "C" fn ld_conf_globbing(
         code|= parse_ld_config_file(st.as_deref_mut(), *result.gl_pathv.offset(i as isize));
         i= i.wrapping_add(1);
     }
-    globfree(core::ptr::addr_of_mut!(result));
+    globfree(&mut result);
     return code;
 }
 unsafe extern "C" fn parse_ld_config_file(
@@ -2263,7 +2263,7 @@ unsafe extern "C" fn parse_ld_config_file(
     return 0 as libc::c_int;
 }
 unsafe extern "C" fn parse_ld_so_conf(mut s: *mut libtree_state_t) {
-    let mut st: *mut string_table_t = core::ptr::addr_of_mut!((*s).string_table);
+    let mut st: *mut string_table_t = &mut (*s).string_table;
     (*s).ld_so_conf_offset= (*st).n;
     parse_ld_config_file(st.as_mut(), (*s).ld_conf_file);
     if (*st).n > (*s).ld_so_conf_offset {
@@ -2503,7 +2503,7 @@ unsafe fn main_0(mut argc: libc::c_int, mut argv: *mut *mut libc::c_char) -> lib
         machine: [0; 65],
         __domainname: [0; 65],
     };
-    if uname(core::ptr::addr_of_mut!(uname_val)) != 0 as libc::c_int {
+    if uname(&mut uname_val) != 0 as libc::c_int {
         return 1 as libc::c_int;
     }
     s.PLATFORM= uname_val.machine.as_mut_ptr();
@@ -2580,7 +2580,7 @@ unsafe fn main_0(mut argc: libc::c_int, mut argv: *mut *mut libc::c_char) -> lib
                     }
                     let mut ptr = 0 as *mut libc::c_char;
                     i+= 1;
-                    s.max_depth= strtoul(*argv.offset(i as isize), core::ptr::addr_of_mut!(ptr), 10 as libc::c_int);
+                    s.max_depth= strtoul(*argv.offset(i as isize), &mut ptr, 10 as libc::c_int);
                     if s.max_depth > 32 as libc::c_int as libc::c_ulong {
                         s.max_depth= 32 as libc::c_int as libc::c_ulong;
                     }
