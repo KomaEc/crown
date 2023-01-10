@@ -1,4 +1,3 @@
-
 use std::{
     collections::HashSet,
     fs,
@@ -25,11 +24,12 @@ pub fn char_array_transmute(tcx: TyCtxt, mode: RewriteMode) {
     for file_name in user_files.iter() {
         let source = fs::read_to_string(file_name).unwrap();
 
-
-        let replacement = re.replace_all(&source, |captures: &regex::Captures| {
-            let chars = &captures["chars"];
-            chars.to_owned() + " as *const u8 as *const i8"
-        }).to_string();
+        let replacement = re
+            .replace_all(&source, |captures: &regex::Captures| {
+                let chars = &captures["chars"];
+                chars.to_owned() + " as *const u8 as *const i8"
+            })
+            .to_string();
 
         match mode {
             RewriteMode::InPlace => fs::write(file_name, replacement).unwrap(),
