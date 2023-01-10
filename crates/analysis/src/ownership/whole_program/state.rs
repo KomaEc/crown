@@ -1,3 +1,4 @@
+use rustc_hash::FxHashMap;
 use rustc_middle::mir::Body;
 
 use super::InterCtxt;
@@ -22,7 +23,7 @@ pub(super) fn initial_inter_ctxt(
 ) -> InterCtxt {
     const INIT_PRECISION: Precision = 1;
 
-    let mut fn_sigs = indexmap::IndexMap::default();
+    let mut fn_sigs = FxHashMap::default();
     fn_sigs.reserve(crate_ctxt.fns().len());
     for &did in crate_ctxt.fn_ctxt.fns() {
         let output_params = &output_params[&did];
@@ -81,7 +82,6 @@ pub(super) fn initial_inter_ctxt(
 
             FnSig { ret, args }
         };
-        println!("generating signatures for {:?}: {:?}", did, fn_sig);
         fn_sigs.insert(did, fn_sig);
     }
 

@@ -75,7 +75,7 @@ impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for WholeProgramAn
 
 pub struct FnLocals {
     fn_sigs: InterCtxt,
-    fn_summaries: FxHashMap<DefId, (FnSummary, Precision)>,
+    fn_summaries: indexmap::IndexMap<DefId, (FnSummary, Precision)>,
 }
 
 pub type IntermediateResults = (Vec<Ownership>, FnLocals, GlobalAssumptions);
@@ -170,15 +170,22 @@ fn solve_body<'tcx>(
 
     let results = FnSummary::new(rn, infer_cx);
 
+    print!(
+        "Solving {}... ",
+        crate_ctxt.tcx.def_path_str(body.source.def_id())
+    );
+
     match database.solver.check() {
         z3::SatResult::Unsat => {
-            let fn_name = crate_ctxt.tcx.def_path_str(body.source.def_id());
-            println!("failed: {fn_name}");
+            println!("Failed");
             database.solver.pop(1);
             Ok((results, precision - 1))
         }
         z3::SatResult::Unknown => bail!("z3 status: unknown"),
-        z3::SatResult::Sat => Ok((results, precision)),
+        z3::SatResult::Sat => {
+            println!("");
+            Ok((results, precision))
+        }
     }
 }
 
@@ -199,7 +206,7 @@ fn solve_crate(
         &mut database,
     );
 
-    let mut fn_summaries = FxHashMap::default();
+    let mut fn_summaries = indexmap::IndexMap::default();
     fn_summaries.reserve(crate_ctxt.fns().len());
 
     let fn_sigs = match previous_results {
@@ -407,7 +414,7 @@ impl<'a, 'tcx> FnResults<'a>
     }
 }
 
-pub type InterCtxt = indexmap::IndexMap<DefId, FnSig<Option<Param<Range<Var>>>>>;
+pub type InterCtxt = FxHashMap<DefId, FnSig<Option<Param<Range<Var>>>>>;
 
 impl FnLocals {
     pub fn refine<'tcx>(
@@ -420,7 +427,7 @@ impl FnLocals {
         InterCtxt,
         impl Iterator<Item = (DefId, SSAState, Precision)> + 'tcx,
     ) {
-        let mut inter_ctxt = indexmap::IndexMap::default();
+        let mut inter_ctxt = FxHashMap::default();
         inter_ctxt.reserve(self.fn_sigs.len());
 
         for (did, original) in self.fn_sigs.into_iter() {
@@ -476,8 +483,6 @@ impl FnLocals {
                     }
                 })
                 .collect();
-
-            println!("generating signatures for {:?}: {:?}", did, fn_sig);
 
             inter_ctxt.insert(did, fn_sig);
         }
