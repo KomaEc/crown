@@ -171,19 +171,19 @@ fn solve_body<'tcx>(
     let results = FnSummary::new(rn, infer_cx);
 
     print!(
-        "Solving {}... ",
+        "Solving {} with precision {precision}... ",
         crate_ctxt.tcx.def_path_str(body.source.def_id())
     );
 
     match database.solver.check() {
         z3::SatResult::Unsat => {
-            println!("Failed");
+            println!("\u{274C}");
             database.solver.pop(1);
             Ok((results, precision - 1))
         }
         z3::SatResult::Unknown => bail!("z3 status: unknown"),
         z3::SatResult::Sat => {
-            println!("");
+            println!("\u{2705}");
             Ok((results, precision))
         }
     }
