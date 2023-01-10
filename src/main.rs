@@ -54,6 +54,10 @@ enum Command {
         #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
     },
+    CharArrayTransmute {
+        #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
+        rewrite_mode: RewriteMode,
+    },
     ExplicitAddr {
         #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
@@ -368,6 +372,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             refactor::refactor(&input, &analysis_results, rewrite_mode, refactor_options)?;
         }
         Command::FoldLetRefMut { rewrite_mode } => preprocess::fold_let_ref_mut(tcx, rewrite_mode),
+        Command::CharArrayTransmute { rewrite_mode } => preprocess::char_array_transmute(tcx, rewrite_mode),
         Command::ExplicitAddr { rewrite_mode } => preprocess::use_explicit_addr(tcx, rewrite_mode),
         Command::OutputParams => {
             let alias_result = alias::alias_results(&input);

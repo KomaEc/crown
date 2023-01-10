@@ -4,6 +4,7 @@ mod explicit_addr;
 mod fold_let_ref_mut;
 mod linkage;
 mod signal_nullness;
+mod char_array_transmute;
 
 extern crate rustc_ast;
 extern crate rustc_hash;
@@ -21,6 +22,7 @@ use rustc_middle::ty::TyCtxt;
 use crate::signal_nullness::signal_nullness;
 
 pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] = &[
+    char_array_transmute,
     fold_let_ref_mut,
     signal_nullness,
     link_incomplete_types,
@@ -29,6 +31,7 @@ pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] = &[
 ];
 
 pub use fold_let_ref_mut::fold_let_ref_mut;
+pub use char_array_transmute::char_array_transmute;
 
 pub fn use_explicit_addr(tcx: TyCtxt, mode: RewriteMode) {
     let mut rewriter = Vec::new();
