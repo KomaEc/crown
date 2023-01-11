@@ -131,7 +131,7 @@ fn rewrite_fn<'tcx>(
 
 fn accum_deref_copies<'tcx>(
     mut place: Place<'tcx>,
-    location: Location,
+    mut location: Location,
     def_use_chain: &DefUseChain,
     body: &Body<'tcx>,
     tcx: TyCtxt<'tcx>,
@@ -148,7 +148,8 @@ fn accum_deref_copies<'tcx>(
         let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
         let Rvalue::CopyForDeref(rplace) = rvalue else { panic!() };
         local = rplace.local;
-        place = rplace.project_deeper(place.projection, tcx)
+        place = rplace.project_deeper(place.projection, tcx);
+        location = def_loc;
     }
 
     place
