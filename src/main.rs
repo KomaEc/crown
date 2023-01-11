@@ -230,11 +230,11 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
     match *cmd {
         Command::Preprocess { .. } => unreachable!(),
         Command::ShowMir { ref function } => {
-            if let Some(def_path_str) = function {
+            if let Some(fn_name) = function {
                 let Some(&did) = input
                     .fns
                     .iter()
-                    .find(|did| input.tcx.def_path_str(**did) == *def_path_str)
+                    .find(|did| input.tcx.def_path_str(**did).ends_with(fn_name))
                     else {
                         bail!("no such function!")
                     };
