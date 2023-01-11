@@ -498,13 +498,24 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             ..
         } = *self;
 
-        let mut replacement = user_idents
+        let mut replacement = if let Some(replacement) = user_idents
             .get(&place.local)
             .map(|symbol| symbol.to_string())
-            .unwrap_or_else(|| {
-                assert!(place.as_local().is_none());
-                unimplemented!("rewrite immediate value, could be static, func call return")
-            });
+        {
+            replacement
+        } else {
+            tracing::error!("rewrite immediate value, could be static, func call return");
+            return;
+        };
+
+        // let mut replacement = user_idents
+        //     .get(&place.local)
+        //     .map(|symbol| symbol.to_string())
+        //     .unwrap_or_else(|| {
+        //         assert!(place.as_local().is_none());
+        //         tracing::error!("rewrite immediate value, could be static, func call return");
+        //         return
+        //     });
 
         let mut index_spans: SmallVec<[Span; 1]> = smallvec::smallvec![];
 

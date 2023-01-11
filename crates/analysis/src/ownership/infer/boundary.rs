@@ -192,7 +192,6 @@ where
                             }
                             let arg = arg;
 
-
                             let arg = arg.transpose();
 
                             matcher(

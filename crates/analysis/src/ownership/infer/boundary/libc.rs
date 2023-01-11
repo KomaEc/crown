@@ -81,13 +81,11 @@ where
         assert!(!is_ref);
         // <Analysis as InferMode>::sink(self, arg);
 
-
         // FIXME working around type cast
         let mut arg = arg;
         arg.r#use = arg.r#use.start..arg.r#use.start + 1u32;
         arg.def = arg.def.start..arg.def.start + 1u32;
         let arg = arg;
-
 
         <Analysis as InferMode>::transfer::<false>(self, ty, destination, arg)
     }
