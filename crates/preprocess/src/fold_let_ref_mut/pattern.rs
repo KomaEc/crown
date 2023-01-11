@@ -13,7 +13,9 @@ pub struct Pattern {
     pub replacer: for<'t> fn(&regex::Captures<'t>) -> String,
 }
 
-
+/// ```c
+/// x = y = z = w = val;
+/// ```
 const ASSIGN_VALUE_AS_ASSIGNER4: Pattern = Pattern {
     pattern: concat!(
         r"let ref mut fresh(?P<version1>[0-9]+)[\s|\n]*=[\s|\n]*(?P<w>[^;]+);[\s|\n]*",

@@ -171,6 +171,8 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
         "f128",
         #[cfg(target_arch = "x86_64")]
         "f128_internal",
+        "--cap-lints",
+        "allow",
     ]
     .map(|s| s.to_owned());
 
