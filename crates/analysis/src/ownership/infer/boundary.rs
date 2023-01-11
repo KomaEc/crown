@@ -181,6 +181,18 @@ where
                                 ty
                             };
 
+                            // FIXME working around type cast
+                            let mut arg = arg;
+                            if let Some(pointee_ty) = ty.builtin_deref(true) {
+                                let pointee_ty = pointee_ty.ty;
+                                if format!("{pointee_ty}").ends_with("c_void") {
+                                    arg.r#use = arg.r#use.start..arg.r#use.start + 1u32;
+                                    arg.def = arg.def.start..arg.def.start + 1u32;
+                                }
+                            }
+                            let arg = arg;
+
+
                             let arg = arg.transpose();
 
                             matcher(

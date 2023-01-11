@@ -19,6 +19,7 @@ use crate::{
         infer::{FnSummary, InferCtxt},
         Param,
     },
+    ptr::Measurable,
     ssa::{
         constraint::{
             infer::Renamer, initialize_local, Database, Gen, GlobalAssumptions, Var, Z3Database,
@@ -156,9 +157,17 @@ fn solve_body<'tcx>(
 
     let mut rn = Renamer::new(body, ssa_state, crate_ctxt.tcx);
 
+    let struct_ctxt = crate_ctxt.struct_ctxt.with_precision(precision);
+
+    print!(
+        "Solving {} with precision {}... ",
+        crate_ctxt.tcx.def_path_str(body.source.def_id()),
+        struct_ctxt.max_ptr_chased(),
+    );
+
     let mut infer_cx = InferCtxt::new(
         crate_ctxt.tcx,
-        crate_ctxt.struct_ctxt.with_precision(precision),
+        struct_ctxt,
         body,
         database,
         gen,
@@ -169,11 +178,6 @@ fn solve_body<'tcx>(
     rn.go::<WholeProgramAnalysis>(&mut infer_cx);
 
     let results = FnSummary::new(rn, infer_cx);
-
-    print!(
-        "Solving {} with precision {precision}... ",
-        crate_ctxt.tcx.def_path_str(body.source.def_id())
-    );
 
     match database.solver.check() {
         z3::SatResult::Unsat => {
