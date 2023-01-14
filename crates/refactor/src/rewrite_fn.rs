@@ -574,6 +574,17 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rewrite_place(tcx, span, replacement, &index_spans, rewriter)
     }
 
+
+    fn rewrite_usage(
+        &self,
+        span: Span,
+        required: PlaceValueType,
+        prduced: PlaceValueType,
+        rewriter: &mut impl Rewrite
+    ) {
+
+    }
+
     fn rewrite_place_load_at<const PLACE_LOAD_MODE: u8>(
         &self,
         place: Place<'tcx>,
