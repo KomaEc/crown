@@ -193,6 +193,15 @@ fn retype<'hir>(ty: &rustc_hir::Ty<'hir>, decision: &[PointerKind], tcx: TyCtxt<
             }
         },
         hir::TyKind::Path(ref qpath) => {
+            let hir::QPath::Resolved(None, path) = qpath else { todo!("not supported") };
+            assert!(!path.segments.is_empty());
+            if "Option" == path.segments[0].ident.as_str() {
+                // HACK
+                // [`Option`] happens only at bare fn ptr
+                let span = ty.span;
+                let snippet = common::rewrite::get_snippet(tcx, span).text.1;
+                return snippet;
+            }
             if let Some(aliased_ty) = try_dealias(ty, tcx) {
                 return retype(aliased_ty, decision, tcx);
             }
