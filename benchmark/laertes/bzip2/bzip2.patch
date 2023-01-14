@@ -1,0 +1,14 @@
+diff -ru bzip2/rust/bzlib.rs bzip2-preprocessed/rust/bzlib.rs
+--- bzip2/rust/bzlib.rs
++++ bzip2-patched/rust/bzlib.rs
+@@ -2360,9 +2360,7 @@
+     let mut unused: [std::os::raw::c_char; 5000] = [0; 5000];
+     let mut blockSize100k: std::os::raw::c_int = 9 as std::os::raw::c_int;
+     let mut writing: std::os::raw::c_int = 0 as std::os::raw::c_int;
+-    let mut mode2: [std::os::raw::c_char; 10] =
+-        *::std::mem::transmute::<&[u8; 10],
+-                                 &mut [std::os::raw::c_char; 10]>(b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00");
++    let mut mode2: [std::os::raw::c_char; 10] = [0; 10];
+     let mut fp: *mut FILE = 0 as *mut FILE;
+     let mut bzfp: *mut std::os::raw::c_void = 0 as *mut std::os::raw::c_void;
+     let mut verbosity: std::os::raw::c_int = 0 as std::os::raw::c_int;
