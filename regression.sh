@@ -6,6 +6,10 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     if [ -d "$RUSTC_PATH" ] && [[ ":$DYLD_FALLBACK_LIBRARY_PATH:" != *":$RUSTC_PATH:"* ]]; then
         export DYLD_FALLBACK_LIBRARY_PATH="${DYLD_FALLBACK_LIBRARY_PATH:+"$DYLD_FALLBACK_LIBRARY_PATH:"}$RUSTC_PATH"
     fi
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    if [ -d "$RUSTC_PATH" ] && [[ ":$LD_LIBRARY_PATH:" != *":$RUSTC_PATH:"* ]]; then
+        export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+"$LD_LIBRARY_PATH:"}$RUSTC_PATH"
+    fi
 fi
 
 echo "start building crown.."
@@ -13,7 +17,6 @@ cargo build --release
 
 CROWN=target/release/crown
 
-FILE_CNT=0
 
 if [ $# -eq 0 ]; then
     regressions="regressions"
@@ -23,8 +26,8 @@ fi
 
 echo "writing results into $regressions"
 
+while read -r name path; do
+    echo "rewriting benchmark $name"
+    $CROWN $path rewrite print > "$regressions/$name.results"
+done < regression-invocations
 
-for f in $(cat regression-invocations) ; do
-    $CROWN $f analyse > "$regressions/$FILE_CNT"
-    let FILE_CNT=FILE_CNT+1
-done

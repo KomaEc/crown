@@ -1,0 +1,555 @@
+Solving src::bst::deleteNode with precision 1... ✅
+Solving src::bst::newNode with precision 1... ✅
+Solving src::bst::inorder with precision 1... ✅
+Solving src::bst::insert with precision 1... ✅
+Solving src::bst::minValueNode with precision 1... ✅
+src::bst::deleteNode: (&move, _) -> &move
+src::bst::newNode: (_) -> &move
+src::bst::inorder: (&) -> _
+src::bst::insert: (&move, _) -> &move
+src::bst::minValueNode: (&) -> &
+Solving src::bst::deleteNode with precision 2... ✅
+Solving src::bst::newNode with precision 2... ✅
+Solving src::bst::inorder with precision 2... ✅
+Solving src::bst::insert with precision 2... ✅
+Solving src::bst::minValueNode with precision 2... ✅
+src::bst::deleteNode: (&move &move &move, _) -> &move &move &move
+src::bst::newNode: (_) -> &move &move &move
+src::bst::inorder: (& & &) -> _
+src::bst::insert: (&move &move &move, _) -> &move &move &move
+src::bst::minValueNode: (& & &) -> & & &
+Solving src::bst::deleteNode with precision 3... ✅
+Solving src::bst::newNode with precision 3... ✅
+Solving src::bst::inorder with precision 3... ✅
+Solving src::bst::insert with precision 3... ✅
+Solving src::bst::minValueNode with precision 3... ✅
+src::bst::deleteNode: (&move &move &move &move &move &move &move, _) -> &move &move &move &move &move &move &move
+src::bst::newNode: (_) -> &move &move &move &move &move &move &move
+src::bst::inorder: (& & & & & & &) -> _
+src::bst::insert: (&move &move &move &move &move &move &move, _) -> &move &move &move &move &move &move &move
+src::bst::minValueNode: (& & & & & & &) -> & & & & & & &
+Solving src::bst::deleteNode with precision 3... ✅
+Solving src::bst::newNode with precision 3... ✅
+Solving src::bst::inorder with precision 3... ✅
+Solving src::bst::insert with precision 3... ✅
+Solving src::bst::minValueNode with precision 3... ✅
+src::bst::deleteNode: (&move &move &move &move &move &move &move, _) -> &move &move &move &move &move &move &move
+src::bst::newNode: (_) -> &move &move &move &move &move &move &move
+src::bst::inorder: (& & & & & & &) -> _
+src::bst::insert: (&move &move &move &move &move &move &move, _) -> &move &move &move &move &move &move &move
+src::bst::minValueNode: (& & & & & & &) -> & & & & & & &
+Solving src::bst::deleteNode with precision 3... ✅
+Solving src::bst::newNode with precision 3... ✅
+Solving src::bst::inorder with precision 3... ✅
+Solving src::bst::insert with precision 3... ✅
+Solving src::bst::minValueNode with precision 3... ✅
+src::bst::deleteNode: (&move &move &move &move &move &move &move, _) -> &move &move &move &move &move &move &move
+src::bst::newNode: (_) -> &move &move &move &move &move &move &move
+src::bst::inorder: (& & & & & & &) -> _
+src::bst::insert: (&move &move &move &move &move &move &move, _) -> &move &move &move &move &move &move &move
+src::bst::minValueNode: (& & & & & & &) -> & & & & & & &
+Solving src::bst::deleteNode with precision 3... ✅
+Solving src::bst::newNode with precision 3... ✅
+Solving src::bst::inorder with precision 3... ✅
+Solving src::bst::insert with precision 3... ✅
+Solving src::bst::minValueNode with precision 3... ✅
+src::bst::deleteNode: (&move &move &move &move &move &move &move, _) -> &move &move &move &move &move &move &move
+src::bst::newNode: (_) -> &move &move &move &move &move &move &move
+src::bst::inorder: (& & & & & & &) -> _
+src::bst::insert: (&move &move &move &move &move &move &move, _) -> &move &move &move &move &move &move &move
+src::bst::minValueNode: (& & & & & & &) -> & & & & & & &
+@DefId(0:11 ~ lib[40c5]::src::bst::newNode)
+bb0:
+  _4 = std::mem::size_of::<src::bst::node>() -> bb1
+  using: 
+bb1:
+  _3 = move _4 as u64 (IntToInt)
+  using: _4@Mir(bb0[0])
+  _2 = src::bst::malloc(move _3) -> bb2
+  using: _3@Mir(bb1[0])
+bb2:
+  _0 = move _2 as *mut src::bst::node (PtrToPtr)
+  using: _2@Mir(bb1[1])
+  _5 = _1
+  using: _1@Entry
+  ((*_0).0: i32) = move _5
+  using: _0@Mir(bb2[0]), _5@Mir(bb2[1])
+  ((*_0).2: *mut src::bst::node) = const 0_usize as *mut src::bst::node (PointerFromExposedAddress)
+  using: _0@Mir(bb2[0])
+  ((*_0).1: *mut src::bst::node) = const 0_usize as *mut src::bst::node (PointerFromExposedAddress)
+  using: _0@Mir(bb2[0])
+  return
+  using: _0@Mir(bb2[0])
+rewrite call std::mem::size_of @ workspace/bst/src/bst.rs:20:16: 20:45 (#0) by default
+@DefId(0:12 ~ lib[40c5]::src::bst::inorder)
+bb0:
+  _4 = _1
+  using: _1@Entry
+  _3 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _4) -> bb1
+  using: _4@Mir(bb0[0])
+bb1:
+  _2 = Not(move _3)
+  using: _3@Mir(bb0[1])
+  switchInt(move _2) -> [0: bb5, otherwise: bb2]
+  using: _2@Mir(bb1[0])
+bb2:
+  _6 = ((*_1).1: *mut src::bst::node)
+  using: _1@Entry
+  _5 = src::bst::inorder(move _6) -> bb3
+  using: _6@Mir(bb2[0])
+bb3:
+  _11 = const b"%d \x00"
+  using: 
+  _10 = &raw const (*_11)
+  using: _11@Mir(bb3[0])
+  _9 = move _10 as *const u8 (Pointer(ArrayToPointer))
+  using: _10@Mir(bb3[1])
+  _8 = move _9 as *const i8 (PtrToPtr)
+  using: _9@Mir(bb3[2])
+  _12 = ((*_1).0: i32)
+  using: _1@Entry
+  _7 = src::bst::printf(move _8, move _12) -> bb4
+  using: _8@Mir(bb3[3]), _12@Mir(bb3[4])
+bb4:
+  _14 = ((*_1).2: *mut src::bst::node)
+  using: _1@Entry
+  _13 = src::bst::inorder(move _14) -> bb6
+  using: _14@Mir(bb4[0])
+bb5:
+  _17 = _1
+  using: _1@Entry
+  _16 = move _17 as usize (PointerExposeAddress)
+  using: _17@Mir(bb5[0])
+  _15 = Eq(move _16, const 0_usize)
+  using: _16@Mir(bb5[1])
+  assume(move _15)
+  using: _15@Mir(bb5[2])
+  goto -> bb6
+  using: 
+bb6:
+  return
+  using: _0@Entry
+@DefId(0:13 ~ lib[40c5]::src::bst::insert)
+bb0:
+  _4 = _1
+  using: _1@Entry
+  _3 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _4) -> bb1
+  using: _4@Mir(bb0[0])
+bb1:
+  switchInt(move _3) -> [0: bb3, otherwise: bb2]
+  using: _3@Mir(bb0[1])
+bb2:
+  _7 = _1
+  using: _1@Entry
+  _6 = move _7 as usize (PointerExposeAddress)
+  using: _7@Mir(bb2[0])
+  _5 = Eq(move _6, const 0_usize)
+  using: _6@Mir(bb2[1])
+  assume(move _5)
+  using: _5@Mir(bb2[2])
+  _8 = _2
+  using: _2@Entry
+  _0 = src::bst::newNode(move _8) -> bb9
+  using: _8@Mir(bb2[4])
+bb3:
+  _10 = _2
+  using: _2@Entry
+  _11 = ((*_1).0: i32)
+  using: _1@Entry
+  _9 = Lt(move _10, move _11)
+  using: _10@Mir(bb3[0]), _11@Mir(bb3[1])
+  switchInt(move _9) -> [0: bb5, otherwise: bb4]
+  using: _9@Mir(bb3[2])
+bb4:
+  _13 = ((*_1).1: *mut src::bst::node)
+  using: _1@Entry
+  _14 = _2
+  using: _2@Entry
+  _12 = src::bst::insert(move _13, move _14) -> bb6
+  using: _13@Mir(bb4[0]), _14@Mir(bb4[1])
+bb5:
+  _16 = ((*_1).2: *mut src::bst::node)
+  using: _1@Entry
+  _17 = _2
+  using: _2@Entry
+  _15 = src::bst::insert(move _16, move _17) -> bb7
+  using: _16@Mir(bb5[0]), _17@Mir(bb5[1])
+bb6:
+  ((*_1).1: *mut src::bst::node) = move _12
+  using: _1@Entry, _12@Mir(bb4[2])
+  goto -> bb8
+  using: 
+bb7:
+  ((*_1).2: *mut src::bst::node) = move _15
+  using: _1@Entry, _15@Mir(bb5[2])
+  goto -> bb8
+  using: 
+bb8:
+  _0 = _1
+  using: _1@Phi(bb8)
+  goto -> bb9
+  using: 
+bb9:
+  return
+  using: _0@Phi(bb9)
+@DefId(0:14 ~ lib[40c5]::src::bst::minValueNode)
+bb0:
+  _0 = _1
+  using: _1@Entry
+  goto -> bb1
+  using: 
+bb1:
+  _5 = _0
+  using: _0@Phi(bb1)
+  _4 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _5) -> bb5
+  using: _5@Mir(bb1[0])
+bb2:
+  _2 = const false
+  using: 
+  goto -> bb4
+  using: 
+bb3:
+  _8 = ((*_0).1: *mut src::bst::node)
+  using: _0@Phi(bb1)
+  _7 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _8) -> bb6
+  using: _8@Mir(bb3[0])
+bb4:
+  switchInt(move _2) -> [0: bb8, otherwise: bb7]
+  using: _2@Phi(bb4)
+bb5:
+  _3 = Not(move _4)
+  using: _4@Mir(bb1[1])
+  switchInt(move _3) -> [0: bb2, otherwise: bb3]
+  using: _3@Mir(bb5[0])
+bb6:
+  _6 = Not(move _7)
+  using: _7@Mir(bb3[1])
+  _2 = move _6
+  using: _6@Mir(bb6[0])
+  goto -> bb4
+  using: 
+bb7:
+  _9 = ((*_0).1: *mut src::bst::node)
+  using: _0@Phi(bb4)
+  _0 = move _9
+  using: _9@Mir(bb7[0])
+  goto -> bb1
+  using: 
+bb8:
+  return
+  using: _0@Phi(bb4)
+@DefId(0:15 ~ lib[40c5]::src::bst::deleteNode)
+bb0:
+  _4 = _1
+  using: _1@Entry
+  _3 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _4) -> bb1
+  using: _4@Mir(bb0[0])
+bb1:
+  switchInt(move _3) -> [0: bb3, otherwise: bb2]
+  using: _3@Mir(bb0[1])
+bb2:
+  _7 = _1
+  using: _1@Entry
+  _6 = move _7 as usize (PointerExposeAddress)
+  using: _7@Mir(bb2[0])
+  _5 = Eq(move _6, const 0_usize)
+  using: _6@Mir(bb2[1])
+  assume(move _5)
+  using: _5@Mir(bb2[2])
+  _0 = _1
+  using: _1@Entry
+  goto -> bb21
+  using: 
+bb3:
+  _9 = _2
+  using: _2@Entry
+  _10 = ((*_1).0: i32)
+  using: _1@Entry
+  _8 = Lt(move _9, move _10)
+  using: _9@Mir(bb3[0]), _10@Mir(bb3[1])
+  switchInt(move _8) -> [0: bb5, otherwise: bb4]
+  using: _8@Mir(bb3[2])
+bb4:
+  _12 = ((*_1).1: *mut src::bst::node)
+  using: _1@Entry
+  _13 = _2
+  using: _2@Entry
+  _11 = src::bst::deleteNode(move _12, move _13) -> bb6
+  using: _12@Mir(bb4[0]), _13@Mir(bb4[1])
+bb5:
+  _15 = _2
+  using: _2@Entry
+  _16 = ((*_1).0: i32)
+  using: _1@Entry
+  _14 = Gt(move _15, move _16)
+  using: _15@Mir(bb5[0]), _16@Mir(bb5[1])
+  switchInt(move _14) -> [0: bb8, otherwise: bb7]
+  using: _14@Mir(bb5[2])
+bb6:
+  ((*_1).1: *mut src::bst::node) = move _11
+  using: _1@Entry, _11@Mir(bb4[2])
+  goto -> bb20
+  using: 
+bb7:
+  _18 = ((*_1).2: *mut src::bst::node)
+  using: _1@Entry
+  _19 = _2
+  using: _2@Entry
+  _17 = src::bst::deleteNode(move _18, move _19) -> bb9
+  using: _18@Mir(bb7[0]), _19@Mir(bb7[1])
+bb8:
+  _21 = ((*_1).1: *mut src::bst::node)
+  using: _1@Entry
+  _20 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _21) -> bb10
+  using: _21@Mir(bb8[0])
+bb9:
+  ((*_1).2: *mut src::bst::node) = move _17
+  using: _1@Entry, _17@Mir(bb7[2])
+  goto -> bb20
+  using: 
+bb10:
+  switchInt(move _20) -> [0: bb13, otherwise: bb11]
+  using: _20@Mir(bb8[1])
+bb11:
+  _24 = ((*_1).1: *mut src::bst::node)
+  using: _1@Entry
+  _23 = move _24 as usize (PointerExposeAddress)
+  using: _24@Mir(bb11[0])
+  _22 = Eq(move _23, const 0_usize)
+  using: _23@Mir(bb11[1])
+  assume(move _22)
+  using: _22@Mir(bb11[2])
+  _25 = ((*_1).2: *mut src::bst::node)
+  using: _1@Entry
+  _28 = _1
+  using: _1@Entry
+  _27 = move _28 as *mut libc::c_void (PtrToPtr)
+  using: _28@Mir(bb11[5])
+  _26 = src::bst::free(move _27) -> bb12
+  using: _27@Mir(bb11[6])
+bb12:
+  _0 = _25
+  using: _25@Mir(bb11[4])
+  goto -> bb21
+  using: 
+bb13:
+  _30 = ((*_1).2: *mut src::bst::node)
+  using: _1@Entry
+  _29 = std::ptr::mut_ptr::<impl *mut src::bst::node>::is_null(move _30) -> bb14
+  using: _30@Mir(bb13[0])
+bb14:
+  switchInt(move _29) -> [0: bb17, otherwise: bb15]
+  using: _29@Mir(bb13[1])
+bb15:
+  _33 = ((*_1).2: *mut src::bst::node)
+  using: _1@Entry
+  _32 = move _33 as usize (PointerExposeAddress)
+  using: _33@Mir(bb15[0])
+  _31 = Eq(move _32, const 0_usize)
+  using: _32@Mir(bb15[1])
+  assume(move _31)
+  using: _31@Mir(bb15[2])
+  _34 = ((*_1).1: *mut src::bst::node)
+  using: _1@Entry
+  _37 = _1
+  using: _1@Entry
+  _36 = move _37 as *mut libc::c_void (PtrToPtr)
+  using: _37@Mir(bb15[5])
+  _35 = src::bst::free(move _36) -> bb16
+  using: _36@Mir(bb15[6])
+bb16:
+  _0 = _34
+  using: _34@Mir(bb15[4])
+  goto -> bb21
+  using: 
+bb17:
+  _39 = ((*_1).2: *mut src::bst::node)
+  using: _1@Entry
+  _38 = src::bst::minValueNode(move _39) -> bb18
+  using: _39@Mir(bb17[0])
+bb18:
+  _40 = ((*_38).0: i32)
+  using: _38@Mir(bb17[1])
+  ((*_1).0: i32) = move _40
+  using: _1@Entry, _40@Mir(bb18[0])
+  _42 = ((*_1).2: *mut src::bst::node)
+  using: _1@Entry
+  _43 = ((*_38).0: i32)
+  using: _38@Mir(bb17[1])
+  _41 = src::bst::deleteNode(move _42, move _43) -> bb19
+  using: _42@Mir(bb18[2]), _43@Mir(bb18[3])
+bb19:
+  ((*_1).2: *mut src::bst::node) = move _41
+  using: _1@Entry, _41@Mir(bb18[4])
+  goto -> bb20
+  using: 
+bb20:
+  _0 = _1
+  using: _1@Phi(bb20)
+  goto -> bb21
+  using: 
+bb21:
+  return
+  using: _0@Phi(bb21)
+use ::libc;
+extern "C" {
+    fn printf(_: *const libc::c_char, _: ...) -> i32;
+    fn malloc(_: u64) -> *mut libc::c_void;
+    fn free(__ptr: *mut libc::c_void);
+}
+// C program to demonstrate
+// delete operation in binary
+// search tree
+
+#[repr(C)]#[derive(Copy, Clone)]
+struct ErasedByRefactorer0;
+#[repr(C)]
+pub struct node {
+    pub key: i32,
+    pub left: Option<Box<node>>,
+    pub right: Option<Box<node>>,
+}
+impl Default for node {fn default() -> Self {Self {
+key: Default::default(),
+left: None,
+right: None,
+}}}
+impl node {pub fn take(&mut self) -> Self {core::mem::take(self)}}
+
+// A utility function to create a new BST node
+pub unsafe extern "C" fn newNode(mut item: i32) -> Option<Box<node>> {
+    let mut temp =
+        Some(Box::new(<crate::src::bst::node as Default>::default()));
+    (*temp.as_deref_mut().unwrap()).key= item;
+    (*temp.as_deref_mut().unwrap()).right= None;
+    (*temp.as_deref_mut().unwrap()).left= None;
+    // (*temp).left = (*temp).right;
+    return temp;
+}
+// A utility function to do inorder traversal of BST
+pub unsafe extern "C" fn inorder(mut root: *const node) {
+    if !root.is_null() {
+        inorder(core::mem::transmute::<_, *const crate::src::bst::node>((*root).left.as_deref()));
+        printf(b"%d \x00" as *const u8 as *const libc::c_char, (*root).key);
+        inorder(core::mem::transmute::<_, *const crate::src::bst::node>((*root).right.as_deref()));
+    }else { (); };
+}
+/* A utility function to
+insert a new node with given key in
+* BST */
+pub unsafe extern "C" fn insert(mut node: Option<Box<node>>, mut key: i32)
+ -> Option<Box<node>> {
+    /* If the tree is empty, return a new node */
+    if node.as_deref().is_none() {(); return newNode(key) }
+    /* Otherwise, recur down the tree */
+    if key < (*node.as_deref().unwrap()).key {
+        (*node.as_deref_mut().unwrap()).left= insert((*node.as_deref_mut().unwrap()).left.take(), key)
+    } else { (*node.as_deref_mut().unwrap()).right= insert((*node.as_deref_mut().unwrap()).right.take(), key) }
+    /* return the (unchanged) node pointer */
+    return node;
+}
+/* Given a non-empty binary search
+tree, return the node
+with minimum key value found in
+that tree. Note that the
+entire tree does not need to be searched. */
+pub unsafe extern "C" fn minValueNode(mut node: *const node) -> *const node {
+    let mut current = node;
+    /* loop down to find the leftmost leaf */
+    while !current.is_null() && !(*current).left.as_deref().is_none() {
+        current= core::mem::transmute::<_, *const crate::src::bst::node>((*current).left.as_deref())
+    }
+    return current;
+}
+/* Given a binary search tree
+and a key, this function
+deletes the key and
+returns the new root */
+pub unsafe extern "C" fn deleteNode(mut root: Option<Box<node>>, mut key: i32)
+ -> Option<Box<node>> {
+    // base case
+    if root.as_deref().is_none() {(); return root }
+    // If the key to be deleted
+	// is smaller than the root's
+	// key, then it lies in left subtree
+    if key < (*root.as_deref().unwrap()).key {
+        (*root.as_deref_mut().unwrap()).left= deleteNode((*root.as_deref_mut().unwrap()).left.take(), key)
+    } else if key > (*root.as_deref().unwrap()).key {
+        (*root.as_deref_mut().unwrap()).right= deleteNode((*root.as_deref_mut().unwrap()).right.take(), key)
+    } else {
+        // If the key to be deleted
+	// is greater than the root's
+	// key, then it lies in right subtree
+        // if key is same as root's key,
+	// then This is the node
+	// to be deleted
+        // node with only one child or no child
+        if (*root.as_deref().unwrap()).left.as_deref().is_none() {();
+            let mut temp = (*root.as_deref_mut().unwrap()).right.take();
+            ();
+            return temp
+        } else {
+            if (*root.as_deref().unwrap()).right.as_deref().is_none() {();
+                let mut temp_0 = (*root.as_deref_mut().unwrap()).left.take();
+                ();
+                return temp_0
+            }
+        }
+        let mut temp_1 = minValueNode(core::mem::transmute::<_, *const crate::src::bst::node>((*root.as_deref().unwrap()).right.as_deref()));
+        (*root.as_deref_mut().unwrap()).key= (*temp_1).key;
+        (*root.as_deref_mut().unwrap()).right= deleteNode((*root.as_deref_mut().unwrap()).right.take(), (*temp_1).key)
+    }
+    return root;
+}
+
+
+/* 
+// node with two children:
+
+// Get the inorder successor
+
+// (smallest in the right subtree)
+
+// Copy the inorder
+
+// successor's content to this node
+
+// Delete the inorder successor
+
+// Driver Code
+unsafe fn main() {
+    /* Let us create following BST
+			50
+		/	 \
+		30	 70
+		/ \ / \
+	20 40 60 80 */
+    let mut root: *mut node = 0 as *mut node;
+    root = insert(root, 50 as i32);
+    root = insert(root, 30 as i32);
+    root = insert(root, 20 as i32);
+    root = insert(root, 40 as i32);
+    root = insert(root, 70 as i32);
+    root = insert(root, 60 as i32);
+    root = insert(root, 80 as i32);
+    printf(b"Inorder traversal of the given tree \n\x00" as *const u8 as
+               *const libc::c_char);
+    inorder(root);
+    printf(b"\nDelete 20\n\x00" as *const u8 as *const libc::c_char);
+    root = deleteNode(root, 20 as i32);
+    printf(b"Inorder traversal of the modified tree \n\x00" as *const u8 as
+               *const libc::c_char);
+    inorder(root);
+    printf(b"\nDelete 30\n\x00" as *const u8 as *const libc::c_char);
+    root = deleteNode(root, 30 as i32);
+    printf(b"Inorder traversal of the modified tree \n\x00" as *const u8 as
+               *const libc::c_char);
+    inorder(root);
+    printf(b"\nDelete 50\n\x00" as *const u8 as *const libc::c_char);
+    root = deleteNode(root, 50 as i32);
+    printf(b"Inorder traversal of the modified tree \n\x00" as *const u8 as
+               *const libc::c_char);
+    inorder(root);
+    return 0 as i32;
+}
+*/

@@ -1,11 +1,11 @@
-workspace/rbtree/lib.rs
-workspace/llist/lib.rs
-workspace/genann/c2rust-lib.rs
-workspace/bzip2/rust/c2rust-lib.rs
-workspace/kdtree/lib.rs
-workspace/libtree/lib.rs
-workspace/buffer/lib.rs
-workspace/bst/lib.rs
-workspace/libzahl/lib.rs
-workspace/urlparser/test.rs
-workspace/libcsv/rust/c2rust-lib.rs
+rbtree  workspace/rbtree/lib.rs
+llist   workspace/llist/lib.rs
+genann  workspace/genann/c2rust-lib.rs
+bzip2   workspace/bzip2/rust/c2rust-lib.rs
+kdtree  workspace/kdtree/lib.rs
+libtree workspace/libtree/lib.rs
+buffer  workspace/clibs-buffer/lib.rs
+bst workspace/bst/lib.rs
+libzahl workspace/libzahl/lib.rs
+urlparser   workspace/urlparser/test.rs
+libcsv  workspace/libcsv/rust/c2rust-lib.rs

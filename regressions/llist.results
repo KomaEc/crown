@@ -1,0 +1,468 @@
+Solving src::llist::deleteFirst with precision 1... ✅
+Solving src::llist::newNode2 with precision 1... ✅
+Solving src::llist::push with precision 1... ✅
+Solving src::llist::insertAfter with precision 1... ✅
+Solving src::llist::append with precision 1... ✅
+Solving src::llist::test_list with precision 1... ✅
+src::llist::deleteFirst: (&uniq  ↓ &uniq ) -> _
+src::llist::newNode2: () -> &move
+src::llist::push: (&uniq  ↓ &uniq , _) -> _
+src::llist::insertAfter: (&uniq  ↓ &uniq , _) -> _
+src::llist::append: (&uniq  ↓ &uniq , _) -> _
+src::llist::test_list: (&uniq  ↓ &uniq ) -> _
+Solving src::llist::deleteFirst with precision 2... ✅
+Solving src::llist::newNode2 with precision 2... ✅
+Solving src::llist::push with precision 2... ✅
+Solving src::llist::insertAfter with precision 2... ✅
+Solving src::llist::append with precision 2... ❌
+Solving src::llist::test_list with precision 2... ✅
+src::llist::deleteFirst: (&uniq &move ↓ &uniq &move) -> _
+src::llist::newNode2: () -> &move &move
+src::llist::push: (&uniq & ↓ &uniq &move, _) -> _
+src::llist::insertAfter: (&uniq &move ↓ &uniq &move, _) -> _
+src::llist::append: (&uniq &move ↓ &uniq &move, _) -> _
+src::llist::test_list: (&uniq &move ↓ &uniq &move) -> _
+Solving src::llist::deleteFirst with precision 3... ✅
+Solving src::llist::newNode2 with precision 3... ✅
+Solving src::llist::push with precision 3... ✅
+Solving src::llist::insertAfter with precision 3... ✅
+Solving src::llist::append with precision 2... ❌
+Solving src::llist::test_list with precision 3... ✅
+src::llist::deleteFirst: (&uniq &move &move ↓ &uniq &move &move) -> _
+src::llist::newNode2: () -> &move &move &move
+src::llist::push: (&uniq & & ↓ &uniq &move &, _) -> _
+src::llist::insertAfter: (&uniq &move &move ↓ &uniq &move &move, _) -> _
+src::llist::append: (&uniq &move ↓ &uniq &move, _) -> _
+src::llist::test_list: (&uniq &move & ↓ &uniq &move &move) -> _
+Solving src::llist::deleteFirst with precision 3... ✅
+Solving src::llist::newNode2 with precision 3... ✅
+Solving src::llist::push with precision 3... ✅
+Solving src::llist::insertAfter with precision 3... ✅
+Solving src::llist::append with precision 1... ✅
+Solving src::llist::test_list with precision 3... ✅
+src::llist::deleteFirst: (&uniq &move &move ↓ &uniq &move &move) -> _
+src::llist::newNode2: () -> &move &move &move
+src::llist::push: (&uniq & & ↓ &uniq &move &, _) -> _
+src::llist::insertAfter: (&uniq &move &move ↓ &uniq &move &move, _) -> _
+src::llist::append: (&uniq  ↓ &uniq , _) -> _
+src::llist::test_list: (&uniq & & ↓ &uniq &move &move) -> _
+Solving src::llist::deleteFirst with precision 3... ✅
+Solving src::llist::newNode2 with precision 3... ✅
+Solving src::llist::push with precision 3... ✅
+Solving src::llist::insertAfter with precision 3... ✅
+Solving src::llist::append with precision 1... ✅
+Solving src::llist::test_list with precision 3... ✅
+src::llist::deleteFirst: (&uniq &move &move ↓ &uniq &move &move) -> _
+src::llist::newNode2: () -> &move &move &move
+src::llist::push: (&uniq & & ↓ &uniq &move &, _) -> _
+src::llist::insertAfter: (&uniq &move &move ↓ &uniq &move &move, _) -> _
+src::llist::append: (&uniq  ↓ &uniq , _) -> _
+src::llist::test_list: (&uniq & & ↓ &uniq &move &move) -> _
+Solving src::llist::deleteFirst with precision 3... ✅
+Solving src::llist::newNode2 with precision 3... ✅
+Solving src::llist::push with precision 3... ✅
+Solving src::llist::insertAfter with precision 3... ✅
+Solving src::llist::append with precision 1... ✅
+Solving src::llist::test_list with precision 3... ✅
+src::llist::deleteFirst: (&uniq &move &move ↓ &uniq &move &move) -> _
+src::llist::newNode2: () -> &move &move &move
+src::llist::push: (&uniq & & ↓ &uniq &move &, _) -> _
+src::llist::insertAfter: (&uniq &move &move ↓ &uniq &move &move, _) -> _
+src::llist::append: (&uniq  ↓ &uniq , _) -> _
+src::llist::test_list: (&uniq & & ↓ &uniq &move &move) -> _
+@DefId(0:14 ~ lib[40c5]::src::llist::push)
+bb0:
+  _6 = std::mem::size_of::<src::llist::Node>() -> bb1
+  using: 
+bb1:
+  _5 = move _6 as u64 (IntToInt)
+  using: _6@Mir(bb0[0])
+  _4 = src::llist::malloc(move _5) -> bb2
+  using: _5@Mir(bb1[0])
+bb2:
+  _3 = move _4 as *mut src::llist::Node (PtrToPtr)
+  using: _4@Mir(bb1[1])
+  _7 = _2
+  using: _2@Entry
+  ((*_3).0: i32) = move _7
+  using: _3@Mir(bb2[0]), _7@Mir(bb2[1])
+  _8 = (*_1)
+  using: _1@Entry
+  ((*_3).1: *mut src::llist::Node) = move _8
+  using: _3@Mir(bb2[0]), _8@Mir(bb2[3])
+  _9 = _3
+  using: _3@Mir(bb2[0])
+  (*_1) = move _9
+  using: _1@Entry, _9@Mir(bb2[5])
+  return
+  using: _0@Entry
+rewrite call std::mem::size_of @ workspace/llist/src/llist.rs:19:31: 19:60 (#0) by default
+@DefId(0:15 ~ lib[40c5]::src::llist::insertAfter)
+bb0:
+  _4 = _1
+  using: _1@Entry
+  _3 = std::ptr::mut_ptr::<impl *mut src::llist::Node>::is_null(move _4) -> bb1
+  using: _4@Mir(bb0[0])
+bb1:
+  switchInt(move _3) -> [0: bb3, otherwise: bb2]
+  using: _3@Mir(bb0[1])
+bb2:
+  _7 = _1
+  using: _1@Entry
+  _6 = move _7 as usize (PointerExposeAddress)
+  using: _7@Mir(bb2[0])
+  _5 = Eq(move _6, const 0_usize)
+  using: _6@Mir(bb2[1])
+  assume(move _5)
+  using: _5@Mir(bb2[2])
+  _12 = const b"the given previous node cannot be NULL\x00"
+  using: 
+  _11 = &raw const (*_12)
+  using: _12@Mir(bb2[4])
+  _10 = move _11 as *const u8 (Pointer(ArrayToPointer))
+  using: _11@Mir(bb2[5])
+  _9 = move _10 as *const i8 (PtrToPtr)
+  using: _10@Mir(bb2[6])
+  _8 = src::llist::printf(move _9) -> bb6
+  using: _9@Mir(bb2[7])
+bb3:
+  _16 = std::mem::size_of::<src::llist::Node>() -> bb4
+  using: 
+bb4:
+  _15 = move _16 as u64 (IntToInt)
+  using: _16@Mir(bb3[0])
+  _14 = src::llist::malloc(move _15) -> bb5
+  using: _15@Mir(bb4[0])
+bb5:
+  _13 = move _14 as *mut src::llist::Node (PtrToPtr)
+  using: _14@Mir(bb4[1])
+  _17 = _2
+  using: _2@Entry
+  ((*_13).0: i32) = move _17
+  using: _13@Mir(bb5[0]), _17@Mir(bb5[1])
+  _18 = ((*_1).1: *mut src::llist::Node)
+  using: _1@Entry
+  ((*_13).1: *mut src::llist::Node) = move _18
+  using: _13@Mir(bb5[0]), _18@Mir(bb5[3])
+  _19 = _13
+  using: _13@Mir(bb5[0])
+  ((*_1).1: *mut src::llist::Node) = move _19
+  using: _1@Entry, _19@Mir(bb5[5])
+  goto -> bb6
+  using: 
+bb6:
+  return
+  using: _0@Entry
+rewrite call std::mem::size_of @ workspace/llist/src/llist.rs:37:31: 37:60 (#0) by default
+@DefId(0:16 ~ lib[40c5]::src::llist::append)
+bb0:
+  _6 = std::mem::size_of::<src::llist::Node>() -> bb1
+  using: 
+bb1:
+  _5 = move _6 as u64 (IntToInt)
+  using: _6@Mir(bb0[0])
+  _4 = src::llist::malloc(move _5) -> bb2
+  using: _5@Mir(bb1[0])
+bb2:
+  _3 = move _4 as *mut src::llist::Node (PtrToPtr)
+  using: _4@Mir(bb1[1])
+  _7 = (*_1)
+  using: _1@Entry
+  _8 = _2
+  using: _2@Entry
+  ((*_3).0: i32) = move _8
+  using: _3@Mir(bb2[0]), _8@Mir(bb2[2])
+  ((*_3).1: *mut src::llist::Node) = const 0_usize as *mut src::llist::Node (PointerFromExposedAddress)
+  using: _3@Mir(bb2[0])
+  _10 = (*_1)
+  using: _1@Entry
+  _9 = std::ptr::mut_ptr::<impl *mut src::llist::Node>::is_null(move _10) -> bb3
+  using: _10@Mir(bb2[5])
+bb3:
+  switchInt(move _9) -> [0: bb5, otherwise: bb4]
+  using: _9@Mir(bb2[6])
+bb4:
+  _13 = (*_1)
+  using: _1@Entry
+  _12 = move _13 as usize (PointerExposeAddress)
+  using: _13@Mir(bb4[0])
+  _11 = Eq(move _12, const 0_usize)
+  using: _12@Mir(bb4[1])
+  assume(move _11)
+  using: _11@Mir(bb4[2])
+  _14 = _3
+  using: _3@Mir(bb2[0])
+  (*_1) = move _14
+  using: _1@Entry, _14@Mir(bb4[4])
+  goto -> bb9
+  using: 
+bb5:
+  _17 = ((*_7).1: *mut src::llist::Node)
+  using: _7@Phi(bb5)
+  _16 = std::ptr::mut_ptr::<impl *mut src::llist::Node>::is_null(move _17) -> bb6
+  using: _17@Mir(bb5[0])
+bb6:
+  _15 = Not(move _16)
+  using: _16@Mir(bb5[1])
+  switchInt(move _15) -> [0: bb8, otherwise: bb7]
+  using: _15@Mir(bb6[0])
+bb7:
+  _18 = ((*_7).1: *mut src::llist::Node)
+  using: _7@Phi(bb5)
+  _7 = move _18
+  using: _18@Mir(bb7[0])
+  goto -> bb5
+  using: 
+bb8:
+  _19 = _3
+  using: _3@Mir(bb2[0])
+  ((*_7).1: *mut src::llist::Node) = move _19
+  using: _7@Phi(bb5), _19@Mir(bb8[0])
+  goto -> bb9
+  using: 
+bb9:
+  return
+  using: _0@Entry
+rewrite call std::mem::size_of @ workspace/llist/src/llist.rs:49:31: 49:60 (#0) by default
+@DefId(0:17 ~ lib[40c5]::src::llist::deleteFirst)
+bb0:
+  _4 = (*_1)
+  using: _1@Entry
+  _3 = std::ptr::mut_ptr::<impl *mut src::llist::Node>::is_null(move _4) -> bb1
+  using: _4@Mir(bb0[0])
+bb1:
+  _2 = Not(move _3)
+  using: _3@Mir(bb0[1])
+  switchInt(move _2) -> [0: bb3, otherwise: bb2]
+  using: _2@Mir(bb1[0])
+bb2:
+  _5 = (*_1)
+  using: _1@Entry
+  _6 = ((*_5).1: *mut src::llist::Node)
+  using: _5@Mir(bb2[0])
+  (*_1) = move _6
+  using: _1@Entry, _6@Mir(bb2[1])
+  _9 = _5
+  using: _5@Mir(bb2[0])
+  _8 = move _9 as *mut libc::c_void (PtrToPtr)
+  using: _9@Mir(bb2[3])
+  _7 = src::llist::free(move _8) -> bb4
+  using: _8@Mir(bb2[4])
+bb3:
+  _12 = (*_1)
+  using: _1@Entry
+  _11 = move _12 as usize (PointerExposeAddress)
+  using: _12@Mir(bb3[0])
+  _10 = Eq(move _11, const 0_usize)
+  using: _11@Mir(bb3[1])
+  assume(move _10)
+  using: _10@Mir(bb3[2])
+  goto -> bb4
+  using: 
+bb4:
+  return
+  using: _0@Entry
+@DefId(0:18 ~ lib[40c5]::src::llist::test_list)
+bb0:
+  _3 = &raw mut (*_1)
+  using: _1@Entry
+  _2 = src::llist::append(move _3, const 1_i32) -> bb1
+  using: _3@Mir(bb0[0])
+bb1:
+  _5 = &raw mut (*_1)
+  using: _1@Entry
+  _4 = src::llist::append(move _5, const 2_i32) -> bb2
+  using: _5@Mir(bb1[0])
+bb2:
+  _7 = &raw mut (*_1)
+  using: _1@Entry
+  _6 = src::llist::append(move _7, const 3_i32) -> bb3
+  using: _7@Mir(bb2[0])
+bb3:
+  _9 = &raw mut (*_1)
+  using: _1@Entry
+  _8 = src::llist::append(move _9, const 4_i32) -> bb4
+  using: _9@Mir(bb3[0])
+bb4:
+  _11 = &raw mut (*_1)
+  using: _1@Entry
+  _10 = src::llist::deleteFirst(move _11) -> bb5
+  using: _11@Mir(bb4[0])
+bb5:
+  _13 = &raw mut (*_1)
+  using: _1@Entry
+  _12 = src::llist::deleteFirst(move _13) -> bb6
+  using: _13@Mir(bb5[0])
+bb6:
+  _15 = &raw mut (*_1)
+  using: _1@Entry
+  _14 = src::llist::deleteFirst(move _15) -> bb7
+  using: _15@Mir(bb6[0])
+bb7:
+  _17 = &raw mut (*_1)
+  using: _1@Entry
+  _16 = src::llist::deleteFirst(move _17) -> bb8
+  using: _17@Mir(bb7[0])
+bb8:
+  return
+  using: _0@Entry
+@DefId(0:19 ~ lib[40c5]::src::llist::newNode2)
+bb0:
+  _3 = std::mem::size_of::<src::llist::Node>() -> bb1
+  using: 
+bb1:
+  _2 = move _3 as u64 (IntToInt)
+  using: _3@Mir(bb0[0])
+  _1 = src::llist::malloc(move _2) -> bb2
+  using: _2@Mir(bb1[0])
+bb2:
+  _0 = move _1 as *mut src::llist::Node (PtrToPtr)
+  using: _1@Mir(bb1[1])
+  _7 = std::mem::size_of::<src::llist::Node>() -> bb3
+  using: 
+bb3:
+  _6 = move _7 as u64 (IntToInt)
+  using: _7@Mir(bb2[1])
+  _5 = src::llist::malloc(move _6) -> bb4
+  using: _6@Mir(bb3[0])
+bb4:
+  _4 = move _5 as *mut src::llist::Node (PtrToPtr)
+  using: _5@Mir(bb3[1])
+  ((*_4).0: i32) = const 3_i32
+  using: _4@Mir(bb4[0])
+  _8 = const {0x0 as *mut src::llist::Node}
+  using: 
+  ((*_4).1: *mut src::llist::Node) = move _8
+  using: _4@Mir(bb4[0]), _8@Mir(bb4[2])
+  ((*_0).0: i32) = const 2_i32
+  using: _0@Mir(bb2[0])
+  _9 = _4
+  using: _4@Mir(bb4[0])
+  ((*_0).1: *mut src::llist::Node) = move _9
+  using: _0@Mir(bb2[0]), _9@Mir(bb4[5])
+  return
+  using: _0@Mir(bb2[0])
+rewrite call std::mem::size_of @ workspace/llist/src/llist.rs:104:31: 104:60 (#0) by default
+rewrite call std::mem::size_of @ workspace/llist/src/llist.rs:105:27: 105:56 (#0) by default
+use ::libc;
+extern "C" {
+    fn printf(_: *const libc::c_char, _: ...) -> i32;
+    fn malloc(_: libc::c_ulong) -> *mut libc::c_void;
+    fn free(_: *mut libc::c_void);
+}
+// A linked list node
+
+#[repr(C)]
+struct ErasedByRefactorer0;
+#[repr(C)]
+pub struct Node {
+    pub data: i32,
+    pub next: Option<Box<Node>>,
+}
+impl Default for Node {fn default() -> Self {Self {
+data: Default::default(),
+next: None,
+}}}
+impl Node {pub fn take(&mut self) -> Self {core::mem::take(self)}}
+
+
+/* Given a reference (pointer to pointer) to the head of a list and
+an int, inserts a new node on the front of the list. */
+pub unsafe extern "C" fn push(mut head_ref: Option<&mut Option<Box<Node>>>, mut new_data: i32) {
+    /* 1. allocate node */
+    let mut new_node = Some(Box::new(<crate::src::llist::Node as Default>::default()));
+    /* 2. put in the data  */
+    (*new_node.as_deref_mut().unwrap()).data= new_data;
+    /* 3. Make next of new node as head */
+    (*new_node.as_deref_mut().unwrap()).next= (*head_ref.as_deref_mut().unwrap()).take();
+    /* 4. move the head to point to the new node */
+    *head_ref.as_deref_mut().unwrap()= new_node;
+}
+/* Given a node prev_node, insert a new node after the given
+prev_node */
+pub unsafe extern "C" fn insertAfter(mut prev_node: Option<&mut Node>, mut new_data: i32) {
+    /*1. check if the given prev_node is NULL */
+    if prev_node.as_deref().is_none() {
+        ();
+        printf(b"the given previous node cannot be NULL\x00" as *const u8 as *const libc::c_char);
+        return;
+    }
+    /* 2. allocate new node */
+    let mut new_node = Some(Box::new(<crate::src::llist::Node as Default>::default()));
+    /* 3. put in the data  */
+    (*new_node.as_deref_mut().unwrap()).data= new_data;
+    /* 4. Make next of new node as next of prev_node */
+    (*new_node.as_deref_mut().unwrap()).next= (*prev_node.as_deref_mut().unwrap()).next.take();
+    /* 5. move the next of prev_node as new_node */
+    (*prev_node.as_deref_mut().unwrap()).next= new_node;
+}
+/* Given a reference (pointer to pointer) to the head
+of a list and an int, appends a new node at the end  */
+pub unsafe extern "C" fn append(mut head_ref: Option<&mut *mut Node>, mut new_data: i32) {
+    /* 1. allocate node */
+    let mut new_node = Some(Box::new(<crate::src::llist::Node as Default>::default())); /* used in step 5*/
+    let mut last = (*head_ref.as_deref().unwrap());
+    /* 2. put in the data  */
+    (*new_node.as_deref_mut().unwrap()).data= new_data;
+    /* 3. This new node is going to be the last node, so make next of
+    it as NULL*/
+    (*new_node.as_deref_mut().unwrap()).next= None;
+    /* 4. If the Linked List is empty, then make the new node as head */
+    if (*head_ref.as_deref().unwrap()).is_null() {
+        ();
+        *head_ref.as_deref_mut().unwrap()= core::mem::transmute::<_, *mut crate::src::llist::Node>(new_node.as_deref_mut());
+        return;
+    }
+    // let mut last = *head_ref;
+    // /* 5. Else traverse till the last node */
+    while !(*last).next.as_deref().is_none() {
+        last= core::mem::transmute::<_, *mut crate::src::llist::Node>((*last).next.as_deref_mut())
+    }
+    // std::intrinsics::assume((*last).next as usize == 0);
+    // /* 6. Change the next of last node */
+    (*last).next= new_node;
+}
+
+pub unsafe extern "C" fn deleteFirst(mut head_ref: Option<&mut Option<Box<Node>>>) {
+    if !(*head_ref.as_deref().unwrap()).as_deref().is_none() {
+        // store the old value of pointer to head pointer
+        let mut temp = (*head_ref.as_deref_mut().unwrap()).take();
+
+        // Change head pointer to point to next node
+        *head_ref.as_deref_mut().unwrap()= 
+        (*temp.as_deref_mut().unwrap()).next.take();
+        // (**head_ref).next;
+
+        // delete memory allocated for the previous head node
+        ();
+    } else {
+        ();
+    }
+}
+
+pub unsafe fn test_list(mut list: Option<&mut Option<Box<Node>>>) {
+    // let mut list = core::ptr::null_mut();
+    append(Some(&mut (*list.as_deref_mut().unwrap())), 1);
+    append(Some(&mut (*list.as_deref_mut().unwrap())), 2);
+    append(Some(&mut (*list.as_deref_mut().unwrap())), 3);
+    append(Some(&mut (*list.as_deref_mut().unwrap())), 4);
+
+    deleteFirst(Some(&mut (*list.as_deref_mut().unwrap())));
+    deleteFirst(Some(&mut (*list.as_deref_mut().unwrap())));
+    deleteFirst(Some(&mut (*list.as_deref_mut().unwrap())));
+    deleteFirst(Some(&mut (*list.as_deref_mut().unwrap())));
+
+}
+
+pub unsafe fn newNode2() -> Option<Box<Node>> {
+    let mut new_node = Some(Box::new(<crate::src::llist::Node as Default>::default()));
+    let mut next = Some(Box::new(<crate::src::llist::Node as Default>::default()));
+
+    (*next.as_deref_mut().unwrap()).data= 3;
+    (*next.as_deref_mut().unwrap()).next= None;
+
+    (*new_node.as_deref_mut().unwrap()).data= 2;
+    (*new_node.as_deref_mut().unwrap()).next= next;
+
+    return new_node
+}
