@@ -10,6 +10,7 @@ pub fn rewrite_structs(
     struct_decision: &StructFields,
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt,
+    type_reconstruction: bool,
 ) -> anyhow::Result<()> {
     use std::fmt::Write;
 
@@ -24,7 +25,14 @@ pub fn rewrite_structs(
             "\nimpl Default for {} {{fn default() -> Self {{Self {{",
             item.ident
         )?;
-        rewrite_struct(item, fields_data, &mut default_impl_block, rewriter, tcx)?;
+        rewrite_struct(
+            item,
+            fields_data,
+            &mut default_impl_block,
+            rewriter,
+            tcx,
+            type_reconstruction,
+        )?;
 
         writeln!(default_impl_block, "}}}}}}").unwrap();
 
@@ -56,20 +64,26 @@ pub fn rewrite_structs(
     Ok(())
 }
 
-pub fn rewrite_struct(
-    r#struct: &Item,
+pub fn rewrite_struct<'hir>(
+    r#struct: &Item<'hir>,
     decision: &[SmallVec<[PointerKind; 3]>],
     default_impl_body: &mut String,
     rewriter: &mut impl Rewrite,
-    tcx: TyCtxt,
+    tcx: TyCtxt<'hir>,
+    type_reconstruction: bool,
 ) -> anyhow::Result<()> {
     use std::fmt::Write;
 
     let ItemKind::Struct(variant_data, _generics) = &r#struct.kind else { panic!() };
     for (field, decision) in itertools::izip!(variant_data.fields(), decision) {
-        rewrite_hir_ty(field.ty, decision, rewriter, tcx);
+        rewrite_hir_ty(field.ty, decision, rewriter, tcx, type_reconstruction);
+        // let field_ty = try_dealias(field.ty, tcx).unwrap_or(field.ty);
+        let mut field_ty = field.ty;
+        while let Some(ty) = try_dealias(field_ty, tcx) {
+            field_ty = ty;
+        }
 
-        if let rustc_hir::TyKind::Ptr(pointee) = &field.ty.kind {
+        if let rustc_hir::TyKind::Ptr(pointee) = &field_ty.kind {
             let decision = decision.first().unwrap();
             if decision.is_raw() {
                 match pointee.mutbl {
@@ -126,13 +140,81 @@ pub fn rewrite_outermost_ptr_ty(
     }
 }
 
-pub fn rewrite_hir_ty(
-    ty: &rustc_hir::Ty,
+fn try_dealias<'hir>(
+    ty: &rustc_hir::Ty<'hir>,
+    tcx: TyCtxt<'hir>,
+) -> Option<&'hir rustc_hir::Ty<'hir>> {
+    if let rustc_hir::TyKind::Path(rustc_hir::QPath::Resolved(_, path)) = ty.kind {
+        let res = path.res;
+        if let rustc_hir::def::Res::Def(rustc_hir::def::DefKind::TyAlias, did) = res {
+            if let Some(local_did) = did.as_local() {
+                let item = tcx
+                    .hir()
+                    .get_by_def_id(local_did)
+                    .as_owner()
+                    .unwrap()
+                    .expect_item();
+                let rustc_hir::ItemKind::TyAlias(aliased_ty, _) = &item.kind else { unreachable!() };
+                return Some(*aliased_ty);
+            }
+        }
+    }
+    None
+}
+
+fn retype<'hir>(ty: &rustc_hir::Ty<'hir>, decision: &[PointerKind], tcx: TyCtxt<'hir>) -> String {
+    use rustc_hir as hir;
+    match ty.kind {
+        hir::TyKind::Slice(ty) => {
+            format!("[{}]", retype(ty, decision, tcx))
+        }
+        hir::TyKind::Ptr(ref mt) => match decision[0] {
+            PointerKind::Move => {
+                format!("Option<Box<{}>>", retype(mt.ty, &decision[1..], tcx))
+            }
+            PointerKind::Mut => {
+                format!("Option<&mut {}>", retype(mt.ty, &decision[1..], tcx))
+            }
+            PointerKind::Const => {
+                format!("Option<& {}>", retype(mt.ty, &decision[1..], tcx))
+            }
+            PointerKind::Raw(RawMeta::Const) => {
+                format!("*const {}", retype(mt.ty, &decision[1..], tcx))
+            }
+            PointerKind::Raw(..) => {
+                format!("*mut {}", retype(mt.ty, &decision[1..], tcx))
+            }
+        },
+        hir::TyKind::Path(ref qpath) => {
+            if let Some(aliased_ty) = try_dealias(ty, tcx) {
+                return retype(aliased_ty, decision, tcx);
+            }
+            rustc_hir_pretty::qpath_to_string(qpath)
+        }
+        hir::TyKind::Array(ty, ref length) => {
+            let hir::ArrayLen::Body(constant) = length else { unreachable!()};
+            format!(
+                "[{}; {}]",
+                retype(ty, decision, tcx),
+                rustc_hir_pretty::id_to_string(&tcx.hir(), constant.hir_id)
+            )
+        }
+        _ => unreachable!(),
+    }
+}
+
+pub fn rewrite_hir_ty<'hir>(
+    ty: &rustc_hir::Ty<'hir>,
     decision: &[PointerKind],
     rewriter: &mut impl Rewrite,
-    tcx: TyCtxt,
+    tcx: TyCtxt<'hir>,
+    type_reconstruction: bool,
 ) {
-    for (raw_ptr_ty, &decision) in itertools::izip!(ty.walk_ptr(), decision) {
-        rewrite_outermost_ptr_ty(raw_ptr_ty, decision, rewriter, tcx);
+    if type_reconstruction {
+        rewriter.replace(tcx, ty.span, retype(ty, decision, tcx))
+    } else {
+        for (raw_ptr_ty, &decision) in itertools::izip!(ty.walk_ptr(), decision) {
+            rewrite_outermost_ptr_ty(raw_ptr_ty, decision, rewriter, tcx);
+        }
     }
 }

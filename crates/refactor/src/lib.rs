@@ -54,6 +54,8 @@ pub struct RefactorOptions {
     pub verbose: bool,
     /// attempt to rewrite const reference
     pub const_reference: bool,
+    /// reconstruct every type it visits
+    pub type_reconstruction: bool,
 }
 
 pub fn refactor<'tcx>(
@@ -72,6 +74,7 @@ pub fn refactor<'tcx>(
             &fn_decision,
             &struct_decision,
             options.type_only,
+            options.type_reconstruction,
             &mut rewriter,
         )?;
         rewriter.write(rewrite_mode);
@@ -83,6 +86,7 @@ pub fn refactor<'tcx>(
             &fn_decision,
             &struct_decision,
             options.type_only,
+            options.type_reconstruction,
             &mut rewriter,
         )?;
 
@@ -97,6 +101,7 @@ fn rewrite(
     fn_decision: &FnLocals,
     struct_decision: &StructFields,
     type_only: bool,
+    type_reconstruction: bool,
     rewriter: &mut impl Rewrite,
 ) -> anyhow::Result<()> {
     rewrite_structs(
@@ -104,6 +109,7 @@ fn rewrite(
         &struct_decision,
         rewriter,
         crate_data.tcx,
+        type_reconstruction,
     )?;
 
     rewrite_fns(
@@ -113,6 +119,7 @@ fn rewrite(
         rewriter,
         crate_data.tcx,
         type_only,
+        type_reconstruction,
     );
 
     Ok(())

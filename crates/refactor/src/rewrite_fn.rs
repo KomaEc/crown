@@ -33,11 +33,12 @@ pub fn rewrite_fns(
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt,
     type_only: bool,
+    type_reconstruction: bool,
 ) {
     for &did in fns {
         let local_data = fn_decision.local_data(&did);
         let body = tcx.optimized_mir(did);
-        rewrite_fn_sig(body, local_data, rewriter, tcx);
+        rewrite_fn_sig(body, local_data, rewriter, tcx, type_reconstruction);
         if !type_only {
             rewrite_fn(
                 body,
@@ -56,16 +57,17 @@ fn rewrite_fn_sig<'tcx>(
     decision: &[SmallVec<[PointerKind; 3]>],
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt<'tcx>,
+    type_reconstruction: bool,
 ) {
     let fn_item = tcx.hir().expect_item(body.source.def_id().expect_local());
     let ItemKind::Fn(fn_sig, _, _) = &fn_item.kind else { unreachable!() };
 
     if let rustc_hir::FnRetTy::Return(ret_ty) = fn_sig.decl.output {
-        rewrite_hir_ty(ret_ty, &decision[0], rewriter, tcx);
+        rewrite_hir_ty(ret_ty, &decision[0], rewriter, tcx, type_reconstruction);
     }
 
     for (ty, decision) in itertools::izip!(fn_sig.decl.inputs, &decision[1..]) {
-        rewrite_hir_ty(ty, decision, rewriter, tcx);
+        rewrite_hir_ty(ty, decision, rewriter, tcx, type_reconstruction);
     }
 }
 
