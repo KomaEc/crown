@@ -136,6 +136,10 @@ pub fn rewrite_outermost_ptr_ty(
             let qualifier_span = ty.span.until(pointee.ty.span);
             rewriter.replace(tcx, qualifier_span, "*const ".to_owned());
         }
+        PointerKind::Raw(RawMeta::Move) => {
+            let qualifier_span = ty.span.until(pointee.ty.span);
+            rewriter.replace(tcx, qualifier_span, "*mut /* owning */ ".to_owned());
+        }
         PointerKind::Raw(..) => {}
     }
 }
@@ -181,7 +185,10 @@ fn retype<'hir>(ty: &rustc_hir::Ty<'hir>, decision: &[PointerKind], tcx: TyCtxt<
             PointerKind::Raw(RawMeta::Const) => {
                 format!("*const {}", retype(mt.ty, &decision[1..], tcx))
             }
-            PointerKind::Raw(..) => {
+            PointerKind::Raw(RawMeta::Move) => {
+                format!("*mut /* owning */ {}", retype(mt.ty, &decision[1..], tcx))
+            }
+            PointerKind::Raw(RawMeta::Mut) => {
                 format!("*mut {}", retype(mt.ty, &decision[1..], tcx))
             }
         },
