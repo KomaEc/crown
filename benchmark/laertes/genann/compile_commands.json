@@ -1,0 +1,68 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-o",
+            "genann.o",
+            "genann.c"
+        ],
+        "directory": "/Users/emre/lab/c2rust/examples/genann/repo",
+        "file": "genann.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-o",
+            "example1.o",
+            "example1.c"
+        ],
+        "directory": "/Users/emre/lab/c2rust/examples/genann/repo",
+        "file": "example1.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-o",
+            "test.o",
+            "test.c"
+        ],
+        "directory": "/Users/emre/lab/c2rust/examples/genann/repo",
+        "file": "test.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-o",
+            "example4.o",
+            "example4.c"
+        ],
+        "directory": "/Users/emre/lab/c2rust/examples/genann/repo",
+        "file": "example4.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-o",
+            "example3.o",
+            "example3.c"
+        ],
+        "directory": "/Users/emre/lab/c2rust/examples/genann/repo",
+        "file": "example3.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-o",
+            "example2.o",
+            "example2.c"
+        ],
+        "directory": "/Users/emre/lab/c2rust/examples/genann/repo",
+        "file": "example2.c"
+    }
+]
