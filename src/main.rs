@@ -72,13 +72,13 @@ enum Command {
     Rewrite {
         #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
-        #[clap(long, short)]
+        #[clap(long)]
         type_only: bool,
         #[clap(long, short)]
         verbose: bool,
-        #[clap(long, short)]
+        #[clap(long)]
         const_reference: bool,
-        #[clap(long, short)]
+        #[clap(long)]
         type_reconstruction: bool,
     },
     VerifyRustcProperties,
