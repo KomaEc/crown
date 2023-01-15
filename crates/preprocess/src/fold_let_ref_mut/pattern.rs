@@ -262,7 +262,7 @@ fn assign_value_in_condition(caps: &regex::Captures<'_>) -> String {
 const ASSIGN_TWO_LINES: Pattern = Pattern {
     pattern: concat!(
         r"let ref mut fresh(?P<version1>[0-9]+)[\s|\n]*=[\s|\n]*(?P<lhs>[^;]+);",
-        r"[\s|\n]*\*fresh(?P<version2>[0-9]+)[\s|\n]*(?P<assignop>[&|\^|\+|-|\*|/|%|\|]*=)[\s|\n]*(?P<rhs>[^;]+);"
+        r"[\s|\n]*\*fresh(?P<version2>[0-9]+)[\s|\n]*(?P<assignop>[&|\^|\+|\-|\*|/|%|\|]*=)[\s|\n]*(?P<rhs>[^;]+);"
     ),
     replacer: assign_two_lines,
 };
