@@ -72,76 +72,28 @@ pub type fpos_t = __darwin_off_t;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor4;
-impl Default for ErasedByPreprocessor4 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor5;
-impl Default for ErasedByPreprocessor5 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type FILE = crate::blocksort::__sFILE;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor6;
-impl Default for ErasedByPreprocessor6 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor7;
-impl Default for ErasedByPreprocessor7 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor8;
-impl Default for ErasedByPreprocessor8 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor9;
-impl Default for ErasedByPreprocessor9 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor10;
-impl Default for ErasedByPreprocessor10 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor11;
-impl Default for ErasedByPreprocessor11 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type UInt32 = std::os::raw::c_uint;
 pub type Int32 = std::os::raw::c_int;
 pub type UChar = std::os::raw::c_uchar;
@@ -211,81 +163,10 @@ pub struct DState {
     pub save_zj: Int32,
     pub save_gSel: Int32,
     pub save_gMinlen: Int32,
-    pub save_gLimit: *const Int32,
-    pub save_gBase: *const Int32,
-    pub save_gPerm: *const Int32,
+    pub save_gLimit: *mut Int32,
+    pub save_gBase: *mut Int32,
+    pub save_gPerm: *mut Int32,
 }
-impl Default for DState {
-    fn default() -> Self {
-        Self {
-            strm: std::ptr::null_mut(),
-            state: Default::default(),
-            state_out_ch: Default::default(),
-            state_out_len: Default::default(),
-            blockRandomised: Default::default(),
-            rNToGo: Default::default(),
-            rTPos: Default::default(),
-            bsBuff: Default::default(),
-            bsLive: Default::default(),
-            blockSize100k: Default::default(),
-            smallDecompress: Default::default(),
-            currBlockNo: Default::default(),
-            verbosity: Default::default(),
-            origPtr: Default::default(),
-            tPos: Default::default(),
-            k0: Default::default(),
-            unzftab: Default::default(),
-            nblock_used: Default::default(),
-            cftab: Default::default(),
-            cftabCopy: Default::default(),
-            tt: std::ptr::null_mut(),
-            ll16: std::ptr::null_mut(),
-            ll4: std::ptr::null_mut(),
-            storedBlockCRC: Default::default(),
-            storedCombinedCRC: Default::default(),
-            calculatedBlockCRC: Default::default(),
-            calculatedCombinedCRC: Default::default(),
-            nInUse: Default::default(),
-            inUse: Default::default(),
-            inUse16: Default::default(),
-            seqToUnseq: Default::default(),
-            mtfa: Default::default(),
-            mtfbase: Default::default(),
-            selector: Default::default(),
-            selectorMtf: Default::default(),
-            len: Default::default(),
-            limit: Default::default(),
-            base: Default::default(),
-            perm: Default::default(),
-            minLens: Default::default(),
-            save_i: Default::default(),
-            save_j: Default::default(),
-            save_t: Default::default(),
-            save_alphaSize: Default::default(),
-            save_nGroups: Default::default(),
-            save_nSelectors: Default::default(),
-            save_EOB: Default::default(),
-            save_groupNo: Default::default(),
-            save_groupPos: Default::default(),
-            save_nextSym: Default::default(),
-            save_nblockMAX: Default::default(),
-            save_nblock: Default::default(),
-            save_es: Default::default(),
-            save_N: Default::default(),
-            save_curr: Default::default(),
-            save_zt: Default::default(),
-            save_zn: Default::default(),
-            save_zvec: Default::default(),
-            save_zj: Default::default(),
-            save_gSel: Default::default(),
-            save_gMinlen: Default::default(),
-            save_gLimit: std::ptr::null_mut(),
-            save_gBase: std::ptr::null_mut(),
-            save_gPerm: std::ptr::null_mut(),
-        }
-    }
-}
-
 pub type BZFILE = ();
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -298,20 +179,6 @@ pub struct bzFile {
     pub lastErr: Int32,
     pub initialisedOk: Bool,
 }
-impl Default for bzFile {
-    fn default() -> Self {
-        Self {
-            handle: std::ptr::null_mut(),
-            buf: Default::default(),
-            bufN: Default::default(),
-            writing: Default::default(),
-            strm: Default::default(),
-            lastErr: Default::default(),
-            initialisedOk: Default::default(),
-        }
-    }
-}
-
 pub type Char = std::os::raw::c_char;
 #[inline]
 unsafe extern "C" fn __isctype(
@@ -397,43 +264,43 @@ unsafe extern "C" fn bz_config_ok() -> std::os::raw::c_int {
 }
 /*---------------------------------------------------*/
 unsafe extern "C" fn default_bzalloc(
-    mut opaque: *const std::os::raw::c_void,
+    mut opaque: *mut std::os::raw::c_void,
     mut items: Int32,
     mut size: Int32,
-) -> Option<Box<std::os::raw::c_void>> {
+) -> *mut std::os::raw::c_void {
     let mut v: *mut std::os::raw::c_void = malloc((items * size) as std::os::raw::c_ulong);
     return v;
 }
 unsafe extern "C" fn default_bzfree(
-    mut opaque: *const std::os::raw::c_void,
-    mut addr: Option<Box<std::os::raw::c_void>>,
+    mut opaque: *mut std::os::raw::c_void,
+    mut addr: *mut std::os::raw::c_void,
 ) {
-    if !addr.as_deref().is_none() {
-        ();
+    if !addr.is_null() {
+        free(addr);
     } else {
-        ();
+        std::intrinsics::assume(addr as usize == 0);
     };
 }
 /*---------------------------------------------------*/
-unsafe extern "C" fn prepare_new_block(mut s: Option<&mut crate::blocksort::EState>) {
+unsafe extern "C" fn prepare_new_block(mut s: *mut crate::blocksort::EState) {
     let mut i: Int32 = 0;
-    (*s.as_deref_mut().unwrap()).nblock = 0 as std::os::raw::c_int;
-    (*s.as_deref_mut().unwrap()).numZ = 0 as std::os::raw::c_int;
-    (*s.as_deref_mut().unwrap()).state_out_pos = 0 as std::os::raw::c_int;
-    (*s.as_deref_mut().unwrap()).blockCRC = 0xffffffff as std::os::raw::c_long as UInt32;
+    (*s).nblock = 0 as std::os::raw::c_int;
+    (*s).numZ = 0 as std::os::raw::c_int;
+    (*s).state_out_pos = 0 as std::os::raw::c_int;
+    (*s).blockCRC = 0xffffffff as std::os::raw::c_long as UInt32;
     i = 0 as std::os::raw::c_int;
     while i < 256 as std::os::raw::c_int {
-        (*s.as_deref_mut().unwrap()).inUse[i as usize] = 0 as std::os::raw::c_int as Bool;
+        (*s).inUse[i as usize] = 0 as std::os::raw::c_int as Bool;
         i += 1
     }
     (*s).blockNo += 1;
 }
 /*---------------------------------------------------*/
-unsafe extern "C" fn init_RL(mut s: Option<&mut crate::blocksort::EState>) {
-    (*s.as_deref_mut().unwrap()).state_in_ch = 256 as std::os::raw::c_int as UInt32;
-    (*s.as_deref_mut().unwrap()).state_in_len = 0 as std::os::raw::c_int;
+unsafe extern "C" fn init_RL(mut s: *mut crate::blocksort::EState) {
+    (*s).state_in_ch = 256 as std::os::raw::c_int as UInt32;
+    (*s).state_in_len = 0 as std::os::raw::c_int;
 }
-unsafe extern "C" fn isempty_RL(mut s: *const crate::blocksort::EState) -> Bool {
+unsafe extern "C" fn isempty_RL(mut s: *mut crate::blocksort::EState) -> Bool {
     if (*s).state_in_ch < 256 as std::os::raw::c_int as std::os::raw::c_uint
         && (*s).state_in_len > 0 as std::os::raw::c_int
     {
@@ -492,7 +359,7 @@ pub unsafe extern "C" fn BZ2_bzCompressInit(
         1 as std::os::raw::c_int,
     ) as *mut crate::blocksort::EState;
     if s.is_null() {
-        ();
+        std::intrinsics::assume(s as usize == 0);
         return -(3 as std::os::raw::c_int);
     }
     (*s).strm = strm;
@@ -531,7 +398,7 @@ pub unsafe extern "C" fn BZ2_bzCompressInit(
                 (*s).arr1 as *mut std::os::raw::c_void,
             );
         } else {
-            ();
+            std::intrinsics::assume((*s).arr1 as usize == 0);
         }
         if !(*s).arr2.is_null() {
             (*strm).bzfree.expect("non-null function pointer")(
@@ -539,7 +406,7 @@ pub unsafe extern "C" fn BZ2_bzCompressInit(
                 (*s).arr2 as *mut std::os::raw::c_void,
             );
         } else {
-            ();
+            std::intrinsics::assume((*s).arr2 as usize == 0);
         }
         if !(*s).ftab.is_null() {
             (*strm).bzfree.expect("non-null function pointer")(
@@ -547,7 +414,7 @@ pub unsafe extern "C" fn BZ2_bzCompressInit(
                 (*s).ftab as *mut std::os::raw::c_void,
             );
         } else {
-            ();
+            std::intrinsics::assume((*s).ftab as usize == 0);
         }
         if !s.is_null() {
             (*strm).bzfree.expect("non-null function pointer")(
@@ -555,7 +422,7 @@ pub unsafe extern "C" fn BZ2_bzCompressInit(
                 s as *mut std::os::raw::c_void,
             );
         } else {
-            ();
+            std::intrinsics::assume(s as usize == 0);
         }
         return -(3 as std::os::raw::c_int);
     }
@@ -576,8 +443,8 @@ pub unsafe extern "C" fn BZ2_bzCompressInit(
     (*strm).total_in_hi32 = 0 as std::os::raw::c_int as std::os::raw::c_uint;
     (*strm).total_out_lo32 = 0 as std::os::raw::c_int as std::os::raw::c_uint;
     (*strm).total_out_hi32 = 0 as std::os::raw::c_int as std::os::raw::c_uint;
-    init_RL(s.as_mut());
-    prepare_new_block(s.as_mut());
+    init_RL(s);
+    prepare_new_block(s);
     return 0 as std::os::raw::c_int;
 }
 /*---------------------------------------------------*/
@@ -629,15 +496,11 @@ unsafe extern "C" fn add_pair_to_block(mut s: *mut crate::blocksort::EState) {
     };
 }
 /*---------------------------------------------------*/
-unsafe extern "C" fn flush_RL(mut s: Option<&mut crate::blocksort::EState>) {
-    if (*s.as_deref().unwrap()).state_in_ch < 256 as std::os::raw::c_int as std::os::raw::c_uint {
-        add_pair_to_block(
-            s.as_deref_mut()
-                .map(|r| r as *mut _)
-                .unwrap_or(std::ptr::null_mut()),
-        );
+unsafe extern "C" fn flush_RL(mut s: *mut crate::blocksort::EState) {
+    if (*s).state_in_ch < 256 as std::os::raw::c_int as std::os::raw::c_uint {
+        add_pair_to_block(s);
     }
-    init_RL(s.as_deref_mut());
+    init_RL(s);
 }
 /*---------------------------------------------------*/
 /*-- fast track the common case --*/
@@ -776,7 +639,7 @@ unsafe extern "C" fn handle_compress(mut strm: *mut crate::blocksort::bz_stream)
             {
                 break;
             }
-            prepare_new_block(s.as_mut());
+            prepare_new_block(s);
             (*s).state = 2 as std::os::raw::c_int;
             if (*s).mode == 3 as std::os::raw::c_int
                 && (*s).avail_in_expect == 0 as std::os::raw::c_int as std::os::raw::c_uint
@@ -793,7 +656,7 @@ unsafe extern "C" fn handle_compress(mut strm: *mut crate::blocksort::bz_stream)
         if (*s).mode != 2 as std::os::raw::c_int
             && (*s).avail_in_expect == 0 as std::os::raw::c_int as std::os::raw::c_uint
         {
-            flush_RL(s.as_mut());
+            flush_RL(s);
             crate::compress::BZ2_compressBlock(
                 s,
                 ((*s).mode == 4 as std::os::raw::c_int) as std::os::raw::c_int as Bool,
@@ -818,12 +681,12 @@ pub unsafe extern "C" fn BZ2_bzCompress(
     let mut progress: Bool = 0;
     let mut s: *mut crate::blocksort::EState = 0 as *mut crate::blocksort::EState;
     if strm.is_null() {
-        ();
+        std::intrinsics::assume(strm as usize == 0);
         return -(2 as std::os::raw::c_int);
     }
     s = (*strm).state as *mut crate::blocksort::EState;
     if s.is_null() {
-        ();
+        std::intrinsics::assume(s as usize == 0);
         return -(2 as std::os::raw::c_int);
     }
     if (*s).strm != strm {
@@ -899,12 +762,12 @@ pub unsafe extern "C" fn BZ2_bzCompressEnd(
 ) -> std::os::raw::c_int {
     let mut s: *mut crate::blocksort::EState = 0 as *mut crate::blocksort::EState;
     if strm.is_null() {
-        ();
+        std::intrinsics::assume(strm as usize == 0);
         return -(2 as std::os::raw::c_int);
     }
     s = (*strm).state as *mut crate::blocksort::EState;
     if s.is_null() {
-        ();
+        std::intrinsics::assume(s as usize == 0);
         return -(2 as std::os::raw::c_int);
     }
     if (*s).strm != strm {
@@ -916,7 +779,7 @@ pub unsafe extern "C" fn BZ2_bzCompressEnd(
             (*s).arr1 as *mut std::os::raw::c_void,
         );
     } else {
-        ();
+        std::intrinsics::assume((*s).arr1 as usize == 0);
     }
     if !(*s).arr2.is_null() {
         (*strm).bzfree.expect("non-null function pointer")(
@@ -924,7 +787,7 @@ pub unsafe extern "C" fn BZ2_bzCompressEnd(
             (*s).arr2 as *mut std::os::raw::c_void,
         );
     } else {
-        ();
+        std::intrinsics::assume((*s).arr2 as usize == 0);
     }
     if !(*s).ftab.is_null() {
         (*strm).bzfree.expect("non-null function pointer")(
@@ -932,7 +795,7 @@ pub unsafe extern "C" fn BZ2_bzCompressEnd(
             (*s).ftab as *mut std::os::raw::c_void,
         );
     } else {
-        ();
+        std::intrinsics::assume((*s).ftab as usize == 0);
     }
     (*strm).bzfree.expect("non-null function pointer")((*strm).opaque, (*strm).state);
     (*strm).state = 0 as *mut std::os::raw::c_void;
@@ -953,7 +816,7 @@ pub unsafe extern "C" fn BZ2_bzDecompressInit(
         return -(9 as std::os::raw::c_int);
     }
     if strm.is_null() {
-        ();
+        std::intrinsics::assume(strm as usize == 0);
         return -(2 as std::os::raw::c_int);
     }
     if small != 0 as std::os::raw::c_int && small != 1 as std::os::raw::c_int {
@@ -987,7 +850,7 @@ pub unsafe extern "C" fn BZ2_bzDecompressInit(
         1 as std::os::raw::c_int,
     ) as *mut DState;
     if s.is_null() {
-        ();
+        std::intrinsics::assume(s as usize == 0);
         return -(3 as std::os::raw::c_int);
     }
     (*s).strm = strm;
@@ -1379,7 +1242,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
 #[no_mangle]
 #[inline]
 #[linkage = "external"]
-pub unsafe extern "C" fn BZ2_indexIntoF(mut indx: Int32, mut cftab: *const Int32) -> Int32 {
+pub unsafe extern "C" fn BZ2_indexIntoF(mut indx: Int32, mut cftab: *mut Int32) -> Int32 {
     let mut nb: Int32 = 0;
     let mut na: Int32 = 0;
     let mut mid: Int32 = 0;
@@ -1770,12 +1633,12 @@ pub unsafe extern "C" fn BZ2_bzDecompress(
     let mut corrupt: Bool = 0;
     let mut s: *mut DState = 0 as *mut DState;
     if strm.is_null() {
-        ();
+        std::intrinsics::assume(strm as usize == 0);
         return -(2 as std::os::raw::c_int);
     }
     s = (*strm).state as *mut DState;
     if s.is_null() {
-        ();
+        std::intrinsics::assume(s as usize == 0);
         return -(2 as std::os::raw::c_int);
     }
     if (*s).strm != strm {
@@ -1858,12 +1721,12 @@ pub unsafe extern "C" fn BZ2_bzDecompressEnd(
 ) -> std::os::raw::c_int {
     let mut s: *mut DState = 0 as *mut DState;
     if strm.is_null() {
-        ();
+        std::intrinsics::assume(strm as usize == 0);
         return -(2 as std::os::raw::c_int);
     }
     s = (*strm).state as *mut DState;
     if s.is_null() {
-        ();
+        std::intrinsics::assume(s as usize == 0);
         return -(2 as std::os::raw::c_int);
     }
     if (*s).strm != strm {
@@ -1875,7 +1738,7 @@ pub unsafe extern "C" fn BZ2_bzDecompressEnd(
             (*s).tt as *mut std::os::raw::c_void,
         );
     } else {
-        ();
+        std::intrinsics::assume((*s).tt as usize == 0);
     }
     if !(*s).ll16.is_null() {
         (*strm).bzfree.expect("non-null function pointer")(
@@ -1883,7 +1746,7 @@ pub unsafe extern "C" fn BZ2_bzDecompressEnd(
             (*s).ll16 as *mut std::os::raw::c_void,
         );
     } else {
-        ();
+        std::intrinsics::assume((*s).ll16 as usize == 0);
     }
     if !(*s).ll4.is_null() {
         (*strm).bzfree.expect("non-null function pointer")(
@@ -1891,7 +1754,7 @@ pub unsafe extern "C" fn BZ2_bzDecompressEnd(
             (*s).ll4 as *mut std::os::raw::c_void,
         );
     } else {
-        ();
+        std::intrinsics::assume((*s).ll4 as usize == 0);
     }
     (*strm).bzfree.expect("non-null function pointer")((*strm).opaque, (*strm).state);
     (*strm).state = 0 as *mut std::os::raw::c_void;
@@ -1920,12 +1783,12 @@ pub unsafe extern "C" fn BZ2_bzWriteOpen(
     if !bzerror.is_null() {
         *bzerror = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzerror as usize == 0);
     }
     if !bzf.is_null() {
         (*bzf).lastErr = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzf as usize == 0);
     }
     if f.is_null()
         || (blockSize100k < 1 as std::os::raw::c_int || blockSize100k > 9 as std::os::raw::c_int)
@@ -1935,12 +1798,12 @@ pub unsafe extern "C" fn BZ2_bzWriteOpen(
         if !bzerror.is_null() {
             *bzerror = -(2 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(2 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return 0 as *mut std::os::raw::c_void;
     }
@@ -1948,39 +1811,39 @@ pub unsafe extern "C" fn BZ2_bzWriteOpen(
         if !bzerror.is_null() {
             *bzerror = -(6 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(6 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return 0 as *mut std::os::raw::c_void;
     }
     bzf = malloc(::std::mem::size_of::<bzFile>() as std::os::raw::c_ulong) as *mut bzFile;
     if bzf.is_null() {
-        ();
+        std::intrinsics::assume(bzf as usize == 0);
         if !bzerror.is_null() {
             *bzerror = -(3 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(3 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return 0 as *mut std::os::raw::c_void;
     }
     if !bzerror.is_null() {
         *bzerror = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzerror as usize == 0);
     }
     if !bzf.is_null() {
         (*bzf).lastErr = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzf as usize == 0);
     }
     (*bzf).initialisedOk = 0 as std::os::raw::c_int as Bool;
     (*bzf).bufN = 0 as std::os::raw::c_int;
@@ -1997,12 +1860,12 @@ pub unsafe extern "C" fn BZ2_bzWriteOpen(
         if !bzerror.is_null() {
             *bzerror = ret
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = ret
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         free(bzf as *mut std::os::raw::c_void);
         return 0 as *mut std::os::raw::c_void;
@@ -2014,74 +1877,74 @@ pub unsafe extern "C" fn BZ2_bzWriteOpen(
 /*---------------------------------------------------*/
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzWrite(
-    mut bzerror: Option<&mut std::os::raw::c_int>,
+    mut bzerror: *mut std::os::raw::c_int,
     mut b: *mut std::os::raw::c_void,
-    mut buf: *const std::os::raw::c_void,
+    mut buf: *mut std::os::raw::c_void,
     mut len: std::os::raw::c_int,
 ) {
     let mut n: Int32 = 0;
     let mut n2: Int32 = 0;
     let mut ret: Int32 = 0;
     let mut bzf: *mut bzFile = b as *mut bzFile;
-    if !bzerror.as_deref().is_none() {
-        *bzerror.as_deref_mut().unwrap() = 0 as std::os::raw::c_int
+    if !bzerror.is_null() {
+        *bzerror = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzerror as usize == 0);
     }
     if !bzf.is_null() {
         (*bzf).lastErr = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzf as usize == 0);
     }
     if bzf.is_null() || buf.is_null() || len < 0 as std::os::raw::c_int {
-        if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(2 as std::os::raw::c_int)
+        if !bzerror.is_null() {
+            *bzerror = -(2 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(2 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return;
     }
     if (*bzf).writing == 0 {
-        if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(1 as std::os::raw::c_int)
+        if !bzerror.is_null() {
+            *bzerror = -(1 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(1 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return;
     }
     if ferror((*bzf).handle) != 0 {
-        if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(6 as std::os::raw::c_int)
+        if !bzerror.is_null() {
+            *bzerror = -(6 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(6 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return;
     }
     if len == 0 as std::os::raw::c_int {
-        if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = 0 as std::os::raw::c_int
+        if !bzerror.is_null() {
+            *bzerror = 0 as std::os::raw::c_int
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = 0 as std::os::raw::c_int
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return;
     }
@@ -2092,15 +1955,15 @@ pub unsafe extern "C" fn BZ2_bzWrite(
         (*bzf).strm.next_out = (*bzf).buf.as_mut_ptr();
         ret = BZ2_bzCompress(&mut (*bzf).strm, 0 as std::os::raw::c_int);
         if ret != 1 as std::os::raw::c_int {
-            if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = ret
+            if !bzerror.is_null() {
+                *bzerror = ret
             } else {
-                ();
+                std::intrinsics::assume(bzerror as usize == 0);
             }
             if !bzf.is_null() {
                 (*bzf).lastErr = ret
             } else {
-                ();
+                std::intrinsics::assume(bzf as usize == 0);
             }
             return;
         }
@@ -2114,29 +1977,29 @@ pub unsafe extern "C" fn BZ2_bzWrite(
                 (*bzf).handle,
             ) as Int32;
             if n != n2 || ferror((*bzf).handle) != 0 {
-                if !bzerror.as_deref().is_none() {
-                    *bzerror.as_deref_mut().unwrap() = -(6 as std::os::raw::c_int)
+                if !bzerror.is_null() {
+                    *bzerror = -(6 as std::os::raw::c_int)
                 } else {
-                    ();
+                    std::intrinsics::assume(bzerror as usize == 0);
                 }
                 if !bzf.is_null() {
                     (*bzf).lastErr = -(6 as std::os::raw::c_int)
                 } else {
-                    ();
+                    std::intrinsics::assume(bzf as usize == 0);
                 }
                 return;
             }
         }
         if (*bzf).strm.avail_in == 0 as std::os::raw::c_int as std::os::raw::c_uint {
-            if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = 0 as std::os::raw::c_int
+            if !bzerror.is_null() {
+                *bzerror = 0 as std::os::raw::c_int
             } else {
-                ();
+                std::intrinsics::assume(bzerror as usize == 0);
             }
             if !bzf.is_null() {
                 (*bzf).lastErr = 0 as std::os::raw::c_int
             } else {
-                ();
+                std::intrinsics::assume(bzf as usize == 0);
             }
             return;
         }
@@ -2145,30 +2008,19 @@ pub unsafe extern "C" fn BZ2_bzWrite(
 /*---------------------------------------------------*/
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzWriteClose(
-    mut bzerror: Option<&mut std::os::raw::c_int>,
-    mut b: Option<&mut std::os::raw::c_void>,
+    mut bzerror: *mut std::os::raw::c_int,
+    mut b: *mut std::os::raw::c_void,
     mut abandon: std::os::raw::c_int,
-    mut nbytes_in: Option<&mut std::os::raw::c_uint>,
-    mut nbytes_out: Option<&mut std::os::raw::c_uint>,
+    mut nbytes_in: *mut std::os::raw::c_uint,
+    mut nbytes_out: *mut std::os::raw::c_uint,
 ) {
     BZ2_bzWriteClose64(
-        bzerror
-            .as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
-        b.as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
+        bzerror,
+        b,
         abandon,
-        nbytes_in
-            .as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
+        nbytes_in,
         0 as *mut std::os::raw::c_uint,
-        nbytes_out
-            .as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
+        nbytes_out,
         0 as *mut std::os::raw::c_uint,
     );
 }
@@ -2187,16 +2039,16 @@ pub unsafe extern "C" fn BZ2_bzWriteClose64(
     let mut ret: Int32 = 0;
     let mut bzf: *mut bzFile = b as *mut bzFile;
     if bzf.is_null() {
-        ();
+        std::intrinsics::assume(bzf as usize == 0);
         if !bzerror.is_null() {
             *bzerror = 0 as std::os::raw::c_int
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = 0 as std::os::raw::c_int
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return;
     }
@@ -2204,12 +2056,12 @@ pub unsafe extern "C" fn BZ2_bzWriteClose64(
         if !bzerror.is_null() {
             *bzerror = -(1 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(1 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return;
     }
@@ -2217,34 +2069,34 @@ pub unsafe extern "C" fn BZ2_bzWriteClose64(
         if !bzerror.is_null() {
             *bzerror = -(6 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(6 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return;
     }
     if !nbytes_in_lo32.is_null() {
         *nbytes_in_lo32 = 0 as std::os::raw::c_int as std::os::raw::c_uint
     } else {
-        ();
+        std::intrinsics::assume(nbytes_in_lo32 as usize == 0);
     }
     if !nbytes_in_hi32.is_null() {
         *nbytes_in_hi32 = 0 as std::os::raw::c_int as std::os::raw::c_uint
     } else {
-        ();
+        std::intrinsics::assume(nbytes_in_hi32 as usize == 0);
     }
     if !nbytes_out_lo32.is_null() {
         *nbytes_out_lo32 = 0 as std::os::raw::c_int as std::os::raw::c_uint
     } else {
-        ();
+        std::intrinsics::assume(nbytes_out_lo32 as usize == 0);
     }
     if !nbytes_out_hi32.is_null() {
         *nbytes_out_hi32 = 0 as std::os::raw::c_int as std::os::raw::c_uint
     } else {
-        ();
+        std::intrinsics::assume(nbytes_out_hi32 as usize == 0);
     }
     if abandon == 0 && (*bzf).lastErr == 0 as std::os::raw::c_int {
         while 1 as std::os::raw::c_int as Bool != 0 {
@@ -2255,12 +2107,12 @@ pub unsafe extern "C" fn BZ2_bzWriteClose64(
                 if !bzerror.is_null() {
                     *bzerror = ret
                 } else {
-                    ();
+                    std::intrinsics::assume(bzerror as usize == 0);
                 }
                 if !bzf.is_null() {
                     (*bzf).lastErr = ret
                 } else {
-                    ();
+                    std::intrinsics::assume(bzf as usize == 0);
                 }
                 return;
             }
@@ -2277,12 +2129,12 @@ pub unsafe extern "C" fn BZ2_bzWriteClose64(
                     if !bzerror.is_null() {
                         *bzerror = -(6 as std::os::raw::c_int)
                     } else {
-                        ();
+                        std::intrinsics::assume(bzerror as usize == 0);
                     }
                     if !bzf.is_null() {
                         (*bzf).lastErr = -(6 as std::os::raw::c_int)
                     } else {
-                        ();
+                        std::intrinsics::assume(bzf as usize == 0);
                     }
                     return;
                 }
@@ -2298,12 +2150,12 @@ pub unsafe extern "C" fn BZ2_bzWriteClose64(
             if !bzerror.is_null() {
                 *bzerror = -(6 as std::os::raw::c_int)
             } else {
-                ();
+                std::intrinsics::assume(bzerror as usize == 0);
             }
             if !bzf.is_null() {
                 (*bzf).lastErr = -(6 as std::os::raw::c_int)
             } else {
-                ();
+                std::intrinsics::assume(bzf as usize == 0);
             }
             return;
         }
@@ -2311,32 +2163,32 @@ pub unsafe extern "C" fn BZ2_bzWriteClose64(
     if !nbytes_in_lo32.is_null() {
         *nbytes_in_lo32 = (*bzf).strm.total_in_lo32
     } else {
-        ();
+        std::intrinsics::assume(nbytes_in_lo32 as usize == 0);
     }
     if !nbytes_in_hi32.is_null() {
         *nbytes_in_hi32 = (*bzf).strm.total_in_hi32
     } else {
-        ();
+        std::intrinsics::assume(nbytes_in_hi32 as usize == 0);
     }
     if !nbytes_out_lo32.is_null() {
         *nbytes_out_lo32 = (*bzf).strm.total_out_lo32
     } else {
-        ();
+        std::intrinsics::assume(nbytes_out_lo32 as usize == 0);
     }
     if !nbytes_out_hi32.is_null() {
         *nbytes_out_hi32 = (*bzf).strm.total_out_hi32
     } else {
-        ();
+        std::intrinsics::assume(nbytes_out_hi32 as usize == 0);
     }
     if !bzerror.is_null() {
         *bzerror = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzerror as usize == 0);
     }
     if !bzf.is_null() {
         (*bzf).lastErr = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzf as usize == 0);
     }
     BZ2_bzCompressEnd(&mut (*bzf).strm);
     free(bzf as *mut std::os::raw::c_void);
@@ -2348,7 +2200,7 @@ pub unsafe extern "C" fn BZ2_bzReadOpen(
     mut f: *mut FILE,
     mut verbosity: std::os::raw::c_int,
     mut small: std::os::raw::c_int,
-    mut unused: *const std::os::raw::c_void,
+    mut unused: *mut std::os::raw::c_void,
     mut nUnused: std::os::raw::c_int,
 ) -> *mut std::os::raw::c_void {
     let mut bzf: *mut bzFile = 0 as *mut bzFile;
@@ -2356,12 +2208,12 @@ pub unsafe extern "C" fn BZ2_bzReadOpen(
     if !bzerror.is_null() {
         *bzerror = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzerror as usize == 0);
     }
     if !bzf.is_null() {
         (*bzf).lastErr = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzf as usize == 0);
     }
     if f.is_null()
         || small != 0 as std::os::raw::c_int && small != 1 as std::os::raw::c_int
@@ -2373,12 +2225,12 @@ pub unsafe extern "C" fn BZ2_bzReadOpen(
         if !bzerror.is_null() {
             *bzerror = -(2 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(2 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return 0 as *mut std::os::raw::c_void;
     }
@@ -2386,39 +2238,39 @@ pub unsafe extern "C" fn BZ2_bzReadOpen(
         if !bzerror.is_null() {
             *bzerror = -(6 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(6 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return 0 as *mut std::os::raw::c_void;
     }
     bzf = malloc(::std::mem::size_of::<bzFile>() as std::os::raw::c_ulong) as *mut bzFile;
     if bzf.is_null() {
-        ();
+        std::intrinsics::assume(bzf as usize == 0);
         if !bzerror.is_null() {
             *bzerror = -(3 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(3 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return 0 as *mut std::os::raw::c_void;
     }
     if !bzerror.is_null() {
         *bzerror = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzerror as usize == 0);
     }
     if !bzf.is_null() {
         (*bzf).lastErr = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzf as usize == 0);
     }
     (*bzf).initialisedOk = 0 as std::os::raw::c_int as Bool;
     (*bzf).handle = f;
@@ -2439,12 +2291,12 @@ pub unsafe extern "C" fn BZ2_bzReadOpen(
         if !bzerror.is_null() {
             *bzerror = ret
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = ret
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         free(bzf as *mut std::os::raw::c_void);
         return 0 as *mut std::os::raw::c_void;
@@ -2464,24 +2316,24 @@ pub unsafe extern "C" fn BZ2_bzReadClose(
     if !bzerror.is_null() {
         *bzerror = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzerror as usize == 0);
     }
     if !bzf.is_null() {
         (*bzf).lastErr = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzf as usize == 0);
     }
     if bzf.is_null() {
-        ();
+        std::intrinsics::assume(bzf as usize == 0);
         if !bzerror.is_null() {
             *bzerror = 0 as std::os::raw::c_int
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = 0 as std::os::raw::c_int
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return;
     }
@@ -2489,12 +2341,12 @@ pub unsafe extern "C" fn BZ2_bzReadClose(
         if !bzerror.is_null() {
             *bzerror = -(1 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(1 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return;
     }
@@ -2506,7 +2358,7 @@ pub unsafe extern "C" fn BZ2_bzReadClose(
 /*---------------------------------------------------*/
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzRead(
-    mut bzerror: Option<&mut std::os::raw::c_int>,
+    mut bzerror: *mut std::os::raw::c_int,
     mut b: *mut std::os::raw::c_void,
     mut buf: *mut std::os::raw::c_void,
     mut len: std::os::raw::c_int,
@@ -2514,52 +2366,52 @@ pub unsafe extern "C" fn BZ2_bzRead(
     let mut n: Int32 = 0;
     let mut ret: Int32 = 0;
     let mut bzf: *mut bzFile = b as *mut bzFile;
-    if !bzerror.as_deref().is_none() {
-        *bzerror.as_deref_mut().unwrap() = 0 as std::os::raw::c_int
+    if !bzerror.is_null() {
+        *bzerror = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzerror as usize == 0);
     }
     if !bzf.is_null() {
         (*bzf).lastErr = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzf as usize == 0);
     }
     if bzf.is_null() || buf.is_null() || len < 0 as std::os::raw::c_int {
-        if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(2 as std::os::raw::c_int)
+        if !bzerror.is_null() {
+            *bzerror = -(2 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(2 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return 0 as std::os::raw::c_int;
     }
     if (*bzf).writing != 0 {
-        if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(1 as std::os::raw::c_int)
+        if !bzerror.is_null() {
+            *bzerror = -(1 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(1 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return 0 as std::os::raw::c_int;
     }
     if len == 0 as std::os::raw::c_int {
-        if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = 0 as std::os::raw::c_int
+        if !bzerror.is_null() {
+            *bzerror = 0 as std::os::raw::c_int
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = 0 as std::os::raw::c_int
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return 0 as std::os::raw::c_int;
     }
@@ -2567,15 +2419,15 @@ pub unsafe extern "C" fn BZ2_bzRead(
     (*bzf).strm.next_out = buf as *mut std::os::raw::c_char;
     while 1 as std::os::raw::c_int as Bool != 0 {
         if ferror((*bzf).handle) != 0 {
-            if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = -(6 as std::os::raw::c_int)
+            if !bzerror.is_null() {
+                *bzerror = -(6 as std::os::raw::c_int)
             } else {
-                ();
+                std::intrinsics::assume(bzerror as usize == 0);
             }
             if !bzf.is_null() {
                 (*bzf).lastErr = -(6 as std::os::raw::c_int)
             } else {
-                ();
+                std::intrinsics::assume(bzf as usize == 0);
             }
             return 0 as std::os::raw::c_int;
         }
@@ -2589,15 +2441,15 @@ pub unsafe extern "C" fn BZ2_bzRead(
                 (*bzf).handle,
             ) as Int32;
             if ferror((*bzf).handle) != 0 {
-                if !bzerror.as_deref().is_none() {
-                    *bzerror.as_deref_mut().unwrap() = -(6 as std::os::raw::c_int)
+                if !bzerror.is_null() {
+                    *bzerror = -(6 as std::os::raw::c_int)
                 } else {
-                    ();
+                    std::intrinsics::assume(bzerror as usize == 0);
                 }
                 if !bzf.is_null() {
                     (*bzf).lastErr = -(6 as std::os::raw::c_int)
                 } else {
-                    ();
+                    std::intrinsics::assume(bzf as usize == 0);
                 }
                 return 0 as std::os::raw::c_int;
             }
@@ -2607,15 +2459,15 @@ pub unsafe extern "C" fn BZ2_bzRead(
         }
         ret = BZ2_bzDecompress(&mut (*bzf).strm);
         if ret != 0 as std::os::raw::c_int && ret != 4 as std::os::raw::c_int {
-            if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = ret
+            if !bzerror.is_null() {
+                *bzerror = ret
             } else {
-                ();
+                std::intrinsics::assume(bzerror as usize == 0);
             }
             if !bzf.is_null() {
                 (*bzf).lastErr = ret
             } else {
-                ();
+                std::intrinsics::assume(bzf as usize == 0);
             }
             return 0 as std::os::raw::c_int;
         }
@@ -2624,42 +2476,42 @@ pub unsafe extern "C" fn BZ2_bzRead(
             && (*bzf).strm.avail_in == 0 as std::os::raw::c_int as std::os::raw::c_uint
             && (*bzf).strm.avail_out > 0 as std::os::raw::c_int as std::os::raw::c_uint
         {
-            if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = -(7 as std::os::raw::c_int)
+            if !bzerror.is_null() {
+                *bzerror = -(7 as std::os::raw::c_int)
             } else {
-                ();
+                std::intrinsics::assume(bzerror as usize == 0);
             }
             if !bzf.is_null() {
                 (*bzf).lastErr = -(7 as std::os::raw::c_int)
             } else {
-                ();
+                std::intrinsics::assume(bzf as usize == 0);
             }
             return 0 as std::os::raw::c_int;
         }
         if ret == 4 as std::os::raw::c_int {
-            if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = 4 as std::os::raw::c_int
+            if !bzerror.is_null() {
+                *bzerror = 4 as std::os::raw::c_int
             } else {
-                ();
+                std::intrinsics::assume(bzerror as usize == 0);
             }
             if !bzf.is_null() {
                 (*bzf).lastErr = 4 as std::os::raw::c_int
             } else {
-                ();
+                std::intrinsics::assume(bzf as usize == 0);
             }
             return (len as std::os::raw::c_uint).wrapping_sub((*bzf).strm.avail_out)
                 as std::os::raw::c_int;
         }
         if (*bzf).strm.avail_out == 0 as std::os::raw::c_int as std::os::raw::c_uint {
-            if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = 0 as std::os::raw::c_int
+            if !bzerror.is_null() {
+                *bzerror = 0 as std::os::raw::c_int
             } else {
-                ();
+                std::intrinsics::assume(bzerror as usize == 0);
             }
             if !bzf.is_null() {
                 (*bzf).lastErr = 0 as std::os::raw::c_int
             } else {
-                ();
+                std::intrinsics::assume(bzf as usize == 0);
             }
             return len;
         }
@@ -2670,64 +2522,64 @@ pub unsafe extern "C" fn BZ2_bzRead(
 /*---------------------------------------------------*/
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzReadGetUnused(
-    mut bzerror: Option<&mut std::os::raw::c_int>,
+    mut bzerror: *mut std::os::raw::c_int,
     mut b: *mut std::os::raw::c_void,
-    mut unused: Option<&mut *const std::os::raw::c_void>,
-    mut nUnused: Option<&mut std::os::raw::c_int>,
+    mut unused: *mut *mut std::os::raw::c_void,
+    mut nUnused: *mut std::os::raw::c_int,
 ) {
     let mut bzf: *mut bzFile = b as *mut bzFile;
     if bzf.is_null() {
-        ();
-        if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(2 as std::os::raw::c_int)
+        std::intrinsics::assume(bzf as usize == 0);
+        if !bzerror.is_null() {
+            *bzerror = -(2 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(2 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return;
     }
     if (*bzf).lastErr != 4 as std::os::raw::c_int {
-        if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(1 as std::os::raw::c_int)
+        if !bzerror.is_null() {
+            *bzerror = -(1 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(1 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return;
     }
-    if unused.as_deref().is_none() || nUnused.as_deref().is_none() {
-        if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(2 as std::os::raw::c_int)
+    if unused.is_null() || nUnused.is_null() {
+        if !bzerror.is_null() {
+            *bzerror = -(2 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzerror as usize == 0);
         }
         if !bzf.is_null() {
             (*bzf).lastErr = -(2 as std::os::raw::c_int)
         } else {
-            ();
+            std::intrinsics::assume(bzf as usize == 0);
         }
         return;
     }
-    if !bzerror.as_deref().is_none() {
-        *bzerror.as_deref_mut().unwrap() = 0 as std::os::raw::c_int
+    if !bzerror.is_null() {
+        *bzerror = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzerror as usize == 0);
     }
     if !bzf.is_null() {
         (*bzf).lastErr = 0 as std::os::raw::c_int
     } else {
-        ();
+        std::intrinsics::assume(bzf as usize == 0);
     }
-    *nUnused.as_deref_mut().unwrap() = (*bzf).strm.avail_in as std::os::raw::c_int;
-    *unused.as_deref_mut().unwrap() = (*bzf).strm.next_in as *mut std::os::raw::c_void;
+    *nUnused = (*bzf).strm.avail_in as std::os::raw::c_int;
+    *unused = (*bzf).strm.next_in as *mut std::os::raw::c_void;
 }
 /*---------------------------------------------------*/
 /*--- Misc convenience stuff                      ---*/
@@ -2736,8 +2588,8 @@ pub unsafe extern "C" fn BZ2_bzReadGetUnused(
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzBuffToBuffCompress(
     mut dest: *mut std::os::raw::c_char,
-    mut destLen: Option<&mut std::os::raw::c_uint>,
-    mut source: *const std::os::raw::c_char,
+    mut destLen: *mut std::os::raw::c_uint,
+    mut source: *mut std::os::raw::c_char,
     mut sourceLen: std::os::raw::c_uint,
     mut blockSize100k: std::os::raw::c_int,
     mut verbosity: std::os::raw::c_int,
@@ -2759,7 +2611,7 @@ pub unsafe extern "C" fn BZ2_bzBuffToBuffCompress(
     };
     let mut ret: std::os::raw::c_int = 0;
     if dest.is_null()
-        || destLen.as_deref().is_none()
+        || destLen.is_null()
         || source.is_null()
         || blockSize100k < 1 as std::os::raw::c_int
         || blockSize100k > 9 as std::os::raw::c_int
@@ -2783,7 +2635,7 @@ pub unsafe extern "C" fn BZ2_bzBuffToBuffCompress(
     strm.next_in = source;
     strm.next_out = dest;
     strm.avail_in = sourceLen;
-    strm.avail_out = (*destLen.as_deref().unwrap());
+    strm.avail_out = *destLen;
     ret = BZ2_bzCompress(&mut strm, 2 as std::os::raw::c_int);
     if ret == 3 as std::os::raw::c_int {
         BZ2_bzCompressEnd(&mut strm);
@@ -2793,8 +2645,7 @@ pub unsafe extern "C" fn BZ2_bzBuffToBuffCompress(
         return ret;
     } else {
         /* normal termination */
-        *destLen.as_deref_mut().unwrap() =
-            (*destLen.as_deref().unwrap()).wrapping_sub(strm.avail_out);
+        *destLen = (*destLen).wrapping_sub(strm.avail_out);
         BZ2_bzCompressEnd(&mut strm);
         return 0 as std::os::raw::c_int;
     };
@@ -2803,8 +2654,8 @@ pub unsafe extern "C" fn BZ2_bzBuffToBuffCompress(
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzBuffToBuffDecompress(
     mut dest: *mut std::os::raw::c_char,
-    mut destLen: Option<&mut std::os::raw::c_uint>,
-    mut source: *const std::os::raw::c_char,
+    mut destLen: *mut std::os::raw::c_uint,
+    mut source: *mut std::os::raw::c_char,
     mut sourceLen: std::os::raw::c_uint,
     mut small: std::os::raw::c_int,
     mut verbosity: std::os::raw::c_int,
@@ -2825,7 +2676,7 @@ pub unsafe extern "C" fn BZ2_bzBuffToBuffDecompress(
     };
     let mut ret: std::os::raw::c_int = 0;
     if dest.is_null()
-        || destLen.as_deref().is_none()
+        || destLen.is_null()
         || source.is_null()
         || small != 0 as std::os::raw::c_int && small != 1 as std::os::raw::c_int
         || verbosity < 0 as std::os::raw::c_int
@@ -2843,7 +2694,7 @@ pub unsafe extern "C" fn BZ2_bzBuffToBuffDecompress(
     strm.next_in = source;
     strm.next_out = dest;
     strm.avail_in = sourceLen;
-    strm.avail_out = (*destLen.as_deref().unwrap());
+    strm.avail_out = *destLen;
     ret = BZ2_bzDecompress(&mut strm);
     if ret == 0 as std::os::raw::c_int {
         if strm.avail_out > 0 as std::os::raw::c_int as std::os::raw::c_uint {
@@ -2858,8 +2709,7 @@ pub unsafe extern "C" fn BZ2_bzBuffToBuffDecompress(
         return ret;
     } else {
         /* normal termination */
-        *destLen.as_deref_mut().unwrap() =
-            (*destLen.as_deref().unwrap()).wrapping_sub(strm.avail_out);
+        *destLen = (*destLen).wrapping_sub(strm.avail_out);
         BZ2_bzDecompressEnd(&mut strm);
         return 0 as std::os::raw::c_int;
     };
@@ -2888,7 +2738,7 @@ unsafe extern "C" fn bzopen_or_bzdopen(
     mut fd: std::os::raw::c_int,
     mut mode: *const std::os::raw::c_char,
     mut open_mode: std::os::raw::c_int,
-) -> *const std::os::raw::c_void
+) -> *mut std::os::raw::c_void
 /* bzopen: 0, bzdopen:1 */ {
     let mut bzerr: std::os::raw::c_int = 0; /* binary mode */
     let mut unused: [std::os::raw::c_char; 5000] = [0; 5000];
@@ -2902,16 +2752,16 @@ unsafe extern "C" fn bzopen_or_bzdopen(
     let mut smallMode: std::os::raw::c_int = 0 as std::os::raw::c_int;
     let mut nUnused: std::os::raw::c_int = 0 as std::os::raw::c_int;
     if mode.is_null() {
-        ();
+        std::intrinsics::assume(mode as usize == 0);
         return 0 as *mut std::os::raw::c_void;
     }
-    while (*mode) != 0 {
-        match (*mode) as std::os::raw::c_int {
+    while *mode != 0 {
+        match *mode as std::os::raw::c_int {
             114 => writing = 0 as std::os::raw::c_int,
             119 => writing = 1 as std::os::raw::c_int,
             115 => smallMode = 1 as std::os::raw::c_int,
             _ => {
-                if isdigit((*mode) as std::os::raw::c_int) != 0 {
+                if isdigit(*mode as std::os::raw::c_int) != 0 {
                     blockSize100k = *mode as std::os::raw::c_int - 0x30 as std::os::raw::c_int
                 }
             }
@@ -2943,7 +2793,7 @@ unsafe extern "C" fn bzopen_or_bzdopen(
         fp = fdopen(fd, mode2.as_mut_ptr())
     }
     if fp.is_null() {
-        ();
+        std::intrinsics::assume(fp as usize == 0);
         return 0 as *mut std::os::raw::c_void;
     }
     if writing != 0 {
@@ -2966,7 +2816,7 @@ unsafe extern "C" fn bzopen_or_bzdopen(
         )
     }
     if bzfp.is_null() {
-        ();
+        std::intrinsics::assume(bzfp as usize == 0);
         if fp != __stdinp && fp != __stdoutp {
             fclose(fp);
         }
@@ -2982,9 +2832,9 @@ unsafe extern "C" fn bzopen_or_bzdopen(
 --*/
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzopen(
-    mut path: *mut std::os::raw::c_char,
+    mut path: *const std::os::raw::c_char,
     mut mode: *const std::os::raw::c_char,
-) -> *const std::os::raw::c_void {
+) -> *mut std::os::raw::c_void {
     return bzopen_or_bzdopen(
         path,
         -(1 as std::os::raw::c_int),
@@ -2997,7 +2847,7 @@ pub unsafe extern "C" fn BZ2_bzopen(
 pub unsafe extern "C" fn BZ2_bzdopen(
     mut fd: std::os::raw::c_int,
     mut mode: *const std::os::raw::c_char,
-) -> *const std::os::raw::c_void {
+) -> *mut std::os::raw::c_void {
     return bzopen_or_bzdopen(
         0 as *const std::os::raw::c_char,
         fd,
@@ -3027,19 +2877,12 @@ pub unsafe extern "C" fn BZ2_bzread(
 /*---------------------------------------------------*/
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzwrite(
-    mut b: Option<&mut std::os::raw::c_void>,
-    mut buf: *const std::os::raw::c_void,
+    mut b: *mut std::os::raw::c_void,
+    mut buf: *mut std::os::raw::c_void,
     mut len: std::os::raw::c_int,
 ) -> std::os::raw::c_int {
     let mut bzerr: std::os::raw::c_int = 0;
-    BZ2_bzWrite(
-        &mut bzerr,
-        b.as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
-        buf,
-        len,
-    );
+    BZ2_bzWrite(&mut bzerr, b, buf, len);
     if bzerr == 0 as std::os::raw::c_int {
         return len;
     } else {
@@ -3048,7 +2891,7 @@ pub unsafe extern "C" fn BZ2_bzwrite(
 }
 /*---------------------------------------------------*/
 #[no_mangle]
-pub unsafe extern "C" fn BZ2_bzflush(mut b: *const std::os::raw::c_void) -> std::os::raw::c_int {
+pub unsafe extern "C" fn BZ2_bzflush(mut b: *mut std::os::raw::c_void) -> std::os::raw::c_int {
     /* do nothing now... */
     return 0 as std::os::raw::c_int;
 }
@@ -3058,14 +2901,26 @@ pub unsafe extern "C" fn BZ2_bzclose(mut b: *mut std::os::raw::c_void) {
     let mut bzerr: std::os::raw::c_int = 0;
     let mut fp: *mut FILE = 0 as *mut FILE;
     if b.is_null() {
-        ();
+        std::intrinsics::assume(b as usize == 0);
         return;
     }
     fp = (*(b as *mut bzFile)).handle;
     if (*(b as *mut bzFile)).writing != 0 {
-        BZ2_bzWriteClose(&mut bzerr, b.as_mut(), 0 as std::os::raw::c_int, None, None);
+        BZ2_bzWriteClose(
+            &mut bzerr,
+            b,
+            0 as std::os::raw::c_int,
+            0 as *mut std::os::raw::c_uint,
+            0 as *mut std::os::raw::c_uint,
+        );
         if bzerr != 0 as std::os::raw::c_int {
-            BZ2_bzWriteClose(None, b.as_mut(), 1 as std::os::raw::c_int, None, None);
+            BZ2_bzWriteClose(
+                0 as *mut std::os::raw::c_int,
+                b,
+                1 as std::os::raw::c_int,
+                0 as *mut std::os::raw::c_uint,
+                0 as *mut std::os::raw::c_uint,
+            );
         }
     } else {
         BZ2_bzReadClose(&mut bzerr, b);
@@ -3098,14 +2953,14 @@ static mut bzerrorstrings: [*const std::os::raw::c_char; 16] = [
 ];
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzerror(
-    mut b: *const std::os::raw::c_void,
-    mut errnum: Option<&mut std::os::raw::c_int>,
+    mut b: *mut std::os::raw::c_void,
+    mut errnum: *mut std::os::raw::c_int,
 ) -> *const std::os::raw::c_char {
     let mut err: std::os::raw::c_int = (*(b as *mut bzFile)).lastErr;
     if err > 0 as std::os::raw::c_int {
         err = 0 as std::os::raw::c_int
     }
-    *errnum.as_deref_mut().unwrap() = err;
+    *errnum = err;
     return bzerrorstrings[(err * -(1 as std::os::raw::c_int)) as usize];
 }
 /*-------------------------------------------------------------*/

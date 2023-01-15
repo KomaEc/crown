@@ -15,31 +15,13 @@ pub type fpos_t = __darwin_off_t;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor16;
-impl Default for ErasedByPreprocessor16 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor17;
-impl Default for ErasedByPreprocessor17 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type FILE = crate::blocksort::__sFILE;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor18;
-impl Default for ErasedByPreprocessor18 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type Bool = std::os::raw::c_uchar;
 pub type UChar = std::os::raw::c_uchar;
 pub type Int32 = std::os::raw::c_int;
@@ -48,12 +30,6 @@ pub type UInt16 = std::os::raw::c_ushort;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor19;
-impl Default for ErasedByPreprocessor19 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 /*-------------------------------------------------------------*/
 /*--- Decompression machinery                               ---*/
 /*---                                          decompress.c ---*/
@@ -72,14 +48,13 @@ This program is released under the terms of the license contained
 in the file LICENSE.
 ------------------------------------------------------------------ */
 /*---------------------------------------------------*/
-unsafe extern "C" fn makeMaps_d(mut s: Option<&mut crate::bzlib::DState>) {
+unsafe extern "C" fn makeMaps_d(mut s: *mut crate::bzlib::DState) {
     let mut i: Int32 = 0;
-    (*s.as_deref_mut().unwrap()).nInUse = 0 as std::os::raw::c_int;
+    (*s).nInUse = 0 as std::os::raw::c_int;
     i = 0 as std::os::raw::c_int;
     while i < 256 as std::os::raw::c_int {
-        if (*s.as_deref().unwrap()).inUse[i as usize] != 0 {
-            (*s.as_deref_mut().unwrap()).seqToUnseq[(*s.as_deref().unwrap()).nInUse as usize] =
-                i as UChar;
+        if (*s).inUse[i as usize] != 0 {
+            (*s).seqToUnseq[(*s).nInUse as usize] = i as UChar;
             (*s).nInUse += 1
         }
         i += 1
@@ -542,7 +517,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::bzlib::DState) -> Int
                                 1 as std::os::raw::c_int,
                             ) as *mut UInt32;
                             if (*s).tt.is_null() {
-                                ();
+                                std::intrinsics::assume((*s).tt as usize == 0);
                                 retVal = -(3 as std::os::raw::c_int);
                                 current_block = 15885526978618306830;
                             } else {
@@ -2896,7 +2871,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::bzlib::DState) -> Int
                             continue;
                         }
                     } else {
-                        makeMaps_d(s.as_mut());
+                        makeMaps_d(s);
                         if (*s).nInUse == 0 as std::os::raw::c_int {
                             current_block = 11906008669688594715;
                             break;

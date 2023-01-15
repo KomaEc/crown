@@ -33,7 +33,7 @@ pub unsafe extern "C" fn zswap(
         alloced: 0,
         chars: 0 as *mut zahl_char_t,
     }; 1];
-    *t.as_mut_ptr() = *a;
+    *t.as_mut_ptr() = (*a.as_deref().unwrap());
     *a.as_deref_mut().unwrap() = (*b.as_deref().unwrap());
     *b.as_deref_mut().unwrap() = *t.as_mut_ptr();
 }

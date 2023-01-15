@@ -151,9 +151,9 @@ pub unsafe extern "C" fn genann_init(
         0 as std::os::raw::c_int
     };
     let output_weights: std::os::raw::c_int = (if hidden_layers != 0 {
-        (hidden) + 1 as std::os::raw::c_int
+        hidden + 1 as std::os::raw::c_int
     } else {
-        (inputs) + 1 as std::os::raw::c_int
+        inputs + 1 as std::os::raw::c_int
     }) * outputs;
     let total_weights: std::os::raw::c_int = hidden_weights + output_weights;
     let total_neurons: std::os::raw::c_int = inputs + hidden * hidden_layers + outputs;
@@ -511,7 +511,7 @@ pub unsafe extern "C" fn genann_train(
     );
     let i: *const std::os::raw::c_double = (*ann).output.offset(
         (if (*ann).hidden_layers != 0 {
-            ((*ann).inputs) + (*ann).hidden * ((*ann).hidden_layers - 1 as std::os::raw::c_int)
+            (*ann).inputs + (*ann).hidden * ((*ann).hidden_layers - 1 as std::os::raw::c_int)
         } else {
             0 as std::os::raw::c_int
         }) as isize,
@@ -567,7 +567,7 @@ pub unsafe extern "C" fn genann_train(
         /* Find first input to this layer. */
         let mut i_0: *const std::os::raw::c_double = (*ann).output.offset(
             (if h != 0 {
-                ((*ann).inputs) + (*ann).hidden * (h - 1 as std::os::raw::c_int)
+                (*ann).inputs + (*ann).hidden * (h - 1 as std::os::raw::c_int)
             } else {
                 0 as std::os::raw::c_int
             }) as isize,

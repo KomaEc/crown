@@ -58,21 +58,9 @@ pub type fpos_t = __darwin_off_t;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor2;
-impl Default for ErasedByPreprocessor2 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor3;
-impl Default for ErasedByPreprocessor3 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type FILE = crate::blocksort::__sFILE;
 /*-----------------------------------------------------------*/
 /*--- Block recoverer program for bzip2                   ---*/
@@ -110,30 +98,12 @@ pub type Char = std::os::raw::c_char;
 pub type Bool = std::os::raw::c_uchar;
 #[derive(Copy, Clone)]
 #[repr(C)]
-struct ErasedByRefactorer2;
-#[repr(C)]
 pub struct BitStream {
-    pub handle: Option<Box<FILE>>,
+    pub handle: *mut FILE,
     pub buffer: Int32,
     pub buffLive: Int32,
     pub mode: Char,
 }
-impl Default for BitStream {
-    fn default() -> Self {
-        Self {
-            handle: None,
-            buffer: Default::default(),
-            buffLive: Default::default(),
-            mode: Default::default(),
-        }
-    }
-}
-impl BitStream {
-    pub fn take(&mut self) -> Self {
-        core::mem::take(self)
-    }
-}
-
 #[no_mangle]
 pub static mut inFileName: [Char; 2000] = [0; 2000];
 #[no_mangle]
@@ -225,55 +195,45 @@ unsafe extern "C" fn tooManyBlocks(mut max_handled_blocks: Int32) {
     exit(1 as std::os::raw::c_int);
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn bsOpenReadStream(mut stream: Option<Box<FILE>>) -> Option<Box<BitStream>> {
-    let mut bs: *mut BitStream = Some(Box::new(
-        <crate::bzip2recover::BitStream as Default>::default(),
-    ));
-    if bs.as_deref().is_none() {
-        ();
+unsafe extern "C" fn bsOpenReadStream(mut stream: *mut FILE) -> *mut BitStream {
+    let mut bs: *mut BitStream =
+        malloc(::std::mem::size_of::<BitStream>() as std::os::raw::c_ulong) as *mut BitStream;
+    if bs.is_null() {
+        std::intrinsics::assume(bs as usize == 0);
         mallocFail(::std::mem::size_of::<BitStream>() as std::os::raw::c_ulong as Int32);
     }
-    (*bs.as_deref_mut().unwrap()).handle = stream;
-    (*bs.as_deref_mut().unwrap()).buffer = 0 as std::os::raw::c_int;
-    (*bs.as_deref_mut().unwrap()).buffLive = 0 as std::os::raw::c_int;
-    (*bs.as_deref_mut().unwrap()).mode = 'r' as i32 as Char;
+    (*bs).handle = stream;
+    (*bs).buffer = 0 as std::os::raw::c_int;
+    (*bs).buffLive = 0 as std::os::raw::c_int;
+    (*bs).mode = 'r' as i32 as Char;
     return bs;
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn bsOpenWriteStream(mut stream: Option<Box<FILE>>) -> Option<Box<BitStream>> {
-    let mut bs: *mut BitStream = Some(Box::new(
-        <crate::bzip2recover::BitStream as Default>::default(),
-    ));
-    if bs.as_deref().is_none() {
-        ();
+unsafe extern "C" fn bsOpenWriteStream(mut stream: *mut FILE) -> *mut BitStream {
+    let mut bs: *mut BitStream =
+        malloc(::std::mem::size_of::<BitStream>() as std::os::raw::c_ulong) as *mut BitStream;
+    if bs.is_null() {
+        std::intrinsics::assume(bs as usize == 0);
         mallocFail(::std::mem::size_of::<BitStream>() as std::os::raw::c_ulong as Int32);
     }
-    (*bs.as_deref_mut().unwrap()).handle = stream;
-    (*bs.as_deref_mut().unwrap()).buffer = 0 as std::os::raw::c_int;
-    (*bs.as_deref_mut().unwrap()).buffLive = 0 as std::os::raw::c_int;
-    (*bs.as_deref_mut().unwrap()).mode = 'w' as i32 as Char;
+    (*bs).handle = stream;
+    (*bs).buffer = 0 as std::os::raw::c_int;
+    (*bs).buffLive = 0 as std::os::raw::c_int;
+    (*bs).mode = 'w' as i32 as Char;
     return bs;
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn bsPutBit(mut bs: Option<&mut BitStream>, mut bit: Int32) {
-    if (*bs.as_deref().unwrap()).buffLive == 8 as std::os::raw::c_int {
-        let mut retVal: Int32 = putc(
-            (*bs.as_deref().unwrap()).buffer as UChar as std::os::raw::c_int,
-            (*bs.as_deref().unwrap())
-                .handle
-                .as_deref_mut()
-                .map(|r| r as *mut _)
-                .unwrap_or(std::ptr::null_mut()),
-        );
+unsafe extern "C" fn bsPutBit(mut bs: *mut BitStream, mut bit: Int32) {
+    if (*bs).buffLive == 8 as std::os::raw::c_int {
+        let mut retVal: Int32 = putc((*bs).buffer as UChar as std::os::raw::c_int, (*bs).handle);
         if retVal == -(1 as std::os::raw::c_int) {
             writeError();
         }
         bytesOut = bytesOut.wrapping_add(1);
-        (*bs.as_deref_mut().unwrap()).buffLive = 1 as std::os::raw::c_int;
-        (*bs.as_deref_mut().unwrap()).buffer = bit & 0x1 as std::os::raw::c_int
+        (*bs).buffLive = 1 as std::os::raw::c_int;
+        (*bs).buffer = bit & 0x1 as std::os::raw::c_int
     } else {
-        (*bs.as_deref_mut().unwrap()).buffer =
-            (*bs).buffer << 1 as std::os::raw::c_int | bit & 0x1 as std::os::raw::c_int;
+        (*bs).buffer = (*bs).buffer << 1 as std::os::raw::c_int | bit & 0x1 as std::os::raw::c_int;
         (*bs).buffLive += 1
     };
 }
@@ -281,102 +241,77 @@ unsafe extern "C" fn bsPutBit(mut bs: Option<&mut BitStream>, mut bit: Int32) {
 /*--
    Returns 0 or 1, or 2 to indicate EOF.
 --*/
-unsafe extern "C" fn bsGetBit(mut bs: Option<&mut BitStream>) -> Int32 {
-    if (*bs.as_deref().unwrap()).buffLive > 0 as std::os::raw::c_int {
+unsafe extern "C" fn bsGetBit(mut bs: *mut BitStream) -> Int32 {
+    if (*bs).buffLive > 0 as std::os::raw::c_int {
         (*bs).buffLive -= 1;
         return (*bs).buffer >> (*bs).buffLive & 0x1 as std::os::raw::c_int;
     } else {
-        let mut retVal: Int32 = getc(
-            (*bs.as_deref().unwrap())
-                .handle
-                .as_deref_mut()
-                .map(|r| r as *mut _)
-                .unwrap_or(std::ptr::null_mut()),
-        );
+        let mut retVal: Int32 = getc((*bs).handle);
         if retVal == -(1 as std::os::raw::c_int) {
             if *__error() != 0 as std::os::raw::c_int {
                 readError();
             }
             return 2 as std::os::raw::c_int;
         }
-        (*bs.as_deref_mut().unwrap()).buffLive = 7 as std::os::raw::c_int;
-        (*bs.as_deref_mut().unwrap()).buffer = retVal;
+        (*bs).buffLive = 7 as std::os::raw::c_int;
+        (*bs).buffer = retVal;
         return (*bs).buffer >> 7 as std::os::raw::c_int & 0x1 as std::os::raw::c_int;
     };
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn bsClose(mut bs: Option<Box<BitStream>>) {
+unsafe extern "C" fn bsClose(mut bs: *mut BitStream) {
     let mut retVal: Int32 = 0;
-    if (*bs.as_deref().unwrap()).mode as std::os::raw::c_int == 'w' as i32 {
-        while (*bs.as_deref().unwrap()).buffLive < 8 as std::os::raw::c_int {
+    if (*bs).mode as std::os::raw::c_int == 'w' as i32 {
+        while (*bs).buffLive < 8 as std::os::raw::c_int {
             (*bs).buffLive += 1;
             (*bs).buffer <<= 1 as std::os::raw::c_int
         }
-        retVal = putc(
-            (*bs.as_deref().unwrap()).buffer as UChar as std::os::raw::c_int,
-            (*bs.as_deref().unwrap())
-                .handle
-                .as_deref_mut()
-                .map(|r| r as *mut _)
-                .unwrap_or(std::ptr::null_mut()),
-        );
+        retVal = putc((*bs).buffer as UChar as std::os::raw::c_int, (*bs).handle);
         if retVal == -(1 as std::os::raw::c_int) {
             writeError();
         }
         bytesOut = bytesOut.wrapping_add(1);
-        retVal = fflush(
-            (*bs.as_deref().unwrap())
-                .handle
-                .as_deref_mut()
-                .map(|r| r as *mut _)
-                .unwrap_or(std::ptr::null_mut()),
-        );
+        retVal = fflush((*bs).handle);
         if retVal == -(1 as std::os::raw::c_int) {
             writeError();
         }
     }
-    retVal = fclose(
-        (*bs.as_deref().unwrap())
-            .handle
-            .as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
-    );
+    retVal = fclose((*bs).handle);
     if retVal == -(1 as std::os::raw::c_int) {
-        if (*bs.as_deref().unwrap()).mode as std::os::raw::c_int == 'w' as i32 {
+        if (*bs).mode as std::os::raw::c_int == 'w' as i32 {
             writeError();
         } else {
             readError();
         }
     }
-    ();
+    free(bs as *mut std::os::raw::c_void);
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn bsPutUChar(mut bs: Option<&mut BitStream>, mut c: UChar) {
+unsafe extern "C" fn bsPutUChar(mut bs: *mut BitStream, mut c: UChar) {
     let mut i: Int32 = 0;
     i = 7 as std::os::raw::c_int;
     while i >= 0 as std::os::raw::c_int {
         bsPutBit(
-            bs.as_deref_mut(),
+            bs,
             (c as UInt32 >> i & 0x1 as std::os::raw::c_int as std::os::raw::c_uint) as Int32,
         );
         i -= 1
     }
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn bsPutUInt32(mut bs: Option<&mut BitStream>, mut c: UInt32) {
+unsafe extern "C" fn bsPutUInt32(mut bs: *mut BitStream, mut c: UInt32) {
     let mut i: Int32 = 0;
     i = 31 as std::os::raw::c_int;
     while i >= 0 as std::os::raw::c_int {
         bsPutBit(
-            bs.as_deref_mut(),
+            bs,
             (c >> i & 0x1 as std::os::raw::c_int as std::os::raw::c_uint) as Int32,
         );
         i -= 1
     }
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn endsInBz2(mut name: *const Char) -> Bool {
+unsafe extern "C" fn endsInBz2(mut name: *mut Char) -> Bool {
     let mut n: Int32 = strlen(name) as Int32;
     if n <= 4 as std::os::raw::c_int {
         return 0 as std::os::raw::c_int as Bool;
@@ -483,7 +418,7 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
         b"rb\x00" as *const u8 as *const std::os::raw::c_char,
     );
     if inFile.is_null() {
-        ();
+        std::intrinsics::assume(inFile as usize == 0);
         fprintf(
             __stderrp,
             b"%s: can\'t read `%s\'\n\x00" as *const u8 as *const std::os::raw::c_char,
@@ -492,7 +427,7 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
         );
         exit(1 as std::os::raw::c_int);
     }
-    bsIn = bsOpenReadStream(Some(Box::from_raw(inFile)));
+    bsIn = bsOpenReadStream(inFile);
     fprintf(
         __stderrp,
         b"%s: searching for block boundaries ...\n\x00" as *const u8 as *const std::os::raw::c_char,
@@ -505,7 +440,7 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
     bStart[currBlock as usize] = 0 as std::os::raw::c_int as MaybeUInt64;
     rbCtr = 0 as std::os::raw::c_int;
     while 1 as std::os::raw::c_int as Bool != 0 {
-        b = bsGetBit(bsIn.as_mut());
+        b = bsGetBit(bsIn);
         bitsRead = bitsRead.wrapping_add(1);
         if b == 2 as std::os::raw::c_int {
             if bitsRead >= bStart[currBlock as usize]
@@ -571,7 +506,7 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
             }
         }
     }
-    bsClose(Some(Box::from_raw(bsIn)));
+    bsClose(bsIn);
     /*-- identified blocks run from 1 to rbCtr inclusive. --*/
     if rbCtr < 1 as std::os::raw::c_int {
         fprintf(
@@ -592,7 +527,7 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
         b"rb\x00" as *const u8 as *const std::os::raw::c_char,
     );
     if inFile.is_null() {
-        ();
+        std::intrinsics::assume(inFile as usize == 0);
         fprintf(
             __stderrp,
             b"%s: can\'t open `%s\'\n\x00" as *const u8 as *const std::os::raw::c_char,
@@ -601,7 +536,7 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
         );
         exit(1 as std::os::raw::c_int);
     }
-    bsIn = bsOpenReadStream(Some(Box::from_raw(inFile)));
+    bsIn = bsOpenReadStream(inFile);
     /*-- placate gcc's dataflow analyser --*/
     blockCRC = 0 as std::os::raw::c_int as UInt32;
     bsWr = 0 as *mut BitStream;
@@ -609,7 +544,7 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
     outFile = 0 as *mut FILE;
     wrBlock = 0 as std::os::raw::c_int;
     while 1 as std::os::raw::c_int as Bool != 0 {
-        b = bsGetBit(bsIn.as_mut());
+        b = bsGetBit(bsIn);
         if b == 2 as std::os::raw::c_int {
             break;
         }
@@ -626,7 +561,7 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
             && bitsRead >= rbStart[wrBlock as usize]
             && bitsRead <= rbEnd[wrBlock as usize]
         {
-            bsPutBit(bsWr.as_mut(), b);
+            bsPutBit(bsWr, b);
         }
         bitsRead = bitsRead.wrapping_add(1);
         if bitsRead
@@ -634,17 +569,17 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
                 .wrapping_add(1 as std::os::raw::c_int as std::os::raw::c_ulonglong)
         {
             if !outFile.is_null() {
-                bsPutUChar(bsWr.as_mut(), 0x17 as std::os::raw::c_int as UChar);
-                bsPutUChar(bsWr.as_mut(), 0x72 as std::os::raw::c_int as UChar);
-                bsPutUChar(bsWr.as_mut(), 0x45 as std::os::raw::c_int as UChar);
-                bsPutUChar(bsWr.as_mut(), 0x38 as std::os::raw::c_int as UChar);
-                bsPutUChar(bsWr.as_mut(), 0x50 as std::os::raw::c_int as UChar);
-                bsPutUChar(bsWr.as_mut(), 0x90 as std::os::raw::c_int as UChar);
-                bsPutUInt32(bsWr.as_mut(), blockCRC);
-                bsClose(Some(Box::from_raw(bsWr)));
+                bsPutUChar(bsWr, 0x17 as std::os::raw::c_int as UChar);
+                bsPutUChar(bsWr, 0x72 as std::os::raw::c_int as UChar);
+                bsPutUChar(bsWr, 0x45 as std::os::raw::c_int as UChar);
+                bsPutUChar(bsWr, 0x38 as std::os::raw::c_int as UChar);
+                bsPutUChar(bsWr, 0x50 as std::os::raw::c_int as UChar);
+                bsPutUChar(bsWr, 0x90 as std::os::raw::c_int as UChar);
+                bsPutUInt32(bsWr, blockCRC);
+                bsClose(bsWr);
                 outFile = 0 as *mut FILE
             } else {
-                ();
+                std::intrinsics::assume(outFile as usize == 0);
             }
             if wrBlock >= rbCtr {
                 break;
@@ -664,7 +599,7 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
             strcpy(outFileName.as_mut_ptr(), inFileName.as_mut_ptr());
             split = strrchr(outFileName.as_mut_ptr(), '/' as i32);
             if split.is_null() {
-                ();
+                std::intrinsics::assume(split as usize == 0);
                 split = outFileName.as_mut_ptr()
             } else {
                 split = split.offset(1)
@@ -677,8 +612,8 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
                 wrBlock + 1 as std::os::raw::c_int,
             );
             p = split;
-            while (*p) as std::os::raw::c_int != 0 as std::os::raw::c_int {
-                if (*p) as std::os::raw::c_int == ' ' as i32 {
+            while *p as std::os::raw::c_int != 0 as std::os::raw::c_int {
+                if *p as std::os::raw::c_int == ' ' as i32 {
                     *p = '0' as i32 as Char
                 }
                 p = p.offset(1)
@@ -705,7 +640,7 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
                 b"wb\x00" as *const u8 as *const std::os::raw::c_char,
             );
             if outFile.is_null() {
-                ();
+                std::intrinsics::assume(outFile as usize == 0);
                 fprintf(
                     __stderrp,
                     b"%s: can\'t write `%s\'\n\x00" as *const u8 as *const std::os::raw::c_char,
@@ -714,20 +649,20 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
                 );
                 exit(1 as std::os::raw::c_int);
             }
-            bsWr = bsOpenWriteStream(Some(Box::from_raw(outFile)));
-            bsPutUChar(bsWr.as_mut(), 0x42 as std::os::raw::c_int as UChar);
-            bsPutUChar(bsWr.as_mut(), 0x5a as std::os::raw::c_int as UChar);
-            bsPutUChar(bsWr.as_mut(), 0x68 as std::os::raw::c_int as UChar);
+            bsWr = bsOpenWriteStream(outFile);
+            bsPutUChar(bsWr, 0x42 as std::os::raw::c_int as UChar);
+            bsPutUChar(bsWr, 0x5a as std::os::raw::c_int as UChar);
+            bsPutUChar(bsWr, 0x68 as std::os::raw::c_int as UChar);
             bsPutUChar(
-                bsWr.as_mut(),
+                bsWr,
                 (0x30 as std::os::raw::c_int + 9 as std::os::raw::c_int) as UChar,
             );
-            bsPutUChar(bsWr.as_mut(), 0x31 as std::os::raw::c_int as UChar);
-            bsPutUChar(bsWr.as_mut(), 0x41 as std::os::raw::c_int as UChar);
-            bsPutUChar(bsWr.as_mut(), 0x59 as std::os::raw::c_int as UChar);
-            bsPutUChar(bsWr.as_mut(), 0x26 as std::os::raw::c_int as UChar);
-            bsPutUChar(bsWr.as_mut(), 0x53 as std::os::raw::c_int as UChar);
-            bsPutUChar(bsWr.as_mut(), 0x59 as std::os::raw::c_int as UChar);
+            bsPutUChar(bsWr, 0x31 as std::os::raw::c_int as UChar);
+            bsPutUChar(bsWr, 0x41 as std::os::raw::c_int as UChar);
+            bsPutUChar(bsWr, 0x59 as std::os::raw::c_int as UChar);
+            bsPutUChar(bsWr, 0x26 as std::os::raw::c_int as UChar);
+            bsPutUChar(bsWr, 0x53 as std::os::raw::c_int as UChar);
+            bsPutUChar(bsWr, 0x59 as std::os::raw::c_int as UChar);
         }
     }
     fprintf(

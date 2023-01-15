@@ -10,39 +10,21 @@ pub type __darwin_off_t = __int64_t;
 pub type fpos_t = __darwin_off_t;
 #[derive(Copy, Clone)]
 #[repr(C)]
-struct ErasedByRefactorer0;
-#[repr(C)]
 pub struct __sbuf {
-    pub _base: Option<Box<std::os::raw::c_uchar>>,
+    pub _base: *mut std::os::raw::c_uchar,
     pub _size: std::os::raw::c_int,
 }
-impl Default for __sbuf {
-    fn default() -> Self {
-        Self {
-            _base: None,
-            _size: Default::default(),
-        }
-    }
-}
-impl __sbuf {
-    pub fn take(&mut self) -> Self {
-        core::mem::take(self)
-    }
-}
-
 #[derive(Copy, Clone)]
 #[repr(C)]
-struct ErasedByRefactorer1;
-#[repr(C)]
 pub struct __sFILE {
-    pub _p: Option<Box<std::os::raw::c_uchar>>,
+    pub _p: *mut std::os::raw::c_uchar,
     pub _r: std::os::raw::c_int,
     pub _w: std::os::raw::c_int,
     pub _flags: std::os::raw::c_short,
     pub _file: std::os::raw::c_short,
     pub _bf: __sbuf,
     pub _lbfsize: std::os::raw::c_int,
-    pub _cookie: Option<Box<std::os::raw::c_void>>,
+    pub _cookie: *mut std::os::raw::c_void,
     pub _close: Option<unsafe extern "C" fn(_: *mut std::os::raw::c_void) -> std::os::raw::c_int>,
     pub _read: Option<
         unsafe extern "C" fn(
@@ -66,7 +48,7 @@ pub struct __sFILE {
         ) -> std::os::raw::c_int,
     >,
     pub _ub: __sbuf,
-    pub _extra: Option<Box<crate::decompress::__sFILEX>>,
+    pub _extra: *mut crate::decompress::__sFILEX,
     pub _ur: std::os::raw::c_int,
     pub _ubuf: [std::os::raw::c_uchar; 3],
     pub _nbuf: [std::os::raw::c_uchar; 1],
@@ -74,43 +56,11 @@ pub struct __sFILE {
     pub _blksize: std::os::raw::c_int,
     pub _offset: fpos_t,
 }
-impl Default for __sFILE {
-    fn default() -> Self {
-        Self {
-            _p: None,
-            _r: Default::default(),
-            _w: Default::default(),
-            _flags: Default::default(),
-            _file: Default::default(),
-            _bf: Default::default(),
-            _lbfsize: Default::default(),
-            _cookie: None,
-            _close: Default::default(),
-            _read: Default::default(),
-            _seek: Default::default(),
-            _write: Default::default(),
-            _ub: Default::default(),
-            _extra: None,
-            _ur: Default::default(),
-            _ubuf: Default::default(),
-            _nbuf: Default::default(),
-            _lb: Default::default(),
-            _blksize: Default::default(),
-            _offset: Default::default(),
-        }
-    }
-}
-impl __sFILE {
-    pub fn take(&mut self) -> Self {
-        core::mem::take(self)
-    }
-}
-
 pub type FILE = __sFILE;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct bz_stream {
-    pub next_in: *const std::os::raw::c_char,
+    pub next_in: *mut std::os::raw::c_char,
     pub avail_in: std::os::raw::c_uint,
     pub total_in_lo32: std::os::raw::c_uint,
     pub total_in_hi32: std::os::raw::c_uint,
@@ -131,25 +81,6 @@ pub struct bz_stream {
     >,
     pub opaque: *mut std::os::raw::c_void,
 }
-impl Default for bz_stream {
-    fn default() -> Self {
-        Self {
-            next_in: std::ptr::null_mut(),
-            avail_in: Default::default(),
-            total_in_lo32: Default::default(),
-            total_in_hi32: Default::default(),
-            next_out: std::ptr::null_mut(),
-            avail_out: Default::default(),
-            total_out_lo32: Default::default(),
-            total_out_hi32: Default::default(),
-            state: std::ptr::null_mut(),
-            bzalloc: Default::default(),
-            bzfree: Default::default(),
-            opaque: std::ptr::null_mut(),
-        }
-    }
-}
-
 pub type Bool = std::os::raw::c_uchar;
 pub type UChar = std::os::raw::c_uchar;
 pub type Int32 = std::os::raw::c_int;
@@ -198,52 +129,6 @@ pub struct EState {
     pub rfreq: [[Int32; 258]; 6],
     pub len_pack: [[UInt32; 4]; 258],
 }
-impl Default for EState {
-    fn default() -> Self {
-        Self {
-            strm: std::ptr::null_mut(),
-            mode: Default::default(),
-            state: Default::default(),
-            avail_in_expect: Default::default(),
-            arr1: std::ptr::null_mut(),
-            arr2: std::ptr::null_mut(),
-            ftab: std::ptr::null_mut(),
-            origPtr: Default::default(),
-            ptr: std::ptr::null_mut(),
-            block: std::ptr::null_mut(),
-            mtfv: std::ptr::null_mut(),
-            zbits: std::ptr::null_mut(),
-            workFactor: Default::default(),
-            state_in_ch: Default::default(),
-            state_in_len: Default::default(),
-            rNToGo: Default::default(),
-            rTPos: Default::default(),
-            nblock: Default::default(),
-            nblockMAX: Default::default(),
-            numZ: Default::default(),
-            state_out_pos: Default::default(),
-            nInUse: Default::default(),
-            inUse: Default::default(),
-            unseqToSeq: Default::default(),
-            bsBuff: Default::default(),
-            bsLive: Default::default(),
-            blockCRC: Default::default(),
-            combinedCRC: Default::default(),
-            verbosity: Default::default(),
-            blockNo: Default::default(),
-            blockSize100k: Default::default(),
-            nMTF: Default::default(),
-            mtfFreq: Default::default(),
-            selector: Default::default(),
-            selectorMtf: Default::default(),
-            len: Default::default(),
-            code: Default::default(),
-            rfreq: Default::default(),
-            len_pack: Default::default(),
-        }
-    }
-}
-
 /*-------------------------------------------------------------*/
 /*--- Block sorting machinery                               ---*/
 /*---                                           blocksort.c ---*/
@@ -269,7 +154,7 @@ in the file LICENSE.
 #[inline]
 unsafe extern "C" fn fallbackSimpleSort(
     mut fmap: *mut UInt32,
-    mut eclass: *const UInt32,
+    mut eclass: *mut UInt32,
     mut lo: Int32,
     mut hi: Int32,
 ) {
@@ -309,7 +194,7 @@ unsafe extern "C" fn fallbackSimpleSort(
 }
 unsafe extern "C" fn fallbackQSort3(
     mut fmap: *mut UInt32,
-    mut eclass: *const UInt32,
+    mut eclass: *mut UInt32,
     mut loSt: Int32,
     mut hiSt: Int32,
 ) {
@@ -703,10 +588,10 @@ unsafe extern "C" fn fallbackSort(
 unsafe extern "C" fn mainGtU(
     mut i1: UInt32,
     mut i2: UInt32,
-    mut block: *const UChar,
-    mut quadrant: *const UInt16,
+    mut block: *mut UChar,
+    mut quadrant: *mut UInt16,
     mut nblock: UInt32,
-    mut budget: Option<&mut Int32>,
+    mut budget: *mut Int32,
 ) -> Bool {
     let mut k: Int32 = 0;
     let mut c1: UChar = 0;
@@ -982,13 +867,13 @@ static mut incs: [Int32; 14] = [
 ];
 unsafe extern "C" fn mainSimpleSort(
     mut ptr: *mut UInt32,
-    mut block: *const UChar,
-    mut quadrant: *const UInt16,
+    mut block: *mut UChar,
+    mut quadrant: *mut UInt16,
     mut nblock: Int32,
     mut lo: Int32,
     mut hi: Int32,
     mut d: Int32,
-    mut budget: Option<&mut Int32>,
+    mut budget: *mut Int32,
 ) {
     let mut i: Int32 = 0;
     let mut j: Int32 = 0;
@@ -1021,7 +906,7 @@ unsafe extern "C" fn mainSimpleSort(
                 block,
                 quadrant,
                 nblock as UInt32,
-                budget.as_deref_mut(),
+                budget,
             ) != 0
             {
                 *ptr.offset(j as isize) = *ptr.offset((j - h) as isize);
@@ -1044,7 +929,7 @@ unsafe extern "C" fn mainSimpleSort(
                 block,
                 quadrant,
                 nblock as UInt32,
-                budget.as_deref_mut(),
+                budget,
             ) != 0
             {
                 *ptr.offset(j as isize) = *ptr.offset((j - h) as isize);
@@ -1067,7 +952,7 @@ unsafe extern "C" fn mainSimpleSort(
                 block,
                 quadrant,
                 nblock as UInt32,
-                budget.as_deref_mut(),
+                budget,
             ) != 0
             {
                 *ptr.offset(j as isize) = *ptr.offset((j - h) as isize);
@@ -1078,7 +963,7 @@ unsafe extern "C" fn mainSimpleSort(
             }
             *ptr.offset(j as isize) = v;
             i += 1;
-            if (*budget.as_deref().unwrap()) < 0 as std::os::raw::c_int {
+            if *budget < 0 as std::os::raw::c_int {
                 return;
             }
         }
@@ -1111,13 +996,13 @@ unsafe extern "C" fn mmed3(mut a: UChar, mut b: UChar, mut c: UChar) -> UChar {
 }
 unsafe extern "C" fn mainQSort3(
     mut ptr: *mut UInt32,
-    mut block: *const UChar,
-    mut quadrant: *const UInt16,
+    mut block: *mut UChar,
+    mut quadrant: *mut UInt16,
     mut nblock: Int32,
     mut loSt: Int32,
     mut hiSt: Int32,
     mut dSt: Int32,
-    mut budget: Option<&mut Int32>,
+    mut budget: *mut Int32,
 ) {
     let mut unLo: Int32 = 0;
     let mut unHi: Int32 = 0;
@@ -1152,17 +1037,8 @@ unsafe extern "C" fn mainQSort3(
         if hi - lo < 20 as std::os::raw::c_int
             || d > 2 as std::os::raw::c_int + 12 as std::os::raw::c_int
         {
-            mainSimpleSort(
-                ptr,
-                block,
-                quadrant,
-                nblock,
-                lo,
-                hi,
-                d,
-                budget.as_deref_mut(),
-            );
-            if (*budget.as_deref().unwrap()) < 0 as std::os::raw::c_int {
+            mainSimpleSort(ptr, block, quadrant, nblock, lo, hi, d, budget);
+            if *budget < 0 as std::os::raw::c_int {
                 return;
             }
         } else {
@@ -1365,7 +1241,7 @@ unsafe extern "C" fn mainSort(
     mut ftab: *mut UInt32,
     mut nblock: Int32,
     mut verb: Int32,
-    mut budget: Option<&mut Int32>,
+    mut budget: *mut Int32,
 ) {
     let mut i: Int32 = 0;
     let mut j: Int32 = 0;
@@ -1607,10 +1483,10 @@ unsafe extern "C" fn mainSort(
                             lo,
                             hi,
                             2 as std::os::raw::c_int,
-                            budget.as_deref_mut(),
+                            budget,
                         );
                         numQSorted += hi - lo + 1 as std::os::raw::c_int;
-                        if (*budget.as_deref().unwrap()) < 0 as std::os::raw::c_int {
+                        if *budget < 0 as std::os::raw::c_int {
                             return;
                         }
                     }

@@ -6,7 +6,7 @@ pub type Int32 = std::os::raw::c_int;
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_hbMakeCodeLengths(
     mut len: *mut UChar,
-    mut freq: *const Int32,
+    mut freq: *mut Int32,
     mut alphaSize: Int32,
     mut maxLen: Int32,
 ) {
@@ -197,7 +197,7 @@ pub unsafe extern "C" fn BZ2_hbMakeCodeLengths(
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_hbAssignCodes(
     mut code: *mut Int32,
-    mut length: *const UChar,
+    mut length: *mut UChar,
     mut minLen: Int32,
     mut maxLen: Int32,
     mut alphaSize: Int32,
@@ -226,7 +226,7 @@ pub unsafe extern "C" fn BZ2_hbCreateDecodeTables(
     mut limit: *mut Int32,
     mut base: *mut Int32,
     mut perm: *mut Int32,
-    mut length: *const UChar,
+    mut length: *mut UChar,
     mut minLen: Int32,
     mut maxLen: Int32,
     mut alphaSize: Int32,

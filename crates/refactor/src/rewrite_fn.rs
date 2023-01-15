@@ -325,11 +325,24 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         match &statement.kind {
             StatementKind::Assign(box (place, rvalue)) => {
+
+                // TODO constant immediate_lvalue
+                let is_immediate_lvalue = place.is_indirect() && {
+                    match def_use_chain.def_loc(place.local, location) {
+                        RichLocation::Entry => false,
+                        RichLocation::Phi(_) => false,
+                        RichLocation::Mir(def_loc) => {
+                            matches!(body.stmt_at(def_loc), Right(..))
+                        },
+                    }
+                };
+
                 // rewrite point: non-temporary place
                 // this includes 1. place of which base local is a user defined variable
                 // 2. place of which base local is a deref tmp, and the rvalue is not another deref tmp
                 if user_idents.contains_key(&place.local)
                     || matches!(body.local_decls[place.local].local_info, Some(box LocalInfo::DerefTemp) if !matches!(rvalue, Rvalue::CopyForDeref(..)))
+                    || is_immediate_lvalue
                 {
                     let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
                     let span = statement.source_info.span;
@@ -568,13 +581,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         {
             replacement
         } else if place.as_local().is_none() {
-            // self.rewrite_temporary(place.local, location, PlaceValueType::Irrelavent, rewriter);
-            // return
-            tracing::warn!(
-                "rewrite immediate value, could be static, func call return @ {:?}",
-                span
-            );
-            return;
+            // FIXME usage!
+            self.rewrite_temporary(place.local, location, PlaceValueType::Irrelavent, rewriter);
+            return
         } else {
             self.rewrite_temporary(place.local, location, required, rewriter);
             return;
@@ -875,7 +884,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt {
-            tcx, ..
+            tcx,
+            def_use_chain,
+            body,
+            ..
         } = *self;
 
         match rvalue {
@@ -939,7 +951,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 PlaceValueType::Irrelavent,
                 rewriter,
             ),
-            Rvalue::CopyForDeref(_) => unreachable!(),
+            Rvalue::CopyForDeref(_) => unreachable!("{:?}", span),
             Rvalue::Cast(_, operand, ty) => {
                 match self.try_rewrite_malloc_from_dest(
                     operand,
@@ -967,8 +979,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
             Rvalue::AddressOf(rustc_mutability, place) => {
                 if matches!(rustc_mutability, rustc_ast::Mutability::Mut) {
+                    let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
                     self.rewrite_place_load_at::<{ PlaceLoadMode::ByAddr as u8 }>(
-                        *place, location, span, required, rewriter,
+                        place, location, span, required, rewriter,
                     );
                 } else {
                     tracing::error!("const addr is ignored")
@@ -977,8 +990,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             Rvalue::Ref(_, borrow_kind, place) => {
                 let rustc_mutability = borrow_kind.to_mutbl_lossy();
                 if matches!(rustc_mutability, rustc_ast::Mutability::Mut) {
+                    let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
                     self.rewrite_place_load_at::<{ PlaceLoadMode::ByRef as u8 }>(
-                        *place, location, span, required, rewriter,
+                        place, location, span, required, rewriter,
                     );
                 } else {
                     tracing::error!("const reference is ignored")

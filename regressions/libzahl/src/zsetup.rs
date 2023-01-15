@@ -265,7 +265,7 @@ pub static mut libzahl_pool_alloc: [size_t; 64] = [0; 64];
 #[no_mangle]
 pub unsafe extern "C" fn zsetup(mut env: *const crate::src::allocator::__jmp_buf_tag) {
     let mut i: size_t = 0;
-    *libzahl_jmp_buf.as_mut_ptr() = *env;
+    *libzahl_jmp_buf.as_mut_ptr() = (*env);
     if libzahl_set_up == 0 {
         libzahl_set_up = 1 as libc::c_int;
         memset(

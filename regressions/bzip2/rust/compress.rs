@@ -12,31 +12,13 @@ pub type fpos_t = __darwin_off_t;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor12;
-impl Default for ErasedByPreprocessor12 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor13;
-impl Default for ErasedByPreprocessor13 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type FILE = crate::blocksort::__sFILE;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor14;
-impl Default for ErasedByPreprocessor14 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type Bool = std::os::raw::c_uchar;
 pub type UChar = std::os::raw::c_uchar;
 pub type Int32 = std::os::raw::c_int;
@@ -45,12 +27,6 @@ pub type UInt16 = std::os::raw::c_ushort;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor15;
-impl Default for ErasedByPreprocessor15 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 /*-------------------------------------------------------------*/
 /*--- Compression machinery (not incl block sorting)        ---*/
 /*---                                            compress.c ---*/
@@ -79,9 +55,9 @@ in the file LICENSE.
 /*---------------------------------------------------*/
 /*---------------------------------------------------*/
 #[no_mangle]
-pub unsafe extern "C" fn BZ2_bsInitWrite(mut s: Option<&mut crate::blocksort::EState>) {
-    (*s.as_deref_mut().unwrap()).bsLive = 0 as std::os::raw::c_int;
-    (*s.as_deref_mut().unwrap()).bsBuff = 0 as std::os::raw::c_int as UInt32;
+pub unsafe extern "C" fn BZ2_bsInitWrite(mut s: *mut crate::blocksort::EState) {
+    (*s).bsLive = 0 as std::os::raw::c_int;
+    (*s).bsBuff = 0 as std::os::raw::c_int as UInt32;
 }
 /*---------------------------------------------------*/
 unsafe extern "C" fn bsFinishWrite(mut s: *mut crate::blocksort::EState) {
@@ -108,61 +84,46 @@ unsafe extern "C" fn bsW(mut s: *mut crate::blocksort::EState, mut n: Int32, mut
     (*s).bsLive += n;
 }
 /*---------------------------------------------------*/
-unsafe extern "C" fn bsPutUInt32(mut s: Option<&mut crate::blocksort::EState>, mut u: UInt32) {
+unsafe extern "C" fn bsPutUInt32(mut s: *mut crate::blocksort::EState, mut u: UInt32) {
     bsW(
-        s.as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
+        s,
         8 as std::os::raw::c_int,
         ((u >> 24 as std::os::raw::c_int) as std::os::raw::c_long & 0xff as std::os::raw::c_long)
             as UInt32,
     );
     bsW(
-        s.as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
+        s,
         8 as std::os::raw::c_int,
         ((u >> 16 as std::os::raw::c_int) as std::os::raw::c_long & 0xff as std::os::raw::c_long)
             as UInt32,
     );
     bsW(
-        s.as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
+        s,
         8 as std::os::raw::c_int,
         ((u >> 8 as std::os::raw::c_int) as std::os::raw::c_long & 0xff as std::os::raw::c_long)
             as UInt32,
     );
     bsW(
-        s.as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
+        s,
         8 as std::os::raw::c_int,
         (u as std::os::raw::c_long & 0xff as std::os::raw::c_long) as UInt32,
     );
 }
 /*---------------------------------------------------*/
-unsafe extern "C" fn bsPutUChar(mut s: Option<&mut crate::blocksort::EState>, mut c: UChar) {
-    bsW(
-        s.as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
-        8 as std::os::raw::c_int,
-        c as UInt32,
-    );
+unsafe extern "C" fn bsPutUChar(mut s: *mut crate::blocksort::EState, mut c: UChar) {
+    bsW(s, 8 as std::os::raw::c_int, c as UInt32);
 }
 /*---------------------------------------------------*/
 /*--- The back end proper                         ---*/
 /*---------------------------------------------------*/
 /*---------------------------------------------------*/
-unsafe extern "C" fn makeMaps_e(mut s: Option<&mut crate::blocksort::EState>) {
+unsafe extern "C" fn makeMaps_e(mut s: *mut crate::blocksort::EState) {
     let mut i: Int32 = 0;
-    (*s.as_deref_mut().unwrap()).nInUse = 0 as std::os::raw::c_int;
+    (*s).nInUse = 0 as std::os::raw::c_int;
     i = 0 as std::os::raw::c_int;
     while i < 256 as std::os::raw::c_int {
-        if (*s.as_deref().unwrap()).inUse[i as usize] != 0 {
-            (*s.as_deref_mut().unwrap()).unseqToSeq[i as usize] =
-                (*s.as_deref().unwrap()).nInUse as UChar;
+        if (*s).inUse[i as usize] != 0 {
+            (*s).unseqToSeq[i as usize] = (*s).nInUse as UChar;
             (*s).nInUse += 1
         }
         i += 1
@@ -201,7 +162,7 @@ unsafe extern "C" fn generateMTFValues(mut s: *mut crate::blocksort::EState) {
     let mut ptr: *mut UInt32 = (*s).ptr;
     let mut block: *mut UChar = (*s).block;
     let mut mtfv: *mut UInt16 = (*s).mtfv;
-    makeMaps_e(s.as_mut());
+    makeMaps_e(s);
     EOB = (*s).nInUse + 1 as std::os::raw::c_int;
     i = 0 as std::os::raw::c_int;
     while i <= EOB {
@@ -259,7 +220,7 @@ unsafe extern "C" fn generateMTFValues(mut s: *mut crate::blocksort::EState) {
                 let mut rtmp2: UChar = 0;
                 ryy_j = ryy_j.offset(1);
                 rtmp2 = rtmp;
-                rtmp = (*ryy_j);
+                rtmp = *ryy_j;
                 *ryy_j = rtmp2
             }
             yy[0 as std::os::raw::c_int as usize] = rtmp;
@@ -1790,24 +1751,24 @@ pub unsafe extern "C" fn BZ2_compressBlock(
     (*s).zbits = &mut *((*s).arr2 as *mut UChar).offset((*s).nblock as isize) as *mut UChar;
     /*-- If this is the first block, create the stream header. --*/
     if (*s).blockNo == 1 as std::os::raw::c_int {
-        BZ2_bsInitWrite(s.as_mut());
-        bsPutUChar(s.as_mut(), 0x42 as std::os::raw::c_int as UChar);
-        bsPutUChar(s.as_mut(), 0x5a as std::os::raw::c_int as UChar);
-        bsPutUChar(s.as_mut(), 0x68 as std::os::raw::c_int as UChar);
+        BZ2_bsInitWrite(s);
+        bsPutUChar(s, 0x42 as std::os::raw::c_int as UChar);
+        bsPutUChar(s, 0x5a as std::os::raw::c_int as UChar);
+        bsPutUChar(s, 0x68 as std::os::raw::c_int as UChar);
         bsPutUChar(
-            s.as_mut(),
+            s,
             (0x30 as std::os::raw::c_int + (*s).blockSize100k) as UChar,
         );
     }
     if (*s).nblock > 0 as std::os::raw::c_int {
-        bsPutUChar(s.as_mut(), 0x31 as std::os::raw::c_int as UChar);
-        bsPutUChar(s.as_mut(), 0x41 as std::os::raw::c_int as UChar);
-        bsPutUChar(s.as_mut(), 0x59 as std::os::raw::c_int as UChar);
-        bsPutUChar(s.as_mut(), 0x26 as std::os::raw::c_int as UChar);
-        bsPutUChar(s.as_mut(), 0x53 as std::os::raw::c_int as UChar);
-        bsPutUChar(s.as_mut(), 0x59 as std::os::raw::c_int as UChar);
+        bsPutUChar(s, 0x31 as std::os::raw::c_int as UChar);
+        bsPutUChar(s, 0x41 as std::os::raw::c_int as UChar);
+        bsPutUChar(s, 0x59 as std::os::raw::c_int as UChar);
+        bsPutUChar(s, 0x26 as std::os::raw::c_int as UChar);
+        bsPutUChar(s, 0x53 as std::os::raw::c_int as UChar);
+        bsPutUChar(s, 0x59 as std::os::raw::c_int as UChar);
         /*-- Now the block's CRC, so it is in a known place. --*/
-        bsPutUInt32(s.as_mut(), (*s).blockCRC);
+        bsPutUInt32(s, (*s).blockCRC);
         /*--
            Now a single bit indicating (non-)randomisation.
            As of version 0.9.5, we use a better sorting algorithm
@@ -1828,13 +1789,13 @@ pub unsafe extern "C" fn BZ2_compressBlock(
     }
     /*-- If this is the last block, add the stream trailer. --*/
     if is_last_block != 0 {
-        bsPutUChar(s.as_mut(), 0x17 as std::os::raw::c_int as UChar);
-        bsPutUChar(s.as_mut(), 0x72 as std::os::raw::c_int as UChar);
-        bsPutUChar(s.as_mut(), 0x45 as std::os::raw::c_int as UChar);
-        bsPutUChar(s.as_mut(), 0x38 as std::os::raw::c_int as UChar);
-        bsPutUChar(s.as_mut(), 0x50 as std::os::raw::c_int as UChar);
-        bsPutUChar(s.as_mut(), 0x90 as std::os::raw::c_int as UChar);
-        bsPutUInt32(s.as_mut(), (*s).combinedCRC);
+        bsPutUChar(s, 0x17 as std::os::raw::c_int as UChar);
+        bsPutUChar(s, 0x72 as std::os::raw::c_int as UChar);
+        bsPutUChar(s, 0x45 as std::os::raw::c_int as UChar);
+        bsPutUChar(s, 0x38 as std::os::raw::c_int as UChar);
+        bsPutUChar(s, 0x50 as std::os::raw::c_int as UChar);
+        bsPutUChar(s, 0x90 as std::os::raw::c_int as UChar);
+        bsPutUInt32(s, (*s).combinedCRC);
         if (*s).verbosity >= 2 as std::os::raw::c_int {
             fprintf(
                 __stderrp,

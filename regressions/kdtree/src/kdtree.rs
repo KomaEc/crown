@@ -281,15 +281,27 @@ unsafe extern "C" fn insert_rec(
         return 0 as libc::c_int;
     }
     node = Some(Box::from_raw((*nptr)));
-    new_dir = ((*node).dir + 1 as libc::c_int) % dim;
+    new_dir = ((*node.as_deref().unwrap()).dir + 1 as libc::c_int) % dim;
     if *pos.offset((*node.as_deref().unwrap()).dir as isize)
         < *(*node.as_deref().unwrap())
             .pos
             .offset((*node.as_deref().unwrap()).dir as isize)
     {
-        return insert_rec(&mut (**nptr).left, pos, data, new_dir, dim);
+        return insert_rec(
+            core::ptr::addr_of_mut!((*(*nptr)).left),
+            pos,
+            data,
+            new_dir,
+            dim,
+        );
     }
-    return insert_rec(&mut (**nptr).right, pos, data, new_dir, dim);
+    return insert_rec(
+        core::ptr::addr_of_mut!((*(*nptr)).right),
+        pos,
+        data,
+        new_dir,
+        dim,
+    );
 }
 #[no_mangle]
 pub unsafe extern "C" fn kd_insert(
@@ -297,7 +309,14 @@ pub unsafe extern "C" fn kd_insert(
     mut pos: *const libc::c_double,
     mut data: *mut libc::c_void,
 ) -> libc::c_int {
-    if insert_rec(&mut (*tree).root, pos, data, 0 as libc::c_int, (*tree).dim) != 0 {
+    if insert_rec(
+        core::ptr::addr_of_mut!((*tree).root),
+        pos,
+        data,
+        0 as libc::c_int,
+        (*tree).dim,
+    ) != 0
+    {
         return -(1 as libc::c_int);
     }
     if (*tree).rect.as_deref().is_none() {
@@ -634,8 +653,8 @@ pub unsafe extern "C" fn kd_nearest(
             .map(|r| r as *const _)
             .unwrap_or(std::ptr::null()),
         pos,
-        &mut result,
-        &mut dist_sq,
+        Some(&mut result),
+        Some(&mut dist_sq),
         rect.as_deref_mut()
             .map(|r| r as *mut _)
             .unwrap_or(std::ptr::null_mut()),
@@ -1134,7 +1153,7 @@ static mut alloc_mutex: pthread_mutex_t = pthread_mutex_t {
 };
 unsafe extern "C" fn alloc_resnode() -> Option<Box<res_node>> {
     let mut node = None;
-    pthread_mutex_lock(&mut alloc_mutex);
+    pthread_mutex_lock(&raw mut alloc_mutex);
     if free_nodes.is_null() {
         ();
         node = Some(Box::new(
@@ -1145,14 +1164,14 @@ unsafe extern "C" fn alloc_resnode() -> Option<Box<res_node>> {
         free_nodes = (*free_nodes).next;
         (*node.as_deref_mut().unwrap()).next = 0 as *mut res_node;
     }
-    pthread_mutex_unlock(&mut alloc_mutex);
+    pthread_mutex_unlock(&raw mut alloc_mutex);
     return node;
 }
 unsafe extern "C" fn free_resnode(mut node: *mut res_node) {
-    pthread_mutex_lock(&mut alloc_mutex);
+    pthread_mutex_lock(&raw mut alloc_mutex);
     (*node).next = free_nodes;
     free_nodes = node;
-    pthread_mutex_unlock(&mut alloc_mutex);
+    pthread_mutex_unlock(&raw mut alloc_mutex);
 }
 unsafe extern "C" fn rlist_insert(
     mut list: *mut res_node,

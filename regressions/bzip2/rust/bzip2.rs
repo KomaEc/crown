@@ -149,21 +149,9 @@ pub type fpos_t = __darwin_off_t;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor0;
-impl Default for ErasedByPreprocessor0 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor1;
-impl Default for ErasedByPreprocessor1 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type FILE = crate::blocksort::__sFILE;
 pub type off_t = __darwin_off_t;
 pub type ssize_t = __darwin_ssize_t;
@@ -176,49 +164,20 @@ pub struct _RuneEntry {
     pub __min: __darwin_rune_t,
     pub __max: __darwin_rune_t,
     pub __map: __darwin_rune_t,
-    pub __types: *const __uint32_t,
+    pub __types: *mut __uint32_t,
 }
-impl Default for _RuneEntry {
-    fn default() -> Self {
-        Self {
-            __min: Default::default(),
-            __max: Default::default(),
-            __map: Default::default(),
-            __types: std::ptr::null_mut(),
-        }
-    }
-}
-
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _RuneRange {
     pub __nranges: std::os::raw::c_int,
-    pub __ranges: *const _RuneEntry,
+    pub __ranges: *mut _RuneEntry,
 }
-impl Default for _RuneRange {
-    fn default() -> Self {
-        Self {
-            __nranges: Default::default(),
-            __ranges: std::ptr::null_mut(),
-        }
-    }
-}
-
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _RuneCharClass {
     pub __name: [std::os::raw::c_char; 14],
     pub __mask: __uint32_t,
 }
-impl Default for _RuneCharClass {
-    fn default() -> Self {
-        Self {
-            __name: Default::default(),
-            __mask: Default::default(),
-        }
-    }
-}
-
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _RuneLocale {
@@ -246,33 +205,11 @@ pub struct _RuneLocale {
     pub __runetype_ext: _RuneRange,
     pub __maplower_ext: _RuneRange,
     pub __mapupper_ext: _RuneRange,
-    pub __variable: *const std::os::raw::c_void,
+    pub __variable: *mut std::os::raw::c_void,
     pub __variable_len: std::os::raw::c_int,
     pub __ncharclasses: std::os::raw::c_int,
-    pub __charclasses: *const _RuneCharClass,
+    pub __charclasses: *mut _RuneCharClass,
 }
-impl Default for _RuneLocale {
-    fn default() -> Self {
-        Self {
-            __magic: Default::default(),
-            __encoding: Default::default(),
-            __sgetrune: Default::default(),
-            __sputrune: Default::default(),
-            __invalid_rune: Default::default(),
-            __runetype: Default::default(),
-            __maplower: Default::default(),
-            __mapupper: Default::default(),
-            __runetype_ext: Default::default(),
-            __maplower_ext: Default::default(),
-            __mapupper_ext: Default::default(),
-            __variable: std::ptr::null_mut(),
-            __variable_len: Default::default(),
-            __ncharclasses: Default::default(),
-            __charclasses: std::ptr::null_mut(),
-        }
-    }
-}
-
 pub type BZFILE = ();
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -280,15 +217,6 @@ pub struct timespec {
     pub tv_sec: __darwin_time_t,
     pub tv_nsec: std::os::raw::c_long,
 }
-impl Default for timespec {
-    fn default() -> Self {
-        Self {
-            tv_sec: Default::default(),
-            tv_nsec: Default::default(),
-        }
-    }
-}
-
 pub type blkcnt_t = __darwin_blkcnt_t;
 pub type blksize_t = __darwin_blksize_t;
 pub type gid_t = __darwin_gid_t;
@@ -300,15 +228,6 @@ pub struct utimbuf {
     pub actime: time_t,
     pub modtime: time_t,
 }
-impl Default for utimbuf {
-    fn default() -> Self {
-        Self {
-            actime: Default::default(),
-            modtime: Default::default(),
-        }
-    }
-}
-
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct stat {
@@ -331,31 +250,6 @@ pub struct stat {
     pub st_lspare: __int32_t,
     pub st_qspare: [__int64_t; 2],
 }
-impl Default for stat {
-    fn default() -> Self {
-        Self {
-            st_dev: Default::default(),
-            st_mode: Default::default(),
-            st_nlink: Default::default(),
-            st_ino: Default::default(),
-            st_uid: Default::default(),
-            st_gid: Default::default(),
-            st_rdev: Default::default(),
-            st_atimespec: Default::default(),
-            st_mtimespec: Default::default(),
-            st_ctimespec: Default::default(),
-            st_birthtimespec: Default::default(),
-            st_size: Default::default(),
-            st_blocks: Default::default(),
-            st_blksize: Default::default(),
-            st_flags: Default::default(),
-            st_gen: Default::default(),
-            st_lspare: Default::default(),
-            st_qspare: Default::default(),
-        }
-    }
-}
-
 /* */
 /* BZ_UNIX */
 /* BZ_LCCWIN32 */
@@ -380,29 +274,12 @@ pub type IntNative = std::os::raw::c_int;
 pub struct UInt64 {
     pub b: [UChar; 8],
 }
-impl Default for UInt64 {
-    fn default() -> Self {
-        Self {
-            b: Default::default(),
-        }
-    }
-}
-
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct zzzz {
     pub name: *mut Char,
     pub link: *mut zzzz,
 }
-impl Default for zzzz {
-    fn default() -> Self {
-        Self {
-            name: std::ptr::null_mut(),
-            link: std::ptr::null_mut(),
-        }
-    }
-}
-
 /*---------------------------------------------*/
 /*--
   All the garbage from here to main() is purely to
@@ -488,35 +365,31 @@ pub static mut progNameReally: [Char; 1034] = [0; 1034];
 pub static mut outputHandleJustInCase: *mut FILE = 0 as *const FILE as *mut FILE;
 #[no_mangle]
 pub static mut workFactor: Int32 = 0;
-unsafe extern "C" fn uInt64_from_UInt32s(
-    mut n: Option<&mut UInt64>,
-    mut lo32: UInt32,
-    mut hi32: UInt32,
-) {
-    (*n.as_deref_mut().unwrap()).b[7 as std::os::raw::c_int as usize] =
-        (hi32 >> 24 as std::os::raw::c_int & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
-            as UChar;
-    (*n.as_deref_mut().unwrap()).b[6 as std::os::raw::c_int as usize] =
-        (hi32 >> 16 as std::os::raw::c_int & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
-            as UChar;
-    (*n.as_deref_mut().unwrap()).b[5 as std::os::raw::c_int as usize] =
-        (hi32 >> 8 as std::os::raw::c_int & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
-            as UChar;
-    (*n.as_deref_mut().unwrap()).b[4 as std::os::raw::c_int as usize] =
+unsafe extern "C" fn uInt64_from_UInt32s(mut n: *mut UInt64, mut lo32: UInt32, mut hi32: UInt32) {
+    (*n).b[7 as std::os::raw::c_int as usize] = (hi32 >> 24 as std::os::raw::c_int
+        & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
+        as UChar;
+    (*n).b[6 as std::os::raw::c_int as usize] = (hi32 >> 16 as std::os::raw::c_int
+        & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
+        as UChar;
+    (*n).b[5 as std::os::raw::c_int as usize] = (hi32 >> 8 as std::os::raw::c_int
+        & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
+        as UChar;
+    (*n).b[4 as std::os::raw::c_int as usize] =
         (hi32 & 0xff as std::os::raw::c_int as std::os::raw::c_uint) as UChar;
-    (*n.as_deref_mut().unwrap()).b[3 as std::os::raw::c_int as usize] =
-        (lo32 >> 24 as std::os::raw::c_int & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
-            as UChar;
-    (*n.as_deref_mut().unwrap()).b[2 as std::os::raw::c_int as usize] =
-        (lo32 >> 16 as std::os::raw::c_int & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
-            as UChar;
-    (*n.as_deref_mut().unwrap()).b[1 as std::os::raw::c_int as usize] =
-        (lo32 >> 8 as std::os::raw::c_int & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
-            as UChar;
-    (*n.as_deref_mut().unwrap()).b[0 as std::os::raw::c_int as usize] =
+    (*n).b[3 as std::os::raw::c_int as usize] = (lo32 >> 24 as std::os::raw::c_int
+        & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
+        as UChar;
+    (*n).b[2 as std::os::raw::c_int as usize] = (lo32 >> 16 as std::os::raw::c_int
+        & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
+        as UChar;
+    (*n).b[1 as std::os::raw::c_int as usize] = (lo32 >> 8 as std::os::raw::c_int
+        & 0xff as std::os::raw::c_int as std::os::raw::c_uint)
+        as UChar;
+    (*n).b[0 as std::os::raw::c_int as usize] =
         (lo32 & 0xff as std::os::raw::c_int as std::os::raw::c_uint) as UChar;
 }
-unsafe extern "C" fn uInt64_to_double(mut n: *const UInt64) -> std::os::raw::c_double {
+unsafe extern "C" fn uInt64_to_double(mut n: *mut UInt64) -> std::os::raw::c_double {
     let mut i: Int32 = 0;
     let mut base: std::os::raw::c_double = 1.0f64;
     let mut sum: std::os::raw::c_double = 0.0f64;
@@ -528,7 +401,7 @@ unsafe extern "C" fn uInt64_to_double(mut n: *const UInt64) -> std::os::raw::c_d
     }
     return sum;
 }
-unsafe extern "C" fn uInt64_isZero(mut n: *const UInt64) -> Bool {
+unsafe extern "C" fn uInt64_isZero(mut n: *mut UInt64) -> Bool {
     let mut i: Int32 = 0;
     i = 0 as std::os::raw::c_int;
     while i < 8 as std::os::raw::c_int {
@@ -540,7 +413,7 @@ unsafe extern "C" fn uInt64_isZero(mut n: *const UInt64) -> Bool {
     return 1 as std::os::raw::c_int as Bool;
 }
 /* Divide *n by 10, and return the remainder.  */
-unsafe extern "C" fn uInt64_qrm10(mut n: Option<&mut UInt64>) -> Int32 {
+unsafe extern "C" fn uInt64_qrm10(mut n: *mut UInt64) -> Int32 {
     let mut rem: UInt32 = 0;
     let mut tmp: UInt32 = 0;
     let mut i: Int32 = 0;
@@ -549,8 +422,8 @@ unsafe extern "C" fn uInt64_qrm10(mut n: Option<&mut UInt64>) -> Int32 {
     while i >= 0 as std::os::raw::c_int {
         tmp = rem
             .wrapping_mul(256 as std::os::raw::c_int as std::os::raw::c_uint)
-            .wrapping_add((*n.as_deref().unwrap()).b[i as usize] as std::os::raw::c_uint);
-        (*n.as_deref_mut().unwrap()).b[i as usize] =
+            .wrapping_add((*n).b[i as usize] as std::os::raw::c_uint);
+        (*n).b[i as usize] =
             tmp.wrapping_div(10 as std::os::raw::c_int as std::os::raw::c_uint) as UChar;
         rem = tmp.wrapping_rem(10 as std::os::raw::c_int as std::os::raw::c_uint);
         i -= 1
@@ -560,12 +433,12 @@ unsafe extern "C" fn uInt64_qrm10(mut n: Option<&mut UInt64>) -> Int32 {
 /* ... and the Whole Entire Point of all this UInt64 stuff is
    so that we can supply the following function.
 */
-unsafe extern "C" fn uInt64_toAscii(mut outbuf: *mut std::os::raw::c_char, mut n: *const UInt64) {
+unsafe extern "C" fn uInt64_toAscii(mut outbuf: *mut std::os::raw::c_char, mut n: *mut UInt64) {
     let mut i: Int32 = 0;
     let mut q: Int32 = 0;
     let mut buf: [UChar; 32] = [0; 32];
     let mut nBuf: Int32 = 0 as std::os::raw::c_int;
-    let mut n_copy: UInt64 = (*n);
+    let mut n_copy: UInt64 = *n;
     loop {
         q = uInt64_qrm10(&mut n_copy);
         buf[nBuf as usize] = (q + '0' as i32) as UChar;
@@ -1879,7 +1752,7 @@ unsafe extern "C" fn cleanUpAndFail(mut ec: Int32) -> ! {
             if !outputHandleJustInCase.is_null() {
                 fclose(outputHandleJustInCase);
             } else {
-                ();
+                std::intrinsics::assume(outputHandleJustInCase as usize == 0);
             }
             retVal = remove(outName.as_mut_ptr());
             if retVal != 0 as std::os::raw::c_int {
@@ -1988,11 +1861,11 @@ unsafe extern "C" fn mySignalCatcher(mut n: IntNative) {
 unsafe extern "C" fn mySIGSEGVorSIGBUScatcher(mut n: IntNative) {
     let mut msg: *const std::os::raw::c_char = 0 as *const std::os::raw::c_char;
     if opMode == 1 as std::os::raw::c_int {
-        msg=
+        msg =
             b": Caught a SIGSEGV or SIGBUS whilst compressing.\n\n   Possible causes are (most likely first):\n   (1) This computer has unreliable memory or cache hardware\n       (a surprisingly common problem; try a different machine.)\n   (2) A bug in the compiler used to create this executable\n       (unlikely, if you didn\'t compile bzip2 yourself.)\n   (3) A real bug in bzip2 -- I hope this should never be the case.\n   The user\'s manual, Section 4.3, has more info on (1) and (2).\n   \n   If you suspect this is a bug in bzip2, or are unsure about (1)\n   or (2), feel free to report it to: bzip2-devel@sourceware.org.\n   Section 4.3 of the user\'s manual describes the info a useful\n   bug report should have.  If the manual is available on your\n   system, please try and read it before mailing me.  If you don\'t\n   have the manual or can\'t be bothered to read it, mail me anyway.\n\n\x00"
                 as *const u8 as *const std::os::raw::c_char
     } else {
-        msg=
+        msg =
             b": Caught a SIGSEGV or SIGBUS whilst decompressing.\n\n   Possible causes are (most likely first):\n   (1) The compressed data is corrupted, and bzip2\'s usual checks\n       failed to detect this.  Try bzip2 -tvv my_file.bz2.\n   (2) This computer has unreliable memory or cache hardware\n       (a surprisingly common problem; try a different machine.)\n   (3) A bug in the compiler used to create this executable\n       (unlikely, if you didn\'t compile bzip2 yourself.)\n   (4) A real bug in bzip2 -- I hope this should never be the case.\n   The user\'s manual, Section 4.3, has more info on (2) and (3).\n   \n   If you suspect this is a bug in bzip2, or are unsure about (2)\n   or (3), feel free to report it to: bzip2-devel@sourceware.org.\n   Section 4.3 of the user\'s manual describes the info a useful\n   bug report should have.  If the manual is available on your\n   system, please try and read it before mailing me.  If you don\'t\n   have the manual or can\'t be bothered to read it, mail me anyway.\n\n\x00"
                 as *const u8 as *const std::os::raw::c_char
     }
@@ -2078,7 +1951,7 @@ unsafe extern "C" fn configError() -> ! {
    cleaned up.
 */
 /*---------------------------------------------*/
-unsafe extern "C" fn pad(mut s: *const Char) {
+unsafe extern "C" fn pad(mut s: *mut Char) {
     let mut i: Int32 = 0;
     if strlen(s) as Int32 >= longestFileName {
         return;
@@ -2120,7 +1993,7 @@ unsafe extern "C" fn fileExists(mut name: *mut Char) -> Bool {
     if !tmp.is_null() {
         fclose(tmp);
     } else {
-        ();
+        std::intrinsics::assume(tmp as usize == 0);
     }
     return exists;
 }
@@ -2150,7 +2023,7 @@ unsafe extern "C" fn fopen_output_safely(
     }
     fp = fdopen(fh, mode);
     if fp.is_null() {
-        ();
+        std::intrinsics::assume(fp as usize == 0);
         close(fh);
     }
     return fp;
@@ -2336,7 +2209,7 @@ unsafe extern "C" fn applySavedFileAttrToOutputFile(mut fd: IntNative) {
     */
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn containsDubiousChars(mut name: *const Char) -> Bool {
+unsafe extern "C" fn containsDubiousChars(mut name: *mut Char) -> Bool {
     /* On unix, files can contain any characters and the file expansion
      * is performed by the shell.
      */
@@ -2358,7 +2231,7 @@ pub static mut unzSuffix: [*const Char; 4] = [
     b".tar\x00" as *const u8 as *const std::os::raw::c_char,
     b".tar\x00" as *const u8 as *const std::os::raw::c_char,
 ];
-unsafe extern "C" fn hasSuffix(mut s: *const Char, mut suffix: *const Char) -> Bool {
+unsafe extern "C" fn hasSuffix(mut s: *mut Char, mut suffix: *const Char) -> Bool {
     let mut ns: Int32 = strlen(s) as Int32;
     let mut nx: Int32 = strlen(suffix) as Int32;
     if ns < nx {
@@ -2547,7 +2420,7 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
     }
     if srcMode == 3 as std::os::raw::c_int && forceOverwrite == 0 && {
         n = countHardLinks(inName.as_mut_ptr());
-        n > 0 as std::os::raw::c_int
+        (n) > 0 as std::os::raw::c_int
     } {
         fprintf(
             __stderrp,
@@ -2615,13 +2488,13 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
                 if !inStr.is_null() {
                     fclose(inStr);
                 } else {
-                    ();
+                    std::intrinsics::assume(inStr as usize == 0);
                 }
                 setExit(1 as std::os::raw::c_int);
                 return;
             }
             if inStr.is_null() {
-                ();
+                std::intrinsics::assume(inStr as usize == 0);
                 fprintf(
                     __stderrp,
                     b"%s: Can\'t open input file %s: %s.\n\x00" as *const u8
@@ -2644,7 +2517,7 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
                 b"wb\x00" as *const u8 as *const std::os::raw::c_char,
             );
             if outStr.is_null() {
-                ();
+                std::intrinsics::assume(outStr as usize == 0);
                 fprintf(
                     __stderrp,
                     b"%s: Can\'t create output file %s: %s.\n\x00" as *const u8
@@ -2656,13 +2529,13 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
                 if !inStr.is_null() {
                     fclose(inStr);
                 } else {
-                    ();
+                    std::intrinsics::assume(inStr as usize == 0);
                 }
                 setExit(1 as std::os::raw::c_int);
                 return;
             }
             if inStr.is_null() {
-                ();
+                std::intrinsics::assume(inStr as usize == 0);
                 fprintf(
                     __stderrp,
                     b"%s: Can\'t open input file %s: %s.\n\x00" as *const u8
@@ -2674,7 +2547,7 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
                 if !outStr.is_null() {
                     fclose(outStr);
                 } else {
-                    ();
+                    std::intrinsics::assume(outStr as usize == 0);
                 }
                 setExit(1 as std::os::raw::c_int);
                 return;
@@ -2898,7 +2771,7 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
     }
     if srcMode == 3 as std::os::raw::c_int && forceOverwrite == 0 && {
         n = countHardLinks(inName.as_mut_ptr());
-        n > 0 as std::os::raw::c_int
+        (n) > 0 as std::os::raw::c_int
     } {
         fprintf(
             __stderrp,
@@ -2950,7 +2823,7 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
             );
             outStr = __stdoutp;
             if inStr.is_null() {
-                ();
+                std::intrinsics::assume(inStr as usize == 0);
                 fprintf(
                     __stderrp,
                     b"%s: Can\'t open input file %s:%s.\n\x00" as *const u8
@@ -2962,7 +2835,7 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
                 if !inStr.is_null() {
                     fclose(inStr);
                 } else {
-                    ();
+                    std::intrinsics::assume(inStr as usize == 0);
                 }
                 setExit(1 as std::os::raw::c_int);
                 return;
@@ -2978,7 +2851,7 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
                 b"wb\x00" as *const u8 as *const std::os::raw::c_char,
             );
             if outStr.is_null() {
-                ();
+                std::intrinsics::assume(outStr as usize == 0);
                 fprintf(
                     __stderrp,
                     b"%s: Can\'t create output file %s: %s.\n\x00" as *const u8
@@ -2990,13 +2863,13 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
                 if !inStr.is_null() {
                     fclose(inStr);
                 } else {
-                    ();
+                    std::intrinsics::assume(inStr as usize == 0);
                 }
                 setExit(1 as std::os::raw::c_int);
                 return;
             }
             if inStr.is_null() {
-                ();
+                std::intrinsics::assume(inStr as usize == 0);
                 fprintf(
                     __stderrp,
                     b"%s: Can\'t open input file %s: %s.\n\x00" as *const u8
@@ -3008,7 +2881,7 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
                 if !outStr.is_null() {
                     fclose(outStr);
                 } else {
-                    ();
+                    std::intrinsics::assume(outStr as usize == 0);
                 }
                 setExit(1 as std::os::raw::c_int);
                 return;
@@ -3207,7 +3080,7 @@ unsafe extern "C" fn testf(mut name: *mut Char) {
                 b"rb\x00" as *const u8 as *const std::os::raw::c_char,
             );
             if inStr.is_null() {
-                ();
+                std::intrinsics::assume(inStr as usize == 0);
                 fprintf(
                     __stderrp,
                     b"%s: Can\'t open input file %s:%s.\n\x00" as *const u8
@@ -3253,14 +3126,14 @@ unsafe extern "C" fn license() {
                 as *const u8 as *const std::os::raw::c_char, crate::bzlib::BZ2_bzlibVersion());
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn usage(mut fullProgName: *const Char) {
+unsafe extern "C" fn usage(mut fullProgName: *mut Char) {
     fprintf(__stderrp,
             b"bzip2, a block-sorting file compressor.  Version %s.\n\n   usage: %s [flags and input files in any order]\n\n   -h --help           print this message\n   -d --decompress     force decompression\n   -z --compress       force compression\n   -k --keep           keep (don\'t delete) input files\n   -f --force          overwrite existing output files\n   -t --test           test compressed file integrity\n   -c --stdout         output to standard out\n   -q --quiet          suppress noncritical error messages\n   -v --verbose        be verbose (a 2nd -v gives more)\n   -L --license        display software version & license\n   -V --version        display software version & license\n   -s --small          use less memory (at most 2500k)\n   -1 .. -9            set block size to 100k .. 900k\n   --fast              alias for -1\n   --best              alias for -9\n\n   If invoked as `bzip2\', default action is to compress.\n              as `bunzip2\',  default action is to decompress.\n              as `bzcat\', default action is to decompress to stdout.\n\n   If no file names are given, bzip2 compresses or decompresses\n   from standard input to standard output.  You can combine\n   short flags, so `-v -4\' means the same as -v4 or -4v, &c.\n\n\x00"
                 as *const u8 as *const std::os::raw::c_char, crate::bzlib::BZ2_bzlibVersion(),
             fullProgName);
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn redundant(mut flag: *const Char) {
+unsafe extern "C" fn redundant(mut flag: *mut Char) {
     fprintf(
         __stderrp,
         b"%s: %s is redundant in versions 0.9.5 and above\n\x00" as *const u8
@@ -3274,50 +3147,41 @@ unsafe extern "C" fn myMalloc(mut n: Int32) -> *mut std::os::raw::c_void {
     let mut p: *mut std::os::raw::c_void = 0 as *mut std::os::raw::c_void;
     p = malloc(n as size_t);
     if p.is_null() {
-        ();
+        std::intrinsics::assume(p as usize == 0);
         outOfMemory();
     }
     return p;
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn mkCell() -> Option<Box<Cell>> {
-    let mut c: *mut Cell = None;
+unsafe extern "C" fn mkCell() -> *mut Cell {
+    let mut c: *mut Cell = 0 as *mut Cell;
     c = myMalloc(::std::mem::size_of::<Cell>() as std::os::raw::c_ulong as Int32) as *mut Cell;
-    (*c.as_deref_mut().unwrap()).name = 0 as *mut Char;
-    (*c.as_deref_mut().unwrap()).link = 0 as *mut zzzz;
+    (*c).name = 0 as *mut Char;
+    (*c).link = 0 as *mut zzzz;
     return c;
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn snocString(
-    mut root: Option<Box<Cell>>,
-    mut name: *mut Char,
-) -> Option<Box<Cell>> {
-    if root.as_deref().is_none() {
-        ();
+unsafe extern "C" fn snocString(mut root: *mut Cell, mut name: *mut Char) -> *mut Cell {
+    if root.is_null() {
+        std::intrinsics::assume(root as usize == 0);
         let mut tmp: *mut Cell = mkCell();
-        (*tmp.as_deref_mut().unwrap()).name = myMalloc(
+        (*tmp).name = myMalloc(
             (5 as std::os::raw::c_int as std::os::raw::c_ulong).wrapping_add(strlen(name)) as Int32,
         ) as *mut Char;
-        strcpy((*tmp.as_deref().unwrap()).name, name);
+        strcpy((*tmp).name, name);
         return tmp;
     } else {
-        let mut tmp_0: *mut Cell = root
-            .as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut());
+        let mut tmp_0: *mut Cell = root;
         while !(*tmp_0).link.is_null() {
             tmp_0 = (*tmp_0).link
         }
-        ();
-        (*tmp_0).link = snocString(Some(Box::from_raw((*tmp_0).link)), name);
+        std::intrinsics::assume((*tmp_0).link as usize == 0);
+        (*tmp_0).link = snocString((*tmp_0).link, name);
         return root;
     };
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn addFlagsFromEnvVar(
-    mut argList: Option<&mut Option<Box<Cell>>>,
-    mut varName: *mut Char,
-) {
+unsafe extern "C" fn addFlagsFromEnvVar(mut argList: *mut *mut Cell, mut varName: *mut Char) {
     let mut i: Int32 = 0;
     let mut j: Int32 = 0;
     let mut k: Int32 = 0;
@@ -3352,22 +3216,19 @@ unsafe extern "C" fn addFlagsFromEnvVar(
                     j += 1
                 }
                 tmpName[k as usize] = 0 as std::os::raw::c_int as Char;
-                *argList.as_deref_mut().unwrap() = snocString(
-                    (*argList.as_deref_mut().unwrap()).take(),
-                    tmpName.as_mut_ptr(),
-                )
+                *argList = snocString(*argList, tmpName.as_mut_ptr())
             }
         }
     } else {
-        ();
+        std::intrinsics::assume(envbase as usize == 0);
     };
 }
 unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
     let mut i: Int32 = 0;
     let mut j: Int32 = 0;
     let mut tmp: *mut Char = 0 as *mut Char;
-    let mut argList: *mut Cell = None;
-    let mut aa: *mut Cell = None;
+    let mut argList: *mut Cell = 0 as *mut Cell;
+    let mut aa: *mut Cell = 0 as *mut Cell;
     let mut decode: Bool = 0;
     /*-- Be really really really paranoid :-) --*/
     if ::std::mem::size_of::<Int32>() as std::os::raw::c_ulong
@@ -3429,8 +3290,8 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
     tmp = &mut *progNameReally
         .as_mut_ptr()
         .offset(0 as std::os::raw::c_int as isize) as *mut Char;
-    while (*tmp) as std::os::raw::c_int != '\u{0}' as i32 {
-        if (*tmp) as std::os::raw::c_int == '/' as i32 {
+    while *tmp as std::os::raw::c_int != '\u{0}' as i32 {
+        if *tmp as std::os::raw::c_int == '/' as i32 {
             progName = tmp.offset(1 as std::os::raw::c_int as isize)
         }
         tmp = tmp.offset(1)
@@ -3438,7 +3299,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
     /*-- Copy flags from env var BZIP2, and
          expand filename wildcards in arg list.
     --*/
-    argList = None;
+    argList = 0 as *mut Cell;
     addFlagsFromEnvVar(
         &mut argList,
         b"BZIP2\x00" as *const u8 as *const std::os::raw::c_char as *mut Char,
@@ -3457,27 +3318,25 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
     numFileNames = 0 as std::os::raw::c_int;
     decode = 1 as std::os::raw::c_int as Bool;
     aa = argList;
-    while !aa.as_deref().is_none() {
+    while !aa.is_null() {
         if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             decode = 0 as std::os::raw::c_int as Bool
-        } else if !(*(*aa.as_deref().unwrap())
-            .name
-            .offset(0 as std::os::raw::c_int as isize) as std::os::raw::c_int
+        } else if !(*(*aa).name.offset(0 as std::os::raw::c_int as isize) as std::os::raw::c_int
             == '-' as i32
             && decode as std::os::raw::c_int != 0)
         {
             numFileNames += 1;
-            if longestFileName < strlen((*aa.as_deref().unwrap()).name) as Int32 {
-                longestFileName = strlen((*aa.as_deref().unwrap()).name) as Int32
+            if longestFileName < strlen((*aa).name) as Int32 {
+                longestFileName = strlen((*aa).name) as Int32
             }
         }
-        aa = Some(Box::from_raw((*aa.as_deref().unwrap()).link))
+        aa = (*aa).link
     }
-    ();
+    std::intrinsics::assume(aa as usize == 0);
     /*-- Determine source modes; flag handling may change this too. --*/
     if numFileNames == 0 as std::os::raw::c_int {
         srcMode = 1 as std::os::raw::c_int
@@ -3530,28 +3389,22 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
     }
     /*-- Look at the flags. --*/
     aa = argList;
-    while !aa.as_deref().is_none() {
+    while !aa.is_null() {
         if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             break;
         }
-        if *(*aa.as_deref().unwrap())
-            .name
-            .offset(0 as std::os::raw::c_int as isize) as std::os::raw::c_int
+        if *(*aa).name.offset(0 as std::os::raw::c_int as isize) as std::os::raw::c_int
             == '-' as i32
-            && *(*aa.as_deref().unwrap())
-                .name
-                .offset(1 as std::os::raw::c_int as isize) as std::os::raw::c_int
+            && *(*aa).name.offset(1 as std::os::raw::c_int as isize) as std::os::raw::c_int
                 != '-' as i32
         {
             j = 1 as std::os::raw::c_int;
-            while *(*aa.as_deref().unwrap()).name.offset(j as isize) as std::os::raw::c_int
-                != '\u{0}' as i32
-            {
-                match *(*aa.as_deref().unwrap()).name.offset(j as isize) as std::os::raw::c_int {
+            while *(*aa).name.offset(j as isize) as std::os::raw::c_int != '\u{0}' as i32 {
+                match *(*aa).name.offset(j as isize) as std::os::raw::c_int {
                     99 => srcMode = 2 as std::os::raw::c_int,
                     100 => opMode = 2 as std::os::raw::c_int,
                     122 => opMode = 1 as std::os::raw::c_int,
@@ -3591,117 +3444,117 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
                 j += 1
             }
         }
-        aa = Some(Box::from_raw((*aa.as_deref().unwrap()).link))
+        aa = (*aa).link
     }
-    ();
+    std::intrinsics::assume(aa as usize == 0);
     /*-- And again ... --*/
     aa = argList;
-    while !aa.as_deref().is_none() {
+    while !aa.is_null() {
         if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             break;
         }
         if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--stdout\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             srcMode = 2 as std::os::raw::c_int
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--decompress\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             opMode = 2 as std::os::raw::c_int
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--compress\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             opMode = 1 as std::os::raw::c_int
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--force\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             forceOverwrite = 1 as std::os::raw::c_int as Bool
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--test\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             opMode = 3 as std::os::raw::c_int
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--keep\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             keepInputFiles = 1 as std::os::raw::c_int as Bool
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--small\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             smallMode = 1 as std::os::raw::c_int as Bool
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--quiet\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             noisy = 0 as std::os::raw::c_int as Bool
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--version\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             license();
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--license\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             license();
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--exponential\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             workFactor = 1 as std::os::raw::c_int
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--repetitive-best\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
-            redundant((*aa.as_deref().unwrap()).name);
+            redundant((*aa).name);
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--repetitive-fast\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
-            redundant((*aa.as_deref().unwrap()).name);
+            redundant((*aa).name);
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--fast\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             blockSize100k = 1 as std::os::raw::c_int
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--best\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             blockSize100k = 9 as std::os::raw::c_int
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--verbose\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
             verbosity += 1
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa).name,
             b"--help\x00" as *const u8 as *const std::os::raw::c_char,
         ) == 0 as std::os::raw::c_int
         {
@@ -3709,7 +3562,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
             exit(0 as std::os::raw::c_int);
         } else {
             if strncmp(
-                (*aa.as_deref().unwrap()).name,
+                (*aa).name,
                 b"--\x00" as *const u8 as *const std::os::raw::c_char,
                 2 as std::os::raw::c_int as std::os::raw::c_ulong,
             ) == 0 as std::os::raw::c_int
@@ -3724,9 +3577,9 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
                 exit(1 as std::os::raw::c_int);
             }
         }
-        aa = Some(Box::from_raw((*aa.as_deref().unwrap()).link))
+        aa = (*aa).link
     }
-    ();
+    std::intrinsics::assume(aa as usize == 0);
     if verbosity > 4 as std::os::raw::c_int {
         verbosity = 4 as std::os::raw::c_int
     }
@@ -3771,26 +3624,24 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
         } else {
             decode = 1 as std::os::raw::c_int as Bool;
             aa = argList;
-            while !aa.as_deref().is_none() {
+            while !aa.is_null() {
                 if strcmp(
-                    (*aa.as_deref().unwrap()).name,
+                    (*aa).name,
                     b"--\x00" as *const u8 as *const std::os::raw::c_char,
                 ) == 0 as std::os::raw::c_int
                 {
                     decode = 0 as std::os::raw::c_int as Bool
-                } else if !(*(*aa.as_deref().unwrap())
-                    .name
-                    .offset(0 as std::os::raw::c_int as isize)
+                } else if !(*(*aa).name.offset(0 as std::os::raw::c_int as isize)
                     as std::os::raw::c_int
                     == '-' as i32
                     && decode as std::os::raw::c_int != 0)
                 {
                     numFilesProcessed += 1;
-                    compress((*aa.as_deref().unwrap()).name);
+                    compress((*aa).name);
                 }
-                aa = Some(Box::from_raw((*aa.as_deref().unwrap()).link))
+                aa = (*aa).link
             }
-            ();
+            std::intrinsics::assume(aa as usize == 0);
         }
     } else if opMode == 2 as std::os::raw::c_int {
         unzFailsExist = 0 as std::os::raw::c_int as Bool;
@@ -3799,26 +3650,24 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
         } else {
             decode = 1 as std::os::raw::c_int as Bool;
             aa = argList;
-            while !aa.as_deref().is_none() {
+            while !aa.is_null() {
                 if strcmp(
-                    (*aa.as_deref().unwrap()).name,
+                    (*aa).name,
                     b"--\x00" as *const u8 as *const std::os::raw::c_char,
                 ) == 0 as std::os::raw::c_int
                 {
                     decode = 0 as std::os::raw::c_int as Bool
-                } else if !(*(*aa.as_deref().unwrap())
-                    .name
-                    .offset(0 as std::os::raw::c_int as isize)
+                } else if !(*(*aa).name.offset(0 as std::os::raw::c_int as isize)
                     as std::os::raw::c_int
                     == '-' as i32
                     && decode as std::os::raw::c_int != 0)
                 {
                     numFilesProcessed += 1;
-                    uncompress((*aa.as_deref().unwrap()).name);
+                    uncompress((*aa).name);
                 }
-                aa = Some(Box::from_raw((*aa.as_deref().unwrap()).link))
+                aa = (*aa).link
             }
-            ();
+            std::intrinsics::assume(aa as usize == 0);
         }
         if unzFailsExist != 0 {
             setExit(2 as std::os::raw::c_int);
@@ -3831,26 +3680,24 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
         } else {
             decode = 1 as std::os::raw::c_int as Bool;
             aa = argList;
-            while !aa.as_deref().is_none() {
+            while !aa.is_null() {
                 if strcmp(
-                    (*aa.as_deref().unwrap()).name,
+                    (*aa).name,
                     b"--\x00" as *const u8 as *const std::os::raw::c_char,
                 ) == 0 as std::os::raw::c_int
                 {
                     decode = 0 as std::os::raw::c_int as Bool
-                } else if !(*(*aa.as_deref().unwrap())
-                    .name
-                    .offset(0 as std::os::raw::c_int as isize)
+                } else if !(*(*aa).name.offset(0 as std::os::raw::c_int as isize)
                     as std::os::raw::c_int
                     == '-' as i32
                     && decode as std::os::raw::c_int != 0)
                 {
                     numFilesProcessed += 1;
-                    testf((*aa.as_deref().unwrap()).name);
+                    testf((*aa).name);
                 }
-                aa = Some(Box::from_raw((*aa.as_deref().unwrap()).link))
+                aa = (*aa).link
             }
-            ();
+            std::intrinsics::assume(aa as usize == 0);
         }
         if testFailsExist != 0 {
             if noisy != 0 {
@@ -3866,17 +3713,17 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
        (eg) Purify, Checker.  Serves no other useful purpose.
     */
     aa = argList;
-    while !aa.as_deref().is_none() {
-        let mut aa2: *mut Cell = Some(Box::from_raw((*aa.as_deref().unwrap()).link));
-        if !(*aa.as_deref().unwrap()).name.is_null() {
-            free((*aa.as_deref().unwrap()).name as *mut std::os::raw::c_void);
+    while !aa.is_null() {
+        let mut aa2: *mut Cell = (*aa).link;
+        if !(*aa).name.is_null() {
+            free((*aa).name as *mut std::os::raw::c_void);
         } else {
-            ();
+            std::intrinsics::assume((*aa).name as usize == 0);
         }
-        ();
+        free(aa as *mut std::os::raw::c_void);
         aa = aa2
     }
-    ();
+    std::intrinsics::assume(aa as usize == 0);
     return exitValue;
 }
 // #[main]
