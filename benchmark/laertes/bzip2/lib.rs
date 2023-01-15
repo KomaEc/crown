@@ -5,21 +5,14 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
-#![feature(const_raw_ptr_to_usize_cast)]
-// #![feature(const_transmute)]
 #![feature(extern_types)]
 #![feature(linkage)]
-#![feature(main)]
-#![feature(ptr_offset_from)]
 #![feature(register_tool)]
 #![register_tool(c2rust)]
 
 
-
-
-
-
-
+extern crate libc;
+pub mod src {
 pub mod blocksort;
 pub mod bzip2;
 pub mod bzip2recover;
@@ -29,4 +22,4 @@ pub mod crctable;
 pub mod decompress;
 pub mod huffman;
 pub mod randtable;
-
+} // mod src
