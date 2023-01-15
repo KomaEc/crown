@@ -194,7 +194,10 @@ impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for IntraProcedura
 }
 
 pub fn total_deref_level(body: &Body) -> Precision {
-    use rustc_middle::mir::{visit::{PlaceContext, MutatingUseContext, NonMutatingUseContext, Visitor}, Place};
+    use rustc_middle::mir::{
+        visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
+        Place,
+    };
 
     struct AccessDepthApproximation {
         read: usize,
@@ -202,12 +205,28 @@ pub fn total_deref_level(body: &Body) -> Precision {
     }
 
     impl<'tcx> Visitor<'tcx> for AccessDepthApproximation {
-        fn visit_place(&mut self, _: &Place<'tcx>, context: PlaceContext, _: rustc_middle::mir::Location,) {
-            if matches!(context, PlaceContext::MutatingUse(MutatingUseContext::Store)) {
+        fn visit_place(
+            &mut self,
+            _: &Place<'tcx>,
+            context: PlaceContext,
+            _: rustc_middle::mir::Location,
+        ) {
+            if matches!(
+                context,
+                PlaceContext::MutatingUse(MutatingUseContext::Store)
+            ) {
                 self.write += 1;
-            } else if matches!(context, PlaceContext::NonMutatingUse(NonMutatingUseContext::Copy | NonMutatingUseContext::Move)) {
+            } else if matches!(
+                context,
+                PlaceContext::NonMutatingUse(
+                    NonMutatingUseContext::Copy | NonMutatingUseContext::Move
+                )
+            ) {
                 self.read += 1;
-            } else if matches!(context, PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect)) {
+            } else if matches!(
+                context,
+                PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect)
+            ) {
                 // deref copies
                 self.write += 1;
                 self.read += 1;
@@ -215,10 +234,7 @@ pub fn total_deref_level(body: &Body) -> Precision {
         }
     }
 
-    let mut approximator = AccessDepthApproximation {
-        read: 0,
-        write: 0,
-    };
+    let mut approximator = AccessDepthApproximation { read: 0, write: 0 };
     approximator.visit_body(body);
 
     let max_depth = approximator.read.max(approximator.write);

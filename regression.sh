@@ -59,7 +59,7 @@ done
 
 # fmt all
 for path in $(ls $regressions); do
-    path="$1/$path"
+    path="$regressions/$path"
     if [ -f "$path/lib.rs" ]; then
         echo "fmtting $path"
         cd $path

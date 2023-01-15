@@ -325,7 +325,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         match &statement.kind {
             StatementKind::Assign(box (place, rvalue)) => {
-
                 // TODO constant immediate_lvalue
                 let is_immediate_lvalue = place.is_indirect() && {
                     match def_use_chain.def_loc(place.local, location) {
@@ -333,7 +332,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         RichLocation::Phi(_) => false,
                         RichLocation::Mir(def_loc) => {
                             matches!(body.stmt_at(def_loc), Right(..))
-                        },
+                        }
                     }
                 };
 
@@ -583,7 +582,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         } else if place.as_local().is_none() {
             // FIXME usage!
             self.rewrite_temporary(place.local, location, PlaceValueType::Irrelavent, rewriter);
-            return
+            return;
         } else {
             self.rewrite_temporary(place.local, location, required, rewriter);
             return;
@@ -896,12 +895,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
             Rvalue::BinaryOp(_, box (operand1, operand2))
             | Rvalue::CheckedBinaryOp(_, box (operand1, operand2)) => {
-
-
                 let source_text = tcx.sess.source_map().span_to_snippet(span).unwrap();
 
-                let source_token_stream =
-                    proc_macro2::TokenStream::from_str(&source_text).unwrap();
+                let source_token_stream = proc_macro2::TokenStream::from_str(&source_text).unwrap();
                 let parsed_expr =
                     syn::parse2::<syn::Expr>(source_token_stream).expect(&source_text);
 
@@ -910,9 +906,19 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
                     let assign_op_str = format!("{}", assign.op.to_token_stream());
                     let assign_op_pos = source_text.find(&assign_op_str).unwrap();
-                    let operand1_span = span.with_hi(span.lo() + rustc_span::BytePos(assign_op_pos as u32));
-                    let operand2_span = span.with_lo(span.lo() + rustc_span::BytePos(assign_op_pos as u32) + rustc_span::BytePos(assign_op_str.len() as u32));
-                    self.rewrite_place_store(operand1.place().unwrap(), location, operand1_span, rewriter);
+                    let operand1_span =
+                        span.with_hi(span.lo() + rustc_span::BytePos(assign_op_pos as u32));
+                    let operand2_span = span.with_lo(
+                        span.lo()
+                            + rustc_span::BytePos(assign_op_pos as u32)
+                            + rustc_span::BytePos(assign_op_str.len() as u32),
+                    );
+                    self.rewrite_place_store(
+                        operand1.place().unwrap(),
+                        location,
+                        operand1_span,
+                        rewriter,
+                    );
                     self.rewrite_operand_at(
                         operand2,
                         location,
@@ -1116,8 +1122,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                             }
                         }
                     }
-                },
-                rustc_const_eval::interpret::Scalar::Ptr(_, _) => {},
+                }
+                rustc_const_eval::interpret::Scalar::Ptr(_, _) => {}
             }
         }
     }
