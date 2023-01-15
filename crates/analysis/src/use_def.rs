@@ -34,7 +34,7 @@ impl DefUseChain {
     }
 
     pub fn def_loc(&self, local: Local, location: Location) -> RichLocation {
-        let Some(consume) = self.0.of_location(location).get_by_key(&local) else { panic!() };
+        let Some(consume) = self.0.of_location(location).get_by_key(&local) else { panic!("{:?} @ {:?}", local, location) };
         assert!(consume.is_use());
 
         let ssa_idx = consume.r#use;
