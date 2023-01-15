@@ -5,19 +5,18 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
-// #![feature(const_transmute)]
 #![feature(extern_types)]
-#![feature(linkage)]
-#![feature(ptr_offset_from)]
+#![feature(label_break_value)]
 #![feature(register_tool)]
 #![register_tool(c2rust)]
+#![feature(raw_ref_op)]
 
-pub mod blocksort;
-pub mod bzip2;
-pub mod bzip2recover;
-pub mod bzlib;
-pub mod compress;
-pub mod crctable;
-pub mod decompress;
-pub mod huffman;
-pub mod randtable;
+extern crate libc;
+pub mod src {
+    pub mod example1;
+    pub mod example2;
+    pub mod example3;
+    pub mod example4;
+    pub mod genann;
+    pub mod test;
+} // mod src

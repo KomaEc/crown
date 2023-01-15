@@ -912,13 +912,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     let assign_op_pos = source_text.find(&assign_op_str).unwrap();
                     let operand1_span = span.with_hi(span.lo() + rustc_span::BytePos(assign_op_pos as u32));
                     let operand2_span = span.with_lo(span.lo() + rustc_span::BytePos(assign_op_pos as u32) + rustc_span::BytePos(assign_op_str.len() as u32));
-                    self.rewrite_operand_at(
-                        operand1,
-                        location,
-                        operand1_span,
-                        PlaceValueType::Irrelavent,
-                        rewriter,
-                    );
+                    self.rewrite_place_store(operand1.place().unwrap(), location, operand1_span, rewriter);
                     self.rewrite_operand_at(
                         operand2,
                         location,
