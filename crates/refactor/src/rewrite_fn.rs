@@ -350,11 +350,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                             assign_op_pos = source_text.find(&assign_op_str);
                             assert!(assign_op_pos.is_some());
                         }
-                        syn::Expr::AssignOp(assign) => {
-                            let assign_op_str = format!("{}", assign.op.to_token_stream());
-                            assign_op_pos = source_text.find(&assign_op_str);
-                            assert!(assign_op_pos.is_some());
-                        }
+                        // syn::Expr::AssignOp(assign) => {
+                        //     let assign_op_str = format!("{}", assign.op.to_token_stream());
+                        //     assign_op_pos = source_text.find(&assign_op_str);
+                        //     assert!(assign_op_pos.is_some());
+                        // }
                         _ => {}
                     }
 
@@ -568,6 +568,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         {
             replacement
         } else if place.as_local().is_none() {
+            // self.rewrite_temporary(place.local, location, PlaceValueType::Irrelavent, rewriter);
+            // return
             tracing::warn!(
                 "rewrite immediate value, could be static, func call return @ {:?}",
                 span
@@ -859,7 +861,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 )
             }
             Operand::Constant(constant) => {
-                self.try_rewrite_null_constant(constant, span, required, rewriter);
+                self.rewrite_constant(constant, span, required, rewriter);
             }
         }
     }
@@ -873,7 +875,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt {
-            tcx, def_use_chain, ..
+            tcx, ..
         } = *self;
 
         match rvalue {
@@ -882,23 +884,39 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
             Rvalue::BinaryOp(_, box (operand1, operand2))
             | Rvalue::CheckedBinaryOp(_, box (operand1, operand2)) => {
-                if let Some(operand1) = operand1.place().and_then(|place| place.as_local()) {
-                    if def_use_chain
-                        .uses(location)
-                        .find(|&local| local == operand1)
-                        .is_none()
-                    {
-                        // special case
-                        self.rewrite_operand_at(
-                            operand2,
-                            location,
-                            span,
-                            PlaceValueType::Irrelavent,
-                            rewriter,
-                        );
-                        return;
-                    }
+
+
+                let source_text = tcx.sess.source_map().span_to_snippet(span).unwrap();
+
+                let source_token_stream =
+                    proc_macro2::TokenStream::from_str(&source_text).unwrap();
+                let parsed_expr =
+                    syn::parse2::<syn::Expr>(source_token_stream).expect(&source_text);
+
+                if let syn::Expr::AssignOp(assign) = parsed_expr {
+                    // special case
+
+                    let assign_op_str = format!("{}", assign.op.to_token_stream());
+                    let assign_op_pos = source_text.find(&assign_op_str).unwrap();
+                    let operand1_span = span.with_hi(span.lo() + rustc_span::BytePos(assign_op_pos as u32));
+                    let operand2_span = span.with_lo(span.lo() + rustc_span::BytePos(assign_op_pos as u32) + rustc_span::BytePos(assign_op_str.len() as u32));
+                    self.rewrite_operand_at(
+                        operand1,
+                        location,
+                        operand1_span,
+                        PlaceValueType::Irrelavent,
+                        rewriter,
+                    );
+                    self.rewrite_operand_at(
+                        operand2,
+                        location,
+                        operand2_span,
+                        PlaceValueType::Irrelavent,
+                        rewriter,
+                    );
+                    return;
                 }
+
                 self.rewrite_operand_at(
                     operand1,
                     location,
@@ -1069,7 +1087,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         }
     }
 
-    fn try_rewrite_null_constant(
+    fn rewrite_constant(
         &self,
         constant: &Constant<'tcx>,
         stmt_span: Span,
@@ -1078,15 +1096,20 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     ) {
         let FnRewriteCtxt { tcx, .. } = *self;
 
-        if let Some(scalar) = constant.literal.try_to_scalar_int() {
-            if scalar.is_null() {
-                if let PlaceValueType::Ptr(ptr_kinds) = required {
-                    let ptr_kind = ptr_kinds[0];
-                    let span = constant.span.until(stmt_span.shrink_to_hi());
-                    if ptr_kind.is_safe() {
-                        rewriter.replace(tcx, span, "None".to_owned());
+        if let Some(scalar) = constant.literal.try_to_scalar() {
+            match scalar {
+                rustc_const_eval::interpret::Scalar::Int(scalar) => {
+                    if scalar.is_null() {
+                        if let PlaceValueType::Ptr(ptr_kinds) = required {
+                            let ptr_kind = ptr_kinds[0];
+                            let span = constant.span.until(stmt_span.shrink_to_hi());
+                            if ptr_kind.is_safe() {
+                                rewriter.replace(tcx, span, "None".to_owned());
+                            }
+                        }
                     }
-                }
+                },
+                rustc_const_eval::interpret::Scalar::Ptr(_, _) => {},
             }
         }
     }
