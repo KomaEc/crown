@@ -281,7 +281,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             local_decision,
             struct_decision,
             body,
-            def_use_chain: _,
             ..
         } = *self;
 
@@ -395,7 +394,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     ) {
         let FnRewriteCtxt {
             fn_decision,
-            body,
             def_use_chain,
             user_idents,
             tcx,
@@ -442,38 +440,12 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             TerminatorKind::Return => {
                 // rewrite point: return
                 if !user_idents.contains_key(&RETURN_PLACE) {
-                    let def_loc = def_use_chain.def_loc(RETURN_PLACE, location);
                     let return_ctxt = PlaceValueType::from_ptr_ctxt(
                         self.body.return_ty(),
                         &self.local_decision[0],
                     );
-                    match def_loc {
-                        RichLocation::Entry => {}
-                        RichLocation::Phi(block) => {
-                            for def_loc in def_use_chain.phi_def_locs(RETURN_PLACE, block) {
-                                let RichLocation::Mir(def_loc) = def_loc else { todo!() };
-                                let Left(stmt) = body.stmt_at(def_loc) else { return };
-                                let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-                                self.rewrite_rvalue_at(
-                                    rvalue,
-                                    def_loc,
-                                    stmt.source_info.span,
-                                    return_ctxt,
-                                    rewriter,
-                                );
-                            }
-                        }
-                        RichLocation::Mir(def_loc) => {
-                            let Left(stmt) = body.stmt_at(def_loc) else { return };
-                            let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-                            self.rewrite_rvalue_at(
-                                rvalue,
-                                def_loc,
-                                stmt.source_info.span,
-                                return_ctxt,
-                                rewriter,
-                            );
-                        }
+                    if !matches!(def_use_chain.def_loc(RETURN_PLACE, location), RichLocation::Entry) {
+                        self.rewrite_temporary(RETURN_PLACE, location, return_ctxt, rewriter);
                     }
                 }
             }
@@ -509,15 +481,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             tracing::error!("rewrite immediate value, could be static, func call return");
             return;
         };
-
-        // let mut replacement = user_idents
-        //     .get(&place.local)
-        //     .map(|symbol| symbol.to_string())
-        //     .unwrap_or_else(|| {
-        //         assert!(place.as_local().is_none());
-        //         tracing::error!("rewrite immediate value, could be static, func call return");
-        //         return
-        //     });
 
         let mut index_spans: SmallVec<[Span; 1]> = smallvec::smallvec![];
 
@@ -574,17 +537,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rewrite_place(tcx, span, replacement, &index_spans, rewriter)
     }
 
-
-    fn rewrite_usage(
-        &self,
-        span: Span,
-        required: PlaceValueType,
-        prduced: PlaceValueType,
-        rewriter: &mut impl Rewrite
-    ) {
-
-    }
-
     fn rewrite_place_load_at<const PLACE_LOAD_MODE: u8>(
         &self,
         place: Place<'tcx>,
@@ -597,7 +549,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             local_decision,
             struct_decision,
             body,
-            def_use_chain,
             user_idents,
             tcx,
             ..
@@ -615,47 +566,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             );
             return;
         } else {
-            assert!(place.as_local().is_some());
-            let def_loc = def_use_chain.def_loc(place.local, location);
-
-            match def_loc {
-                RichLocation::Entry => todo!(),
-                RichLocation::Phi(block) => {
-                    // FIXME correctness? recursive?
-                    for def_loc in def_use_chain.phi_def_locs(place.local, block) {
-                        let RichLocation::Mir(def_loc) = def_loc else { todo!() };
-                        let Left(stmt) = body.stmt_at(def_loc) else { return };
-                        let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-                        self.rewrite_rvalue_at(
-                            rvalue,
-                            def_loc,
-                            stmt.source_info.span,
-                            required,
-                            rewriter,
-                        );
-                    }
-                    return;
-                }
-                RichLocation::Mir(def_loc) => {
-                    let Left(stmt) = body.stmt_at(def_loc) else { return };
-                    let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else {
-                        if let StatementKind::Deinit(..) = &stmt.kind {
-                            // happens only when S { f: T { g: .. } }
-                            return;
-                        } else {
-                            unreachable!()
-                        }
-                    };
-                    self.rewrite_rvalue_at(
-                        rvalue,
-                        def_loc,
-                        stmt.source_info.span,
-                        required,
-                        rewriter,
-                    );
-                    return;
-                }
-            }
+            self.rewrite_temporary(place.local, location, required, rewriter);
+            return
         };
 
         let mut index_spans: SmallVec<[Span; 1]> = smallvec::smallvec![];
