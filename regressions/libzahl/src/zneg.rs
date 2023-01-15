@@ -21,5 +21,5 @@ pub unsafe extern "C" fn zneg(mut a: Option<&mut crate::src::allocator::C2RustUn
     if a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) != b {
         crate::src::zset::zset(a.as_deref_mut(), b);
     }
-    (*a.as_deref_mut().unwrap()).sign= -zsignum(core::mem::transmute::<_, *const crate::src::allocator::C2RustUnnamed>(a.as_deref()));
+    (*a.as_deref_mut().unwrap()).sign= -zsignum(a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()));
 }

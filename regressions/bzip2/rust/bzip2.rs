@@ -2765,7 +2765,7 @@ unsafe extern "C" fn snocString(mut root: Option<Box<Cell>>, mut name: *mut Char
         strcpy((*tmp.as_deref().unwrap()).name, name);
         return tmp
     } else {
-        let mut tmp_0: *mut Cell = core::mem::transmute::<_, *mut crate::bzip2::zzzz>(root.as_deref_mut());
+        let mut tmp_0: *mut Cell = root.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut());
         while !(*tmp_0).link.is_null() { tmp_0= (*tmp_0).link }();
         (*tmp_0).link= snocString(Some(Box::from_raw((*tmp_0).link)), name);
         return root

@@ -734,9 +734,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     } else {
                         ("as_deref_mut", "mut")
                     };
-                    replacement = format!(
-                        "core::mem::transmute::<_, *{target_ty} {pointee_ty_str}>({replacement}.{usage}())"
-                    )
+                    replacement = format!("{replacement}.{usage}().map(|r| r as *{target_ty} _).unwrap_or(std::ptr::null{}())", (target_ty == "mut").then_some("_mut").unwrap_or(""));
+                    // replacement = format!(
+                    //     "core::mem::transmute::<_, *{target_ty} {pointee_ty_str}>({replacement}.{usage}())"
+                    // )
                 } else if required.expect_ptr()[0].is_raw_const()
                     && produced.expect_ptr()[0].is_raw_mut()
                 {

@@ -64,13 +64,13 @@ pub unsafe extern "C" fn append(mut head_ref: Option<&mut *mut Node>, mut new_da
     /* 4. If the Linked List is empty, then make the new node as head */
     if (*head_ref.as_deref().unwrap()).is_null() {
         ();
-        *head_ref.as_deref_mut().unwrap()= core::mem::transmute::<_, *mut crate::src::llist::Node>(new_node.as_deref_mut());
+        *head_ref.as_deref_mut().unwrap()= new_node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut());
         return;
     }
     // let mut last = *head_ref;
     // /* 5. Else traverse till the last node */
     while !(*last).next.as_deref().is_none() {
-        last= core::mem::transmute::<_, *mut crate::src::llist::Node>((*last).next.as_deref_mut())
+        last= (*last).next.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())
     }
     // std::intrinsics::assume((*last).next as usize == 0);
     // /* 6. Change the next of last node */

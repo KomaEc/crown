@@ -45,7 +45,7 @@ pub unsafe extern "C" fn zload(
     return (::std::mem::size_of::<libc::c_int>() as libc::c_ulong)
         .wrapping_add(::std::mem::size_of::<size_t>() as libc::c_ulong)
         .wrapping_add(
-            (if zzero(core::mem::transmute::<_, *const crate::src::allocator::C2RustUnnamed>(a.as_deref())) != 0 {
+            (if zzero(a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())) != 0 {
                 0 as libc::c_int as libc::c_ulong
             } else {
                 (*a.as_deref().unwrap()).used

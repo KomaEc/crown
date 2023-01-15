@@ -567,7 +567,7 @@ unsafe extern "C" fn add_pair_to_block(mut s: *mut crate::blocksort::EState) {
 /*---------------------------------------------------*/
 unsafe extern "C" fn flush_RL(mut s: Option<&mut crate::blocksort::EState>) {
     if (*s.as_deref().unwrap()).state_in_ch < 256 as std::os::raw::c_int as std::os::raw::c_uint {
-        add_pair_to_block(core::mem::transmute::<_, *mut crate::blocksort::EState>(s.as_deref_mut()));
+        add_pair_to_block(s.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
     }
     init_RL(s.as_deref_mut());
 }
@@ -1896,8 +1896,8 @@ pub unsafe extern "C" fn BZ2_bzWriteClose(mut bzerror: Option<&mut std::os::raw:
                                           mut abandon: std::os::raw::c_int,
                                           mut nbytes_in: Option<&mut std::os::raw::c_uint>,
                                           mut nbytes_out: Option<&mut std::os::raw::c_uint>) {
-    BZ2_bzWriteClose64(core::mem::transmute::<_, *mut i32>(bzerror.as_deref_mut()), core::mem::transmute::<_, *mut crate::std::ffi::c_void>(b.as_deref_mut()), abandon, core::mem::transmute::<_, *mut u32>(nbytes_in.as_deref_mut()), 0 as *mut std::os::raw::c_uint,
-                       core::mem::transmute::<_, *mut u32>(nbytes_out.as_deref_mut()), 0 as *mut std::os::raw::c_uint);
+    BZ2_bzWriteClose64(bzerror.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), b.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), abandon, nbytes_in.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), 0 as *mut std::os::raw::c_uint,
+                       nbytes_out.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), 0 as *mut std::os::raw::c_uint);
 }
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzWriteClose64(mut bzerror: *mut std::os::raw::c_int,
@@ -2433,7 +2433,7 @@ pub unsafe extern "C" fn BZ2_bzwrite(mut b: Option<&mut std::os::raw::c_void>,
                                      mut buf: *const std::os::raw::c_void,
                                      mut len: std::os::raw::c_int) -> std::os::raw::c_int {
     let mut bzerr: std::os::raw::c_int = 0;
-    BZ2_bzWrite(&mut bzerr, core::mem::transmute::<_, *mut crate::std::ffi::c_void>(b.as_deref_mut()), buf, len);
+    BZ2_bzWrite(&mut bzerr, b.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), buf, len);
     if bzerr == 0 as std::os::raw::c_int {
         return len
     } else { return -(1 as std::os::raw::c_int) };

@@ -205,7 +205,7 @@ unsafe extern "C" fn bsOpenWriteStream(mut stream: Option<Box<FILE>>)
 unsafe extern "C" fn bsPutBit(mut bs: Option<&mut BitStream>, mut bit: Int32) {
     if (*bs.as_deref().unwrap()).buffLive == 8 as std::os::raw::c_int {
         let mut retVal: Int32 =
-            putc((*bs.as_deref().unwrap()).buffer as UChar as std::os::raw::c_int, core::mem::transmute::<_, *mut crate::blocksort::__sFILE>((*bs.as_deref().unwrap()).handle.as_deref_mut()));
+            putc((*bs.as_deref().unwrap()).buffer as UChar as std::os::raw::c_int, (*bs.as_deref().unwrap()).handle.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
         if retVal == -(1 as std::os::raw::c_int) { writeError(); }
         bytesOut = bytesOut.wrapping_add(1);
         (*bs.as_deref_mut().unwrap()).buffLive= 1 as std::os::raw::c_int;
@@ -225,7 +225,7 @@ unsafe extern "C" fn bsGetBit(mut bs: Option<&mut BitStream>) -> Int32 {
         (*bs.as_deref_mut().unwrap()).buffLive-= 1;
         return (*bs).buffer >> (*bs).buffLive & 0x1 as std::os::raw::c_int
     } else {
-        let mut retVal: Int32 = getc(core::mem::transmute::<_, *mut crate::blocksort::__sFILE>((*bs.as_deref().unwrap()).handle.as_deref_mut()));
+        let mut retVal: Int32 = getc((*bs.as_deref().unwrap()).handle.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
         if retVal == -(1 as std::os::raw::c_int) {
             if *__error() != 0 as std::os::raw::c_int { readError(); }
             return 2 as std::os::raw::c_int
@@ -243,13 +243,13 @@ unsafe extern "C" fn bsClose(mut bs: Option<Box<BitStream>>) {
             (*bs.as_deref_mut().unwrap()).buffLive+= 1;
             (*bs.as_deref_mut().unwrap()).buffer<<= 1 as std::os::raw::c_int
         }
-        retVal= putc((*bs.as_deref().unwrap()).buffer as UChar as std::os::raw::c_int, core::mem::transmute::<_, *mut crate::blocksort::__sFILE>((*bs.as_deref().unwrap()).handle.as_deref_mut()));
+        retVal= putc((*bs.as_deref().unwrap()).buffer as UChar as std::os::raw::c_int, (*bs.as_deref().unwrap()).handle.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
         if retVal == -(1 as std::os::raw::c_int) { writeError(); }
         bytesOut = bytesOut.wrapping_add(1);
-        retVal= fflush(core::mem::transmute::<_, *mut crate::blocksort::__sFILE>((*bs.as_deref().unwrap()).handle.as_deref_mut()));
+        retVal= fflush((*bs.as_deref().unwrap()).handle.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
         if retVal == -(1 as std::os::raw::c_int) { writeError(); }
     }
-    retVal= fclose(core::mem::transmute::<_, *mut crate::blocksort::__sFILE>((*bs.as_deref().unwrap()).handle.as_deref_mut()));
+    retVal= fclose((*bs.as_deref().unwrap()).handle.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
     if retVal == -(1 as std::os::raw::c_int) {
         if (*bs.as_deref().unwrap()).mode as std::os::raw::c_int == 'w' as i32 {
             writeError();

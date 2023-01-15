@@ -500,7 +500,7 @@ pub unsafe extern "C" fn csv_parse(mut p: Option<&mut csv_parser>,
     let mut entry_pos: size_t = (*p.as_deref().unwrap()).entry_pos;
     if (*p.as_deref().unwrap()).entry_buf.is_null() && pos < len {
         /* Buffer hasn't been allocated yet and len > 0 */
-        if csv_increase_buffer(core::mem::transmute::<_, *mut crate::libcsv::csv_parser>(p.as_deref_mut())) != 0 as std::os::raw::c_int {
+        if csv_increase_buffer(p.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) != 0 as std::os::raw::c_int {
             (*p.as_deref_mut().unwrap()).quoted= quoted;
             (*p.as_deref_mut().unwrap()).pstate= pstate;
             (*p.as_deref_mut().unwrap()).spaces= spaces;
@@ -516,7 +516,7 @@ pub unsafe extern "C" fn csv_parse(mut p: Option<&mut csv_parser>,
                     (*p.as_deref().unwrap()).entry_size.wrapping_sub(1 as std::os::raw::c_int as
                                                      std::os::raw::c_ulong)
                 } else { (*p).entry_size }) {
-            if csv_increase_buffer(core::mem::transmute::<_, *mut crate::libcsv::csv_parser>(p.as_deref_mut())) != 0 as std::os::raw::c_int {
+            if csv_increase_buffer(p.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) != 0 as std::os::raw::c_int {
                 (*p.as_deref_mut().unwrap()).quoted= quoted;
                 (*p.as_deref_mut().unwrap()).pstate= pstate;
                 (*p.as_deref_mut().unwrap()).spaces= spaces;
@@ -948,7 +948,7 @@ pub unsafe extern "C" fn csv_write(mut dest: *mut /* owning */ std::os::raw::c_v
 pub unsafe extern "C" fn csv_fwrite(mut fp: Option<&mut FILE>,
                                     mut src: *const std::os::raw::c_void,
                                     mut src_size: size_t) -> std::os::raw::c_int {
-    return csv_fwrite2(core::mem::transmute::<_, *mut crate::libcsv::__sFILE>(fp.as_deref_mut()), src, src_size,
+    return csv_fwrite2(fp.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), src, src_size,
                        0x22 as std::os::raw::c_int as std::os::raw::c_uchar);
 }
 #[no_mangle]

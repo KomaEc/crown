@@ -845,7 +845,7 @@ unsafe extern "C" fn check_absolute_paths(
                 }
             }
             if !err.is_null() {
-                tree_preamble(core::mem::transmute::<_, *const crate::src::libtree::libtree_state_t>(s.as_deref()), depth.wrapping_add(1 as libc::c_int as libc::c_ulong));
+                tree_preamble(s.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()), depth.wrapping_add(1 as libc::c_int as libc::c_ulong));
                 if (*s.as_deref().unwrap()).color != 0 {
                     fputs(b"\x1B[1;31m\0" as *const u8 as *const libc::c_char, stdout);
                 }
@@ -1113,7 +1113,7 @@ unsafe extern "C" fn print_line(
     mut reason: found_t,
     mut s: Option<&mut libtree_state_t>,
 ) {
-    tree_preamble(core::mem::transmute::<_, *const crate::src::libtree::libtree_state_t>(s.as_deref()), depth);
+    tree_preamble(s.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()), depth);
     let mut slash = 0 as *mut libc::c_char;
     if (*s.as_deref().unwrap()).color != 0 && highlight != 0 && {
         slash= strrchr(name, '/' as i32);
@@ -1209,7 +1209,7 @@ unsafe extern "C" fn print_error(
         (*s.as_deref_mut().unwrap()).found_all_needed[depth as usize] = (i.wrapping_add(1 as libc::c_int as libc::c_ulong)
             >= needed_not_found) as libc::c_int
             as libc::c_char;
-        tree_preamble(core::mem::transmute::<_, *const crate::src::libtree::libtree_state_t>(s.as_deref()), depth.wrapping_add(1 as libc::c_int as libc::c_ulong));
+        tree_preamble(s.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()), depth.wrapping_add(1 as libc::c_int as libc::c_ulong));
         if (*s.as_deref().unwrap()).color != 0 {
             fputs(b"\x1B[1;31m\0" as *const u8 as *const libc::c_char, stdout);
         }
@@ -1903,7 +1903,7 @@ unsafe extern "C" fn recurse(
         }
         string_table_copy_from_file(Some(&mut (*s.as_deref_mut().unwrap()).string_table), fptr);
         let mut curr_buf_size = (*s.as_deref().unwrap()).string_table.n;
-        if interpolate_variables(core::mem::transmute::<_, *mut crate::src::libtree::libtree_state_t>(s.as_deref_mut()), (*s.as_deref().unwrap()).rpath_offsets[depth as usize], origin.as_mut_ptr()) != 0 {
+        if interpolate_variables(s.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), (*s.as_deref().unwrap()).rpath_offsets[depth as usize], origin.as_mut_ptr()) != 0 {
             (*s.as_deref_mut().unwrap()).rpath_offsets[depth as usize] = curr_buf_size;
         }
     }
@@ -1922,7 +1922,7 @@ unsafe extern "C" fn recurse(
         }
         string_table_copy_from_file(Some(&mut (*s.as_deref_mut().unwrap()).string_table), fptr);
         let mut curr_buf_size_0 = (*s.as_deref().unwrap()).string_table.n;
-        if interpolate_variables(core::mem::transmute::<_, *mut crate::src::libtree::libtree_state_t>(s.as_deref_mut()), runpath_buf_offset, origin.as_mut_ptr()) != 0 {
+        if interpolate_variables(s.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), runpath_buf_offset, origin.as_mut_ptr()) != 0 {
             runpath_buf_offset= curr_buf_size_0;
         }
     }
@@ -1984,7 +1984,7 @@ unsafe extern "C" fn recurse(
     let mut exit_code = 0 as libc::c_int;
     let mut needed_not_found = needed_buf_offsets.n;
     if needed_not_found != 0 && (*s.as_deref().unwrap()).verbosity == 0 as libc::c_int {
-        apply_exclude_list(Some(&mut needed_not_found), core::ptr::addr_of_mut!(needed_buf_offsets), core::mem::transmute::<_, *const crate::src::libtree::libtree_state_t>(s.as_deref()));
+        apply_exclude_list(Some(&mut needed_not_found), core::ptr::addr_of_mut!(needed_buf_offsets), s.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()));
     }
     if needed_not_found != 0 {
         exit_code|= check_absolute_paths(
@@ -2333,7 +2333,7 @@ unsafe extern "C" fn print_tree(
     mut s: Option<&mut libtree_state_t>,
 ) -> libc::c_int {
     libtree_state_init(s.as_deref_mut());
-    parse_ld_so_conf(core::mem::transmute::<_, *mut crate::src::libtree::libtree_state_t>(s.as_deref_mut()));
+    parse_ld_so_conf(s.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
     parse_ld_library_path(s.as_deref_mut());
     set_default_paths(s.as_deref_mut());
     let mut exit_code = 0 as libc::c_int;

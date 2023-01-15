@@ -38,7 +38,7 @@ pub unsafe extern "C" fn zbset(
         crate::src::zset::zset(a.as_deref_mut(), b);
     }
     if action != 0 {
-        if zzero(core::mem::transmute::<_, *const crate::src::allocator::C2RustUnnamed>(a.as_deref())) != 0 {
+        if zzero(a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())) != 0 {
             (*a.as_deref_mut().unwrap()).used= 0 as libc::c_int as size_t;
             (*a.as_deref_mut().unwrap()).sign= 1 as libc::c_int;
         }

@@ -36,9 +36,9 @@ pub unsafe extern "C" fn newNode(mut item: i32) -> Option<Box<node>> {
 // A utility function to do inorder traversal of BST
 pub unsafe extern "C" fn inorder(mut root: *const node) {
     if !root.is_null() {
-        inorder(core::mem::transmute::<_, *const crate::src::bst::node>((*root).left.as_deref()));
+        inorder((*root).left.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()));
         printf(b"%d \x00" as *const u8 as *const libc::c_char, (*root).key);
-        inorder(core::mem::transmute::<_, *const crate::src::bst::node>((*root).right.as_deref()));
+        inorder((*root).right.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()));
     }else { (); };
 }
 /* A utility function to
@@ -64,7 +64,7 @@ pub unsafe extern "C" fn minValueNode(mut node: *const node) -> *const node {
     let mut current = node;
     /* loop down to find the leftmost leaf */
     while !current.is_null() && !(*current).left.as_deref().is_none() {
-        current= core::mem::transmute::<_, *const crate::src::bst::node>((*current).left.as_deref())
+        current= (*current).left.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())
     }
     return current;
 }
@@ -102,7 +102,7 @@ pub unsafe extern "C" fn deleteNode(mut root: Option<Box<node>>, mut key: i32)
                 return temp_0
             }
         }
-        let mut temp_1 = minValueNode(core::mem::transmute::<_, *const crate::src::bst::node>((*root.as_deref().unwrap()).right.as_deref()));
+        let mut temp_1 = minValueNode((*root.as_deref().unwrap()).right.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()));
         (*root.as_deref_mut().unwrap()).key= (*temp_1).key;
         (*root.as_deref_mut().unwrap()).right= deleteNode((*root.as_deref_mut().unwrap()).right.take(), (*temp_1).key)
     }

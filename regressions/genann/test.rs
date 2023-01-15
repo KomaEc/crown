@@ -549,7 +549,7 @@ pub unsafe extern "C" fn persist() {
     let mut out: *mut FILE =
         fopen(b"persist.txt\x00" as *const u8 as *const std::os::raw::c_char,
               b"w\x00" as *const u8 as *const std::os::raw::c_char);
-    crate::genann::genann_write(core::mem::transmute::<_, *const crate::example1::genann>(first.as_deref()), out);
+    crate::genann::genann_write(first.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()), out);
     fclose(out);
     let mut in_0: *mut FILE =
         fopen(b"persist.txt\x00" as *const u8 as *const std::os::raw::c_char,

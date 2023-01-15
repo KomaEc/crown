@@ -105,21 +105,21 @@ unsafe extern "C" fn bsW(mut s: *mut crate::blocksort::EState, mut n: Int32, mut
 }
 /*---------------------------------------------------*/
 unsafe extern "C" fn bsPutUInt32(mut s: Option<&mut crate::blocksort::EState>, mut u: UInt32) {
-    bsW(core::mem::transmute::<_, *mut crate::blocksort::EState>(s.as_deref_mut()), 8 as std::os::raw::c_int,
+    bsW(s.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), 8 as std::os::raw::c_int,
         ((u >> 24 as std::os::raw::c_int) as std::os::raw::c_long & 0xff as std::os::raw::c_long) as
             UInt32);
-    bsW(core::mem::transmute::<_, *mut crate::blocksort::EState>(s.as_deref_mut()), 8 as std::os::raw::c_int,
+    bsW(s.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), 8 as std::os::raw::c_int,
         ((u >> 16 as std::os::raw::c_int) as std::os::raw::c_long & 0xff as std::os::raw::c_long) as
             UInt32);
-    bsW(core::mem::transmute::<_, *mut crate::blocksort::EState>(s.as_deref_mut()), 8 as std::os::raw::c_int,
+    bsW(s.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), 8 as std::os::raw::c_int,
         ((u >> 8 as std::os::raw::c_int) as std::os::raw::c_long & 0xff as std::os::raw::c_long) as
             UInt32);
-    bsW(core::mem::transmute::<_, *mut crate::blocksort::EState>(s.as_deref_mut()), 8 as std::os::raw::c_int,
+    bsW(s.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), 8 as std::os::raw::c_int,
         (u as std::os::raw::c_long & 0xff as std::os::raw::c_long) as UInt32);
 }
 /*---------------------------------------------------*/
 unsafe extern "C" fn bsPutUChar(mut s: Option<&mut crate::blocksort::EState>, mut c: UChar) {
-    bsW(core::mem::transmute::<_, *mut crate::blocksort::EState>(s.as_deref_mut()), 8 as std::os::raw::c_int, c as UInt32);
+    bsW(s.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), 8 as std::os::raw::c_int, c as UInt32);
 }
 /*---------------------------------------------------*/
 /*--- The back end proper                         ---*/

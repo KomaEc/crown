@@ -21,5 +21,5 @@ pub unsafe extern "C" fn zabs(mut a: Option<&mut crate::src::allocator::C2RustUn
     if a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) != b {
         crate::src::zset::zset(a.as_deref_mut(), b);
     }
-    (*a.as_deref_mut().unwrap()).sign= (zzero(core::mem::transmute::<_, *const crate::src::allocator::C2RustUnnamed>(a.as_deref())) == 0) as libc::c_int;
+    (*a.as_deref_mut().unwrap()).sign= (zzero(a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())) == 0) as libc::c_int;
 }

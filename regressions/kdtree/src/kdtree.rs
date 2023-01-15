@@ -221,7 +221,7 @@ unsafe extern "C" fn insert_rec(
         (*node.as_deref_mut().unwrap()).data= data;
         (*node.as_deref_mut().unwrap()).dir= dir;
         (*node.as_deref_mut().unwrap()).right= None; (*node.as_deref_mut().unwrap()).left= (*node.as_deref_mut().unwrap()).right.take();
-        *nptr= core::mem::transmute::<_, *mut crate::src::kdtree::kdnode>(node.as_deref_mut());
+        *nptr= node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut());
         return 0 as libc::c_int;
     }
     node= Some(Box::from_raw((*nptr)));
@@ -365,7 +365,7 @@ unsafe extern "C" fn find_nearest(
         i+= 1;
     }
     if dist_sq <= range * range {
-        if rlist_insert(core::mem::transmute::<_, *mut crate::src::kdtree::res_node>(list.as_deref_mut()), node, (if ordered != 0 { dist_sq } else { -1.0f64 }))
+        if rlist_insert(list.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), node, (if ordered != 0 { dist_sq } else { -1.0f64 }))
             == -(1 as libc::c_int)
         {
             return -(1 as libc::c_int);
@@ -374,7 +374,7 @@ unsafe extern "C" fn find_nearest(
     }
     dx= *pos.offset((*node).dir as isize) - *(*node).pos.offset((*node).dir as isize);
     ret= find_nearest(
-        if dx <= 0.0f64 { core::mem::transmute::<_, *const crate::src::kdtree::kdnode>((*node).left.as_deref()) } else { core::mem::transmute::<_, *const crate::src::kdtree::kdnode>((*node).right.as_deref()) },
+        if dx <= 0.0f64 { (*node).left.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) } else { (*node).right.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) },
         pos,
         range,
         list.as_deref_mut(),
@@ -384,7 +384,7 @@ unsafe extern "C" fn find_nearest(
     if ret >= 0 as libc::c_int && fabs(dx) < range {
         added_res+= ret;
         ret= find_nearest(
-            if dx <= 0.0f64 { core::mem::transmute::<_, *const crate::src::kdtree::kdnode>((*node).right.as_deref()) } else { core::mem::transmute::<_, *const crate::src::kdtree::kdnode>((*node).left.as_deref()) },
+            if dx <= 0.0f64 { (*node).right.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) } else { (*node).left.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) },
             pos,
             range,
             list.as_deref_mut(),
@@ -415,13 +415,13 @@ unsafe extern "C" fn kd_nearest_i(
     let mut farther_hyperrect_coord = 0 as *mut libc::c_double;
     dummy= *pos.offset(dir as isize) - *(*node).pos.offset(dir as isize);
     if dummy <= 0 as libc::c_int as libc::c_double {
-        nearer_subtree= core::mem::transmute::<_, *const crate::src::kdtree::kdnode>((*node).left.as_deref());
-        farther_subtree= core::mem::transmute::<_, *const crate::src::kdtree::kdnode>((*node).right.as_deref());
+        nearer_subtree= (*node).left.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null());
+        farther_subtree= (*node).right.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null());
         nearer_hyperrect_coord= (*rect).max.offset(dir as isize);
         farther_hyperrect_coord= (*rect).min.offset(dir as isize);
     } else {
-        nearer_subtree= core::mem::transmute::<_, *const crate::src::kdtree::kdnode>((*node).right.as_deref());
-        farther_subtree= core::mem::transmute::<_, *const crate::src::kdtree::kdnode>((*node).left.as_deref());
+        nearer_subtree= (*node).right.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null());
+        farther_subtree= (*node).left.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null());
         nearer_hyperrect_coord= (*rect).min.offset(dir as isize);
         farther_hyperrect_coord= (*rect).max.offset(dir as isize);
     }
@@ -478,12 +478,12 @@ pub unsafe extern "C" fn kd_nearest(
     }
     (*(*rset.as_deref_mut().unwrap()).rlist).next= 0 as *mut res_node;
     (*rset.as_deref_mut().unwrap()).tree= kd;
-    rect= hyperrect_duplicate(core::mem::transmute::<_, *const crate::src::kdtree::kdhyperrect>((*kd).rect.as_deref()));
+    rect= hyperrect_duplicate((*kd).rect.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()));
     if rect.as_deref().is_none() {();
         kd_res_free(rset);
         return None;
     }
-    result= core::mem::transmute::<_, *const crate::src::kdtree::kdnode>((*kd).root.as_deref());
+    result= (*kd).root.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null());
     dist_sq= 0 as libc::c_int as libc::c_double;
     i= 0 as libc::c_int;
     while i < (*kd).dim {
@@ -491,7 +491,7 @@ pub unsafe extern "C" fn kd_nearest(
                 * (*(*result).pos.offset(i as isize) - *pos.offset(i as isize));
         i+= 1;
     }
-    kd_nearest_i(core::mem::transmute::<_, *const crate::src::kdtree::kdnode>((*kd).root.as_deref()), pos, &mut result, &mut dist_sq, core::mem::transmute::<_, *mut crate::src::kdtree::kdhyperrect>(rect.as_deref_mut()));
+    kd_nearest_i((*kd).root.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()), pos, &mut result, &mut dist_sq, rect.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
     hyperrect_free(rect);
     if !result.is_null() {
         if rlist_insert((*rset.as_deref().unwrap()).rlist, result, -1.0f64) == -(1 as libc::c_int) {
@@ -617,7 +617,7 @@ pub unsafe extern "C" fn kd_nearest_range(
     (*(*rset.as_deref_mut().unwrap()).rlist).next= 0 as *mut res_node;
     (*rset.as_deref_mut().unwrap()).tree= kd;
     ret= find_nearest(
-        core::mem::transmute::<_, *const crate::src::kdtree::kdnode>((*kd).root.as_deref()),
+        (*kd).root.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()),
         pos,
         range,
         (*rset.as_deref_mut().unwrap()).rlist.as_mut(),
@@ -974,7 +974,7 @@ unsafe extern "C" fn rlist_insert(
         }
     }
     (*rnode.as_deref_mut().unwrap()).next= (*list).next;
-    (*list).next= core::mem::transmute::<_, *mut crate::src::kdtree::res_node>(rnode.as_deref_mut());
+    (*list).next= rnode.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut());
     return 0 as libc::c_int;
 }
 unsafe extern "C" fn clear_results(mut rset: Option<&mut kdres>) {

@@ -17,7 +17,7 @@ unsafe extern "C" fn zzero(mut a: *const crate::src::allocator::C2RustUnnamed) -
 pub unsafe extern "C" fn zbits(mut a: Option<&mut crate::src::allocator::C2RustUnnamed>) -> size_t {
     let mut i: size_t = 0;
     let mut x: zahl_char_t = 0;
-    if zzero(core::mem::transmute::<_, *const crate::src::allocator::C2RustUnnamed>(a.as_deref())) != 0 {
+    if zzero(a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())) != 0 {
         return 1 as libc::c_int as size_t;
     }
     i= (*a.as_deref().unwrap()).used.wrapping_sub(1 as libc::c_int as libc::c_ulong);

@@ -85,7 +85,7 @@ unsafe extern "C" fn rotate_right(mut right: Option<Box<t_rbnode>>) -> Option<Bo
     (*right.as_deref_mut().unwrap()).left= (*left.as_deref().unwrap()).right;
     // let ref mut fresh3 = (*left).right;
     // *fresh3 = right;
-    (*left.as_deref_mut().unwrap()).right= core::mem::transmute::<_, *mut crate::src::rbtree::s_rbnode>(right.as_deref_mut());
+    (*left.as_deref_mut().unwrap()).right= right.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut());
     (*left.as_deref_mut().unwrap()).color= (*right.as_deref().unwrap()).color;
     (*right.as_deref_mut().unwrap()).color= RED;
     return left;
@@ -204,10 +204,10 @@ unsafe extern "C" fn move_red_to_left(mut node: *mut t_rbnode) -> *mut t_rbnode 
     return node;
 }
 unsafe extern "C" fn move_red_to_right(mut node: Option<Box<t_rbnode>>) -> Option<Box<t_rbnode>> {
-    flip_color(core::mem::transmute::<_, *mut crate::src::rbtree::s_rbnode>(node.as_deref_mut()));
+    flip_color(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
     if !node.as_deref().is_none() && !(*node.as_deref().unwrap()).left.is_null() && is_red((*(*node.as_deref().unwrap()).left).left as *const crate::src::rbtree::s_rbnode) != 0 {
         node= rotate_right(node);
-        flip_color(core::mem::transmute::<_, *mut crate::src::rbtree::s_rbnode>(node.as_deref_mut()));
+        flip_color(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
     }
     return node;
 }
@@ -223,12 +223,12 @@ unsafe extern "C" fn remove_min(mut node: Option<Box<t_rbnode>>) -> *mut t_rbnod
         return 0 as *mut t_rbnode;
     }
     if is_red((*node.as_deref().unwrap()).left as *const crate::src::rbtree::s_rbnode) == 0 && is_red((*(*node.as_deref().unwrap()).left).left as *const crate::src::rbtree::s_rbnode) == 0 {
-        node= move_red_to_left(core::mem::transmute::<_, *mut crate::src::rbtree::s_rbnode>(node.as_deref_mut()));
+        node= move_red_to_left(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
     }
     // let ref mut fresh9 = (*node).left;
     // *fresh9 = remove_min((*node).left);
     (*node.as_deref_mut().unwrap()).left= remove_min(Some(Box::from_raw((*node.as_deref_mut().unwrap()).left)));
-    return balance_me_that(core::mem::transmute::<_, *mut crate::src::rbtree::s_rbnode>(node.as_deref_mut()));
+    return balance_me_that(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
 }
 unsafe extern "C" fn remove_it(mut node: Option<Box<t_rbnode>>, mut key: t_key) -> *mut t_rbnode {
     let mut tmp = 0 as *mut t_rbnode;
@@ -239,7 +239,7 @@ unsafe extern "C" fn remove_it(mut node: Option<Box<t_rbnode>>, mut key: t_key) 
     if my_compare(key, (*node.as_deref().unwrap()).key) == -(1 as libc::c_int) {
         if !(*node.as_deref().unwrap()).left.is_null() {
             if is_red((*node.as_deref().unwrap()).left as *const crate::src::rbtree::s_rbnode) == 0 && is_red((*(*node.as_deref().unwrap()).left).left as *const crate::src::rbtree::s_rbnode) == 0 {
-                node= move_red_to_left(core::mem::transmute::<_, *mut crate::src::rbtree::s_rbnode>(node.as_deref_mut()));
+                node= move_red_to_left(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
             }
             // let ref mut fresh10 = (*node).left;
             // *fresh10 = remove_key((*node).left, key);
@@ -277,7 +277,7 @@ unsafe extern "C" fn remove_it(mut node: Option<Box<t_rbnode>>, mut key: t_key) 
             ();
         }
     }
-    return balance_me_that(core::mem::transmute::<_, *mut crate::src::rbtree::s_rbnode>(node.as_deref_mut()));
+    return balance_me_that(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
 }
 #[no_mangle]
 pub unsafe extern "C" fn remove_key(mut node: Option<Box<t_rbnode>>, mut key: t_key) -> *mut t_rbnode {
@@ -287,7 +287,7 @@ pub unsafe extern "C" fn remove_key(mut node: Option<Box<t_rbnode>>, mut key: t_
     } else {
         ();
     }
-    return core::mem::transmute::<_, *mut crate::src::rbtree::s_rbnode>(node.as_deref_mut());
+    return node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut());
 }
 #[no_mangle]
 pub unsafe extern "C" fn erase_tree(mut node: Option<Box<t_rbnode>>) -> *const t_rbnode {

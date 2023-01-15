@@ -128,7 +128,7 @@ pub unsafe extern "C" fn buffer_new_with_copy(mut str: *const libc::c_char) -> O
  */
 #[no_mangle]
 pub unsafe extern "C" fn buffer_compact(mut self_0: Option<&mut buffer_t>) -> ssize_t {
-    let mut len = buffer_length(core::mem::transmute::<_, *const crate::src::buffer::buffer_t>(self_0.as_deref()));
+    let mut len = buffer_length(self_0.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()));
     let mut rem = (*self_0.as_deref().unwrap()).len.wrapping_sub(len);
     let mut buf = calloc(len.wrapping_add(1 as i32 as u64), 1 as i32 as u64) as *mut libc::c_char;
     if buf.is_null() {();
@@ -370,7 +370,7 @@ pub unsafe extern "C" fn buffer_trim_left(mut self_0: Option<&mut buffer_t>) {
 #[no_mangle]
 pub unsafe extern "C" fn buffer_trim_right(mut self_0: Option<&mut buffer_t>) {
     let mut c: i32 = 0;
-    let mut i = buffer_length(core::mem::transmute::<_, *const crate::src::buffer::buffer_t>(self_0.as_deref())).wrapping_sub(1 as i32 as u64);
+    let mut i = buffer_length(self_0.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())).wrapping_sub(1 as i32 as u64);
     loop {
         c= *(*self_0.as_deref().unwrap()).data.offset(i as isize) as i32;
         if !(c != 0
