@@ -254,10 +254,6 @@ impl<'me> PlaceValueType<'me> {
         }
     }
 
-    // fn is_mut_borrow<'tcx>(&self, rewrite_ctxt: &FnRewriteCtxt<'tcx, 'me>) -> bool {
-    //     !self.is_copy_obj(rewrite_ctxt) && !self.is_move_obj(rewrite_ctxt)
-    // }
-
     fn is_raw_ptr(self) -> bool {
         matches!(self, PlaceValueType::Ptr(ptr_kinds) if matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_raw()))
     }
@@ -664,14 +660,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         if PLACE_LOAD_MODE == PlaceLoadMode::ByRef as u8 {
             let source_text = common::rewrite::get_snippet(tcx, span).text.1;
             assert!(source_text.contains("as_mut_ptr()"));
-            // let required_ptr_kind = required.expect_ptr()[0];
-            // if required_ptr_kind.is_mut() {
-            //     // requiring mutable ref in array context, this happens in libzahl
-            //     // erase as_mut_ptr()
-            //     replacement += ".first_mut()";
-            // } else {
-            //     replacement += ".as_mut_ptr()";
-            // }
             replacement += ".as_mut_ptr()";
             rewriter.replace(tcx, span, replacement);
             return;
@@ -741,9 +729,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         ("as_deref_mut", "mut")
                     };
                     replacement = format!("{replacement}.{usage}().map(|r| r as *{target_ty} _).unwrap_or(std::ptr::null{}())", (target_ty == "mut").then_some("_mut").unwrap_or(""));
-                    // replacement = format!(
-                    //     "core::mem::transmute::<_, *{target_ty} {pointee_ty_str}>({replacement}.{usage}())"
-                    // )
                 } else if required.expect_ptr()[0].is_raw_const()
                     && produced.expect_ptr()[0].is_raw_mut()
                 {
