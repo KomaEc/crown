@@ -2,7 +2,7 @@ pub mod infer;
 pub mod solidify;
 pub mod whole_program;
 
-use rustc_middle::mir::{Body, Rvalue, StatementKind};
+use rustc_middle::mir::Body;
 
 use self::infer::InferCtxt;
 use crate::{
@@ -193,25 +193,37 @@ impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for IntraProcedura
     }
 }
 
-pub fn max_deref_level(body: &Body) -> Precision {
-    let mut max_deref_level = 1;
-    for bb_data in body.basic_blocks.iter() {
-        let rustc_middle::mir::BasicBlockData {
-            statements,
-            terminator: _,
-            ..
-        } = bb_data;
-        let mut deref_level = None;
-        for statement in statements {
-            if matches!(&statement.kind, StatementKind::Assign(box (_, rvalue)) if matches!(rvalue, Rvalue::CopyForDeref(_)))
-            {
-                *deref_level.get_or_insert(1) += 1;
-                continue;
-            }
-            if let Some(deref_level) = deref_level.take() {
-                max_deref_level = std::cmp::max(max_deref_level, deref_level);
+pub fn total_deref_level(body: &Body) -> Precision {
+    use rustc_middle::mir::{visit::{PlaceContext, MutatingUseContext, NonMutatingUseContext, Visitor}, Place};
+
+    struct AccessDepthApproximation {
+        read: usize,
+        write: usize,
+    }
+
+    impl<'tcx> Visitor<'tcx> for AccessDepthApproximation {
+        fn visit_place(&mut self, _: &Place<'tcx>, context: PlaceContext, _: rustc_middle::mir::Location,) {
+            if matches!(context, PlaceContext::MutatingUse(MutatingUseContext::Store)) {
+                self.write += 1;
+            } else if matches!(context, PlaceContext::NonMutatingUse(NonMutatingUseContext::Copy | NonMutatingUseContext::Move)) {
+                self.read += 1;
+            } else if matches!(context, PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect)) {
+                // deref copies
+                self.write += 1;
+                self.read += 1;
             }
         }
     }
-    max_deref_level
+
+    let mut approximator = AccessDepthApproximation {
+        read: 0,
+        write: 0,
+    };
+    approximator.visit_body(body);
+
+    let max_depth = approximator.read.max(approximator.write);
+
+    // FIXME ok?
+    // generally we expect a maximum ptr chased of depth 2
+    u8::try_from(max_depth).unwrap_or(2)
 }

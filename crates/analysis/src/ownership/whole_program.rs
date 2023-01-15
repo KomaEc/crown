@@ -12,7 +12,7 @@ use rustc_middle::{
 };
 
 use self::state::{initial_inter_ctxt, initial_ssa_state, refine_state};
-use super::{max_deref_level, AnalysisKind, Ownership, Precision};
+use super::{total_deref_level, AnalysisKind, Ownership, Precision};
 use crate::{
     call_graph::FnSig,
     ownership::{
@@ -47,10 +47,10 @@ impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for WholeProgramAn
         mut crate_ctxt: CrateCtxt<'tcx>,
         output_params: &OutputParams,
     ) -> anyhow::Result<Self::Results> {
-        let required_precision = std::cmp::max(
+        let required_precision = std::cmp::min(
             crate_ctxt.fns().iter().copied().fold(0, |acc, did| {
                 let body = crate_ctxt.tcx.optimized_mir(did);
-                std::cmp::max(acc, max_deref_level(body) + 1)
+                std::cmp::max(acc, total_deref_level(body) + 1)
             }),
             3,
         );
