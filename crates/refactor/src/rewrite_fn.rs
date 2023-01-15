@@ -405,7 +405,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 // rewrite point: if expr, match expr
                 let mut span = terminator.source_info.span;
                 let source_text = common::rewrite::get_snippet(tcx, span).text.1;
-                if source_text.starts_with("match") {
+                let source_token_stream = proc_macro2::TokenStream::from_str(&source_text).unwrap();
+                let parsed_expr = syn::parse2::<syn::Expr>(source_token_stream);
+                // if starts with match, the parsed thing cannot be an expr
+                if parsed_expr.is_err() && source_text.starts_with("match") {
                     let match_span = span.with_hi(span.lo() + rustc_span::BytePos(5));
                     rewriter.replace(tcx, match_span, "match ".to_owned());
                     span = span.with_lo(span.lo() + rustc_span::BytePos(5));
