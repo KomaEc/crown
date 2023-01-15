@@ -444,7 +444,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         self.body.return_ty(),
                         &self.local_decision[0],
                     );
-                    if !matches!(def_use_chain.def_loc(RETURN_PLACE, location), RichLocation::Entry) {
+                    if !matches!(
+                        def_use_chain.def_loc(RETURN_PLACE, location),
+                        RichLocation::Entry
+                    ) {
                         self.rewrite_temporary(RETURN_PLACE, location, return_ctxt, rewriter);
                     }
                 }
@@ -573,7 +576,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             return;
         } else {
             self.rewrite_temporary(place.local, location, required, rewriter);
-            return
+            return;
         };
 
         let mut index_spans: SmallVec<[Span; 1]> = smallvec::smallvec![];

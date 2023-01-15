@@ -167,7 +167,7 @@ impl<'tcx> WholeProgramResults<'tcx> {
                                     if adt_def.is_union() {
                                         // FIXME
                                         ownership = &[];
-                                        continue
+                                        continue;
                                     }
                                     let Range { start, end } =
                                         struct_fields.field(&adt_def.did(), f.index());
