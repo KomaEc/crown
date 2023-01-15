@@ -5,20 +5,13 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
-#![feature(const_raw_ptr_to_usize_cast)]
 #![feature(extern_types)]
-#![feature(linkage)]
-#![feature(main)]
-#![feature(ptr_offset_from)]
 #![feature(register_tool)]
 #![register_tool(c2rust)]
 
 
-
-
-
-
-
+extern crate libc;
+pub mod src {
 pub mod lil;
 pub mod main;
-
+} // mod src
