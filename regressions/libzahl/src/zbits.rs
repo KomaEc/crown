@@ -6,8 +6,11 @@ pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX3;
-impl Default for OrcGeneratedXXX3 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX3 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 #[inline]
 unsafe extern "C" fn zzero(mut a: *const crate::src::allocator::C2RustUnnamed) -> libc::c_int {
@@ -17,22 +20,29 @@ unsafe extern "C" fn zzero(mut a: *const crate::src::allocator::C2RustUnnamed) -
 pub unsafe extern "C" fn zbits(mut a: Option<&mut crate::src::allocator::C2RustUnnamed>) -> size_t {
     let mut i: size_t = 0;
     let mut x: zahl_char_t = 0;
-    if zzero(a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())) != 0 {
+    if zzero(
+        a.as_deref()
+            .map(|r| r as *const _)
+            .unwrap_or(std::ptr::null()),
+    ) != 0
+    {
         return 1 as libc::c_int as size_t;
     }
-    i= (*a.as_deref().unwrap()).used.wrapping_sub(1 as libc::c_int as libc::c_ulong);
+    i = (*a.as_deref().unwrap())
+        .used
+        .wrapping_sub(1 as libc::c_int as libc::c_ulong);
     loop {
-        x= *(*a.as_deref().unwrap()).chars.offset(i as isize);
+        x = *(*a.as_deref().unwrap()).chars.offset(i as isize);
         if x != 0 {
-            (*a.as_deref_mut().unwrap()).used= i.wrapping_add(1 as libc::c_int as libc::c_ulong);
-            i= (i as libc::c_ulong).wrapping_mul(32 as libc::c_int as libc::c_ulong)
-                as size_t as size_t;
+            (*a.as_deref_mut().unwrap()).used = i.wrapping_add(1 as libc::c_int as libc::c_ulong);
+            i = (i as libc::c_ulong).wrapping_mul(32 as libc::c_int as libc::c_ulong) as size_t
+                as size_t;
             while x != 0 {
-                x>>= 1 as libc::c_int;
-                i= i.wrapping_add(1);
+                x >>= 1 as libc::c_int;
+                i = i.wrapping_add(1);
             }
             return i;
         }
-        i= i.wrapping_sub(1);
-    };
+        i = i.wrapping_sub(1);
+    }
 }

@@ -8,8 +8,7 @@
 #![feature(register_tool)]
 #![register_tool(c2rust)]
 
-
 extern crate libc;
 pub mod src {
-pub mod kdtree;
+    pub mod kdtree;
 } // mod src

@@ -1,10 +1,6 @@
 use ::libc;
 extern "C" {
-    fn memcpy(
-        _: *mut libc::c_void,
-        _: *const libc::c_void,
-        _: libc::c_ulong,
-    ) -> *mut libc::c_void;
+    fn memcpy(_: *mut libc::c_void, _: *const libc::c_void, _: libc::c_ulong) -> *mut libc::c_void;
 }
 pub type size_t = libc::c_ulong;
 pub type __uint32_t = libc::c_uint;
@@ -13,8 +9,11 @@ pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX43;
-impl Default for OrcGeneratedXXX43 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX43 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 #[inline]
 unsafe extern "C" fn zzero(mut a: *const crate::src::allocator::C2RustUnnamed) -> libc::c_int {
@@ -28,9 +27,9 @@ pub unsafe extern "C" fn zsave(
     if !buffer.is_null() {
         let mut buf = buffer as *mut libc::c_char;
         *(buf as *mut libc::c_int) = (*a).sign;
-        buf= buf.offset(::std::mem::size_of::<libc::c_int>() as libc::c_ulong as isize);
+        buf = buf.offset(::std::mem::size_of::<libc::c_int>() as libc::c_ulong as isize);
         *(buf as *mut size_t) = (*a).used;
-        buf= buf.offset(::std::mem::size_of::<size_t>() as libc::c_ulong as isize);
+        buf = buf.offset(::std::mem::size_of::<size_t>() as libc::c_ulong as isize);
         if zzero(a) == 0 {
             memcpy(
                 buf as *mut libc::c_void,
@@ -39,7 +38,9 @@ pub unsafe extern "C" fn zsave(
                     .wrapping_mul(::std::mem::size_of::<zahl_char_t>() as libc::c_ulong),
             );
         }
-    }else { (); }
+    } else {
+        ();
+    }
     return (::std::mem::size_of::<libc::c_int>() as libc::c_ulong)
         .wrapping_add(::std::mem::size_of::<size_t>() as libc::c_ulong)
         .wrapping_add(

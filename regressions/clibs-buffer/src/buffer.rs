@@ -48,15 +48,23 @@ struct ErasedByRefactorer0;
 #[repr(C)]
 pub struct buffer_t {
     pub len: size_t,
-    pub alloc: *mut /* owning */ libc::c_char,
+    pub alloc: *mut libc::c_char,
     pub data: *mut libc::c_char,
 }
-impl Default for buffer_t {fn default() -> Self {Self {
-len: Default::default(),
-alloc: std::ptr::null_mut(),
-data: std::ptr::null_mut(),
-}}}
-impl buffer_t {pub fn take(&mut self) -> Self {core::mem::take(self)}}
+impl Default for buffer_t {
+    fn default() -> Self {
+        Self {
+            len: Default::default(),
+            alloc: std::ptr::null_mut(),
+            data: std::ptr::null_mut(),
+        }
+    }
+}
+impl buffer_t {
+    pub fn take(&mut self) -> Self {
+        core::mem::take(self)
+    }
+}
 
 // prototypes
 /*
@@ -71,20 +79,26 @@ pub unsafe extern "C" fn buffer_new() -> Option<Box<buffer_t>> {
  */
 #[no_mangle]
 pub unsafe extern "C" fn buffer_new_with_size(mut n: size_t) -> Option<Box<buffer_t>> {
-    let mut self_0 = Some(Box::new(<crate::src::buffer::buffer_t as Default>::default()));
-    if self_0.as_deref().is_none() {();
+    let mut self_0 = Some(Box::new(
+        <crate::src::buffer::buffer_t as Default>::default(),
+    ));
+    if self_0.as_deref().is_none() {
+        ();
         return None;
     }
-    (*self_0.as_deref_mut().unwrap()).len= n;
-    (*self_0.as_deref_mut().unwrap()).alloc= calloc(n.wrapping_add(1 as i32 as u64), 1 as i32 as u64) as *mut libc::c_char;
-    (*self_0.as_deref_mut().unwrap()).data= (*self_0.as_deref().unwrap()).alloc;
+    (*self_0.as_deref_mut().unwrap()).len = n;
+    (*self_0.as_deref_mut().unwrap()).alloc =
+        calloc(n.wrapping_add(1 as i32 as u64), 1 as i32 as u64) as *mut libc::c_char;
+    (*self_0.as_deref_mut().unwrap()).data = (*self_0.as_deref().unwrap()).alloc;
     return self_0;
 }
 /*
  * Allocate a new buffer with `str`.
  */
 #[no_mangle]
-pub unsafe extern "C" fn buffer_new_with_string(mut str: *mut /* owning */ libc::c_char) -> Option<Box<buffer_t>> {
+pub unsafe extern "C" fn buffer_new_with_string(
+    mut str: *mut libc::c_char,
+) -> Option<Box<buffer_t>> {
     return buffer_new_with_string_length(str, strlen(str as *const i8));
 }
 /*
@@ -95,23 +109,29 @@ pub unsafe extern "C" fn buffer_new_with_string_length(
     mut str: *mut libc::c_char,
     mut len: size_t,
 ) -> Option<Box<buffer_t>> {
-    let mut self_0 = Some(Box::new(<crate::src::buffer::buffer_t as Default>::default()));
-    if self_0.as_deref().is_none() {();
+    let mut self_0 = Some(Box::new(
+        <crate::src::buffer::buffer_t as Default>::default(),
+    ));
+    if self_0.as_deref().is_none() {
+        ();
         return None;
     }
-    (*self_0.as_deref_mut().unwrap()).len= len;
-    (*self_0.as_deref_mut().unwrap()).alloc= str;
-    (*self_0.as_deref_mut().unwrap()).data= (*self_0.as_deref().unwrap()).alloc;
+    (*self_0.as_deref_mut().unwrap()).len = len;
+    (*self_0.as_deref_mut().unwrap()).alloc = str;
+    (*self_0.as_deref_mut().unwrap()).data = (*self_0.as_deref().unwrap()).alloc;
     return self_0;
 }
 /*
  * Allocate a new buffer with a copy of `str`.
  */
 #[no_mangle]
-pub unsafe extern "C" fn buffer_new_with_copy(mut str: *const libc::c_char) -> Option<Box<buffer_t>> {
+pub unsafe extern "C" fn buffer_new_with_copy(
+    mut str: *const libc::c_char,
+) -> Option<Box<buffer_t>> {
     let mut len = strlen(str);
     let mut self_0 = buffer_new_with_size(len);
-    if self_0.as_deref().is_none() {();
+    if self_0.as_deref().is_none() {
+        ();
         return None;
     }
     memcpy(
@@ -119,7 +139,7 @@ pub unsafe extern "C" fn buffer_new_with_copy(mut str: *const libc::c_char) -> O
         str as *const libc::c_void,
         len,
     );
-    (*self_0.as_deref_mut().unwrap()).data= (*self_0.as_deref().unwrap()).alloc;
+    (*self_0.as_deref_mut().unwrap()).data = (*self_0.as_deref().unwrap()).alloc;
     return self_0;
 }
 /*
@@ -128,10 +148,16 @@ pub unsafe extern "C" fn buffer_new_with_copy(mut str: *const libc::c_char) -> O
  */
 #[no_mangle]
 pub unsafe extern "C" fn buffer_compact(mut self_0: Option<&mut buffer_t>) -> ssize_t {
-    let mut len = buffer_length(self_0.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()));
+    let mut len = buffer_length(
+        self_0
+            .as_deref()
+            .map(|r| r as *const _)
+            .unwrap_or(std::ptr::null()),
+    );
     let mut rem = (*self_0.as_deref().unwrap()).len.wrapping_sub(len);
     let mut buf = calloc(len.wrapping_add(1 as i32 as u64), 1 as i32 as u64) as *mut libc::c_char;
-    if buf.is_null() {();
+    if buf.is_null() {
+        ();
         return -(1 as i32) as ssize_t;
     }
     memcpy(
@@ -140,9 +166,9 @@ pub unsafe extern "C" fn buffer_compact(mut self_0: Option<&mut buffer_t>) -> ss
         len,
     );
     free((*self_0.as_deref().unwrap()).alloc as *mut libc::c_void);
-    (*self_0.as_deref_mut().unwrap()).len= len;
-    (*self_0.as_deref_mut().unwrap()).alloc= buf;
-    (*self_0.as_deref_mut().unwrap()).data= (*self_0.as_deref().unwrap()).alloc;
+    (*self_0.as_deref_mut().unwrap()).len = len;
+    (*self_0.as_deref_mut().unwrap()).alloc = buf;
+    (*self_0.as_deref_mut().unwrap()).data = (*self_0.as_deref().unwrap()).alloc;
     return rem as ssize_t;
 }
 /*
@@ -172,14 +198,15 @@ pub unsafe extern "C" fn buffer_length(mut self_0: *const buffer_t) -> size_t {
  */
 #[no_mangle]
 pub unsafe extern "C" fn buffer_resize(mut self_0: Option<&mut buffer_t>, mut n: size_t) -> i32 {
-    n= n.wrapping_add((1024 as i32 - 1 as i32) as u64) & !(1024 as i32 - 1 as i32) as u64;
-    (*self_0.as_deref_mut().unwrap()).len= n;
-    (*self_0.as_deref_mut().unwrap()).data= realloc(
+    n = n.wrapping_add((1024 as i32 - 1 as i32) as u64) & !(1024 as i32 - 1 as i32) as u64;
+    (*self_0.as_deref_mut().unwrap()).len = n;
+    (*self_0.as_deref_mut().unwrap()).data = realloc(
         (*self_0.as_deref().unwrap()).alloc as *mut libc::c_void,
         n.wrapping_add(1 as i32 as u64),
     ) as *mut libc::c_char;
-    (*self_0.as_deref_mut().unwrap()).alloc= (*self_0.as_deref().unwrap()).data;
-    if (*self_0.as_deref().unwrap()).alloc.is_null() {();
+    (*self_0.as_deref_mut().unwrap()).alloc = (*self_0.as_deref().unwrap()).data;
+    if (*self_0.as_deref().unwrap()).alloc.is_null() {
+        ();
         return -(1 as i32);
     }
     *(*self_0.as_deref().unwrap()).alloc.offset(n as isize) = '\u{0}' as i32 as libc::c_char;
@@ -273,7 +300,7 @@ pub unsafe extern "C" fn buffer_prepend(
     // enough space
     if !((*self_0.as_deref().unwrap()).len > needed) {
         // resize
-        ret= buffer_resize(self_0.as_deref_mut(), needed);
+        ret = buffer_resize(self_0.as_deref_mut(), needed);
         if -(1 as i32) == ret {
             return -(1 as i32);
         }
@@ -308,11 +335,11 @@ pub unsafe extern "C" fn buffer_slice(
     }
     // relative to end
     if to < 0 as i32 as libc::c_long {
-        to= len.wrapping_sub(!to as u64) as ssize_t
+        to = len.wrapping_sub(!to as u64) as ssize_t
     }
     // cap end
     if to as u64 > len {
-        to= len as ssize_t
+        to = len as ssize_t
     }
     let mut n = (to as u64).wrapping_sub(from);
     let mut self_0 = buffer_new_with_size(n);
@@ -327,7 +354,10 @@ pub unsafe extern "C" fn buffer_slice(
  * Return 1 if the buffers contain equivalent data.
  */
 #[no_mangle]
-pub unsafe extern "C" fn buffer_equals(mut self_0: *const buffer_t, mut other: *const buffer_t) -> i32 {
+pub unsafe extern "C" fn buffer_equals(
+    mut self_0: *const buffer_t,
+    mut other: *const buffer_t,
+) -> i32 {
     return (0 as i32 == strcmp((*self_0).data, (*other).data)) as i32;
 }
 /*
@@ -339,7 +369,8 @@ pub unsafe extern "C" fn buffer_indexof(
     mut str: *const libc::c_char,
 ) -> ssize_t {
     let mut sub = strstr((*self_0).data, str);
-    if sub.is_null() {();
+    if sub.is_null() {
+        ();
         return -(1 as i32) as ssize_t;
     }
     return sub.offset_from((*self_0).data) as libc::c_long;
@@ -351,17 +382,16 @@ pub unsafe extern "C" fn buffer_indexof(
 pub unsafe extern "C" fn buffer_trim_left(mut self_0: Option<&mut buffer_t>) {
     let mut c: i32 = 0;
     loop {
-        c= (*(*self_0.as_deref().unwrap()).data) as i32;
-        if !(c != 0
-            && char::from_u32(c as u32).unwrap().is_whitespace())
-            /* *(*__ctype_b_loc()).offset(c as isize) as i32
-                & _ISspace as i32 as libc::c_ushort as i32
-                != 0)
-                */
+        c = (*(*self_0.as_deref().unwrap()).data) as i32;
+        if !(c != 0 && char::from_u32(c as u32).unwrap().is_whitespace())
+        /* *(*__ctype_b_loc()).offset(c as isize) as i32
+        & _ISspace as i32 as libc::c_ushort as i32
+        != 0)
+        */
         {
             break;
         }
-        (*self_0.as_deref_mut().unwrap()).data= (*self_0.as_deref().unwrap()).data.offset(1)
+        (*self_0.as_deref_mut().unwrap()).data = (*self_0.as_deref().unwrap()).data.offset(1)
     }
 }
 /*
@@ -370,16 +400,20 @@ pub unsafe extern "C" fn buffer_trim_left(mut self_0: Option<&mut buffer_t>) {
 #[no_mangle]
 pub unsafe extern "C" fn buffer_trim_right(mut self_0: Option<&mut buffer_t>) {
     let mut c: i32 = 0;
-    let mut i = buffer_length(self_0.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())).wrapping_sub(1 as i32 as u64);
+    let mut i = buffer_length(
+        self_0
+            .as_deref()
+            .map(|r| r as *const _)
+            .unwrap_or(std::ptr::null()),
+    )
+    .wrapping_sub(1 as i32 as u64);
     loop {
-        c= *(*self_0.as_deref().unwrap()).data.offset(i as isize) as i32;
-        if !(c != 0
-            && char::from_u32(c as u32).unwrap().is_whitespace())
-        {
+        c = *(*self_0.as_deref().unwrap()).data.offset(i as isize) as i32;
+        if !(c != 0 && char::from_u32(c as u32).unwrap().is_whitespace()) {
             break;
         }
         let fresh0 = i;
-        i= i.wrapping_sub(1);
+        i = i.wrapping_sub(1);
         *(*self_0.as_deref().unwrap()).data.offset(fresh0 as isize) = 0 as i32 as libc::c_char
     }
 }
@@ -396,7 +430,11 @@ pub unsafe extern "C" fn buffer_trim(mut self_0: Option<&mut buffer_t>) {
  */
 #[no_mangle]
 pub unsafe extern "C" fn buffer_fill(mut self_0: Option<&mut buffer_t>, mut c: i32) {
-    memset((*self_0.as_deref().unwrap()).data as *mut libc::c_void, c, (*self_0.as_deref().unwrap()).len);
+    memset(
+        (*self_0.as_deref().unwrap()).data as *mut libc::c_void,
+        c,
+        (*self_0.as_deref().unwrap()).len,
+    );
 }
 /*
  * Fill the buffer with 0.
@@ -414,7 +452,7 @@ pub unsafe extern "C" fn buffer_print(mut self_0: *const buffer_t) {
     let mut len = (*self_0).len;
     printf(b"\n \x00" as *const u8 as *const libc::c_char);
     // hex
-    i= 0 as i32;
+    i = 0 as i32;
     while (i as u64) < len {
         printf(
             b" %02x\x00" as *const u8 as *const libc::c_char,
@@ -423,7 +461,7 @@ pub unsafe extern "C" fn buffer_print(mut self_0: *const buffer_t) {
         if (i + 1 as i32) % 8 as i32 == 0 as i32 {
             printf(b"\n \x00" as *const u8 as *const libc::c_char);
         }
-        i+= 1
+        i += 1
     }
     printf(b"\n\x00" as *const u8 as *const libc::c_char);
 }

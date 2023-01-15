@@ -17,17 +17,25 @@ pub struct s_rbnode {
     pub key: t_key,
     pub value: t_value,
     pub color: t_rbcolor,
-    pub left: *mut /* owning */ s_rbnode,
+    pub left: *mut s_rbnode,
     pub right: *mut s_rbnode,
 }
-impl Default for s_rbnode {fn default() -> Self {Self {
-key: Default::default(),
-value: Default::default(),
-color: Default::default(),
-left: std::ptr::null_mut(),
-right: std::ptr::null_mut(),
-}}}
-impl s_rbnode {pub fn take(&mut self) -> Self {core::mem::take(self)}}
+impl Default for s_rbnode {
+    fn default() -> Self {
+        Self {
+            key: Default::default(),
+            value: Default::default(),
+            color: Default::default(),
+            left: std::ptr::null_mut(),
+            right: std::ptr::null_mut(),
+        }
+    }
+}
+impl s_rbnode {
+    pub fn take(&mut self) -> Self {
+        core::mem::take(self)
+    }
+}
 
 pub type t_rbnode = s_rbnode;
 #[no_mangle]
@@ -52,9 +60,9 @@ unsafe extern "C" fn my_compare(mut key1: libc::c_uint, mut key2: libc::c_uint) 
     };
 }
 unsafe extern "C" fn flip_color(mut node: *mut t_rbnode) {
-    (*node).color= ((*node).color as u64 == 0) as libc::c_int as t_rbcolor;
-    (*(*node).left).color= ((*(*node).left).color as u64 == 0) as libc::c_int as t_rbcolor;
-    (*(*node).right).color= ((*(*node).right).color as u64 == 0) as libc::c_int as t_rbcolor;
+    (*node).color = ((*node).color as u64 == 0) as libc::c_int as t_rbcolor;
+    (*(*node).left).color = ((*(*node).left).color as u64 == 0) as libc::c_int as t_rbcolor;
+    (*(*node).right).color = ((*(*node).right).color as u64 == 0) as libc::c_int as t_rbcolor;
 }
 unsafe extern "C" fn rotate_left(mut left: *mut t_rbnode) -> *mut t_rbnode {
     let mut right = 0 as *mut t_rbnode;
@@ -62,15 +70,15 @@ unsafe extern "C" fn rotate_left(mut left: *mut t_rbnode) -> *mut t_rbnode {
         ();
         return 0 as *mut t_rbnode;
     }
-    right= (*left).right;
+    right = (*left).right;
     // let ref mut fresh0 = (*left).right;
     // *fresh0 = (*right).left;
-    (*left).right= (*right).left;
+    (*left).right = (*right).left;
     // let ref mut fresh1 = (*right).left;
     // *fresh1 = left;
-    (*right).left= left;
-    (*right).color= (*left).color;
-    (*left).color= RED;
+    (*right).left = left;
+    (*right).color = (*left).color;
+    (*left).color = RED;
     return right;
 }
 unsafe extern "C" fn rotate_right(mut right: Option<Box<t_rbnode>>) -> Option<Box<t_rbnode>> {
@@ -79,34 +87,39 @@ unsafe extern "C" fn rotate_right(mut right: Option<Box<t_rbnode>>) -> Option<Bo
         ();
         return None;
     }
-    left= Some(Box::from_raw((*right.as_deref_mut().unwrap()).left));
+    left = Some(Box::from_raw((*right.as_deref_mut().unwrap()).left));
     // let ref mut fresh2 = (*right).left;
     // *fresh2 = (*left).right;
-    (*right.as_deref_mut().unwrap()).left= (*left.as_deref().unwrap()).right;
+    (*right.as_deref_mut().unwrap()).left = (*left.as_deref().unwrap()).right;
     // let ref mut fresh3 = (*left).right;
     // *fresh3 = right;
-    (*left.as_deref_mut().unwrap()).right= right.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut());
-    (*left.as_deref_mut().unwrap()).color= (*right.as_deref().unwrap()).color;
-    (*right.as_deref_mut().unwrap()).color= RED;
+    (*left.as_deref_mut().unwrap()).right = right
+        .as_deref_mut()
+        .map(|r| r as *mut _)
+        .unwrap_or(std::ptr::null_mut());
+    (*left.as_deref_mut().unwrap()).color = (*right.as_deref().unwrap()).color;
+    (*right.as_deref_mut().unwrap()).color = RED;
     return left;
 }
 #[no_mangle]
 pub unsafe extern "C" fn create_node(mut key: t_key, mut value: t_value) -> Option<Box<t_rbnode>> {
     let mut new = None;
-    new= Some(Box::new(<crate::src::rbtree::s_rbnode as Default>::default()));
+    new = Some(Box::new(
+        <crate::src::rbtree::s_rbnode as Default>::default(),
+    ));
     if new.as_deref().is_none() {
         ();
         return None;
     }
-    (*new.as_deref_mut().unwrap()).key= key;
-    (*new.as_deref_mut().unwrap()).value= value;
-    (*new.as_deref_mut().unwrap()).color= RED;
+    (*new.as_deref_mut().unwrap()).key = key;
+    (*new.as_deref_mut().unwrap()).value = value;
+    (*new.as_deref_mut().unwrap()).color = RED;
     // let ref mut fresh4 = (*new).left;
     // *fresh4 = 0 as *mut t_rbnode;
-    (*new.as_deref_mut().unwrap()).left= 0 as *mut t_rbnode;
+    (*new.as_deref_mut().unwrap()).left = 0 as *mut t_rbnode;
     // let ref mut fresh5 = (*new).right;
     // *fresh5 = 0 as *mut t_rbnode;
-    (*new.as_deref_mut().unwrap()).right= 0 as *mut t_rbnode;
+    (*new.as_deref_mut().unwrap()).right = 0 as *mut t_rbnode;
     return new;
 }
 unsafe extern "C" fn insert_this(
@@ -119,25 +132,31 @@ unsafe extern "C" fn insert_this(
         ();
         return create_node(key, value);
     }
-    res= my_compare(key, (*node).key);
+    res = my_compare(key, (*node).key);
     if res == 0 as libc::c_int {
-        (*node).value= value;
+        (*node).value = value;
     } else if res < 0 as libc::c_int {
         // let ref mut fresh6 = (*node).left;
         // *fresh6 = insert_this((*node).left, key, value);
-        (*node).left= insert_this((*node).left, key, value);
+        (*node).left = insert_this((*node).left, key, value);
     } else {
         // let ref mut fresh7 = (*node).right;
         // *fresh7 = insert_this((*node).right, key, value);
-        (*node).right= insert_this((*node).right, key, value);
+        (*node).right = insert_this((*node).right, key, value);
     }
-    if is_red((*node).right) != 0 && is_red((*node).left as *const crate::src::rbtree::s_rbnode) == 0 {
-        node= rotate_left(node);
+    if is_red((*node).right) != 0
+        && is_red((*node).left as *const crate::src::rbtree::s_rbnode) == 0
+    {
+        node = rotate_left(node);
     }
-    if is_red((*node).left as *const crate::src::rbtree::s_rbnode) != 0 && is_red((*(*node).left).left as *const crate::src::rbtree::s_rbnode) != 0 {
-        node= rotate_right(Some(Box::from_raw(node)));
+    if is_red((*node).left as *const crate::src::rbtree::s_rbnode) != 0
+        && is_red((*(*node).left).left as *const crate::src::rbtree::s_rbnode) != 0
+    {
+        node = rotate_right(Some(Box::from_raw(node)));
     }
-    if is_red((*node).left as *const crate::src::rbtree::s_rbnode) != 0 && is_red((*node).right) != 0 {
+    if is_red((*node).left as *const crate::src::rbtree::s_rbnode) != 0
+        && is_red((*node).right) != 0
+    {
         flip_color(node);
     }
     return node;
@@ -155,11 +174,11 @@ pub unsafe extern "C" fn insert(mut key: t_key, mut value: t_value) {
 pub unsafe extern "C" fn get_key(mut node: *const t_rbnode, mut key: t_key) -> t_value {
     let mut cmp: libc::c_int = 0;
     while !node.is_null() {
-        cmp= my_compare(key, (*node).key);
+        cmp = my_compare(key, (*node).key);
         if cmp == 0 {
             return (*node).value;
         }
-        node= if cmp < 0 as libc::c_int {
+        node = if cmp < 0 as libc::c_int {
             (*node).left as *const crate::src::rbtree::s_rbnode
         } else {
             (*node).right
@@ -174,7 +193,7 @@ unsafe extern "C" fn min(mut node: *const t_rbnode) -> *const t_rbnode {
         return 0 as *mut t_rbnode;
     }
     while !(*node).left.is_null() {
-        node= (*node).left as *const crate::src::rbtree::s_rbnode;
+        node = (*node).left as *const crate::src::rbtree::s_rbnode;
     }
     ();
     return node;
@@ -182,32 +201,51 @@ unsafe extern "C" fn min(mut node: *const t_rbnode) -> *const t_rbnode {
 #[inline]
 unsafe extern "C" fn balance_me_that(mut node: *mut t_rbnode) -> *mut t_rbnode {
     if is_red((*node).right) != 0 {
-        node= rotate_left(node);
+        node = rotate_left(node);
     }
-    if is_red((*node).left as *const crate::src::rbtree::s_rbnode) != 0 && is_red((*(*node).left).left as *const crate::src::rbtree::s_rbnode) != 0 {
-        node= rotate_right(Some(Box::from_raw(node)));
+    if is_red((*node).left as *const crate::src::rbtree::s_rbnode) != 0
+        && is_red((*(*node).left).left as *const crate::src::rbtree::s_rbnode) != 0
+    {
+        node = rotate_right(Some(Box::from_raw(node)));
     }
-    if is_red((*node).left as *const crate::src::rbtree::s_rbnode) != 0 && is_red((*node).right) != 0 {
+    if is_red((*node).left as *const crate::src::rbtree::s_rbnode) != 0
+        && is_red((*node).right) != 0
+    {
         flip_color(node);
     }
     return node;
 }
 unsafe extern "C" fn move_red_to_left(mut node: *mut t_rbnode) -> *mut t_rbnode {
     flip_color(node);
-    if !node.is_null() && !(*node).right.is_null() && is_red((*(*node).right).left as *const crate::src::rbtree::s_rbnode) != 0 {
+    if !node.is_null()
+        && !(*node).right.is_null()
+        && is_red((*(*node).right).left as *const crate::src::rbtree::s_rbnode) != 0
+    {
         // let ref mut fresh8 = (*node).right;
         // *fresh8 = rotate_right((*node).right);
-        (*node).right= rotate_right(Some(Box::from_raw((*node).right)));
-        node= rotate_left(node);
+        (*node).right = rotate_right(Some(Box::from_raw((*node).right)));
+        node = rotate_left(node);
         flip_color(node);
     }
     return node;
 }
 unsafe extern "C" fn move_red_to_right(mut node: Option<Box<t_rbnode>>) -> Option<Box<t_rbnode>> {
-    flip_color(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
-    if !node.as_deref().is_none() && !(*node.as_deref().unwrap()).left.is_null() && is_red((*(*node.as_deref().unwrap()).left).left as *const crate::src::rbtree::s_rbnode) != 0 {
-        node= rotate_right(node);
-        flip_color(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
+    flip_color(
+        node.as_deref_mut()
+            .map(|r| r as *mut _)
+            .unwrap_or(std::ptr::null_mut()),
+    );
+    if !node.as_deref().is_none()
+        && !(*node.as_deref().unwrap()).left.is_null()
+        && is_red((*(*node.as_deref().unwrap()).left).left as *const crate::src::rbtree::s_rbnode)
+            != 0
+    {
+        node = rotate_right(node);
+        flip_color(
+            node.as_deref_mut()
+                .map(|r| r as *mut _)
+                .unwrap_or(std::ptr::null_mut()),
+        );
     }
     return node;
 }
@@ -222,13 +260,25 @@ unsafe extern "C" fn remove_min(mut node: Option<Box<t_rbnode>>) -> *mut t_rbnod
         ();
         return 0 as *mut t_rbnode;
     }
-    if is_red((*node.as_deref().unwrap()).left as *const crate::src::rbtree::s_rbnode) == 0 && is_red((*(*node.as_deref().unwrap()).left).left as *const crate::src::rbtree::s_rbnode) == 0 {
-        node= move_red_to_left(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
+    if is_red((*node.as_deref().unwrap()).left as *const crate::src::rbtree::s_rbnode) == 0
+        && is_red((*(*node.as_deref().unwrap()).left).left as *const crate::src::rbtree::s_rbnode)
+            == 0
+    {
+        node = move_red_to_left(
+            node.as_deref_mut()
+                .map(|r| r as *mut _)
+                .unwrap_or(std::ptr::null_mut()),
+        );
     }
     // let ref mut fresh9 = (*node).left;
     // *fresh9 = remove_min((*node).left);
-    (*node.as_deref_mut().unwrap()).left= remove_min(Some(Box::from_raw((*node.as_deref_mut().unwrap()).left)));
-    return balance_me_that(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
+    (*node.as_deref_mut().unwrap()).left =
+        remove_min(Some(Box::from_raw((*node.as_deref_mut().unwrap()).left)));
+    return balance_me_that(
+        node.as_deref_mut()
+            .map(|r| r as *mut _)
+            .unwrap_or(std::ptr::null_mut()),
+    );
 }
 unsafe extern "C" fn remove_it(mut node: Option<Box<t_rbnode>>, mut key: t_key) -> *mut t_rbnode {
     let mut tmp = 0 as *mut t_rbnode;
@@ -238,56 +288,86 @@ unsafe extern "C" fn remove_it(mut node: Option<Box<t_rbnode>>, mut key: t_key) 
     }
     if my_compare(key, (*node.as_deref().unwrap()).key) == -(1 as libc::c_int) {
         if !(*node.as_deref().unwrap()).left.is_null() {
-            if is_red((*node.as_deref().unwrap()).left as *const crate::src::rbtree::s_rbnode) == 0 && is_red((*(*node.as_deref().unwrap()).left).left as *const crate::src::rbtree::s_rbnode) == 0 {
-                node= move_red_to_left(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
+            if is_red((*node.as_deref().unwrap()).left as *const crate::src::rbtree::s_rbnode) == 0
+                && is_red(
+                    (*(*node.as_deref().unwrap()).left).left as *const crate::src::rbtree::s_rbnode,
+                ) == 0
+            {
+                node = move_red_to_left(
+                    node.as_deref_mut()
+                        .map(|r| r as *mut _)
+                        .unwrap_or(std::ptr::null_mut()),
+                );
             }
             // let ref mut fresh10 = (*node).left;
             // *fresh10 = remove_key((*node).left, key);
-            (*node.as_deref_mut().unwrap()).left= remove_key(Some(Box::from_raw((*node.as_deref_mut().unwrap()).left)), key);
+            (*node.as_deref_mut().unwrap()).left = remove_key(
+                Some(Box::from_raw((*node.as_deref_mut().unwrap()).left)),
+                key,
+            );
         } else {
             ();
         }
     } else {
         if is_red((*node.as_deref().unwrap()).left as *const crate::src::rbtree::s_rbnode) != 0 {
-            node= rotate_right(node);
+            node = rotate_right(node);
         }
-        if my_compare(key, (*node.as_deref().unwrap()).key) == 0 && (*node.as_deref().unwrap()).right.is_null() {
+        if my_compare(key, (*node.as_deref().unwrap()).key) == 0
+            && (*node.as_deref().unwrap()).right.is_null()
+        {
             // std::intrinsics::assume((*node).left as usize == 0);
             // std::intrinsics::assume((*node).right as usize == 0);
             ();
             return 0 as *mut t_rbnode;
         }
         if !(*node.as_deref().unwrap()).right.is_null() {
-            if is_red((*node.as_deref().unwrap()).right) == 0 && is_red((*(*node.as_deref().unwrap()).right).left as *const crate::src::rbtree::s_rbnode) == 0 {
-                node= move_red_to_right(node);
+            if is_red((*node.as_deref().unwrap()).right) == 0
+                && is_red(
+                    (*(*node.as_deref().unwrap()).right).left
+                        as *const crate::src::rbtree::s_rbnode,
+                ) == 0
+            {
+                node = move_red_to_right(node);
             }
             if my_compare(key, (*node.as_deref().unwrap()).key) == 0 {
-                tmp= min((*node.as_deref().unwrap()).right);
-                (*node.as_deref_mut().unwrap()).key= (*tmp).key;
-                (*node.as_deref_mut().unwrap()).value= (*tmp).value;
+                tmp = min((*node.as_deref().unwrap()).right);
+                (*node.as_deref_mut().unwrap()).key = (*tmp).key;
+                (*node.as_deref_mut().unwrap()).value = (*tmp).value;
                 // let ref mut fresh11 = (*node).right;
                 // *fresh11 = remove_min((*node).right);
-                (*node.as_deref_mut().unwrap()).right= remove_min(Some(Box::from_raw((*node.as_deref().unwrap()).right)));
+                (*node.as_deref_mut().unwrap()).right =
+                    remove_min(Some(Box::from_raw((*node.as_deref().unwrap()).right)));
             } else {
                 // let ref mut fresh12 = (*node).right;
                 // *fresh12 = remove_key((*node).right, key);
-                (*node.as_deref_mut().unwrap()).right= remove_key(Some(Box::from_raw((*node.as_deref().unwrap()).right)), key);
+                (*node.as_deref_mut().unwrap()).right =
+                    remove_key(Some(Box::from_raw((*node.as_deref().unwrap()).right)), key);
             }
         } else {
             ();
         }
     }
-    return balance_me_that(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
+    return balance_me_that(
+        node.as_deref_mut()
+            .map(|r| r as *mut _)
+            .unwrap_or(std::ptr::null_mut()),
+    );
 }
 #[no_mangle]
-pub unsafe extern "C" fn remove_key(mut node: Option<Box<t_rbnode>>, mut key: t_key) -> *mut t_rbnode {
-    node= remove_it(node, key);
+pub unsafe extern "C" fn remove_key(
+    mut node: Option<Box<t_rbnode>>,
+    mut key: t_key,
+) -> *mut t_rbnode {
+    node = remove_it(node, key);
     if !node.as_deref().is_none() {
-        (*node.as_deref_mut().unwrap()).color= BLACK;
+        (*node.as_deref_mut().unwrap()).color = BLACK;
     } else {
         ();
     }
-    return node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut());
+    return node
+        .as_deref_mut()
+        .map(|r| r as *mut _)
+        .unwrap_or(std::ptr::null_mut());
 }
 #[no_mangle]
 pub unsafe extern "C" fn erase_tree(mut node: Option<Box<t_rbnode>>) -> *const t_rbnode {
@@ -304,10 +384,10 @@ pub unsafe extern "C" fn erase_tree(mut node: Option<Box<t_rbnode>>) -> *const t
         }
         // let ref mut fresh13 = (*node).left;
         // *fresh13 = 0 as *mut t_rbnode;
-        (*node.as_deref_mut().unwrap()).left= 0 as *mut t_rbnode;
+        (*node.as_deref_mut().unwrap()).left = 0 as *mut t_rbnode;
         // let ref mut fresh14 = (*node).right;
         // *fresh14 = 0 as *mut t_rbnode;
-        (*node.as_deref_mut().unwrap()).right= 0 as *mut t_rbnode;
+        (*node.as_deref_mut().unwrap()).right = 0 as *mut t_rbnode;
         ();
     } else {
         ();

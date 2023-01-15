@@ -10,11 +10,4 @@
 #![feature(register_tool)]
 #![register_tool(c2rust)]
 
-
-
-
-
-
-
 pub mod libcsv;
-

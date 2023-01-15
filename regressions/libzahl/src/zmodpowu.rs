@@ -1,10 +1,6 @@
 use ::libc;
 extern "C" {
-    
-    
-    
-    
-    
+
     static mut libzahl_tmp_pow_d: z_t;
     static mut libzahl_tmp_pow_b: z_t;
     static mut libzahl_jmp_buf: jmp_buf;
@@ -16,14 +12,20 @@ pub type __jmp_buf = [libc::c_long; 8];
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX24;
-impl Default for OrcGeneratedXXX24 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX24 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX25;
-impl Default for OrcGeneratedXXX25 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX25 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 pub type jmp_buf = [crate::src::allocator::__jmp_buf_tag; 1];
 pub type __uint32_t = libc::c_uint;
@@ -32,8 +34,11 @@ pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX26;
-impl Default for OrcGeneratedXXX26 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX26 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[inline]
@@ -63,7 +68,7 @@ pub unsafe extern "C" fn zmodpowu(
             libzahl_error = 33 as libc::c_int;
             longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
         } else if zzero(b) != 0 {
-            (*a).sign= 0 as libc::c_int;
+            (*a).sign = 0 as libc::c_int;
             return;
         }
     }
@@ -84,6 +89,6 @@ pub unsafe extern "C" fn zmodpowu(
             libzahl_tmp_pow_b.as_mut_ptr(),
             libzahl_tmp_pow_d.as_mut_ptr(),
         );
-        c>>= 1 as libc::c_int;
+        c >>= 1 as libc::c_int;
     }
 }

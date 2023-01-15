@@ -1,12 +1,9 @@
 use ::libc;
 extern "C" {
-    
-    
-    
-    
+
     static mut libzahl_tmp_pow_b: z_t;
     static mut libzahl_tmp_pow_c: z_t;
-    
+
     static mut libzahl_jmp_buf: jmp_buf;
     static mut libzahl_error: libc::c_int;
     fn longjmp(_: *mut crate::src::allocator::__jmp_buf_tag, _: libc::c_int) -> !;
@@ -16,14 +13,20 @@ pub type __jmp_buf = [libc::c_long; 8];
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX32;
-impl Default for OrcGeneratedXXX32 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX32 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX33;
-impl Default for OrcGeneratedXXX33 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX33 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 pub type jmp_buf = [crate::src::allocator::__jmp_buf_tag; 1];
 pub type __uint32_t = libc::c_uint;
@@ -32,8 +35,11 @@ pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX34;
-impl Default for OrcGeneratedXXX34 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX34 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[inline]
@@ -66,44 +72,50 @@ pub unsafe extern "C" fn zpow(
             libzahl_error = 33 as libc::c_int;
             longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
         } else {
-            (*a).sign= 0 as libc::c_int;
+            (*a).sign = 0 as libc::c_int;
         }
         return;
     } else {
         if zzero(b) != 0 {
-            (*a).sign= 0 as libc::c_int;
+            (*a).sign = 0 as libc::c_int;
             return;
         }
     }
-    bits= crate::src::zbits::zbits(c.as_mut());
-    n= bits >> 5 as libc::c_int;
+    bits = crate::src::zbits::zbits(c.as_mut());
+    n = bits >> 5 as libc::c_int;
     crate::src::zset::zset(libzahl_tmp_pow_b.as_mut_ptr().as_mut(), b);
     crate::src::zset::zset(libzahl_tmp_pow_c.as_mut_ptr().as_mut(), c);
     crate::src::zsetu::zsetu(a.as_mut(), 1 as libc::c_int as libc::c_ulonglong);
-    i= 0 as libc::c_int as size_t;
+    i = 0 as libc::c_int as size_t;
     while i < n {
-        x= *((*libzahl_tmp_pow_c.as_mut_ptr()).chars).offset(i as isize);
-        j= 32 as libc::c_int as size_t;
+        x = *((*libzahl_tmp_pow_c.as_mut_ptr()).chars).offset(i as isize);
+        j = 32 as libc::c_int as size_t;
         loop {
             let fresh0 = j;
-            j= j.wrapping_sub(1);
+            j = j.wrapping_sub(1);
             if !(fresh0 != 0) {
                 break;
             }
             if x & 1 as libc::c_int as libc::c_uint != 0 {
                 crate::src::zmul::zmul(a, a, libzahl_tmp_pow_b.as_mut_ptr());
             }
-            crate::src::zsqr::zsqr(libzahl_tmp_pow_b.as_mut_ptr(), libzahl_tmp_pow_b.as_mut_ptr());
-            x>>= 1 as libc::c_int;
+            crate::src::zsqr::zsqr(
+                libzahl_tmp_pow_b.as_mut_ptr(),
+                libzahl_tmp_pow_b.as_mut_ptr(),
+            );
+            x >>= 1 as libc::c_int;
         }
-        i= i.wrapping_add(1);
+        i = i.wrapping_add(1);
     }
-    x= *((*libzahl_tmp_pow_c.as_mut_ptr()).chars).offset(i as isize);
+    x = *((*libzahl_tmp_pow_c.as_mut_ptr()).chars).offset(i as isize);
     while x != 0 {
         if x & 1 as libc::c_int as libc::c_uint != 0 {
             crate::src::zmul::zmul(a, a, libzahl_tmp_pow_b.as_mut_ptr());
         }
-        crate::src::zsqr::zsqr(libzahl_tmp_pow_b.as_mut_ptr(), libzahl_tmp_pow_b.as_mut_ptr());
-        x>>= 1 as libc::c_int;
+        crate::src::zsqr::zsqr(
+            libzahl_tmp_pow_b.as_mut_ptr(),
+            libzahl_tmp_pow_b.as_mut_ptr(),
+        );
+        x >>= 1 as libc::c_int;
     }
 }

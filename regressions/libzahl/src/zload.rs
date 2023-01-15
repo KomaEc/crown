@@ -1,11 +1,7 @@
 use ::libc;
 extern "C" {
-    fn memcpy(
-        _: *mut libc::c_void,
-        _: *const libc::c_void,
-        _: libc::c_ulong,
-    ) -> *mut libc::c_void;
-    
+    fn memcpy(_: *mut libc::c_void, _: *const libc::c_void, _: libc::c_ulong) -> *mut libc::c_void;
+
 }
 pub type size_t = libc::c_ulong;
 pub type __uint32_t = libc::c_uint;
@@ -14,8 +10,11 @@ pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX16;
-impl Default for OrcGeneratedXXX16 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX16 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 #[inline]
 unsafe extern "C" fn zzero(mut a: *const crate::src::allocator::C2RustUnnamed) -> libc::c_int {
@@ -27,10 +26,10 @@ pub unsafe extern "C" fn zload(
     mut buffer: *const libc::c_void,
 ) -> size_t {
     let mut buf = buffer as *const libc::c_char;
-    (*a.as_deref_mut().unwrap()).sign= *(buf as *const libc::c_int);
-    buf= buf.offset(::std::mem::size_of::<libc::c_int>() as libc::c_ulong as isize);
-    (*a.as_deref_mut().unwrap()).used= *(buf as *const size_t);
-    buf= buf.offset(::std::mem::size_of::<size_t>() as libc::c_ulong as isize);
+    (*a.as_deref_mut().unwrap()).sign = *(buf as *const libc::c_int);
+    buf = buf.offset(::std::mem::size_of::<libc::c_int>() as libc::c_ulong as isize);
+    (*a.as_deref_mut().unwrap()).used = *(buf as *const size_t);
+    buf = buf.offset(::std::mem::size_of::<size_t>() as libc::c_ulong as isize);
     if (*a.as_deref().unwrap()).sign != 0 {
         if (*a.as_deref().unwrap()).alloced < (*a.as_deref().unwrap()).used {
             crate::src::allocator::libzahl_realloc(a.as_deref_mut(), (*a.as_deref().unwrap()).used);
@@ -38,17 +37,24 @@ pub unsafe extern "C" fn zload(
         memcpy(
             (*a.as_deref().unwrap()).chars as *mut libc::c_void,
             buf as *const libc::c_void,
-            (*a.as_deref().unwrap()).used
+            (*a.as_deref().unwrap())
+                .used
                 .wrapping_mul(::std::mem::size_of::<zahl_char_t>() as libc::c_ulong),
         );
     }
     return (::std::mem::size_of::<libc::c_int>() as libc::c_ulong)
         .wrapping_add(::std::mem::size_of::<size_t>() as libc::c_ulong)
         .wrapping_add(
-            (if zzero(a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())) != 0 {
+            (if zzero(
+                a.as_deref()
+                    .map(|r| r as *const _)
+                    .unwrap_or(std::ptr::null()),
+            ) != 0
+            {
                 0 as libc::c_int as libc::c_ulong
             } else {
-                (*a.as_deref().unwrap()).used
+                (*a.as_deref().unwrap())
+                    .used
                     .wrapping_mul(::std::mem::size_of::<zahl_char_t>() as libc::c_ulong)
             }),
         );

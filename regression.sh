@@ -56,6 +56,36 @@ for path in $(cat regression-invocations); do
     $CROWN $entry rewrite in-place
 done
 
+
+# fmt all
+for path in $(ls $regressions); do
+    path="$1/$path"
+    if [ -f "$path/lib.rs" ]; then
+        echo "fmtting $path"
+        cd $path
+        cargo fmt
+        cd - > /dev/null
+    elif [ -f "$path/c2rust-lib.rs" ]; then
+        echo "fmtting $path"
+        cd $path
+        cargo fmt
+        cd - > /dev/null
+    elif [ -f "$path/rust/c2rust-lib.rs" ]; then
+        echo "fmtting $path"
+        cd "$path/rust"
+        cargo fmt
+        cd - > /dev/null
+    elif [ -f "$path/test.rs" -a "$(basename "$path")" == "urlparser" ]; then
+        echo "fmtting $path"
+        cd $path
+        rustfmt test.rs
+        cd - > /dev/null
+    else
+        echo "cannot find rust project entry"
+        exit 1
+    fi
+done
+
 # while read -r name path; do
 #     echo "rewriting benchmark $name"
 #     $CROWN $path rewrite print > "$regressions/$name.results"

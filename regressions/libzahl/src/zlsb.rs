@@ -6,8 +6,11 @@ pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX17;
-impl Default for OrcGeneratedXXX17 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX17 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 #[inline]
 unsafe extern "C" fn zzero(mut a: *const crate::src::allocator::C2RustUnnamed) -> libc::c_int {
@@ -21,17 +24,17 @@ pub unsafe extern "C" fn zlsb(mut a: *const crate::src::allocator::C2RustUnnamed
         return 18446744073709551615 as libc::c_ulong;
     }
     loop {
-        x= *(*a).chars.offset(i as isize);
+        x = *(*a).chars.offset(i as isize);
         if x != 0 {
-            x= !x;
-            i= (i as libc::c_ulong).wrapping_mul(32 as libc::c_int as libc::c_ulong)
-                as size_t as size_t;
+            x = !x;
+            i = (i as libc::c_ulong).wrapping_mul(32 as libc::c_int as libc::c_ulong) as size_t
+                as size_t;
             while x & 1 as libc::c_int as libc::c_uint != 0 {
-                x>>= 1 as libc::c_int;
-                i= i.wrapping_add(1);
+                x >>= 1 as libc::c_int;
+                i = i.wrapping_add(1);
             }
             return i;
         }
-        i= i.wrapping_add(1);
-    };
+        i = i.wrapping_add(1);
+    }
 }

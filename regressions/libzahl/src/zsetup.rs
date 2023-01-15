@@ -1,25 +1,27 @@
 use ::libc;
 extern "C" {
-    
-    fn memset(
-        _: *mut libc::c_void,
-        _: libc::c_int,
-        _: libc::c_ulong,
-    ) -> *mut libc::c_void;
+
+    fn memset(_: *mut libc::c_void, _: libc::c_int, _: libc::c_ulong) -> *mut libc::c_void;
 }
 pub type size_t = libc::c_ulong;
 pub type __jmp_buf = [libc::c_long; 8];
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX48;
-impl Default for OrcGeneratedXXX48 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX48 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX49;
-impl Default for OrcGeneratedXXX49 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX49 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 pub type jmp_buf = [crate::src::allocator::__jmp_buf_tag; 1];
 pub type __uint32_t = libc::c_uint;
@@ -28,14 +30,17 @@ pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX50;
-impl Default for OrcGeneratedXXX50 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX50 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[inline]
 unsafe extern "C" fn zinit(mut a: Option<&mut crate::src::allocator::C2RustUnnamed>) {
-    (*a.as_deref_mut().unwrap()).alloced= 0 as libc::c_int as size_t;
-    (*a.as_deref_mut().unwrap()).chars= 0 as *mut zahl_char_t;
+    (*a.as_deref_mut().unwrap()).alloced = 0 as libc::c_int as size_t;
+    (*a.as_deref_mut().unwrap()).chars = 0 as *mut zahl_char_t;
 }
 #[no_mangle]
 pub static mut libzahl_tmp_modmul: z_t = [crate::src::allocator::C2RustUnnamed {
@@ -251,8 +256,8 @@ pub static mut libzahl_set_up: libc::c_int = 0 as libc::c_int;
 #[no_mangle]
 pub static mut libzahl_error: libc::c_int = 0;
 #[no_mangle]
-pub static mut libzahl_pool: [*mut *mut zahl_char_t; 64] = [0 as *const *mut zahl_char_t
-    as *mut *mut zahl_char_t; 64];
+pub static mut libzahl_pool: [*mut *mut zahl_char_t; 64] =
+    [0 as *const *mut zahl_char_t as *mut *mut zahl_char_t; 64];
 #[no_mangle]
 pub static mut libzahl_pool_n: [size_t; 64] = [0; 64];
 #[no_mangle]
@@ -307,17 +312,29 @@ pub unsafe extern "C" fn zsetup(mut env: *const crate::src::allocator::__jmp_buf
             10000000000000000000 as libc::c_ulonglong,
         );
         zinit(libzahl_const_1e9.as_mut_ptr().as_mut());
-        crate::src::zsetu::zsetu(libzahl_const_1e9.as_mut_ptr().as_mut(), 1000000000 as libc::c_ulonglong);
+        crate::src::zsetu::zsetu(
+            libzahl_const_1e9.as_mut_ptr().as_mut(),
+            1000000000 as libc::c_ulonglong,
+        );
         zinit(libzahl_const_1.as_mut_ptr().as_mut());
-        crate::src::zsetu::zsetu(libzahl_const_1.as_mut_ptr().as_mut(), 1 as libc::c_int as libc::c_ulonglong);
+        crate::src::zsetu::zsetu(
+            libzahl_const_1.as_mut_ptr().as_mut(),
+            1 as libc::c_int as libc::c_ulonglong,
+        );
         zinit(libzahl_const_2.as_mut_ptr().as_mut());
-        crate::src::zsetu::zsetu(libzahl_const_2.as_mut_ptr().as_mut(), 2 as libc::c_int as libc::c_ulonglong);
+        crate::src::zsetu::zsetu(
+            libzahl_const_2.as_mut_ptr().as_mut(),
+            2 as libc::c_int as libc::c_ulonglong,
+        );
         zinit(libzahl_const_4.as_mut_ptr().as_mut());
-        crate::src::zsetu::zsetu(libzahl_const_4.as_mut_ptr().as_mut(), 4 as libc::c_int as libc::c_ulonglong);
-        i= 32 as libc::c_int as size_t;
+        crate::src::zsetu::zsetu(
+            libzahl_const_4.as_mut_ptr().as_mut(),
+            4 as libc::c_int as libc::c_ulonglong,
+        );
+        i = 32 as libc::c_int as size_t;
         loop {
             let fresh1 = i;
-            i= i.wrapping_sub(1);
+            i = i.wrapping_sub(1);
             if !(fresh1 != 0) {
                 break;
             }

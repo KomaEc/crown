@@ -12,12 +12,6 @@
 #![feature(register_tool)]
 #![register_tool(c2rust)]
 
-
-
-
-
-
-
 pub mod blocksort;
 pub mod bzip2;
 pub mod bzip2recover;
@@ -27,4 +21,3 @@ pub mod crctable;
 pub mod decompress;
 pub mod huffman;
 pub mod randtable;
-

@@ -11,14 +11,18 @@ pub const ZERROR_ERRNO_SET: zerror = 0;
 pub unsafe extern "C" fn zerror(mut desc: Option<&mut *const libc::c_char>) -> zerror {
     if libzahl_error >= 0 as libc::c_int {
         if !desc.as_deref().is_none() {
-            *desc.as_deref_mut().unwrap()= strerror(libzahl_error);
-        }else { (); }
+            *desc.as_deref_mut().unwrap() = strerror(libzahl_error);
+        } else {
+            ();
+        }
         *__errno_location() = libzahl_error;
         return ZERROR_ERRNO_SET;
     } else {
         if !desc.as_deref().is_none() {
             abort();
-        }else { (); }
+        } else {
+            ();
+        }
         return -libzahl_error as zerror;
     };
 }

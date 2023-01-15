@@ -1,7 +1,6 @@
 use ::libc;
 extern "C" {
-    
-    
+
     static mut libzahl_tmp_cmp: z_t;
 }
 pub type size_t = libc::c_ulong;
@@ -11,8 +10,11 @@ pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
 struct OrcGeneratedXXX9;
-impl Default for OrcGeneratedXXX9 {fn default() -> Self {Self {
-}}}
+impl Default for OrcGeneratedXXX9 {
+    fn default() -> Self {
+        Self {}
+    }
+}
 
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[inline]
