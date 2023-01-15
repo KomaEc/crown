@@ -519,6 +519,12 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     replacement = replacement + "." + field_name;
                     ty = field_ty;
 
+                    if adt_def.is_union() {
+                        // FIXME
+                        ptr_kinds = (&[]).iter().copied();
+                        continue;
+                    }
+
                     ptr_kinds = struct_decision.field_data(&adt_def.did())[f.index()]
                         .iter()
                         .copied();

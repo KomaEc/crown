@@ -162,7 +162,7 @@ pub unsafe extern "C" fn basic() {
                b"test.c\x00" as *const u8 as *const std::os::raw::c_char,
                63 as std::os::raw::c_int, 0.0f64, *crate::genann::genann_run(ann.as_mut(), &mut a));
     }
-    crate::genann::genann_free(ann);
+    crate::genann::genann_free(Some(Box::from_raw(ann)));
 }
 #[no_mangle]
 pub unsafe extern "C" fn xor() {
@@ -263,7 +263,7 @@ pub unsafe extern "C" fn xor() {
                *crate::genann::genann_run(ann.as_mut(),
                            input[索引].as_mut_ptr()));
     }
-    crate::genann::genann_free(ann);
+    crate::genann::genann_free(Some(Box::from_raw(ann)));
 }
 #[no_mangle]
 pub unsafe extern "C" fn backprop() {
@@ -284,7 +284,7 @@ pub unsafe extern "C" fn backprop() {
                b"test.c\x00" as *const u8 as *const std::os::raw::c_char,
                114 as std::os::raw::c_int);
     }
-    crate::genann::genann_free(ann);
+    crate::genann::genann_free(Some(Box::from_raw(ann)));
 }
 #[no_mangle]
 pub unsafe extern "C" fn train_and() {
@@ -368,7 +368,7 @@ pub unsafe extern "C" fn train_and() {
                *crate::genann::genann_run(ann.as_mut(),
                            input[索引].as_mut_ptr()));
     }
-    crate::genann::genann_free(ann);
+    crate::genann::genann_free(Some(Box::from_raw(ann)));
 }
 #[no_mangle]
 pub unsafe extern "C" fn train_or() {
@@ -453,7 +453,7 @@ pub unsafe extern "C" fn train_or() {
                *crate::genann::genann_run(ann.as_mut(),
                            input[索引].as_mut_ptr()));
     }
-    crate::genann::genann_free(ann);
+    crate::genann::genann_free(Some(Box::from_raw(ann)));
 }
 #[no_mangle]
 pub unsafe extern "C" fn train_xor() {
@@ -539,7 +539,7 @@ pub unsafe extern "C" fn train_xor() {
                *crate::genann::genann_run(ann.as_mut(),
                            input[索引].as_mut_ptr()));
     }
-    crate::genann::genann_free(ann);
+    crate::genann::genann_free(Some(Box::from_raw(ann)));
 }
 #[no_mangle]
 pub unsafe extern "C" fn persist() {
@@ -606,8 +606,8 @@ pub unsafe extern "C" fn persist() {
         }
         i+= 1
     }
-    crate::genann::genann_free(core::mem::transmute::<_, *mut crate::example1::genann>(first.as_deref_mut()));
-    crate::genann::genann_free(core::mem::transmute::<_, *mut crate::example1::genann>(second.as_deref_mut()));
+    crate::genann::genann_free(first);
+    crate::genann::genann_free(second);
 }
 #[no_mangle]
 pub unsafe extern "C" fn copy() {
@@ -667,8 +667,8 @@ pub unsafe extern "C" fn copy() {
         }
         i+= 1
     }
-    crate::genann::genann_free(first);
-    crate::genann::genann_free(core::mem::transmute::<_, *mut crate::example1::genann>(second.as_deref_mut()));
+    crate::genann::genann_free(Some(Box::from_raw(first)));
+    crate::genann::genann_free(second);
 }
 #[no_mangle]
 pub unsafe extern "C" fn sigmoid() {

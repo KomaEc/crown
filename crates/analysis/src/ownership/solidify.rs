@@ -116,10 +116,10 @@ impl<'tcx> WholeProgramResults<'tcx> {
                     for (local, consume) in location_results {
                         let solidified_ownership: &mut smallvec::SmallVec<[Ownership; 3]> =
                             &mut locals[local.as_usize()];
-                        for (solidified_ownership, ownership) in
-                            solidified_ownership.iter_mut().zip(consume.def.iter())
+                        for (solidified_ownership, r#use, def) in
+                            itertools::izip!(solidified_ownership, consume.r#use, consume.def)
                         {
-                            if ownership.is_owning() {
+                            if r#use.is_owning() || def.is_owning() {
                                 *solidified_ownership = Ownership::Owning;
                             }
                         }
@@ -164,6 +164,11 @@ impl<'tcx> WholeProgramResults<'tcx> {
                                         // tuple
                                         continue
                                     };
+                                    if adt_def.is_union() {
+                                        // FIXME
+                                        ownership = &[];
+                                        continue
+                                    }
                                     let Range { start, end } =
                                         struct_fields.field(&adt_def.did(), f.index());
                                     ownership = &model.raw[start.index()..end.index()];

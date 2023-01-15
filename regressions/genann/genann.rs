@@ -194,7 +194,7 @@ pub unsafe extern "C" fn genann_read(mut in_0: *mut FILE) -> Option<Box<crate::e
                    (*ann.as_deref().unwrap()).weight.offset(i as isize));
         if rc < 1 as std::os::raw::c_int || *__error() != 0 as std::os::raw::c_int {
             perror(b"fscanf\x00" as *const u8 as *const std::os::raw::c_char);
-            genann_free(core::mem::transmute::<_, *mut crate::example1::genann>(ann.as_deref_mut()));
+            genann_free(ann);
             return None
         }
         i+= 1
@@ -245,7 +245,7 @@ pub unsafe extern "C" fn genann_randomize(mut ann: Option<&mut crate::example1::
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn genann_free(mut ann: *mut crate::example1::genann) {
+pub unsafe extern "C" fn genann_free(mut ann: Option<Box<crate::example1::genann>>) {
     /* The weight, output, and delta pointers go to the same buffer. */
     ();
 }

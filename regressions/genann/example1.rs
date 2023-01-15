@@ -112,7 +112,7 @@ unsafe fn main_0(mut argc: std::os::raw::c_int, mut argv: *const *const std::os:
            input[3 as std::os::raw::c_int as usize][0 as std::os::raw::c_int as usize],
            input[3 as std::os::raw::c_int as usize][1 as std::os::raw::c_int as usize],
            *crate::genann::genann_run(ann.as_mut(), input[3 as std::os::raw::c_int as usize].as_ptr()));
-    crate::genann::genann_free(ann);
+    crate::genann::genann_free(Some(Box::from_raw(ann)));
     return 0 as std::os::raw::c_int;
 }
 // pub fn main() {

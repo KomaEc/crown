@@ -172,7 +172,7 @@ unsafe extern "C" fn tooManyBlocks(mut max_handled_blocks: Int32) {
     exit(1 as std::os::raw::c_int);
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn bsOpenReadStream(mut stream: *mut FILE)
+unsafe extern "C" fn bsOpenReadStream(mut stream: Option<Box<FILE>>)
  -> Option<Box<BitStream>> {
     let mut bs: *mut BitStream =
         Some(Box::new(<crate::bzip2recover::BitStream as Default>::default()));
@@ -180,14 +180,14 @@ unsafe extern "C" fn bsOpenReadStream(mut stream: *mut FILE)
         mallocFail(::std::mem::size_of::<BitStream>() as std::os::raw::c_ulong as
                        Int32);
     }
-    (*bs.as_deref_mut().unwrap()).handle= Some(Box::from_raw(stream));
+    (*bs.as_deref_mut().unwrap()).handle= stream;
     (*bs.as_deref_mut().unwrap()).buffer= 0 as std::os::raw::c_int;
     (*bs.as_deref_mut().unwrap()).buffLive= 0 as std::os::raw::c_int;
     (*bs.as_deref_mut().unwrap()).mode= 'r' as i32 as Char;
     return bs;
 }
 /*---------------------------------------------*/
-unsafe extern "C" fn bsOpenWriteStream(mut stream: *mut FILE)
+unsafe extern "C" fn bsOpenWriteStream(mut stream: Option<Box<FILE>>)
  -> Option<Box<BitStream>> {
     let mut bs: *mut BitStream =
         Some(Box::new(<crate::bzip2recover::BitStream as Default>::default()));
@@ -195,7 +195,7 @@ unsafe extern "C" fn bsOpenWriteStream(mut stream: *mut FILE)
         mallocFail(::std::mem::size_of::<BitStream>() as std::os::raw::c_ulong as
                        Int32);
     }
-    (*bs.as_deref_mut().unwrap()).handle= Some(Box::from_raw(stream));
+    (*bs.as_deref_mut().unwrap()).handle= stream;
     (*bs.as_deref_mut().unwrap()).buffer= 0 as std::os::raw::c_int;
     (*bs.as_deref_mut().unwrap()).buffLive= 0 as std::os::raw::c_int;
     (*bs.as_deref_mut().unwrap()).mode= 'w' as i32 as Char;
@@ -370,7 +370,7 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
                 inFileName.as_mut_ptr());
         exit(1 as std::os::raw::c_int);
     }
-    bsIn= bsOpenReadStream(inFile);
+    bsIn= bsOpenReadStream(Some(Box::from_raw(inFile)));
     fprintf(__stderrp,
             b"%s: searching for block boundaries ...\n\x00" as *const u8 as
                 *const std::os::raw::c_char, progName.as_mut_ptr());
@@ -462,7 +462,7 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
                 inFileName.as_mut_ptr());
         exit(1 as std::os::raw::c_int);
     }
-    bsIn= bsOpenReadStream(inFile);
+    bsIn= bsOpenReadStream(Some(Box::from_raw(inFile)));
     /*-- placate gcc's dataflow analyser --*/
     blockCRC= 0 as std::os::raw::c_int as UInt32;
     bsWr= 0 as *mut BitStream;
@@ -552,7 +552,7 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
                         outFileName.as_mut_ptr());
                 exit(1 as std::os::raw::c_int);
             }
-            bsWr= bsOpenWriteStream(outFile);
+            bsWr= bsOpenWriteStream(Some(Box::from_raw(outFile)));
             bsPutUChar(bsWr.as_mut(), 0x42 as std::os::raw::c_int as UChar);
             bsPutUChar(bsWr.as_mut(), 0x5a as std::os::raw::c_int as UChar);
             bsPutUChar(bsWr.as_mut(), 0x68 as std::os::raw::c_int as UChar);

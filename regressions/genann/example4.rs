@@ -239,7 +239,7 @@ unsafe fn main_0(mut argc: std::os::raw::c_int, mut argv: *const *const std::os:
     printf(b"%d/%d correct (%0.1f%%).\n\x00" as *const u8 as
                *const std::os::raw::c_char, correct, samples,
            correct as std::os::raw::c_double / samples as std::os::raw::c_double * 100.0f64);
-    crate::genann::genann_free(ann);
+    crate::genann::genann_free(Some(Box::from_raw(ann)));
     return 0 as std::os::raw::c_int;
 }
 // pub fn main() {

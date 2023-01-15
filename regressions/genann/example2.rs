@@ -87,9 +87,9 @@ unsafe fn main_0(mut argc: std::os::raw::c_int, mut argv: *const *const std::os:
                     output[3 as std::os::raw::c_int as usize], 2.0f64);
         /* Keep these weights if they're an improvement. */
         if err < last_err {
-            crate::genann::genann_free(save);
+            crate::genann::genann_free(Some(Box::from_raw(save)));
             last_err= err
-        } else { crate::genann::genann_free(ann); ann= save }
+        } else { crate::genann::genann_free(Some(Box::from_raw(ann))); ann= save }
         if !(err > 0.01f64) { break ; }
     }
     printf(b"Finished in %d loops.\n\x00" as *const u8 as *const std::os::raw::c_char,
@@ -115,7 +115,7 @@ unsafe fn main_0(mut argc: std::os::raw::c_int, mut argv: *const *const std::os:
            input[3 as std::os::raw::c_int as usize][0 as std::os::raw::c_int as usize],
            input[3 as std::os::raw::c_int as usize][1 as std::os::raw::c_int as usize],
            *crate::genann::genann_run(ann.as_mut(), input[3 as std::os::raw::c_int as usize].as_ptr()));
-    crate::genann::genann_free(ann);
+    crate::genann::genann_free(Some(Box::from_raw(ann)));
     return 0 as std::os::raw::c_int;
 }
 // pub fn main() {

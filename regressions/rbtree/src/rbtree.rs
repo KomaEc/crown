@@ -243,7 +243,7 @@ unsafe extern "C" fn remove_it(mut node: Option<Box<t_rbnode>>, mut key: t_key) 
             }
             // let ref mut fresh10 = (*node).left;
             // *fresh10 = remove_key((*node).left, key);
-            (*node.as_deref_mut().unwrap()).left= remove_key((*node.as_deref().unwrap()).left, key);
+            (*node.as_deref_mut().unwrap()).left= remove_key(Some(Box::from_raw((*node.as_deref_mut().unwrap()).left)), key);
         } else {
             ();
         }
@@ -271,7 +271,7 @@ unsafe extern "C" fn remove_it(mut node: Option<Box<t_rbnode>>, mut key: t_key) 
             } else {
                 // let ref mut fresh12 = (*node).right;
                 // *fresh12 = remove_key((*node).right, key);
-                (*node.as_deref_mut().unwrap()).right= remove_key((*node.as_deref().unwrap()).right, key);
+                (*node.as_deref_mut().unwrap()).right= remove_key(Some(Box::from_raw((*node.as_deref().unwrap()).right)), key);
             }
         } else {
             ();
@@ -280,14 +280,14 @@ unsafe extern "C" fn remove_it(mut node: Option<Box<t_rbnode>>, mut key: t_key) 
     return balance_me_that(core::mem::transmute::<_, *mut crate::src::rbtree::s_rbnode>(node.as_deref_mut()));
 }
 #[no_mangle]
-pub unsafe extern "C" fn remove_key(mut node: *mut t_rbnode, mut key: t_key) -> *mut t_rbnode {
-    node= remove_it(Some(Box::from_raw(node)), key);
-    if !node.is_null() {
-        (*node).color= BLACK;
+pub unsafe extern "C" fn remove_key(mut node: Option<Box<t_rbnode>>, mut key: t_key) -> *mut t_rbnode {
+    node= remove_it(node, key);
+    if !node.as_deref().is_none() {
+        (*node.as_deref_mut().unwrap()).color= BLACK;
     } else {
         ();
     }
-    return node;
+    return core::mem::transmute::<_, *mut crate::src::rbtree::s_rbnode>(node.as_deref_mut());
 }
 #[no_mangle]
 pub unsafe extern "C" fn erase_tree(mut node: Option<Box<t_rbnode>>) -> *const t_rbnode {
