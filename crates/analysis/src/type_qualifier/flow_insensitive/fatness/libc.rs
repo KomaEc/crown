@@ -98,7 +98,6 @@ pub fn libc_call<'tcx>(
             struct_fields,
             database,
         ),
-        // realloc is skipped
         "realloc" => call_realloc(
             destination,
             args,
@@ -135,6 +134,7 @@ fn call_str_general<'tcx>(
     }
 }
 
+/// TODO generate constraints when the first argument is not 1
 fn call_calloc<'tcx>(
     destination: &Place<'tcx>,
     args: &Vec<Operand<'tcx>>,
@@ -145,7 +145,9 @@ fn call_calloc<'tcx>(
 ) {
     let dest_vars = place_vars(destination, local_decls, locals, struct_fields);
     assert!(dest_vars.end > dest_vars.start);
-    database.bottom(dest_vars.start);
+    // database.bottom(dest_vars.start);
+    let _ = dest_vars;
+    let _ = database;
     let _ = args;
 }
 
