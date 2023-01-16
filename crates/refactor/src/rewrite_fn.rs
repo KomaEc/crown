@@ -486,7 +486,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             ..
         } = *self;
 
-        let (resolved_place, resolved_locaion) =
+        let (resolved_place, resolved_location) =
             accum_deref_copies(place, location, def_use_chain, body, tcx);
         let place = resolved_place;
 
@@ -581,7 +581,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             ..
         } = *self;
 
-        let (resolved_place, resolved_locaion) =
+        let (resolved_place, resolved_location) =
             accum_deref_copies(place, location, def_use_chain, body, tcx);
 
         let mut replacement = if let Some(replacement) = user_idents
@@ -591,9 +591,17 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             replacement
         } else if resolved_place.as_local().is_none() {
             // FIXME usage!
-            self.rewrite_temporary(place.local, location, PlaceValueType::Irrelavent, rewriter);
+            // self.rewrite_temporary(place.local, location, PlaceValueType::Irrelavent, rewriter);
+            self.rewrite_temporary(
+                resolved_place.local,
+                resolved_location,
+                PlaceValueType::Irrelavent,
+                rewriter,
+            );
             return;
         } else {
+            // deref copies must be dereferenced!
+            assert_eq!(resolved_location, location);
             self.rewrite_temporary(resolved_place.local, location, required, rewriter);
             return;
         };
@@ -722,7 +730,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 if produced.is_rustc_move_obj(self) {
                     assert!(produced.is_ptr());
                     // Box to raw (move)
-                    replacement = format!("Box::into_raw({replacement})");
+                    replacement = format!(
+                        "{replacement}.map(|b| Box::into_raw(b)).unwrap_or(std::ptr::null_mut())"
+                    );
                 } else {
                     assert!(produced.is_raw_ptr());
                     // nothing to be done here
