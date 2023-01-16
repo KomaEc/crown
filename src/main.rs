@@ -80,6 +80,8 @@ enum Command {
         const_reference: bool,
         #[clap(long)]
         type_reconstruction: bool,
+        #[clap(long)]
+        no_box: bool,
     },
     VerifyRustcProperties,
     /// Perform empirical studies and show results.
@@ -337,6 +339,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
             verbose,
             const_reference,
             type_reconstruction,
+            no_box,
         } => {
             let alias_result = alias::alias_results(&input);
             let taint_result = alias::taint_results(&input);
@@ -374,6 +377,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 verbose,
                 const_reference,
                 type_reconstruction,
+                no_box,
             };
             refactor::refactor(&input, &analysis_results, rewrite_mode, refactor_options)?;
         }

@@ -48,6 +48,7 @@ extern crate rustc_type_ir;
 
 extern crate either;
 
+#[derive(Clone, Copy)]
 pub struct RefactorOptions {
     /// rewrite struct definitions and function signatures only
     pub type_only: bool,
@@ -57,6 +58,8 @@ pub struct RefactorOptions {
     pub const_reference: bool,
     /// reconstruct every type it visits
     pub type_reconstruction: bool,
+    /// not attempt to introduce box
+    pub no_box: bool,
 }
 
 pub fn refactor<'tcx>(
@@ -65,8 +68,8 @@ pub fn refactor<'tcx>(
     rewrite_mode: RewriteMode,
     options: RefactorOptions,
 ) -> anyhow::Result<()> {
-    let struct_decision = StructFields::new(crate_data, analysis);
-    let fn_decision = FnLocals::new(crate_data, analysis, options.const_reference);
+    let struct_decision = StructFields::new(crate_data, analysis, options);
+    let fn_decision = FnLocals::new(crate_data, analysis, options);
 
     if options.verbose {
         let mut rewriter = VerboseRewriter { rewriter: vec![] };
@@ -222,7 +225,7 @@ impl StructFields {
         &self.0.data[idx]
     }
 
-    pub fn new(crate_data: &CrateData, analysis: &Analysis) -> Self {
+    pub fn new(crate_data: &CrateData, analysis: &Analysis, options: RefactorOptions) -> Self {
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.structs.len());
         let mut struct_fields = VecVec::with_capacity(
@@ -262,7 +265,7 @@ impl StructFields {
                     itertools::izip!(ownership, mutability, fatness)
                 {
                     let pointer_kind = if ownership.is_owning() {
-                        if fatness.is_arr() || aliasing_nonowning_field {
+                        if fatness.is_arr() || aliasing_nonowning_field || options.no_box {
                             PointerKind::Raw(RawMeta::Move)
                         } else {
                             PointerKind::Move
@@ -320,7 +323,7 @@ impl FnLocals {
         &self.0.data[idx]
     }
 
-    pub fn new(crate_data: &CrateData, analysis: &Analysis, const_reference: bool) -> Self {
+    pub fn new(crate_data: &CrateData, analysis: &Analysis, options: RefactorOptions) -> Self {
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.fns.len());
         let mut fn_locals = VecVec::with_capacity(
@@ -356,7 +359,7 @@ impl FnLocals {
                             PointerKind::Move
                         }
                     } else if mutability.is_immutable() {
-                        if const_reference {
+                        if options.const_reference {
                             if fatness.is_arr() {
                                 PointerKind::Raw(RawMeta::Const)
                             } else {
@@ -372,6 +375,13 @@ impl FnLocals {
                 }
                 if is_output_param && local[0].is_move() {
                     local[0] = PointerKind::Mut
+                }
+                if options.no_box {
+                    for pointer_kind in &mut local {
+                        if pointer_kind.is_move() {
+                            *pointer_kind = PointerKind::Raw(RawMeta::Move)
+                        }
+                    }
                 }
                 fn_locals.push_inner(local);
             }
