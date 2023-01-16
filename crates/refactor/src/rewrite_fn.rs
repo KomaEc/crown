@@ -591,7 +591,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             replacement
         } else if resolved_place.as_local().is_none() {
             // FIXME usage!
-            // self.rewrite_temporary(place.local, location, PlaceValueType::Irrelavent, rewriter);
             self.rewrite_temporary(
                 resolved_place.local,
                 resolved_location,
@@ -876,20 +875,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         required: PlaceValueType,
         rewriter: &mut impl Rewrite,
     ) {
-        let FnRewriteCtxt {
-            body,
-            def_use_chain,
-            tcx,
-            ..
-        } = *self;
-
         match operand {
-            Operand::Copy(place) | Operand::Move(place) => {
-                // let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
-                self.rewrite_place_load_at::<{ PlaceLoadMode::ByValue as u8 }>(
+            Operand::Copy(place) | Operand::Move(place) => self
+                .rewrite_place_load_at::<{ PlaceLoadMode::ByValue as u8 }>(
                     *place, location, span, required, rewriter,
-                )
-            }
+                ),
             Operand::Constant(constant) => {
                 self.rewrite_constant(constant, span, required, rewriter);
             }
@@ -904,12 +894,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         required: PlaceValueType,
         rewriter: &mut impl Rewrite,
     ) {
-        let FnRewriteCtxt {
-            tcx,
-            def_use_chain,
-            body,
-            ..
-        } = *self;
+        let FnRewriteCtxt { tcx, .. } = *self;
 
         match rvalue {
             Rvalue::Use(operand) => {
@@ -992,16 +977,12 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         }
                     }
                     Err(()) => {
-                        // if let Some(constant) = operand.constant() {
-                        //     self.try_rewrite_null_constant(constant, span, load_ctxt, rewriter);
-                        // }
                         self.rewrite_operand_at(operand, location, span, required, rewriter);
                     }
                 }
             }
             Rvalue::AddressOf(rustc_mutability, place) => {
                 if matches!(rustc_mutability, rustc_ast::Mutability::Mut) {
-                    // let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
                     self.rewrite_place_load_at::<{ PlaceLoadMode::ByAddr as u8 }>(
                         *place, location, span, required, rewriter,
                     );
@@ -1012,7 +993,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             Rvalue::Ref(_, borrow_kind, place) => {
                 let rustc_mutability = borrow_kind.to_mutbl_lossy();
                 if matches!(rustc_mutability, rustc_ast::Mutability::Mut) {
-                    // let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
                     self.rewrite_place_load_at::<{ PlaceLoadMode::ByRef as u8 }>(
                         *place, location, span, required, rewriter,
                     );
