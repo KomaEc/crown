@@ -137,7 +137,7 @@ fn accum_deref_copies<'tcx>(
     def_use_chain: &DefUseChain,
     body: &Body<'tcx>,
     tcx: TyCtxt<'tcx>,
-) -> Place<'tcx> {
+) -> (Place<'tcx>, Location) {
     let mut local = place.local;
 
     while matches!(
@@ -154,7 +154,7 @@ fn accum_deref_copies<'tcx>(
         location = def_loc;
     }
 
-    place
+    (place, location)
 }
 
 pub struct FnRewriteCtxt<'tcx, 'me> {
@@ -343,7 +343,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     || matches!(body.local_decls[place.local].local_info, Some(box LocalInfo::DerefTemp) if !matches!(rvalue, Rvalue::CopyForDeref(..)))
                     || is_immediate_lvalue
                 {
-                    let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
+                    // let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
                     let span = statement.source_info.span;
                     let source_text = tcx.sess.source_map().span_to_snippet(span).unwrap();
 
@@ -378,7 +378,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         let lhs_span =
                             span.with_hi(span.lo() + rustc_span::BytePos(assign_pos as u32));
 
-                        self.rewrite_place_store(place, location, lhs_span, rewriter);
+                        self.rewrite_place_store(*place, location, lhs_span, rewriter);
                     }
 
                     let ctxt = self.acquire_place_info(&place);
@@ -480,11 +480,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             local_decision,
             struct_decision,
             body,
-            def_use_chain: _,
+            def_use_chain,
             user_idents,
             tcx,
             ..
         } = *self;
+
+        let (resolved_place, resolved_locaion) =
+            accum_deref_copies(place, location, def_use_chain, body, tcx);
+        let place = resolved_place;
 
         let mut replacement = if let Some(replacement) = user_idents
             .get(&place.local)
@@ -557,6 +561,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rewrite_place(tcx, span, replacement, &index_spans, rewriter)
     }
 
+    /// rewrite place load at a location
+    /// note that place base may be a deref copy temporary
     fn rewrite_place_load_at<const PLACE_LOAD_MODE: u8>(
         &self,
         place: Place<'tcx>,
@@ -571,22 +577,28 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             body,
             user_idents,
             tcx,
+            def_use_chain,
             ..
         } = *self;
 
+        let (resolved_place, resolved_locaion) =
+            accum_deref_copies(place, location, def_use_chain, body, tcx);
+
         let mut replacement = if let Some(replacement) = user_idents
-            .get(&place.local)
+            .get(&resolved_place.local)
             .map(|symbol| symbol.to_string())
         {
             replacement
-        } else if place.as_local().is_none() {
+        } else if resolved_place.as_local().is_none() {
             // FIXME usage!
             self.rewrite_temporary(place.local, location, PlaceValueType::Irrelavent, rewriter);
             return;
         } else {
-            self.rewrite_temporary(place.local, location, required, rewriter);
+            self.rewrite_temporary(resolved_place.local, location, required, rewriter);
             return;
         };
+
+        let place = resolved_place;
 
         let mut index_spans: SmallVec<[Span; 1]> = smallvec::smallvec![];
 
@@ -863,9 +875,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         match operand {
             Operand::Copy(place) | Operand::Move(place) => {
-                let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
+                // let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
                 self.rewrite_place_load_at::<{ PlaceLoadMode::ByValue as u8 }>(
-                    place, location, span, required, rewriter,
+                    *place, location, span, required, rewriter,
                 )
             }
             Operand::Constant(constant) => {
@@ -979,9 +991,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
             Rvalue::AddressOf(rustc_mutability, place) => {
                 if matches!(rustc_mutability, rustc_ast::Mutability::Mut) {
-                    let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
+                    // let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
                     self.rewrite_place_load_at::<{ PlaceLoadMode::ByAddr as u8 }>(
-                        place, location, span, required, rewriter,
+                        *place, location, span, required, rewriter,
                     );
                 } else {
                     tracing::error!("const addr is ignored")
@@ -990,9 +1002,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             Rvalue::Ref(_, borrow_kind, place) => {
                 let rustc_mutability = borrow_kind.to_mutbl_lossy();
                 if matches!(rustc_mutability, rustc_ast::Mutability::Mut) {
-                    let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
+                    // let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
                     self.rewrite_place_load_at::<{ PlaceLoadMode::ByRef as u8 }>(
-                        place, location, span, required, rewriter,
+                        *place, location, span, required, rewriter,
                     );
                 } else {
                     tracing::error!("const reference is ignored")
