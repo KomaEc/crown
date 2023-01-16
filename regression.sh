@@ -40,11 +40,11 @@ for path in $(cat regression-invocations); do
     echo "rewriting benchmark $(basename "$path").."
     cp -r $path $regressions/
     entry="$regressions/$(basename "$path")"
-    if [ -f "$path/lib.rs" ]; then
+    if [ -f "$path/lib.rs" -a -f "$path/Cargo.toml" ]; then
         entry="$entry/lib.rs"
-    elif [ -f "$path/c2rust-lib.rs" ]; then
+    elif [ -f "$path/c2rust-lib.rs" -a -f "$path/Cargo.toml" ]; then
         entry="$entry/c2rust-lib.rs"
-    elif [ -f "$path/rust/c2rust-lib.rs" ]; then
+    elif [ -f "$path/rust/c2rust-lib.rs" -a -f "$path/rust/Cargo.toml" ]; then
         entry="$entry/rust/c2rust-lib.rs"
     elif [ -f "$path/test.rs" -a "$(basename "$path")" == "urlparser" ]; then
         entry="$entry/test.rs"
@@ -54,40 +54,12 @@ for path in $(cat regression-invocations); do
     fi
 
     $CROWN $entry rewrite in-place
-done
 
-
-# fmt all
-for path in $(ls $regressions); do
-    path="$regressions/$path"
-    if [ -f "$path/lib.rs" ]; then
-        echo "fmtting $path"
-        cd $path
-        cargo fmt
-        cd - > /dev/null
-    elif [ -f "$path/c2rust-lib.rs" ]; then
-        echo "fmtting $path"
-        cd $path
-        cargo fmt
-        cd - > /dev/null
-    elif [ -f "$path/rust/c2rust-lib.rs" ]; then
-        echo "fmtting $path"
-        cd "$path/rust"
-        cargo fmt
-        cd - > /dev/null
+    echo "formatting $(basename $path)"
+    if [ -f "$(dirname $entry)/Cargo.toml" ]; then
+        cargo fmt --manifest-path "$(dirname $entry)/Cargo.toml"
     elif [ -f "$path/test.rs" -a "$(basename "$path")" == "urlparser" ]; then
-        echo "fmtting $path"
-        cd $path
-        rustfmt test.rs
-        cd - > /dev/null
-    else
-        echo "cannot find rust project entry"
-        exit 1
+        rustfmt "$entry"
     fi
 done
-
-# while read -r name path; do
-#     echo "rewriting benchmark $name"
-#     $CROWN $path rewrite print > "$regressions/$name.results"
-# done < regression-invocations
 
