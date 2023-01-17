@@ -256,7 +256,7 @@ pub struct RestrictedStructCtxt<'intra, 'tcx> {
 }
 
 impl<'tcx> StructCtxt<'tcx> {
-    pub fn with_precision(&self, precision: Precision) -> RestrictedStructCtxt<'_, 'tcx> {
+    pub fn with_max_precision(&self, precision: Precision) -> RestrictedStructCtxt<'_, 'tcx> {
         RestrictedStructCtxt {
             unrestricted: self,
             allowed_ptr_depth: precision,

@@ -24,6 +24,7 @@ use crate::{
         FnResults,
     },
     struct_ctxt::{RestrictedStructCtxt, StructCtxt},
+    CrateCtxt,
 };
 
 pub mod boundary;
@@ -104,14 +105,15 @@ where
     Analysis: AnalysisKind<'infercx, 'db, 'tcx>,
 {
     pub fn new(
-        tcx: TyCtxt<'tcx>,
-        struct_ctxt: RestrictedStructCtxt<'infercx, 'tcx>,
+        crate_ctxt: &'infercx CrateCtxt<'tcx>,
+        max_precision: Precision,
         body: &Body<'tcx>,
         database: &'infercx mut Analysis::DB,
         gen: &'infercx mut Gen,
         inter_ctxt: Analysis::InterCtxt,
         global_assumptions: &'infercx GlobalAssumptions,
     ) -> Self {
+        let struct_ctxt = crate_ctxt.struct_ctxt.with_max_precision(max_precision);
         let mut fn_body_sig = IndexVec::with_capacity(body.local_decls.len());
 
         for local_decl in body.local_decls.iter() {
@@ -123,11 +125,9 @@ where
         }
 
         <Analysis as Boundary>::entry(
-            // crate_ctxt,
-            tcx,
+            crate_ctxt,
             &inter_ctxt,
             global_assumptions,
-            struct_ctxt.unrestricted,
             database,
             body,
             fn_body_sig
@@ -138,7 +138,7 @@ where
         );
 
         InferCtxt {
-            tcx,
+            tcx: crate_ctxt.tcx,
             inter_ctxt,
             database,
             gen,

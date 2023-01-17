@@ -177,8 +177,8 @@ impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for IntraProcedura
                 &mut database,
             );
             let mut infer_cx = InferCtxt::new(
-                crate_ctxt.tcx,
-                crate_ctxt.struct_ctxt.with_precision(0),
+                &crate_ctxt,
+                0,
                 body,
                 &mut database,
                 &mut gen,

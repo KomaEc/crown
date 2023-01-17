@@ -157,17 +157,15 @@ fn solve_body<'tcx>(
 
     let mut rn = Renamer::new(body, ssa_state, crate_ctxt.tcx);
 
-    let struct_ctxt = crate_ctxt.struct_ctxt.with_precision(precision);
-
     print!(
         "Solving {} with precision {}... ",
         crate_ctxt.tcx.def_path_str(body.source.def_id()),
-        struct_ctxt.max_ptr_chased(),
+        std::cmp::min(precision, crate_ctxt.struct_ctxt.max_ptr_chased()),
     );
 
     let mut infer_cx = InferCtxt::new(
-        crate_ctxt.tcx,
-        struct_ctxt,
+        crate_ctxt,
+        precision,
         body,
         database,
         gen,
@@ -311,7 +309,7 @@ impl<'analysis_results, 'tcx: 'analysis_results> AnalysisResults<'analysis_resul
         Some((
             fn_summary,
             &self.model[..],
-            self.struct_ctxt.with_precision(*precision),
+            self.struct_ctxt.with_max_precision(*precision),
         ))
     }
 
@@ -446,7 +444,7 @@ impl FnLocals {
                                 local_decl,
                                 gen,
                                 database,
-                                crate_ctxt.struct_ctxt.with_precision(precision),
+                                crate_ctxt.struct_ctxt.with_max_precision(precision),
                             )?;
                             assert!(!r#use.is_empty());
                             database.push_assume::<crate::ssa::constraint::Debug>(
@@ -458,7 +456,7 @@ impl FnLocals {
                                 local_decl,
                                 gen,
                                 database,
-                                crate_ctxt.struct_ctxt.with_precision(precision),
+                                crate_ctxt.struct_ctxt.with_max_precision(precision),
                             )?;
                             assert!(!def.is_empty());
                             database.push_assume::<crate::ssa::constraint::Debug>(
@@ -474,7 +472,7 @@ impl FnLocals {
                                 local_decl,
                                 gen,
                                 database,
-                                crate_ctxt.struct_ctxt.with_precision(precision),
+                                crate_ctxt.struct_ctxt.with_max_precision(precision),
                             )?;
 
                             Some(Param::Normal(now))

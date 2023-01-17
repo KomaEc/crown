@@ -1,5 +1,6 @@
 use common::data_structure::vec_vec::VecVec;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
+use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_middle::{
     mir::{visit::Visitor, Terminator, TerminatorKind},
@@ -57,9 +58,40 @@ impl<T: std::fmt::Debug> std::fmt::Debug for FnSig<T> {
     }
 }
 
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub enum Monotonicity {
+    Alloc,
+    Dealloc,
+    Not,
+}
+
+struct MonotonicityChecker<'tcx> {
+    alloc: bool,
+    dealloc: bool,
+    tcx: TyCtxt<'tcx>,
+}
+
+impl<'tcx> Visitor<'tcx> for MonotonicityChecker<'tcx> {
+    fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _: rustc_middle::mir::Location) {
+        let TerminatorKind::Call { func, .. } = &terminator.kind else { return; };
+        let Some(func) = func.constant() else { return; };
+        let ty = func.ty();
+        let &FnDef(callee, _) = ty.kind() else { unreachable!() };
+        let Some(local_did) = callee.as_local() else { return; };
+        let rustc_hir::Node::ForeignItem(foreign_item) =
+            self.tcx.hir().find_by_def_id(local_did).unwrap() else { return };
+        match foreign_item.ident.as_str() {
+            "free" => self.dealloc = true,
+            "malloc" => self.alloc = true,
+            _ => {}
+        }
+    }
+}
+
 pub struct CallGraph {
     post_order: VecVec<DefId>,
     ranked_by_n_alloc_deallocs: Vec<DefId>,
+    monotonicity: FxHashMap<DefId, Monotonicity>,
 }
 
 impl CallGraph {
@@ -122,10 +154,37 @@ impl CallGraph {
         ranked_by_n_alloc_deallocs
             .sort_by(|f, g| n_alloc_deallocs[f].cmp(&n_alloc_deallocs[g]).reverse());
 
+        let mut monotonicity = FxHashMap::default();
+        monotonicity.reserve(functions.len());
+        for &did in functions {
+            let body = tcx.optimized_mir(did);
+            let mut mc = MonotonicityChecker {
+                alloc: false,
+                dealloc: false,
+                tcx,
+            };
+            mc.visit_body(body);
+            monotonicity.insert(
+                did,
+                if !(mc.alloc ^ mc.dealloc) {
+                    Monotonicity::Not
+                } else if mc.alloc {
+                    Monotonicity::Alloc
+                } else {
+                    Monotonicity::Dealloc
+                },
+            );
+        }
+
         CallGraph {
             post_order,
             ranked_by_n_alloc_deallocs,
+            monotonicity,
         }
+    }
+
+    pub fn monotonicity(&self, did: DefId) -> Monotonicity {
+        self.monotonicity[&did]
     }
 
     #[inline]

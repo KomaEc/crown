@@ -1,14 +1,12 @@
 use std::{num::NonZeroU32, ops::Range};
 
 use common::data_structure::vec_vec::VecVec;
-use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::vec::IndexVec;
 use rustc_middle::{
-    mir::{visit::Visitor, LocalDecl, LocalInfo, Terminator, TerminatorKind},
-    ty::{TyCtxt, TyKind},
+    mir::{LocalDecl, LocalInfo},
+    ty::TyKind,
 };
-use rustc_type_ir::TyKind::FnDef;
 
 use super::consume::Voidable;
 use crate::{ptr::Measurable, struct_ctxt::StructCtxt, CrateCtxt};
@@ -86,37 +84,6 @@ pub fn initialize_local<'tcx>(
 
 pub struct GlobalAssumptions {
     struct_fields: VecVec<Var>,
-    monotonicity: FxHashMap<DefId, Monotonicity>,
-}
-
-#[derive(PartialEq, Eq, Clone, Copy)]
-pub enum Monotonicity {
-    Alloc,
-    Dealloc,
-    Not,
-}
-
-struct MonotonicityChecker<'tcx> {
-    alloc: bool,
-    dealloc: bool,
-    tcx: TyCtxt<'tcx>,
-}
-
-impl<'tcx> Visitor<'tcx> for MonotonicityChecker<'tcx> {
-    fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _: rustc_middle::mir::Location) {
-        let TerminatorKind::Call { func, .. } = &terminator.kind else { return; };
-        let Some(func) = func.constant() else { return; };
-        let ty = func.ty();
-        let &FnDef(callee, _) = ty.kind() else { unreachable!() };
-        let Some(local_did) = callee.as_local() else { return; };
-        let rustc_hir::Node::ForeignItem(foreign_item) =
-            self.tcx.hir().find_by_def_id(local_did).unwrap() else { return };
-        match foreign_item.ident.as_str() {
-            "free" => self.dealloc = true,
-            "malloc" => self.alloc = true,
-            _ => {}
-        }
-    }
 }
 
 impl GlobalAssumptions {
@@ -127,8 +94,8 @@ impl GlobalAssumptions {
     ) -> Self {
         let CrateCtxt {
             tcx,
-            ref fn_ctxt,
             ref struct_ctxt,
+            ..
         } = *crate_ctxt;
         let mut struct_fields = VecVec::with_indices_capacity(struct_ctxt.post_order.len());
 
@@ -147,36 +114,7 @@ impl GlobalAssumptions {
 
         let struct_fields = struct_fields.done();
 
-        let mut monotonicity = FxHashMap::default();
-        monotonicity.reserve(fn_ctxt.fns().len());
-        for &did in fn_ctxt.fns() {
-            let body = tcx.optimized_mir(did);
-            let mut mc = MonotonicityChecker {
-                alloc: false,
-                dealloc: false,
-                tcx,
-            };
-            mc.visit_body(body);
-            monotonicity.insert(
-                did,
-                if !(mc.alloc ^ mc.dealloc) {
-                    Monotonicity::Not
-                } else if mc.alloc {
-                    Monotonicity::Alloc
-                } else {
-                    Monotonicity::Dealloc
-                },
-            );
-        }
-
-        GlobalAssumptions {
-            struct_fields,
-            monotonicity,
-        }
-    }
-
-    pub fn monotonicity(&self, did: DefId) -> Monotonicity {
-        self.monotonicity[&did]
+        GlobalAssumptions { struct_fields }
     }
 
     pub fn fields<'a, 'tcx>(

@@ -9,13 +9,15 @@ use rustc_middle::{
 
 use super::{matcher, CallArgs, InferCtxt};
 use crate::{
+    call_graph::Monotonicity,
     ownership::{whole_program::WholeProgramAnalysis, AnalysisKind},
     ptr::Measurable,
     ssa::{
-        constraint::{infer::InferMode, Database, GlobalAssumptions, Monotonicity, Var},
+        constraint::{infer::InferMode, Database, GlobalAssumptions, Var},
         consume::Consume,
     },
     struct_ctxt::StructCtxt,
+    CrateCtxt,
 };
 
 pub mod libc;
@@ -33,10 +35,9 @@ where
     );
 
     fn entry(
-        tcx: TyCtxt<'tcx>,
+        crate_ctxt: &CrateCtxt<'tcx>,
         inter_ctxt: &Self::InterCtxt,
         global_assumptions: &GlobalAssumptions,
-        struct_ctxt: &StructCtxt,
         database: &mut <Self as AnalysisKind<'infercx, 'db, 'tcx>>::DB,
         body: &Body<'tcx>,
         params: impl Iterator<Item = Option<Range<Var>>>,
@@ -67,10 +68,9 @@ where
     }
 
     default fn entry(
-        _: TyCtxt,
+        _: &CrateCtxt<'tcx>,
         _: &Analysis::InterCtxt,
         _: &GlobalAssumptions,
-        _: &StructCtxt,
         _: &mut <Self as AnalysisKind<'infercx, 'db, 'tcx>>::DB,
         _: &Body<'tcx>,
         _: impl Iterator<Item = Option<Range<Var>>>,
@@ -217,14 +217,18 @@ where
     }
 
     fn entry(
-        tcx: TyCtxt<'tcx>,
+        crate_ctxt: &CrateCtxt<'tcx>,
         inter_ctxt: &<WholeProgramAnalysis as AnalysisKind>::InterCtxt,
         global_assumptions: &GlobalAssumptions,
-        struct_ctxt: &StructCtxt,
         database: &mut <WholeProgramAnalysis as AnalysisKind>::DB,
         body: &Body<'tcx>,
         params: impl Iterator<Item = Option<Range<Var>>>,
     ) {
+        let CrateCtxt {
+            tcx,
+            ref fn_ctxt,
+            ref struct_ctxt,
+        } = *crate_ctxt;
         let fn_sig = &inter_ctxt[&body.source.def_id()];
 
         for (input, sigs, ty) in itertools::izip!(
@@ -262,7 +266,7 @@ where
                             precision,
                         );
                     } else {
-                        let monotonicity = global_assumptions.monotonicity(body.source.def_id());
+                        let monotonicity = fn_ctxt.monotonicity(body.source.def_id());
                         let mut input_sigs = input_sigs;
                         let mut output_sigs = sigs.clone().to_output().unwrap();
                         if matches!(monotonicity, Monotonicity::Alloc) {

@@ -35,7 +35,7 @@ pub(super) fn initial_inter_ctxt(
                 return_local_decl,
                 gen,
                 database,
-                crate_ctxt.struct_ctxt.with_precision(INIT_PRECISION),
+                crate_ctxt.struct_ctxt.with_max_precision(INIT_PRECISION),
             )
             .map(|sigs| Param::Normal(sigs));
 
@@ -47,13 +47,13 @@ pub(super) fn initial_inter_ctxt(
                             local_decl,
                             gen,
                             database,
-                            crate_ctxt.struct_ctxt.with_precision(INIT_PRECISION),
+                            crate_ctxt.struct_ctxt.with_max_precision(INIT_PRECISION),
                         );
                         let def = initialize_local(
                             local_decl,
                             gen,
                             database,
-                            crate_ctxt.struct_ctxt.with_precision(INIT_PRECISION),
+                            crate_ctxt.struct_ctxt.with_max_precision(INIT_PRECISION),
                         );
                         r#use.zip(def).map(|(r#use, def)| {
                             database.push_assume::<crate::ssa::constraint::Debug>(
@@ -73,7 +73,7 @@ pub(super) fn initial_inter_ctxt(
                             local_decl,
                             gen,
                             database,
-                            crate_ctxt.struct_ctxt.with_precision(INIT_PRECISION),
+                            crate_ctxt.struct_ctxt.with_max_precision(INIT_PRECISION),
                         )
                         .map(|sigs| Param::Normal(sigs))
                     }
