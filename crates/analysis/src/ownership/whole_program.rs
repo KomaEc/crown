@@ -203,12 +203,7 @@ fn solve_crate(
     let ctx = z3::Context::new(&config);
     let mut database = <WholeProgramAnalysis as AnalysisKind>::DB::new(&ctx);
 
-    let global_assumptions = GlobalAssumptions::new(
-        &crate_ctxt.struct_ctxt,
-        crate_ctxt.tcx,
-        &mut gen,
-        &mut database,
-    );
+    let global_assumptions = GlobalAssumptions::new(&*crate_ctxt, &mut gen, &mut database);
 
     let mut fn_summaries = indexmap::IndexMap::default();
     fn_summaries.reserve(crate_ctxt.fns().len());

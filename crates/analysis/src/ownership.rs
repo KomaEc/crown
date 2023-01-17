@@ -172,8 +172,7 @@ impl<'analysis, 'db, 'tcx> AnalysisKind<'analysis, 'db, 'tcx> for IntraProcedura
             let mut gen = Gen::new();
             let mut database = CadicalDatabase::new();
             let global_assumptions = crate::ssa::constraint::GlobalAssumptions::new(
-                &crate_ctxt.struct_ctxt,
-                crate_ctxt.tcx,
+                &crate_ctxt,
                 &mut gen,
                 &mut database,
             );

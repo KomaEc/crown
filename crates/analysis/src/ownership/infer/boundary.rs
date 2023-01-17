@@ -12,7 +12,7 @@ use crate::{
     ownership::{whole_program::WholeProgramAnalysis, AnalysisKind},
     ptr::Measurable,
     ssa::{
-        constraint::{infer::InferMode, Database, GlobalAssumptions, Var},
+        constraint::{infer::InferMode, Database, GlobalAssumptions, Monotonicity, Var},
         consume::Consume,
     },
     struct_ctxt::StructCtxt,
@@ -235,12 +235,15 @@ where
             match (input, sigs) {
                 (Some(input), Some(sigs)) => {
                     let is_output = sigs.is_output();
-                    let sigs = sigs.clone().to_input();
-                    assert_eq!(input.size_hint().1.unwrap(), sigs.size_hint().1.unwrap());
+                    let input_sigs = sigs.clone().to_input();
+                    assert_eq!(
+                        input.size_hint().1.unwrap(),
+                        input_sigs.size_hint().1.unwrap()
+                    );
                     let measure = input.size_hint().1.unwrap() as u32;
                     let precision = struct_ctxt.absolute_precision(ty, measure);
 
-                    for (input, sig) in input.clone().zip(sigs) {
+                    for (input, sig) in input.clone().zip(input_sigs.clone()) {
                         database.push_equal::<crate::ssa::constraint::Debug>((), input, sig)
                     }
 
@@ -258,6 +261,37 @@ where
                             tcx,
                             precision,
                         );
+                    } else {
+                        let monotonicity = global_assumptions.monotonicity(body.source.def_id());
+                        let mut input_sigs = input_sigs;
+                        let mut output_sigs = sigs.clone().to_output().unwrap();
+                        if matches!(monotonicity, Monotonicity::Alloc) {
+                            apply_global_assumptions(
+                                ty,
+                                None,
+                                &mut std::iter::empty(),
+                                &mut output_sigs,
+                                global_assumptions,
+                                struct_ctxt,
+                                database,
+                                tcx,
+                                precision,
+                            );
+                        }
+
+                        if matches!(monotonicity, Monotonicity::Dealloc) {
+                            apply_global_assumptions(
+                                ty,
+                                None,
+                                &mut std::iter::empty(),
+                                &mut input_sigs,
+                                global_assumptions,
+                                struct_ctxt,
+                                database,
+                                tcx,
+                                precision,
+                            );
+                        }
                     }
                 }
                 (None, None) => {}

@@ -478,6 +478,8 @@ impl Default for found_t {
 
 #[derive(Copy, Clone)]
 #[repr(C)]
+struct ErasedByRefactorer0;
+#[repr(C)]
 pub struct string_table_t {
     pub arr: *mut libc::c_char,
     pub n: size_t,
@@ -490,6 +492,11 @@ impl Default for string_table_t {
             n: Default::default(),
             capacity: Default::default(),
         }
+    }
+}
+impl string_table_t {
+    pub fn take(&mut self) -> Self {
+        core::mem::take(self)
     }
 }
 
@@ -510,6 +517,8 @@ impl Default for visited_file_t {
 
 #[derive(Copy, Clone)]
 #[repr(C)]
+struct ErasedByRefactorer1;
+#[repr(C)]
 pub struct visited_file_array_t {
     pub arr: *mut visited_file_t,
     pub n: size_t,
@@ -522,6 +531,11 @@ impl Default for visited_file_array_t {
             n: Default::default(),
             capacity: Default::default(),
         }
+    }
+}
+impl visited_file_array_t {
+    pub fn take(&mut self) -> Self {
+        core::mem::take(self)
     }
 }
 
@@ -1094,7 +1108,7 @@ unsafe extern "C" fn interpolate_variables(
             ();
             break;
         }
-        curr_src = dollar.offset_from((*st).arr) as libc::c_long as size_t;
+        curr_src = dollar.offset_from((*st).arr as *const i8) as libc::c_long as size_t;
         let mut bytes_to_dollar = curr_src.wrapping_sub(prev_src);
         curr_src = curr_src.wrapping_add(1);
         let mut curly = 0 as libc::c_int;
