@@ -32,7 +32,7 @@ where
         callee: DefId,
     );
 
-    fn params(
+    fn entry(
         tcx: TyCtxt<'tcx>,
         inter_ctxt: &Self::InterCtxt,
         global_assumptions: &GlobalAssumptions,
@@ -42,7 +42,7 @@ where
         params: impl Iterator<Item = Option<Range<Var>>>,
     );
 
-    fn r#return(
+    fn exit(
         tcx: TyCtxt<'tcx>,
         inter_ctxt: &Self::InterCtxt,
         global_assumptions: &GlobalAssumptions,
@@ -66,7 +66,7 @@ where
     ) {
     }
 
-    default fn params(
+    default fn entry(
         _: TyCtxt,
         _: &Analysis::InterCtxt,
         _: &GlobalAssumptions,
@@ -77,7 +77,7 @@ where
     ) {
     }
 
-    default fn r#return(
+    default fn exit(
         _: TyCtxt<'tcx>,
         _: &Self::InterCtxt,
         _: &GlobalAssumptions,
@@ -216,7 +216,7 @@ where
         }
     }
 
-    fn params(
+    fn entry(
         tcx: TyCtxt<'tcx>,
         inter_ctxt: &<WholeProgramAnalysis as AnalysisKind>::InterCtxt,
         global_assumptions: &GlobalAssumptions,
@@ -266,7 +266,7 @@ where
         }
     }
 
-    fn r#return(
+    fn exit(
         tcx: TyCtxt<'tcx>,
         inter_ctxt: &Self::InterCtxt,
         global_assumptions: &GlobalAssumptions,

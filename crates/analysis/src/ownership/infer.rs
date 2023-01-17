@@ -122,7 +122,7 @@ where
             }
         }
 
-        <Analysis as Boundary>::params(
+        <Analysis as Boundary>::entry(
             // crate_ctxt,
             tcx,
             &inter_ctxt,
@@ -572,7 +572,7 @@ where
             ssa_idx.map(|ssa_idx| infer_cx.fn_body_sig[local][ssa_idx].clone())
         });
 
-        <Analysis as Boundary>::r#return(
+        <Analysis as Boundary>::exit(
             infer_cx.tcx,
             &infer_cx.inter_ctxt,
             infer_cx.global_assumptions,
