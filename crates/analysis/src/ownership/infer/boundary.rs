@@ -10,6 +10,7 @@ use rustc_middle::{
 use super::{matcher, CallArgs, InferCtxt};
 use crate::{
     call_graph::Monotonicity,
+    lattice::FlatSet,
     ownership::{whole_program::WholeProgramAnalysis, AnalysisKind},
     ptr::Measurable,
     ssa::{
@@ -269,32 +270,35 @@ where
                         let monotonicity = fn_ctxt.monotonicity(body.source.def_id());
                         let mut input_sigs = input_sigs;
                         let mut output_sigs = sigs.clone().to_output().unwrap();
-                        if matches!(monotonicity, Monotonicity::Alloc) {
-                            apply_global_assumptions(
-                                ty,
-                                None,
-                                &mut std::iter::empty(),
-                                &mut output_sigs,
-                                global_assumptions,
-                                struct_ctxt,
-                                database,
-                                tcx,
-                                precision,
-                            );
-                        }
 
-                        if matches!(monotonicity, Monotonicity::Dealloc) {
-                            apply_global_assumptions(
-                                ty,
-                                None,
-                                &mut std::iter::empty(),
-                                &mut input_sigs,
-                                global_assumptions,
-                                struct_ctxt,
-                                database,
-                                tcx,
-                                precision,
-                            );
+                        if !matches!(monotonicity, FlatSet::Bottom) {
+                            if !matches!(monotonicity, FlatSet::Elem(Monotonicity::Dealloc)) {
+                                apply_global_assumptions(
+                                    ty,
+                                    None,
+                                    &mut std::iter::empty(),
+                                    &mut output_sigs,
+                                    global_assumptions,
+                                    struct_ctxt,
+                                    database,
+                                    tcx,
+                                    precision,
+                                );
+                            }
+
+                            if !matches!(monotonicity, FlatSet::Elem(Monotonicity::Alloc)) {
+                                apply_global_assumptions(
+                                    ty,
+                                    None,
+                                    &mut std::iter::empty(),
+                                    &mut input_sigs,
+                                    global_assumptions,
+                                    struct_ctxt,
+                                    database,
+                                    tcx,
+                                    precision,
+                                );
+                            }
                         }
                     }
                 }

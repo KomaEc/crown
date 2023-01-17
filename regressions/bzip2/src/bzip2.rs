@@ -195,16 +195,23 @@ impl Default for UInt64 {
 
 #[derive(Copy, Clone)]
 #[repr(C)]
+struct ErasedByRefactorer0;
+#[repr(C)]
 pub struct zzzz {
     pub name: *mut Char,
-    pub link: *mut zzzz,
+    pub link: Option<Box<zzzz>>,
 }
 impl Default for zzzz {
     fn default() -> Self {
         Self {
             name: std::ptr::null_mut(),
-            link: std::ptr::null_mut(),
+            link: None,
         }
+    }
+}
+impl zzzz {
+    pub fn take(&mut self) -> Self {
+        core::mem::take(self)
     }
 }
 
@@ -2804,7 +2811,7 @@ unsafe extern "C" fn mkCell() -> Option<Box<Cell>> {
     let mut c = None;
     c = myMalloc(::std::mem::size_of::<Cell>() as libc::c_ulong as Int32) as *mut Cell;
     (*c.as_deref_mut().unwrap()).name = 0 as *mut Char;
-    (*c.as_deref_mut().unwrap()).link = 0 as *mut zzzz;
+    (*c.as_deref_mut().unwrap()).link = None;
     return c;
 }
 unsafe extern "C" fn snocString(
@@ -2824,11 +2831,15 @@ unsafe extern "C" fn snocString(
             .as_deref_mut()
             .map(|r| r as *mut _)
             .unwrap_or(std::ptr::null_mut());
-        while !(*tmp_0).link.is_null() {
-            tmp_0 = (*tmp_0).link;
+        while !(*tmp_0).link.as_deref().is_none() {
+            tmp_0 = (*tmp_0)
+                .link
+                .as_deref_mut()
+                .map(|r| r as *mut _)
+                .unwrap_or(std::ptr::null_mut());
         }
         ();
-        (*tmp_0).link = snocString(Some(Box::from_raw((*tmp_0).link)), name);
+        (*tmp_0).link = snocString((*tmp_0).link.take(), name);
         return root;
     };
 }
@@ -2971,7 +2982,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
     aa = argList;
     while !aa.as_deref().is_none() {
         if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
@@ -2983,11 +2994,11 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
             && decode as libc::c_int != 0)
         {
             numFileNames += 1;
-            if longestFileName < strlen((*aa.as_deref().unwrap()).name) as Int32 {
-                longestFileName = strlen((*aa.as_deref().unwrap()).name) as Int32;
+            if longestFileName < strlen((*aa.as_deref().unwrap()).name as *const i8) as Int32 {
+                longestFileName = strlen((*aa.as_deref().unwrap()).name as *const i8) as Int32;
             }
         }
-        aa = Some(Box::from_raw((*aa.as_deref().unwrap()).link));
+        aa = (*aa.as_deref_mut().unwrap()).link.take();
     }
     ();
     if numFileNames == 0 as libc::c_int {
@@ -3016,7 +3027,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
     aa = argList;
     while !aa.as_deref().is_none() {
         if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
@@ -3109,116 +3120,116 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
                 j += 1;
             }
         }
-        aa = Some(Box::from_raw((*aa.as_deref().unwrap()).link));
+        aa = (*aa.as_deref_mut().unwrap()).link.take();
     }
     ();
     aa = argList;
     while !aa.as_deref().is_none() {
         if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             break;
         }
         if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--stdout\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             srcMode = 2 as libc::c_int;
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--decompress\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             opMode = 2 as libc::c_int;
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--compress\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             opMode = 1 as libc::c_int;
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--force\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             forceOverwrite = 1 as libc::c_int as Bool;
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--test\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             opMode = 3 as libc::c_int;
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--keep\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             keepInputFiles = 1 as libc::c_int as Bool;
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--small\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             smallMode = 1 as libc::c_int as Bool;
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--quiet\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             noisy = 0 as libc::c_int as Bool;
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--version\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             license();
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--license\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             license();
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--exponential\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             workFactor = 1 as libc::c_int;
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--repetitive-best\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
-            redundant((*aa.as_deref().unwrap()).name);
+            redundant((*aa.as_deref().unwrap()).name as *const i8);
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--repetitive-fast\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
-            redundant((*aa.as_deref().unwrap()).name);
+            redundant((*aa.as_deref().unwrap()).name as *const i8);
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--fast\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             blockSize100k = 1 as libc::c_int;
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--best\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             blockSize100k = 9 as libc::c_int;
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--verbose\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
             verbosity += 1;
         } else if strcmp(
-            (*aa.as_deref().unwrap()).name,
+            (*aa.as_deref().unwrap()).name as *const i8,
             b"--help\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
@@ -3226,7 +3237,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
             exit(0 as libc::c_int);
         } else {
             if strncmp(
-                (*aa.as_deref().unwrap()).name,
+                (*aa.as_deref().unwrap()).name as *const i8,
                 b"--\0" as *const u8 as *const libc::c_char,
                 2 as libc::c_int as libc::c_ulong,
             ) == 0 as libc::c_int
@@ -3241,7 +3252,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
                 exit(1 as libc::c_int);
             }
         }
-        aa = Some(Box::from_raw((*aa.as_deref().unwrap()).link));
+        aa = (*aa.as_deref_mut().unwrap()).link.take();
     }
     ();
     if verbosity > 4 as libc::c_int {
@@ -3289,7 +3300,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
             aa = argList;
             while !aa.as_deref().is_none() {
                 if strcmp(
-                    (*aa.as_deref().unwrap()).name,
+                    (*aa.as_deref().unwrap()).name as *const i8,
                     b"--\0" as *const u8 as *const libc::c_char,
                 ) == 0 as libc::c_int
                 {
@@ -3303,7 +3314,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
                     numFilesProcessed += 1;
                     compress((*aa.as_deref().unwrap()).name);
                 }
-                aa = Some(Box::from_raw((*aa.as_deref().unwrap()).link));
+                aa = (*aa.as_deref_mut().unwrap()).link.take();
             }
             ();
         }
@@ -3316,7 +3327,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
             aa = argList;
             while !aa.as_deref().is_none() {
                 if strcmp(
-                    (*aa.as_deref().unwrap()).name,
+                    (*aa.as_deref().unwrap()).name as *const i8,
                     b"--\0" as *const u8 as *const libc::c_char,
                 ) == 0 as libc::c_int
                 {
@@ -3330,7 +3341,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
                     numFilesProcessed += 1;
                     uncompress((*aa.as_deref().unwrap()).name);
                 }
-                aa = Some(Box::from_raw((*aa.as_deref().unwrap()).link));
+                aa = (*aa.as_deref_mut().unwrap()).link.take();
             }
             ();
         }
@@ -3347,7 +3358,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
             aa = argList;
             while !aa.as_deref().is_none() {
                 if strcmp(
-                    (*aa.as_deref().unwrap()).name,
+                    (*aa.as_deref().unwrap()).name as *const i8,
                     b"--\0" as *const u8 as *const libc::c_char,
                 ) == 0 as libc::c_int
                 {
@@ -3361,7 +3372,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
                     numFilesProcessed += 1;
                     testf((*aa.as_deref().unwrap()).name);
                 }
-                aa = Some(Box::from_raw((*aa.as_deref().unwrap()).link));
+                aa = (*aa.as_deref_mut().unwrap()).link.take();
             }
             ();
         }
@@ -3379,7 +3390,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
     }
     aa = argList;
     while !aa.as_deref().is_none() {
-        let mut aa2 = Some(Box::from_raw((*aa.as_deref().unwrap()).link));
+        let mut aa2 = (*aa.as_deref_mut().unwrap()).link.take();
         if !(*aa.as_deref().unwrap()).name.is_null() {
             free((*aa.as_deref().unwrap()).name as *mut libc::c_void);
         } else {

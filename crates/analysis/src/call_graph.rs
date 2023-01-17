@@ -9,6 +9,8 @@ use rustc_middle::{
 use rustc_type_ir::TyKind::FnDef;
 use smallvec::SmallVec;
 
+use crate::lattice::{FlatSet, Lattice};
+
 pub struct FnSig<T> {
     pub ret: T,
     pub args: SmallVec<[T; 4]>,
@@ -58,31 +60,36 @@ impl<T: std::fmt::Debug> std::fmt::Debug for FnSig<T> {
     }
 }
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum Monotonicity {
     Alloc,
     Dealloc,
-    Not,
 }
 
-struct MonotonicityChecker<'tcx> {
-    alloc: bool,
-    dealloc: bool,
+struct MonotonicityChecker<'me, 'tcx> {
+    this: FlatSet<Monotonicity>,
+    monotonicity: &'me FxHashMap<DefId, FlatSet<Monotonicity>>,
     tcx: TyCtxt<'tcx>,
 }
 
-impl<'tcx> Visitor<'tcx> for MonotonicityChecker<'tcx> {
+impl<'me, 'tcx> Visitor<'tcx> for MonotonicityChecker<'me, 'tcx> {
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _: rustc_middle::mir::Location) {
         let TerminatorKind::Call { func, .. } = &terminator.kind else { return; };
         let Some(func) = func.constant() else { return; };
         let ty = func.ty();
         let &FnDef(callee, _) = ty.kind() else { unreachable!() };
         let Some(local_did) = callee.as_local() else { return; };
-        let rustc_hir::Node::ForeignItem(foreign_item) =
-            self.tcx.hir().find_by_def_id(local_did).unwrap() else { return };
-        match foreign_item.ident.as_str() {
-            "free" => self.dealloc = true,
-            "malloc" => self.alloc = true,
+
+        match self.tcx.hir().find_by_def_id(local_did).unwrap() {
+            rustc_hir::Node::ForeignItem(foreign_item) => match foreign_item.ident.as_str() {
+                "free" => self.this = self.this.meet(FlatSet::Elem(Monotonicity::Dealloc)),
+                "malloc" | "calloc" | "realloc" => self.this = self.this.meet(FlatSet::Elem(Monotonicity::Alloc)),
+                _ => {}
+            },
+            rustc_hir::Node::Item(..) => {
+                let that = self.monotonicity[&callee];
+                self.this = self.this.meet(that);
+            }
             _ => {}
         }
     }
@@ -91,7 +98,7 @@ impl<'tcx> Visitor<'tcx> for MonotonicityChecker<'tcx> {
 pub struct CallGraph {
     post_order: VecVec<DefId>,
     ranked_by_n_alloc_deallocs: Vec<DefId>,
-    monotonicity: FxHashMap<DefId, Monotonicity>,
+    monotonicity: FxHashMap<DefId, FlatSet<Monotonicity>>,
 }
 
 impl CallGraph {
@@ -112,9 +119,6 @@ impl CallGraph {
         let mut post_order = VecVec::with_indices_capacity(functions.len());
         tarjan_scc.run(&graph, |nodes| post_order.push_vec(nodes.iter().copied()));
         let post_order = post_order.done();
-
-        // FIXME not enough. The orders in wholeprogram analysis is wrong, and the reason is that
-        // hashmap is unordered (waht a terrible mistake!)
 
         let mut n_alloc_deallocs = rustc_hash::FxHashMap::default();
         n_alloc_deallocs.reserve(functions.len());
@@ -156,25 +160,32 @@ impl CallGraph {
 
         let mut monotonicity = FxHashMap::default();
         monotonicity.reserve(functions.len());
-        for &did in functions {
-            let body = tcx.optimized_mir(did);
-            let mut mc = MonotonicityChecker {
-                alloc: false,
-                dealloc: false,
-                tcx,
-            };
-            mc.visit_body(body);
-            monotonicity.insert(
-                did,
-                if !(mc.alloc ^ mc.dealloc) {
-                    Monotonicity::Not
-                } else if mc.alloc {
-                    Monotonicity::Alloc
-                } else {
-                    Monotonicity::Dealloc
-                },
-            );
-        }
+        tarjan_scc.run(&graph, |nodes| {
+            monotonicity.extend(nodes.iter().map(|&node| (node, FlatSet::Top)));
+            loop {
+                let mut changed = false;
+
+                for did in nodes {
+                    let body = tcx.optimized_mir(*did);
+                    let original = monotonicity[did];
+                    let mut mc = MonotonicityChecker {
+                        this: original,
+                        monotonicity: &monotonicity,
+                        tcx,
+                    };
+                    mc.visit_body(body);
+                    let new = mc.this;
+                    if original != new {
+                        changed = true;
+                        *monotonicity.get_mut(did).unwrap() = new;
+                    }
+                }
+
+                if !changed {
+                    break;
+                }
+            }
+        });
 
         CallGraph {
             post_order,
@@ -183,13 +194,12 @@ impl CallGraph {
         }
     }
 
-    pub fn monotonicity(&self, did: DefId) -> Monotonicity {
+    pub fn monotonicity(&self, did: DefId) -> FlatSet<Monotonicity> {
         self.monotonicity[&did]
     }
 
     #[inline]
     pub fn fns(&self) -> &[DefId] {
-        // self.post_order.everything()
         &self.ranked_by_n_alloc_deallocs
     }
 

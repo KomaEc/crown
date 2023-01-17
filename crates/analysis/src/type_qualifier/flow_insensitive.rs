@@ -23,9 +23,8 @@ use rustc_middle::{
 };
 use rustc_type_ir::TyKind;
 
-use crate::lattice::Lattice;
-
 use self::boolean_system::BooleanSystem;
+use crate::lattice::Lattice;
 
 pub type StructFields = discretization::StructFields<Var>;
 pub type FnLocals = discretization::FnLocals<Var>;

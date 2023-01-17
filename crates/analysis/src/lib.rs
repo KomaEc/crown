@@ -31,6 +31,7 @@ extern crate rustc_target;
 extern crate rustc_type_ir;
 
 mod call_graph;
+mod lattice;
 pub mod ownership;
 mod ptr;
 pub mod ssa;
@@ -39,7 +40,6 @@ mod struct_ctxt;
 mod test;
 pub mod type_qualifier;
 pub mod use_def;
-mod lattice;
 
 use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;

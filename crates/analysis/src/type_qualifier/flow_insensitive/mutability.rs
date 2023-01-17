@@ -16,7 +16,10 @@ use super::{
     boolean_system::BooleanSystem, resolve_body, BooleanLattice, FnLocals, Infer, Lattice,
     StructFields, TypeQualifiers, Var, WithConstraintSystem,
 };
-use crate::{type_qualifier::flow_insensitive::ConstraintSystem, lattice::{HasBottom, HasTop}};
+use crate::{
+    lattice::{HasBottom, HasTop},
+    type_qualifier::flow_insensitive::ConstraintSystem,
+};
 
 pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResult {
     let mut result = MutabilityResult::new_empty(crate_data);

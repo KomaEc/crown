@@ -17,7 +17,10 @@ use super::{
     boolean_system::BooleanSystem, resolve_body, BooleanLattice, ConstraintSystem, FnLocals, Infer,
     Lattice, StructFields, TypeQualifiers, Var, WithConstraintSystem,
 };
-use crate::{ownership::solidify::SolidifiedOwnershipSchemes, lattice::{HasBottom, HasTop}};
+use crate::{
+    lattice::{HasBottom, HasTop},
+    ownership::solidify::SolidifiedOwnershipSchemes,
+};
 
 pub fn fatness_analysis(
     crate_data: &common::CrateData,
