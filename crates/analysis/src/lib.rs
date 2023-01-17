@@ -39,6 +39,7 @@ mod struct_ctxt;
 mod test;
 pub mod type_qualifier;
 pub mod use_def;
+mod lattice;
 
 use call_graph::CallGraph;
 use rustc_hir::def_id::DefId;

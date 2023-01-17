@@ -17,7 +17,7 @@ use super::{
     boolean_system::BooleanSystem, resolve_body, BooleanLattice, ConstraintSystem, FnLocals, Infer,
     Lattice, StructFields, TypeQualifiers, Var, WithConstraintSystem,
 };
-use crate::ownership::solidify::SolidifiedOwnershipSchemes;
+use crate::{ownership::solidify::SolidifiedOwnershipSchemes, lattice::{HasBottom, HasTop}};
 
 pub fn fatness_analysis(
     crate_data: &common::CrateData,
@@ -85,10 +85,30 @@ impl From<bool> for Fatness {
     }
 }
 
-impl Lattice for Fatness {
+impl HasBottom for Fatness {
     const BOTTOM: Self = Self::Arr;
+}
 
+impl HasTop for Fatness {
     const TOP: Self = Self::Ptr;
+}
+
+impl Lattice for Fatness {
+    fn join(self, other: Self) -> Self {
+        if self.is_ptr() || other.is_ptr() {
+            Fatness::Ptr
+        } else {
+            Fatness::Arr
+        }
+    }
+
+    fn meet(self, other: Self) -> Self {
+        if self.is_arr() || other.is_arr() {
+            Fatness::Arr
+        } else {
+            Fatness::Ptr
+        }
+    }
 }
 
 impl BooleanLattice for Fatness {}

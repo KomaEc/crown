@@ -23,6 +23,8 @@ use rustc_middle::{
 };
 use rustc_type_ir::TyKind;
 
+use crate::lattice::Lattice;
+
 use self::boolean_system::BooleanSystem;
 
 pub type StructFields = discretization::StructFields<Var>;
@@ -282,12 +284,12 @@ pub fn resolve_body<'tcx, I, Domain>(
     );
 }
 
-pub trait Lattice: Clone {
-    const BOTTOM: Self;
-    const TOP: Self;
-}
+// pub trait Lattice: Clone {
+//     const BOTTOM: Self;
+//     const TOP: Self;
+// }
 
-pub trait BooleanLattice: Copy + PartialEq + Eq + From<bool> + Into<bool> + Lattice {}
+pub trait BooleanLattice: From<bool> + Into<bool> + Lattice {}
 
 common::macros::newtype_index! {
     #[debug_format = "{}"]

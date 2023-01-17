@@ -16,7 +16,7 @@ use super::{
     boolean_system::BooleanSystem, resolve_body, BooleanLattice, FnLocals, Infer, Lattice,
     StructFields, TypeQualifiers, Var, WithConstraintSystem,
 };
-use crate::type_qualifier::flow_insensitive::ConstraintSystem;
+use crate::{type_qualifier::flow_insensitive::ConstraintSystem, lattice::{HasBottom, HasTop}};
 
 pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResult {
     let mut result = MutabilityResult::new_empty(crate_data);
@@ -81,10 +81,30 @@ impl From<bool> for Mutability {
     }
 }
 
-impl Lattice for Mutability {
+impl HasBottom for Mutability {
     const BOTTOM: Self = Self::Mut;
+}
 
+impl HasTop for Mutability {
     const TOP: Self = Self::Imm;
+}
+
+impl Lattice for Mutability {
+    fn join(self, other: Self) -> Self {
+        if self.is_immutable() || other.is_immutable() {
+            Mutability::Imm
+        } else {
+            Mutability::Mut
+        }
+    }
+
+    fn meet(self, other: Self) -> Self {
+        if self.is_mutable() || other.is_mutable() {
+            Mutability::Mut
+        } else {
+            Mutability::Imm
+        }
+    }
 }
 
 impl BooleanLattice for Mutability {}
