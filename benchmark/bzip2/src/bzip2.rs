@@ -100,7 +100,9 @@ extern "C" {
     fn open(__file: *const libc::c_char, __oflag: libc::c_int, _: ...) -> libc::c_int;
     fn utime(__file: *const libc::c_char, __file_times: *const utimbuf) -> libc::c_int;
     fn close(__fd: libc::c_int) -> libc::c_int;
+    fn write(__fd: libc::c_int, __buf: *const libc::c_void, __n: size_t) -> ssize_t;
     fn fchown(__fd: libc::c_int, __owner: __uid_t, __group: __gid_t) -> libc::c_int;
+    fn _exit(_: libc::c_int) -> !;
     fn isatty(__fd: libc::c_int) -> libc::c_int;
     fn fchmod(__fd: libc::c_int, __mode: __mode_t) -> libc::c_int;
     fn __xstat(
@@ -126,6 +128,7 @@ pub type __off64_t = libc::c_long;
 pub type __time_t = libc::c_long;
 pub type __blksize_t = libc::c_long;
 pub type __blkcnt_t = libc::c_long;
+pub type __ssize_t = libc::c_long;
 pub type __syscall_slong_t = libc::c_long;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -162,6 +165,7 @@ pub struct _IO_FILE {
 }
 pub type _IO_lock_t = ();
 pub type FILE = _IO_FILE;
+pub type ssize_t = __ssize_t;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct timespec {
@@ -1711,28 +1715,51 @@ unsafe extern "C" fn mySignalCatcher(mut n: IntNative) {
     cleanUpAndFail(1 as libc::c_int);
 }
 unsafe extern "C" fn mySIGSEGVorSIGBUScatcher(mut n: IntNative) {
+    let mut msg = 0 as *const libc::c_char;
     if opMode == 1 as libc::c_int {
-        fprintf(
-            stderr,
-            b"\n%s: Caught a SIGSEGV or SIGBUS whilst compressing.\n\n   Possible causes are (most likely first):\n   (1) This computer has unreliable memory or cache hardware\n       (a surprisingly common problem; try a different machine.)\n   (2) A bug in the compiler used to create this executable\n       (unlikely, if you didn't compile bzip2 yourself.)\n   (3) A real bug in bzip2 -- I hope this should never be the case.\n   The user's manual, Section 4.3, has more info on (1) and (2).\n   \n   If you suspect this is a bug in bzip2, or are unsure about (1)\n   or (2), feel free to report it to: bzip2-devel@sourceware.org.\n   Section 4.3 of the user's manual describes the info a useful\n   bug report should have.  If the manual is available on your\n   system, please try and read it before mailing me.  If you don't\n   have the manual or can't be bothered to read it, mail me anyway.\n\n\0"
-                as *const u8 as *const libc::c_char,
-            progName,
-        );
+        msg = b": Caught a SIGSEGV or SIGBUS whilst compressing.\n\n   Possible causes are (most likely first):\n   (1) This computer has unreliable memory or cache hardware\n       (a surprisingly common problem; try a different machine.)\n   (2) A bug in the compiler used to create this executable\n       (unlikely, if you didn't compile bzip2 yourself.)\n   (3) A real bug in bzip2 -- I hope this should never be the case.\n   The user's manual, Section 4.3, has more info on (1) and (2).\n   \n   If you suspect this is a bug in bzip2, or are unsure about (1)\n   or (2), feel free to report it to: bzip2-devel@sourceware.org.\n   Section 4.3 of the user's manual describes the info a useful\n   bug report should have.  If the manual is available on your\n   system, please try and read it before mailing me.  If you don't\n   have the manual or can't be bothered to read it, mail me anyway.\n\n\0"
+            as *const u8 as *const libc::c_char;
     } else {
-        fprintf(
-            stderr,
-            b"\n%s: Caught a SIGSEGV or SIGBUS whilst decompressing.\n\n   Possible causes are (most likely first):\n   (1) The compressed data is corrupted, and bzip2's usual checks\n       failed to detect this.  Try bzip2 -tvv my_file.bz2.\n   (2) This computer has unreliable memory or cache hardware\n       (a surprisingly common problem; try a different machine.)\n   (3) A bug in the compiler used to create this executable\n       (unlikely, if you didn't compile bzip2 yourself.)\n   (4) A real bug in bzip2 -- I hope this should never be the case.\n   The user's manual, Section 4.3, has more info on (2) and (3).\n   \n   If you suspect this is a bug in bzip2, or are unsure about (2)\n   or (3), feel free to report it to: bzip2-devel@sourceware.org.\n   Section 4.3 of the user's manual describes the info a useful\n   bug report should have.  If the manual is available on your\n   system, please try and read it before mailing me.  If you don't\n   have the manual or can't be bothered to read it, mail me anyway.\n\n\0"
-                as *const u8 as *const libc::c_char,
-            progName,
-        );
+        msg = b": Caught a SIGSEGV or SIGBUS whilst decompressing.\n\n   Possible causes are (most likely first):\n   (1) The compressed data is corrupted, and bzip2's usual checks\n       failed to detect this.  Try bzip2 -tvv my_file.bz2.\n   (2) This computer has unreliable memory or cache hardware\n       (a surprisingly common problem; try a different machine.)\n   (3) A bug in the compiler used to create this executable\n       (unlikely, if you didn't compile bzip2 yourself.)\n   (4) A real bug in bzip2 -- I hope this should never be the case.\n   The user's manual, Section 4.3, has more info on (2) and (3).\n   \n   If you suspect this is a bug in bzip2, or are unsure about (2)\n   or (3), feel free to report it to: bzip2-devel@sourceware.org.\n   Section 4.3 of the user's manual describes the info a useful\n   bug report should have.  If the manual is available on your\n   system, please try and read it before mailing me.  If you don't\n   have the manual or can't be bothered to read it, mail me anyway.\n\n\0"
+            as *const u8 as *const libc::c_char;
     }
-    showFileNames();
+    write(
+        2 as libc::c_int,
+        b"\n\0" as *const u8 as *const libc::c_char as *const libc::c_void,
+        1 as libc::c_int as size_t,
+    );
+    write(2 as libc::c_int, progName as *const libc::c_void, strlen(progName));
+    write(2 as libc::c_int, msg as *const libc::c_void, strlen(msg));
+    msg = b"\tInput file = \0" as *const u8 as *const libc::c_char;
+    write(2 as libc::c_int, msg as *const libc::c_void, strlen(msg));
+    write(
+        2 as libc::c_int,
+        inName.as_mut_ptr() as *const libc::c_void,
+        strlen(inName.as_mut_ptr()),
+    );
+    write(
+        2 as libc::c_int,
+        b"\n\0" as *const u8 as *const libc::c_char as *const libc::c_void,
+        1 as libc::c_int as size_t,
+    );
+    msg = b"\tOutput file = \0" as *const u8 as *const libc::c_char;
+    write(2 as libc::c_int, msg as *const libc::c_void, strlen(msg));
+    write(
+        2 as libc::c_int,
+        outName.as_mut_ptr() as *const libc::c_void,
+        strlen(outName.as_mut_ptr()),
+    );
+    write(
+        2 as libc::c_int,
+        b"\n\0" as *const u8 as *const libc::c_char as *const libc::c_void,
+        1 as libc::c_int as size_t,
+    );
     if opMode == 1 as libc::c_int {
-        cleanUpAndFail(3 as libc::c_int);
+        setExit(3 as libc::c_int);
     } else {
-        cadvise();
-        cleanUpAndFail(2 as libc::c_int);
-    };
+        setExit(2 as libc::c_int);
+    }
+    _exit(exitValue);
 }
 unsafe extern "C" fn outOfMemory() -> ! {
     fprintf(
@@ -2300,13 +2327,13 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
                     unzSuffix[i as usize],
                 ) != 0
                 {
-                    current_block = 13197658476834711520;
+                    current_block = 4283963503649295902;
                     break;
                 }
                 i += 1;
             }
             match current_block {
-                13197658476834711520 => {}
+                4283963503649295902 => {}
                 _ => {
                     cantGuess = 1 as libc::c_int as Bool;
                     strcat(
