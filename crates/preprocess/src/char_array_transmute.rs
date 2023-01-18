@@ -19,7 +19,7 @@ pub fn char_array_transmute(tcx: TyCtxt, mode: RewriteMode) {
         })
         .collect::<HashSet<_>>();
 
-    let re = regex::Regex::new(r#"\(\*::std::mem::transmute::<&\[u8;[ |\n]*\d+\],[ |\n]*&\[[^;]+;[ | \n]*\d+\]>\([ |\n]*(?P<chars>b".*"),*[ |\n]*\)\)[ |\n]*\.as_ptr\(\)"#).unwrap();
+    let re = regex::Regex::new(r#"\(\*::std::mem::transmute::<[ |\n]*&\[u8;[ |\n]*\d+\],[ |\n]*&\[[^;]+;[ | \n]*\d+\],*[ |\n]*>\([ |\n]*(?P<chars>b".*"),*[ |\n]*\)\)[ |\n]*\.as_ptr\(\)"#).unwrap();
 
     for file_name in user_files.iter() {
         let source = fs::read_to_string(file_name).unwrap();

@@ -688,7 +688,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         if PLACE_LOAD_MODE == PlaceLoadMode::ByRef as u8 {
             let source_text = common::rewrite::get_snippet(tcx, span).text.1;
-            assert!(source_text.contains("as_mut_ptr()"));
+            assert!(source_text.contains("as_mut_ptr()"), "@ {:?}", span);
             replacement += ".as_mut_ptr()";
             rewriter.replace(tcx, span, replacement);
             return;

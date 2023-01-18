@@ -151,7 +151,8 @@ impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
                 // type safety
                 assert_eq!(
                     lhs.end.index() - lhs.start.index(),
-                    rhs.end.index() - rhs.start.index()
+                    rhs.end.index() - rhs.start.index(),
+                    "{:?}: {} = {:?}", place, local_decls.local_decls()[place.local].ty, rvalue
                 );
 
                 let mut lhs_rhs = lhs.zip(rhs);
