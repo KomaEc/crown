@@ -185,6 +185,10 @@ fn canonicalize_structs_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         structs.push(did);
     }
 
+    if structs.is_empty() {
+        return
+    }
+
     let mut equivalent_classes = UnionFind::new(structs.len());
     for (idx1, &s) in structs[..structs.len() - 1].iter().enumerate() {
         for idx2 in idx1 + 1..structs.len() {
