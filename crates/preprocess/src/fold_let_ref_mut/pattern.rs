@@ -191,7 +191,6 @@ fn assign_value_as_assigner_3_vars_v1(caps: &regex::Captures<'_>) -> String {
     z.to_owned() + " = " + val + "; " + y + " = " + z + "; " + x + "= " + y + ";"
 }
 
-
 /// ```c
 /// x = y = value;
 /// ```
@@ -272,7 +271,6 @@ fn assign_value_as_assigner2(caps: &regex::Captures<'_>) -> String {
     let lhs1 = &caps["lhs1"];
     let lhs2 = &caps["lhs2"];
     let rhs = &caps["rhs"];
-
 
     let mut ret = lhs1.to_string() + " = " + rhs + "; " + lhs2 + " = " + lhs1;
 
@@ -385,7 +383,6 @@ fn ptr_incr_four_lines(caps: &regex::Captures<'_>) -> String {
     r"let fresh".to_owned() + version2 + " = " + lhs + ";" + &incr
 }
 
-
 const DANGEROUS_STMT: Pattern = Pattern {
     pattern: concat!(
         r"let ref mut fresh(?P<version1>[0-9]+)[\s|\n]*=[\s|\n]*(?P<x>[^;]+);[\s|\n]*",
@@ -414,11 +411,7 @@ fn dangerous_stmt(caps: &regex::Captures<'_>) -> String {
 
     let fresh = r"\*fresh".to_owned() + version1;
 
-
-    let stmt = regex::Regex::new(&fresh)
-        .unwrap()
-        .replace_all(stmt, x);
-
+    let stmt = regex::Regex::new(&fresh).unwrap().replace_all(stmt, x);
 
     x.to_owned() + " " + assignop + " " + val + "; " + &stmt + ";"
 }

@@ -186,7 +186,7 @@ fn canonicalize_structs_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     }
 
     if structs.is_empty() {
-        return
+        return;
     }
 
     let mut equivalent_classes = UnionFind::new(structs.len());

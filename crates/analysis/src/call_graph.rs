@@ -83,7 +83,9 @@ impl<'me, 'tcx> Visitor<'tcx> for MonotonicityChecker<'me, 'tcx> {
         match self.tcx.hir().find_by_def_id(local_did).unwrap() {
             rustc_hir::Node::ForeignItem(foreign_item) => match foreign_item.ident.as_str() {
                 "free" => self.this = self.this.meet(FlatSet::Elem(Monotonicity::Dealloc)),
-                "malloc" | "calloc" | "realloc" => self.this = self.this.meet(FlatSet::Elem(Monotonicity::Alloc)),
+                "malloc" | "calloc" | "realloc" => {
+                    self.this = self.this.meet(FlatSet::Elem(Monotonicity::Alloc))
+                }
                 _ => {}
             },
             rustc_hir::Node::Item(..) => {

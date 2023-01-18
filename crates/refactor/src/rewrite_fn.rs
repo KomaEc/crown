@@ -465,7 +465,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
             TerminatorKind::Goto { .. } => {}
             TerminatorKind::Assert { .. } => {}
-            _ => todo!("terminator kind {:?} @ {:?}", terminator.kind, terminator.source_info.span),
+            _ => todo!(
+                "terminator kind {:?} @ {:?}",
+                terminator.kind,
+                terminator.source_info.span
+            ),
         }
     }
 
