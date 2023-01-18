@@ -1,9 +1,11 @@
 pub const PATTERNS: &[Pattern] = &[
     ASSIGN_VALUE_AS_ASSIGNER4,
-    ASSIGN_VALUE_AS_ASSIGNER3,
+    ASSIGN_VALUE_AS_ASSIGNER_3_VARS_V0,
+    ASSIGN_VALUE_AS_ASSIGNER_3_VARS_V1,
     ASSIGN_VALUE_AS_ASSIGNER1,
     ASSIGN_VALUE_AS_ASSIGNER2,
     ASSIGN_VALUE_IN_CONDITION,
+    DANGEROUS_STMT,
     ASSIGN_TWO_LINES,
     PTR_INCR_FOUR_LINES,
 ];
@@ -97,7 +99,7 @@ fn assign_value_as_assigner4(caps: &regex::Captures<'_>) -> String {
 /// let ref mut fresh3 = x;
 /// *fresh3 = *fresh2;
 /// ```
-const ASSIGN_VALUE_AS_ASSIGNER3: Pattern = Pattern {
+const ASSIGN_VALUE_AS_ASSIGNER_3_VARS_V0: Pattern = Pattern {
     pattern: concat!(
         r"let ref mut fresh(?P<version1>[0-9]+)[\s|\n]*=[\s|\n]*(?P<z>[^;]+);[\s|\n]*",
         r"\*fresh(?P<version2>[0-9]+)[\s|\n]*=[\s|\n]*(?P<val>[^;]+);[\s|\n]*",
@@ -106,10 +108,10 @@ const ASSIGN_VALUE_AS_ASSIGNER3: Pattern = Pattern {
         r"let ref mut fresh(?P<version6>[0-9]+)[\s|\n]*=[\s|\n]*(?P<x>[^;]+);[\s|\n]*",
         r"\*fresh(?P<version7>[0-9]+)[\s|\n]*=[\s|\n]*\*fresh(?P<version8>[0-9]+);",
     ),
-    replacer: assign_value_as_assigner3,
+    replacer: assign_value_as_assigner_3_vars_v0,
 };
 
-fn assign_value_as_assigner3(caps: &regex::Captures<'_>) -> String {
+fn assign_value_as_assigner_3_vars_v0(caps: &regex::Captures<'_>) -> String {
     let original = &caps[0];
     let version1 = &caps["version1"];
     let version2 = &caps["version2"];
@@ -139,6 +141,56 @@ fn assign_value_as_assigner3(caps: &regex::Captures<'_>) -> String {
 
     z.to_owned() + " = " + val + "; " + y + " = " + z + "; " + x + " = " + y + ";"
 }
+
+/// ```c
+/// x = y = z = value;
+/// ```
+/// is translated to
+/// ```rust
+/// let ref mut fresh1 = z;
+/// *fresh1 = val;
+/// let ref mut fresh2 = y;
+/// *fresh2 = *fresh1;
+/// x = *fresh2;
+/// ```
+const ASSIGN_VALUE_AS_ASSIGNER_3_VARS_V1: Pattern = Pattern {
+    pattern: concat!(
+        r"let ref mut fresh(?P<version1>[0-9]+)[\s|\n]*=[\s|\n]*(?P<z>[^;]+);[\s|\n]*",
+        r"\*fresh(?P<version2>[0-9]+)[\s|\n]*=[\s|\n]*(?P<val>[^;]+);[\s|\n]*",
+        r"let ref mut fresh(?P<version3>[0-9]+)[\s|\n]*=[\s|\n]*(?P<y>[^;]+);[\s|\n]*",
+        r"\*fresh(?P<version4>[0-9]+)[\s|\n]*=[\s|\n]*\*fresh(?P<version5>[0-9]+);[\s|\n]*",
+        r"(?P<x>[^=]+)[ |\n]*=[\s|\n]*\*fresh(?P<version6>\d+);",
+    ),
+    replacer: assign_value_as_assigner_3_vars_v1,
+};
+
+fn assign_value_as_assigner_3_vars_v1(caps: &regex::Captures<'_>) -> String {
+    let original = &caps[0];
+    let version1 = &caps["version1"];
+    let version2 = &caps["version2"];
+    let version3 = &caps["version3"];
+    let version4 = &caps["version4"];
+    let version5 = &caps["version5"];
+    let version6 = &caps["version6"];
+
+    if !(version1 == version2
+        && version1 != version3
+        && version3 == version4
+        && version1 == version5
+        && version1 != version6
+        && version3 == version6)
+    {
+        return original.to_owned();
+    }
+
+    let x = &caps["x"];
+    let y = &caps["y"];
+    let z = &caps["z"];
+    let val = &caps["val"];
+
+    z.to_owned() + " = " + val + "; " + y + " = " + z + "; " + x + "= " + y + ";"
+}
+
 
 /// ```c
 /// x = y = value;
@@ -191,15 +243,15 @@ fn assign_value_as_assigner1(caps: &regex::Captures<'_>) -> String {
 /// ```
 /// is translated to
 /// ```rust
-/// let ref mut fresh1 = rhs;
+/// let ref mut fresh1 = y;
 /// *fresh1 = val;
-/// lhs = *fresh1;
+/// x = *fresh1;
 /// ```
 const ASSIGN_VALUE_AS_ASSIGNER2: Pattern = Pattern {
     pattern: concat!(
         r"let ref mut fresh(?P<version1>[0-9]+)[\s|\n]*=[\s|\n]*(?P<lhs1>[^;]+);[\s|\n]*",
         r"\*fresh(?P<version2>[0-9]+)[\s|\n]*=[\s|\n]*(?P<rhs>[^;]+);[\s|\n]*",
-        r"(?P<lhs2>[^;]+)[\s|\n]*=[\s|\n]*\*fresh(?P<version3>[0-9]+)[\s|\n]*;",
+        r"(?P<lhs2>[^;]+)[\s|\n]*=[\s|\n]*\*fresh(?P<version3>[0-9]+)[\s|\n]*(?P<as>as[^;]+)?;",
     ),
     replacer: assign_value_as_assigner2,
 };
@@ -221,7 +273,14 @@ fn assign_value_as_assigner2(caps: &regex::Captures<'_>) -> String {
     let lhs2 = &caps["lhs2"];
     let rhs = &caps["rhs"];
 
-    lhs1.to_string() + " = " + rhs + "; " + lhs2 + " = " + lhs1 + ";"
+
+    let mut ret = lhs1.to_string() + " = " + rhs + "; " + lhs2 + " = " + lhs1;
+
+    if let Some(cast) = caps.name("as") {
+        ret = ret + " " + cast.as_str()
+    }
+
+    ret + ";"
 }
 
 /// ```c
@@ -324,4 +383,42 @@ fn ptr_incr_four_lines(caps: &regex::Captures<'_>) -> String {
         .replace_all(incr, lhs);
 
     r"let fresh".to_owned() + version2 + " = " + lhs + ";" + &incr
+}
+
+
+const DANGEROUS_STMT: Pattern = Pattern {
+    pattern: concat!(
+        r"let ref mut fresh(?P<version1>[0-9]+)[\s|\n]*=[\s|\n]*(?P<x>[^;]+);[\s|\n]*",
+        r"\*fresh(?P<version2>[0-9]+)[\s|\n]*(?P<assignop>[&|\^|\+|\-|\*|/|%|\|]*=)[\s|\n]*(?P<val>[^;]+);[\s|\n]*",
+        r"(?P<stmt>[^;]*\*fresh(?P<version3>\d+)[^;\n]*);",
+    ),
+    replacer: dangerous_stmt,
+};
+
+fn dangerous_stmt(caps: &regex::Captures<'_>) -> String {
+    let original = &caps[0];
+    let version1 = &caps["version1"];
+    let version2 = &caps["version2"];
+    let version3 = &caps["version3"];
+    let assignop = &caps["assignop"];
+
+    if version1 != version2 || version1 != version3 {
+        return original.to_owned();
+    }
+
+    // println!("{original}");
+
+    let x = &caps["x"];
+    let val = &caps["val"];
+    let stmt = &caps["stmt"];
+
+    let fresh = r"\*fresh".to_owned() + version1;
+
+
+    let stmt = regex::Regex::new(&fresh)
+        .unwrap()
+        .replace_all(stmt, x);
+
+
+    x.to_owned() + " " + assignop + " " + val + "; " + &stmt + ";"
 }
