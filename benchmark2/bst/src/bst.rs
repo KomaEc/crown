@@ -84,42 +84,42 @@ pub unsafe extern "C" fn deleteNode(
     }
     return root;
 }
-unsafe fn main_0() -> libc::c_int {
-    let mut root = 0 as *mut node;
-    root = insert(root, 50 as libc::c_int);
-    root = insert(root, 30 as libc::c_int);
-    root = insert(root, 20 as libc::c_int);
-    root = insert(root, 40 as libc::c_int);
-    root = insert(root, 70 as libc::c_int);
-    root = insert(root, 60 as libc::c_int);
-    root = insert(root, 80 as libc::c_int);
-    printf(
-        b"Inorder traversal of the given tree \n\0" as *const u8 as *const libc::c_char,
-    );
-    inorder(root);
-    printf(b"\nDelete 20\n\0" as *const u8 as *const libc::c_char);
-    root = deleteNode(root, 20 as libc::c_int);
-    printf(
-        b"Inorder traversal of the modified tree \n\0" as *const u8
-            as *const libc::c_char,
-    );
-    inorder(root);
-    printf(b"\nDelete 30\n\0" as *const u8 as *const libc::c_char);
-    root = deleteNode(root, 30 as libc::c_int);
-    printf(
-        b"Inorder traversal of the modified tree \n\0" as *const u8
-            as *const libc::c_char,
-    );
-    inorder(root);
-    printf(b"\nDelete 50\n\0" as *const u8 as *const libc::c_char);
-    root = deleteNode(root, 50 as libc::c_int);
-    printf(
-        b"Inorder traversal of the modified tree \n\0" as *const u8
-            as *const libc::c_char,
-    );
-    inorder(root);
-    return 0 as libc::c_int;
-}
+// unsafe fn main_0() -> libc::c_int {
+//     let mut root = 0 as *mut node;
+//     root = insert(root, 50 as libc::c_int);
+//     root = insert(root, 30 as libc::c_int);
+//     root = insert(root, 20 as libc::c_int);
+//     root = insert(root, 40 as libc::c_int);
+//     root = insert(root, 70 as libc::c_int);
+//     root = insert(root, 60 as libc::c_int);
+//     root = insert(root, 80 as libc::c_int);
+//     printf(
+//         b"Inorder traversal of the given tree \n\0" as *const u8 as *const libc::c_char,
+//     );
+//     inorder(root);
+//     printf(b"\nDelete 20\n\0" as *const u8 as *const libc::c_char);
+//     root = deleteNode(root, 20 as libc::c_int);
+//     printf(
+//         b"Inorder traversal of the modified tree \n\0" as *const u8
+//             as *const libc::c_char,
+//     );
+//     inorder(root);
+//     printf(b"\nDelete 30\n\0" as *const u8 as *const libc::c_char);
+//     root = deleteNode(root, 30 as libc::c_int);
+//     printf(
+//         b"Inorder traversal of the modified tree \n\0" as *const u8
+//             as *const libc::c_char,
+//     );
+//     inorder(root);
+//     printf(b"\nDelete 50\n\0" as *const u8 as *const libc::c_char);
+//     root = deleteNode(root, 50 as libc::c_int);
+//     printf(
+//         b"Inorder traversal of the modified tree \n\0" as *const u8
+//             as *const libc::c_char,
+//     );
+//     inorder(root);
+//     return 0 as libc::c_int;
+// }
 // pub fn main() {
 //     unsafe { ::std::process::exit(main_0() as i32) }
 // }
