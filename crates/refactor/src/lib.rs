@@ -68,6 +68,14 @@ pub fn refactor<'tcx>(
     rewrite_mode: RewriteMode,
     options: RefactorOptions,
 ) -> anyhow::Result<()> {
+    let mut options = options;
+    for did in &crate_data.fns {
+        if analysis.ownership_schemes.precision(did) == 0 {
+            options.no_box = true;
+        }
+    }
+    let options = options;
+
     let struct_decision = StructFields::new(crate_data, analysis, options);
     let fn_decision = FnLocals::new(crate_data, analysis, options);
 

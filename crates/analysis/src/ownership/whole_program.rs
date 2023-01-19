@@ -98,6 +98,10 @@ impl<'tcx> WholeProgramResults<'tcx> {
             .map(|range| &self.model[range.start.index()..range.end.index()])
     }
 
+    pub fn precision(&self, did: &DefId) -> Precision {
+        self.fn_locals.fn_summaries[did].1
+    }
+
     pub fn trace(&self, tcx: TyCtxt) {
         for &did in &self.struct_ctxt.post_order {
             tracing::debug!("{}: {{", tcx.def_path_str(did));
