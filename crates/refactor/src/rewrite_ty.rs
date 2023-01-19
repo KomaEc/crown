@@ -19,6 +19,15 @@ pub fn rewrite_structs(
     for did in structs {
         let fields_data = struct_decision.field_data(did);
         let item = tcx.hir().expect_item(did.expect_local());
+
+        let struct_span = item.span;
+
+        let is_owning = fields_data.iter().any(|field| {
+            field
+                .iter()
+                .any(|ptr_kind| ptr_kind.is_move() || ptr_kind.is_raw_move())
+        });
+
         let mut default_impl_block = String::new();
         writeln!(
             default_impl_block,
@@ -36,13 +45,6 @@ pub fn rewrite_structs(
 
         writeln!(default_impl_block, "}}}}}}").unwrap();
 
-        let struct_span = item.span;
-
-        let is_owning = fields_data.iter().any(|field| {
-            field
-                .iter()
-                .any(|ptr_kind| ptr_kind.is_move() || ptr_kind.is_raw_move())
-        });
         if is_owning {
             rewriter.replace(
                 tcx,
@@ -57,9 +59,8 @@ pub fn rewrite_structs(
                 item.ident
             )
             .unwrap();
+            rewriter.replace(tcx, struct_span.shrink_to_hi(), default_impl_block);
         }
-
-        rewriter.replace(tcx, struct_span.shrink_to_hi(), default_impl_block);
     }
     Ok(())
 }
