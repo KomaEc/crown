@@ -8,7 +8,7 @@ extern "C" {
 pub type zerror = libc::c_uint;
 pub const ZERROR_ERRNO_SET: zerror = 0;
 #[no_mangle]
-pub unsafe extern "C" fn zerror(mut desc: Option<&mut *const libc::c_char>) -> zerror {
+pub unsafe extern "C" fn zerror(mut desc: Option<&mut *mut libc::c_char>) -> zerror {
     if libzahl_error >= 0 as libc::c_int {
         if !desc.as_deref().is_none() {
             *desc.as_deref_mut().unwrap()= strerror(libzahl_error);

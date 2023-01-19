@@ -411,7 +411,7 @@ unsafe extern "C" fn test_points() {
 }
 unsafe fn main_0(
     mut argc: libc::c_int,
-    mut argv: *mut *const libc::c_char,
+    mut argv: *mut *mut libc::c_char,
 ) -> libc::c_int {
     printf(
         b"\nquadtree_t: %ld\n\0" as *const u8 as *const libc::c_char,

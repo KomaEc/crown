@@ -310,7 +310,7 @@ unsafe extern "C" fn repl() -> libc::c_int {
 }
 unsafe extern "C" fn nonint(
     mut argc: libc::c_int,
-    mut argv: *mut *const libc::c_char,
+    mut argv: *mut *mut libc::c_char,
 ) -> libc::c_int {
     let mut lil = crate::src::lil::lil_new();
     let mut filename = *argv.offset(1 as libc::c_int as isize);
@@ -376,7 +376,7 @@ unsafe extern "C" fn nonint(
 }
 unsafe fn main_0(
     mut argc: libc::c_int,
-    mut argv: *mut /* owning */ *const libc::c_char,
+    mut argv: *mut *mut libc::c_char,
 ) -> libc::c_int {
     if argc < 2 as libc::c_int { return repl() } else { return nonint(argc, argv) };
 }

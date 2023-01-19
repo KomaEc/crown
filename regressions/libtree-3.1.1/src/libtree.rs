@@ -409,7 +409,7 @@ unsafe extern "C" fn putchar(mut __c: libc::c_int) -> libc::c_int {
 }
 #[inline]
 unsafe extern "C" fn stat(
-    mut __path: *const libc::c_char,
+    mut __path: *mut libc::c_char,
     mut __statbuf: *mut stat,
 ) -> libc::c_int {
     return __xstat(1 as libc::c_int, __path, __statbuf);
@@ -973,8 +973,8 @@ unsafe extern "C" fn interpolate_variables(
     return 0 as libc::c_int;
 }
 unsafe extern "C" fn print_colon_delimited_paths(
-    mut start: *const libc::c_char,
-    mut indent: *const libc::c_char,
+    mut start: *mut libc::c_char,
+    mut indent: *mut libc::c_char,
 ) {
     while !((*start) as libc::c_int == '\0' as i32) {
         let mut next = strchr(start, ':' as i32);

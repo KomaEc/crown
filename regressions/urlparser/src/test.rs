@@ -438,7 +438,7 @@ pub unsafe extern "C" fn url_parse(mut url: *mut libc::c_char) -> *mut url_data_
     return data;
 }
 #[no_mangle]
-pub unsafe extern "C" fn strdup(mut str: *const libc::c_char) -> *mut /* owning */ libc::c_char {
+pub unsafe extern "C" fn strdup(mut str: *mut libc::c_char) -> *mut /* owning */ libc::c_char {
     let mut n = (strlen(str)).wrapping_add(1 as libc::c_int as libc::c_ulong)
         as libc::c_int;
     let mut dup = malloc(n as libc::c_ulong) as *mut libc::c_char;

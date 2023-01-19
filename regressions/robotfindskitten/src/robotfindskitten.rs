@@ -109,7 +109,7 @@ pub struct screen_object {
 static mut ver: *mut libc::c_char = b"1.7320508.406\0" as *const u8
     as *const libc::c_char as *mut libc::c_char;
 #[inline]
-unsafe extern "C" fn atoi(mut __nptr: *const libc::c_char) -> libc::c_int {
+unsafe extern "C" fn atoi(mut __nptr: *mut libc::c_char) -> libc::c_int {
     return strtol(
         __nptr,
         0 as *mut libc::c_void as *mut *mut libc::c_char,

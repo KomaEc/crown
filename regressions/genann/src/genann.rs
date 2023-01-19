@@ -318,7 +318,7 @@ pub unsafe extern "C" fn genann_run(
 }
 #[no_mangle]
 pub unsafe extern "C" fn genann_train(
-    mut ann: *const crate::src::example1::genann,
+    mut ann: *mut crate::src::example1::genann,
     mut inputs: *const libc::c_double,
     mut desired_outputs: *const libc::c_double,
     mut learning_rate: libc::c_double,

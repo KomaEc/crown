@@ -2400,7 +2400,7 @@ unsafe extern "C" fn bzopen_or_bzdopen(
 }
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzopen(
-    mut path: *mut /* owning */ libc::c_char,
+    mut path: *const libc::c_char,
     mut mode: *const libc::c_char,
 ) -> *mut libc::c_void {
     return bzopen_or_bzdopen(path, -(1 as libc::c_int), mode, 0 as libc::c_int);

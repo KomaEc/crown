@@ -625,7 +625,7 @@ pub unsafe extern "C" fn lil_register(
 #[no_mangle]
 pub unsafe extern "C" fn lil_set_var(
     mut lil: lil_t,
-    mut name: *const libc::c_char,
+    mut name: *mut libc::c_char,
     mut val: lil_value_t,
     mut local: libc::c_int,
 ) -> lil_var_t {
@@ -689,14 +689,14 @@ pub unsafe extern "C" fn lil_set_var(
 #[no_mangle]
 pub unsafe extern "C" fn lil_get_var(
     mut lil: lil_t,
-    mut name: *const libc::c_char,
+    mut name: *mut libc::c_char,
 ) -> lil_value_t {
     return lil_get_var_or(lil.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), name, (*lil.as_deref().unwrap()).empty);
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_get_var_or(
     mut lil: lil_t,
-    mut name: *const libc::c_char,
+    mut name: *mut libc::c_char,
     mut defvalue: lil_value_t,
 ) -> lil_value_t {
     let mut var = lil_find_var(lil.as_mut(), (*lil).env.as_mut(), name);
@@ -1273,7 +1273,7 @@ pub unsafe extern "C" fn lil_set_error_at(
 #[no_mangle]
 pub unsafe extern "C" fn lil_error(
     mut lil: lil_t,
-    mut msg: Option<&mut *const libc::c_char>,
+    mut msg: Option<&mut *mut libc::c_char>,
     mut pos: Option<&mut size_t>,
 ) -> libc::c_int {
     if (*lil.as_deref().unwrap()).error == 0 {
@@ -2751,7 +2751,7 @@ pub unsafe extern "C" fn lil_arg(
     return if !argv.is_null() { *argv.offset(index as isize) } else {(); 0 as lil_value_t };
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_to_string(mut val: lil_value_t) -> *const libc::c_char {
+pub unsafe extern "C" fn lil_to_string(mut val: lil_value_t) -> *mut libc::c_char {
     return if !val.is_null() && !(*val).d.is_null() {
         (*val).d as *const libc::c_char
     } else {
@@ -3804,7 +3804,7 @@ unsafe extern "C" fn fnc_expr(
 }
 unsafe extern "C" fn real_inc(
     mut lil: lil_t,
-    mut varname: *const libc::c_char,
+    mut varname: *mut libc::c_char,
     mut v: libc::c_float,
 ) -> lil_value_t {
     let mut pv = lil_get_var(lil.as_deref_mut(), varname);

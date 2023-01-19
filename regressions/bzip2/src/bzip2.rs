@@ -176,14 +176,14 @@ impl zzzz {pub fn take(&mut self) -> Self {core::mem::take(self)}}
 pub type Cell = zzzz;
 #[inline]
 unsafe extern "C" fn stat(
-    mut __path: *const libc::c_char,
+    mut __path: *mut libc::c_char,
     mut __statbuf: *mut stat,
 ) -> libc::c_int {
     return __xstat(1 as libc::c_int, __path, __statbuf);
 }
 #[inline]
 unsafe extern "C" fn lstat(
-    mut __path: *const libc::c_char,
+    mut __path: *mut libc::c_char,
     mut __statbuf: *mut stat,
 ) -> libc::c_int {
     return __lxstat(1 as libc::c_int, __path, __statbuf);

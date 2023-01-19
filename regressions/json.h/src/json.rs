@@ -64,7 +64,7 @@ pub struct json_parse_state_s {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct json_number_s {
-    pub number: *const libc::c_char,
+    pub number: *mut libc::c_char,
     pub number_size: size_t,
 }
 pub const json_type_number: json_type_e = 1;
@@ -2572,7 +2572,7 @@ pub unsafe extern "C" fn json_value_is_null(value: *const json_value_s) -> libc:
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_get_number_size(
-    mut number: *const json_number_s,
+    mut number: *mut json_number_s,
     mut size: Option<&mut size_t>,
 ) -> libc::c_int {
     let mut parsed_number: uintmax_t = 0;
@@ -2717,7 +2717,7 @@ pub unsafe extern "C" fn json_write_get_string_size(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_minified_get_array_size(
-    mut array: *const json_array_s,
+    mut array: *mut json_array_s,
     mut size: Option<&mut size_t>,
 ) -> libc::c_int {
     let mut element = 0 as *mut json_array_element_s;
@@ -2740,7 +2740,7 @@ pub unsafe extern "C" fn json_write_minified_get_array_size(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_minified_get_object_size(
-    mut object: *const json_object_s,
+    mut object: *mut json_object_s,
     mut size: Option<&mut size_t>,
 ) -> libc::c_int {
     let mut element = 0 as *mut json_object_element_s;
@@ -2767,7 +2767,7 @@ pub unsafe extern "C" fn json_write_minified_get_object_size(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_minified_get_value_size(
-    mut value: *const json_value_s,
+    mut value: *mut json_value_s,
     mut size: Option<&mut size_t>,
 ) -> libc::c_int {
     match (*value).type_0 {
@@ -2815,7 +2815,7 @@ pub unsafe extern "C" fn json_write_minified_get_value_size(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_number(
-    mut number: *const json_number_s,
+    mut number: *mut json_number_s,
     mut data: *mut libc::c_char,
 ) -> *mut libc::c_char {
     let mut parsed_number: uintmax_t = 0;
@@ -3087,7 +3087,7 @@ pub unsafe extern "C" fn json_write_string(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_minified_array(
-    mut array: *const json_array_s,
+    mut array: *mut json_array_s,
     mut data: *mut libc::c_char,
 ) -> *mut libc::c_char {
     let mut element = 0 as *mut json_array_element_s;
@@ -3114,7 +3114,7 @@ pub unsafe extern "C" fn json_write_minified_array(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_minified_object(
-    mut object: *const json_object_s,
+    mut object: *mut json_object_s,
     mut data: *mut libc::c_char,
 ) -> *mut libc::c_char {
     let mut element = 0 as *mut json_object_element_s;
@@ -3148,7 +3148,7 @@ pub unsafe extern "C" fn json_write_minified_object(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_minified_value(
-    mut value: *const json_value_s,
+    mut value: *mut json_value_s,
     mut data: *mut libc::c_char,
 ) -> *mut libc::c_char {
     match (*value).type_0 {
@@ -3221,7 +3221,7 @@ pub unsafe extern "C" fn json_write_minified(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_pretty_get_array_size(
-    mut array: *const json_array_s,
+    mut array: *mut json_array_s,
     mut depth: size_t,
     mut indent_size: size_t,
     mut newline_size: size_t,
@@ -3267,7 +3267,7 @@ pub unsafe extern "C" fn json_write_pretty_get_array_size(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_pretty_get_object_size(
-    mut object: *const json_object_s,
+    mut object: *mut json_object_s,
     mut depth: size_t,
     mut indent_size: size_t,
     mut newline_size: size_t,
@@ -3318,7 +3318,7 @@ pub unsafe extern "C" fn json_write_pretty_get_object_size(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_pretty_get_value_size(
-    mut value: *const json_value_s,
+    mut value: *mut json_value_s,
     mut depth: size_t,
     mut indent_size: size_t,
     mut newline_size: size_t,
@@ -3375,7 +3375,7 @@ pub unsafe extern "C" fn json_write_pretty_get_value_size(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_pretty_array(
-    mut array: *const json_array_s,
+    mut array: *mut json_array_s,
     mut depth: size_t,
     mut indent: *const libc::c_char,
     mut newline: *const libc::c_char,
@@ -3458,7 +3458,7 @@ pub unsafe extern "C" fn json_write_pretty_array(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_pretty_object(
-    mut object: *const json_object_s,
+    mut object: *mut json_object_s,
     mut depth: size_t,
     mut indent: *const libc::c_char,
     mut newline: *const libc::c_char,
@@ -3554,7 +3554,7 @@ pub unsafe extern "C" fn json_write_pretty_object(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_write_pretty_value(
-    mut value: *const json_value_s,
+    mut value: *mut json_value_s,
     mut depth: size_t,
     mut indent: *const libc::c_char,
     mut newline: *const libc::c_char,
