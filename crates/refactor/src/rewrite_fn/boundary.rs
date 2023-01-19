@@ -14,8 +14,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         &self,
         callee: DefId,
         args: &Vec<Operand<'tcx>>,
-        _destination: Place<'tcx>,
-        _fn_span: Span,
+        destination: Place<'tcx>,
+        fn_span: Span,
         location: Location,
         fn_decision: &FnLocals,
         rewriter: &mut impl Rewrite,
@@ -39,6 +39,12 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 self.rewrite_temporary(local, location, required, rewriter);
             }
         }
+
+        let ret_ty = destination.ty(self.body, self.tcx).ty;
+        let required = self.acquire_place_info(&destination);
+        let produced = PlaceValueType::from_ptr_ctxt(ret_ty, &callee_decision[0]);
+        println!("calling {}, adapting {:?} to {:?}", self.tcx.def_path_str(callee), produced, required);
+        self.adapt_usage(fn_span, ret_ty, destination.is_indirect(), produced, required, rewriter)
     }
 
     /// Hack

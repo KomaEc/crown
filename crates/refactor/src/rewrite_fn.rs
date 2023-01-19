@@ -107,6 +107,8 @@ fn rewrite_fn<'tcx>(
         tcx,
     };
 
+    println!("Rewriting {}", tcx.def_path_str(body.source.def_id()));
+
     for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
         let mut statement_index = 0;
         for statement in bb_data.statements.iter() {
@@ -168,7 +170,7 @@ pub struct FnRewriteCtxt<'tcx, 'me> {
 }
 
 /// Information of a lvalue/rvalue coming from a place
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 enum PlaceValueType<'me> {
     Ptr(&'me [PointerKind]),
     Struct(DefId),
@@ -711,6 +713,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         } else {
             // deref copies must be dereferenced!
             assert_eq!(resolved_location, location);
+            assert_eq!(place, resolved_place);
             self.rewrite_temporary(resolved_place.local, location, required, rewriter);
             return;
         };
