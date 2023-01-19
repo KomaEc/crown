@@ -1,5 +1,6 @@
 pub const PATTERNS: &[Pattern] = &[
-    ASSIGN_VALUE_AS_ASSIGNER4,
+    ASSIGN_VALUE_AS_ASSIGNER_4_VARS_V0,
+    ASSIGN_VALUE_AS_ASSIGNER_4_VARS_V1,
     ASSIGN_VALUE_AS_ASSIGNER_3_VARS_V0,
     ASSIGN_VALUE_AS_ASSIGNER_3_VARS_V1,
     ASSIGN_VALUE_AS_ASSIGNER1,
@@ -18,7 +19,7 @@ pub struct Pattern {
 /// ```c
 /// x = y = z = w = val;
 /// ```
-const ASSIGN_VALUE_AS_ASSIGNER4: Pattern = Pattern {
+const ASSIGN_VALUE_AS_ASSIGNER_4_VARS_V0: Pattern = Pattern {
     pattern: concat!(
         r"let ref mut fresh(?P<version1>[0-9]+)[\s|\n]*=[\s|\n]*(?P<w>[^;]+);[\s|\n]*",
         r"\*fresh(?P<version2>[0-9]+)[\s|\n]*=[\s|\n]*(?P<val>[^;]+);[\s|\n]*",
@@ -29,10 +30,10 @@ const ASSIGN_VALUE_AS_ASSIGNER4: Pattern = Pattern {
         r"let ref mut fresh(?P<version9>[0-9]+)[\s|\n]*=[\s|\n]*(?P<x>[^;]+);[\s|\n]*",
         r"\*fresh(?P<version10>[0-9]+)[\s|\n]*=[\s|\n]*\*fresh(?P<version11>[0-9]+);",
     ),
-    replacer: assign_value_as_assigner4,
+    replacer: assign_value_as_assigner_4_vars_v0,
 };
 
-fn assign_value_as_assigner4(caps: &regex::Captures<'_>) -> String {
+fn assign_value_as_assigner_4_vars_v0(caps: &regex::Captures<'_>) -> String {
     let original = &caps[0];
     let version1 = &caps["version1"];
     let version2 = &caps["version2"];
@@ -85,6 +86,85 @@ fn assign_value_as_assigner4(caps: &regex::Captures<'_>) -> String {
         + " = "
         + y
         + ";"
+}
+
+/// ```c
+/// w = x = y = z = value;
+/// ```
+/// is translated to
+/// ```rust
+/// let ref mut fresh1 = z;
+/// *fresh1 = val;
+/// let ref mut fresh2 = y;
+/// *fresh2 = *fresh1;
+/// let ref mut fresh3 = x;
+/// *fresh3 = *fresh2;
+/// w = *fresh3;
+/// ```
+const ASSIGN_VALUE_AS_ASSIGNER_4_VARS_V1: Pattern = Pattern {
+    pattern: concat!(
+        r"let ref mut fresh(?P<version1>[0-9]+)[\s|\n]*=[\s|\n]*(?P<z>[^;]+);[\s|\n]*",
+        r"\*fresh(?P<version2>[0-9]+)[\s|\n]*=[\s|\n]*(?P<val>[^;]+);[\s|\n]*",
+        r"let ref mut fresh(?P<version3>[0-9]+)[\s|\n]*=[\s|\n]*(?P<y>[^;]+);[\s|\n]*",
+        r"\*fresh(?P<version4>[0-9]+)[\s|\n]*=[\s|\n]*\*fresh(?P<version5>[0-9]+)[\s|\n]*(?P<as1>as[^;]+)?;[\s|\n]*",
+        r"let ref mut fresh(?P<version6>[0-9]+)[\s|\n]*=[\s|\n]*(?P<x>[^;]+);[\s|\n]*",
+        r"\*fresh(?P<version7>[0-9]+)[\s|\n]*=[\s|\n]*\*fresh(?P<version8>[0-9]+)[\s|\n]*(?P<as2>as[^;]+)?;[\s|\n]*",
+        r"(?P<w>[^=]+)[ |\n]*=[\s|\n]*\*fresh(?P<version9>\d+)[\s|\n]*(?P<as3>as[^;]+)?;",
+    ),
+    replacer: assign_value_as_assigner_4_vars_v1,
+};
+
+fn assign_value_as_assigner_4_vars_v1(caps: &regex::Captures<'_>) -> String {
+    let original = &caps[0];
+    let version1 = &caps["version1"];
+    let version2 = &caps["version2"];
+    let version3 = &caps["version3"];
+    let version4 = &caps["version4"];
+    let version5 = &caps["version5"];
+    let version6 = &caps["version6"];
+    let version7 = &caps["version7"];
+    let version8 = &caps["version8"];
+    let version9 = &caps["version9"];
+
+    if !(version1 == version2
+        && version1 != version3
+        && version3 == version4
+        && version1 == version5
+        && version1 != version6
+        && version3 != version6
+        && version6 == version7
+        && version3 == version8
+        && version9 == version6)
+    {
+        return original.to_owned();
+    }
+
+    let w = &caps["w"];
+    let x = &caps["x"];
+    let y = &caps["y"];
+    let z = &caps["z"];
+    let val = &caps["val"];
+
+    let stmt1 = z.to_owned() + " = " + val + ";";
+    let mut stmt2 = y.to_owned() + " = " + z;
+    if let Some(cast) = &caps.name("as1") {
+        stmt2 = stmt2 + " " + cast.as_str()
+    }
+    stmt2 += ";";
+    let stmt2 = stmt2;
+    let mut stmt3 = x.to_owned() + " = " + y;
+    if let Some(cast) = &caps.name("as2") {
+        stmt3 = stmt3 + " " + cast.as_str()
+    }
+    stmt3 += ";";
+    let stmt3 = stmt3;
+    let mut stmt4 = w.to_owned() + " = " + x;
+    if let Some(cast) = &caps.name("as3") {
+        stmt4 = stmt4 + " " + cast.as_str()
+    }
+    stmt4 += ";";
+
+    stmt1 + " " + &stmt2 + " " + &stmt3 + " " + &stmt4
 }
 
 /// ```c
