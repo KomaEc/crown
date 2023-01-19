@@ -738,7 +738,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     if base_ptr_kind.is_raw() {
                         replacement = format!("*{replacement}");
                     } else {
-                        let usage = if required.is_copy_obj(self)
+                        let usage = if (required.is_copy_obj(self) && !produced.is_rustc_move_obj(self))
                             || (produced.is_copy_obj(self)
                                 && PLACE_LOAD_MODE == PlaceLoadMode::ByValue as u8)
                         {
