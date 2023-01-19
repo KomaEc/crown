@@ -1,9 +1,14 @@
 use ::libc;
 extern "C" {
     fn printf(_: *const libc::c_char, _: ...) -> libc::c_int;
-
+    
+    
+    
+    
 }
-pub type genann_actfun = Option<unsafe extern "C" fn(libc::c_double) -> libc::c_double>;
+pub type genann_actfun = Option::<
+    unsafe extern "C" fn(libc::c_double) -> libc::c_double,
+>;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct genann {
@@ -19,47 +24,20 @@ pub struct genann {
     pub output: *mut libc::c_double,
     pub delta: *mut libc::c_double,
 }
-impl Default for genann {
-    fn default() -> Self {
-        Self {
-            inputs: Default::default(),
-            hidden_layers: Default::default(),
-            hidden: Default::default(),
-            outputs: Default::default(),
-            activation_hidden: Default::default(),
-            activation_output: Default::default(),
-            total_weights: Default::default(),
-            total_neurons: Default::default(),
-            weight: std::ptr::null_mut(),
-            output: std::ptr::null_mut(),
-            delta: std::ptr::null_mut(),
-        }
-    }
-}
-
-unsafe fn main_0(mut argc: libc::c_int, mut argv: *const *const libc::c_char) -> libc::c_int {
+unsafe fn main_0(
+    mut argc: libc::c_int,
+    mut argv: *mut *mut libc::c_char,
+) -> libc::c_int {
     printf(b"GENANN example 1.\n\0" as *const u8 as *const libc::c_char);
     printf(
         b"Train a small ANN to the XOR function using backpropagation.\n\0" as *const u8
             as *const libc::c_char,
     );
     let input: [[libc::c_double; 2]; 4] = [
-        [
-            0 as libc::c_int as libc::c_double,
-            0 as libc::c_int as libc::c_double,
-        ],
-        [
-            0 as libc::c_int as libc::c_double,
-            1 as libc::c_int as libc::c_double,
-        ],
-        [
-            1 as libc::c_int as libc::c_double,
-            0 as libc::c_int as libc::c_double,
-        ],
-        [
-            1 as libc::c_int as libc::c_double,
-            1 as libc::c_int as libc::c_double,
-        ],
+        [0 as libc::c_int as libc::c_double, 0 as libc::c_int as libc::c_double],
+        [0 as libc::c_int as libc::c_double, 1 as libc::c_int as libc::c_double],
+        [1 as libc::c_int as libc::c_double, 0 as libc::c_int as libc::c_double],
+        [1 as libc::c_int as libc::c_double, 1 as libc::c_int as libc::c_double],
     ];
     let output: [libc::c_double; 4] = [
         0 as libc::c_int as libc::c_double,
@@ -74,7 +52,7 @@ unsafe fn main_0(mut argc: libc::c_int, mut argv: *const *const libc::c_char) ->
         2 as libc::c_int,
         1 as libc::c_int,
     );
-    i = 0 as libc::c_int;
+    i= 0 as libc::c_int;
     while i < 300 as libc::c_int {
         crate::src::genann::genann_train(
             ann,
@@ -100,7 +78,7 @@ unsafe fn main_0(mut argc: libc::c_int, mut argv: *const *const libc::c_char) ->
             output.as_ptr().offset(3 as libc::c_int as isize),
             3 as libc::c_int as libc::c_double,
         );
-        i += 1;
+        i+= 1;
     }
     printf(
         b"Output for [%1.f, %1.f] is %1.f.\n\0" as *const u8 as *const libc::c_char,
@@ -126,7 +104,7 @@ unsafe fn main_0(mut argc: libc::c_int, mut argv: *const *const libc::c_char) ->
         input[3 as libc::c_int as usize][1 as libc::c_int as usize],
         *crate::src::genann::genann_run(ann.as_mut(), (input[3 as libc::c_int as usize]).as_ptr()),
     );
-    crate::src::genann::genann_free(Some(Box::from_raw(ann)));
+    crate::src::genann::genann_free(ann);
     return 0 as libc::c_int;
 }
 // pub fn main() {

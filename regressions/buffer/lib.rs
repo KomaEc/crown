@@ -11,8 +11,9 @@
 #![feature(core_intrinsics)]
 #![feature(raw_ref_op)]
 
+
 extern crate libc;
 pub mod src {
-    pub mod buffer;
-    pub mod test;
+pub mod buffer;
+pub mod test;
 } // mod src

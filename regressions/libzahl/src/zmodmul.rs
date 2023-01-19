@@ -1,6 +1,8 @@
 use ::libc;
 extern "C" {
-
+    
+    
+    
     static mut libzahl_tmp_modmul: z_t;
 }
 pub type size_t = libc::c_ulong;
@@ -10,12 +12,6 @@ pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor20;
-impl Default for ErasedByPreprocessor20 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[no_mangle]
 pub unsafe extern "C" fn zmodmul(

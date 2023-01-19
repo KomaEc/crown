@@ -41,12 +41,6 @@ pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor60;
-impl Default for ErasedByPreprocessor60 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[no_mangle]
 pub unsafe extern "C" fn zunsetup() {
@@ -81,32 +75,41 @@ pub unsafe extern "C" fn zunsetup() {
         free((*libzahl_const_1.as_mut_ptr()).chars as *mut libc::c_void);
         free((*libzahl_const_2.as_mut_ptr()).chars as *mut libc::c_void);
         free((*libzahl_const_4.as_mut_ptr()).chars as *mut libc::c_void);
-        i = 32 as libc::c_int as size_t;
+        i= 32 as libc::c_int as size_t;
         loop {
             let fresh0 = i;
-            i = i.wrapping_sub(1);
+            i= i.wrapping_sub(1);
             if !(fresh0 != 0) {
                 break;
             }
-            free((*(libzahl_tmp_divmod_ds[i as usize]).as_mut_ptr()).chars as *mut libc::c_void);
+            free(
+                (*(libzahl_tmp_divmod_ds[i as usize]).as_mut_ptr()).chars
+                    as *mut libc::c_void,
+            );
         }
-        i = (::std::mem::size_of::<[*mut *mut zahl_char_t; 64]>() as libc::c_ulong)
-            .wrapping_div(::std::mem::size_of::<*mut *mut zahl_char_t>() as libc::c_ulong);
+        i= (::std::mem::size_of::<[*mut *mut zahl_char_t; 64]>() as libc::c_ulong)
+            .wrapping_div(
+                ::std::mem::size_of::<*mut *mut zahl_char_t>() as libc::c_ulong,
+            );
         loop {
             let fresh1 = i;
-            i = i.wrapping_sub(1);
+            i= i.wrapping_sub(1);
             if !(fresh1 != 0) {
                 break;
             }
             loop {
                 let fresh2 = libzahl_pool_n[i as usize];
-                libzahl_pool_n[i as usize] = (libzahl_pool_n[i as usize]).wrapping_sub(1);
+                libzahl_pool_n[i
+                    as usize] = (libzahl_pool_n[i as usize]).wrapping_sub(1);
                 if !(fresh2 != 0) {
                     break;
                 }
-                ();
+                free(
+                    *(libzahl_pool[i as usize])
+                        .offset(libzahl_pool_n[i as usize] as isize) as *mut libc::c_void,
+                );
             }
-            ();
+            free(libzahl_pool[i as usize] as *mut libc::c_void);
         }
     }
 }

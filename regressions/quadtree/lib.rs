@@ -10,13 +10,14 @@
 #![feature(core_intrinsics)]
 #![feature(raw_ref_op)]
 
+
 extern crate libc;
 pub mod src {
-    pub mod src {
-        pub mod bounds;
-        pub mod node;
-        pub mod point;
-        pub mod quadtree;
-    } // mod src
-    pub mod test;
+pub mod src {
+pub mod bounds;
+pub mod node;
+pub mod point;
+pub mod quadtree;
+} // mod src
+pub mod test;
 } // mod src

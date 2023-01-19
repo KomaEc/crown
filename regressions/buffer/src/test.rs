@@ -10,13 +10,29 @@ extern "C" {
     fn printf(_: *const libc::c_char, _: ...) -> libc::c_int;
     fn strcmp(_: *const libc::c_char, _: *const libc::c_char) -> libc::c_int;
     fn strlen(_: *const libc::c_char) -> libc::c_ulong;
-
+    
+    
+    
+    
+    
+    
+    
+    
+    
     fn buffer_appendf(
         self_0: *mut crate::src::buffer::buffer_t,
         format: *const libc::c_char,
         _: ...
     ) -> libc::c_int;
-
+    
+    
+    
+    
+    
+    
+    
+    
+    
 }
 pub type size_t = libc::c_ulong;
 pub type __ssize_t = libc::c_long;
@@ -24,24 +40,12 @@ pub type ssize_t = __ssize_t;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor0;
-impl Default for ErasedByPreprocessor0 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 #[no_mangle]
-pub unsafe extern "C" fn equal(mut a: *const libc::c_char, mut b: *const libc::c_char) {
+pub unsafe extern "C" fn equal(mut a: *mut libc::c_char, mut b: *mut libc::c_char) {
     if strcmp(a, b) != 0 {
         printf(b"\n\0" as *const u8 as *const libc::c_char);
-        printf(
-            b"  expected: '%s'\n\0" as *const u8 as *const libc::c_char,
-            a,
-        );
-        printf(
-            b"    actual: '%s'\n\0" as *const u8 as *const libc::c_char,
-            b,
-        );
+        printf(b"  expected: '%s'\n\0" as *const u8 as *const libc::c_char, a);
+        printf(b"    actual: '%s'\n\0" as *const u8 as *const libc::c_char, b);
         printf(b"\n\0" as *const u8 as *const libc::c_char);
         exit(1 as libc::c_int);
     }
@@ -49,29 +53,16 @@ pub unsafe extern "C" fn equal(mut a: *const libc::c_char, mut b: *const libc::c
 #[no_mangle]
 pub unsafe extern "C" fn test_buffer_new() {
     let mut buf = crate::src::buffer::buffer_new();
-    if 64 as libc::c_int as libc::c_ulong
-        == crate::src::buffer::buffer_size(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 64 as libc::c_int as libc::c_ulong == crate::src::buffer::buffer_size(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
-            b"BUFFER_DEFAULT_SIZE == buffer_size(buf)\0" as *const u8 as *const libc::c_char,
+            b"BUFFER_DEFAULT_SIZE == buffer_size(buf)\0" as *const u8
+                as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             28 as libc::c_int as libc::c_uint,
             b"void test_buffer_new()\0" as *const u8 as *const i8,
         );
     };
-    if 0 as libc::c_int as libc::c_ulong
-        == crate::src::buffer::buffer_length(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 0 as libc::c_int as libc::c_ulong == crate::src::buffer::buffer_length(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"0 == buffer_length(buf)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -84,14 +75,7 @@ pub unsafe extern "C" fn test_buffer_new() {
 #[no_mangle]
 pub unsafe extern "C" fn test_buffer_new_with_size() {
     let mut buf = crate::src::buffer::buffer_new_with_size(1024 as libc::c_int as size_t);
-    if 1024 as libc::c_int as libc::c_ulong
-        == crate::src::buffer::buffer_size(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 1024 as libc::c_int as libc::c_ulong == crate::src::buffer::buffer_size(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"1024 == buffer_size(buf)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -99,14 +83,7 @@ pub unsafe extern "C" fn test_buffer_new_with_size() {
             b"void test_buffer_new_with_size()\0" as *const u8 as *const i8,
         );
     };
-    if 0 as libc::c_int as libc::c_ulong
-        == crate::src::buffer::buffer_length(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 0 as libc::c_int as libc::c_ulong == crate::src::buffer::buffer_length(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"0 == buffer_length(buf)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -120,12 +97,8 @@ pub unsafe extern "C" fn test_buffer_new_with_size() {
 pub unsafe extern "C" fn test_buffer_append() {
     let mut buf = crate::src::buffer::buffer_new();
     if 0 as libc::c_int
-        == crate::src::buffer::buffer_append(
-            buf.as_deref_mut(),
-            b"Hello\0" as *const u8 as *const libc::c_char,
-        )
-    {
-    } else {
+        == crate::src::buffer::buffer_append(buf.as_deref_mut(), b"Hello\0" as *const u8 as *const libc::c_char)
+    {} else {
         __assert_fail(
             b"0 == buffer_append(buf, \"Hello\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -134,12 +107,8 @@ pub unsafe extern "C" fn test_buffer_append() {
         );
     };
     if 0 as libc::c_int
-        == crate::src::buffer::buffer_append(
-            buf.as_deref_mut(),
-            b" World\0" as *const u8 as *const libc::c_char,
-        )
-    {
-    } else {
+        == crate::src::buffer::buffer_append(buf.as_deref_mut(), b" World\0" as *const u8 as *const libc::c_char)
+    {} else {
         __assert_fail(
             b"0 == buffer_append(buf, \" World\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -147,16 +116,11 @@ pub unsafe extern "C" fn test_buffer_append() {
             b"void test_buffer_append()\0" as *const u8 as *const i8,
         );
     };
-    if strlen(b"Hello World\0" as *const u8 as *const libc::c_char)
-        == crate::src::buffer::buffer_length(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if strlen(b"Hello World\0" as *const u8 as *const libc::c_char) == crate::src::buffer::buffer_length(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()))
+    {} else {
         __assert_fail(
-            b"strlen(\"Hello World\") == buffer_length(buf)\0" as *const u8 as *const libc::c_char,
+            b"strlen(\"Hello World\") == buffer_length(buf)\0" as *const u8
+                as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             46 as libc::c_int as libc::c_uint,
             b"void test_buffer_append()\0" as *const u8 as *const i8,
@@ -177,10 +141,10 @@ pub unsafe extern "C" fn test_buffer_append_n() {
             b"subway\0" as *const u8 as *const libc::c_char,
             3 as libc::c_int as size_t,
         )
-    {
-    } else {
+    {} else {
         __assert_fail(
-            b"0 == buffer_append_n(buf, \"subway\", 3)\0" as *const u8 as *const libc::c_char,
+            b"0 == buffer_append_n(buf, \"subway\", 3)\0" as *const u8
+                as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             54 as libc::c_int as libc::c_uint,
             b"void test_buffer_append_n()\0" as *const u8 as *const i8,
@@ -192,25 +156,20 @@ pub unsafe extern "C" fn test_buffer_append_n() {
             b"marines\0" as *const u8 as *const libc::c_char,
             6 as libc::c_int as size_t,
         )
-    {
-    } else {
+    {} else {
         __assert_fail(
-            b"0 == buffer_append_n(buf, \"marines\", 6)\0" as *const u8 as *const libc::c_char,
+            b"0 == buffer_append_n(buf, \"marines\", 6)\0" as *const u8
+                as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             55 as libc::c_int as libc::c_uint,
             b"void test_buffer_append_n()\0" as *const u8 as *const i8,
         );
     };
-    if strlen(b"submarine\0" as *const u8 as *const libc::c_char)
-        == crate::src::buffer::buffer_length(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if strlen(b"submarine\0" as *const u8 as *const libc::c_char) == crate::src::buffer::buffer_length(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()))
+    {} else {
         __assert_fail(
-            b"strlen(\"submarine\") == buffer_length(buf)\0" as *const u8 as *const libc::c_char,
+            b"strlen(\"submarine\") == buffer_length(buf)\0" as *const u8
+                as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             56 as libc::c_int as libc::c_uint,
             b"void test_buffer_append_n()\0" as *const u8 as *const i8,
@@ -226,12 +185,8 @@ pub unsafe extern "C" fn test_buffer_append_n() {
 pub unsafe extern "C" fn test_buffer_append__grow() {
     let mut buf = crate::src::buffer::buffer_new_with_size(10 as libc::c_int as size_t);
     if 0 as libc::c_int
-        == crate::src::buffer::buffer_append(
-            buf.as_deref_mut(),
-            b"Hello\0" as *const u8 as *const libc::c_char,
-        )
-    {
-    } else {
+        == crate::src::buffer::buffer_append(buf.as_deref_mut(), b"Hello\0" as *const u8 as *const libc::c_char)
+    {} else {
         __assert_fail(
             b"0 == buffer_append(buf, \"Hello\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -240,12 +195,8 @@ pub unsafe extern "C" fn test_buffer_append__grow() {
         );
     };
     if 0 as libc::c_int
-        == crate::src::buffer::buffer_append(
-            buf.as_deref_mut(),
-            b" tobi\0" as *const u8 as *const libc::c_char,
-        )
-    {
-    } else {
+        == crate::src::buffer::buffer_append(buf.as_deref_mut(), b" tobi\0" as *const u8 as *const libc::c_char)
+    {} else {
         __assert_fail(
             b"0 == buffer_append(buf, \" tobi\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -254,12 +205,8 @@ pub unsafe extern "C" fn test_buffer_append__grow() {
         );
     };
     if 0 as libc::c_int
-        == crate::src::buffer::buffer_append(
-            buf.as_deref_mut(),
-            b" was\0" as *const u8 as *const libc::c_char,
-        )
-    {
-    } else {
+        == crate::src::buffer::buffer_append(buf.as_deref_mut(), b" was\0" as *const u8 as *const libc::c_char)
+    {} else {
         __assert_fail(
             b"0 == buffer_append(buf, \" was\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -268,12 +215,8 @@ pub unsafe extern "C" fn test_buffer_append__grow() {
         );
     };
     if 0 as libc::c_int
-        == crate::src::buffer::buffer_append(
-            buf.as_deref_mut(),
-            b" here\0" as *const u8 as *const libc::c_char,
-        )
-    {
-    } else {
+        == crate::src::buffer::buffer_append(buf.as_deref_mut(), b" here\0" as *const u8 as *const libc::c_char)
+    {} else {
         __assert_fail(
             b"0 == buffer_append(buf, \" here\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -281,16 +224,10 @@ pub unsafe extern "C" fn test_buffer_append__grow() {
             b"void test_buffer_append__grow()\0" as *const u8 as *const i8,
         );
     };
-    let mut str = b"Hello tobi was here\0" as *const u8 as *const libc::c_char as *mut libc::c_char;
+    let mut str = b"Hello tobi was here\0" as *const u8 as *const libc::c_char
+        as *mut libc::c_char;
     equal(str, (*buf.as_deref().unwrap()).data);
-    if 1024 as libc::c_int as libc::c_ulong
-        == crate::src::buffer::buffer_size(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 1024 as libc::c_int as libc::c_ulong == crate::src::buffer::buffer_size(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"1024 == buffer_size(buf)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -298,14 +235,7 @@ pub unsafe extern "C" fn test_buffer_append__grow() {
             b"void test_buffer_append__grow()\0" as *const u8 as *const i8,
         );
     };
-    if strlen(str)
-        == crate::src::buffer::buffer_length(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if strlen(str) == crate::src::buffer::buffer_length(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"strlen(str) == buffer_length(buf)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -319,12 +249,8 @@ pub unsafe extern "C" fn test_buffer_append__grow() {
 pub unsafe extern "C" fn test_buffer_prepend() {
     let mut buf = crate::src::buffer::buffer_new();
     if 0 as libc::c_int
-        == crate::src::buffer::buffer_append(
-            buf.as_deref_mut(),
-            b" World\0" as *const u8 as *const libc::c_char,
-        )
-    {
-    } else {
+        == crate::src::buffer::buffer_append(buf.as_deref_mut(), b" World\0" as *const u8 as *const libc::c_char)
+    {} else {
         __assert_fail(
             b"0 == buffer_append(buf, \" World\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -337,8 +263,7 @@ pub unsafe extern "C" fn test_buffer_prepend() {
             buf.as_deref_mut(),
             b"Hello\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
         )
-    {
-    } else {
+    {} else {
         __assert_fail(
             b"0 == buffer_prepend(buf, \"Hello\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -346,16 +271,11 @@ pub unsafe extern "C" fn test_buffer_prepend() {
             b"void test_buffer_prepend()\0" as *const u8 as *const i8,
         );
     };
-    if strlen(b"Hello World\0" as *const u8 as *const libc::c_char)
-        == crate::src::buffer::buffer_length(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if strlen(b"Hello World\0" as *const u8 as *const libc::c_char) == crate::src::buffer::buffer_length(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()))
+    {} else {
         __assert_fail(
-            b"strlen(\"Hello World\") == buffer_length(buf)\0" as *const u8 as *const libc::c_char,
+            b"strlen(\"Hello World\") == buffer_length(buf)\0" as *const u8
+                as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             81 as libc::c_int as libc::c_uint,
             b"void test_buffer_prepend()\0" as *const u8 as *const i8,
@@ -370,14 +290,9 @@ pub unsafe extern "C" fn test_buffer_prepend() {
 #[no_mangle]
 pub unsafe extern "C" fn test_buffer_slice() {
     let mut buf = crate::src::buffer::buffer_new();
-    crate::src::buffer::buffer_append(
-        buf.as_deref_mut(),
-        b"Tobi Ferret\0" as *const u8 as *const libc::c_char,
-    );
+    crate::src::buffer::buffer_append(buf.as_deref_mut(), b"Tobi Ferret\0" as *const u8 as *const libc::c_char);
     let mut a = crate::src::buffer::buffer_slice(
-        buf.as_deref()
-            .map(|r| r as *const _)
-            .unwrap_or(std::ptr::null()),
+        buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         2 as libc::c_int as size_t,
         8 as libc::c_int as ssize_t,
     );
@@ -398,15 +313,11 @@ pub unsafe extern "C" fn test_buffer_slice__range_error() {
         b"Tobi Ferret\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
     );
     let mut a = crate::src::buffer::buffer_slice(
-        buf.as_deref()
-            .map(|r| r as *const _)
-            .unwrap_or(std::ptr::null()),
+        buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         10 as libc::c_int as size_t,
         2 as libc::c_int as ssize_t,
     );
-    if a.as_deref().is_none() {
-        ();
-    } else {
+    if a.as_deref().is_none() {();} else {
         __assert_fail(
             b"NULL == a\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -422,9 +333,7 @@ pub unsafe extern "C" fn test_buffer_slice__end() {
         b"Tobi Ferret\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
     );
     let mut a = crate::src::buffer::buffer_slice(
-        buf.as_deref()
-            .map(|r| r as *const _)
-            .unwrap_or(std::ptr::null()),
+        buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         5 as libc::c_int as size_t,
         -(1 as libc::c_int) as ssize_t,
     );
@@ -437,27 +346,17 @@ pub unsafe extern "C" fn test_buffer_slice__end() {
         (*a.as_deref().unwrap()).data,
     );
     let mut b = crate::src::buffer::buffer_slice(
-        buf.as_deref()
-            .map(|r| r as *const _)
-            .unwrap_or(std::ptr::null()),
+        buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         5 as libc::c_int as size_t,
         -(3 as libc::c_int) as ssize_t,
     );
-    equal(
-        b"Ferr\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
-        (*b.as_deref().unwrap()).data,
-    );
+    equal(b"Ferr\0" as *const u8 as *const libc::c_char as *mut libc::c_char, (*b.as_deref().unwrap()).data);
     let mut c = crate::src::buffer::buffer_slice(
-        buf.as_deref()
-            .map(|r| r as *const _)
-            .unwrap_or(std::ptr::null()),
+        buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         8 as libc::c_int as size_t,
         -(1 as libc::c_int) as ssize_t,
     );
-    equal(
-        b"ret\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
-        (*c.as_deref().unwrap()).data,
-    );
+    equal(b"ret\0" as *const u8 as *const libc::c_char as *mut libc::c_char, (*c.as_deref().unwrap()).data);
     crate::src::buffer::buffer_free(buf);
     crate::src::buffer::buffer_free(a);
     crate::src::buffer::buffer_free(b);
@@ -469,9 +368,7 @@ pub unsafe extern "C" fn test_buffer_slice__end_overflow() {
         b"Tobi Ferret\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
     );
     let mut a = crate::src::buffer::buffer_slice(
-        buf.as_deref()
-            .map(|r| r as *const _)
-            .unwrap_or(std::ptr::null()),
+        buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         5 as libc::c_int as size_t,
         1000 as libc::c_int as ssize_t,
     );
@@ -494,17 +391,7 @@ pub unsafe extern "C" fn test_buffer_equals() {
     let mut b = crate::src::buffer::buffer_new_with_copy(
         b"Hello\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
     );
-    if 1 as libc::c_int
-        == crate::src::buffer::buffer_equals(
-            a.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-            b.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 1 as libc::c_int == crate::src::buffer::buffer_equals(a.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), b.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"1 == buffer_equals(a, b)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -512,21 +399,8 @@ pub unsafe extern "C" fn test_buffer_equals() {
             b"void test_buffer_equals()\0" as *const u8 as *const i8,
         );
     };
-    crate::src::buffer::buffer_append(
-        b.as_deref_mut(),
-        b" World\0" as *const u8 as *const libc::c_char,
-    );
-    if 0 as libc::c_int
-        == crate::src::buffer::buffer_equals(
-            a.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-            b.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    crate::src::buffer::buffer_append(b.as_deref_mut(), b" World\0" as *const u8 as *const libc::c_char);
+    if 0 as libc::c_int == crate::src::buffer::buffer_equals(a.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), b.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"0 == buffer_equals(a, b)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -541,15 +415,12 @@ pub unsafe extern "C" fn test_buffer_equals() {
 pub unsafe extern "C" fn test_buffer_formatting() {
     let mut buf = crate::src::buffer::buffer_new();
     let mut result = buffer_appendf(
-        buf.as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
+        buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         b"%d %s\0" as *const u8 as *const libc::c_char,
         3 as libc::c_int,
         b"cow\0" as *const u8 as *const libc::c_char,
     );
-    if 0 as libc::c_int == result {
-    } else {
+    if 0 as libc::c_int == result {} else {
         __assert_fail(
             b"0 == result\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -561,15 +432,12 @@ pub unsafe extern "C" fn test_buffer_formatting() {
         b"3 cow\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
         (*buf.as_deref().unwrap()).data,
     );
-    result = buffer_appendf(
-        buf.as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
+    result= buffer_appendf(
+        buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         b" - 0x%08X\0" as *const u8 as *const libc::c_char,
         0xdeadbeef as libc::c_uint,
     );
-    if 0 as libc::c_int == result {
-    } else {
+    if 0 as libc::c_int == result {} else {
         __assert_fail(
             b"0 == result\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -589,13 +457,10 @@ pub unsafe extern "C" fn test_buffer_indexof() {
         b"Tobi is a ferret\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
     );
     let mut i = crate::src::buffer::buffer_indexof(
-        buf.as_deref()
-            .map(|r| r as *const _)
-            .unwrap_or(std::ptr::null()),
+        buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         b"is\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
     );
-    if 5 as libc::c_int as libc::c_long == i {
-    } else {
+    if 5 as libc::c_int as libc::c_long == i {} else {
         __assert_fail(
             b"5 == i\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -603,14 +468,11 @@ pub unsafe extern "C" fn test_buffer_indexof() {
             b"void test_buffer_indexof()\0" as *const u8 as *const i8,
         );
     };
-    i = crate::src::buffer::buffer_indexof(
-        buf.as_deref()
-            .map(|r| r as *const _)
-            .unwrap_or(std::ptr::null()),
+    i= crate::src::buffer::buffer_indexof(
+        buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         b"a\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
     );
-    if 8 as libc::c_int as libc::c_long == i {
-    } else {
+    if 8 as libc::c_int as libc::c_long == i {} else {
         __assert_fail(
             b"8 == i\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -618,14 +480,11 @@ pub unsafe extern "C" fn test_buffer_indexof() {
             b"void test_buffer_indexof()\0" as *const u8 as *const i8,
         );
     };
-    i = crate::src::buffer::buffer_indexof(
-        buf.as_deref()
-            .map(|r| r as *const _)
-            .unwrap_or(std::ptr::null()),
+    i= crate::src::buffer::buffer_indexof(
+        buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         b"something\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
     );
-    if -(1 as libc::c_int) as libc::c_long == i {
-    } else {
+    if -(1 as libc::c_int) as libc::c_long == i {} else {
         __assert_fail(
             b"-1 == i\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -640,14 +499,7 @@ pub unsafe extern "C" fn test_buffer_fill() {
     let mut buf = crate::src::buffer::buffer_new_with_copy(
         b"Hello\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
     );
-    if 5 as libc::c_int as libc::c_ulong
-        == crate::src::buffer::buffer_length(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 5 as libc::c_int as libc::c_ulong == crate::src::buffer::buffer_length(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"5 == buffer_length(buf)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -656,14 +508,7 @@ pub unsafe extern "C" fn test_buffer_fill() {
         );
     };
     crate::src::buffer::buffer_fill(buf.as_deref_mut(), 0 as libc::c_int);
-    if 0 as libc::c_int as libc::c_ulong
-        == crate::src::buffer::buffer_length(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 0 as libc::c_int as libc::c_ulong == crate::src::buffer::buffer_length(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"0 == buffer_length(buf)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -678,14 +523,7 @@ pub unsafe extern "C" fn test_buffer_clear() {
     let mut buf = crate::src::buffer::buffer_new_with_copy(
         b"Hello\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
     );
-    if 5 as libc::c_int as libc::c_ulong
-        == crate::src::buffer::buffer_length(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 5 as libc::c_int as libc::c_ulong == crate::src::buffer::buffer_length(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"5 == buffer_length(buf)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -694,14 +532,7 @@ pub unsafe extern "C" fn test_buffer_clear() {
         );
     };
     crate::src::buffer::buffer_clear(buf.as_deref_mut());
-    if 0 as libc::c_int as libc::c_ulong
-        == crate::src::buffer::buffer_length(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 0 as libc::c_int as libc::c_ulong == crate::src::buffer::buffer_length(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"0 == buffer_length(buf)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -722,7 +553,7 @@ pub unsafe extern "C" fn test_buffer_trim() {
         (*buf.as_deref().unwrap()).data,
     );
     crate::src::buffer::buffer_free(buf);
-    buf = crate::src::buffer::buffer_new_with_copy(
+    buf= crate::src::buffer::buffer_new_with_copy(
         b"  Hello\n\n \0" as *const u8 as *const libc::c_char as *mut libc::c_char,
     );
     crate::src::buffer::buffer_trim_left(buf.as_deref_mut());
@@ -731,7 +562,7 @@ pub unsafe extern "C" fn test_buffer_trim() {
         (*buf.as_deref().unwrap()).data,
     );
     crate::src::buffer::buffer_free(buf);
-    buf = crate::src::buffer::buffer_new_with_copy(
+    buf= crate::src::buffer::buffer_new_with_copy(
         b"  Hello\n\n \0" as *const u8 as *const libc::c_char as *mut libc::c_char,
     );
     crate::src::buffer::buffer_trim_right(buf.as_deref_mut());
@@ -747,14 +578,7 @@ pub unsafe extern "C" fn test_buffer_compact() {
         b"  Hello\n\n \0" as *const u8 as *const libc::c_char as *mut libc::c_char,
     );
     crate::src::buffer::buffer_trim(buf.as_deref_mut());
-    if 5 as libc::c_int as libc::c_ulong
-        == crate::src::buffer::buffer_length(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 5 as libc::c_int as libc::c_ulong == crate::src::buffer::buffer_length(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"5 == buffer_length(buf)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -762,14 +586,7 @@ pub unsafe extern "C" fn test_buffer_compact() {
             b"void test_buffer_compact()\0" as *const u8 as *const i8,
         );
     };
-    if 10 as libc::c_int as libc::c_ulong
-        == crate::src::buffer::buffer_size(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 10 as libc::c_int as libc::c_ulong == crate::src::buffer::buffer_size(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"10 == buffer_size(buf)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -778,8 +595,7 @@ pub unsafe extern "C" fn test_buffer_compact() {
         );
     };
     let mut removed = crate::src::buffer::buffer_compact(buf.as_deref_mut());
-    if 5 as libc::c_int as libc::c_long == removed {
-    } else {
+    if 5 as libc::c_int as libc::c_long == removed {} else {
         __assert_fail(
             b"5 == removed\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -787,14 +603,7 @@ pub unsafe extern "C" fn test_buffer_compact() {
             b"void test_buffer_compact()\0" as *const u8 as *const i8,
         );
     };
-    if 5 as libc::c_int as libc::c_ulong
-        == crate::src::buffer::buffer_length(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 5 as libc::c_int as libc::c_ulong == crate::src::buffer::buffer_length(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"5 == buffer_length(buf)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -802,14 +611,7 @@ pub unsafe extern "C" fn test_buffer_compact() {
             b"void test_buffer_compact()\0" as *const u8 as *const i8,
         );
     };
-    if 5 as libc::c_int as libc::c_ulong
-        == crate::src::buffer::buffer_size(
-            buf.as_deref()
-                .map(|r| r as *const _)
-                .unwrap_or(std::ptr::null()),
-        )
-    {
-    } else {
+    if 5 as libc::c_int as libc::c_ulong == crate::src::buffer::buffer_size(buf.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) {} else {
         __assert_fail(
             b"5 == buffer_size(buf)\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -841,7 +643,10 @@ unsafe fn main_0() -> libc::c_int {
     test_buffer_clear();
     test_buffer_trim();
     test_buffer_compact();
-    printf(b"\n  \x1B[32m\xE2\x9C\x93 \x1B[90mok\x1B[0m\n\n\0" as *const u8 as *const libc::c_char);
+    printf(
+        b"\n  \x1B[32m\xE2\x9C\x93 \x1B[90mok\x1B[0m\n\n\0" as *const u8
+            as *const libc::c_char,
+    );
     return 0 as libc::c_int;
 }
 // pub fn main() {

@@ -1,6 +1,16 @@
 use ::libc;
 extern "C" {
-
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     static mut libzahl_tmp_ptest_a: z_t;
     static mut libzahl_tmp_ptest_n1: z_t;
     static mut libzahl_tmp_ptest_x: z_t;
@@ -8,7 +18,7 @@ extern "C" {
     static mut libzahl_tmp_ptest_d: z_t;
     static mut libzahl_const_2: z_t;
     static mut libzahl_tmp_ptest_n4: z_t;
-
+    
     static mut libzahl_const_4: z_t;
 }
 pub type size_t = libc::c_ulong;
@@ -18,12 +28,6 @@ pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor38;
-impl Default for ErasedByPreprocessor38 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 pub type zprimality = libc::c_uint;
 pub const PRIME: zprimality = 2;
@@ -36,10 +40,10 @@ pub type zranddist = libc::c_uint;
 pub const UNIFORM: zranddist = 1;
 pub const QUASIUNIFORM: zranddist = 0;
 #[inline]
-unsafe extern "C" fn zeven(mut a_0: *const crate::src::allocator::C2RustUnnamed) -> libc::c_int {
+unsafe extern "C" fn zeven(mut a_0: *mut crate::src::allocator::C2RustUnnamed) -> libc::c_int {
     return ((*a_0).sign == 0
-        || *(*a_0).chars.offset(0 as libc::c_int as isize) & 1 as libc::c_int as libc::c_uint == 0)
-        as libc::c_int;
+        || *(*a_0).chars.offset(0 as libc::c_int as isize)
+            & 1 as libc::c_int as libc::c_uint == 0) as libc::c_int;
 }
 #[no_mangle]
 pub unsafe extern "C" fn zptest(
@@ -55,12 +59,10 @@ pub unsafe extern "C" fn zptest(
                 if witness != n {
                     crate::src::zset::zset(witness.as_mut(), n);
                 }
-            } else {
-                ();
-            }
+            }else { (); }
             return NONPRIME;
         } else {
-            return PRIME;
+            return PRIME
         }
     }
     if zeven(n) != 0 {
@@ -68,30 +70,16 @@ pub unsafe extern "C" fn zptest(
             if witness != n {
                 crate::src::zset::zset(witness.as_mut(), n);
             }
-        } else {
-            ();
-        }
+        }else { (); }
         return NONPRIME;
     }
-    crate::src::zsub::zsub_unsigned(
-        libzahl_tmp_ptest_n1.as_mut_ptr(),
-        n,
-        libzahl_const_1.as_mut_ptr(),
-    );
-    crate::src::zsub::zsub_unsigned(
-        libzahl_tmp_ptest_n4.as_mut_ptr(),
-        n,
-        libzahl_const_4.as_mut_ptr(),
-    );
-    r = crate::src::zlsb::zlsb(libzahl_tmp_ptest_n1.as_mut_ptr());
-    crate::src::zrsh::zrsh(
-        libzahl_tmp_ptest_d.as_mut_ptr(),
-        libzahl_tmp_ptest_n1.as_mut_ptr(),
-        r,
-    );
+    crate::src::zsub::zsub_unsigned(libzahl_tmp_ptest_n1.as_mut_ptr(), n, libzahl_const_1.as_mut_ptr());
+    crate::src::zsub::zsub_unsigned(libzahl_tmp_ptest_n4.as_mut_ptr(), n, libzahl_const_4.as_mut_ptr());
+    r= crate::src::zlsb::zlsb(libzahl_tmp_ptest_n1.as_mut_ptr());
+    crate::src::zrsh::zrsh(libzahl_tmp_ptest_d.as_mut_ptr(), libzahl_tmp_ptest_n1.as_mut_ptr(), r);
     loop {
         let fresh0 = t;
-        t = t - 1;
+        t= t - 1;
         if !(fresh0 != 0) {
             break;
         }
@@ -112,61 +100,34 @@ pub unsafe extern "C" fn zptest(
             libzahl_tmp_ptest_d.as_mut_ptr(),
             n,
         );
-        if crate::src::zcmp::zcmp(
-            libzahl_tmp_ptest_x.as_mut_ptr(),
-            libzahl_const_1.as_mut_ptr(),
-        ) == 0
-            || crate::src::zcmp::zcmp(
-                libzahl_tmp_ptest_x.as_mut_ptr(),
-                libzahl_tmp_ptest_n1.as_mut_ptr(),
-            ) == 0
+        if crate::src::zcmp::zcmp(libzahl_tmp_ptest_x.as_mut_ptr(), libzahl_const_1.as_mut_ptr()) == 0
+            || crate::src::zcmp::zcmp(libzahl_tmp_ptest_x.as_mut_ptr(), libzahl_tmp_ptest_n1.as_mut_ptr())
+                == 0
         {
             continue;
         }
-        i = 1 as libc::c_int as size_t;
+        i= 1 as libc::c_int as size_t;
         while i < r {
-            crate::src::zsqr::zsqr(
-                libzahl_tmp_ptest_x.as_mut_ptr(),
-                libzahl_tmp_ptest_x.as_mut_ptr(),
-            );
-            crate::src::zmod::zmod(
-                libzahl_tmp_ptest_x.as_mut_ptr(),
-                libzahl_tmp_ptest_x.as_mut_ptr(),
-                n,
-            );
-            if crate::src::zcmp::zcmp(
-                libzahl_tmp_ptest_x.as_mut_ptr(),
-                libzahl_const_1.as_mut_ptr(),
-            ) == 0
+            crate::src::zsqr::zsqr(libzahl_tmp_ptest_x.as_mut_ptr(), libzahl_tmp_ptest_x.as_mut_ptr());
+            crate::src::zmod::zmod(libzahl_tmp_ptest_x.as_mut_ptr(), libzahl_tmp_ptest_x.as_mut_ptr(), n);
+            if crate::src::zcmp::zcmp(libzahl_tmp_ptest_x.as_mut_ptr(), libzahl_const_1.as_mut_ptr()) == 0
             {
                 if !witness.is_null() {
-                    crate::src::zswap::zswap(
-                        witness.as_mut(),
-                        libzahl_tmp_ptest_a.as_mut_ptr().as_mut(),
-                    );
-                } else {
-                    ();
-                }
+                    crate::src::zswap::zswap(witness.as_mut(), libzahl_tmp_ptest_a.as_mut_ptr().as_mut());
+                }else { (); }
                 return NONPRIME;
             }
-            if crate::src::zcmp::zcmp(
-                libzahl_tmp_ptest_x.as_mut_ptr(),
-                libzahl_tmp_ptest_n1.as_mut_ptr(),
-            ) == 0
+            if crate::src::zcmp::zcmp(libzahl_tmp_ptest_x.as_mut_ptr(), libzahl_tmp_ptest_n1.as_mut_ptr())
+                == 0
             {
                 break;
             }
-            i = i.wrapping_add(1);
+            i= i.wrapping_add(1);
         }
         if i == r {
             if !witness.is_null() {
-                crate::src::zswap::zswap(
-                    witness.as_mut(),
-                    libzahl_tmp_ptest_a.as_mut_ptr().as_mut(),
-                );
-            } else {
-                ();
-            }
+                crate::src::zswap::zswap(witness.as_mut(), libzahl_tmp_ptest_a.as_mut_ptr().as_mut());
+            }else { (); }
             return NONPRIME;
         }
     }

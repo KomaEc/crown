@@ -6,31 +6,23 @@ extern "C" {
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor2;
-impl Default for ErasedByPreprocessor2 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type quadtree_point_t = crate::src::src::bounds::quadtree_point;
 #[no_mangle]
 pub unsafe extern "C" fn quadtree_point_new(
     mut x: libc::c_double,
     mut y: libc::c_double,
-) -> Option<Box<quadtree_point_t>> {
-    let mut point = None;
-    point = Some(Box::new(
-        <crate::src::src::bounds::quadtree_point as Default>::default(),
-    ));
-    if point.as_deref().is_none() {
-        ();
-        return None;
+) -> *mut /* owning */ quadtree_point_t {
+    let mut point = 0 as *mut quadtree_point_t;
+    point= malloc(::std::mem::size_of::<quadtree_point_t>() as libc::c_ulong)
+        as *mut quadtree_point_t;
+    if point.is_null() {();
+        return 0 as *mut quadtree_point_t;
     }
-    (*point.as_deref_mut().unwrap()).x = x;
-    (*point.as_deref_mut().unwrap()).y = y;
+    (*point).x= x;
+    (*point).y= y;
     return point;
 }
 #[no_mangle]
-pub unsafe extern "C" fn quadtree_point_free(mut point: Option<Box<quadtree_point_t>>) {
-    ();
+pub unsafe extern "C" fn quadtree_point_free(mut point: *mut /* owning */ quadtree_point_t) {
+    free(point as *mut libc::c_void);
 }

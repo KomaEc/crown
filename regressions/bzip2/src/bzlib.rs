@@ -1,7 +1,7 @@
 use ::libc;
 extern "C" {
     pub type _IO_wide_data;
-
+    
     pub type _IO_marker;
     static mut stdin: *mut FILE;
     static mut stdout: *mut FILE;
@@ -32,9 +32,9 @@ extern "C" {
     fn __ctype_b_loc() -> *mut *const libc::c_ushort;
     fn strcat(_: *mut libc::c_char, _: *const libc::c_char) -> *mut libc::c_char;
     fn strcmp(_: *const libc::c_char, _: *const libc::c_char) -> libc::c_int;
-
+    
     static mut BZ2_crc32Table: [UInt32; 256];
-
+    
     static mut BZ2_rNums: [Int32; 512];
 }
 pub type size_t = libc::c_ulong;
@@ -43,12 +43,6 @@ pub type __off64_t = libc::c_long;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor2;
-impl Default for ErasedByPreprocessor2 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type _IO_lock_t = ();
 pub type FILE = crate::src::blocksort::_IO_FILE;
 pub type C2RustUnnamed = libc::c_uint;
@@ -67,21 +61,9 @@ pub const _ISupper: C2RustUnnamed = 256;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor3;
-impl Default for ErasedByPreprocessor3 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor4;
-impl Default for ErasedByPreprocessor4 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type UInt32 = libc::c_uint;
 pub type Int32 = libc::c_int;
 pub type UChar = libc::c_uchar;
@@ -151,81 +133,10 @@ pub struct DState {
     pub save_zj: Int32,
     pub save_gSel: Int32,
     pub save_gMinlen: Int32,
-    pub save_gLimit: *const Int32,
-    pub save_gBase: *const Int32,
-    pub save_gPerm: *const Int32,
+    pub save_gLimit: *mut Int32,
+    pub save_gBase: *mut Int32,
+    pub save_gPerm: *mut Int32,
 }
-impl Default for DState {
-    fn default() -> Self {
-        Self {
-            strm: std::ptr::null_mut(),
-            state: Default::default(),
-            state_out_ch: Default::default(),
-            state_out_len: Default::default(),
-            blockRandomised: Default::default(),
-            rNToGo: Default::default(),
-            rTPos: Default::default(),
-            bsBuff: Default::default(),
-            bsLive: Default::default(),
-            blockSize100k: Default::default(),
-            smallDecompress: Default::default(),
-            currBlockNo: Default::default(),
-            verbosity: Default::default(),
-            origPtr: Default::default(),
-            tPos: Default::default(),
-            k0: Default::default(),
-            unzftab: Default::default(),
-            nblock_used: Default::default(),
-            cftab: Default::default(),
-            cftabCopy: Default::default(),
-            tt: std::ptr::null_mut(),
-            ll16: std::ptr::null_mut(),
-            ll4: std::ptr::null_mut(),
-            storedBlockCRC: Default::default(),
-            storedCombinedCRC: Default::default(),
-            calculatedBlockCRC: Default::default(),
-            calculatedCombinedCRC: Default::default(),
-            nInUse: Default::default(),
-            inUse: Default::default(),
-            inUse16: Default::default(),
-            seqToUnseq: Default::default(),
-            mtfa: Default::default(),
-            mtfbase: Default::default(),
-            selector: Default::default(),
-            selectorMtf: Default::default(),
-            len: Default::default(),
-            limit: Default::default(),
-            base: Default::default(),
-            perm: Default::default(),
-            minLens: Default::default(),
-            save_i: Default::default(),
-            save_j: Default::default(),
-            save_t: Default::default(),
-            save_alphaSize: Default::default(),
-            save_nGroups: Default::default(),
-            save_nSelectors: Default::default(),
-            save_EOB: Default::default(),
-            save_groupNo: Default::default(),
-            save_groupPos: Default::default(),
-            save_nextSym: Default::default(),
-            save_nblockMAX: Default::default(),
-            save_nblock: Default::default(),
-            save_es: Default::default(),
-            save_N: Default::default(),
-            save_curr: Default::default(),
-            save_zt: Default::default(),
-            save_zn: Default::default(),
-            save_zvec: Default::default(),
-            save_zj: Default::default(),
-            save_gSel: Default::default(),
-            save_gMinlen: Default::default(),
-            save_gLimit: std::ptr::null_mut(),
-            save_gBase: std::ptr::null_mut(),
-            save_gPerm: std::ptr::null_mut(),
-        }
-    }
-}
-
 pub type BZFILE = ();
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -238,20 +149,6 @@ pub struct bzFile {
     pub lastErr: Int32,
     pub initialisedOk: Bool,
 }
-impl Default for bzFile {
-    fn default() -> Self {
-        Self {
-            handle: std::ptr::null_mut(),
-            buf: Default::default(),
-            bufN: Default::default(),
-            writing: Default::default(),
-            strm: Default::default(),
-            lastErr: Default::default(),
-            initialisedOk: Default::default(),
-        }
-    }
-}
-
 pub type Char = libc::c_char;
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bz__AssertH__fail(mut errcode: libc::c_int) {
@@ -272,59 +169,63 @@ pub unsafe extern "C" fn BZ2_bz__AssertH__fail(mut errcode: libc::c_int) {
     exit(3 as libc::c_int);
 }
 unsafe extern "C" fn bz_config_ok() -> libc::c_int {
-    if ::std::mem::size_of::<libc::c_int>() as libc::c_ulong != 4 as libc::c_int as libc::c_ulong {
-        return 0 as libc::c_int;
-    }
-    if ::std::mem::size_of::<libc::c_short>() as libc::c_ulong != 2 as libc::c_int as libc::c_ulong
+    if ::std::mem::size_of::<libc::c_int>() as libc::c_ulong
+        != 4 as libc::c_int as libc::c_ulong
     {
         return 0 as libc::c_int;
     }
-    if ::std::mem::size_of::<libc::c_char>() as libc::c_ulong != 1 as libc::c_int as libc::c_ulong {
+    if ::std::mem::size_of::<libc::c_short>() as libc::c_ulong
+        != 2 as libc::c_int as libc::c_ulong
+    {
+        return 0 as libc::c_int;
+    }
+    if ::std::mem::size_of::<libc::c_char>() as libc::c_ulong
+        != 1 as libc::c_int as libc::c_ulong
+    {
         return 0 as libc::c_int;
     }
     return 1 as libc::c_int;
 }
 unsafe extern "C" fn default_bzalloc(
-    mut opaque: *const libc::c_void,
+    mut opaque: *mut libc::c_void,
     mut items: Int32,
     mut size: Int32,
-) -> Option<Box<libc::c_void>> {
+) -> *mut /* owning */ libc::c_void {
     let mut v = malloc((items * size) as libc::c_ulong);
     return v;
 }
 unsafe extern "C" fn default_bzfree(
-    mut opaque: *const libc::c_void,
-    mut addr: Option<Box<libc::c_void>>,
+    mut opaque: *mut libc::c_void,
+    mut addr: *mut /* owning */ libc::c_void,
 ) {
-    if !addr.as_deref().is_none() {
-        ();
-    } else {
-        ();
-    }
+    if !addr.is_null() {
+        free(addr);
+    }else { (); }
 }
 unsafe extern "C" fn prepare_new_block(mut s: Option<&mut crate::src::blocksort::EState>) {
     let mut i: Int32 = 0;
-    (*s.as_deref_mut().unwrap()).nblock = 0 as libc::c_int;
-    (*s.as_deref_mut().unwrap()).numZ = 0 as libc::c_int;
-    (*s.as_deref_mut().unwrap()).state_out_pos = 0 as libc::c_int;
-    (*s.as_deref_mut().unwrap()).blockCRC = 0xffffffff as libc::c_long as UInt32;
-    i = 0 as libc::c_int;
+    (*s.as_deref_mut().unwrap()).nblock= 0 as libc::c_int;
+    (*s.as_deref_mut().unwrap()).numZ= 0 as libc::c_int;
+    (*s.as_deref_mut().unwrap()).state_out_pos= 0 as libc::c_int;
+    (*s.as_deref_mut().unwrap()).blockCRC= 0xffffffff as libc::c_long as UInt32;
+    i= 0 as libc::c_int;
     while i < 256 as libc::c_int {
         (*s.as_deref_mut().unwrap()).inUse[i as usize] = 0 as libc::c_int as Bool;
-        i += 1;
+        i+= 1;
     }
-    (*s.as_deref_mut().unwrap()).blockNo += 1;
+    (*s.as_deref_mut().unwrap()).blockNo+= 1;
 }
 unsafe extern "C" fn init_RL(mut s: Option<&mut crate::src::blocksort::EState>) {
-    (*s.as_deref_mut().unwrap()).state_in_ch = 256 as libc::c_int as UInt32;
-    (*s.as_deref_mut().unwrap()).state_in_len = 0 as libc::c_int;
+    (*s.as_deref_mut().unwrap()).state_in_ch= 256 as libc::c_int as UInt32;
+    (*s.as_deref_mut().unwrap()).state_in_len= 0 as libc::c_int;
 }
-unsafe extern "C" fn isempty_RL(mut s: *const crate::src::blocksort::EState) -> Bool {
-    if (*s).state_in_ch < 256 as libc::c_int as libc::c_uint && (*s).state_in_len > 0 as libc::c_int
+unsafe extern "C" fn isempty_RL(mut s: *mut crate::src::blocksort::EState) -> Bool {
+    if (*s).state_in_ch < 256 as libc::c_int as libc::c_uint
+        && (*s).state_in_len > 0 as libc::c_int
     {
-        return 0 as libc::c_int as Bool;
+        return 0 as libc::c_int as Bool
     } else {
-        return 1 as libc::c_int as Bool;
+        return 1 as libc::c_int as Bool
     };
 }
 #[no_mangle]
@@ -339,113 +240,123 @@ pub unsafe extern "C" fn BZ2_bzCompressInit(
     if bz_config_ok() == 0 {
         return -(9 as libc::c_int);
     }
-    if strm.is_null()
-        || blockSize100k < 1 as libc::c_int
-        || blockSize100k > 9 as libc::c_int
-        || workFactor < 0 as libc::c_int
+    if strm.is_null() || blockSize100k < 1 as libc::c_int
+        || blockSize100k > 9 as libc::c_int || workFactor < 0 as libc::c_int
         || workFactor > 250 as libc::c_int
     {
         return -(2 as libc::c_int);
     }
     if workFactor == 0 as libc::c_int {
-        workFactor = 30 as libc::c_int;
+        workFactor= 30 as libc::c_int;
     }
     if ((*strm).bzalloc).is_none() {
-        (*strm).bzalloc = Some(
+        (*strm).bzalloc= Some(
             default_bzalloc
-                as unsafe extern "C" fn(*mut libc::c_void, Int32, Int32) -> *mut libc::c_void,
+                as unsafe extern "C" fn(
+                    *mut libc::c_void,
+                    Int32,
+                    Int32,
+                ) -> *mut libc::c_void,
         );
     }
     if ((*strm).bzfree).is_none() {
-        (*strm).bzfree = Some(
-            default_bzfree as unsafe extern "C" fn(*mut libc::c_void, *mut libc::c_void) -> (),
+        (*strm).bzfree= Some(
+            default_bzfree
+                as unsafe extern "C" fn(*mut libc::c_void, *mut libc::c_void) -> (),
         );
     }
-    s = (*strm).bzalloc.expect("non-null function pointer")(
+    s= (*strm).bzalloc
+        .expect(
+            "non-null function pointer",
+        )(
         (*strm).opaque,
         ::std::mem::size_of::<crate::src::blocksort::EState>() as libc::c_ulong as libc::c_int,
         1 as libc::c_int,
     ) as *mut crate::src::blocksort::EState;
-    if s.is_null() {
-        ();
+    if s.is_null() {();
         return -(3 as libc::c_int);
     }
-    (*s).strm = strm;
-    (*s).arr1 = 0 as *mut UInt32;
-    (*s).arr2 = 0 as *mut UInt32;
-    (*s).ftab = 0 as *mut UInt32;
-    n = 100000 as libc::c_int * blockSize100k;
-    (*s).arr1 = (*strm).bzalloc.expect("non-null function pointer")(
+    (*s).strm= strm;
+    (*s).arr1= 0 as *mut UInt32;
+    (*s).arr2= 0 as *mut UInt32;
+    (*s).ftab= 0 as *mut UInt32;
+    n= 100000 as libc::c_int * blockSize100k;
+    (*s).arr1= (*strm).bzalloc
+        .expect(
+            "non-null function pointer",
+        )(
         (*strm).opaque,
-        (n as libc::c_ulong).wrapping_mul(::std::mem::size_of::<UInt32>() as libc::c_ulong)
+        (n as libc::c_ulong)
+            .wrapping_mul(::std::mem::size_of::<UInt32>() as libc::c_ulong)
             as libc::c_int,
         1 as libc::c_int,
     ) as *mut UInt32;
-    (*s).arr2 = (*strm).bzalloc.expect("non-null function pointer")(
+    (*s).arr2= (*strm).bzalloc
+        .expect(
+            "non-null function pointer",
+        )(
         (*strm).opaque,
-        ((n + (2 as libc::c_int + 12 as libc::c_int + 18 as libc::c_int + 2 as libc::c_int))
-            as libc::c_ulong)
-            .wrapping_mul(::std::mem::size_of::<UInt32>() as libc::c_ulong) as libc::c_int,
+        ((n
+            + (2 as libc::c_int + 12 as libc::c_int + 18 as libc::c_int
+                + 2 as libc::c_int)) as libc::c_ulong)
+            .wrapping_mul(::std::mem::size_of::<UInt32>() as libc::c_ulong)
+            as libc::c_int,
         1 as libc::c_int,
     ) as *mut UInt32;
-    (*s).ftab = (*strm).bzalloc.expect("non-null function pointer")(
+    (*s).ftab= (*strm).bzalloc
+        .expect(
+            "non-null function pointer",
+        )(
         (*strm).opaque,
         (65537 as libc::c_int as libc::c_ulong)
-            .wrapping_mul(::std::mem::size_of::<UInt32>() as libc::c_ulong) as libc::c_int,
+            .wrapping_mul(::std::mem::size_of::<UInt32>() as libc::c_ulong)
+            as libc::c_int,
         1 as libc::c_int,
     ) as *mut UInt32;
     if (*s).arr1.is_null() || (*s).arr2.is_null() || (*s).ftab.is_null() {
         if !(*s).arr1.is_null() {
-            (*strm).bzfree.expect("non-null function pointer")(
-                (*strm).opaque,
-                (*s).arr1 as *mut libc::c_void,
-            );
-        } else {
-            ();
-        }
+            (*strm).bzfree
+                .expect(
+                    "non-null function pointer",
+                )((*strm).opaque, (*s).arr1 as *mut libc::c_void);
+        }else { (); }
         if !(*s).arr2.is_null() {
-            (*strm).bzfree.expect("non-null function pointer")(
-                (*strm).opaque,
-                (*s).arr2 as *mut libc::c_void,
-            );
-        } else {
-            ();
-        }
+            (*strm).bzfree
+                .expect(
+                    "non-null function pointer",
+                )((*strm).opaque, (*s).arr2 as *mut libc::c_void);
+        }else { (); }
         if !(*s).ftab.is_null() {
-            (*strm).bzfree.expect("non-null function pointer")(
-                (*strm).opaque,
-                (*s).ftab as *mut libc::c_void,
-            );
-        } else {
-            ();
-        }
+            (*strm).bzfree
+                .expect(
+                    "non-null function pointer",
+                )((*strm).opaque, (*s).ftab as *mut libc::c_void);
+        }else { (); }
         if !s.is_null() {
-            (*strm).bzfree.expect("non-null function pointer")(
-                (*strm).opaque,
-                s as *mut libc::c_void,
-            );
-        } else {
-            ();
-        }
+            (*strm).bzfree
+                .expect(
+                    "non-null function pointer",
+                )((*strm).opaque, s as *mut libc::c_void);
+        }else { (); }
         return -(3 as libc::c_int);
     }
-    (*s).blockNo = 0 as libc::c_int;
-    (*s).state = 2 as libc::c_int;
-    (*s).mode = 2 as libc::c_int;
-    (*s).combinedCRC = 0 as libc::c_int as UInt32;
-    (*s).blockSize100k = blockSize100k;
-    (*s).nblockMAX = 100000 as libc::c_int * blockSize100k - 19 as libc::c_int;
-    (*s).verbosity = verbosity;
-    (*s).workFactor = workFactor;
-    (*s).block = (*s).arr2 as *mut UChar;
-    (*s).mtfv = (*s).arr1 as *mut UInt16;
-    (*s).zbits = 0 as *mut UChar;
-    (*s).ptr = (*s).arr1;
-    (*strm).state = s as *mut libc::c_void;
-    (*strm).total_in_lo32 = 0 as libc::c_int as libc::c_uint;
-    (*strm).total_in_hi32 = 0 as libc::c_int as libc::c_uint;
-    (*strm).total_out_lo32 = 0 as libc::c_int as libc::c_uint;
-    (*strm).total_out_hi32 = 0 as libc::c_int as libc::c_uint;
+    (*s).blockNo= 0 as libc::c_int;
+    (*s).state= 2 as libc::c_int;
+    (*s).mode= 2 as libc::c_int;
+    (*s).combinedCRC= 0 as libc::c_int as UInt32;
+    (*s).blockSize100k= blockSize100k;
+    (*s).nblockMAX= 100000 as libc::c_int * blockSize100k - 19 as libc::c_int;
+    (*s).verbosity= verbosity;
+    (*s).workFactor= workFactor;
+    (*s).block= (*s).arr2 as *mut UChar;
+    (*s).mtfv= (*s).arr1 as *mut UInt16;
+    (*s).zbits= 0 as *mut UChar;
+    (*s).ptr= (*s).arr1;
+    (*strm).state= s as *mut libc::c_void;
+    (*strm).total_in_lo32= 0 as libc::c_int as libc::c_uint;
+    (*strm).total_in_hi32= 0 as libc::c_int as libc::c_uint;
+    (*strm).total_out_lo32= 0 as libc::c_int as libc::c_uint;
+    (*strm).total_out_hi32= 0 as libc::c_int as libc::c_uint;
     init_RL(s.as_mut());
     prepare_new_block(s.as_mut());
     return 0 as libc::c_int;
@@ -453,55 +364,55 @@ pub unsafe extern "C" fn BZ2_bzCompressInit(
 unsafe extern "C" fn add_pair_to_block(mut s: *mut crate::src::blocksort::EState) {
     let mut i: Int32 = 0;
     let mut ch = (*s).state_in_ch as UChar;
-    i = 0 as libc::c_int;
+    i= 0 as libc::c_int;
     while i < (*s).state_in_len {
-        (*s).blockCRC = (*s).blockCRC << 8 as libc::c_int
-            ^ BZ2_crc32Table[((*s).blockCRC >> 24 as libc::c_int ^ ch as libc::c_uint) as usize];
-        i += 1;
+        (*s).blockCRC= (*s).blockCRC << 8 as libc::c_int
+            ^ BZ2_crc32Table[((*s).blockCRC >> 24 as libc::c_int ^ ch as libc::c_uint)
+                as usize];
+        i+= 1;
     }
     (*s).inUse[(*s).state_in_ch as usize] = 1 as libc::c_int as Bool;
     match (*s).state_in_len {
         1 => {
             *(*s).block.offset((*s).nblock as isize) = ch;
-            (*s).nblock += 1;
+            (*s).nblock+= 1;
         }
         2 => {
             *(*s).block.offset((*s).nblock as isize) = ch;
-            (*s).nblock += 1;
+            (*s).nblock+= 1;
             *(*s).block.offset((*s).nblock as isize) = ch;
-            (*s).nblock += 1;
+            (*s).nblock+= 1;
         }
         3 => {
             *(*s).block.offset((*s).nblock as isize) = ch;
-            (*s).nblock += 1;
+            (*s).nblock+= 1;
             *(*s).block.offset((*s).nblock as isize) = ch;
-            (*s).nblock += 1;
+            (*s).nblock+= 1;
             *(*s).block.offset((*s).nblock as isize) = ch;
-            (*s).nblock += 1;
+            (*s).nblock+= 1;
         }
         _ => {
-            (*s).inUse[((*s).state_in_len - 4 as libc::c_int) as usize] = 1 as libc::c_int as Bool;
+            (*s).inUse[((*s).state_in_len - 4 as libc::c_int)
+                as usize] = 1 as libc::c_int as Bool;
             *(*s).block.offset((*s).nblock as isize) = ch;
-            (*s).nblock += 1;
+            (*s).nblock+= 1;
             *(*s).block.offset((*s).nblock as isize) = ch;
-            (*s).nblock += 1;
+            (*s).nblock+= 1;
             *(*s).block.offset((*s).nblock as isize) = ch;
-            (*s).nblock += 1;
+            (*s).nblock+= 1;
             *(*s).block.offset((*s).nblock as isize) = ch;
-            (*s).nblock += 1;
-            *(*s).block.offset((*s).nblock as isize) =
-                ((*s).state_in_len - 4 as libc::c_int) as UChar;
-            (*s).nblock += 1;
+            (*s).nblock+= 1;
+            *(*s).block
+                .offset(
+                    (*s).nblock as isize,
+                ) = ((*s).state_in_len - 4 as libc::c_int) as UChar;
+            (*s).nblock+= 1;
         }
     };
 }
 unsafe extern "C" fn flush_RL(mut s: Option<&mut crate::src::blocksort::EState>) {
     if (*s.as_deref().unwrap()).state_in_ch < 256 as libc::c_int as libc::c_uint {
-        add_pair_to_block(
-            s.as_deref_mut()
-                .map(|r| r as *mut _)
-                .unwrap_or(std::ptr::null_mut()),
-        );
+        add_pair_to_block(s.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
     }
     init_RL(s.as_deref_mut());
 }
@@ -515,31 +426,32 @@ unsafe extern "C" fn copy_input_until_stop(mut s: *mut crate::src::blocksort::ES
             if (*(*s).strm).avail_in == 0 as libc::c_int as libc::c_uint {
                 break;
             }
-            progress_in = 1 as libc::c_int as Bool;
+            progress_in= 1 as libc::c_int as Bool;
             let mut zchh = *((*(*s).strm).next_in as *mut UChar) as UInt32;
             if zchh != (*s).state_in_ch && (*s).state_in_len == 1 as libc::c_int {
                 let mut ch = (*s).state_in_ch as UChar;
-                (*s).blockCRC = (*s).blockCRC << 8 as libc::c_int
-                    ^ BZ2_crc32Table
-                        [((*s).blockCRC >> 24 as libc::c_int ^ ch as libc::c_uint) as usize];
+                (*s).blockCRC= (*s).blockCRC << 8 as libc::c_int
+                    ^ BZ2_crc32Table[((*s).blockCRC >> 24 as libc::c_int
+                        ^ ch as libc::c_uint) as usize];
                 (*s).inUse[(*s).state_in_ch as usize] = 1 as libc::c_int as Bool;
                 *(*s).block.offset((*s).nblock as isize) = ch;
-                (*s).nblock += 1;
-                (*s).state_in_ch = zchh;
-            } else if zchh != (*s).state_in_ch || (*s).state_in_len == 255 as libc::c_int {
+                (*s).nblock+= 1;
+                (*s).state_in_ch= zchh;
+            } else if zchh != (*s).state_in_ch || (*s).state_in_len == 255 as libc::c_int
+            {
                 if (*s).state_in_ch < 256 as libc::c_int as libc::c_uint {
                     add_pair_to_block(s);
                 }
-                (*s).state_in_ch = zchh;
-                (*s).state_in_len = 1 as libc::c_int;
+                (*s).state_in_ch= zchh;
+                (*s).state_in_len= 1 as libc::c_int;
             } else {
-                (*s).state_in_len += 1;
+                (*s).state_in_len+= 1;
             }
-            (*(*s).strm).next_in = (*(*s).strm).next_in.offset(1);
-            (*(*s).strm).avail_in = (*(*s).strm).avail_in.wrapping_sub(1);
-            (*(*s).strm).total_in_lo32 = (*(*s).strm).total_in_lo32.wrapping_add(1);
+            (*(*s).strm).next_in= (*(*s).strm).next_in.offset(1);
+            (*(*s).strm).avail_in= (*(*s).strm).avail_in.wrapping_sub(1);
+            (*(*s).strm).total_in_lo32= (*(*s).strm).total_in_lo32.wrapping_add(1);
             if (*(*s).strm).total_in_lo32 == 0 as libc::c_int as libc::c_uint {
-                (*(*s).strm).total_in_hi32 = (*(*s).strm).total_in_hi32.wrapping_add(1);
+                (*(*s).strm).total_in_hi32= (*(*s).strm).total_in_hi32.wrapping_add(1);
             }
         }
     } else {
@@ -553,33 +465,35 @@ unsafe extern "C" fn copy_input_until_stop(mut s: *mut crate::src::blocksort::ES
             if (*s).avail_in_expect == 0 as libc::c_int as libc::c_uint {
                 break;
             }
-            progress_in = 1 as libc::c_int as Bool;
+            progress_in= 1 as libc::c_int as Bool;
             let mut zchh_0 = *((*(*s).strm).next_in as *mut UChar) as UInt32;
             if zchh_0 != (*s).state_in_ch && (*s).state_in_len == 1 as libc::c_int {
                 let mut ch_0 = (*s).state_in_ch as UChar;
-                (*s).blockCRC = (*s).blockCRC << 8 as libc::c_int
-                    ^ BZ2_crc32Table
-                        [((*s).blockCRC >> 24 as libc::c_int ^ ch_0 as libc::c_uint) as usize];
+                (*s).blockCRC= (*s).blockCRC << 8 as libc::c_int
+                    ^ BZ2_crc32Table[((*s).blockCRC >> 24 as libc::c_int
+                        ^ ch_0 as libc::c_uint) as usize];
                 (*s).inUse[(*s).state_in_ch as usize] = 1 as libc::c_int as Bool;
                 *(*s).block.offset((*s).nblock as isize) = ch_0;
-                (*s).nblock += 1;
-                (*s).state_in_ch = zchh_0;
-            } else if zchh_0 != (*s).state_in_ch || (*s).state_in_len == 255 as libc::c_int {
+                (*s).nblock+= 1;
+                (*s).state_in_ch= zchh_0;
+            } else if zchh_0 != (*s).state_in_ch
+                || (*s).state_in_len == 255 as libc::c_int
+            {
                 if (*s).state_in_ch < 256 as libc::c_int as libc::c_uint {
                     add_pair_to_block(s);
                 }
-                (*s).state_in_ch = zchh_0;
-                (*s).state_in_len = 1 as libc::c_int;
+                (*s).state_in_ch= zchh_0;
+                (*s).state_in_len= 1 as libc::c_int;
             } else {
-                (*s).state_in_len += 1;
+                (*s).state_in_len+= 1;
             }
-            (*(*s).strm).next_in = (*(*s).strm).next_in.offset(1);
-            (*(*s).strm).avail_in = (*(*s).strm).avail_in.wrapping_sub(1);
-            (*(*s).strm).total_in_lo32 = (*(*s).strm).total_in_lo32.wrapping_add(1);
+            (*(*s).strm).next_in= (*(*s).strm).next_in.offset(1);
+            (*(*s).strm).avail_in= (*(*s).strm).avail_in.wrapping_sub(1);
+            (*(*s).strm).total_in_lo32= (*(*s).strm).total_in_lo32.wrapping_add(1);
             if (*(*s).strm).total_in_lo32 == 0 as libc::c_int as libc::c_uint {
-                (*(*s).strm).total_in_hi32 = (*(*s).strm).total_in_hi32.wrapping_add(1);
+                (*(*s).strm).total_in_hi32= (*(*s).strm).total_in_hi32.wrapping_add(1);
             }
-            (*s).avail_in_expect = (*s).avail_in_expect.wrapping_sub(1);
+            (*s).avail_in_expect= (*s).avail_in_expect.wrapping_sub(1);
         }
     }
     return progress_in;
@@ -593,14 +507,15 @@ unsafe extern "C" fn copy_output_until_stop(mut s: *mut crate::src::blocksort::E
         if (*s).state_out_pos >= (*s).numZ {
             break;
         }
-        progress_out = 1 as libc::c_int as Bool;
-        *(*(*s).strm).next_out = *(*s).zbits.offset((*s).state_out_pos as isize) as libc::c_char;
-        (*s).state_out_pos += 1;
-        (*(*s).strm).avail_out = (*(*s).strm).avail_out.wrapping_sub(1);
-        (*(*s).strm).next_out = (*(*s).strm).next_out.offset(1);
-        (*(*s).strm).total_out_lo32 = (*(*s).strm).total_out_lo32.wrapping_add(1);
+        progress_out= 1 as libc::c_int as Bool;
+        *(*(*s).strm).next_out= *(*s).zbits.offset((*s).state_out_pos as isize)
+            as libc::c_char;
+        (*s).state_out_pos+= 1;
+        (*(*s).strm).avail_out= (*(*s).strm).avail_out.wrapping_sub(1);
+        (*(*s).strm).next_out= (*(*s).strm).next_out.offset(1);
+        (*(*s).strm).total_out_lo32= (*(*s).strm).total_out_lo32.wrapping_add(1);
         if (*(*s).strm).total_out_lo32 == 0 as libc::c_int as libc::c_uint {
-            (*(*s).strm).total_out_hi32 = (*(*s).strm).total_out_hi32.wrapping_add(1);
+            (*(*s).strm).total_out_hi32= (*(*s).strm).total_out_hi32.wrapping_add(1);
         }
     }
     return progress_out;
@@ -611,8 +526,8 @@ unsafe extern "C" fn handle_compress(mut strm: *mut crate::src::blocksort::bz_st
     let mut s = (*strm).state as *mut crate::src::blocksort::EState;
     while 1 as libc::c_int as Bool != 0 {
         if (*s).state == 1 as libc::c_int {
-            progress_out =
-                (progress_out as libc::c_int | copy_output_until_stop(s) as libc::c_int) as Bool;
+            progress_out= (progress_out as libc::c_int
+                | copy_output_until_stop(s) as libc::c_int) as Bool;
             if (*s).state_out_pos < (*s).numZ {
                 break;
             }
@@ -623,7 +538,7 @@ unsafe extern "C" fn handle_compress(mut strm: *mut crate::src::blocksort::bz_st
                 break;
             }
             prepare_new_block(s.as_mut());
-            (*s).state = 2 as libc::c_int;
+            (*s).state= 2 as libc::c_int;
             if (*s).mode == 3 as libc::c_int
                 && (*s).avail_in_expect == 0 as libc::c_int as libc::c_uint
                 && isempty_RL(s) as libc::c_int != 0
@@ -634,25 +549,23 @@ unsafe extern "C" fn handle_compress(mut strm: *mut crate::src::blocksort::bz_st
         if !((*s).state == 2 as libc::c_int) {
             continue;
         }
-        progress_in =
-            (progress_in as libc::c_int | copy_input_until_stop(s) as libc::c_int) as Bool;
-        if (*s).mode != 2 as libc::c_int && (*s).avail_in_expect == 0 as libc::c_int as libc::c_uint
+        progress_in= (progress_in as libc::c_int
+            | copy_input_until_stop(s) as libc::c_int) as Bool;
+        if (*s).mode != 2 as libc::c_int
+            && (*s).avail_in_expect == 0 as libc::c_int as libc::c_uint
         {
             flush_RL(s.as_mut());
-            crate::src::compress::BZ2_compressBlock(
-                s,
-                ((*s).mode == 4 as libc::c_int) as libc::c_int as Bool,
-            );
-            (*s).state = 1 as libc::c_int;
+            crate::src::compress::BZ2_compressBlock(s, ((*s).mode == 4 as libc::c_int) as libc::c_int as Bool);
+            (*s).state= 1 as libc::c_int;
         } else if (*s).nblock >= (*s).nblockMAX {
             crate::src::compress::BZ2_compressBlock(s, 0 as libc::c_int as Bool);
-            (*s).state = 1 as libc::c_int;
+            (*s).state= 1 as libc::c_int;
         } else if (*(*s).strm).avail_in == 0 as libc::c_int as libc::c_uint {
             break;
         }
     }
-    return (progress_in as libc::c_int != 0 || progress_out as libc::c_int != 0) as libc::c_int
-        as Bool;
+    return (progress_in as libc::c_int != 0 || progress_out as libc::c_int != 0)
+        as libc::c_int as Bool;
 }
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzCompress(
@@ -661,13 +574,11 @@ pub unsafe extern "C" fn BZ2_bzCompress(
 ) -> libc::c_int {
     let mut progress: Bool = 0;
     let mut s = 0 as *mut crate::src::blocksort::EState;
-    if strm.is_null() {
-        ();
+    if strm.is_null() {();
         return -(2 as libc::c_int);
     }
-    s = (*strm).state as *mut crate::src::blocksort::EState;
-    if s.is_null() {
-        ();
+    s= (*strm).state as *mut crate::src::blocksort::EState;
+    if s.is_null() {();
         return -(2 as libc::c_int);
     }
     if (*s).strm != strm {
@@ -678,20 +589,20 @@ pub unsafe extern "C" fn BZ2_bzCompress(
             1 => return -(1 as libc::c_int),
             2 => {
                 if action == 0 as libc::c_int {
-                    progress = handle_compress(strm);
+                    progress= handle_compress(strm);
                     return if progress as libc::c_int != 0 {
                         1 as libc::c_int
                     } else {
                         -(2 as libc::c_int)
                     };
                 } else if action == 1 as libc::c_int {
-                    (*s).avail_in_expect = (*strm).avail_in;
-                    (*s).mode = 3 as libc::c_int;
+                    (*s).avail_in_expect= (*strm).avail_in;
+                    (*s).mode= 3 as libc::c_int;
                 } else if action == 2 as libc::c_int {
-                    (*s).avail_in_expect = (*strm).avail_in;
-                    (*s).mode = 4 as libc::c_int;
+                    (*s).avail_in_expect= (*strm).avail_in;
+                    (*s).mode= 4 as libc::c_int;
                 } else {
-                    return -(2 as libc::c_int);
+                    return -(2 as libc::c_int)
                 }
             }
             3 => {
@@ -701,14 +612,13 @@ pub unsafe extern "C" fn BZ2_bzCompress(
                 if (*s).avail_in_expect != (*(*s).strm).avail_in {
                     return -(1 as libc::c_int);
                 }
-                progress = handle_compress(strm);
+                progress= handle_compress(strm);
                 if (*s).avail_in_expect > 0 as libc::c_int as libc::c_uint
-                    || isempty_RL(s) == 0
-                    || (*s).state_out_pos < (*s).numZ
+                    || isempty_RL(s) == 0 || (*s).state_out_pos < (*s).numZ
                 {
                     return 2 as libc::c_int;
                 }
-                (*s).mode = 2 as libc::c_int;
+                (*s).mode= 2 as libc::c_int;
                 return 1 as libc::c_int;
             }
             4 => {
@@ -718,66 +628,55 @@ pub unsafe extern "C" fn BZ2_bzCompress(
                 if (*s).avail_in_expect != (*(*s).strm).avail_in {
                     return -(1 as libc::c_int);
                 }
-                progress = handle_compress(strm);
+                progress= handle_compress(strm);
                 if progress == 0 {
                     return -(1 as libc::c_int);
                 }
                 if (*s).avail_in_expect > 0 as libc::c_int as libc::c_uint
-                    || isempty_RL(s) == 0
-                    || (*s).state_out_pos < (*s).numZ
+                    || isempty_RL(s) == 0 || (*s).state_out_pos < (*s).numZ
                 {
                     return 3 as libc::c_int;
                 }
-                (*s).mode = 1 as libc::c_int;
+                (*s).mode= 1 as libc::c_int;
                 return 4 as libc::c_int;
             }
             _ => return 0 as libc::c_int,
         }
-    }
+    };
 }
 #[no_mangle]
-pub unsafe extern "C" fn BZ2_bzCompressEnd(
-    mut strm: *mut crate::src::blocksort::bz_stream,
-) -> libc::c_int {
+pub unsafe extern "C" fn BZ2_bzCompressEnd(mut strm: *mut crate::src::blocksort::bz_stream) -> libc::c_int {
     let mut s = 0 as *mut crate::src::blocksort::EState;
-    if strm.is_null() {
-        ();
+    if strm.is_null() {();
         return -(2 as libc::c_int);
     }
-    s = (*strm).state as *mut crate::src::blocksort::EState;
-    if s.is_null() {
-        ();
+    s= (*strm).state as *mut crate::src::blocksort::EState;
+    if s.is_null() {();
         return -(2 as libc::c_int);
     }
     if (*s).strm != strm {
         return -(2 as libc::c_int);
     }
     if !(*s).arr1.is_null() {
-        (*strm).bzfree.expect("non-null function pointer")(
-            (*strm).opaque,
-            (*s).arr1 as *mut libc::c_void,
-        );
-    } else {
-        ();
-    }
+        (*strm).bzfree
+            .expect(
+                "non-null function pointer",
+            )((*strm).opaque, (*s).arr1 as *mut libc::c_void);
+    }else { (); }
     if !(*s).arr2.is_null() {
-        (*strm).bzfree.expect("non-null function pointer")(
-            (*strm).opaque,
-            (*s).arr2 as *mut libc::c_void,
-        );
-    } else {
-        ();
-    }
+        (*strm).bzfree
+            .expect(
+                "non-null function pointer",
+            )((*strm).opaque, (*s).arr2 as *mut libc::c_void);
+    }else { (); }
     if !(*s).ftab.is_null() {
-        (*strm).bzfree.expect("non-null function pointer")(
-            (*strm).opaque,
-            (*s).ftab as *mut libc::c_void,
-        );
-    } else {
-        ();
-    }
+        (*strm).bzfree
+            .expect(
+                "non-null function pointer",
+            )((*strm).opaque, (*s).ftab as *mut libc::c_void);
+    }else { (); }
     (*strm).bzfree.expect("non-null function pointer")((*strm).opaque, (*strm).state);
-    (*strm).state = 0 as *mut libc::c_void;
+    (*strm).state= 0 as *mut libc::c_void;
     return 0 as libc::c_int;
 }
 #[no_mangle]
@@ -790,8 +689,7 @@ pub unsafe extern "C" fn BZ2_bzDecompressInit(
     if bz_config_ok() == 0 {
         return -(9 as libc::c_int);
     }
-    if strm.is_null() {
-        ();
+    if strm.is_null() {();
         return -(2 as libc::c_int);
     }
     if small != 0 as libc::c_int && small != 1 as libc::c_int {
@@ -801,41 +699,48 @@ pub unsafe extern "C" fn BZ2_bzDecompressInit(
         return -(2 as libc::c_int);
     }
     if ((*strm).bzalloc).is_none() {
-        (*strm).bzalloc = Some(
+        (*strm).bzalloc= Some(
             default_bzalloc
-                as unsafe extern "C" fn(*mut libc::c_void, Int32, Int32) -> *mut libc::c_void,
+                as unsafe extern "C" fn(
+                    *mut libc::c_void,
+                    Int32,
+                    Int32,
+                ) -> *mut libc::c_void,
         );
     }
     if ((*strm).bzfree).is_none() {
-        (*strm).bzfree = Some(
-            default_bzfree as unsafe extern "C" fn(*mut libc::c_void, *mut libc::c_void) -> (),
+        (*strm).bzfree= Some(
+            default_bzfree
+                as unsafe extern "C" fn(*mut libc::c_void, *mut libc::c_void) -> (),
         );
     }
-    s = (*strm).bzalloc.expect("non-null function pointer")(
+    s= (*strm).bzalloc
+        .expect(
+            "non-null function pointer",
+        )(
         (*strm).opaque,
         ::std::mem::size_of::<DState>() as libc::c_ulong as libc::c_int,
         1 as libc::c_int,
     ) as *mut DState;
-    if s.is_null() {
-        ();
+    if s.is_null() {();
         return -(3 as libc::c_int);
     }
-    (*s).strm = strm;
-    (*strm).state = s as *mut libc::c_void;
-    (*s).state = 10 as libc::c_int;
-    (*s).bsLive = 0 as libc::c_int;
-    (*s).bsBuff = 0 as libc::c_int as UInt32;
-    (*s).calculatedCombinedCRC = 0 as libc::c_int as UInt32;
-    (*strm).total_in_lo32 = 0 as libc::c_int as libc::c_uint;
-    (*strm).total_in_hi32 = 0 as libc::c_int as libc::c_uint;
-    (*strm).total_out_lo32 = 0 as libc::c_int as libc::c_uint;
-    (*strm).total_out_hi32 = 0 as libc::c_int as libc::c_uint;
-    (*s).smallDecompress = small as Bool;
-    (*s).ll4 = 0 as *mut UChar;
-    (*s).ll16 = 0 as *mut UInt16;
-    (*s).tt = 0 as *mut UInt32;
-    (*s).currBlockNo = 0 as libc::c_int;
-    (*s).verbosity = verbosity;
+    (*s).strm= strm;
+    (*strm).state= s as *mut libc::c_void;
+    (*s).state= 10 as libc::c_int;
+    (*s).bsLive= 0 as libc::c_int;
+    (*s).bsBuff= 0 as libc::c_int as UInt32;
+    (*s).calculatedCombinedCRC= 0 as libc::c_int as UInt32;
+    (*strm).total_in_lo32= 0 as libc::c_int as libc::c_uint;
+    (*strm).total_in_hi32= 0 as libc::c_int as libc::c_uint;
+    (*strm).total_out_lo32= 0 as libc::c_int as libc::c_uint;
+    (*strm).total_out_hi32= 0 as libc::c_int as libc::c_uint;
+    (*s).smallDecompress= small as Bool;
+    (*s).ll4= 0 as *mut UChar;
+    (*s).ll16= 0 as *mut UInt16;
+    (*s).tt= 0 as *mut UInt32;
+    (*s).currBlockNo= 0 as libc::c_int;
+    (*s).verbosity= verbosity;
     return 0 as libc::c_int;
 }
 unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
@@ -851,16 +756,15 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
                     break;
                 }
                 *((*(*s).strm).next_out as *mut UChar) = (*s).state_out_ch;
-                (*s).calculatedBlockCRC = (*s).calculatedBlockCRC << 8 as libc::c_int
+                (*s).calculatedBlockCRC= (*s).calculatedBlockCRC << 8 as libc::c_int
                     ^ BZ2_crc32Table[((*s).calculatedBlockCRC >> 24 as libc::c_int
-                        ^ (*s).state_out_ch as libc::c_uint)
-                        as usize];
-                (*s).state_out_len -= 1;
-                (*(*s).strm).next_out = (*(*s).strm).next_out.offset(1);
-                (*(*s).strm).avail_out = (*(*s).strm).avail_out.wrapping_sub(1);
-                (*(*s).strm).total_out_lo32 = (*(*s).strm).total_out_lo32.wrapping_add(1);
+                        ^ (*s).state_out_ch as libc::c_uint) as usize];
+                (*s).state_out_len-= 1;
+                (*(*s).strm).next_out= (*(*s).strm).next_out.offset(1);
+                (*(*s).strm).avail_out= (*(*s).strm).avail_out.wrapping_sub(1);
+                (*(*s).strm).total_out_lo32= (*(*s).strm).total_out_lo32.wrapping_add(1);
                 if (*(*s).strm).total_out_lo32 == 0 as libc::c_int as libc::c_uint {
-                    (*(*s).strm).total_out_hi32 = (*(*s).strm).total_out_hi32.wrapping_add(1);
+                    (*(*s).strm).total_out_hi32= (*(*s).strm).total_out_hi32.wrapping_add(1);
                 }
             }
             if (*s).nblock_used == (*s).save_nblock + 1 as libc::c_int {
@@ -869,97 +773,99 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
             if (*s).nblock_used > (*s).save_nblock + 1 as libc::c_int {
                 return 1 as libc::c_int as Bool;
             }
-            (*s).state_out_len = 1 as libc::c_int;
-            (*s).state_out_ch = (*s).k0 as UChar;
+            (*s).state_out_len= 1 as libc::c_int;
+            (*s).state_out_ch= (*s).k0 as UChar;
             if (*s).tPos
-                >= (100000 as libc::c_int as UInt32).wrapping_mul((*s).blockSize100k as UInt32)
+                >= (100000 as libc::c_int as UInt32)
+                    .wrapping_mul((*s).blockSize100k as UInt32)
             {
                 return 1 as libc::c_int as Bool;
             }
-            (*s).tPos = *(*s).tt.offset((*s).tPos as isize);
-            k1 = ((*s).tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
-            (*s).tPos >>= 8 as libc::c_int;
+            (*s).tPos= *(*s).tt.offset((*s).tPos as isize);
+            k1= ((*s).tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
+            (*s).tPos>>= 8 as libc::c_int;
             if (*s).rNToGo == 0 as libc::c_int {
-                (*s).rNToGo = BZ2_rNums[(*s).rTPos as usize];
-                (*s).rTPos += 1;
+                (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                (*s).rTPos+= 1;
                 if (*s).rTPos == 512 as libc::c_int {
-                    (*s).rTPos = 0 as libc::c_int;
+                    (*s).rTPos= 0 as libc::c_int;
                 }
             }
-            (*s).rNToGo -= 1;
-            k1 = (k1 as libc::c_int
+            (*s).rNToGo-= 1;
+            k1= (k1 as libc::c_int
                 ^ if (*s).rNToGo == 1 as libc::c_int {
                     1 as libc::c_int
                 } else {
                     0 as libc::c_int
                 }) as UChar;
-            (*s).nblock_used += 1;
+            (*s).nblock_used+= 1;
             if (*s).nblock_used == (*s).save_nblock + 1 as libc::c_int {
                 continue;
             }
             if k1 as libc::c_int != (*s).k0 {
-                (*s).k0 = k1 as Int32;
+                (*s).k0= k1 as Int32;
             } else {
-                (*s).state_out_len = 2 as libc::c_int;
+                (*s).state_out_len= 2 as libc::c_int;
                 if (*s).tPos
-                    >= (100000 as libc::c_int as UInt32).wrapping_mul((*s).blockSize100k as UInt32)
+                    >= (100000 as libc::c_int as UInt32)
+                        .wrapping_mul((*s).blockSize100k as UInt32)
                 {
                     return 1 as libc::c_int as Bool;
                 }
-                (*s).tPos = *(*s).tt.offset((*s).tPos as isize);
-                k1 = ((*s).tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
-                (*s).tPos >>= 8 as libc::c_int;
+                (*s).tPos= *(*s).tt.offset((*s).tPos as isize);
+                k1= ((*s).tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
+                (*s).tPos>>= 8 as libc::c_int;
                 if (*s).rNToGo == 0 as libc::c_int {
-                    (*s).rNToGo = BZ2_rNums[(*s).rTPos as usize];
-                    (*s).rTPos += 1;
+                    (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                    (*s).rTPos+= 1;
                     if (*s).rTPos == 512 as libc::c_int {
-                        (*s).rTPos = 0 as libc::c_int;
+                        (*s).rTPos= 0 as libc::c_int;
                     }
                 }
-                (*s).rNToGo -= 1;
-                k1 = (k1 as libc::c_int
+                (*s).rNToGo-= 1;
+                k1= (k1 as libc::c_int
                     ^ if (*s).rNToGo == 1 as libc::c_int {
                         1 as libc::c_int
                     } else {
                         0 as libc::c_int
                     }) as UChar;
-                (*s).nblock_used += 1;
+                (*s).nblock_used+= 1;
                 if (*s).nblock_used == (*s).save_nblock + 1 as libc::c_int {
                     continue;
                 }
                 if k1 as libc::c_int != (*s).k0 {
-                    (*s).k0 = k1 as Int32;
+                    (*s).k0= k1 as Int32;
                 } else {
-                    (*s).state_out_len = 3 as libc::c_int;
+                    (*s).state_out_len= 3 as libc::c_int;
                     if (*s).tPos
                         >= (100000 as libc::c_int as UInt32)
                             .wrapping_mul((*s).blockSize100k as UInt32)
                     {
                         return 1 as libc::c_int as Bool;
                     }
-                    (*s).tPos = *(*s).tt.offset((*s).tPos as isize);
-                    k1 = ((*s).tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
-                    (*s).tPos >>= 8 as libc::c_int;
+                    (*s).tPos= *(*s).tt.offset((*s).tPos as isize);
+                    k1= ((*s).tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
+                    (*s).tPos>>= 8 as libc::c_int;
                     if (*s).rNToGo == 0 as libc::c_int {
-                        (*s).rNToGo = BZ2_rNums[(*s).rTPos as usize];
-                        (*s).rTPos += 1;
+                        (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                        (*s).rTPos+= 1;
                         if (*s).rTPos == 512 as libc::c_int {
-                            (*s).rTPos = 0 as libc::c_int;
+                            (*s).rTPos= 0 as libc::c_int;
                         }
                     }
-                    (*s).rNToGo -= 1;
-                    k1 = (k1 as libc::c_int
+                    (*s).rNToGo-= 1;
+                    k1= (k1 as libc::c_int
                         ^ if (*s).rNToGo == 1 as libc::c_int {
                             1 as libc::c_int
                         } else {
                             0 as libc::c_int
                         }) as UChar;
-                    (*s).nblock_used += 1;
+                    (*s).nblock_used+= 1;
                     if (*s).nblock_used == (*s).save_nblock + 1 as libc::c_int {
                         continue;
                     }
                     if k1 as libc::c_int != (*s).k0 {
-                        (*s).k0 = k1 as Int32;
+                        (*s).k0= k1 as Int32;
                     } else {
                         if (*s).tPos
                             >= (100000 as libc::c_int as UInt32)
@@ -967,49 +873,49 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
                         {
                             return 1 as libc::c_int as Bool;
                         }
-                        (*s).tPos = *(*s).tt.offset((*s).tPos as isize);
-                        k1 = ((*s).tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
-                        (*s).tPos >>= 8 as libc::c_int;
+                        (*s).tPos= *(*s).tt.offset((*s).tPos as isize);
+                        k1= ((*s).tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
+                        (*s).tPos>>= 8 as libc::c_int;
                         if (*s).rNToGo == 0 as libc::c_int {
-                            (*s).rNToGo = BZ2_rNums[(*s).rTPos as usize];
-                            (*s).rTPos += 1;
+                            (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                            (*s).rTPos+= 1;
                             if (*s).rTPos == 512 as libc::c_int {
-                                (*s).rTPos = 0 as libc::c_int;
+                                (*s).rTPos= 0 as libc::c_int;
                             }
                         }
-                        (*s).rNToGo -= 1;
-                        k1 = (k1 as libc::c_int
+                        (*s).rNToGo-= 1;
+                        k1= (k1 as libc::c_int
                             ^ if (*s).rNToGo == 1 as libc::c_int {
                                 1 as libc::c_int
                             } else {
                                 0 as libc::c_int
                             }) as UChar;
-                        (*s).nblock_used += 1;
-                        (*s).state_out_len = k1 as Int32 + 4 as libc::c_int;
+                        (*s).nblock_used+= 1;
+                        (*s).state_out_len= k1 as Int32 + 4 as libc::c_int;
                         if (*s).tPos
                             >= (100000 as libc::c_int as UInt32)
                                 .wrapping_mul((*s).blockSize100k as UInt32)
                         {
                             return 1 as libc::c_int as Bool;
                         }
-                        (*s).tPos = *(*s).tt.offset((*s).tPos as isize);
-                        (*s).k0 =
-                            ((*s).tPos & 0xff as libc::c_int as libc::c_uint) as UChar as Int32;
-                        (*s).tPos >>= 8 as libc::c_int;
+                        (*s).tPos= *(*s).tt.offset((*s).tPos as isize);
+                        (*s).k0= ((*s).tPos & 0xff as libc::c_int as libc::c_uint)
+                            as UChar as Int32;
+                        (*s).tPos>>= 8 as libc::c_int;
                         if (*s).rNToGo == 0 as libc::c_int {
-                            (*s).rNToGo = BZ2_rNums[(*s).rTPos as usize];
-                            (*s).rTPos += 1;
+                            (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                            (*s).rTPos+= 1;
                             if (*s).rTPos == 512 as libc::c_int {
-                                (*s).rTPos = 0 as libc::c_int;
+                                (*s).rTPos= 0 as libc::c_int;
                             }
                         }
-                        (*s).rNToGo -= 1;
-                        (*s).k0 ^= if (*s).rNToGo == 1 as libc::c_int {
-                            1 as libc::c_int
-                        } else {
-                            0 as libc::c_int
-                        };
-                        (*s).nblock_used += 1;
+                        (*s).rNToGo-= 1;
+                        (*s).k0^= if (*s).rNToGo == 1 as libc::c_int {
+                                1 as libc::c_int
+                            } else {
+                                0 as libc::c_int
+                            };
+                        (*s).nblock_used+= 1;
                     }
                 }
             }
@@ -1038,33 +944,32 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
                         break;
                     }
                     *(cs_next_out as *mut UChar) = c_state_out_ch;
-                    c_calculatedBlockCRC = c_calculatedBlockCRC << 8 as libc::c_int
+                    c_calculatedBlockCRC= c_calculatedBlockCRC << 8 as libc::c_int
                         ^ BZ2_crc32Table[(c_calculatedBlockCRC >> 24 as libc::c_int
-                            ^ c_state_out_ch as libc::c_uint)
-                            as usize];
-                    c_state_out_len -= 1;
-                    cs_next_out = cs_next_out.offset(1);
-                    cs_avail_out = cs_avail_out.wrapping_sub(1);
+                            ^ c_state_out_ch as libc::c_uint) as usize];
+                    c_state_out_len-= 1;
+                    cs_next_out= cs_next_out.offset(1);
+                    cs_avail_out= cs_avail_out.wrapping_sub(1);
                 }
-                current_block = 16910810822589621899;
+                current_block= 16910810822589621899;
             } else {
-                current_block = 3024573345131975588;
+                current_block= 3024573345131975588;
             }
             loop {
                 match current_block {
                     16910810822589621899 => {
                         if cs_avail_out == 0 as libc::c_int as libc::c_uint {
-                            c_state_out_len = 1 as libc::c_int;
+                            c_state_out_len= 1 as libc::c_int;
                             break 's_569;
                         } else {
                             *(cs_next_out as *mut UChar) = c_state_out_ch;
-                            c_calculatedBlockCRC = c_calculatedBlockCRC << 8 as libc::c_int
+                            c_calculatedBlockCRC= c_calculatedBlockCRC
+                                << 8 as libc::c_int
                                 ^ BZ2_crc32Table[(c_calculatedBlockCRC >> 24 as libc::c_int
-                                    ^ c_state_out_ch as libc::c_uint)
-                                    as usize];
-                            cs_next_out = cs_next_out.offset(1);
-                            cs_avail_out = cs_avail_out.wrapping_sub(1);
-                            current_block = 3024573345131975588;
+                                    ^ c_state_out_ch as libc::c_uint) as usize];
+                            cs_next_out= cs_next_out.offset(1);
+                            cs_avail_out= cs_avail_out.wrapping_sub(1);
+                            current_block= 3024573345131975588;
                         }
                     }
                     _ => {
@@ -1072,47 +977,48 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
                             return 1 as libc::c_int as Bool;
                         }
                         if c_nblock_used == s_save_nblockPP {
-                            c_state_out_len = 0 as libc::c_int;
+                            c_state_out_len= 0 as libc::c_int;
                             break 's_569;
                         } else {
-                            c_state_out_ch = c_k0 as UChar;
+                            c_state_out_ch= c_k0 as UChar;
                             if c_tPos
                                 >= (100000 as libc::c_int as UInt32)
                                     .wrapping_mul(ro_blockSize100k as UInt32)
                             {
                                 return 1 as libc::c_int as Bool;
                             }
-                            c_tPos = *c_tt.offset(c_tPos as isize);
-                            k1 = (c_tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
-                            c_tPos >>= 8 as libc::c_int;
-                            c_nblock_used += 1;
+                            c_tPos= *c_tt.offset(c_tPos as isize);
+                            k1= (c_tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
+                            c_tPos>>= 8 as libc::c_int;
+                            c_nblock_used+= 1;
                             if k1 as libc::c_int != c_k0 {
-                                c_k0 = k1 as Int32;
-                                current_block = 16910810822589621899;
+                                c_k0= k1 as Int32;
+                                current_block= 16910810822589621899;
                             } else {
                                 if c_nblock_used == s_save_nblockPP {
-                                    current_block = 16910810822589621899;
+                                    current_block= 16910810822589621899;
                                     continue;
                                 }
-                                c_state_out_len = 2 as libc::c_int;
+                                c_state_out_len= 2 as libc::c_int;
                                 if c_tPos
                                     >= (100000 as libc::c_int as UInt32)
                                         .wrapping_mul(ro_blockSize100k as UInt32)
                                 {
                                     return 1 as libc::c_int as Bool;
                                 }
-                                c_tPos = *c_tt.offset(c_tPos as isize);
-                                k1 = (c_tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
-                                c_tPos >>= 8 as libc::c_int;
-                                c_nblock_used += 1;
+                                c_tPos= *c_tt.offset(c_tPos as isize);
+                                k1= (c_tPos & 0xff as libc::c_int as libc::c_uint)
+                                    as UChar;
+                                c_tPos>>= 8 as libc::c_int;
+                                c_nblock_used+= 1;
                                 if c_nblock_used == s_save_nblockPP {
                                     continue 's_569;
                                 }
                                 if k1 as libc::c_int != c_k0 {
-                                    current_block = 18139099716546303047;
+                                    current_block= 18139099716546303047;
                                     break;
                                 } else {
-                                    current_block = 919396821984190499;
+                                    current_block= 919396821984190499;
                                     break;
                                 }
                             }
@@ -1122,25 +1028,25 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
             }
             match current_block {
                 18139099716546303047 => {
-                    c_k0 = k1 as Int32;
+                    c_k0= k1 as Int32;
                 }
                 _ => {
-                    c_state_out_len = 3 as libc::c_int;
+                    c_state_out_len= 3 as libc::c_int;
                     if c_tPos
                         >= (100000 as libc::c_int as UInt32)
                             .wrapping_mul(ro_blockSize100k as UInt32)
                     {
                         return 1 as libc::c_int as Bool;
                     }
-                    c_tPos = *c_tt.offset(c_tPos as isize);
-                    k1 = (c_tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
-                    c_tPos >>= 8 as libc::c_int;
-                    c_nblock_used += 1;
+                    c_tPos= *c_tt.offset(c_tPos as isize);
+                    k1= (c_tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
+                    c_tPos>>= 8 as libc::c_int;
+                    c_nblock_used+= 1;
                     if c_nblock_used == s_save_nblockPP {
                         continue;
                     }
                     if k1 as libc::c_int != c_k0 {
-                        c_k0 = k1 as Int32;
+                        c_k0= k1 as Int32;
                     } else {
                         if c_tPos
                             >= (100000 as libc::c_int as UInt32)
@@ -1148,59 +1054,61 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
                         {
                             return 1 as libc::c_int as Bool;
                         }
-                        c_tPos = *c_tt.offset(c_tPos as isize);
-                        k1 = (c_tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
-                        c_tPos >>= 8 as libc::c_int;
-                        c_nblock_used += 1;
-                        c_state_out_len = k1 as Int32 + 4 as libc::c_int;
+                        c_tPos= *c_tt.offset(c_tPos as isize);
+                        k1= (c_tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
+                        c_tPos>>= 8 as libc::c_int;
+                        c_nblock_used+= 1;
+                        c_state_out_len= k1 as Int32 + 4 as libc::c_int;
                         if c_tPos
                             >= (100000 as libc::c_int as UInt32)
                                 .wrapping_mul(ro_blockSize100k as UInt32)
                         {
                             return 1 as libc::c_int as Bool;
                         }
-                        c_tPos = *c_tt.offset(c_tPos as isize);
-                        c_k0 = (c_tPos & 0xff as libc::c_int as libc::c_uint) as UChar as Int32;
-                        c_tPos >>= 8 as libc::c_int;
-                        c_nblock_used += 1;
+                        c_tPos= *c_tt.offset(c_tPos as isize);
+                        c_k0= (c_tPos & 0xff as libc::c_int as libc::c_uint) as UChar
+                            as Int32;
+                        c_tPos>>= 8 as libc::c_int;
+                        c_nblock_used+= 1;
                     }
                 }
             }
         }
-        total_out_lo32_old = (*(*s).strm).total_out_lo32;
-        (*(*s).strm).total_out_lo32 = (*(*s).strm)
-            .total_out_lo32
-            .wrapping_add(avail_out_INIT.wrapping_sub(cs_avail_out));
+        total_out_lo32_old= (*(*s).strm).total_out_lo32;
+        (*(*s).strm).total_out_lo32= (*(*s).strm).total_out_lo32.wrapping_add(avail_out_INIT.wrapping_sub(cs_avail_out));
         if (*(*s).strm).total_out_lo32 < total_out_lo32_old {
-            (*(*s).strm).total_out_hi32 = (*(*s).strm).total_out_hi32.wrapping_add(1);
+            (*(*s).strm).total_out_hi32= (*(*s).strm).total_out_hi32.wrapping_add(1);
         }
-        (*s).calculatedBlockCRC = c_calculatedBlockCRC;
-        (*s).state_out_ch = c_state_out_ch;
-        (*s).state_out_len = c_state_out_len;
-        (*s).nblock_used = c_nblock_used;
-        (*s).k0 = c_k0;
-        (*s).tt = c_tt;
-        (*s).tPos = c_tPos;
-        (*(*s).strm).next_out = cs_next_out;
-        (*(*s).strm).avail_out = cs_avail_out;
+        (*s).calculatedBlockCRC= c_calculatedBlockCRC;
+        (*s).state_out_ch= c_state_out_ch;
+        (*s).state_out_len= c_state_out_len;
+        (*s).nblock_used= c_nblock_used;
+        (*s).k0= c_k0;
+        (*s).tt= c_tt;
+        (*s).tPos= c_tPos;
+        (*(*s).strm).next_out= cs_next_out;
+        (*(*s).strm).avail_out= cs_avail_out;
     }
     return 0 as libc::c_int as Bool;
 }
 #[no_mangle]
 #[inline]
 #[linkage = "external"]
-pub unsafe extern "C" fn BZ2_indexIntoF(mut indx: Int32, mut cftab: *const Int32) -> Int32 {
+pub unsafe extern "C" fn BZ2_indexIntoF(
+    mut indx: Int32,
+    mut cftab: *mut Int32,
+) -> Int32 {
     let mut nb: Int32 = 0;
     let mut na: Int32 = 0;
     let mut mid: Int32 = 0;
-    nb = 0 as libc::c_int;
-    na = 256 as libc::c_int;
+    nb= 0 as libc::c_int;
+    na= 256 as libc::c_int;
     loop {
-        mid = nb + na >> 1 as libc::c_int;
+        mid= nb + na >> 1 as libc::c_int;
         if indx >= *cftab.offset(mid as isize) {
-            nb = mid;
+            nb= mid;
         } else {
-            na = mid;
+            na= mid;
         }
         if !(na - nb != 1 as libc::c_int) {
             break;
@@ -1220,16 +1128,15 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
                     break;
                 }
                 *((*(*s).strm).next_out as *mut UChar) = (*s).state_out_ch;
-                (*s).calculatedBlockCRC = (*s).calculatedBlockCRC << 8 as libc::c_int
+                (*s).calculatedBlockCRC= (*s).calculatedBlockCRC << 8 as libc::c_int
                     ^ BZ2_crc32Table[((*s).calculatedBlockCRC >> 24 as libc::c_int
-                        ^ (*s).state_out_ch as libc::c_uint)
-                        as usize];
-                (*s).state_out_len -= 1;
-                (*(*s).strm).next_out = (*(*s).strm).next_out.offset(1);
-                (*(*s).strm).avail_out = (*(*s).strm).avail_out.wrapping_sub(1);
-                (*(*s).strm).total_out_lo32 = (*(*s).strm).total_out_lo32.wrapping_add(1);
+                        ^ (*s).state_out_ch as libc::c_uint) as usize];
+                (*s).state_out_len-= 1;
+                (*(*s).strm).next_out= (*(*s).strm).next_out.offset(1);
+                (*(*s).strm).avail_out= (*(*s).strm).avail_out.wrapping_sub(1);
+                (*(*s).strm).total_out_lo32= (*(*s).strm).total_out_lo32.wrapping_add(1);
                 if (*(*s).strm).total_out_lo32 == 0 as libc::c_int as libc::c_uint {
-                    (*(*s).strm).total_out_hi32 = (*(*s).strm).total_out_hi32.wrapping_add(1);
+                    (*(*s).strm).total_out_hi32= (*(*s).strm).total_out_hi32.wrapping_add(1);
                 }
             }
             if (*s).nblock_used == (*s).save_nblock + 1 as libc::c_int {
@@ -1238,107 +1145,112 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
             if (*s).nblock_used > (*s).save_nblock + 1 as libc::c_int {
                 return 1 as libc::c_int as Bool;
             }
-            (*s).state_out_len = 1 as libc::c_int;
-            (*s).state_out_ch = (*s).k0 as UChar;
+            (*s).state_out_len= 1 as libc::c_int;
+            (*s).state_out_ch= (*s).k0 as UChar;
             if (*s).tPos
-                >= (100000 as libc::c_int as UInt32).wrapping_mul((*s).blockSize100k as UInt32)
+                >= (100000 as libc::c_int as UInt32)
+                    .wrapping_mul((*s).blockSize100k as UInt32)
             {
                 return 1 as libc::c_int as Bool;
             }
-            k1 = BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr()) as UChar;
-            (*s).tPos = *(*s).ll16.offset((*s).tPos as isize) as UInt32
+            k1= BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr()) as UChar;
+            (*s).tPos= *(*s).ll16.offset((*s).tPos as isize) as UInt32
                 | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize) as UInt32
-                    >> ((*s).tPos << 2 as libc::c_int & 0x4 as libc::c_int as libc::c_uint)
-                    & 0xf as libc::c_int as libc::c_uint)
-                    << 16 as libc::c_int;
+                    >> ((*s).tPos << 2 as libc::c_int
+                        & 0x4 as libc::c_int as libc::c_uint)
+                    & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
             if (*s).rNToGo == 0 as libc::c_int {
-                (*s).rNToGo = BZ2_rNums[(*s).rTPos as usize];
-                (*s).rTPos += 1;
+                (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                (*s).rTPos+= 1;
                 if (*s).rTPos == 512 as libc::c_int {
-                    (*s).rTPos = 0 as libc::c_int;
+                    (*s).rTPos= 0 as libc::c_int;
                 }
             }
-            (*s).rNToGo -= 1;
-            k1 = (k1 as libc::c_int
+            (*s).rNToGo-= 1;
+            k1= (k1 as libc::c_int
                 ^ if (*s).rNToGo == 1 as libc::c_int {
                     1 as libc::c_int
                 } else {
                     0 as libc::c_int
                 }) as UChar;
-            (*s).nblock_used += 1;
+            (*s).nblock_used+= 1;
             if (*s).nblock_used == (*s).save_nblock + 1 as libc::c_int {
                 continue;
             }
             if k1 as libc::c_int != (*s).k0 {
-                (*s).k0 = k1 as Int32;
+                (*s).k0= k1 as Int32;
             } else {
-                (*s).state_out_len = 2 as libc::c_int;
+                (*s).state_out_len= 2 as libc::c_int;
                 if (*s).tPos
-                    >= (100000 as libc::c_int as UInt32).wrapping_mul((*s).blockSize100k as UInt32)
+                    >= (100000 as libc::c_int as UInt32)
+                        .wrapping_mul((*s).blockSize100k as UInt32)
                 {
                     return 1 as libc::c_int as Bool;
                 }
-                k1 = BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr()) as UChar;
-                (*s).tPos = *(*s).ll16.offset((*s).tPos as isize) as UInt32
-                    | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize) as UInt32
-                        >> ((*s).tPos << 2 as libc::c_int & 0x4 as libc::c_int as libc::c_uint)
-                        & 0xf as libc::c_int as libc::c_uint)
-                        << 16 as libc::c_int;
+                k1= BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr())
+                    as UChar;
+                (*s).tPos= *(*s).ll16.offset((*s).tPos as isize) as UInt32
+                    | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize)
+                        as UInt32
+                        >> ((*s).tPos << 2 as libc::c_int
+                            & 0x4 as libc::c_int as libc::c_uint)
+                        & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
                 if (*s).rNToGo == 0 as libc::c_int {
-                    (*s).rNToGo = BZ2_rNums[(*s).rTPos as usize];
-                    (*s).rTPos += 1;
+                    (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                    (*s).rTPos+= 1;
                     if (*s).rTPos == 512 as libc::c_int {
-                        (*s).rTPos = 0 as libc::c_int;
+                        (*s).rTPos= 0 as libc::c_int;
                     }
                 }
-                (*s).rNToGo -= 1;
-                k1 = (k1 as libc::c_int
+                (*s).rNToGo-= 1;
+                k1= (k1 as libc::c_int
                     ^ if (*s).rNToGo == 1 as libc::c_int {
                         1 as libc::c_int
                     } else {
                         0 as libc::c_int
                     }) as UChar;
-                (*s).nblock_used += 1;
+                (*s).nblock_used+= 1;
                 if (*s).nblock_used == (*s).save_nblock + 1 as libc::c_int {
                     continue;
                 }
                 if k1 as libc::c_int != (*s).k0 {
-                    (*s).k0 = k1 as Int32;
+                    (*s).k0= k1 as Int32;
                 } else {
-                    (*s).state_out_len = 3 as libc::c_int;
+                    (*s).state_out_len= 3 as libc::c_int;
                     if (*s).tPos
                         >= (100000 as libc::c_int as UInt32)
                             .wrapping_mul((*s).blockSize100k as UInt32)
                     {
                         return 1 as libc::c_int as Bool;
                     }
-                    k1 = BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr()) as UChar;
-                    (*s).tPos = *(*s).ll16.offset((*s).tPos as isize) as UInt32
-                        | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize) as UInt32
+                    k1= BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr())
+                        as UChar;
+                    (*s).tPos= *(*s).ll16.offset((*s).tPos as isize) as UInt32
+                        | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize)
+                            as UInt32
                             >> ((*s).tPos << 2 as libc::c_int
                                 & 0x4 as libc::c_int as libc::c_uint)
-                            & 0xf as libc::c_int as libc::c_uint)
-                            << 16 as libc::c_int;
+                            & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
                     if (*s).rNToGo == 0 as libc::c_int {
-                        (*s).rNToGo = BZ2_rNums[(*s).rTPos as usize];
-                        (*s).rTPos += 1;
+                        (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                        (*s).rTPos+= 1;
                         if (*s).rTPos == 512 as libc::c_int {
-                            (*s).rTPos = 0 as libc::c_int;
+                            (*s).rTPos= 0 as libc::c_int;
                         }
                     }
-                    (*s).rNToGo -= 1;
-                    k1 = (k1 as libc::c_int
+                    (*s).rNToGo-= 1;
+                    k1= (k1 as libc::c_int
                         ^ if (*s).rNToGo == 1 as libc::c_int {
                             1 as libc::c_int
                         } else {
                             0 as libc::c_int
                         }) as UChar;
-                    (*s).nblock_used += 1;
+                    (*s).nblock_used+= 1;
                     if (*s).nblock_used == (*s).save_nblock + 1 as libc::c_int {
                         continue;
                     }
                     if k1 as libc::c_int != (*s).k0 {
-                        (*s).k0 = k1 as Int32;
+                        (*s).k0= k1 as Int32;
                     } else {
                         if (*s).tPos
                             >= (100000 as libc::c_int as UInt32)
@@ -1346,58 +1258,62 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
                         {
                             return 1 as libc::c_int as Bool;
                         }
-                        k1 = BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr()) as UChar;
-                        (*s).tPos = *(*s).ll16.offset((*s).tPos as isize) as UInt32
-                            | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize)
-                                as UInt32
+                        k1= BZ2_indexIntoF(
+                            (*s).tPos as Int32,
+                            (*s).cftab.as_mut_ptr(),
+                        ) as UChar;
+                        (*s).tPos= *(*s).ll16.offset((*s).tPos as isize) as UInt32
+                            | (*(*s).ll4
+                                .offset(((*s).tPos >> 1 as libc::c_int) as isize) as UInt32
                                 >> ((*s).tPos << 2 as libc::c_int
                                     & 0x4 as libc::c_int as libc::c_uint)
-                                & 0xf as libc::c_int as libc::c_uint)
-                                << 16 as libc::c_int;
+                                & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
                         if (*s).rNToGo == 0 as libc::c_int {
-                            (*s).rNToGo = BZ2_rNums[(*s).rTPos as usize];
-                            (*s).rTPos += 1;
+                            (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                            (*s).rTPos+= 1;
                             if (*s).rTPos == 512 as libc::c_int {
-                                (*s).rTPos = 0 as libc::c_int;
+                                (*s).rTPos= 0 as libc::c_int;
                             }
                         }
-                        (*s).rNToGo -= 1;
-                        k1 = (k1 as libc::c_int
+                        (*s).rNToGo-= 1;
+                        k1= (k1 as libc::c_int
                             ^ if (*s).rNToGo == 1 as libc::c_int {
                                 1 as libc::c_int
                             } else {
                                 0 as libc::c_int
                             }) as UChar;
-                        (*s).nblock_used += 1;
-                        (*s).state_out_len = k1 as Int32 + 4 as libc::c_int;
+                        (*s).nblock_used+= 1;
+                        (*s).state_out_len= k1 as Int32 + 4 as libc::c_int;
                         if (*s).tPos
                             >= (100000 as libc::c_int as UInt32)
                                 .wrapping_mul((*s).blockSize100k as UInt32)
                         {
                             return 1 as libc::c_int as Bool;
                         }
-                        (*s).k0 = BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr());
-                        (*s).tPos = *(*s).ll16.offset((*s).tPos as isize) as UInt32
-                            | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize)
-                                as UInt32
+                        (*s).k0= BZ2_indexIntoF(
+                            (*s).tPos as Int32,
+                            (*s).cftab.as_mut_ptr(),
+                        );
+                        (*s).tPos= *(*s).ll16.offset((*s).tPos as isize) as UInt32
+                            | (*(*s).ll4
+                                .offset(((*s).tPos >> 1 as libc::c_int) as isize) as UInt32
                                 >> ((*s).tPos << 2 as libc::c_int
                                     & 0x4 as libc::c_int as libc::c_uint)
-                                & 0xf as libc::c_int as libc::c_uint)
-                                << 16 as libc::c_int;
+                                & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
                         if (*s).rNToGo == 0 as libc::c_int {
-                            (*s).rNToGo = BZ2_rNums[(*s).rTPos as usize];
-                            (*s).rTPos += 1;
+                            (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                            (*s).rTPos+= 1;
                             if (*s).rTPos == 512 as libc::c_int {
-                                (*s).rTPos = 0 as libc::c_int;
+                                (*s).rTPos= 0 as libc::c_int;
                             }
                         }
-                        (*s).rNToGo -= 1;
-                        (*s).k0 ^= if (*s).rNToGo == 1 as libc::c_int {
-                            1 as libc::c_int
-                        } else {
-                            0 as libc::c_int
-                        };
-                        (*s).nblock_used += 1;
+                        (*s).rNToGo-= 1;
+                        (*s).k0^= if (*s).rNToGo == 1 as libc::c_int {
+                                1 as libc::c_int
+                            } else {
+                                0 as libc::c_int
+                            };
+                        (*s).nblock_used+= 1;
                     }
                 }
             }
@@ -1412,16 +1328,15 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
                     break;
                 }
                 *((*(*s).strm).next_out as *mut UChar) = (*s).state_out_ch;
-                (*s).calculatedBlockCRC = (*s).calculatedBlockCRC << 8 as libc::c_int
+                (*s).calculatedBlockCRC= (*s).calculatedBlockCRC << 8 as libc::c_int
                     ^ BZ2_crc32Table[((*s).calculatedBlockCRC >> 24 as libc::c_int
-                        ^ (*s).state_out_ch as libc::c_uint)
-                        as usize];
-                (*s).state_out_len -= 1;
-                (*(*s).strm).next_out = (*(*s).strm).next_out.offset(1);
-                (*(*s).strm).avail_out = (*(*s).strm).avail_out.wrapping_sub(1);
-                (*(*s).strm).total_out_lo32 = (*(*s).strm).total_out_lo32.wrapping_add(1);
+                        ^ (*s).state_out_ch as libc::c_uint) as usize];
+                (*s).state_out_len-= 1;
+                (*(*s).strm).next_out= (*(*s).strm).next_out.offset(1);
+                (*(*s).strm).avail_out= (*(*s).strm).avail_out.wrapping_sub(1);
+                (*(*s).strm).total_out_lo32= (*(*s).strm).total_out_lo32.wrapping_add(1);
                 if (*(*s).strm).total_out_lo32 == 0 as libc::c_int as libc::c_uint {
-                    (*(*s).strm).total_out_hi32 = (*(*s).strm).total_out_hi32.wrapping_add(1);
+                    (*(*s).strm).total_out_hi32= (*(*s).strm).total_out_hi32.wrapping_add(1);
                 }
             }
             if (*s).nblock_used == (*s).save_nblock + 1 as libc::c_int {
@@ -1430,65 +1345,70 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
             if (*s).nblock_used > (*s).save_nblock + 1 as libc::c_int {
                 return 1 as libc::c_int as Bool;
             }
-            (*s).state_out_len = 1 as libc::c_int;
-            (*s).state_out_ch = (*s).k0 as UChar;
+            (*s).state_out_len= 1 as libc::c_int;
+            (*s).state_out_ch= (*s).k0 as UChar;
             if (*s).tPos
-                >= (100000 as libc::c_int as UInt32).wrapping_mul((*s).blockSize100k as UInt32)
+                >= (100000 as libc::c_int as UInt32)
+                    .wrapping_mul((*s).blockSize100k as UInt32)
             {
                 return 1 as libc::c_int as Bool;
             }
-            k1 = BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr()) as UChar;
-            (*s).tPos = *(*s).ll16.offset((*s).tPos as isize) as UInt32
+            k1= BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr()) as UChar;
+            (*s).tPos= *(*s).ll16.offset((*s).tPos as isize) as UInt32
                 | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize) as UInt32
-                    >> ((*s).tPos << 2 as libc::c_int & 0x4 as libc::c_int as libc::c_uint)
-                    & 0xf as libc::c_int as libc::c_uint)
-                    << 16 as libc::c_int;
-            (*s).nblock_used += 1;
+                    >> ((*s).tPos << 2 as libc::c_int
+                        & 0x4 as libc::c_int as libc::c_uint)
+                    & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
+            (*s).nblock_used+= 1;
             if (*s).nblock_used == (*s).save_nblock + 1 as libc::c_int {
                 continue;
             }
             if k1 as libc::c_int != (*s).k0 {
-                (*s).k0 = k1 as Int32;
+                (*s).k0= k1 as Int32;
             } else {
-                (*s).state_out_len = 2 as libc::c_int;
+                (*s).state_out_len= 2 as libc::c_int;
                 if (*s).tPos
-                    >= (100000 as libc::c_int as UInt32).wrapping_mul((*s).blockSize100k as UInt32)
+                    >= (100000 as libc::c_int as UInt32)
+                        .wrapping_mul((*s).blockSize100k as UInt32)
                 {
                     return 1 as libc::c_int as Bool;
                 }
-                k1 = BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr()) as UChar;
-                (*s).tPos = *(*s).ll16.offset((*s).tPos as isize) as UInt32
-                    | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize) as UInt32
-                        >> ((*s).tPos << 2 as libc::c_int & 0x4 as libc::c_int as libc::c_uint)
-                        & 0xf as libc::c_int as libc::c_uint)
-                        << 16 as libc::c_int;
-                (*s).nblock_used += 1;
+                k1= BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr())
+                    as UChar;
+                (*s).tPos= *(*s).ll16.offset((*s).tPos as isize) as UInt32
+                    | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize)
+                        as UInt32
+                        >> ((*s).tPos << 2 as libc::c_int
+                            & 0x4 as libc::c_int as libc::c_uint)
+                        & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
+                (*s).nblock_used+= 1;
                 if (*s).nblock_used == (*s).save_nblock + 1 as libc::c_int {
                     continue;
                 }
                 if k1 as libc::c_int != (*s).k0 {
-                    (*s).k0 = k1 as Int32;
+                    (*s).k0= k1 as Int32;
                 } else {
-                    (*s).state_out_len = 3 as libc::c_int;
+                    (*s).state_out_len= 3 as libc::c_int;
                     if (*s).tPos
                         >= (100000 as libc::c_int as UInt32)
                             .wrapping_mul((*s).blockSize100k as UInt32)
                     {
                         return 1 as libc::c_int as Bool;
                     }
-                    k1 = BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr()) as UChar;
-                    (*s).tPos = *(*s).ll16.offset((*s).tPos as isize) as UInt32
-                        | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize) as UInt32
+                    k1= BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr())
+                        as UChar;
+                    (*s).tPos= *(*s).ll16.offset((*s).tPos as isize) as UInt32
+                        | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize)
+                            as UInt32
                             >> ((*s).tPos << 2 as libc::c_int
                                 & 0x4 as libc::c_int as libc::c_uint)
-                            & 0xf as libc::c_int as libc::c_uint)
-                            << 16 as libc::c_int;
-                    (*s).nblock_used += 1;
+                            & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
+                    (*s).nblock_used+= 1;
                     if (*s).nblock_used == (*s).save_nblock + 1 as libc::c_int {
                         continue;
                     }
                     if k1 as libc::c_int != (*s).k0 {
-                        (*s).k0 = k1 as Int32;
+                        (*s).k0= k1 as Int32;
                     } else {
                         if (*s).tPos
                             >= (100000 as libc::c_int as UInt32)
@@ -1496,31 +1416,35 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
                         {
                             return 1 as libc::c_int as Bool;
                         }
-                        k1 = BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr()) as UChar;
-                        (*s).tPos = *(*s).ll16.offset((*s).tPos as isize) as UInt32
-                            | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize)
-                                as UInt32
+                        k1= BZ2_indexIntoF(
+                            (*s).tPos as Int32,
+                            (*s).cftab.as_mut_ptr(),
+                        ) as UChar;
+                        (*s).tPos= *(*s).ll16.offset((*s).tPos as isize) as UInt32
+                            | (*(*s).ll4
+                                .offset(((*s).tPos >> 1 as libc::c_int) as isize) as UInt32
                                 >> ((*s).tPos << 2 as libc::c_int
                                     & 0x4 as libc::c_int as libc::c_uint)
-                                & 0xf as libc::c_int as libc::c_uint)
-                                << 16 as libc::c_int;
-                        (*s).nblock_used += 1;
-                        (*s).state_out_len = k1 as Int32 + 4 as libc::c_int;
+                                & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
+                        (*s).nblock_used+= 1;
+                        (*s).state_out_len= k1 as Int32 + 4 as libc::c_int;
                         if (*s).tPos
                             >= (100000 as libc::c_int as UInt32)
                                 .wrapping_mul((*s).blockSize100k as UInt32)
                         {
                             return 1 as libc::c_int as Bool;
                         }
-                        (*s).k0 = BZ2_indexIntoF((*s).tPos as Int32, (*s).cftab.as_mut_ptr());
-                        (*s).tPos = *(*s).ll16.offset((*s).tPos as isize) as UInt32
-                            | (*(*s).ll4.offset(((*s).tPos >> 1 as libc::c_int) as isize)
-                                as UInt32
+                        (*s).k0= BZ2_indexIntoF(
+                            (*s).tPos as Int32,
+                            (*s).cftab.as_mut_ptr(),
+                        );
+                        (*s).tPos= *(*s).ll16.offset((*s).tPos as isize) as UInt32
+                            | (*(*s).ll4
+                                .offset(((*s).tPos >> 1 as libc::c_int) as isize) as UInt32
                                 >> ((*s).tPos << 2 as libc::c_int
                                     & 0x4 as libc::c_int as libc::c_uint)
-                                & 0xf as libc::c_int as libc::c_uint)
-                                << 16 as libc::c_int;
-                        (*s).nblock_used += 1;
+                                & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
+                        (*s).nblock_used+= 1;
                     }
                 }
             }
@@ -1529,18 +1453,14 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
     panic!("Reached end of non-void function without returning");
 }
 #[no_mangle]
-pub unsafe extern "C" fn BZ2_bzDecompress(
-    mut strm: *mut crate::src::blocksort::bz_stream,
-) -> libc::c_int {
+pub unsafe extern "C" fn BZ2_bzDecompress(mut strm: *mut crate::src::blocksort::bz_stream) -> libc::c_int {
     let mut corrupt: Bool = 0;
     let mut s = 0 as *mut DState;
-    if strm.is_null() {
-        ();
+    if strm.is_null() {();
         return -(2 as libc::c_int);
     }
-    s = (*strm).state as *mut DState;
-    if s.is_null() {
-        ();
+    s= (*strm).state as *mut DState;
+    if s.is_null() {();
         return -(2 as libc::c_int);
     }
     if (*s).strm != strm {
@@ -1552,9 +1472,9 @@ pub unsafe extern "C" fn BZ2_bzDecompress(
         }
         if (*s).state == 2 as libc::c_int {
             if (*s).smallDecompress != 0 {
-                corrupt = unRLE_obuf_to_output_SMALL(s);
+                corrupt= unRLE_obuf_to_output_SMALL(s);
             } else {
-                corrupt = unRLE_obuf_to_output_FAST(s);
+                corrupt= unRLE_obuf_to_output_FAST(s);
             }
             if corrupt != 0 {
                 return -(4 as libc::c_int);
@@ -1562,7 +1482,7 @@ pub unsafe extern "C" fn BZ2_bzDecompress(
             if (*s).nblock_used == (*s).save_nblock + 1 as libc::c_int
                 && (*s).state_out_len == 0 as libc::c_int
             {
-                (*s).calculatedBlockCRC = !(*s).calculatedBlockCRC;
+                (*s).calculatedBlockCRC= !(*s).calculatedBlockCRC;
                 if (*s).verbosity >= 3 as libc::c_int {
                     fprintf(
                         stderr,
@@ -1577,12 +1497,13 @@ pub unsafe extern "C" fn BZ2_bzDecompress(
                 if (*s).calculatedBlockCRC != (*s).storedBlockCRC {
                     return -(4 as libc::c_int);
                 }
-                (*s).calculatedCombinedCRC = (*s).calculatedCombinedCRC << 1 as libc::c_int
+                (*s).calculatedCombinedCRC= (*s).calculatedCombinedCRC
+                    << 1 as libc::c_int
                     | (*s).calculatedCombinedCRC >> 31 as libc::c_int;
-                (*s).calculatedCombinedCRC ^= (*s).calculatedBlockCRC;
-                (*s).state = 14 as libc::c_int;
+                (*s).calculatedCombinedCRC^= (*s).calculatedBlockCRC;
+                (*s).state= 14 as libc::c_int;
             } else {
-                return 0 as libc::c_int;
+                return 0 as libc::c_int
             }
         }
         if (*s).state >= 10 as libc::c_int {
@@ -1591,8 +1512,8 @@ pub unsafe extern "C" fn BZ2_bzDecompress(
                 if (*s).verbosity >= 3 as libc::c_int {
                     fprintf(
                         stderr,
-                        b"\n    combined CRCs: stored = 0x%08x, computed = 0x%08x\0" as *const u8
-                            as *const libc::c_char,
+                        b"\n    combined CRCs: stored = 0x%08x, computed = 0x%08x\0"
+                            as *const u8 as *const libc::c_char,
                         (*s).storedCombinedCRC,
                         (*s).calculatedCombinedCRC,
                     );
@@ -1613,48 +1534,38 @@ pub unsafe extern "C" fn BZ2_bzDecompress(
     return 0 as libc::c_int;
 }
 #[no_mangle]
-pub unsafe extern "C" fn BZ2_bzDecompressEnd(
-    mut strm: *mut crate::src::blocksort::bz_stream,
-) -> libc::c_int {
+pub unsafe extern "C" fn BZ2_bzDecompressEnd(mut strm: *mut crate::src::blocksort::bz_stream) -> libc::c_int {
     let mut s = 0 as *mut DState;
-    if strm.is_null() {
-        ();
+    if strm.is_null() {();
         return -(2 as libc::c_int);
     }
-    s = (*strm).state as *mut DState;
-    if s.is_null() {
-        ();
+    s= (*strm).state as *mut DState;
+    if s.is_null() {();
         return -(2 as libc::c_int);
     }
     if (*s).strm != strm {
         return -(2 as libc::c_int);
     }
     if !(*s).tt.is_null() {
-        (*strm).bzfree.expect("non-null function pointer")(
-            (*strm).opaque,
-            (*s).tt as *mut libc::c_void,
-        );
-    } else {
-        ();
-    }
+        (*strm).bzfree
+            .expect(
+                "non-null function pointer",
+            )((*strm).opaque, (*s).tt as *mut libc::c_void);
+    }else { (); }
     if !(*s).ll16.is_null() {
-        (*strm).bzfree.expect("non-null function pointer")(
-            (*strm).opaque,
-            (*s).ll16 as *mut libc::c_void,
-        );
-    } else {
-        ();
-    }
+        (*strm).bzfree
+            .expect(
+                "non-null function pointer",
+            )((*strm).opaque, (*s).ll16 as *mut libc::c_void);
+    }else { (); }
     if !(*s).ll4.is_null() {
-        (*strm).bzfree.expect("non-null function pointer")(
-            (*strm).opaque,
-            (*s).ll4 as *mut libc::c_void,
-        );
-    } else {
-        ();
-    }
+        (*strm).bzfree
+            .expect(
+                "non-null function pointer",
+            )((*strm).opaque, (*s).ll4 as *mut libc::c_void);
+    }else { (); }
     (*strm).bzfree.expect("non-null function pointer")((*strm).opaque, (*strm).state);
-    (*strm).state = 0 as *mut libc::c_void;
+    (*strm).state= 0 as *mut libc::c_void;
     return 0 as libc::c_int;
 }
 unsafe extern "C" fn myfeof(mut f: *mut FILE) -> Bool {
@@ -1676,109 +1587,79 @@ pub unsafe extern "C" fn BZ2_bzWriteOpen(
     let mut ret: Int32 = 0;
     let mut bzf = 0 as *mut bzFile;
     if !bzerror.is_null() {
-        *bzerror = 0 as libc::c_int;
-    } else {
-        ();
-    }
+        *bzerror= 0 as libc::c_int;
+    }else { (); }
     if !bzf.is_null() {
-        (*bzf).lastErr = 0 as libc::c_int;
-    } else {
-        ();
-    }
+        (*bzf).lastErr= 0 as libc::c_int;
+    }else { (); }
     if f.is_null()
         || (blockSize100k < 1 as libc::c_int || blockSize100k > 9 as libc::c_int)
         || (workFactor < 0 as libc::c_int || workFactor > 250 as libc::c_int)
         || (verbosity < 0 as libc::c_int || verbosity > 4 as libc::c_int)
     {
         if !bzerror.is_null() {
-            *bzerror = -(2 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror= -(2 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(2 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(2 as libc::c_int);
+        }else { (); }
         return 0 as *mut libc::c_void;
     }
     if ferror(f) != 0 {
         if !bzerror.is_null() {
-            *bzerror = -(6 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror= -(6 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(6 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(6 as libc::c_int);
+        }else { (); }
         return 0 as *mut libc::c_void;
     }
-    bzf = malloc(::std::mem::size_of::<bzFile>() as libc::c_ulong) as *mut bzFile;
-    if bzf.is_null() {
-        ();
+    bzf= malloc(::std::mem::size_of::<bzFile>() as libc::c_ulong) as *mut bzFile;
+    if bzf.is_null() {();
         if !bzerror.is_null() {
-            *bzerror = -(3 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror= -(3 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(3 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(3 as libc::c_int);
+        }else { (); }
         return 0 as *mut libc::c_void;
     }
     if !bzerror.is_null() {
-        *bzerror = 0 as libc::c_int;
-    } else {
-        ();
-    }
+        *bzerror= 0 as libc::c_int;
+    }else { (); }
     if !bzf.is_null() {
-        (*bzf).lastErr = 0 as libc::c_int;
-    } else {
-        ();
-    }
-    (*bzf).initialisedOk = 0 as libc::c_int as Bool;
-    (*bzf).bufN = 0 as libc::c_int;
-    (*bzf).handle = f;
-    (*bzf).writing = 1 as libc::c_int as Bool;
-    (*bzf).strm.bzalloc = None;
-    (*bzf).strm.bzfree = None;
-    (*bzf).strm.opaque = 0 as *mut libc::c_void;
+        (*bzf).lastErr= 0 as libc::c_int;
+    }else { (); }
+    (*bzf).initialisedOk= 0 as libc::c_int as Bool;
+    (*bzf).bufN= 0 as libc::c_int;
+    (*bzf).handle= f;
+    (*bzf).writing= 1 as libc::c_int as Bool;
+    (*bzf).strm.bzalloc= None;
+    (*bzf).strm.bzfree= None;
+    (*bzf).strm.opaque= 0 as *mut libc::c_void;
     if workFactor == 0 as libc::c_int {
-        workFactor = 30 as libc::c_int;
+        workFactor= 30 as libc::c_int;
     }
-    ret = BZ2_bzCompressInit(
-        core::ptr::addr_of_mut!((*bzf).strm),
-        blockSize100k,
-        verbosity,
-        workFactor,
-    );
+    ret= BZ2_bzCompressInit(core::ptr::addr_of_mut!((*bzf).strm), blockSize100k, verbosity, workFactor);
     if ret != 0 as libc::c_int {
         if !bzerror.is_null() {
-            *bzerror = ret;
-        } else {
-            ();
-        }
+            *bzerror= ret;
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = ret;
-        } else {
-            ();
-        }
+            (*bzf).lastErr= ret;
+        }else { (); }
         free(bzf as *mut libc::c_void);
         return 0 as *mut libc::c_void;
     }
-    (*bzf).strm.avail_in = 0 as libc::c_int as libc::c_uint;
-    (*bzf).initialisedOk = 1 as libc::c_int as Bool;
+    (*bzf).strm.avail_in= 0 as libc::c_int as libc::c_uint;
+    (*bzf).initialisedOk= 1 as libc::c_int as Bool;
     return bzf as *mut libc::c_void;
 }
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzWrite(
     mut bzerror: Option<&mut libc::c_int>,
     mut b: *mut libc::c_void,
-    mut buf: *const libc::c_void,
+    mut buf: *mut libc::c_void,
     mut len: libc::c_int,
 ) {
     let mut n: Int32 = 0;
@@ -1786,89 +1667,66 @@ pub unsafe extern "C" fn BZ2_bzWrite(
     let mut ret: Int32 = 0;
     let mut bzf = b as *mut bzFile;
     if !bzerror.as_deref().is_none() {
-        *bzerror.as_deref_mut().unwrap() = 0 as libc::c_int;
-    } else {
-        ();
-    }
+        *bzerror.as_deref_mut().unwrap()= 0 as libc::c_int;
+    }else { (); }
     if !bzf.is_null() {
-        (*bzf).lastErr = 0 as libc::c_int;
-    } else {
-        ();
-    }
+        (*bzf).lastErr= 0 as libc::c_int;
+    }else { (); }
     if bzf.is_null() || buf.is_null() || len < 0 as libc::c_int {
         if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(2 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror.as_deref_mut().unwrap()= -(2 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(2 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(2 as libc::c_int);
+        }else { (); }
         return;
     }
     if (*bzf).writing == 0 {
         if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(1 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror.as_deref_mut().unwrap()= -(1 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(1 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(1 as libc::c_int);
+        }else { (); }
         return;
     }
     if ferror((*bzf).handle) != 0 {
         if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(6 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror.as_deref_mut().unwrap()= -(6 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(6 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(6 as libc::c_int);
+        }else { (); }
         return;
     }
     if len == 0 as libc::c_int {
         if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = 0 as libc::c_int;
-        } else {
-            ();
-        }
+            *bzerror.as_deref_mut().unwrap()= 0 as libc::c_int;
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = 0 as libc::c_int;
-        } else {
-            ();
-        }
+            (*bzf).lastErr= 0 as libc::c_int;
+        }else { (); }
         return;
     }
-    (*bzf).strm.avail_in = len as libc::c_uint;
-    (*bzf).strm.next_in = buf as *mut libc::c_char;
+    (*bzf).strm.avail_in= len as libc::c_uint;
+    (*bzf).strm.next_in= buf as *mut libc::c_char;
     while 1 as libc::c_int as Bool != 0 {
-        (*bzf).strm.avail_out = 5000 as libc::c_int as libc::c_uint;
-        (*bzf).strm.next_out = (*bzf).buf.as_mut_ptr();
-        ret = BZ2_bzCompress(core::ptr::addr_of_mut!((*bzf).strm), 0 as libc::c_int);
+        (*bzf).strm.avail_out= 5000 as libc::c_int as libc::c_uint;
+        (*bzf).strm.next_out= (*bzf).buf.as_mut_ptr();
+        ret= BZ2_bzCompress(core::ptr::addr_of_mut!((*bzf).strm), 0 as libc::c_int);
         if ret != 1 as libc::c_int {
             if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = ret;
-            } else {
-                ();
-            }
+                *bzerror.as_deref_mut().unwrap()= ret;
+            }else { (); }
             if !bzf.is_null() {
-                (*bzf).lastErr = ret;
-            } else {
-                ();
-            }
+                (*bzf).lastErr= ret;
+            }else { (); }
             return;
         }
         if (*bzf).strm.avail_out < 5000 as libc::c_int as libc::c_uint {
-            n = (5000 as libc::c_int as libc::c_uint).wrapping_sub((*bzf).strm.avail_out) as Int32;
-            n2 = fwrite(
+            n= (5000 as libc::c_int as libc::c_uint).wrapping_sub((*bzf).strm.avail_out)
+                as Int32;
+            n2= fwrite(
                 (*bzf).buf.as_mut_ptr() as *mut libc::c_void,
                 ::std::mem::size_of::<UChar>() as libc::c_ulong,
                 n as libc::c_ulong,
@@ -1876,29 +1734,21 @@ pub unsafe extern "C" fn BZ2_bzWrite(
             ) as Int32;
             if n != n2 || ferror((*bzf).handle) != 0 {
                 if !bzerror.as_deref().is_none() {
-                    *bzerror.as_deref_mut().unwrap() = -(6 as libc::c_int);
-                } else {
-                    ();
-                }
+                    *bzerror.as_deref_mut().unwrap()= -(6 as libc::c_int);
+                }else { (); }
                 if !bzf.is_null() {
-                    (*bzf).lastErr = -(6 as libc::c_int);
-                } else {
-                    ();
-                }
+                    (*bzf).lastErr= -(6 as libc::c_int);
+                }else { (); }
                 return;
             }
         }
         if (*bzf).strm.avail_in == 0 as libc::c_int as libc::c_uint {
             if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = 0 as libc::c_int;
-            } else {
-                ();
-            }
+                *bzerror.as_deref_mut().unwrap()= 0 as libc::c_int;
+            }else { (); }
             if !bzf.is_null() {
-                (*bzf).lastErr = 0 as libc::c_int;
-            } else {
-                ();
-            }
+                (*bzf).lastErr= 0 as libc::c_int;
+            }else { (); }
             return;
         }
     }
@@ -1912,23 +1762,12 @@ pub unsafe extern "C" fn BZ2_bzWriteClose(
     mut nbytes_out: Option<&mut libc::c_uint>,
 ) {
     BZ2_bzWriteClose64(
-        bzerror
-            .as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
-        b.as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
+        bzerror.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
+        b.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         abandon,
-        nbytes_in
-            .as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
+        nbytes_in.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         0 as *mut libc::c_uint,
-        nbytes_out
-            .as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
+        nbytes_out.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         0 as *mut libc::c_uint,
     );
 }
@@ -1946,88 +1785,63 @@ pub unsafe extern "C" fn BZ2_bzWriteClose64(
     let mut n2: Int32 = 0;
     let mut ret: Int32 = 0;
     let mut bzf = b as *mut bzFile;
-    if bzf.is_null() {
-        ();
+    if bzf.is_null() {();
         if !bzerror.is_null() {
-            *bzerror = 0 as libc::c_int;
-        } else {
-            ();
-        }
+            *bzerror= 0 as libc::c_int;
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = 0 as libc::c_int;
-        } else {
-            ();
-        }
+            (*bzf).lastErr= 0 as libc::c_int;
+        }else { (); }
         return;
     }
     if (*bzf).writing == 0 {
         if !bzerror.is_null() {
-            *bzerror = -(1 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror= -(1 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(1 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(1 as libc::c_int);
+        }else { (); }
         return;
     }
     if ferror((*bzf).handle) != 0 {
         if !bzerror.is_null() {
-            *bzerror = -(6 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror= -(6 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(6 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(6 as libc::c_int);
+        }else { (); }
         return;
     }
     if !nbytes_in_lo32.is_null() {
-        *nbytes_in_lo32 = 0 as libc::c_int as libc::c_uint;
-    } else {
-        ();
-    }
+        *nbytes_in_lo32= 0 as libc::c_int as libc::c_uint;
+    }else { (); }
     if !nbytes_in_hi32.is_null() {
-        *nbytes_in_hi32 = 0 as libc::c_int as libc::c_uint;
-    } else {
-        ();
-    }
+        *nbytes_in_hi32= 0 as libc::c_int as libc::c_uint;
+    }else { (); }
     if !nbytes_out_lo32.is_null() {
-        *nbytes_out_lo32 = 0 as libc::c_int as libc::c_uint;
-    } else {
-        ();
-    }
+        *nbytes_out_lo32= 0 as libc::c_int as libc::c_uint;
+    }else { (); }
     if !nbytes_out_hi32.is_null() {
-        *nbytes_out_hi32 = 0 as libc::c_int as libc::c_uint;
-    } else {
-        ();
-    }
+        *nbytes_out_hi32= 0 as libc::c_int as libc::c_uint;
+    }else { (); }
     if abandon == 0 && (*bzf).lastErr == 0 as libc::c_int {
         while 1 as libc::c_int as Bool != 0 {
-            (*bzf).strm.avail_out = 5000 as libc::c_int as libc::c_uint;
-            (*bzf).strm.next_out = (*bzf).buf.as_mut_ptr();
-            ret = BZ2_bzCompress(core::ptr::addr_of_mut!((*bzf).strm), 2 as libc::c_int);
+            (*bzf).strm.avail_out= 5000 as libc::c_int as libc::c_uint;
+            (*bzf).strm.next_out= (*bzf).buf.as_mut_ptr();
+            ret= BZ2_bzCompress(core::ptr::addr_of_mut!((*bzf).strm), 2 as libc::c_int);
             if ret != 3 as libc::c_int && ret != 4 as libc::c_int {
                 if !bzerror.is_null() {
-                    *bzerror = ret;
-                } else {
-                    ();
-                }
+                    *bzerror= ret;
+                }else { (); }
                 if !bzf.is_null() {
-                    (*bzf).lastErr = ret;
-                } else {
-                    ();
-                }
+                    (*bzf).lastErr= ret;
+                }else { (); }
                 return;
             }
             if (*bzf).strm.avail_out < 5000 as libc::c_int as libc::c_uint {
-                n = (5000 as libc::c_int as libc::c_uint).wrapping_sub((*bzf).strm.avail_out)
-                    as Int32;
-                n2 = fwrite(
+                n= (5000 as libc::c_int as libc::c_uint)
+                    .wrapping_sub((*bzf).strm.avail_out) as Int32;
+                n2= fwrite(
                     (*bzf).buf.as_mut_ptr() as *mut libc::c_void,
                     ::std::mem::size_of::<UChar>() as libc::c_ulong,
                     n as libc::c_ulong,
@@ -2035,15 +1849,11 @@ pub unsafe extern "C" fn BZ2_bzWriteClose64(
                 ) as Int32;
                 if n != n2 || ferror((*bzf).handle) != 0 {
                     if !bzerror.is_null() {
-                        *bzerror = -(6 as libc::c_int);
-                    } else {
-                        ();
-                    }
+                        *bzerror= -(6 as libc::c_int);
+                    }else { (); }
                     if !bzf.is_null() {
-                        (*bzf).lastErr = -(6 as libc::c_int);
-                    } else {
-                        ();
-                    }
+                        (*bzf).lastErr= -(6 as libc::c_int);
+                    }else { (); }
                     return;
                 }
             }
@@ -2056,48 +1866,32 @@ pub unsafe extern "C" fn BZ2_bzWriteClose64(
         fflush((*bzf).handle);
         if ferror((*bzf).handle) != 0 {
             if !bzerror.is_null() {
-                *bzerror = -(6 as libc::c_int);
-            } else {
-                ();
-            }
+                *bzerror= -(6 as libc::c_int);
+            }else { (); }
             if !bzf.is_null() {
-                (*bzf).lastErr = -(6 as libc::c_int);
-            } else {
-                ();
-            }
+                (*bzf).lastErr= -(6 as libc::c_int);
+            }else { (); }
             return;
         }
     }
     if !nbytes_in_lo32.is_null() {
-        *nbytes_in_lo32 = (*bzf).strm.total_in_lo32;
-    } else {
-        ();
-    }
+        *nbytes_in_lo32= (*bzf).strm.total_in_lo32;
+    }else { (); }
     if !nbytes_in_hi32.is_null() {
-        *nbytes_in_hi32 = (*bzf).strm.total_in_hi32;
-    } else {
-        ();
-    }
+        *nbytes_in_hi32= (*bzf).strm.total_in_hi32;
+    }else { (); }
     if !nbytes_out_lo32.is_null() {
-        *nbytes_out_lo32 = (*bzf).strm.total_out_lo32;
-    } else {
-        ();
-    }
+        *nbytes_out_lo32= (*bzf).strm.total_out_lo32;
+    }else { (); }
     if !nbytes_out_hi32.is_null() {
-        *nbytes_out_hi32 = (*bzf).strm.total_out_hi32;
-    } else {
-        ();
-    }
+        *nbytes_out_hi32= (*bzf).strm.total_out_hi32;
+    }else { (); }
     if !bzerror.is_null() {
-        *bzerror = 0 as libc::c_int;
-    } else {
-        ();
-    }
+        *bzerror= 0 as libc::c_int;
+    }else { (); }
     if !bzf.is_null() {
-        (*bzf).lastErr = 0 as libc::c_int;
-    } else {
-        ();
-    }
+        (*bzf).lastErr= 0 as libc::c_int;
+    }else { (); }
     BZ2_bzCompressEnd(core::ptr::addr_of_mut!((*bzf).strm));
     free(bzf as *mut libc::c_void);
 }
@@ -2107,148 +1901,114 @@ pub unsafe extern "C" fn BZ2_bzReadOpen(
     mut f: *mut FILE,
     mut verbosity: libc::c_int,
     mut small: libc::c_int,
-    mut unused: *const libc::c_void,
+    mut unused: *mut libc::c_void,
     mut nUnused: libc::c_int,
 ) -> *mut libc::c_void {
     let mut bzf = 0 as *mut bzFile;
     let mut ret: libc::c_int = 0;
     if !bzerror.is_null() {
-        *bzerror = 0 as libc::c_int;
-    } else {
-        ();
-    }
+        *bzerror= 0 as libc::c_int;
+    }else { (); }
     if !bzf.is_null() {
-        (*bzf).lastErr = 0 as libc::c_int;
-    } else {
-        ();
-    }
-    if f.is_null()
-        || small != 0 as libc::c_int && small != 1 as libc::c_int
+        (*bzf).lastErr= 0 as libc::c_int;
+    }else { (); }
+    if f.is_null() || small != 0 as libc::c_int && small != 1 as libc::c_int
         || (verbosity < 0 as libc::c_int || verbosity > 4 as libc::c_int)
         || unused.is_null() && nUnused != 0 as libc::c_int
-        || !unused.is_null() && (nUnused < 0 as libc::c_int || nUnused > 5000 as libc::c_int)
+        || !unused.is_null()
+            && (nUnused < 0 as libc::c_int || nUnused > 5000 as libc::c_int)
     {
         if !bzerror.is_null() {
-            *bzerror = -(2 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror= -(2 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(2 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(2 as libc::c_int);
+        }else { (); }
         return 0 as *mut libc::c_void;
     }
     if ferror(f) != 0 {
         if !bzerror.is_null() {
-            *bzerror = -(6 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror= -(6 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(6 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(6 as libc::c_int);
+        }else { (); }
         return 0 as *mut libc::c_void;
     }
-    bzf = malloc(::std::mem::size_of::<bzFile>() as libc::c_ulong) as *mut bzFile;
-    if bzf.is_null() {
-        ();
+    bzf= malloc(::std::mem::size_of::<bzFile>() as libc::c_ulong) as *mut bzFile;
+    if bzf.is_null() {();
         if !bzerror.is_null() {
-            *bzerror = -(3 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror= -(3 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(3 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(3 as libc::c_int);
+        }else { (); }
         return 0 as *mut libc::c_void;
     }
     if !bzerror.is_null() {
-        *bzerror = 0 as libc::c_int;
-    } else {
-        ();
-    }
+        *bzerror= 0 as libc::c_int;
+    }else { (); }
     if !bzf.is_null() {
-        (*bzf).lastErr = 0 as libc::c_int;
-    } else {
-        ();
-    }
-    (*bzf).initialisedOk = 0 as libc::c_int as Bool;
-    (*bzf).handle = f;
-    (*bzf).bufN = 0 as libc::c_int;
-    (*bzf).writing = 0 as libc::c_int as Bool;
-    (*bzf).strm.bzalloc = None;
-    (*bzf).strm.bzfree = None;
-    (*bzf).strm.opaque = 0 as *mut libc::c_void;
+        (*bzf).lastErr= 0 as libc::c_int;
+    }else { (); }
+    (*bzf).initialisedOk= 0 as libc::c_int as Bool;
+    (*bzf).handle= f;
+    (*bzf).bufN= 0 as libc::c_int;
+    (*bzf).writing= 0 as libc::c_int as Bool;
+    (*bzf).strm.bzalloc= None;
+    (*bzf).strm.bzfree= None;
+    (*bzf).strm.opaque= 0 as *mut libc::c_void;
     while nUnused > 0 as libc::c_int {
         (*bzf).buf[(*bzf).bufN as usize] = *(unused as *mut UChar) as Char;
-        (*bzf).bufN += 1;
-        unused = (unused as *mut UChar).offset(1 as libc::c_int as isize) as *mut libc::c_void;
-        nUnused -= 1;
+        (*bzf).bufN+= 1;
+        unused= (unused as *mut UChar).offset(1 as libc::c_int as isize)
+            as *mut libc::c_void;
+        nUnused-= 1;
     }
-    ret = BZ2_bzDecompressInit(core::ptr::addr_of_mut!((*bzf).strm), verbosity, small);
+    ret= BZ2_bzDecompressInit(core::ptr::addr_of_mut!((*bzf).strm), verbosity, small);
     if ret != 0 as libc::c_int {
         if !bzerror.is_null() {
-            *bzerror = ret;
-        } else {
-            ();
-        }
+            *bzerror= ret;
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = ret;
-        } else {
-            ();
-        }
+            (*bzf).lastErr= ret;
+        }else { (); }
         free(bzf as *mut libc::c_void);
         return 0 as *mut libc::c_void;
     }
-    (*bzf).strm.avail_in = (*bzf).bufN as libc::c_uint;
-    (*bzf).strm.next_in = (*bzf).buf.as_mut_ptr();
-    (*bzf).initialisedOk = 1 as libc::c_int as Bool;
+    (*bzf).strm.avail_in= (*bzf).bufN as libc::c_uint;
+    (*bzf).strm.next_in= (*bzf).buf.as_mut_ptr();
+    (*bzf).initialisedOk= 1 as libc::c_int as Bool;
     return bzf as *mut libc::c_void;
 }
 #[no_mangle]
-pub unsafe extern "C" fn BZ2_bzReadClose(mut bzerror: *mut libc::c_int, mut b: *mut libc::c_void) {
+pub unsafe extern "C" fn BZ2_bzReadClose(
+    mut bzerror: *mut libc::c_int,
+    mut b: *mut libc::c_void,
+) {
     let mut bzf = b as *mut bzFile;
     if !bzerror.is_null() {
-        *bzerror = 0 as libc::c_int;
-    } else {
-        ();
-    }
+        *bzerror= 0 as libc::c_int;
+    }else { (); }
     if !bzf.is_null() {
-        (*bzf).lastErr = 0 as libc::c_int;
-    } else {
-        ();
-    }
-    if bzf.is_null() {
-        ();
+        (*bzf).lastErr= 0 as libc::c_int;
+    }else { (); }
+    if bzf.is_null() {();
         if !bzerror.is_null() {
-            *bzerror = 0 as libc::c_int;
-        } else {
-            ();
-        }
+            *bzerror= 0 as libc::c_int;
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = 0 as libc::c_int;
-        } else {
-            ();
-        }
+            (*bzf).lastErr= 0 as libc::c_int;
+        }else { (); }
         return;
     }
     if (*bzf).writing != 0 {
         if !bzerror.is_null() {
-            *bzerror = -(1 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror= -(1 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(1 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(1 as libc::c_int);
+        }else { (); }
         return;
     }
     if (*bzf).initialisedOk != 0 {
@@ -2267,72 +2027,54 @@ pub unsafe extern "C" fn BZ2_bzRead(
     let mut ret: Int32 = 0;
     let mut bzf = b as *mut bzFile;
     if !bzerror.as_deref().is_none() {
-        *bzerror.as_deref_mut().unwrap() = 0 as libc::c_int;
-    } else {
-        ();
-    }
+        *bzerror.as_deref_mut().unwrap()= 0 as libc::c_int;
+    }else { (); }
     if !bzf.is_null() {
-        (*bzf).lastErr = 0 as libc::c_int;
-    } else {
-        ();
-    }
+        (*bzf).lastErr= 0 as libc::c_int;
+    }else { (); }
     if bzf.is_null() || buf.is_null() || len < 0 as libc::c_int {
         if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(2 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror.as_deref_mut().unwrap()= -(2 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(2 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(2 as libc::c_int);
+        }else { (); }
         return 0 as libc::c_int;
     }
     if (*bzf).writing != 0 {
         if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(1 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror.as_deref_mut().unwrap()= -(1 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(1 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(1 as libc::c_int);
+        }else { (); }
         return 0 as libc::c_int;
     }
     if len == 0 as libc::c_int {
         if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = 0 as libc::c_int;
-        } else {
-            ();
-        }
+            *bzerror.as_deref_mut().unwrap()= 0 as libc::c_int;
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = 0 as libc::c_int;
-        } else {
-            ();
-        }
+            (*bzf).lastErr= 0 as libc::c_int;
+        }else { (); }
         return 0 as libc::c_int;
     }
-    (*bzf).strm.avail_out = len as libc::c_uint;
-    (*bzf).strm.next_out = buf as *mut libc::c_char;
+    (*bzf).strm.avail_out= len as libc::c_uint;
+    (*bzf).strm.next_out= buf as *mut libc::c_char;
     while 1 as libc::c_int as Bool != 0 {
         if ferror((*bzf).handle) != 0 {
             if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = -(6 as libc::c_int);
-            } else {
-                ();
-            }
+                *bzerror.as_deref_mut().unwrap()= -(6 as libc::c_int);
+            }else { (); }
             if !bzf.is_null() {
-                (*bzf).lastErr = -(6 as libc::c_int);
-            } else {
-                ();
-            }
+                (*bzf).lastErr= -(6 as libc::c_int);
+            }else { (); }
             return 0 as libc::c_int;
         }
-        if (*bzf).strm.avail_in == 0 as libc::c_int as libc::c_uint && myfeof((*bzf).handle) == 0 {
-            n = fread(
+        if (*bzf).strm.avail_in == 0 as libc::c_int as libc::c_uint
+            && myfeof((*bzf).handle) == 0
+        {
+            n= fread(
                 (*bzf).buf.as_mut_ptr() as *mut libc::c_void,
                 ::std::mem::size_of::<UChar>() as libc::c_ulong,
                 5000 as libc::c_int as libc::c_ulong,
@@ -2340,76 +2082,56 @@ pub unsafe extern "C" fn BZ2_bzRead(
             ) as Int32;
             if ferror((*bzf).handle) != 0 {
                 if !bzerror.as_deref().is_none() {
-                    *bzerror.as_deref_mut().unwrap() = -(6 as libc::c_int);
-                } else {
-                    ();
-                }
+                    *bzerror.as_deref_mut().unwrap()= -(6 as libc::c_int);
+                }else { (); }
                 if !bzf.is_null() {
-                    (*bzf).lastErr = -(6 as libc::c_int);
-                } else {
-                    ();
-                }
+                    (*bzf).lastErr= -(6 as libc::c_int);
+                }else { (); }
                 return 0 as libc::c_int;
             }
-            (*bzf).bufN = n;
-            (*bzf).strm.avail_in = (*bzf).bufN as libc::c_uint;
-            (*bzf).strm.next_in = (*bzf).buf.as_mut_ptr();
+            (*bzf).bufN= n;
+            (*bzf).strm.avail_in= (*bzf).bufN as libc::c_uint;
+            (*bzf).strm.next_in= (*bzf).buf.as_mut_ptr();
         }
-        ret = BZ2_bzDecompress(core::ptr::addr_of_mut!((*bzf).strm));
+        ret= BZ2_bzDecompress(core::ptr::addr_of_mut!((*bzf).strm));
         if ret != 0 as libc::c_int && ret != 4 as libc::c_int {
             if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = ret;
-            } else {
-                ();
-            }
+                *bzerror.as_deref_mut().unwrap()= ret;
+            }else { (); }
             if !bzf.is_null() {
-                (*bzf).lastErr = ret;
-            } else {
-                ();
-            }
+                (*bzf).lastErr= ret;
+            }else { (); }
             return 0 as libc::c_int;
         }
-        if ret == 0 as libc::c_int
-            && myfeof((*bzf).handle) as libc::c_int != 0
+        if ret == 0 as libc::c_int && myfeof((*bzf).handle) as libc::c_int != 0
             && (*bzf).strm.avail_in == 0 as libc::c_int as libc::c_uint
             && (*bzf).strm.avail_out > 0 as libc::c_int as libc::c_uint
         {
             if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = -(7 as libc::c_int);
-            } else {
-                ();
-            }
+                *bzerror.as_deref_mut().unwrap()= -(7 as libc::c_int);
+            }else { (); }
             if !bzf.is_null() {
-                (*bzf).lastErr = -(7 as libc::c_int);
-            } else {
-                ();
-            }
+                (*bzf).lastErr= -(7 as libc::c_int);
+            }else { (); }
             return 0 as libc::c_int;
         }
         if ret == 4 as libc::c_int {
             if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = 4 as libc::c_int;
-            } else {
-                ();
-            }
+                *bzerror.as_deref_mut().unwrap()= 4 as libc::c_int;
+            }else { (); }
             if !bzf.is_null() {
-                (*bzf).lastErr = 4 as libc::c_int;
-            } else {
-                ();
-            }
-            return (len as libc::c_uint).wrapping_sub((*bzf).strm.avail_out) as libc::c_int;
+                (*bzf).lastErr= 4 as libc::c_int;
+            }else { (); }
+            return (len as libc::c_uint).wrapping_sub((*bzf).strm.avail_out)
+                as libc::c_int;
         }
         if (*bzf).strm.avail_out == 0 as libc::c_int as libc::c_uint {
             if !bzerror.as_deref().is_none() {
-                *bzerror.as_deref_mut().unwrap() = 0 as libc::c_int;
-            } else {
-                ();
-            }
+                *bzerror.as_deref_mut().unwrap()= 0 as libc::c_int;
+            }else { (); }
             if !bzf.is_null() {
-                (*bzf).lastErr = 0 as libc::c_int;
-            } else {
-                ();
-            }
+                (*bzf).lastErr= 0 as libc::c_int;
+            }else { (); }
             return len;
         }
     }
@@ -2419,68 +2141,51 @@ pub unsafe extern "C" fn BZ2_bzRead(
 pub unsafe extern "C" fn BZ2_bzReadGetUnused(
     mut bzerror: Option<&mut libc::c_int>,
     mut b: *mut libc::c_void,
-    mut unused: Option<&mut *const libc::c_void>,
+    mut unused: Option<&mut *mut libc::c_void>,
     mut nUnused: Option<&mut libc::c_int>,
 ) {
     let mut bzf = b as *mut bzFile;
-    if bzf.is_null() {
-        ();
+    if bzf.is_null() {();
         if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(2 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror.as_deref_mut().unwrap()= -(2 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(2 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(2 as libc::c_int);
+        }else { (); }
         return;
     }
     if (*bzf).lastErr != 4 as libc::c_int {
         if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(1 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror.as_deref_mut().unwrap()= -(1 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(1 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(1 as libc::c_int);
+        }else { (); }
         return;
     }
     if unused.as_deref().is_none() || nUnused.as_deref().is_none() {
         if !bzerror.as_deref().is_none() {
-            *bzerror.as_deref_mut().unwrap() = -(2 as libc::c_int);
-        } else {
-            ();
-        }
+            *bzerror.as_deref_mut().unwrap()= -(2 as libc::c_int);
+        }else { (); }
         if !bzf.is_null() {
-            (*bzf).lastErr = -(2 as libc::c_int);
-        } else {
-            ();
-        }
+            (*bzf).lastErr= -(2 as libc::c_int);
+        }else { (); }
         return;
     }
     if !bzerror.as_deref().is_none() {
-        *bzerror.as_deref_mut().unwrap() = 0 as libc::c_int;
-    } else {
-        ();
-    }
+        *bzerror.as_deref_mut().unwrap()= 0 as libc::c_int;
+    }else { (); }
     if !bzf.is_null() {
-        (*bzf).lastErr = 0 as libc::c_int;
-    } else {
-        ();
-    }
-    *nUnused.as_deref_mut().unwrap() = (*bzf).strm.avail_in as libc::c_int;
-    *unused.as_deref_mut().unwrap() = (*bzf).strm.next_in as *mut libc::c_void;
+        (*bzf).lastErr= 0 as libc::c_int;
+    }else { (); }
+    *nUnused.as_deref_mut().unwrap()= (*bzf).strm.avail_in as libc::c_int;
+    *unused.as_deref_mut().unwrap()= (*bzf).strm.next_in as *mut libc::c_void;
 }
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzBuffToBuffCompress(
     mut dest: *mut libc::c_char,
     mut destLen: Option<&mut libc::c_uint>,
-    mut source: *const libc::c_char,
+    mut source: *mut libc::c_char,
     mut sourceLen: libc::c_uint,
     mut blockSize100k: libc::c_int,
     mut verbosity: libc::c_int,
@@ -2501,38 +2206,28 @@ pub unsafe extern "C" fn BZ2_bzBuffToBuffCompress(
         opaque: 0 as *mut libc::c_void,
     };
     let mut ret: libc::c_int = 0;
-    if dest.is_null()
-        || destLen.as_deref().is_none()
-        || source.is_null()
-        || blockSize100k < 1 as libc::c_int
-        || blockSize100k > 9 as libc::c_int
-        || verbosity < 0 as libc::c_int
-        || verbosity > 4 as libc::c_int
-        || workFactor < 0 as libc::c_int
-        || workFactor > 250 as libc::c_int
+    if dest.is_null() || destLen.as_deref().is_none() || source.is_null()
+        || blockSize100k < 1 as libc::c_int || blockSize100k > 9 as libc::c_int
+        || verbosity < 0 as libc::c_int || verbosity > 4 as libc::c_int
+        || workFactor < 0 as libc::c_int || workFactor > 250 as libc::c_int
     {
         return -(2 as libc::c_int);
     }
     if workFactor == 0 as libc::c_int {
-        workFactor = 30 as libc::c_int;
+        workFactor= 30 as libc::c_int;
     }
-    strm.bzalloc = None;
-    strm.bzfree = None;
-    strm.opaque = 0 as *mut libc::c_void;
-    ret = BZ2_bzCompressInit(
-        core::ptr::addr_of_mut!(strm),
-        blockSize100k,
-        verbosity,
-        workFactor,
-    );
+    strm.bzalloc= None;
+    strm.bzfree= None;
+    strm.opaque= 0 as *mut libc::c_void;
+    ret= BZ2_bzCompressInit(core::ptr::addr_of_mut!(strm), blockSize100k, verbosity, workFactor);
     if ret != 0 as libc::c_int {
         return ret;
     }
-    strm.next_in = source;
-    strm.next_out = dest;
-    strm.avail_in = sourceLen;
-    strm.avail_out = (*destLen.as_deref().unwrap());
-    ret = BZ2_bzCompress(core::ptr::addr_of_mut!(strm), 2 as libc::c_int);
+    strm.next_in= source;
+    strm.next_out= dest;
+    strm.avail_in= sourceLen;
+    strm.avail_out= (*destLen.as_deref().unwrap());
+    ret= BZ2_bzCompress(core::ptr::addr_of_mut!(strm), 2 as libc::c_int);
     if ret == 3 as libc::c_int {
         BZ2_bzCompressEnd(core::ptr::addr_of_mut!(strm));
         return -(8 as libc::c_int);
@@ -2540,8 +2235,7 @@ pub unsafe extern "C" fn BZ2_bzBuffToBuffCompress(
         BZ2_bzCompressEnd(core::ptr::addr_of_mut!(strm));
         return ret;
     } else {
-        *destLen.as_deref_mut().unwrap() =
-            (*destLen.as_deref().unwrap()).wrapping_sub(strm.avail_out);
+        *destLen.as_deref_mut().unwrap()= (*destLen.as_deref().unwrap()).wrapping_sub(strm.avail_out);
         BZ2_bzCompressEnd(core::ptr::addr_of_mut!(strm));
         return 0 as libc::c_int;
     };
@@ -2550,7 +2244,7 @@ pub unsafe extern "C" fn BZ2_bzBuffToBuffCompress(
 pub unsafe extern "C" fn BZ2_bzBuffToBuffDecompress(
     mut dest: *mut libc::c_char,
     mut destLen: Option<&mut libc::c_uint>,
-    mut source: *const libc::c_char,
+    mut source: *mut libc::c_char,
     mut sourceLen: libc::c_uint,
     mut small: libc::c_int,
     mut verbosity: libc::c_int,
@@ -2570,27 +2264,24 @@ pub unsafe extern "C" fn BZ2_bzBuffToBuffDecompress(
         opaque: 0 as *mut libc::c_void,
     };
     let mut ret: libc::c_int = 0;
-    if dest.is_null()
-        || destLen.as_deref().is_none()
-        || source.is_null()
+    if dest.is_null() || destLen.as_deref().is_none() || source.is_null()
         || small != 0 as libc::c_int && small != 1 as libc::c_int
-        || verbosity < 0 as libc::c_int
-        || verbosity > 4 as libc::c_int
+        || verbosity < 0 as libc::c_int || verbosity > 4 as libc::c_int
     {
         return -(2 as libc::c_int);
     }
-    strm.bzalloc = None;
-    strm.bzfree = None;
-    strm.opaque = 0 as *mut libc::c_void;
-    ret = BZ2_bzDecompressInit(core::ptr::addr_of_mut!(strm), verbosity, small);
+    strm.bzalloc= None;
+    strm.bzfree= None;
+    strm.opaque= 0 as *mut libc::c_void;
+    ret= BZ2_bzDecompressInit(core::ptr::addr_of_mut!(strm), verbosity, small);
     if ret != 0 as libc::c_int {
         return ret;
     }
-    strm.next_in = source;
-    strm.next_out = dest;
-    strm.avail_in = sourceLen;
-    strm.avail_out = (*destLen.as_deref().unwrap());
-    ret = BZ2_bzDecompress(core::ptr::addr_of_mut!(strm));
+    strm.next_in= source;
+    strm.next_out= dest;
+    strm.avail_in= sourceLen;
+    strm.avail_out= (*destLen.as_deref().unwrap());
+    ret= BZ2_bzDecompress(core::ptr::addr_of_mut!(strm));
     if ret == 0 as libc::c_int {
         if strm.avail_out > 0 as libc::c_int as libc::c_uint {
             BZ2_bzDecompressEnd(core::ptr::addr_of_mut!(strm));
@@ -2603,8 +2294,7 @@ pub unsafe extern "C" fn BZ2_bzBuffToBuffDecompress(
         BZ2_bzDecompressEnd(core::ptr::addr_of_mut!(strm));
         return ret;
     } else {
-        *destLen.as_deref_mut().unwrap() =
-            (*destLen.as_deref().unwrap()).wrapping_sub(strm.avail_out);
+        *destLen.as_deref_mut().unwrap()= (*destLen.as_deref().unwrap()).wrapping_sub(strm.avail_out);
         BZ2_bzDecompressEnd(core::ptr::addr_of_mut!(strm));
         return 0 as libc::c_int;
     };
@@ -2618,44 +2308,45 @@ unsafe extern "C" fn bzopen_or_bzdopen(
     mut fd: libc::c_int,
     mut mode: *const libc::c_char,
     mut open_mode: libc::c_int,
-) -> *const libc::c_void {
+) -> *mut libc::c_void {
     let mut bzerr: libc::c_int = 0;
     let mut unused: [libc::c_char; 5000] = [0; 5000];
     let mut blockSize100k = 9 as libc::c_int;
     let mut writing = 0 as libc::c_int;
-    let mut mode2: [libc::c_char; 10] =
-        *::std::mem::transmute::<&[u8; 10], &mut [libc::c_char; 10]>(b"\0\0\0\0\0\0\0\0\0\0");
+    let mut mode2: [libc::c_char; 10] = *::std::mem::transmute::<
+        &[u8; 10],
+        &mut [libc::c_char; 10],
+    >(b"\0\0\0\0\0\0\0\0\0\0");
     let mut fp = 0 as *mut FILE;
     let mut bzfp = 0 as *mut libc::c_void;
     let mut verbosity = 0 as libc::c_int;
     let mut workFactor = 30 as libc::c_int;
     let mut smallMode = 0 as libc::c_int;
     let mut nUnused = 0 as libc::c_int;
-    if mode.is_null() {
-        ();
+    if mode.is_null() {();
         return 0 as *mut libc::c_void;
     }
     while (*mode) != 0 {
-        match (*mode) as libc::c_int {
+        match  (*mode) as libc::c_int {
             114 => {
-                writing = 0 as libc::c_int;
+                writing= 0 as libc::c_int;
             }
             119 => {
-                writing = 1 as libc::c_int;
+                writing= 1 as libc::c_int;
             }
             115 => {
-                smallMode = 1 as libc::c_int;
+                smallMode= 1 as libc::c_int;
             }
             _ => {
-                if *(*__ctype_b_loc()).offset((*mode) as libc::c_int as isize) as libc::c_int
-                    & _ISdigit as libc::c_int as libc::c_ushort as libc::c_int
-                    != 0
+                if *(*__ctype_b_loc()).offset((*mode) as libc::c_int as isize)
+                    as libc::c_int
+                    & _ISdigit as libc::c_int as libc::c_ushort as libc::c_int != 0
                 {
-                    blockSize100k = (*mode) as libc::c_int - 0x30 as libc::c_int;
+                    blockSize100k= (*mode) as libc::c_int - 0x30 as libc::c_int;
                 }
             }
         }
-        mode = mode.offset(1);
+        mode= mode.offset(1);
     }
     strcat(
         mode2.as_mut_ptr(),
@@ -2665,41 +2356,32 @@ unsafe extern "C" fn bzopen_or_bzdopen(
             b"r\0" as *const u8 as *const libc::c_char
         },
     );
-    strcat(
-        mode2.as_mut_ptr(),
-        b"b\0" as *const u8 as *const libc::c_char,
-    );
+    strcat(mode2.as_mut_ptr(), b"b\0" as *const u8 as *const libc::c_char);
     if open_mode == 0 as libc::c_int {
         if path.is_null()
-            || strcmp(path, b"\0" as *const u8 as *const libc::c_char) == 0 as libc::c_int
+            || strcmp(path, b"\0" as *const u8 as *const libc::c_char)
+                == 0 as libc::c_int
         {
-            fp = if writing != 0 { stdout } else { stdin };
+            fp= if writing != 0 { stdout } else { stdin };
         } else {
-            fp = fopen(path, mode2.as_mut_ptr());
+            fp= fopen(path, mode2.as_mut_ptr());
         }
     } else {
-        fp = fdopen(fd, mode2.as_mut_ptr());
+        fp= fdopen(fd, mode2.as_mut_ptr());
     }
-    if fp.is_null() {
-        ();
+    if fp.is_null() {();
         return 0 as *mut libc::c_void;
     }
     if writing != 0 {
         if blockSize100k < 1 as libc::c_int {
-            blockSize100k = 1 as libc::c_int;
+            blockSize100k= 1 as libc::c_int;
         }
         if blockSize100k > 9 as libc::c_int {
-            blockSize100k = 9 as libc::c_int;
+            blockSize100k= 9 as libc::c_int;
         }
-        bzfp = BZ2_bzWriteOpen(
-            core::ptr::addr_of_mut!(bzerr),
-            fp,
-            blockSize100k,
-            verbosity,
-            workFactor,
-        );
+        bzfp= BZ2_bzWriteOpen(core::ptr::addr_of_mut!(bzerr), fp, blockSize100k, verbosity, workFactor);
     } else {
-        bzfp = BZ2_bzReadOpen(
+        bzfp= BZ2_bzReadOpen(
             core::ptr::addr_of_mut!(bzerr),
             fp,
             verbosity,
@@ -2708,8 +2390,7 @@ unsafe extern "C" fn bzopen_or_bzdopen(
             nUnused,
         );
     }
-    if bzfp.is_null() {
-        ();
+    if bzfp.is_null() {();
         if fp != stdin && fp != stdout {
             fclose(fp);
         }
@@ -2719,16 +2400,16 @@ unsafe extern "C" fn bzopen_or_bzdopen(
 }
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzopen(
-    mut path: *mut libc::c_char,
+    mut path: *mut /* owning */ libc::c_char,
     mut mode: *const libc::c_char,
-) -> *const libc::c_void {
+) -> *mut libc::c_void {
     return bzopen_or_bzdopen(path, -(1 as libc::c_int), mode, 0 as libc::c_int);
 }
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzdopen(
     mut fd: libc::c_int,
     mut mode: *const libc::c_char,
-) -> *const libc::c_void {
+) -> *mut libc::c_void {
     return bzopen_or_bzdopen(0 as *const libc::c_char, fd, mode, 1 as libc::c_int);
 }
 #[no_mangle]
@@ -2742,51 +2423,51 @@ pub unsafe extern "C" fn BZ2_bzread(
     if (*(b as *mut bzFile)).lastErr == 4 as libc::c_int {
         return 0 as libc::c_int;
     }
-    nread = BZ2_bzRead(Some(&mut bzerr), b, buf, len);
+    nread= BZ2_bzRead(Some(&mut bzerr), b, buf, len);
     if bzerr == 0 as libc::c_int || bzerr == 4 as libc::c_int {
-        return nread;
+        return nread
     } else {
-        return -(1 as libc::c_int);
+        return -(1 as libc::c_int)
     };
 }
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzwrite(
     mut b: Option<&mut libc::c_void>,
-    mut buf: *const libc::c_void,
+    mut buf: *mut libc::c_void,
     mut len: libc::c_int,
 ) -> libc::c_int {
     let mut bzerr: libc::c_int = 0;
-    BZ2_bzWrite(
-        Some(&mut bzerr),
-        b.as_deref_mut()
-            .map(|r| r as *mut _)
-            .unwrap_or(std::ptr::null_mut()),
-        buf,
-        len,
-    );
-    if bzerr == 0 as libc::c_int {
-        return len;
-    } else {
-        return -(1 as libc::c_int);
-    };
+    BZ2_bzWrite(Some(&mut bzerr), b.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), buf, len);
+    if bzerr == 0 as libc::c_int { return len } else { return -(1 as libc::c_int) };
 }
 #[no_mangle]
-pub unsafe extern "C" fn BZ2_bzflush(mut b: *const libc::c_void) -> libc::c_int {
+pub unsafe extern "C" fn BZ2_bzflush(mut b: *mut libc::c_void) -> libc::c_int {
     return 0 as libc::c_int;
 }
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzclose(mut b: *mut libc::c_void) {
     let mut bzerr: libc::c_int = 0;
     let mut fp = 0 as *mut FILE;
-    if b.is_null() {
-        ();
+    if b.is_null() {();
         return;
     }
-    fp = (*(b as *mut bzFile)).handle;
+    fp= (*(b as *mut bzFile)).handle;
     if (*(b as *mut bzFile)).writing != 0 {
-        BZ2_bzWriteClose(Some(&mut bzerr), b.as_mut(), 0 as libc::c_int, None, None);
+        BZ2_bzWriteClose(
+            Some(&mut bzerr),
+            b.as_mut(),
+            0 as libc::c_int,
+            None,
+            None,
+        );
         if bzerr != 0 as libc::c_int {
-            BZ2_bzWriteClose(None, b.as_mut(), 1 as libc::c_int, None, None);
+            BZ2_bzWriteClose(
+                None,
+                b.as_mut(),
+                1 as libc::c_int,
+                None,
+                None,
+            );
         }
     } else {
         BZ2_bzReadClose(core::ptr::addr_of_mut!(bzerr), b);
@@ -2815,13 +2496,13 @@ static mut bzerrorstrings: [*const libc::c_char; 16] = [
 ];
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzerror(
-    mut b: *const libc::c_void,
+    mut b: *mut libc::c_void,
     mut errnum: Option<&mut libc::c_int>,
 ) -> *const libc::c_char {
     let mut err = (*(b as *mut bzFile)).lastErr;
     if err > 0 as libc::c_int {
-        err = 0 as libc::c_int;
+        err= 0 as libc::c_int;
     }
-    *errnum.as_deref_mut().unwrap() = err;
+    *errnum.as_deref_mut().unwrap()= err;
     return bzerrorstrings[(err * -(1 as libc::c_int)) as usize];
 }

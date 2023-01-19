@@ -2472,7 +2472,7 @@ pub unsafe extern "C" fn json_extract_get_value_size(
 }
 #[no_mangle]
 pub unsafe extern "C" fn json_extract_copy_value(
-    state: *mut json_extract_state_s,
+    mut state: *mut json_extract_state_s,
     value: *const json_value_s,
 ) {
     let mut string = 0 as *mut json_string_s;

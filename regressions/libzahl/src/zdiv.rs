@@ -1,7 +1,7 @@
 use ::libc;
 extern "C" {
     static mut libzahl_tmp_div: z_t;
-
+    
 }
 pub type size_t = libc::c_ulong;
 pub type __uint32_t = libc::c_uint;
@@ -10,12 +10,6 @@ pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor10;
-impl Default for ErasedByPreprocessor10 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[no_mangle]
 pub unsafe extern "C" fn zdiv(

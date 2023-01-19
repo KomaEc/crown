@@ -20,7 +20,7 @@ extern "C" {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct url_data {
-    pub href: *const libc::c_char,
+    pub href: *mut libc::c_char,
     pub protocol: *mut libc::c_char,
     pub host: *mut libc::c_char,
     pub auth: *mut libc::c_char,
@@ -30,46 +30,19 @@ pub struct url_data {
     pub path: *mut libc::c_char,
     pub hash: *mut libc::c_char,
     pub query: *mut libc::c_char,
-    pub port: *const libc::c_char,
+    pub port: *mut libc::c_char,
 }
-impl Default for url_data {
-    fn default() -> Self {
-        Self {
-            href: std::ptr::null_mut(),
-            protocol: std::ptr::null_mut(),
-            host: std::ptr::null_mut(),
-            auth: std::ptr::null_mut(),
-            hostname: std::ptr::null_mut(),
-            pathname: std::ptr::null_mut(),
-            search: std::ptr::null_mut(),
-            path: std::ptr::null_mut(),
-            hash: std::ptr::null_mut(),
-            query: std::ptr::null_mut(),
-            port: std::ptr::null_mut(),
-        }
-    }
-}
-
 pub type url_data_t = url_data;
 #[no_mangle]
-pub unsafe extern "C" fn url_data_inspect(mut data: *const url_data_t) {
+pub unsafe extern "C" fn url_data_inspect(mut data: *mut url_data_t) {
     printf(b"#url =>\n\0" as *const u8 as *const libc::c_char);
-    printf(
-        b"    .href: \"%s\"\n\0" as *const u8 as *const libc::c_char,
-        (*data).href,
-    );
+    printf(b"    .href: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).href);
     printf(
         b"    .protocol: \"%s\"\n\0" as *const u8 as *const libc::c_char,
         (*data).protocol,
     );
-    printf(
-        b"    .host: \"%s\"\n\0" as *const u8 as *const libc::c_char,
-        (*data).host,
-    );
-    printf(
-        b"    .auth: \"%s\"\n\0" as *const u8 as *const libc::c_char,
-        (*data).auth,
-    );
+    printf(b"    .host: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).host);
+    printf(b"    .auth: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).auth);
     printf(
         b"    .hostname: \"%s\"\n\0" as *const u8 as *const libc::c_char,
         (*data).hostname,
@@ -82,83 +55,52 @@ pub unsafe extern "C" fn url_data_inspect(mut data: *const url_data_t) {
         b"    .search: \"%s\"\n\0" as *const u8 as *const libc::c_char,
         (*data).search,
     );
-    printf(
-        b"    .path: \"%s\"\n\0" as *const u8 as *const libc::c_char,
-        (*data).path,
-    );
-    printf(
-        b"    .hash: \"%s\"\n\0" as *const u8 as *const libc::c_char,
-        (*data).hash,
-    );
-    printf(
-        b"    .query: \"%s\"\n\0" as *const u8 as *const libc::c_char,
-        (*data).query,
-    );
-    printf(
-        b"    .port: \"%s\"\n\0" as *const u8 as *const libc::c_char,
-        (*data).port,
-    );
+    printf(b"    .path: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).path);
+    printf(b"    .hash: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).hash);
+    printf(b"    .query: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).query);
+    printf(b"    .port: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).port);
 }
 #[no_mangle]
-pub unsafe extern "C" fn url_inspect(mut url: *mut libc::c_char) {
+pub unsafe extern "C" fn url_inspect(mut url: *mut /* owning */ libc::c_char) {
     url_data_inspect(url_parse(url));
 }
 #[no_mangle]
 pub unsafe extern "C" fn url_free(mut data: Option<&mut url_data_t>) {
-    if data.as_deref().is_none() {
-        ();
+    if data.as_deref().is_none() {();
         return;
     }
     if !(*data.as_deref().unwrap()).auth.is_null() {
-        ();
-    } else {
-        ();
-    }
+        free((*data.as_deref().unwrap()).auth as *mut libc::c_void);
+    }else { (); }
     if !(*data.as_deref().unwrap()).protocol.is_null() {
-        ();
-    } else {
-        ();
-    }
+        free((*data.as_deref().unwrap()).protocol as *mut libc::c_void);
+    }else { (); }
     if !(*data.as_deref().unwrap()).hostname.is_null() {
-        ();
-    } else {
-        ();
-    }
+        free((*data.as_deref().unwrap()).hostname as *mut libc::c_void);
+    }else { (); }
     if !(*data.as_deref().unwrap()).host.is_null() {
-        ();
-    } else {
-        ();
-    }
+        free((*data.as_deref().unwrap()).host as *mut libc::c_void);
+    }else { (); }
     if !(*data.as_deref().unwrap()).pathname.is_null() {
-        ();
-    } else {
-        ();
-    }
+        free((*data.as_deref().unwrap()).pathname as *mut libc::c_void);
+    }else { (); }
     if !(*data.as_deref().unwrap()).path.is_null() {
-        ();
-    } else {
-        ();
-    }
+        free((*data.as_deref().unwrap()).path as *mut libc::c_void);
+    }else { (); }
     if !(*data.as_deref().unwrap()).hash.is_null() {
-        ();
-    } else {
-        ();
-    }
+        free((*data.as_deref().unwrap()).hash as *mut libc::c_void);
+    }else { (); }
     if !(*data.as_deref().unwrap()).search.is_null() {
-        ();
-    } else {
-        ();
-    }
+        free((*data.as_deref().unwrap()).search as *mut libc::c_void);
+    }else { (); }
     if !(*data.as_deref().unwrap()).query.is_null() {
-        ();
-    } else {
-        ();
-    }
+        free((*data.as_deref().unwrap()).query as *mut libc::c_void);
+    }else { (); }
 }
 #[no_mangle]
-pub unsafe extern "C" fn url_get_port(mut url: *mut libc::c_char) -> *const libc::c_char {
-    let mut port =
-        malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
+pub unsafe extern "C" fn url_get_port(mut url: *mut libc::c_char) -> *mut libc::c_char {
+    let mut port = malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
     let mut hostname = url_get_hostname(url);
     let mut host = url_get_host(url);
     if port.is_null() || hostname.is_null() {
@@ -168,11 +110,7 @@ pub unsafe extern "C" fn url_get_port(mut url: *mut libc::c_char) -> *const libc
         hostname,
         (strlen(host)).wrapping_add(1 as libc::c_int as libc::c_ulong) as libc::c_int,
     );
-    sscanf(
-        tmp_hostname,
-        b"%s\0" as *const u8 as *const libc::c_char,
-        port,
-    );
+    sscanf(tmp_hostname, b"%s\0" as *const u8 as *const libc::c_char, port);
     free(hostname as *mut libc::c_void);
     free(tmp_hostname as *mut libc::c_void);
     return port;
@@ -359,45 +297,40 @@ pub static mut URL_SCHEMES: [*mut libc::c_char; 177] = [
 ];
 #[no_mangle]
 pub unsafe extern "C" fn url_parse(mut url: *mut libc::c_char) -> *mut url_data_t {
-    let mut data = malloc(::std::mem::size_of::<url_data_t>() as libc::c_ulong) as *mut url_data_t;
-    if data.is_null() {
-        ();
+    let mut data = malloc(::std::mem::size_of::<url_data_t>() as libc::c_ulong)
+        as *mut url_data_t;
+    if data.is_null() {();
         return 0 as *mut url_data_t;
     }
-    (*data).href = url;
+    (*data).href= url;
     let mut tmp = 0 as *mut libc::c_char;
     let mut tmp_url = strdup(url);
     let mut is_ssh = 0 as libc::c_int != 0;
     let mut protocol = url_get_protocol(tmp_url);
-    if protocol.is_null() {
-        ();
+    if protocol.is_null() {();
         return 0 as *mut url_data_t;
     }
     let mut protocol_len = strlen(protocol) as libc::c_int + 3 as libc::c_int;
-    (*data).protocol = protocol;
-    is_ssh = url_is_ssh(protocol);
-    let mut auth =
-        malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
+    (*data).protocol= protocol;
+    is_ssh= url_is_ssh(protocol);
+    let mut auth = malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
     let mut auth_len = 0 as libc::c_int;
-    tmp = strstr(tmp_url, b"@\0" as *const u8 as *const libc::c_char);
+    tmp= strstr(tmp_url, b"@\0" as *const u8 as *const libc::c_char);
     if !tmp.is_null() {
-        auth = get_part(
+        auth= get_part(
             tmp_url,
             b"%[^@]\0" as *const u8 as *const libc::c_char,
             protocol_len,
         );
-        auth_len = strlen(auth) as libc::c_int;
+        auth_len= strlen(auth) as libc::c_int;
         if !auth.is_null() {
-            auth_len += 1;
-        } else {
-            ();
-        }
-    } else {
-        ();
-    }
-    (*data).auth = auth;
+            auth_len+= 1;
+        }else { (); }
+    }else { (); }
+    (*data).auth= auth;
     let mut hostname = 0 as *mut libc::c_char;
-    hostname = if is_ssh as libc::c_int != 0 {
+    hostname= if is_ssh as libc::c_int != 0 {
         get_part(
             tmp_url,
             b"%[^:]\0" as *const u8 as *const libc::c_char,
@@ -410,29 +343,24 @@ pub unsafe extern "C" fn url_parse(mut url: *mut libc::c_char) -> *mut url_data_
             protocol_len + auth_len,
         )
     };
-    if hostname.is_null() {
-        ();
+    if hostname.is_null() {();
         return 0 as *mut url_data_t;
     }
     let mut hostname_len = strlen(hostname) as libc::c_int;
     let mut tmp_hostname = strdup(hostname);
-    (*data).hostname = hostname;
+    (*data).hostname= hostname;
     let mut host = malloc(
-        (strlen(tmp_hostname)).wrapping_mul(::std::mem::size_of::<libc::c_char>() as libc::c_ulong),
+        (strlen(tmp_hostname))
+            .wrapping_mul(::std::mem::size_of::<libc::c_char>() as libc::c_ulong),
     ) as *mut libc::c_char;
-    sscanf(
-        tmp_hostname,
-        b"%[^:]\0" as *const u8 as *const libc::c_char,
-        host,
-    );
-    if host.is_null() {
-        ();
+    sscanf(tmp_hostname, b"%[^:]\0" as *const u8 as *const libc::c_char, host);
+    if host.is_null() {();
         return 0 as *mut url_data_t;
     }
     let mut host_len = strlen(host) as libc::c_int;
-    (*data).host = host;
+    (*data).host= host;
     let mut tmp_path = 0 as *mut libc::c_char;
-    tmp_path = if is_ssh as libc::c_int != 0 {
+    tmp_path= if is_ssh as libc::c_int != 0 {
         get_part(
             tmp_url,
             b":%s\0" as *const u8 as *const libc::c_char,
@@ -446,10 +374,10 @@ pub unsafe extern "C" fn url_parse(mut url: *mut libc::c_char) -> *mut url_data_
         )
     };
     let mut path = malloc(
-        (strlen(tmp_path)).wrapping_mul(::std::mem::size_of::<libc::c_char>() as libc::c_ulong),
+        (strlen(tmp_path))
+            .wrapping_mul(::std::mem::size_of::<libc::c_char>() as libc::c_ulong),
     ) as *mut libc::c_char;
-    if path.is_null() {
-        ();
+    if path.is_null() {();
         return 0 as *mut url_data_t;
     }
     let mut fmt = (if is_ssh as libc::c_int != 0 {
@@ -458,118 +386,100 @@ pub unsafe extern "C" fn url_parse(mut url: *mut libc::c_char) -> *mut url_data_
         b"/%s\0" as *const u8 as *const libc::c_char
     }) as *mut libc::c_char;
     sprintf(path, fmt, tmp_path);
-    (*data).path = path;
+    (*data).path= path;
     free(tmp_path as *mut libc::c_void);
-    let mut pathname =
-        malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
-    if pathname.is_null() {
-        ();
+    let mut pathname = malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
+    if pathname.is_null() {();
         return 0 as *mut url_data_t;
     }
     strcat(pathname, b"\0" as *const u8 as *const libc::c_char);
-    tmp_path = strdup(path);
-    sscanf(
-        tmp_path,
-        b"%[^? | ^#]\0" as *const u8 as *const libc::c_char,
-        pathname,
-    );
+    tmp_path= strdup(path);
+    sscanf(tmp_path, b"%[^? | ^#]\0" as *const u8 as *const libc::c_char, pathname);
     let mut pathname_len = strlen(pathname) as libc::c_int;
-    (*data).pathname = pathname;
-    let mut search =
-        malloc(::std::mem::size_of::<*mut libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
-    if search.is_null() {
-        ();
+    (*data).pathname= pathname;
+    let mut search = malloc(::std::mem::size_of::<*mut libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
+    if search.is_null() {();
         return 0 as *mut url_data_t;
     }
-    tmp_path = strff(tmp_path, pathname_len);
+    tmp_path= strff(tmp_path, pathname_len);
     strcat(search, b"\0" as *const u8 as *const libc::c_char);
-    sscanf(
-        tmp_path,
-        b"%[^#]\0" as *const u8 as *const libc::c_char,
-        search,
-    );
-    (*data).search = search;
+    sscanf(tmp_path, b"%[^#]\0" as *const u8 as *const libc::c_char, search);
+    (*data).search= search;
     let mut search_len = strlen(search) as libc::c_int;
     free(tmp_path as *mut libc::c_void);
-    let mut query =
-        malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
-    if query.is_null() {
-        ();
+    let mut query = malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
+    if query.is_null() {();
         return 0 as *mut url_data_t;
     }
     sscanf(search, b"?%s\0" as *const u8 as *const libc::c_char, query);
-    (*data).query = query;
-    let mut hash =
-        malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
-    if hash.is_null() {
-        ();
+    (*data).query= query;
+    let mut hash = malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
+    if hash.is_null() {();
         return 0 as *mut url_data_t;
     }
-    tmp_path = strff(path, pathname_len + search_len);
+    tmp_path= strff(path, pathname_len + search_len);
     strcat(hash, b"\0" as *const u8 as *const libc::c_char);
     sscanf(tmp_path, b"%s\0" as *const u8 as *const libc::c_char, hash);
-    (*data).hash = hash;
+    (*data).hash= hash;
     free(tmp_path as *mut libc::c_void);
-    let mut port =
-        malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
-    if port.is_null() {
-        ();
+    let mut port = malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
+    if port.is_null() {();
         return 0 as *mut url_data_t;
     }
-    tmp_hostname = strff(hostname, host_len + 1 as libc::c_int);
-    sscanf(
-        tmp_hostname,
-        b"%s\0" as *const u8 as *const libc::c_char,
-        port,
-    );
-    (*data).port = port;
+    tmp_hostname= strff(hostname, host_len + 1 as libc::c_int);
+    sscanf(tmp_hostname, b"%s\0" as *const u8 as *const libc::c_char, port);
+    (*data).port= port;
     free(tmp_hostname as *mut libc::c_void);
     return data;
 }
 #[no_mangle]
-pub unsafe extern "C" fn strdup(mut str: *const libc::c_char) -> *mut libc::c_char {
-    let mut n = (strlen(str)).wrapping_add(1 as libc::c_int as libc::c_ulong) as libc::c_int;
+pub unsafe extern "C" fn strdup(mut str: *const libc::c_char) -> *mut /* owning */ libc::c_char {
+    let mut n = (strlen(str)).wrapping_add(1 as libc::c_int as libc::c_ulong)
+        as libc::c_int;
     let mut dup = malloc(n as libc::c_ulong) as *mut libc::c_char;
     if !dup.is_null() {
         strcpy(dup, str);
-    } else {
-        ();
-    }
+    }else { (); }
     return dup;
 }
-unsafe extern "C" fn strff(mut ptr: *mut libc::c_char, mut n: libc::c_int) -> *mut libc::c_char {
+unsafe extern "C" fn strff(
+    mut ptr: *mut libc::c_char,
+    mut n: libc::c_int,
+) -> *mut /* owning */ libc::c_char {
     let mut y = 0 as libc::c_int;
     let mut i = 0 as libc::c_int;
     while i < n {
         let fresh11 = ptr;
-        ptr = ptr.offset(1);
-        y = (*fresh11) as libc::c_int;
-        i += 1;
+        ptr= ptr.offset(1);
+        y= (*fresh11) as libc::c_int;
+        i+= 1;
     }
     return strdup(ptr);
 }
 #[no_mangle]
-pub unsafe extern "C" fn url_get_protocol(mut url: *mut libc::c_char) -> *mut libc::c_char {
+pub unsafe extern "C" fn url_get_protocol(
+    mut url: *mut libc::c_char,
+) -> *mut libc::c_char {
     let mut protocol = malloc(
         (16 as libc::c_int as libc::c_ulong)
             .wrapping_mul(::std::mem::size_of::<libc::c_char>() as libc::c_ulong),
     ) as *mut libc::c_char;
-    if protocol.is_null() {
-        ();
+    if protocol.is_null() {();
         return 0 as *mut libc::c_char;
     }
-    sscanf(
-        url,
-        b"%[^://]\0" as *const u8 as *const libc::c_char,
-        protocol,
-    );
-    if url_is_protocol(protocol as *const i8) {
+    sscanf(url, b"%[^://]\0" as *const u8 as *const libc::c_char, protocol);
+    if url_is_protocol(protocol) {
         return protocol;
     }
     return 0 as *mut libc::c_char;
 }
 #[no_mangle]
-pub unsafe extern "C" fn url_is_protocol(mut str: *const libc::c_char) -> bool {
+pub unsafe extern "C" fn url_is_protocol(mut str: *mut libc::c_char) -> bool {
     let mut count = (::std::mem::size_of::<[*mut libc::c_char; 177]>() as libc::c_ulong)
         .wrapping_div(::std::mem::size_of::<*mut libc::c_char>() as libc::c_ulong)
         as libc::c_int;
@@ -578,7 +488,7 @@ pub unsafe extern "C" fn url_is_protocol(mut str: *const libc::c_char) -> bool {
         if 0 as libc::c_int == strcmp(URL_SCHEMES[i as usize], str) {
             return 1 as libc::c_int != 0;
         }
-        i += 1;
+        i+= 1;
     }
     return 0 as libc::c_int != 0;
 }
@@ -588,47 +498,46 @@ unsafe extern "C" fn get_part(
     mut l: libc::c_int,
 ) -> *mut libc::c_char {
     let mut has = 0 as libc::c_int != 0;
-    let mut tmp =
-        malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
+    let mut tmp = malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
     let mut tmp_url = strdup(url);
     let mut fmt_url = strdup(url);
-    let mut ret =
-        malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
+    let mut ret = malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
     if tmp.is_null() || tmp_url.is_null() || fmt_url.is_null() || ret.is_null() {
         return 0 as *mut libc::c_char;
     }
     strcpy(tmp, b"\0" as *const u8 as *const libc::c_char);
     strcpy(fmt_url, b"\0" as *const u8 as *const libc::c_char);
-    fmt_url = strff(fmt_url, l);
+    fmt_url= strff(fmt_url, l);
     sscanf(fmt_url, format, tmp);
     if 0 as libc::c_int != strcmp(tmp, tmp_url) {
-        has = 1 as libc::c_int != 0;
-        ret = strdup(tmp);
+        has= 1 as libc::c_int != 0;
+        ret= strdup(tmp);
     }
-    fmt_url = strrwd(fmt_url, l);
+    fmt_url= strrwd(fmt_url, l);
     free(tmp as *mut libc::c_void);
     free(tmp_url as *mut libc::c_void);
     free(fmt_url as *mut libc::c_void);
-    return if has as libc::c_int != 0 {
-        ret
-    } else {
-        0 as *mut libc::c_char
-    };
+    return if has as libc::c_int != 0 { ret } else { 0 as *mut libc::c_char };
 }
-unsafe extern "C" fn strrwd(mut ptr: *mut libc::c_char, mut n: libc::c_int) -> *mut libc::c_char {
+unsafe extern "C" fn strrwd(
+    mut ptr: *mut libc::c_char,
+    mut n: libc::c_int,
+) -> *mut /* owning */ libc::c_char {
     let mut y = 0 as libc::c_int;
     let mut i = 0 as libc::c_int;
     while i < n {
         let fresh12 = ptr;
-        ptr = ptr.offset(-1);
-        y = (*fresh12) as libc::c_int;
-        i += 1;
+        ptr= ptr.offset(-1);
+        y= (*fresh12) as libc::c_int;
+        i+= 1;
     }
     return strdup(ptr);
 }
 #[no_mangle]
 pub unsafe extern "C" fn url_is_ssh(mut str: *mut libc::c_char) -> bool {
-    str = strdup(str);
+    str= strdup(str);
     if 0 as libc::c_int == strcmp(str, b"ssh\0" as *const u8 as *const libc::c_char)
         || 0 as libc::c_int == strcmp(str, b"git\0" as *const u8 as *const libc::c_char)
     {
@@ -640,36 +549,32 @@ pub unsafe extern "C" fn url_is_ssh(mut str: *mut libc::c_char) -> bool {
 #[no_mangle]
 pub unsafe extern "C" fn url_get_auth(mut url: *mut libc::c_char) -> *mut libc::c_char {
     let mut protocol = url_get_protocol(url);
-    if protocol.is_null() {
-        ();
+    if protocol.is_null() {();
         return 0 as *mut libc::c_char;
     }
     let mut l = strlen(protocol) as libc::c_int + 3 as libc::c_int;
     return get_part(url, b"%[^@]\0" as *const u8 as *const libc::c_char, l);
 }
 #[no_mangle]
-pub unsafe extern "C" fn url_get_hostname(mut url: *mut libc::c_char) -> *mut libc::c_char {
+pub unsafe extern "C" fn url_get_hostname(
+    mut url: *mut libc::c_char,
+) -> *mut libc::c_char {
     let mut l = 3 as libc::c_int;
     let mut protocol = url_get_protocol(url);
     let mut tmp_protocol = strdup(protocol);
     let mut auth = url_get_auth(url);
-    if protocol.is_null() {
-        ();
+    if protocol.is_null() {();
         return 0 as *mut libc::c_char;
     }
     if !auth.is_null() {
-        l = (l as libc::c_ulong)
+        l= (l as libc::c_ulong)
             .wrapping_add((strlen(auth)).wrapping_add(1 as libc::c_int as libc::c_ulong))
             as libc::c_int as libc::c_int;
-    } else {
-        ();
-    }
+    }else { (); }
     if !auth.is_null() {
         free(auth as *mut libc::c_void);
-    } else {
-        ();
-    }
-    l += strlen(protocol) as libc::c_int;
+    }else { (); }
+    l+= strlen(protocol) as libc::c_int;
     free(protocol as *mut libc::c_void);
     let mut hostname = if url_is_ssh(tmp_protocol) as libc::c_int != 0 {
         get_part(url, b"%[^:]\0" as *const u8 as *const libc::c_char, l)
@@ -680,35 +585,29 @@ pub unsafe extern "C" fn url_get_hostname(mut url: *mut libc::c_char) -> *mut li
     return hostname;
 }
 #[no_mangle]
-pub unsafe extern "C" fn url_get_host(mut url: *mut libc::c_char) -> *const libc::c_char {
-    let mut host =
-        malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
+pub unsafe extern "C" fn url_get_host(mut url: *mut libc::c_char) -> *mut libc::c_char {
+    let mut host = malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
     let mut hostname = url_get_hostname(url);
     if host.is_null() || hostname.is_null() {
         return 0 as *mut libc::c_char;
     }
-    sscanf(
-        hostname,
-        b"%[^:]\0" as *const u8 as *const libc::c_char,
-        host,
-    );
+    sscanf(hostname, b"%[^:]\0" as *const u8 as *const libc::c_char, host);
     free(hostname as *mut libc::c_void);
     return host;
 }
 #[no_mangle]
-pub unsafe extern "C" fn url_get_pathname(mut url: *mut libc::c_char) -> *mut libc::c_char {
+pub unsafe extern "C" fn url_get_pathname(
+    mut url: *mut libc::c_char,
+) -> *mut libc::c_char {
     let mut path = url_get_path(url);
-    let mut pathname =
-        malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
+    let mut pathname = malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
     if path.is_null() || pathname.is_null() {
         return 0 as *mut libc::c_char;
     }
     strcat(pathname, b"\0" as *const u8 as *const libc::c_char);
-    sscanf(
-        path,
-        b"%[^?]\0" as *const u8 as *const libc::c_char,
-        pathname,
-    );
+    sscanf(path, b"%[^?]\0" as *const u8 as *const libc::c_char, pathname);
     free(path as *mut libc::c_void);
     return pathname;
 }
@@ -723,13 +622,11 @@ pub unsafe extern "C" fn url_get_path(mut url: *mut libc::c_char) -> *mut libc::
         return 0 as *mut libc::c_char;
     }
     let mut is_ssh = url_is_ssh(protocol);
-    l += strlen(protocol) as libc::c_int + strlen(hostname) as libc::c_int;
+    l+= strlen(protocol) as libc::c_int + strlen(hostname) as libc::c_int;
     if !auth.is_null() {
-        l += strlen(auth) as libc::c_int + 1 as libc::c_int;
-    } else {
-        ();
-    }
-    tmp_path = if is_ssh as libc::c_int != 0 {
+        l+= strlen(auth) as libc::c_int + 1 as libc::c_int;
+    }else { (); }
+    tmp_path= if is_ssh as libc::c_int != 0 {
         get_part(url, b":%s\0" as *const u8 as *const libc::c_char, l)
     } else {
         get_part(url, b"/%s\0" as *const u8 as *const libc::c_char, l)
@@ -740,47 +637,43 @@ pub unsafe extern "C" fn url_get_path(mut url: *mut libc::c_char) -> *mut libc::
         b"/%s\0" as *const u8 as *const libc::c_char
     }) as *mut libc::c_char;
     let mut path = malloc(
-        (strlen(tmp_path)).wrapping_mul(::std::mem::size_of::<libc::c_char>() as libc::c_ulong),
+        (strlen(tmp_path))
+            .wrapping_mul(::std::mem::size_of::<libc::c_char>() as libc::c_ulong),
     ) as *mut libc::c_char;
     sprintf(path, fmt, tmp_path);
     if !auth.is_null() {
         free(auth as *mut libc::c_void);
-    } else {
-        ();
-    }
+    }else { (); }
     free(protocol as *mut libc::c_void);
     free(hostname as *mut libc::c_void);
     free(tmp_path as *mut libc::c_void);
     return path;
 }
 #[no_mangle]
-pub unsafe extern "C" fn url_get_search(mut url: *mut libc::c_char) -> *mut libc::c_char {
+pub unsafe extern "C" fn url_get_search(
+    mut url: *mut libc::c_char,
+) -> *mut libc::c_char {
     let mut path = url_get_path(url);
     let mut pathname = url_get_pathname(url);
-    let mut search =
-        malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
+    let mut search = malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
     if path.is_null() || search.is_null() {
         return 0 as *mut libc::c_char;
     }
     let mut tmp_path = strff(path, strlen(pathname) as libc::c_int);
     strcat(search, b"\0" as *const u8 as *const libc::c_char);
-    sscanf(
-        tmp_path,
-        b"%[^#]\0" as *const u8 as *const libc::c_char,
-        search,
-    );
-    tmp_path = strrwd(tmp_path, strlen(pathname) as libc::c_int);
+    sscanf(tmp_path, b"%[^#]\0" as *const u8 as *const libc::c_char, search);
+    tmp_path= strrwd(tmp_path, strlen(pathname) as libc::c_int);
     free(path as *mut libc::c_void);
     free(pathname as *mut libc::c_void);
     return search;
 }
 #[no_mangle]
-pub unsafe extern "C" fn url_get_query(mut url: *mut libc::c_char) -> *const libc::c_char {
+pub unsafe extern "C" fn url_get_query(mut url: *mut libc::c_char) -> *mut libc::c_char {
     let mut search = url_get_search(url);
-    let mut query =
-        malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
-    if search.is_null() {
-        ();
+    let mut query = malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
+    if search.is_null() {();
         return 0 as *mut libc::c_char;
     }
     sscanf(search, b"?%s\0" as *const u8 as *const libc::c_char, query);
@@ -788,21 +681,18 @@ pub unsafe extern "C" fn url_get_query(mut url: *mut libc::c_char) -> *const lib
     return query;
 }
 #[no_mangle]
-pub unsafe extern "C" fn url_get_hash(mut url: *mut libc::c_char) -> *const libc::c_char {
-    let mut hash =
-        malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong) as *mut libc::c_char;
-    if hash.is_null() {
-        ();
+pub unsafe extern "C" fn url_get_hash(mut url: *mut libc::c_char) -> *mut libc::c_char {
+    let mut hash = malloc(::std::mem::size_of::<libc::c_char>() as libc::c_ulong)
+        as *mut libc::c_char;
+    if hash.is_null() {();
         return 0 as *mut libc::c_char;
     }
     let mut path = url_get_path(url);
-    if path.is_null() {
-        ();
+    if path.is_null() {();
         return 0 as *mut libc::c_char;
     }
     let mut pathname = url_get_pathname(url);
-    if pathname.is_null() {
-        ();
+    if pathname.is_null() {();
         return 0 as *mut libc::c_char;
     }
     let mut search = url_get_search(url);
@@ -811,27 +701,23 @@ pub unsafe extern "C" fn url_get_hash(mut url: *mut libc::c_char) -> *const libc
     let mut tmp_path = strff(path, pathname_len + search_len);
     strcat(hash, b"\0" as *const u8 as *const libc::c_char);
     sscanf(tmp_path, b"%s\0" as *const u8 as *const libc::c_char, hash);
-    tmp_path = strrwd(tmp_path, pathname_len + search_len);
+    tmp_path= strrwd(tmp_path, pathname_len + search_len);
     free(tmp_path as *mut libc::c_void);
     free(pathname as *mut libc::c_void);
     free(path as *mut libc::c_void);
     if !search.is_null() {
         free(search as *mut libc::c_void);
-    } else {
-        ();
-    }
+    }else { (); }
     return hash;
 }
 unsafe fn main_0() -> libc::c_int {
-    let mut gh_url = b"git://git@github.com:jwerle/url.h.git\0" as *const u8 as *const libc::c_char
-        as *mut libc::c_char;
+    let mut gh_url = b"git://git@github.com:jwerle/url.h.git\0" as *const u8
+        as *const libc::c_char as *mut libc::c_char;
     let mut url = b"http://user:pass@subdomain.host.com:8080/p/a/t/h?query=string#hash\0"
         as *const u8 as *const libc::c_char as *mut libc::c_char;
     let mut parsed = url_parse(url);
     let mut gh_parsed = url_parse(gh_url);
-    if !parsed.is_null() {
-    } else {
-        ();
+    if !parsed.is_null() {} else {();
         __assert_fail(
             b"parsed\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -839,9 +725,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !gh_parsed.is_null() {
-    } else {
-        ();
+    if !gh_parsed.is_null() {} else {();
         __assert_fail(
             b"gh_parsed\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -851,9 +735,7 @@ unsafe fn main_0() -> libc::c_int {
     };
     url_data_inspect(parsed);
     url_data_inspect(gh_parsed);
-    if !(*parsed).href.is_null() {
-    } else {
-        ();
+    if !(*parsed).href.is_null() {} else {();
         __assert_fail(
             b"parsed->href\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -861,9 +743,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*parsed).auth.is_null() {
-    } else {
-        ();
+    if !(*parsed).auth.is_null() {} else {();
         __assert_fail(
             b"parsed->auth\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -871,9 +751,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*parsed).protocol.is_null() {
-    } else {
-        ();
+    if !(*parsed).protocol.is_null() {} else {();
         __assert_fail(
             b"parsed->protocol\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -881,9 +759,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*parsed).port.is_null() {
-    } else {
-        ();
+    if !(*parsed).port.is_null() {} else {();
         __assert_fail(
             b"parsed->port\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -891,9 +767,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*parsed).hostname.is_null() {
-    } else {
-        ();
+    if !(*parsed).hostname.is_null() {} else {();
         __assert_fail(
             b"parsed->hostname\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -901,9 +775,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*parsed).host.is_null() {
-    } else {
-        ();
+    if !(*parsed).host.is_null() {} else {();
         __assert_fail(
             b"parsed->host\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -911,9 +783,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*parsed).pathname.is_null() {
-    } else {
-        ();
+    if !(*parsed).pathname.is_null() {} else {();
         __assert_fail(
             b"parsed->pathname\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -921,9 +791,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*parsed).path.is_null() {
-    } else {
-        ();
+    if !(*parsed).path.is_null() {} else {();
         __assert_fail(
             b"parsed->path\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -931,9 +799,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*parsed).hash.is_null() {
-    } else {
-        ();
+    if !(*parsed).hash.is_null() {} else {();
         __assert_fail(
             b"parsed->hash\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -941,9 +807,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*parsed).search.is_null() {
-    } else {
-        ();
+    if !(*parsed).search.is_null() {} else {();
         __assert_fail(
             b"parsed->search\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -951,9 +815,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*parsed).query.is_null() {
-    } else {
-        ();
+    if !(*parsed).query.is_null() {} else {();
         __assert_fail(
             b"parsed->query\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -961,9 +823,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*gh_parsed).href.is_null() {
-    } else {
-        ();
+    if !(*gh_parsed).href.is_null() {} else {();
         __assert_fail(
             b"gh_parsed->href\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -971,9 +831,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*gh_parsed).protocol.is_null() {
-    } else {
-        ();
+    if !(*gh_parsed).protocol.is_null() {} else {();
         __assert_fail(
             b"gh_parsed->protocol\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -981,9 +839,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*gh_parsed).host.is_null() {
-    } else {
-        ();
+    if !(*gh_parsed).host.is_null() {} else {();
         __assert_fail(
             b"gh_parsed->host\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -991,9 +847,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*gh_parsed).auth.is_null() {
-    } else {
-        ();
+    if !(*gh_parsed).auth.is_null() {} else {();
         __assert_fail(
             b"gh_parsed->auth\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -1001,9 +855,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*gh_parsed).hostname.is_null() {
-    } else {
-        ();
+    if !(*gh_parsed).hostname.is_null() {} else {();
         __assert_fail(
             b"gh_parsed->hostname\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -1011,9 +863,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*gh_parsed).pathname.is_null() {
-    } else {
-        ();
+    if !(*gh_parsed).pathname.is_null() {} else {();
         __assert_fail(
             b"gh_parsed->pathname\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -1021,9 +871,7 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if !(*gh_parsed).path.is_null() {
-    } else {
-        ();
+    if !(*gh_parsed).path.is_null() {} else {();
         __assert_fail(
             b"gh_parsed->path\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -1031,11 +879,10 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if url_is_protocol(b"http\0" as *const u8 as *const libc::c_char as *mut libc::c_char)
-        as libc::c_int
-        != 0
-    {
-    } else {
+    if url_is_protocol(
+        b"http\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
+    ) as libc::c_int != 0
+    {} else {
         __assert_fail(
             b"url_is_protocol(\"http\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -1043,11 +890,10 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if url_is_protocol(b"https\0" as *const u8 as *const libc::c_char as *mut libc::c_char)
-        as libc::c_int
-        != 0
-    {
-    } else {
+    if url_is_protocol(
+        b"https\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
+    ) as libc::c_int != 0
+    {} else {
         __assert_fail(
             b"url_is_protocol(\"https\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -1056,10 +902,8 @@ unsafe fn main_0() -> libc::c_int {
         );
     };
     if url_is_protocol(b"git\0" as *const u8 as *const libc::c_char as *mut libc::c_char)
-        as libc::c_int
-        != 0
-    {
-    } else {
+        as libc::c_int != 0
+    {} else {
         __assert_fail(
             b"url_is_protocol(\"git\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -1068,10 +912,8 @@ unsafe fn main_0() -> libc::c_int {
         );
     };
     if url_is_protocol(b"ssh\0" as *const u8 as *const libc::c_char as *mut libc::c_char)
-        as libc::c_int
-        != 0
-    {
-    } else {
+        as libc::c_int != 0
+    {} else {
         __assert_fail(
             b"url_is_protocol(\"ssh\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -1079,11 +921,10 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if url_is_protocol(b"sftp\0" as *const u8 as *const libc::c_char as *mut libc::c_char)
-        as libc::c_int
-        != 0
-    {
-    } else {
+    if url_is_protocol(
+        b"sftp\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
+    ) as libc::c_int != 0
+    {} else {
         __assert_fail(
             b"url_is_protocol(\"sftp\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -1092,10 +933,8 @@ unsafe fn main_0() -> libc::c_int {
         );
     };
     if url_is_protocol(b"ftp\0" as *const u8 as *const libc::c_char as *mut libc::c_char)
-        as libc::c_int
-        != 0
-    {
-    } else {
+        as libc::c_int != 0
+    {} else {
         __assert_fail(
             b"url_is_protocol(\"ftp\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -1103,11 +942,10 @@ unsafe fn main_0() -> libc::c_int {
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
-    if url_is_protocol(b"javascript\0" as *const u8 as *const libc::c_char as *mut libc::c_char)
-        as libc::c_int
-        != 0
-    {
-    } else {
+    if url_is_protocol(
+        b"javascript\0" as *const u8 as *const libc::c_char as *mut libc::c_char,
+    ) as libc::c_int != 0
+    {} else {
         __assert_fail(
             b"url_is_protocol(\"javascript\")\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -1116,28 +954,22 @@ unsafe fn main_0() -> libc::c_int {
         );
     };
     if 0 as libc::c_int
-        == strcmp(
-            b"http\0" as *const u8 as *const libc::c_char,
-            url_get_protocol(url),
-        )
-    {
-    } else {
+        == strcmp(b"http\0" as *const u8 as *const libc::c_char, url_get_protocol(url))
+    {} else {
         __assert_fail(
-            b"0 == strcmp(\"http\", url_get_protocol(url))\0" as *const u8 as *const libc::c_char,
+            b"0 == strcmp(\"http\", url_get_protocol(url))\0" as *const u8
+                as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             49 as libc::c_int as libc::c_uint,
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
     if 0 as libc::c_int
-        == strcmp(
-            b"user:pass\0" as *const u8 as *const libc::c_char,
-            url_get_auth(url),
-        )
-    {
-    } else {
+        == strcmp(b"user:pass\0" as *const u8 as *const libc::c_char, url_get_auth(url))
+    {} else {
         __assert_fail(
-            b"0 == strcmp(\"user:pass\", url_get_auth(url))\0" as *const u8 as *const libc::c_char,
+            b"0 == strcmp(\"user:pass\", url_get_auth(url))\0" as *const u8
+                as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             50 as libc::c_int as libc::c_uint,
             b"int main(void)\0" as *const u8 as *const i8,
@@ -1148,11 +980,10 @@ unsafe fn main_0() -> libc::c_int {
             b"subdomain.host.com:8080\0" as *const u8 as *const libc::c_char,
             url_get_hostname(url),
         )
-    {
-    } else {
+    {} else {
         __assert_fail(
-            b"0 == strcmp(\"subdomain.host.com:8080\", url_get_hostname(url))\0" as *const u8
-                as *const libc::c_char,
+            b"0 == strcmp(\"subdomain.host.com:8080\", url_get_hostname(url))\0"
+                as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             51 as libc::c_int as libc::c_uint,
             b"int main(void)\0" as *const u8 as *const i8,
@@ -1163,8 +994,7 @@ unsafe fn main_0() -> libc::c_int {
             b"subdomain.host.com\0" as *const u8 as *const libc::c_char,
             url_get_host(url),
         )
-    {
-    } else {
+    {} else {
         __assert_fail(
             b"0 == strcmp(\"subdomain.host.com\", url_get_host(url))\0" as *const u8
                 as *const libc::c_char,
@@ -1178,8 +1008,7 @@ unsafe fn main_0() -> libc::c_int {
             b"/p/a/t/h\0" as *const u8 as *const libc::c_char,
             url_get_pathname(url),
         )
-    {
-    } else {
+    {} else {
         __assert_fail(
             b"0 == strcmp(\"/p/a/t/h\", url_get_pathname(url))\0" as *const u8
                 as *const libc::c_char,
@@ -1193,11 +1022,10 @@ unsafe fn main_0() -> libc::c_int {
             b"/p/a/t/h?query=string#hash\0" as *const u8 as *const libc::c_char,
             url_get_path(url),
         )
-    {
-    } else {
+    {} else {
         __assert_fail(
-            b"0 == strcmp(\"/p/a/t/h?query=string#hash\", url_get_path(url))\0" as *const u8
-                as *const libc::c_char,
+            b"0 == strcmp(\"/p/a/t/h?query=string#hash\", url_get_path(url))\0"
+                as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             54 as libc::c_int as libc::c_uint,
             b"int main(void)\0" as *const u8 as *const i8,
@@ -1208,8 +1036,7 @@ unsafe fn main_0() -> libc::c_int {
             b"?query=string\0" as *const u8 as *const libc::c_char,
             url_get_search(url),
         )
-    {
-    } else {
+    {} else {
         __assert_fail(
             b"0 == strcmp(\"?query=string\", url_get_search(url))\0" as *const u8
                 as *const libc::c_char,
@@ -1223,8 +1050,7 @@ unsafe fn main_0() -> libc::c_int {
             b"query=string\0" as *const u8 as *const libc::c_char,
             url_get_query(url),
         )
-    {
-    } else {
+    {} else {
         __assert_fail(
             b"0 == strcmp(\"query=string\", url_get_query(url))\0" as *const u8
                 as *const libc::c_char,
@@ -1234,42 +1060,33 @@ unsafe fn main_0() -> libc::c_int {
         );
     };
     if 0 as libc::c_int
-        == strcmp(
-            b"#hash\0" as *const u8 as *const libc::c_char,
-            url_get_hash(url),
-        )
-    {
-    } else {
+        == strcmp(b"#hash\0" as *const u8 as *const libc::c_char, url_get_hash(url))
+    {} else {
         __assert_fail(
-            b"0 == strcmp(\"#hash\", url_get_hash(url))\0" as *const u8 as *const libc::c_char,
+            b"0 == strcmp(\"#hash\", url_get_hash(url))\0" as *const u8
+                as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             57 as libc::c_int as libc::c_uint,
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
     if 0 as libc::c_int
-        == strcmp(
-            b"8080\0" as *const u8 as *const libc::c_char,
-            url_get_port(url),
-        )
-    {
-    } else {
+        == strcmp(b"8080\0" as *const u8 as *const libc::c_char, url_get_port(url))
+    {} else {
         __assert_fail(
-            b"0 == strcmp(\"8080\", url_get_port(url))\0" as *const u8 as *const libc::c_char,
+            b"0 == strcmp(\"8080\", url_get_port(url))\0" as *const u8
+                as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             58 as libc::c_int as libc::c_uint,
             b"int main(void)\0" as *const u8 as *const i8,
         );
     };
     if 0 as libc::c_int
-        == strcmp(
-            b"git\0" as *const u8 as *const libc::c_char,
-            url_get_protocol(gh_url),
-        )
-    {
-    } else {
+        == strcmp(b"git\0" as *const u8 as *const libc::c_char, url_get_protocol(gh_url))
+    {} else {
         __assert_fail(
-            b"0 == strcmp(\"git\", url_get_protocol(gh_url))\0" as *const u8 as *const libc::c_char,
+            b"0 == strcmp(\"git\", url_get_protocol(gh_url))\0" as *const u8
+                as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             60 as libc::c_int as libc::c_uint,
             b"int main(void)\0" as *const u8 as *const i8,
@@ -1280,8 +1097,7 @@ unsafe fn main_0() -> libc::c_int {
             b"github.com\0" as *const u8 as *const libc::c_char,
             url_get_host(gh_url),
         )
-    {
-    } else {
+    {} else {
         __assert_fail(
             b"0 == strcmp(\"github.com\", url_get_host(gh_url))\0" as *const u8
                 as *const libc::c_char,
@@ -1295,8 +1111,7 @@ unsafe fn main_0() -> libc::c_int {
             b"github.com\0" as *const u8 as *const libc::c_char,
             url_get_hostname(gh_url),
         )
-    {
-    } else {
+    {} else {
         __assert_fail(
             b"0 == strcmp(\"github.com\", url_get_hostname(gh_url))\0" as *const u8
                 as *const libc::c_char,
@@ -1306,14 +1121,11 @@ unsafe fn main_0() -> libc::c_int {
         );
     };
     if 0 as libc::c_int
-        == strcmp(
-            b"git\0" as *const u8 as *const libc::c_char,
-            url_get_auth(gh_url),
-        )
-    {
-    } else {
+        == strcmp(b"git\0" as *const u8 as *const libc::c_char, url_get_auth(gh_url))
+    {} else {
         __assert_fail(
-            b"0 == strcmp(\"git\", url_get_auth(gh_url))\0" as *const u8 as *const libc::c_char,
+            b"0 == strcmp(\"git\", url_get_auth(gh_url))\0" as *const u8
+                as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             63 as libc::c_int as libc::c_uint,
             b"int main(void)\0" as *const u8 as *const i8,
@@ -1324,8 +1136,7 @@ unsafe fn main_0() -> libc::c_int {
             b"jwerle/url.h.git\0" as *const u8 as *const libc::c_char,
             url_get_pathname(gh_url),
         )
-    {
-    } else {
+    {} else {
         __assert_fail(
             b"0 == strcmp(\"jwerle/url.h.git\", url_get_pathname(gh_url))\0" as *const u8
                 as *const libc::c_char,
@@ -1339,8 +1150,7 @@ unsafe fn main_0() -> libc::c_int {
             b"jwerle/url.h.git\0" as *const u8 as *const libc::c_char,
             url_get_path(gh_url),
         )
-    {
-    } else {
+    {} else {
         __assert_fail(
             b"0 == strcmp(\"jwerle/url.h.git\", url_get_path(gh_url))\0" as *const u8
                 as *const libc::c_char,

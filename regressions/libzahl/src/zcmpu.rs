@@ -1,6 +1,7 @@
 use ::libc;
 extern "C" {
-
+    
+    
     static mut libzahl_tmp_cmp: z_t;
 }
 pub type size_t = libc::c_ulong;
@@ -10,15 +11,9 @@ pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor9;
-impl Default for ErasedByPreprocessor9 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[inline]
-unsafe extern "C" fn zsignum(mut a: *const crate::src::allocator::C2RustUnnamed) -> libc::c_int {
+unsafe extern "C" fn zsignum(mut a: *mut crate::src::allocator::C2RustUnnamed) -> libc::c_int {
     return (*a).sign;
 }
 #[no_mangle]

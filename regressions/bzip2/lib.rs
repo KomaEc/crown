@@ -12,15 +12,16 @@
 #![feature(core_intrinsics)]
 #![feature(raw_ref_op)]
 
+
 extern crate libc;
 pub mod src {
-    pub mod blocksort;
-    pub mod bzip2;
-    pub mod bzip2recover;
-    pub mod bzlib;
-    pub mod compress;
-    pub mod crctable;
-    pub mod decompress;
-    pub mod huffman;
-    pub mod randtable;
+pub mod blocksort;
+pub mod bzip2;
+pub mod bzip2recover;
+pub mod bzlib;
+pub mod compress;
+pub mod crctable;
+pub mod decompress;
+pub mod huffman;
+pub mod randtable;
 } // mod src

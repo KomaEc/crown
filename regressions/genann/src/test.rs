@@ -1,11 +1,22 @@
 use ::libc;
 extern "C" {
     pub type _IO_wide_data;
-
+    
+    
     fn fclose(__stream: *mut FILE) -> libc::c_int;
     fn fopen(_: *const libc::c_char, _: *const libc::c_char) -> *mut FILE;
     fn printf(_: *const libc::c_char, _: ...) -> libc::c_int;
-
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     fn fabs(_: libc::c_double) -> libc::c_double;
     fn clock() -> clock_t;
     fn srand(__seed: libc::c_uint);
@@ -17,24 +28,14 @@ pub type __clock_t = libc::c_long;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor6;
-impl Default for ErasedByPreprocessor6 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type _IO_lock_t = ();
 pub type FILE = crate::src::example3::_IO_FILE;
-pub type genann_actfun = Option<unsafe extern "C" fn(libc::c_double) -> libc::c_double>;
+pub type genann_actfun = Option::<
+    unsafe extern "C" fn(libc::c_double) -> libc::c_double,
+>;
 #[derive(Copy, Clone)]
 
 struct ErasedByPreprocessor7;
-impl Default for ErasedByPreprocessor7 {
-    fn default() -> Self {
-        Self {}
-    }
-}
-
 pub type clock_t = __clock_t;
 static mut ltests: libc::c_int = 0 as libc::c_int;
 static mut lfails: libc::c_int = 0 as libc::c_int;
@@ -58,13 +59,13 @@ pub unsafe extern "C" fn basic() {
         );
     }
     let mut a: libc::c_double = 0.;
-    a = 0 as libc::c_int as libc::c_double;
-    *(*ann).weight.offset(0 as libc::c_int as isize) = 0 as libc::c_int as libc::c_double;
-    *(*ann).weight.offset(1 as libc::c_int as isize) = 0 as libc::c_int as libc::c_double;
+    a= 0 as libc::c_int as libc::c_double;
+    *(*ann).weight
+        .offset(0 as libc::c_int as isize) = 0 as libc::c_int as libc::c_double;
+    *(*ann).weight
+        .offset(1 as libc::c_int as isize) = 0 as libc::c_int as libc::c_double;
     ltests += 1;
-    if fabs(0.5f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a)))
-        > 0.001f64
-    {
+    if fabs(0.5f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a))) > 0.001f64 {
         lfails += 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
@@ -74,11 +75,9 @@ pub unsafe extern "C" fn basic() {
             *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a)),
         );
     }
-    a = 1 as libc::c_int as libc::c_double;
+    a= 1 as libc::c_int as libc::c_double;
     ltests += 1;
-    if fabs(0.5f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a)))
-        > 0.001f64
-    {
+    if fabs(0.5f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a))) > 0.001f64 {
         lfails += 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
@@ -88,11 +87,9 @@ pub unsafe extern "C" fn basic() {
             *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a)),
         );
     }
-    a = 11 as libc::c_int as libc::c_double;
+    a= 11 as libc::c_int as libc::c_double;
     ltests += 1;
-    if fabs(0.5f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a)))
-        > 0.001f64
-    {
+    if fabs(0.5f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a))) > 0.001f64 {
         lfails += 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
@@ -102,13 +99,13 @@ pub unsafe extern "C" fn basic() {
             *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a)),
         );
     }
-    a = 1 as libc::c_int as libc::c_double;
-    *(*ann).weight.offset(0 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
-    *(*ann).weight.offset(1 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
+    a= 1 as libc::c_int as libc::c_double;
+    *(*ann).weight
+        .offset(0 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
+    *(*ann).weight
+        .offset(1 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
     ltests += 1;
-    if fabs(0.5f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a)))
-        > 0.001f64
-    {
+    if fabs(0.5f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a))) > 0.001f64 {
         lfails += 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
@@ -118,13 +115,13 @@ pub unsafe extern "C" fn basic() {
             *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a)),
         );
     }
-    a = 10 as libc::c_int as libc::c_double;
-    *(*ann).weight.offset(0 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
-    *(*ann).weight.offset(1 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
+    a= 10 as libc::c_int as libc::c_double;
+    *(*ann).weight
+        .offset(0 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
+    *(*ann).weight
+        .offset(1 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
     ltests += 1;
-    if fabs(1.0f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a)))
-        > 0.001f64
-    {
+    if fabs(1.0f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a))) > 0.001f64 {
         lfails += 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
@@ -134,11 +131,9 @@ pub unsafe extern "C" fn basic() {
             *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a)),
         );
     }
-    a = -(10 as libc::c_int) as libc::c_double;
+    a= -(10 as libc::c_int) as libc::c_double;
     ltests += 1;
-    if fabs(0.0f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a)))
-        > 0.001f64
-    {
+    if fabs(0.0f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a))) > 0.001f64 {
         lfails += 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
@@ -148,7 +143,7 @@ pub unsafe extern "C" fn basic() {
             *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a)),
         );
     }
-    crate::src::genann::genann_free(Some(Box::from_raw(ann)));
+    crate::src::genann::genann_free(ann);
 }
 #[no_mangle]
 pub unsafe extern "C" fn xor() {
@@ -158,13 +153,11 @@ pub unsafe extern "C" fn xor() {
         2 as libc::c_int,
         1 as libc::c_int,
     );
-    (*ann).activation_hidden = Some(
-        crate::src::genann::genann_act_threshold
-            as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
+    (*ann).activation_hidden= Some(
+        crate::src::genann::genann_act_threshold as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
     );
-    (*ann).activation_output = Some(
-        crate::src::genann::genann_act_threshold
-            as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
+    (*ann).activation_output= Some(
+        crate::src::genann::genann_act_threshold as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
     );
     ltests += 1;
     if (*ann).total_weights != 9 as libc::c_int {
@@ -178,31 +171,26 @@ pub unsafe extern "C" fn xor() {
         );
     }
     *(*ann).weight.offset(0 as libc::c_int as isize) = 0.5f64;
-    *(*ann).weight.offset(1 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
-    *(*ann).weight.offset(2 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
-    *(*ann).weight.offset(3 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
-    *(*ann).weight.offset(4 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
-    *(*ann).weight.offset(5 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
+    *(*ann).weight
+        .offset(1 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
+    *(*ann).weight
+        .offset(2 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
+    *(*ann).weight
+        .offset(3 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
+    *(*ann).weight
+        .offset(4 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
+    *(*ann).weight
+        .offset(5 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
     *(*ann).weight.offset(6 as libc::c_int as isize) = 0.5f64;
-    *(*ann).weight.offset(7 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
-    *(*ann).weight.offset(8 as libc::c_int as isize) = -(1 as libc::c_int) as libc::c_double;
+    *(*ann).weight
+        .offset(7 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
+    *(*ann).weight
+        .offset(8 as libc::c_int as isize) = -(1 as libc::c_int) as libc::c_double;
     let mut input: [[libc::c_double; 2]; 4] = [
-        [
-            0 as libc::c_int as libc::c_double,
-            0 as libc::c_int as libc::c_double,
-        ],
-        [
-            0 as libc::c_int as libc::c_double,
-            1 as libc::c_int as libc::c_double,
-        ],
-        [
-            1 as libc::c_int as libc::c_double,
-            0 as libc::c_int as libc::c_double,
-        ],
-        [
-            1 as libc::c_int as libc::c_double,
-            1 as libc::c_int as libc::c_double,
-        ],
+        [0 as libc::c_int as libc::c_double, 0 as libc::c_int as libc::c_double],
+        [0 as libc::c_int as libc::c_double, 1 as libc::c_int as libc::c_double],
+        [1 as libc::c_int as libc::c_double, 0 as libc::c_int as libc::c_double],
+        [1 as libc::c_int as libc::c_double, 1 as libc::c_int as libc::c_double],
     ];
     let mut output: [libc::c_double; 4] = [
         0 as libc::c_int as libc::c_double,
@@ -270,7 +258,7 @@ pub unsafe extern "C" fn xor() {
             *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
         );
     }
-    crate::src::genann::genann_free(Some(Box::from_raw(ann)));
+    crate::src::genann::genann_free(ann);
 }
 #[no_mangle]
 pub unsafe extern "C" fn backprop() {
@@ -282,15 +270,10 @@ pub unsafe extern "C" fn backprop() {
     );
     let mut input: libc::c_double = 0.;
     let mut output: libc::c_double = 0.;
-    input = 0.5f64;
-    output = 1 as libc::c_int as libc::c_double;
+    input= 0.5f64;
+    output= 1 as libc::c_int as libc::c_double;
     let mut first_try = *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(input));
-    crate::src::genann::genann_train(
-        ann,
-        core::ptr::addr_of!(input),
-        core::ptr::addr_of!(output),
-        0.5f64,
-    );
+    crate::src::genann::genann_train(ann, core::ptr::addr_of!(input), core::ptr::addr_of!(output), 0.5f64);
     let mut second_try = *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(input));
     ltests += 1;
     if !(fabs(first_try - output) > fabs(second_try - output)) {
@@ -301,27 +284,15 @@ pub unsafe extern "C" fn backprop() {
             114 as libc::c_int,
         );
     }
-    crate::src::genann::genann_free(Some(Box::from_raw(ann)));
+    crate::src::genann::genann_free(ann);
 }
 #[no_mangle]
 pub unsafe extern "C" fn train_and() {
     let mut input: [[libc::c_double; 2]; 4] = [
-        [
-            0 as libc::c_int as libc::c_double,
-            0 as libc::c_int as libc::c_double,
-        ],
-        [
-            0 as libc::c_int as libc::c_double,
-            1 as libc::c_int as libc::c_double,
-        ],
-        [
-            1 as libc::c_int as libc::c_double,
-            0 as libc::c_int as libc::c_double,
-        ],
-        [
-            1 as libc::c_int as libc::c_double,
-            1 as libc::c_int as libc::c_double,
-        ],
+        [0 as libc::c_int as libc::c_double, 0 as libc::c_int as libc::c_double],
+        [0 as libc::c_int as libc::c_double, 1 as libc::c_int as libc::c_double],
+        [1 as libc::c_int as libc::c_double, 0 as libc::c_int as libc::c_double],
+        [1 as libc::c_int as libc::c_double, 1 as libc::c_int as libc::c_double],
     ];
     let mut output: [libc::c_double; 4] = [
         0 as libc::c_int as libc::c_double,
@@ -337,9 +308,9 @@ pub unsafe extern "C" fn train_and() {
     );
     let mut i: libc::c_int = 0;
     let mut j: libc::c_int = 0;
-    i = 0 as libc::c_int;
+    i= 0 as libc::c_int;
     while i < 50 as libc::c_int {
-        j = 0 as libc::c_int;
+        j= 0 as libc::c_int;
         while j < 4 as libc::c_int {
             crate::src::genann::genann_train(
                 ann,
@@ -347,13 +318,12 @@ pub unsafe extern "C" fn train_and() {
                 output.as_mut_ptr().offset(j as isize),
                 0.8f64,
             );
-            j += 1;
+            j+= 1;
         }
-        i += 1;
+        i+= 1;
     }
-    (*ann).activation_output = Some(
-        crate::src::genann::genann_act_threshold
-            as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
+    (*ann).activation_output= Some(
+        crate::src::genann::genann_act_threshold as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
     );
     ltests += 1;
     if fabs(
@@ -415,27 +385,15 @@ pub unsafe extern "C" fn train_and() {
             *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
         );
     }
-    crate::src::genann::genann_free(Some(Box::from_raw(ann)));
+    crate::src::genann::genann_free(ann);
 }
 #[no_mangle]
 pub unsafe extern "C" fn train_or() {
     let mut input: [[libc::c_double; 2]; 4] = [
-        [
-            0 as libc::c_int as libc::c_double,
-            0 as libc::c_int as libc::c_double,
-        ],
-        [
-            0 as libc::c_int as libc::c_double,
-            1 as libc::c_int as libc::c_double,
-        ],
-        [
-            1 as libc::c_int as libc::c_double,
-            0 as libc::c_int as libc::c_double,
-        ],
-        [
-            1 as libc::c_int as libc::c_double,
-            1 as libc::c_int as libc::c_double,
-        ],
+        [0 as libc::c_int as libc::c_double, 0 as libc::c_int as libc::c_double],
+        [0 as libc::c_int as libc::c_double, 1 as libc::c_int as libc::c_double],
+        [1 as libc::c_int as libc::c_double, 0 as libc::c_int as libc::c_double],
+        [1 as libc::c_int as libc::c_double, 1 as libc::c_int as libc::c_double],
     ];
     let mut output: [libc::c_double; 4] = [
         0 as libc::c_int as libc::c_double,
@@ -452,9 +410,9 @@ pub unsafe extern "C" fn train_or() {
     crate::src::genann::genann_randomize(ann.as_mut());
     let mut i: libc::c_int = 0;
     let mut j: libc::c_int = 0;
-    i = 0 as libc::c_int;
+    i= 0 as libc::c_int;
     while i < 50 as libc::c_int {
-        j = 0 as libc::c_int;
+        j= 0 as libc::c_int;
         while j < 4 as libc::c_int {
             crate::src::genann::genann_train(
                 ann,
@@ -462,13 +420,12 @@ pub unsafe extern "C" fn train_or() {
                 output.as_mut_ptr().offset(j as isize),
                 0.8f64,
             );
-            j += 1;
+            j+= 1;
         }
-        i += 1;
+        i+= 1;
     }
-    (*ann).activation_output = Some(
-        crate::src::genann::genann_act_threshold
-            as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
+    (*ann).activation_output= Some(
+        crate::src::genann::genann_act_threshold as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
     );
     ltests += 1;
     if fabs(
@@ -530,27 +487,15 @@ pub unsafe extern "C" fn train_or() {
             *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
         );
     }
-    crate::src::genann::genann_free(Some(Box::from_raw(ann)));
+    crate::src::genann::genann_free(ann);
 }
 #[no_mangle]
 pub unsafe extern "C" fn train_xor() {
     let mut input: [[libc::c_double; 2]; 4] = [
-        [
-            0 as libc::c_int as libc::c_double,
-            0 as libc::c_int as libc::c_double,
-        ],
-        [
-            0 as libc::c_int as libc::c_double,
-            1 as libc::c_int as libc::c_double,
-        ],
-        [
-            1 as libc::c_int as libc::c_double,
-            0 as libc::c_int as libc::c_double,
-        ],
-        [
-            1 as libc::c_int as libc::c_double,
-            1 as libc::c_int as libc::c_double,
-        ],
+        [0 as libc::c_int as libc::c_double, 0 as libc::c_int as libc::c_double],
+        [0 as libc::c_int as libc::c_double, 1 as libc::c_int as libc::c_double],
+        [1 as libc::c_int as libc::c_double, 0 as libc::c_int as libc::c_double],
+        [1 as libc::c_int as libc::c_double, 1 as libc::c_int as libc::c_double],
     ];
     let mut output: [libc::c_double; 4] = [
         0 as libc::c_int as libc::c_double,
@@ -566,9 +511,9 @@ pub unsafe extern "C" fn train_xor() {
     );
     let mut i: libc::c_int = 0;
     let mut j: libc::c_int = 0;
-    i = 0 as libc::c_int;
+    i= 0 as libc::c_int;
     while i < 500 as libc::c_int {
-        j = 0 as libc::c_int;
+        j= 0 as libc::c_int;
         while j < 4 as libc::c_int {
             crate::src::genann::genann_train(
                 ann,
@@ -576,13 +521,12 @@ pub unsafe extern "C" fn train_xor() {
                 output.as_mut_ptr().offset(j as isize),
                 3 as libc::c_int as libc::c_double,
             );
-            j += 1;
+            j+= 1;
         }
-        i += 1;
+        i+= 1;
     }
-    (*ann).activation_output = Some(
-        crate::src::genann::genann_act_threshold
-            as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
+    (*ann).activation_output= Some(
+        crate::src::genann::genann_act_threshold as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
     );
     ltests += 1;
     if fabs(
@@ -644,7 +588,7 @@ pub unsafe extern "C" fn train_xor() {
             *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
         );
     }
-    crate::src::genann::genann_free(Some(Box::from_raw(ann)));
+    crate::src::genann::genann_free(ann);
 }
 #[no_mangle]
 pub unsafe extern "C" fn persist() {
@@ -658,13 +602,7 @@ pub unsafe extern "C" fn persist() {
         b"persist.txt\0" as *const u8 as *const libc::c_char,
         b"w\0" as *const u8 as *const libc::c_char,
     );
-    crate::src::genann::genann_write(
-        first
-            .as_deref()
-            .map(|r| r as *const _)
-            .unwrap_or(std::ptr::null()),
-        out,
-    );
+    crate::src::genann::genann_write(first as *const crate::src::example1::genann, out);
     fclose(out);
     let mut in_0 = fopen(
         b"persist.txt\0" as *const u8 as *const libc::c_char,
@@ -673,66 +611,66 @@ pub unsafe extern "C" fn persist() {
     let mut second = crate::src::genann::genann_read(in_0);
     fclose(out);
     ltests += 1;
-    if (*first.as_deref().unwrap()).inputs != (*second.as_deref().unwrap()).inputs {
+    if (*first).inputs != (*second).inputs {
         lfails += 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             208 as libc::c_int,
-            (*first.as_deref().unwrap()).inputs,
-            (*second.as_deref().unwrap()).inputs,
+            (*first).inputs,
+            (*second).inputs,
         );
     }
     ltests += 1;
-    if (*first.as_deref().unwrap()).hidden_layers != (*second.as_deref().unwrap()).hidden_layers {
+    if (*first).hidden_layers != (*second).hidden_layers {
         lfails += 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             209 as libc::c_int,
-            (*first.as_deref().unwrap()).hidden_layers,
-            (*second.as_deref().unwrap()).hidden_layers,
+            (*first).hidden_layers,
+            (*second).hidden_layers,
         );
     }
     ltests += 1;
-    if (*first.as_deref().unwrap()).hidden != (*second.as_deref().unwrap()).hidden {
+    if (*first).hidden != (*second).hidden {
         lfails += 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             210 as libc::c_int,
-            (*first.as_deref().unwrap()).hidden,
-            (*second.as_deref().unwrap()).hidden,
+            (*first).hidden,
+            (*second).hidden,
         );
     }
     ltests += 1;
-    if (*first.as_deref().unwrap()).outputs != (*second.as_deref().unwrap()).outputs {
+    if (*first).outputs != (*second).outputs {
         lfails += 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             211 as libc::c_int,
-            (*first.as_deref().unwrap()).outputs,
-            (*second.as_deref().unwrap()).outputs,
+            (*first).outputs,
+            (*second).outputs,
         );
     }
     ltests += 1;
-    if (*first.as_deref().unwrap()).total_weights != (*second.as_deref().unwrap()).total_weights {
+    if (*first).total_weights != (*second).total_weights {
         lfails += 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             212 as libc::c_int,
-            (*first.as_deref().unwrap()).total_weights,
-            (*second.as_deref().unwrap()).total_weights,
+            (*first).total_weights,
+            (*second).total_weights,
         );
     }
     let mut i: libc::c_int = 0;
-    i = 0 as libc::c_int;
-    while i < (*first.as_deref().unwrap()).total_weights {
+    i= 0 as libc::c_int;
+    while i < (*first).total_weights {
         ltests += 1;
-        if !(*(*first.as_deref().unwrap()).weight.offset(i as isize)
-            == *(*second.as_deref().unwrap()).weight.offset(i as isize))
+        if !(*(*first).weight.offset(i as isize)
+            == *(*second).weight.offset(i as isize))
         {
             lfails += 1;
             printf(
@@ -741,7 +679,7 @@ pub unsafe extern "C" fn persist() {
                 216 as libc::c_int,
             );
         }
-        i += 1;
+        i+= 1;
     }
     crate::src::genann::genann_free(first);
     crate::src::genann::genann_free(second);
@@ -756,67 +694,67 @@ pub unsafe extern "C" fn copy() {
     );
     let mut second = crate::src::genann::genann_copy(first as *const crate::src::example1::genann);
     ltests += 1;
-    if (*first).inputs != (*second.as_deref().unwrap()).inputs {
+    if (*first).inputs != (*second).inputs {
         lfails += 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             229 as libc::c_int,
             (*first).inputs,
-            (*second.as_deref().unwrap()).inputs,
+            (*second).inputs,
         );
     }
     ltests += 1;
-    if (*first).hidden_layers != (*second.as_deref().unwrap()).hidden_layers {
+    if (*first).hidden_layers != (*second).hidden_layers {
         lfails += 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             230 as libc::c_int,
             (*first).hidden_layers,
-            (*second.as_deref().unwrap()).hidden_layers,
+            (*second).hidden_layers,
         );
     }
     ltests += 1;
-    if (*first).hidden != (*second.as_deref().unwrap()).hidden {
+    if (*first).hidden != (*second).hidden {
         lfails += 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             231 as libc::c_int,
             (*first).hidden,
-            (*second.as_deref().unwrap()).hidden,
+            (*second).hidden,
         );
     }
     ltests += 1;
-    if (*first).outputs != (*second.as_deref().unwrap()).outputs {
+    if (*first).outputs != (*second).outputs {
         lfails += 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             232 as libc::c_int,
             (*first).outputs,
-            (*second.as_deref().unwrap()).outputs,
+            (*second).outputs,
         );
     }
     ltests += 1;
-    if (*first).total_weights != (*second.as_deref().unwrap()).total_weights {
+    if (*first).total_weights != (*second).total_weights {
         lfails += 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
             233 as libc::c_int,
             (*first).total_weights,
-            (*second.as_deref().unwrap()).total_weights,
+            (*second).total_weights,
         );
     }
     let mut i: libc::c_int = 0;
-    i = 0 as libc::c_int;
+    i= 0 as libc::c_int;
     while i < (*first).total_weights {
         ltests += 1;
         if fabs(
             *(*first).weight.offset(i as isize)
-                - *(*second.as_deref().unwrap()).weight.offset(i as isize),
+                - *(*second).weight.offset(i as isize),
         ) > 0.001f64
         {
             lfails += 1;
@@ -825,12 +763,12 @@ pub unsafe extern "C" fn copy() {
                 b"test.c\0" as *const u8 as *const libc::c_char,
                 237 as libc::c_int,
                 *(*first).weight.offset(i as isize),
-                *(*second.as_deref().unwrap()).weight.offset(i as isize),
+                *(*second).weight.offset(i as isize),
             );
         }
-        i += 1;
+        i+= 1;
     }
-    crate::src::genann::genann_free(Some(Box::from_raw(first)));
+    crate::src::genann::genann_free(first);
     crate::src::genann::genann_free(second);
 }
 #[no_mangle]
@@ -840,11 +778,7 @@ pub unsafe extern "C" fn sigmoid() {
     let d = 0.0001f64;
     while i < max {
         ltests += 1;
-        if fabs(
-            crate::src::genann::genann_act_sigmoid(i)
-                - crate::src::genann::genann_act_sigmoid_cached(i),
-        ) > 0.001f64
-        {
+        if fabs(crate::src::genann::genann_act_sigmoid(i) - crate::src::genann::genann_act_sigmoid_cached(i)) > 0.001f64 {
             lfails += 1;
             printf(
                 b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
@@ -854,10 +788,13 @@ pub unsafe extern "C" fn sigmoid() {
                 crate::src::genann::genann_act_sigmoid_cached(i),
             );
         }
-        i += d;
+        i+= d;
     }
 }
-unsafe fn main_0(mut argc: libc::c_int, mut argv: *const *const libc::c_char) -> libc::c_int {
+unsafe fn main_0(
+    mut argc: libc::c_int,
+    mut argv: *mut *mut libc::c_char,
+) -> libc::c_int {
     printf(b"GENANN TEST SUITE\n\0" as *const u8 as *const libc::c_char);
     srand(100 as libc::c_int as libc::c_uint);
     let ts = ltests;

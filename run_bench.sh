@@ -55,9 +55,9 @@ for f in $(ls $WORKSPACE); do
     $CROWN $ENTRY rewrite in-place || { echo 'rewrite $f failed' ; exit 1; }
 
 
-    if [ -f "$(dirname $ENTRY)/Cargo.toml" ]; then
-        echo "formatting $f"
-        cargo fmt --manifest-path "$(dirname $ENTRY)/Cargo.toml"
-    fi
+    # if [ -f "$(dirname $ENTRY)/Cargo.toml" ]; then
+    #     echo "formatting $f"
+    #     cargo fmt --manifest-path "$(dirname $ENTRY)/Cargo.toml"
+    # fi
 done
 
