@@ -862,7 +862,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 // FIXME correctness? recursive?
                 for def_loc in def_use_chain.phi_def_locs(local, block) {
                     let RichLocation::Mir(def_loc) = def_loc else { todo!() };
-                    let Left(stmt) = body.stmt_at(def_loc) else { return };
+                    let Left(stmt) = body.stmt_at(def_loc) else { continue };
                     let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
                     self.rewrite_rvalue_at(
                         rvalue,
@@ -1080,6 +1080,33 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         } else {
             // closure or fn ptr
             /* TODO */
+            for arg in args {
+                let Some(arg) = arg.place() else { continue };
+                let arg = arg.as_local().unwrap();
+                let ty = self.body.local_decls[arg].ty;
+                let ctxt = if ty.is_unsafe_ptr() {
+                    PlaceValueType::from_ptr_ctxt(
+                        ty,
+                        if ty.is_mutable_ptr() {
+                            &[PointerKind::Raw(RawMeta::Mut)]
+                        } else {
+                            &[PointerKind::Raw(RawMeta::Const)]
+                        },
+                    )
+                } else if ty.is_region_ptr() {
+                    PlaceValueType::from_ptr_ctxt(
+                        ty,
+                        if ty.is_mutable_ptr() {
+                            &[PointerKind::Mut]
+                        } else {
+                            &[PointerKind::Const]
+                        },
+                    )
+                } else {
+                    PlaceValueType::Irrelavent
+                };
+                self.rewrite_temporary(arg, location, ctxt, rewriter);
+            }
         }
     }
 
