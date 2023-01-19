@@ -305,7 +305,7 @@ impl StructFields {
                         } else {
                             PointerKind::Move
                         }
-                    } else if /* mutability.is_immutable() */ !field_ty.is_mutable_ptr() {
+                    } else if mutability.is_immutable() && !field_ty.is_mutable_ptr() {
                         PointerKind::Raw(RawMeta::Const)
                     } else {
                         PointerKind::Raw(RawMeta::Mut)

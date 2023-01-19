@@ -156,7 +156,12 @@ pub fn rewrite_outermost_ptr_ty(
             let qualifier_span = ty.span.until(pointee.ty.span);
             rewriter.replace(tcx, qualifier_span, "*mut /* owning */ ".to_owned());
         }
-        PointerKind::Raw(..) => {}
+        PointerKind::Raw(..) => {
+            // rewrite is still performed because it might be the case that
+            // *const is actually mutable.
+            let qualifier_span = ty.span.until(pointee.ty.span);
+            rewriter.replace(tcx, qualifier_span, "*mut ".to_owned());
+        }
     }
 }
 
