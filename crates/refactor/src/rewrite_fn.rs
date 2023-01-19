@@ -208,12 +208,7 @@ impl<'me> PlaceValueType<'me> {
                 matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_move() || ptr_kind.is_raw_move())
             }
             PlaceValueType::Struct(did) => {
-                let fields_data = rewrite_ctxt.struct_decision.field_data(did);
-                fields_data.iter().any(|field| {
-                    field
-                        .iter()
-                        .any(|ptr_kind| ptr_kind.is_move() || ptr_kind.is_raw_move())
-                })
+                rewrite_ctxt.struct_decision.is_owning(rewrite_ctxt.tcx, did)
             }
             PlaceValueType::Irrelavent => false,
         }

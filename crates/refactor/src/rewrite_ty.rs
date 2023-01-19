@@ -22,11 +22,7 @@ pub fn rewrite_structs(
 
         let struct_span = item.span;
 
-        let is_owning = fields_data.iter().any(|field| {
-            field
-                .iter()
-                .any(|ptr_kind| ptr_kind.is_move() || ptr_kind.is_raw_move())
-        });
+        let is_owning = struct_decision.is_owning(tcx, did);
 
         let mut default_impl_block = String::new();
         writeln!(

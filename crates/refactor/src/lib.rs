@@ -24,6 +24,7 @@ use rewrite_fn::rewrite_fns;
 use rewrite_ty::rewrite_structs;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
+use rustc_middle::ty::TyCtxt;
 use smallvec::SmallVec;
 
 extern crate rustc_ast;
@@ -231,6 +232,27 @@ impl StructFields {
     pub fn field_data(&self, did: &DefId) -> &[SmallVec<[PointerKind; 3]>] {
         let idx = self.0.did_idx[did];
         &self.0.data[idx]
+    }
+
+    pub fn is_owning(&self, tcx: TyCtxt, did: &DefId) -> bool {
+        let fields_data = self.field_data(did);
+        let fields = tcx.adt_def(*did).all_fields();
+        fields_data.iter().zip(fields).any(|(field_data, field_def)| {
+            if field_data.is_empty() {
+                let field_ty = tcx.type_of(field_def.did);
+                if let Some(adt_def) = field_ty.ty_adt_def() {
+                    if self.0.did_idx.contains_key(&adt_def.did()) {
+                        self.is_owning(tcx, &adt_def.did())    
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            } else {
+                field_data[0].is_move() || field_data[0].is_raw_move()
+            }
+        })
     }
 
     pub fn new(crate_data: &CrateData, analysis: &Analysis, options: RefactorOptions) -> Self {
