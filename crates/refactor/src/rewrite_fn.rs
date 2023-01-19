@@ -95,7 +95,7 @@ fn rewrite_fn<'tcx>(
 
     let def_use_chain = def_use_chain(body, tcx);
 
-    analysis::use_def::show_def_use_chain(body, &def_use_chain);
+    // analysis::use_def::show_def_use_chain(body, &def_use_chain);
 
     let rewrite_ctxt = FnRewriteCtxt {
         local_decision,
@@ -307,6 +307,112 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let ptr = &ptr_kinds[ptr_kinds_index..];
 
         PlaceValueType::from_ptr_ctxt(ty, ptr)
+    }
+
+
+    /// [`expr_span`] is already rewritten
+    fn adapt_usage(
+        &self,
+        expr_span: Span,
+        ty: Ty,
+        is_indirect: bool,
+        produced: PlaceValueType,
+        required: PlaceValueType,
+        rewriter: &mut impl Rewrite
+    ) {
+        let FnRewriteCtxt {
+            tcx,
+            ..
+        } = *self;
+
+        if required.is_rustc_move_obj(self) {
+            if produced.is_rustc_move_obj(self) {
+                // move to move
+                if is_indirect {
+                    rewriter.replace(tcx, expr_span.shrink_to_hi(), ".take()".to_owned())
+                }
+            } else {
+                assert!(required.is_ptr());
+                assert!(produced.is_raw_ptr());
+                rewriter.replace(tcx, expr_span.shrink_to_lo(), "Some(Box::from_raw(".to_owned());
+                rewriter.replace(tcx, expr_span.shrink_to_hi(), "))".to_owned())
+            }
+        } else if required.is_rustc_copy_obj(self) {
+            if required.is_move_obj(self) {
+                // raw move
+                assert!(required.is_raw_ptr());
+
+                // we can not have the assertion below because of lacking precision
+                // assert!(produced.is_move_obj(self));
+                if produced.is_rustc_move_obj(self) {
+                    assert!(produced.is_ptr());
+                    // Box to raw (move)
+                    rewriter.replace(tcx, expr_span.shrink_to_hi(), ".map(|b| Box::into_raw(b)).unwrap_or(std::ptr::null_mut())".to_owned())
+                } else {
+                    assert!(produced.is_raw_ptr());
+                    // nothing to be done here
+                }
+            } else if required.is_raw_ptr() {
+                // raw mut or raw const
+                assert!(produced.is_ptr());
+                let pointee_ty = ty.builtin_deref(true).unwrap().ty;
+                let mut pointee_ty_str = format!("{pointee_ty}");
+                if pointee_ty_str.starts_with("src::") || pointee_ty_str.starts_with("bin::") {
+                    pointee_ty_str = "crate::".to_owned() + &pointee_ty_str
+                }
+                let pointee_ty_str = pointee_ty_str;
+
+                if !produced.is_raw_ptr() {
+                    // &mut to *const,*mut or & to *const
+
+                    let (usage, target_ty) = if required.expect_ptr()[0].is_raw_const() {
+                        (
+                            if produced.expect_ptr()[0].is_const() {
+                                "clone"
+                            } else {
+                                "as_deref"
+                            },
+                            "const",
+                        )
+                    } else {
+                        ("as_deref_mut", "mut")
+                    };
+
+                    rewriter.replace(tcx, expr_span.shrink_to_hi(), format!(".{usage}().map(|r| r as *{target_ty} _).unwrap_or(std::ptr::null{}())", (target_ty == "mut").then_some("_mut").unwrap_or("")))
+                } else if required.expect_ptr()[0].is_raw_const()
+                    && produced.expect_ptr()[0].is_raw_mut() {
+                    // raw mut to raw const
+                    rewriter.replace(tcx, expr_span.shrink_to_hi(), format!(" as *const {pointee_ty_str}"))
+                }
+
+            } else if required.is_ptr() {
+                assert!(produced.is_ptr());
+                // &ref
+                if produced.is_raw_ptr() {
+                    rewriter.replace(tcx, expr_span.shrink_to_hi(), ".as_ref()".to_owned())
+                } else if !produced.is_rustc_copy_obj(self) {
+                    rewriter.replace(tcx, expr_span.shrink_to_hi(), ".as_deref()".to_owned())
+                } else {
+                    rewriter.replace(tcx, expr_span.shrink_to_hi(), ".clone()".to_owned())
+                }
+            } else if required.is_irrelavent() {
+                if produced.is_ptr() && !produced.is_raw_ptr() {
+                    // irrelavent context, cast expr into raw pointer
+                    // this happens when comparing addr
+                    rewriter.replace(tcx, expr_span.shrink_to_hi(), ".as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())".to_owned())
+                }
+            }
+
+            // else copyable structs, or primitive, directly copy, nothing to do here
+        } else {
+            assert!(required.is_ptr());
+            assert!(produced.is_ptr());
+            if produced.is_raw_ptr() {
+                rewriter.replace(tcx, expr_span.shrink_to_hi(), ".as_mut()".to_owned())
+            } else {
+                rewriter.replace(tcx, expr_span.shrink_to_hi(), ".as_deref_mut()".to_owned())
+            }
+        }
     }
 
     fn rewrite_statement(
@@ -714,90 +820,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         assert_eq!(PLACE_LOAD_MODE, PlaceLoadMode::ByValue as u8);
 
-        if required.is_rustc_move_obj(self) {
-            if produced.is_rustc_move_obj(self) {
-                if place.is_indirect() {
-                    replacement += ".take()";
-                }
-            } else {
-                assert!(required.is_ptr());
-                assert!(produced.is_raw_ptr());
-                replacement = format!("Some(Box::from_raw({replacement}))")
-            }
-        } else if required.is_rustc_copy_obj(self) {
-            if required.is_move_obj(self) {
-                // raw move
-                assert!(required.is_raw_ptr());
-                // we can not have the assertion below because of lacking precision
-                // assert!(produced.is_move_obj(self));
-                if produced.is_rustc_move_obj(self) {
-                    assert!(produced.is_ptr());
-                    // Box to raw (move)
-                    replacement = format!(
-                        "{replacement}.map(|b| Box::into_raw(b)).unwrap_or(std::ptr::null_mut())"
-                    );
-                } else {
-                    assert!(produced.is_raw_ptr());
-                    // nothing to be done here
-                }
-            } else if required.is_raw_ptr() {
-                // raw mut or raw const
-                assert!(produced.is_ptr());
-                let pointee_ty = ty.builtin_deref(true).unwrap().ty;
-                let pointee_ty_str = if pointee_ty.is_primitive() {
-                    format!("{pointee_ty}")
-                } else {
-                    format!("crate::{pointee_ty}")
-                };
-                if !produced.is_raw_ptr() {
-                    // &mut to *mut *const,  or & to *const
-                    let (usage, target_ty) = if required.expect_ptr()[0].is_raw_const() {
-                        (
-                            if produced.expect_ptr()[0].is_const() {
-                                "clone"
-                            } else {
-                                "as_deref"
-                            },
-                            "const",
-                        )
-                    } else {
-                        ("as_deref_mut", "mut")
-                    };
-                    replacement = format!("{replacement}.{usage}().map(|r| r as *{target_ty} _).unwrap_or(std::ptr::null{}())", (target_ty == "mut").then_some("_mut").unwrap_or(""));
-                } else if required.expect_ptr()[0].is_raw_const()
-                    && produced.expect_ptr()[0].is_raw_mut()
-                {
-                    // *mut to *const
-                    replacement = format!("{replacement} as *const {pointee_ty_str}");
-                }
-            } else if required.is_ptr() {
-                // const ref
-                if produced.is_raw_ptr() {
-                    replacement = format!("{replacement}.as_ref()");
-                } else if !produced.is_rustc_copy_obj(self) {
-                    replacement = format!("{replacement}.as_deref()");
-                } else {
-                    replacement = format!("{replacement}.clone()");
-                }
-            } else if required.is_irrelavent() {
-                if produced.is_ptr() && !produced.is_raw_ptr() {
-                    // irrelavent context, cast expr into raw pointer
-                    // this happens when comparing addr
-                    replacement = format!("{replacement}.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())");
-                }
-            }
-            // else copyable structs, or primitive, directly copy, nothing to do here
-        } else {
-            // mut borrows
-            assert!(produced.is_ptr());
-            if produced.is_raw_ptr() {
-                replacement += ".as_mut()"
-            } else {
-                replacement += ".as_deref_mut()"
-            }
-        }
+        rewrite_place(tcx, span, replacement, &index_spans, rewriter);
 
-        rewrite_place(tcx, span, replacement, &index_spans, rewriter)
+        self.adapt_usage(span, ty, place.is_indirect(), produced, required, rewriter)
     }
 
     fn get_temporary_def_span(&self, local: Local, location: Location) -> Span {
