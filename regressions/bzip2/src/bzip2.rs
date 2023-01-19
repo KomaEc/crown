@@ -238,27 +238,27 @@ unsafe extern "C" fn uInt64_from_UInt32s(
     mut hi32: UInt32,
 ) {
     (*n.as_deref_mut().unwrap()).b[7 as libc::c_int
-        as usize] = (hi32 >> 24 as libc::c_int & 0xff as libc::c_int as libc::c_uint)
+        as usize]= (hi32 >> 24 as libc::c_int & 0xff as libc::c_int as libc::c_uint)
         as UChar;
     (*n.as_deref_mut().unwrap()).b[6 as libc::c_int
-        as usize] = (hi32 >> 16 as libc::c_int & 0xff as libc::c_int as libc::c_uint)
+        as usize]= (hi32 >> 16 as libc::c_int & 0xff as libc::c_int as libc::c_uint)
         as UChar;
     (*n.as_deref_mut().unwrap()).b[5 as libc::c_int
-        as usize] = (hi32 >> 8 as libc::c_int & 0xff as libc::c_int as libc::c_uint)
+        as usize]= (hi32 >> 8 as libc::c_int & 0xff as libc::c_int as libc::c_uint)
         as UChar;
     (*n.as_deref_mut().unwrap()).b[4 as libc::c_int
-        as usize] = (hi32 & 0xff as libc::c_int as libc::c_uint) as UChar;
+        as usize]= (hi32 & 0xff as libc::c_int as libc::c_uint) as UChar;
     (*n.as_deref_mut().unwrap()).b[3 as libc::c_int
-        as usize] = (lo32 >> 24 as libc::c_int & 0xff as libc::c_int as libc::c_uint)
+        as usize]= (lo32 >> 24 as libc::c_int & 0xff as libc::c_int as libc::c_uint)
         as UChar;
     (*n.as_deref_mut().unwrap()).b[2 as libc::c_int
-        as usize] = (lo32 >> 16 as libc::c_int & 0xff as libc::c_int as libc::c_uint)
+        as usize]= (lo32 >> 16 as libc::c_int & 0xff as libc::c_int as libc::c_uint)
         as UChar;
     (*n.as_deref_mut().unwrap()).b[1 as libc::c_int
-        as usize] = (lo32 >> 8 as libc::c_int & 0xff as libc::c_int as libc::c_uint)
+        as usize]= (lo32 >> 8 as libc::c_int & 0xff as libc::c_int as libc::c_uint)
         as UChar;
     (*n.as_deref_mut().unwrap()).b[0 as libc::c_int
-        as usize] = (lo32 & 0xff as libc::c_int as libc::c_uint) as UChar;
+        as usize]= (lo32 & 0xff as libc::c_int as libc::c_uint) as UChar;
 }
 unsafe extern "C" fn uInt64_to_double(mut n: *mut UInt64) -> libc::c_double {
     let mut i: Int32 = 0;
@@ -294,7 +294,7 @@ unsafe extern "C" fn uInt64_qrm10(mut n: Option<&mut UInt64>) -> Int32 {
             .wrapping_mul(256 as libc::c_int as libc::c_uint)
             .wrapping_add((*n.as_deref().unwrap()).b[i as usize] as libc::c_uint);
         (*n.as_deref_mut().unwrap()).b[i
-            as usize] = tmp.wrapping_div(10 as libc::c_int as libc::c_uint) as UChar;
+            as usize]= tmp.wrapping_div(10 as libc::c_int as libc::c_uint) as UChar;
         rem= tmp.wrapping_rem(10 as libc::c_int as libc::c_uint);
         i-= 1;
     }
@@ -308,7 +308,7 @@ unsafe extern "C" fn uInt64_toAscii(mut outbuf: *mut libc::c_char, mut n: *mut U
     let mut n_copy = (*n);
     loop {
         q= uInt64_qrm10(Some(&mut n_copy));
-        buf[nBuf as usize] = (q + '0' as i32) as UChar;
+        buf[nBuf as usize]= (q + '0' as i32) as UChar;
         nBuf+= 1;
         if !(uInt64_isZero(core::ptr::addr_of_mut!(n_copy)) == 0) {
             break;
@@ -644,7 +644,7 @@ unsafe extern "C" fn uncompressStream(
                 unusedTmp= unusedTmpV as *mut UChar;
                 i= 0 as libc::c_int;
                 while i < nUnused {
-                    unused[i as usize] = *unusedTmp.offset(i as isize);
+                    unused[i as usize]= *unusedTmp.offset(i as isize);
                     i+= 1;
                 }
                 crate::src::bzlib::BZ2_bzReadClose(core::ptr::addr_of_mut!(bzerr), bzf);
@@ -1102,7 +1102,7 @@ unsafe extern "C" fn testStream(mut zStream: *mut FILE) -> Bool {
             unusedTmp= unusedTmpV as *mut UChar;
             i= 0 as libc::c_int;
             while i < nUnused {
-                unused[i as usize] = *unusedTmp.offset(i as isize);
+                unused[i as usize]= *unusedTmp.offset(i as isize);
                 i+= 1;
             }
             crate::src::bzlib::BZ2_bzReadClose(core::ptr::addr_of_mut!(bzerr), bzf);

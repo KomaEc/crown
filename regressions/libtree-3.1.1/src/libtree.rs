@@ -711,7 +711,7 @@ unsafe extern "C" fn check_absolute_paths(
                 len.wrapping_add(1 as libc::c_int as libc::c_ulong),
             );
             (*s.as_deref_mut().unwrap()).found_all_needed[depth
-                as usize] = ((*needed_not_found.as_deref().unwrap()) <= 1 as libc::c_int as libc::c_ulong)
+                as usize]= ((*needed_not_found.as_deref().unwrap()) <= 1 as libc::c_int as libc::c_ulong)
                 as libc::c_int as libc::c_char;
             let mut err = 0 as *mut libc::c_char;
             if path[0 as libc::c_int as usize] as libc::c_int != '/' as i32 {
@@ -830,7 +830,7 @@ unsafe extern "C" fn check_search_paths(
                 soname_len.wrapping_add(1 as libc::c_int as libc::c_ulong),
             );
             (*s.as_deref_mut().unwrap()).found_all_needed[depth
-                as usize] = ((*needed_not_found.as_deref().unwrap()) <= 1 as libc::c_int as libc::c_ulong)
+                as usize]= ((*needed_not_found.as_deref().unwrap()) <= 1 as libc::c_int as libc::c_ulong)
                 as libc::c_int as libc::c_char;
             let mut code = recurse(
                 path.as_mut_ptr(),
@@ -1097,7 +1097,7 @@ unsafe extern "C" fn print_error(
     let mut i = 0 as libc::c_int as size_t;
     while i < needed_not_found {
         (*s.as_deref_mut().unwrap()).found_all_needed[depth
-            as usize] = (i.wrapping_add(1 as libc::c_int as libc::c_ulong)
+            as usize]= (i.wrapping_add(1 as libc::c_int as libc::c_ulong)
             >= needed_not_found) as libc::c_int as libc::c_char;
         tree_preamble(s.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), depth.wrapping_add(1 as libc::c_int as libc::c_ulong));
         if (*s.as_deref().unwrap()).color != 0 {
@@ -1760,7 +1760,7 @@ unsafe extern "C" fn recurse(
             current_file as *const libc::c_void,
             bytes,
         );
-        origin[bytes as usize] = '\0' as i32 as libc::c_char;
+        origin[bytes as usize]= '\0' as i32 as libc::c_char;
     } else {();
         memcpy(
             origin.as_mut_ptr() as *mut libc::c_void,
@@ -1769,9 +1769,9 @@ unsafe extern "C" fn recurse(
         );
     }
     if rpath == 0xffffffffffffffff as libc::c_ulong {
-        (*s.as_deref_mut().unwrap()).rpath_offsets[depth as usize] = 18446744073709551615 as libc::c_ulong;
+        (*s.as_deref_mut().unwrap()).rpath_offsets[depth as usize]= 18446744073709551615 as libc::c_ulong;
     } else {
-        (*s.as_deref_mut().unwrap()).rpath_offsets[depth as usize] = (*s.as_deref().unwrap()).string_table.n;
+        (*s.as_deref_mut().unwrap()).rpath_offsets[depth as usize]= (*s.as_deref().unwrap()).string_table.n;
         if fseek(
             fptr,
             strtab_offset.wrapping_add(rpath) as libc::c_long,
@@ -1791,7 +1791,7 @@ unsafe extern "C" fn recurse(
             origin.as_mut_ptr(),
         ) != 0
         {
-            (*s.as_deref_mut().unwrap()).rpath_offsets[depth as usize] = curr_buf_size;
+            (*s.as_deref_mut().unwrap()).rpath_offsets[depth as usize]= curr_buf_size;
         }
     }
     let mut runpath_buf_offset = (*s.as_deref().unwrap()).string_table.n;
@@ -2057,10 +2057,10 @@ unsafe extern "C" fn parse_ld_config_file(
             if line_len < (4096 as libc::c_int - 1 as libc::c_int) as libc::c_ulong {
                 let fresh25 = line_len;
                 line_len= line_len.wrapping_add(1);
-                line[fresh25 as usize] = c as libc::c_char;
+                line[fresh25 as usize]= c as libc::c_char;
             }
         }
-        line[line_len as usize] = '\0' as i32 as libc::c_char;
+        line[line_len as usize]= '\0' as i32 as libc::c_char;
         let mut begin = line.as_mut_ptr();
         let mut end = line.as_mut_ptr().offset(line_len as isize);
         while *(*__ctype_b_loc()).offset((*begin) as libc::c_int as isize) as libc::c_int
@@ -2118,7 +2118,7 @@ unsafe extern "C" fn parse_ld_config_file(
                     path as *const libc::c_void,
                     wd_len,
                 );
-                tmp[wd_len as usize] = '/' as i32 as libc::c_char;
+                tmp[wd_len as usize]= '/' as i32 as libc::c_char;
                 memcpy(
                     tmp.as_mut_ptr()
                         .offset(wd_len as isize)
@@ -2128,7 +2128,7 @@ unsafe extern "C" fn parse_ld_config_file(
                 );
                 tmp[wd_len
                     .wrapping_add(1 as libc::c_int as libc::c_ulong)
-                    .wrapping_add(include_len) as usize] = '\0' as i32 as libc::c_char;
+                    .wrapping_add(include_len) as usize]= '\0' as i32 as libc::c_char;
                 begin= tmp.as_mut_ptr();
             }
             ld_conf_globbing(st.as_deref_mut(), begin);

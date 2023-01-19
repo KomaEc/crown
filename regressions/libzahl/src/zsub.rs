@@ -78,7 +78,7 @@ pub unsafe extern "C" fn zsub_unsigned(
     i= 0 as libc::c_int as size_t;
     while i < n {
         carry[(!i & 1 as libc::c_int as libc::c_ulong)
-            as usize] = (if carry[(i & 1 as libc::c_int as libc::c_ulong) as usize] != 0
+            as usize]= (if carry[(i & 1 as libc::c_int as libc::c_ulong) as usize] != 0
         {
             (*(*a).chars.offset(i as isize) <= *s.offset(i as isize)) as libc::c_int
         } else {

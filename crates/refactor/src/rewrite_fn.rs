@@ -818,7 +818,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             let source_text = common::rewrite::get_snippet(tcx, span).text.1;
             assert!(source_text.contains("as_mut_ptr()"), "@ {:?}", span);
             replacement += ".as_mut_ptr()";
-            rewriter.replace(tcx, span, replacement);
+            rewrite_place(tcx, span, replacement, &index_spans, rewriter);
             return;
         } else if PLACE_LOAD_MODE == PlaceLoadMode::ByAddr as u8 {
             let required_ptr_kind = required.expect_ptr()[0];
@@ -832,7 +832,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 replacement = format!("core::ptr::addr_of_mut!({replacement})");
             }
 
-            rewriter.replace(tcx, span, replacement);
+            rewrite_place(tcx, span, replacement, &index_spans, rewriter);
             return;
         }
 
@@ -1217,10 +1217,18 @@ fn rewrite_place(
     } else {
         let mut rest = span;
         let replacements = replacement.split(INDEX_SEPARATOR);
-        for (replacement, &index) in replacements.zip(index_spans) {
-            let part = rest.until(index);
-            rewriter.replace(tcx, part, replacement.to_owned());
-            rest = index.between(rest.shrink_to_hi());
+        let mut index_spans = index_spans.iter().copied();
+        for replacement in replacements {
+            match index_spans.next() {
+                Some(index_span) => {
+                    let part = rest.until(index_span);
+                    rewriter.replace(tcx, part, replacement.to_owned());
+                    rest = index_span.between(rest.shrink_to_hi());
+                },
+                None => {
+                    rewriter.replace(tcx, rest, replacement.to_owned());        
+                },
+            }
         }
     }
 }

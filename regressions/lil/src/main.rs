@@ -281,7 +281,7 @@ unsafe extern "C" fn repl() -> libc::c_int {
         let mut strres = 0 as *const libc::c_char;
         let mut err_msg = 0 as *const libc::c_char;
         let mut pos: size_t = 0;
-        buffer[0 as libc::c_int as usize] = 0 as libc::c_int as libc::c_char;
+        buffer[0 as libc::c_int as usize]= 0 as libc::c_int as libc::c_char;
         printf(b"# \0" as *const u8 as *const libc::c_char);
         if (fgets(buffer.as_mut_ptr(), 16384 as libc::c_int, stdin)).is_null() {();
             break;

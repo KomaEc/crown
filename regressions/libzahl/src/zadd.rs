@@ -107,12 +107,12 @@ pub unsafe extern "C" fn zadd_unsigned(
     while i < n {
         if carry[(i & 1 as libc::c_int as libc::c_ulong) as usize] != 0 {
             carry[(!i & 1 as libc::c_int as libc::c_ulong)
-                as usize] = ((4294967295 as libc::c_uint)
+                as usize]= ((4294967295 as libc::c_uint)
                 .wrapping_sub(*(*a.as_deref().unwrap()).chars.offset(i as isize))
                 <= *addend.offset(i as isize)) as libc::c_int as uint32_t;
         } else {
             carry[(!i & 1 as libc::c_int as libc::c_ulong)
-                as usize] = ((4294967295 as libc::c_uint)
+                as usize]= ((4294967295 as libc::c_uint)
                 .wrapping_sub(*(*a.as_deref().unwrap()).chars.offset(i as isize))
                 < *addend.offset(i as isize)) as libc::c_int as uint32_t;
         }
@@ -127,7 +127,7 @@ pub unsafe extern "C" fn zadd_unsigned(
     }
     while carry[(i & 1 as libc::c_int as libc::c_ulong) as usize] != 0 {
         carry[(!i & 1 as libc::c_int as libc::c_ulong)
-            as usize] = (*(*a.as_deref().unwrap()).chars.offset(i as isize) == 4294967295 as libc::c_uint)
+            as usize]= (*(*a.as_deref().unwrap()).chars.offset(i as isize) == 4294967295 as libc::c_uint)
             as libc::c_int as uint32_t;
         let fresh1 = i;
         i= i.wrapping_add(1);

@@ -1240,7 +1240,7 @@ pub unsafe extern "C" fn lil_callback(
     if cb < 0 as libc::c_int || cb > 8 as libc::c_int {
         return;
     }
-    (*lil.as_deref_mut().unwrap()).callback[cb as usize] = proc_0;
+    (*lil.as_deref_mut().unwrap()).callback[cb as usize]= proc_0;
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_set_error(mut lil: lil_t, mut msg: *const libc::c_char) {
@@ -4087,9 +4087,9 @@ unsafe extern "C" fn fnc_char(
         return 0 as lil_value_t;
     }
     s[0 as libc::c_int
-        as usize] = lil_to_integer(*argv.offset(0 as libc::c_int as isize))
+        as usize]= lil_to_integer(*argv.offset(0 as libc::c_int as isize))
         as libc::c_char;
-    s[1 as libc::c_int as usize] = 0 as libc::c_int as libc::c_char;
+    s[1 as libc::c_int as usize]= 0 as libc::c_int as libc::c_char;
     return lil_alloc_string(s.as_mut_ptr());
 }
 unsafe extern "C" fn fnc_charat(
@@ -4108,8 +4108,8 @@ unsafe extern "C" fn fnc_charat(
     if index >= strlen(str) {
         return 0 as lil_value_t;
     }
-    chstr[0 as libc::c_int as usize] = *str.offset(index as isize);
-    chstr[1 as libc::c_int as usize] = 0 as libc::c_int as libc::c_char;
+    chstr[0 as libc::c_int as usize]= *str.offset(index as isize);
+    chstr[1 as libc::c_int as usize]= 0 as libc::c_int as libc::c_char;
     return lil_alloc_string(chstr.as_mut_ptr());
 }
 unsafe extern "C" fn fnc_codeat(

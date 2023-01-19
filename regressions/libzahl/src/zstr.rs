@@ -119,7 +119,7 @@ pub unsafe extern "C" fn zstr(
                     .offset(0 as libc::c_int as isize) as libc::c_ulong,
             ) as size_t;
             if overridden != 0 {
-                buf[len as usize] = *b.offset(n.wrapping_add(len) as isize);
+                buf[len as usize]= *b.offset(n.wrapping_add(len) as isize);
             }
             memcpy(
                 b.offset(n as isize) as *mut libc::c_void,

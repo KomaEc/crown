@@ -82,7 +82,7 @@ unsafe extern "C" fn makeMaps_e(mut s: Option<&mut crate::src::blocksort::EState
     i= 0 as libc::c_int;
     while i < 256 as libc::c_int {
         if (*s.as_deref().unwrap()).inUse[i as usize] != 0 {
-            (*s.as_deref_mut().unwrap()).unseqToSeq[i as usize] = (*s.as_deref().unwrap()).nInUse as UChar;
+            (*s.as_deref_mut().unwrap()).unseqToSeq[i as usize]= (*s.as_deref().unwrap()).nInUse as UChar;
             (*s.as_deref_mut().unwrap()).nInUse+= 1;
         }
         i+= 1;
@@ -102,14 +102,14 @@ unsafe extern "C" fn generateMTFValues(mut s: *mut crate::src::blocksort::EState
     EOB= (*s).nInUse + 1 as libc::c_int;
     i= 0 as libc::c_int;
     while i <= EOB {
-        (*s).mtfFreq[i as usize] = 0 as libc::c_int;
+        (*s).mtfFreq[i as usize]= 0 as libc::c_int;
         i+= 1;
     }
     wr= 0 as libc::c_int;
     zPend= 0 as libc::c_int;
     i= 0 as libc::c_int;
     while i < (*s).nInUse {
-        yy[i as usize] = i as UChar;
+        yy[i as usize]= i as UChar;
         i+= 1;
     }
     i= 0 as libc::c_int;
@@ -130,11 +130,11 @@ unsafe extern "C" fn generateMTFValues(mut s: *mut crate::src::blocksort::EState
                     if zPend & 1 as libc::c_int != 0 {
                         *mtfv.offset(wr as isize) = 1 as libc::c_int as UInt16;
                         wr+= 1;
-                        (*s).mtfFreq[1 as libc::c_int as usize] += 1;
+                        (*s).mtfFreq[1 as libc::c_int as usize]+= 1;
                     } else {
                         *mtfv.offset(wr as isize) = 0 as libc::c_int as UInt16;
                         wr+= 1;
-                        (*s).mtfFreq[0 as libc::c_int as usize] += 1;
+                        (*s).mtfFreq[0 as libc::c_int as usize]+= 1;
                     }
                     if zPend < 2 as libc::c_int {
                         break;
@@ -147,7 +147,7 @@ unsafe extern "C" fn generateMTFValues(mut s: *mut crate::src::blocksort::EState
             let mut ryy_j = 0 as *mut UChar;
             let mut rll_i: UChar = 0;
             rtmp= yy[1 as libc::c_int as usize];
-            yy[1 as libc::c_int as usize] = yy[0 as libc::c_int as usize];
+            yy[1 as libc::c_int as usize]= yy[0 as libc::c_int as usize];
             ryy_j= &raw mut *yy.as_mut_ptr().offset(1 as libc::c_int as isize)
                 as *mut UChar;
             rll_i= ll_i;
@@ -158,14 +158,14 @@ unsafe extern "C" fn generateMTFValues(mut s: *mut crate::src::blocksort::EState
                 rtmp= (*ryy_j);
                 *ryy_j= rtmp2;
             }
-            yy[0 as libc::c_int as usize] = rtmp;
+            yy[0 as libc::c_int as usize]= rtmp;
             j= ryy_j
                 .offset_from(
                     &raw mut *yy.as_mut_ptr().offset(0 as libc::c_int as isize) as *mut UChar,
                 ) as libc::c_long as Int32;
             *mtfv.offset(wr as isize) = (j + 1 as libc::c_int) as UInt16;
             wr+= 1;
-            (*s).mtfFreq[(j + 1 as libc::c_int) as usize] += 1;
+            (*s).mtfFreq[(j + 1 as libc::c_int) as usize]+= 1;
         }
         i+= 1;
     }
@@ -175,11 +175,11 @@ unsafe extern "C" fn generateMTFValues(mut s: *mut crate::src::blocksort::EState
             if zPend & 1 as libc::c_int != 0 {
                 *mtfv.offset(wr as isize) = 1 as libc::c_int as UInt16;
                 wr+= 1;
-                (*s).mtfFreq[1 as libc::c_int as usize] += 1;
+                (*s).mtfFreq[1 as libc::c_int as usize]+= 1;
             } else {
                 *mtfv.offset(wr as isize) = 0 as libc::c_int as UInt16;
                 wr+= 1;
-                (*s).mtfFreq[0 as libc::c_int as usize] += 1;
+                (*s).mtfFreq[0 as libc::c_int as usize]+= 1;
             }
             if zPend < 2 as libc::c_int {
                 break;
@@ -190,7 +190,7 @@ unsafe extern "C" fn generateMTFValues(mut s: *mut crate::src::blocksort::EState
     }
     *mtfv.offset(wr as isize) = EOB as UInt16;
     wr+= 1;
-    (*s).mtfFreq[EOB as usize] += 1;
+    (*s).mtfFreq[EOB as usize]+= 1;
     (*s).nMTF= wr;
 }
 unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
@@ -229,7 +229,7 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
     while t < 6 as libc::c_int {
         v= 0 as libc::c_int;
         while v < alphaSize {
-            (*s).len[t as usize][v as usize] = 15 as libc::c_int as UChar;
+            (*s).len[t as usize][v as usize]= 15 as libc::c_int as UChar;
             v+= 1;
         }
         t+= 1;
@@ -286,10 +286,10 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
         while v < alphaSize {
             if v >= gs && v <= ge {
                 (*s).len[(nPart - 1 as libc::c_int)
-                    as usize][v as usize] = 0 as libc::c_int as UChar;
+                    as usize][v as usize]= 0 as libc::c_int as UChar;
             } else {
                 (*s).len[(nPart - 1 as libc::c_int)
-                    as usize][v as usize] = 15 as libc::c_int as UChar;
+                    as usize][v as usize]= 15 as libc::c_int as UChar;
             }
             v+= 1;
         }
@@ -301,14 +301,14 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
     while iter < 4 as libc::c_int {
         t= 0 as libc::c_int;
         while t < nGroups {
-            fave[t as usize] = 0 as libc::c_int;
+            fave[t as usize]= 0 as libc::c_int;
             t+= 1;
         }
         t= 0 as libc::c_int;
         while t < nGroups {
             v= 0 as libc::c_int;
             while v < alphaSize {
-                (*s).rfreq[t as usize][v as usize] = 0 as libc::c_int;
+                (*s).rfreq[t as usize][v as usize]= 0 as libc::c_int;
                 v+= 1;
             }
             t+= 1;
@@ -318,19 +318,19 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
             while v < alphaSize {
                 (*s).len_pack[v
                     as usize][0 as libc::c_int
-                    as usize] = (((*s).len[1 as libc::c_int as usize][v as usize]
+                    as usize]= (((*s).len[1 as libc::c_int as usize][v as usize]
                     as libc::c_int) << 16 as libc::c_int
                     | (*s).len[0 as libc::c_int as usize][v as usize] as libc::c_int)
                     as UInt32;
                 (*s).len_pack[v
                     as usize][1 as libc::c_int
-                    as usize] = (((*s).len[3 as libc::c_int as usize][v as usize]
+                    as usize]= (((*s).len[3 as libc::c_int as usize][v as usize]
                     as libc::c_int) << 16 as libc::c_int
                     | (*s).len[2 as libc::c_int as usize][v as usize] as libc::c_int)
                     as UInt32;
                 (*s).len_pack[v
                     as usize][2 as libc::c_int
-                    as usize] = (((*s).len[5 as libc::c_int as usize][v as usize]
+                    as usize]= (((*s).len[5 as libc::c_int as usize][v as usize]
                     as libc::c_int) << 16 as libc::c_int
                     | (*s).len[4 as libc::c_int as usize][v as usize] as libc::c_int)
                     as UInt32;
@@ -350,7 +350,7 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
             }
             t= 0 as libc::c_int;
             while t < nGroups {
-                cost[t as usize] = 0 as libc::c_int as UInt16;
+                cost[t as usize]= 0 as libc::c_int as UInt16;
                 t+= 1;
             }
             if nGroups == 6 as libc::c_int
@@ -864,20 +864,20 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
                     .wrapping_add((*s).len_pack[icv as usize][2 as libc::c_int as usize])
                     as UInt32 as UInt32;
                 cost[0 as libc::c_int
-                    as usize] = (cost01 & 0xffff as libc::c_int as libc::c_uint)
+                    as usize]= (cost01 & 0xffff as libc::c_int as libc::c_uint)
                     as UInt16;
                 cost[1 as libc::c_int
-                    as usize] = (cost01 >> 16 as libc::c_int) as UInt16;
+                    as usize]= (cost01 >> 16 as libc::c_int) as UInt16;
                 cost[2 as libc::c_int
-                    as usize] = (cost23 & 0xffff as libc::c_int as libc::c_uint)
+                    as usize]= (cost23 & 0xffff as libc::c_int as libc::c_uint)
                     as UInt16;
                 cost[3 as libc::c_int
-                    as usize] = (cost23 >> 16 as libc::c_int) as UInt16;
+                    as usize]= (cost23 >> 16 as libc::c_int) as UInt16;
                 cost[4 as libc::c_int
-                    as usize] = (cost45 & 0xffff as libc::c_int as libc::c_uint)
+                    as usize]= (cost45 & 0xffff as libc::c_int as libc::c_uint)
                     as UInt16;
                 cost[5 as libc::c_int
-                    as usize] = (cost45 >> 16 as libc::c_int) as UInt16;
+                    as usize]= (cost45 >> 16 as libc::c_int) as UInt16;
             } else {
                 i= gs;
                 while i <= ge {
@@ -885,7 +885,7 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
                     t= 0 as libc::c_int;
                     while t < nGroups {
                         cost[t
-                            as usize] = (cost[t as usize] as libc::c_int
+                            as usize]= (cost[t as usize] as libc::c_int
                             + (*s).len[t as usize][icv_0 as usize] as libc::c_int)
                             as UInt16;
                         t+= 1;
@@ -904,116 +904,116 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
                 t+= 1;
             }
             totc+= bc;
-            fave[bt as usize] += 1;
-            (*s).selector[nSelectors as usize] = bt as UChar;
+            fave[bt as usize]+= 1;
+            (*s).selector[nSelectors as usize]= bt as UChar;
             nSelectors+= 1;
             if nGroups == 6 as libc::c_int
                 && 50 as libc::c_int == ge - gs + 1 as libc::c_int
             {
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 0 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 0 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 1 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 1 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 2 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 2 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 3 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 3 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 4 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 4 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 5 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 5 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 6 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 6 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 7 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 7 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 8 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 8 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 9 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 9 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 10 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 10 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 11 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 11 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 12 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 12 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 13 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 13 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 14 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 14 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 15 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 15 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 16 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 16 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 17 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 17 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 18 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 18 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 19 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 19 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 20 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 20 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 21 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 21 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 22 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 22 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 23 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 23 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 24 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 24 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 25 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 25 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 26 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 26 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 27 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 27 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 28 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 28 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 29 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 29 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 30 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 30 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 31 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 31 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 32 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 32 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 33 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 33 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 34 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 34 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 35 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 35 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 36 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 36 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 37 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 37 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 38 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 38 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 39 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 39 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 40 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 40 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 41 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 41 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 42 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 42 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 43 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 43 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 44 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 44 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 45 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 45 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 46 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 46 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 47 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 47 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 48 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 48 as libc::c_int) as isize) as usize]+= 1;
                 (*s).rfreq[bt
-                    as usize][*mtfv.offset((gs + 49 as libc::c_int) as isize) as usize] += 1;
+                    as usize][*mtfv.offset((gs + 49 as libc::c_int) as isize) as usize]+= 1;
             } else {
                 i= gs;
                 while i <= ge {
-                    (*s).rfreq[bt as usize][*mtfv.offset(i as isize) as usize] += 1;
+                    (*s).rfreq[bt as usize][*mtfv.offset(i as isize) as usize]+= 1;
                     i+= 1;
                 }
             }
@@ -1068,7 +1068,7 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
     let mut tmp: UChar = 0;
     i= 0 as libc::c_int;
     while i < nGroups {
-        pos[i as usize] = i as UChar;
+        pos[i as usize]= i as UChar;
         i+= 1;
     }
     i= 0 as libc::c_int;
@@ -1080,10 +1080,10 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
             j+= 1;
             tmp2= tmp;
             tmp= pos[j as usize];
-            pos[j as usize] = tmp2;
+            pos[j as usize]= tmp2;
         }
-        pos[0 as libc::c_int as usize] = tmp;
-        (*s).selectorMtf[i as usize] = j as UChar;
+        pos[0 as libc::c_int as usize]= tmp;
+        (*s).selectorMtf[i as usize]= j as UChar;
         i+= 1;
     }
     t= 0 as libc::c_int;
@@ -1122,11 +1122,11 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
     let mut inUse16: [Bool; 16] = [0; 16];
     i= 0 as libc::c_int;
     while i < 16 as libc::c_int {
-        inUse16[i as usize] = 0 as libc::c_int as Bool;
+        inUse16[i as usize]= 0 as libc::c_int as Bool;
         j= 0 as libc::c_int;
         while j < 16 as libc::c_int {
             if (*s).inUse[(i * 16 as libc::c_int + j) as usize] != 0 {
-                inUse16[i as usize] = 1 as libc::c_int as Bool;
+                inUse16[i as usize]= 1 as libc::c_int as Bool;
             }
             j+= 1;
         }

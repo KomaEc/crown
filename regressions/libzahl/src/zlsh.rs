@@ -87,7 +87,7 @@ pub unsafe extern "C" fn zlsh(
         i= chars;
         while i < (*a.as_deref().unwrap()).used {
             carry[(!i & 1 as libc::c_int as libc::c_ulong)
-                as usize] = *(*a.as_deref().unwrap()).chars.offset(i as isize) >> cbits;
+                as usize]= *(*a.as_deref().unwrap()).chars.offset(i as isize) >> cbits;
             *(*a.as_deref().unwrap()).chars.offset(i as isize) <<= bits;
             *(*a.as_deref().unwrap()).chars.offset(i as isize) = carry[(i & 1 as libc::c_int as libc::c_ulong) as usize];
             i= i.wrapping_add(1);

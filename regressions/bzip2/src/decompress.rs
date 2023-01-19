@@ -35,7 +35,7 @@ unsafe extern "C" fn makeMaps_d(mut s: Option<&mut crate::src::bzlib::DState>) {
     i= 0 as libc::c_int;
     while i < 256 as libc::c_int {
         if (*s.as_deref().unwrap()).inUse[i as usize] != 0 {
-            (*s.as_deref_mut().unwrap()).seqToUnseq[(*s.as_deref().unwrap()).nInUse as usize] = i as UChar;
+            (*s.as_deref_mut().unwrap()).seqToUnseq[(*s.as_deref().unwrap()).nInUse as usize]= i as UChar;
             (*s.as_deref_mut().unwrap()).nInUse+= 1;
         }
         i+= 1;
@@ -1936,7 +1936,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                 }
                 if uc as libc::c_int == 1 as libc::c_int {
                     (*s).inUse[(i * 16 as libc::c_int + j)
-                        as usize] = 1 as libc::c_int as Bool;
+                        as usize]= 1 as libc::c_int as Bool;
                 }
                 j+= 1;
                 current_block= 3854024847017804838;
@@ -1948,7 +1948,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                 }
                 i= 0 as libc::c_int;
                 while i < 256 as libc::c_int {
-                    (*s).inUse[i as usize] = 0 as libc::c_int as Bool;
+                    (*s).inUse[i as usize]= 0 as libc::c_int as Bool;
                     i+= 1;
                 }
                 i= 0 as libc::c_int;
@@ -1983,9 +1983,9 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                     }
                 }
                 if uc as libc::c_int == 1 as libc::c_int {
-                    (*s).inUse16[i as usize] = 1 as libc::c_int as Bool;
+                    (*s).inUse16[i as usize]= 1 as libc::c_int as Bool;
                 } else {
-                    (*s).inUse16[i as usize] = 0 as libc::c_int as Bool;
+                    (*s).inUse16[i as usize]= 0 as libc::c_int as Bool;
                 }
                 i+= 1;
                 current_block= 17262312153619709241;
@@ -2068,7 +2068,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                             es+= 1;
                             uc= (*s).seqToUnseq[(*s).mtfa[(*s).mtfbase[0 as libc::c_int as usize] as usize]
                                 as usize];
-                            (*s).unzftab[uc as usize] += es;
+                            (*s).unzftab[uc as usize]+= es;
                             if (*s).smallDecompress != 0 {
                                 while es > 0 as libc::c_int {
                                     if nblock >= nblockMAX {
@@ -2156,25 +2156,25 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                                 while nn > 3 as libc::c_int as libc::c_uint {
                                     let mut z = (pp as libc::c_uint).wrapping_add(nn) as Int32;
                                     (*s).mtfa[z
-                                        as usize] = (*s).mtfa[(z - 1 as libc::c_int) as usize];
+                                        as usize]= (*s).mtfa[(z - 1 as libc::c_int) as usize];
                                     (*s).mtfa[(z - 1 as libc::c_int)
-                                        as usize] = (*s).mtfa[(z - 2 as libc::c_int) as usize];
+                                        as usize]= (*s).mtfa[(z - 2 as libc::c_int) as usize];
                                     (*s).mtfa[(z - 2 as libc::c_int)
-                                        as usize] = (*s).mtfa[(z - 3 as libc::c_int) as usize];
+                                        as usize]= (*s).mtfa[(z - 3 as libc::c_int) as usize];
                                     (*s).mtfa[(z - 3 as libc::c_int)
-                                        as usize] = (*s).mtfa[(z - 4 as libc::c_int) as usize];
+                                        as usize]= (*s).mtfa[(z - 4 as libc::c_int) as usize];
                                     nn= (nn as libc::c_uint)
                                         .wrapping_sub(4 as libc::c_int as libc::c_uint) as UInt32
                                         as UInt32;
                                 }
                                 while nn > 0 as libc::c_int as libc::c_uint {
                                     (*s).mtfa[(pp as libc::c_uint).wrapping_add(nn)
-                                        as usize] = (*s).mtfa[(pp as libc::c_uint)
+                                        as usize]= (*s).mtfa[(pp as libc::c_uint)
                                         .wrapping_add(nn)
                                         .wrapping_sub(1 as libc::c_int as libc::c_uint) as usize];
                                     nn= nn.wrapping_sub(1);
                                 }
-                                (*s).mtfa[pp as usize] = uc;
+                                (*s).mtfa[pp as usize]= uc;
                             } else {
                                 lno= nn.wrapping_div(16 as libc::c_int as libc::c_uint)
                                     as Int32;
@@ -2184,20 +2184,20 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                                 uc= (*s).mtfa[pp as usize];
                                 while pp > (*s).mtfbase[lno as usize] {
                                     (*s).mtfa[pp
-                                        as usize] = (*s).mtfa[(pp - 1 as libc::c_int) as usize];
+                                        as usize]= (*s).mtfa[(pp - 1 as libc::c_int) as usize];
                                     pp-= 1;
                                 }
-                                (*s).mtfbase[lno as usize] += 1;
+                                (*s).mtfbase[lno as usize]+= 1;
                                 while lno > 0 as libc::c_int {
-                                    (*s).mtfbase[lno as usize] -= 1;
+                                    (*s).mtfbase[lno as usize]-= 1;
                                     (*s).mtfa[(*s).mtfbase[lno as usize]
-                                        as usize] = (*s).mtfa[((*s).mtfbase[(lno - 1 as libc::c_int) as usize]
+                                        as usize]= (*s).mtfa[((*s).mtfbase[(lno - 1 as libc::c_int) as usize]
                                         + 16 as libc::c_int - 1 as libc::c_int) as usize];
                                     lno-= 1;
                                 }
-                                (*s).mtfbase[0 as libc::c_int as usize] -= 1;
+                                (*s).mtfbase[0 as libc::c_int as usize]-= 1;
                                 (*s).mtfa[(*s).mtfbase[0 as libc::c_int as usize]
-                                    as usize] = uc;
+                                    as usize]= uc;
                                 if (*s).mtfbase[0 as libc::c_int as usize]
                                     == 0 as libc::c_int
                                 {
@@ -2208,16 +2208,16 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                                         jj_0= 16 as libc::c_int - 1 as libc::c_int;
                                         while jj_0 >= 0 as libc::c_int {
                                             (*s).mtfa[kk_0
-                                                as usize] = (*s).mtfa[((*s).mtfbase[ii_0 as usize] + jj_0) as usize];
+                                                as usize]= (*s).mtfa[((*s).mtfbase[ii_0 as usize] + jj_0) as usize];
                                             kk_0-= 1;
                                             jj_0-= 1;
                                         }
-                                        (*s).mtfbase[ii_0 as usize] = kk_0 + 1 as libc::c_int;
+                                        (*s).mtfbase[ii_0 as usize]= kk_0 + 1 as libc::c_int;
                                         ii_0-= 1;
                                     }
                                 }
                             }
-                            (*s).unzftab[(*s).seqToUnseq[uc as usize] as usize] += 1;
+                            (*s).unzftab[(*s).seqToUnseq[uc as usize] as usize]+= 1;
                             if (*s).smallDecompress != 0 {
                                 *(*s).ll16
                                     .offset(
@@ -2284,16 +2284,16 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                                     i+= 1;
                                 }
                             }
-                            (*s).cftab[0 as libc::c_int as usize] = 0 as libc::c_int;
+                            (*s).cftab[0 as libc::c_int as usize]= 0 as libc::c_int;
                             i= 1 as libc::c_int;
                             while i <= 256 as libc::c_int {
                                 (*s).cftab[i
-                                    as usize] = (*s).unzftab[(i - 1 as libc::c_int) as usize];
+                                    as usize]= (*s).unzftab[(i - 1 as libc::c_int) as usize];
                                 i+= 1;
                             }
                             i= 1 as libc::c_int;
                             while i <= 256 as libc::c_int {
-                                (*s).cftab[i as usize] += (*s).cftab[(i - 1 as libc::c_int) as usize];
+                                (*s).cftab[i as usize]+= (*s).cftab[(i - 1 as libc::c_int) as usize];
                                 i+= 1;
                             }
                             i= 0 as libc::c_int;
@@ -2333,7 +2333,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                             if (*s).smallDecompress != 0 {
                                 i= 0 as libc::c_int;
                                 while i <= 256 as libc::c_int {
-                                    (*s).cftabCopy[i as usize] = (*s).cftab[i as usize];
+                                    (*s).cftabCopy[i as usize]= (*s).cftab[i as usize];
                                     i+= 1;
                                 }
                                 i= 0 as libc::c_int;
@@ -2361,7 +2361,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                                             | ((*s).cftabCopy[uc as usize] >> 16 as libc::c_int)
                                                 << 4 as libc::c_int) as UChar;
                                     }
-                                    (*s).cftabCopy[uc as usize] += 1;
+                                    (*s).cftabCopy[uc as usize]+= 1;
                                     i+= 1;
                                 }
                                 i= (*s).origPtr;
@@ -2460,7 +2460,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                                         & 0xff as libc::c_int as libc::c_uint) as UChar;
                                     *(*s).tt
                                         .offset((*s).cftab[uc as usize] as isize) = (i << 8 as libc::c_int) as libc::c_uint;
-                                    (*s).cftab[uc as usize] += 1;
+                                    (*s).cftab[uc as usize]+= 1;
                                     i+= 1;
                                 }
                                 (*s).tPos= *(*s).tt.offset((*s).origPtr as isize)
@@ -2587,7 +2587,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                         let mut v_22: UChar = 0;
                         v_22= 0 as libc::c_int as UChar;
                         while (v_22 as libc::c_int) < nGroups {
-                            pos[v_22 as usize] = v_22;
+                            pos[v_22 as usize]= v_22;
                             v_22= v_22.wrapping_add(1);
                         }
                         i= 0 as libc::c_int;
@@ -2596,12 +2596,12 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                             tmp= pos[v_22 as usize];
                             while v_22 as libc::c_int > 0 as libc::c_int {
                                 pos[v_22
-                                    as usize] = pos[(v_22 as libc::c_int - 1 as libc::c_int)
+                                    as usize]= pos[(v_22 as libc::c_int - 1 as libc::c_int)
                                     as usize];
                                 v_22= v_22.wrapping_sub(1);
                             }
-                            pos[0 as libc::c_int as usize] = tmp;
-                            (*s).selector[i as usize] = tmp;
+                            pos[0 as libc::c_int as usize]= tmp;
+                            (*s).selector[i as usize]= tmp;
                             i+= 1;
                         }
                         t= 0 as libc::c_int;
@@ -2628,7 +2628,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                     }
                 }
                 17503523010989424999 => {
-                    (*s).len[t as usize][i as usize] = curr as UChar;
+                    (*s).len[t as usize][i as usize]= curr as UChar;
                     i+= 1;
                     current_block= 3770765986603902964;
                     continue;
@@ -2644,7 +2644,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                 }
                 5281038271658253520 => {
                     if i < 2 as libc::c_int + 900000 as libc::c_int / 50 as libc::c_int {
-                        (*s).selectorMtf[i as usize] = j as UChar;
+                        (*s).selectorMtf[i as usize]= j as UChar;
                     }
                     i+= 1;
                     current_block= 6591141407893725683;
@@ -2721,7 +2721,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                         maxLen,
                         alphaSize,
                     );
-                    (*s).minLens[t as usize] = minLen;
+                    (*s).minLens[t as usize]= minLen;
                     t+= 1;
                 }
                 EOB= (*s).nInUse + 1 as libc::c_int;
@@ -2730,7 +2730,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                 groupPos= 0 as libc::c_int;
                 i= 0 as libc::c_int;
                 while i <= 255 as libc::c_int {
-                    (*s).unzftab[i as usize] = 0 as libc::c_int;
+                    (*s).unzftab[i as usize]= 0 as libc::c_int;
                     i+= 1;
                 }
                 let mut ii: Int32 = 0;
@@ -2741,11 +2741,11 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                 while ii >= 0 as libc::c_int {
                     jj= 16 as libc::c_int - 1 as libc::c_int;
                     while jj >= 0 as libc::c_int {
-                        (*s).mtfa[kk as usize] = (ii * 16 as libc::c_int + jj) as UChar;
+                        (*s).mtfa[kk as usize]= (ii * 16 as libc::c_int + jj) as UChar;
                         kk-= 1;
                         jj-= 1;
                     }
-                    (*s).mtfbase[ii as usize] = kk + 1 as libc::c_int;
+                    (*s).mtfbase[ii as usize]= kk + 1 as libc::c_int;
                     ii-= 1;
                 }
                 nblock= 0 as libc::c_int;

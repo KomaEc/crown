@@ -201,7 +201,7 @@ pub unsafe extern "C" fn xor() {
     ltests += 1;
     if fabs(
         output[0 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -210,13 +210,13 @@ pub unsafe extern "C" fn xor() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             95 as libc::c_int,
             output[0 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     ltests += 1;
     if fabs(
         output[1 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -225,13 +225,13 @@ pub unsafe extern "C" fn xor() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             96 as libc::c_int,
             output[1 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     ltests += 1;
     if fabs(
         output[2 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -240,13 +240,13 @@ pub unsafe extern "C" fn xor() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             97 as libc::c_int,
             output[2 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     ltests += 1;
     if fabs(
         output[3 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[3 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -255,7 +255,7 @@ pub unsafe extern "C" fn xor() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             98 as libc::c_int,
             output[3 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[3 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     crate::src::genann::genann_free(ann);
@@ -314,7 +314,7 @@ pub unsafe extern "C" fn train_and() {
         while j < 4 as libc::c_int {
             crate::src::genann::genann_train(
                 ann,
-                input[索引].as_mut_ptr(),
+                input[j as usize].as_mut_ptr(),
                 output.as_mut_ptr().offset(j as isize),
                 0.8f64,
             );
@@ -328,7 +328,7 @@ pub unsafe extern "C" fn train_and() {
     ltests += 1;
     if fabs(
         output[0 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -337,13 +337,13 @@ pub unsafe extern "C" fn train_and() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             135 as libc::c_int,
             output[0 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     ltests += 1;
     if fabs(
         output[1 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -352,13 +352,13 @@ pub unsafe extern "C" fn train_and() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             136 as libc::c_int,
             output[1 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     ltests += 1;
     if fabs(
         output[2 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -367,13 +367,13 @@ pub unsafe extern "C" fn train_and() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             137 as libc::c_int,
             output[2 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     ltests += 1;
     if fabs(
         output[3 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[3 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -382,7 +382,7 @@ pub unsafe extern "C" fn train_and() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             138 as libc::c_int,
             output[3 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[3 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     crate::src::genann::genann_free(ann);
@@ -416,7 +416,7 @@ pub unsafe extern "C" fn train_or() {
         while j < 4 as libc::c_int {
             crate::src::genann::genann_train(
                 ann,
-                input[索引].as_mut_ptr(),
+                input[j as usize].as_mut_ptr(),
                 output.as_mut_ptr().offset(j as isize),
                 0.8f64,
             );
@@ -430,7 +430,7 @@ pub unsafe extern "C" fn train_or() {
     ltests += 1;
     if fabs(
         output[0 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -439,13 +439,13 @@ pub unsafe extern "C" fn train_or() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             160 as libc::c_int,
             output[0 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     ltests += 1;
     if fabs(
         output[1 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -454,13 +454,13 @@ pub unsafe extern "C" fn train_or() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             161 as libc::c_int,
             output[1 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     ltests += 1;
     if fabs(
         output[2 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -469,13 +469,13 @@ pub unsafe extern "C" fn train_or() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             162 as libc::c_int,
             output[2 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     ltests += 1;
     if fabs(
         output[3 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[3 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -484,7 +484,7 @@ pub unsafe extern "C" fn train_or() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             163 as libc::c_int,
             output[3 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[3 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     crate::src::genann::genann_free(ann);
@@ -517,7 +517,7 @@ pub unsafe extern "C" fn train_xor() {
         while j < 4 as libc::c_int {
             crate::src::genann::genann_train(
                 ann,
-                input[索引].as_mut_ptr(),
+                input[j as usize].as_mut_ptr(),
                 output.as_mut_ptr().offset(j as isize),
                 3 as libc::c_int as libc::c_double,
             );
@@ -531,7 +531,7 @@ pub unsafe extern "C" fn train_xor() {
     ltests += 1;
     if fabs(
         output[0 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -540,13 +540,13 @@ pub unsafe extern "C" fn train_xor() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             186 as libc::c_int,
             output[0 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     ltests += 1;
     if fabs(
         output[1 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -555,13 +555,13 @@ pub unsafe extern "C" fn train_xor() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             187 as libc::c_int,
             output[1 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     ltests += 1;
     if fabs(
         output[2 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -570,13 +570,13 @@ pub unsafe extern "C" fn train_xor() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             188 as libc::c_int,
             output[2 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     ltests += 1;
     if fabs(
         output[3 as libc::c_int as usize]
-            - *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            - *crate::src::genann::genann_run(ann.as_mut(), input[3 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
         lfails += 1;
@@ -585,7 +585,7 @@ pub unsafe extern "C" fn train_xor() {
             b"test.c\0" as *const u8 as *const libc::c_char,
             189 as libc::c_int,
             output[3 as libc::c_int as usize],
-            *crate::src::genann::genann_run(ann.as_mut(), input[索引].as_mut_ptr()),
+            *crate::src::genann::genann_run(ann.as_mut(), input[3 as libc::c_int as usize].as_mut_ptr()),
         );
     }
     crate::src::genann::genann_free(ann);

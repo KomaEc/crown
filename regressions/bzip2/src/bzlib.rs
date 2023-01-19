@@ -210,7 +210,7 @@ unsafe extern "C" fn prepare_new_block(mut s: Option<&mut crate::src::blocksort:
     (*s.as_deref_mut().unwrap()).blockCRC= 0xffffffff as libc::c_long as UInt32;
     i= 0 as libc::c_int;
     while i < 256 as libc::c_int {
-        (*s.as_deref_mut().unwrap()).inUse[i as usize] = 0 as libc::c_int as Bool;
+        (*s.as_deref_mut().unwrap()).inUse[i as usize]= 0 as libc::c_int as Bool;
         i+= 1;
     }
     (*s.as_deref_mut().unwrap()).blockNo+= 1;
@@ -371,7 +371,7 @@ unsafe extern "C" fn add_pair_to_block(mut s: *mut crate::src::blocksort::EState
                 as usize];
         i+= 1;
     }
-    (*s).inUse[(*s).state_in_ch as usize] = 1 as libc::c_int as Bool;
+    (*s).inUse[(*s).state_in_ch as usize]= 1 as libc::c_int as Bool;
     match (*s).state_in_len {
         1 => {
             *(*s).block.offset((*s).nblock as isize) = ch;
@@ -393,7 +393,7 @@ unsafe extern "C" fn add_pair_to_block(mut s: *mut crate::src::blocksort::EState
         }
         _ => {
             (*s).inUse[((*s).state_in_len - 4 as libc::c_int)
-                as usize] = 1 as libc::c_int as Bool;
+                as usize]= 1 as libc::c_int as Bool;
             *(*s).block.offset((*s).nblock as isize) = ch;
             (*s).nblock+= 1;
             *(*s).block.offset((*s).nblock as isize) = ch;
@@ -433,7 +433,7 @@ unsafe extern "C" fn copy_input_until_stop(mut s: *mut crate::src::blocksort::ES
                 (*s).blockCRC= (*s).blockCRC << 8 as libc::c_int
                     ^ BZ2_crc32Table[((*s).blockCRC >> 24 as libc::c_int
                         ^ ch as libc::c_uint) as usize];
-                (*s).inUse[(*s).state_in_ch as usize] = 1 as libc::c_int as Bool;
+                (*s).inUse[(*s).state_in_ch as usize]= 1 as libc::c_int as Bool;
                 *(*s).block.offset((*s).nblock as isize) = ch;
                 (*s).nblock+= 1;
                 (*s).state_in_ch= zchh;
@@ -472,7 +472,7 @@ unsafe extern "C" fn copy_input_until_stop(mut s: *mut crate::src::blocksort::ES
                 (*s).blockCRC= (*s).blockCRC << 8 as libc::c_int
                     ^ BZ2_crc32Table[((*s).blockCRC >> 24 as libc::c_int
                         ^ ch_0 as libc::c_uint) as usize];
-                (*s).inUse[(*s).state_in_ch as usize] = 1 as libc::c_int as Bool;
+                (*s).inUse[(*s).state_in_ch as usize]= 1 as libc::c_int as Bool;
                 *(*s).block.offset((*s).nblock as isize) = ch_0;
                 (*s).nblock+= 1;
                 (*s).state_in_ch= zchh_0;
@@ -1959,7 +1959,7 @@ pub unsafe extern "C" fn BZ2_bzReadOpen(
     (*bzf).strm.bzfree= None;
     (*bzf).strm.opaque= 0 as *mut libc::c_void;
     while nUnused > 0 as libc::c_int {
-        (*bzf).buf[(*bzf).bufN as usize] = *(unused as *mut UChar) as Char;
+        (*bzf).buf[(*bzf).bufN as usize]= *(unused as *mut UChar) as Char;
         (*bzf).bufN+= 1;
         unused= (unused as *mut UChar).offset(1 as libc::c_int as isize)
             as *mut libc::c_void;

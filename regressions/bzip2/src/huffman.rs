@@ -26,7 +26,7 @@ pub unsafe extern "C" fn BZ2_hbMakeCodeLengths(
     i= 0 as libc::c_int;
     while i < alphaSize {
         weight[(i + 1 as libc::c_int)
-            as usize] = (if *freq.offset(i as isize) == 0 as libc::c_int {
+            as usize]= (if *freq.offset(i as isize) == 0 as libc::c_int {
             1 as libc::c_int
         } else {
             *freq.offset(i as isize)
@@ -36,14 +36,14 @@ pub unsafe extern "C" fn BZ2_hbMakeCodeLengths(
     while 1 as libc::c_int as Bool != 0 {
         nNodes= alphaSize;
         nHeap= 0 as libc::c_int;
-        heap[0 as libc::c_int as usize] = 0 as libc::c_int;
-        weight[0 as libc::c_int as usize] = 0 as libc::c_int;
-        parent[0 as libc::c_int as usize] = -(2 as libc::c_int);
+        heap[0 as libc::c_int as usize]= 0 as libc::c_int;
+        weight[0 as libc::c_int as usize]= 0 as libc::c_int;
+        parent[0 as libc::c_int as usize]= -(2 as libc::c_int);
         i= 1 as libc::c_int;
         while i <= alphaSize {
-            parent[i as usize] = -(1 as libc::c_int);
+            parent[i as usize]= -(1 as libc::c_int);
             nHeap+= 1;
-            heap[nHeap as usize] = i;
+            heap[nHeap as usize]= i;
             let mut zz: Int32 = 0;
             let mut tmp: Int32 = 0;
             zz= nHeap;
@@ -51,10 +51,10 @@ pub unsafe extern "C" fn BZ2_hbMakeCodeLengths(
             while weight[tmp as usize]
                 < weight[heap[(zz >> 1 as libc::c_int) as usize] as usize]
             {
-                heap[zz as usize] = heap[(zz >> 1 as libc::c_int) as usize];
+                heap[zz as usize]= heap[(zz >> 1 as libc::c_int) as usize];
                 zz>>= 1 as libc::c_int;
             }
-            heap[zz as usize] = tmp;
+            heap[zz as usize]= tmp;
             i+= 1;
         }
         if !(nHeap < 258 as libc::c_int + 2 as libc::c_int) {
@@ -62,7 +62,7 @@ pub unsafe extern "C" fn BZ2_hbMakeCodeLengths(
         }
         while nHeap > 1 as libc::c_int {
             n1= heap[1 as libc::c_int as usize];
-            heap[1 as libc::c_int as usize] = heap[nHeap as usize];
+            heap[1 as libc::c_int as usize]= heap[nHeap as usize];
             nHeap-= 1;
             let mut zz_0: Int32 = 0;
             let mut yy: Int32 = 0;
@@ -83,12 +83,12 @@ pub unsafe extern "C" fn BZ2_hbMakeCodeLengths(
                 if weight[tmp_0 as usize] < weight[heap[yy as usize] as usize] {
                     break;
                 }
-                heap[zz_0 as usize] = heap[yy as usize];
+                heap[zz_0 as usize]= heap[yy as usize];
                 zz_0= yy;
             }
-            heap[zz_0 as usize] = tmp_0;
+            heap[zz_0 as usize]= tmp_0;
             n2= heap[1 as libc::c_int as usize];
-            heap[1 as libc::c_int as usize] = heap[nHeap as usize];
+            heap[1 as libc::c_int as usize]= heap[nHeap as usize];
             nHeap-= 1;
             let mut zz_1: Int32 = 0;
             let mut yy_0: Int32 = 0;
@@ -109,15 +109,15 @@ pub unsafe extern "C" fn BZ2_hbMakeCodeLengths(
                 if weight[tmp_1 as usize] < weight[heap[yy_0 as usize] as usize] {
                     break;
                 }
-                heap[zz_1 as usize] = heap[yy_0 as usize];
+                heap[zz_1 as usize]= heap[yy_0 as usize];
                 zz_1= yy_0;
             }
-            heap[zz_1 as usize] = tmp_1;
+            heap[zz_1 as usize]= tmp_1;
             nNodes+= 1;
-            parent[n2 as usize] = nNodes;
-            parent[n1 as usize] = parent[n2 as usize];
+            parent[n2 as usize]= nNodes;
+            parent[n1 as usize]= parent[n2 as usize];
             weight[nNodes
-                as usize] = ((weight[n1 as usize] as libc::c_uint
+                as usize]= ((weight[n1 as usize] as libc::c_uint
                 & 0xffffff00 as libc::c_uint)
                 .wrapping_add(
                     weight[n2 as usize] as libc::c_uint & 0xffffff00 as libc::c_uint,
@@ -130,9 +130,9 @@ pub unsafe extern "C" fn BZ2_hbMakeCodeLengths(
                     } else {
                         weight[n2 as usize] & 0xff as libc::c_int
                     })) as libc::c_uint) as Int32;
-            parent[nNodes as usize] = -(1 as libc::c_int);
+            parent[nNodes as usize]= -(1 as libc::c_int);
             nHeap+= 1;
-            heap[nHeap as usize] = nNodes;
+            heap[nHeap as usize]= nNodes;
             let mut zz_2: Int32 = 0;
             let mut tmp_2: Int32 = 0;
             zz_2= nHeap;
@@ -140,10 +140,10 @@ pub unsafe extern "C" fn BZ2_hbMakeCodeLengths(
             while weight[tmp_2 as usize]
                 < weight[heap[(zz_2 >> 1 as libc::c_int) as usize] as usize]
             {
-                heap[zz_2 as usize] = heap[(zz_2 >> 1 as libc::c_int) as usize];
+                heap[zz_2 as usize]= heap[(zz_2 >> 1 as libc::c_int) as usize];
                 zz_2>>= 1 as libc::c_int;
             }
-            heap[zz_2 as usize] = tmp_2;
+            heap[zz_2 as usize]= tmp_2;
         }
         if !(nNodes < 258 as libc::c_int * 2 as libc::c_int) {
             crate::src::bzlib::BZ2_bz__AssertH__fail(2002 as libc::c_int);
@@ -170,7 +170,7 @@ pub unsafe extern "C" fn BZ2_hbMakeCodeLengths(
         while i <= alphaSize {
             j= weight[i as usize] >> 8 as libc::c_int;
             j= 1 as libc::c_int + j / 2 as libc::c_int;
-            weight[i as usize] = j << 8 as libc::c_int;
+            weight[i as usize]= j << 8 as libc::c_int;
             i+= 1;
         }
     }
