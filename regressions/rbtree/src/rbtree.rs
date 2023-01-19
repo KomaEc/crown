@@ -71,11 +71,7 @@ unsafe extern "C" fn rotate_left(mut left: *mut t_rbnode) -> *mut t_rbnode {
         return 0 as *mut t_rbnode;
     }
     right = (*left).right;
-    // let ref mut fresh0 = (*left).right;
-    // *fresh0 = (*right).left;
     (*left).right = (*right).left;
-    // let ref mut fresh1 = (*right).left;
-    // *fresh1 = left;
     (*right).left = left;
     (*right).color = (*left).color;
     (*left).color = RED;
@@ -88,11 +84,7 @@ unsafe extern "C" fn rotate_right(mut right: Option<Box<t_rbnode>>) -> Option<Bo
         return None;
     }
     left = Some(Box::from_raw((*right.as_deref_mut().unwrap()).left));
-    // let ref mut fresh2 = (*right).left;
-    // *fresh2 = (*left).right;
     (*right.as_deref_mut().unwrap()).left = (*left.as_deref().unwrap()).right;
-    // let ref mut fresh3 = (*left).right;
-    // *fresh3 = right;
     (*left.as_deref_mut().unwrap()).right = right
         .as_deref_mut()
         .map(|r| r as *mut _)
@@ -114,11 +106,7 @@ pub unsafe extern "C" fn create_node(mut key: t_key, mut value: t_value) -> Opti
     (*new.as_deref_mut().unwrap()).key = key;
     (*new.as_deref_mut().unwrap()).value = value;
     (*new.as_deref_mut().unwrap()).color = RED;
-    // let ref mut fresh4 = (*new).left;
-    // *fresh4 = 0 as *mut t_rbnode;
     (*new.as_deref_mut().unwrap()).left = 0 as *mut t_rbnode;
-    // let ref mut fresh5 = (*new).right;
-    // *fresh5 = 0 as *mut t_rbnode;
     (*new.as_deref_mut().unwrap()).right = 0 as *mut t_rbnode;
     return new;
 }
@@ -136,12 +124,8 @@ unsafe extern "C" fn insert_this(
     if res == 0 as libc::c_int {
         (*node).value = value;
     } else if res < 0 as libc::c_int {
-        // let ref mut fresh6 = (*node).left;
-        // *fresh6 = insert_this((*node).left, key, value);
         (*node).left = insert_this((*node).left, key, value);
     } else {
-        // let ref mut fresh7 = (*node).right;
-        // *fresh7 = insert_this((*node).right, key, value);
         (*node).right = insert_this((*node).right, key, value);
     }
     if is_red((*node).right) != 0
@@ -221,8 +205,6 @@ unsafe extern "C" fn move_red_to_left(mut node: *mut t_rbnode) -> *mut t_rbnode 
         && !(*node).right.is_null()
         && is_red((*(*node).right).left as *const crate::src::rbtree::s_rbnode) != 0
     {
-        // let ref mut fresh8 = (*node).right;
-        // *fresh8 = rotate_right((*node).right);
         (*node).right = rotate_right(Some(Box::from_raw((*node).right)));
         node = rotate_left(node);
         flip_color(node);
@@ -256,7 +238,6 @@ unsafe extern "C" fn remove_min(mut node: Option<Box<t_rbnode>>) -> *mut t_rbnod
     }
     if (*node.as_deref().unwrap()).left.is_null() {
         ();
-        // std::intrinsics::assume((*node).right as usize == 0);
         ();
         return 0 as *mut t_rbnode;
     }
@@ -270,8 +251,6 @@ unsafe extern "C" fn remove_min(mut node: Option<Box<t_rbnode>>) -> *mut t_rbnod
                 .unwrap_or(std::ptr::null_mut()),
         );
     }
-    // let ref mut fresh9 = (*node).left;
-    // *fresh9 = remove_min((*node).left);
     (*node.as_deref_mut().unwrap()).left =
         remove_min(Some(Box::from_raw((*node.as_deref_mut().unwrap()).left)));
     return balance_me_that(
@@ -299,8 +278,6 @@ unsafe extern "C" fn remove_it(mut node: Option<Box<t_rbnode>>, mut key: t_key) 
                         .unwrap_or(std::ptr::null_mut()),
                 );
             }
-            // let ref mut fresh10 = (*node).left;
-            // *fresh10 = remove_key((*node).left, key);
             (*node.as_deref_mut().unwrap()).left = remove_key(
                 Some(Box::from_raw((*node.as_deref_mut().unwrap()).left)),
                 key,
@@ -315,8 +292,6 @@ unsafe extern "C" fn remove_it(mut node: Option<Box<t_rbnode>>, mut key: t_key) 
         if my_compare(key, (*node.as_deref().unwrap()).key) == 0
             && (*node.as_deref().unwrap()).right.is_null()
         {
-            // std::intrinsics::assume((*node).left as usize == 0);
-            // std::intrinsics::assume((*node).right as usize == 0);
             ();
             return 0 as *mut t_rbnode;
         }
@@ -333,13 +308,9 @@ unsafe extern "C" fn remove_it(mut node: Option<Box<t_rbnode>>, mut key: t_key) 
                 tmp = min((*node.as_deref().unwrap()).right);
                 (*node.as_deref_mut().unwrap()).key = (*tmp).key;
                 (*node.as_deref_mut().unwrap()).value = (*tmp).value;
-                // let ref mut fresh11 = (*node).right;
-                // *fresh11 = remove_min((*node).right);
                 (*node.as_deref_mut().unwrap()).right =
                     remove_min(Some(Box::from_raw((*node.as_deref().unwrap()).right)));
             } else {
-                // let ref mut fresh12 = (*node).right;
-                // *fresh12 = remove_key((*node).right, key);
                 (*node.as_deref_mut().unwrap()).right =
                     remove_key(Some(Box::from_raw((*node.as_deref().unwrap()).right)), key);
             }
@@ -382,11 +353,7 @@ pub unsafe extern "C" fn erase_tree(mut node: Option<Box<t_rbnode>>) -> *const t
         } else {
             ();
         }
-        // let ref mut fresh13 = (*node).left;
-        // *fresh13 = 0 as *mut t_rbnode;
         (*node.as_deref_mut().unwrap()).left = 0 as *mut t_rbnode;
-        // let ref mut fresh14 = (*node).right;
-        // *fresh14 = 0 as *mut t_rbnode;
         (*node.as_deref_mut().unwrap()).right = 0 as *mut t_rbnode;
         ();
     } else {

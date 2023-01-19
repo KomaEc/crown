@@ -1,8 +1,6 @@
 use ::libc;
 extern "C" {
 
-    pub type _IO_codecvt;
-
     static mut stderr: *mut FILE;
     fn fclose(__stream: *mut FILE) -> libc::c_int;
     fn fflush(__stream: *mut FILE) -> libc::c_int;

@@ -2,7 +2,7 @@ use ::libc;
 extern "C" {
 
     pub type _IO_codecvt;
-    pub type _IO_marker;
+
     fn fclose(__stream: *mut FILE) -> libc::c_int;
     fn fopen(_: *const libc::c_char, _: *const libc::c_char) -> *mut FILE;
     fn printf(_: *const libc::c_char, _: ...) -> libc::c_int;

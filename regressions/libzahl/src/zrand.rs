@@ -16,8 +16,8 @@ pub type size_t = libc::c_ulong;
 pub type __jmp_buf = [libc::c_long; 8];
 #[derive(Copy, Clone)]
 
-struct OrcGeneratedXXX39;
-impl Default for OrcGeneratedXXX39 {
+struct ErasedByPreprocessor39;
+impl Default for ErasedByPreprocessor39 {
     fn default() -> Self {
         Self {}
     }
@@ -25,8 +25,8 @@ impl Default for OrcGeneratedXXX39 {
 
 #[derive(Copy, Clone)]
 
-struct OrcGeneratedXXX40;
-impl Default for OrcGeneratedXXX40 {
+struct ErasedByPreprocessor40;
+impl Default for ErasedByPreprocessor40 {
     fn default() -> Self {
         Self {}
     }
@@ -39,8 +39,8 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct OrcGeneratedXXX41;
-impl Default for OrcGeneratedXXX41 {
+struct ErasedByPreprocessor41;
+impl Default for ErasedByPreprocessor41 {
     fn default() -> Self {
         Self {}
     }

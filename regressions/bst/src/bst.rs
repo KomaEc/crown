@@ -1,19 +1,15 @@
 use ::libc;
 extern "C" {
-    fn printf(_: *const libc::c_char, _: ...) -> i32;
-    fn malloc(_: u64) -> *mut libc::c_void;
-    fn free(__ptr: *mut libc::c_void);
+    fn printf(_: *const libc::c_char, _: ...) -> libc::c_int;
+    fn malloc(_: libc::c_ulong) -> *mut libc::c_void;
+    fn free(_: *mut libc::c_void);
 }
-// C program to demonstrate
-// delete operation in binary
-// search tree
-
-#[repr(C)]
 #[derive(Copy, Clone)]
+#[repr(C)]
 struct ErasedByRefactorer0;
 #[repr(C)]
 pub struct node {
-    pub key: i32,
+    pub key: libc::c_int,
     pub left: Option<Box<node>>,
     pub right: Option<Box<node>>,
 }
@@ -32,16 +28,15 @@ impl node {
     }
 }
 
-// A utility function to create a new BST node
-pub unsafe extern "C" fn newNode(mut item: i32) -> Option<Box<node>> {
+#[no_mangle]
+pub unsafe extern "C" fn newNode(mut item: libc::c_int) -> Option<Box<node>> {
     let mut temp = Some(Box::new(<crate::src::bst::node as Default>::default()));
     (*temp.as_deref_mut().unwrap()).key = item;
-    (*temp.as_deref_mut().unwrap()).right = None;
     (*temp.as_deref_mut().unwrap()).left = None;
-    // (*temp).left = (*temp).right;
+    (*temp.as_deref_mut().unwrap()).right = None;
     return temp;
 }
-// A utility function to do inorder traversal of BST
+#[no_mangle]
 pub unsafe extern "C" fn inorder(mut root: *const node) {
     if !root.is_null() {
         inorder(
@@ -51,7 +46,7 @@ pub unsafe extern "C" fn inorder(mut root: *const node) {
                 .map(|r| r as *const _)
                 .unwrap_or(std::ptr::null()),
         );
-        printf(b"%d \x00" as *const u8 as *const libc::c_char, (*root).key);
+        printf(b"%d \0" as *const u8 as *const libc::c_char, (*root).key);
         inorder(
             (*root)
                 .right
@@ -61,75 +56,54 @@ pub unsafe extern "C" fn inorder(mut root: *const node) {
         );
     } else {
         ();
-    };
+    }
 }
-/* A utility function to
-insert a new node with given key in
-* BST */
-pub unsafe extern "C" fn insert(mut node: Option<Box<node>>, mut key: i32) -> Option<Box<node>> {
-    /* If the tree is empty, return a new node */
+#[no_mangle]
+pub unsafe extern "C" fn insert(
+    mut node: Option<Box<node>>,
+    mut key: libc::c_int,
+) -> Option<Box<node>> {
     if node.as_deref().is_none() {
         ();
         return newNode(key);
     }
-    /* Otherwise, recur down the tree */
     if key < (*node.as_deref().unwrap()).key {
         (*node.as_deref_mut().unwrap()).left =
-            insert((*node.as_deref_mut().unwrap()).left.take(), key)
+            insert((*node.as_deref_mut().unwrap()).left.take(), key);
     } else {
         (*node.as_deref_mut().unwrap()).right =
-            insert((*node.as_deref_mut().unwrap()).right.take(), key)
+            insert((*node.as_deref_mut().unwrap()).right.take(), key);
     }
-    /* return the (unchanged) node pointer */
     return node;
 }
-/* Given a non-empty binary search
-tree, return the node
-with minimum key value found in
-that tree. Note that the
-entire tree does not need to be searched. */
+#[no_mangle]
 pub unsafe extern "C" fn minValueNode(mut node: *const node) -> *const node {
     let mut current = node;
-    /* loop down to find the leftmost leaf */
     while !current.is_null() && !(*current).left.as_deref().is_none() {
         current = (*current)
             .left
             .as_deref()
             .map(|r| r as *const _)
-            .unwrap_or(std::ptr::null())
+            .unwrap_or(std::ptr::null());
     }
     return current;
 }
-/* Given a binary search tree
-and a key, this function
-deletes the key and
-returns the new root */
+#[no_mangle]
 pub unsafe extern "C" fn deleteNode(
     mut root: Option<Box<node>>,
-    mut key: i32,
+    mut key: libc::c_int,
 ) -> Option<Box<node>> {
-    // base case
     if root.as_deref().is_none() {
         ();
         return root;
     }
-    // If the key to be deleted
-    // is smaller than the root's
-    // key, then it lies in left subtree
     if key < (*root.as_deref().unwrap()).key {
         (*root.as_deref_mut().unwrap()).left =
-            deleteNode((*root.as_deref_mut().unwrap()).left.take(), key)
+            deleteNode((*root.as_deref_mut().unwrap()).left.take(), key);
     } else if key > (*root.as_deref().unwrap()).key {
         (*root.as_deref_mut().unwrap()).right =
-            deleteNode((*root.as_deref_mut().unwrap()).right.take(), key)
+            deleteNode((*root.as_deref_mut().unwrap()).right.take(), key);
     } else {
-        // If the key to be deleted
-        // is greater than the root's
-        // key, then it lies in right subtree
-        // if key is same as root's key,
-        // then This is the node
-        // to be deleted
-        // node with only one child or no child
         if (*root.as_deref().unwrap()).left.as_deref().is_none() {
             ();
             let mut temp = (*root.as_deref_mut().unwrap()).right.take();
@@ -152,58 +126,35 @@ pub unsafe extern "C" fn deleteNode(
         );
         (*root.as_deref_mut().unwrap()).key = (*temp_1).key;
         (*root.as_deref_mut().unwrap()).right =
-            deleteNode((*root.as_deref_mut().unwrap()).right.take(), (*temp_1).key)
+            deleteNode((*root.as_deref_mut().unwrap()).right.take(), (*temp_1).key);
     }
     return root;
 }
-
-/*
-// node with two children:
-
-// Get the inorder successor
-
-// (smallest in the right subtree)
-
-// Copy the inorder
-
-// successor's content to this node
-
-// Delete the inorder successor
-
-// Driver Code
-unsafe fn main() {
-    /* Let us create following BST
-            50
-        /	 \
-        30	 70
-        / \ / \
-    20 40 60 80 */
-    let mut root: *mut node = 0 as *mut node;
-    root = insert(root, 50 as i32);
-    root = insert(root, 30 as i32);
-    root = insert(root, 20 as i32);
-    root = insert(root, 40 as i32);
-    root = insert(root, 70 as i32);
-    root = insert(root, 60 as i32);
-    root = insert(root, 80 as i32);
-    printf(b"Inorder traversal of the given tree \n\x00" as *const u8 as
-               *const libc::c_char);
+unsafe fn main_0() -> libc::c_int {
+    let mut root = 0 as *mut node;
+    root = insert(None, 50 as libc::c_int);
+    root = insert(Some(Box::from_raw(root)), 30 as libc::c_int);
+    root = insert(Some(Box::from_raw(root)), 20 as libc::c_int);
+    root = insert(Some(Box::from_raw(root)), 40 as libc::c_int);
+    root = insert(Some(Box::from_raw(root)), 70 as libc::c_int);
+    root = insert(Some(Box::from_raw(root)), 60 as libc::c_int);
+    root = insert(Some(Box::from_raw(root)), 80 as libc::c_int);
+    printf(b"Inorder traversal of the given tree \n\0" as *const u8 as *const libc::c_char);
     inorder(root);
-    printf(b"\nDelete 20\n\x00" as *const u8 as *const libc::c_char);
-    root = deleteNode(root, 20 as i32);
-    printf(b"Inorder traversal of the modified tree \n\x00" as *const u8 as
-               *const libc::c_char);
+    printf(b"\nDelete 20\n\0" as *const u8 as *const libc::c_char);
+    root = deleteNode(Some(Box::from_raw(root)), 20 as libc::c_int);
+    printf(b"Inorder traversal of the modified tree \n\0" as *const u8 as *const libc::c_char);
     inorder(root);
-    printf(b"\nDelete 30\n\x00" as *const u8 as *const libc::c_char);
-    root = deleteNode(root, 30 as i32);
-    printf(b"Inorder traversal of the modified tree \n\x00" as *const u8 as
-               *const libc::c_char);
+    printf(b"\nDelete 30\n\0" as *const u8 as *const libc::c_char);
+    root = deleteNode(Some(Box::from_raw(root)), 30 as libc::c_int);
+    printf(b"Inorder traversal of the modified tree \n\0" as *const u8 as *const libc::c_char);
     inorder(root);
-    printf(b"\nDelete 50\n\x00" as *const u8 as *const libc::c_char);
-    root = deleteNode(root, 50 as i32);
-    printf(b"Inorder traversal of the modified tree \n\x00" as *const u8 as
-               *const libc::c_char);
+    printf(b"\nDelete 50\n\0" as *const u8 as *const libc::c_char);
+    root = deleteNode(Some(Box::from_raw(root)), 50 as libc::c_int);
+    printf(b"Inorder traversal of the modified tree \n\0" as *const u8 as *const libc::c_char);
     inorder(root);
-    return 0 as i32;
+    return 0 as libc::c_int;
 }
-*/
+// pub fn main() {
+//     unsafe { ::std::process::exit(main_0() as i32) }
+// }

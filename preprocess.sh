@@ -1,5 +1,3 @@
-
-
 RUSTC_PATH=$(rustc --print sysroot)/lib
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -47,4 +45,5 @@ for f in $(ls $1); do
     fi
 
     $CROWN $ENTRY preprocess in-place
+    $CROWN $ENTRY explicit-addr in-place
 done

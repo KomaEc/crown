@@ -318,10 +318,7 @@ pub unsafe extern "C" fn genann_run(
             b"w - ann->weight == ann->total_weights\0" as *const u8 as *const libc::c_char,
             b"genann.c\0" as *const u8 as *const libc::c_char,
             225 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 57], &[libc::c_char; 57]>(
-                b"const double *genann_run(const genann *, const double *)\0",
-            ))
-            .as_ptr(),
+            b"const double *genann_run(const genann *, const double *)\0" as *const u8 as *const i8,
         );
     }
     if o.offset_from((*ann.as_deref().unwrap()).output) as libc::c_long
@@ -332,10 +329,7 @@ pub unsafe extern "C" fn genann_run(
             b"o - ann->output == ann->total_neurons\0" as *const u8 as *const libc::c_char,
             b"genann.c\0" as *const u8 as *const libc::c_char,
             226 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 57], &[libc::c_char; 57]>(
-                b"const double *genann_run(const genann *, const double *)\0",
-            ))
-            .as_ptr(),
+            b"const double *genann_run(const genann *, const double *)\0" as *const u8 as *const i8,
         );
     }
     return ret;
@@ -472,10 +466,8 @@ pub unsafe extern "C" fn genann_train(
             b"w - ann->weight == ann->total_weights\0" as *const u8 as *const libc::c_char,
             b"genann.c\0" as *const u8 as *const libc::c_char,
             318 as libc::c_int as libc::c_uint,
-            (*::std::mem::transmute::<&[u8; 74], &[libc::c_char; 74]>(
-                b"void genann_train(const genann *, const double *, const double *, double)\0",
-            ))
-            .as_ptr(),
+            b"void genann_train(const genann *, const double *, const double *, double)\0"
+                as *const u8 as *const i8,
         );
     }
     h = (*ann).hidden_layers - 1 as libc::c_int;

@@ -1,5 +1,6 @@
 use ::libc;
 extern "C" {
+    pub type _IO_wide_data;
 
     fn fclose(__stream: *mut FILE) -> libc::c_int;
     fn fopen(_: *const libc::c_char, _: *const libc::c_char) -> *mut FILE;

@@ -1,7 +1,7 @@
 use ::libc;
 extern "C" {
-    pub type _IO_wide_data;
 
+    pub type _IO_marker;
     fn fclose(__stream: *mut FILE) -> libc::c_int;
     fn fopen(_: *const libc::c_char, _: *const libc::c_char) -> *mut FILE;
     fn printf(_: *const libc::c_char, _: ...) -> libc::c_int;
@@ -26,7 +26,7 @@ pub struct _IO_FILE {
     pub _IO_save_base: *const libc::c_char,
     pub _IO_backup_base: *const libc::c_char,
     pub _IO_save_end: *const libc::c_char,
-    pub _markers: *const crate::src::example4::_IO_marker,
+    pub _markers: *const _IO_marker,
     pub _chain: *const _IO_FILE,
     pub _fileno: libc::c_int,
     pub _flags2: libc::c_int,
@@ -37,7 +37,7 @@ pub struct _IO_FILE {
     pub _lock: *const libc::c_void,
     pub _offset: __off64_t,
     pub _codecvt: *const crate::src::example4::_IO_codecvt,
-    pub _wide_data: *const _IO_wide_data,
+    pub _wide_data: *const crate::src::test::_IO_wide_data,
     pub _freeres_list: *const _IO_FILE,
     pub _freeres_buf: *const libc::c_void,
     pub __pad5: size_t,

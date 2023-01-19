@@ -8,9 +8,9 @@
 #![feature(register_tool)]
 #![register_tool(c2rust)]
 #![feature(core_intrinsics)]
+#![feature(raw_ref_op)]
 
 extern crate libc;
 pub mod src {
     pub mod rbtree;
-    // pub mod rbtree_safe;
 } // mod src

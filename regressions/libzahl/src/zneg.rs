@@ -6,8 +6,8 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct OrcGeneratedXXX29;
-impl Default for OrcGeneratedXXX29 {
+struct ErasedByPreprocessor29;
+impl Default for ErasedByPreprocessor29 {
     fn default() -> Self {
         Self {}
     }

@@ -5,8 +5,8 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct OrcGeneratedXXX58;
-impl Default for OrcGeneratedXXX58 {
+struct ErasedByPreprocessor58;
+impl Default for ErasedByPreprocessor58 {
     fn default() -> Self {
         Self {}
     }
@@ -18,15 +18,6 @@ pub unsafe extern "C" fn zswap(
     mut a: Option<&mut crate::src::allocator::C2RustUnnamed>,
     mut b: Option<&mut crate::src::allocator::C2RustUnnamed>,
 ) {
-    // let mut t = &mut crate::src::allocator::C2RustUnnamed {
-    //     sign: 0,
-    //     used: 0,
-    //     alloced: 0,
-    //     chars: 0 as *mut zahl_char_t,
-    // };
-    // *t = *a;
-    // *a = *b;
-    // *b = *t;
     let mut t: z_t = [crate::src::allocator::C2RustUnnamed {
         sign: 0,
         used: 0,
