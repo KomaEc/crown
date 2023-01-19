@@ -237,22 +237,25 @@ impl StructFields {
     pub fn is_owning(&self, tcx: TyCtxt, did: &DefId) -> bool {
         let fields_data = self.field_data(did);
         let fields = tcx.adt_def(*did).all_fields();
-        fields_data.iter().zip(fields).any(|(field_data, field_def)| {
-            if field_data.is_empty() {
-                let field_ty = tcx.type_of(field_def.did);
-                if let Some(adt_def) = field_ty.ty_adt_def() {
-                    if self.0.did_idx.contains_key(&adt_def.did()) {
-                        self.is_owning(tcx, &adt_def.did())    
+        fields_data
+            .iter()
+            .zip(fields)
+            .any(|(field_data, field_def)| {
+                if field_data.is_empty() {
+                    let field_ty = tcx.type_of(field_def.did);
+                    if let Some(adt_def) = field_ty.ty_adt_def() {
+                        if self.0.did_idx.contains_key(&adt_def.did()) {
+                            self.is_owning(tcx, &adt_def.did())
+                        } else {
+                            false
+                        }
                     } else {
                         false
                     }
                 } else {
-                    false
+                    field_data[0].is_move() || field_data[0].is_raw_move()
                 }
-            } else {
-                field_data[0].is_move() || field_data[0].is_raw_move()
-            }
-        })
+            })
     }
 
     pub fn new(crate_data: &CrateData, analysis: &Analysis, options: RefactorOptions) -> Self {
@@ -381,10 +384,13 @@ impl FnLocals {
 
             let body = crate_data.tcx.optimized_mir(did);
 
-
-            for (local_decl, is_output_param, ownership, mutability, fatness) in
-                itertools::izip!(body.local_decls.iter(), local_kind, ownership, mutability, fatness)
-            {
+            for (local_decl, is_output_param, ownership, mutability, fatness) in itertools::izip!(
+                body.local_decls.iter(),
+                local_kind,
+                ownership,
+                mutability,
+                fatness
+            ) {
                 let ty = local_decl.ty;
                 let mut local: SmallVec<[PointerKind; 3]> =
                     SmallVec::with_capacity(ownership.len());

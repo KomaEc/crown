@@ -43,8 +43,20 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let ret_ty = destination.ty(self.body, self.tcx).ty;
         let required = self.acquire_place_info(&destination);
         let produced = PlaceValueType::from_ptr_ctxt(ret_ty, &callee_decision[0]);
-        println!("calling {}, adapting {:?} to {:?}", self.tcx.def_path_str(callee), produced, required);
-        self.adapt_usage(fn_span, ret_ty, destination.is_indirect(), produced, required, rewriter)
+        println!(
+            "calling {}, adapting {:?} to {:?}",
+            self.tcx.def_path_str(callee),
+            produced,
+            required
+        );
+        self.adapt_usage(
+            fn_span,
+            ret_ty,
+            destination.is_indirect(),
+            produced,
+            required,
+            rewriter,
+        )
     }
 
     /// Hack

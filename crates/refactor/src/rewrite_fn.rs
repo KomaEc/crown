@@ -207,9 +207,9 @@ impl<'me> PlaceValueType<'me> {
             PlaceValueType::Ptr(ptr_kinds) => {
                 matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_move() || ptr_kind.is_raw_move())
             }
-            PlaceValueType::Struct(did) => {
-                rewrite_ctxt.struct_decision.is_owning(rewrite_ctxt.tcx, did)
-            }
+            PlaceValueType::Struct(did) => rewrite_ctxt
+                .struct_decision
+                .is_owning(rewrite_ctxt.tcx, did),
             PlaceValueType::Irrelavent => false,
         }
     }
@@ -306,7 +306,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         PlaceValueType::from_ptr_ctxt(ty, ptr)
     }
 
-
     /// [`expr_span`] is already rewritten
     fn adapt_usage(
         &self,
@@ -315,12 +314,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         is_indirect: bool,
         produced: PlaceValueType,
         required: PlaceValueType,
-        rewriter: &mut impl Rewrite
+        rewriter: &mut impl Rewrite,
     ) {
-        let FnRewriteCtxt {
-            tcx,
-            ..
-        } = *self;
+        let FnRewriteCtxt { tcx, .. } = *self;
 
         if required.is_rustc_move_obj(self) {
             if produced.is_rustc_move_obj(self) {
@@ -331,7 +327,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             } else {
                 assert!(required.is_ptr());
                 assert!(produced.is_raw_ptr());
-                rewriter.replace(tcx, expr_span.shrink_to_lo(), "Some(Box::from_raw(".to_owned());
+                rewriter.replace(
+                    tcx,
+                    expr_span.shrink_to_lo(),
+                    "Some(Box::from_raw(".to_owned(),
+                );
                 rewriter.replace(tcx, expr_span.shrink_to_hi(), "))".to_owned())
             }
         } else if required.is_rustc_copy_obj(self) {
@@ -344,7 +344,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 if produced.is_rustc_move_obj(self) {
                     assert!(produced.is_ptr());
                     // Box to raw (move)
-                    rewriter.replace(tcx, expr_span.shrink_to_hi(), ".map(|b| Box::into_raw(b)).unwrap_or(std::ptr::null_mut())".to_owned())
+                    rewriter.replace(
+                        tcx,
+                        expr_span.shrink_to_hi(),
+                        ".map(|b| Box::into_raw(b)).unwrap_or(std::ptr::null_mut())".to_owned(),
+                    )
                 } else {
                     assert!(produced.is_raw_ptr());
                     // nothing to be done here
@@ -375,13 +379,24 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         ("as_deref_mut", "mut")
                     };
 
-                    rewriter.replace(tcx, expr_span.shrink_to_hi(), format!(".{usage}().map(|r| r as *{target_ty} _).unwrap_or(std::ptr::null{}())", (target_ty == "mut").then_some("_mut").unwrap_or("")))
+                    rewriter.replace(
+                        tcx,
+                        expr_span.shrink_to_hi(),
+                        format!(
+                            ".{usage}().map(|r| r as *{target_ty} _).unwrap_or(std::ptr::null{}())",
+                            (target_ty == "mut").then_some("_mut").unwrap_or("")
+                        ),
+                    )
                 } else if required.expect_ptr()[0].is_raw_const()
-                    && produced.expect_ptr()[0].is_raw_mut() {
+                    && produced.expect_ptr()[0].is_raw_mut()
+                {
                     // raw mut to raw const
-                    rewriter.replace(tcx, expr_span.shrink_to_hi(), format!(" as *const {pointee_ty_str}"))
+                    rewriter.replace(
+                        tcx,
+                        expr_span.shrink_to_hi(),
+                        format!(" as *const {pointee_ty_str}"),
+                    )
                 }
-
             } else if required.is_ptr() {
                 assert!(produced.is_ptr());
                 // &ref
@@ -396,7 +411,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 if produced.is_ptr() && !produced.is_raw_ptr() {
                     // irrelavent context, cast expr into raw pointer
                     // this happens when comparing addr
-                    rewriter.replace(tcx, expr_span.shrink_to_hi(), ".as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())".to_owned())
+                    rewriter.replace(
+                        tcx,
+                        expr_span.shrink_to_hi(),
+                        ".as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null())".to_owned(),
+                    )
                 }
             }
 
@@ -738,7 +757,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     if base_ptr_kind.is_raw() {
                         replacement = format!("*{replacement}");
                     } else {
-                        let usage = if (required.is_copy_obj(self) && !produced.is_rustc_move_obj(self))
+                        let usage = if (required.is_copy_obj(self)
+                            && !produced.is_rustc_move_obj(self))
                             || (produced.is_copy_obj(self)
                                 && PLACE_LOAD_MODE == PlaceLoadMode::ByValue as u8)
                         {

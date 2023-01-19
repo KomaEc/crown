@@ -95,7 +95,6 @@ pub fn rewrite_struct<'hir>(
                 writeln!(default_impl_body, "{}: None,", field.ident)?;
             }
         } else if let rustc_hir::TyKind::Array(ty, array_len) = &field_ty.kind {
-
             fn array_ty_replacement(
                 tcx: TyCtxt,
                 ty: &rustc_hir::Ty,
@@ -105,14 +104,25 @@ pub fn rewrite_struct<'hir>(
 
                 if let rustc_hir::TyKind::Array(inner_ty, inner_array_len) = &ty.kind {
                     let inner = array_ty_replacement(tcx, inner_ty, inner_array_len);
-                    format!("[{inner}; {}]", rustc_hir_pretty::id_to_string(&tcx.hir(), constant.hir_id))
+                    format!(
+                        "[{inner}; {}]",
+                        rustc_hir_pretty::id_to_string(&tcx.hir(), constant.hir_id)
+                    )
                 } else {
-                    format!("[Default::default(); {}]", rustc_hir_pretty::id_to_string(&tcx.hir(), constant.hir_id))
+                    format!(
+                        "[Default::default(); {}]",
+                        rustc_hir_pretty::id_to_string(&tcx.hir(), constant.hir_id)
+                    )
                 }
             }
 
             // writeln!(default_impl_body, "{}: [Default::default(); {}],", field.ident, rustc_hir_pretty::id_to_string(&tcx.hir(), constant.hir_id))?;
-            writeln!(default_impl_body, "{}: {},", field.ident, array_ty_replacement(tcx, ty, array_len))?;
+            writeln!(
+                default_impl_body,
+                "{}: {},",
+                field.ident,
+                array_ty_replacement(tcx, ty, array_len)
+            )?;
         } else {
             writeln!(default_impl_body, "{}: Default::default(),", field.ident)?;
         }

@@ -138,14 +138,26 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             )
         }
         "scanf" => {
-            return call_scanf::<1, M>(destination, args, local_decls, locals, struct_fields, database)
+            return call_scanf::<1, M>(
+                destination,
+                args,
+                local_decls,
+                locals,
+                struct_fields,
+                database,
+            )
         }
         "fscanf" | "sscanf" => {
-            return call_scanf::<2, M>(destination, args, local_decls, locals, struct_fields, database)
+            return call_scanf::<2, M>(
+                destination,
+                args,
+                local_decls,
+                locals,
+                struct_fields,
+                database,
+            )
         }
-        "fdopen" | "fopen" => {
-            return
-        }
+        "fdopen" | "fopen" => return,
         _ => {}
     }
 
@@ -198,26 +210,26 @@ fn call_strcat<'tcx, M: MutabilityLikeAnalysis>(
     database: &mut <M as WithConstraintSystem>::DB,
 ) {
     let dest_vars =
-    place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
-// assert!(dest_vars.is_empty());
-// no constraint on args
-let ([memcpy_dest, _], _) = args.split_array_ref();
-if let Some(memcpy_dest) = memcpy_dest.place() {
-    let memcpy_dest =
-        place_vars::<EnsureNoDeref>(&memcpy_dest, local_decls, locals, struct_fields, &mut ());
+        place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
+    // assert!(dest_vars.is_empty());
+    // no constraint on args
+    let ([memcpy_dest, _], _) = args.split_array_ref();
+    if let Some(memcpy_dest) = memcpy_dest.place() {
+        let memcpy_dest =
+            place_vars::<EnsureNoDeref>(&memcpy_dest, local_decls, locals, struct_fields, &mut ());
 
-    assert!(memcpy_dest.end > memcpy_dest.start);
-    database.bottom(memcpy_dest.start);
+        assert!(memcpy_dest.end > memcpy_dest.start);
+        database.bottom(memcpy_dest.start);
 
-    let mut lhs_rhs = dest_vars.zip(memcpy_dest);
-    if let Some((lhs, rhs)) = lhs_rhs.next() {
-        database.guard(lhs, rhs);
+        let mut lhs_rhs = dest_vars.zip(memcpy_dest);
+        if let Some((lhs, rhs)) = lhs_rhs.next() {
+            database.guard(lhs, rhs);
+        }
+        for (lhs, rhs) in lhs_rhs {
+            database.guard(lhs, rhs);
+            database.guard(rhs, lhs)
+        }
     }
-    for (lhs, rhs) in lhs_rhs {
-        database.guard(lhs, rhs);
-        database.guard(rhs, lhs)
-    }
-}
 }
 
 fn call_strncat<'tcx, M: MutabilityLikeAnalysis>(
@@ -428,7 +440,7 @@ fn call_scanf<'tcx, const MUT_START: usize, M: MutabilityLikeAnalysis>(
         if let Some(arg) = arg.place() {
             let arg =
                 place_vars::<EnsureNoDeref>(&arg, local_decls, locals, struct_fields, &mut ());
-    
+
             assert!(arg.end > arg.start);
             database.bottom(arg.start);
         }
