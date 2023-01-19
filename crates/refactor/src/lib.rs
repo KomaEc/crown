@@ -253,7 +253,10 @@ impl StructFields {
             let fields_fatness = analysis.fatness_result.struct_results(did);
             let fields_aliases = analysis.taint_result.fields_aliases(did);
 
-            for (ownership, mutability, fatness, aliases) in itertools::izip!(
+            let adt_def = crate_data.tcx.adt_def(*did);
+
+            for (field, ownership, mutability, fatness, aliases) in itertools::izip!(
+                adt_def.all_fields(),
                 fields_ownership.iter().copied(),
                 fields_mutability,
                 fields_fatness,
@@ -261,6 +264,8 @@ impl StructFields {
             ) {
                 assert_eq!(ownership.len(), mutability.len());
                 assert_eq!(mutability.len(), fatness.len());
+
+                let field_ty = crate_data.tcx.type_of(field.did);
 
                 let aliasing_nonowning_field = aliases.iter().any(|&idx| {
                     fields_ownership[idx]
@@ -278,7 +283,7 @@ impl StructFields {
                         } else {
                             PointerKind::Move
                         }
-                    } else if mutability.is_immutable() {
+                    } else if /* mutability.is_immutable() */ !field_ty.is_mutable_ptr() {
                         PointerKind::Raw(RawMeta::Const)
                     } else {
                         PointerKind::Raw(RawMeta::Mut)
@@ -352,9 +357,13 @@ impl FnLocals {
                 .map(|param| matches!(param, Some(param) if param.is_output()))
                 .chain(std::iter::repeat(false));
 
-            for (is_output_param, ownership, mutability, fatness) in
-                itertools::izip!(local_kind, ownership, mutability, fatness)
+            let body = crate_data.tcx.optimized_mir(did);
+
+
+            for (local_decl, is_output_param, ownership, mutability, fatness) in
+                itertools::izip!(body.local_decls.iter(), local_kind, ownership, mutability, fatness)
             {
+                let ty = local_decl.ty;
                 let mut local: SmallVec<[PointerKind; 3]> =
                     SmallVec::with_capacity(ownership.len());
                 for (&ownership, &mutability, &fatness) in
@@ -369,12 +378,20 @@ impl FnLocals {
                     } else if mutability.is_immutable() {
                         if options.const_reference {
                             if fatness.is_arr() {
-                                PointerKind::Raw(RawMeta::Const)
+                                if !ty.is_mutable_ptr() {
+                                    PointerKind::Raw(RawMeta::Const)
+                                } else {
+                                    PointerKind::Raw(RawMeta::Mut)
+                                }
                             } else {
                                 PointerKind::Const
                             }
                         } else {
-                            PointerKind::Raw(RawMeta::Const)
+                            if !ty.is_mutable_ptr() {
+                                PointerKind::Raw(RawMeta::Const)
+                            } else {
+                                PointerKind::Raw(RawMeta::Mut)
+                            }
                         }
                     } else {
                         PointerKind::Raw(RawMeta::Mut)
