@@ -1224,10 +1224,10 @@ fn rewrite_place(
                     let part = rest.until(index_span);
                     rewriter.replace(tcx, part, replacement.to_owned());
                     rest = index_span.between(rest.shrink_to_hi());
-                },
+                }
                 None => {
-                    rewriter.replace(tcx, rest, replacement.to_owned());        
-                },
+                    rewriter.replace(tcx, rest, replacement.to_owned());
+                }
             }
         }
     }
