@@ -1277,7 +1277,7 @@ pub unsafe extern "C" fn lil_set_error_at(
 #[no_mangle]
 pub unsafe extern "C" fn lil_error(
     mut lil: Option<&mut _lil_t>,
-    mut msg: Option<&mut *mut libc::c_char>,
+    mut msg: Option<&mut *const libc::c_char>,
     mut pos: Option<&mut libc::c_ulong>,
 ) -> libc::c_int {
     if (*lil.as_deref().unwrap()).error == 0 {

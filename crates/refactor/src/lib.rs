@@ -391,7 +391,7 @@ impl FnLocals {
                 mutability,
                 fatness
             ) {
-                let ty = local_decl.ty;
+                let mut ty = local_decl.ty;
                 let mut local: SmallVec<[PointerKind; 3]> =
                     SmallVec::with_capacity(ownership.len());
                 for (&ownership, &mutability, &fatness) in
@@ -425,6 +425,12 @@ impl FnLocals {
                         PointerKind::Raw(RawMeta::Mut)
                     };
                     local.push(pointer_kind);
+
+                    // update type
+                    while let Some(inner_ty) = ty.builtin_index() {
+                        ty = inner_ty;
+                    }
+                    ty = ty.builtin_deref(true).unwrap().ty;
                 }
                 if is_output_param && local[0].is_move() {
                     local[0] = PointerKind::Mut
