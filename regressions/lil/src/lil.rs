@@ -67,17 +67,17 @@ pub struct _IO_FILE {
     pub _chain: *mut _IO_FILE,
     pub _fileno: libc::c_int,
     pub _flags2: libc::c_int,
-    pub _old_offset: __off_t,
+    pub _old_offset: libc::c_long,
     pub _cur_column: libc::c_ushort,
     pub _vtable_offset: libc::c_schar,
     pub _shortbuf: [libc::c_char; 1],
     pub _lock: *mut libc::c_void,
-    pub _offset: __off64_t,
+    pub _offset: libc::c_long,
     pub _codecvt: *mut crate::src::main::_IO_codecvt,
     pub _wide_data: *mut crate::src::main::_IO_wide_data,
     pub _freeres_list: *mut _IO_FILE,
     pub _freeres_buf: *mut libc::c_void,
-    pub __pad5: size_t,
+    pub __pad5: libc::c_ulong,
     pub _mode: libc::c_int,
     pub _unused2: [libc::c_char; 20],
 }
@@ -103,7 +103,7 @@ pub type lilint_t = int64_t;
 struct ErasedByRefactorer0;
 #[repr(C)]
 pub struct _lil_value_t {
-    pub l: size_t,
+    pub l: libc::c_ulong,
     pub d: *mut /* owning */ libc::c_char,
 }
 impl Default for _lil_value_t {fn default() -> Self {Self {
@@ -117,9 +117,11 @@ pub type lil_value_t = *mut _lil_value_t;
 #[repr(C)]
 pub struct _lil_func_t {
     pub name: *mut libc::c_char,
-    pub code: lil_value_t,
-    pub argnames: lil_list_t,
-    pub proc_0: lil_func_proc_t,
+    pub code: *mut _lil_value_t,
+    pub argnames: *mut _lil_list_t,
+    pub proc_0: Option::<
+    unsafe extern "C" fn(lil_t, size_t, *mut lil_value_t) -> lil_value_t,
+>,
 }
 pub type lil_func_proc_t = Option::<
     unsafe extern "C" fn(lil_t, size_t, *mut lil_value_t) -> lil_value_t,
@@ -132,24 +134,24 @@ struct ErasedByRefactorer1;
 pub struct _lil_t {
     pub code: *const libc::c_char,
     pub rootcode: *const libc::c_char,
-    pub clen: size_t,
-    pub head: size_t,
+    pub clen: libc::c_ulong,
+    pub head: libc::c_ulong,
     pub ignoreeol: libc::c_int,
-    pub cmd: *mut lil_func_t,
-    pub cmds: size_t,
-    pub syscmds: size_t,
+    pub cmd: *mut *mut _lil_func_t,
+    pub cmds: libc::c_ulong,
+    pub syscmds: libc::c_ulong,
     pub catcher: *mut libc::c_char,
     pub in_catcher: libc::c_int,
     pub dollarprefix: *mut libc::c_char,
-    pub env: lil_env_t,
-    pub rootenv: lil_env_t,
-    pub downenv: lil_env_t,
-    pub empty: lil_value_t,
+    pub env: *mut /* owning */ _lil_env_t,
+    pub rootenv: *mut /* owning */ _lil_env_t,
+    pub downenv: *mut _lil_env_t,
+    pub empty: *mut _lil_value_t,
     pub error: libc::c_int,
-    pub err_head: size_t,
+    pub err_head: libc::c_ulong,
     pub err_msg: *mut libc::c_char,
-    pub callback: [lil_callback_proc_t; 8],
-    pub parse_depth: size_t,
+    pub callback: [Option::<unsafe extern "C" fn() -> ()>; 8],
+    pub parse_depth: libc::c_ulong,
     pub data: *mut libc::c_void,
 }
 impl Default for _lil_t {fn default() -> Self {Self {
@@ -185,11 +187,11 @@ struct ErasedByRefactorer2;
 #[repr(C)]
 pub struct _lil_env_t {
     pub parent: *mut /* owning */ _lil_env_t,
-    pub func: lil_func_t,
-    pub catcher_for: lil_value_t,
-    pub var: *mut lil_var_t,
-    pub vars: size_t,
-    pub retval: lil_value_t,
+    pub func: *mut _lil_func_t,
+    pub catcher_for: *mut _lil_value_t,
+    pub var: *mut *mut _lil_var_t,
+    pub vars: libc::c_ulong,
+    pub retval: *mut _lil_value_t,
     pub retval_set: libc::c_int,
     pub breakrun: libc::c_int,
 }
@@ -211,15 +213,15 @@ pub type lil_var_t = *mut _lil_var_t;
 pub struct _lil_var_t {
     pub n: *mut libc::c_char,
     pub env: *mut _lil_env_t,
-    pub v: lil_value_t,
+    pub v: *mut _lil_value_t,
 }
 pub type lil_func_t = *mut _lil_func_t;
 pub type lil_list_t = *mut _lil_list_t;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _lil_list_t {
-    pub v: *mut lil_value_t,
-    pub c: size_t,
+    pub v: *mut *mut _lil_value_t,
+    pub c: libc::c_ulong,
 }
 pub type lil_exit_callback_proc_t = Option::<
     unsafe extern "C" fn(lil_t, lil_value_t) -> (),
@@ -250,9 +252,9 @@ pub type expreval_t = _expreval_t;
 #[repr(C)]
 pub struct _expreval_t {
     pub code: *const libc::c_char,
-    pub len: size_t,
-    pub head: size_t,
-    pub ival: lilint_t,
+    pub len: libc::c_ulong,
+    pub head: libc::c_ulong,
+    pub ival: libc::c_long,
     pub dval: libc::c_double,
     pub type_0: libc::c_int,
     pub error: libc::c_int,
@@ -266,7 +268,7 @@ unsafe extern "C" fn strclone(mut s: *const libc::c_char) -> *mut /* owning */ l
     memcpy(ns as *mut libc::c_void, s as *const libc::c_void, len);
     return ns;
 }
-unsafe extern "C" fn alloc_value(mut str: *const libc::c_char) -> lil_value_t {
+unsafe extern "C" fn alloc_value(mut str: *const libc::c_char) -> *mut /* owning */ _lil_value_t {
     let mut val = calloc(
         1 as libc::c_int as libc::c_ulong,
         ::std::mem::size_of::<_lil_value_t>() as libc::c_ulong,
@@ -294,7 +296,7 @@ unsafe extern "C" fn alloc_value(mut str: *const libc::c_char) -> lil_value_t {
     return val;
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_clone_value(mut src: lil_value_t) -> lil_value_t {
+pub unsafe extern "C" fn lil_clone_value(mut src: *mut _lil_value_t) -> *mut /* owning */ _lil_value_t {
     let mut val = 0 as *mut _lil_value_t;
     if src.is_null() {();
         return 0 as lil_value_t;
@@ -326,7 +328,7 @@ pub unsafe extern "C" fn lil_clone_value(mut src: lil_value_t) -> lil_value_t {
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_append_char(
-    mut val: lil_value_t,
+    mut val: *mut _lil_value_t,
     mut ch: libc::c_char,
 ) -> libc::c_int {
     let mut new = realloc(
@@ -344,7 +346,7 @@ pub unsafe extern "C" fn lil_append_char(
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_append_string(
-    mut val: lil_value_t,
+    mut val: Option<&mut _lil_value_t>,
     mut s: *const libc::c_char,
 ) -> libc::c_int {
     let mut new = 0 as *mut libc::c_char;
@@ -371,8 +373,8 @@ pub unsafe extern "C" fn lil_append_string(
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_append_val(
-    mut val: lil_value_t,
-    mut v: lil_value_t,
+    mut val: *mut _lil_value_t,
+    mut v: *mut _lil_value_t,
 ) -> libc::c_int {
     let mut new = 0 as *mut libc::c_char;
     if v.is_null() || (*v).l == 0 {
@@ -395,7 +397,7 @@ pub unsafe extern "C" fn lil_append_val(
     return 1 as libc::c_int;
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_free_value(mut val: lil_value_t) {
+pub unsafe extern "C" fn lil_free_value(mut val: *mut /* owning */ _lil_value_t) {
     if val.is_null() {();
         return;
     }
@@ -403,7 +405,7 @@ pub unsafe extern "C" fn lil_free_value(mut val: lil_value_t) {
     free(val as *mut libc::c_void);
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_alloc_list() -> lil_list_t {
+pub unsafe extern "C" fn lil_alloc_list() -> *mut /* owning */ _lil_list_t {
     let mut list = calloc(
         1 as libc::c_int as libc::c_ulong,
         ::std::mem::size_of::<_lil_list_t>() as libc::c_ulong,
@@ -413,7 +415,7 @@ pub unsafe extern "C" fn lil_alloc_list() -> lil_list_t {
     return list;
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_free_list(mut list: lil_list_t) {
+pub unsafe extern "C" fn lil_free_list(mut list: *mut /* owning */ _lil_list_t) {
     let mut i: size_t = 0;
     if list.is_null() {();
         return;
@@ -427,7 +429,7 @@ pub unsafe extern "C" fn lil_free_list(mut list: lil_list_t) {
     free(list as *mut libc::c_void);
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_list_append(mut list: lil_list_t, mut val: lil_value_t) {
+pub unsafe extern "C" fn lil_list_append(mut list: *mut _lil_list_t, mut val: *mut _lil_value_t) {
     let mut nv = realloc(
         (*list).v as *mut libc::c_void,
         (::std::mem::size_of::<lil_value_t>() as libc::c_ulong)
@@ -441,14 +443,14 @@ pub unsafe extern "C" fn lil_list_append(mut list: lil_list_t, mut val: lil_valu
     *nv.offset(fresh14 as isize) = val;
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_list_size(mut list: lil_list_t) -> size_t {
+pub unsafe extern "C" fn lil_list_size(mut list: *mut _lil_list_t) -> libc::c_ulong {
     return (*list).c;
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_list_get(
-    mut list: lil_list_t,
-    mut index: size_t,
-) -> lil_value_t {
+    mut list: *mut _lil_list_t,
+    mut index: libc::c_ulong,
+) -> *mut _lil_value_t {
     return if index >= (*list).c {
         0 as lil_value_t
     } else {
@@ -477,9 +479,9 @@ unsafe extern "C" fn needs_escape(mut str: *const libc::c_char) -> libc::c_int {
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_list_to_value(
-    mut list: lil_list_t,
+    mut list: *mut _lil_list_t,
     mut do_escape: libc::c_int,
-) -> lil_value_t {
+) -> *mut /* owning */ _lil_value_t {
     let mut val = alloc_value(0 as *const libc::c_char);
     let mut i: size_t = 0;
     i= 0 as libc::c_int as size_t;
@@ -504,7 +506,7 @@ pub unsafe extern "C" fn lil_list_to_value(
     return val;
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_alloc_env(mut parent: lil_env_t) -> lil_env_t {
+pub unsafe extern "C" fn lil_alloc_env(mut parent: *mut /* owning */ _lil_env_t) -> *mut /* owning */ _lil_env_t {
     let mut env = calloc(
         1 as libc::c_int as libc::c_ulong,
         ::std::mem::size_of::<_lil_env_t>() as libc::c_ulong,
@@ -513,7 +515,7 @@ pub unsafe extern "C" fn lil_alloc_env(mut parent: lil_env_t) -> lil_env_t {
     return env;
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_free_env(mut env: lil_env_t) {
+pub unsafe extern "C" fn lil_free_env(mut env: *mut /* owning */ _lil_env_t) {
     let mut i: size_t = 0;
     if env.is_null() {();
         return;
@@ -530,10 +532,10 @@ pub unsafe extern "C" fn lil_free_env(mut env: lil_env_t) {
     free(env as *mut libc::c_void);
 }
 unsafe extern "C" fn lil_find_local_var(
-    mut lil: lil_t,
-    mut env: lil_env_t,
+    mut lil: *mut _lil_t,
+    mut env: *mut _lil_env_t,
     mut name: *const libc::c_char,
-) -> lil_var_t {
+) -> *mut _lil_var_t {
     if (*env).vars > 0 as libc::c_int as libc::c_ulong {
         let mut i = (*env).vars.wrapping_sub(1 as libc::c_int as libc::c_ulong);
         loop {
@@ -549,10 +551,10 @@ unsafe extern "C" fn lil_find_local_var(
     return 0 as lil_var_t;
 }
 unsafe extern "C" fn lil_find_var(
-    mut lil: lil_t,
-    mut env: lil_env_t,
+    mut lil: Option<&mut _lil_t>,
+    mut env: Option<&mut _lil_env_t>,
     mut name: *const libc::c_char,
-) -> lil_var_t {
+) -> *mut _lil_var_t {
     let mut r = lil_find_local_var(lil.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), env.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), name);
     return if !r.is_null() {
         r
@@ -563,9 +565,9 @@ unsafe extern "C" fn lil_find_var(
     };
 }
 unsafe extern "C" fn find_cmd(
-    mut lil: lil_t,
+    mut lil: Option<&mut _lil_t>,
     mut name: *const libc::c_char,
-) -> lil_func_t {
+) -> *mut _lil_func_t {
     if (*lil.as_deref().unwrap()).cmds > 0 as libc::c_int as libc::c_ulong {
         let mut i = (*lil.as_deref().unwrap()).cmds.wrapping_sub(1 as libc::c_int as libc::c_ulong);
         loop {
@@ -581,9 +583,9 @@ unsafe extern "C" fn find_cmd(
     return 0 as lil_func_t;
 }
 unsafe extern "C" fn add_func(
-    mut lil: lil_t,
+    mut lil: Option<&mut _lil_t>,
     mut name: *const libc::c_char,
-) -> lil_func_t {
+) -> *mut _lil_func_t {
     let mut cmd = 0 as *mut _lil_func_t;
     let mut ncmd = 0 as *mut lil_func_t;
     cmd= find_cmd(lil.as_deref_mut(), name);
@@ -611,9 +613,11 @@ unsafe extern "C" fn add_func(
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_register(
-    mut lil: lil_t,
+    mut lil: Option<&mut _lil_t>,
     mut name: *const libc::c_char,
-    mut proc_0: lil_func_proc_t,
+    mut proc_0: Option::<
+    unsafe extern "C" fn(lil_t, size_t, *mut lil_value_t) -> lil_value_t,
+>,
 ) -> libc::c_int {
     let mut cmd = add_func(lil.as_deref_mut(), name);
     if cmd.is_null() {();
@@ -624,11 +628,11 @@ pub unsafe extern "C" fn lil_register(
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_set_var(
-    mut lil: lil_t,
+    mut lil: *mut _lil_t,
     mut name: *mut libc::c_char,
-    mut val: lil_value_t,
+    mut val: *mut _lil_value_t,
     mut local: libc::c_int,
-) -> lil_var_t {
+) -> *mut _lil_var_t {
     let mut nvar = 0 as *mut lil_var_t;
     let mut env = if local == 0 as libc::c_int { (*lil).rootenv } else { (*lil).env };
     let mut freeval = 0 as libc::c_int;
@@ -688,17 +692,17 @@ pub unsafe extern "C" fn lil_set_var(
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_get_var(
-    mut lil: lil_t,
+    mut lil: Option<&mut _lil_t>,
     mut name: *mut libc::c_char,
-) -> lil_value_t {
+) -> *mut _lil_value_t {
     return lil_get_var_or(lil.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), name, (*lil.as_deref().unwrap()).empty);
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_get_var_or(
-    mut lil: lil_t,
+    mut lil: *mut _lil_t,
     mut name: *mut libc::c_char,
-    mut defvalue: lil_value_t,
-) -> lil_value_t {
+    mut defvalue: *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut var = lil_find_var(lil.as_mut(), (*lil).env.as_mut(), name);
     let mut retval = if !var.is_null() { (*var).v } else {(); defvalue };
     if ((*lil).callback[7 as libc::c_int as usize]).is_some()
@@ -716,13 +720,13 @@ pub unsafe extern "C" fn lil_get_var_or(
     return retval;
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_push_env(mut lil: lil_t) -> lil_env_t {
+pub unsafe extern "C" fn lil_push_env(mut lil: Option<&mut _lil_t>) -> *mut /* owning */ _lil_env_t {
     let mut env = lil_alloc_env((*lil.as_deref_mut().unwrap()).env);
     (*lil.as_deref_mut().unwrap()).env= env;
     return env;
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_pop_env(mut lil: lil_t) {
+pub unsafe extern "C" fn lil_pop_env(mut lil: Option<&mut _lil_t>) {
     if !(*(*lil.as_deref().unwrap()).env).parent.is_null() {
         let mut next = (*(*lil.as_deref_mut().unwrap()).env).parent;
         lil_free_env((*lil.as_deref_mut().unwrap()).env);
@@ -730,7 +734,7 @@ pub unsafe extern "C" fn lil_pop_env(mut lil: lil_t) {
     }else { (); }
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_new() -> lil_t {
+pub unsafe extern "C" fn lil_new() -> *mut /* owning */ _lil_t {
     let mut lil = calloc(
         1 as libc::c_int as libc::c_ulong,
         ::std::mem::size_of::<_lil_t>() as libc::c_ulong,
@@ -748,14 +752,14 @@ unsafe extern "C" fn islilspecial(mut ch: libc::c_char) -> libc::c_int {
         || ch as libc::c_int == '"' as i32 || ch as libc::c_int == '\'' as i32)
         as libc::c_int;
 }
-unsafe extern "C" fn ateol(mut lil: lil_t) -> libc::c_int {
+unsafe extern "C" fn ateol(mut lil: *mut _lil_t) -> libc::c_int {
     return ((*lil).ignoreeol == 0
         && (*(*lil).code.offset((*lil).head as isize) as libc::c_int == '\n' as i32
             || *(*lil).code.offset((*lil).head as isize) as libc::c_int == '\r' as i32
             || *(*lil).code.offset((*lil).head as isize) as libc::c_int == ';' as i32))
         as libc::c_int;
 }
-unsafe extern "C" fn skip_spaces(mut lil: lil_t) {
+unsafe extern "C" fn skip_spaces(mut lil: Option<&mut _lil_t>) {
     while (*lil.as_deref().unwrap()).head < (*lil.as_deref().unwrap()).clen
         && (*(*lil.as_deref().unwrap()).code.offset((*lil.as_deref().unwrap()).head as isize) as libc::c_int == '\\' as i32
             || *(*lil.as_deref().unwrap()).code.offset((*lil.as_deref().unwrap()).head as isize) as libc::c_int == '#' as i32
@@ -796,7 +800,7 @@ unsafe extern "C" fn skip_spaces(mut lil: lil_t) {
         }
     }
 }
-unsafe extern "C" fn get_bracketpart(mut lil: lil_t) -> lil_value_t {
+unsafe extern "C" fn get_bracketpart(mut lil: Option<&mut _lil_t>) -> *mut /* owning */ _lil_value_t {
     let mut cnt = 1 as libc::c_int as size_t;
     let mut val = 0 as *mut _lil_value_t;
     let mut cmd = alloc_value(0 as *const libc::c_char);
@@ -824,7 +828,7 @@ unsafe extern "C" fn get_bracketpart(mut lil: lil_t) -> lil_value_t {
     lil_free_value(cmd);
     return val;
 }
-unsafe extern "C" fn get_dollarpart(mut lil: lil_t) -> lil_value_t {
+unsafe extern "C" fn get_dollarpart(mut lil: Option<&mut _lil_t>) -> *mut /* owning */ _lil_value_t {
     let mut val = 0 as *mut _lil_value_t;
     let mut name = 0 as *mut _lil_value_t;
     let mut tmp = 0 as *mut _lil_value_t;
@@ -837,7 +841,7 @@ unsafe extern "C" fn get_dollarpart(mut lil: lil_t) -> lil_value_t {
     lil_free_value(tmp);
     return val;
 }
-unsafe extern "C" fn next_word(mut lil: lil_t) -> lil_value_t {
+unsafe extern "C" fn next_word(mut lil: *mut _lil_t) -> *mut _lil_value_t {
     let mut val = 0 as *mut _lil_value_t;
     skip_spaces(lil.as_mut());
     if *(*lil).code.offset((*lil).head as isize) as libc::c_int == '$' as i32 {
@@ -956,7 +960,7 @@ unsafe extern "C" fn next_word(mut lil: lil_t) -> lil_value_t {
     }
     return if !val.is_null() { val } else {(); alloc_value(0 as *const libc::c_char) };
 }
-unsafe extern "C" fn substitute(mut lil: lil_t) -> lil_list_t {
+unsafe extern "C" fn substitute(mut lil: *mut _lil_t) -> *mut _lil_list_t {
     let mut words = lil_alloc_list();
     skip_spaces(lil.as_mut());
     while (*lil).head < (*lil).clen && ateol(lil) == 0 && (*lil).error == 0 {
@@ -991,9 +995,9 @@ unsafe extern "C" fn substitute(mut lil: lil_t) -> lil_list_t {
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_subst_to_list(
-    mut lil: lil_t,
-    mut code: lil_value_t,
-) -> lil_list_t {
+    mut lil: Option<&mut _lil_t>,
+    mut code: *mut _lil_value_t,
+) -> *mut /* owning */ _lil_list_t {
     let mut save_code = (*lil.as_deref().unwrap()).code;
     let mut save_clen = (*lil.as_deref().unwrap()).clen;
     let mut save_head = (*lil.as_deref().unwrap()).head;
@@ -1012,9 +1016,9 @@ pub unsafe extern "C" fn lil_subst_to_list(
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_subst_to_value(
-    mut lil: lil_t,
-    mut code: lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut code: *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut words = lil_subst_to_list(lil.as_deref_mut(), code);
     let mut val = 0 as *mut _lil_value_t;
     if words.is_null() {();
@@ -1026,11 +1030,11 @@ pub unsafe extern "C" fn lil_subst_to_value(
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_parse(
-    mut lil: lil_t,
+    mut lil: *mut _lil_t,
     mut code: *const libc::c_char,
-    mut codelen: size_t,
+    mut codelen: libc::c_ulong,
     mut funclevel: libc::c_int,
-) -> lil_value_t {
+) -> *mut _lil_value_t {
     let mut save_code = (*lil).code;
     let mut save_clen = (*lil).clen;
     let mut save_head = (*lil).head;
@@ -1222,10 +1226,10 @@ pub unsafe extern "C" fn lil_parse(
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_parse_value(
-    mut lil: lil_t,
-    mut val: lil_value_t,
+    mut lil: Option<&mut _lil_t>,
+    mut val: *mut _lil_value_t,
     mut funclevel: libc::c_int,
-) -> lil_value_t {
+) -> *mut /* owning */ _lil_value_t {
     if val.is_null() || (*val).d.is_null() || (*val).l == 0 {
         return alloc_value(0 as *const libc::c_char);
     }
@@ -1233,9 +1237,9 @@ pub unsafe extern "C" fn lil_parse_value(
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_callback(
-    mut lil: lil_t,
+    mut lil: Option<&mut _lil_t>,
     mut cb: libc::c_int,
-    mut proc_0: lil_callback_proc_t,
+    mut proc_0: Option::<unsafe extern "C" fn() -> ()>,
 ) {
     if cb < 0 as libc::c_int || cb > 8 as libc::c_int {
         return;
@@ -1243,7 +1247,7 @@ pub unsafe extern "C" fn lil_callback(
     (*lil.as_deref_mut().unwrap()).callback[cb as usize]= proc_0;
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_set_error(mut lil: lil_t, mut msg: *const libc::c_char) {
+pub unsafe extern "C" fn lil_set_error(mut lil: Option<&mut _lil_t>, mut msg: *const libc::c_char) {
     if (*lil.as_deref().unwrap()).error != 0 {
         return;
     }
@@ -1256,8 +1260,8 @@ pub unsafe extern "C" fn lil_set_error(mut lil: lil_t, mut msg: *const libc::c_c
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_set_error_at(
-    mut lil: lil_t,
-    mut pos: size_t,
+    mut lil: Option<&mut _lil_t>,
+    mut pos: libc::c_ulong,
     mut msg: *const libc::c_char,
 ) {
     if (*lil.as_deref().unwrap()).error != 0 {
@@ -1272,9 +1276,9 @@ pub unsafe extern "C" fn lil_set_error_at(
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_error(
-    mut lil: lil_t,
+    mut lil: Option<&mut _lil_t>,
     mut msg: Option<&mut *mut libc::c_char>,
-    mut pos: Option<&mut size_t>,
+    mut pos: Option<&mut libc::c_ulong>,
 ) -> libc::c_int {
     if (*lil.as_deref().unwrap()).error == 0 {
         return 0 as libc::c_int;
@@ -1284,7 +1288,7 @@ pub unsafe extern "C" fn lil_error(
     (*lil.as_deref_mut().unwrap()).error= 0 as libc::c_int;
     return 1 as libc::c_int;
 }
-unsafe extern "C" fn ee_skip_spaces(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_skip_spaces(mut ee: Option<&mut _expreval_t>) {
     while (*ee.as_deref().unwrap()).head < (*ee.as_deref().unwrap()).len
         && *(*__ctype_b_loc())
             .offset(*(*ee.as_deref().unwrap()).code.offset((*ee.as_deref().unwrap()).head as isize) as libc::c_int as isize)
@@ -1294,7 +1298,7 @@ unsafe extern "C" fn ee_skip_spaces(mut ee: Option<&mut expreval_t>) {
         (*ee.as_deref_mut().unwrap()).head= (*ee.as_deref().unwrap()).head.wrapping_add(1);
     }
 }
-unsafe extern "C" fn ee_numeric_element(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_numeric_element(mut ee: Option<&mut _expreval_t>) {
     let mut fpart = 0 as libc::c_int as lilint_t;
     let mut fpartlen = 1 as libc::c_int as lilint_t;
     (*ee.as_deref_mut().unwrap()).type_0= 0 as libc::c_int;
@@ -1332,7 +1336,7 @@ unsafe extern "C" fn ee_numeric_element(mut ee: Option<&mut expreval_t>) {
             + fpart as libc::c_double / fpartlen as libc::c_double;
     }
 }
-unsafe extern "C" fn ee_element(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_element(mut ee: Option<&mut _expreval_t>) {
     if *(*__ctype_b_loc())
         .offset(*(*ee.as_deref().unwrap()).code.offset((*ee.as_deref().unwrap()).head as isize) as libc::c_int as isize)
         as libc::c_int & _ISdigit as libc::c_int as libc::c_ushort as libc::c_int != 0
@@ -1344,7 +1348,7 @@ unsafe extern "C" fn ee_element(mut ee: Option<&mut expreval_t>) {
     (*ee.as_deref_mut().unwrap()).ival= 1 as libc::c_int as lilint_t;
     (*ee.as_deref_mut().unwrap()).error= 4 as libc::c_int;
 }
-unsafe extern "C" fn ee_paren(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_paren(mut ee: Option<&mut _expreval_t>) {
     ee_skip_spaces(ee.as_deref_mut());
     if *(*ee.as_deref().unwrap()).code.offset((*ee.as_deref().unwrap()).head as isize) as libc::c_int == '(' as i32 {
         (*ee.as_deref_mut().unwrap()).head= (*ee.as_deref().unwrap()).head.wrapping_add(1);
@@ -1359,7 +1363,7 @@ unsafe extern "C" fn ee_paren(mut ee: Option<&mut expreval_t>) {
         ee_element(ee.as_deref_mut());
     };
 }
-unsafe extern "C" fn ee_unary(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_unary(mut ee: Option<&mut _expreval_t>) {
     ee_skip_spaces(ee.as_deref_mut());
     if (*ee.as_deref().unwrap()).head < (*ee.as_deref().unwrap()).len && (*ee.as_deref().unwrap()).error == 0
         && (*(*ee.as_deref().unwrap()).code.offset((*ee.as_deref().unwrap()).head as isize) as libc::c_int == '-' as i32
@@ -1420,7 +1424,7 @@ unsafe extern "C" fn ee_unary(mut ee: Option<&mut expreval_t>) {
         ee_paren(ee.as_deref_mut());
     };
 }
-unsafe extern "C" fn ee_muldiv(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_muldiv(mut ee: Option<&mut _expreval_t>) {
     ee_unary(ee.as_deref_mut());
     if (*ee.as_deref().unwrap()).error != 0 {
         return;
@@ -1673,7 +1677,7 @@ unsafe extern "C" fn ee_muldiv(mut ee: Option<&mut expreval_t>) {
         ee_skip_spaces(ee.as_deref_mut());
     }
 }
-unsafe extern "C" fn ee_addsub(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_addsub(mut ee: Option<&mut _expreval_t>) {
     ee_muldiv(ee.as_deref_mut());
     ee_skip_spaces(ee.as_deref_mut());
     while (*ee.as_deref().unwrap()).head < (*ee.as_deref().unwrap()).len && (*ee.as_deref().unwrap()).error == 0
@@ -1787,7 +1791,7 @@ unsafe extern "C" fn ee_addsub(mut ee: Option<&mut expreval_t>) {
         ee_skip_spaces(ee.as_deref_mut());
     }
 }
-unsafe extern "C" fn ee_shift(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_shift(mut ee: Option<&mut _expreval_t>) {
     ee_addsub(ee.as_deref_mut());
     ee_skip_spaces(ee.as_deref_mut());
     while (*ee.as_deref().unwrap()).head < (*ee.as_deref().unwrap()).len && (*ee.as_deref().unwrap()).error == 0
@@ -1902,7 +1906,7 @@ unsafe extern "C" fn ee_shift(mut ee: Option<&mut expreval_t>) {
         ee_skip_spaces(ee.as_deref_mut());
     }
 }
-unsafe extern "C" fn ee_compare(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_compare(mut ee: Option<&mut _expreval_t>) {
     ee_shift(ee.as_deref_mut());
     ee_skip_spaces(ee.as_deref_mut());
     while (*ee.as_deref().unwrap()).head < (*ee.as_deref().unwrap()).len && (*ee.as_deref().unwrap()).error == 0
@@ -2221,7 +2225,7 @@ unsafe extern "C" fn ee_compare(mut ee: Option<&mut expreval_t>) {
         ee_skip_spaces(ee.as_deref_mut());
     }
 }
-unsafe extern "C" fn ee_equals(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_equals(mut ee: Option<&mut _expreval_t>) {
     ee_compare(ee.as_deref_mut());
     ee_skip_spaces(ee.as_deref_mut());
     while (*ee.as_deref().unwrap()).head < (*ee.as_deref().unwrap()).len && (*ee.as_deref().unwrap()).error == 0
@@ -2372,7 +2376,7 @@ unsafe extern "C" fn ee_equals(mut ee: Option<&mut expreval_t>) {
         ee_skip_spaces(ee.as_deref_mut());
     }
 }
-unsafe extern "C" fn ee_bitand(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_bitand(mut ee: Option<&mut _expreval_t>) {
     ee_equals(ee.as_deref_mut());
     ee_skip_spaces(ee.as_deref_mut());
     while (*ee.as_deref().unwrap()).head < (*ee.as_deref().unwrap()).len && (*ee.as_deref().unwrap()).error == 0
@@ -2434,7 +2438,7 @@ unsafe extern "C" fn ee_bitand(mut ee: Option<&mut expreval_t>) {
         ee_skip_spaces(ee.as_deref_mut());
     }
 }
-unsafe extern "C" fn ee_bitor(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_bitor(mut ee: Option<&mut _expreval_t>) {
     ee_bitand(ee.as_deref_mut());
     ee_skip_spaces(ee.as_deref_mut());
     while (*ee.as_deref().unwrap()).head < (*ee.as_deref().unwrap()).len && (*ee.as_deref().unwrap()).error == 0
@@ -2496,7 +2500,7 @@ unsafe extern "C" fn ee_bitor(mut ee: Option<&mut expreval_t>) {
         ee_skip_spaces(ee.as_deref_mut());
     }
 }
-unsafe extern "C" fn ee_logand(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_logand(mut ee: Option<&mut _expreval_t>) {
     ee_bitor(ee.as_deref_mut());
     ee_skip_spaces(ee.as_deref_mut());
     while (*ee.as_deref().unwrap()).head < (*ee.as_deref().unwrap()).len && (*ee.as_deref().unwrap()).error == 0
@@ -2570,7 +2574,7 @@ unsafe extern "C" fn ee_logand(mut ee: Option<&mut expreval_t>) {
         ee_skip_spaces(ee.as_deref_mut());
     }
 }
-unsafe extern "C" fn ee_logor(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_logor(mut ee: Option<&mut _expreval_t>) {
     ee_logand(ee.as_deref_mut());
     ee_skip_spaces(ee.as_deref_mut());
     while (*ee.as_deref().unwrap()).head < (*ee.as_deref().unwrap()).len && (*ee.as_deref().unwrap()).error == 0
@@ -2644,7 +2648,7 @@ unsafe extern "C" fn ee_logor(mut ee: Option<&mut expreval_t>) {
         ee_skip_spaces(ee.as_deref_mut());
     }
 }
-unsafe extern "C" fn ee_expr(mut ee: Option<&mut expreval_t>) {
+unsafe extern "C" fn ee_expr(mut ee: Option<&mut _expreval_t>) {
     ee_logor(ee.as_deref_mut());
     if (*ee.as_deref().unwrap()).error == 4 as libc::c_int {
         (*ee.as_deref_mut().unwrap()).error= 0 as libc::c_int;
@@ -2653,9 +2657,9 @@ unsafe extern "C" fn ee_expr(mut ee: Option<&mut expreval_t>) {
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_eval_expr(
-    mut lil: lil_t,
-    mut code: lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut code: *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut ee = expreval_t {
         code: 0 as *const libc::c_char,
         len: 0,
@@ -2716,9 +2720,9 @@ pub unsafe extern "C" fn lil_eval_expr(
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_unused_name(
-    mut lil: lil_t,
+    mut lil: *mut _lil_t,
     mut part: *const libc::c_char,
-) -> lil_value_t {
+) -> *mut _lil_value_t {
     let mut name = malloc(
         (strlen(part)).wrapping_add(64 as libc::c_int as libc::c_ulong),
     ) as *mut libc::c_char;
@@ -2745,13 +2749,13 @@ pub unsafe extern "C" fn lil_unused_name(
 }
 #[no_mangle]
 pub unsafe extern "C" fn lil_arg(
-    mut argv: *mut lil_value_t,
-    mut index: size_t,
-) -> lil_value_t {
+    mut argv: *mut *mut _lil_value_t,
+    mut index: libc::c_ulong,
+) -> *mut _lil_value_t {
     return if !argv.is_null() { *argv.offset(index as isize) } else {(); 0 as lil_value_t };
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_to_string(mut val: lil_value_t) -> *mut libc::c_char {
+pub unsafe extern "C" fn lil_to_string(mut val: *mut _lil_value_t) -> *mut libc::c_char {
     return if !val.is_null() && !(*val).d.is_null() {
         (*val).d as *const libc::c_char
     } else {
@@ -2759,15 +2763,15 @@ pub unsafe extern "C" fn lil_to_string(mut val: lil_value_t) -> *mut libc::c_cha
     };
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_to_double(mut val: lil_value_t) -> libc::c_double {
+pub unsafe extern "C" fn lil_to_double(mut val: *mut _lil_value_t) -> libc::c_double {
     return atof(lil_to_string(val));
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_to_integer(mut val: lil_value_t) -> lilint_t {
+pub unsafe extern "C" fn lil_to_integer(mut val: *mut _lil_value_t) -> libc::c_long {
     return atoll(lil_to_string(val)) as lilint_t;
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_to_boolean(mut val: lil_value_t) -> libc::c_int {
+pub unsafe extern "C" fn lil_to_boolean(mut val: Option<&mut _lil_value_t>) -> libc::c_int {
     let mut s = lil_to_string(val.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
     let mut i: size_t = 0;
     let mut dots = 0 as libc::c_int as size_t;
@@ -2792,23 +2796,23 @@ pub unsafe extern "C" fn lil_to_boolean(mut val: lil_value_t) -> libc::c_int {
     return 0 as libc::c_int;
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_alloc_string(mut str: *const libc::c_char) -> lil_value_t {
+pub unsafe extern "C" fn lil_alloc_string(mut str: *const libc::c_char) -> *mut /* owning */ _lil_value_t {
     return alloc_value(str);
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_alloc_double(mut num: libc::c_double) -> lil_value_t {
+pub unsafe extern "C" fn lil_alloc_double(mut num: libc::c_double) -> *mut /* owning */ _lil_value_t {
     let mut buff: [libc::c_char; 128] = [0; 128];
     sprintf(buff.as_mut_ptr(), b"%f\0" as *const u8 as *const libc::c_char, num);
     return alloc_value(buff.as_mut_ptr());
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_alloc_integer(mut num: lilint_t) -> lil_value_t {
+pub unsafe extern "C" fn lil_alloc_integer(mut num: libc::c_long) -> *mut /* owning */ _lil_value_t {
     let mut buff: [libc::c_char; 128] = [0; 128];
     sprintf(buff.as_mut_ptr(), b"%lli\0" as *const u8 as *const libc::c_char, num);
     return alloc_value(buff.as_mut_ptr());
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_free(mut lil: lil_t) {
+pub unsafe extern "C" fn lil_free(mut lil: *mut /* owning */ _lil_t) {
     let mut i: size_t = 0;
     if lil.is_null() {();
         return;
@@ -2836,18 +2840,18 @@ pub unsafe extern "C" fn lil_free(mut lil: lil_t) {
     free(lil as *mut libc::c_void);
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_set_data(mut lil: lil_t, mut data: *mut libc::c_void) {
+pub unsafe extern "C" fn lil_set_data(mut lil: Option<&mut _lil_t>, mut data: *mut libc::c_void) {
     (*lil.as_deref_mut().unwrap()).data= data;
 }
 #[no_mangle]
-pub unsafe extern "C" fn lil_get_data(mut lil: lil_t) -> *mut libc::c_void {
+pub unsafe extern "C" fn lil_get_data(mut lil: *mut _lil_t) -> *mut libc::c_void {
     return (*lil).data;
 }
 unsafe extern "C" fn fnc_reflect(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut func = 0 as *mut _lil_func_t;
     let mut type_0 = 0 as *const libc::c_char;
     let mut i: size_t = 0;
@@ -3035,10 +3039,10 @@ unsafe extern "C" fn fnc_reflect(
     return 0 as lil_value_t;
 }
 unsafe extern "C" fn fnc_func(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut name = 0 as *mut _lil_value_t;
     let mut cmd = 0 as *mut _lil_func_t;
     if argc < 1 as libc::c_int as libc::c_ulong {
@@ -3070,10 +3074,10 @@ unsafe extern "C" fn fnc_func(
     return name;
 }
 unsafe extern "C" fn fnc_rename(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut r = 0 as *mut _lil_value_t;
     let mut func = 0 as *mut _lil_func_t;
     let mut oldname = 0 as *const libc::c_char;
@@ -3103,10 +3107,10 @@ unsafe extern "C" fn fnc_rename(
     return r;
 }
 unsafe extern "C" fn fnc_unusedname(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     return lil_unused_name(
         lil.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()),
         if argc > 0 as libc::c_int as libc::c_ulong {
@@ -3117,10 +3121,10 @@ unsafe extern "C" fn fnc_unusedname(
     );
 }
 unsafe extern "C" fn fnc_quote(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut r = 0 as *mut _lil_value_t;
     let mut i: size_t = 0;
     if argc < 1 as libc::c_int as libc::c_ulong {
@@ -3138,10 +3142,10 @@ unsafe extern "C" fn fnc_quote(
     return r;
 }
 unsafe extern "C" fn fnc_set(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut i = 0 as libc::c_int as size_t;
     let mut var = 0 as lil_var_t;
     let mut access = 1 as libc::c_int;
@@ -3174,10 +3178,10 @@ unsafe extern "C" fn fnc_set(
     return if !var.is_null() { lil_clone_value((*var).v) } else {(); 0 as lil_value_t };
 }
 unsafe extern "C" fn fnc_local(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut i: size_t = 0;
     i= 0 as libc::c_int as size_t;
     while i < argc {
@@ -3190,10 +3194,10 @@ unsafe extern "C" fn fnc_local(
     return 0 as lil_value_t;
 }
 unsafe extern "C" fn fnc_write(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut i: size_t = 0;
     let mut msg = lil_alloc_string(0 as *const libc::c_char);
     i= 0 as libc::c_int as size_t;
@@ -3217,10 +3221,10 @@ unsafe extern "C" fn fnc_write(
     return 0 as lil_value_t;
 }
 unsafe extern "C" fn fnc_print(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     fnc_write(lil, argc, argv);
     if ((*lil).callback[1 as libc::c_int as usize]).is_some() {
         let mut proc_0: lil_write_callback_proc_t = ::std::mem::transmute::<
@@ -3237,10 +3241,10 @@ unsafe extern "C" fn fnc_print(
     return 0 as lil_value_t;
 }
 unsafe extern "C" fn fnc_eval(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     if argc == 1 as libc::c_int as libc::c_ulong {
         return lil_parse_value(
             lil.as_mut(),
@@ -3267,10 +3271,10 @@ unsafe extern "C" fn fnc_eval(
     return 0 as lil_value_t;
 }
 unsafe extern "C" fn fnc_topeval(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut thisenv = (*lil.as_deref().unwrap()).env;
     let mut thisdownenv = (*lil.as_deref().unwrap()).downenv;
     let mut r = 0 as *mut _lil_value_t;
@@ -3282,10 +3286,10 @@ unsafe extern "C" fn fnc_topeval(
     return r;
 }
 unsafe extern "C" fn fnc_upeval(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut thisenv = (*lil.as_deref().unwrap()).env;
     let mut thisdownenv = (*lil.as_deref().unwrap()).downenv;
     let mut r = 0 as *mut _lil_value_t;
@@ -3300,10 +3304,10 @@ unsafe extern "C" fn fnc_upeval(
     return r;
 }
 unsafe extern "C" fn fnc_downeval(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut r = 0 as *mut _lil_value_t;
     let mut upenv = (*lil.as_deref().unwrap()).env;
     let mut downenv = (*lil.as_deref().unwrap()).downenv;
@@ -3318,10 +3322,10 @@ unsafe extern "C" fn fnc_downeval(
     return r;
 }
 unsafe extern "C" fn fnc_enveval(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut r = 0 as *mut _lil_value_t;
     let mut invars = 0 as lil_list_t;
     let mut outvars = 0 as lil_list_t;
@@ -3428,10 +3432,10 @@ unsafe extern "C" fn fnc_enveval(
     return r;
 }
 unsafe extern "C" fn fnc_jaileval(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut i: size_t = 0;
     let mut sublil = 0 as *mut _lil_t;
     let mut r = 0 as *mut _lil_value_t;
@@ -3465,10 +3469,10 @@ unsafe extern "C" fn fnc_jaileval(
     return r;
 }
 unsafe extern "C" fn fnc_count(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut list = 0 as *mut _lil_list_t;
     let mut buff: [libc::c_char; 64] = [0; 64];
     if argc == 0 {
@@ -3484,10 +3488,10 @@ unsafe extern "C" fn fnc_count(
     return alloc_value(buff.as_mut_ptr());
 }
 unsafe extern "C" fn fnc_index(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut list = 0 as *mut _lil_list_t;
     let mut index: size_t = 0;
     let mut r = 0 as *mut _lil_value_t;
@@ -3505,10 +3509,10 @@ unsafe extern "C" fn fnc_index(
     return r;
 }
 unsafe extern "C" fn fnc_indexof(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut list = 0 as *mut _lil_list_t;
     let mut index: size_t = 0;
     let mut r = 0 as lil_value_t;
@@ -3533,10 +3537,10 @@ unsafe extern "C" fn fnc_indexof(
     return r;
 }
 unsafe extern "C" fn fnc_append(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut list = 0 as *mut _lil_list_t;
     let mut r = 0 as *mut _lil_value_t;
     let mut i: size_t = 0;
@@ -3567,10 +3571,10 @@ unsafe extern "C" fn fnc_append(
     return r;
 }
 unsafe extern "C" fn fnc_slice(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut list = 0 as *mut _lil_list_t;
     let mut slice = 0 as *mut _lil_list_t;
     let mut i: size_t = 0;
@@ -3611,10 +3615,10 @@ unsafe extern "C" fn fnc_slice(
     return r;
 }
 unsafe extern "C" fn fnc_filter(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut list = 0 as *mut _lil_list_t;
     let mut filtered = 0 as *mut _lil_list_t;
     let mut i: size_t = 0;
@@ -3649,10 +3653,10 @@ unsafe extern "C" fn fnc_filter(
     return r;
 }
 unsafe extern "C" fn fnc_list(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut list = lil_alloc_list();
     let mut r = 0 as *mut _lil_value_t;
     let mut i: size_t = 0;
@@ -3666,20 +3670,20 @@ unsafe extern "C" fn fnc_list(
     return r;
 }
 unsafe extern "C" fn fnc_subst(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     if argc < 1 as libc::c_int as libc::c_ulong {
         return 0 as lil_value_t;
     }
     return lil_subst_to_value(lil.as_deref_mut(), *argv.offset(0 as libc::c_int as isize));
 }
 unsafe extern "C" fn fnc_concat(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut list = 0 as *mut _lil_list_t;
     let mut r = 0 as *mut _lil_value_t;
     let mut tmp = 0 as *mut _lil_value_t;
@@ -3700,10 +3704,10 @@ unsafe extern "C" fn fnc_concat(
     return r;
 }
 unsafe extern "C" fn fnc_foreach(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut list = 0 as *mut _lil_list_t;
     let mut rlist = 0 as *mut _lil_list_t;
     let mut r = 0 as *mut _lil_value_t;
@@ -3742,10 +3746,10 @@ unsafe extern "C" fn fnc_foreach(
     return r;
 }
 unsafe extern "C" fn fnc_return(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     (*(*lil.as_deref_mut().unwrap()).env).breakrun= 1 as libc::c_int;
     lil_free_value((*(*lil.as_deref().unwrap()).env).retval);
     (*(*lil.as_deref_mut().unwrap()).env).retval= if argc < 1 as libc::c_int as libc::c_ulong {
@@ -3761,10 +3765,10 @@ unsafe extern "C" fn fnc_return(
     };
 }
 unsafe extern "C" fn fnc_result(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     if argc > 0 as libc::c_int as libc::c_ulong {
         lil_free_value((*(*lil.as_deref().unwrap()).env).retval);
         (*(*lil.as_deref_mut().unwrap()).env).retval= lil_clone_value(*argv.offset(0 as libc::c_int as isize));
@@ -3777,10 +3781,10 @@ unsafe extern "C" fn fnc_result(
     };
 }
 unsafe extern "C" fn fnc_expr(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     if argc == 1 as libc::c_int as libc::c_ulong {
         return lil_eval_expr(lil, *argv.offset(0 as libc::c_int as isize));
     }
@@ -3803,10 +3807,10 @@ unsafe extern "C" fn fnc_expr(
     return 0 as lil_value_t;
 }
 unsafe extern "C" fn real_inc(
-    mut lil: lil_t,
+    mut lil: Option<&mut _lil_t>,
     mut varname: *mut libc::c_char,
     mut v: libc::c_float,
-) -> lil_value_t {
+) -> *mut /* owning */ _lil_value_t {
     let mut pv = lil_get_var(lil.as_deref_mut(), varname);
     let mut dv = lil_to_double(pv) + v as libc::c_double;
     if fmod(dv, 1 as libc::c_int as libc::c_double) != 0. {
@@ -3818,10 +3822,10 @@ unsafe extern "C" fn real_inc(
     return pv;
 }
 unsafe extern "C" fn fnc_inc(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     if argc < 1 as libc::c_int as libc::c_ulong {
         return 0 as lil_value_t;
     }
@@ -3836,10 +3840,10 @@ unsafe extern "C" fn fnc_inc(
     );
 }
 unsafe extern "C" fn fnc_dec(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     if argc < 1 as libc::c_int as libc::c_ulong {
         return 0 as lil_value_t;
     }
@@ -3854,10 +3858,10 @@ unsafe extern "C" fn fnc_dec(
     );
 }
 unsafe extern "C" fn fnc_read(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut f = 0 as *mut FILE;
     let mut size: size_t = 0;
     let mut buffer = 0 as *mut libc::c_char;
@@ -3896,10 +3900,10 @@ unsafe extern "C" fn fnc_read(
     return r;
 }
 unsafe extern "C" fn fnc_store(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut f = 0 as *mut FILE;
     let mut buffer = 0 as *const libc::c_char;
     if argc < 2 as libc::c_int as libc::c_ulong {
@@ -3938,10 +3942,10 @@ unsafe extern "C" fn fnc_store(
     return lil_clone_value(*argv.offset(1 as libc::c_int as isize));
 }
 unsafe extern "C" fn fnc_if(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut val = 0 as *mut _lil_value_t;
     let mut r = 0 as lil_value_t;
     let mut base = 0 as libc::c_int;
@@ -3986,10 +3990,10 @@ unsafe extern "C" fn fnc_if(
     return r;
 }
 unsafe extern "C" fn fnc_while(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut val = 0 as *mut _lil_value_t;
     let mut r = 0 as lil_value_t;
     let mut base = 0 as libc::c_int;
@@ -4036,10 +4040,10 @@ unsafe extern "C" fn fnc_while(
     return r;
 }
 unsafe extern "C" fn fnc_for(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut val = 0 as *mut _lil_value_t;
     let mut r = 0 as lil_value_t;
     if argc < 4 as libc::c_int as libc::c_ulong {
@@ -4078,10 +4082,10 @@ unsafe extern "C" fn fnc_for(
     return r;
 }
 unsafe extern "C" fn fnc_char(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut s: [libc::c_char; 2] = [0; 2];
     if argc == 0 {
         return 0 as lil_value_t;
@@ -4093,10 +4097,10 @@ unsafe extern "C" fn fnc_char(
     return lil_alloc_string(s.as_mut_ptr());
 }
 unsafe extern "C" fn fnc_charat(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut index: size_t = 0;
     let mut chstr: [libc::c_char; 2] = [0; 2];
     let mut str = 0 as *const libc::c_char;
@@ -4113,10 +4117,10 @@ unsafe extern "C" fn fnc_charat(
     return lil_alloc_string(chstr.as_mut_ptr());
 }
 unsafe extern "C" fn fnc_codeat(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut index: size_t = 0;
     let mut str = 0 as *const libc::c_char;
     if argc < 2 as libc::c_int as libc::c_ulong {
@@ -4130,10 +4134,10 @@ unsafe extern "C" fn fnc_codeat(
     return lil_alloc_integer(*str.offset(index as isize) as lilint_t);
 }
 unsafe extern "C" fn fnc_substr(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut str = 0 as *const libc::c_char;
     let mut r = 0 as *mut _lil_value_t;
     let mut start: size_t = 0;
@@ -4169,10 +4173,10 @@ unsafe extern "C" fn fnc_substr(
     return r;
 }
 unsafe extern "C" fn fnc_strpos(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut hay = 0 as *const libc::c_char;
     let mut str = 0 as *const libc::c_char;
     let mut min = 0 as libc::c_int as size_t;
@@ -4196,10 +4200,10 @@ unsafe extern "C" fn fnc_strpos(
     return lil_alloc_integer(str.offset_from(hay) as libc::c_long);
 }
 unsafe extern "C" fn fnc_length(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut i: size_t = 0;
     let mut total = 0 as libc::c_int as size_t;
     i= 0 as libc::c_int as size_t;
@@ -4219,7 +4223,7 @@ unsafe extern "C" fn real_trim(
     mut chars: *const libc::c_char,
     mut left: libc::c_int,
     mut right: libc::c_int,
-) -> lil_value_t {
+) -> *mut _lil_value_t {
     let mut base = 0 as libc::c_int;
     let mut r = 0 as lil_value_t;
     if left != 0 {
@@ -4260,10 +4264,10 @@ unsafe extern "C" fn real_trim(
     return r;
 }
 unsafe extern "C" fn fnc_trim(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     if argc == 0 {
         return 0 as lil_value_t;
     }
@@ -4279,10 +4283,10 @@ unsafe extern "C" fn fnc_trim(
     );
 }
 unsafe extern "C" fn fnc_ltrim(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     if argc == 0 {
         return 0 as lil_value_t;
     }
@@ -4298,10 +4302,10 @@ unsafe extern "C" fn fnc_ltrim(
     );
 }
 unsafe extern "C" fn fnc_rtrim(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     if argc == 0 {
         return 0 as lil_value_t;
     }
@@ -4317,10 +4321,10 @@ unsafe extern "C" fn fnc_rtrim(
     );
 }
 unsafe extern "C" fn fnc_strcmp(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     if argc < 2 as libc::c_int as libc::c_ulong {
         return 0 as lil_value_t;
     }
@@ -4332,10 +4336,10 @@ unsafe extern "C" fn fnc_strcmp(
     );
 }
 unsafe extern "C" fn fnc_streq(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     if argc < 2 as libc::c_int as libc::c_ulong {
         return 0 as lil_value_t;
     }
@@ -4352,10 +4356,10 @@ unsafe extern "C" fn fnc_streq(
     );
 }
 unsafe extern "C" fn fnc_repstr(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut from = 0 as *const libc::c_char;
     let mut to = 0 as *const libc::c_char;
     let mut src = 0 as *mut libc::c_char;
@@ -4415,10 +4419,10 @@ unsafe extern "C" fn fnc_repstr(
     return r;
 }
 unsafe extern "C" fn fnc_split(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut list = 0 as *mut _lil_list_t;
     let mut sep = b" \0" as *const u8 as *const libc::c_char;
     let mut i: size_t = 0;
@@ -4452,10 +4456,10 @@ unsafe extern "C" fn fnc_split(
     return val;
 }
 unsafe extern "C" fn fnc_try(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     let mut r = 0 as *mut _lil_value_t;
     if argc < 1 as libc::c_int as libc::c_ulong {
         return 0 as lil_value_t;
@@ -4480,10 +4484,10 @@ unsafe extern "C" fn fnc_try(
     return r;
 }
 unsafe extern "C" fn fnc_error(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     lil_set_error(
         lil.as_deref_mut(),
         if argc > 0 as libc::c_int as libc::c_ulong {
@@ -4495,10 +4499,10 @@ unsafe extern "C" fn fnc_error(
     return 0 as lil_value_t;
 }
 unsafe extern "C" fn fnc_exit(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     if ((*lil).callback[0 as libc::c_int as usize]).is_some() {
         let mut proc_0: lil_exit_callback_proc_t = ::std::mem::transmute::<
             lil_callback_proc_t,
@@ -4519,10 +4523,10 @@ unsafe extern "C" fn fnc_exit(
     return 0 as lil_value_t;
 }
 unsafe extern "C" fn fnc_source(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut f = 0 as *mut FILE;
     let mut size: size_t = 0;
     let mut buffer = 0 as *mut libc::c_char;
@@ -4570,10 +4574,10 @@ unsafe extern "C" fn fnc_source(
     return r;
 }
 unsafe extern "C" fn fnc_lmap(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut _lil_value_t {
     let mut list = 0 as *mut _lil_list_t;
     let mut i: size_t = 0;
     if argc < 2 as libc::c_int as libc::c_ulong {
@@ -4594,19 +4598,19 @@ unsafe extern "C" fn fnc_lmap(
     return 0 as lil_value_t;
 }
 unsafe extern "C" fn fnc_rand(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut _lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     return lil_alloc_double(
         rand() as libc::c_double / 2147483647 as libc::c_int as libc::c_double,
     );
 }
 unsafe extern "C" fn fnc_catcher(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: Option<&mut _lil_t>,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut _lil_value_t,
+) -> *mut /* owning */ _lil_value_t {
     if argc == 0 as libc::c_int as libc::c_ulong {
         return lil_alloc_string((*lil.as_deref().unwrap()).catcher)
     } else {
@@ -4620,7 +4624,7 @@ unsafe extern "C" fn fnc_catcher(
     }
     return 0 as lil_value_t;
 }
-unsafe extern "C" fn register_stdcmds(mut lil: lil_t) {
+unsafe extern "C" fn register_stdcmds(mut lil: Option<&mut _lil_t>) {
     lil_register(
         lil.as_deref_mut(),
         b"reflect\0" as *const u8 as *const libc::c_char,

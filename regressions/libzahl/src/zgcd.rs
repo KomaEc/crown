@@ -151,7 +151,7 @@ pub unsafe extern "C" fn zgcd(
         if crate::src::zcmpmag::zcmpmag(libzahl_tmp_gcd_u.as_mut_ptr(), libzahl_tmp_gcd_v.as_mut_ptr())
             > 0 as libc::c_int
         {
-            crate::src::zswap::zswap(libzahl_tmp_gcd_u.as_mut_ptr().as_mut(), libzahl_tmp_gcd_v.as_mut_ptr());
+            crate::src::zswap::zswap(libzahl_tmp_gcd_u.as_mut_ptr().as_mut(), libzahl_tmp_gcd_v.as_mut_ptr().as_mut());
         }
         crate::src::zsub::zsub_unsigned(
             libzahl_tmp_gcd_v.as_mut_ptr(),

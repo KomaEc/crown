@@ -38,26 +38,18 @@ else
     exit 1
 fi
 
-for f in $(ls $WORKSPACE); do
-    ENTRY="$WORKSPACE/$f"
-    echo "rewriting $f"
-    if [ -f "$ENTRY/lib.rs" -a -f "$ENTRY/Cargo.toml" ]; then
-        ENTRY="$ENTRY/lib.rs"
-    elif [ -f "$ENTRY/c2rust-lib.rs" -a -f "$ENTRY/Cargo.toml" ]; then
-        ENTRY="$ENTRY/c2rust-lib.rs"
-    elif [ -f "$ENTRY/rust/c2rust-lib.rs" -a -f "$ENTRY/rust/Cargo.toml" ]; then
-        ENTRY="$ENTRY/rust/c2rust-lib.rs"
-    else
-        echo "cannot find rust project entry"
+for f in $(find $WORKSPACE -name "Cargo.toml"); do
+    BENCH_DIR="$(dirname $f)"
+    BENCH_NAME="$(basename $BENCH_DIR)"
+    ENTRY="$BENCH_DIR/lib.rs"
+    if [ ! -f $ENTRY ]; then
+        echo "cannot find benchmark entry, expect lib.rs"
         exit 1
     fi
-
-    $CROWN $ENTRY rewrite in-place || { echo 'rewrite $f failed' ; exit 1; }
-
-
-    # if [ -f "$(dirname $ENTRY)/Cargo.toml" ]; then
-    #     echo "formatting $f"
-    #     cargo fmt --manifest-path "$(dirname $ENTRY)/Cargo.toml"
-    # fi
+    echo "rewriting $BENCH_NAME"
+    OPTION=""
+    if [ $BENCH_NAME = "lil" ]; then
+        OPTION="--type-reconstruction"
+    fi
+    $CROWN $ENTRY rewrite $OPTION in-place || { echo 'rewrite $f crashed' ; exit 1; }
 done
-

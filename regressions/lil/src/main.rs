@@ -74,12 +74,12 @@ pub type lil_func_proc_t = Option::<
 pub type lil_callback_proc_t = Option::<unsafe extern "C" fn() -> ()>;
 static mut running: libc::c_int = 1 as libc::c_int;
 static mut exit_code: libc::c_int = 0 as libc::c_int;
-unsafe extern "C" fn do_exit(mut lil: lil_t, mut val: lil_value_t) {
+unsafe extern "C" fn do_exit(mut lil: *mut crate::src::lil::_lil_t, mut val: Option<&mut crate::src::lil::_lil_value_t>) {
     running = 0 as libc::c_int;
     exit_code = crate::src::lil::lil_to_integer(val.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) as libc::c_int;
 }
 unsafe extern "C" fn do_system(
-    mut argc: size_t,
+    mut argc: libc::c_ulong,
     mut argv: *mut *mut libc::c_char,
 ) -> *mut libc::c_char {
     let mut cmd = 0 as *mut libc::c_char;
@@ -155,10 +155,10 @@ unsafe extern "C" fn do_system(
     };
 }
 unsafe extern "C" fn fnc_writechar(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut crate::src::lil::_lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut crate::src::lil::_lil_value_t,
+) -> *mut crate::src::lil::_lil_value_t {
     if argc == 0 {
         return 0 as lil_value_t;
     }
@@ -170,10 +170,10 @@ unsafe extern "C" fn fnc_writechar(
     return 0 as lil_value_t;
 }
 unsafe extern "C" fn fnc_system(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut crate::src::lil::_lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut crate::src::lil::_lil_value_t,
+) -> *mut crate::src::lil::_lil_value_t {
     let mut sargv = malloc(
         (::std::mem::size_of::<*mut libc::c_char>() as libc::c_ulong)
             .wrapping_mul(argc.wrapping_add(1 as libc::c_int as libc::c_ulong)),
@@ -199,10 +199,10 @@ unsafe extern "C" fn fnc_system(
     return r;
 }
 unsafe extern "C" fn fnc_readline(
-    mut lil: lil_t,
-    mut argc: size_t,
-    mut argv: *mut lil_value_t,
-) -> lil_value_t {
+    mut lil: *mut crate::src::lil::_lil_t,
+    mut argc: libc::c_ulong,
+    mut argv: *mut *mut crate::src::lil::_lil_value_t,
+) -> *mut /* owning */ crate::src::lil::_lil_value_t {
     let mut len = 0 as libc::c_int as size_t;
     let mut size = 64 as libc::c_int as size_t;
     let mut buffer = malloc(size) as *mut libc::c_char;

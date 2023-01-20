@@ -4,19 +4,14 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
-if [ $# -eq 2 ]; then
-    if [ -f "$1/$2/Cargo.toml" ]; then
-        echo "checking $2"
-        RUSTFLAGS=-Awarnings cargo check --manifest-path "$1/$2/Cargo.toml"
-        cargo clean --manifest-path "$1/$2/Cargo.toml"
+for f in $(find $1 -name "Cargo.toml"); do
+    BENCH_DIR="$(dirname $f)"
+    BENCH_NAME="$(basename $BENCH_DIR)"
+    ENTRY="$BENCH_DIR/lib.rs"
+    if [ ! -f $ENTRY ]; then
+        echo "cannot find benchmark entry, expect lib.rs"
+        exit 1
     fi
-    exit 0
-fi
-
-for f in $(ls $1); do
-    if [ -f "$1/$f/Cargo.toml" ]; then
-        echo "checking $f"
-        RUSTFLAGS=-Awarnings cargo check --manifest-path "$1/$f/Cargo.toml"
-        cargo clean --manifest-path "$1/$f/Cargo.toml"
-    fi
+    echo "checking $BENCH_NAME"
+    RUSTFLAGS=-Awarnings cargo check --manifest-path "$f"
 done

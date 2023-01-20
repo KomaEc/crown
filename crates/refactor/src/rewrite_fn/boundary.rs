@@ -33,7 +33,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                             as_mut_ptr_span.shrink_to_hi(),
                             ".as_mut()".to_owned(),
                         );
-                        return;
+                        continue;
                     }
                 }
                 self.rewrite_temporary(local, location, required, rewriter);

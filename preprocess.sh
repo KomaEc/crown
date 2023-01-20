@@ -28,22 +28,15 @@ cargo build --release
 CROWN=target/release/crown
 
 
-for f in $(ls $1); do
-    ENTRY="$1/$f"
-    echo "preprocessing $f"
-    if [ -f "$ENTRY/lib.rs" -a -f "$ENTRY/Cargo.toml" ]; then
-        ENTRY="$ENTRY/lib.rs"
-    elif [ -f "$ENTRY/c2rust-lib.rs" -a -f "$ENTRY/Cargo.toml" ]; then
-        ENTRY="$ENTRY/c2rust-lib.rs"
-    elif [ -f "$ENTRY/rust/c2rust-lib.rs" -a -f "$ENTRY/rust/Cargo.toml" ]; then
-        ENTRY="$ENTRY/rust/c2rust-lib.rs"
-    elif [ -f "$ENTRY/test.rs" -a "$(basename "$ENTRY")" == "urlparser" ]; then
-        ENTRY="$ENTRY/test.rs"
-    else
-        echo "cannot find rust project entry"
+for f in $(find $1 -name "Cargo.toml"); do
+    BENCH_DIR="$(dirname $f)"
+    BENCH_NAME="$(basename $BENCH_DIR)"
+    ENTRY="$BENCH_DIR/lib.rs"
+    if [ ! -f $ENTRY ]; then
+        echo "cannot find benchmark entry, expect lib.rs"
         exit 1
     fi
-
+    echo "preprocessing $BENCH_NAME"
     $CROWN $ENTRY preprocess in-place
     $CROWN $ENTRY explicit-addr in-place
 done

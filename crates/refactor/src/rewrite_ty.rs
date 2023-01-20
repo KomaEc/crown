@@ -246,7 +246,10 @@ fn retype<'hir>(ty: &rustc_hir::Ty<'hir>, decision: &[PointerKind], tcx: TyCtxt<
                 rustc_hir_pretty::id_to_string(&tcx.hir(), constant.hir_id)
             )
         }
-        _ => unreachable!(),
+        hir::TyKind::Never => {
+            "!".to_owned()
+        }
+        _ => unreachable!("{:?}", ty),
     }
 }
 
