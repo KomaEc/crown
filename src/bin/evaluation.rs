@@ -3,7 +3,7 @@
 use std::{
     borrow::BorrowMut,
     path::{Path, PathBuf},
-    time::Instant,
+    time::Instant, collections::HashSet,
 };
 
 use analysis::{ownership::AnalysisKind, CrateCtxt};
@@ -16,7 +16,7 @@ use refactor::RefactorOptions;
 use rustc_errors::registry;
 use rustc_hir::{ItemKind, OwnerNode};
 use rustc_interface::Config;
-use rustc_middle::{mir::Body, ty::TyCtxt};
+use rustc_middle::{mir::{Body, visit::Visitor, Local}, ty::TyCtxt};
 use rustc_session::config;
 use tracing_subscriber::EnvFilter;
 
@@ -42,18 +42,44 @@ struct Cli {
     new: PathBuf,
 }
 
-fn body_stat(body: &Body) -> usize {
+fn body_stat(body: &Body) -> (usize, usize) {
     let mut unsafe_ptr_cnt = 0;
-    for local_decl in &body.local_decls {
+    let mut user_vars = HashSet::new();
+    for (local, local_decl) in body.local_decls.iter_enumerated() {
         if local_decl.is_user_variable() && local_decl.ty.is_unsafe_ptr() {
             unsafe_ptr_cnt += 1;
+            user_vars.insert(local);
         }
     }
-    unsafe_ptr_cnt
+
+    struct UnsafeUsage<'me, 'tcx> {
+        user_vars: &'me HashSet<Local>,
+        num_unsafe_usages: &'me mut usize,
+        body: &'me Body<'tcx>
+    }
+
+    impl<'tcx> Visitor<'tcx> for UnsafeUsage<'_, 'tcx> {
+        fn visit_place(&mut self, place: &rustc_middle::mir::Place<'tcx>, _: rustc_middle::mir::visit::PlaceContext, _: rustc_middle::mir::Location,) {
+            if self.user_vars.contains(&place.local) && place.is_indirect() && self.body.local_decls[place.local].ty.is_unsafe_ptr() {
+                *self.num_unsafe_usages += 1;
+            }
+        }
+    }
+
+    let mut num_unsafe_usages = 0;
+    UnsafeUsage {
+        user_vars: &user_vars,
+        num_unsafe_usages: &mut num_unsafe_usages,
+        body
+    }.visit_body(body);
+
+
+    (unsafe_ptr_cnt, num_unsafe_usages)
 }
 
 struct Statistics {
     num_unsafe_ptrs: usize,
+    num_unsafe_usages: usize,
     num_unsafe_ptr_free_fns: usize,
     num_fns: usize,
 }
@@ -76,6 +102,7 @@ fn get_statistics(tcx: TyCtxt) -> Statistics {
     let structs = structs;
 
     let mut num_unsafe_ptrs = 0;
+    let mut num_unsafe_usages = 0;
     let mut num_unsafe_ptr_free_fns = 0;
     let mut num_fns = 0;
     for did in fns {
@@ -91,16 +118,18 @@ fn get_statistics(tcx: TyCtxt) -> Statistics {
         {
             continue;
         }
-        let fn_num_unsafe_ptrs = body_stat(body);
+        let (fn_num_unsafe_ptrs, fn_num_unsafe_usages) = body_stat(body);
         if fn_num_unsafe_ptrs == 0 {
             num_unsafe_ptr_free_fns += 1;
         }
-        num_unsafe_ptrs += body_stat(body);
+        num_unsafe_ptrs += fn_num_unsafe_ptrs;
+        num_unsafe_usages += fn_num_unsafe_usages;
         num_fns += 1;
     }
 
     Statistics {
         num_unsafe_ptrs,
+        num_unsafe_usages,
         num_unsafe_ptr_free_fns,
         num_fns,
     }
@@ -116,11 +145,13 @@ fn main() -> Result<()> {
     let table = vec![
         vec![
             original.num_unsafe_ptrs,
+            original.num_unsafe_usages,
             original.num_fns,
             original.num_unsafe_ptr_free_fns,
         ],
         vec![
             new.num_unsafe_ptrs,
+            new.num_unsafe_usages,
             new.num_fns,
             new.num_unsafe_ptr_free_fns,
         ],
@@ -128,6 +159,7 @@ fn main() -> Result<()> {
     .table()
     .title(vec![
         "# Unsafe Ptrs".cell().bold(true),
+        "# Unsafe Usages".cell().bold(true),
         "# Fns".cell().bold(true),
         "# Unsafe Ptr Free Fns".cell().bold(true),
     ])
