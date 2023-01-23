@@ -34,9 +34,7 @@ extern crate rustc_target;
 
 #[derive(Parser)]
 struct Cli {
-    #[clap(parse(from_os_str))]
     original: PathBuf,
-    #[clap(parse(from_os_str))]
     new: PathBuf,
 }
 

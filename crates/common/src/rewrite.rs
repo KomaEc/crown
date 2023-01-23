@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fs, io, io::Write};
 
-use clap::ArgEnum;
+use clap::ValueEnum;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::{FileName, Span};
 use rustfix::{LinePosition, LineRange, Replacement, Snippet, Solution, Suggestion};
@@ -184,7 +184,7 @@ pub fn make_suggestion(
     }
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ArgEnum)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
 pub enum RewriteMode {
     InPlace,
     Print,

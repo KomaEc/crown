@@ -15,6 +15,7 @@ use analysis::{
     ssa::AnalysisResults,
     type_qualifier::flow_insensitive::{fatness::FatnessResult, mutability::MutabilityResult},
 };
+use clap::{Args, ArgGroup};
 use common::{
     data_structure::vec_vec::VecVec,
     rewrite::{Rewrite, RewriteMode},
@@ -49,18 +50,30 @@ extern crate rustc_type_ir;
 
 extern crate either;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Args)]
+#[command(group(
+    ArgGroup::new("box")
+        .args(["no_box", "force_box"]),
+))]
 pub struct RefactorOptions {
     /// rewrite struct definitions and function signatures only
+    #[clap(long)]
     pub type_only: bool,
     /// show detailed rewrite trace
+    #[clap(long, short)]
     pub verbose: bool,
     /// attempt to rewrite const reference
+    #[clap(long)]
     pub const_reference: bool,
     /// reconstruct every type it visits
+    #[clap(long)]
     pub type_reconstruction: bool,
     /// not attempt to introduce box
+    #[clap(long)]
     pub no_box: bool,
+    /// force rewrite box even if no-box is deduced
+    #[clap(long)]
+    pub force_box: bool,
 }
 
 pub fn refactor<'tcx>(

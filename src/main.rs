@@ -40,26 +40,25 @@ struct Cli {
     cmd: Command,
 
     /// Path to lib.rs or main.rs of crate to work on
-    #[clap(parse(from_os_str))]
     path: PathBuf,
 }
 
 #[derive(Parser)]
 enum Command {
     Preprocess {
-        #[clap(arg_enum, default_value_t = RewriteMode::Print)]
+        #[clap(value_enum, default_value_t = RewriteMode::Print)]
         rewrite_mode: RewriteMode,
     },
     FoldLetRefMut {
-        #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
+        #[clap(value_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
     },
     CharArrayTransmute {
-        #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
+        #[clap(value_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
     },
     ExplicitAddr {
-        #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
+        #[clap(value_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
     },
     OutputParams,
@@ -70,18 +69,10 @@ enum Command {
     Fatness,
     // Refactor,
     Rewrite {
-        #[clap(arg_enum, default_value_t = RewriteMode::Diff)]
+        #[clap(value_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
-        #[clap(long)]
-        type_only: bool,
-        #[clap(long, short)]
-        verbose: bool,
-        #[clap(long)]
-        const_reference: bool,
-        #[clap(long)]
-        type_reconstruction: bool,
-        #[clap(long)]
-        no_box: bool,
+        #[command(flatten)]
+        options: RefactorOptions,
     },
     VerifyRustcProperties,
     /// Perform empirical studies and show results.
@@ -335,11 +326,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         }
         Command::Rewrite {
             rewrite_mode,
-            type_only,
-            verbose,
-            const_reference,
-            type_reconstruction,
-            no_box,
+            options
         } => {
             let alias_result = alias::alias_results(&input);
             let taint_result = alias::taint_results(&input);
@@ -372,13 +359,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
                 mutability_result,
                 fatness_result,
             );
-            let refactor_options = RefactorOptions {
-                type_only,
-                verbose,
-                const_reference,
-                type_reconstruction,
-                no_box,
-            };
+            let refactor_options = options;
             refactor::refactor(&input, &analysis_results, rewrite_mode, refactor_options)?;
         }
         Command::FoldLetRefMut { rewrite_mode } => preprocess::fold_let_ref_mut(tcx, rewrite_mode),
