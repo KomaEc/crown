@@ -7,6 +7,7 @@ pub const PATTERNS: &[Pattern] = &[
     ASSIGN_VALUE_AS_ASSIGNER2,
     ASSIGN_VALUE_IN_CONDITION,
     DANGEROUS_STMT,
+    DANGEROUS_IF,
     ASSIGN_TWO_LINES,
     PTR_INCR_FOUR_LINES,
 ];
@@ -351,8 +352,12 @@ fn assign_value_as_assigner2(caps: &regex::Captures<'_>) -> String {
     let lhs1 = &caps["lhs1"];
     let lhs2 = &caps["lhs2"];
     let rhs = &caps["rhs"];
+    let expr_fresh = r"\*fresh".to_owned() + version1;
+    let rhs = regex::Regex::new(&expr_fresh)
+        .unwrap()
+        .replace_all(rhs, lhs1);
 
-    let mut ret = lhs1.to_string() + " = " + rhs + "; " + lhs2 + " = " + lhs1;
+    let mut ret = lhs1.to_string() + " = " + &rhs + "; " + lhs2 + " = " + lhs1;
 
     if let Some(cast) = caps.name("as") {
         ret = ret + " " + cast.as_str()
@@ -494,4 +499,38 @@ fn dangerous_stmt(caps: &regex::Captures<'_>) -> String {
     let stmt = regex::Regex::new(&fresh).unwrap().replace_all(stmt, x);
 
     x.to_owned() + " " + assignop + " " + val + "; " + &stmt + ";"
+}
+
+const DANGEROUS_IF: Pattern = Pattern {
+    pattern: concat!(
+        r"let ref mut fresh(?P<version1>[0-9]+)[\s|\n]*=[\s|\n]*(?P<x>[^;]+);[\s|\n]*",
+        r"\*fresh(?P<version2>[0-9]+)[\s|\n]*(?P<assignop>[&|\^|\+|\-|\*|/|%|\|]*=)[\s|\n]*(?P<val>[^;]+);[\s|\n]*",
+        r"if(?P<cond>[^\{]*\*fresh(?P<version3>\d+)[^\{]*)\{",
+    ),
+    replacer: dangerous_if,
+};
+
+fn dangerous_if(caps: &regex::Captures<'_>) -> String {
+    let original = &caps[0];
+    let version1 = &caps["version1"];
+    let version2 = &caps["version2"];
+    let version3 = &caps["version3"];
+    let assignop = &caps["assignop"];
+
+    if version1 != version2 || version1 != version3 {
+        return original.to_owned();
+    }
+
+    // println!("{original}");
+
+    let x = &caps["x"];
+    let val = &caps["val"];
+    let cond = &caps["cond"];
+
+    let fresh = r"\*fresh".to_owned() + version1;
+
+    let val = regex::Regex::new(&fresh).unwrap().replace_all(val, x);
+    let cond = regex::Regex::new(&fresh).unwrap().replace_all(cond, x);
+
+    x.to_owned() + " " + assignop + " " + &val + ";\n if" + &cond + "{"
 }

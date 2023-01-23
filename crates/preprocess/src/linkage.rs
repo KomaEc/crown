@@ -195,10 +195,12 @@ fn canonicalize_structs_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
             let t = structs[idx2];
             let s_symbol = tcx.item_name(s);
             let t_symbol = tcx.item_name(t);
-            if s_symbol == t_symbol {
-                let s = tcx.adt_def(s);
-                let t = tcx.adt_def(t);
-                if s.all_fields()
+            let s = tcx.adt_def(s);
+            let t = tcx.adt_def(t);
+            let maybe_equiv = s_symbol == t_symbol || s.is_union() && t.is_union() && s_symbol.as_str().starts_with("C2RustUnnamed") && t_symbol.as_str().starts_with("C2RustUnnamed");
+            if maybe_equiv {
+                if s.all_fields().count() == t.all_fields().count() &&
+                    s.all_fields()
                     .zip(t.all_fields())
                     .all(|(f, g)| f.name == g.name)
                 {
@@ -222,7 +224,7 @@ fn canonicalize_structs_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         let span = item.span;
         // println!("erased: {:?}", span);
         // rewriter.erase(tcx, span);
-        rewriter.replace(tcx, span, format!("struct ErasedByPreprocessor{version};"));
+        rewriter.replace(tcx, span, format!("struct ErasedByPreprocessor{version} {{ dummy: () }}"));
         version += 1;
 
         let hir_id = item.hir_id();
