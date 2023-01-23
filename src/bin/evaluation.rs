@@ -2,23 +2,21 @@
 
 use std::{
     borrow::BorrowMut,
+    collections::HashSet,
     path::{Path, PathBuf},
-    time::Instant, collections::HashSet,
 };
 
-use analysis::{ownership::AnalysisKind, CrateCtxt};
 use anyhow::{bail, Context, Result};
 use clap::Parser;
-use cli_table::{format::Justify, print_stdout, Cell, Style, Table};
-use common::rewrite::RewriteMode;
-use empirical_study::EmpiricalStudy;
-use refactor::RefactorOptions;
+use cli_table::{print_stdout, Cell, Style, Table};
 use rustc_errors::registry;
 use rustc_hir::{ItemKind, OwnerNode};
 use rustc_interface::Config;
-use rustc_middle::{mir::{Body, visit::Visitor, Local}, ty::TyCtxt};
+use rustc_middle::{
+    mir::{visit::Visitor, Body, Local},
+    ty::TyCtxt,
+};
 use rustc_session::config;
-use tracing_subscriber::EnvFilter;
 
 extern crate once_cell;
 extern crate rustc_driver;
@@ -55,12 +53,20 @@ fn body_stat(body: &Body) -> (usize, usize) {
     struct UnsafeUsage<'me, 'tcx> {
         user_vars: &'me HashSet<Local>,
         num_unsafe_usages: &'me mut usize,
-        body: &'me Body<'tcx>
+        body: &'me Body<'tcx>,
     }
 
     impl<'tcx> Visitor<'tcx> for UnsafeUsage<'_, 'tcx> {
-        fn visit_place(&mut self, place: &rustc_middle::mir::Place<'tcx>, _: rustc_middle::mir::visit::PlaceContext, _: rustc_middle::mir::Location,) {
-            if self.user_vars.contains(&place.local) && place.is_indirect() && self.body.local_decls[place.local].ty.is_unsafe_ptr() {
+        fn visit_place(
+            &mut self,
+            place: &rustc_middle::mir::Place<'tcx>,
+            _: rustc_middle::mir::visit::PlaceContext,
+            _: rustc_middle::mir::Location,
+        ) {
+            if self.user_vars.contains(&place.local)
+                && place.is_indirect()
+                && self.body.local_decls[place.local].ty.is_unsafe_ptr()
+            {
                 *self.num_unsafe_usages += 1;
             }
         }
@@ -70,9 +76,9 @@ fn body_stat(body: &Body) -> (usize, usize) {
     UnsafeUsage {
         user_vars: &user_vars,
         num_unsafe_usages: &mut num_unsafe_usages,
-        body
-    }.visit_body(body);
-
+        body,
+    }
+    .visit_body(body);
 
     (unsafe_ptr_cnt, num_unsafe_usages)
 }
@@ -99,7 +105,7 @@ fn get_statistics(tcx: TyCtxt) -> Statistics {
     }
 
     let fns = fns;
-    let structs = structs;
+    // let structs = structs;
 
     let mut num_unsafe_ptrs = 0;
     let mut num_unsafe_usages = 0;
