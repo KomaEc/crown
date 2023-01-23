@@ -458,7 +458,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     }
                 };
 
-                // let is_static_ref = body.local_decls[place.local].is_ref_to_static();
+                let is_static_ref = body.local_decls[place.local].is_ref_to_static();
 
                 // rewrite point: non-temporary place
                 // this includes 1. place of which base local is a user defined variable
@@ -466,13 +466,12 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 if user_idents.contains_key(&place.local)
                     || matches!(body.local_decls[place.local].local_info, Some(box LocalInfo::DerefTemp) if !matches!(rvalue, Rvalue::CopyForDeref(..)))
                     || is_func_call_dest
-                    // || is_static_ref
+                    || is_static_ref
                 {
-                    // let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
+
                     let span = statement.source_info.span;
                     let source_text = tcx.sess.source_map().span_to_snippet(span).unwrap();
 
-                    // println!("rewrite {:?} @ {:?}, {:?}", place, location, span);
 
                     let source_token_stream =
                         proc_macro2::TokenStream::from_str(&source_text).unwrap();
@@ -487,11 +486,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                             assign_op_pos = source_text.find(&assign_op_str);
                             assert!(assign_op_pos.is_some());
                         }
-                        // syn::Expr::AssignOp(assign) => {
-                        //     let assign_op_str = format!("{}", assign.op.to_token_stream());
-                        //     assign_op_pos = source_text.find(&assign_op_str);
-                        //     assert!(assign_op_pos.is_some());
-                        // }
                         _ => {}
                     }
 
@@ -619,11 +613,22 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             accum_deref_copies(place, location, def_use_chain, body, tcx);
         let place = resolved_place;
 
+        let is_static_ref = body.local_decls[place.local].is_ref_to_static();
+
         let mut replacement = if let Some(replacement) = user_idents
             .get(&place.local)
             .map(|symbol| symbol.to_string())
         {
             replacement
+        } else if is_static_ref {
+            let &LocalInfo::StaticRef { def_id, is_thread_local } = body.local_decls[place.local].local_info.as_deref().unwrap() else { unreachable!() };
+            assert!(!is_thread_local, "thread local is not supported");
+            let static_name = tcx.def_path_str(def_id);
+            if static_name.starts_with(&tcx.def_path_str(body.source.def_id())) {
+                static_name.split("::").last().unwrap().to_owned()
+            } else {
+                format!("crate::{}", static_name)
+            }
         } else {
             tracing::error!("rewrite immediate value, could be static, func call return");
             return;
@@ -635,8 +640,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let mut ty = body.local_decls[place.local].ty;
         let mut need_paren = false;
 
+        let mut projection = place.projection.iter();
+        if is_static_ref {
+            let _ = projection.next();
+            let _ = ptr_kinds.next();
+            ty = ty.builtin_deref(true).unwrap().ty;
+        }
+
         // Invariant: [`replacement`] is a nullable pointer or a struct
-        for proj in place.projection {
+        for proj in projection {
             if need_paren {
                 replacement = format!("({replacement})");
                 need_paren = false;
@@ -710,14 +722,26 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             ..
         } = *self;
 
+        // TODO resolve place only when local is deref copy
         let (resolved_place, resolved_location) =
             accum_deref_copies(place, location, def_use_chain, body, tcx);
+
+        let is_static_ref = body.local_decls[place.local].is_ref_to_static();
 
         let mut replacement = if let Some(replacement) = user_idents
             .get(&resolved_place.local)
             .map(|symbol| symbol.to_string())
         {
             replacement
+        } else if is_static_ref {
+            let &LocalInfo::StaticRef { def_id, is_thread_local } = body.local_decls[place.local].local_info.as_deref().unwrap() else { unreachable!() };
+            assert!(!is_thread_local, "thread local is not supported");
+            let static_name = tcx.def_path_str(def_id);
+            if static_name.starts_with(&tcx.def_path_str(body.source.def_id())) {
+                static_name.split("::").last().unwrap().to_owned()
+            } else {
+                format!("crate::{}", static_name)
+            }
         } else if resolved_place.as_local().is_none() {
             // FIXME usage!
             self.rewrite_temporary(
@@ -731,18 +755,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 let def_span = self.get_temporary_def_span(place.local, location);
                 if PLACE_LOAD_MODE == PlaceLoadMode::ByAddr as u8 {
                     let required_ptr_kind = required.expect_ptr()[0];
-                    let optional_star = if body.local_decls[place.local].is_ref_to_static() {
-                        ""
-                    } else {
-                        "*"
-                    };
                     if required_ptr_kind.is_mut() {
-                        let prefix = format!("Some(&mut {optional_star}");
-                        rewriter.replace(tcx, span.until(def_span), prefix);
+                        rewriter.replace(tcx, span.until(def_span), "Some(&mut *".to_owned());
                         rewriter.replace(tcx, def_span.shrink_to_hi(), ")".to_owned());
                     } else {
-                        let prefix = format!("core::ptr::addr_of_mut!({optional_star}");
-                        rewriter.replace(tcx, span.until(def_span), prefix);
+                        rewriter.replace(tcx, span.until(def_span), "core::ptr::addr_of_mut!(*".to_owned());
                         rewriter.replace(tcx, def_span.shrink_to_hi(), ")".to_owned());
                     }
                 }
@@ -766,8 +783,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let mut ty = body.local_decls[place.local].ty;
         let mut need_paren = false;
 
+        let mut projection = place.projection.iter();
+        if is_static_ref {
+            let _ = projection.next();
+            let _ = ptr_kinds.next();
+            ty = ty.builtin_deref(true).unwrap().ty;
+        }
+
         // Invariant: [`replacement`] is a nullable pointer or a struct
-        for proj in place.projection {
+        for proj in projection {
             if need_paren {
                 replacement = format!("({replacement})");
                 need_paren = false;
@@ -782,8 +806,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         replacement = format!("*{replacement}");
                     } else {
                         let usage = if PLACE_LOAD_MODE == PlaceLoadMode::ByValue as u8 && (required.is_copy_obj(self)
-                            && !produced.is_rustc_move_obj(self))
-                            || produced.is_copy_obj(self)
+                            && !produced.is_rustc_move_obj(self)
+                            || produced.is_copy_obj(self))
                         {
                             if base_ptr_kind.is_const() {
                                 "clone"
@@ -1171,8 +1195,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         );
 
         let fn_sig = tcx.fn_sig(callee).skip_binder();
-        for (arg, ty) in itertools::izip!(args, fn_sig.inputs()) {
-            let ctxt = if ty.is_unsafe_ptr() {
+        // dealing with c_variadic
+        let ctxts = fn_sig.inputs().iter().map(|ty| {
+            if ty.is_unsafe_ptr() {
                 PlaceValueType::from_ptr_ctxt(
                     *ty,
                     if ty.is_mutable_ptr() {
@@ -1192,7 +1217,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 )
             } else {
                 PlaceValueType::Irrelavent
-            };
+            }
+        }).chain(std::iter::repeat(PlaceValueType::Irrelavent));
+        for (arg, ctxt) in itertools::izip!(args, ctxts) {
+
             if let Some(place) = arg.place() {
                 let Some(local) = place.as_local() else { panic!() };
                 self.rewrite_temporary(local, location, ctxt, rewriter);
