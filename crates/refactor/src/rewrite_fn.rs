@@ -468,10 +468,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     || is_func_call_dest
                     || is_static_ref
                 {
-
                     let span = statement.source_info.span;
                     let source_text = tcx.sess.source_map().span_to_snippet(span).unwrap();
-
 
                     let source_token_stream =
                         proc_macro2::TokenStream::from_str(&source_text).unwrap();
@@ -759,7 +757,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         rewriter.replace(tcx, span.until(def_span), "Some(&mut *".to_owned());
                         rewriter.replace(tcx, def_span.shrink_to_hi(), ")".to_owned());
                     } else {
-                        rewriter.replace(tcx, span.until(def_span), "core::ptr::addr_of_mut!(*".to_owned());
+                        rewriter.replace(
+                            tcx,
+                            span.until(def_span),
+                            "core::ptr::addr_of_mut!(*".to_owned(),
+                        );
                         rewriter.replace(tcx, def_span.shrink_to_hi(), ")".to_owned());
                     }
                 }
@@ -805,9 +807,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     if base_ptr_kind.is_raw() {
                         replacement = format!("*{replacement}");
                     } else {
-                        let usage = if PLACE_LOAD_MODE == PlaceLoadMode::ByValue as u8 && (required.is_copy_obj(self)
-                            && !produced.is_rustc_move_obj(self)
-                            || produced.is_copy_obj(self))
+                        let usage = if PLACE_LOAD_MODE == PlaceLoadMode::ByValue as u8
+                            && (required.is_copy_obj(self) && !produced.is_rustc_move_obj(self)
+                                || produced.is_copy_obj(self))
                         {
                             if base_ptr_kind.is_const() {
                                 "clone"
@@ -1195,7 +1197,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         );
 
         for arg in args {
-
             if let Some(place) = arg.place() {
                 let Some(local) = place.as_local() else { panic!() };
 
