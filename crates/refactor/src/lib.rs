@@ -88,6 +88,9 @@ pub fn refactor<'tcx>(
             options.no_box = true;
         }
     }
+    if options.force_box {
+        options.no_box = false;
+    }
     let options = options;
 
     let struct_decision = StructFields::new(crate_data, analysis, options);
