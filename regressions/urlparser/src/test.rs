@@ -485,7 +485,7 @@ pub unsafe extern "C" fn url_is_protocol(mut str: *mut libc::c_char) -> bool {
         as libc::c_int;
     let mut i = 0 as libc::c_int;
     while i < count {
-        if 0 as libc::c_int == strcmp(URL_SCHEMES[i as usize], str) {
+        if 0 as libc::c_int == strcmp(crate::src::test::URL_SCHEMES[i as usize], str) {
             return 1 as libc::c_int != 0;
         }
         i+= 1;

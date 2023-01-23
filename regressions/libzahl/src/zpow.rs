@@ -49,13 +49,13 @@ pub unsafe extern "C" fn zpow(
     if zsignum(c) <= 0 as libc::c_int {
         if zzero(c) != 0 {
             if zzero(b) != 0 {
-                libzahl_error = 33 as libc::c_int;
-                longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+                crate::src::zpow::libzahl_error= 33 as libc::c_int;
+                longjmp(crate::src::zpow::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
             }
             crate::src::zsetu::zsetu(a.as_mut(), 1 as libc::c_int as libc::c_ulonglong);
         } else if zzero(b) != 0 {
-            libzahl_error = 33 as libc::c_int;
-            longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+            crate::src::zpow::libzahl_error= 33 as libc::c_int;
+            longjmp(crate::src::zpow::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
         } else {
             (*a).sign= 0 as libc::c_int;
         }
@@ -68,12 +68,12 @@ pub unsafe extern "C" fn zpow(
     }
     bits= crate::src::zbits::zbits(c.as_mut());
     n= bits >> 5 as libc::c_int;
-    crate::src::zset::zset(libzahl_tmp_pow_b.as_mut_ptr().as_mut(), b);
-    crate::src::zset::zset(libzahl_tmp_pow_c.as_mut_ptr().as_mut(), c);
+    crate::src::zset::zset(crate::src::zpow::libzahl_tmp_pow_b.as_mut_ptr().as_mut(), b);
+    crate::src::zset::zset(crate::src::zpow::libzahl_tmp_pow_c.as_mut_ptr().as_mut(), c);
     crate::src::zsetu::zsetu(a.as_mut(), 1 as libc::c_int as libc::c_ulonglong);
     i= 0 as libc::c_int as size_t;
     while i < n {
-        x= *((*libzahl_tmp_pow_c.as_mut_ptr()).chars).offset(i as isize);
+        x= *((*crate::src::zpow::libzahl_tmp_pow_c.as_mut_ptr()).chars).offset(i as isize);
         j= 32 as libc::c_int as size_t;
         loop {
             let fresh0 = j;
@@ -82,19 +82,19 @@ pub unsafe extern "C" fn zpow(
                 break;
             }
             if x & 1 as libc::c_int as libc::c_uint != 0 {
-                crate::src::zmul::zmul(a, a, libzahl_tmp_pow_b.as_mut_ptr());
+                crate::src::zmul::zmul(a, a, crate::src::zpow::libzahl_tmp_pow_b.as_mut_ptr());
             }
-            crate::src::zsqr::zsqr(libzahl_tmp_pow_b.as_mut_ptr(), libzahl_tmp_pow_b.as_mut_ptr());
+            crate::src::zsqr::zsqr(crate::src::zpow::libzahl_tmp_pow_b.as_mut_ptr(), crate::src::zpow::libzahl_tmp_pow_b.as_mut_ptr());
             x>>= 1 as libc::c_int;
         }
         i= i.wrapping_add(1);
     }
-    x= *((*libzahl_tmp_pow_c.as_mut_ptr()).chars).offset(i as isize);
+    x= *((*crate::src::zpow::libzahl_tmp_pow_c.as_mut_ptr()).chars).offset(i as isize);
     while x != 0 {
         if x & 1 as libc::c_int as libc::c_uint != 0 {
-            crate::src::zmul::zmul(a, a, libzahl_tmp_pow_b.as_mut_ptr());
+            crate::src::zmul::zmul(a, a, crate::src::zpow::libzahl_tmp_pow_b.as_mut_ptr());
         }
-        crate::src::zsqr::zsqr(libzahl_tmp_pow_b.as_mut_ptr(), libzahl_tmp_pow_b.as_mut_ptr());
+        crate::src::zsqr::zsqr(crate::src::zpow::libzahl_tmp_pow_b.as_mut_ptr(), crate::src::zpow::libzahl_tmp_pow_b.as_mut_ptr());
         x>>= 1 as libc::c_int;
     }
 }

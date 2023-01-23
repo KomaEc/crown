@@ -69,7 +69,7 @@ pub unsafe extern "C" fn load_data() {
     if in_0.is_null() {();
         printf(
             b"Could not open file: %s\n\0" as *const u8 as *const libc::c_char,
-            iris_data,
+            crate::src::example4::iris_data,
         );
         exit(1 as libc::c_int);
     }
@@ -77,30 +77,30 @@ pub unsafe extern "C" fn load_data() {
     while feof(in_0) == 0
         && !(fgets(line.as_mut_ptr(), 1024 as libc::c_int, in_0)).is_null()
     {
-        samples += 1;
+        crate::src::example4::samples+= 1;
     }
     fseek(in_0, 0 as libc::c_int as libc::c_long, 0 as libc::c_int);
     printf(
         b"Loading %d data points from %s\n\0" as *const u8 as *const libc::c_char,
-        samples,
-        iris_data,
+        crate::src::example4::samples,
+        crate::src::example4::iris_data,
     );
-    input = malloc(
+    crate::src::example4::input= malloc(
         (::std::mem::size_of::<libc::c_double>() as libc::c_ulong)
-            .wrapping_mul(samples as libc::c_ulong)
+            .wrapping_mul(crate::src::example4::samples as libc::c_ulong)
             .wrapping_mul(4 as libc::c_int as libc::c_ulong),
     ) as *mut libc::c_double;
-    class = malloc(
+    crate::src::example4::class= malloc(
         (::std::mem::size_of::<libc::c_double>() as libc::c_ulong)
-            .wrapping_mul(samples as libc::c_ulong)
+            .wrapping_mul(crate::src::example4::samples as libc::c_ulong)
             .wrapping_mul(3 as libc::c_int as libc::c_ulong),
     ) as *mut libc::c_double;
     let mut i: libc::c_int = 0;
     let mut j: libc::c_int = 0;
     i= 0 as libc::c_int;
-    while i < samples {
-        let mut p = input.offset((i * 4 as libc::c_int) as isize);
-        let mut c = class.offset((i * 3 as libc::c_int) as isize);
+    while i < crate::src::example4::samples {
+        let mut p = crate::src::example4::input.offset((i * 4 as libc::c_int) as isize);
+        let mut c = crate::src::example4::class.offset((i * 3 as libc::c_int) as isize);
         *c.offset(2 as libc::c_int as isize) = 0.0f64; *c.offset(1 as libc::c_int as isize) = *c.offset(2 as libc::c_int as isize); *c.offset(0 as libc::c_int as isize) = *c.offset(1 as libc::c_int as isize);
         if (fgets(line.as_mut_ptr(), 1024 as libc::c_int, in_0)).is_null() {();
             perror(b"fgets\0" as *const u8 as *const libc::c_char);
@@ -123,13 +123,13 @@ pub unsafe extern "C" fn load_data() {
             .offset(
                 (strlen(split)).wrapping_sub(1 as libc::c_int as libc::c_ulong) as isize,
             ) = 0 as libc::c_int as libc::c_char;
-        if strcmp(split, class_names[0 as libc::c_int as usize]) == 0 as libc::c_int {
+        if strcmp(split, crate::src::example4::class_names[0 as libc::c_int as usize]) == 0 as libc::c_int {
             *c.offset(0 as libc::c_int as isize) = 1.0f64;
-        } else if strcmp(split, class_names[1 as libc::c_int as usize])
+        } else if strcmp(split, crate::src::example4::class_names[1 as libc::c_int as usize])
             == 0 as libc::c_int
         {
             *c.offset(1 as libc::c_int as isize) = 1.0f64;
-        } else if strcmp(split, class_names[2 as libc::c_int as usize])
+        } else if strcmp(split, crate::src::example4::class_names[2 as libc::c_int as usize])
             == 0 as libc::c_int
         {
             *c.offset(2 as libc::c_int as isize) = 1.0f64;
@@ -167,11 +167,11 @@ unsafe fn main_0(
     i= 0 as libc::c_int;
     while i < loops {
         j= 0 as libc::c_int;
-        while j < samples {
+        while j < crate::src::example4::samples {
             crate::src::genann::genann_train(
                 ann,
-                input.offset((j * 4 as libc::c_int) as isize),
-                class.offset((j * 3 as libc::c_int) as isize),
+                crate::src::example4::input.offset((j * 4 as libc::c_int) as isize),
+                crate::src::example4::class.offset((j * 3 as libc::c_int) as isize),
                 0.01f64,
             );
             j+= 1;
@@ -180,9 +180,9 @@ unsafe fn main_0(
     }
     let mut correct = 0 as libc::c_int;
     j= 0 as libc::c_int;
-    while j < samples {
-        let mut guess = crate::src::genann::genann_run(ann.as_mut(), input.offset((j * 4 as libc::c_int) as isize));
-        if *class.offset((j * 3 as libc::c_int + 0 as libc::c_int) as isize) == 1.0f64 {
+    while j < crate::src::example4::samples {
+        let mut guess = crate::src::genann::genann_run(ann.as_mut(), crate::src::example4::input.offset((j * 4 as libc::c_int) as isize));
+        if *crate::src::example4::class.offset((j * 3 as libc::c_int + 0 as libc::c_int) as isize) == 1.0f64 {
             if *guess.offset(0 as libc::c_int as isize)
                 > *guess.offset(1 as libc::c_int as isize)
                 && *guess.offset(0 as libc::c_int as isize)
@@ -190,7 +190,7 @@ unsafe fn main_0(
             {
                 correct+= 1;
             }
-        } else if *class.offset((j * 3 as libc::c_int + 1 as libc::c_int) as isize)
+        } else if *crate::src::example4::class.offset((j * 3 as libc::c_int + 1 as libc::c_int) as isize)
             == 1.0f64
         {
             if *guess.offset(1 as libc::c_int as isize)
@@ -200,7 +200,7 @@ unsafe fn main_0(
             {
                 correct+= 1;
             }
-        } else if *class.offset((j * 3 as libc::c_int + 2 as libc::c_int) as isize)
+        } else if *crate::src::example4::class.offset((j * 3 as libc::c_int + 2 as libc::c_int) as isize)
             == 1.0f64
         {
             if *guess.offset(2 as libc::c_int as isize)
@@ -219,8 +219,8 @@ unsafe fn main_0(
     printf(
         b"%d/%d correct (%0.1f%%).\n\0" as *const u8 as *const libc::c_char,
         correct,
-        samples,
-        correct as libc::c_double / samples as libc::c_double * 100.0f64,
+        crate::src::example4::samples,
+        correct as libc::c_double / crate::src::example4::samples as libc::c_double * 100.0f64,
     );
     crate::src::genann::genann_free(ann);
     return 0 as libc::c_int;

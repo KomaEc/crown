@@ -1186,7 +1186,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         location: Location,
         rewriter: &mut impl Rewrite,
     ) {
-        let FnRewriteCtxt { tcx, .. } = *self;
+        let FnRewriteCtxt { body, .. } = *self;
 
         println!(
             "rewrite call {} @ {:?} by default",
@@ -1194,35 +1194,35 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             fn_span
         );
 
-        let fn_sig = tcx.fn_sig(callee).skip_binder();
-        // dealing with c_variadic
-        let ctxts = fn_sig.inputs().iter().map(|ty| {
-            if ty.is_unsafe_ptr() {
-                PlaceValueType::from_ptr_ctxt(
-                    *ty,
-                    if ty.is_mutable_ptr() {
-                        &[PointerKind::Raw(RawMeta::Mut)]
-                    } else {
-                        &[PointerKind::Raw(RawMeta::Const)]
-                    },
-                )
-            } else if ty.is_region_ptr() {
-                PlaceValueType::from_ptr_ctxt(
-                    *ty,
-                    if ty.is_mutable_ptr() {
-                        &[PointerKind::Mut]
-                    } else {
-                        &[PointerKind::Const]
-                    },
-                )
-            } else {
-                PlaceValueType::Irrelavent
-            }
-        }).chain(std::iter::repeat(PlaceValueType::Irrelavent));
-        for (arg, ctxt) in itertools::izip!(args, ctxts) {
+        for arg in args {
 
             if let Some(place) = arg.place() {
                 let Some(local) = place.as_local() else { panic!() };
+
+                let ty = body.local_decls[local].ty;
+
+                let ctxt = if ty.is_unsafe_ptr() {
+                    PlaceValueType::from_ptr_ctxt(
+                        ty,
+                        if ty.is_mutable_ptr() {
+                            &[PointerKind::Raw(RawMeta::Mut)]
+                        } else {
+                            &[PointerKind::Raw(RawMeta::Const)]
+                        },
+                    )
+                } else if ty.is_region_ptr() {
+                    PlaceValueType::from_ptr_ctxt(
+                        ty,
+                        if ty.is_mutable_ptr() {
+                            &[PointerKind::Mut]
+                        } else {
+                            &[PointerKind::Const]
+                        },
+                    )
+                } else {
+                    PlaceValueType::Irrelavent
+                };
+
                 self.rewrite_temporary(local, location, ctxt, rewriter);
             }
         }

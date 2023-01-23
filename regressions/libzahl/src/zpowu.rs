@@ -37,8 +37,8 @@ pub unsafe extern "C" fn zpowu(
 ) {
     if c == 0 {
         if zzero(b) != 0 {
-            libzahl_error = 33 as libc::c_int;
-            longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+            crate::src::zpowu::libzahl_error= 33 as libc::c_int;
+            longjmp(crate::src::zpowu::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
         }
         crate::src::zsetu::zsetu(a.as_mut(), 1 as libc::c_int as libc::c_ulonglong);
         return;
@@ -48,13 +48,13 @@ pub unsafe extern "C" fn zpowu(
             return;
         }
     }
-    crate::src::zset::zset(libzahl_tmp_pow_b.as_mut_ptr().as_mut(), b);
+    crate::src::zset::zset(crate::src::zpowu::libzahl_tmp_pow_b.as_mut_ptr().as_mut(), b);
     crate::src::zsetu::zsetu(a.as_mut(), 1 as libc::c_int as libc::c_ulonglong);
     while c != 0 {
         if c & 1 as libc::c_int as libc::c_ulonglong != 0 {
-            crate::src::zmul::zmul(a, a, libzahl_tmp_pow_b.as_mut_ptr());
+            crate::src::zmul::zmul(a, a, crate::src::zpowu::libzahl_tmp_pow_b.as_mut_ptr());
         }
-        crate::src::zsqr::zsqr(libzahl_tmp_pow_b.as_mut_ptr(), libzahl_tmp_pow_b.as_mut_ptr());
+        crate::src::zsqr::zsqr(crate::src::zpowu::libzahl_tmp_pow_b.as_mut_ptr(), crate::src::zpowu::libzahl_tmp_pow_b.as_mut_ptr());
         c>>= 1 as libc::c_int;
     }
 }

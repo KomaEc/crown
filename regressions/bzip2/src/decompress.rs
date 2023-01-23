@@ -995,7 +995,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                         (*s).currBlockNo+= 1;
                         if (*s).verbosity >= 2 as libc::c_int {
                             fprintf(
-                                stderr,
+                                crate::src::decompress::stderr,
                                 b"\n    [%d: huff+mtf \0" as *const u8
                                     as *const libc::c_char,
                                 (*s).currBlockNo,
@@ -2326,7 +2326,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                             (*s).state= 2 as libc::c_int;
                             if (*s).verbosity >= 2 as libc::c_int {
                                 fprintf(
-                                    stderr,
+                                    crate::src::decompress::stderr,
                                     b"rt+rld\0" as *const u8 as *const libc::c_char,
                                 );
                             }
@@ -2422,7 +2422,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                                             & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
                                     (*s).nblock_used+= 1;
                                     if (*s).rNToGo == 0 as libc::c_int {
-                                        (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                                        (*s).rNToGo= crate::src::decompress::BZ2_rNums[(*s).rTPos as usize];
                                         (*s).rTPos+= 1;
                                         if (*s).rTPos == 512 as libc::c_int {
                                             (*s).rTPos= 0 as libc::c_int;
@@ -2481,7 +2481,7 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                                     (*s).tPos>>= 8 as libc::c_int;
                                     (*s).nblock_used+= 1;
                                     if (*s).rNToGo == 0 as libc::c_int {
-                                        (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                                        (*s).rNToGo= crate::src::decompress::BZ2_rNums[(*s).rTPos as usize];
                                         (*s).rTPos+= 1;
                                         if (*s).rTPos == 512 as libc::c_int {
                                             (*s).rTPos= 0 as libc::c_int;

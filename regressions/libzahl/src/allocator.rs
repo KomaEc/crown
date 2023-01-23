@@ -66,9 +66,9 @@ pub unsafe extern "C" fn libzahl_realloc(mut a: Option<&mut C2RustUnnamed>, mut 
             as size_t as size_t;
         x>>= 1 as libc::c_int;
     }
-    if libzahl_pool_n[i as usize] != 0 {
-        libzahl_pool_n[i as usize] = (libzahl_pool_n[i as usize]).wrapping_sub(1);
-        new= *(libzahl_pool[i as usize]).offset(libzahl_pool_n[i as usize] as isize);
+    if crate::src::allocator::libzahl_pool_n[i as usize] != 0 {
+        crate::src::allocator::libzahl_pool_n[i as usize]= crate::src::allocator::libzahl_pool_n[i as usize].wrapping_sub(1);
+        new= *crate::src::allocator::libzahl_pool[i as usize].offset(crate::src::allocator::libzahl_pool_n[i as usize] as isize);
         memcpy(
             new as *mut libc::c_void,
             (*a.as_deref().unwrap()).chars as *const libc::c_void,
@@ -86,8 +86,8 @@ pub unsafe extern "C" fn libzahl_realloc(mut a: Option<&mut C2RustUnnamed>, mut 
             if *__errno_location() == 0 {
                 *__errno_location() = 12 as libc::c_int;
             }
-            libzahl_error = *__errno_location();
-            longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+            crate::src::allocator::libzahl_error= *__errno_location();
+            longjmp(crate::src::allocator::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
         }
     }
     (*a.as_deref_mut().unwrap()).alloced= need;

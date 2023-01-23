@@ -56,8 +56,8 @@ pub unsafe extern "C" fn zstr(
         if b.is_null() {();
             b= malloc(2 as libc::c_int as libc::c_ulong) as *mut libc::c_char;
             if b.is_null() {();
-                libzahl_error = *__errno_location();
-                longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+                crate::src::zstr::libzahl_error= *__errno_location();
+                longjmp(crate::src::zstr::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
             }
         }
         *b.offset(0 as libc::c_int as isize) = '0' as i32 as libc::c_char;
@@ -69,12 +69,12 @@ pub unsafe extern "C" fn zstr(
         b= malloc(n.wrapping_add(1 as libc::c_int as libc::c_ulong))
             as *mut libc::c_char;
         if b.is_null() {();
-            libzahl_error = *__errno_location();
-            longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+            crate::src::zstr::libzahl_error= *__errno_location();
+            longjmp(crate::src::zstr::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
         }
     }
     neg= (zsignum(a) < 0 as libc::c_int) as libc::c_int;
-    crate::src::zabs::zabs(libzahl_tmp_str_num.as_mut_ptr().as_mut(), a);
+    crate::src::zabs::zabs(crate::src::zstr::libzahl_tmp_str_num.as_mut_ptr().as_mut(), a);
     *b.offset(0 as libc::c_int as isize) = '-' as i32 as libc::c_char;
     b= b.offset(neg as isize);
     n= (n as libc::c_ulong).wrapping_sub(neg as libc::c_ulong) as size_t as size_t;
@@ -85,19 +85,19 @@ pub unsafe extern "C" fn zstr(
     };
     loop {
         crate::src::zdivmod::zdivmod(
-            libzahl_tmp_str_num.as_mut_ptr(),
-            libzahl_tmp_str_rem.as_mut_ptr(),
-            libzahl_tmp_str_num.as_mut_ptr(),
-            libzahl_const_1e9.as_mut_ptr(),
+            crate::src::zstr::libzahl_tmp_str_num.as_mut_ptr(),
+            crate::src::zstr::libzahl_tmp_str_rem.as_mut_ptr(),
+            crate::src::zstr::libzahl_tmp_str_num.as_mut_ptr(),
+            crate::src::zstr::libzahl_const_1e9.as_mut_ptr(),
         );
-        if zzero(libzahl_tmp_str_num.as_mut_ptr()) == 0 {
+        if zzero(crate::src::zstr::libzahl_tmp_str_num.as_mut_ptr()) == 0 {
             sprintf(
                 b.offset(n as isize),
                 b"%09lu\0" as *const u8 as *const libc::c_char,
-                if zzero(libzahl_tmp_str_rem.as_mut_ptr()) != 0 {
+                if zzero(crate::src::zstr::libzahl_tmp_str_rem.as_mut_ptr()) != 0 {
                     0 as libc::c_ulong
                 } else {
-                    *((*libzahl_tmp_str_rem.as_mut_ptr()).chars)
+                    *((*crate::src::zstr::libzahl_tmp_str_rem.as_mut_ptr()).chars)
                         .offset(0 as libc::c_int as isize) as libc::c_ulong
                 },
             );
@@ -115,7 +115,7 @@ pub unsafe extern "C" fn zstr(
             len= sprintf(
                 buf.as_mut_ptr(),
                 b"%lu\0" as *const u8 as *const libc::c_char,
-                *((*libzahl_tmp_str_rem.as_mut_ptr()).chars)
+                *((*crate::src::zstr::libzahl_tmp_str_rem.as_mut_ptr()).chars)
                     .offset(0 as libc::c_int as isize) as libc::c_ulong,
             ) as size_t;
             if overridden != 0 {

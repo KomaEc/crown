@@ -67,11 +67,11 @@ unsafe fn main_0(
         b"Load a saved ANN to solve the XOR function.\n\0" as *const u8
             as *const libc::c_char,
     );
-    let mut saved = fopen(save_name, b"r\0" as *const u8 as *const libc::c_char);
+    let mut saved = fopen(crate::src::example3::save_name, b"r\0" as *const u8 as *const libc::c_char);
     if saved.is_null() {();
         printf(
             b"Couldn't open file: %s\n\0" as *const u8 as *const libc::c_char,
-            save_name,
+            crate::src::example3::save_name,
         );
         exit(1 as libc::c_int);
     }
@@ -80,7 +80,7 @@ unsafe fn main_0(
     if ann.is_null() {();
         printf(
             b"Error loading ANN from file: %s.\0" as *const u8 as *const libc::c_char,
-            save_name,
+            crate::src::example3::save_name,
         );
         exit(1 as libc::c_int);
     }

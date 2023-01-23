@@ -216,7 +216,7 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
     let mut mtfv = (*s).mtfv;
     if (*s).verbosity >= 3 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::compress::stderr,
             b"      %d in block, %d after MTF & 1-2 coding, %d+2 syms in use\n\0"
                 as *const u8 as *const libc::c_char,
             (*s).nblock,
@@ -271,7 +271,7 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
         }
         if (*s).verbosity >= 3 as libc::c_int {
             fprintf(
-                stderr,
+                crate::src::compress::stderr,
                 b"      initial group %d, [%d .. %d], has %d syms (%4.1f%%)\n\0"
                     as *const u8 as *const libc::c_char,
                 nPart,
@@ -1021,7 +1021,7 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
         }
         if (*s).verbosity >= 3 as libc::c_int {
             fprintf(
-                stderr,
+                crate::src::compress::stderr,
                 b"      pass %d: size is %d, grp uses are \0" as *const u8
                     as *const libc::c_char,
                 iter + 1 as libc::c_int,
@@ -1030,13 +1030,13 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
             t= 0 as libc::c_int;
             while t < nGroups {
                 fprintf(
-                    stderr,
+                    crate::src::compress::stderr,
                     b"%d \0" as *const u8 as *const libc::c_char,
                     fave[t as usize],
                 );
                 t+= 1;
             }
-            fprintf(stderr, b"\n\0" as *const u8 as *const libc::c_char);
+            fprintf(crate::src::compress::stderr, b"\n\0" as *const u8 as *const libc::c_char);
         }
         t= 0 as libc::c_int;
         while t < nGroups {
@@ -1159,7 +1159,7 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
     }
     if (*s).verbosity >= 3 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::compress::stderr,
             b"      bytes: mapping %d, \0" as *const u8 as *const libc::c_char,
             (*s).numZ - nBytes,
         );
@@ -1179,7 +1179,7 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
     }
     if (*s).verbosity >= 3 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::compress::stderr,
             b"selectors %d, \0" as *const u8 as *const libc::c_char,
             (*s).numZ - nBytes,
         );
@@ -1206,7 +1206,7 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
     }
     if (*s).verbosity >= 3 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::compress::stderr,
             b"code lengths %d, \0" as *const u8 as *const libc::c_char,
             (*s).numZ - nBytes,
         );
@@ -1557,7 +1557,7 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
     }
     if (*s).verbosity >= 3 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::compress::stderr,
             b"codes %d\n\0" as *const u8 as *const libc::c_char,
             (*s).numZ - nBytes,
         );
@@ -1575,7 +1575,7 @@ pub unsafe extern "C" fn BZ2_compressBlock(mut s: *mut crate::src::blocksort::ES
         }
         if (*s).verbosity >= 2 as libc::c_int {
             fprintf(
-                stderr,
+                crate::src::compress::stderr,
                 b"    block %d: crc = 0x%08x, combined CRC = 0x%08x, size = %d\n\0"
                     as *const u8 as *const libc::c_char,
                 (*s).blockNo,
@@ -1618,7 +1618,7 @@ pub unsafe extern "C" fn BZ2_compressBlock(mut s: *mut crate::src::blocksort::ES
         bsPutUInt32(s.as_mut(), (*s).combinedCRC);
         if (*s).verbosity >= 2 as libc::c_int {
             fprintf(
-                stderr,
+                crate::src::compress::stderr,
                 b"    final combined CRC = 0x%08x\n   \0" as *const u8
                     as *const libc::c_char,
                 (*s).combinedCRC,

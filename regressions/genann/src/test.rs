@@ -47,9 +47,9 @@ pub unsafe extern "C" fn basic() {
         0 as libc::c_int,
         1 as libc::c_int,
     );
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if (*ann).total_weights != 2 as libc::c_int {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -64,9 +64,9 @@ pub unsafe extern "C" fn basic() {
         .offset(0 as libc::c_int as isize) = 0 as libc::c_int as libc::c_double;
     *(*ann).weight
         .offset(1 as libc::c_int as isize) = 0 as libc::c_int as libc::c_double;
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(0.5f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a))) > 0.001f64 {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -76,9 +76,9 @@ pub unsafe extern "C" fn basic() {
         );
     }
     a= 1 as libc::c_int as libc::c_double;
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(0.5f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a))) > 0.001f64 {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -88,9 +88,9 @@ pub unsafe extern "C" fn basic() {
         );
     }
     a= 11 as libc::c_int as libc::c_double;
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(0.5f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a))) > 0.001f64 {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -104,9 +104,9 @@ pub unsafe extern "C" fn basic() {
         .offset(0 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
     *(*ann).weight
         .offset(1 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(0.5f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a))) > 0.001f64 {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -120,9 +120,9 @@ pub unsafe extern "C" fn basic() {
         .offset(0 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
     *(*ann).weight
         .offset(1 as libc::c_int as isize) = 1 as libc::c_int as libc::c_double;
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(1.0f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a))) > 0.001f64 {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -132,9 +132,9 @@ pub unsafe extern "C" fn basic() {
         );
     }
     a= -(10 as libc::c_int) as libc::c_double;
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(0.0f64 - *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(a))) > 0.001f64 {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -159,9 +159,9 @@ pub unsafe extern "C" fn xor() {
     (*ann).activation_output= Some(
         crate::src::genann::genann_act_threshold as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
     );
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if (*ann).total_weights != 9 as libc::c_int {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -198,13 +198,13 @@ pub unsafe extern "C" fn xor() {
         1 as libc::c_int as libc::c_double,
         0 as libc::c_int as libc::c_double,
     ];
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[0 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -213,13 +213,13 @@ pub unsafe extern "C" fn xor() {
             *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[1 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -228,13 +228,13 @@ pub unsafe extern "C" fn xor() {
             *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[2 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -243,13 +243,13 @@ pub unsafe extern "C" fn xor() {
             *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[3 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[3 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -275,9 +275,9 @@ pub unsafe extern "C" fn backprop() {
     let mut first_try = *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(input));
     crate::src::genann::genann_train(ann, core::ptr::addr_of!(input), core::ptr::addr_of!(output), 0.5f64);
     let mut second_try = *crate::src::genann::genann_run(ann.as_mut(), core::ptr::addr_of!(input));
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if !(fabs(first_try - output) > fabs(second_try - output)) {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d error \n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -325,13 +325,13 @@ pub unsafe extern "C" fn train_and() {
     (*ann).activation_output= Some(
         crate::src::genann::genann_act_threshold as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
     );
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[0 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -340,13 +340,13 @@ pub unsafe extern "C" fn train_and() {
             *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[1 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -355,13 +355,13 @@ pub unsafe extern "C" fn train_and() {
             *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[2 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -370,13 +370,13 @@ pub unsafe extern "C" fn train_and() {
             *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[3 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[3 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -427,13 +427,13 @@ pub unsafe extern "C" fn train_or() {
     (*ann).activation_output= Some(
         crate::src::genann::genann_act_threshold as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
     );
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[0 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -442,13 +442,13 @@ pub unsafe extern "C" fn train_or() {
             *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[1 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -457,13 +457,13 @@ pub unsafe extern "C" fn train_or() {
             *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[2 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -472,13 +472,13 @@ pub unsafe extern "C" fn train_or() {
             *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[3 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[3 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -528,13 +528,13 @@ pub unsafe extern "C" fn train_xor() {
     (*ann).activation_output= Some(
         crate::src::genann::genann_act_threshold as unsafe extern "C" fn(libc::c_double) -> libc::c_double,
     );
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[0 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -543,13 +543,13 @@ pub unsafe extern "C" fn train_xor() {
             *crate::src::genann::genann_run(ann.as_mut(), input[0 as libc::c_int as usize].as_mut_ptr()),
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[1 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -558,13 +558,13 @@ pub unsafe extern "C" fn train_xor() {
             *crate::src::genann::genann_run(ann.as_mut(), input[1 as libc::c_int as usize].as_mut_ptr()),
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[2 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -573,13 +573,13 @@ pub unsafe extern "C" fn train_xor() {
             *crate::src::genann::genann_run(ann.as_mut(), input[2 as libc::c_int as usize].as_mut_ptr()),
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if fabs(
         output[3 as libc::c_int as usize]
             - *crate::src::genann::genann_run(ann.as_mut(), input[3 as libc::c_int as usize].as_mut_ptr()),
     ) > 0.001f64
     {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -610,9 +610,9 @@ pub unsafe extern "C" fn persist() {
     );
     let mut second = crate::src::genann::genann_read(in_0);
     fclose(out);
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if (*first).inputs != (*second).inputs {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -621,9 +621,9 @@ pub unsafe extern "C" fn persist() {
             (*second).inputs,
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if (*first).hidden_layers != (*second).hidden_layers {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -632,9 +632,9 @@ pub unsafe extern "C" fn persist() {
             (*second).hidden_layers,
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if (*first).hidden != (*second).hidden {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -643,9 +643,9 @@ pub unsafe extern "C" fn persist() {
             (*second).hidden,
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if (*first).outputs != (*second).outputs {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -654,9 +654,9 @@ pub unsafe extern "C" fn persist() {
             (*second).outputs,
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if (*first).total_weights != (*second).total_weights {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -668,11 +668,11 @@ pub unsafe extern "C" fn persist() {
     let mut i: libc::c_int = 0;
     i= 0 as libc::c_int;
     while i < (*first).total_weights {
-        ltests += 1;
+        crate::src::test::ltests+= 1;
         if !(*(*first).weight.offset(i as isize)
             == *(*second).weight.offset(i as isize))
         {
-            lfails += 1;
+            crate::src::test::lfails+= 1;
             printf(
                 b"%s:%d error \n\0" as *const u8 as *const libc::c_char,
                 b"test.c\0" as *const u8 as *const libc::c_char,
@@ -693,9 +693,9 @@ pub unsafe extern "C" fn copy() {
         10 as libc::c_int,
     );
     let mut second = crate::src::genann::genann_copy(first as *const crate::src::example1::genann);
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if (*first).inputs != (*second).inputs {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -704,9 +704,9 @@ pub unsafe extern "C" fn copy() {
             (*second).inputs,
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if (*first).hidden_layers != (*second).hidden_layers {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -715,9 +715,9 @@ pub unsafe extern "C" fn copy() {
             (*second).hidden_layers,
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if (*first).hidden != (*second).hidden {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -726,9 +726,9 @@ pub unsafe extern "C" fn copy() {
             (*second).hidden,
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if (*first).outputs != (*second).outputs {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -737,9 +737,9 @@ pub unsafe extern "C" fn copy() {
             (*second).outputs,
         );
     }
-    ltests += 1;
+    crate::src::test::ltests+= 1;
     if (*first).total_weights != (*second).total_weights {
-        lfails += 1;
+        crate::src::test::lfails+= 1;
         printf(
             b"%s:%d (%d != %d)\n\0" as *const u8 as *const libc::c_char,
             b"test.c\0" as *const u8 as *const libc::c_char,
@@ -751,13 +751,13 @@ pub unsafe extern "C" fn copy() {
     let mut i: libc::c_int = 0;
     i= 0 as libc::c_int;
     while i < (*first).total_weights {
-        ltests += 1;
+        crate::src::test::ltests+= 1;
         if fabs(
             *(*first).weight.offset(i as isize)
                 - *(*second).weight.offset(i as isize),
         ) > 0.001f64
         {
-            lfails += 1;
+            crate::src::test::lfails+= 1;
             printf(
                 b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
                 b"test.c\0" as *const u8 as *const libc::c_char,
@@ -777,9 +777,9 @@ pub unsafe extern "C" fn sigmoid() {
     let max = 20 as libc::c_int as libc::c_double;
     let d = 0.0001f64;
     while i < max {
-        ltests += 1;
+        crate::src::test::ltests+= 1;
         if fabs(crate::src::genann::genann_act_sigmoid(i) - crate::src::genann::genann_act_sigmoid_cached(i)) > 0.001f64 {
-            lfails += 1;
+            crate::src::test::lfails+= 1;
             printf(
                 b"%s:%d (%f != %f)\n\0" as *const u8 as *const libc::c_char,
                 b"test.c\0" as *const u8 as *const libc::c_char,
@@ -797,8 +797,8 @@ unsafe fn main_0(
 ) -> libc::c_int {
     printf(b"GENANN TEST SUITE\n\0" as *const u8 as *const libc::c_char);
     srand(100 as libc::c_int as libc::c_uint);
-    let ts = ltests;
-    let fs = lfails;
+    let ts = crate::src::test::ltests;
+    let fs = crate::src::test::lfails;
     let start = clock();
     printf(
         b"\t%-14s\0" as *const u8 as *const libc::c_char,
@@ -807,13 +807,13 @@ unsafe fn main_0(
     basic();
     printf(
         b"pass:%2d   fail:%2d   %4dms\n\0" as *const u8 as *const libc::c_char,
-        ltests - ts - (lfails - fs),
-        lfails - fs,
+        crate::src::test::ltests - ts - (crate::src::test::lfails - fs),
+        crate::src::test::lfails - fs,
         ((clock() - start) * 1000 as libc::c_int as libc::c_long
             / 1000000 as libc::c_int as __clock_t) as libc::c_int,
     );
-    let ts_0 = ltests;
-    let fs_0 = lfails;
+    let ts_0 = crate::src::test::ltests;
+    let fs_0 = crate::src::test::lfails;
     let start_0 = clock();
     printf(
         b"\t%-14s\0" as *const u8 as *const libc::c_char,
@@ -822,13 +822,13 @@ unsafe fn main_0(
     xor();
     printf(
         b"pass:%2d   fail:%2d   %4dms\n\0" as *const u8 as *const libc::c_char,
-        ltests - ts_0 - (lfails - fs_0),
-        lfails - fs_0,
+        crate::src::test::ltests - ts_0 - (crate::src::test::lfails - fs_0),
+        crate::src::test::lfails - fs_0,
         ((clock() - start_0) * 1000 as libc::c_int as libc::c_long
             / 1000000 as libc::c_int as __clock_t) as libc::c_int,
     );
-    let ts_1 = ltests;
-    let fs_1 = lfails;
+    let ts_1 = crate::src::test::ltests;
+    let fs_1 = crate::src::test::lfails;
     let start_1 = clock();
     printf(
         b"\t%-14s\0" as *const u8 as *const libc::c_char,
@@ -837,13 +837,13 @@ unsafe fn main_0(
     backprop();
     printf(
         b"pass:%2d   fail:%2d   %4dms\n\0" as *const u8 as *const libc::c_char,
-        ltests - ts_1 - (lfails - fs_1),
-        lfails - fs_1,
+        crate::src::test::ltests - ts_1 - (crate::src::test::lfails - fs_1),
+        crate::src::test::lfails - fs_1,
         ((clock() - start_1) * 1000 as libc::c_int as libc::c_long
             / 1000000 as libc::c_int as __clock_t) as libc::c_int,
     );
-    let ts_2 = ltests;
-    let fs_2 = lfails;
+    let ts_2 = crate::src::test::ltests;
+    let fs_2 = crate::src::test::lfails;
     let start_2 = clock();
     printf(
         b"\t%-14s\0" as *const u8 as *const libc::c_char,
@@ -852,13 +852,13 @@ unsafe fn main_0(
     train_and();
     printf(
         b"pass:%2d   fail:%2d   %4dms\n\0" as *const u8 as *const libc::c_char,
-        ltests - ts_2 - (lfails - fs_2),
-        lfails - fs_2,
+        crate::src::test::ltests - ts_2 - (crate::src::test::lfails - fs_2),
+        crate::src::test::lfails - fs_2,
         ((clock() - start_2) * 1000 as libc::c_int as libc::c_long
             / 1000000 as libc::c_int as __clock_t) as libc::c_int,
     );
-    let ts_3 = ltests;
-    let fs_3 = lfails;
+    let ts_3 = crate::src::test::ltests;
+    let fs_3 = crate::src::test::lfails;
     let start_3 = clock();
     printf(
         b"\t%-14s\0" as *const u8 as *const libc::c_char,
@@ -867,13 +867,13 @@ unsafe fn main_0(
     train_or();
     printf(
         b"pass:%2d   fail:%2d   %4dms\n\0" as *const u8 as *const libc::c_char,
-        ltests - ts_3 - (lfails - fs_3),
-        lfails - fs_3,
+        crate::src::test::ltests - ts_3 - (crate::src::test::lfails - fs_3),
+        crate::src::test::lfails - fs_3,
         ((clock() - start_3) * 1000 as libc::c_int as libc::c_long
             / 1000000 as libc::c_int as __clock_t) as libc::c_int,
     );
-    let ts_4 = ltests;
-    let fs_4 = lfails;
+    let ts_4 = crate::src::test::ltests;
+    let fs_4 = crate::src::test::lfails;
     let start_4 = clock();
     printf(
         b"\t%-14s\0" as *const u8 as *const libc::c_char,
@@ -882,13 +882,13 @@ unsafe fn main_0(
     train_xor();
     printf(
         b"pass:%2d   fail:%2d   %4dms\n\0" as *const u8 as *const libc::c_char,
-        ltests - ts_4 - (lfails - fs_4),
-        lfails - fs_4,
+        crate::src::test::ltests - ts_4 - (crate::src::test::lfails - fs_4),
+        crate::src::test::lfails - fs_4,
         ((clock() - start_4) * 1000 as libc::c_int as libc::c_long
             / 1000000 as libc::c_int as __clock_t) as libc::c_int,
     );
-    let ts_5 = ltests;
-    let fs_5 = lfails;
+    let ts_5 = crate::src::test::ltests;
+    let fs_5 = crate::src::test::lfails;
     let start_5 = clock();
     printf(
         b"\t%-14s\0" as *const u8 as *const libc::c_char,
@@ -897,13 +897,13 @@ unsafe fn main_0(
     persist();
     printf(
         b"pass:%2d   fail:%2d   %4dms\n\0" as *const u8 as *const libc::c_char,
-        ltests - ts_5 - (lfails - fs_5),
-        lfails - fs_5,
+        crate::src::test::ltests - ts_5 - (crate::src::test::lfails - fs_5),
+        crate::src::test::lfails - fs_5,
         ((clock() - start_5) * 1000 as libc::c_int as libc::c_long
             / 1000000 as libc::c_int as __clock_t) as libc::c_int,
     );
-    let ts_6 = ltests;
-    let fs_6 = lfails;
+    let ts_6 = crate::src::test::ltests;
+    let fs_6 = crate::src::test::lfails;
     let start_6 = clock();
     printf(
         b"\t%-14s\0" as *const u8 as *const libc::c_char,
@@ -912,13 +912,13 @@ unsafe fn main_0(
     copy();
     printf(
         b"pass:%2d   fail:%2d   %4dms\n\0" as *const u8 as *const libc::c_char,
-        ltests - ts_6 - (lfails - fs_6),
-        lfails - fs_6,
+        crate::src::test::ltests - ts_6 - (crate::src::test::lfails - fs_6),
+        crate::src::test::lfails - fs_6,
         ((clock() - start_6) * 1000 as libc::c_int as libc::c_long
             / 1000000 as libc::c_int as __clock_t) as libc::c_int,
     );
-    let ts_7 = ltests;
-    let fs_7 = lfails;
+    let ts_7 = crate::src::test::ltests;
+    let fs_7 = crate::src::test::lfails;
     let start_7 = clock();
     printf(
         b"\t%-14s\0" as *const u8 as *const libc::c_char,
@@ -927,25 +927,25 @@ unsafe fn main_0(
     sigmoid();
     printf(
         b"pass:%2d   fail:%2d   %4dms\n\0" as *const u8 as *const libc::c_char,
-        ltests - ts_7 - (lfails - fs_7),
-        lfails - fs_7,
+        crate::src::test::ltests - ts_7 - (crate::src::test::lfails - fs_7),
+        crate::src::test::lfails - fs_7,
         ((clock() - start_7) * 1000 as libc::c_int as libc::c_long
             / 1000000 as libc::c_int as __clock_t) as libc::c_int,
     );
-    if lfails == 0 as libc::c_int {
+    if crate::src::test::lfails == 0 as libc::c_int {
         printf(
             b"ALL TESTS PASSED (%d/%d)\n\0" as *const u8 as *const libc::c_char,
-            ltests,
-            ltests,
+            crate::src::test::ltests,
+            crate::src::test::ltests,
         );
     } else {
         printf(
             b"SOME TESTS FAILED (%d/%d)\n\0" as *const u8 as *const libc::c_char,
-            ltests - lfails,
-            ltests,
+            crate::src::test::ltests - crate::src::test::lfails,
+            crate::src::test::ltests,
         );
     }
-    return (lfails != 0 as libc::c_int) as libc::c_int;
+    return (crate::src::test::lfails != 0 as libc::c_int) as libc::c_int;
 }
 // pub fn main() {
 //     let mut args: Vec::<*mut libc::c_char> = Vec::new();

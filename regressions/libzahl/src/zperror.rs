@@ -7,8 +7,8 @@ extern "C" {
 }
 #[no_mangle]
 pub unsafe extern "C" fn zperror(mut prefix: *mut libc::c_char) {
-    if libzahl_error >= 0 as libc::c_int {
-        *__errno_location() = libzahl_error;
+    if crate::src::zperror::libzahl_error >= 0 as libc::c_int {
+        *__errno_location() = crate::src::zperror::libzahl_error;
         perror(prefix);
     } else {
         abort();

@@ -55,8 +55,8 @@ pub unsafe extern "C" fn zsub_unsigned(
         }
         n= if (*b).used < (*c).used { (*b).used } else { (*c).used };
         if a == b {
-            crate::src::zset::zset(libzahl_tmp_sub.as_mut_ptr().as_mut(), b);
-            s= (*libzahl_tmp_sub.as_mut_ptr()).chars;
+            crate::src::zset::zset(crate::src::zsub::libzahl_tmp_sub.as_mut_ptr().as_mut(), b);
+            s= (*crate::src::zsub::libzahl_tmp_sub.as_mut_ptr()).chars;
         } else {
             s= (*b).chars;
         }
@@ -66,8 +66,8 @@ pub unsafe extern "C" fn zsub_unsigned(
     } else {
         n= if (*b).used < (*c).used { (*b).used } else { (*c).used };
         if a == c {
-            crate::src::zset::zset(libzahl_tmp_sub.as_mut_ptr().as_mut(), c);
-            s= (*libzahl_tmp_sub.as_mut_ptr()).chars;
+            crate::src::zset::zset(crate::src::zsub::libzahl_tmp_sub.as_mut_ptr().as_mut(), c);
+            s= (*crate::src::zsub::libzahl_tmp_sub.as_mut_ptr()).chars;
         } else {
             s= (*c).chars;
         }

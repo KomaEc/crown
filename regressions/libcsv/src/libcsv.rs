@@ -99,9 +99,9 @@ pub unsafe extern "C" fn csv_error(mut p: *const csv_parser) -> libc::c_int {
 #[no_mangle]
 pub unsafe extern "C" fn csv_strerror(mut status: libc::c_int) -> *const libc::c_char {
     if status >= 4 as libc::c_int || status < 0 as libc::c_int {
-        return csv_errors[4 as libc::c_int as usize]
+        return crate::src::libcsv::csv_errors[4 as libc::c_int as usize]
     } else {
-        return csv_errors[status as usize]
+        return crate::src::libcsv::csv_errors[status as usize]
     };
 }
 #[no_mangle]

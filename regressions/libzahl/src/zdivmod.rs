@@ -58,15 +58,15 @@ pub unsafe extern "C" fn zdivmod(
     if sign == 0 {
         if zzero(c) != 0 {
             if zzero(d) != 0 {
-                libzahl_error = 33 as libc::c_int;
-                longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+                crate::src::zdivmod::libzahl_error= 33 as libc::c_int;
+                longjmp(crate::src::zdivmod::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
             } else {
                 (*a).sign= 0 as libc::c_int;
                 (*b).sign= 0 as libc::c_int;
             }
         } else {
-            libzahl_error = 33 as libc::c_int;
-            longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+            crate::src::zdivmod::libzahl_error= 33 as libc::c_int;
+            longjmp(crate::src::zdivmod::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
         }
         return;
     } else {
@@ -89,46 +89,46 @@ pub unsafe extern "C" fn zdivmod(
     c_bits= crate::src::zbits::zbits(c.as_mut());
     d_bits= crate::src::zbits::zbits(d.as_mut());
     bit= c_bits.wrapping_sub(d_bits);
-    crate::src::zlsh::zlsh(libzahl_tmp_divmod_d.as_mut_ptr().as_mut(), d, bit);
-    (*libzahl_tmp_divmod_d.as_mut_ptr()).sign = 1 as libc::c_int;
-    if crate::src::zcmpmag::zcmpmag(libzahl_tmp_divmod_d.as_mut_ptr(), c) > 0 as libc::c_int {
+    crate::src::zlsh::zlsh(crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr().as_mut(), d, bit);
+    (*crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr()).sign = 1 as libc::c_int;
+    if crate::src::zcmpmag::zcmpmag(crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr(), c) > 0 as libc::c_int {
         crate::src::zrsh::zrsh(
-            libzahl_tmp_divmod_d.as_mut_ptr(),
-            libzahl_tmp_divmod_d.as_mut_ptr(),
+            crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr(),
+            crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr(),
             1 as libc::c_int as size_t,
         );
         bit= (bit as libc::c_ulong).wrapping_sub(1 as libc::c_int as libc::c_ulong)
             as size_t as size_t;
     }
-    (*libzahl_tmp_divmod_a.as_mut_ptr()).sign = 0 as libc::c_int;
-    crate::src::zabs::zabs(libzahl_tmp_divmod_b.as_mut_ptr().as_mut(), c);
+    (*crate::src::zdivmod::libzahl_tmp_divmod_a.as_mut_ptr()).sign = 0 as libc::c_int;
+    crate::src::zabs::zabs(crate::src::zdivmod::libzahl_tmp_divmod_b.as_mut_ptr().as_mut(), c);
     if bit < 32 as libc::c_int as libc::c_ulong {
         loop {
             if crate::src::zcmpmag::zcmpmag(
-                libzahl_tmp_divmod_d.as_mut_ptr(),
-                libzahl_tmp_divmod_b.as_mut_ptr(),
+                crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr(),
+                crate::src::zdivmod::libzahl_tmp_divmod_b.as_mut_ptr(),
             ) <= 0 as libc::c_int
             {
                 crate::src::zsub::zsub(
-                    libzahl_tmp_divmod_b.as_mut_ptr(),
-                    libzahl_tmp_divmod_b.as_mut_ptr(),
-                    libzahl_tmp_divmod_d.as_mut_ptr(),
+                    crate::src::zdivmod::libzahl_tmp_divmod_b.as_mut_ptr(),
+                    crate::src::zdivmod::libzahl_tmp_divmod_b.as_mut_ptr(),
+                    crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr(),
                 );
                 crate::src::zbset::zbset(
-                    libzahl_tmp_divmod_a.as_mut_ptr().as_mut(),
-                    libzahl_tmp_divmod_a.as_mut_ptr(),
+                    crate::src::zdivmod::libzahl_tmp_divmod_a.as_mut_ptr().as_mut(),
+                    crate::src::zdivmod::libzahl_tmp_divmod_a.as_mut_ptr(),
                     bit,
                     1 as libc::c_int,
                 );
             }
             let fresh0 = bit;
             bit= bit.wrapping_sub(1);
-            if fresh0 == 0 || zzero(libzahl_tmp_divmod_b.as_mut_ptr()) != 0 {
+            if fresh0 == 0 || zzero(crate::src::zdivmod::libzahl_tmp_divmod_b.as_mut_ptr()) != 0 {
                 break;
             }
             crate::src::zrsh::zrsh(
-                libzahl_tmp_divmod_d.as_mut_ptr(),
-                libzahl_tmp_divmod_d.as_mut_ptr(),
+                crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr(),
+                crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr(),
                 1 as libc::c_int as size_t,
             );
         }
@@ -137,8 +137,8 @@ pub unsafe extern "C" fn zdivmod(
         i= 0 as libc::c_int as size_t;
         while i < 32 as libc::c_int as libc::c_ulong {
             crate::src::zrsh::zrsh(
-                (libzahl_tmp_divmod_ds[i as usize]).as_mut_ptr(),
-                libzahl_tmp_divmod_d.as_mut_ptr(),
+                crate::src::zdivmod::libzahl_tmp_divmod_ds[i as usize].as_mut_ptr(),
+                crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr(),
                 i,
             );
             i= i.wrapping_add(1);
@@ -147,25 +147,25 @@ pub unsafe extern "C" fn zdivmod(
             i= 0 as libc::c_int as size_t;
             while i < 32 as libc::c_int as libc::c_ulong {
                 if crate::src::zcmpmag::zcmpmag(
-                    (libzahl_tmp_divmod_ds[i as usize]).as_mut_ptr(),
-                    libzahl_tmp_divmod_b.as_mut_ptr(),
+                    crate::src::zdivmod::libzahl_tmp_divmod_ds[i as usize].as_mut_ptr(),
+                    crate::src::zdivmod::libzahl_tmp_divmod_b.as_mut_ptr(),
                 ) <= 0 as libc::c_int
                 {
                     crate::src::zsub::zsub(
-                        libzahl_tmp_divmod_b.as_mut_ptr(),
-                        libzahl_tmp_divmod_b.as_mut_ptr(),
-                        (libzahl_tmp_divmod_ds[i as usize]).as_mut_ptr(),
+                        crate::src::zdivmod::libzahl_tmp_divmod_b.as_mut_ptr(),
+                        crate::src::zdivmod::libzahl_tmp_divmod_b.as_mut_ptr(),
+                        crate::src::zdivmod::libzahl_tmp_divmod_ds[i as usize].as_mut_ptr(),
                     );
                     crate::src::zbset::zbset(
-                        libzahl_tmp_divmod_a.as_mut_ptr().as_mut(),
-                        libzahl_tmp_divmod_a.as_mut_ptr(),
+                        crate::src::zdivmod::libzahl_tmp_divmod_a.as_mut_ptr().as_mut(),
+                        crate::src::zdivmod::libzahl_tmp_divmod_a.as_mut_ptr(),
                         bit,
                         1 as libc::c_int,
                     );
                 }
                 let fresh1 = bit;
                 bit= bit.wrapping_sub(1);
-                if fresh1 == 0 || zzero(libzahl_tmp_divmod_b.as_mut_ptr()) != 0 {
+                if fresh1 == 0 || zzero(crate::src::zdivmod::libzahl_tmp_divmod_b.as_mut_ptr()) != 0 {
                     break 's_253;
                 }
                 i= i.wrapping_add(1);
@@ -183,14 +183,14 @@ pub unsafe extern "C" fn zdivmod(
                     break;
                 }
                 crate::src::zrsh::zrsh(
-                    (libzahl_tmp_divmod_ds[i as usize]).as_mut_ptr(),
-                    (libzahl_tmp_divmod_ds[i as usize]).as_mut_ptr(),
+                    crate::src::zdivmod::libzahl_tmp_divmod_ds[i as usize].as_mut_ptr(),
+                    crate::src::zdivmod::libzahl_tmp_divmod_ds[i as usize].as_mut_ptr(),
                     32 as libc::c_int as size_t,
                 );
             }
         }
     }
-    crate::src::zswap::zswap(a.as_mut(), libzahl_tmp_divmod_a.as_mut_ptr().as_mut());
-    crate::src::zswap::zswap(b.as_mut(), libzahl_tmp_divmod_b.as_mut_ptr().as_mut());
+    crate::src::zswap::zswap(a.as_mut(), crate::src::zdivmod::libzahl_tmp_divmod_a.as_mut_ptr().as_mut());
+    crate::src::zswap::zswap(b.as_mut(), crate::src::zdivmod::libzahl_tmp_divmod_b.as_mut_ptr().as_mut());
     (*a).sign= sign;
 }

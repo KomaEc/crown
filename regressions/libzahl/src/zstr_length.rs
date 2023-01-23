@@ -32,25 +32,25 @@ pub unsafe extern "C" fn zstr_length(
 ) -> size_t {
     let mut size_total = 1 as libc::c_int as size_t;
     let mut size_temp: size_t = 0;
-    crate::src::zset::zset(libzahl_tmp_str_num.as_mut_ptr().as_mut(), a);
-    while zzero(libzahl_tmp_str_num.as_mut_ptr()) == 0 {
-        crate::src::zsetu::zsetu(libzahl_tmp_str_mag.as_mut_ptr().as_mut(), radix);
-        crate::src::zset::zset(libzahl_tmp_str_div.as_mut_ptr().as_mut(), libzahl_tmp_str_mag.as_mut_ptr());
+    crate::src::zset::zset(crate::src::zstr_length::libzahl_tmp_str_num.as_mut_ptr().as_mut(), a);
+    while zzero(crate::src::zstr_length::libzahl_tmp_str_num.as_mut_ptr()) == 0 {
+        crate::src::zsetu::zsetu(crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr().as_mut(), radix);
+        crate::src::zset::zset(crate::src::zstr_length::libzahl_tmp_str_div.as_mut_ptr().as_mut(), crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr());
         size_temp= 1 as libc::c_int as size_t;
-        while crate::src::zcmpmag::zcmpmag(libzahl_tmp_str_mag.as_mut_ptr(), libzahl_tmp_str_num.as_mut_ptr())
+        while crate::src::zcmpmag::zcmpmag(crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr(), crate::src::zstr_length::libzahl_tmp_str_num.as_mut_ptr())
             <= 0 as libc::c_int
         {
-            crate::src::zset::zset(libzahl_tmp_str_div.as_mut_ptr().as_mut(), libzahl_tmp_str_mag.as_mut_ptr());
-            crate::src::zsqr::zsqr(libzahl_tmp_str_mag.as_mut_ptr(), libzahl_tmp_str_mag.as_mut_ptr());
+            crate::src::zset::zset(crate::src::zstr_length::libzahl_tmp_str_div.as_mut_ptr().as_mut(), crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr());
+            crate::src::zsqr::zsqr(crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr(), crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr());
             size_temp<<= 1 as libc::c_int;
         }
         size_temp>>= 1 as libc::c_int;
         size_total= (size_total as libc::c_ulong).wrapping_add(size_temp) as size_t
             as size_t;
         crate::src::zdiv::zdiv(
-            libzahl_tmp_str_num.as_mut_ptr(),
-            libzahl_tmp_str_num.as_mut_ptr(),
-            libzahl_tmp_str_div.as_mut_ptr(),
+            crate::src::zstr_length::libzahl_tmp_str_num.as_mut_ptr(),
+            crate::src::zstr_length::libzahl_tmp_str_num.as_mut_ptr(),
+            crate::src::zstr_length::libzahl_tmp_str_div.as_mut_ptr(),
         );
     }
     return size_total

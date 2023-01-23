@@ -73,10 +73,10 @@ pub unsafe extern "C" fn zptest(
         }else { (); }
         return NONPRIME;
     }
-    crate::src::zsub::zsub_unsigned(libzahl_tmp_ptest_n1.as_mut_ptr(), n, libzahl_const_1.as_mut_ptr());
-    crate::src::zsub::zsub_unsigned(libzahl_tmp_ptest_n4.as_mut_ptr(), n, libzahl_const_4.as_mut_ptr());
-    r= crate::src::zlsb::zlsb(libzahl_tmp_ptest_n1.as_mut_ptr());
-    crate::src::zrsh::zrsh(libzahl_tmp_ptest_d.as_mut_ptr(), libzahl_tmp_ptest_n1.as_mut_ptr(), r);
+    crate::src::zsub::zsub_unsigned(crate::src::zptest::libzahl_tmp_ptest_n1.as_mut_ptr(), n, crate::src::zptest::libzahl_const_1.as_mut_ptr());
+    crate::src::zsub::zsub_unsigned(crate::src::zptest::libzahl_tmp_ptest_n4.as_mut_ptr(), n, crate::src::zptest::libzahl_const_4.as_mut_ptr());
+    r= crate::src::zlsb::zlsb(crate::src::zptest::libzahl_tmp_ptest_n1.as_mut_ptr());
+    crate::src::zrsh::zrsh(crate::src::zptest::libzahl_tmp_ptest_d.as_mut_ptr(), crate::src::zptest::libzahl_tmp_ptest_n1.as_mut_ptr(), r);
     loop {
         let fresh0 = t;
         t= t - 1;
@@ -84,40 +84,40 @@ pub unsafe extern "C" fn zptest(
             break;
         }
         crate::src::zrand::zrand(
-            libzahl_tmp_ptest_a.as_mut_ptr(),
+            crate::src::zptest::libzahl_tmp_ptest_a.as_mut_ptr(),
             FAST_RANDOM,
             UNIFORM,
-            libzahl_tmp_ptest_n4.as_mut_ptr(),
+            crate::src::zptest::libzahl_tmp_ptest_n4.as_mut_ptr(),
         );
         crate::src::zadd::zadd_unsigned(
-            libzahl_tmp_ptest_a.as_mut_ptr().as_mut(),
-            libzahl_tmp_ptest_a.as_mut_ptr(),
-            libzahl_const_2.as_mut_ptr(),
+            crate::src::zptest::libzahl_tmp_ptest_a.as_mut_ptr().as_mut(),
+            crate::src::zptest::libzahl_tmp_ptest_a.as_mut_ptr(),
+            crate::src::zptest::libzahl_const_2.as_mut_ptr(),
         );
         crate::src::zmodpow::zmodpow(
-            libzahl_tmp_ptest_x.as_mut_ptr(),
-            libzahl_tmp_ptest_a.as_mut_ptr(),
-            libzahl_tmp_ptest_d.as_mut_ptr(),
+            crate::src::zptest::libzahl_tmp_ptest_x.as_mut_ptr(),
+            crate::src::zptest::libzahl_tmp_ptest_a.as_mut_ptr(),
+            crate::src::zptest::libzahl_tmp_ptest_d.as_mut_ptr(),
             n,
         );
-        if crate::src::zcmp::zcmp(libzahl_tmp_ptest_x.as_mut_ptr(), libzahl_const_1.as_mut_ptr()) == 0
-            || crate::src::zcmp::zcmp(libzahl_tmp_ptest_x.as_mut_ptr(), libzahl_tmp_ptest_n1.as_mut_ptr())
+        if crate::src::zcmp::zcmp(crate::src::zptest::libzahl_tmp_ptest_x.as_mut_ptr(), crate::src::zptest::libzahl_const_1.as_mut_ptr()) == 0
+            || crate::src::zcmp::zcmp(crate::src::zptest::libzahl_tmp_ptest_x.as_mut_ptr(), crate::src::zptest::libzahl_tmp_ptest_n1.as_mut_ptr())
                 == 0
         {
             continue;
         }
         i= 1 as libc::c_int as size_t;
         while i < r {
-            crate::src::zsqr::zsqr(libzahl_tmp_ptest_x.as_mut_ptr(), libzahl_tmp_ptest_x.as_mut_ptr());
-            crate::src::zmod::zmod(libzahl_tmp_ptest_x.as_mut_ptr(), libzahl_tmp_ptest_x.as_mut_ptr(), n);
-            if crate::src::zcmp::zcmp(libzahl_tmp_ptest_x.as_mut_ptr(), libzahl_const_1.as_mut_ptr()) == 0
+            crate::src::zsqr::zsqr(crate::src::zptest::libzahl_tmp_ptest_x.as_mut_ptr(), crate::src::zptest::libzahl_tmp_ptest_x.as_mut_ptr());
+            crate::src::zmod::zmod(crate::src::zptest::libzahl_tmp_ptest_x.as_mut_ptr(), crate::src::zptest::libzahl_tmp_ptest_x.as_mut_ptr(), n);
+            if crate::src::zcmp::zcmp(crate::src::zptest::libzahl_tmp_ptest_x.as_mut_ptr(), crate::src::zptest::libzahl_const_1.as_mut_ptr()) == 0
             {
                 if !witness.is_null() {
-                    crate::src::zswap::zswap(witness.as_mut(), libzahl_tmp_ptest_a.as_mut_ptr().as_mut());
+                    crate::src::zswap::zswap(witness.as_mut(), crate::src::zptest::libzahl_tmp_ptest_a.as_mut_ptr().as_mut());
                 }else { (); }
                 return NONPRIME;
             }
-            if crate::src::zcmp::zcmp(libzahl_tmp_ptest_x.as_mut_ptr(), libzahl_tmp_ptest_n1.as_mut_ptr())
+            if crate::src::zcmp::zcmp(crate::src::zptest::libzahl_tmp_ptest_x.as_mut_ptr(), crate::src::zptest::libzahl_tmp_ptest_n1.as_mut_ptr())
                 == 0
             {
                 break;
@@ -126,7 +126,7 @@ pub unsafe extern "C" fn zptest(
         }
         if i == r {
             if !witness.is_null() {
-                crate::src::zswap::zswap(witness.as_mut(), libzahl_tmp_ptest_a.as_mut_ptr().as_mut());
+                crate::src::zswap::zswap(witness.as_mut(), crate::src::zptest::libzahl_tmp_ptest_a.as_mut_ptr().as_mut());
             }else { (); }
             return NONPRIME;
         }

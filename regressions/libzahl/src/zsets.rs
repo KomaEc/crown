@@ -58,7 +58,7 @@ pub unsafe extern "C" fn zsets(
         str_end= str_end.offset(1);
     }
     (*a).sign= 0 as libc::c_int;
-    crate::src::zset::zset(libzahl_tmp_str_num.as_mut_ptr().as_mut(), libzahl_const_1e19.as_mut_ptr());
+    crate::src::zset::zset(crate::src::zsets::libzahl_tmp_str_num.as_mut_ptr().as_mut(), crate::src::zsets::libzahl_const_1e19.as_mut_ptr());
     's_234: {
         let mut current_block_39: u64;
         match  str_end.offset_from(str) as libc::c_long
@@ -338,21 +338,21 @@ pub unsafe extern "C" fn zsets(
                                 as libc::c_ulonglong,
                         );
                     if !(temp == 0) {
-                        *((*libzahl_tmp_str_num.as_mut_ptr()).chars)
+                        *((*crate::src::zsets::libzahl_tmp_str_num.as_mut_ptr()).chars)
                             .offset(0 as libc::c_int as isize) = temp as zahl_char_t;
                         temp>>= 32 as libc::c_int;
-                        *((*libzahl_tmp_str_num.as_mut_ptr()).chars)
+                        *((*crate::src::zsets::libzahl_tmp_str_num.as_mut_ptr()).chars)
                             .offset(1 as libc::c_int as isize) = temp as zahl_char_t;
-                        (*libzahl_tmp_str_num.as_mut_ptr())
+                        (*crate::src::zsets::libzahl_tmp_str_num.as_mut_ptr())
                             .used = (1 as libc::c_int + (temp != 0) as libc::c_int)
                             as size_t;
-                        crate::src::zadd::zadd(a, a, libzahl_tmp_str_num.as_mut_ptr());
+                        crate::src::zadd::zadd(a, a, crate::src::zsets::libzahl_tmp_str_num.as_mut_ptr());
                     }
                     if !((*str) != 0) {
                         current_block_39= 1434579379687443766;
                         continue;
                     }
-                    crate::src::zmul::zmul(a, a, libzahl_const_1e19.as_mut_ptr());
+                    crate::src::zmul::zmul(a, a, crate::src::zsets::libzahl_const_1e19.as_mut_ptr());
                     temp= 0 as libc::c_int as libc::c_ulonglong;
                     current_block_39= 2009900886467833939;
                 }

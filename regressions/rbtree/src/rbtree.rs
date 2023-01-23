@@ -130,9 +130,9 @@ unsafe extern "C" fn insert_this(
 }
 #[no_mangle]
 pub unsafe extern "C" fn insert(mut key: t_key, mut value: t_value) {
-    root_rbtree = insert_this(root_rbtree, key, value);
-    if !root_rbtree.is_null() {
-        (*root_rbtree).color = BLACK;
+    crate::src::rbtree::root_rbtree= insert_this(crate::src::rbtree::root_rbtree, key, value);
+    if !crate::src::rbtree::root_rbtree.is_null() {
+        (*crate::src::rbtree::root_rbtree).color= BLACK;
     }else { (); }
 }
 #[no_mangle]

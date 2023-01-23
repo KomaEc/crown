@@ -21,9 +21,9 @@ pub unsafe extern "C" fn zmodmul(
     mut d: *mut crate::src::allocator::C2RustUnnamed,
 ) {
     if a == d {
-        crate::src::zset::zset(libzahl_tmp_modmul.as_mut_ptr().as_mut(), d);
+        crate::src::zset::zset(crate::src::zmodmul::libzahl_tmp_modmul.as_mut_ptr().as_mut(), d);
         crate::src::zmul::zmul(a, b, c);
-        crate::src::zmod::zmod(a, a, libzahl_tmp_modmul.as_mut_ptr());
+        crate::src::zmod::zmod(a, a, crate::src::zmodmul::libzahl_tmp_modmul.as_mut_ptr());
     } else {
         crate::src::zmul::zmul(a, b, c);
         crate::src::zmod::zmod(a, a, d);

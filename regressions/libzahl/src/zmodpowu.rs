@@ -40,40 +40,40 @@ pub unsafe extern "C" fn zmodpowu(
 ) {
     if c == 0 {
         if zzero(b) != 0 {
-            libzahl_error = 33 as libc::c_int;
-            longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+            crate::src::zmodpowu::libzahl_error= 33 as libc::c_int;
+            longjmp(crate::src::zmodpowu::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
         } else if zzero(d) != 0 {
-            libzahl_error = 33 as libc::c_int;
-            longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+            crate::src::zmodpowu::libzahl_error= 33 as libc::c_int;
+            longjmp(crate::src::zmodpowu::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
         } else {
             crate::src::zsetu::zsetu(a.as_mut(), 1 as libc::c_int as libc::c_ulonglong);
         }
         return;
     } else {
         if zzero(d) != 0 {
-            libzahl_error = 33 as libc::c_int;
-            longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+            crate::src::zmodpowu::libzahl_error= 33 as libc::c_int;
+            longjmp(crate::src::zmodpowu::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
         } else if zzero(b) != 0 {
             (*a).sign= 0 as libc::c_int;
             return;
         }
     }
-    crate::src::zmod::zmod(libzahl_tmp_pow_b.as_mut_ptr(), b, d);
-    crate::src::zset::zset(libzahl_tmp_pow_d.as_mut_ptr().as_mut(), d);
+    crate::src::zmod::zmod(crate::src::zmodpowu::libzahl_tmp_pow_b.as_mut_ptr(), b, d);
+    crate::src::zset::zset(crate::src::zmodpowu::libzahl_tmp_pow_d.as_mut_ptr().as_mut(), d);
     crate::src::zsetu::zsetu(a.as_mut(), 1 as libc::c_int as libc::c_ulonglong);
     while c != 0 {
         if c & 1 as libc::c_int as libc::c_ulonglong != 0 {
             crate::src::zmodmul::zmodmul(
                 a,
                 a,
-                libzahl_tmp_pow_b.as_mut_ptr(),
-                libzahl_tmp_pow_d.as_mut_ptr(),
+                crate::src::zmodpowu::libzahl_tmp_pow_b.as_mut_ptr(),
+                crate::src::zmodpowu::libzahl_tmp_pow_d.as_mut_ptr(),
             );
         }
         crate::src::zmodsqr::zmodsqr(
-            libzahl_tmp_pow_b.as_mut_ptr(),
-            libzahl_tmp_pow_b.as_mut_ptr(),
-            libzahl_tmp_pow_d.as_mut_ptr(),
+            crate::src::zmodpowu::libzahl_tmp_pow_b.as_mut_ptr(),
+            crate::src::zmodpowu::libzahl_tmp_pow_b.as_mut_ptr(),
+            crate::src::zmodpowu::libzahl_tmp_pow_d.as_mut_ptr(),
         );
         c>>= 1 as libc::c_int;
     }

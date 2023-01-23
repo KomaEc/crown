@@ -153,7 +153,7 @@ pub type Char = libc::c_char;
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bz__AssertH__fail(mut errcode: libc::c_int) {
     fprintf(
-        stderr,
+        crate::src::bzlib::stderr,
         b"\n\nbzip2/libbzip2: internal error number %d.\nThis is a bug in bzip2/libbzip2, %s.\nPlease report it to: bzip2-devel@sourceware.org.  If this happened\nwhen you were using some program which uses libbzip2 as a\ncomponent, you should also report this bug to the author(s)\nof that program.  Please make an effort to report this bug;\ntimely and accurate bug reports eventually lead to higher\nquality software.  Thanks.\n\n\0"
             as *const u8 as *const libc::c_char,
         errcode,
@@ -161,7 +161,7 @@ pub unsafe extern "C" fn BZ2_bz__AssertH__fail(mut errcode: libc::c_int) {
     );
     if errcode == 1007 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::bzlib::stderr,
             b"\n*** A special note about internal error number 1007 ***\n\nExperience suggests that a common cause of i.e. 1007\nis unreliable memory or other hardware.  The 1007 assertion\njust happens to cross-check the results of huge numbers of\nmemory reads/writes, and so acts (unintendedly) as a stress\ntest of your memory system.\n\nI suggest the following: try compressing the file again,\npossibly monitoring progress in detail with the -vv flag.\n\n* If the error cannot be reproduced, and/or happens at different\n  points in compression, you may have a flaky memory system.\n  Try a memory-test program.  I have used Memtest86\n  (www.memtest86.com).  At the time of writing it is free (GPLd).\n  Memtest86 tests memory much more thorougly than your BIOSs\n  power-on test, and may find failures that the BIOS doesn't.\n\n* If the error can be repeatably reproduced, this is a bug in\n  bzip2, and I would very much like to hear about it.  Please\n  let me know, and, ideally, save a copy of the file causing the\n  problem -- without which I will be unable to investigate it.\n\n\0"
                 as *const u8 as *const libc::c_char,
         );
@@ -367,7 +367,7 @@ unsafe extern "C" fn add_pair_to_block(mut s: *mut crate::src::blocksort::EState
     i= 0 as libc::c_int;
     while i < (*s).state_in_len {
         (*s).blockCRC= (*s).blockCRC << 8 as libc::c_int
-            ^ BZ2_crc32Table[((*s).blockCRC >> 24 as libc::c_int ^ ch as libc::c_uint)
+            ^ crate::src::bzlib::BZ2_crc32Table[((*s).blockCRC >> 24 as libc::c_int ^ ch as libc::c_uint)
                 as usize];
         i+= 1;
     }
@@ -431,7 +431,7 @@ unsafe extern "C" fn copy_input_until_stop(mut s: *mut crate::src::blocksort::ES
             if zchh != (*s).state_in_ch && (*s).state_in_len == 1 as libc::c_int {
                 let mut ch = (*s).state_in_ch as UChar;
                 (*s).blockCRC= (*s).blockCRC << 8 as libc::c_int
-                    ^ BZ2_crc32Table[((*s).blockCRC >> 24 as libc::c_int
+                    ^ crate::src::bzlib::BZ2_crc32Table[((*s).blockCRC >> 24 as libc::c_int
                         ^ ch as libc::c_uint) as usize];
                 (*s).inUse[(*s).state_in_ch as usize]= 1 as libc::c_int as Bool;
                 *(*s).block.offset((*s).nblock as isize) = ch;
@@ -470,7 +470,7 @@ unsafe extern "C" fn copy_input_until_stop(mut s: *mut crate::src::blocksort::ES
             if zchh_0 != (*s).state_in_ch && (*s).state_in_len == 1 as libc::c_int {
                 let mut ch_0 = (*s).state_in_ch as UChar;
                 (*s).blockCRC= (*s).blockCRC << 8 as libc::c_int
-                    ^ BZ2_crc32Table[((*s).blockCRC >> 24 as libc::c_int
+                    ^ crate::src::bzlib::BZ2_crc32Table[((*s).blockCRC >> 24 as libc::c_int
                         ^ ch_0 as libc::c_uint) as usize];
                 (*s).inUse[(*s).state_in_ch as usize]= 1 as libc::c_int as Bool;
                 *(*s).block.offset((*s).nblock as isize) = ch_0;
@@ -757,7 +757,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
                 }
                 *((*(*s).strm).next_out as *mut UChar) = (*s).state_out_ch;
                 (*s).calculatedBlockCRC= (*s).calculatedBlockCRC << 8 as libc::c_int
-                    ^ BZ2_crc32Table[((*s).calculatedBlockCRC >> 24 as libc::c_int
+                    ^ crate::src::bzlib::BZ2_crc32Table[((*s).calculatedBlockCRC >> 24 as libc::c_int
                         ^ (*s).state_out_ch as libc::c_uint) as usize];
                 (*s).state_out_len-= 1;
                 (*(*s).strm).next_out= (*(*s).strm).next_out.offset(1);
@@ -785,7 +785,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
             k1= ((*s).tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
             (*s).tPos>>= 8 as libc::c_int;
             if (*s).rNToGo == 0 as libc::c_int {
-                (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                (*s).rNToGo= crate::src::bzlib::BZ2_rNums[(*s).rTPos as usize];
                 (*s).rTPos+= 1;
                 if (*s).rTPos == 512 as libc::c_int {
                     (*s).rTPos= 0 as libc::c_int;
@@ -816,7 +816,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
                 k1= ((*s).tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
                 (*s).tPos>>= 8 as libc::c_int;
                 if (*s).rNToGo == 0 as libc::c_int {
-                    (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                    (*s).rNToGo= crate::src::bzlib::BZ2_rNums[(*s).rTPos as usize];
                     (*s).rTPos+= 1;
                     if (*s).rTPos == 512 as libc::c_int {
                         (*s).rTPos= 0 as libc::c_int;
@@ -847,7 +847,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
                     k1= ((*s).tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
                     (*s).tPos>>= 8 as libc::c_int;
                     if (*s).rNToGo == 0 as libc::c_int {
-                        (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                        (*s).rNToGo= crate::src::bzlib::BZ2_rNums[(*s).rTPos as usize];
                         (*s).rTPos+= 1;
                         if (*s).rTPos == 512 as libc::c_int {
                             (*s).rTPos= 0 as libc::c_int;
@@ -877,7 +877,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
                         k1= ((*s).tPos & 0xff as libc::c_int as libc::c_uint) as UChar;
                         (*s).tPos>>= 8 as libc::c_int;
                         if (*s).rNToGo == 0 as libc::c_int {
-                            (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                            (*s).rNToGo= crate::src::bzlib::BZ2_rNums[(*s).rTPos as usize];
                             (*s).rTPos+= 1;
                             if (*s).rTPos == 512 as libc::c_int {
                                 (*s).rTPos= 0 as libc::c_int;
@@ -903,7 +903,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
                             as UChar as Int32;
                         (*s).tPos>>= 8 as libc::c_int;
                         if (*s).rNToGo == 0 as libc::c_int {
-                            (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                            (*s).rNToGo= crate::src::bzlib::BZ2_rNums[(*s).rTPos as usize];
                             (*s).rTPos+= 1;
                             if (*s).rTPos == 512 as libc::c_int {
                                 (*s).rTPos= 0 as libc::c_int;
@@ -945,7 +945,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
                     }
                     *(cs_next_out as *mut UChar) = c_state_out_ch;
                     c_calculatedBlockCRC= c_calculatedBlockCRC << 8 as libc::c_int
-                        ^ BZ2_crc32Table[(c_calculatedBlockCRC >> 24 as libc::c_int
+                        ^ crate::src::bzlib::BZ2_crc32Table[(c_calculatedBlockCRC >> 24 as libc::c_int
                             ^ c_state_out_ch as libc::c_uint) as usize];
                     c_state_out_len-= 1;
                     cs_next_out= cs_next_out.offset(1);
@@ -965,7 +965,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_FAST(mut s: *mut DState) -> Bool {
                             *(cs_next_out as *mut UChar) = c_state_out_ch;
                             c_calculatedBlockCRC= c_calculatedBlockCRC
                                 << 8 as libc::c_int
-                                ^ BZ2_crc32Table[(c_calculatedBlockCRC >> 24 as libc::c_int
+                                ^ crate::src::bzlib::BZ2_crc32Table[(c_calculatedBlockCRC >> 24 as libc::c_int
                                     ^ c_state_out_ch as libc::c_uint) as usize];
                             cs_next_out= cs_next_out.offset(1);
                             cs_avail_out= cs_avail_out.wrapping_sub(1);
@@ -1129,7 +1129,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
                 }
                 *((*(*s).strm).next_out as *mut UChar) = (*s).state_out_ch;
                 (*s).calculatedBlockCRC= (*s).calculatedBlockCRC << 8 as libc::c_int
-                    ^ BZ2_crc32Table[((*s).calculatedBlockCRC >> 24 as libc::c_int
+                    ^ crate::src::bzlib::BZ2_crc32Table[((*s).calculatedBlockCRC >> 24 as libc::c_int
                         ^ (*s).state_out_ch as libc::c_uint) as usize];
                 (*s).state_out_len-= 1;
                 (*(*s).strm).next_out= (*(*s).strm).next_out.offset(1);
@@ -1160,7 +1160,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
                         & 0x4 as libc::c_int as libc::c_uint)
                     & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
             if (*s).rNToGo == 0 as libc::c_int {
-                (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                (*s).rNToGo= crate::src::bzlib::BZ2_rNums[(*s).rTPos as usize];
                 (*s).rTPos+= 1;
                 if (*s).rTPos == 512 as libc::c_int {
                     (*s).rTPos= 0 as libc::c_int;
@@ -1196,7 +1196,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
                             & 0x4 as libc::c_int as libc::c_uint)
                         & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
                 if (*s).rNToGo == 0 as libc::c_int {
-                    (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                    (*s).rNToGo= crate::src::bzlib::BZ2_rNums[(*s).rTPos as usize];
                     (*s).rTPos+= 1;
                     if (*s).rTPos == 512 as libc::c_int {
                         (*s).rTPos= 0 as libc::c_int;
@@ -1232,7 +1232,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
                                 & 0x4 as libc::c_int as libc::c_uint)
                             & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
                     if (*s).rNToGo == 0 as libc::c_int {
-                        (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                        (*s).rNToGo= crate::src::bzlib::BZ2_rNums[(*s).rTPos as usize];
                         (*s).rTPos+= 1;
                         if (*s).rTPos == 512 as libc::c_int {
                             (*s).rTPos= 0 as libc::c_int;
@@ -1269,7 +1269,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
                                     & 0x4 as libc::c_int as libc::c_uint)
                                 & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
                         if (*s).rNToGo == 0 as libc::c_int {
-                            (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                            (*s).rNToGo= crate::src::bzlib::BZ2_rNums[(*s).rTPos as usize];
                             (*s).rTPos+= 1;
                             if (*s).rTPos == 512 as libc::c_int {
                                 (*s).rTPos= 0 as libc::c_int;
@@ -1301,7 +1301,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
                                     & 0x4 as libc::c_int as libc::c_uint)
                                 & 0xf as libc::c_int as libc::c_uint) << 16 as libc::c_int;
                         if (*s).rNToGo == 0 as libc::c_int {
-                            (*s).rNToGo= BZ2_rNums[(*s).rTPos as usize];
+                            (*s).rNToGo= crate::src::bzlib::BZ2_rNums[(*s).rTPos as usize];
                             (*s).rTPos+= 1;
                             if (*s).rTPos == 512 as libc::c_int {
                                 (*s).rTPos= 0 as libc::c_int;
@@ -1329,7 +1329,7 @@ unsafe extern "C" fn unRLE_obuf_to_output_SMALL(mut s: *mut DState) -> Bool {
                 }
                 *((*(*s).strm).next_out as *mut UChar) = (*s).state_out_ch;
                 (*s).calculatedBlockCRC= (*s).calculatedBlockCRC << 8 as libc::c_int
-                    ^ BZ2_crc32Table[((*s).calculatedBlockCRC >> 24 as libc::c_int
+                    ^ crate::src::bzlib::BZ2_crc32Table[((*s).calculatedBlockCRC >> 24 as libc::c_int
                         ^ (*s).state_out_ch as libc::c_uint) as usize];
                 (*s).state_out_len-= 1;
                 (*(*s).strm).next_out= (*(*s).strm).next_out.offset(1);
@@ -1485,14 +1485,14 @@ pub unsafe extern "C" fn BZ2_bzDecompress(mut strm: *mut crate::src::blocksort::
                 (*s).calculatedBlockCRC= !(*s).calculatedBlockCRC;
                 if (*s).verbosity >= 3 as libc::c_int {
                     fprintf(
-                        stderr,
+                        crate::src::bzlib::stderr,
                         b" {0x%08x, 0x%08x}\0" as *const u8 as *const libc::c_char,
                         (*s).storedBlockCRC,
                         (*s).calculatedBlockCRC,
                     );
                 }
                 if (*s).verbosity >= 2 as libc::c_int {
-                    fprintf(stderr, b"]\0" as *const u8 as *const libc::c_char);
+                    fprintf(crate::src::bzlib::stderr, b"]\0" as *const u8 as *const libc::c_char);
                 }
                 if (*s).calculatedBlockCRC != (*s).storedBlockCRC {
                     return -(4 as libc::c_int);
@@ -1511,7 +1511,7 @@ pub unsafe extern "C" fn BZ2_bzDecompress(mut strm: *mut crate::src::blocksort::
             if r == 4 as libc::c_int {
                 if (*s).verbosity >= 3 as libc::c_int {
                     fprintf(
-                        stderr,
+                        crate::src::bzlib::stderr,
                         b"\n    combined CRCs: stored = 0x%08x, computed = 0x%08x\0"
                             as *const u8 as *const libc::c_char,
                         (*s).storedCombinedCRC,
@@ -2362,7 +2362,7 @@ unsafe extern "C" fn bzopen_or_bzdopen(
             || strcmp(path, b"\0" as *const u8 as *const libc::c_char)
                 == 0 as libc::c_int
         {
-            fp= if writing != 0 { stdout } else { stdin };
+            fp= if writing != 0 { crate::src::bzlib::stdout } else { crate::src::bzlib::stdin };
         } else {
             fp= fopen(path, mode2.as_mut_ptr());
         }
@@ -2391,7 +2391,7 @@ unsafe extern "C" fn bzopen_or_bzdopen(
         );
     }
     if bzfp.is_null() {();
-        if fp != stdin && fp != stdout {
+        if fp != crate::src::bzlib::stdin && fp != crate::src::bzlib::stdout {
             fclose(fp);
         }
         return 0 as *mut libc::c_void;
@@ -2472,7 +2472,7 @@ pub unsafe extern "C" fn BZ2_bzclose(mut b: *mut libc::c_void) {
     } else {
         BZ2_bzReadClose(core::ptr::addr_of_mut!(bzerr), b);
     }
-    if fp != stdin && fp != stdout {
+    if fp != crate::src::bzlib::stdin && fp != crate::src::bzlib::stdout {
         fclose(fp);
     }
 }
@@ -2504,5 +2504,5 @@ pub unsafe extern "C" fn BZ2_bzerror(
         err= 0 as libc::c_int;
     }
     *errnum.as_deref_mut().unwrap()= err;
-    return bzerrorstrings[(err * -(1 as libc::c_int)) as usize];
+    return crate::src::bzlib::bzerrorstrings[(err * -(1 as libc::c_int)) as usize];
 }

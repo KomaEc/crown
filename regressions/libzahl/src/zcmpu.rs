@@ -27,6 +27,6 @@ pub unsafe extern "C" fn zcmpu(
     if zsignum(a) <= 0 as libc::c_int {
         return -(1 as libc::c_int);
     }
-    crate::src::zsetu::zsetu(libzahl_tmp_cmp.as_mut_ptr().as_mut(), b);
-    return crate::src::zcmp::zcmp(a, libzahl_tmp_cmp.as_mut_ptr());
+    crate::src::zsetu::zsetu(crate::src::zcmpu::libzahl_tmp_cmp.as_mut_ptr().as_mut(), b);
+    return crate::src::zcmp::zcmp(a, crate::src::zcmpu::libzahl_tmp_cmp.as_mut_ptr());
 }

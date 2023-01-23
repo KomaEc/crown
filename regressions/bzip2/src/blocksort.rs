@@ -323,7 +323,7 @@ unsafe extern "C" fn fallbackSort(
     let mut eclass8 = eclass as *mut UChar;
     if verb >= 4 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::blocksort::stderr,
             b"        bucket sorting ...\n\0" as *const u8 as *const libc::c_char,
         );
     }
@@ -385,7 +385,7 @@ unsafe extern "C" fn fallbackSort(
     loop {
         if verb >= 4 as libc::c_int {
             fprintf(
-                stderr,
+                crate::src::blocksort::stderr,
                 b"        depth %6d has \0" as *const u8 as *const libc::c_char,
                 H,
             );
@@ -475,7 +475,7 @@ unsafe extern "C" fn fallbackSort(
         }
         if verb >= 4 as libc::c_int {
             fprintf(
-                stderr,
+                crate::src::blocksort::stderr,
                 b"%6d unresolved strings\n\0" as *const u8 as *const libc::c_char,
                 nNotDone,
             );
@@ -487,7 +487,7 @@ unsafe extern "C" fn fallbackSort(
     }
     if verb >= 4 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::blocksort::stderr,
             b"        reconstructing block ...\n\0" as *const u8 as *const libc::c_char,
         );
     }
@@ -752,12 +752,12 @@ unsafe extern "C" fn mainSimpleSort(
         return;
     }
     hp= 0 as libc::c_int;
-    while incs[hp as usize] < bigN {
+    while crate::src::blocksort::incs[hp as usize] < bigN {
         hp+= 1;
     }
     hp-= 1;
     while hp >= 0 as libc::c_int {
-        h= incs[hp as usize];
+        h= crate::src::blocksort::incs[hp as usize];
         i= lo + h;
         while 1 as libc::c_int as Bool != 0 {
             if i > hi {
@@ -1101,7 +1101,7 @@ unsafe extern "C" fn mainSort(
     let mut s: UInt16 = 0;
     if verb >= 4 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::blocksort::stderr,
             b"        main sort initialise ...\n\0" as *const u8 as *const libc::c_char,
         );
     }
@@ -1150,7 +1150,7 @@ unsafe extern "C" fn mainSort(
     }
     if verb >= 4 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::blocksort::stderr,
             b"        bucket sorting ...\n\0" as *const u8 as *const libc::c_char,
         );
     }
@@ -1270,7 +1270,7 @@ unsafe extern "C" fn mainSort(
                     if hi > lo {
                         if verb >= 4 as libc::c_int {
                             fprintf(
-                                stderr,
+                                crate::src::blocksort::stderr,
                                 b"        qsort [0x%x, 0x%x]   done %d   this %d\n\0"
                                     as *const u8 as *const libc::c_char,
                                 ss,
@@ -1391,7 +1391,7 @@ unsafe extern "C" fn mainSort(
     }
     if verb >= 4 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::blocksort::stderr,
             b"        %d pointers, %d sorted, %d scanned\n\0" as *const u8
                 as *const libc::c_char,
             nblock,
@@ -1433,7 +1433,7 @@ pub unsafe extern "C" fn BZ2_blockSort(mut s: *mut EState) {
         mainSort(ptr, block, quadrant, ftab, nblock, verb, Some(&mut budget));
         if verb >= 3 as libc::c_int {
             fprintf(
-                stderr,
+                crate::src::blocksort::stderr,
                 b"      %d work, %d block, ratio %5.2f\n\0" as *const u8
                     as *const libc::c_char,
                 budgetInit - budget,
@@ -1449,7 +1449,7 @@ pub unsafe extern "C" fn BZ2_blockSort(mut s: *mut EState) {
         if budget < 0 as libc::c_int {
             if verb >= 2 as libc::c_int {
                 fprintf(
-                    stderr,
+                    crate::src::blocksort::stderr,
                     b"    too repetitive; using fallback sorting algorithm\n\0"
                         as *const u8 as *const libc::c_char,
                 );

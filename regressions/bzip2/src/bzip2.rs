@@ -349,15 +349,15 @@ unsafe extern "C" fn compressStream(mut stream: *mut FILE, mut zStream: *mut FIL
             bzf= crate::src::bzlib::BZ2_bzWriteOpen(
                 core::ptr::addr_of_mut!(bzerr),
                 zStream,
-                blockSize100k,
-                verbosity,
-                workFactor,
+                crate::src::bzip2::blockSize100k,
+                crate::src::bzip2::verbosity,
+                crate::src::bzip2::workFactor,
             );
             if bzerr != 0 as libc::c_int {
                 current_block= 12087451728421612484;
             } else {
-                if verbosity >= 2 as libc::c_int {
-                    fprintf(stderr, b"\n\0" as *const u8 as *const libc::c_char);
+                if crate::src::bzip2::verbosity >= 2 as libc::c_int {
+                    fprintf(crate::src::bzip2::stderr, b"\n\0" as *const u8 as *const libc::c_char);
                 }
                 loop {
                     if !(1 as libc::c_int as Bool != 0) {
@@ -413,14 +413,14 @@ unsafe extern "C" fn compressStream(mut stream: *mut FILE, mut zStream: *mut FIL
                             if ret == -(1 as libc::c_int) {
                                 current_block= 13935372548986539192;
                             } else {
-                                if zStream != stdout {
+                                if zStream != crate::src::bzip2::stdout {
                                     let mut fd = fileno(zStream);
                                     if fd < 0 as libc::c_int {
                                         current_block= 13935372548986539192;
                                     } else {
                                         applySavedFileAttrToOutputFile(fd);
                                         ret= fclose(zStream);
-                                        outputHandleJustInCase = 0 as *mut FILE;
+                                        crate::src::bzip2::outputHandleJustInCase= 0 as *mut FILE;
                                         if ret == -(1 as libc::c_int) {
                                             current_block= 13935372548986539192;
                                         } else {
@@ -433,7 +433,7 @@ unsafe extern "C" fn compressStream(mut stream: *mut FILE, mut zStream: *mut FIL
                                 match current_block {
                                     13935372548986539192 => {}
                                     _ => {
-                                        outputHandleJustInCase = 0 as *mut FILE;
+                                        crate::src::bzip2::outputHandleJustInCase= 0 as *mut FILE;
                                         if ferror(stream) != 0 {
                                             current_block= 13935372548986539192;
                                         } else {
@@ -441,12 +441,12 @@ unsafe extern "C" fn compressStream(mut stream: *mut FILE, mut zStream: *mut FIL
                                             if ret == -(1 as libc::c_int) {
                                                 current_block= 13935372548986539192;
                                             } else {
-                                                if verbosity >= 1 as libc::c_int {
+                                                if crate::src::bzip2::verbosity >= 1 as libc::c_int {
                                                     if nbytes_in_lo32 == 0 as libc::c_int as libc::c_uint
                                                         && nbytes_in_hi32 == 0 as libc::c_int as libc::c_uint
                                                     {
                                                         fprintf(
-                                                            stderr,
+                                                            crate::src::bzip2::stderr,
                                                             b" no data compressed.\n\0" as *const u8
                                                                 as *const libc::c_char,
                                                         );
@@ -472,7 +472,7 @@ unsafe extern "C" fn compressStream(mut stream: *mut FILE, mut zStream: *mut FIL
                                                         uInt64_toAscii(buf_nin.as_mut_ptr(), core::ptr::addr_of_mut!(nbytes_in));
                                                         uInt64_toAscii(buf_nout.as_mut_ptr(), core::ptr::addr_of_mut!(nbytes_out));
                                                         fprintf(
-                                                            stderr,
+                                                            crate::src::bzip2::stderr,
                                                             b"%6.3f:1, %6.3f bits/byte, %5.2f%% saved, %s in, %s out.\n\0"
                                                                 as *const u8 as *const libc::c_char,
                                                             nbytes_in_d / nbytes_out_d,
@@ -594,8 +594,8 @@ unsafe extern "C" fn uncompressStream(
                 bzf= crate::src::bzlib::BZ2_bzReadOpen(
                     core::ptr::addr_of_mut!(bzerr),
                     zStream,
-                    verbosity,
-                    smallMode as libc::c_int,
+                    crate::src::bzip2::verbosity,
+                    crate::src::bzip2::smallMode as libc::c_int,
                     unused.as_mut_ptr() as *mut libc::c_void,
                     nUnused,
                 );
@@ -664,7 +664,7 @@ unsafe extern "C" fn uncompressStream(
                 _ => {
                     match current_block {
                         3516197883607697062 => {
-                            if forceOverwrite != 0 {
+                            if crate::src::bzip2::forceOverwrite != 0 {
                                 rewind(zStream);
                                 loop {
                                     if !(1 as libc::c_int as Bool != 0) {
@@ -914,22 +914,22 @@ unsafe extern "C" fn uncompressStream(
                                                     compressedStreamEOF();
                                                 }
                                                 _ => {
-                                                    if zStream != stdin {
+                                                    if zStream != crate::src::bzip2::stdin {
                                                         fclose(zStream);
                                                     }
-                                                    if stream != stdout {
+                                                    if stream != crate::src::bzip2::stdout {
                                                         fclose(stream);
                                                     }
                                                     if streamNo == 1 as libc::c_int {
                                                         return 0 as libc::c_int as Bool
                                                     } else {
-                                                        if noisy != 0 {
+                                                        if crate::src::bzip2::noisy != 0 {
                                                             fprintf(
-                                                                stderr,
+                                                                crate::src::bzip2::stderr,
                                                                 b"\n%s: %s: trailing garbage after EOF ignored\n\0"
                                                                     as *const u8 as *const libc::c_char,
-                                                                progName,
-                                                                inName.as_mut_ptr(),
+                                                                crate::src::bzip2::progName,
+                                                                crate::src::bzip2::inName.as_mut_ptr(),
                                                             );
                                                         }
                                                         return 1 as libc::c_int as Bool;
@@ -986,7 +986,7 @@ unsafe extern "C" fn uncompressStream(
                                 }
                                 _ => {
                                     if !(ferror(zStream) != 0) {
-                                        if stream != stdout {
+                                        if stream != crate::src::bzip2::stdout {
                                             let mut fd = fileno(stream);
                                             if fd < 0 as libc::c_int {
                                                 current_block= 9292489448180700977;
@@ -1005,9 +1005,9 @@ unsafe extern "C" fn uncompressStream(
                                                     if !(ferror(stream) != 0) {
                                                         ret= fflush(stream);
                                                         if !(ret != 0 as libc::c_int) {
-                                                            if stream != stdout {
+                                                            if stream != crate::src::bzip2::stdout {
                                                                 ret= fclose(stream);
-                                                                outputHandleJustInCase = 0 as *mut FILE;
+                                                                crate::src::bzip2::outputHandleJustInCase= 0 as *mut FILE;
                                                                 if ret == -(1 as libc::c_int) {
                                                                     current_block= 9292489448180700977;
                                                                 } else {
@@ -1019,10 +1019,10 @@ unsafe extern "C" fn uncompressStream(
                                                             match current_block {
                                                                 9292489448180700977 => {}
                                                                 _ => {
-                                                                    outputHandleJustInCase = 0 as *mut FILE;
-                                                                    if verbosity >= 2 as libc::c_int {
+                                                                    crate::src::bzip2::outputHandleJustInCase= 0 as *mut FILE;
+                                                                    if crate::src::bzip2::verbosity >= 2 as libc::c_int {
                                                                         fprintf(
-                                                                            stderr,
+                                                                            crate::src::bzip2::stderr,
                                                                             b"\n    \0" as *const u8 as *const libc::c_char,
                                                                         );
                                                                     }
@@ -1069,8 +1069,8 @@ unsafe extern "C" fn testStream(mut zStream: *mut FILE) -> Bool {
             bzf= crate::src::bzlib::BZ2_bzReadOpen(
                 core::ptr::addr_of_mut!(bzerr),
                 zStream,
-                verbosity,
-                smallMode as libc::c_int,
+                crate::src::bzip2::verbosity,
+                crate::src::bzip2::smallMode as libc::c_int,
                 unused.as_mut_ptr() as *mut libc::c_void,
                 nUnused,
             );
@@ -1119,9 +1119,9 @@ unsafe extern "C" fn testStream(mut zStream: *mut FILE) -> Bool {
                 if !(ferror(zStream) != 0) {
                     ret= fclose(zStream);
                     if !(ret == -(1 as libc::c_int)) {
-                        if verbosity >= 2 as libc::c_int {
+                        if crate::src::bzip2::verbosity >= 2 as libc::c_int {
                             fprintf(
-                                stderr,
+                                crate::src::bzip2::stderr,
                                 b"\n    \0" as *const u8 as *const libc::c_char,
                             );
                         }
@@ -1131,12 +1131,12 @@ unsafe extern "C" fn testStream(mut zStream: *mut FILE) -> Bool {
             }
             _ => {
                 crate::src::bzlib::BZ2_bzReadClose(core::ptr::addr_of_mut!(bzerr_dummy), bzf);
-                if verbosity == 0 as libc::c_int {
+                if crate::src::bzip2::verbosity == 0 as libc::c_int {
                     fprintf(
-                        stderr,
+                        crate::src::bzip2::stderr,
                         b"%s: %s: \0" as *const u8 as *const libc::c_char,
-                        progName,
-                        inName.as_mut_ptr(),
+                        crate::src::bzip2::progName,
+                        crate::src::bzip2::inName.as_mut_ptr(),
                     );
                 }
                 match bzerr {
@@ -1243,7 +1243,7 @@ unsafe extern "C" fn testStream(mut zStream: *mut FILE) -> Bool {
                             }
                             _ => {
                                 fprintf(
-                                    stderr,
+                                    crate::src::bzip2::stderr,
                                     b"data integrity (CRC) error in data\n\0" as *const u8
                                         as *const libc::c_char,
                                 );
@@ -1317,7 +1317,7 @@ unsafe extern "C" fn testStream(mut zStream: *mut FILE) -> Bool {
                             }
                             2147259178340583234 => {
                                 fprintf(
-                                    stderr,
+                                    crate::src::bzip2::stderr,
                                     b"file ends unexpectedly\n\0" as *const u8
                                         as *const libc::c_char,
                                 );
@@ -1379,20 +1379,20 @@ unsafe extern "C" fn testStream(mut zStream: *mut FILE) -> Bool {
                                 return 0 as libc::c_int as Bool;
                             }
                             14509768194702470232 => {
-                                if zStream != stdin {
+                                if zStream != crate::src::bzip2::stdin {
                                     fclose(zStream);
                                 }
                                 if streamNo == 1 as libc::c_int {
                                     fprintf(
-                                        stderr,
+                                        crate::src::bzip2::stderr,
                                         b"bad magic number (file not created by bzip2)\n\0"
                                             as *const u8 as *const libc::c_char,
                                     );
                                     return 0 as libc::c_int as Bool;
                                 } else {
-                                    if noisy != 0 {
+                                    if crate::src::bzip2::noisy != 0 {
                                         fprintf(
-                                            stderr,
+                                            crate::src::bzip2::stderr,
                                             b"trailing garbage after EOF ignored\n\0" as *const u8
                                                 as *const libc::c_char,
                                         );
@@ -1478,27 +1478,27 @@ unsafe extern "C" fn testStream(mut zStream: *mut FILE) -> Bool {
     ioError();
 }
 unsafe extern "C" fn setExit(mut v: Int32) {
-    if v > exitValue {
-        exitValue = v;
+    if v > crate::src::bzip2::exitValue {
+        crate::src::bzip2::exitValue= v;
     }
 }
 unsafe extern "C" fn cadvise() {
-    if noisy != 0 {
+    if crate::src::bzip2::noisy != 0 {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"\nIt is possible that the compressed file(s) have become corrupted.\nYou can use the -tvv option to test integrity of such files.\n\nYou can use the `bzip2recover' program to attempt to recover\ndata from undamaged sections of corrupted files.\n\n\0"
                 as *const u8 as *const libc::c_char,
         );
     }
 }
 unsafe extern "C" fn showFileNames() {
-    if noisy != 0 {
+    if crate::src::bzip2::noisy != 0 {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"\tInput file = %s, output file = %s\n\0" as *const u8
                 as *const libc::c_char,
-            inName.as_mut_ptr(),
-            outName.as_mut_ptr(),
+            crate::src::bzip2::inName.as_mut_ptr(),
+            crate::src::bzip2::outName.as_mut_ptr(),
         );
     }
 }
@@ -1521,82 +1521,82 @@ unsafe extern "C" fn cleanUpAndFail(mut ec: Int32) -> ! {
         st_ctim: timespec { tv_sec: 0, tv_nsec: 0 },
         __glibc_reserved: [0; 3],
     };
-    if srcMode == 3 as libc::c_int && opMode != 3 as libc::c_int
-        && deleteOutputOnInterrupt as libc::c_int != 0
+    if crate::src::bzip2::srcMode == 3 as libc::c_int && crate::src::bzip2::opMode != 3 as libc::c_int
+        && crate::src::bzip2::deleteOutputOnInterrupt as libc::c_int != 0
     {
-        retVal= stat(inName.as_mut_ptr(), core::ptr::addr_of_mut!(statBuf));
+        retVal= stat(crate::src::bzip2::inName.as_mut_ptr(), core::ptr::addr_of_mut!(statBuf));
         if retVal == 0 as libc::c_int {
-            if noisy != 0 {
+            if crate::src::bzip2::noisy != 0 {
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: Deleting output file %s, if it exists.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
-                    outName.as_mut_ptr(),
+                    crate::src::bzip2::progName,
+                    crate::src::bzip2::outName.as_mut_ptr(),
                 );
             }
-            if !outputHandleJustInCase.is_null() {
-                fclose(outputHandleJustInCase);
+            if !crate::src::bzip2::outputHandleJustInCase.is_null() {
+                fclose(crate::src::bzip2::outputHandleJustInCase);
             }else { (); }
-            retVal= remove(outName.as_mut_ptr());
+            retVal= remove(crate::src::bzip2::outName.as_mut_ptr());
             if retVal != 0 as libc::c_int {
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: WARNING: deletion of output file (apparently) failed.\n\0"
                         as *const u8 as *const libc::c_char,
-                    progName,
+                    crate::src::bzip2::progName,
                 );
             }
         } else {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s: WARNING: deletion of output file suppressed\n\0" as *const u8
                     as *const libc::c_char,
-                progName,
+                crate::src::bzip2::progName,
             );
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s:    since input file no longer exists.  Output file\n\0"
                     as *const u8 as *const libc::c_char,
-                progName,
+                crate::src::bzip2::progName,
             );
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s:    `%s' may be incomplete.\n\0" as *const u8
                     as *const libc::c_char,
-                progName,
-                outName.as_mut_ptr(),
+                crate::src::bzip2::progName,
+                crate::src::bzip2::outName.as_mut_ptr(),
             );
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s:    I suggest doing an integrity test (bzip2 -tv) of it.\n\0"
                     as *const u8 as *const libc::c_char,
-                progName,
+                crate::src::bzip2::progName,
             );
         }
     }
-    if noisy as libc::c_int != 0 && numFileNames > 0 as libc::c_int
-        && numFilesProcessed < numFileNames
+    if crate::src::bzip2::noisy as libc::c_int != 0 && crate::src::bzip2::numFileNames > 0 as libc::c_int
+        && crate::src::bzip2::numFilesProcessed < crate::src::bzip2::numFileNames
     {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"%s: WARNING: some files have not been processed:\n%s:    %d specified on command line, %d not processed yet.\n\n\0"
                 as *const u8 as *const libc::c_char,
-            progName,
-            progName,
-            numFileNames,
-            numFileNames - numFilesProcessed,
+            crate::src::bzip2::progName,
+            crate::src::bzip2::progName,
+            crate::src::bzip2::numFileNames,
+            crate::src::bzip2::numFileNames - crate::src::bzip2::numFilesProcessed,
         );
     }
     setExit(ec);
-    exit(exitValue);
+    exit(crate::src::bzip2::exitValue);
 }
 unsafe extern "C" fn panic(mut s: *const Char) -> ! {
     fprintf(
-        stderr,
+        crate::src::bzip2::stderr,
         b"\n%s: PANIC -- internal consistency error:\n\t%s\n\tThis is a BUG.  Please report it to:\n\tbzip2-devel@sourceware.org\n\0"
             as *const u8 as *const libc::c_char,
-        progName,
+        crate::src::bzip2::progName,
         s,
     );
     showFileNames();
@@ -1604,24 +1604,24 @@ unsafe extern "C" fn panic(mut s: *const Char) -> ! {
 }
 unsafe extern "C" fn crcError() -> ! {
     fprintf(
-        stderr,
+        crate::src::bzip2::stderr,
         b"\n%s: Data integrity error when decompressing.\n\0" as *const u8
             as *const libc::c_char,
-        progName,
+        crate::src::bzip2::progName,
     );
     showFileNames();
     cadvise();
     cleanUpAndFail(2 as libc::c_int);
 }
 unsafe extern "C" fn compressedStreamEOF() -> ! {
-    if noisy != 0 {
+    if crate::src::bzip2::noisy != 0 {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"\n%s: Compressed file ends unexpectedly;\n\tperhaps it is corrupted?  *Possible* reason follows.\n\0"
                 as *const u8 as *const libc::c_char,
-            progName,
+            crate::src::bzip2::progName,
         );
-        perror(progName);
+        perror(crate::src::bzip2::progName);
         showFileNames();
         cadvise();
     }
@@ -1629,27 +1629,27 @@ unsafe extern "C" fn compressedStreamEOF() -> ! {
 }
 unsafe extern "C" fn ioError() -> ! {
     fprintf(
-        stderr,
+        crate::src::bzip2::stderr,
         b"\n%s: I/O or other error, bailing out.  Possible reason follows.\n\0"
             as *const u8 as *const libc::c_char,
-        progName,
+        crate::src::bzip2::progName,
     );
-    perror(progName);
+    perror(crate::src::bzip2::progName);
     showFileNames();
     cleanUpAndFail(1 as libc::c_int);
 }
 unsafe extern "C" fn mySignalCatcher(mut n: IntNative) {
     fprintf(
-        stderr,
+        crate::src::bzip2::stderr,
         b"\n%s: Control-C or similar caught, quitting.\n\0" as *const u8
             as *const libc::c_char,
-        progName,
+        crate::src::bzip2::progName,
     );
     cleanUpAndFail(1 as libc::c_int);
 }
 unsafe extern "C" fn mySIGSEGVorSIGBUScatcher(mut n: IntNative) {
     let mut msg = 0 as *const libc::c_char;
-    if opMode == 1 as libc::c_int {
+    if crate::src::bzip2::opMode == 1 as libc::c_int {
         msg= b": Caught a SIGSEGV or SIGBUS whilst compressing.\n\n   Possible causes are (most likely first):\n   (1) This computer has unreliable memory or cache hardware\n       (a surprisingly common problem; try a different machine.)\n   (2) A bug in the compiler used to create this executable\n       (unlikely, if you didn't compile bzip2 yourself.)\n   (3) A real bug in bzip2 -- I hope this should never be the case.\n   The user's manual, Section 4.3, has more info on (1) and (2).\n   \n   If you suspect this is a bug in bzip2, or are unsure about (1)\n   or (2), feel free to report it to: bzip2-devel@sourceware.org.\n   Section 4.3 of the user's manual describes the info a useful\n   bug report should have.  If the manual is available on your\n   system, please try and read it before mailing me.  If you don't\n   have the manual or can't be bothered to read it, mail me anyway.\n\n\0"
             as *const u8 as *const libc::c_char;
     } else {
@@ -1661,14 +1661,14 @@ unsafe extern "C" fn mySIGSEGVorSIGBUScatcher(mut n: IntNative) {
         b"\n\0" as *const u8 as *const libc::c_char as *const libc::c_void,
         1 as libc::c_int as size_t,
     );
-    write(2 as libc::c_int, progName as *const libc::c_void, strlen(progName));
+    write(2 as libc::c_int, crate::src::bzip2::progName as *const libc::c_void, strlen(crate::src::bzip2::progName));
     write(2 as libc::c_int, msg as *const libc::c_void, strlen(msg));
     msg= b"\tInput file = \0" as *const u8 as *const libc::c_char;
     write(2 as libc::c_int, msg as *const libc::c_void, strlen(msg));
     write(
         2 as libc::c_int,
-        inName.as_mut_ptr() as *const libc::c_void,
-        strlen(inName.as_mut_ptr()),
+        crate::src::bzip2::inName.as_mut_ptr() as *const libc::c_void,
+        strlen(crate::src::bzip2::inName.as_mut_ptr()),
     );
     write(
         2 as libc::c_int,
@@ -1679,61 +1679,61 @@ unsafe extern "C" fn mySIGSEGVorSIGBUScatcher(mut n: IntNative) {
     write(2 as libc::c_int, msg as *const libc::c_void, strlen(msg));
     write(
         2 as libc::c_int,
-        outName.as_mut_ptr() as *const libc::c_void,
-        strlen(outName.as_mut_ptr()),
+        crate::src::bzip2::outName.as_mut_ptr() as *const libc::c_void,
+        strlen(crate::src::bzip2::outName.as_mut_ptr()),
     );
     write(
         2 as libc::c_int,
         b"\n\0" as *const u8 as *const libc::c_char as *const libc::c_void,
         1 as libc::c_int as size_t,
     );
-    if opMode == 1 as libc::c_int {
+    if crate::src::bzip2::opMode == 1 as libc::c_int {
         setExit(3 as libc::c_int);
     } else {
         setExit(2 as libc::c_int);
     }
-    _exit(exitValue);
+    _exit(crate::src::bzip2::exitValue);
 }
 unsafe extern "C" fn outOfMemory() -> ! {
     fprintf(
-        stderr,
+        crate::src::bzip2::stderr,
         b"\n%s: couldn't allocate enough memory\n\0" as *const u8 as *const libc::c_char,
-        progName,
+        crate::src::bzip2::progName,
     );
     showFileNames();
     cleanUpAndFail(1 as libc::c_int);
 }
 unsafe extern "C" fn configError() -> ! {
     fprintf(
-        stderr,
+        crate::src::bzip2::stderr,
         b"bzip2: I'm not configured correctly for this platform!\n\tI require Int32, Int16 and Char to have sizes\n\tof 4, 2 and 1 bytes to run properly, and they don't.\n\tProbably you can fix this by defining them correctly,\n\tand recompiling.  Bye!\n\0"
             as *const u8 as *const libc::c_char,
     );
     setExit(3 as libc::c_int);
-    exit(exitValue);
+    exit(crate::src::bzip2::exitValue);
 }
 unsafe extern "C" fn pad(mut s: *mut Char) {
     let mut i: Int32 = 0;
-    if strlen(s) as Int32 >= longestFileName {
+    if strlen(s) as Int32 >= crate::src::bzip2::longestFileName {
         return;
     }
     i= 1 as libc::c_int;
-    while i <= longestFileName - strlen(s) as Int32 {
-        fprintf(stderr, b" \0" as *const u8 as *const libc::c_char);
+    while i <= crate::src::bzip2::longestFileName - strlen(s) as Int32 {
+        fprintf(crate::src::bzip2::stderr, b" \0" as *const u8 as *const libc::c_char);
         i+= 1;
     }
 }
 unsafe extern "C" fn copyFileName(mut to: *mut Char, mut from: *mut Char) {
     if strlen(from) > (1034 as libc::c_int - 10 as libc::c_int) as libc::c_ulong {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"bzip2: file name\n`%s'\nis suspiciously (more than %d chars) long.\nTry using a reasonable file name instead.  Sorry! :-)\n\0"
                 as *const u8 as *const libc::c_char,
             from,
             1034 as libc::c_int - 10 as libc::c_int,
         );
         setExit(1 as libc::c_int);
-        exit(exitValue);
+        exit(crate::src::bzip2::exitValue);
     }
     strncpy(to, from, (1034 as libc::c_int - 10 as libc::c_int) as libc::c_ulong);
     *to.offset((1034 as libc::c_int - 10 as libc::c_int) as isize) = '\0' as i32 as Char;
@@ -1840,7 +1840,7 @@ static mut fileMetaInfo: stat = stat {
 };
 unsafe extern "C" fn saveInputFileMetaInfo(mut srcName: *mut Char) {
     let mut retVal: IntNative = 0;
-    retVal= stat(srcName, core::ptr::addr_of_mut!(fileMetaInfo));
+    retVal= stat(srcName, core::ptr::addr_of_mut!(crate::src::bzip2::fileMetaInfo));
     if retVal != 0 as libc::c_int {
         ioError();
     }
@@ -1848,8 +1848,8 @@ unsafe extern "C" fn saveInputFileMetaInfo(mut srcName: *mut Char) {
 unsafe extern "C" fn applySavedTimeInfoToOutputFile(mut dstName: *mut Char) {
     let mut retVal: IntNative = 0;
     let mut uTimBuf = utimbuf { actime: 0, modtime: 0 };
-    uTimBuf.actime= fileMetaInfo.st_atim.tv_sec;
-    uTimBuf.modtime= fileMetaInfo.st_mtim.tv_sec;
+    uTimBuf.actime= crate::src::bzip2::fileMetaInfo.st_atim.tv_sec;
+    uTimBuf.modtime= crate::src::bzip2::fileMetaInfo.st_mtim.tv_sec;
     retVal= utime(dstName, core::ptr::addr_of!(uTimBuf));
     if retVal != 0 as libc::c_int {
         ioError();
@@ -1857,11 +1857,11 @@ unsafe extern "C" fn applySavedTimeInfoToOutputFile(mut dstName: *mut Char) {
 }
 unsafe extern "C" fn applySavedFileAttrToOutputFile(mut fd: IntNative) {
     let mut retVal: IntNative = 0;
-    retVal= fchmod(fd, fileMetaInfo.st_mode);
+    retVal= fchmod(fd, crate::src::bzip2::fileMetaInfo.st_mode);
     if retVal != 0 as libc::c_int {
         ioError();
     }
-    fchown(fd, fileMetaInfo.st_uid, fileMetaInfo.st_gid);
+    fchown(fd, crate::src::bzip2::fileMetaInfo.st_uid, crate::src::bzip2::fileMetaInfo.st_gid);
 }
 unsafe extern "C" fn containsDubiousChars(mut name: *mut Char) -> Bool {
     return 0 as libc::c_int as Bool;
@@ -1928,56 +1928,56 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
         st_ctim: timespec { tv_sec: 0, tv_nsec: 0 },
         __glibc_reserved: [0; 3],
     };
-    deleteOutputOnInterrupt = 0 as libc::c_int as Bool;
-    if name.is_null() && srcMode != 1 as libc::c_int {
+    crate::src::bzip2::deleteOutputOnInterrupt= 0 as libc::c_int as Bool;
+    if name.is_null() && crate::src::bzip2::srcMode != 1 as libc::c_int {
         panic(b"compress: bad modes\n\0" as *const u8 as *const libc::c_char);
     }
-    match  srcMode {
+    match crate::src::bzip2::srcMode {
         1 => {
             copyFileName(
-                inName.as_mut_ptr(),
+                crate::src::bzip2::inName.as_mut_ptr(),
                 b"(stdin)\0" as *const u8 as *const libc::c_char as *mut Char,
             );
             copyFileName(
-                outName.as_mut_ptr(),
+                crate::src::bzip2::outName.as_mut_ptr(),
                 b"(stdout)\0" as *const u8 as *const libc::c_char as *mut Char,
             );
         }
         3 => {
-            copyFileName(inName.as_mut_ptr(), name);
-            copyFileName(outName.as_mut_ptr(), name);
-            strcat(outName.as_mut_ptr(), b".bz2\0" as *const u8 as *const libc::c_char);
+            copyFileName(crate::src::bzip2::inName.as_mut_ptr(), name);
+            copyFileName(crate::src::bzip2::outName.as_mut_ptr(), name);
+            strcat(crate::src::bzip2::outName.as_mut_ptr(), b".bz2\0" as *const u8 as *const libc::c_char);
         }
         2 => {
-            copyFileName(inName.as_mut_ptr(), name);
+            copyFileName(crate::src::bzip2::inName.as_mut_ptr(), name);
             copyFileName(
-                outName.as_mut_ptr(),
+                crate::src::bzip2::outName.as_mut_ptr(),
                 b"(stdout)\0" as *const u8 as *const libc::c_char as *mut Char,
             );
         }
         _ => {}
     }
-    if srcMode != 1 as libc::c_int
-        && containsDubiousChars(inName.as_mut_ptr()) as libc::c_int != 0
+    if crate::src::bzip2::srcMode != 1 as libc::c_int
+        && containsDubiousChars(crate::src::bzip2::inName.as_mut_ptr()) as libc::c_int != 0
     {
-        if noisy != 0 {
+        if crate::src::bzip2::noisy != 0 {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s: There are no files matching `%s'.\n\0" as *const u8
                     as *const libc::c_char,
-                progName,
-                inName.as_mut_ptr(),
+                crate::src::bzip2::progName,
+                crate::src::bzip2::inName.as_mut_ptr(),
             );
         }
         setExit(1 as libc::c_int);
         return;
     }
-    if srcMode != 1 as libc::c_int && fileExists(inName.as_mut_ptr()) == 0 {
+    if crate::src::bzip2::srcMode != 1 as libc::c_int && fileExists(crate::src::bzip2::inName.as_mut_ptr()) == 0 {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"%s: Can't open input file %s: %s.\n\0" as *const u8 as *const libc::c_char,
-            progName,
-            inName.as_mut_ptr(),
+            crate::src::bzip2::progName,
+            crate::src::bzip2::inName.as_mut_ptr(),
             strerror(*__errno_location()),
         );
         setExit(1 as libc::c_int);
@@ -1985,15 +1985,15 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
     }
     i= 0 as libc::c_int;
     while i < 4 as libc::c_int {
-        if hasSuffix(inName.as_mut_ptr(), zSuffix[i as usize]) != 0 {
-            if noisy != 0 {
+        if hasSuffix(crate::src::bzip2::inName.as_mut_ptr(), crate::src::bzip2::zSuffix[i as usize]) != 0 {
+            if crate::src::bzip2::noisy != 0 {
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: Input file %s already has %s suffix.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
-                    inName.as_mut_ptr(),
-                    zSuffix[i as usize],
+                    crate::src::bzip2::progName,
+                    crate::src::bzip2::inName.as_mut_ptr(),
+                    crate::src::bzip2::zSuffix[i as usize],
                 );
             }
             setExit(1 as libc::c_int);
@@ -2001,66 +2001,66 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
         }
         i+= 1;
     }
-    if srcMode == 3 as libc::c_int || srcMode == 2 as libc::c_int {
-        stat(inName.as_mut_ptr(), core::ptr::addr_of_mut!(statBuf));
+    if crate::src::bzip2::srcMode == 3 as libc::c_int || crate::src::bzip2::srcMode == 2 as libc::c_int {
+        stat(crate::src::bzip2::inName.as_mut_ptr(), core::ptr::addr_of_mut!(statBuf));
         if statBuf.st_mode & 0o170000 as libc::c_int as libc::c_uint
             == 0o40000 as libc::c_int as libc::c_uint
         {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s: Input file %s is a directory.\n\0" as *const u8
                     as *const libc::c_char,
-                progName,
-                inName.as_mut_ptr(),
+                crate::src::bzip2::progName,
+                crate::src::bzip2::inName.as_mut_ptr(),
             );
             setExit(1 as libc::c_int);
             return;
         }
     }
-    if srcMode == 3 as libc::c_int && forceOverwrite == 0
-        && notAStandardFile(inName.as_mut_ptr()) as libc::c_int != 0
+    if crate::src::bzip2::srcMode == 3 as libc::c_int && crate::src::bzip2::forceOverwrite == 0
+        && notAStandardFile(crate::src::bzip2::inName.as_mut_ptr()) as libc::c_int != 0
     {
-        if noisy != 0 {
+        if crate::src::bzip2::noisy != 0 {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s: Input file %s is not a normal file.\n\0" as *const u8
                     as *const libc::c_char,
-                progName,
-                inName.as_mut_ptr(),
+                crate::src::bzip2::progName,
+                crate::src::bzip2::inName.as_mut_ptr(),
             );
         }
         setExit(1 as libc::c_int);
         return;
     }
-    if srcMode == 3 as libc::c_int
-        && fileExists(outName.as_mut_ptr()) as libc::c_int != 0
+    if crate::src::bzip2::srcMode == 3 as libc::c_int
+        && fileExists(crate::src::bzip2::outName.as_mut_ptr()) as libc::c_int != 0
     {
-        if forceOverwrite != 0 {
-            remove(outName.as_mut_ptr());
+        if crate::src::bzip2::forceOverwrite != 0 {
+            remove(crate::src::bzip2::outName.as_mut_ptr());
         } else {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s: Output file %s already exists.\n\0" as *const u8
                     as *const libc::c_char,
-                progName,
-                outName.as_mut_ptr(),
+                crate::src::bzip2::progName,
+                crate::src::bzip2::outName.as_mut_ptr(),
             );
             setExit(1 as libc::c_int);
             return;
         }
     }
-    if srcMode == 3 as libc::c_int && forceOverwrite == 0
+    if crate::src::bzip2::srcMode == 3 as libc::c_int && crate::src::bzip2::forceOverwrite == 0
         && {
-            n= countHardLinks(inName.as_mut_ptr());
+            n= countHardLinks(crate::src::bzip2::inName.as_mut_ptr());
             n > 0 as libc::c_int
         }
     {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"%s: Input file %s has %d other link%s.\n\0" as *const u8
                 as *const libc::c_char,
-            progName,
-            inName.as_mut_ptr(),
+            crate::src::bzip2::progName,
+            crate::src::bzip2::inName.as_mut_ptr(),
             n,
             if n > 1 as libc::c_int {
                 b"s\0" as *const u8 as *const libc::c_char
@@ -2071,26 +2071,26 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
         setExit(1 as libc::c_int);
         return;
     }
-    if srcMode == 3 as libc::c_int {
-        saveInputFileMetaInfo(inName.as_mut_ptr());
+    if crate::src::bzip2::srcMode == 3 as libc::c_int {
+        saveInputFileMetaInfo(crate::src::bzip2::inName.as_mut_ptr());
     }
-    match  srcMode {
+    match crate::src::bzip2::srcMode {
         1 => {
-            inStr= stdin;
-            outStr= stdout;
-            if isatty(fileno(stdout)) != 0 {
+            inStr= crate::src::bzip2::stdin;
+            outStr= crate::src::bzip2::stdout;
+            if isatty(fileno(crate::src::bzip2::stdout)) != 0 {
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: I won't write compressed data to a terminal.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
+                    crate::src::bzip2::progName,
                 );
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: For help, type: `%s --help'.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
-                    progName,
+                    crate::src::bzip2::progName,
+                    crate::src::bzip2::progName,
                 );
                 setExit(1 as libc::c_int);
                 return;
@@ -2098,23 +2098,23 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
         }
         2 => {
             inStr= fopen(
-                inName.as_mut_ptr(),
+                crate::src::bzip2::inName.as_mut_ptr(),
                 b"rb\0" as *const u8 as *const libc::c_char,
             );
-            outStr= stdout;
-            if isatty(fileno(stdout)) != 0 {
+            outStr= crate::src::bzip2::stdout;
+            if isatty(fileno(crate::src::bzip2::stdout)) != 0 {
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: I won't write compressed data to a terminal.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
+                    crate::src::bzip2::progName,
                 );
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: For help, type: `%s --help'.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
-                    progName,
+                    crate::src::bzip2::progName,
+                    crate::src::bzip2::progName,
                 );
                 if !inStr.is_null() {
                     fclose(inStr);
@@ -2124,11 +2124,11 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
             }
             if inStr.is_null() {();
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: Can't open input file %s: %s.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
-                    inName.as_mut_ptr(),
+                    crate::src::bzip2::progName,
+                    crate::src::bzip2::inName.as_mut_ptr(),
                     strerror(*__errno_location()),
                 );
                 setExit(1 as libc::c_int);
@@ -2137,20 +2137,20 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
         }
         3 => {
             inStr= fopen(
-                inName.as_mut_ptr(),
+                crate::src::bzip2::inName.as_mut_ptr(),
                 b"rb\0" as *const u8 as *const libc::c_char,
             );
             outStr= fopen_output_safely(
-                outName.as_mut_ptr(),
+                crate::src::bzip2::outName.as_mut_ptr(),
                 b"wb\0" as *const u8 as *const libc::c_char,
             );
             if outStr.is_null() {();
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: Can't create output file %s: %s.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
-                    outName.as_mut_ptr(),
+                    crate::src::bzip2::progName,
+                    crate::src::bzip2::outName.as_mut_ptr(),
                     strerror(*__errno_location()),
                 );
                 if !inStr.is_null() {
@@ -2161,11 +2161,11 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
             }
             if inStr.is_null() {();
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: Can't open input file %s: %s.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
-                    inName.as_mut_ptr(),
+                    crate::src::bzip2::progName,
+                    crate::src::bzip2::inName.as_mut_ptr(),
                     strerror(*__errno_location()),
                 );
                 if !outStr.is_null() {
@@ -2179,30 +2179,30 @@ unsafe extern "C" fn compress(mut name: *mut Char) {
             panic(b"compress: bad srcMode\0" as *const u8 as *const libc::c_char);
         }
     }
-    if verbosity >= 1 as libc::c_int {
+    if crate::src::bzip2::verbosity >= 1 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"  %s: \0" as *const u8 as *const libc::c_char,
-            inName.as_mut_ptr(),
+            crate::src::bzip2::inName.as_mut_ptr(),
         );
-        pad(inName.as_mut_ptr());
-        fflush(stderr);
+        pad(crate::src::bzip2::inName.as_mut_ptr());
+        fflush(crate::src::bzip2::stderr);
     }
-    outputHandleJustInCase = outStr;
-    deleteOutputOnInterrupt = 1 as libc::c_int as Bool;
+    crate::src::bzip2::outputHandleJustInCase= outStr;
+    crate::src::bzip2::deleteOutputOnInterrupt= 1 as libc::c_int as Bool;
     compressStream(inStr, outStr);
-    outputHandleJustInCase = 0 as *mut FILE;
-    if srcMode == 3 as libc::c_int {
-        applySavedTimeInfoToOutputFile(outName.as_mut_ptr());
-        deleteOutputOnInterrupt = 0 as libc::c_int as Bool;
-        if keepInputFiles == 0 {
-            let mut retVal = remove(inName.as_mut_ptr());
+    crate::src::bzip2::outputHandleJustInCase= 0 as *mut FILE;
+    if crate::src::bzip2::srcMode == 3 as libc::c_int {
+        applySavedTimeInfoToOutputFile(crate::src::bzip2::outName.as_mut_ptr());
+        crate::src::bzip2::deleteOutputOnInterrupt= 0 as libc::c_int as Bool;
+        if crate::src::bzip2::keepInputFiles == 0 {
+            let mut retVal = remove(crate::src::bzip2::inName.as_mut_ptr());
             if retVal != 0 as libc::c_int {
                 ioError();
             }
         }
     }
-    deleteOutputOnInterrupt = 0 as libc::c_int as Bool;
+    crate::src::bzip2::deleteOutputOnInterrupt= 0 as libc::c_int as Bool;
 }
 unsafe extern "C" fn uncompress(mut name: *mut Char) {
     let mut current_block: u64;
@@ -2229,25 +2229,25 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
         st_ctim: timespec { tv_sec: 0, tv_nsec: 0 },
         __glibc_reserved: [0; 3],
     };
-    deleteOutputOnInterrupt = 0 as libc::c_int as Bool;
-    if name.is_null() && srcMode != 1 as libc::c_int {
+    crate::src::bzip2::deleteOutputOnInterrupt= 0 as libc::c_int as Bool;
+    if name.is_null() && crate::src::bzip2::srcMode != 1 as libc::c_int {
         panic(b"uncompress: bad modes\n\0" as *const u8 as *const libc::c_char);
     }
     cantGuess= 0 as libc::c_int as Bool;
-    match  srcMode {
+    match crate::src::bzip2::srcMode {
         1 => {
             copyFileName(
-                inName.as_mut_ptr(),
+                crate::src::bzip2::inName.as_mut_ptr(),
                 b"(stdin)\0" as *const u8 as *const libc::c_char as *mut Char,
             );
             copyFileName(
-                outName.as_mut_ptr(),
+                crate::src::bzip2::outName.as_mut_ptr(),
                 b"(stdout)\0" as *const u8 as *const libc::c_char as *mut Char,
             );
         }
         3 => {
-            copyFileName(inName.as_mut_ptr(), name);
-            copyFileName(outName.as_mut_ptr(), name);
+            copyFileName(crate::src::bzip2::inName.as_mut_ptr(), name);
+            copyFileName(crate::src::bzip2::outName.as_mut_ptr(), name);
             i= 0 as libc::c_int;
             loop {
                 if !(i < 4 as libc::c_int) {
@@ -2255,9 +2255,9 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
                     break;
                 }
                 if mapSuffix(
-                    outName.as_mut_ptr(),
-                    zSuffix[i as usize],
-                    unzSuffix[i as usize],
+                    crate::src::bzip2::outName.as_mut_ptr(),
+                    crate::src::bzip2::zSuffix[i as usize],
+                    crate::src::bzip2::unzSuffix[i as usize],
                 ) != 0
                 {
                     current_block= 4283963503649295902;
@@ -2270,119 +2270,119 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
                 _ => {
                     cantGuess= 1 as libc::c_int as Bool;
                     strcat(
-                        outName.as_mut_ptr(),
+                        crate::src::bzip2::outName.as_mut_ptr(),
                         b".out\0" as *const u8 as *const libc::c_char,
                     );
                 }
             }
         }
         2 => {
-            copyFileName(inName.as_mut_ptr(), name);
+            copyFileName(crate::src::bzip2::inName.as_mut_ptr(), name);
             copyFileName(
-                outName.as_mut_ptr(),
+                crate::src::bzip2::outName.as_mut_ptr(),
                 b"(stdout)\0" as *const u8 as *const libc::c_char as *mut Char,
             );
         }
         _ => {}
     }
-    if srcMode != 1 as libc::c_int
-        && containsDubiousChars(inName.as_mut_ptr()) as libc::c_int != 0
+    if crate::src::bzip2::srcMode != 1 as libc::c_int
+        && containsDubiousChars(crate::src::bzip2::inName.as_mut_ptr()) as libc::c_int != 0
     {
-        if noisy != 0 {
+        if crate::src::bzip2::noisy != 0 {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s: There are no files matching `%s'.\n\0" as *const u8
                     as *const libc::c_char,
-                progName,
-                inName.as_mut_ptr(),
+                crate::src::bzip2::progName,
+                crate::src::bzip2::inName.as_mut_ptr(),
             );
         }
         setExit(1 as libc::c_int);
         return;
     }
-    if srcMode != 1 as libc::c_int && fileExists(inName.as_mut_ptr()) == 0 {
+    if crate::src::bzip2::srcMode != 1 as libc::c_int && fileExists(crate::src::bzip2::inName.as_mut_ptr()) == 0 {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"%s: Can't open input file %s: %s.\n\0" as *const u8 as *const libc::c_char,
-            progName,
-            inName.as_mut_ptr(),
+            crate::src::bzip2::progName,
+            crate::src::bzip2::inName.as_mut_ptr(),
             strerror(*__errno_location()),
         );
         setExit(1 as libc::c_int);
         return;
     }
-    if srcMode == 3 as libc::c_int || srcMode == 2 as libc::c_int {
-        stat(inName.as_mut_ptr(), core::ptr::addr_of_mut!(statBuf));
+    if crate::src::bzip2::srcMode == 3 as libc::c_int || crate::src::bzip2::srcMode == 2 as libc::c_int {
+        stat(crate::src::bzip2::inName.as_mut_ptr(), core::ptr::addr_of_mut!(statBuf));
         if statBuf.st_mode & 0o170000 as libc::c_int as libc::c_uint
             == 0o40000 as libc::c_int as libc::c_uint
         {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s: Input file %s is a directory.\n\0" as *const u8
                     as *const libc::c_char,
-                progName,
-                inName.as_mut_ptr(),
+                crate::src::bzip2::progName,
+                crate::src::bzip2::inName.as_mut_ptr(),
             );
             setExit(1 as libc::c_int);
             return;
         }
     }
-    if srcMode == 3 as libc::c_int && forceOverwrite == 0
-        && notAStandardFile(inName.as_mut_ptr()) as libc::c_int != 0
+    if crate::src::bzip2::srcMode == 3 as libc::c_int && crate::src::bzip2::forceOverwrite == 0
+        && notAStandardFile(crate::src::bzip2::inName.as_mut_ptr()) as libc::c_int != 0
     {
-        if noisy != 0 {
+        if crate::src::bzip2::noisy != 0 {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s: Input file %s is not a normal file.\n\0" as *const u8
                     as *const libc::c_char,
-                progName,
-                inName.as_mut_ptr(),
+                crate::src::bzip2::progName,
+                crate::src::bzip2::inName.as_mut_ptr(),
             );
         }
         setExit(1 as libc::c_int);
         return;
     }
     if cantGuess != 0 {
-        if noisy != 0 {
+        if crate::src::bzip2::noisy != 0 {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s: Can't guess original name for %s -- using %s\n\0" as *const u8
                     as *const libc::c_char,
-                progName,
-                inName.as_mut_ptr(),
-                outName.as_mut_ptr(),
+                crate::src::bzip2::progName,
+                crate::src::bzip2::inName.as_mut_ptr(),
+                crate::src::bzip2::outName.as_mut_ptr(),
             );
         }
     }
-    if srcMode == 3 as libc::c_int
-        && fileExists(outName.as_mut_ptr()) as libc::c_int != 0
+    if crate::src::bzip2::srcMode == 3 as libc::c_int
+        && fileExists(crate::src::bzip2::outName.as_mut_ptr()) as libc::c_int != 0
     {
-        if forceOverwrite != 0 {
-            remove(outName.as_mut_ptr());
+        if crate::src::bzip2::forceOverwrite != 0 {
+            remove(crate::src::bzip2::outName.as_mut_ptr());
         } else {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s: Output file %s already exists.\n\0" as *const u8
                     as *const libc::c_char,
-                progName,
-                outName.as_mut_ptr(),
+                crate::src::bzip2::progName,
+                crate::src::bzip2::outName.as_mut_ptr(),
             );
             setExit(1 as libc::c_int);
             return;
         }
     }
-    if srcMode == 3 as libc::c_int && forceOverwrite == 0
+    if crate::src::bzip2::srcMode == 3 as libc::c_int && crate::src::bzip2::forceOverwrite == 0
         && {
-            n= countHardLinks(inName.as_mut_ptr());
+            n= countHardLinks(crate::src::bzip2::inName.as_mut_ptr());
             n > 0 as libc::c_int
         }
     {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"%s: Input file %s has %d other link%s.\n\0" as *const u8
                 as *const libc::c_char,
-            progName,
-            inName.as_mut_ptr(),
+            crate::src::bzip2::progName,
+            crate::src::bzip2::inName.as_mut_ptr(),
             n,
             if n > 1 as libc::c_int {
                 b"s\0" as *const u8 as *const libc::c_char
@@ -2393,26 +2393,26 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
         setExit(1 as libc::c_int);
         return;
     }
-    if srcMode == 3 as libc::c_int {
-        saveInputFileMetaInfo(inName.as_mut_ptr());
+    if crate::src::bzip2::srcMode == 3 as libc::c_int {
+        saveInputFileMetaInfo(crate::src::bzip2::inName.as_mut_ptr());
     }
-    match  srcMode {
+    match crate::src::bzip2::srcMode {
         1 => {
-            inStr= stdin;
-            outStr= stdout;
-            if isatty(fileno(stdin)) != 0 {
+            inStr= crate::src::bzip2::stdin;
+            outStr= crate::src::bzip2::stdout;
+            if isatty(fileno(crate::src::bzip2::stdin)) != 0 {
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: I won't read compressed data from a terminal.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
+                    crate::src::bzip2::progName,
                 );
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: For help, type: `%s --help'.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
-                    progName,
+                    crate::src::bzip2::progName,
+                    crate::src::bzip2::progName,
                 );
                 setExit(1 as libc::c_int);
                 return;
@@ -2420,17 +2420,17 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
         }
         2 => {
             inStr= fopen(
-                inName.as_mut_ptr(),
+                crate::src::bzip2::inName.as_mut_ptr(),
                 b"rb\0" as *const u8 as *const libc::c_char,
             );
-            outStr= stdout;
+            outStr= crate::src::bzip2::stdout;
             if inStr.is_null() {();
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: Can't open input file %s:%s.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
-                    inName.as_mut_ptr(),
+                    crate::src::bzip2::progName,
+                    crate::src::bzip2::inName.as_mut_ptr(),
                     strerror(*__errno_location()),
                 );
                 if !inStr.is_null() {
@@ -2442,20 +2442,20 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
         }
         3 => {
             inStr= fopen(
-                inName.as_mut_ptr(),
+                crate::src::bzip2::inName.as_mut_ptr(),
                 b"rb\0" as *const u8 as *const libc::c_char,
             );
             outStr= fopen_output_safely(
-                outName.as_mut_ptr(),
+                crate::src::bzip2::outName.as_mut_ptr(),
                 b"wb\0" as *const u8 as *const libc::c_char,
             );
             if outStr.is_null() {();
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: Can't create output file %s: %s.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
-                    outName.as_mut_ptr(),
+                    crate::src::bzip2::progName,
+                    crate::src::bzip2::outName.as_mut_ptr(),
                     strerror(*__errno_location()),
                 );
                 if !inStr.is_null() {
@@ -2466,11 +2466,11 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
             }
             if inStr.is_null() {();
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: Can't open input file %s: %s.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
-                    inName.as_mut_ptr(),
+                    crate::src::bzip2::progName,
+                    crate::src::bzip2::inName.as_mut_ptr(),
                     strerror(*__errno_location()),
                 );
                 if !outStr.is_null() {
@@ -2484,58 +2484,58 @@ unsafe extern "C" fn uncompress(mut name: *mut Char) {
             panic(b"uncompress: bad srcMode\0" as *const u8 as *const libc::c_char);
         }
     }
-    if verbosity >= 1 as libc::c_int {
+    if crate::src::bzip2::verbosity >= 1 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"  %s: \0" as *const u8 as *const libc::c_char,
-            inName.as_mut_ptr(),
+            crate::src::bzip2::inName.as_mut_ptr(),
         );
-        pad(inName.as_mut_ptr());
-        fflush(stderr);
+        pad(crate::src::bzip2::inName.as_mut_ptr());
+        fflush(crate::src::bzip2::stderr);
     }
-    outputHandleJustInCase = outStr;
-    deleteOutputOnInterrupt = 1 as libc::c_int as Bool;
+    crate::src::bzip2::outputHandleJustInCase= outStr;
+    crate::src::bzip2::deleteOutputOnInterrupt= 1 as libc::c_int as Bool;
     magicNumberOK= uncompressStream(inStr, outStr);
-    outputHandleJustInCase = 0 as *mut FILE;
+    crate::src::bzip2::outputHandleJustInCase= 0 as *mut FILE;
     if magicNumberOK != 0 {
-        if srcMode == 3 as libc::c_int {
-            applySavedTimeInfoToOutputFile(outName.as_mut_ptr());
-            deleteOutputOnInterrupt = 0 as libc::c_int as Bool;
-            if keepInputFiles == 0 {
-                let mut retVal = remove(inName.as_mut_ptr());
+        if crate::src::bzip2::srcMode == 3 as libc::c_int {
+            applySavedTimeInfoToOutputFile(crate::src::bzip2::outName.as_mut_ptr());
+            crate::src::bzip2::deleteOutputOnInterrupt= 0 as libc::c_int as Bool;
+            if crate::src::bzip2::keepInputFiles == 0 {
+                let mut retVal = remove(crate::src::bzip2::inName.as_mut_ptr());
                 if retVal != 0 as libc::c_int {
                     ioError();
                 }
             }
         }
     } else {
-        unzFailsExist = 1 as libc::c_int as Bool;
-        deleteOutputOnInterrupt = 0 as libc::c_int as Bool;
-        if srcMode == 3 as libc::c_int {
-            let mut retVal_0 = remove(outName.as_mut_ptr());
+        crate::src::bzip2::unzFailsExist= 1 as libc::c_int as Bool;
+        crate::src::bzip2::deleteOutputOnInterrupt= 0 as libc::c_int as Bool;
+        if crate::src::bzip2::srcMode == 3 as libc::c_int {
+            let mut retVal_0 = remove(crate::src::bzip2::outName.as_mut_ptr());
             if retVal_0 != 0 as libc::c_int {
                 ioError();
             }
         }
     }
-    deleteOutputOnInterrupt = 0 as libc::c_int as Bool;
+    crate::src::bzip2::deleteOutputOnInterrupt= 0 as libc::c_int as Bool;
     if magicNumberOK != 0 {
-        if verbosity >= 1 as libc::c_int {
-            fprintf(stderr, b"done\n\0" as *const u8 as *const libc::c_char);
+        if crate::src::bzip2::verbosity >= 1 as libc::c_int {
+            fprintf(crate::src::bzip2::stderr, b"done\n\0" as *const u8 as *const libc::c_char);
         }
     } else {
         setExit(2 as libc::c_int);
-        if verbosity >= 1 as libc::c_int {
+        if crate::src::bzip2::verbosity >= 1 as libc::c_int {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"not a bzip2 file.\n\0" as *const u8 as *const libc::c_char,
             );
         } else {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s: %s is not a bzip2 file.\n\0" as *const u8 as *const libc::c_char,
-                progName,
-                inName.as_mut_ptr(),
+                crate::src::bzip2::progName,
+                crate::src::bzip2::inName.as_mut_ptr(),
             );
         }
     };
@@ -2560,104 +2560,104 @@ unsafe extern "C" fn testf(mut name: *mut Char) {
         st_ctim: timespec { tv_sec: 0, tv_nsec: 0 },
         __glibc_reserved: [0; 3],
     };
-    deleteOutputOnInterrupt = 0 as libc::c_int as Bool;
-    if name.is_null() && srcMode != 1 as libc::c_int {
+    crate::src::bzip2::deleteOutputOnInterrupt= 0 as libc::c_int as Bool;
+    if name.is_null() && crate::src::bzip2::srcMode != 1 as libc::c_int {
         panic(b"testf: bad modes\n\0" as *const u8 as *const libc::c_char);
     }
     copyFileName(
-        outName.as_mut_ptr(),
+        crate::src::bzip2::outName.as_mut_ptr(),
         b"(none)\0" as *const u8 as *const libc::c_char as *mut Char,
     );
-    match  srcMode {
+    match crate::src::bzip2::srcMode {
         1 => {
             copyFileName(
-                inName.as_mut_ptr(),
+                crate::src::bzip2::inName.as_mut_ptr(),
                 b"(stdin)\0" as *const u8 as *const libc::c_char as *mut Char,
             );
         }
         3 => {
-            copyFileName(inName.as_mut_ptr(), name);
+            copyFileName(crate::src::bzip2::inName.as_mut_ptr(), name);
         }
         2 => {
-            copyFileName(inName.as_mut_ptr(), name);
+            copyFileName(crate::src::bzip2::inName.as_mut_ptr(), name);
         }
         _ => {}
     }
-    if srcMode != 1 as libc::c_int
-        && containsDubiousChars(inName.as_mut_ptr()) as libc::c_int != 0
+    if crate::src::bzip2::srcMode != 1 as libc::c_int
+        && containsDubiousChars(crate::src::bzip2::inName.as_mut_ptr()) as libc::c_int != 0
     {
-        if noisy != 0 {
+        if crate::src::bzip2::noisy != 0 {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s: There are no files matching `%s'.\n\0" as *const u8
                     as *const libc::c_char,
-                progName,
-                inName.as_mut_ptr(),
+                crate::src::bzip2::progName,
+                crate::src::bzip2::inName.as_mut_ptr(),
             );
         }
         setExit(1 as libc::c_int);
         return;
     }
-    if srcMode != 1 as libc::c_int && fileExists(inName.as_mut_ptr()) == 0 {
+    if crate::src::bzip2::srcMode != 1 as libc::c_int && fileExists(crate::src::bzip2::inName.as_mut_ptr()) == 0 {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"%s: Can't open input %s: %s.\n\0" as *const u8 as *const libc::c_char,
-            progName,
-            inName.as_mut_ptr(),
+            crate::src::bzip2::progName,
+            crate::src::bzip2::inName.as_mut_ptr(),
             strerror(*__errno_location()),
         );
         setExit(1 as libc::c_int);
         return;
     }
-    if srcMode != 1 as libc::c_int {
-        stat(inName.as_mut_ptr(), core::ptr::addr_of_mut!(statBuf));
+    if crate::src::bzip2::srcMode != 1 as libc::c_int {
+        stat(crate::src::bzip2::inName.as_mut_ptr(), core::ptr::addr_of_mut!(statBuf));
         if statBuf.st_mode & 0o170000 as libc::c_int as libc::c_uint
             == 0o40000 as libc::c_int as libc::c_uint
         {
             fprintf(
-                stderr,
+                crate::src::bzip2::stderr,
                 b"%s: Input file %s is a directory.\n\0" as *const u8
                     as *const libc::c_char,
-                progName,
-                inName.as_mut_ptr(),
+                crate::src::bzip2::progName,
+                crate::src::bzip2::inName.as_mut_ptr(),
             );
             setExit(1 as libc::c_int);
             return;
         }
     }
-    match  srcMode {
+    match crate::src::bzip2::srcMode {
         1 => {
-            if isatty(fileno(stdin)) != 0 {
+            if isatty(fileno(crate::src::bzip2::stdin)) != 0 {
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: I won't read compressed data from a terminal.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
+                    crate::src::bzip2::progName,
                 );
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: For help, type: `%s --help'.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
-                    progName,
+                    crate::src::bzip2::progName,
+                    crate::src::bzip2::progName,
                 );
                 setExit(1 as libc::c_int);
                 return;
             }
-            inStr= stdin;
+            inStr= crate::src::bzip2::stdin;
         }
         2 | 3 => {
             inStr= fopen(
-                inName.as_mut_ptr(),
+                crate::src::bzip2::inName.as_mut_ptr(),
                 b"rb\0" as *const u8 as *const libc::c_char,
             );
             if inStr.is_null() {();
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: Can't open input file %s:%s.\n\0" as *const u8
                         as *const libc::c_char,
-                    progName,
-                    inName.as_mut_ptr(),
+                    crate::src::bzip2::progName,
+                    crate::src::bzip2::inName.as_mut_ptr(),
                     strerror(*__errno_location()),
                 );
                 setExit(1 as libc::c_int);
@@ -2668,27 +2668,27 @@ unsafe extern "C" fn testf(mut name: *mut Char) {
             panic(b"testf: bad srcMode\0" as *const u8 as *const libc::c_char);
         }
     }
-    if verbosity >= 1 as libc::c_int {
+    if crate::src::bzip2::verbosity >= 1 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"  %s: \0" as *const u8 as *const libc::c_char,
-            inName.as_mut_ptr(),
+            crate::src::bzip2::inName.as_mut_ptr(),
         );
-        pad(inName.as_mut_ptr());
-        fflush(stderr);
+        pad(crate::src::bzip2::inName.as_mut_ptr());
+        fflush(crate::src::bzip2::stderr);
     }
-    outputHandleJustInCase = 0 as *mut FILE;
+    crate::src::bzip2::outputHandleJustInCase= 0 as *mut FILE;
     allOK= testStream(inStr);
-    if allOK as libc::c_int != 0 && verbosity >= 1 as libc::c_int {
-        fprintf(stderr, b"ok\n\0" as *const u8 as *const libc::c_char);
+    if allOK as libc::c_int != 0 && crate::src::bzip2::verbosity >= 1 as libc::c_int {
+        fprintf(crate::src::bzip2::stderr, b"ok\n\0" as *const u8 as *const libc::c_char);
     }
     if allOK == 0 {
-        testFailsExist = 1 as libc::c_int as Bool;
+        crate::src::bzip2::testFailsExist= 1 as libc::c_int as Bool;
     }
 }
 unsafe extern "C" fn license() {
     fprintf(
-        stderr,
+        crate::src::bzip2::stderr,
         b"bzip2, a block-sorting file compressor.  Version %s.\n   \n   Copyright (C) 1996-2019 by Julian Seward.\n   \n   This program is free software; you can redistribute it and/or modify\n   it under the terms set out in the LICENSE file, which is included\n   in the bzip2 source distribution.\n   \n   This program is distributed in the hope that it will be useful,\n   but WITHOUT ANY WARRANTY; without even the implied warranty of\n   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n   LICENSE file for more details.\n   \n\0"
             as *const u8 as *const libc::c_char,
         crate::src::bzlib::BZ2_bzlibVersion(),
@@ -2696,7 +2696,7 @@ unsafe extern "C" fn license() {
 }
 unsafe extern "C" fn usage(mut fullProgName: *mut Char) {
     fprintf(
-        stderr,
+        crate::src::bzip2::stderr,
         b"bzip2, a block-sorting file compressor.  Version %s.\n\n   usage: %s [flags and input files in any order]\n\n   -h --help           print this message\n   -d --decompress     force decompression\n   -z --compress       force compression\n   -k --keep           keep (don't delete) input files\n   -f --force          overwrite existing output files\n   -t --test           test compressed file integrity\n   -c --stdout         output to standard out\n   -q --quiet          suppress noncritical error messages\n   -v --verbose        be verbose (a 2nd -v gives more)\n   -L --license        display software version & license\n   -V --version        display software version & license\n   -s --small          use less memory (at most 2500k)\n   -1 .. -9            set block size to 100k .. 900k\n   --fast              alias for -1\n   --best              alias for -9\n\n   If invoked as `bzip2', default action is to compress.\n              as `bunzip2',  default action is to decompress.\n              as `bzcat', default action is to decompress to stdout.\n\n   If no file names are given, bzip2 compresses or decompresses\n   from standard input to standard output.  You can combine\n   short flags, so `-v -4' means the same as -v4 or -4v, &c.\n\n\0"
             as *const u8 as *const libc::c_char,
         crate::src::bzlib::BZ2_bzlibVersion(),
@@ -2705,10 +2705,10 @@ unsafe extern "C" fn usage(mut fullProgName: *mut Char) {
 }
 unsafe extern "C" fn redundant(mut flag: *mut Char) {
     fprintf(
-        stderr,
+        crate::src::bzip2::stderr,
         b"%s: %s is redundant in versions 0.9.5 and above\n\0" as *const u8
             as *const libc::c_char,
-        progName,
+        crate::src::bzip2::progName,
         flag,
     );
 }
@@ -2784,11 +2784,11 @@ unsafe extern "C" fn addFlagsFromEnvVar(
                 }
                 j= 0 as libc::c_int;
                 while j < k {
-                    tmpName[j as usize] = *p.offset(j as isize);
+                    crate::src::bzip2::tmpName[j as usize]= *p.offset(j as isize);
                     j+= 1;
                 }
-                tmpName[k as usize] = 0 as libc::c_int as Char;
-                *argList.as_deref_mut().unwrap()= snocString((*argList.as_deref_mut().unwrap()), tmpName.as_mut_ptr());
+                crate::src::bzip2::tmpName[k as usize]= 0 as libc::c_int as Char;
+                *argList.as_deref_mut().unwrap()= snocString((*argList.as_deref_mut().unwrap()), crate::src::bzip2::tmpName.as_mut_ptr());
             }
         }
     }else { (); }
@@ -2815,20 +2815,20 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
     {
         configError();
     }
-    outputHandleJustInCase = 0 as *mut FILE;
-    smallMode = 0 as libc::c_int as Bool;
-    keepInputFiles = 0 as libc::c_int as Bool;
-    forceOverwrite = 0 as libc::c_int as Bool;
-    noisy = 1 as libc::c_int as Bool;
-    verbosity = 0 as libc::c_int;
-    blockSize100k = 9 as libc::c_int;
-    testFailsExist = 0 as libc::c_int as Bool;
-    unzFailsExist = 0 as libc::c_int as Bool;
-    numFileNames = 0 as libc::c_int;
-    numFilesProcessed = 0 as libc::c_int;
-    workFactor = 30 as libc::c_int;
-    deleteOutputOnInterrupt = 0 as libc::c_int as Bool;
-    exitValue = 0 as libc::c_int;
+    crate::src::bzip2::outputHandleJustInCase= 0 as *mut FILE;
+    crate::src::bzip2::smallMode= 0 as libc::c_int as Bool;
+    crate::src::bzip2::keepInputFiles= 0 as libc::c_int as Bool;
+    crate::src::bzip2::forceOverwrite= 0 as libc::c_int as Bool;
+    crate::src::bzip2::noisy= 1 as libc::c_int as Bool;
+    crate::src::bzip2::verbosity= 0 as libc::c_int;
+    crate::src::bzip2::blockSize100k= 9 as libc::c_int;
+    crate::src::bzip2::testFailsExist= 0 as libc::c_int as Bool;
+    crate::src::bzip2::unzFailsExist= 0 as libc::c_int as Bool;
+    crate::src::bzip2::numFileNames= 0 as libc::c_int;
+    crate::src::bzip2::numFilesProcessed= 0 as libc::c_int;
+    crate::src::bzip2::workFactor= 30 as libc::c_int;
+    crate::src::bzip2::deleteOutputOnInterrupt= 0 as libc::c_int as Bool;
+    crate::src::bzip2::exitValue= 0 as libc::c_int;
     j= 0 as libc::c_int;
     i= j;
     signal(
@@ -2840,21 +2840,21 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
         Some(mySIGSEGVorSIGBUScatcher as unsafe extern "C" fn(IntNative) -> ()),
     );
     copyFileName(
-        inName.as_mut_ptr(),
+        crate::src::bzip2::inName.as_mut_ptr(),
         b"(none)\0" as *const u8 as *const libc::c_char as *mut Char,
     );
     copyFileName(
-        outName.as_mut_ptr(),
+        crate::src::bzip2::outName.as_mut_ptr(),
         b"(none)\0" as *const u8 as *const libc::c_char as *mut Char,
     );
-    copyFileName(progNameReally.as_mut_ptr(), *argv.offset(0 as libc::c_int as isize));
-    progName = &raw mut *progNameReally.as_mut_ptr().offset(0 as libc::c_int as isize)
+    copyFileName(crate::src::bzip2::progNameReally.as_mut_ptr(), *argv.offset(0 as libc::c_int as isize));
+    crate::src::bzip2::progName= core::ptr::addr_of_mut!(*crate::src::bzip2::progNameReally.as_mut_ptr().offset(0 as libc::c_int as isize))
         as *mut Char;
-    tmp= core::ptr::addr_of_mut!(*progNameReally.as_mut_ptr().offset(0 as libc::c_int as isize))
+    tmp= core::ptr::addr_of_mut!(*crate::src::bzip2::progNameReally.as_mut_ptr().offset(0 as libc::c_int as isize))
         as *mut Char;
     while (*tmp) as libc::c_int != '\0' as i32 {
         if (*tmp) as libc::c_int == '/' as i32 {
-            progName = tmp.offset(1 as libc::c_int as isize);
+            crate::src::bzip2::progName= tmp.offset(1 as libc::c_int as isize);
         }
         tmp= tmp.offset(1);
     }
@@ -2872,8 +2872,8 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
         argList= snocString(argList, *argv.offset(i as isize));
         i+= 1;
     }
-    longestFileName = 7 as libc::c_int;
-    numFileNames = 0 as libc::c_int;
+    crate::src::bzip2::longestFileName= 7 as libc::c_int;
+    crate::src::bzip2::numFileNames= 0 as libc::c_int;
     decode= 1 as libc::c_int as Bool;
     aa= argList;
     while !aa.is_null() {
@@ -2884,31 +2884,31 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
         } else if !(*(*aa).name.offset(0 as libc::c_int as isize) as libc::c_int
             == '-' as i32 && decode as libc::c_int != 0)
         {
-            numFileNames += 1;
-            if longestFileName < strlen((*aa).name as *const i8) as Int32 {
-                longestFileName = strlen((*aa).name as *const i8) as Int32;
+            crate::src::bzip2::numFileNames+= 1;
+            if crate::src::bzip2::longestFileName < strlen((*aa).name as *const i8) as Int32 {
+                crate::src::bzip2::longestFileName= strlen((*aa).name as *const i8) as Int32;
             }
         }
         aa= (*aa).link;
     }();
-    if numFileNames == 0 as libc::c_int {
-        srcMode = 1 as libc::c_int;
+    if crate::src::bzip2::numFileNames == 0 as libc::c_int {
+        crate::src::bzip2::srcMode= 1 as libc::c_int;
     } else {
-        srcMode = 3 as libc::c_int;
+        crate::src::bzip2::srcMode= 3 as libc::c_int;
     }
-    opMode = 1 as libc::c_int;
-    if !(strstr(progName, b"unzip\0" as *const u8 as *const libc::c_char)).is_null()
-        || !(strstr(progName, b"UNZIP\0" as *const u8 as *const libc::c_char)).is_null()
+    crate::src::bzip2::opMode= 1 as libc::c_int;
+    if !(strstr(crate::src::bzip2::progName, b"unzip\0" as *const u8 as *const libc::c_char)).is_null()
+        || !(strstr(crate::src::bzip2::progName, b"UNZIP\0" as *const u8 as *const libc::c_char)).is_null()
     {
-        opMode = 2 as libc::c_int;
+        crate::src::bzip2::opMode= 2 as libc::c_int;
     }
-    if !(strstr(progName, b"z2cat\0" as *const u8 as *const libc::c_char)).is_null()
-        || !(strstr(progName, b"Z2CAT\0" as *const u8 as *const libc::c_char)).is_null()
-        || !(strstr(progName, b"zcat\0" as *const u8 as *const libc::c_char)).is_null()
-        || !(strstr(progName, b"ZCAT\0" as *const u8 as *const libc::c_char)).is_null()
+    if !(strstr(crate::src::bzip2::progName, b"z2cat\0" as *const u8 as *const libc::c_char)).is_null()
+        || !(strstr(crate::src::bzip2::progName, b"Z2CAT\0" as *const u8 as *const libc::c_char)).is_null()
+        || !(strstr(crate::src::bzip2::progName, b"zcat\0" as *const u8 as *const libc::c_char)).is_null()
+        || !(strstr(crate::src::bzip2::progName, b"ZCAT\0" as *const u8 as *const libc::c_char)).is_null()
     {
-        opMode = 2 as libc::c_int;
-        srcMode = if numFileNames == 0 as libc::c_int {
+        crate::src::bzip2::opMode= 2 as libc::c_int;
+        crate::src::bzip2::srcMode= if crate::src::bzip2::numFileNames == 0 as libc::c_int {
             1 as libc::c_int
         } else {
             2 as libc::c_int
@@ -2929,74 +2929,74 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
             while *(*aa).name.offset(j as isize) as libc::c_int != '\0' as i32 {
                 match  *(*aa).name.offset(j as isize) as libc::c_int {
                     99 => {
-                        srcMode = 2 as libc::c_int;
+                        crate::src::bzip2::srcMode= 2 as libc::c_int;
                     }
                     100 => {
-                        opMode = 2 as libc::c_int;
+                        crate::src::bzip2::opMode= 2 as libc::c_int;
                     }
                     122 => {
-                        opMode = 1 as libc::c_int;
+                        crate::src::bzip2::opMode= 1 as libc::c_int;
                     }
                     102 => {
-                        forceOverwrite = 1 as libc::c_int as Bool;
+                        crate::src::bzip2::forceOverwrite= 1 as libc::c_int as Bool;
                     }
                     116 => {
-                        opMode = 3 as libc::c_int;
+                        crate::src::bzip2::opMode= 3 as libc::c_int;
                     }
                     107 => {
-                        keepInputFiles = 1 as libc::c_int as Bool;
+                        crate::src::bzip2::keepInputFiles= 1 as libc::c_int as Bool;
                     }
                     115 => {
-                        smallMode = 1 as libc::c_int as Bool;
+                        crate::src::bzip2::smallMode= 1 as libc::c_int as Bool;
                     }
                     113 => {
-                        noisy = 0 as libc::c_int as Bool;
+                        crate::src::bzip2::noisy= 0 as libc::c_int as Bool;
                     }
                     49 => {
-                        blockSize100k = 1 as libc::c_int;
+                        crate::src::bzip2::blockSize100k= 1 as libc::c_int;
                     }
                     50 => {
-                        blockSize100k = 2 as libc::c_int;
+                        crate::src::bzip2::blockSize100k= 2 as libc::c_int;
                     }
                     51 => {
-                        blockSize100k = 3 as libc::c_int;
+                        crate::src::bzip2::blockSize100k= 3 as libc::c_int;
                     }
                     52 => {
-                        blockSize100k = 4 as libc::c_int;
+                        crate::src::bzip2::blockSize100k= 4 as libc::c_int;
                     }
                     53 => {
-                        blockSize100k = 5 as libc::c_int;
+                        crate::src::bzip2::blockSize100k= 5 as libc::c_int;
                     }
                     54 => {
-                        blockSize100k = 6 as libc::c_int;
+                        crate::src::bzip2::blockSize100k= 6 as libc::c_int;
                     }
                     55 => {
-                        blockSize100k = 7 as libc::c_int;
+                        crate::src::bzip2::blockSize100k= 7 as libc::c_int;
                     }
                     56 => {
-                        blockSize100k = 8 as libc::c_int;
+                        crate::src::bzip2::blockSize100k= 8 as libc::c_int;
                     }
                     57 => {
-                        blockSize100k = 9 as libc::c_int;
+                        crate::src::bzip2::blockSize100k= 9 as libc::c_int;
                     }
                     86 | 76 => {
                         license();
                     }
                     118 => {
-                        verbosity += 1;
+                        crate::src::bzip2::verbosity+= 1;
                     }
                     104 => {
-                        usage(progName);
+                        usage(crate::src::bzip2::progName);
                         exit(0 as libc::c_int);
                     }
                     _ => {
                         fprintf(
-                            stderr,
+                            crate::src::bzip2::stderr,
                             b"%s: Bad flag `%s'\n\0" as *const u8 as *const libc::c_char,
-                            progName,
+                            crate::src::bzip2::progName,
                             (*aa).name,
                         );
-                        usage(progName);
+                        usage(crate::src::bzip2::progName);
                         exit(1 as libc::c_int);
                     }
                 }
@@ -3015,37 +3015,37 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
         if strcmp((*aa).name as *const i8, b"--stdout\0" as *const u8 as *const libc::c_char)
             == 0 as libc::c_int
         {
-            srcMode = 2 as libc::c_int;
+            crate::src::bzip2::srcMode= 2 as libc::c_int;
         } else if strcmp(
             (*aa).name as *const i8,
             b"--decompress\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
-            opMode = 2 as libc::c_int;
+            crate::src::bzip2::opMode= 2 as libc::c_int;
         } else if strcmp((*aa).name as *const i8, b"--compress\0" as *const u8 as *const libc::c_char)
             == 0 as libc::c_int
         {
-            opMode = 1 as libc::c_int;
+            crate::src::bzip2::opMode= 1 as libc::c_int;
         } else if strcmp((*aa).name as *const i8, b"--force\0" as *const u8 as *const libc::c_char)
             == 0 as libc::c_int
         {
-            forceOverwrite = 1 as libc::c_int as Bool;
+            crate::src::bzip2::forceOverwrite= 1 as libc::c_int as Bool;
         } else if strcmp((*aa).name as *const i8, b"--test\0" as *const u8 as *const libc::c_char)
             == 0 as libc::c_int
         {
-            opMode = 3 as libc::c_int;
+            crate::src::bzip2::opMode= 3 as libc::c_int;
         } else if strcmp((*aa).name as *const i8, b"--keep\0" as *const u8 as *const libc::c_char)
             == 0 as libc::c_int
         {
-            keepInputFiles = 1 as libc::c_int as Bool;
+            crate::src::bzip2::keepInputFiles= 1 as libc::c_int as Bool;
         } else if strcmp((*aa).name as *const i8, b"--small\0" as *const u8 as *const libc::c_char)
             == 0 as libc::c_int
         {
-            smallMode = 1 as libc::c_int as Bool;
+            crate::src::bzip2::smallMode= 1 as libc::c_int as Bool;
         } else if strcmp((*aa).name as *const i8, b"--quiet\0" as *const u8 as *const libc::c_char)
             == 0 as libc::c_int
         {
-            noisy = 0 as libc::c_int as Bool;
+            crate::src::bzip2::noisy= 0 as libc::c_int as Bool;
         } else if strcmp((*aa).name as *const i8, b"--version\0" as *const u8 as *const libc::c_char)
             == 0 as libc::c_int
         {
@@ -3059,7 +3059,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
             b"--exponential\0" as *const u8 as *const libc::c_char,
         ) == 0 as libc::c_int
         {
-            workFactor = 1 as libc::c_int;
+            crate::src::bzip2::workFactor= 1 as libc::c_int;
         } else if strcmp(
             (*aa).name as *const i8,
             b"--repetitive-best\0" as *const u8 as *const libc::c_char,
@@ -3075,19 +3075,19 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
         } else if strcmp((*aa).name as *const i8, b"--fast\0" as *const u8 as *const libc::c_char)
             == 0 as libc::c_int
         {
-            blockSize100k = 1 as libc::c_int;
+            crate::src::bzip2::blockSize100k= 1 as libc::c_int;
         } else if strcmp((*aa).name as *const i8, b"--best\0" as *const u8 as *const libc::c_char)
             == 0 as libc::c_int
         {
-            blockSize100k = 9 as libc::c_int;
+            crate::src::bzip2::blockSize100k= 9 as libc::c_int;
         } else if strcmp((*aa).name as *const i8, b"--verbose\0" as *const u8 as *const libc::c_char)
             == 0 as libc::c_int
         {
-            verbosity += 1;
+            crate::src::bzip2::verbosity+= 1;
         } else if strcmp((*aa).name as *const i8, b"--help\0" as *const u8 as *const libc::c_char)
             == 0 as libc::c_int
         {
-            usage(progName);
+            usage(crate::src::bzip2::progName);
             exit(0 as libc::c_int);
         } else {
             if strncmp(
@@ -3097,41 +3097,41 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
             ) == 0 as libc::c_int
             {
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"%s: Bad flag `%s'\n\0" as *const u8 as *const libc::c_char,
-                    progName,
+                    crate::src::bzip2::progName,
                     (*aa).name,
                 );
-                usage(progName);
+                usage(crate::src::bzip2::progName);
                 exit(1 as libc::c_int);
             }
         }
         aa= (*aa).link;
     }();
-    if verbosity > 4 as libc::c_int {
-        verbosity = 4 as libc::c_int;
+    if crate::src::bzip2::verbosity > 4 as libc::c_int {
+        crate::src::bzip2::verbosity= 4 as libc::c_int;
     }
-    if opMode == 1 as libc::c_int && smallMode as libc::c_int != 0
-        && blockSize100k > 2 as libc::c_int
+    if crate::src::bzip2::opMode == 1 as libc::c_int && crate::src::bzip2::smallMode as libc::c_int != 0
+        && crate::src::bzip2::blockSize100k > 2 as libc::c_int
     {
-        blockSize100k = 2 as libc::c_int;
+        crate::src::bzip2::blockSize100k= 2 as libc::c_int;
     }
-    if opMode == 3 as libc::c_int && srcMode == 2 as libc::c_int {
+    if crate::src::bzip2::opMode == 3 as libc::c_int && crate::src::bzip2::srcMode == 2 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::bzip2::stderr,
             b"%s: -c and -t cannot be used together.\n\0" as *const u8
                 as *const libc::c_char,
-            progName,
+            crate::src::bzip2::progName,
         );
         exit(1 as libc::c_int);
     }
-    if srcMode == 2 as libc::c_int && numFileNames == 0 as libc::c_int {
-        srcMode = 1 as libc::c_int;
+    if crate::src::bzip2::srcMode == 2 as libc::c_int && crate::src::bzip2::numFileNames == 0 as libc::c_int {
+        crate::src::bzip2::srcMode= 1 as libc::c_int;
     }
-    if opMode != 1 as libc::c_int {
-        blockSize100k = 0 as libc::c_int;
+    if crate::src::bzip2::opMode != 1 as libc::c_int {
+        crate::src::bzip2::blockSize100k= 0 as libc::c_int;
     }
-    if srcMode == 3 as libc::c_int {
+    if crate::src::bzip2::srcMode == 3 as libc::c_int {
         signal(
             2 as libc::c_int,
             Some(mySignalCatcher as unsafe extern "C" fn(IntNative) -> ()),
@@ -3145,8 +3145,8 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
             Some(mySignalCatcher as unsafe extern "C" fn(IntNative) -> ()),
         );
     }
-    if opMode == 1 as libc::c_int {
-        if srcMode == 1 as libc::c_int {
+    if crate::src::bzip2::opMode == 1 as libc::c_int {
+        if crate::src::bzip2::srcMode == 1 as libc::c_int {
             compress(0 as *mut Char);
         } else {
             decode= 1 as libc::c_int as Bool;
@@ -3159,15 +3159,15 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
                 } else if !(*(*aa).name.offset(0 as libc::c_int as isize)
                     as libc::c_int == '-' as i32 && decode as libc::c_int != 0)
                 {
-                    numFilesProcessed += 1;
+                    crate::src::bzip2::numFilesProcessed+= 1;
                     compress((*aa).name);
                 }
                 aa= (*aa).link;
             }();
         }
-    } else if opMode == 2 as libc::c_int {
-        unzFailsExist = 0 as libc::c_int as Bool;
-        if srcMode == 1 as libc::c_int {
+    } else if crate::src::bzip2::opMode == 2 as libc::c_int {
+        crate::src::bzip2::unzFailsExist= 0 as libc::c_int as Bool;
+        if crate::src::bzip2::srcMode == 1 as libc::c_int {
             uncompress(0 as *mut Char);
         } else {
             decode= 1 as libc::c_int as Bool;
@@ -3180,19 +3180,19 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
                 } else if !(*(*aa).name.offset(0 as libc::c_int as isize)
                     as libc::c_int == '-' as i32 && decode as libc::c_int != 0)
                 {
-                    numFilesProcessed += 1;
+                    crate::src::bzip2::numFilesProcessed+= 1;
                     uncompress((*aa).name);
                 }
                 aa= (*aa).link;
             }();
         }
-        if unzFailsExist != 0 {
+        if crate::src::bzip2::unzFailsExist != 0 {
             setExit(2 as libc::c_int);
-            exit(exitValue);
+            exit(crate::src::bzip2::exitValue);
         }
     } else {
-        testFailsExist = 0 as libc::c_int as Bool;
-        if srcMode == 1 as libc::c_int {
+        crate::src::bzip2::testFailsExist= 0 as libc::c_int as Bool;
+        if crate::src::bzip2::srcMode == 1 as libc::c_int {
             testf(0 as *mut Char);
         } else {
             decode= 1 as libc::c_int as Bool;
@@ -3205,22 +3205,22 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
                 } else if !(*(*aa).name.offset(0 as libc::c_int as isize)
                     as libc::c_int == '-' as i32 && decode as libc::c_int != 0)
                 {
-                    numFilesProcessed += 1;
+                    crate::src::bzip2::numFilesProcessed+= 1;
                     testf((*aa).name);
                 }
                 aa= (*aa).link;
             }();
         }
-        if testFailsExist != 0 {
-            if noisy != 0 {
+        if crate::src::bzip2::testFailsExist != 0 {
+            if crate::src::bzip2::noisy != 0 {
                 fprintf(
-                    stderr,
+                    crate::src::bzip2::stderr,
                     b"\nYou can use the `bzip2recover' program to attempt to recover\ndata from undamaged sections of corrupted files.\n\n\0"
                         as *const u8 as *const libc::c_char,
                 );
             }
             setExit(2 as libc::c_int);
-            exit(exitValue);
+            exit(crate::src::bzip2::exitValue);
         }
     }
     aa= argList;
@@ -3232,7 +3232,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
         free(aa as *mut libc::c_void);
         aa= aa2;
     }();
-    return exitValue;
+    return crate::src::bzip2::exitValue;
 }
 // pub fn main() {
 //     let mut args: Vec::<*mut libc::c_char> = Vec::new();

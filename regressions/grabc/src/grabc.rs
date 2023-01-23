@@ -804,7 +804,7 @@ unsafe fn main_0(
         ) == 0 as libc::c_int
         {
             fprintf(
-                stderr,
+                crate::src::grabc::stderr,
                 b"grabc 1.1 by Muhammad A Muquit\n\0" as *const u8 as *const libc::c_char,
             );
             exit(1 as libc::c_int);
@@ -823,7 +823,7 @@ unsafe fn main_0(
     );
     if display.is_null() {();
         fprintf(
-            stderr,
+            crate::src::grabc::stderr,
             b"Failed to open local DISPLAY!'n\0" as *const u8 as *const libc::c_char,
         );
         exit(1 as libc::c_int);
@@ -835,17 +835,17 @@ unsafe fn main_0(
         g= color.green as libc::c_int >> 8 as libc::c_int;
         b= color.blue as libc::c_int >> 8 as libc::c_int;
         fprintf(
-            stdout,
+            crate::src::grabc::stdout,
             b"#%02x%02x%02x\n\0" as *const u8 as *const libc::c_char,
             r,
             g,
             b,
         );
-        fflush(stdout);
-        fprintf(stderr, b"%d,%d,%d\n\0" as *const u8 as *const libc::c_char, r, g, b);
+        fflush(crate::src::grabc::stdout);
+        fprintf(crate::src::grabc::stderr, b"%d,%d,%d\n\0" as *const u8 as *const libc::c_char, r, g, b);
     } else {
         fprintf(
-            stderr,
+            crate::src::grabc::stderr,
             b"Failed to grab color!\n\0" as *const u8 as *const libc::c_char,
         );
     }
@@ -863,17 +863,17 @@ unsafe extern "C" fn selectWindow(
     let mut root_window: Window = 0;
     let mut event = _XEvent { type_0: 0 };
     target_window= 0 as *mut libc::c_void as Window;
-    if cross_cursor == 0 as *mut libc::c_void as Cursor {
-        cross_cursor = XCreateFontCursor(display, 130 as libc::c_int as libc::c_uint);
-        if cross_cursor == 0 as *mut libc::c_void as Cursor {
+    if crate::src::grabc::cross_cursor == 0 as *mut libc::c_void as Cursor {
+        crate::src::grabc::cross_cursor= XCreateFontCursor(display, 130 as libc::c_int as libc::c_uint);
+        if crate::src::grabc::cross_cursor == 0 as *mut libc::c_void as Cursor {
             fprintf(
-                stderr,
+                crate::src::grabc::stderr,
                 b"Failed to create Cross Cursor!\n\0" as *const u8 as *const libc::c_char,
             );
             return 0 as *mut libc::c_void as Window;
         }
     }
-    target_cursor= cross_cursor;
+    target_cursor= crate::src::grabc::cross_cursor;
     root_window= XRootWindow(display, XDefaultScreen(display));
     status= XGrabPointer(
         display,
@@ -904,7 +904,7 @@ unsafe extern "C" fn selectWindow(
             );
             if target_window == 0 as *mut libc::c_void as Window {
                 fprintf(
-                    stderr,
+                    crate::src::grabc::stderr,
                     b"Failed to get target window, getting root window!\n\0" as *const u8
                         as *const libc::c_char,
                 );
@@ -914,12 +914,12 @@ unsafe extern "C" fn selectWindow(
         }
     } else {
         fprintf(
-            stderr,
+            crate::src::grabc::stderr,
             b"Failed to grab mouse!\n\0" as *const u8 as *const libc::c_char,
         );
         exit(1 as libc::c_int);
     }
-    XFreeCursor(display, cross_cursor);
+    XFreeCursor(display, crate::src::grabc::cross_cursor);
     *x.as_deref_mut().unwrap()= event.xbutton.x;
     *y.as_deref_mut().unwrap()= event.xbutton.y;
     return target_window;
@@ -1053,7 +1053,7 @@ unsafe extern "C" fn MXError(
 //     }
 // }
 unsafe extern "C" fn run_static_initializers() {
-    cross_cursor = 0 as *const libc::c_void as *mut libc::c_void as Cursor;
+    crate::src::grabc::cross_cursor= 0 as *const libc::c_void as *mut libc::c_void as Cursor;
 }
 #[used]
 #[cfg_attr(target_os = "linux", link_section = ".init_array")]

@@ -251,60 +251,60 @@ pub static mut libzahl_pool_alloc: [size_t; 64] = [0; 64];
 #[no_mangle]
 pub unsafe extern "C" fn zsetup(mut env: *mut crate::src::allocator::__jmp_buf_tag) {
     let mut i: size_t = 0;
-    *libzahl_jmp_buf.as_mut_ptr() = (*env);
-    if libzahl_set_up == 0 {
-        libzahl_set_up = 1 as libc::c_int;
+    *crate::src::zsetup::libzahl_jmp_buf.as_mut_ptr() = (*env);
+    if crate::src::zsetup::libzahl_set_up == 0 {
+        crate::src::zsetup::libzahl_set_up= 1 as libc::c_int;
         memset(
-            libzahl_pool.as_mut_ptr() as *mut libc::c_void,
+            crate::src::zsetup::libzahl_pool.as_mut_ptr() as *mut libc::c_void,
             0 as libc::c_int,
             ::std::mem::size_of::<[*mut *mut zahl_char_t; 64]>() as libc::c_ulong,
         );
         memset(
-            libzahl_pool_n.as_mut_ptr() as *mut libc::c_void,
+            crate::src::zsetup::libzahl_pool_n.as_mut_ptr() as *mut libc::c_void,
             0 as libc::c_int,
             ::std::mem::size_of::<[size_t; 64]>() as libc::c_ulong,
         );
         memset(
-            libzahl_pool_alloc.as_mut_ptr() as *mut libc::c_void,
+            crate::src::zsetup::libzahl_pool_alloc.as_mut_ptr() as *mut libc::c_void,
             0 as libc::c_int,
             ::std::mem::size_of::<[size_t; 64]>() as libc::c_ulong,
         );
-        zinit(libzahl_tmp_cmp.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_str_num.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_str_mag.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_str_div.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_str_rem.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_gcd_u.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_gcd_v.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_sub.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_modmul.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_div.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_mod.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_pow_b.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_pow_c.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_pow_d.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_modsqr.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_divmod_a.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_divmod_b.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_divmod_d.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_ptest_x.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_ptest_a.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_ptest_d.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_ptest_n1.as_mut_ptr().as_mut());
-        zinit(libzahl_tmp_ptest_n4.as_mut_ptr().as_mut());
-        zinit(libzahl_const_1e19.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_cmp.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_str_num.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_str_mag.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_str_div.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_str_rem.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_gcd_u.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_gcd_v.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_sub.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_modmul.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_div.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_mod.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_pow_b.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_pow_c.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_pow_d.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_modsqr.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_divmod_a.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_divmod_b.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_divmod_d.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_ptest_x.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_ptest_a.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_ptest_d.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_ptest_n1.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_tmp_ptest_n4.as_mut_ptr().as_mut());
+        zinit(crate::src::zsetup::libzahl_const_1e19.as_mut_ptr().as_mut());
         crate::src::zsetu::zsetu(
-            libzahl_const_1e19.as_mut_ptr().as_mut(),
+            crate::src::zsetup::libzahl_const_1e19.as_mut_ptr().as_mut(),
             10000000000000000000 as libc::c_ulonglong,
         );
-        zinit(libzahl_const_1e9.as_mut_ptr().as_mut());
-        crate::src::zsetu::zsetu(libzahl_const_1e9.as_mut_ptr().as_mut(), 1000000000 as libc::c_ulonglong);
-        zinit(libzahl_const_1.as_mut_ptr().as_mut());
-        crate::src::zsetu::zsetu(libzahl_const_1.as_mut_ptr().as_mut(), 1 as libc::c_int as libc::c_ulonglong);
-        zinit(libzahl_const_2.as_mut_ptr().as_mut());
-        crate::src::zsetu::zsetu(libzahl_const_2.as_mut_ptr().as_mut(), 2 as libc::c_int as libc::c_ulonglong);
-        zinit(libzahl_const_4.as_mut_ptr().as_mut());
-        crate::src::zsetu::zsetu(libzahl_const_4.as_mut_ptr().as_mut(), 4 as libc::c_int as libc::c_ulonglong);
+        zinit(crate::src::zsetup::libzahl_const_1e9.as_mut_ptr().as_mut());
+        crate::src::zsetu::zsetu(crate::src::zsetup::libzahl_const_1e9.as_mut_ptr().as_mut(), 1000000000 as libc::c_ulonglong);
+        zinit(crate::src::zsetup::libzahl_const_1.as_mut_ptr().as_mut());
+        crate::src::zsetu::zsetu(crate::src::zsetup::libzahl_const_1.as_mut_ptr().as_mut(), 1 as libc::c_int as libc::c_ulonglong);
+        zinit(crate::src::zsetup::libzahl_const_2.as_mut_ptr().as_mut());
+        crate::src::zsetu::zsetu(crate::src::zsetup::libzahl_const_2.as_mut_ptr().as_mut(), 2 as libc::c_int as libc::c_ulonglong);
+        zinit(crate::src::zsetup::libzahl_const_4.as_mut_ptr().as_mut());
+        crate::src::zsetu::zsetu(crate::src::zsetup::libzahl_const_4.as_mut_ptr().as_mut(), 4 as libc::c_int as libc::c_ulonglong);
         i= 32 as libc::c_int as size_t;
         loop {
             let fresh1 = i;
@@ -312,7 +312,7 @@ pub unsafe extern "C" fn zsetup(mut env: *mut crate::src::allocator::__jmp_buf_t
             if !(fresh1 != 0) {
                 break;
             }
-            zinit((libzahl_tmp_divmod_ds[i as usize]).as_mut_ptr().as_mut());
+            zinit(crate::src::zsetup::libzahl_tmp_divmod_ds[i as usize].as_mut_ptr().as_mut());
         }
     }
 }

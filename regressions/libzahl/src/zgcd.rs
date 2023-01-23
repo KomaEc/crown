@@ -59,24 +59,24 @@ pub unsafe extern "C" fn zgcd(
         }
         return;
     }
-    crate::src::zabs::zabs(libzahl_tmp_gcd_u.as_mut_ptr().as_mut(), b);
-    crate::src::zabs::zabs(libzahl_tmp_gcd_v.as_mut_ptr().as_mut(), c);
+    crate::src::zabs::zabs(crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr().as_mut(), b);
+    crate::src::zabs::zabs(crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr().as_mut(), c);
     neg= (zsignum(b) < 0 as libc::c_int && zsignum(c) < 0 as libc::c_int)
         as libc::c_int;
-    min= if (*libzahl_tmp_gcd_u.as_mut_ptr()).used
-        < (*libzahl_tmp_gcd_v.as_mut_ptr()).used
+    min= if (*crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr()).used
+        < (*crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr()).used
     {
-        (*libzahl_tmp_gcd_u.as_mut_ptr()).used
+        (*crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr()).used
     } else {
-        (*libzahl_tmp_gcd_v.as_mut_ptr()).used
+        (*crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr()).used
     };
     's_124: loop {
         if !(i < min) {
             current_block= 11459959175219260272;
             break;
         }
-        uv= *((*libzahl_tmp_gcd_u.as_mut_ptr()).chars).offset(i as isize)
-            | *((*libzahl_tmp_gcd_v.as_mut_ptr()).chars).offset(i as isize);
+        uv= *((*crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr()).chars).offset(i as isize)
+            | *((*crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr()).chars).offset(i as isize);
         bit= 1 as libc::c_int as zahl_char_t;
         while bit != 0 {
             if uv & bit != 0 {
@@ -92,17 +92,17 @@ pub unsafe extern "C" fn zgcd(
         match current_block {
             4217392055787675399 => {
                 crate::src::zrsh::zrsh(
-                    libzahl_tmp_gcd_u.as_mut_ptr(),
-                    libzahl_tmp_gcd_u.as_mut_ptr(),
+                    crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr(),
+                    crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr(),
                     shifts,
                 );
                 break;
             }
             _ => {
-                if i < (*libzahl_tmp_gcd_u.as_mut_ptr()).used {
+                if i < (*crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr()).used {
                     bit= 1 as libc::c_int as zahl_char_t;
                     while bit != 0 {
-                        if *((*libzahl_tmp_gcd_u.as_mut_ptr()).chars).offset(i as isize)
+                        if *((*crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr()).chars).offset(i as isize)
                             & bit != 0
                         {
                             current_block= 4217392055787675399;
@@ -115,13 +115,13 @@ pub unsafe extern "C" fn zgcd(
                     current_block= 11459959175219260272;
                 } else {
                     's_178: loop {
-                        if !(i < (*libzahl_tmp_gcd_v.as_mut_ptr()).used) {
+                        if !(i < (*crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr()).used) {
                             current_block= 4217392055787675399;
                             break;
                         }
                         bit= 1 as libc::c_int as zahl_char_t;
                         while bit != 0 {
-                            if *((*libzahl_tmp_gcd_v.as_mut_ptr()).chars)
+                            if *((*crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr()).chars)
                                 .offset(i as isize) & bit != 0
                             {
                                 current_block= 4217392055787675399;
@@ -136,32 +136,32 @@ pub unsafe extern "C" fn zgcd(
             }
         }
     }
-    crate::src::zrsh::zrsh(libzahl_tmp_gcd_v.as_mut_ptr(), libzahl_tmp_gcd_v.as_mut_ptr(), shifts);
+    crate::src::zrsh::zrsh(crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr(), crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr(), shifts);
     crate::src::zrsh::zrsh(
-        libzahl_tmp_gcd_u.as_mut_ptr(),
-        libzahl_tmp_gcd_u.as_mut_ptr(),
-        crate::src::zlsb::zlsb(libzahl_tmp_gcd_u.as_mut_ptr()),
+        crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr(),
+        crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr(),
+        crate::src::zlsb::zlsb(crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr()),
     );
     loop {
         crate::src::zrsh::zrsh(
-            libzahl_tmp_gcd_v.as_mut_ptr(),
-            libzahl_tmp_gcd_v.as_mut_ptr(),
-            crate::src::zlsb::zlsb(libzahl_tmp_gcd_v.as_mut_ptr()),
+            crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr(),
+            crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr(),
+            crate::src::zlsb::zlsb(crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr()),
         );
-        if crate::src::zcmpmag::zcmpmag(libzahl_tmp_gcd_u.as_mut_ptr(), libzahl_tmp_gcd_v.as_mut_ptr())
+        if crate::src::zcmpmag::zcmpmag(crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr(), crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr())
             > 0 as libc::c_int
         {
-            crate::src::zswap::zswap(libzahl_tmp_gcd_u.as_mut_ptr().as_mut(), libzahl_tmp_gcd_v.as_mut_ptr().as_mut());
+            crate::src::zswap::zswap(crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr().as_mut(), crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr().as_mut());
         }
         crate::src::zsub::zsub_unsigned(
-            libzahl_tmp_gcd_v.as_mut_ptr(),
-            libzahl_tmp_gcd_v.as_mut_ptr(),
-            libzahl_tmp_gcd_u.as_mut_ptr(),
+            crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr(),
+            crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr(),
+            crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr(),
         );
-        if !(zzero(libzahl_tmp_gcd_v.as_mut_ptr()) == 0) {
+        if !(zzero(crate::src::zgcd::libzahl_tmp_gcd_v.as_mut_ptr()) == 0) {
             break;
         }
     }
-    crate::src::zlsh::zlsh(a.as_mut(), libzahl_tmp_gcd_u.as_mut_ptr(), shifts);
+    crate::src::zlsh::zlsh(a.as_mut(), crate::src::zgcd::libzahl_tmp_gcd_u.as_mut_ptr(), shifts);
     (*a).sign= if neg != 0 { -(1 as libc::c_int) } else { 1 as libc::c_int };
 }

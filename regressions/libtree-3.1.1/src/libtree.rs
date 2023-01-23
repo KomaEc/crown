@@ -405,7 +405,7 @@ pub union C2RustUnnamed_1 {
 }
 #[inline]
 unsafe extern "C" fn putchar(mut __c: libc::c_int) -> libc::c_int {
-    return _IO_putc(__c, stdout);
+    return _IO_putc(__c, crate::src::libtree::stdout);
 }
 #[inline]
 unsafe extern "C" fn stat(
@@ -610,8 +610,8 @@ unsafe extern "C" fn is_in_exclude_list(mut soname: *mut libc::c_char) -> libc::
         < (::std::mem::size_of::<[*const libc::c_char; 14]>() as libc::c_ulong)
             .wrapping_div(::std::mem::size_of::<*mut libc::c_char>() as libc::c_ulong)
     {
-        let mut len = strlen(exclude_list[j as usize]);
-        if strncmp(start, exclude_list[j as usize], len) != 0 as libc::c_int {
+        let mut len = strlen(crate::src::libtree::exclude_list[j as usize]);
+        if strncmp(start, crate::src::libtree::exclude_list[j as usize], len) != 0 as libc::c_int {
             j= j.wrapping_add(1);
         } else {
             return 1 as libc::c_int
@@ -631,7 +631,7 @@ unsafe extern "C" fn tree_preamble(mut s: *mut libtree_state_t, mut depth: size_
             } else {
                 b"\xE2\x94\x82   \0" as *const u8 as *const libc::c_char
             },
-            stdout,
+            crate::src::libtree::stdout,
         );
         i= i.wrapping_add(1);
     }
@@ -645,7 +645,7 @@ unsafe extern "C" fn tree_preamble(mut s: *mut libtree_state_t, mut depth: size_
             b"\xE2\x94\x9C\xE2\x94\x80\xE2\x94\x80 \0" as *const u8
                 as *const libc::c_char
         },
-        stdout,
+        crate::src::libtree::stdout,
     );
 }
 unsafe extern "C" fn apply_exclude_list(
@@ -740,17 +740,17 @@ unsafe extern "C" fn check_absolute_paths(
             if !err.is_null() {
                 tree_preamble(s.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), depth.wrapping_add(1 as libc::c_int as libc::c_ulong));
                 if (*s.as_deref().unwrap()).color != 0 {
-                    fputs(b"\x1B[1;31m\0" as *const u8 as *const libc::c_char, stdout);
+                    fputs(b"\x1B[1;31m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
                 }
-                fputs(path.as_mut_ptr(), stdout);
-                fputs(b" is not absolute\0" as *const u8 as *const libc::c_char, stdout);
+                fputs(path.as_mut_ptr(), crate::src::libtree::stdout);
+                fputs(b" is not absolute\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
                 fputs(
                     if (*s.as_deref().unwrap()).color != 0 {
                         b"\x1B[0m\n\0" as *const u8 as *const libc::c_char
                     } else {
                         b"\n\0" as *const u8 as *const libc::c_char
                     },
-                    stdout,
+                    crate::src::libtree::stdout,
                 );
             }else { (); }
             let mut tmp = *(*needed_buf_offsets).p.offset(i as isize);
@@ -981,8 +981,8 @@ unsafe extern "C" fn print_colon_delimited_paths(
         if start == next {
             start= start.offset(1);
         } else {
-            fputs(indent, stdout);
-            fputs(b"    \0" as *const u8 as *const libc::c_char, stdout);
+            fputs(indent, crate::src::libtree::stdout);
+            fputs(b"    \0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
             if next.is_null() {();
                 puts(start);
             } else {
@@ -990,7 +990,7 @@ unsafe extern "C" fn print_colon_delimited_paths(
                     start as *const libc::c_void,
                     1 as libc::c_int as size_t,
                     next.offset_from(start) as libc::c_long as size_t,
-                    stdout,
+                    crate::src::libtree::stdout,
                 );
                 putchar('\n' as i32);
             }
@@ -1018,24 +1018,24 @@ unsafe extern "C" fn print_line(
             !slash.is_null()
         }
     {
-        fputs(color_regular, stdout);
+        fputs(color_regular, crate::src::libtree::stdout);
         fwrite(
             name as *const libc::c_void,
             1 as libc::c_int as size_t,
             slash.offset(1 as libc::c_int as isize).offset_from(name) as libc::c_long
                 as size_t,
-            stdout,
+            crate::src::libtree::stdout,
         );
-        fputs(color_bold, stdout);
-        fputs(slash.offset(1 as libc::c_int as isize), stdout);
+        fputs(color_bold, crate::src::libtree::stdout);
+        fputs(slash.offset(1 as libc::c_int as isize), crate::src::libtree::stdout);
     } else {
         if (*s.as_deref().unwrap()).color != 0 {
-            fputs(color_bold, stdout);
+            fputs(color_bold, crate::src::libtree::stdout);
         }
-        fputs(name, stdout);
+        fputs(name, crate::src::libtree::stdout);
     }
     if (*s.as_deref().unwrap()).color != 0 && highlight != 0 {
-        fputs(b"\x1B[0m \x1B[33m\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b"\x1B[0m \x1B[33m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
     } else {
         putchar(' ' as i32);
     }
@@ -1043,23 +1043,23 @@ unsafe extern "C" fn print_line(
     match  reason.how as libc::c_uint {
         2 => {
             if reason.depth.wrapping_add(1 as libc::c_int as libc::c_ulong) >= depth {
-                fputs(b"[rpath]\0" as *const u8 as *const libc::c_char, stdout);
+                fputs(b"[rpath]\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
             } else {
                 let mut num: [libc::c_char; 8] = [0; 8];
                 utoa(
                     num.as_mut_ptr(),
                     reason.depth.wrapping_add(1 as libc::c_int as libc::c_ulong),
                 );
-                fputs(b"[rpath of \0" as *const u8 as *const libc::c_char, stdout);
-                fputs(num.as_mut_ptr(), stdout);
+                fputs(b"[rpath of \0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
+                fputs(num.as_mut_ptr(), crate::src::libtree::stdout);
                 putchar(']' as i32);
             }
         }
         3 => {
-            fputs(b"[LD_LIBRARY_PATH]\0" as *const u8 as *const libc::c_char, stdout);
+            fputs(b"[LD_LIBRARY_PATH]\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
         }
         4 => {
-            fputs(b"[runpath]\0" as *const u8 as *const libc::c_char, stdout);
+            fputs(b"[runpath]\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
         }
         5 => {
             putchar('[' as i32);
@@ -1069,19 +1069,19 @@ unsafe extern "C" fn print_line(
             } else {
                 conf_name.offset(1 as libc::c_int as isize)
             };
-            fputs(conf_name, stdout);
+            fputs(conf_name, crate::src::libtree::stdout);
             putchar(']' as i32);
         }
         1 => {
-            fputs(b"[direct]\0" as *const u8 as *const libc::c_char, stdout);
+            fputs(b"[direct]\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
         }
         6 => {
-            fputs(b"[default path]\0" as *const u8 as *const libc::c_char, stdout);
+            fputs(b"[default path]\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
         }
         _ => {}
     }
     if (*s.as_deref().unwrap()).color != 0 {
-        fputs(b"\x1B[0m\n\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b"\x1B[0m\n\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
     } else {
         putchar('\n' as i32);
     };
@@ -1101,16 +1101,16 @@ unsafe extern "C" fn print_error(
             >= needed_not_found) as libc::c_int as libc::c_char;
         tree_preamble(s.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), depth.wrapping_add(1 as libc::c_int as libc::c_ulong));
         if (*s.as_deref().unwrap()).color != 0 {
-            fputs(b"\x1B[1;31m\0" as *const u8 as *const libc::c_char, stdout);
+            fputs(b"\x1B[1;31m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
         }
         fputs(
             (*s.as_deref().unwrap()).string_table.arr
                 .offset(*(*needed_buf_offsets).p.offset(i as isize) as isize),
-            stdout,
+            crate::src::libtree::stdout,
         );
-        fputs(b" not found\n\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b" not found\n\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
         if (*s.as_deref().unwrap()).color != 0 {
-            fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, stdout);
+            fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
         }
         i= i.wrapping_add(1);
     }
@@ -1151,51 +1151,51 @@ unsafe extern "C" fn print_error(
         i_0= i_0.wrapping_add(1);
     }
     strcpy(p, box_vertical);
-    fputs(indent as *const i8, stdout);
+    fputs(indent as *const i8, crate::src::libtree::stdout);
     if (*s.as_deref().unwrap()).color != 0 {
-        fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
     }
     fputs(
         b" Paths considered in this order:\n\0" as *const u8 as *const libc::c_char,
-        stdout,
+        crate::src::libtree::stdout,
     );
     if (*s.as_deref().unwrap()).color != 0 {
-        fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
     }
-    fputs(indent as *const i8, stdout);
+    fputs(indent as *const i8, crate::src::libtree::stdout);
     if !runpath.is_null() {
         if (*s.as_deref().unwrap()).color != 0 {
-            fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, stdout);
+            fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
         }
         fputs(
             b" 1. rpath is skipped because runpath was set\n\0" as *const u8
                 as *const libc::c_char,
-            stdout,
+            crate::src::libtree::stdout,
         );
         if (*s.as_deref().unwrap()).color != 0 {
-            fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, stdout);
+            fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
         }
     } else {();
         if (*s.as_deref().unwrap()).color != 0 {
-            fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, stdout);
+            fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
         }
-        fputs(b" 1. rpath:\n\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b" 1. rpath:\n\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
         if (*s.as_deref().unwrap()).color != 0 {
-            fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, stdout);
+            fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
         }
         let mut j = depth as libc::c_int;
         while j >= 0 as libc::c_int {
             if (*s.as_deref().unwrap()).rpath_offsets[j as usize] != 18446744073709551615 as libc::c_ulong {
                 let mut num: [libc::c_char; 8] = [0; 8];
                 utoa(num.as_mut_ptr(), (j + 1 as libc::c_int) as size_t);
-                fputs(indent as *const i8, stdout);
+                fputs(indent as *const i8, crate::src::libtree::stdout);
                 if (*s.as_deref().unwrap()).color != 0 {
-                    fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, stdout);
+                    fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
                 }
-                fputs(b"    depth \0" as *const u8 as *const libc::c_char, stdout);
-                fputs(num.as_mut_ptr(), stdout);
+                fputs(b"    depth \0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
+                fputs(num.as_mut_ptr(), crate::src::libtree::stdout);
                 if (*s.as_deref().unwrap()).color != 0 {
-                    fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, stdout);
+                    fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
                 }
                 putchar('\n' as i32);
                 print_colon_delimited_paths(
@@ -1207,9 +1207,9 @@ unsafe extern "C" fn print_error(
             j-= 1;
         }
     }
-    fputs(indent as *const i8, stdout);
+    fputs(indent as *const i8, crate::src::libtree::stdout);
     if (*s.as_deref().unwrap()).color != 0 {
-        fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
     }
     fputs(
         if (*s.as_deref().unwrap()).ld_library_path_offset == 18446744073709551615 as libc::c_ulong {
@@ -1217,10 +1217,10 @@ unsafe extern "C" fn print_error(
         } else {
             b" 2. LD_LIBRARY_PATH:\n\0" as *const u8 as *const libc::c_char
         },
-        stdout,
+        crate::src::libtree::stdout,
     );
     if (*s.as_deref().unwrap()).color != 0 {
-        fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
     }
     if (*s.as_deref().unwrap()).ld_library_path_offset != 18446744073709551615 as libc::c_ulong {
         print_colon_delimited_paths(
@@ -1228,9 +1228,9 @@ unsafe extern "C" fn print_error(
             indent,
         );
     }
-    fputs(indent as *const i8, stdout);
+    fputs(indent as *const i8, crate::src::libtree::stdout);
     if (*s.as_deref().unwrap()).color != 0 {
-        fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
     }
     fputs(
         if runpath.is_null() {();
@@ -1238,17 +1238,17 @@ unsafe extern "C" fn print_error(
         } else {
             b" 3. runpath:\n\0" as *const u8 as *const libc::c_char
         },
-        stdout,
+        crate::src::libtree::stdout,
     );
     if (*s.as_deref().unwrap()).color != 0 {
-        fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
     }
     if !runpath.is_null() {
         print_colon_delimited_paths(runpath, indent);
     }else { (); }
-    fputs(indent as *const i8, stdout);
+    fputs(indent as *const i8, crate::src::libtree::stdout);
     if (*s.as_deref().unwrap()).color != 0 {
-        fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
     }
     fputs(
         if no_def_lib != 0 {
@@ -1257,18 +1257,18 @@ unsafe extern "C" fn print_error(
         } else {
             b" 4. ld config files:\n\0" as *const u8 as *const libc::c_char
         },
-        stdout,
+        crate::src::libtree::stdout,
     );
     if (*s.as_deref().unwrap()).color != 0 {
-        fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
     }
     print_colon_delimited_paths(
         (*s.as_deref().unwrap()).string_table.arr.offset((*s.as_deref().unwrap()).ld_so_conf_offset as isize),
         indent,
     );
-    fputs(indent as *const i8, stdout);
+    fputs(indent as *const i8, crate::src::libtree::stdout);
     if (*s.as_deref().unwrap()).color != 0 {
-        fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b"\x1B[0;90m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
     }
     fputs(
         if no_def_lib != 0 {
@@ -1277,10 +1277,10 @@ unsafe extern "C" fn print_error(
         } else {
             b" 5. Standard paths:\n\0" as *const u8 as *const libc::c_char
         },
-        stdout,
+        crate::src::libtree::stdout,
     );
     if (*s.as_deref().unwrap()).color != 0 {
-        fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, stdout);
+        fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
     }
     print_colon_delimited_paths(
         (*s.as_deref().unwrap()).string_table.arr.offset((*s.as_deref().unwrap()).default_paths_offset as isize),
@@ -2230,12 +2230,12 @@ unsafe extern "C" fn print_tree(
                 init
             },
         );
-        fflush(stdout);
+        fflush(crate::src::libtree::stdout);
         if code != 0 as libc::c_int {
             exit_code= code;
-            fputs(b"Error [\0" as *const u8 as *const libc::c_char, stderr);
-            fputs(*pathv.offset(i as isize), stderr);
-            fputs(b"]: \0" as *const u8 as *const libc::c_char, stderr);
+            fputs(b"Error [\0" as *const u8 as *const libc::c_char, crate::src::libtree::stderr);
+            fputs(*pathv.offset(i as isize), crate::src::libtree::stderr);
+            fputs(b"]: \0" as *const u8 as *const libc::c_char, crate::src::libtree::stderr);
         }
         let mut msg = 0 as *mut libc::c_char;
         match code {
@@ -2330,9 +2330,9 @@ unsafe extern "C" fn print_tree(
             _ => {}
         }
         if !msg.is_null() {
-            fputs(msg, stderr);
+            fputs(msg, crate::src::libtree::stderr);
         }else { (); }
-        fflush(stderr);
+        fflush(crate::src::libtree::stderr);
         i+= 1;
     }
     libtree_state_free(s.as_deref_mut());
@@ -2440,7 +2440,7 @@ unsafe fn main_0(
                         fputs(
                             b"Expected value after `--ldconf`\n\0" as *const u8
                                 as *const libc::c_char,
-                            stderr,
+                            crate::src::libtree::stderr,
                         );
                         return 1 as libc::c_int;
                     }
@@ -2453,7 +2453,7 @@ unsafe fn main_0(
                         fputs(
                             b"Expected value after `--max-depth`\n\0" as *const u8
                                 as *const libc::c_char,
-                            stderr,
+                            crate::src::libtree::stderr,
                         );
                         return 1 as libc::c_int;
                     }
@@ -2470,10 +2470,10 @@ unsafe fn main_0(
                 } else {
                     fputs(
                         b"Unrecognized flag `--\0" as *const u8 as *const libc::c_char,
-                        stderr,
+                        crate::src::libtree::stderr,
                     );
-                    fputs(arg, stderr);
-                    fputs(b"`\n\0" as *const u8 as *const libc::c_char, stderr);
+                    fputs(arg, crate::src::libtree::stderr);
+                    fputs(b"`\n\0" as *const u8 as *const libc::c_char, crate::src::libtree::stderr);
                     return 1 as libc::c_int;
                 }
             } else {
@@ -2492,10 +2492,10 @@ unsafe fn main_0(
                             fputs(
                                 b"Unrecognized flag `-\0" as *const u8
                                     as *const libc::c_char,
-                                stderr,
+                                crate::src::libtree::stderr,
                             );
-                            fputs(arg, stderr);
-                            fputs(b"`\n\0" as *const u8 as *const libc::c_char, stderr);
+                            fputs(arg, crate::src::libtree::stderr);
+                            fputs(b"`\n\0" as *const u8 as *const libc::c_char, crate::src::libtree::stderr);
                             return 1 as libc::c_int;
                         }
                     }
@@ -2511,13 +2511,13 @@ unsafe fn main_0(
         fputs(
             b"Show the dynamic dependency tree of ELF files\nUsage: libtree [OPTION]... [--] FILE [FILES]...\n\n  -h, --help     Print help info\n      --version  Print version info\n\nFile names starting with '-', for example '-.so', can be specified as follows:\n  libtree -- -.so\n\nLocating libs options:\n  -p, --path       Show the path of libraries instead of the soname\n  -v               Show libraries skipped by default*\n  -vv              Show dependencies of libraries skipped by default*\n  -vvv             Show dependencies of already encountered libraries\n  --ldconf <path>  Config file for extra search paths [\0"
                 as *const u8 as *const libc::c_char,
-            stdout,
+            crate::src::libtree::stdout,
         );
-        fputs(s.ld_conf_file, stdout);
+        fputs(s.ld_conf_file, crate::src::libtree::stdout);
         fputs(
             b"]\n  --max-depth <n>  Limit library traversal to at most n levels of depth\n\n* For brevity, the following libraries are not shown by default:\n  \0"
                 as *const u8 as *const libc::c_char,
-            stdout,
+            crate::src::libtree::stdout,
         );
         let mut num_excluded = (::std::mem::size_of::<[*const libc::c_char; 14]>()
             as libc::c_ulong)
@@ -2526,30 +2526,30 @@ unsafe fn main_0(
         let mut j = 0 as libc::c_int as size_t;
         while j < num_excluded {
             cursor_x= (cursor_x as libc::c_ulong)
-                .wrapping_add(strlen(exclude_list[j as usize])) as size_t as size_t;
+                .wrapping_add(strlen(crate::src::libtree::exclude_list[j as usize])) as size_t as size_t;
             if cursor_x > 60 as libc::c_int as libc::c_ulong {
                 cursor_x= 3 as libc::c_int as size_t;
-                fputs(b"\n  \0" as *const u8 as *const libc::c_char, stdout);
+                fputs(b"\n  \0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
             }
-            fputs(exclude_list[j as usize], stdout);
+            fputs(crate::src::libtree::exclude_list[j as usize], crate::src::libtree::stdout);
             if j.wrapping_add(1 as libc::c_int as libc::c_ulong) != num_excluded {
-                fputs(b", \0" as *const u8 as *const libc::c_char, stdout);
+                fputs(b", \0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
             }
             j= j.wrapping_add(1);
         }
         fputs(
             b".\n\nThe following rpath/runpath substitutions are used:\n\0" as *const u8
                 as *const libc::c_char,
-            stdout,
+            crate::src::libtree::stdout,
         );
-        fputs(b"  PLATFORM       \0" as *const u8 as *const libc::c_char, stdout);
-        fputs(s.PLATFORM, stdout);
-        fputs(b"\n  LIB            \0" as *const u8 as *const libc::c_char, stdout);
-        fputs(s.LIB, stdout);
-        fputs(b"\n  OSNAME         \0" as *const u8 as *const libc::c_char, stdout);
-        fputs(s.OSNAME, stdout);
-        fputs(b"\n  OSREL          \0" as *const u8 as *const libc::c_char, stdout);
-        fputs(s.OSREL, stdout);
+        fputs(b"  PLATFORM       \0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
+        fputs(s.PLATFORM, crate::src::libtree::stdout);
+        fputs(b"\n  LIB            \0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
+        fputs(s.LIB, crate::src::libtree::stdout);
+        fputs(b"\n  OSNAME         \0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
+        fputs(s.OSNAME, crate::src::libtree::stdout);
+        fputs(b"\n  OSREL          \0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
+        fputs(s.OSREL, crate::src::libtree::stdout);
         putchar('\n' as i32);
         return (opt_help == 0) as libc::c_int;
     }

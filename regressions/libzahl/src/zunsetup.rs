@@ -45,36 +45,36 @@ pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[no_mangle]
 pub unsafe extern "C" fn zunsetup() {
     let mut i: size_t = 0;
-    if libzahl_set_up != 0 {
-        libzahl_set_up = 0 as libc::c_int;
-        free((*libzahl_tmp_cmp.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_str_num.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_str_mag.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_str_div.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_str_rem.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_gcd_u.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_gcd_v.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_sub.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_modmul.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_div.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_mod.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_pow_b.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_pow_c.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_pow_d.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_modsqr.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_divmod_a.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_divmod_b.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_divmod_d.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_ptest_x.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_ptest_a.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_ptest_d.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_ptest_n1.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_tmp_ptest_n4.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_const_1e19.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_const_1e9.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_const_1.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_const_2.as_mut_ptr()).chars as *mut libc::c_void);
-        free((*libzahl_const_4.as_mut_ptr()).chars as *mut libc::c_void);
+    if crate::src::zunsetup::libzahl_set_up != 0 {
+        crate::src::zunsetup::libzahl_set_up= 0 as libc::c_int;
+        free((*crate::src::zunsetup::libzahl_tmp_cmp.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_str_num.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_str_mag.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_str_div.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_str_rem.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_gcd_u.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_gcd_v.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_sub.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_modmul.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_div.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_mod.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_pow_b.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_pow_c.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_pow_d.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_modsqr.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_divmod_a.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_divmod_b.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_divmod_d.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_ptest_x.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_ptest_a.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_ptest_d.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_ptest_n1.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_tmp_ptest_n4.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_const_1e19.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_const_1e9.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_const_1.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_const_2.as_mut_ptr()).chars as *mut libc::c_void);
+        free((*crate::src::zunsetup::libzahl_const_4.as_mut_ptr()).chars as *mut libc::c_void);
         i= 32 as libc::c_int as size_t;
         loop {
             let fresh0 = i;
@@ -83,7 +83,7 @@ pub unsafe extern "C" fn zunsetup() {
                 break;
             }
             free(
-                (*(libzahl_tmp_divmod_ds[i as usize]).as_mut_ptr()).chars
+                (*crate::src::zunsetup::libzahl_tmp_divmod_ds[i as usize].as_mut_ptr()).chars
                     as *mut libc::c_void,
             );
         }
@@ -98,18 +98,18 @@ pub unsafe extern "C" fn zunsetup() {
                 break;
             }
             loop {
-                let fresh2 = libzahl_pool_n[i as usize];
-                libzahl_pool_n[i
-                    as usize] = (libzahl_pool_n[i as usize]).wrapping_sub(1);
+                let fresh2 = crate::src::zunsetup::libzahl_pool_n[i as usize];
+                crate::src::zunsetup::libzahl_pool_n[i
+                    as usize]= crate::src::zunsetup::libzahl_pool_n[i as usize].wrapping_sub(1);
                 if !(fresh2 != 0) {
                     break;
                 }
                 free(
-                    *(libzahl_pool[i as usize])
-                        .offset(libzahl_pool_n[i as usize] as isize) as *mut libc::c_void,
+                    *crate::src::zunsetup::libzahl_pool[i as usize]
+                        .offset(crate::src::zunsetup::libzahl_pool_n[i as usize] as isize) as *mut libc::c_void,
                 );
             }
-            free(libzahl_pool[i as usize] as *mut libc::c_void);
+            free(crate::src::zunsetup::libzahl_pool[i as usize] as *mut libc::c_void);
         }
     }
 }

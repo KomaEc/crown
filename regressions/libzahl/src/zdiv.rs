@@ -17,5 +17,5 @@ pub unsafe extern "C" fn zdiv(
     mut b: *mut crate::src::allocator::C2RustUnnamed,
     mut c: *mut crate::src::allocator::C2RustUnnamed,
 ) {
-    crate::src::zdivmod::zdivmod(a, libzahl_tmp_div.as_mut_ptr(), b, c);
+    crate::src::zdivmod::zdivmod(a, crate::src::zdiv::libzahl_tmp_div.as_mut_ptr(), b, c);
 }

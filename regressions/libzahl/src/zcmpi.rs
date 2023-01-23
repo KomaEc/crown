@@ -35,6 +35,6 @@ pub unsafe extern "C" fn zcmpi(
             (b < 0 as libc::c_int as libc::c_longlong) as libc::c_int
         };
     }
-    crate::src::zseti::zseti(libzahl_tmp_cmp.as_mut_ptr().as_mut(), b);
-    return crate::src::zcmp::zcmp(a, libzahl_tmp_cmp.as_mut_ptr());
+    crate::src::zseti::zseti(crate::src::zcmpi::libzahl_tmp_cmp.as_mut_ptr().as_mut(), b);
+    return crate::src::zcmp::zcmp(a, crate::src::zcmpi::libzahl_tmp_cmp.as_mut_ptr());
 }

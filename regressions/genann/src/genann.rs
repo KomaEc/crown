@@ -57,15 +57,15 @@ pub unsafe extern "C" fn genann_act_sigmoid_cached(
     static mut initialized: libc::c_int = 0 as libc::c_int;
     static mut lookup: [libc::c_double; 4096] = [0.; 4096];
     if initialized == 0 {
-        interval = (max - min) / 4096 as libc::c_int as libc::c_double;
+        interval= (max - min) / 4096 as libc::c_int as libc::c_double;
         let mut i: libc::c_int = 0;
         i= 0 as libc::c_int;
         while i < 4096 as libc::c_int {
             lookup[i
-                as usize] = genann_act_sigmoid(min + interval * i as libc::c_double);
+                as usize]= genann_act_sigmoid(min + interval * i as libc::c_double);
             i+= 1;
         }
-        initialized = 1 as libc::c_int;
+        initialized= 1 as libc::c_int;
     }
     let mut i_0: libc::c_int = 0;
     i_0= ((a - min) / interval + 0.5f64) as libc::c_int;
@@ -162,10 +162,10 @@ pub unsafe extern "C" fn genann_read(mut in_0: *mut FILE) -> *mut /* owning */ c
     rc= fscanf(
         in_0,
         b"%d %d %d %d\0" as *const u8 as *const libc::c_char,
-        &raw mut inputs as *mut libc::c_int,
-        &raw mut hidden_layers as *mut libc::c_int,
-        &raw mut hidden as *mut libc::c_int,
-        &raw mut outputs as *mut libc::c_int,
+        core::ptr::addr_of_mut!(inputs) as *mut libc::c_int,
+        core::ptr::addr_of_mut!(hidden_layers) as *mut libc::c_int,
+        core::ptr::addr_of_mut!(hidden) as *mut libc::c_int,
+        core::ptr::addr_of_mut!(outputs) as *mut libc::c_int,
     );
     if rc < 4 as libc::c_int || *__errno_location() != 0 as libc::c_int {
         perror(b"fscanf\0" as *const u8 as *const libc::c_char);

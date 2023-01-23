@@ -28,29 +28,29 @@ pub unsafe extern "C" fn zfree(mut a: Option<&mut crate::src::allocator::C2RustU
             as size_t as size_t;
         x>>= 1 as libc::c_int;
     }
-    let fresh0 = libzahl_pool_n[i as usize];
-    libzahl_pool_n[i as usize] = (libzahl_pool_n[i as usize]).wrapping_add(1);
+    let fresh0 = crate::src::zfree::libzahl_pool_n[i as usize];
+    crate::src::zfree::libzahl_pool_n[i as usize]= crate::src::zfree::libzahl_pool_n[i as usize].wrapping_add(1);
     j= fresh0;
-    if j == libzahl_pool_alloc[i as usize] {
+    if j == crate::src::zfree::libzahl_pool_alloc[i as usize] {
         x= if j != 0 {
             j.wrapping_mul(3 as libc::c_int as libc::c_ulong) >> 1 as libc::c_int
         } else {
             128 as libc::c_int as libc::c_ulong
         };
         new= realloc(
-            libzahl_pool[i as usize] as *mut libc::c_void,
+            crate::src::zfree::libzahl_pool[i as usize] as *mut libc::c_void,
             x.wrapping_mul(::std::mem::size_of::<*mut zahl_char_t>() as libc::c_ulong),
         ) as *mut *mut zahl_char_t;
         if new.is_null() {();
             free((*a.as_deref().unwrap()).chars as *mut libc::c_void);
-            free(libzahl_pool[i as usize] as *mut libc::c_void);
-            libzahl_pool_n[i as usize] = 0 as libc::c_int as size_t;
-            libzahl_pool[i as usize] = 0 as *mut *mut zahl_char_t;
-            libzahl_pool_alloc[i as usize] = 0 as libc::c_int as size_t;
+            free(crate::src::zfree::libzahl_pool[i as usize] as *mut libc::c_void);
+            crate::src::zfree::libzahl_pool_n[i as usize]= 0 as libc::c_int as size_t;
+            crate::src::zfree::libzahl_pool[i as usize]= 0 as *mut *mut zahl_char_t;
+            crate::src::zfree::libzahl_pool_alloc[i as usize]= 0 as libc::c_int as size_t;
             return;
         }
-        libzahl_pool[i as usize] = new;
-        libzahl_pool_alloc[i as usize] = x;
+        crate::src::zfree::libzahl_pool[i as usize]= new as *const *mut u32;
+        crate::src::zfree::libzahl_pool_alloc[i as usize]= x;
     }
-    *(libzahl_pool[i as usize]).offset(j as isize) = (*a.as_deref().unwrap()).chars;
+    *crate::src::zfree::libzahl_pool[i as usize].offset(j as isize) = (*a.as_deref().unwrap()).chars;
 }

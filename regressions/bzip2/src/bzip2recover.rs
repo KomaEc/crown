@@ -60,74 +60,74 @@ pub static mut bytesOut: MaybeUInt64 = 0 as libc::c_int as MaybeUInt64;
 pub static mut bytesIn: MaybeUInt64 = 0 as libc::c_int as MaybeUInt64;
 unsafe extern "C" fn readError() {
     fprintf(
-        stderr,
+        crate::src::bzip2recover::stderr,
         b"%s: I/O error reading `%s', possible reason follows.\n\0" as *const u8
             as *const libc::c_char,
-        progName.as_mut_ptr(),
-        inFileName.as_mut_ptr(),
+        crate::src::bzip2recover::progName.as_mut_ptr(),
+        crate::src::bzip2recover::inFileName.as_mut_ptr(),
     );
-    perror(progName.as_mut_ptr());
+    perror(crate::src::bzip2recover::progName.as_mut_ptr());
     fprintf(
-        stderr,
+        crate::src::bzip2recover::stderr,
         b"%s: warning: output file(s) may be incomplete.\n\0" as *const u8
             as *const libc::c_char,
-        progName.as_mut_ptr(),
+        crate::src::bzip2recover::progName.as_mut_ptr(),
     );
     exit(1 as libc::c_int);
 }
 unsafe extern "C" fn writeError() {
     fprintf(
-        stderr,
+        crate::src::bzip2recover::stderr,
         b"%s: I/O error reading `%s', possible reason follows.\n\0" as *const u8
             as *const libc::c_char,
-        progName.as_mut_ptr(),
-        inFileName.as_mut_ptr(),
+        crate::src::bzip2recover::progName.as_mut_ptr(),
+        crate::src::bzip2recover::inFileName.as_mut_ptr(),
     );
-    perror(progName.as_mut_ptr());
+    perror(crate::src::bzip2recover::progName.as_mut_ptr());
     fprintf(
-        stderr,
+        crate::src::bzip2recover::stderr,
         b"%s: warning: output file(s) may be incomplete.\n\0" as *const u8
             as *const libc::c_char,
-        progName.as_mut_ptr(),
+        crate::src::bzip2recover::progName.as_mut_ptr(),
     );
     exit(1 as libc::c_int);
 }
 unsafe extern "C" fn mallocFail(mut n: Int32) {
     fprintf(
-        stderr,
+        crate::src::bzip2recover::stderr,
         b"%s: malloc failed on request for %d bytes.\n\0" as *const u8
             as *const libc::c_char,
-        progName.as_mut_ptr(),
+        crate::src::bzip2recover::progName.as_mut_ptr(),
         n,
     );
     fprintf(
-        stderr,
+        crate::src::bzip2recover::stderr,
         b"%s: warning: output file(s) may be incomplete.\n\0" as *const u8
             as *const libc::c_char,
-        progName.as_mut_ptr(),
+        crate::src::bzip2recover::progName.as_mut_ptr(),
     );
     exit(1 as libc::c_int);
 }
 unsafe extern "C" fn tooManyBlocks(mut max_handled_blocks: Int32) {
     fprintf(
-        stderr,
+        crate::src::bzip2recover::stderr,
         b"%s: `%s' appears to contain more than %d blocks\n\0" as *const u8
             as *const libc::c_char,
-        progName.as_mut_ptr(),
-        inFileName.as_mut_ptr(),
+        crate::src::bzip2recover::progName.as_mut_ptr(),
+        crate::src::bzip2recover::inFileName.as_mut_ptr(),
         max_handled_blocks,
     );
     fprintf(
-        stderr,
+        crate::src::bzip2recover::stderr,
         b"%s: and cannot be handled.  To fix, increase\n\0" as *const u8
             as *const libc::c_char,
-        progName.as_mut_ptr(),
+        crate::src::bzip2recover::progName.as_mut_ptr(),
     );
     fprintf(
-        stderr,
+        crate::src::bzip2recover::stderr,
         b"%s: BZ_MAX_HANDLED_BLOCKS in bzip2recover.c, and recompile.\n\0" as *const u8
             as *const libc::c_char,
-        progName.as_mut_ptr(),
+        crate::src::bzip2recover::progName.as_mut_ptr(),
     );
     exit(1 as libc::c_int);
 }
@@ -161,7 +161,7 @@ unsafe extern "C" fn bsPutBit(mut bs: Option<&mut BitStream>, mut bit: Int32) {
         if retVal == -(1 as libc::c_int) {
             writeError();
         }
-        bytesOut = bytesOut.wrapping_add(1);
+        crate::src::bzip2recover::bytesOut= crate::src::bzip2recover::bytesOut.wrapping_add(1);
         (*bs.as_deref_mut().unwrap()).buffLive= 1 as libc::c_int;
         (*bs.as_deref_mut().unwrap()).buffer= bit & 0x1 as libc::c_int;
     } else {
@@ -197,7 +197,7 @@ unsafe extern "C" fn bsClose(mut bs: *mut /* owning */ BitStream) {
         if retVal == -(1 as libc::c_int) {
             writeError();
         }
-        bytesOut = bytesOut.wrapping_add(1);
+        crate::src::bzip2recover::bytesOut= crate::src::bzip2recover::bytesOut.wrapping_add(1);
         retVal= fflush((*bs).handle);
         if retVal == -(1 as libc::c_int) {
             writeError();
@@ -263,49 +263,49 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
     let mut blockCRC: UInt32 = 0;
     let mut p = 0 as *mut Char;
     strncpy(
-        progName.as_mut_ptr(),
+        crate::src::bzip2recover::progName.as_mut_ptr(),
         *argv.offset(0 as libc::c_int as isize),
         (2000 as libc::c_int - 1 as libc::c_int) as libc::c_ulong,
     );
-    progName[(2000 as libc::c_int - 1 as libc::c_int) as usize] = '\0' as i32 as Char;
-    outFileName[0 as libc::c_int as usize] = 0 as libc::c_int as Char;
-    inFileName[0 as libc::c_int as usize] = outFileName[0 as libc::c_int as usize];
+    crate::src::bzip2recover::progName[(2000 as libc::c_int - 1 as libc::c_int) as usize]= '\0' as i32 as Char;
+    crate::src::bzip2recover::outFileName[0 as libc::c_int as usize]= 0 as libc::c_int as Char;
+    crate::src::bzip2recover::inFileName[0 as libc::c_int as usize]= crate::src::bzip2recover::outFileName[0 as libc::c_int as usize];
     fprintf(
-        stderr,
+        crate::src::bzip2recover::stderr,
         b"bzip2recover 1.0.8: extracts blocks from damaged .bz2 files.\n\0" as *const u8
             as *const libc::c_char,
     );
     if argc != 2 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::bzip2recover::stderr,
             b"%s: usage is `%s damaged_file_name'.\n\0" as *const u8
                 as *const libc::c_char,
-            progName.as_mut_ptr(),
-            progName.as_mut_ptr(),
+            crate::src::bzip2recover::progName.as_mut_ptr(),
+            crate::src::bzip2recover::progName.as_mut_ptr(),
         );
         match  ::std::mem::size_of::<MaybeUInt64>() as libc::c_ulong {
             8 => {
                 fprintf(
-                    stderr,
+                    crate::src::bzip2recover::stderr,
                     b"\trestrictions on size of recovered file: None\n\0" as *const u8
                         as *const libc::c_char,
                 );
             }
             4 => {
                 fprintf(
-                    stderr,
+                    crate::src::bzip2recover::stderr,
                     b"\trestrictions on size of recovered file: 512 MB\n\0" as *const u8
                         as *const libc::c_char,
                 );
                 fprintf(
-                    stderr,
+                    crate::src::bzip2recover::stderr,
                     b"\tto circumvent, recompile with MaybeUInt64 as an\n\tunsigned 64-bit int.\n\0"
                         as *const u8 as *const libc::c_char,
                 );
             }
             _ => {
                 fprintf(
-                    stderr,
+                    crate::src::bzip2recover::stderr,
                     b"\tsizeof(MaybeUInt64) is not 4 or 8 -- configuration error.\n\0"
                         as *const u8 as *const libc::c_char,
                 );
@@ -317,57 +317,57 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
         >= (2000 as libc::c_int - 20 as libc::c_int) as libc::c_ulong
     {
         fprintf(
-            stderr,
+            crate::src::bzip2recover::stderr,
             b"%s: supplied filename is suspiciously (>= %d chars) long.  Bye!\n\0"
                 as *const u8 as *const libc::c_char,
-            progName.as_mut_ptr(),
+            crate::src::bzip2recover::progName.as_mut_ptr(),
             strlen(*argv.offset(1 as libc::c_int as isize)) as libc::c_int,
         );
         exit(1 as libc::c_int);
     }
-    strcpy(inFileName.as_mut_ptr(), *argv.offset(1 as libc::c_int as isize));
-    inFile= fopen(inFileName.as_mut_ptr(), b"rb\0" as *const u8 as *const libc::c_char);
+    strcpy(crate::src::bzip2recover::inFileName.as_mut_ptr(), *argv.offset(1 as libc::c_int as isize));
+    inFile= fopen(crate::src::bzip2recover::inFileName.as_mut_ptr(), b"rb\0" as *const u8 as *const libc::c_char);
     if inFile.is_null() {();
         fprintf(
-            stderr,
+            crate::src::bzip2recover::stderr,
             b"%s: can't read `%s'\n\0" as *const u8 as *const libc::c_char,
-            progName.as_mut_ptr(),
-            inFileName.as_mut_ptr(),
+            crate::src::bzip2recover::progName.as_mut_ptr(),
+            crate::src::bzip2recover::inFileName.as_mut_ptr(),
         );
         exit(1 as libc::c_int);
     }
     bsIn= bsOpenReadStream(inFile);
     fprintf(
-        stderr,
+        crate::src::bzip2recover::stderr,
         b"%s: searching for block boundaries ...\n\0" as *const u8
             as *const libc::c_char,
-        progName.as_mut_ptr(),
+        crate::src::bzip2recover::progName.as_mut_ptr(),
     );
     bitsRead= 0 as libc::c_int as MaybeUInt64;
     buffLo= 0 as libc::c_int as UInt32;
     buffHi= buffLo;
     currBlock= 0 as libc::c_int;
-    bStart[currBlock as usize] = 0 as libc::c_int as MaybeUInt64;
+    crate::src::bzip2recover::bStart[currBlock as usize]= 0 as libc::c_int as MaybeUInt64;
     rbCtr= 0 as libc::c_int;
     while 1 as libc::c_int as Bool != 0 {
         b= bsGetBit(bsIn.as_mut());
         bitsRead= bitsRead.wrapping_add(1);
         if b == 2 as libc::c_int {
-            if bitsRead >= bStart[currBlock as usize]
-                && bitsRead.wrapping_sub(bStart[currBlock as usize])
+            if bitsRead >= crate::src::bzip2recover::bStart[currBlock as usize]
+                && bitsRead.wrapping_sub(crate::src::bzip2recover::bStart[currBlock as usize])
                     >= 40 as libc::c_int as libc::c_ulonglong
             {
-                bEnd[currBlock
-                    as usize] = bitsRead
+                crate::src::bzip2recover::bEnd[currBlock
+                    as usize]= bitsRead
                     .wrapping_sub(1 as libc::c_int as libc::c_ulonglong);
                 if currBlock > 0 as libc::c_int {
                     fprintf(
-                        stderr,
+                        crate::src::bzip2recover::stderr,
                         b"   block %d runs from %Lu to %Lu (incomplete)\n\0" as *const u8
                             as *const libc::c_char,
                         currBlock,
-                        bStart[currBlock as usize],
-                        bEnd[currBlock as usize],
+                        crate::src::bzip2recover::bStart[currBlock as usize],
+                        crate::src::bzip2recover::bEnd[currBlock as usize],
                     );
                 }
             } else {
@@ -385,59 +385,59 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
                     && buffLo as libc::c_ulong == 0x45385090 as libc::c_ulong
             {
                 if bitsRead > 49 as libc::c_int as libc::c_ulonglong {
-                    bEnd[currBlock
-                        as usize] = bitsRead
+                    crate::src::bzip2recover::bEnd[currBlock
+                        as usize]= bitsRead
                         .wrapping_sub(49 as libc::c_int as libc::c_ulonglong);
                 } else {
-                    bEnd[currBlock as usize] = 0 as libc::c_int as MaybeUInt64;
+                    crate::src::bzip2recover::bEnd[currBlock as usize]= 0 as libc::c_int as MaybeUInt64;
                 }
                 if currBlock > 0 as libc::c_int
-                    && (bEnd[currBlock as usize])
-                        .wrapping_sub(bStart[currBlock as usize])
+                    && crate::src::bzip2recover::bEnd[currBlock as usize]
+                        .wrapping_sub(crate::src::bzip2recover::bStart[currBlock as usize])
                         >= 130 as libc::c_int as libc::c_ulonglong
                 {
                     fprintf(
-                        stderr,
+                        crate::src::bzip2recover::stderr,
                         b"   block %d runs from %Lu to %Lu\n\0" as *const u8
                             as *const libc::c_char,
                         rbCtr + 1 as libc::c_int,
-                        bStart[currBlock as usize],
-                        bEnd[currBlock as usize],
+                        crate::src::bzip2recover::bStart[currBlock as usize],
+                        crate::src::bzip2recover::bEnd[currBlock as usize],
                     );
-                    rbStart[rbCtr as usize] = bStart[currBlock as usize];
-                    rbEnd[rbCtr as usize] = bEnd[currBlock as usize];
+                    crate::src::bzip2recover::rbStart[rbCtr as usize]= crate::src::bzip2recover::bStart[currBlock as usize];
+                    crate::src::bzip2recover::rbEnd[rbCtr as usize]= crate::src::bzip2recover::bEnd[currBlock as usize];
                     rbCtr+= 1;
                 }
                 if currBlock >= 50000 as libc::c_int {
                     tooManyBlocks(50000 as libc::c_int);
                 }
                 currBlock+= 1;
-                bStart[currBlock as usize] = bitsRead;
+                crate::src::bzip2recover::bStart[currBlock as usize]= bitsRead;
             }
         }
     }
     bsClose(bsIn);
     if rbCtr < 1 as libc::c_int {
         fprintf(
-            stderr,
+            crate::src::bzip2recover::stderr,
             b"%s: sorry, I couldn't find any block boundaries.\n\0" as *const u8
                 as *const libc::c_char,
-            progName.as_mut_ptr(),
+            crate::src::bzip2recover::progName.as_mut_ptr(),
         );
         exit(1 as libc::c_int);
     }
     fprintf(
-        stderr,
+        crate::src::bzip2recover::stderr,
         b"%s: splitting into blocks\n\0" as *const u8 as *const libc::c_char,
-        progName.as_mut_ptr(),
+        crate::src::bzip2recover::progName.as_mut_ptr(),
     );
-    inFile= fopen(inFileName.as_mut_ptr(), b"rb\0" as *const u8 as *const libc::c_char);
+    inFile= fopen(crate::src::bzip2recover::inFileName.as_mut_ptr(), b"rb\0" as *const u8 as *const libc::c_char);
     if inFile.is_null() {();
         fprintf(
-            stderr,
+            crate::src::bzip2recover::stderr,
             b"%s: can't open `%s'\n\0" as *const u8 as *const libc::c_char,
-            progName.as_mut_ptr(),
-            inFileName.as_mut_ptr(),
+            crate::src::bzip2recover::progName.as_mut_ptr(),
+            crate::src::bzip2recover::inFileName.as_mut_ptr(),
         );
         exit(1 as libc::c_int);
     }
@@ -456,18 +456,18 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
         buffLo= buffLo << 1 as libc::c_int | (b & 1 as libc::c_int) as libc::c_uint;
         if bitsRead
             == (47 as libc::c_int as libc::c_ulonglong)
-                .wrapping_add(rbStart[wrBlock as usize])
+                .wrapping_add(crate::src::bzip2recover::rbStart[wrBlock as usize])
         {
             blockCRC= buffHi << 16 as libc::c_int | buffLo >> 16 as libc::c_int;
         }
-        if !outFile.is_null() && bitsRead >= rbStart[wrBlock as usize]
-            && bitsRead <= rbEnd[wrBlock as usize]
+        if !outFile.is_null() && bitsRead >= crate::src::bzip2recover::rbStart[wrBlock as usize]
+            && bitsRead <= crate::src::bzip2recover::rbEnd[wrBlock as usize]
         {
             bsPutBit(bsWr.as_mut(), b);
         }
         bitsRead= bitsRead.wrapping_add(1);
         if bitsRead
-            == (rbEnd[wrBlock as usize])
+            == crate::src::bzip2recover::rbEnd[wrBlock as usize]
                 .wrapping_add(1 as libc::c_int as libc::c_ulonglong)
         {
             if !outFile.is_null() {
@@ -485,23 +485,23 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
                 break;
             }
             wrBlock+= 1;
-        } else if bitsRead == rbStart[wrBlock as usize] {
+        } else if bitsRead == crate::src::bzip2recover::rbStart[wrBlock as usize] {
             let mut split = 0 as *mut Char;
             let mut ofs: Int32 = 0;
             let mut k: Int32 = 0;
             k= 0 as libc::c_int;
             while k < 2000 as libc::c_int {
-                outFileName[k as usize] = 0 as libc::c_int as Char;
+                crate::src::bzip2recover::outFileName[k as usize]= 0 as libc::c_int as Char;
                 k+= 1;
             }
-            strcpy(outFileName.as_mut_ptr(), inFileName.as_mut_ptr());
-            split= strrchr(outFileName.as_mut_ptr(), '/' as i32);
+            strcpy(crate::src::bzip2recover::outFileName.as_mut_ptr(), crate::src::bzip2recover::inFileName.as_mut_ptr());
+            split= strrchr(crate::src::bzip2recover::outFileName.as_mut_ptr(), '/' as i32);
             if split.is_null() {();
-                split= outFileName.as_mut_ptr();
+                split= crate::src::bzip2recover::outFileName.as_mut_ptr();
             } else {
                 split= split.offset(1);
             }
-            ofs= split.offset_from(outFileName.as_mut_ptr()) as libc::c_long as Int32;
+            ofs= split.offset_from(crate::src::bzip2recover::outFileName.as_mut_ptr()) as libc::c_long as Int32;
             sprintf(
                 split,
                 b"rec%5d\0" as *const u8 as *const libc::c_char,
@@ -515,32 +515,32 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
                 p= p.offset(1);
             }
             strcat(
-                outFileName.as_mut_ptr(),
-                inFileName.as_mut_ptr().offset(ofs as isize),
+                crate::src::bzip2recover::outFileName.as_mut_ptr(),
+                crate::src::bzip2recover::inFileName.as_mut_ptr().offset(ofs as isize),
             );
-            if endsInBz2(outFileName.as_mut_ptr()) == 0 {
+            if endsInBz2(crate::src::bzip2recover::outFileName.as_mut_ptr()) == 0 {
                 strcat(
-                    outFileName.as_mut_ptr(),
+                    crate::src::bzip2recover::outFileName.as_mut_ptr(),
                     b".bz2\0" as *const u8 as *const libc::c_char,
                 );
             }
             fprintf(
-                stderr,
+                crate::src::bzip2recover::stderr,
                 b"   writing block %d to `%s' ...\n\0" as *const u8
                     as *const libc::c_char,
                 wrBlock + 1 as libc::c_int,
-                outFileName.as_mut_ptr(),
+                crate::src::bzip2recover::outFileName.as_mut_ptr(),
             );
             outFile= fopen(
-                outFileName.as_mut_ptr(),
+                crate::src::bzip2recover::outFileName.as_mut_ptr(),
                 b"wb\0" as *const u8 as *const libc::c_char,
             );
             if outFile.is_null() {();
                 fprintf(
-                    stderr,
+                    crate::src::bzip2recover::stderr,
                     b"%s: can't write `%s'\n\0" as *const u8 as *const libc::c_char,
-                    progName.as_mut_ptr(),
-                    outFileName.as_mut_ptr(),
+                    crate::src::bzip2recover::progName.as_mut_ptr(),
+                    crate::src::bzip2recover::outFileName.as_mut_ptr(),
                 );
                 exit(1 as libc::c_int);
             }
@@ -558,9 +558,9 @@ unsafe fn main_0(mut argc: Int32, mut argv: *mut *mut Char) -> Int32 {
         }
     }
     fprintf(
-        stderr,
+        crate::src::bzip2recover::stderr,
         b"%s: finished\n\0" as *const u8 as *const libc::c_char,
-        progName.as_mut_ptr(),
+        crate::src::bzip2recover::progName.as_mut_ptr(),
     );
     return 0 as libc::c_int;
 }

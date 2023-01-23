@@ -932,7 +932,7 @@ pub unsafe extern "C" fn full_draw(mut o: screen_object, mut in_place: bool) {
     let mut old: attr_t = 0;
     let mut dummy: libc::c_short = 0;
     let mut new: attr_t = 0;
-    wattr_get(stdscr, core::ptr::addr_of_mut!(old), core::ptr::addr_of_mut!(dummy), 0 as *mut libc::c_void);
+    wattr_get(crate::src::robotfindskitten::stdscr, core::ptr::addr_of_mut!(old), core::ptr::addr_of_mut!(dummy), 0 as *mut libc::c_void);
     new= (o.color as chtype) << 0 as libc::c_int + 8 as libc::c_int
         & ((1 as libc::c_uint) << 8 as libc::c_int).wrapping_sub(1 as libc::c_uint)
             << 0 as libc::c_int + 8 as libc::c_int;
@@ -945,7 +945,7 @@ pub unsafe extern "C" fn full_draw(mut o: screen_object, mut in_place: bool) {
     if o.bold {
         new|= (1 as libc::c_uint) << 13 as libc::c_int + 8 as libc::c_int;
     }
-    wattrset(stdscr, new as libc::c_int);
+    wattrset(crate::src::robotfindskitten::stdscr, new as libc::c_int);
     if in_place {
         printw(b"%c\0" as *const u8 as *const libc::c_char, o.character as libc::c_int);
     } else {
@@ -955,9 +955,9 @@ pub unsafe extern "C" fn full_draw(mut o: screen_object, mut in_place: bool) {
             b"%c\0" as *const u8 as *const libc::c_char,
             o.character as libc::c_int,
         );
-        wmove(stdscr, o.y, o.x);
+        wmove(crate::src::robotfindskitten::stdscr, o.y, o.x);
     }
-    wattrset(stdscr, old as libc::c_int);
+    wattrset(crate::src::robotfindskitten::stdscr, old as libc::c_int);
 }
 #[no_mangle]
 pub unsafe extern "C" fn draw(mut o: screen_object) {
@@ -969,52 +969,52 @@ pub unsafe extern "C" fn draw_in_place(mut o: screen_object) {
 }
 #[no_mangle]
 pub unsafe extern "C" fn message(mut message_0: *mut libc::c_char) {
-    wmove(stdscr, 1 as libc::c_int, 0 as libc::c_int);
-    wclrtoeol(stdscr);
+    wmove(crate::src::robotfindskitten::stdscr, 1 as libc::c_int, 0 as libc::c_int);
+    wclrtoeol(crate::src::robotfindskitten::stdscr);
     mvprintw(
         1 as libc::c_int,
         0 as libc::c_int,
         b"%.*s\0" as *const u8 as *const libc::c_char,
-        COLS,
+        crate::src::robotfindskitten::COLS,
         message_0,
     );
-    wmove(stdscr, robot.y, robot.x);
-    wrefresh(stdscr);
+    wmove(crate::src::robotfindskitten::stdscr, crate::src::robotfindskitten::robot.y, crate::src::robotfindskitten::robot.x);
+    wrefresh(crate::src::robotfindskitten::stdscr);
 }
 #[no_mangle]
 pub unsafe extern "C" fn play_game() {
-    let mut old_x = robot.x;
-    let mut old_y = robot.y;
+    let mut old_x = crate::src::robotfindskitten::robot.x;
+    let mut old_y = crate::src::robotfindskitten::robot.y;
     let mut input: libc::c_int = 0;
-    input= wgetch(stdscr);
+    input= wgetch(crate::src::robotfindskitten::stdscr);
     while input != 27 as libc::c_int && input != 'q' as i32 && input != 'Q' as i32 {
         process_input(input);
-        if !(old_x == robot.x && old_y == robot.y) {
-            if wmove(stdscr, old_y, old_x) == -(1 as libc::c_int) {} else {
-                waddch(stdscr, ' ' as i32 as chtype);
+        if !(old_x == crate::src::robotfindskitten::robot.x && old_y == crate::src::robotfindskitten::robot.y) {
+            if wmove(crate::src::robotfindskitten::stdscr, old_y, old_x) == -(1 as libc::c_int) {} else {
+                waddch(crate::src::robotfindskitten::stdscr, ' ' as i32 as chtype);
             };
-            *(*screen.offset(old_x as isize))
+            *(*crate::src::robotfindskitten::screen.offset(old_x as isize))
                 .offset(old_y as isize) = -(1 as libc::c_int);
-            draw(robot);
-            wrefresh(stdscr);
-            *(*screen.offset(robot.x as isize))
-                .offset(robot.y as isize) = 0 as libc::c_int;
-            old_x= robot.x;
-            old_y= robot.y;
+            draw(crate::src::robotfindskitten::robot);
+            wrefresh(crate::src::robotfindskitten::stdscr);
+            *(*crate::src::robotfindskitten::screen.offset(crate::src::robotfindskitten::robot.x as isize))
+                .offset(crate::src::robotfindskitten::robot.y as isize) = 0 as libc::c_int;
+            old_x= crate::src::robotfindskitten::robot.x;
+            old_y= crate::src::robotfindskitten::robot.y;
         }
-        input= wgetch(stdscr);
+        input= wgetch(crate::src::robotfindskitten::stdscr);
     }
     message(b"Bye!\0" as *const u8 as *const libc::c_char as *mut libc::c_char);
-    wrefresh(stdscr);
+    wrefresh(crate::src::robotfindskitten::stdscr);
     finish(0 as libc::c_int);
 }
 #[no_mangle]
 pub unsafe extern "C" fn process_input(mut input: libc::c_int) {
-    let mut check_x = robot.x;
-    let mut check_y = robot.y;
+    let mut check_x = crate::src::robotfindskitten::robot.x;
+    let mut check_y = crate::src::robotfindskitten::robot.y;
     match input {
         12 => {
-            wrefresh(curscr);
+            wrefresh(crate::src::robotfindskitten::curscr);
         }
         259 | 107 | 75 | 16 => {
             check_y-= 1;
@@ -1053,32 +1053,32 @@ pub unsafe extern "C" fn process_input(mut input: libc::c_int) {
             return;
         }
     }
-    if check_y < 3 as libc::c_int || check_y > LINES - 1 as libc::c_int
-        || check_x < 0 as libc::c_int || check_x > COLS - 1 as libc::c_int
+    if check_y < 3 as libc::c_int || check_y > crate::src::robotfindskitten::LINES - 1 as libc::c_int
+        || check_x < 0 as libc::c_int || check_x > crate::src::robotfindskitten::COLS - 1 as libc::c_int
     {
         return;
     }
-    if *(*screen.offset(check_x as isize)).offset(check_y as isize)
+    if *(*crate::src::robotfindskitten::screen.offset(check_x as isize)).offset(check_y as isize)
         != -(1 as libc::c_int)
     {
-        match  *(*screen.offset(check_x as isize)).offset(check_y as isize) {
+        match  *(*crate::src::robotfindskitten::screen.offset(check_x as isize)).offset(check_y as isize) {
             0 => {}
             1 => {
-                wmove(stdscr, 1 as libc::c_int, 0 as libc::c_int);
-                wclrtoeol(stdscr);
+                wmove(crate::src::robotfindskitten::stdscr, 1 as libc::c_int, 0 as libc::c_int);
+                wclrtoeol(crate::src::robotfindskitten::stdscr);
                 play_animation(input);
             }
             _ => {
                 message(
-                    messages[bogus_messages[(*(*screen.offset(check_x as isize))
+                    crate::src::robotfindskitten::messages[crate::src::robotfindskitten::bogus_messages[(*(*crate::src::robotfindskitten::screen.offset(check_x as isize))
                         .offset(check_y as isize) - 2 as libc::c_int) as usize] as usize],
                 );
             }
         }
         return;
     }
-    robot.x = check_x;
-    robot.y = check_y;
+    crate::src::robotfindskitten::robot.x= check_x;
+    crate::src::robotfindskitten::robot.y= check_y;
 }
 unsafe extern "C" fn finish(mut sig: libc::c_int) {
     endwin();
@@ -1104,45 +1104,45 @@ pub unsafe extern "C" fn play_animation(mut input: libc::c_int) {
     counter= 4 as libc::c_int;
     while counter > 0 as libc::c_int {
         if wmove(
-            stdscr,
+            crate::src::robotfindskitten::stdscr,
             1 as libc::c_int,
             50 as libc::c_int + counter + 1 as libc::c_int,
         ) == -(1 as libc::c_int)
         {} else {
-            waddch(stdscr, ' ' as i32 as chtype);
+            waddch(crate::src::robotfindskitten::stdscr, ' ' as i32 as chtype);
         };
-        wmove(stdscr, 1 as libc::c_int, 50 as libc::c_int + counter);
+        wmove(crate::src::robotfindskitten::stdscr, 1 as libc::c_int, 50 as libc::c_int + counter);
         if input == 0o405 as libc::c_int || input == 0o402 as libc::c_int
             || input == 0o540 as libc::c_int || input == 0o535 as libc::c_int
         {
-            draw_in_place(kitten);
+            draw_in_place(crate::src::robotfindskitten::kitten);
         } else {
-            draw_in_place(robot);
+            draw_in_place(crate::src::robotfindskitten::robot);
         }
-        if wmove(stdscr, 1 as libc::c_int, 50 as libc::c_int - counter)
+        if wmove(crate::src::robotfindskitten::stdscr, 1 as libc::c_int, 50 as libc::c_int - counter)
             == -(1 as libc::c_int)
         {} else {
-            waddch(stdscr, ' ' as i32 as chtype);
+            waddch(crate::src::robotfindskitten::stdscr, ' ' as i32 as chtype);
         };
-        wmove(stdscr, 1 as libc::c_int, 50 as libc::c_int - counter + 1 as libc::c_int);
+        wmove(crate::src::robotfindskitten::stdscr, 1 as libc::c_int, 50 as libc::c_int - counter + 1 as libc::c_int);
         if input == 0o405 as libc::c_int || input == 0o402 as libc::c_int
             || input == 0o540 as libc::c_int || input == 0o535 as libc::c_int
         {
-            draw_in_place(robot);
+            draw_in_place(crate::src::robotfindskitten::robot);
         } else {
-            draw_in_place(kitten);
+            draw_in_place(crate::src::robotfindskitten::kitten);
         }
-        wrefresh(stdscr);
+        wrefresh(crate::src::robotfindskitten::stdscr);
         sleep(1 as libc::c_int as libc::c_uint);
         counter-= 1;
     }
-    wmove(stdscr, 1 as libc::c_int, 0 as libc::c_int);
+    wmove(crate::src::robotfindskitten::stdscr, 1 as libc::c_int, 0 as libc::c_int);
     waddnstr(
-        stdscr,
+        crate::src::robotfindskitten::stdscr,
         b"You found kitten! Way to go, robot!\0" as *const u8 as *const libc::c_char,
         -(1 as libc::c_int),
     );
-    wrefresh(stdscr);
+    wrefresh(crate::src::robotfindskitten::stdscr);
     finish(0 as libc::c_int);
 }
 #[no_mangle]
@@ -1152,7 +1152,7 @@ pub unsafe extern "C" fn instructions() {
         0 as libc::c_int,
         0 as libc::c_int,
         b"robotfindskitten v%s\n\0" as *const u8 as *const libc::c_char,
-        ver,
+        crate::src::robotfindskitten::ver,
     );
     printw(
         b"By the illustrious Leonard Richardson (C) 1997, 2000\n\0" as *const u8
@@ -1163,7 +1163,7 @@ pub unsafe extern "C" fn instructions() {
             as *const u8 as *const libc::c_char,
     );
     printw(b"In this game, you are robot (\0" as *const u8 as *const libc::c_char);
-    draw_in_place(robot);
+    draw_in_place(crate::src::robotfindskitten::robot);
     printw(
         b"). Your job is to find kitten. This task\n\0" as *const u8
             as *const libc::c_char,
@@ -1185,9 +1185,9 @@ pub unsafe extern "C" fn instructions() {
             as *const libc::c_char,
     );
     printw(b"Press any key to start.\n\0" as *const u8 as *const libc::c_char);
-    wrefresh(stdscr);
-    dummy= wgetch(stdscr) as libc::c_char;
-    wclear(stdscr);
+    wrefresh(crate::src::robotfindskitten::stdscr);
+    dummy= wgetch(crate::src::robotfindskitten::stdscr) as libc::c_char;
+    wclear(crate::src::robotfindskitten::stdscr);
 }
 #[no_mangle]
 pub unsafe extern "C" fn initialize_arrays() {
@@ -1201,16 +1201,16 @@ pub unsafe extern "C" fn initialize_arrays() {
         character: 0,
     };
     let mut i = 0 as libc::c_int;
-    screen = malloc(
+    crate::src::robotfindskitten::screen= malloc(
         (::std::mem::size_of::<*mut libc::c_int>() as libc::c_ulong)
-            .wrapping_mul((COLS - 1 as libc::c_int + 1 as libc::c_int) as libc::c_ulong),
+            .wrapping_mul((crate::src::robotfindskitten::COLS - 1 as libc::c_int + 1 as libc::c_int) as libc::c_ulong),
     ) as *mut *mut libc::c_int;
     i= 0 as libc::c_int;
-    while i < COLS - 1 as libc::c_int + 1 as libc::c_int {
-        *screen.offset(i as isize) = malloc(
+    while i < crate::src::robotfindskitten::COLS - 1 as libc::c_int + 1 as libc::c_int {
+        *crate::src::robotfindskitten::screen.offset(i as isize) = malloc(
             (::std::mem::size_of::<libc::c_int>() as libc::c_ulong)
                 .wrapping_mul(
-                    (LINES - 1 as libc::c_int + 1 as libc::c_int) as libc::c_ulong,
+                    (crate::src::robotfindskitten::LINES - 1 as libc::c_int + 1 as libc::c_int) as libc::c_ulong,
                 ),
         ) as *mut libc::c_int;
         i+= 1;
@@ -1221,10 +1221,10 @@ pub unsafe extern "C" fn initialize_arrays() {
     empty.bold= 0 as libc::c_int != 0;
     empty.character= ' ' as i32 as libc::c_char;
     counter= 0 as libc::c_int;
-    while counter <= COLS - 1 as libc::c_int {
+    while counter <= crate::src::robotfindskitten::COLS - 1 as libc::c_int {
         counter2= 0 as libc::c_int;
-        while counter2 <= LINES - 1 as libc::c_int {
-            *(*screen.offset(counter as isize))
+        while counter2 <= crate::src::robotfindskitten::LINES - 1 as libc::c_int {
+            *(*crate::src::robotfindskitten::screen.offset(counter as isize))
                 .offset(counter2 as isize) = -(1 as libc::c_int);
             counter2+= 1;
         }
@@ -1235,9 +1235,9 @@ pub unsafe extern "C" fn initialize_arrays() {
         < (::std::mem::size_of::<[*mut libc::c_char; 406]>() as libc::c_ulong)
             .wrapping_div(::std::mem::size_of::<*mut libc::c_char>() as libc::c_ulong)
     {
-        used_messages[counter as usize] = 0 as libc::c_int;
-        bogus_messages[counter as usize] = 0 as libc::c_int;
-        bogus[counter as usize] = empty;
+        crate::src::robotfindskitten::used_messages[counter as usize]= 0 as libc::c_int;
+        crate::src::robotfindskitten::bogus_messages[counter as usize]= 0 as libc::c_int;
+        crate::src::robotfindskitten::bogus[counter as usize]= empty;
         counter+= 1;
     }
 }
@@ -1245,9 +1245,9 @@ pub unsafe extern "C" fn initialize_arrays() {
 pub unsafe extern "C" fn initialize_ncurses() {
     signal(2 as libc::c_int, Some(finish as unsafe extern "C" fn(libc::c_int) -> ()));
     initscr();
-    keypad(stdscr, 1 as libc::c_int != 0);
+    keypad(crate::src::robotfindskitten::stdscr, 1 as libc::c_int != 0);
     nonl();
-    intrflush(stdscr, 0 as libc::c_int != 0);
+    intrflush(crate::src::robotfindskitten::stdscr, 0 as libc::c_int != 0);
     noecho();
     cbreak();
     if has_colors() {
@@ -1296,41 +1296,37 @@ pub unsafe extern "C" fn initialize_ncurses() {
 }
 #[no_mangle]
 pub unsafe extern "C" fn initialize_robot() {
-    robot.x = rand() % (COLS - 1 as libc::c_int) + 1 as libc::c_int;
-    robot
-        .y = rand() % (LINES - 1 as libc::c_int - 3 as libc::c_int + 1 as libc::c_int)
+    crate::src::robotfindskitten::robot.x= rand() % (crate::src::robotfindskitten::COLS - 1 as libc::c_int) + 1 as libc::c_int;
+    crate::src::robotfindskitten::robot.y= rand() % (crate::src::robotfindskitten::LINES - 1 as libc::c_int - 3 as libc::c_int + 1 as libc::c_int)
         + 3 as libc::c_int;
-    robot.character = '#' as i32 as libc::c_char;
-    robot.color = 0 as libc::c_int;
-    robot.bold = 0 as libc::c_int != 0;
-    *(*screen.offset(robot.x as isize)).offset(robot.y as isize) = 0 as libc::c_int;
+    crate::src::robotfindskitten::robot.character= '#' as i32 as libc::c_char;
+    crate::src::robotfindskitten::robot.color= 0 as libc::c_int;
+    crate::src::robotfindskitten::robot.bold= 0 as libc::c_int != 0;
+    *(*crate::src::robotfindskitten::screen.offset(crate::src::robotfindskitten::robot.x as isize)).offset(crate::src::robotfindskitten::robot.y as isize) = 0 as libc::c_int;
 }
 #[no_mangle]
 pub unsafe extern "C" fn initialize_kitten() {
     loop {
-        kitten.x = rand() % (COLS - 1 as libc::c_int) + 1 as libc::c_int;
-        kitten
-            .y = rand()
-            % (LINES - 1 as libc::c_int - 3 as libc::c_int + 1 as libc::c_int)
+        crate::src::robotfindskitten::kitten.x= rand() % (crate::src::robotfindskitten::COLS - 1 as libc::c_int) + 1 as libc::c_int;
+        crate::src::robotfindskitten::kitten.y= rand()
+            % (crate::src::robotfindskitten::LINES - 1 as libc::c_int - 3 as libc::c_int + 1 as libc::c_int)
             + 3 as libc::c_int;
-        if !(*(*screen.offset(kitten.x as isize)).offset(kitten.y as isize)
+        if !(*(*crate::src::robotfindskitten::screen.offset(crate::src::robotfindskitten::kitten.x as isize)).offset(crate::src::robotfindskitten::kitten.y as isize)
             != -(1 as libc::c_int))
         {
             break;
         }
     }
     loop {
-        kitten
-            .character = (rand() % (126 as libc::c_int - '!' as i32 + 1 as libc::c_int)
+        crate::src::robotfindskitten::kitten.character= (rand() % (126 as libc::c_int - '!' as i32 + 1 as libc::c_int)
             + '!' as i32) as libc::c_char;
-        if !(validchar(kitten.character) == 0) {
+        if !(validchar(crate::src::robotfindskitten::kitten.character) == 0) {
             break;
         }
     }
-    *(*screen.offset(kitten.x as isize)).offset(kitten.y as isize) = 1 as libc::c_int;
-    kitten.color = rand() % 6 as libc::c_int + 1 as libc::c_int;
-    kitten
-        .bold = if rand() % 2 as libc::c_int != 0 {
+    *(*crate::src::robotfindskitten::screen.offset(crate::src::robotfindskitten::kitten.x as isize)).offset(crate::src::robotfindskitten::kitten.y as isize) = 1 as libc::c_int;
+    crate::src::robotfindskitten::kitten.color= rand() % 6 as libc::c_int + 1 as libc::c_int;
+    crate::src::robotfindskitten::kitten.bold= if rand() % 2 as libc::c_int != 0 {
         1 as libc::c_int
     } else {
         0 as libc::c_int
@@ -1341,38 +1337,34 @@ pub unsafe extern "C" fn initialize_bogus() {
     let mut counter: libc::c_int = 0;
     let mut index: libc::c_int = 0;
     counter= 0 as libc::c_int;
-    while counter < num_bogus {
-        bogus[counter as usize].color = rand() % 6 as libc::c_int + 1 as libc::c_int;
-        bogus[counter as usize]
-            .bold = if rand() % 2 as libc::c_int != 0 {
+    while counter < crate::src::robotfindskitten::num_bogus {
+        crate::src::robotfindskitten::bogus[counter as usize].color= rand() % 6 as libc::c_int + 1 as libc::c_int;
+        crate::src::robotfindskitten::bogus[counter as usize].bold= if rand() % 2 as libc::c_int != 0 {
             1 as libc::c_int
         } else {
             0 as libc::c_int
         } != 0;
         loop {
-            bogus[counter as usize]
-                .character = (rand()
+            crate::src::robotfindskitten::bogus[counter as usize].character= (rand()
                 % (126 as libc::c_int - '!' as i32 + 1 as libc::c_int) + '!' as i32)
                 as libc::c_char;
-            if !(validchar(bogus[counter as usize].character) == 0) {
+            if !(validchar(crate::src::robotfindskitten::bogus[counter as usize].character) == 0) {
                 break;
             }
         }
         loop {
-            bogus[counter as usize]
-                .x = rand() % (COLS - 1 as libc::c_int) + 1 as libc::c_int;
-            bogus[counter as usize]
-                .y = rand()
-                % (LINES - 1 as libc::c_int - 3 as libc::c_int + 1 as libc::c_int)
+            crate::src::robotfindskitten::bogus[counter as usize].x= rand() % (crate::src::robotfindskitten::COLS - 1 as libc::c_int) + 1 as libc::c_int;
+            crate::src::robotfindskitten::bogus[counter as usize].y= rand()
+                % (crate::src::robotfindskitten::LINES - 1 as libc::c_int - 3 as libc::c_int + 1 as libc::c_int)
                 + 3 as libc::c_int;
-            if !(*(*screen.offset(bogus[counter as usize].x as isize))
-                .offset(bogus[counter as usize].y as isize) != -(1 as libc::c_int))
+            if !(*(*crate::src::robotfindskitten::screen.offset(crate::src::robotfindskitten::bogus[counter as usize].x as isize))
+                .offset(crate::src::robotfindskitten::bogus[counter as usize].y as isize) != -(1 as libc::c_int))
             {
                 break;
             }
         }
-        *(*screen.offset(bogus[counter as usize].x as isize))
-            .offset(bogus[counter as usize].y as isize) = counter + 2 as libc::c_int;
+        *(*crate::src::robotfindskitten::screen.offset(crate::src::robotfindskitten::bogus[counter as usize].x as isize))
+            .offset(crate::src::robotfindskitten::bogus[counter as usize].y as isize) = counter + 2 as libc::c_int;
         loop {
             index= (rand() as libc::c_ulong)
                 .wrapping_rem(
@@ -1381,12 +1373,12 @@ pub unsafe extern "C" fn initialize_bogus() {
                             ::std::mem::size_of::<*mut libc::c_char>() as libc::c_ulong,
                         ),
                 ) as libc::c_int;
-            if !(used_messages[index as usize] != 0 as libc::c_int) {
+            if !(crate::src::robotfindskitten::used_messages[index as usize] != 0 as libc::c_int) {
                 break;
             }
         }
-        bogus_messages[counter as usize] = index;
-        used_messages[index as usize] = 1 as libc::c_int;
+        crate::src::robotfindskitten::bogus_messages[counter as usize]= index;
+        crate::src::robotfindskitten::used_messages[index as usize]= 1 as libc::c_int;
         counter+= 1;
     }
 }
@@ -1397,32 +1389,32 @@ pub unsafe extern "C" fn initialize_screen() {
         0 as libc::c_int,
         0 as libc::c_int,
         b"robotfindskitten v%s\n\n\0" as *const u8 as *const libc::c_char,
-        ver,
+        crate::src::robotfindskitten::ver,
     );
     counter= 0 as libc::c_int;
-    while counter <= COLS - 1 as libc::c_int {
+    while counter <= crate::src::robotfindskitten::COLS - 1 as libc::c_int {
         printw(b"%c\0" as *const u8 as *const libc::c_char, 95 as libc::c_int);
         counter+= 1;
     }
     counter= 0 as libc::c_int;
-    while counter < num_bogus {
-        draw(bogus[counter as usize]);
+    while counter < crate::src::robotfindskitten::num_bogus {
+        draw(crate::src::robotfindskitten::bogus[counter as usize]);
         counter+= 1;
     }
-    draw(kitten);
-    draw(robot);
-    wrefresh(stdscr);
+    draw(crate::src::robotfindskitten::kitten);
+    draw(crate::src::robotfindskitten::robot);
+    wrefresh(crate::src::robotfindskitten::stdscr);
 }
 unsafe fn main_0(
     mut argc: libc::c_int,
     mut argv: *mut *mut libc::c_char,
 ) -> libc::c_int {
     if argc == 1 as libc::c_int {
-        num_bogus = 20 as libc::c_int;
+        crate::src::robotfindskitten::num_bogus= 20 as libc::c_int;
     } else {
-        num_bogus = atoi(*argv.offset(1 as libc::c_int as isize));
-        if num_bogus < 0 as libc::c_int
-            || num_bogus as libc::c_ulong
+        crate::src::robotfindskitten::num_bogus= atoi(*argv.offset(1 as libc::c_int as isize));
+        if crate::src::robotfindskitten::num_bogus < 0 as libc::c_int
+            || crate::src::robotfindskitten::num_bogus as libc::c_ulong
                 > (::std::mem::size_of::<[*mut libc::c_char; 406]>() as libc::c_ulong)
                     .wrapping_div(
                         ::std::mem::size_of::<*mut libc::c_char>() as libc::c_ulong,

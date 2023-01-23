@@ -75,8 +75,8 @@ pub type lil_callback_proc_t = Option::<unsafe extern "C" fn() -> ()>;
 static mut running: libc::c_int = 1 as libc::c_int;
 static mut exit_code: libc::c_int = 0 as libc::c_int;
 unsafe extern "C" fn do_exit(mut lil: *mut crate::src::lil::_lil_t, mut val: Option<&mut crate::src::lil::_lil_value_t>) {
-    running = 0 as libc::c_int;
-    exit_code = crate::src::lil::lil_to_integer(val.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) as libc::c_int;
+    crate::src::main::running= 0 as libc::c_int;
+    crate::src::main::exit_code= crate::src::lil::lil_to_integer(val.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) as libc::c_int;
 }
 unsafe extern "C" fn do_system(
     mut argc: libc::c_ulong,
@@ -209,7 +209,7 @@ unsafe extern "C" fn fnc_readline(
     let mut ch: libc::c_schar = 0;
     let mut retval = 0 as *mut crate::src::lil::_lil_value_t;
     loop {
-        ch= fgetc(stdin) as libc::c_schar;
+        ch= fgetc(crate::src::main::stdin) as libc::c_schar;
         if ch as libc::c_int == -(1 as libc::c_int) {
             break;
         }
@@ -276,14 +276,14 @@ unsafe extern "C" fn repl() -> libc::c_int {
             lil_callback_proc_t,
         >(Some(do_exit as unsafe extern "C" fn(lil_t, lil_value_t) -> ())),
     );
-    while running != 0 {
+    while crate::src::main::running != 0 {
         let mut result = 0 as *mut crate::src::lil::_lil_value_t;
         let mut strres = 0 as *const libc::c_char;
         let mut err_msg = 0 as *const libc::c_char;
         let mut pos: size_t = 0;
         buffer[0 as libc::c_int as usize]= 0 as libc::c_int as libc::c_char;
         printf(b"# \0" as *const u8 as *const libc::c_char);
-        if (fgets(buffer.as_mut_ptr(), 16384 as libc::c_int, stdin)).is_null() {();
+        if (fgets(buffer.as_mut_ptr(), 16384 as libc::c_int, crate::src::main::stdin)).is_null() {();
             break;
         }
         result= crate::src::lil::lil_parse(
@@ -306,7 +306,7 @@ unsafe extern "C" fn repl() -> libc::c_int {
         }
     }
     crate::src::lil::lil_free(lil);
-    return exit_code;
+    return crate::src::main::exit_code;
 }
 unsafe extern "C" fn nonint(
     mut argc: libc::c_int,
@@ -365,14 +365,14 @@ unsafe extern "C" fn nonint(
     crate::src::lil::lil_free_value(result);
     if crate::src::lil::lil_error(lil.as_mut(), Some(&mut err_msg), Some(&mut pos)) != 0 {
         fprintf(
-            stderr,
+            crate::src::main::stderr,
             b"lil: error at %i: %s\n\0" as *const u8 as *const libc::c_char,
             pos as libc::c_int,
             err_msg,
         );
     }
     crate::src::lil::lil_free(lil);
-    return exit_code;
+    return crate::src::main::exit_code;
 }
 unsafe fn main_0(
     mut argc: libc::c_int,

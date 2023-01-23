@@ -20,9 +20,9 @@ pub unsafe extern "C" fn zmodsqr(
     mut c: *mut crate::src::allocator::C2RustUnnamed,
 ) {
     if a == c {
-        crate::src::zset::zset(libzahl_tmp_modsqr.as_mut_ptr().as_mut(), c);
+        crate::src::zset::zset(crate::src::zmodsqr::libzahl_tmp_modsqr.as_mut_ptr().as_mut(), c);
         crate::src::zsqr::zsqr(a, b);
-        crate::src::zmod::zmod(a, a, libzahl_tmp_modsqr.as_mut_ptr());
+        crate::src::zmod::zmod(a, a, crate::src::zmodsqr::libzahl_tmp_modsqr.as_mut_ptr());
     } else {
         crate::src::zsqr::zsqr(a, b);
         crate::src::zmod::zmod(a, a, c);

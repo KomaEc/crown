@@ -69,8 +69,8 @@ unsafe extern "C" fn zrand_get_random_bits(
     while n != 0 {
         read_just= read(fd, buf.offset(read_total as isize) as *mut libc::c_void, n);
         if read_just < 0 as libc::c_int as libc::c_long {
-            libzahl_error = *__errno_location();
-            longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+            crate::src::zrand::libzahl_error= *__errno_location();
+            longjmp(crate::src::zrand::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
         }
         read_total= (read_total as libc::c_ulong).wrapping_add(read_just as size_t)
             as size_t as size_t;
@@ -124,25 +124,25 @@ pub unsafe extern "C" fn zrand(
     }
     fd= open(pathname, 0 as libc::c_int);
     if fd < 0 as libc::c_int {
-        libzahl_error = *__errno_location();
-        longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+        crate::src::zrand::libzahl_error= *__errno_location();
+        longjmp(crate::src::zrand::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
     }
     match  dist as libc::c_uint {
         0 => {
             if zsignum(n) < 0 as libc::c_int {
-                libzahl_error = 33 as libc::c_int;
-                longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+                crate::src::zrand::libzahl_error= 33 as libc::c_int;
+                longjmp(crate::src::zrand::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
             }
             bits= crate::src::zbits::zbits(n.as_mut());
             zrand_get_random_bits(r.as_mut(), bits, fd);
-            crate::src::zadd::zadd(r, r, libzahl_const_1.as_mut_ptr());
+            crate::src::zadd::zadd(r, r, crate::src::zrand::libzahl_const_1.as_mut_ptr());
             crate::src::zmul::zmul(r, r, n);
             crate::src::zrsh::zrsh(r, r, bits);
         }
         1 => {
             if zsignum(n) < 0 as libc::c_int {
-                libzahl_error = 33 as libc::c_int;
-                longjmp(libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
+                crate::src::zrand::libzahl_error= 33 as libc::c_int;
+                longjmp(crate::src::zrand::libzahl_jmp_buf.as_mut_ptr(), 1 as libc::c_int);
             }
             bits= crate::src::zbits::zbits(n.as_mut());
             loop {
