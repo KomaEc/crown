@@ -1,10 +1,9 @@
 use analysis::ssa::consume::RichLocation;
 use common::rewrite::Rewrite;
 use either::Either::Right;
-use rustc_hir::{def_id::DefId, definitions::DefPathData};
-use rustc_middle::mir::{Local, Location, Operand, Place, TerminatorKind};
+use rustc_hir::def_id::DefId;
+use rustc_middle::mir::{Local, Location, Operand, Place};
 use rustc_span::Span;
-use rustc_type_ir::TyKind::FnDef;
 
 use super::{FnRewriteCtxt, PlaceValueType};
 use crate::FnLocals;
@@ -26,15 +25,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 let Some(local) = place.as_local() else { panic!() };
                 let ty = self.body.local_decls[local].ty;
                 let required = PlaceValueType::from_ptr_ctxt(ty, ctxt);
-                if let Some(as_mut_ptr_span) = self.is_call_of_as_mut_ptr(local, location) {
-                    if required.is_ptr() && required.expect_ptr()[0].is_mut() {
-                        rewriter.replace(
-                            self.tcx,
-                            as_mut_ptr_span.shrink_to_hi(),
-                            ".as_mut()".to_owned(),
-                        );
-                        continue;
-                    }
+                // Hack! may not work is no-box is off
+                if required.is_ptr() && required.expect_ptr()[0].is_mut() && self.arg_is_dest_of_call(local, location) {
+                    let def_span = self.get_temporary_def_span(local, location);
+                    rewriter.replace(self.tcx, def_span.shrink_to_hi(), ".as_mut()".to_owned(),)
                 }
                 self.rewrite_temporary(local, location, required, rewriter);
             }
@@ -53,33 +47,14 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         )
     }
 
-    /// Hack
-    fn is_call_of_as_mut_ptr(&self, arg: Local, location: Location) -> Option<Span> {
+    fn arg_is_dest_of_call(&self, arg: Local, location: Location) -> bool {
         let FnRewriteCtxt {
-            tcx,
             body,
             def_use_chain,
             ..
         } = *self;
         let def_loc = def_use_chain.def_loc(arg, location);
-        let RichLocation::Mir(def_loc) = def_loc else { return None };
-        let Right(term) = body.stmt_at(def_loc) else { return None };
-        let TerminatorKind::Call { func, ..} = &term.kind else { return None };
-        let Some(func) = func.constant() else { return None };
-        let ty = func.ty();
-        let &FnDef(callee, _) = ty.kind() else { return None };
-        let false = callee.as_local().is_some() else { return None };
-        let def_path = tcx.def_path(callee);
-        if let [DefPathData::TypeNs(slice), _, DefPathData::ValueNs(as_mut_ptr), ..] = &def_path
-            .data
-            .iter()
-            .map(|data| data.data)
-            .collect::<smallvec::SmallVec<[_; 4]>>()[..]
-        {
-            if slice.as_str() == "slice" && as_mut_ptr.as_str() == "as_mut_ptr" {
-                return Some(term.source_info.span);
-            }
-        }
-        None
+        let RichLocation::Mir(def_loc) = def_loc else { return false };
+        matches!(body.stmt_at(def_loc), Right(..))
     }
 }
