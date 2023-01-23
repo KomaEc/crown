@@ -723,6 +723,20 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 PlaceValueType::Irrelavent,
                 rewriter,
             );
+            if resolved_location == location && place.is_indirect() && place.projection.len() == 1 {
+                assert_eq!(place, resolved_place);
+                let def_span = self.get_temporary_def_span(place.local, location);
+                if PLACE_LOAD_MODE == PlaceLoadMode::ByAddr as u8 {
+                    let required_ptr_kind = required.expect_ptr()[0];
+                    if required_ptr_kind.is_mut() {
+                        rewriter.replace(tcx, span.until(def_span), "Some(&mut *".to_owned());
+                        rewriter.replace(tcx, def_span.shrink_to_hi(), ")".to_owned());
+                    } else {
+                        rewriter.replace(tcx, span.until(def_span), "core::ptr::addr_of_mut!(*".to_owned());
+                        rewriter.replace(tcx, def_span.shrink_to_hi(), ")".to_owned());
+                    }
+                }
+            }
             return;
         } else {
             // deref copies must be dereferenced!
@@ -757,10 +771,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     if base_ptr_kind.is_raw() {
                         replacement = format!("*{replacement}");
                     } else {
-                        let usage = if (required.is_copy_obj(self)
+                        let usage = if PLACE_LOAD_MODE == PlaceLoadMode::ByValue as u8 && (required.is_copy_obj(self)
                             && !produced.is_rustc_move_obj(self))
-                            || (produced.is_copy_obj(self)
-                                && PLACE_LOAD_MODE == PlaceLoadMode::ByValue as u8)
+                            || produced.is_copy_obj(self)
                         {
                             if base_ptr_kind.is_const() {
                                 "clone"
