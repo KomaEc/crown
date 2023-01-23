@@ -39,7 +39,7 @@ pub fn rewrite_fns(
         let local_data = fn_decision.local_data(&did);
         let body = tcx.optimized_mir(did);
         rewrite_fn_sig(body, local_data, rewriter, tcx, type_reconstruction);
-        if !type_only {
+        if !type_only && !tcx.fn_sig(did).c_variadic() {
             rewrite_fn(
                 body,
                 fn_decision.local_data(&did),
@@ -582,6 +582,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             }
             TerminatorKind::Goto { .. } => {}
             TerminatorKind::Assert { .. } => {}
+            TerminatorKind::Drop { .. } => {
+                // only happens when playing with va list
+            }
             _ => todo!(
                 "terminator kind {:?} @ {:?}",
                 terminator.kind,
@@ -865,8 +868,13 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         if PLACE_LOAD_MODE == PlaceLoadMode::ByRef as u8 {
             let source_text = common::rewrite::get_snippet(tcx, span).text.1;
-            assert!(source_text.contains("as_mut_ptr()"), "@ {:?}", span);
-            replacement += ".as_mut_ptr()";
+            if source_text.contains("as_mut_ptr()") {
+                replacement += ".as_mut_ptr()";
+            } else if source_text.contains("as_va_list") {
+                replacement += ".as_va_list()";
+            } else {
+                panic!("unexpected &mut @ {:?}", span)
+            }
             rewrite_place(tcx, span, replacement, &index_spans, rewriter);
             return;
         } else if PLACE_LOAD_MODE == PlaceLoadMode::ByAddr as u8 {

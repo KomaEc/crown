@@ -247,6 +247,11 @@ fn retype<'hir>(ty: &rustc_hir::Ty<'hir>, decision: &[PointerKind], tcx: TyCtxt<
             )
         }
         hir::TyKind::Never => "!".to_owned(),
+        hir::TyKind::Tup(tuples) => {
+            // happens with struct ErasedByPreprocessor { dummy: () }
+            assert!(tuples.is_empty());
+            rustc_hir_pretty::id_to_string(&tcx.hir(), ty.hir_id)
+        }
         _ => unreachable!("{:?}", ty),
     }
 }
