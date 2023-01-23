@@ -432,8 +432,14 @@ impl FnLocals {
                     }
                     ty = ty.builtin_deref(true).unwrap().ty;
                 }
-                if is_output_param && local[0].is_move() {
-                    local[0] = PointerKind::Mut
+                if is_output_param {
+                    if local[0].is_move() {
+                        local[0] = PointerKind::Mut
+                    } else if local[0].is_raw_move() {
+                        local[0] = PointerKind::Raw(RawMeta::Mut)
+                    } else {
+                        unreachable!()
+                    }
                 }
                 if options.no_box {
                     for pointer_kind in &mut local {
