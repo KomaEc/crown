@@ -607,7 +607,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             ..
         } = *self;
 
-        let (resolved_place, resolved_location) =
+        let (resolved_place, _) =
             accum_deref_copies(place, location, def_use_chain, body, tcx);
         let place = resolved_place;
 
