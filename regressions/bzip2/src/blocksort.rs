@@ -1421,7 +1421,7 @@ pub unsafe extern "C" fn BZ2_blockSort(mut s: *mut EState) {
         if i & 1 as libc::c_int != 0 {
             i+= 1;
         }
-        quadrant= &raw mut *block.offset(i as isize) as *mut UChar as *mut UInt16;
+        quadrant= core::ptr::addr_of_mut!(*block.offset(i as isize)) as *mut UChar as *mut UInt16;
         if wfact < 1 as libc::c_int {
             wfact= 1 as libc::c_int;
         }

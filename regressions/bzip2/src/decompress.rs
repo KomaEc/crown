@@ -2240,18 +2240,18 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                                     groupPos= 50 as libc::c_int;
                                     gSel= (*s).selector[groupNo as usize] as Int32;
                                     gMinlen= (*s).minLens[gSel as usize];
-                                    gLimit= &raw mut *(*(*s).limit.as_mut_ptr()
+                                    gLimit= core::ptr::addr_of_mut!(*(*(*s).limit.as_mut_ptr()
                                         .offset(gSel as isize))
                                         .as_mut_ptr()
-                                        .offset(0 as libc::c_int as isize) as *mut Int32;
-                                    gPerm= &raw mut *(*(*s).perm.as_mut_ptr()
+                                        .offset(0 as libc::c_int as isize)) as *mut Int32;
+                                    gPerm= core::ptr::addr_of_mut!(*(*(*s).perm.as_mut_ptr()
                                         .offset(gSel as isize))
                                         .as_mut_ptr()
-                                        .offset(0 as libc::c_int as isize) as *mut Int32;
-                                    gBase= &raw mut *(*(*s).base.as_mut_ptr()
+                                        .offset(0 as libc::c_int as isize)) as *mut Int32;
+                                    gBase= core::ptr::addr_of_mut!(*(*(*s).base.as_mut_ptr()
                                         .offset(gSel as isize))
                                         .as_mut_ptr()
-                                        .offset(0 as libc::c_int as isize) as *mut Int32;
+                                        .offset(0 as libc::c_int as isize)) as *mut Int32;
                                 }
                             }
                             groupPos-= 1;
@@ -2539,18 +2539,18 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                             groupPos= 50 as libc::c_int;
                             gSel= (*s).selector[groupNo as usize] as Int32;
                             gMinlen= (*s).minLens[gSel as usize];
-                            gLimit= &raw mut *(*(*s).limit.as_mut_ptr()
+                            gLimit= core::ptr::addr_of_mut!(*(*(*s).limit.as_mut_ptr()
                                 .offset(gSel as isize))
                                 .as_mut_ptr()
-                                .offset(0 as libc::c_int as isize) as *mut Int32;
-                            gPerm= &raw mut *(*(*s).perm.as_mut_ptr()
+                                .offset(0 as libc::c_int as isize)) as *mut Int32;
+                            gPerm= core::ptr::addr_of_mut!(*(*(*s).perm.as_mut_ptr()
                                 .offset(gSel as isize))
                                 .as_mut_ptr()
-                                .offset(0 as libc::c_int as isize) as *mut Int32;
-                            gBase= &raw mut *(*(*s).base.as_mut_ptr()
+                                .offset(0 as libc::c_int as isize)) as *mut Int32;
+                            gBase= core::ptr::addr_of_mut!(*(*(*s).base.as_mut_ptr()
                                 .offset(gSel as isize))
                                 .as_mut_ptr()
-                                .offset(0 as libc::c_int as isize) as *mut Int32;
+                                .offset(0 as libc::c_int as isize)) as *mut Int32;
                         }
                     }
                     groupPos-= 1;
@@ -2705,18 +2705,18 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                         i+= 1;
                     }
                     crate::src::huffman::BZ2_hbCreateDecodeTables(
-                        &raw mut *(*(*s).limit.as_mut_ptr().offset(t as isize))
+                        core::ptr::addr_of_mut!(*(*(*s).limit.as_mut_ptr().offset(t as isize))
                             .as_mut_ptr()
-                            .offset(0 as libc::c_int as isize),
-                        &raw mut *(*(*s).base.as_mut_ptr().offset(t as isize))
+                            .offset(0 as libc::c_int as isize)),
+                        core::ptr::addr_of_mut!(*(*(*s).base.as_mut_ptr().offset(t as isize))
                             .as_mut_ptr()
-                            .offset(0 as libc::c_int as isize),
-                        &raw mut *(*(*s).perm.as_mut_ptr().offset(t as isize))
+                            .offset(0 as libc::c_int as isize)),
+                        core::ptr::addr_of_mut!(*(*(*s).perm.as_mut_ptr().offset(t as isize))
                             .as_mut_ptr()
-                            .offset(0 as libc::c_int as isize),
-                        &raw mut *(*(*s).len.as_mut_ptr().offset(t as isize))
+                            .offset(0 as libc::c_int as isize)),
+                        core::ptr::addr_of_mut!(*(*(*s).len.as_mut_ptr().offset(t as isize))
                             .as_mut_ptr()
-                            .offset(0 as libc::c_int as isize),
+                            .offset(0 as libc::c_int as isize)),
                         minLen,
                         maxLen,
                         alphaSize,
@@ -2759,15 +2759,15 @@ pub unsafe extern "C" fn BZ2_decompress(mut s: *mut crate::src::bzlib::DState) -
                         groupPos= 50 as libc::c_int;
                         gSel= (*s).selector[groupNo as usize] as Int32;
                         gMinlen= (*s).minLens[gSel as usize];
-                        gLimit= &raw mut *(*(*s).limit.as_mut_ptr().offset(gSel as isize))
+                        gLimit= core::ptr::addr_of_mut!(*(*(*s).limit.as_mut_ptr().offset(gSel as isize))
                             .as_mut_ptr()
-                            .offset(0 as libc::c_int as isize) as *mut Int32;
-                        gPerm= &raw mut *(*(*s).perm.as_mut_ptr().offset(gSel as isize))
+                            .offset(0 as libc::c_int as isize)) as *mut Int32;
+                        gPerm= core::ptr::addr_of_mut!(*(*(*s).perm.as_mut_ptr().offset(gSel as isize))
                             .as_mut_ptr()
-                            .offset(0 as libc::c_int as isize) as *mut Int32;
-                        gBase= &raw mut *(*(*s).base.as_mut_ptr().offset(gSel as isize))
+                            .offset(0 as libc::c_int as isize)) as *mut Int32;
+                        gBase= core::ptr::addr_of_mut!(*(*(*s).base.as_mut_ptr().offset(gSel as isize))
                             .as_mut_ptr()
-                            .offset(0 as libc::c_int as isize) as *mut Int32;
+                            .offset(0 as libc::c_int as isize)) as *mut Int32;
                     }
                 }
                 groupPos-= 1;

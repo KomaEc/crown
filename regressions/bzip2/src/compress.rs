@@ -148,7 +148,7 @@ unsafe extern "C" fn generateMTFValues(mut s: *mut crate::src::blocksort::EState
             let mut rll_i: UChar = 0;
             rtmp= yy[1 as libc::c_int as usize];
             yy[1 as libc::c_int as usize]= yy[0 as libc::c_int as usize];
-            ryy_j= &raw mut *yy.as_mut_ptr().offset(1 as libc::c_int as isize)
+            ryy_j= core::ptr::addr_of_mut!(*yy.as_mut_ptr().offset(1 as libc::c_int as isize))
                 as *mut UChar;
             rll_i= ll_i;
             while rll_i as libc::c_int != rtmp as libc::c_int {
@@ -161,7 +161,7 @@ unsafe extern "C" fn generateMTFValues(mut s: *mut crate::src::blocksort::EState
             yy[0 as libc::c_int as usize]= rtmp;
             j= ryy_j
                 .offset_from(
-                    &raw mut *yy.as_mut_ptr().offset(0 as libc::c_int as isize) as *mut UChar,
+                    core::ptr::addr_of_mut!(*yy.as_mut_ptr().offset(0 as libc::c_int as isize)) as *mut UChar,
                 ) as libc::c_long as Int32;
             *mtfv.offset(wr as isize) = (j + 1 as libc::c_int) as UInt16;
             wr+= 1;
@@ -1041,12 +1041,12 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
         t= 0 as libc::c_int;
         while t < nGroups {
             crate::src::huffman::BZ2_hbMakeCodeLengths(
-                &raw mut *(*(*s).len.as_mut_ptr().offset(t as isize))
+                core::ptr::addr_of_mut!(*(*(*s).len.as_mut_ptr().offset(t as isize))
                     .as_mut_ptr()
-                    .offset(0 as libc::c_int as isize),
-                &raw mut *(*(*s).rfreq.as_mut_ptr().offset(t as isize))
+                    .offset(0 as libc::c_int as isize)),
+                core::ptr::addr_of_mut!(*(*(*s).rfreq.as_mut_ptr().offset(t as isize))
                     .as_mut_ptr()
-                    .offset(0 as libc::c_int as isize),
+                    .offset(0 as libc::c_int as isize)),
                 alphaSize,
                 17 as libc::c_int,
             );
@@ -1107,12 +1107,12 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
             crate::src::bzlib::BZ2_bz__AssertH__fail(3005 as libc::c_int);
         }
         crate::src::huffman::BZ2_hbAssignCodes(
-            &raw mut *(*(*s).code.as_mut_ptr().offset(t as isize))
+            core::ptr::addr_of_mut!(*(*(*s).code.as_mut_ptr().offset(t as isize))
                 .as_mut_ptr()
-                .offset(0 as libc::c_int as isize),
-            &raw mut *(*(*s).len.as_mut_ptr().offset(t as isize))
+                .offset(0 as libc::c_int as isize)),
+            core::ptr::addr_of_mut!(*(*(*s).len.as_mut_ptr().offset(t as isize))
                 .as_mut_ptr()
-                .offset(0 as libc::c_int as isize),
+                .offset(0 as libc::c_int as isize)),
             minLen,
             maxLen,
             alphaSize,
@@ -1228,14 +1228,14 @@ unsafe extern "C" fn sendMTFValues(mut s: *mut crate::src::blocksort::EState) {
         if nGroups == 6 as libc::c_int && 50 as libc::c_int == ge - gs + 1 as libc::c_int
         {
             let mut mtfv_i: UInt16 = 0;
-            let mut s_len_sel_selCtr: *mut UChar = &raw mut *(*(*s).len.as_mut_ptr()
+            let mut s_len_sel_selCtr: *mut UChar = core::ptr::addr_of_mut!(*(*(*s).len.as_mut_ptr()
                 .offset(*(*s).selector.as_mut_ptr().offset(selCtr as isize) as isize))
                 .as_mut_ptr()
-                .offset(0 as libc::c_int as isize) as *mut UChar;
-            let mut s_code_sel_selCtr: *mut Int32 = &raw mut *(*(*s).code.as_mut_ptr()
+                .offset(0 as libc::c_int as isize)) as *mut UChar;
+            let mut s_code_sel_selCtr: *mut Int32 = core::ptr::addr_of_mut!(*(*(*s).code.as_mut_ptr()
                 .offset(*(*s).selector.as_mut_ptr().offset(selCtr as isize) as isize))
                 .as_mut_ptr()
-                .offset(0 as libc::c_int as isize) as *mut Int32;
+                .offset(0 as libc::c_int as isize)) as *mut Int32;
             mtfv_i= *mtfv.offset((gs + 0 as libc::c_int) as isize);
             bsW(
                 s,
@@ -1586,7 +1586,7 @@ pub unsafe extern "C" fn BZ2_compressBlock(mut s: *mut crate::src::blocksort::ES
         }
         crate::src::blocksort::BZ2_blockSort(s);
     }
-    (*s).zbits= &raw mut *((*s).arr2 as *mut UChar).offset((*s).nblock as isize)
+    (*s).zbits= core::ptr::addr_of_mut!(*((*s).arr2 as *mut UChar).offset((*s).nblock as isize))
         as *mut UChar;
     if (*s).blockNo == 1 as libc::c_int {
         BZ2_bsInitWrite(s.as_mut());

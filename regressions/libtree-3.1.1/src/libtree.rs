@@ -884,7 +884,7 @@ unsafe extern "C" fn interpolate_variables(
         }
         let mut var_val = 0 as *const libc::c_char;
         if strncmp(
-            &raw mut *(*st).arr.offset(curr_src as isize),
+            core::ptr::addr_of_mut!(*(*st).arr.offset(curr_src as isize)),
             b"ORIGIN\0" as *const u8 as *const libc::c_char,
             6 as libc::c_int as libc::c_ulong,
         ) == 0 as libc::c_int
@@ -893,7 +893,7 @@ unsafe extern "C" fn interpolate_variables(
             curr_src= (curr_src as libc::c_ulong)
                 .wrapping_add(6 as libc::c_int as libc::c_ulong) as size_t as size_t;
         } else if strncmp(
-            &raw mut *(*st).arr.offset(curr_src as isize),
+            core::ptr::addr_of_mut!(*(*st).arr.offset(curr_src as isize)),
             b"LIB\0" as *const u8 as *const libc::c_char,
             3 as libc::c_int as libc::c_ulong,
         ) == 0 as libc::c_int
@@ -902,7 +902,7 @@ unsafe extern "C" fn interpolate_variables(
             curr_src= (curr_src as libc::c_ulong)
                 .wrapping_add(3 as libc::c_int as libc::c_ulong) as size_t as size_t;
         } else if strncmp(
-            &raw mut *(*st).arr.offset(curr_src as isize),
+            core::ptr::addr_of_mut!(*(*st).arr.offset(curr_src as isize)),
             b"PLATFORM\0" as *const u8 as *const libc::c_char,
             8 as libc::c_int as libc::c_ulong,
         ) == 0 as libc::c_int
@@ -911,7 +911,7 @@ unsafe extern "C" fn interpolate_variables(
             curr_src= (curr_src as libc::c_ulong)
                 .wrapping_add(8 as libc::c_int as libc::c_ulong) as size_t as size_t;
         } else if strncmp(
-            &raw mut *(*st).arr.offset(curr_src as isize),
+            core::ptr::addr_of_mut!(*(*st).arr.offset(curr_src as isize)),
             b"OSNAME\0" as *const u8 as *const libc::c_char,
             6 as libc::c_int as libc::c_ulong,
         ) == 0 as libc::c_int
@@ -921,7 +921,7 @@ unsafe extern "C" fn interpolate_variables(
                 .wrapping_add(6 as libc::c_int as libc::c_ulong) as size_t as size_t;
         } else {
             if !(strncmp(
-                &raw mut *(*st).arr.offset(curr_src as isize),
+                core::ptr::addr_of_mut!(*(*st).arr.offset(curr_src as isize)),
                 b"OSREL\0" as *const u8 as *const libc::c_char,
                 5 as libc::c_int as libc::c_ulong,
             ) == 0 as libc::c_int)
@@ -941,9 +941,9 @@ unsafe extern "C" fn interpolate_variables(
         let mut var_len = strlen(var_val);
         string_table_maybe_grow(st.as_mut(), bytes_to_dollar.wrapping_add(var_len));
         memcpy(
-            &raw mut *(*st).arr.offset((*s).string_table.n as isize) as *mut libc::c_char
+            core::ptr::addr_of_mut!(*(*st).arr.offset((*s).string_table.n as isize)) as *mut libc::c_char
                 as *mut libc::c_void,
-            &raw mut *(*st).arr.offset(prev_src as isize) as *mut libc::c_char
+            core::ptr::addr_of_mut!(*(*st).arr.offset(prev_src as isize)) as *mut libc::c_char
                 as *const libc::c_void,
             bytes_to_dollar,
         );
@@ -951,7 +951,7 @@ unsafe extern "C" fn interpolate_variables(
             as size_t;
         prev_src= curr_src;
         memcpy(
-            &raw mut *(*st).arr.offset((*s).string_table.n as isize) as *mut libc::c_char
+            core::ptr::addr_of_mut!(*(*st).arr.offset((*s).string_table.n as isize)) as *mut libc::c_char
                 as *mut libc::c_void,
             var_val as *const libc::c_void,
             var_len,
@@ -1294,7 +1294,7 @@ unsafe extern "C" fn visited_files_contains(
 ) -> libc::c_int {
     let mut i = 0 as libc::c_int as size_t;
     while i < (*files).n {
-        let mut f: *mut visited_file_t = &raw mut *(*files).arr.offset(i as isize)
+        let mut f: *mut visited_file_t = core::ptr::addr_of_mut!(*(*files).arr.offset(i as isize))
             as *mut visited_file_t;
         if (*f).st_dev == (*needle).st_dev && (*f).st_ino == (*needle).st_ino {
             return 1 as libc::c_int;

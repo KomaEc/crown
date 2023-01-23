@@ -448,7 +448,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         match &statement.kind {
             StatementKind::Assign(box (place, rvalue)) => {
                 // TODO constant immediate_lvalue
-                let is_immediate_lvalue = place.is_indirect() && {
+                let is_func_call_dest = place.is_indirect() && {
                     match def_use_chain.def_loc(place.local, location) {
                         RichLocation::Entry => false,
                         RichLocation::Phi(_) => false,
@@ -458,12 +458,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     }
                 };
 
+                // let is_static_ref = body.local_decls[place.local].is_ref_to_static();
+
                 // rewrite point: non-temporary place
                 // this includes 1. place of which base local is a user defined variable
                 // 2. place of which base local is a deref tmp, and the rvalue is not another deref tmp
                 if user_idents.contains_key(&place.local)
                     || matches!(body.local_decls[place.local].local_info, Some(box LocalInfo::DerefTemp) if !matches!(rvalue, Rvalue::CopyForDeref(..)))
-                    || is_immediate_lvalue
+                    || is_func_call_dest
+                    // || is_static_ref
                 {
                     // let place = accum_deref_copies(*place, location, def_use_chain, body, tcx);
                     let span = statement.source_info.span;
@@ -728,11 +731,18 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 let def_span = self.get_temporary_def_span(place.local, location);
                 if PLACE_LOAD_MODE == PlaceLoadMode::ByAddr as u8 {
                     let required_ptr_kind = required.expect_ptr()[0];
+                    let optional_star = if body.local_decls[place.local].is_ref_to_static() {
+                        ""
+                    } else {
+                        "*"
+                    };
                     if required_ptr_kind.is_mut() {
-                        rewriter.replace(tcx, span.until(def_span), "Some(&mut *".to_owned());
+                        let prefix = format!("Some(&mut {optional_star}");
+                        rewriter.replace(tcx, span.until(def_span), prefix);
                         rewriter.replace(tcx, def_span.shrink_to_hi(), ")".to_owned());
                     } else {
-                        rewriter.replace(tcx, span.until(def_span), "core::ptr::addr_of_mut!(*".to_owned());
+                        let prefix = format!("core::ptr::addr_of_mut!({optional_star}");
+                        rewriter.replace(tcx, span.until(def_span), prefix);
                         rewriter.replace(tcx, def_span.shrink_to_hi(), ")".to_owned());
                     }
                 }

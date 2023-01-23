@@ -1840,7 +1840,7 @@ static mut fileMetaInfo: stat = stat {
 };
 unsafe extern "C" fn saveInputFileMetaInfo(mut srcName: *mut Char) {
     let mut retVal: IntNative = 0;
-    retVal= stat(srcName, &raw mut fileMetaInfo);
+    retVal= stat(srcName, core::ptr::addr_of_mut!(fileMetaInfo));
     if retVal != 0 as libc::c_int {
         ioError();
     }
@@ -2850,7 +2850,7 @@ unsafe fn main_0(mut argc: IntNative, mut argv: *mut *mut Char) -> IntNative {
     copyFileName(progNameReally.as_mut_ptr(), *argv.offset(0 as libc::c_int as isize));
     progName = &raw mut *progNameReally.as_mut_ptr().offset(0 as libc::c_int as isize)
         as *mut Char;
-    tmp= &raw mut *progNameReally.as_mut_ptr().offset(0 as libc::c_int as isize)
+    tmp= core::ptr::addr_of_mut!(*progNameReally.as_mut_ptr().offset(0 as libc::c_int as isize))
         as *mut Char;
     while (*tmp) as libc::c_int != '\0' as i32 {
         if (*tmp) as libc::c_int == '/' as i32 {
