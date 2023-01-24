@@ -8,6 +8,7 @@
 #![feature(extern_types)]
 #![feature(register_tool)]
 #![register_tool(c2rust)]
+#![feature(strict_provenance)]
 #![feature(core_intrinsics)]
 #![feature(raw_ref_op)]
 
