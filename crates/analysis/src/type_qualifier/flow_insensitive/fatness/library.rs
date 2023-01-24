@@ -54,6 +54,10 @@ pub fn library_call<'tcx>(
                             database,
                         )
                     }
+                    "addr" => {
+                        // no constraint
+                        return;
+                    }
                     _ => {}
                 }
             }

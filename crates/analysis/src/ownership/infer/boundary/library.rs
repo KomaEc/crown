@@ -28,32 +28,46 @@ where
     ) {
         let def_path = self.tcx.def_path(callee);
         // if it is a library call in core::ptr
-        if def_path
+        if matches!(def_path
             .data
             .get(0)
             .map(|d| match d.data {
                 rustc_hir::definitions::DefPathData::TypeNs(s) if s.as_str() == "ptr" => true,
                 _ => false,
-            })
-            .is_some()
+            }), Some(cond) if cond)
         {
             // if it is core::ptr::<..>::..
             if let Some(d) = def_path.data.get(3) {
-                match d.data {
-                    rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "is_null" => {
-                        self.call_is_null(args);
-                        return;
+                if let rustc_hir::definitions::DefPathData::ValueNs(s) = d.data {
+                    match s.as_str() {
+                        "is_null" => {
+                            self.call_is_null(args);
+                            return;
+                        }
+                        "offset" => {
+                            self.call_offset(destination, args);
+                            return;
+                        }
+                        "addr" => {
+                            self.call_addr(args);
+                            return;
+                        }
+                        _ => {}
                     }
-                    rustc_hir::definitions::DefPathData::ValueNs(s) if s.as_str() == "offset" => {
-                        self.call_offset(destination, args);
-                        return;
-                    }
-                    _ => {}
                 }
             }
         }
 
         self.unknown_call(destination, args)
+    }
+
+    /// Huge Hack right there
+    pub fn call_addr(&mut self, args: &CallArgs) {
+        assert_eq!(args.len(), 1);
+        if let Some((arg, is_ref)) = args[0].clone() {
+            assert!(!is_ref);
+            let _ = arg; // ignore
+        }
     }
 
     pub fn call_is_null(&mut self, args: &CallArgs) {

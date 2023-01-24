@@ -260,13 +260,15 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     recursion.extend(children[bb].iter().rev().map(|&bb| (bb, State::ToVisit)));
                 }
                 State::ToPopNames => {
-                    for &(local, _) in self
+                    for local in self
                         .state
                         .consume_chain
                         .of_block(bb)
                         .iter()
                         .flatten()
                         .filter(|(_, consume)| !consume.is_use())
+                        .map(|(local, _)| *local)
+                        .chain(self.state.join_points[bb].iter().map(|(local, _)| *local))
                     {
                         let ssa_idx = self.state.name_state.pop(local);
                         tracing::debug!("popping at {:?}: {:?}~{:?}", bb, local, ssa_idx);

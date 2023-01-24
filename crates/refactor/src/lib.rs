@@ -15,7 +15,7 @@ use analysis::{
     ssa::AnalysisResults,
     type_qualifier::flow_insensitive::{fatness::FatnessResult, mutability::MutabilityResult},
 };
-use clap::{Args, ArgGroup};
+use clap::{ArgGroup, Args};
 use common::{
     data_structure::vec_vec::VecVec,
     rewrite::{Rewrite, RewriteMode},

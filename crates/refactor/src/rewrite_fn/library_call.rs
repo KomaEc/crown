@@ -52,6 +52,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                             self.rewrite_is_null(args, destination, fn_span, location, rewriter);
                             return;
                         }
+                        "addr" => return,
                         _ => {}
                     }
                 }

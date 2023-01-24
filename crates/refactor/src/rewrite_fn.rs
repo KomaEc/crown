@@ -610,8 +610,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             ..
         } = *self;
 
-        let (resolved_place, _) =
-            accum_deref_copies(place, location, def_use_chain, body, tcx);
+        let (resolved_place, _) = accum_deref_copies(place, location, def_use_chain, body, tcx);
         let place = resolved_place;
 
         let is_static_ref = body.local_decls[place.local].is_ref_to_static();

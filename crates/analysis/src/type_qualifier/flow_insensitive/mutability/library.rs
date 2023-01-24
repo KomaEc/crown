@@ -95,6 +95,10 @@ pub fn library_call<'tcx, M: MutabilityLikeAnalysis>(
                             database,
                         )
                     }
+                    "addr" => {
+                        // no constraint
+                        return;
+                    }
                     _ => {}
                 }
             }

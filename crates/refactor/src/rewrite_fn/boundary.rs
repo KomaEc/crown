@@ -26,9 +26,12 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 let ty = self.body.local_decls[local].ty;
                 let required = PlaceValueType::from_ptr_ctxt(ty, ctxt);
                 // Hack! may not work is no-box is off
-                if required.is_ptr() && required.expect_ptr()[0].is_mut() && self.arg_is_dest_of_call(local, location) {
+                if required.is_ptr()
+                    && required.expect_ptr()[0].is_mut()
+                    && self.arg_is_dest_of_call(local, location)
+                {
                     let def_span = self.get_temporary_def_span(local, location);
-                    rewriter.replace(self.tcx, def_span.shrink_to_hi(), ".as_mut()".to_owned(),)
+                    rewriter.replace(self.tcx, def_span.shrink_to_hi(), ".as_mut()".to_owned())
                 }
                 self.rewrite_temporary(local, location, required, rewriter);
             }

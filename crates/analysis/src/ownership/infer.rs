@@ -506,6 +506,24 @@ where
         }
     }
 
+    fn source(infer_cx: &mut Self::Ctxt, result: Consume<Self::LocalSig>) {
+        Self::assume(infer_cx, result.r#use, false);
+        if let Some(sig) = result.def.clone().next() {
+            infer_cx
+                .database
+                .push_assume::<crate::ssa::constraint::Debug>((), sig, true)
+        }
+    }
+
+    fn sink(infer_cx: &mut Self::Ctxt, result: Consume<Self::LocalSig>) {
+        if let Some(sig) = result.r#use.clone().next() {
+            infer_cx
+                .database
+                .push_assume::<crate::ssa::constraint::Debug>((), sig, true)
+        }
+        Self::assume(infer_cx, result.def, false);
+    }
+
     #[inline]
     fn assume(
         infer_cx: &mut InferCtxt<'infercx, 'db, 'tcx, Analysis>,

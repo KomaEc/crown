@@ -326,7 +326,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
         }
         Command::Rewrite {
             rewrite_mode,
-            options
+            options,
         } => {
             let alias_result = alias::alias_results(&input);
             let taint_result = alias::taint_results(&input);

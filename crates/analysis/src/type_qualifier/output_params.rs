@@ -84,7 +84,9 @@ fn conservative_output_params(
 
     for arg1 in body.args_iter().map(|arg| arg.index()) {
         for arg2 in body.args_iter().map(|arg| arg.index()) {
-            if arg1 == arg2 { continue };
+            if arg1 == arg2 {
+                continue;
+            };
             if alias_result.may_alias(location_of[arg1], location_of[arg2]) {
                 tracing::debug!(
                     "@{:?}: {:?} removed because it aliases another argument {:?}",
