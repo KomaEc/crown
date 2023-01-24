@@ -249,7 +249,8 @@ fn sanity_check<'tcx>(
                 either::Either::Right(term) => term.source_info.span,
             };
 
-            tracing::error!("semantics changed @ {:?}", span)
+            let source_text = common::rewrite::get_snippet(crate_data.tcx, span).text.1;
+            tracing::error!("semantics changed: {source_text} @ {:?}", span)
         }
     }
 }
