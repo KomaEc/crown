@@ -13,7 +13,10 @@ use rustc_errors::registry;
 use rustc_hir::{ItemKind, OwnerNode};
 use rustc_interface::Config;
 use rustc_middle::{
-    mir::{visit::{Visitor, PlaceContext}, Body, Local},
+    mir::{
+        visit::{PlaceContext, Visitor},
+        Body, Local,
+    },
     ty::TyCtxt,
 };
 use rustc_session::config;
@@ -62,7 +65,7 @@ fn body_stat(body: &Body) -> (usize, usize) {
             _: rustc_middle::mir::Location,
         ) {
             if matches!(context, PlaceContext::NonUse(..)) {
-                return
+                return;
             }
             if self.user_vars.contains(&place.local)
                 && place.is_indirect()
@@ -230,6 +233,7 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
         "f128",
         #[cfg(target_arch = "x86_64")]
         "f128_internal",
+        "num_traits",
         "--cap-lints",
         "allow",
     ]

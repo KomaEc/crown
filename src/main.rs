@@ -166,6 +166,7 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
         "f128",
         #[cfg(target_arch = "x86_64")]
         "f128_internal",
+        "num_traits",
         "--cap-lints",
         "allow",
     ]

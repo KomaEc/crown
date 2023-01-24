@@ -2,10 +2,18 @@ use std::{collections::HashSet, env, ffi::OsStr, fs, path::PathBuf};
 
 const C2RUST_DEPENDENCIES: &[(&str, &str)] = &[
     ("libc2rust_bitfields", "rlib"),
-    ("libc2rust_bitfields_derive", "dylib"),
+    (
+        "libc2rust_bitfields_derive",
+        if cfg!(target_arch = "aarch64") {
+            "dylib"
+        } else {
+            "so"
+        },
+    ),
     ("liblibc", "rlib"),
     ("libf128_internal", "rlib"),
     ("libf128", "rlib"),
+    ("libnum_traits", "rlib"),
 ];
 
 fn main() {
@@ -28,8 +36,9 @@ fn main() {
             .strip_prefix(deps_path.as_path())
             .unwrap();
         if let Some(lib_name) = path.file_stem().and_then(|stem| stem.to_str()) {
+            let lib_name = lib_name.split("-").next().unwrap();
             for &(lib, lib_type) in C2RUST_DEPENDENCIES {
-                if lib_name.starts_with(lib)
+                if lib_name == lib
                     && path.extension() == Some(OsStr::new(lib_type))
                     && !lib_prepared.contains(&lib)
                 {
