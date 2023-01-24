@@ -51,5 +51,5 @@ for f in $(find $WORKSPACE -name "Cargo.toml"); do
     if [ $BENCH_NAME = "lil" ]; then
         OPTION="--type-reconstruction"
     fi
-    $CROWN $ENTRY rewrite $OPTION in-place || { echo 'rewrite $f crashed' ; exit 1; }
+    $CROWN $ENTRY rewrite $OPTION in-place || { echo "rewrite $f crashed" ; exit 1; }
 done
