@@ -60,7 +60,7 @@ fn rewrite_fn_sig<'tcx>(
     type_reconstruction: bool,
 ) {
     let fn_item = tcx.hir().expect_item(body.source.def_id().expect_local());
-    let ItemKind::Fn(fn_sig, _, _) = &fn_item.kind else { unreachable!() };
+    let ItemKind::Fn(fn_sig, _, body_id) = &fn_item.kind else { unreachable!() };
 
     if let rustc_hir::FnRetTy::Return(ret_ty) = fn_sig.decl.output {
         rewrite_hir_ty(ret_ty, &decision[0], rewriter, tcx, type_reconstruction);
@@ -68,6 +68,14 @@ fn rewrite_fn_sig<'tcx>(
 
     for (ty, decision) in itertools::izip!(fn_sig.decl.inputs, &decision[1..]) {
         rewrite_hir_ty(ty, decision, rewriter, tcx, type_reconstruction);
+    }
+
+    let fn_body = tcx.hir().body(*body_id);
+    for param in fn_body.params {
+        let rustc_hir::PatKind::Binding(annot, _, _, _) = param.pat.kind else { unreachable!() };
+        if matches!(annot.1, rustc_hir::Mutability::Not) {
+            rewriter.replace(tcx, param.span.shrink_to_lo(), "mut ".to_owned())
+        }
     }
 }
 
