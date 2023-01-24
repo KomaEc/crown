@@ -895,55 +895,6 @@ unsafe extern "C" fn FindLongestMatchH2(
                 return;
             }
         }
-    } else {
-        let mut keys: [size_t; 1] = [0; 1];
-        let mut i: size_t = 0;
-        i = 0 as libc::c_int as size_t;
-        while i < ((1 as libc::c_int) << 0 as libc::c_int) as libc::c_ulong {
-            keys[i
-                as usize] = key.wrapping_add(i << 3 as libc::c_int)
-                & (((1 as libc::c_int) << 16 as libc::c_int) - 1 as libc::c_int)
-                    as libc::c_ulong;
-            i = i.wrapping_add(1);
-        }
-        key_out = keys[((cur_ix
-            & ((((1 as libc::c_int) << 0 as libc::c_int) - 1 as libc::c_int)
-                << 3 as libc::c_int) as libc::c_ulong) >> 3 as libc::c_int) as usize];
-        i = 0 as libc::c_int as size_t;
-        while i < ((1 as libc::c_int) << 0 as libc::c_int) as libc::c_ulong {
-            let mut len_1: size_t = 0;
-            let mut backward_0: size_t = 0;
-            prev_ix = *buckets.offset(keys[i as usize] as isize) as size_t;
-            backward_0 = cur_ix.wrapping_sub(prev_ix);
-            prev_ix &= ring_buffer_mask as uint32_t as libc::c_ulong;
-            if !(compare_char
-                != *data.offset(prev_ix.wrapping_add(best_len) as isize) as libc::c_int)
-            {
-                if !((backward_0 == 0 as libc::c_int as libc::c_ulong
-                    || backward_0 > max_backward) as libc::c_int as libc::c_long != 0)
-                {
-                    len_1 = FindMatchLengthWithLimit(
-                        &*data.offset(prev_ix as isize),
-                        &*data.offset(cur_ix_masked as isize),
-                        max_length,
-                    );
-                    if len_1 >= 4 as libc::c_int as libc::c_ulong {
-                        let score_1 = BackwardReferenceScore(len_1, backward_0);
-                        if best_score < score_1 {
-                            best_len = len_1;
-                            (*out).len = len_1;
-                            compare_char = *data
-                                .offset(cur_ix_masked.wrapping_add(len_1) as isize)
-                                as libc::c_int;
-                            best_score = score_1;
-                            (*out).score = score_1;
-                            (*out).distance = backward_0;
-                        }
-                    }
-                }
-            }
-            i = i.wrapping_add(1);
-        }
     }
     if 1 as libc::c_int != 0 && min_score == (*out).score {
         SearchInStaticDictionary(
@@ -1075,38 +1026,7 @@ unsafe extern "C" fn FindLongestMatchH3(
             }
         }
     }
-    if (1 as libc::c_int) << 1 as libc::c_int == 1 as libc::c_int {
-        let mut backward: size_t = 0;
-        let mut len_0: size_t = 0;
-        prev_ix = *buckets.offset(key as isize) as size_t;
-        *buckets.offset(key as isize) = cur_ix as uint32_t;
-        backward = cur_ix.wrapping_sub(prev_ix);
-        prev_ix &= ring_buffer_mask as uint32_t as libc::c_ulong;
-        if compare_char
-            != *data.offset(prev_ix.wrapping_add(best_len_in) as isize) as libc::c_int
-        {
-            return;
-        }
-        if (backward == 0 as libc::c_int as libc::c_ulong || backward > max_backward)
-            as libc::c_int as libc::c_long != 0
-        {
-            return;
-        }
-        len_0 = FindMatchLengthWithLimit(
-            &*data.offset(prev_ix as isize),
-            &*data.offset(cur_ix_masked as isize),
-            max_length,
-        );
-        if len_0 >= 4 as libc::c_int as libc::c_ulong {
-            let score_0 = BackwardReferenceScore(len_0, backward);
-            if best_score < score_0 {
-                (*out).len = len_0;
-                (*out).distance = backward;
-                (*out).score = score_0;
-                return;
-            }
-        }
-    } else {
+    {
         let mut keys: [size_t; 2] = [0; 2];
         let mut i: size_t = 0;
         i = 0 as libc::c_int as size_t;
@@ -1155,18 +1075,6 @@ unsafe extern "C" fn FindLongestMatchH3(
             }
             i = i.wrapping_add(1);
         }
-    }
-    if 0 as libc::c_int != 0 && min_score == (*out).score {
-        SearchInStaticDictionary(
-            dictionary,
-            (*self_0).common,
-            &*data.offset(cur_ix_masked as isize),
-            max_length,
-            dictionary_distance,
-            max_distance,
-            out,
-            1 as libc::c_int,
-        );
     }
     if (1 as libc::c_int) << 1 as libc::c_int != 1 as libc::c_int {
         *buckets.offset(key_out as isize) = cur_ix as uint32_t;
@@ -1286,38 +1194,7 @@ unsafe extern "C" fn FindLongestMatchH4(
             }
         }
     }
-    if (1 as libc::c_int) << 2 as libc::c_int == 1 as libc::c_int {
-        let mut backward: size_t = 0;
-        let mut len_0: size_t = 0;
-        prev_ix = *buckets.offset(key as isize) as size_t;
-        *buckets.offset(key as isize) = cur_ix as uint32_t;
-        backward = cur_ix.wrapping_sub(prev_ix);
-        prev_ix &= ring_buffer_mask as uint32_t as libc::c_ulong;
-        if compare_char
-            != *data.offset(prev_ix.wrapping_add(best_len_in) as isize) as libc::c_int
-        {
-            return;
-        }
-        if (backward == 0 as libc::c_int as libc::c_ulong || backward > max_backward)
-            as libc::c_int as libc::c_long != 0
-        {
-            return;
-        }
-        len_0 = FindMatchLengthWithLimit(
-            &*data.offset(prev_ix as isize),
-            &*data.offset(cur_ix_masked as isize),
-            max_length,
-        );
-        if len_0 >= 4 as libc::c_int as libc::c_ulong {
-            let score_0 = BackwardReferenceScore(len_0, backward);
-            if best_score < score_0 {
-                (*out).len = len_0;
-                (*out).distance = backward;
-                (*out).score = score_0;
-                return;
-            }
-        }
-    } else {
+    {
         let mut keys: [size_t; 4] = [0; 4];
         let mut i: size_t = 0;
         i = 0 as libc::c_int as size_t;
@@ -2496,38 +2373,7 @@ unsafe extern "C" fn FindLongestMatchH54(
             }
         }
     }
-    if (1 as libc::c_int) << 2 as libc::c_int == 1 as libc::c_int {
-        let mut backward: size_t = 0;
-        let mut len_0: size_t = 0;
-        prev_ix = *buckets.offset(key as isize) as size_t;
-        *buckets.offset(key as isize) = cur_ix as uint32_t;
-        backward = cur_ix.wrapping_sub(prev_ix);
-        prev_ix &= ring_buffer_mask as uint32_t as libc::c_ulong;
-        if compare_char
-            != *data.offset(prev_ix.wrapping_add(best_len_in) as isize) as libc::c_int
-        {
-            return;
-        }
-        if (backward == 0 as libc::c_int as libc::c_ulong || backward > max_backward)
-            as libc::c_int as libc::c_long != 0
-        {
-            return;
-        }
-        len_0 = FindMatchLengthWithLimit(
-            &*data.offset(prev_ix as isize),
-            &*data.offset(cur_ix_masked as isize),
-            max_length,
-        );
-        if len_0 >= 4 as libc::c_int as libc::c_ulong {
-            let score_0 = BackwardReferenceScore(len_0, backward);
-            if best_score < score_0 {
-                (*out).len = len_0;
-                (*out).distance = backward;
-                (*out).score = score_0;
-                return;
-            }
-        }
-    } else {
+    {
         let mut keys: [size_t; 4] = [0; 4];
         let mut i: size_t = 0;
         i = 0 as libc::c_int as size_t;
@@ -2576,18 +2422,6 @@ unsafe extern "C" fn FindLongestMatchH54(
             }
             i = i.wrapping_add(1);
         }
-    }
-    if 0 as libc::c_int != 0 && min_score == (*out).score {
-        SearchInStaticDictionary(
-            dictionary,
-            (*self_0).common,
-            &*data.offset(cur_ix_masked as isize),
-            max_length,
-            dictionary_distance,
-            max_distance,
-            out,
-            1 as libc::c_int,
-        );
     }
     if (1 as libc::c_int) << 2 as libc::c_int != 1 as libc::c_int {
         *buckets.offset(key_out as isize) = cur_ix as uint32_t;
