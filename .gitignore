@@ -26,3 +26,6 @@ _build/
 
 extra_deps/
 
+potential
+preprocessed
+working
