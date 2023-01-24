@@ -12,15 +12,15 @@ extern "C" {
 }
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor3;
+struct ErasedByPreprocessor3 { dummy: () }
 pub type quadtree_point_t = crate::src::src::bounds::quadtree_point;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor4;
+struct ErasedByPreprocessor4 { dummy: () }
 pub type quadtree_bounds_t = crate::src::src::bounds::quadtree_bounds;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor5;
+struct ErasedByPreprocessor5 { dummy: () }
 pub type quadtree_node_t = crate::src::src::node::quadtree_node;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -145,7 +145,7 @@ unsafe extern "C" fn find_(
         let mut test = quadtree_point_t { x: 0., y: 0. };
         test.x= x;
         test.y= y;
-        return find_(get_quadrant_(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), core::ptr::addr_of_mut!(test)), x, y);
+        return find_(get_quadrant_(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), core::ptr::addr_of_mut!(test)).as_mut(), x, y);
     }
     return 0 as *mut quadtree_point_t;
 }
@@ -191,7 +191,7 @@ pub unsafe extern "C" fn quadtree_new(
     mut miny: libc::c_double,
     mut maxx: libc::c_double,
     mut maxy: libc::c_double,
-) -> *mut quadtree_t {
+) -> *mut /* owning */ quadtree_t {
     let mut tree = 0 as *mut quadtree_t;
     tree= malloc(::std::mem::size_of::<quadtree_t>() as libc::c_ulong)
         as *mut quadtree_t;
@@ -200,6 +200,7 @@ pub unsafe extern "C" fn quadtree_new(
     }
     (*tree).root= crate::src::src::node::quadtree_node_with_bounds(minx, miny, maxx, maxy);
     if (*tree).root.is_null() {();
+        free(tree as *mut libc::c_void);
         return 0 as *mut quadtree_t;
     }
     (*tree).key_free= None;

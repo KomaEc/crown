@@ -34,7 +34,7 @@ pub type __off_t = libc::c_long;
 pub type __off64_t = libc::c_long;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor2;
+struct ErasedByPreprocessor2 { dummy: () }
 pub type _IO_lock_t = ();
 pub type FILE = crate::src::example3::_IO_FILE;
 pub type genann_actfun = Option::<
@@ -42,7 +42,7 @@ pub type genann_actfun = Option::<
 >;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor3;
+struct ErasedByPreprocessor3 { dummy: () }
 #[no_mangle]
 pub static mut iris_data: *const libc::c_char = b"example/iris.data\0" as *const u8
     as *const libc::c_char;

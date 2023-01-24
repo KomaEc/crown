@@ -8,15 +8,15 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor0;
+struct ErasedByPreprocessor0 { dummy: () }
 #[inline]
 unsafe extern "C" fn zzero(mut a: *mut crate::src::allocator::C2RustUnnamed) -> libc::c_int {
     return ((*a).sign == 0) as libc::c_int;
 }
 #[no_mangle]
-pub unsafe extern "C" fn zabs(mut a: Option<&mut crate::src::allocator::C2RustUnnamed>, mut b: *mut crate::src::allocator::C2RustUnnamed) {
-    if a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) != b {
-        crate::src::zset::zset(a.as_deref_mut(), b);
+pub unsafe extern "C" fn zabs(mut a: *mut crate::src::allocator::C2RustUnnamed, mut b: *mut crate::src::allocator::C2RustUnnamed) {
+    if a != b {
+        crate::src::zset::zset(a, b);
     }
-    (*a.as_deref_mut().unwrap()).sign= (zzero(a.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) == 0) as libc::c_int;
+    (*a).sign= (zzero(a) == 0) as libc::c_int;
 }

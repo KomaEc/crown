@@ -9,7 +9,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor10;
+struct ErasedByPreprocessor10 { dummy: () }
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[no_mangle]
 pub unsafe extern "C" fn zdiv(

@@ -142,11 +142,11 @@ pub struct _lil_t {
     pub syscmds: libc::c_ulong,
     pub catcher: *mut libc::c_char,
     pub in_catcher: libc::c_int,
-    pub dollarprefix: *mut libc::c_char,
+    pub dollarprefix: *mut /* owning */ libc::c_char,
     pub env: *mut /* owning */ _lil_env_t,
-    pub rootenv: *mut /* owning */ _lil_env_t,
+    pub rootenv: *mut _lil_env_t,
     pub downenv: *mut _lil_env_t,
-    pub empty: *mut _lil_value_t,
+    pub empty: *mut /* owning */ _lil_value_t,
     pub error: libc::c_int,
     pub err_head: libc::c_ulong,
     pub err_msg: *mut libc::c_char,
@@ -552,16 +552,16 @@ unsafe extern "C" fn lil_find_local_var(
 }
 unsafe extern "C" fn lil_find_var(
     mut lil: Option<&mut _lil_t>,
-    mut env: Option<&mut _lil_env_t>,
+    mut env: *mut _lil_env_t,
     mut name: *const libc::c_char,
 ) -> *mut _lil_var_t {
-    let mut r = lil_find_local_var(lil.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), env.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), name);
+    let mut r = lil_find_local_var(lil.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), env, name);
     return if !r.is_null() {
         r
-    } else if env.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) == (*lil.as_deref().unwrap()).rootenv {
+    } else if env == (*lil.as_deref().unwrap()).rootenv {
         0 as lil_var_t
     } else {
-        lil_find_var(lil.as_deref_mut(), (*lil.as_deref_mut().unwrap()).rootenv.as_mut(), name)
+        lil_find_var(lil.as_deref_mut(), (*lil.as_deref().unwrap()).rootenv, name)
     };
 }
 unsafe extern "C" fn find_cmd(
@@ -640,7 +640,7 @@ pub unsafe extern "C" fn lil_set_var(
         return 0 as lil_var_t;
     }
     if local != 2 as libc::c_int {
-        let mut var = lil_find_var(lil.as_mut(), env.as_mut(), name);
+        let mut var = lil_find_var(lil.as_mut(), env, name);
         if local == 3 as libc::c_int && !var.is_null() && (*var).env == (*lil).rootenv
             && (*var).env != env
         {
@@ -703,7 +703,7 @@ pub unsafe extern "C" fn lil_get_var_or(
     mut name: *mut libc::c_char,
     mut defvalue: *mut _lil_value_t,
 ) -> *mut _lil_value_t {
-    let mut var = lil_find_var(lil.as_mut(), (*lil).env.as_mut(), name);
+    let mut var = lil_find_var(lil.as_mut(), (*lil).env, name);
     let mut retval = if !var.is_null() { (*var).v } else {(); defvalue };
     if ((*lil).callback[7 as libc::c_int as usize]).is_some()
         && (var.is_null() || (*var).env == (*lil).rootenv)
@@ -834,7 +834,7 @@ unsafe extern "C" fn get_dollarpart(mut lil: Option<&mut _lil_t>) -> *mut /* own
     let mut tmp = 0 as *mut _lil_value_t;
     (*lil.as_deref_mut().unwrap()).head= (*lil.as_deref().unwrap()).head.wrapping_add(1);
     name= next_word(lil.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
-    tmp= alloc_value((*lil.as_deref().unwrap()).dollarprefix);
+    tmp= alloc_value((*lil.as_deref().unwrap()).dollarprefix as *const i8);
     lil_append_val(tmp, name);
     lil_free_value(name);
     val= lil_parse_value(lil.as_deref_mut(), tmp, 0 as libc::c_int);
@@ -2737,7 +2737,7 @@ pub unsafe extern "C" fn lil_unused_name(
             i as libc::c_uint,
         );
         if (find_cmd(lil.as_mut(), name)).is_null() {();
-            if (lil_find_var(lil.as_mut(), (*lil).env.as_mut(), name)).is_null() {();
+            if (lil_find_var(lil.as_mut(), (*lil).env, name)).is_null() {();
                 val= lil_alloc_string(name);
                 free(name as *mut libc::c_void);
                 return val;
@@ -2991,9 +2991,9 @@ unsafe extern "C" fn fnc_reflect(
     if strcmp(type_0, b"dollar-prefix\0" as *const u8 as *const libc::c_char) == 0 {
         let mut r_0 = 0 as *mut _lil_value_t;
         if argc == 1 as libc::c_int as libc::c_ulong {
-            return lil_alloc_string((*lil).dollarprefix);
+            return lil_alloc_string((*lil).dollarprefix as *const i8);
         }
-        r_0= lil_alloc_string((*lil).dollarprefix);
+        r_0= lil_alloc_string((*lil).dollarprefix as *const i8);
         free((*lil).dollarprefix as *mut libc::c_void);
         (*lil).dollarprefix= strclone(lil_to_string(*argv.offset(1 as libc::c_int as isize)));
         return r_0;
@@ -3278,7 +3278,7 @@ unsafe extern "C" fn fnc_topeval(
     let mut thisenv = (*lil.as_deref().unwrap()).env;
     let mut thisdownenv = (*lil.as_deref().unwrap()).downenv;
     let mut r = 0 as *mut _lil_value_t;
-    (*lil.as_deref_mut().unwrap()).env= (*lil.as_deref_mut().unwrap()).rootenv;
+    (*lil.as_deref_mut().unwrap()).env= (*lil.as_deref().unwrap()).rootenv;
     (*lil.as_deref_mut().unwrap()).downenv= thisenv;
     r= fnc_eval(lil.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), argc, argv);
     (*lil.as_deref_mut().unwrap()).downenv= thisdownenv;

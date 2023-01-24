@@ -61,7 +61,7 @@ pub unsafe extern "C" fn url_data_inspect(mut data: *mut url_data_t) {
     printf(b"    .port: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).port);
 }
 #[no_mangle]
-pub unsafe extern "C" fn url_inspect(mut url: *mut /* owning */ libc::c_char) {
+pub unsafe extern "C" fn url_inspect(mut url: *mut libc::c_char) {
     url_data_inspect(url_parse(url));
 }
 #[no_mangle]

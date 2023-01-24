@@ -14,7 +14,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor52;
+struct ErasedByPreprocessor52 { dummy: () }
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[inline]
 unsafe extern "C" fn zinit(mut a: Option<&mut crate::src::allocator::C2RustUnnamed>) {
@@ -94,12 +94,12 @@ pub unsafe extern "C" fn zsqr(mut a: *mut crate::src::allocator::C2RustUnnamed, 
     zsqr(z2.as_mut_ptr(), high.as_mut_ptr());
     crate::src::zmul::zmul(z1.as_mut_ptr(), low.as_mut_ptr(), high.as_mut_ptr());
     crate::src::zlsh::zlsh(
-        z1.as_mut_ptr().as_mut(),
+        z1.as_mut_ptr(),
         z1.as_mut_ptr(),
         m2.wrapping_add(1 as libc::c_int as libc::c_ulong),
     );
     m2<<= 1 as libc::c_int;
-    crate::src::zlsh::zlsh(z2.as_mut_ptr().as_mut(), z2.as_mut_ptr(), m2);
+    crate::src::zlsh::zlsh(z2.as_mut_ptr(), z2.as_mut_ptr(), m2);
     crate::src::zadd::zadd(a, z2.as_mut_ptr(), z1.as_mut_ptr());
     crate::src::zadd::zadd(a, a, z0.as_mut_ptr());
     crate::src::zfree::zfree(z0.as_mut_ptr().as_mut());

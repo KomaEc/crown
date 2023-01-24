@@ -54,7 +54,7 @@ pub type genann_actfun = Option::<
 >;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor1;
+struct ErasedByPreprocessor1 { dummy: () }
 #[no_mangle]
 pub static mut save_name: *const libc::c_char = b"example/xor.ann\0" as *const u8
     as *const libc::c_char;

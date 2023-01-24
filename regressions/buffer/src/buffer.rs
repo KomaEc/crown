@@ -97,9 +97,9 @@ pub unsafe extern "C" fn buffer_new_with_size(mut n: size_t) -> Option<Box<buffe
 }
 #[no_mangle]
 pub unsafe extern "C" fn buffer_new_with_string(
-    mut str: *mut /* owning */ libc::c_char,
+    mut str: *mut libc::c_char,
 ) -> Option<Box<buffer_t>> {
-    return buffer_new_with_string_length(str, strlen(str as *const i8));
+    return buffer_new_with_string_length(str, strlen(str));
 }
 #[no_mangle]
 pub unsafe extern "C" fn buffer_new_with_string_length(

@@ -27,7 +27,7 @@ pub type __off64_t = libc::c_long;
 pub type __clock_t = libc::c_long;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor6;
+struct ErasedByPreprocessor6 { dummy: () }
 pub type _IO_lock_t = ();
 pub type FILE = crate::src::example3::_IO_FILE;
 pub type genann_actfun = Option::<
@@ -35,7 +35,7 @@ pub type genann_actfun = Option::<
 >;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor7;
+struct ErasedByPreprocessor7 { dummy: () }
 pub type clock_t = __clock_t;
 static mut ltests: libc::c_int = 0 as libc::c_int;
 static mut lfails: libc::c_int = 0 as libc::c_int;

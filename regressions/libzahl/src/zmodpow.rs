@@ -17,17 +17,17 @@ pub type size_t = libc::c_ulong;
 pub type __jmp_buf = [libc::c_long; 8];
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor21;
+struct ErasedByPreprocessor21 { dummy: () }
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor22;
+struct ErasedByPreprocessor22 { dummy: () }
 pub type jmp_buf = [crate::src::allocator::__jmp_buf_tag; 1];
 pub type __uint32_t = libc::c_uint;
 pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor23;
+struct ErasedByPreprocessor23 { dummy: () }
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[inline]
 unsafe extern "C" fn zzero(mut a: *mut crate::src::allocator::C2RustUnnamed) -> libc::c_int {
@@ -78,8 +78,8 @@ pub unsafe extern "C" fn zmodpow(
     bits= crate::src::zbits::zbits(c.as_mut());
     n= bits >> 5 as libc::c_int;
     crate::src::zmod::zmod(crate::src::zmodpow::libzahl_tmp_pow_b.as_mut_ptr(), b, d);
-    crate::src::zset::zset(crate::src::zmodpow::libzahl_tmp_pow_c.as_mut_ptr().as_mut(), c);
-    crate::src::zset::zset(crate::src::zmodpow::libzahl_tmp_pow_d.as_mut_ptr().as_mut(), d);
+    crate::src::zset::zset(crate::src::zmodpow::libzahl_tmp_pow_c.as_mut_ptr(), c);
+    crate::src::zset::zset(crate::src::zmodpow::libzahl_tmp_pow_d.as_mut_ptr(), d);
     crate::src::zsetu::zsetu(a.as_mut(), 1 as libc::c_int as libc::c_ulonglong);
     i= 0 as libc::c_int as size_t;
     while i < n {

@@ -20,7 +20,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor42;
+struct ErasedByPreprocessor42 { dummy: () }
 #[inline]
 unsafe extern "C" fn zsignum(mut a: *mut crate::src::allocator::C2RustUnnamed) -> libc::c_int {
     return (*a).sign;
@@ -40,7 +40,7 @@ pub unsafe extern "C" fn zrsh(
     let mut cbits: size_t = 0;
     if bits == 0 {
         if a != b {
-            crate::src::zset::zset(a.as_mut(), b);
+            crate::src::zset::zset(a, b);
         }
         return;
     }

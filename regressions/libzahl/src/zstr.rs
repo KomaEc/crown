@@ -22,17 +22,17 @@ pub type size_t = libc::c_ulong;
 pub type __jmp_buf = [libc::c_long; 8];
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor53;
+struct ErasedByPreprocessor53 { dummy: () }
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor54;
+struct ErasedByPreprocessor54 { dummy: () }
 pub type jmp_buf = [crate::src::allocator::__jmp_buf_tag; 1];
 pub type __uint32_t = libc::c_uint;
 pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor55;
+struct ErasedByPreprocessor55 { dummy: () }
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[inline]
 unsafe extern "C" fn zzero(mut a: *mut crate::src::allocator::C2RustUnnamed) -> libc::c_int {
@@ -74,7 +74,7 @@ pub unsafe extern "C" fn zstr(
         }
     }
     neg= (zsignum(a) < 0 as libc::c_int) as libc::c_int;
-    crate::src::zabs::zabs(crate::src::zstr::libzahl_tmp_str_num.as_mut_ptr().as_mut(), a);
+    crate::src::zabs::zabs(crate::src::zstr::libzahl_tmp_str_num.as_mut_ptr(), a);
     *b.offset(0 as libc::c_int as isize) = '-' as i32 as libc::c_char;
     b= b.offset(neg as isize);
     n= (n as libc::c_ulong).wrapping_sub(neg as libc::c_ulong) as size_t as size_t;

@@ -15,7 +15,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor56;
+struct ErasedByPreprocessor56 { dummy: () }
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[inline]
 unsafe extern "C" fn zsignum(mut a: *mut crate::src::allocator::C2RustUnnamed) -> libc::c_int {
@@ -32,15 +32,15 @@ pub unsafe extern "C" fn zstr_length(
 ) -> size_t {
     let mut size_total = 1 as libc::c_int as size_t;
     let mut size_temp: size_t = 0;
-    crate::src::zset::zset(crate::src::zstr_length::libzahl_tmp_str_num.as_mut_ptr().as_mut(), a);
+    crate::src::zset::zset(crate::src::zstr_length::libzahl_tmp_str_num.as_mut_ptr(), a);
     while zzero(crate::src::zstr_length::libzahl_tmp_str_num.as_mut_ptr()) == 0 {
         crate::src::zsetu::zsetu(crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr().as_mut(), radix);
-        crate::src::zset::zset(crate::src::zstr_length::libzahl_tmp_str_div.as_mut_ptr().as_mut(), crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr());
+        crate::src::zset::zset(crate::src::zstr_length::libzahl_tmp_str_div.as_mut_ptr(), crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr());
         size_temp= 1 as libc::c_int as size_t;
         while crate::src::zcmpmag::zcmpmag(crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr(), crate::src::zstr_length::libzahl_tmp_str_num.as_mut_ptr())
             <= 0 as libc::c_int
         {
-            crate::src::zset::zset(crate::src::zstr_length::libzahl_tmp_str_div.as_mut_ptr().as_mut(), crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr());
+            crate::src::zset::zset(crate::src::zstr_length::libzahl_tmp_str_div.as_mut_ptr(), crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr());
             crate::src::zsqr::zsqr(crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr(), crate::src::zstr_length::libzahl_tmp_str_mag.as_mut_ptr());
             size_temp<<= 1 as libc::c_int;
         }

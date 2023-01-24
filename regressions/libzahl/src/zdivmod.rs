@@ -22,17 +22,17 @@ pub type size_t = libc::c_ulong;
 pub type __jmp_buf = [libc::c_long; 8];
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor11;
+struct ErasedByPreprocessor11 { dummy: () }
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor12;
+struct ErasedByPreprocessor12 { dummy: () }
 pub type jmp_buf = [crate::src::allocator::__jmp_buf_tag; 1];
 pub type __uint32_t = libc::c_uint;
 pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor13;
+struct ErasedByPreprocessor13 { dummy: () }
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[inline]
 unsafe extern "C" fn zzero(mut a: *mut crate::src::allocator::C2RustUnnamed) -> libc::c_int {
@@ -78,7 +78,7 @@ pub unsafe extern "C" fn zdivmod(
                 return;
             } else {
                 if b != c {
-                    crate::src::zset::zset(b.as_mut(), c);
+                    crate::src::zset::zset(b, c);
                 }
             }
             (*b).sign= 1 as libc::c_int;
@@ -89,7 +89,7 @@ pub unsafe extern "C" fn zdivmod(
     c_bits= crate::src::zbits::zbits(c.as_mut());
     d_bits= crate::src::zbits::zbits(d.as_mut());
     bit= c_bits.wrapping_sub(d_bits);
-    crate::src::zlsh::zlsh(crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr().as_mut(), d, bit);
+    crate::src::zlsh::zlsh(crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr(), d, bit);
     (*crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr()).sign = 1 as libc::c_int;
     if crate::src::zcmpmag::zcmpmag(crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr(), c) > 0 as libc::c_int {
         crate::src::zrsh::zrsh(
@@ -101,7 +101,7 @@ pub unsafe extern "C" fn zdivmod(
             as size_t as size_t;
     }
     (*crate::src::zdivmod::libzahl_tmp_divmod_a.as_mut_ptr()).sign = 0 as libc::c_int;
-    crate::src::zabs::zabs(crate::src::zdivmod::libzahl_tmp_divmod_b.as_mut_ptr().as_mut(), c);
+    crate::src::zabs::zabs(crate::src::zdivmod::libzahl_tmp_divmod_b.as_mut_ptr(), c);
     if bit < 32 as libc::c_int as libc::c_ulong {
         loop {
             if crate::src::zcmpmag::zcmpmag(
@@ -115,7 +115,7 @@ pub unsafe extern "C" fn zdivmod(
                     crate::src::zdivmod::libzahl_tmp_divmod_d.as_mut_ptr(),
                 );
                 crate::src::zbset::zbset(
-                    crate::src::zdivmod::libzahl_tmp_divmod_a.as_mut_ptr().as_mut(),
+                    crate::src::zdivmod::libzahl_tmp_divmod_a.as_mut_ptr(),
                     crate::src::zdivmod::libzahl_tmp_divmod_a.as_mut_ptr(),
                     bit,
                     1 as libc::c_int,
@@ -157,7 +157,7 @@ pub unsafe extern "C" fn zdivmod(
                         crate::src::zdivmod::libzahl_tmp_divmod_ds[i as usize].as_mut_ptr(),
                     );
                     crate::src::zbset::zbset(
-                        crate::src::zdivmod::libzahl_tmp_divmod_a.as_mut_ptr().as_mut(),
+                        crate::src::zdivmod::libzahl_tmp_divmod_a.as_mut_ptr(),
                         crate::src::zdivmod::libzahl_tmp_divmod_a.as_mut_ptr(),
                         bit,
                         1 as libc::c_int,

@@ -25,19 +25,19 @@ extern "C" {
 }
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor6;
+struct ErasedByPreprocessor6 { dummy: () }
 pub type quadtree_point_t = crate::src::src::bounds::quadtree_point;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor7;
+struct ErasedByPreprocessor7 { dummy: () }
 pub type quadtree_bounds_t = crate::src::src::bounds::quadtree_bounds;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor8;
+struct ErasedByPreprocessor8 { dummy: () }
 pub type quadtree_node_t = crate::src::src::node::quadtree_node;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor9;
+struct ErasedByPreprocessor9 { dummy: () }
 pub type quadtree_t = crate::src::src::quadtree::quadtree;
 #[no_mangle]
 pub unsafe extern "C" fn descent(mut node: *mut quadtree_node_t) {

@@ -59,7 +59,7 @@ pub type ssize_t = __ssize_t;
 pub type size_t = libc::c_ulong;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor0;
+struct ErasedByPreprocessor0 { dummy: () }
 pub type _IO_lock_t = ();
 pub type FILE = crate::src::lil::_IO_FILE;
 pub type int64_t = __int64_t;

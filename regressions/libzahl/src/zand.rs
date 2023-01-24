@@ -13,7 +13,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor2;
+struct ErasedByPreprocessor2 { dummy: () }
 #[inline]
 unsafe extern "C" fn zsignum(mut a: *mut crate::src::allocator::C2RustUnnamed) -> libc::c_int {
     return (*a).sign;

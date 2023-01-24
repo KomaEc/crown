@@ -12,7 +12,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor14;
+struct ErasedByPreprocessor14 { dummy: () }
 #[no_mangle]
 pub unsafe extern "C" fn zfree(mut a: Option<&mut crate::src::allocator::C2RustUnnamed>) {
     let mut i = 0 as libc::c_int as size_t;

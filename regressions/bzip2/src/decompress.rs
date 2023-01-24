@@ -15,12 +15,12 @@ pub type __off_t = libc::c_long;
 pub type __off64_t = libc::c_long;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor8;
+struct ErasedByPreprocessor8 { dummy: () }
 pub type _IO_lock_t = ();
 pub type FILE = crate::src::blocksort::_IO_FILE;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor9;
+struct ErasedByPreprocessor9 { dummy: () }
 pub type Bool = libc::c_uchar;
 pub type UChar = libc::c_uchar;
 pub type Int32 = libc::c_int;
@@ -28,7 +28,7 @@ pub type UInt32 = libc::c_uint;
 pub type UInt16 = libc::c_ushort;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor10;
+struct ErasedByPreprocessor10 { dummy: () }
 unsafe extern "C" fn makeMaps_d(mut s: Option<&mut crate::src::bzlib::DState>) {
     let mut i: Int32 = 0;
     (*s.as_deref_mut().unwrap()).nInUse= 0 as libc::c_int;

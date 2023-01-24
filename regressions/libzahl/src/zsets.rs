@@ -14,7 +14,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor46;
+struct ErasedByPreprocessor46 { dummy: () }
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 pub const _ISdigit: C2RustUnnamed_0 = 2048;
 pub type C2RustUnnamed_0 = libc::c_uint;
@@ -58,7 +58,7 @@ pub unsafe extern "C" fn zsets(
         str_end= str_end.offset(1);
     }
     (*a).sign= 0 as libc::c_int;
-    crate::src::zset::zset(crate::src::zsets::libzahl_tmp_str_num.as_mut_ptr().as_mut(), crate::src::zsets::libzahl_const_1e19.as_mut_ptr());
+    crate::src::zset::zset(crate::src::zsets::libzahl_tmp_str_num.as_mut_ptr(), crate::src::zsets::libzahl_const_1e19.as_mut_ptr());
     's_234: {
         let mut current_block_39: u64;
         match  str_end.offset_from(str) as libc::c_long

@@ -5,7 +5,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor58;
+struct ErasedByPreprocessor58 { dummy: () }
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[no_mangle]
 pub unsafe extern "C" fn zswap(mut a: Option<&mut crate::src::allocator::C2RustUnnamed>, mut b: Option<&mut crate::src::allocator::C2RustUnnamed>) {

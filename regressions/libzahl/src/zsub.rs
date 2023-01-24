@@ -13,7 +13,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor57;
+struct ErasedByPreprocessor57 { dummy: () }
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[inline]
 unsafe extern "C" fn zzero(mut a: *mut crate::src::allocator::C2RustUnnamed) -> libc::c_int {
@@ -38,12 +38,12 @@ pub unsafe extern "C" fn zsub_unsigned(
     let mut n: size_t = 0;
     let mut magcmp: libc::c_int = 0;
     if zzero(b) != 0 {
-        crate::src::zabs::zabs(a.as_mut(), c);
-        crate::src::zneg::zneg(a.as_mut(), a);
+        crate::src::zabs::zabs(a, c);
+        crate::src::zneg::zneg(a, a);
         return;
     } else {
         if zzero(c) != 0 {
-            crate::src::zabs::zabs(a.as_mut(), b);
+            crate::src::zabs::zabs(a, b);
             return;
         }
     }
@@ -55,24 +55,24 @@ pub unsafe extern "C" fn zsub_unsigned(
         }
         n= if (*b).used < (*c).used { (*b).used } else { (*c).used };
         if a == b {
-            crate::src::zset::zset(crate::src::zsub::libzahl_tmp_sub.as_mut_ptr().as_mut(), b);
+            crate::src::zset::zset(crate::src::zsub::libzahl_tmp_sub.as_mut_ptr(), b);
             s= (*crate::src::zsub::libzahl_tmp_sub.as_mut_ptr()).chars;
         } else {
             s= (*b).chars;
         }
         if a != c {
-            crate::src::zset::zset(a.as_mut(), c);
+            crate::src::zset::zset(a, c);
         }
     } else {
         n= if (*b).used < (*c).used { (*b).used } else { (*c).used };
         if a == c {
-            crate::src::zset::zset(crate::src::zsub::libzahl_tmp_sub.as_mut_ptr().as_mut(), c);
+            crate::src::zset::zset(crate::src::zsub::libzahl_tmp_sub.as_mut_ptr(), c);
             s= (*crate::src::zsub::libzahl_tmp_sub.as_mut_ptr()).chars;
         } else {
             s= (*c).chars;
         }
         if a != b {
-            crate::src::zset::zset(a.as_mut(), b);
+            crate::src::zset::zset(a, b);
         }
     }
     i= 0 as libc::c_int as size_t;
@@ -112,21 +112,21 @@ pub unsafe extern "C" fn zsub(
     if b == c {
         (*a).sign= 0 as libc::c_int;
     } else if zzero(b) != 0 {
-        crate::src::zneg::zneg(a.as_mut(), c);
+        crate::src::zneg::zneg(a, c);
     } else if zzero(c) != 0 {
         if a != b {
-            crate::src::zset::zset(a.as_mut(), b);
+            crate::src::zset::zset(a, b);
         }
     } else if zsignum(b) | zsignum(c) < 0 as libc::c_int {
         if zsignum(b) < 0 as libc::c_int {
             if zsignum(c) < 0 as libc::c_int {
                 zsub_unsigned(a, c, b);
             } else {
-                crate::src::zadd::zadd_unsigned(a.as_mut(), b, c);
+                crate::src::zadd::zadd_unsigned(a, b, c);
                 (*a).sign= -zsignum(a);
             }
         } else {
-            crate::src::zadd::zadd_unsigned(a.as_mut(), b, c);
+            crate::src::zadd::zadd_unsigned(a, b, c);
         }
     } else {
         zsub_unsigned(a, b, c);

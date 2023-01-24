@@ -5,7 +5,7 @@ extern "C" {
 }
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor2;
+struct ErasedByPreprocessor2 { dummy: () }
 pub type quadtree_point_t = crate::src::src::bounds::quadtree_point;
 #[no_mangle]
 pub unsafe extern "C" fn quadtree_point_new(

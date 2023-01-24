@@ -42,7 +42,7 @@ pub type __off_t = libc::c_long;
 pub type __off64_t = libc::c_long;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor2;
+struct ErasedByPreprocessor2 { dummy: () }
 pub type _IO_lock_t = ();
 pub type FILE = crate::src::blocksort::_IO_FILE;
 pub type C2RustUnnamed = libc::c_uint;
@@ -60,10 +60,10 @@ pub const _ISlower: C2RustUnnamed = 512;
 pub const _ISupper: C2RustUnnamed = 256;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor3;
+struct ErasedByPreprocessor3 { dummy: () }
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor4;
+struct ErasedByPreprocessor4 { dummy: () }
 pub type UInt32 = libc::c_uint;
 pub type Int32 = libc::c_int;
 pub type UChar = libc::c_uchar;
@@ -2432,12 +2432,12 @@ pub unsafe extern "C" fn BZ2_bzread(
 }
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzwrite(
-    mut b: Option<&mut libc::c_void>,
+    mut b: *mut libc::c_void,
     mut buf: *mut libc::c_void,
     mut len: libc::c_int,
 ) -> libc::c_int {
     let mut bzerr: libc::c_int = 0;
-    BZ2_bzWrite(Some(&mut bzerr), b.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), buf, len);
+    BZ2_bzWrite(Some(&mut bzerr), b, buf, len);
     if bzerr == 0 as libc::c_int { return len } else { return -(1 as libc::c_int) };
 }
 #[no_mangle]

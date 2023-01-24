@@ -27,7 +27,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor38;
+struct ErasedByPreprocessor38 { dummy: () }
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 pub type zprimality = libc::c_uint;
 pub const PRIME: zprimality = 2;
@@ -57,7 +57,7 @@ pub unsafe extern "C" fn zptest(
         if crate::src::zcmpu::zcmpu(n, 1 as libc::c_int as libc::c_ulonglong) <= 0 as libc::c_int {
             if !witness.is_null() {
                 if witness != n {
-                    crate::src::zset::zset(witness.as_mut(), n);
+                    crate::src::zset::zset(witness, n);
                 }
             }else { (); }
             return NONPRIME;
@@ -68,7 +68,7 @@ pub unsafe extern "C" fn zptest(
     if zeven(n) != 0 {
         if !witness.is_null() {
             if witness != n {
-                crate::src::zset::zset(witness.as_mut(), n);
+                crate::src::zset::zset(witness, n);
             }
         }else { (); }
         return NONPRIME;
@@ -90,7 +90,7 @@ pub unsafe extern "C" fn zptest(
             crate::src::zptest::libzahl_tmp_ptest_n4.as_mut_ptr(),
         );
         crate::src::zadd::zadd_unsigned(
-            crate::src::zptest::libzahl_tmp_ptest_a.as_mut_ptr().as_mut(),
+            crate::src::zptest::libzahl_tmp_ptest_a.as_mut_ptr(),
             crate::src::zptest::libzahl_tmp_ptest_a.as_mut_ptr(),
             crate::src::zptest::libzahl_const_2.as_mut_ptr(),
         );

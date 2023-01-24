@@ -11,17 +11,17 @@ pub type size_t = libc::c_ulong;
 pub type __jmp_buf = [libc::c_long; 8];
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor48;
+struct ErasedByPreprocessor48 { dummy: () }
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor49;
+struct ErasedByPreprocessor49 { dummy: () }
 pub type jmp_buf = [crate::src::allocator::__jmp_buf_tag; 1];
 pub type __uint32_t = libc::c_uint;
 pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor50;
+struct ErasedByPreprocessor50 { dummy: () }
 pub type z_t = [crate::src::allocator::C2RustUnnamed; 1];
 #[inline]
 unsafe extern "C" fn zinit(mut a: Option<&mut crate::src::allocator::C2RustUnnamed>) {

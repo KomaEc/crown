@@ -14,7 +14,7 @@ pub type genann_actfun = Option::<
 >;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor0;
+struct ErasedByPreprocessor0 { dummy: () }
 unsafe fn main_0(
     mut argc: libc::c_int,
     mut argv: *mut *mut libc::c_char,

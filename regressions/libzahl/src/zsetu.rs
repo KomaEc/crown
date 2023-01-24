@@ -8,7 +8,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor47;
+struct ErasedByPreprocessor47 { dummy: () }
 #[no_mangle]
 pub unsafe extern "C" fn zsetu(mut a: Option<&mut crate::src::allocator::C2RustUnnamed>, mut b: libc::c_ulonglong) {
     if b == 0 {

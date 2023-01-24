@@ -39,7 +39,7 @@ pub type __ssize_t = libc::c_long;
 pub type ssize_t = __ssize_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor0;
+struct ErasedByPreprocessor0 { dummy: () }
 #[no_mangle]
 pub unsafe extern "C" fn equal(mut a: *mut libc::c_char, mut b: *mut libc::c_char) {
     if strcmp(a, b) != 0 {

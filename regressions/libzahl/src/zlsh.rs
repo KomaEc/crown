@@ -24,7 +24,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor18;
+struct ErasedByPreprocessor18 { dummy: () }
 #[inline]
 unsafe extern "C" fn zsignum(mut a: *mut crate::src::allocator::C2RustUnnamed) -> libc::c_int {
     return (*a).sign;
@@ -35,7 +35,7 @@ unsafe extern "C" fn zzero(mut a: *mut crate::src::allocator::C2RustUnnamed) -> 
 }
 #[no_mangle]
 pub unsafe extern "C" fn zlsh(
-    mut a: Option<&mut crate::src::allocator::C2RustUnnamed>,
+    mut a: *mut crate::src::allocator::C2RustUnnamed,
     mut b: *mut crate::src::allocator::C2RustUnnamed,
     mut bits: size_t,
 ) {
@@ -47,65 +47,65 @@ pub unsafe extern "C" fn zlsh(
         0 as libc::c_int as zahl_char_t,
     ];
     if zzero(b) != 0 {
-        (*a.as_deref_mut().unwrap()).sign= 0 as libc::c_int;
+        (*a).sign= 0 as libc::c_int;
         return;
     }
     if bits == 0 {
-        if a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) != b {
-            crate::src::zset::zset(a.as_deref_mut(), b);
+        if a != b {
+            crate::src::zset::zset(a, b);
         }
         return;
     }
     chars= bits >> 5 as libc::c_int;
     bits= bits & (32 as libc::c_int - 1 as libc::c_int) as libc::c_ulong;
     cbits= (32 as libc::c_int as libc::c_ulong).wrapping_sub(bits);
-    if (*a.as_deref().unwrap()).alloced < (*b).used.wrapping_add(chars) {
-        crate::src::allocator::libzahl_realloc(a.as_deref_mut(), (*b).used.wrapping_add(chars));
+    if (*a).alloced < (*b).used.wrapping_add(chars) {
+        crate::src::allocator::libzahl_realloc(a.as_mut(), (*b).used.wrapping_add(chars));
     }
-    if a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) == b {
+    if a == b {
         memmove(
-            (*a.as_deref().unwrap()).chars.offset(chars as isize) as *mut libc::c_void,
+            (*a).chars.offset(chars as isize) as *mut libc::c_void,
             (*b).chars as *const libc::c_void,
             (*b).used
                 .wrapping_mul(::std::mem::size_of::<zahl_char_t>() as libc::c_ulong),
         );
     } else {
         memcpy(
-            (*a.as_deref().unwrap()).chars.offset(chars as isize) as *mut libc::c_void,
+            (*a).chars.offset(chars as isize) as *mut libc::c_void,
             (*b).chars as *const libc::c_void,
             (*b).used
                 .wrapping_mul(::std::mem::size_of::<zahl_char_t>() as libc::c_ulong),
         );
     }
     memset(
-        (*a.as_deref().unwrap()).chars as *mut libc::c_void,
+        (*a).chars as *mut libc::c_void,
         0 as libc::c_int,
         chars.wrapping_mul(::std::mem::size_of::<zahl_char_t>() as libc::c_ulong),
     );
-    (*a.as_deref_mut().unwrap()).used= (*b).used.wrapping_add(chars);
+    (*a).used= (*b).used.wrapping_add(chars);
     if bits != 0 {
         i= chars;
-        while i < (*a.as_deref().unwrap()).used {
+        while i < (*a).used {
             carry[(!i & 1 as libc::c_int as libc::c_ulong)
-                as usize]= *(*a.as_deref().unwrap()).chars.offset(i as isize) >> cbits;
-            *(*a.as_deref().unwrap()).chars.offset(i as isize) <<= bits;
-            *(*a.as_deref().unwrap()).chars.offset(i as isize) = carry[(i & 1 as libc::c_int as libc::c_ulong) as usize];
+                as usize]= *(*a).chars.offset(i as isize) >> cbits;
+            *(*a).chars.offset(i as isize) <<= bits;
+            *(*a).chars.offset(i as isize) = carry[(i & 1 as libc::c_int as libc::c_ulong) as usize];
             i= i.wrapping_add(1);
         }
         if carry[(i & 1 as libc::c_int as libc::c_ulong) as usize] != 0 {
-            if (*a.as_deref().unwrap()).alloced < (*a.as_deref().unwrap()).used.wrapping_add(1 as libc::c_int as libc::c_ulong)
+            if (*a).alloced < (*a).used.wrapping_add(1 as libc::c_int as libc::c_ulong)
             {
                 crate::src::allocator::libzahl_realloc(
-                    a.as_deref_mut(),
-                    (*a.as_deref().unwrap()).used.wrapping_add(1 as libc::c_int as libc::c_ulong),
+                    a.as_mut(),
+                    (*a).used.wrapping_add(1 as libc::c_int as libc::c_ulong),
                 );
             }
-            *(*a.as_deref().unwrap()).chars
+            *(*a).chars
                 .offset(
                     i as isize,
                 ) = carry[(i & 1 as libc::c_int as libc::c_ulong) as usize];
-            (*a.as_deref_mut().unwrap()).used= (*a.as_deref().unwrap()).used.wrapping_add(1);
+            (*a).used= (*a).used.wrapping_add(1);
         }
     }
-    (*a.as_deref_mut().unwrap()).sign= zsignum(b);
+    (*a).sign= zsignum(b);
 }

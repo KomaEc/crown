@@ -96,7 +96,7 @@ pub type __ssize_t = libc::c_long;
 pub type __syscall_slong_t = libc::c_long;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor0;
+struct ErasedByPreprocessor0 { dummy: () }
 pub type _IO_lock_t = ();
 pub type FILE = crate::src::blocksort::_IO_FILE;
 pub type ssize_t = __ssize_t;

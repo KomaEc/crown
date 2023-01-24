@@ -14,7 +14,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor61;
+struct ErasedByPreprocessor61 { dummy: () }
 #[inline]
 unsafe extern "C" fn zsignum(mut a: *mut crate::src::allocator::C2RustUnnamed) -> libc::c_int {
     return (*a).sign;
@@ -25,7 +25,7 @@ unsafe extern "C" fn zzero(mut a: *mut crate::src::allocator::C2RustUnnamed) -> 
 }
 #[no_mangle]
 pub unsafe extern "C" fn zxor(
-    mut a: Option<&mut crate::src::allocator::C2RustUnnamed>,
+    mut a: *mut crate::src::allocator::C2RustUnnamed,
     mut b: *mut crate::src::allocator::C2RustUnnamed,
     mut c: *mut crate::src::allocator::C2RustUnnamed,
 ) {
@@ -33,28 +33,28 @@ pub unsafe extern "C" fn zxor(
     let mut m: size_t = 0;
     if zzero(b) != 0 {
         if zzero(c) != 0 {
-            (*a.as_deref_mut().unwrap()).sign= 0 as libc::c_int;
-        } else if a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) != c {
-            crate::src::zset::zset(a.as_deref_mut(), c);
+            (*a).sign= 0 as libc::c_int;
+        } else if a != c {
+            crate::src::zset::zset(a, c);
         }
         return;
     } else {
         if zzero(c) != 0 {
-            if a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) != b {
-                crate::src::zset::zset(a.as_deref_mut(), b);
+            if a != b {
+                crate::src::zset::zset(a, b);
             }
             return;
         }
     }
     m= if (*b).used > (*c).used { (*b).used } else { (*c).used };
     n= (*b).used.wrapping_add((*c).used).wrapping_sub(m);
-    if (*a.as_deref().unwrap()).alloced < m {
-        crate::src::allocator::libzahl_realloc(a.as_deref_mut(), m);
+    if (*a).alloced < m {
+        crate::src::allocator::libzahl_realloc(a.as_mut(), m);
     }
-    if a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) == b {
+    if a == b {
         if (*b).used < (*c).used {
             memcpy(
-                (*a.as_deref().unwrap()).chars.offset(n as isize) as *mut libc::c_void,
+                (*a).chars.offset(n as isize) as *mut libc::c_void,
                 (*c).chars.offset(n as isize) as *const libc::c_void,
                 m
                     .wrapping_sub(n)
@@ -67,12 +67,12 @@ pub unsafe extern "C" fn zxor(
             if !(fresh0 != 0) {
                 break;
             }
-            *(*a.as_deref().unwrap()).chars.offset(n as isize) ^= *(*c).chars.offset(n as isize);
+            *(*a).chars.offset(n as isize) ^= *(*c).chars.offset(n as isize);
         }
-    } else if a.as_deref().map(|r| r as *const _).unwrap_or(std::ptr::null()) == c {
+    } else if a == c {
         if (*c).used < (*b).used {
             memcpy(
-                (*a.as_deref().unwrap()).chars.offset(n as isize) as *mut libc::c_void,
+                (*a).chars.offset(n as isize) as *mut libc::c_void,
                 (*b).chars.offset(n as isize) as *const libc::c_void,
                 m
                     .wrapping_sub(n)
@@ -85,11 +85,11 @@ pub unsafe extern "C" fn zxor(
             if !(fresh2 != 0) {
                 break;
             }
-            *(*a.as_deref().unwrap()).chars.offset(n as isize) ^= *(*b).chars.offset(n as isize);
+            *(*a).chars.offset(n as isize) ^= *(*b).chars.offset(n as isize);
         }
     } else if m == (*b).used {
         memcpy(
-            (*a.as_deref().unwrap()).chars as *mut libc::c_void,
+            (*a).chars as *mut libc::c_void,
             (*b).chars as *const libc::c_void,
             m.wrapping_mul(::std::mem::size_of::<zahl_char_t>() as libc::c_ulong),
         );
@@ -99,11 +99,11 @@ pub unsafe extern "C" fn zxor(
             if !(fresh4 != 0) {
                 break;
             }
-            *(*a.as_deref().unwrap()).chars.offset(n as isize) ^= *(*c).chars.offset(n as isize);
+            *(*a).chars.offset(n as isize) ^= *(*c).chars.offset(n as isize);
         }
     } else {
         memcpy(
-            (*a.as_deref().unwrap()).chars as *mut libc::c_void,
+            (*a).chars as *mut libc::c_void,
             (*c).chars as *const libc::c_void,
             m.wrapping_mul(::std::mem::size_of::<zahl_char_t>() as libc::c_ulong),
         );
@@ -113,22 +113,22 @@ pub unsafe extern "C" fn zxor(
             if !(fresh6 != 0) {
                 break;
             }
-            *(*a.as_deref().unwrap()).chars.offset(n as isize) ^= *(*b).chars.offset(n as isize);
+            *(*a).chars.offset(n as isize) ^= *(*b).chars.offset(n as isize);
         }
     }
-    (*a.as_deref_mut().unwrap()).used= m;
-    while (*a.as_deref().unwrap()).used != 0
-        && *(*a.as_deref().unwrap()).chars
-            .offset((*a.as_deref().unwrap()).used.wrapping_sub(1 as libc::c_int as libc::c_ulong) as isize)
+    (*a).used= m;
+    while (*a).used != 0
+        && *(*a).chars
+            .offset((*a).used.wrapping_sub(1 as libc::c_int as libc::c_ulong) as isize)
             == 0
     {
-        (*a.as_deref_mut().unwrap()).used= (*a.as_deref().unwrap()).used.wrapping_sub(1);
+        (*a).used= (*a).used.wrapping_sub(1);
     }
-    if (*a.as_deref().unwrap()).used != 0 {
-        (*a.as_deref_mut().unwrap()).sign= 1 as libc::c_int
+    if (*a).used != 0 {
+        (*a).sign= 1 as libc::c_int
             - 2 as libc::c_int
                 * (zsignum(b) ^ zsignum(c) < 0 as libc::c_int) as libc::c_int;
     } else {
-        (*a.as_deref_mut().unwrap()).sign= 0 as libc::c_int;
+        (*a).sign= 0 as libc::c_int;
     };
 }

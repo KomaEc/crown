@@ -9,7 +9,7 @@ pub type uint32_t = __uint32_t;
 pub type zahl_char_t = uint32_t;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor51;
+struct ErasedByPreprocessor51 { dummy: () }
 #[inline]
 unsafe extern "C" fn zzero(mut a: *mut crate::src::allocator::C2RustUnnamed) -> libc::c_int {
     return ((*a).sign == 0) as libc::c_int;
@@ -27,10 +27,10 @@ pub unsafe extern "C" fn zsplit(
         return;
     }
     if high == a {
-        crate::src::ztrunc::ztrunc(low.as_mut(), a, delim);
+        crate::src::ztrunc::ztrunc(low, a, delim);
         crate::src::zrsh::zrsh(high, a, delim);
     } else {
         crate::src::zrsh::zrsh(high, a, delim);
-        crate::src::ztrunc::ztrunc(low.as_mut(), a, delim);
+        crate::src::ztrunc::ztrunc(low, a, delim);
     };
 }

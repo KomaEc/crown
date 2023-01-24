@@ -9,11 +9,11 @@ extern "C" {
 }
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor0;
+struct ErasedByPreprocessor0 { dummy: () }
 pub type quadtree_point_t = crate::src::src::bounds::quadtree_point;
 #[derive(Copy, Clone)]
 
-struct ErasedByPreprocessor1;
+struct ErasedByPreprocessor1 { dummy: () }
 pub type quadtree_bounds_t = crate::src::src::bounds::quadtree_bounds;
 #[derive(Copy, Clone)]
 #[repr(C)]

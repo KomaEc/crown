@@ -798,7 +798,7 @@ pub unsafe extern "C" fn csv_parse(
 }
 #[no_mangle]
 pub unsafe extern "C" fn csv_write(
-    mut dest: *mut /* owning */ libc::c_void,
+    mut dest: *mut libc::c_void,
     mut dest_size: size_t,
     mut src: *const libc::c_void,
     mut src_size: size_t,
