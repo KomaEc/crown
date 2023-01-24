@@ -18,7 +18,7 @@ extern crate rustc_target;
 use std::{
     borrow::BorrowMut,
     path::{Path, PathBuf},
-    time::Instant,
+    time::Instant, fs,
 };
 
 use analysis::{ownership::AnalysisKind, CrateCtxt};
@@ -153,24 +153,36 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
 
     let project_dir = PathBuf::from(std::env!("CARGO_MANIFEST_DIR"));
     let extra_deps_dir = project_dir.join("extra_deps");
-
-    let args = [
+    let mut args = [
         "rustc",
         "-L",
         extra_deps_dir.to_str().unwrap(),
-        "--extern",
-        "c2rust_bitfields",
-        "c2rust_bitfields_derive",
-        "libc",
-        #[cfg(target_arch = "x86_64")]
-        "f128",
-        #[cfg(target_arch = "x86_64")]
-        "f128_internal",
-        "num_traits",
-        "--cap-lints",
-        "allow",
-    ]
-    .map(|s| s.to_owned());
+    ].map(|s| s.to_owned())
+    .to_vec();
+    for file in fs::read_dir(&extra_deps_dir).expect("build script not working") {
+        let absolute_path = file.unwrap().path();
+        let lib_name = absolute_path.file_name().unwrap();
+        let lib_name = lib_name.to_str().unwrap().split("-").next().unwrap();
+        args.push("--extern".to_owned());
+        args.push(match lib_name {
+            "liblibc" => format!("libc={}", absolute_path.to_str().unwrap()),
+            "libc2rust_bitfields" => {
+                format!("c2rust_bitfields={}", absolute_path.to_str().unwrap())
+            }
+            "libc2rust_bitfields_derive" => format!(
+                "c2rust_bitfields_derive={}",
+                absolute_path.to_str().unwrap()
+            ),
+            #[cfg(target_arch = "x86_64")]
+            "libf128" => format!("f128={}", absolute_path.to_str().unwrap()),
+            #[cfg(target_arch = "x86_64")]
+            "libf128_internal" => format!("f128_internal={}", absolute_path.to_str().unwrap()),
+            "libnum_traits" => format!("num_traits={}", absolute_path.to_str().unwrap()),
+            _ => continue,
+        })
+    }
+    args.push("--cap-lints".to_owned());
+    args.push("allow".to_owned());
 
     let matches = rustc_driver::handle_options(&args).context("what?")?;
     let opts = rustc_session::config::build_session_options(&matches);
