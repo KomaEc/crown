@@ -1090,7 +1090,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         *place, location, span, required, rewriter,
                     );
                 } else {
-                    tracing::error!("const addr is ignored")
+                    tracing::warn!("const addr is ignored")
                 }
             }
             Rvalue::Ref(_, borrow_kind, place) => {
@@ -1100,7 +1100,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         *place, location, span, required, rewriter,
                     );
                 } else {
-                    tracing::error!("const reference is ignored")
+                    tracing::warn!("const reference is ignored")
                 }
             }
             _ => tracing::error!("{:?} is not supported", rvalue), // _ => todo!("{:?} is not supported", rvalue),
