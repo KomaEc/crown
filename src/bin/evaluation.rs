@@ -13,7 +13,7 @@ use rustc_errors::registry;
 use rustc_hir::{ItemKind, OwnerNode};
 use rustc_interface::Config;
 use rustc_middle::{
-    mir::{visit::Visitor, Body, Local},
+    mir::{visit::{Visitor, PlaceContext}, Body, Local},
     ty::TyCtxt,
 };
 use rustc_session::config;
@@ -58,9 +58,12 @@ fn body_stat(body: &Body) -> (usize, usize) {
         fn visit_place(
             &mut self,
             place: &rustc_middle::mir::Place<'tcx>,
-            _: rustc_middle::mir::visit::PlaceContext,
+            context: PlaceContext,
             _: rustc_middle::mir::Location,
         ) {
+            if matches!(context, PlaceContext::NonUse(..)) {
+                return
+            }
             if self.user_vars.contains(&place.local)
                 && place.is_indirect()
                 && self.body.local_decls[place.local].ty.is_unsafe_ptr()
@@ -150,22 +153,19 @@ fn main() -> Result<()> {
         vec![
             original.num_unsafe_ptrs,
             original.num_unsafe_usages,
-            original.num_fns,
-            original.num_unsafe_ptr_free_fns,
+            original.num_fns - original.num_unsafe_ptr_free_fns,
         ],
         vec![
             new.num_unsafe_ptrs,
             new.num_unsafe_usages,
-            new.num_fns,
-            new.num_unsafe_ptr_free_fns,
+            new.num_fns - new.num_unsafe_ptr_free_fns,
         ],
     ]
     .table()
     .title(vec![
         "# Unsafe Ptrs".cell().bold(true),
         "# Unsafe Usages".cell().bold(true),
-        "# Fns".cell().bold(true),
-        "# Unsafe Ptr Free Fns".cell().bold(true),
+        "# Fns with Unsafe Ptrs".cell().bold(true),
     ])
     .bold(true);
 
