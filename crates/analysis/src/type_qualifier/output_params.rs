@@ -82,6 +82,21 @@ fn conservative_output_params(
 
     let call_args_mapping = collect_call_args_mapping(body, tcx);
 
+    for arg1 in body.args_iter().map(|arg| arg.index()) {
+        for arg2 in body.args_iter().map(|arg| arg.index()) {
+            if arg1 == arg2 { continue };
+            if alias_result.may_alias(location_of[arg1], location_of[arg2]) {
+                tracing::debug!(
+                    "@{:?}: {:?} removed because it aliases another argument {:?}",
+                    body.source.def_id(),
+                    &Local::new(arg1),
+                    &Local::new(arg2)
+                );
+                this_output_params.remove(&Local::new(arg1));
+            }
+        }
+    }
+
     for arg in body.args_iter().map(|arg| arg.index()) {
         for (local, local_decl) in body.local_decls.iter_enumerated() {
             if local_decl.ty.is_primitive_ty() {
