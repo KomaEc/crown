@@ -55,6 +55,10 @@ extern crate either;
     ArgGroup::new("box")
         .args(["no_box", "force_box"]),
 ))]
+#[command(group(
+    ArgGroup::new("mutability")
+        .args(["const_reference", "raw_mutability"]),
+))]
 pub struct RefactorOptions {
     /// rewrite struct definitions and function signatures only
     #[clap(long)]
@@ -74,6 +78,9 @@ pub struct RefactorOptions {
     /// force rewrite box even if no-box is deduced
     #[clap(long)]
     pub force_box: bool,
+    /// rewrite raw pointer mutability with respect to mutability analysis
+    #[clap(long)]
+    pub raw_mutability: bool,
 }
 
 pub fn refactor<'tcx>(
@@ -324,10 +331,20 @@ impl StructFields {
                         } else {
                             PointerKind::Move
                         }
-                    } else if mutability.is_immutable() && !field_ty.is_mutable_ptr() {
-                        PointerKind::Raw(RawMeta::Const)
                     } else {
-                        PointerKind::Raw(RawMeta::Mut)
+                        if options.raw_mutability {
+                            if mutability.is_immutable() && !field_ty.is_mutable_ptr() {
+                                PointerKind::Raw(RawMeta::Const)
+                            } else {
+                                PointerKind::Raw(RawMeta::Mut)
+                            }
+                        } else {
+                            if !field_ty.is_mutable_ptr() {
+                                PointerKind::Raw(RawMeta::Const)
+                            } else {
+                                PointerKind::Raw(RawMeta::Mut)
+                            }
+                        }
                     };
                     field.push(pointer_kind);
                 }
@@ -419,17 +436,15 @@ impl FnLocals {
                         } else {
                             PointerKind::Move
                         }
-                    } else if mutability.is_immutable() {
-                        if options.const_reference {
-                            if fatness.is_arr() {
-                                if !ty.is_mutable_ptr() {
-                                    PointerKind::Raw(RawMeta::Const)
-                                } else {
-                                    PointerKind::Raw(RawMeta::Mut)
-                                }
+                    } else {
+                        if options.raw_mutability {
+                            if mutability.is_immutable() && !ty.is_mutable_ptr() {
+                                PointerKind::Raw(RawMeta::Const)
                             } else {
-                                PointerKind::Const
+                                PointerKind::Raw(RawMeta::Mut)
                             }
+                        } else if options.const_reference {
+                            todo!()
                         } else {
                             if !ty.is_mutable_ptr() {
                                 PointerKind::Raw(RawMeta::Const)
@@ -437,8 +452,6 @@ impl FnLocals {
                                 PointerKind::Raw(RawMeta::Mut)
                             }
                         }
-                    } else {
-                        PointerKind::Raw(RawMeta::Mut)
                     };
                     local.push(pointer_kind);
 
@@ -452,7 +465,12 @@ impl FnLocals {
                     if local[0].is_move() {
                         local[0] = PointerKind::Mut
                     } else if local[0].is_raw_move() {
-                        local[0] = PointerKind::Raw(RawMeta::Mut)
+                        ty = local_decl.ty;
+                        local[0] = if !ty.is_mutable_ptr() {
+                            PointerKind::Raw(RawMeta::Const)
+                        } else {
+                            PointerKind::Raw(RawMeta::Mut)
+                        }
                     } else {
                         unreachable!()
                     }

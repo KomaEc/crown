@@ -47,9 +47,11 @@ for f in $(find $WORKSPACE -name "Cargo.toml"); do
         exit 1
     fi
     echo "rewriting $BENCH_NAME"
-    OPTION=""
+    OPTIONS=""
     if [ $BENCH_NAME = "lil" ]; then
-        OPTION="--type-reconstruction"
+        OPTIONS="--type-reconstruction"
+    elif [ $BENCH_NAME = "genann" ]; then
+        OPTIONS="--raw-mutability"
     fi
-    $CROWN $ENTRY rewrite $OPTION in-place || { echo "rewrite $f crashed" ; exit 1; }
+    $CROWN $ENTRY rewrite $OPTIONS in-place || { echo "rewrite $f crashed" ; exit 1; }
 done

@@ -221,12 +221,9 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
 
     let project_dir = PathBuf::from(std::env!("CARGO_MANIFEST_DIR"));
     let extra_deps_dir = project_dir.join("extra_deps");
-    let mut args = [
-        "rustc",
-        "-L",
-        extra_deps_dir.to_str().unwrap(),
-    ].map(|s| s.to_owned())
-    .to_vec();
+    let mut args = ["rustc", "-L", extra_deps_dir.to_str().unwrap()]
+        .map(|s| s.to_owned())
+        .to_vec();
     for file in fs::read_dir(&extra_deps_dir).expect("build script not working") {
         let absolute_path = file.unwrap().path();
         let lib_name = absolute_path.file_name().unwrap();
