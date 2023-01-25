@@ -1578,16 +1578,16 @@ unsafe extern "C" fn myfeof(mut f: *mut FILE) -> Bool {
 }
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzWriteOpen(
-    mut bzerror: *mut libc::c_int,
+    mut bzerror: Option<&mut libc::c_int>,
     mut f: *mut FILE,
     mut blockSize100k: libc::c_int,
     mut verbosity: libc::c_int,
     mut workFactor: libc::c_int,
-) -> *mut libc::c_void {
+) -> *mut /* owning */ libc::c_void {
     let mut ret: Int32 = 0;
     let mut bzf = 0 as *mut bzFile;
-    if !bzerror.is_null() {
-        *bzerror= 0 as libc::c_int;
+    if !bzerror.as_deref().is_none() {
+        *bzerror.as_deref_mut().unwrap()= 0 as libc::c_int;
     }else { (); }
     if !bzf.is_null() {
         (*bzf).lastErr= 0 as libc::c_int;
@@ -1597,8 +1597,8 @@ pub unsafe extern "C" fn BZ2_bzWriteOpen(
         || (workFactor < 0 as libc::c_int || workFactor > 250 as libc::c_int)
         || (verbosity < 0 as libc::c_int || verbosity > 4 as libc::c_int)
     {
-        if !bzerror.is_null() {
-            *bzerror= -(2 as libc::c_int);
+        if !bzerror.as_deref().is_none() {
+            *bzerror.as_deref_mut().unwrap()= -(2 as libc::c_int);
         }else { (); }
         if !bzf.is_null() {
             (*bzf).lastErr= -(2 as libc::c_int);
@@ -1606,8 +1606,8 @@ pub unsafe extern "C" fn BZ2_bzWriteOpen(
         return 0 as *mut libc::c_void;
     }
     if ferror(f) != 0 {
-        if !bzerror.is_null() {
-            *bzerror= -(6 as libc::c_int);
+        if !bzerror.as_deref().is_none() {
+            *bzerror.as_deref_mut().unwrap()= -(6 as libc::c_int);
         }else { (); }
         if !bzf.is_null() {
             (*bzf).lastErr= -(6 as libc::c_int);
@@ -1616,16 +1616,16 @@ pub unsafe extern "C" fn BZ2_bzWriteOpen(
     }
     bzf= malloc(::std::mem::size_of::<bzFile>() as libc::c_ulong) as *mut bzFile;
     if bzf.is_null() {();
-        if !bzerror.is_null() {
-            *bzerror= -(3 as libc::c_int);
+        if !bzerror.as_deref().is_none() {
+            *bzerror.as_deref_mut().unwrap()= -(3 as libc::c_int);
         }else { (); }
         if !bzf.is_null() {
             (*bzf).lastErr= -(3 as libc::c_int);
         }else { (); }
         return 0 as *mut libc::c_void;
     }
-    if !bzerror.is_null() {
-        *bzerror= 0 as libc::c_int;
+    if !bzerror.as_deref().is_none() {
+        *bzerror.as_deref_mut().unwrap()= 0 as libc::c_int;
     }else { (); }
     if !bzf.is_null() {
         (*bzf).lastErr= 0 as libc::c_int;
@@ -1642,8 +1642,8 @@ pub unsafe extern "C" fn BZ2_bzWriteOpen(
     }
     ret= BZ2_bzCompressInit(core::ptr::addr_of_mut!((*bzf).strm), blockSize100k, verbosity, workFactor);
     if ret != 0 as libc::c_int {
-        if !bzerror.is_null() {
-            *bzerror= ret;
+        if !bzerror.as_deref().is_none() {
+            *bzerror.as_deref_mut().unwrap()= ret;
         }else { (); }
         if !bzf.is_null() {
             (*bzf).lastErr= ret;
@@ -1897,17 +1897,17 @@ pub unsafe extern "C" fn BZ2_bzWriteClose64(
 }
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzReadOpen(
-    mut bzerror: *mut libc::c_int,
+    mut bzerror: Option<&mut libc::c_int>,
     mut f: *mut FILE,
     mut verbosity: libc::c_int,
     mut small: libc::c_int,
     mut unused: *mut libc::c_void,
     mut nUnused: libc::c_int,
-) -> *mut libc::c_void {
+) -> *mut /* owning */ libc::c_void {
     let mut bzf = 0 as *mut bzFile;
     let mut ret: libc::c_int = 0;
-    if !bzerror.is_null() {
-        *bzerror= 0 as libc::c_int;
+    if !bzerror.as_deref().is_none() {
+        *bzerror.as_deref_mut().unwrap()= 0 as libc::c_int;
     }else { (); }
     if !bzf.is_null() {
         (*bzf).lastErr= 0 as libc::c_int;
@@ -1918,8 +1918,8 @@ pub unsafe extern "C" fn BZ2_bzReadOpen(
         || !unused.is_null()
             && (nUnused < 0 as libc::c_int || nUnused > 5000 as libc::c_int)
     {
-        if !bzerror.is_null() {
-            *bzerror= -(2 as libc::c_int);
+        if !bzerror.as_deref().is_none() {
+            *bzerror.as_deref_mut().unwrap()= -(2 as libc::c_int);
         }else { (); }
         if !bzf.is_null() {
             (*bzf).lastErr= -(2 as libc::c_int);
@@ -1927,8 +1927,8 @@ pub unsafe extern "C" fn BZ2_bzReadOpen(
         return 0 as *mut libc::c_void;
     }
     if ferror(f) != 0 {
-        if !bzerror.is_null() {
-            *bzerror= -(6 as libc::c_int);
+        if !bzerror.as_deref().is_none() {
+            *bzerror.as_deref_mut().unwrap()= -(6 as libc::c_int);
         }else { (); }
         if !bzf.is_null() {
             (*bzf).lastErr= -(6 as libc::c_int);
@@ -1937,16 +1937,16 @@ pub unsafe extern "C" fn BZ2_bzReadOpen(
     }
     bzf= malloc(::std::mem::size_of::<bzFile>() as libc::c_ulong) as *mut bzFile;
     if bzf.is_null() {();
-        if !bzerror.is_null() {
-            *bzerror= -(3 as libc::c_int);
+        if !bzerror.as_deref().is_none() {
+            *bzerror.as_deref_mut().unwrap()= -(3 as libc::c_int);
         }else { (); }
         if !bzf.is_null() {
             (*bzf).lastErr= -(3 as libc::c_int);
         }else { (); }
         return 0 as *mut libc::c_void;
     }
-    if !bzerror.is_null() {
-        *bzerror= 0 as libc::c_int;
+    if !bzerror.as_deref().is_none() {
+        *bzerror.as_deref_mut().unwrap()= 0 as libc::c_int;
     }else { (); }
     if !bzf.is_null() {
         (*bzf).lastErr= 0 as libc::c_int;
@@ -1967,8 +1967,8 @@ pub unsafe extern "C" fn BZ2_bzReadOpen(
     }
     ret= BZ2_bzDecompressInit(core::ptr::addr_of_mut!((*bzf).strm), verbosity, small);
     if ret != 0 as libc::c_int {
-        if !bzerror.is_null() {
-            *bzerror= ret;
+        if !bzerror.as_deref().is_none() {
+            *bzerror.as_deref_mut().unwrap()= ret;
         }else { (); }
         if !bzf.is_null() {
             (*bzf).lastErr= ret;
@@ -2308,7 +2308,7 @@ unsafe extern "C" fn bzopen_or_bzdopen(
     mut fd: libc::c_int,
     mut mode: *const libc::c_char,
     mut open_mode: libc::c_int,
-) -> *mut libc::c_void {
+) -> *mut /* owning */ libc::c_void {
     let mut bzerr: libc::c_int = 0;
     let mut unused: [libc::c_char; 5000] = [0; 5000];
     let mut blockSize100k = 9 as libc::c_int;
@@ -2379,10 +2379,10 @@ unsafe extern "C" fn bzopen_or_bzdopen(
         if blockSize100k > 9 as libc::c_int {
             blockSize100k= 9 as libc::c_int;
         }
-        bzfp= BZ2_bzWriteOpen(core::ptr::addr_of_mut!(bzerr), fp, blockSize100k, verbosity, workFactor);
+        bzfp= BZ2_bzWriteOpen(Some(&mut bzerr), fp, blockSize100k, verbosity, workFactor);
     } else {
         bzfp= BZ2_bzReadOpen(
-            core::ptr::addr_of_mut!(bzerr),
+            Some(&mut bzerr),
             fp,
             verbosity,
             smallMode,
@@ -2402,14 +2402,14 @@ unsafe extern "C" fn bzopen_or_bzdopen(
 pub unsafe extern "C" fn BZ2_bzopen(
     mut path: *const libc::c_char,
     mut mode: *const libc::c_char,
-) -> *mut libc::c_void {
+) -> *mut /* owning */ libc::c_void {
     return bzopen_or_bzdopen(path, -(1 as libc::c_int), mode, 0 as libc::c_int);
 }
 #[no_mangle]
 pub unsafe extern "C" fn BZ2_bzdopen(
     mut fd: libc::c_int,
     mut mode: *const libc::c_char,
-) -> *mut libc::c_void {
+) -> *mut /* owning */ libc::c_void {
     return bzopen_or_bzdopen(0 as *const libc::c_char, fd, mode, 1 as libc::c_int);
 }
 #[no_mangle]

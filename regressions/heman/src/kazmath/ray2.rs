@@ -316,8 +316,8 @@ pub unsafe extern "C" fn kmRay2IntersectBox(
 #[no_mangle]
 pub unsafe extern "C" fn kmRay2IntersectCircle(
     mut ray: *const kmRay2,
-    centre: crate::src::kazmath::aabb2::kmVec2,
-    radius: libc::c_float,
+    mut centre: crate::src::kazmath::aabb2::kmVec2,
+    mut radius: libc::c_float,
     mut intersection: *mut crate::src::kazmath::aabb2::kmVec2,
 ) -> libc::c_uchar {
     if 0 as libc::c_int != 0

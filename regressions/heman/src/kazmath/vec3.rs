@@ -368,7 +368,7 @@ pub unsafe extern "C" fn kmVec3TransformNormal(
 pub unsafe extern "C" fn kmVec3Scale(
     mut pOut: *mut crate::src::kazmath::aabb3::kmVec3,
     mut pIn: *const crate::src::kazmath::aabb3::kmVec3,
-    s: libc::c_float,
+    mut s: libc::c_float,
 ) -> *mut crate::src::kazmath::aabb3::kmVec3 {
     (*pOut).x= (*pIn).x * s;
     (*pOut).y= (*pIn).y * s;

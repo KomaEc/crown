@@ -409,7 +409,7 @@ unsafe extern "C" fn putchar(mut __c: libc::c_int) -> libc::c_int {
 }
 #[inline]
 unsafe extern "C" fn stat(
-    mut __path: *mut libc::c_char,
+    mut __path: *const libc::c_char,
     mut __statbuf: *mut stat,
 ) -> libc::c_int {
     return __xstat(1 as libc::c_int, __path, __statbuf);
@@ -973,8 +973,8 @@ unsafe extern "C" fn interpolate_variables(
     return 0 as libc::c_int;
 }
 unsafe extern "C" fn print_colon_delimited_paths(
-    mut start: *mut libc::c_char,
-    mut indent: *mut libc::c_char,
+    mut start: *const libc::c_char,
+    mut indent: *const libc::c_char,
 ) {
     while !((*start) as libc::c_int == '\0' as i32) {
         let mut next = strchr(start, ':' as i32);
@@ -1201,7 +1201,7 @@ unsafe extern "C" fn print_error(
                 print_colon_delimited_paths(
                     (*s.as_deref().unwrap()).string_table.arr
                         .offset((*s.as_deref().unwrap()).rpath_offsets[j as usize] as isize),
-                    indent,
+                    indent as *const i8,
                 );
             }
             j-= 1;
@@ -1225,7 +1225,7 @@ unsafe extern "C" fn print_error(
     if (*s.as_deref().unwrap()).ld_library_path_offset != 18446744073709551615 as libc::c_ulong {
         print_colon_delimited_paths(
             (*s.as_deref().unwrap()).string_table.arr.offset((*s.as_deref().unwrap()).ld_library_path_offset as isize),
-            indent,
+            indent as *const i8,
         );
     }
     fputs(indent as *const i8, crate::src::libtree::stdout);
@@ -1244,7 +1244,7 @@ unsafe extern "C" fn print_error(
         fputs(b"\x1B[0m\0" as *const u8 as *const libc::c_char, crate::src::libtree::stdout);
     }
     if !runpath.is_null() {
-        print_colon_delimited_paths(runpath, indent);
+        print_colon_delimited_paths(runpath, indent as *const i8);
     }else { (); }
     fputs(indent as *const i8, crate::src::libtree::stdout);
     if (*s.as_deref().unwrap()).color != 0 {
@@ -1264,7 +1264,7 @@ unsafe extern "C" fn print_error(
     }
     print_colon_delimited_paths(
         (*s.as_deref().unwrap()).string_table.arr.offset((*s.as_deref().unwrap()).ld_so_conf_offset as isize),
-        indent,
+        indent as *const i8,
     );
     fputs(indent as *const i8, crate::src::libtree::stdout);
     if (*s.as_deref().unwrap()).color != 0 {
@@ -1284,7 +1284,7 @@ unsafe extern "C" fn print_error(
     }
     print_colon_delimited_paths(
         (*s.as_deref().unwrap()).string_table.arr.offset((*s.as_deref().unwrap()).default_paths_offset as isize),
-        indent,
+        indent as *const i8,
     );
     free(indent as *mut libc::c_void);
 }

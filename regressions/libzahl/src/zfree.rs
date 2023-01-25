@@ -49,7 +49,7 @@ pub unsafe extern "C" fn zfree(mut a: Option<&mut crate::src::allocator::C2RustU
             crate::src::zfree::libzahl_pool_alloc[i as usize]= 0 as libc::c_int as size_t;
             return;
         }
-        crate::src::zfree::libzahl_pool[i as usize]= new as *const *mut u32;
+        crate::src::zfree::libzahl_pool[i as usize]= new;
         crate::src::zfree::libzahl_pool_alloc[i as usize]= x;
     }
     *crate::src::zfree::libzahl_pool[i as usize].offset(j as isize) = (*a.as_deref().unwrap()).chars;

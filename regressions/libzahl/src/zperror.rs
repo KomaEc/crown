@@ -6,7 +6,7 @@ extern "C" {
     fn perror(__s: *const libc::c_char);
 }
 #[no_mangle]
-pub unsafe extern "C" fn zperror(mut prefix: *mut libc::c_char) {
+pub unsafe extern "C" fn zperror(mut prefix: *const libc::c_char) {
     if crate::src::zperror::libzahl_error >= 0 as libc::c_int {
         *__errno_location() = crate::src::zperror::libzahl_error;
         perror(prefix);

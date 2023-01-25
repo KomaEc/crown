@@ -21,9 +21,9 @@ pub struct kmAABB2 {
 pub unsafe extern "C" fn kmAABB2Initialize(
     mut pBox: Option<&mut kmAABB2>,
     mut centre: *const kmVec2,
-    width: libc::c_float,
-    height: libc::c_float,
-    depth: libc::c_float,
+    mut width: libc::c_float,
+    mut height: libc::c_float,
+    mut depth: libc::c_float,
 ) -> *mut kmAABB2 {
     if pBox.as_deref().is_none() {();
         return 0 as *mut kmAABB2;

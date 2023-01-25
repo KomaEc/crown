@@ -154,7 +154,7 @@ pub unsafe extern "C" fn kmMat3Inverse(
     return pOut.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut());
 }
 #[no_mangle]
-pub unsafe extern "C" fn kmMat3IsIdentity(mut pIn: *mut kmMat3) -> libc::c_int {
+pub unsafe extern "C" fn kmMat3IsIdentity(mut pIn: *const kmMat3) -> libc::c_int {
     static mut identity: [libc::c_float; 9] = [
         1.0f32,
         0.0f32,
@@ -199,8 +199,8 @@ pub unsafe extern "C" fn kmMat3Transpose(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat3Multiply(
     mut pOut: *mut kmMat3,
-    mut pM1: *mut kmMat3,
-    mut pM2: *mut kmMat3,
+    mut pM1: *const kmMat3,
+    mut pM2: *const kmMat3,
 ) -> *mut kmMat3 {
     let mut mat: [libc::c_float; 9] = [0.; 9];
     let mut m1 = ((*pM1).mat).as_ptr();
@@ -262,7 +262,7 @@ pub unsafe extern "C" fn kmMat3Multiply(
 pub unsafe extern "C" fn kmMat3ScalarMultiply(
     mut pOut: *mut kmMat3,
     mut pM: *const kmMat3,
-    pFactor: libc::c_float,
+    mut pFactor: libc::c_float,
 ) -> *mut kmMat3 {
     let mut mat: [libc::c_float; 9] = [0.; 9];
     let mut i: libc::c_int = 0;
@@ -282,7 +282,7 @@ pub unsafe extern "C" fn kmMat3ScalarMultiply(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat3Assign(
     mut pOut: *mut kmMat3,
-    mut pIn: *mut kmMat3,
+    mut pIn: *const kmMat3,
 ) -> *mut kmMat3 {
     if pOut != pIn as *mut kmMat3 {} else {
         __assert_fail(
@@ -341,7 +341,7 @@ pub unsafe extern "C" fn kmMat3AreEqual(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat3Rotation(
     mut pOut: Option<&mut kmMat3>,
-    radians: libc::c_float,
+    mut radians: libc::c_float,
 ) -> *mut kmMat3 {
     (*pOut.as_deref_mut().unwrap()).mat[0 as libc::c_int as usize]= cosf(radians);
     (*pOut.as_deref_mut().unwrap()).mat[1 as libc::c_int as usize]= sinf(radians);
@@ -357,8 +357,8 @@ pub unsafe extern "C" fn kmMat3Rotation(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat3Scaling(
     mut pOut: Option<&mut kmMat3>,
-    x: libc::c_float,
-    y: libc::c_float,
+    mut x: libc::c_float,
+    mut y: libc::c_float,
 ) -> *mut kmMat3 {
     kmMat3Identity(pOut.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
     (*pOut.as_deref_mut().unwrap()).mat[0 as libc::c_int as usize]= x;
@@ -368,8 +368,8 @@ pub unsafe extern "C" fn kmMat3Scaling(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat3Translation(
     mut pOut: Option<&mut kmMat3>,
-    x: libc::c_float,
-    y: libc::c_float,
+    mut x: libc::c_float,
+    mut y: libc::c_float,
 ) -> *mut kmMat3 {
     kmMat3Identity(pOut.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()));
     (*pOut.as_deref_mut().unwrap()).mat[6 as libc::c_int as usize]= x;
@@ -460,7 +460,7 @@ pub unsafe extern "C" fn kmMat3RotationToAxisAngle(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat3RotationX(
     mut pOut: Option<&mut kmMat3>,
-    radians: libc::c_float,
+    mut radians: libc::c_float,
 ) -> *mut kmMat3 {
     (*pOut.as_deref_mut().unwrap()).mat[0 as libc::c_int as usize]= 1.0f32;
     (*pOut.as_deref_mut().unwrap()).mat[1 as libc::c_int as usize]= 0.0f32;
@@ -476,7 +476,7 @@ pub unsafe extern "C" fn kmMat3RotationX(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat3RotationY(
     mut pOut: Option<&mut kmMat3>,
-    radians: libc::c_float,
+    mut radians: libc::c_float,
 ) -> *mut kmMat3 {
     (*pOut.as_deref_mut().unwrap()).mat[0 as libc::c_int as usize]= cosf(radians);
     (*pOut.as_deref_mut().unwrap()).mat[1 as libc::c_int as usize]= 0.0f32;
@@ -492,7 +492,7 @@ pub unsafe extern "C" fn kmMat3RotationY(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat3RotationZ(
     mut pOut: Option<&mut kmMat3>,
-    radians: libc::c_float,
+    mut radians: libc::c_float,
 ) -> *mut kmMat3 {
     (*pOut.as_deref_mut().unwrap()).mat[0 as libc::c_int as usize]= cosf(radians);
     (*pOut.as_deref_mut().unwrap()).mat[1 as libc::c_int as usize]= -sinf(radians);

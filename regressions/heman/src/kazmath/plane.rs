@@ -63,7 +63,7 @@ pub unsafe extern "C" fn kmPlaneDotNormal(
 pub unsafe extern "C" fn kmPlaneFromNormalAndDistance(
     mut plane: Option<&mut crate::src::kazmath::mat4::kmPlane>,
     mut normal: *const crate::src::kazmath::aabb3::kmVec3,
-    dist: libc::c_float,
+    mut dist: libc::c_float,
 ) -> *mut crate::src::kazmath::mat4::kmPlane {
     (*plane.as_deref_mut().unwrap()).a= (*normal).x;
     (*plane.as_deref_mut().unwrap()).b= (*normal).y;

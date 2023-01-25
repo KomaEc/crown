@@ -94,7 +94,7 @@ pub unsafe extern "C" fn kmVec4Normalize(
 pub unsafe extern "C" fn kmVec4Scale(
     mut pOut: *mut crate::src::kazmath::plane::kmVec4,
     mut pIn: *const crate::src::kazmath::plane::kmVec4,
-    s: libc::c_float,
+    mut s: libc::c_float,
 ) -> *mut crate::src::kazmath::plane::kmVec4 {
     kmVec4Normalize(pOut, pIn);
     (*pOut).x*= s;

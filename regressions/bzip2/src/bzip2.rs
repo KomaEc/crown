@@ -176,14 +176,14 @@ impl zzzz {pub fn take(&mut self) -> Self {core::mem::take(self)}}
 pub type Cell = zzzz;
 #[inline]
 unsafe extern "C" fn stat(
-    mut __path: *mut libc::c_char,
+    mut __path: *const libc::c_char,
     mut __statbuf: *mut stat,
 ) -> libc::c_int {
     return __xstat(1 as libc::c_int, __path, __statbuf);
 }
 #[inline]
 unsafe extern "C" fn lstat(
-    mut __path: *mut libc::c_char,
+    mut __path: *const libc::c_char,
     mut __statbuf: *mut stat,
 ) -> libc::c_int {
     return __lxstat(1 as libc::c_int, __path, __statbuf);
@@ -347,7 +347,7 @@ unsafe extern "C" fn compressStream(mut stream: *mut FILE, mut zStream: *mut FIL
     if !(ferror(stream) != 0) {
         if !(ferror(zStream) != 0) {
             bzf= crate::src::bzlib::BZ2_bzWriteOpen(
-                core::ptr::addr_of_mut!(bzerr),
+                Some(&mut bzerr),
                 zStream,
                 crate::src::bzip2::blockSize100k,
                 crate::src::bzip2::verbosity,
@@ -592,7 +592,7 @@ unsafe extern "C" fn uncompressStream(
                     break;
                 }
                 bzf= crate::src::bzlib::BZ2_bzReadOpen(
-                    core::ptr::addr_of_mut!(bzerr),
+                    Some(&mut bzerr),
                     zStream,
                     crate::src::bzip2::verbosity,
                     crate::src::bzip2::smallMode as libc::c_int,
@@ -1067,7 +1067,7 @@ unsafe extern "C" fn testStream(mut zStream: *mut FILE) -> Bool {
                 break;
             }
             bzf= crate::src::bzlib::BZ2_bzReadOpen(
-                core::ptr::addr_of_mut!(bzerr),
+                Some(&mut bzerr),
                 zStream,
                 crate::src::bzip2::verbosity,
                 crate::src::bzip2::smallMode as libc::c_int,

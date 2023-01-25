@@ -19,19 +19,36 @@ extern "C" {
 }
 #[derive(Copy, Clone)]
 #[repr(C)]
+struct ErasedByRefactorer0;
+#[repr(C)]
 pub struct url_data {
     pub href: *mut libc::c_char,
-    pub protocol: *mut libc::c_char,
-    pub host: *mut libc::c_char,
-    pub auth: *mut libc::c_char,
-    pub hostname: *mut libc::c_char,
-    pub pathname: *mut libc::c_char,
-    pub search: *mut libc::c_char,
-    pub path: *mut libc::c_char,
-    pub hash: *mut libc::c_char,
-    pub query: *mut libc::c_char,
+    pub protocol: *mut /* owning */ libc::c_char,
+    pub host: *mut /* owning */ libc::c_char,
+    pub auth: *mut /* owning */ libc::c_char,
+    pub hostname: *mut /* owning */ libc::c_char,
+    pub pathname: *mut /* owning */ libc::c_char,
+    pub search: *mut /* owning */ libc::c_char,
+    pub path: *mut /* owning */ libc::c_char,
+    pub hash: *mut /* owning */ libc::c_char,
+    pub query: *mut /* owning */ libc::c_char,
     pub port: *mut libc::c_char,
 }
+impl Default for url_data {fn default() -> Self {Self {
+href: std::ptr::null_mut(),
+protocol: std::ptr::null_mut(),
+host: std::ptr::null_mut(),
+auth: std::ptr::null_mut(),
+hostname: std::ptr::null_mut(),
+pathname: std::ptr::null_mut(),
+search: std::ptr::null_mut(),
+path: std::ptr::null_mut(),
+hash: std::ptr::null_mut(),
+query: std::ptr::null_mut(),
+port: std::ptr::null_mut(),
+}}}
+impl url_data {pub fn take(&mut self) -> Self {core::mem::take(self)}}
+
 pub type url_data_t = url_data;
 #[no_mangle]
 pub unsafe extern "C" fn url_data_inspect(mut data: *mut url_data_t) {
@@ -39,25 +56,25 @@ pub unsafe extern "C" fn url_data_inspect(mut data: *mut url_data_t) {
     printf(b"    .href: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).href);
     printf(
         b"    .protocol: \"%s\"\n\0" as *const u8 as *const libc::c_char,
-        (*data).protocol,
+        (*data).protocol as *const i8,
     );
-    printf(b"    .host: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).host);
-    printf(b"    .auth: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).auth);
+    printf(b"    .host: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).host as *const i8);
+    printf(b"    .auth: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).auth as *const i8);
     printf(
         b"    .hostname: \"%s\"\n\0" as *const u8 as *const libc::c_char,
-        (*data).hostname,
+        (*data).hostname as *const i8,
     );
     printf(
         b"    .pathname: \"%s\"\n\0" as *const u8 as *const libc::c_char,
-        (*data).pathname,
+        (*data).pathname as *const i8,
     );
     printf(
         b"    .search: \"%s\"\n\0" as *const u8 as *const libc::c_char,
-        (*data).search,
+        (*data).search as *const i8,
     );
-    printf(b"    .path: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).path);
-    printf(b"    .hash: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).hash);
-    printf(b"    .query: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).query);
+    printf(b"    .path: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).path as *const i8);
+    printf(b"    .hash: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).hash as *const i8);
+    printf(b"    .query: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).query as *const i8);
     printf(b"    .port: \"%s\"\n\0" as *const u8 as *const libc::c_char, (*data).port);
 }
 #[no_mangle]
@@ -438,7 +455,7 @@ pub unsafe extern "C" fn url_parse(mut url: *mut libc::c_char) -> *mut url_data_
     return data;
 }
 #[no_mangle]
-pub unsafe extern "C" fn strdup(mut str: *mut libc::c_char) -> *mut /* owning */ libc::c_char {
+pub unsafe extern "C" fn strdup(mut str: *const libc::c_char) -> *mut /* owning */ libc::c_char {
     let mut n = (strlen(str)).wrapping_add(1 as libc::c_int as libc::c_ulong)
         as libc::c_int;
     let mut dup = malloc(n as libc::c_ulong) as *mut libc::c_char;

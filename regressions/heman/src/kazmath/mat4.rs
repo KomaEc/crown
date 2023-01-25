@@ -318,7 +318,7 @@ pub unsafe extern "C" fn kmMat4Inverse(
     return pOut.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut());
 }
 #[no_mangle]
-pub unsafe extern "C" fn kmMat4IsIdentity(mut pIn: *mut crate::src::kazmath::mat3::kmMat4) -> libc::c_int {
+pub unsafe extern "C" fn kmMat4IsIdentity(mut pIn: *const crate::src::kazmath::mat3::kmMat4) -> libc::c_int {
     static mut identity: [libc::c_float; 16] = [
         1.0f32,
         0.0f32,
@@ -366,8 +366,8 @@ pub unsafe extern "C" fn kmMat4Transpose(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat4Multiply(
     mut pOut: *mut crate::src::kazmath::mat3::kmMat4,
-    mut pM1: *mut crate::src::kazmath::mat3::kmMat4,
-    mut pM2: *mut crate::src::kazmath::mat3::kmMat4,
+    mut pM1: *const crate::src::kazmath::mat3::kmMat4,
+    mut pM2: *const crate::src::kazmath::mat3::kmMat4,
 ) -> *mut crate::src::kazmath::mat3::kmMat4 {
     let mut mat: [libc::c_float; 16] = [0.; 16];
     let mut m1 = ((*pM1).mat).as_ptr();
@@ -487,7 +487,7 @@ pub unsafe extern "C" fn kmMat4Multiply(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat4Assign(
     mut pOut: *mut crate::src::kazmath::mat3::kmMat4,
-    mut pIn: *mut crate::src::kazmath::mat3::kmMat4,
+    mut pIn: *const crate::src::kazmath::mat3::kmMat4,
 ) -> *mut crate::src::kazmath::mat3::kmMat4 {
     if pOut != pIn as *mut crate::src::kazmath::mat3::kmMat4
         && !(b"You have tried to self-assign!!\0" as *const u8 as *const libc::c_char)
@@ -579,7 +579,7 @@ pub unsafe extern "C" fn kmMat4RotationAxisAngle(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat4RotationX(
     mut pOut: Option<&mut crate::src::kazmath::mat3::kmMat4>,
-    radians: libc::c_float,
+    mut radians: libc::c_float,
 ) -> *mut crate::src::kazmath::mat3::kmMat4 {
     (*pOut.as_deref_mut().unwrap()).mat[0 as libc::c_int as usize]= 1.0f32;
     (*pOut.as_deref_mut().unwrap()).mat[1 as libc::c_int as usize]= 0.0f32;
@@ -602,7 +602,7 @@ pub unsafe extern "C" fn kmMat4RotationX(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat4RotationY(
     mut pOut: Option<&mut crate::src::kazmath::mat3::kmMat4>,
-    radians: libc::c_float,
+    mut radians: libc::c_float,
 ) -> *mut crate::src::kazmath::mat3::kmMat4 {
     (*pOut.as_deref_mut().unwrap()).mat[0 as libc::c_int as usize]= cosf(radians);
     (*pOut.as_deref_mut().unwrap()).mat[1 as libc::c_int as usize]= 0.0f32;
@@ -625,7 +625,7 @@ pub unsafe extern "C" fn kmMat4RotationY(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat4RotationZ(
     mut pOut: Option<&mut crate::src::kazmath::mat3::kmMat4>,
-    radians: libc::c_float,
+    mut radians: libc::c_float,
 ) -> *mut crate::src::kazmath::mat3::kmMat4 {
     (*pOut.as_deref_mut().unwrap()).mat[0 as libc::c_int as usize]= cosf(radians);
     (*pOut.as_deref_mut().unwrap()).mat[1 as libc::c_int as usize]= sinf(radians);
@@ -648,9 +648,9 @@ pub unsafe extern "C" fn kmMat4RotationZ(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat4RotationYawPitchRoll(
     mut pOut: *mut crate::src::kazmath::mat3::kmMat4,
-    pitch: libc::c_float,
-    yaw: libc::c_float,
-    roll: libc::c_float,
+    mut pitch: libc::c_float,
+    mut yaw: libc::c_float,
+    mut roll: libc::c_float,
 ) -> *mut crate::src::kazmath::mat3::kmMat4 {
     let mut yaw_matrix = crate::src::kazmath::mat3::kmMat4 { mat: [0.; 16] };
     kmMat4RotationY(Some(&mut yaw_matrix), yaw);
@@ -658,8 +658,8 @@ pub unsafe extern "C" fn kmMat4RotationYawPitchRoll(
     kmMat4RotationX(Some(&mut pitch_matrix), pitch);
     let mut roll_matrix = crate::src::kazmath::mat3::kmMat4 { mat: [0.; 16] };
     kmMat4RotationZ(Some(&mut roll_matrix), roll);
-    kmMat4Multiply(pOut, core::ptr::addr_of_mut!(pitch_matrix), core::ptr::addr_of_mut!(roll_matrix));
-    kmMat4Multiply(pOut, core::ptr::addr_of_mut!(yaw_matrix), pOut);
+    kmMat4Multiply(pOut, core::ptr::addr_of!(pitch_matrix), core::ptr::addr_of!(roll_matrix));
+    kmMat4Multiply(pOut, core::ptr::addr_of!(yaw_matrix), pOut);
     return pOut;
 }
 #[no_mangle]
@@ -709,8 +709,8 @@ pub unsafe extern "C" fn kmMat4RotationQuaternion(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat4Scaling(
     mut pOut: *mut crate::src::kazmath::mat3::kmMat4,
-    x: libc::c_float,
-    y: libc::c_float,
+    mut x: libc::c_float,
+    mut y: libc::c_float,
     mut z: libc::c_float,
 ) -> *mut crate::src::kazmath::mat3::kmMat4 {
     memset(
@@ -728,9 +728,9 @@ pub unsafe extern "C" fn kmMat4Scaling(
 #[no_mangle]
 pub unsafe extern "C" fn kmMat4Translation(
     mut pOut: *mut crate::src::kazmath::mat3::kmMat4,
-    x: libc::c_float,
+    mut x: libc::c_float,
     mut y: libc::c_float,
-    z: libc::c_float,
+    mut z: libc::c_float,
 ) -> *mut crate::src::kazmath::mat3::kmMat4 {
     memset(
         (*pOut).mat.as_mut_ptr() as *mut libc::c_void,
@@ -868,7 +868,7 @@ pub unsafe extern "C" fn kmMat4LookAt(
     (*pOut).mat[6 as libc::c_int as usize]= -f.y;
     (*pOut).mat[10 as libc::c_int as usize]= -f.z;
     kmMat4Translation(core::ptr::addr_of_mut!(translate), -(*pEye).x, -(*pEye).y, -(*pEye).z);
-    kmMat4Multiply(pOut, pOut, core::ptr::addr_of_mut!(translate));
+    kmMat4Multiply(pOut, pOut, core::ptr::addr_of!(translate));
     return pOut;
 }
 #[no_mangle]
@@ -933,7 +933,7 @@ pub unsafe extern "C" fn kmMat4RotationTranslation(
 pub unsafe extern "C" fn kmMat4ExtractPlane(
     mut pOut: Option<&mut kmPlane>,
     mut pIn: *const crate::src::kazmath::mat3::kmMat4,
-    plane: libc::c_uint,
+    mut plane: libc::c_uint,
 ) -> *mut kmPlane {
     let mut t = 1.0f32;
     match plane {

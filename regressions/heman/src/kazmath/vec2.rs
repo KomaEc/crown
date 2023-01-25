@@ -197,7 +197,7 @@ pub unsafe extern "C" fn kmVec2TransformCoord(
 pub unsafe extern "C" fn kmVec2Scale(
     mut pOut: *mut crate::src::kazmath::aabb2::kmVec2,
     mut pIn: *const crate::src::kazmath::aabb2::kmVec2,
-    s: libc::c_float,
+    mut s: libc::c_float,
 ) -> *mut crate::src::kazmath::aabb2::kmVec2 {
     (*pOut).x= (*pIn).x * s;
     (*pOut).y= (*pIn).y * s;
@@ -230,7 +230,7 @@ pub unsafe extern "C" fn kmVec2Assign(
 pub unsafe extern "C" fn kmVec2RotateBy(
     mut pOut: Option<&mut crate::src::kazmath::aabb2::kmVec2>,
     mut pIn: *const crate::src::kazmath::aabb2::kmVec2,
-    degrees: libc::c_float,
+    mut degrees: libc::c_float,
     mut center: *const crate::src::kazmath::aabb2::kmVec2,
 ) -> *mut crate::src::kazmath::aabb2::kmVec2 {
     let mut x: libc::c_float = 0.;

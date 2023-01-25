@@ -50,7 +50,7 @@ extern crate rustc_type_ir;
 
 extern crate either;
 
-#[derive(Clone, Copy, Args)]
+#[derive(Args)]
 #[command(group(
     ArgGroup::new("box")
         .args(["no_box", "force_box"]),
@@ -81,6 +81,9 @@ pub struct RefactorOptions {
     /// rewrite raw pointer mutability with respect to mutability analysis
     #[clap(long)]
     pub raw_mutability: bool,
+    /// fn name pattern that is required to be raw
+    #[clap(long)]
+    pub no_attempt: Option<String>,
 }
 
 pub fn refactor<'tcx>(
@@ -100,8 +103,8 @@ pub fn refactor<'tcx>(
     }
     let options = options;
 
-    let struct_decision = StructFields::new(crate_data, analysis, options);
-    let fn_decision = FnLocals::new(crate_data, analysis, options);
+    let struct_decision = StructFields::new(crate_data, analysis, &options);
+    let fn_decision = FnLocals::new(crate_data, analysis, &options);
 
     if options.verbose {
         let mut rewriter = VerboseRewriter { rewriter: vec![] };
@@ -281,7 +284,7 @@ impl StructFields {
             })
     }
 
-    pub fn new(crate_data: &CrateData, analysis: &Analysis, options: RefactorOptions) -> Self {
+    pub fn new(crate_data: &CrateData, analysis: &Analysis, options: &RefactorOptions) -> Self {
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.structs.len());
         let mut struct_fields = VecVec::with_capacity(
@@ -394,7 +397,7 @@ impl FnLocals {
         &self.0.data[idx]
     }
 
-    pub fn new(crate_data: &CrateData, analysis: &Analysis, options: RefactorOptions) -> Self {
+    pub fn new(crate_data: &CrateData, analysis: &Analysis, options: &RefactorOptions) -> Self {
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.fns.len());
         let mut fn_locals = VecVec::with_capacity(
@@ -404,6 +407,11 @@ impl FnLocals {
                 acc + r#fn.local_decls.len()
             }),
         );
+
+        let no_attempt = options
+            .no_attempt
+            .as_deref()
+            .map(|pattern| regex::Regex::new(pattern).expect("bad fn name patterns"));
 
         for (idx, did) in crate_data.fns.iter().enumerate() {
             let ownership = analysis.ownership_result.fn_results(did).results();
@@ -416,6 +424,8 @@ impl FnLocals {
                 .chain(std::iter::repeat(false));
 
             let body = crate_data.tcx.optimized_mir(did);
+
+            let no_attempt = matches!(no_attempt.as_ref().map(|regex| regex.is_match(&crate_data.tcx.def_path_str(*did))), Some(matched) if matched);
 
             for (local_decl, is_output_param, ownership, mutability, fatness) in itertools::izip!(
                 body.local_decls.iter(),
@@ -462,9 +472,9 @@ impl FnLocals {
                     ty = ty.builtin_deref(true).unwrap().ty;
                 }
                 if is_output_param {
-                    if local[0].is_move() {
+                    if local[0].is_move() && !no_attempt {
                         local[0] = PointerKind::Mut
-                    } else if local[0].is_raw_move() {
+                    } else if local[0].is_raw_move() || no_attempt {
                         ty = local_decl.ty;
                         local[0] = if !ty.is_mutable_ptr() {
                             PointerKind::Raw(RawMeta::Const)
@@ -475,7 +485,7 @@ impl FnLocals {
                         unreachable!()
                     }
                 }
-                if options.no_box {
+                if options.no_box || no_attempt {
                     for pointer_kind in &mut local {
                         if pointer_kind.is_move() {
                             *pointer_kind = PointerKind::Raw(RawMeta::Move)

@@ -30,9 +30,9 @@ pub struct kmAABB3 {
 pub unsafe extern "C" fn kmAABB3Initialize(
     mut pBox: Option<&mut kmAABB3>,
     mut centre: *const kmVec3,
-    width: libc::c_float,
-    height: libc::c_float,
-    depth: libc::c_float,
+    mut width: libc::c_float,
+    mut height: libc::c_float,
+    mut depth: libc::c_float,
 ) -> *mut kmAABB3 {
     if pBox.as_deref().is_none() {();
         return 0 as *mut kmAABB3;

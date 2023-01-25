@@ -124,7 +124,7 @@ unsafe extern "C" fn binn_map_set_value(
 #[inline(always)]
 unsafe extern "C" fn binn_object_set_value(
     mut obj: Option<&mut binn>,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
     mut value: *mut binn,
 ) -> BOOL {
     return binn_object_set(
@@ -726,7 +726,7 @@ unsafe extern "C" fn SearchForKey(
     mut header_size: libc::c_int,
     mut size: libc::c_int,
     mut numitems: libc::c_int,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> *mut libc::c_uchar {
     let mut len: libc::c_uchar = 0;
     let mut plimit = 0 as *mut libc::c_uchar;
@@ -787,7 +787,7 @@ unsafe extern "C" fn binn_list_add_raw(
 }
 unsafe extern "C" fn binn_object_set_raw(
     mut item: Option<&mut binn>,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
     mut type_0: libc::c_int,
     mut pvalue: *mut libc::c_void,
     mut size: libc::c_int,
@@ -1682,7 +1682,7 @@ unsafe extern "C" fn store_value(mut value: *mut binn) -> *mut libc::c_void {
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_get_value(
     mut ptr: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
     mut value: *mut binn,
 ) -> BOOL {
     let mut type_0: libc::c_int = 0;
@@ -2633,7 +2633,7 @@ pub unsafe extern "C" fn binn_map_set(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_set(
     mut obj: Option<&mut binn>,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
     mut type_0: libc::c_int,
     mut pvalue: *mut libc::c_void,
     mut size: libc::c_int,
@@ -2688,7 +2688,7 @@ pub unsafe extern "C" fn binn_map_set_new(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_set_new(
     mut obj: Option<&mut binn>,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
     mut value: *mut binn,
 ) -> BOOL {
     let mut retval: BOOL = 0;
@@ -2731,7 +2731,7 @@ pub unsafe extern "C" fn binn_map_value(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_value(
     mut ptr: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> *mut binn {
     let mut value = 0 as *mut binn;
     value= binn_malloc(::std::mem::size_of::<binn>() as libc::c_ulong as libc::c_int)
@@ -2816,7 +2816,7 @@ pub unsafe extern "C" fn binn_map_read(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_read(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
     mut ptype: Option<&mut libc::c_int>,
     mut psize: Option<&mut libc::c_int>,
 ) -> *mut libc::c_void {
@@ -2939,7 +2939,7 @@ pub unsafe extern "C" fn binn_map_get(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_get(
     mut ptr: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
     mut type_0: libc::c_int,
     mut pvalue: *mut libc::c_void,
     mut psize: Option<&mut libc::c_int>,
@@ -3491,7 +3491,7 @@ pub unsafe extern "C" fn binn_map_object(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_int8(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> libc::c_schar {
     let mut value: libc::c_schar = 0;
     binn_object_get(
@@ -3506,7 +3506,7 @@ pub unsafe extern "C" fn binn_object_int8(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_int16(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> libc::c_short {
     let mut value: libc::c_short = 0;
     binn_object_get(
@@ -3521,7 +3521,7 @@ pub unsafe extern "C" fn binn_object_int16(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_int32(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> libc::c_int {
     let mut value: libc::c_int = 0;
     binn_object_get(
@@ -3536,7 +3536,7 @@ pub unsafe extern "C" fn binn_object_int32(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_int64(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> int64 {
     let mut value: int64 = 0;
     binn_object_get(
@@ -3551,7 +3551,7 @@ pub unsafe extern "C" fn binn_object_int64(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_uint8(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> libc::c_uchar {
     let mut value: libc::c_uchar = 0;
     binn_object_get(
@@ -3566,7 +3566,7 @@ pub unsafe extern "C" fn binn_object_uint8(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_uint16(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> libc::c_ushort {
     let mut value: libc::c_ushort = 0;
     binn_object_get(
@@ -3581,7 +3581,7 @@ pub unsafe extern "C" fn binn_object_uint16(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_uint32(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> libc::c_uint {
     let mut value: libc::c_uint = 0;
     binn_object_get(
@@ -3596,7 +3596,7 @@ pub unsafe extern "C" fn binn_object_uint32(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_uint64(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> uint64 {
     let mut value: uint64 = 0;
     binn_object_get(
@@ -3611,7 +3611,7 @@ pub unsafe extern "C" fn binn_object_uint64(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_float(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> libc::c_float {
     let mut value: libc::c_float = 0.;
     binn_object_get(
@@ -3626,7 +3626,7 @@ pub unsafe extern "C" fn binn_object_float(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_double(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> libc::c_double {
     let mut value: libc::c_double = 0.;
     binn_object_get(
@@ -3641,7 +3641,7 @@ pub unsafe extern "C" fn binn_object_double(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_bool(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> BOOL {
     let mut value: BOOL = 0;
     binn_object_get(
@@ -3656,7 +3656,7 @@ pub unsafe extern "C" fn binn_object_bool(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_null(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> BOOL {
     return binn_object_get(
         obj,
@@ -3669,7 +3669,7 @@ pub unsafe extern "C" fn binn_object_null(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_str(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> *mut libc::c_char {
     let mut value = 0 as *mut libc::c_char;
     binn_object_get(
@@ -3684,7 +3684,7 @@ pub unsafe extern "C" fn binn_object_str(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_blob(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
     mut psize: Option<&mut libc::c_int>,
 ) -> *mut libc::c_void {
     let mut value = 0 as *mut libc::c_void;
@@ -3700,7 +3700,7 @@ pub unsafe extern "C" fn binn_object_blob(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_list(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> *mut libc::c_void {
     let mut value = 0 as *mut libc::c_void;
     binn_object_get(
@@ -3715,7 +3715,7 @@ pub unsafe extern "C" fn binn_object_list(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_map(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> *mut libc::c_void {
     let mut value = 0 as *mut libc::c_void;
     binn_object_get(
@@ -3730,7 +3730,7 @@ pub unsafe extern "C" fn binn_object_map(
 #[no_mangle]
 pub unsafe extern "C" fn binn_object_object(
     mut obj: *mut libc::c_void,
-    mut key: *mut libc::c_char,
+    mut key: *const libc::c_char,
 ) -> *mut libc::c_void {
     let mut value = 0 as *mut libc::c_void;
     binn_object_get(

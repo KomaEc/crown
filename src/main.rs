@@ -124,7 +124,7 @@ fn main() -> Result<()> {
         preprocess(&args.path, rewrite_mode)?;
         return Ok(());
     }
-    run_compiler(compiler_config(args.path)?, |tcx| run(&args.cmd, tcx))
+    run_compiler(compiler_config(args.path)?, |tcx| run(args.cmd, tcx))
 }
 
 /// Returns where the given rustc stores its sysroot source code.
@@ -217,7 +217,7 @@ fn time<T>(label: &str, f: impl FnOnce() -> T) -> T {
     ret
 }
 
-fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
+fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
     let mut fns = Vec::new();
     let mut structs = Vec::new();
 
@@ -233,7 +233,7 @@ fn run(cmd: &Command, tcx: TyCtxt<'_>) -> Result<()> {
 
     let input = common::CrateData { tcx, fns, structs };
 
-    match *cmd {
+    match cmd {
         Command::Preprocess { .. } => unreachable!(),
         Command::ShowMir { ref function } => {
             if let Some(fn_name) = function {
