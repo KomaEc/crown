@@ -1,5 +1,7 @@
 PROJ_DIR=$(dirname $0)
 
+source $PROJ_DIR/find_entry.sh
+
 PREPROCESS="$PROJ_DIR/preprocess.sh"
 BENCHMARK="$PROJ_DIR/benchmark2"
 
@@ -41,11 +43,7 @@ fi
 for f in $(find $WORKSPACE -name "Cargo.toml"); do
     BENCH_DIR="$(dirname $f)"
     BENCH_NAME="$(basename $BENCH_DIR)"
-    ENTRY="$BENCH_DIR/lib.rs"
-    if [ ! -f $ENTRY ]; then
-        echo "cannot find benchmark entry, expect lib.rs"
-        exit 1
-    fi
+    ENTRY=$(find_entry $BENCH_DIR)
     echo "rewriting $BENCH_NAME"
     OPTIONS=""
     if [ $BENCH_NAME = "lil" ]; then
