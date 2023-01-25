@@ -1071,7 +1071,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             ),
             Rvalue::CopyForDeref(_) => unreachable!("{:?}", span),
             Rvalue::Cast(_, operand, ty) => {
-                match self.try_rewrite_malloc_from_dest(
+                match self.try_rewrite_alloc_from_dest(
                     operand,
                     location,
                     required.is_rustc_move_obj(self),
