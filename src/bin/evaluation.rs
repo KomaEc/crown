@@ -119,13 +119,15 @@ fn get_statistics(tcx: TyCtxt) -> Statistics {
     for did in fns {
         let body = tcx.optimized_mir(did);
         let def_path_str = tcx.def_path_str(did);
-        if def_path_str.ends_with("borrow")
-            || def_path_str.ends_with("borrow_mut")
-            || def_path_str.ends_with("owned_as_ref")
-            || def_path_str.ends_with("owned_as_mut")
-            || def_path_str.ends_with("option_to_raw")
-            || def_path_str.ends_with("_ref_eq")
-            || def_path_str.ends_with("_ref_ne")
+        let fn_name = def_path_str.split("::").last().unwrap();
+        if fn_name == "borrow"
+            || fn_name == "borrow_mut"
+            || fn_name == "owned_as_ref"
+            || fn_name == "owned_as_mut"
+            || fn_name == "option_to_raw"
+            || fn_name == "_ref_eq"
+            || fn_name == "_ref_ne"
+            || fn_name == "main"
         {
             continue;
         }
@@ -157,11 +159,13 @@ fn main() -> Result<()> {
         vec![
             original.num_unsafe_ptrs,
             original.num_unsafe_usages,
+            original.num_fns,
             original.num_fns - original.num_unsafe_ptr_free_fns,
         ],
         vec![
             new.num_unsafe_ptrs,
             new.num_unsafe_usages,
+            new.num_fns,
             new.num_fns - new.num_unsafe_ptr_free_fns,
         ],
     ]
@@ -169,6 +173,7 @@ fn main() -> Result<()> {
     .title(vec![
         "# Unsafe Ptrs".cell().bold(true),
         "# Unsafe Usages".cell().bold(true),
+        "# Fns".cell().bold(true),
         "# Fns with Unsafe Ptrs".cell().bold(true),
     ])
     .bold(true);
