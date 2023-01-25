@@ -430,6 +430,9 @@ impl FnLocals {
                 for (&ownership, &mutability, &fatness) in
                     itertools::izip!(ownership, mutability, fatness)
                 {
+                    while let Some(inner_ty) = ty.builtin_index() {
+                        ty = inner_ty;
+                    }
                     let pointer_kind = if ownership.is_owning() {
                         if fatness.is_arr() {
                             PointerKind::Raw(RawMeta::Move)
@@ -456,9 +459,6 @@ impl FnLocals {
                     local.push(pointer_kind);
 
                     // update type
-                    while let Some(inner_ty) = ty.builtin_index() {
-                        ty = inner_ty;
-                    }
                     ty = ty.builtin_deref(true).unwrap().ty;
                 }
                 if is_output_param {
