@@ -3,6 +3,7 @@ pub mod solidify;
 pub mod whole_program;
 
 use rustc_middle::mir::Body;
+use serde::{Serialize, Deserialize};
 
 use self::infer::InferCtxt;
 use crate::{
@@ -27,7 +28,7 @@ impl<'analysis, Results> OwnershipSchemes<'analysis> for Results where
 {
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum Ownership {
     Owning,
     Transient,

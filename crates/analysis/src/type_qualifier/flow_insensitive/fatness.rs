@@ -11,6 +11,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use rustc_type_ir::TyKind::{self, FnDef};
+use serde::{Serialize, Deserialize};
 
 use self::{libc::libc_call, library::library_call};
 use super::{
@@ -42,7 +43,7 @@ pub fn fatness_analysis(
     result
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 /// [`Fatness::Arr`] ⊑ [`Fatness::Ptr`]
 pub enum Fatness {
     Arr,

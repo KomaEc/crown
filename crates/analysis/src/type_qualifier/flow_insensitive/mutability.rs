@@ -10,6 +10,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use rustc_type_ir::TyKind::{self, FnDef};
+use serde::{Serialize, Deserialize};
 
 use self::{libc::libc_call, library::library_call};
 use super::{
@@ -38,7 +39,7 @@ pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResult {
     result
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 /// [`Mutability::Mut`] ⊑ [`Mutability::Imm`]
 pub enum Mutability {
     Imm,

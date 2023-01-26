@@ -70,6 +70,8 @@ enum Command {
     Fatness,
     // Refactor,
     Rewrite {
+        #[clap(long)]
+        analysis_results_path: Option<PathBuf>,
         #[clap(value_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
         #[command(flatten)]
@@ -336,6 +338,7 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
             ownership_result.print_results(&input);
         }
         Command::Rewrite {
+            analysis_results_path,
             rewrite_mode,
             options,
         } => {
@@ -362,6 +365,15 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                     &input,
                     &ownership_result,
                 );
+
+            if let Some(results_path) = analysis_results_path {
+                let fatness_data = serde_json::to_string(&fatness_result.make_data(&input)).unwrap();
+                let mutability_data = serde_json::to_string(&mutability_result.make_data(&input)).unwrap();
+                let ownership_data = serde_json::to_string(&ownership_result.make_data(&input)).unwrap();
+                fs::write(results_path.join("fatness.json"), fatness_data)?;
+                fs::write(results_path.join("mutability.json"), mutability_data)?;
+                fs::write(results_path.join("ownership.json"), ownership_data)?;
+            }
 
             let analysis_results = refactor::Analysis::new(
                 taint_result,
