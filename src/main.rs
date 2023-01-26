@@ -365,15 +365,20 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                 );
 
             if let Some(results_path) = results_path {
-                let fatness_data =
-                    serde_json::to_string(&fatness_result.make_data(&input)).unwrap();
-                let mutability_data =
-                    serde_json::to_string(&mutability_result.make_data(&input)).unwrap();
-                let ownership_data =
-                    serde_json::to_string(&ownership_result.make_data(&input)).unwrap();
+                let fatness_data = serde_json::to_string(&fatness_result.make_data(&input))?;
+                let mutability_data = serde_json::to_string(&mutability_result.make_data(&input))?;
+                let ownership_data = serde_json::to_string(&ownership_result.make_data(&input))?;
                 fs::write(results_path.join("fatness.json"), fatness_data)?;
                 fs::write(results_path.join("mutability.json"), mutability_data)?;
                 fs::write(results_path.join("ownership.json"), ownership_data)?;
+                let statistics =
+                    serde_json::to_string(&analysis::statistics::CrateStatistics::new(
+                        &input,
+                        &fatness_result,
+                        &mutability_result,
+                        &ownership_result,
+                    ))?;
+                fs::write(results_path.join("statistics.json"), statistics)?;
             }
         }
         Command::Rewrite {
@@ -406,15 +411,20 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                 );
 
             if let Some(results_path) = results_path {
-                let fatness_data =
-                    serde_json::to_string(&fatness_result.make_data(&input)).unwrap();
-                let mutability_data =
-                    serde_json::to_string(&mutability_result.make_data(&input)).unwrap();
-                let ownership_data =
-                    serde_json::to_string(&ownership_result.make_data(&input)).unwrap();
+                let fatness_data = serde_json::to_string(&fatness_result.make_data(&input))?;
+                let mutability_data = serde_json::to_string(&mutability_result.make_data(&input))?;
+                let ownership_data = serde_json::to_string(&ownership_result.make_data(&input))?;
                 fs::write(results_path.join("fatness.json"), fatness_data)?;
                 fs::write(results_path.join("mutability.json"), mutability_data)?;
                 fs::write(results_path.join("ownership.json"), ownership_data)?;
+                let statistics =
+                    serde_json::to_string(&analysis::statistics::CrateStatistics::new(
+                        &input,
+                        &fatness_result,
+                        &mutability_result,
+                        &ownership_result,
+                    ))?;
+                fs::write(results_path.join("statistics.json"), statistics)?;
             }
 
             let analysis_results = refactor::Analysis::new(

@@ -35,6 +35,7 @@ mod lattice;
 pub mod ownership;
 mod ptr;
 pub mod ssa;
+pub mod statistics;
 mod struct_ctxt;
 #[cfg(test)]
 mod test;
