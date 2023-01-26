@@ -4009,81 +4009,81 @@ unsafe extern "C" fn is_bool_str(
 }
 #[no_mangle]
 pub unsafe extern "C" fn binn_get_int32(
-    mut value: Option<&mut binn>,
+    mut value: *mut binn,
     mut pint: *mut libc::c_int,
 ) -> BOOL {
-    if value.as_deref().is_none() || pint.is_null() {
+    if value.is_null() || pint.is_null() {
         return 0 as libc::c_int;
     }
-    if type_family((*value.as_deref().unwrap()).type_0) == 0xf2 as libc::c_int {
+    if type_family((*value).type_0) == 0xf2 as libc::c_int {
         return copy_int_value(
-            (*value.as_deref().unwrap()).ptr,
+            (*value).ptr,
             pint as *mut libc::c_void,
-            (*value.as_deref().unwrap()).type_0,
+            (*value).type_0,
             0x61 as libc::c_int,
         );
     }
-    match (*value.as_deref().unwrap()).type_0 {
+    match (*value).type_0 {
         98 => {
-            if (*value.as_deref().unwrap()).c2rust_unnamed.vfloat
+            if (*value).c2rust_unnamed.vfloat
                 < (-(2147483647 as libc::c_int) - 1 as libc::c_int) as libc::c_float
-                || (*value.as_deref().unwrap()).c2rust_unnamed.vfloat
+                || (*value).c2rust_unnamed.vfloat
                     > 2147483647 as libc::c_int as libc::c_float
             {
                 return 0 as libc::c_int;
             }
-            *pint= if (*value.as_deref().unwrap()).c2rust_unnamed.vfloat as libc::c_double >= 0.0f64 {
-                ((*value.as_deref().unwrap()).c2rust_unnamed.vfloat as libc::c_double + 0.5f64)
+            *pint= if (*value).c2rust_unnamed.vfloat as libc::c_double >= 0.0f64 {
+                ((*value).c2rust_unnamed.vfloat as libc::c_double + 0.5f64)
                     as libc::c_int
-            } else if (*value.as_deref().unwrap()).c2rust_unnamed.vfloat as libc::c_double
-                - (*value.as_deref().unwrap()).c2rust_unnamed.vfloat as libc::c_int as libc::c_double
+            } else if (*value).c2rust_unnamed.vfloat as libc::c_double
+                - (*value).c2rust_unnamed.vfloat as libc::c_int as libc::c_double
                 <= -0.5f64
             {
-                (*value.as_deref().unwrap()).c2rust_unnamed.vfloat as libc::c_int
+                (*value).c2rust_unnamed.vfloat as libc::c_int
             } else {
-                ((*value.as_deref().unwrap()).c2rust_unnamed.vfloat as libc::c_double - 0.5f64)
+                ((*value).c2rust_unnamed.vfloat as libc::c_double - 0.5f64)
                     as libc::c_int
             };
         }
         130 => {
-            if (*value.as_deref().unwrap()).c2rust_unnamed.vdouble
+            if (*value).c2rust_unnamed.vdouble
                 < (-(2147483647 as libc::c_int) - 1 as libc::c_int) as libc::c_double
-                || (*value.as_deref().unwrap()).c2rust_unnamed.vdouble
+                || (*value).c2rust_unnamed.vdouble
                     > 2147483647 as libc::c_int as libc::c_double
             {
                 return 0 as libc::c_int;
             }
-            *pint= if (*value.as_deref().unwrap()).c2rust_unnamed.vdouble >= 0.0f64 {
-                ((*value.as_deref().unwrap()).c2rust_unnamed.vdouble + 0.5f64) as libc::c_int
-            } else if (*value.as_deref().unwrap()).c2rust_unnamed.vdouble
-                - (*value.as_deref().unwrap()).c2rust_unnamed.vdouble as libc::c_int as libc::c_double
+            *pint= if (*value).c2rust_unnamed.vdouble >= 0.0f64 {
+                ((*value).c2rust_unnamed.vdouble + 0.5f64) as libc::c_int
+            } else if (*value).c2rust_unnamed.vdouble
+                - (*value).c2rust_unnamed.vdouble as libc::c_int as libc::c_double
                 <= -0.5f64
             {
-                (*value.as_deref().unwrap()).c2rust_unnamed.vdouble as libc::c_int
+                (*value).c2rust_unnamed.vdouble as libc::c_int
             } else {
-                ((*value.as_deref().unwrap()).c2rust_unnamed.vdouble - 0.5f64) as libc::c_int
+                ((*value).c2rust_unnamed.vdouble - 0.5f64) as libc::c_int
             };
         }
         160 => {
-            if is_integer((*value.as_deref().unwrap()).ptr as *mut libc::c_char) != 0 {
-                *pint= atoi((*value.as_deref().unwrap()).ptr as *mut libc::c_char);
-            } else if is_float((*value.as_deref().unwrap()).ptr as *mut libc::c_char) != 0 {
-                *pint= if atof((*value.as_deref().unwrap()).ptr as *mut libc::c_char) >= 0.0f64 {
-                    (atof((*value.as_deref().unwrap()).ptr as *mut libc::c_char) + 0.5f64) as libc::c_int
-                } else if atof((*value.as_deref().unwrap()).ptr as *mut libc::c_char)
-                    - atof((*value.as_deref().unwrap()).ptr as *mut libc::c_char) as libc::c_int
+            if is_integer((*value).ptr as *mut libc::c_char) != 0 {
+                *pint= atoi((*value).ptr as *mut libc::c_char);
+            } else if is_float((*value).ptr as *mut libc::c_char) != 0 {
+                *pint= if atof((*value).ptr as *mut libc::c_char) >= 0.0f64 {
+                    (atof((*value).ptr as *mut libc::c_char) + 0.5f64) as libc::c_int
+                } else if atof((*value).ptr as *mut libc::c_char)
+                    - atof((*value).ptr as *mut libc::c_char) as libc::c_int
                         as libc::c_double <= -0.5f64
                 {
-                    atof((*value.as_deref().unwrap()).ptr as *mut libc::c_char) as libc::c_int
+                    atof((*value).ptr as *mut libc::c_char) as libc::c_int
                 } else {
-                    (atof((*value.as_deref().unwrap()).ptr as *mut libc::c_char) - 0.5f64) as libc::c_int
+                    (atof((*value).ptr as *mut libc::c_char) - 0.5f64) as libc::c_int
                 };
             } else {
                 return 0 as libc::c_int
             }
         }
         524385 => {
-            *pint= (*value.as_deref().unwrap()).c2rust_unnamed.vbool;
+            *pint= (*value).c2rust_unnamed.vbool;
         }
         _ => return 0 as libc::c_int,
     }
@@ -4091,83 +4091,83 @@ pub unsafe extern "C" fn binn_get_int32(
 }
 #[no_mangle]
 pub unsafe extern "C" fn binn_get_int64(
-    mut value: Option<&mut binn>,
+    mut value: *mut binn,
     mut pint: *mut int64,
 ) -> BOOL {
-    if value.as_deref().is_none() || pint.is_null() {
+    if value.is_null() || pint.is_null() {
         return 0 as libc::c_int;
     }
-    if type_family((*value.as_deref().unwrap()).type_0) == 0xf2 as libc::c_int {
+    if type_family((*value).type_0) == 0xf2 as libc::c_int {
         return copy_int_value(
-            (*value.as_deref().unwrap()).ptr,
+            (*value).ptr,
             pint as *mut libc::c_void,
-            (*value.as_deref().unwrap()).type_0,
+            (*value).type_0,
             0x81 as libc::c_int,
         );
     }
-    match (*value.as_deref().unwrap()).type_0 {
+    match (*value).type_0 {
         98 => {
-            if (*value.as_deref().unwrap()).c2rust_unnamed.vfloat
+            if (*value).c2rust_unnamed.vfloat
                 < (-(9223372036854775807 as libc::c_long)
                     - 1 as libc::c_int as libc::c_long) as libc::c_float
-                || (*value.as_deref().unwrap()).c2rust_unnamed.vfloat
+                || (*value).c2rust_unnamed.vfloat
                     > 9223372036854775807 as libc::c_long as libc::c_float
             {
                 return 0 as libc::c_int;
             }
-            *pint= (if (*value.as_deref().unwrap()).c2rust_unnamed.vfloat as libc::c_double >= 0.0f64 {
-                ((*value.as_deref().unwrap()).c2rust_unnamed.vfloat as libc::c_double + 0.5f64)
+            *pint= (if (*value).c2rust_unnamed.vfloat as libc::c_double >= 0.0f64 {
+                ((*value).c2rust_unnamed.vfloat as libc::c_double + 0.5f64)
                     as libc::c_int
-            } else if (*value.as_deref().unwrap()).c2rust_unnamed.vfloat as libc::c_double
-                - (*value.as_deref().unwrap()).c2rust_unnamed.vfloat as libc::c_int as libc::c_double
+            } else if (*value).c2rust_unnamed.vfloat as libc::c_double
+                - (*value).c2rust_unnamed.vfloat as libc::c_int as libc::c_double
                 <= -0.5f64
             {
-                (*value.as_deref().unwrap()).c2rust_unnamed.vfloat as libc::c_int
+                (*value).c2rust_unnamed.vfloat as libc::c_int
             } else {
-                ((*value.as_deref().unwrap()).c2rust_unnamed.vfloat as libc::c_double - 0.5f64)
+                ((*value).c2rust_unnamed.vfloat as libc::c_double - 0.5f64)
                     as libc::c_int
             }) as int64;
         }
         130 => {
-            if (*value.as_deref().unwrap()).c2rust_unnamed.vdouble
+            if (*value).c2rust_unnamed.vdouble
                 < (-(9223372036854775807 as libc::c_long)
                     - 1 as libc::c_int as libc::c_long) as libc::c_double
-                || (*value.as_deref().unwrap()).c2rust_unnamed.vdouble
+                || (*value).c2rust_unnamed.vdouble
                     > 9223372036854775807 as libc::c_long as libc::c_double
             {
                 return 0 as libc::c_int;
             }
-            *pint= (if (*value.as_deref().unwrap()).c2rust_unnamed.vdouble >= 0.0f64 {
-                ((*value.as_deref().unwrap()).c2rust_unnamed.vdouble + 0.5f64) as libc::c_int
-            } else if (*value.as_deref().unwrap()).c2rust_unnamed.vdouble
-                - (*value.as_deref().unwrap()).c2rust_unnamed.vdouble as libc::c_int as libc::c_double
+            *pint= (if (*value).c2rust_unnamed.vdouble >= 0.0f64 {
+                ((*value).c2rust_unnamed.vdouble + 0.5f64) as libc::c_int
+            } else if (*value).c2rust_unnamed.vdouble
+                - (*value).c2rust_unnamed.vdouble as libc::c_int as libc::c_double
                 <= -0.5f64
             {
-                (*value.as_deref().unwrap()).c2rust_unnamed.vdouble as libc::c_int
+                (*value).c2rust_unnamed.vdouble as libc::c_int
             } else {
-                ((*value.as_deref().unwrap()).c2rust_unnamed.vdouble - 0.5f64) as libc::c_int
+                ((*value).c2rust_unnamed.vdouble - 0.5f64) as libc::c_int
             }) as int64;
         }
         160 => {
-            if is_integer((*value.as_deref().unwrap()).ptr as *mut libc::c_char) != 0 {
-                *pint= atoi64((*value.as_deref().unwrap()).ptr as *mut libc::c_char);
-            } else if is_float((*value.as_deref().unwrap()).ptr as *mut libc::c_char) != 0 {
-                *pint= (if atof((*value.as_deref().unwrap()).ptr as *mut libc::c_char) >= 0.0f64 {
-                    (atof((*value.as_deref().unwrap()).ptr as *mut libc::c_char) + 0.5f64) as libc::c_int
-                } else if atof((*value.as_deref().unwrap()).ptr as *mut libc::c_char)
-                    - atof((*value.as_deref().unwrap()).ptr as *mut libc::c_char) as libc::c_int
+            if is_integer((*value).ptr as *mut libc::c_char) != 0 {
+                *pint= atoi64((*value).ptr as *mut libc::c_char);
+            } else if is_float((*value).ptr as *mut libc::c_char) != 0 {
+                *pint= (if atof((*value).ptr as *mut libc::c_char) >= 0.0f64 {
+                    (atof((*value).ptr as *mut libc::c_char) + 0.5f64) as libc::c_int
+                } else if atof((*value).ptr as *mut libc::c_char)
+                    - atof((*value).ptr as *mut libc::c_char) as libc::c_int
                         as libc::c_double <= -0.5f64
                 {
-                    atof((*value.as_deref().unwrap()).ptr as *mut libc::c_char) as libc::c_int
+                    atof((*value).ptr as *mut libc::c_char) as libc::c_int
                 } else {
-                    (atof((*value.as_deref().unwrap()).ptr as *mut libc::c_char) - 0.5f64) as libc::c_int
+                    (atof((*value).ptr as *mut libc::c_char) - 0.5f64) as libc::c_int
                 }) as int64;
             } else {
                 return 0 as libc::c_int
             }
         }
         524385 => {
-            *pint= (*value.as_deref().unwrap()).c2rust_unnamed.vbool as int64;
+            *pint= (*value).c2rust_unnamed.vbool as int64;
         }
         _ => return 0 as libc::c_int,
     }
@@ -4175,18 +4175,18 @@ pub unsafe extern "C" fn binn_get_int64(
 }
 #[no_mangle]
 pub unsafe extern "C" fn binn_get_double(
-    mut value: Option<&mut binn>,
+    mut value: *mut binn,
     mut pfloat: Option<&mut libc::c_double>,
 ) -> BOOL {
     let mut vint: int64 = 0;
-    if value.as_deref().is_none() || pfloat.as_deref().is_none() {
+    if value.is_null() || pfloat.as_deref().is_none() {
         return 0 as libc::c_int;
     }
-    if type_family((*value.as_deref().unwrap()).type_0) == 0xf2 as libc::c_int {
+    if type_family((*value).type_0) == 0xf2 as libc::c_int {
         if copy_int_value(
-            (*value.as_deref().unwrap()).ptr,
+            (*value).ptr,
             core::ptr::addr_of_mut!(vint) as *mut int64 as *mut libc::c_void,
-            (*value.as_deref().unwrap()).type_0,
+            (*value).type_0,
             0x81 as libc::c_int,
         ) == 0 as libc::c_int
         {
@@ -4195,24 +4195,24 @@ pub unsafe extern "C" fn binn_get_double(
         *pfloat.as_deref_mut().unwrap()= vint as libc::c_double;
         return 1 as libc::c_int;
     }
-    match (*value.as_deref().unwrap()).type_0 {
+    match (*value).type_0 {
         98 => {
-            *pfloat.as_deref_mut().unwrap()= (*value.as_deref().unwrap()).c2rust_unnamed.vfloat as libc::c_double;
+            *pfloat.as_deref_mut().unwrap()= (*value).c2rust_unnamed.vfloat as libc::c_double;
         }
         130 => {
-            *pfloat.as_deref_mut().unwrap()= (*value.as_deref().unwrap()).c2rust_unnamed.vdouble;
+            *pfloat.as_deref_mut().unwrap()= (*value).c2rust_unnamed.vdouble;
         }
         160 => {
-            if is_integer((*value.as_deref().unwrap()).ptr as *mut libc::c_char) != 0 {
-                *pfloat.as_deref_mut().unwrap()= atoi64((*value.as_deref().unwrap()).ptr as *mut libc::c_char) as libc::c_double;
-            } else if is_float((*value.as_deref().unwrap()).ptr as *mut libc::c_char) != 0 {
-                *pfloat.as_deref_mut().unwrap()= atof((*value.as_deref().unwrap()).ptr as *mut libc::c_char);
+            if is_integer((*value).ptr as *mut libc::c_char) != 0 {
+                *pfloat.as_deref_mut().unwrap()= atoi64((*value).ptr as *mut libc::c_char) as libc::c_double;
+            } else if is_float((*value).ptr as *mut libc::c_char) != 0 {
+                *pfloat.as_deref_mut().unwrap()= atof((*value).ptr as *mut libc::c_char);
             } else {
                 return 0 as libc::c_int
             }
         }
         524385 => {
-            *pfloat.as_deref_mut().unwrap()= (*value.as_deref().unwrap()).c2rust_unnamed.vbool as libc::c_double;
+            *pfloat.as_deref_mut().unwrap()= (*value).c2rust_unnamed.vbool as libc::c_double;
         }
         _ => return 0 as libc::c_int,
     }
@@ -4220,18 +4220,18 @@ pub unsafe extern "C" fn binn_get_double(
 }
 #[no_mangle]
 pub unsafe extern "C" fn binn_get_bool(
-    mut value: Option<&mut binn>,
+    mut value: *mut binn,
     mut pbool: Option<&mut BOOL>,
 ) -> BOOL {
     let mut vint: int64 = 0;
-    if value.as_deref().is_none() || pbool.as_deref().is_none() {
+    if value.is_null() || pbool.as_deref().is_none() {
         return 0 as libc::c_int;
     }
-    if type_family((*value.as_deref().unwrap()).type_0) == 0xf2 as libc::c_int {
+    if type_family((*value).type_0) == 0xf2 as libc::c_int {
         if copy_int_value(
-            (*value.as_deref().unwrap()).ptr,
+            (*value).ptr,
             core::ptr::addr_of_mut!(vint) as *mut int64 as *mut libc::c_void,
-            (*value.as_deref().unwrap()).type_0,
+            (*value).type_0,
             0x81 as libc::c_int,
         ) == 0 as libc::c_int
         {
@@ -4244,12 +4244,12 @@ pub unsafe extern "C" fn binn_get_bool(
         };
         return 1 as libc::c_int;
     }
-    match (*value.as_deref().unwrap()).type_0 {
+    match (*value).type_0 {
         524385 => {
-            *pbool.as_deref_mut().unwrap()= (*value.as_deref().unwrap()).c2rust_unnamed.vbool;
+            *pbool.as_deref_mut().unwrap()= (*value).c2rust_unnamed.vbool;
         }
         98 => {
-            *pbool.as_deref_mut().unwrap()= if (*value.as_deref().unwrap()).c2rust_unnamed.vfloat
+            *pbool.as_deref_mut().unwrap()= if (*value).c2rust_unnamed.vfloat
                 != 0 as libc::c_int as libc::c_float
             {
                 1 as libc::c_int
@@ -4258,7 +4258,7 @@ pub unsafe extern "C" fn binn_get_bool(
             };
         }
         130 => {
-            *pbool.as_deref_mut().unwrap()= if (*value.as_deref().unwrap()).c2rust_unnamed.vdouble
+            *pbool.as_deref_mut().unwrap()= if (*value).c2rust_unnamed.vdouble
                 != 0 as libc::c_int as libc::c_double
             {
                 1 as libc::c_int
@@ -4266,7 +4266,7 @@ pub unsafe extern "C" fn binn_get_bool(
                 0 as libc::c_int
             };
         }
-        160 => return is_bool_str((*value.as_deref().unwrap()).ptr as *mut libc::c_char, pbool.as_deref_mut()),
+        160 => return is_bool_str((*value).ptr as *mut libc::c_char, pbool.as_deref_mut()),
         _ => return 0 as libc::c_int,
     }
     return 1 as libc::c_int;

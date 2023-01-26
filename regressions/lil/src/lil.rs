@@ -3807,18 +3807,18 @@ unsafe extern "C" fn fnc_expr(
     return 0 as lil_value_t;
 }
 unsafe extern "C" fn real_inc(
-    mut lil: Option<&mut _lil_t>,
+    mut lil: *mut _lil_t,
     mut varname: *const libc::c_char,
     mut v: libc::c_float,
-) -> *mut /* owning */ _lil_value_t {
-    let mut pv = lil_get_var(lil.as_deref_mut(), varname);
+) -> *mut _lil_value_t {
+    let mut pv = lil_get_var(lil.as_mut(), varname);
     let mut dv = lil_to_double(pv) + v as libc::c_double;
     if fmod(dv, 1 as libc::c_int as libc::c_double) != 0. {
         pv= lil_alloc_double(dv);
     } else {
         pv= lil_alloc_integer((lil_to_integer(pv) as libc::c_float + v) as lilint_t);
     }
-    lil_set_var(lil.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), varname, pv, 1 as libc::c_int);
+    lil_set_var(lil, varname, pv, 1 as libc::c_int);
     return pv;
 }
 unsafe extern "C" fn fnc_inc(
@@ -3830,7 +3830,7 @@ unsafe extern "C" fn fnc_inc(
         return 0 as lil_value_t;
     }
     return real_inc(
-        lil.as_mut(),
+        lil,
         lil_to_string(*argv.offset(0 as libc::c_int as isize)),
         (if argc > 1 as libc::c_int as libc::c_ulong {
             lil_to_double(*argv.offset(1 as libc::c_int as isize))
@@ -3848,7 +3848,7 @@ unsafe extern "C" fn fnc_dec(
         return 0 as lil_value_t;
     }
     return real_inc(
-        lil.as_mut(),
+        lil,
         lil_to_string(*argv.offset(0 as libc::c_int as isize)),
         -if argc > 1 as libc::c_int as libc::c_ulong {
             lil_to_double(*argv.offset(1 as libc::c_int as isize))

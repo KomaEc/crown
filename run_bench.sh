@@ -47,7 +47,7 @@ for f in $(find $WORKSPACE -name "Cargo.toml"); do
     echo "rewriting $BENCH_NAME"
     OPTIONS=""
     if [ $BENCH_NAME = "lil" ]; then
-        OPTIONS="--type-reconstruction --no-attempt .*fnc_.*|do_exit|lil_find_var"
+        OPTIONS="--type-reconstruction --no-attempt .*fnc_.*|do_exit|lil_find_var|lil_to_double"
     elif [ $BENCH_NAME = "genann" ]; then
         OPTIONS="--raw-mutability"
     fi
