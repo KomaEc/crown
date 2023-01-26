@@ -15,17 +15,13 @@ Cargo.lock
 
 proptest-regressions/
 
-ground_truth
 workspace
 **/*.bak
 
 .z3-trace
 **/*.orc-trace
 
-_build/
-
 extra_deps/
 
-potential
 preprocessed
-working
+results
