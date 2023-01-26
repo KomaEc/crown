@@ -36,9 +36,6 @@ for f in $(find $1 -name "Cargo.toml"); do
     BENCH_DIR="$(dirname $f)"
     BENCH_NAME="$(basename $BENCH_DIR)"
     ENTRY=$(find_entry $BENCH_DIR)
-    echo "preprocessing $BENCH_NAME"
-    $CROWN $ENTRY preprocess in-place
-    $CROWN $ENTRY explicit-addr in-place
     if [ -d "$BENCH_DIR/analysis_results" ]; then
         rm $BENCH_DIR/analysis_results/*
     else
