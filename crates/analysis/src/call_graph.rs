@@ -82,15 +82,17 @@ impl<'me, 'tcx> Visitor<'tcx> for MonotonicityChecker<'me, 'tcx> {
 
         match self.tcx.hir().find_by_def_id(local_did).unwrap() {
             rustc_hir::Node::ForeignItem(foreign_item) => match foreign_item.ident.as_str() {
-                "free" => self.this = self.this.meet(FlatSet::Elem(Monotonicity::Dealloc)),
+                "free" => {
+                    self.this.meet(&FlatSet::Elem(Monotonicity::Dealloc));
+                }
                 "malloc" | "calloc" | "realloc" => {
-                    self.this = self.this.meet(FlatSet::Elem(Monotonicity::Alloc))
+                    self.this.meet(&FlatSet::Elem(Monotonicity::Alloc));
                 }
                 _ => {}
             },
             rustc_hir::Node::Item(..) => {
                 let that = self.monotonicity[&callee];
-                self.this = self.this.meet(that);
+                self.this.meet(&that);
             }
             _ => {}
         }
@@ -205,9 +207,8 @@ impl CallGraph {
         &self.ranked_by_n_alloc_deallocs
     }
 
-    #[inline]
-    pub fn post_order(&self) -> &[DefId] {
-        self.post_order.everything()
+    pub fn sccs(&self) -> impl Iterator<Item = &[DefId]> {
+        self.post_order.iter()
     }
 }
 
@@ -248,12 +249,6 @@ mod test {
     use common::test::init_logger;
 
     use super::*;
-
-    impl CallGraph {
-        fn sccs(&self) -> impl Iterator<Item = &[DefId]> {
-            self.post_order.iter()
-        }
-    }
 
     const TEST_PROGRAMS: &'static str = "
         fn f() {

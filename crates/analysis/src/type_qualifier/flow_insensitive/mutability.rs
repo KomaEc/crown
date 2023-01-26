@@ -94,20 +94,26 @@ impl HasTop for Mutability {
 }
 
 impl Lattice for Mutability {
-    fn join(self, other: Self) -> Self {
-        if self.is_immutable() || other.is_immutable() {
-            Mutability::Imm
-        } else {
-            Mutability::Mut
+    fn join(&mut self, other: &Self) -> bool {
+        match (*self, *other) {
+            (Self::Mut, Self::Imm) => {
+                *self = Self::Imm;
+                return true;
+            }
+            _ => {}
         }
+        false
     }
 
-    fn meet(self, other: Self) -> Self {
-        if self.is_mutable() || other.is_mutable() {
-            Mutability::Mut
-        } else {
-            Mutability::Imm
+    fn meet(&mut self, other: &Self) -> bool {
+        match (*self, *other) {
+            (Self::Imm, Self::Mut) => {
+                *self = Self::Mut;
+                return true;
+            }
+            _ => {}
         }
+        true
     }
 }
 

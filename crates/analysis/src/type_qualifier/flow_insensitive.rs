@@ -288,7 +288,7 @@ pub fn resolve_body<'tcx, I, Domain>(
 //     const TOP: Self;
 // }
 
-pub trait BooleanLattice: From<bool> + Into<bool> + Lattice {}
+pub trait BooleanLattice: From<bool> + Into<bool> + Copy + Lattice {}
 
 common::macros::newtype_index! {
     #[debug_format = "{}"]

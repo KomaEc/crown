@@ -98,20 +98,26 @@ impl HasTop for Fatness {
 }
 
 impl Lattice for Fatness {
-    fn join(self, other: Self) -> Self {
-        if self.is_ptr() || other.is_ptr() {
-            Fatness::Ptr
-        } else {
-            Fatness::Arr
+    fn join(&mut self, other: &Self) -> bool {
+        match (*self, *other) {
+            (Self::Arr, Self::Ptr) => {
+                *self = Self::Ptr;
+                return true;
+            }
+            _ => {}
         }
+        false
     }
 
-    fn meet(self, other: Self) -> Self {
-        if self.is_arr() || other.is_arr() {
-            Fatness::Arr
-        } else {
-            Fatness::Ptr
+    fn meet(&mut self, other: &Self) -> bool {
+        match (*self, *other) {
+            (Self::Ptr, Self::Arr) => {
+                *self = Self::Arr;
+                return true;
+            }
+            _ => {}
         }
+        true
     }
 }
 

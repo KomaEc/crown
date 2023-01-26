@@ -45,7 +45,7 @@ pub fn compute_output_params(
 
     let call_graph = CallGraph::new(crate_data.tcx, &crate_data.fns);
 
-    for &did in call_graph.post_order() {
+    for &did in call_graph.sccs().flatten() {
         let body = crate_data.tcx.optimized_mir(did);
         conservative_output_params(
             body,
