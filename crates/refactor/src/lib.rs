@@ -457,7 +457,13 @@ impl FnLocals {
                                 PointerKind::Raw(RawMeta::Mut)
                             }
                         } else if options.const_reference {
-                            todo!()
+                            if mutability.is_immutable() && !fatness.is_arr() {
+                                PointerKind::Const
+                            } else if !ty.is_mutable_ptr() {
+                                PointerKind::Raw(RawMeta::Const)
+                            } else {
+                                PointerKind::Raw(RawMeta::Mut)
+                            }
                         } else {
                             if !ty.is_mutable_ptr() {
                                 PointerKind::Raw(RawMeta::Const)
