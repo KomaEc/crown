@@ -63,7 +63,10 @@ enum Command {
         rewrite_mode: RewriteMode,
     },
     OutputParams,
-    Analyse,
+    Analyse {
+        results_path: Option<PathBuf>,
+    },
+    Ownership,
     Taint,
     Alias,
     Mutability,
@@ -71,7 +74,7 @@ enum Command {
     // Refactor,
     Rewrite {
         #[clap(long)]
-        analysis_results_path: Option<PathBuf>,
+        results_path: Option<PathBuf>,
         #[clap(value_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
         #[command(flatten)]
@@ -316,7 +319,7 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                 );
             fatness_result.print_results(&input)
         }
-        Command::Analyse => {
+        Command::Ownership => {
             let alias_result = alias::alias_results(&input);
             let mutability_result =
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
@@ -337,8 +340,44 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
             let ownership_result = ownership_schemes.solidify(&input);
             ownership_result.print_results(&input);
         }
+        Command::Analyse { results_path } => {
+            let alias_result = alias::alias_results(&input);
+            let mutability_result =
+                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
+            let output_params = analysis::type_qualifier::output_params::compute_output_params(
+                &input,
+                &alias_result,
+                &mutability_result,
+            );
+            let crate_ctxt = CrateCtxt::new(&input);
+            let ownership_schemes =
+                analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
+                    crate_ctxt,
+                    &output_params,
+                )?;
+
+            let ownership_result = ownership_schemes.solidify(&input);
+
+            let fatness_result =
+                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(
+                    &input,
+                    &ownership_result,
+                );
+
+            if let Some(results_path) = results_path {
+                let fatness_data =
+                    serde_json::to_string(&fatness_result.make_data(&input)).unwrap();
+                let mutability_data =
+                    serde_json::to_string(&mutability_result.make_data(&input)).unwrap();
+                let ownership_data =
+                    serde_json::to_string(&ownership_result.make_data(&input)).unwrap();
+                fs::write(results_path.join("fatness.json"), fatness_data)?;
+                fs::write(results_path.join("mutability.json"), mutability_data)?;
+                fs::write(results_path.join("ownership.json"), ownership_data)?;
+            }
+        }
         Command::Rewrite {
-            analysis_results_path,
+            results_path,
             rewrite_mode,
             options,
         } => {
@@ -366,7 +405,7 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                     &ownership_result,
                 );
 
-            if let Some(results_path) = analysis_results_path {
+            if let Some(results_path) = results_path {
                 let fatness_data =
                     serde_json::to_string(&fatness_result.make_data(&input)).unwrap();
                 let mutability_data =
