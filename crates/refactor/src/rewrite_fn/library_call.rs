@@ -6,7 +6,10 @@ use rustc_middle::mir::{Location, Operand, Place, Rvalue, StatementKind};
 use rustc_span::Span;
 
 use super::FnRewriteCtxt;
-use crate::{rewrite_fn::PlaceValueType, PointerKind, RawMeta};
+use crate::{
+    rewrite_fn::{PlaceLoadMode, PlaceValueType},
+    PointerKind, RawMeta,
+};
 
 impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     pub fn rewrite_library_call(
@@ -31,6 +34,14 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             if slice.as_str() == "slice" && as_mut_ptr.as_str() == "as_mut_ptr" {
                 self.rewrite_as_mut_ptr(args, destination, None, fn_span, location, rewriter);
                 return;
+            } else if slice.as_str() == "option" {
+                match as_mut_ptr.as_str() {
+                    "is_some" | "is_none" => {
+                        self.rewrite_is_some(args, destination, fn_span, location, rewriter);
+                        return;
+                    }
+                    _ => {} // fall
+                }
             }
         }
 
@@ -79,6 +90,42 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             });
             self.rewrite_temporary(arg, location, required, rewriter);
         }
+    }
+
+    fn rewrite_is_some(
+        &self,
+        args: &Vec<Operand<'tcx>>,
+        _destination: Place<'tcx>,
+        fn_span: Span,
+        location: Location,
+        rewriter: &mut impl Rewrite,
+    ) {
+        let FnRewriteCtxt {
+            body,
+            def_use_chain,
+            tcx,
+            ..
+        } = *self;
+
+        assert_eq!(args.len(), 1);
+        let arg = args[0].place().unwrap().as_local().unwrap();
+        let def_loc = def_use_chain.def_loc(arg, location);
+        let RichLocation::Mir(def_loc) = def_loc else { panic!() };
+        let Left(stmt) = body.stmt_at(def_loc) else {
+            // TODO correctness?
+            return
+        };
+        let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+        let Rvalue::Ref(_, _, place) = rvalue else { unreachable!() };
+        let span = stmt.source_info.span.until(fn_span);
+        self.rewrite_place_load_at::<{ PlaceLoadMode::ByValue as u8 }>(
+            *place,
+            def_loc,
+            span,
+            PlaceValueType::Irrelavent,
+            rewriter,
+        );
+        rewriter.replace(tcx, span.shrink_to_hi(), ".".to_owned())
     }
 
     fn rewrite_is_null(

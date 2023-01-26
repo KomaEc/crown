@@ -648,7 +648,7 @@ pub unsafe extern "C" fn lil_set_var(
         }
         if (var.is_null() && env == (*lil).rootenv
             || !var.is_null() && (*var).env == (*lil).rootenv)
-            && ((*lil).callback[6 as libc::c_int as usize]).is_some()
+            && (*lil).callback[6 as libc::c_int as usize].is_some()
         {
             let mut proc_0: lil_setvar_callback_proc_t = ::std::mem::transmute::<
                 lil_callback_proc_t,
@@ -705,7 +705,7 @@ pub unsafe extern "C" fn lil_get_var_or(
 ) -> *mut _lil_value_t {
     let mut var = lil_find_var(lil, (*lil).env, name);
     let mut retval = if !var.is_null() { (*var).v } else {(); defvalue };
-    if ((*lil).callback[7 as libc::c_int as usize]).is_some()
+    if (*lil).callback[7 as libc::c_int as usize].is_some()
         && (var.is_null() || (*var).env == (*lil).rootenv)
     {
         let mut proc_0: lil_getvar_callback_proc_t = ::std::mem::transmute::<
@@ -1127,7 +1127,7 @@ pub unsafe extern "C" fn lil_parse(
                 }
             }
             if !cmd.is_null() {
-                if ((*cmd).proc_0).is_some() {
+                if (*cmd).proc_0.is_some() {
                     let mut shead = (*lil).head;
                     val= (*cmd).proc_0
                         .expect(
@@ -1197,7 +1197,7 @@ pub unsafe extern "C" fn lil_parse(
         }
         skip_spaces(lil.as_mut());
     }
-    if (*lil).error != 0 && ((*lil).callback[5 as libc::c_int as usize]).is_some()
+    if (*lil).error != 0 && (*lil).callback[5 as libc::c_int as usize].is_some()
         && (*lil).parse_depth == 1 as libc::c_int as libc::c_ulong
     {
         let mut proc_0: lil_error_callback_proc_t = ::std::mem::transmute::<
@@ -2878,7 +2878,7 @@ unsafe extern "C" fn fnc_reflect(
             return 0 as lil_value_t;
         }
         func= find_cmd(lil.as_mut(), lil_to_string(*argv.offset(1 as libc::c_int as isize)));
-        if func.is_null() || ((*func).proc_0).is_some() {
+        if func.is_null() || (*func).proc_0.is_some() {
             return 0 as lil_value_t;
         }
         return lil_clone_value((*func).code);
@@ -3208,7 +3208,7 @@ unsafe extern "C" fn fnc_write(
         lil_append_val(msg, *argv.offset(i as isize));
         i= i.wrapping_add(1);
     }
-    if ((*lil).callback[1 as libc::c_int as usize]).is_some() {
+    if (*lil).callback[1 as libc::c_int as usize].is_some() {
         let mut proc_0: lil_write_callback_proc_t = ::std::mem::transmute::<
             lil_callback_proc_t,
             lil_write_callback_proc_t,
@@ -3226,7 +3226,7 @@ unsafe extern "C" fn fnc_print(
     mut argv: *mut *mut _lil_value_t,
 ) -> *mut _lil_value_t {
     fnc_write(lil, argc, argv);
-    if ((*lil).callback[1 as libc::c_int as usize]).is_some() {
+    if (*lil).callback[1 as libc::c_int as usize].is_some() {
         let mut proc_0: lil_write_callback_proc_t = ::std::mem::transmute::<
             lil_callback_proc_t,
             lil_write_callback_proc_t,
@@ -3458,7 +3458,7 @@ unsafe extern "C" fn fnc_jaileval(
         i= (*lil).syscmds;
         while i < (*lil).cmds {
             let mut fnc = *(*lil).cmd.offset(i as isize);
-            if !((*fnc).proc_0).is_none() {
+            if !(*fnc).proc_0.is_none() {
                 lil_register(sublil.as_mut(), (*fnc).name, (*fnc).proc_0);
             }
             i= i.wrapping_add(1);
@@ -3869,7 +3869,7 @@ unsafe extern "C" fn fnc_read(
     if argc < 1 as libc::c_int as libc::c_ulong {
         return 0 as lil_value_t;
     }
-    if ((*lil).callback[2 as libc::c_int as usize]).is_some() {
+    if (*lil).callback[2 as libc::c_int as usize].is_some() {
         let mut proc_0: lil_read_callback_proc_t = ::std::mem::transmute::<
             lil_callback_proc_t,
             lil_read_callback_proc_t,
@@ -3909,7 +3909,7 @@ unsafe extern "C" fn fnc_store(
     if argc < 2 as libc::c_int as libc::c_ulong {
         return 0 as lil_value_t;
     }
-    if ((*lil).callback[3 as libc::c_int as usize]).is_some() {
+    if (*lil).callback[3 as libc::c_int as usize].is_some() {
         let mut proc_0: lil_store_callback_proc_t = ::std::mem::transmute::<
             lil_callback_proc_t,
             lil_store_callback_proc_t,
@@ -4503,7 +4503,7 @@ unsafe extern "C" fn fnc_exit(
     mut argc: libc::c_ulong,
     mut argv: *mut *mut _lil_value_t,
 ) -> *mut _lil_value_t {
-    if ((*lil).callback[0 as libc::c_int as usize]).is_some() {
+    if (*lil).callback[0 as libc::c_int as usize].is_some() {
         let mut proc_0: lil_exit_callback_proc_t = ::std::mem::transmute::<
             lil_callback_proc_t,
             lil_exit_callback_proc_t,
@@ -4534,7 +4534,7 @@ unsafe extern "C" fn fnc_source(
     if argc < 1 as libc::c_int as libc::c_ulong {
         return 0 as lil_value_t;
     }
-    if ((*lil).callback[4 as libc::c_int as usize]).is_some() {
+    if (*lil).callback[4 as libc::c_int as usize].is_some() {
         let mut proc_0: lil_source_callback_proc_t = ::std::mem::transmute::<
             lil_callback_proc_t,
             lil_source_callback_proc_t,
@@ -4543,7 +4543,7 @@ unsafe extern "C" fn fnc_source(
             .expect(
                 "non-null function pointer",
             )(lil, lil_to_string(*argv.offset(0 as libc::c_int as isize)));
-    } else if ((*lil).callback[2 as libc::c_int as usize]).is_some() {
+    } else if (*lil).callback[2 as libc::c_int as usize].is_some() {
         let mut proc_1: lil_read_callback_proc_t = ::std::mem::transmute::<
             lil_callback_proc_t,
             lil_read_callback_proc_t,

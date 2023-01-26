@@ -33,6 +33,21 @@ pub fn library_call<'tcx, M: MutabilityLikeAnalysis>(
         }
     }
 
+    if let [DefPathData::TypeNs(option), _, DefPathData::ValueNs(func), ..] = &def_path
+        .data
+        .iter()
+        .map(|data| data.data)
+        .collect::<smallvec::SmallVec<[_; 4]>>()[..]
+    {
+        if option.as_str() == "option" {
+            // unconstrained call
+            match func.as_str() {
+                "is_some" | "expect" | "is_none" => return,
+                _ => {} // fall
+            }
+        }
+    }
+
     if let [DefPathData::TypeNs(slice), _, DefPathData::ValueNs(as_mut_ptr), ..] = &def_path
         .data
         .iter()

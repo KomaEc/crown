@@ -155,16 +155,16 @@ pub unsafe extern "C" fn csv_init(
     return 0 as libc::c_int;
 }
 #[no_mangle]
-pub unsafe extern "C" fn csv_free(mut p: *mut csv_parser) {
-    if p.is_null() {();
+pub unsafe extern "C" fn csv_free(mut p: Option<&mut csv_parser>) {
+    if p.as_deref().is_none() {();
         return;
     }
-    if !(*p).entry_buf.is_null() && ((*p).free_func).is_some() {
-        (*p).free_func
-            .expect("non-null function pointer")((*p).entry_buf as *mut libc::c_void);
+    if !(*p.as_deref().unwrap()).entry_buf.is_null() && (*p.as_deref().unwrap()).free_func.is_some() {
+        (*p.as_deref().unwrap()).free_func
+            .expect("non-null function pointer")((*p.as_deref().unwrap()).entry_buf as *mut libc::c_void);
     }
-    (*p).entry_buf= 0 as *mut libc::c_uchar;
-    (*p).entry_size= 0 as libc::c_int as size_t;
+    (*p.as_deref_mut().unwrap()).entry_buf= 0 as *mut libc::c_uchar;
+    (*p.as_deref_mut().unwrap()).entry_size= 0 as libc::c_int as size_t;
 }
 #[no_mangle]
 pub unsafe extern "C" fn csv_fini(
@@ -336,29 +336,29 @@ pub unsafe extern "C" fn csv_get_buffer_size(mut p: *const csv_parser) -> size_t
     }else { (); }
     return 0 as libc::c_int as size_t;
 }
-unsafe extern "C" fn csv_increase_buffer(mut p: *mut csv_parser) -> libc::c_int {
-    if p.is_null() {();
+unsafe extern "C" fn csv_increase_buffer(mut p: Option<&mut csv_parser>) -> libc::c_int {
+    if p.as_deref().is_none() {();
         return 0 as libc::c_int;
     }
-    if ((*p).realloc_func).is_none() {
+    if (*p.as_deref().unwrap()).realloc_func.is_none() {
         return 0 as libc::c_int;
     }
-    let mut to_add = (*p).blk_size;
+    let mut to_add = (*p.as_deref().unwrap()).blk_size;
     let mut vp = 0 as *mut libc::c_void;
-    if (*p).entry_size >= (18446744073709551615 as libc::c_ulong).wrapping_sub(to_add) {
-        to_add= (18446744073709551615 as libc::c_ulong).wrapping_sub((*p).entry_size);
+    if (*p.as_deref().unwrap()).entry_size >= (18446744073709551615 as libc::c_ulong).wrapping_sub(to_add) {
+        to_add= (18446744073709551615 as libc::c_ulong).wrapping_sub((*p.as_deref().unwrap()).entry_size);
     }
     if to_add == 0 {
-        (*p).status= 3 as libc::c_int;
+        (*p.as_deref_mut().unwrap()).status= 3 as libc::c_int;
         return -(1 as libc::c_int);
     }
     loop {
-        vp= (*p).realloc_func
+        vp= (*p.as_deref().unwrap()).realloc_func
             .expect(
                 "non-null function pointer",
             )(
-            (*p).entry_buf as *mut libc::c_void,
-            (*p).entry_size.wrapping_add(to_add),
+            (*p.as_deref().unwrap()).entry_buf as *mut libc::c_void,
+            (*p.as_deref().unwrap()).entry_size.wrapping_add(to_add),
         );
         if !vp.is_null() {
             break;
@@ -366,12 +366,12 @@ unsafe extern "C" fn csv_increase_buffer(mut p: *mut csv_parser) -> libc::c_int 
         to_add= (to_add as libc::c_ulong)
             .wrapping_div(2 as libc::c_int as libc::c_ulong) as size_t as size_t;
         if to_add == 0 {
-            (*p).status= 2 as libc::c_int;
+            (*p.as_deref_mut().unwrap()).status= 2 as libc::c_int;
             return -(1 as libc::c_int);
         }
     }
-    (*p).entry_buf= vp as *mut libc::c_uchar;
-    (*p).entry_size= ((*p).entry_size as libc::c_ulong).wrapping_add(to_add) as size_t as size_t;
+    (*p.as_deref_mut().unwrap()).entry_buf= vp as *mut libc::c_uchar;
+    (*p.as_deref_mut().unwrap()).entry_size= ((*p.as_deref().unwrap()).entry_size as libc::c_ulong).wrapping_add(to_add) as size_t as size_t;
     return 0 as libc::c_int;
 }
 #[no_mangle]
@@ -410,7 +410,7 @@ pub unsafe extern "C" fn csv_parse(
     let mut spaces = (*p.as_deref().unwrap()).spaces;
     let mut entry_pos = (*p.as_deref().unwrap()).entry_pos;
     if (*p.as_deref().unwrap()).entry_buf.is_null() && pos < len {
-        if csv_increase_buffer(p.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) != 0 as libc::c_int {
+        if csv_increase_buffer(p.as_deref_mut()) != 0 as libc::c_int {
             (*p.as_deref_mut().unwrap()).quoted= quoted;
             (*p.as_deref_mut().unwrap()).pstate= pstate;
             (*p.as_deref_mut().unwrap()).spaces= spaces;
@@ -426,7 +426,7 @@ pub unsafe extern "C" fn csv_parse(
                 (*p.as_deref().unwrap()).entry_size
             })
         {
-            if csv_increase_buffer(p.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut())) != 0 as libc::c_int {
+            if csv_increase_buffer(p.as_deref_mut()) != 0 as libc::c_int {
                 (*p.as_deref_mut().unwrap()).quoted= quoted;
                 (*p.as_deref_mut().unwrap()).pstate= pstate;
                 (*p.as_deref_mut().unwrap()).spaces= spaces;

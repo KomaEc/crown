@@ -249,7 +249,7 @@ pub unsafe extern "C" fn BZ2_bzCompressInit(
     if workFactor == 0 as libc::c_int {
         workFactor= 30 as libc::c_int;
     }
-    if ((*strm).bzalloc).is_none() {
+    if (*strm).bzalloc.is_none() {
         (*strm).bzalloc= Some(
             default_bzalloc
                 as unsafe extern "C" fn(
@@ -259,7 +259,7 @@ pub unsafe extern "C" fn BZ2_bzCompressInit(
                 ) -> *mut libc::c_void,
         );
     }
-    if ((*strm).bzfree).is_none() {
+    if (*strm).bzfree.is_none() {
         (*strm).bzfree= Some(
             default_bzfree
                 as unsafe extern "C" fn(*mut libc::c_void, *mut libc::c_void) -> (),
@@ -698,7 +698,7 @@ pub unsafe extern "C" fn BZ2_bzDecompressInit(
     if verbosity < 0 as libc::c_int || verbosity > 4 as libc::c_int {
         return -(2 as libc::c_int);
     }
-    if ((*strm).bzalloc).is_none() {
+    if (*strm).bzalloc.is_none() {
         (*strm).bzalloc= Some(
             default_bzalloc
                 as unsafe extern "C" fn(
@@ -708,7 +708,7 @@ pub unsafe extern "C" fn BZ2_bzDecompressInit(
                 ) -> *mut libc::c_void,
         );
     }
-    if ((*strm).bzfree).is_none() {
+    if (*strm).bzfree.is_none() {
         (*strm).bzfree= Some(
             default_bzfree
                 as unsafe extern "C" fn(*mut libc::c_void, *mut libc::c_void) -> (),

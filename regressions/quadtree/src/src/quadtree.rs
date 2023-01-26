@@ -52,7 +52,7 @@ unsafe extern "C" fn reset_node_(
     mut tree: *mut quadtree_t,
     mut node: Option<&mut quadtree_node_t>,
 ) {
-    if ((*tree).key_free).is_some() {
+    if (*tree).key_free.is_some() {
         crate::src::src::node::quadtree_node_reset(node.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), (*tree).key_free);
     } else {
         crate::src::src::node::quadtree_node_reset(
@@ -80,7 +80,7 @@ unsafe extern "C" fn get_quadrant_(
     return 0 as *mut quadtree_node_t;
 }
 unsafe extern "C" fn split_node_(
-    mut tree: Option<&mut quadtree_t>,
+    mut tree: *mut quadtree_t,
     mut node: *mut quadtree_node_t,
 ) -> libc::c_int {
     let mut nw = 0 as *mut quadtree_node_t;
@@ -130,7 +130,7 @@ unsafe extern "C" fn split_node_(
     let mut key = (*node).key;
     (*node).point= 0 as *mut quadtree_point_t;
     (*node).key= 0 as *mut libc::c_void;
-    return insert_(tree.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), node, old, key);
+    return insert_(tree, node, old, key);
 }
 unsafe extern "C" fn find_(
     mut node: Option<&mut quadtree_node_t>,
@@ -167,7 +167,7 @@ unsafe extern "C" fn insert_(
                 (*root).key= key;
                 return 0 as libc::c_int;
             } else {
-                if split_node_(tree.as_mut(), root) == 0 {
+                if split_node_(tree, root) == 0 {
                     return 0 as libc::c_int;
                 }
                 return insert_(tree, root, point, key);
@@ -238,7 +238,7 @@ pub unsafe extern "C" fn quadtree_search(
 }
 #[no_mangle]
 pub unsafe extern "C" fn quadtree_free(mut tree: *mut /* owning */ quadtree_t) {
-    if ((*tree).key_free).is_some() {
+    if (*tree).key_free.is_some() {
         crate::src::src::node::quadtree_node_free((*tree).root, (*tree).key_free);
     } else {
         crate::src::src::node::quadtree_node_free(

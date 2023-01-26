@@ -184,12 +184,12 @@ pub unsafe extern "C" fn binn_set_alloc_functions(
     crate::src::binn::free_fn= new_free;
 }
 unsafe extern "C" fn check_alloc_functions() {
-    if malloc_fn.is_none() {
+    if crate::src::binn::malloc_fn.is_none() {
         crate::src::binn::malloc_fn= Some(
             malloc as unsafe extern "C" fn(libc::c_ulong) -> *mut libc::c_void,
         );
     }
-    if realloc_fn.is_none() {
+    if crate::src::binn::realloc_fn.is_none() {
         crate::src::binn::realloc_fn= Some(
             realloc
                 as unsafe extern "C" fn(
@@ -198,7 +198,7 @@ unsafe extern "C" fn check_alloc_functions() {
                 ) -> *mut libc::c_void,
         );
     }
-    if free_fn.is_none() {
+    if crate::src::binn::free_fn.is_none() {
         crate::src::binn::free_fn= Some(free as unsafe extern "C" fn(*mut libc::c_void) -> ());
     }
 }
@@ -1206,7 +1206,7 @@ pub unsafe extern "C" fn binn_free(mut item: *mut binn) {
     if (*item).writable != 0 && (*item).pre_allocated == 0 as libc::c_int {
         crate::src::binn::free_fn.expect("non-null function pointer")((*item).pbuf);
     }
-    if ((*item).freefn).is_some() {
+    if (*item).freefn.is_some() {
         (*item).freefn.expect("non-null function pointer")((*item).ptr);
     }
     if (*item).allocated != 0 {

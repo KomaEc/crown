@@ -108,11 +108,7 @@ fn conservative_output_params(
                 continue;
             }
             if let Some(&(_callee, _idx)) = call_args_mapping.get(&local) {
-                // if let Some(facts) = known_facts.get(&callee) {
-                // if facts.contains(&Local::new(idx + 1)) {
                 continue;
-                // }
-                // }
             }
             let local = local.index();
             if local == arg {
@@ -124,7 +120,7 @@ fn conservative_output_params(
                     .first(),
                     Some(&mutability) if mutability == Mutability::Mut)
             {
-                tracing::debug!(
+                println!(
                     "@{:?}: {:?} removed because it aliases {:?}, which is mutable",
                     body.source.def_id(),
                     &Local::new(arg),

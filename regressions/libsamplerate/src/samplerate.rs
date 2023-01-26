@@ -247,7 +247,7 @@ pub unsafe extern "C" fn src_process(
 }
 #[no_mangle]
 pub unsafe extern "C" fn src_callback_read(
-    mut state: *mut SRC_STATE,
+    mut state: Option<&mut SRC_STATE>,
     mut src_ratio: libc::c_double,
     mut frames: libc::c_long,
     mut data: *mut libc::c_float,
@@ -264,19 +264,19 @@ pub unsafe extern "C" fn src_callback_read(
     };
     let mut output_frames_gen: libc::c_long = 0;
     let mut error = 0 as libc::c_int;
-    if state.is_null() {();
+    if state.as_deref().is_none() {();
         return 0 as libc::c_int as libc::c_long;
     }
     if frames <= 0 as libc::c_int as libc::c_long {
         return 0 as libc::c_int as libc::c_long;
     }
-    if (*state).mode as libc::c_uint != SRC_MODE_CALLBACK as libc::c_int as libc::c_uint
+    if (*state.as_deref().unwrap()).mode as libc::c_uint != SRC_MODE_CALLBACK as libc::c_int as libc::c_uint
     {
-        (*state).error= SRC_ERR_BAD_MODE;
+        (*state.as_deref_mut().unwrap()).error= SRC_ERR_BAD_MODE;
         return 0 as libc::c_int as libc::c_long;
     }
-    if ((*state).callback_func).is_none() {
-        (*state).error= SRC_ERR_NULL_CALLBACK;
+    if (*state.as_deref().unwrap()).callback_func.is_none() {
+        (*state.as_deref_mut().unwrap()).error= SRC_ERR_NULL_CALLBACK;
         return 0 as libc::c_int as libc::c_long;
     }
     memset(
@@ -285,42 +285,42 @@ pub unsafe extern "C" fn src_callback_read(
         ::std::mem::size_of::<SRC_DATA>() as libc::c_ulong,
     );
     if is_bad_src_ratio(src_ratio) != 0 {
-        (*state).error= SRC_ERR_BAD_SRC_RATIO;
+        (*state.as_deref_mut().unwrap()).error= SRC_ERR_BAD_SRC_RATIO;
         return 0 as libc::c_int as libc::c_long;
     }
     src_data.src_ratio= src_ratio;
     src_data.data_out= data;
     src_data.output_frames= frames;
-    src_data.data_in= (*state).saved_data;
-    src_data.input_frames= (*state).saved_frames;
+    src_data.data_in= (*state.as_deref().unwrap()).saved_data;
+    src_data.input_frames= (*state.as_deref().unwrap()).saved_frames;
     output_frames_gen= 0 as libc::c_int as libc::c_long;
     while output_frames_gen < frames {
         let mut dummy: [libc::c_float; 1] = [0.; 1];
         if src_data.input_frames == 0 as libc::c_int as libc::c_long {
             let mut ptr = dummy.as_mut_ptr();
-            src_data.input_frames= (*state).callback_func
+            src_data.input_frames= (*state.as_deref().unwrap()).callback_func
                 .expect(
                     "non-null function pointer",
-                )((*state).user_callback_data, core::ptr::addr_of_mut!(ptr));
+                )((*state.as_deref().unwrap()).user_callback_data, core::ptr::addr_of_mut!(ptr));
             src_data.data_in= ptr;
             if src_data.input_frames == 0 as libc::c_int as libc::c_long {
                 src_data.end_of_input= 1 as libc::c_int;
             }
         }
-        (*state).mode= SRC_MODE_PROCESS;
-        error= src_process(state, core::ptr::addr_of_mut!(src_data));
-        (*state).mode= SRC_MODE_CALLBACK;
+        (*state.as_deref_mut().unwrap()).mode= SRC_MODE_PROCESS;
+        error= src_process(state.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()), core::ptr::addr_of_mut!(src_data));
+        (*state.as_deref_mut().unwrap()).mode= SRC_MODE_CALLBACK;
         if error != 0 as libc::c_int {
             break;
         }
         src_data.data_in= src_data.data_in
             .offset(
-                (src_data.input_frames_used * (*state).channels as libc::c_long) as isize,
+                (src_data.input_frames_used * (*state.as_deref().unwrap()).channels as libc::c_long) as isize,
             );
         src_data.input_frames-= src_data.input_frames_used;
         src_data.data_out= src_data.data_out
             .offset(
-                (src_data.output_frames_gen * (*state).channels as libc::c_long) as isize,
+                (src_data.output_frames_gen * (*state.as_deref().unwrap()).channels as libc::c_long) as isize,
             );
         src_data.output_frames-= src_data.output_frames_gen;
         output_frames_gen+= src_data.output_frames_gen;
@@ -330,10 +330,10 @@ pub unsafe extern "C" fn src_callback_read(
             break;
         }
     }
-    (*state).saved_data= src_data.data_in;
-    (*state).saved_frames= src_data.input_frames;
+    (*state.as_deref_mut().unwrap()).saved_data= src_data.data_in;
+    (*state.as_deref_mut().unwrap()).saved_frames= src_data.input_frames;
     if error != 0 as libc::c_int {
-        (*state).error= error as SRC_ERROR;
+        (*state.as_deref_mut().unwrap()).error= error as SRC_ERROR;
         return 0 as libc::c_int as libc::c_long;
     }
     return output_frames_gen;
