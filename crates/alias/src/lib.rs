@@ -20,7 +20,8 @@ use common::data_structure::vec_vec::VecVec;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use steensgaard::{
-    FieldFocused, FieldInsensitive, InterProcedural, MergeDeallocArg, NopDeallocArg, Steensgaard, IntraProcedural,
+    FieldFocused, FieldInsensitive, InterProcedural, IntraProcedural, MergeDeallocArg,
+    NopDeallocArg, Steensgaard,
 };
 
 extern crate rustc_arena;

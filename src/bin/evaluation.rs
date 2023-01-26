@@ -226,43 +226,36 @@ fn main() -> Result<()> {
     let original = statistics;
     let new = mock_statistics;
 
-    let table = vec![
-        vec![
-            original.num_unsafe_ptrs,
-            // original.num_mut_unsafe_ptrs,
-            // original.num_non_arr_unsafe_ptrs,
-            original.num_non_arr_mut_unsafe_ptrs,
-            original.num_unsafe_usages,
-            // original.num_mut_unsafe_usages,
-            // original.num_non_arr_unsafe_usages,
-            original.num_non_arr_mut_unsafe_usages,
-            original.num_fns,
-        ],
-        vec![
-            new.num_unsafe_ptrs,
-            // new.num_mut_unsafe_ptrs,
-            // new.num_non_arr_unsafe_ptrs,
-            new.num_non_arr_mut_unsafe_ptrs,
-            new.num_unsafe_usages,
-            // new.num_mut_unsafe_usages,
-            // new.num_non_arr_unsafe_usages,
-            new.num_non_arr_mut_unsafe_usages,
-            new.num_fns,
-        ],
-    ]
-    .table()
-    .title(vec![
-        "# Unsafe Ptrs".cell().bold(true),
-        // "# Unsafe Mut Ptrs".cell().bold(true),
-        // "# Unsafe Thin Ptrs".cell().bold(true),
-        "# Unsafe Mut && Thin Ptrs".cell().bold(true),
-        "# Unsafe Usages".cell().bold(true),
-        // "# Unsafe Mut Usages".cell().bold(true),
-        // "# Unsafe Thin Usages".cell().bold(true),
-        "# Unsafe Mut && Thin Usages".cell().bold(true),
-        "# Fns".cell().bold(true),
-    ])
-    .bold(true);
+    let original = vec![
+        original.num_unsafe_ptrs,
+        original.num_non_arr_mut_unsafe_ptrs,
+        original.num_unsafe_usages,
+        original.num_non_arr_mut_unsafe_usages,
+        original.num_fns,
+    ];
+
+    let new = vec![
+        new.num_unsafe_ptrs,
+        new.num_non_arr_mut_unsafe_ptrs,
+        new.num_unsafe_usages,
+        new.num_non_arr_mut_unsafe_usages,
+        new.num_fns,
+    ];
+
+    let table = vec![original, new]
+        .table()
+        .title(vec![
+            "# Unsafe Ptrs".cell().bold(true),
+            // "# Unsafe Mut Ptrs".cell().bold(true),
+            // "# Unsafe Thin Ptrs".cell().bold(true),
+            "# Unsafe Mut && Thin Ptrs".cell().bold(true),
+            "# Unsafe Usages".cell().bold(true),
+            // "# Unsafe Mut Usages".cell().bold(true),
+            // "# Unsafe Thin Usages".cell().bold(true),
+            "# Unsafe Mut && Thin Usages".cell().bold(true),
+            "# Fns".cell().bold(true),
+        ])
+        .bold(true);
 
     print_stdout(table)?;
 
