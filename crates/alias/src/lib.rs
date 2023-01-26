@@ -19,7 +19,9 @@
 use common::data_structure::vec_vec::VecVec;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use steensgaard::{FieldFocused, FieldInsensitive, MergeDeallocArg, NopDeallocArg, Steensgaard};
+use steensgaard::{
+    FieldFocused, FieldInsensitive, InterProcedural, MergeDeallocArg, NopDeallocArg, Steensgaard, IntraProcedural,
+};
 
 extern crate rustc_arena;
 extern crate rustc_ast;
@@ -41,8 +43,9 @@ extern crate rustc_type_ir;
 
 mod steensgaard;
 
-pub type TaintResult = Steensgaard<FieldFocused, MergeDeallocArg>;
-pub type AliasResult = Steensgaard<FieldInsensitive, NopDeallocArg>;
+pub type TaintResult = Steensgaard<FieldFocused, MergeDeallocArg, InterProcedural>;
+pub type AliasResult = Steensgaard<FieldInsensitive, NopDeallocArg, InterProcedural>;
+pub type IntraAliasResult = Steensgaard<FieldInsensitive, NopDeallocArg, IntraProcedural>;
 
 pub fn taint_results(input: &common::CrateData) -> TaintResult {
     Steensgaard::field_based(input)
@@ -52,8 +55,13 @@ pub fn alias_results(input: &common::CrateData) -> AliasResult {
     Steensgaard::field_insensitive(input)
 }
 
+pub fn intra_alias_results(input: &common::CrateData) -> IntraAliasResult {
+    Steensgaard::field_insensitive(input)
+}
+
 pub fn report_results(input: &common::CrateData) {
-    Steensgaard::field_based(input).print_results()
+    Steensgaard::<FieldFocused, MergeDeallocArg, InterProcedural>::field_based(input)
+        .print_results()
 }
 
 impl TaintResult {
