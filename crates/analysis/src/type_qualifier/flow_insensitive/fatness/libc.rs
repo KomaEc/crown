@@ -106,6 +106,7 @@ pub fn libc_call<'tcx>(
             struct_fields,
             database,
         ),
+        "atoi" | "atof" => call_atoi(destination, args, local_decls, locals, struct_fields, database),
         fn_name if fn_name.starts_with("str") => call_str_general(
             destination,
             args,
@@ -296,4 +297,23 @@ fn call_memset<'tcx>(
         assert!(!ptr_vars.is_empty());
         database.bottom(ptr_vars.start);
     }
+}
+
+
+fn call_atoi<'tcx>(
+    destination: &Place<'tcx>,
+    args: &Vec<Operand<'tcx>>,
+    local_decls: &impl HasLocalDecls<'tcx>,
+    locals: &[Var],
+    struct_fields: &StructFields,
+    database: &mut <FatnessAnalysis as WithConstraintSystem>::DB,
+) {
+    let _ = destination;
+
+    assert_eq!(args.len(), 1);
+    let arg = &args[0];
+    let Some(ptr) = arg.place() else { return };
+    let ptr_vars = place_vars(&ptr, local_decls, locals, struct_fields);
+    assert!(!ptr_vars.is_empty());
+    database.bottom(ptr_vars.start);
 }

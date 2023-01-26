@@ -37,7 +37,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
                 database,
             )
         }
-        "strcmp" => {
+        "strcmp" | "strcasecmp" => {
             return call_strcmp::<M>(
                 destination,
                 args,
@@ -117,7 +117,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
                 database,
             )
         }
-        "strncmp" => {
+        "strncmp" | "strncasecmp" => {
             return call_strncmp::<M>(
                 destination,
                 args,
@@ -157,7 +157,10 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
                 database,
             )
         }
-        "fdopen" | "fopen" => return,
+        "strdup" => {
+            return call_strdup::<M>(destination, args, local_decls, locals, struct_fields, database)
+        }
+        "fdopen" | "fopen" | "atoi" | "atof" => return,
         _ => {}
     }
 
@@ -445,4 +448,19 @@ fn call_scanf<'tcx, const MUT_START: usize, M: MutabilityLikeAnalysis>(
             database.bottom(arg.start);
         }
     }
+}
+
+fn call_strdup<'tcx, M: MutabilityLikeAnalysis>(
+    destination: &Place<'tcx>,
+    args: &Vec<Operand<'tcx>>,
+    local_decls: &impl HasLocalDecls<'tcx>,
+    locals: &[Var],
+    struct_fields: &StructFields,
+    database: &mut <M as WithConstraintSystem>::DB,
+) {
+    let dest_vars =
+        place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
+    let _ = dest_vars;
+    // no constraint on args
+    let _ = args;
 }

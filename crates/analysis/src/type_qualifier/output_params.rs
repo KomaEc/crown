@@ -72,11 +72,14 @@ fn conservative_output_params(
     let mut this_output_params = body
         .args_iter()
         .filter(|&arg| {
-            !body.local_decls[arg].ty.is_primitive_ty()
-                && matches!(fn_result
+            // !body.local_decls[arg].ty.is_primitive_ty()
+                // && 
+                matches!(fn_result
                     .local_result(arg)
                     .first(),
-                    Some(&mutability) if mutability == Mutability::Mut)
+                    Some(&mutability) 
+                    if mutability == Mutability::Mut
+                )
         })
         .collect::<FxHashSet<Local>>();
 
