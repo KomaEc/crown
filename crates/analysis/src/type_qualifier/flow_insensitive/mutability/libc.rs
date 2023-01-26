@@ -158,7 +158,14 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             )
         }
         "strdup" => {
-            return call_strdup::<M>(destination, args, local_decls, locals, struct_fields, database)
+            return call_strdup::<M>(
+                destination,
+                args,
+                local_decls,
+                locals,
+                struct_fields,
+                database,
+            )
         }
         "fdopen" | "fopen" | "atoi" | "atof" => return,
         _ => {}

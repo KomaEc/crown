@@ -106,7 +106,14 @@ pub fn libc_call<'tcx>(
             struct_fields,
             database,
         ),
-        "atoi" | "atof" => call_atoi(destination, args, local_decls, locals, struct_fields, database),
+        "atoi" | "atof" => call_atoi(
+            destination,
+            args,
+            local_decls,
+            locals,
+            struct_fields,
+            database,
+        ),
         fn_name if fn_name.starts_with("str") => call_str_general(
             destination,
             args,
@@ -298,7 +305,6 @@ fn call_memset<'tcx>(
         database.bottom(ptr_vars.start);
     }
 }
-
 
 fn call_atoi<'tcx>(
     destination: &Place<'tcx>,

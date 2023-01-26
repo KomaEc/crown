@@ -3,7 +3,7 @@ pub mod solidify;
 pub mod whole_program;
 
 use rustc_middle::mir::Body;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use self::infer::InferCtxt;
 use crate::{

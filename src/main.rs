@@ -367,9 +367,12 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                 );
 
             if let Some(results_path) = analysis_results_path {
-                let fatness_data = serde_json::to_string(&fatness_result.make_data(&input)).unwrap();
-                let mutability_data = serde_json::to_string(&mutability_result.make_data(&input)).unwrap();
-                let ownership_data = serde_json::to_string(&ownership_result.make_data(&input)).unwrap();
+                let fatness_data =
+                    serde_json::to_string(&fatness_result.make_data(&input)).unwrap();
+                let mutability_data =
+                    serde_json::to_string(&mutability_result.make_data(&input)).unwrap();
+                let ownership_data =
+                    serde_json::to_string(&ownership_result.make_data(&input)).unwrap();
                 fs::write(results_path.join("fatness.json"), fatness_data)?;
                 fs::write(results_path.join("mutability.json"), mutability_data)?;
                 fs::write(results_path.join("ownership.json"), ownership_data)?;

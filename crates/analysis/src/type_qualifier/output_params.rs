@@ -73,13 +73,13 @@ fn conservative_output_params(
         .args_iter()
         .filter(|&arg| {
             // !body.local_decls[arg].ty.is_primitive_ty()
-                // && 
-                matches!(fn_result
-                    .local_result(arg)
-                    .first(),
-                    Some(&mutability) 
-                    if mutability == Mutability::Mut
-                )
+            // &&
+            matches!(fn_result
+                .local_result(arg)
+                .first(),
+                Some(&mutability)
+                if mutability == Mutability::Mut
+            )
         })
         .collect::<FxHashSet<Local>>();
 

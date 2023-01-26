@@ -11,7 +11,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use rustc_type_ir::TyKind::{self, FnDef};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use self::{libc::libc_call, library::library_call};
 use super::{
