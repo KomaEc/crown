@@ -1,7 +1,6 @@
 #![feature(rustc_private)]
 
 use std::{
-    borrow::BorrowMut,
     collections::HashMap,
     fs,
     path::{Path, PathBuf},
@@ -313,14 +312,7 @@ fn run_compiler<R: Send>(
     run: impl for<'tcx> FnOnce(TyCtxt<'tcx>) -> R + Send,
 ) -> R {
     rustc_interface::run_compiler(config, move |compiler| {
-        compiler.enter(|queries| {
-            queries
-                .global_ctxt()
-                .borrow_mut()
-                .unwrap()
-                .peek_mut()
-                .enter(|tcx| run(tcx))
-        })
+        compiler.enter(|queries| queries.global_ctxt().unwrap().enter(|tcx| run(tcx)))
     })
 }
 
@@ -390,7 +382,6 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
         crate_cfg: rustc_hash::FxHashSet::default(),
         crate_check_cfg: rustc_interface::interface::parse_check_cfg(vec![]),
         input: config::Input::File(input_path),
-        input_path: None,
         output_dir: None,
         output_file: None,
         file_loader: None,

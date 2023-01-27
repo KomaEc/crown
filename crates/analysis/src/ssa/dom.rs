@@ -48,9 +48,7 @@ pub fn compute_dominance_frontier(body: &Body) -> DominanceFrontier {
             // if `bb` is a join point
             for &bb_p in preds {
                 let mut runner = bb_p;
-                while !dominators.is_dominated_by(bb, runner)
-                /* runner != dominators.immediate_dominator(bb) */
-                {
+                while !dominators.dominates(runner, bb) {
                     df[runner].insert(bb);
                     runner = dominators.immediate_dominator(runner)
                 }
