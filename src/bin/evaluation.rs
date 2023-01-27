@@ -50,6 +50,8 @@ extern crate rustc_target;
 struct Cli {
     rewritten: PathBuf,
     stat_dir: PathBuf,
+    #[clap(long)]
+    output_csv: Option<PathBuf>,
 }
 
 fn mock_statistics(
@@ -187,6 +189,40 @@ impl<'me, 'tcx> Visitor<'tcx> for MockCountUnsafeUsages<'me, 'tcx> {
     }
 }
 
+fn into_csv_row_data(original: CrateStatistics, new: CrateStatistics) -> ([[String; 3]; 4], usize) {
+    let original_ptrs_data = [
+        original.num_unsafe_ptrs,
+        original.num_non_arr_mut_unsafe_ptrs,
+        original.num_unsafe_usages,
+        original.num_non_arr_mut_unsafe_usages,
+    ];
+
+    let new_ptrs_data = [
+        new.num_unsafe_ptrs,
+        new.num_non_arr_mut_unsafe_ptrs,
+        new.num_unsafe_usages,
+        new.num_non_arr_mut_unsafe_usages,
+    ];
+
+    let comparison = original_ptrs_data
+        .into_iter()
+        .zip(new_ptrs_data)
+        .map(|(original, new)| {
+            let fixed = format!("{:.1}%", 100.0 * (original - new) as f64 / original as f64);
+            [original.to_string(), new.to_string(), fixed]
+        })
+        .collect::<Vec<_>>()
+        .try_into()
+        .unwrap();
+
+    let num_fns = if original.num_fns == new.num_fns {
+        original.num_fns
+    } else {
+        panic!("mismatch between number of functions!")
+    };
+    (comparison, num_fns)
+}
+
 fn main() -> Result<()> {
     let args = Cli::parse();
 
@@ -226,38 +262,48 @@ fn main() -> Result<()> {
     let original = statistics;
     let new = mock_statistics;
 
-    let original = vec![
-        original.num_unsafe_ptrs,
-        original.num_non_arr_mut_unsafe_ptrs,
-        original.num_unsafe_usages,
-        original.num_non_arr_mut_unsafe_usages,
-        original.num_fns,
-    ];
+    if let Some(output_path) = args.output_csv {
+        let row = into_csv_row_data(original, new);
+        let row_iter = row
+            .0
+            .into_iter()
+            .flatten()
+            .chain(std::iter::once(row.1.to_string()));
+        fs::write(output_path, row_iter.collect::<Vec<_>>().join(","))?;
+    } else {
+        let original = vec![
+            original.num_unsafe_ptrs,
+            original.num_non_arr_mut_unsafe_ptrs,
+            original.num_unsafe_usages,
+            original.num_non_arr_mut_unsafe_usages,
+            original.num_fns,
+        ];
 
-    let new = vec![
-        new.num_unsafe_ptrs,
-        new.num_non_arr_mut_unsafe_ptrs,
-        new.num_unsafe_usages,
-        new.num_non_arr_mut_unsafe_usages,
-        new.num_fns,
-    ];
+        let new = vec![
+            new.num_unsafe_ptrs,
+            new.num_non_arr_mut_unsafe_ptrs,
+            new.num_unsafe_usages,
+            new.num_non_arr_mut_unsafe_usages,
+            new.num_fns,
+        ];
 
-    let table = vec![original, new]
-        .table()
-        .title(vec![
-            "# Unsafe Ptrs".cell().bold(true),
-            // "# Unsafe Mut Ptrs".cell().bold(true),
-            // "# Unsafe Thin Ptrs".cell().bold(true),
-            "# Unsafe Mut && Thin Ptrs".cell().bold(true),
-            "# Unsafe Usages".cell().bold(true),
-            // "# Unsafe Mut Usages".cell().bold(true),
-            // "# Unsafe Thin Usages".cell().bold(true),
-            "# Unsafe Mut && Thin Usages".cell().bold(true),
-            "# Fns".cell().bold(true),
-        ])
-        .bold(true);
+        let table = vec![original, new]
+            .table()
+            .title(vec![
+                "# Unsafe Ptrs".cell().bold(true),
+                // "# Unsafe Mut Ptrs".cell().bold(true),
+                // "# Unsafe Thin Ptrs".cell().bold(true),
+                "# Unsafe Mut && Thin Ptrs".cell().bold(true),
+                "# Unsafe Usages".cell().bold(true),
+                // "# Unsafe Mut Usages".cell().bold(true),
+                // "# Unsafe Thin Usages".cell().bold(true),
+                "# Unsafe Mut && Thin Usages".cell().bold(true),
+                "# Fns".cell().bold(true),
+            ])
+            .bold(true);
 
-    print_stdout(table)?;
+        print_stdout(table)?;
+    }
 
     Ok(())
 }

@@ -28,12 +28,26 @@ fi
 cargo build --release --bin evaluation
 
 EVALUATION=target/release/evaluation
+SUMMARY=evaluation.csv
+
+if [ -f $SUMMARY ]; then
+    rm $SUMMARY
+fi
+touch $SUMMARY
+
+echo "Benchmark Name,#Unsafe Pointers,,,#Unsafe Mutable Non-Array Pointers,,,#Unsafe Usages,,,#Unsafe Mutable Non-Array Usages,,,#Functions" > $SUMMARY
 
 for f in $(find $1 -name "Cargo.toml"); do
     BENCH_DIR="$(dirname $f)"
     BENCH_NAME="$(basename $BENCH_DIR)"
     ENTRY=$(find_entry $BENCH_DIR)
-    echo "preprocessing $BENCH_NAME"
-    $EVALUATION $ENTRY $BENCH_DIR/analysis_results
+    echo "evaluating $BENCH_NAME"
+    if [ -f $BENCH_DIR/statistics.csv ]; then
+        rm $BENCH_DIR/statistics.csv
+    fi
+    touch $BENCH_DIR/statistics.csv
+    $EVALUATION $ENTRY $BENCH_DIR/analysis_results --output-csv $BENCH_DIR/statistics.csv
+
+    (printf '%s' "$BENCH_NAME,"; cat $BENCH_DIR/statistics.csv; printf '\n') >> $SUMMARY
 done
 
