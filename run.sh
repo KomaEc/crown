@@ -48,6 +48,8 @@ for f in $(find $WORKSPACE -name "Cargo.toml"); do
     OPTIONS=""
     if [ $BENCH_NAME = "lil" ]; then
         OPTIONS="--type-reconstruction --no-attempt .*fnc_.*|do_exit|lil_find_var|lil_to_double"
+    elif [ $BENCH_NAME = "libsamplerate" ]; then
+        OPTIONS="--no-attempt .*_vari_process|.*_reset"
     elif [ $BENCH_NAME = "quadtree" ]; then
         OPTIONS="--force-box"
     elif [ $BENCH_NAME = "genann" ]; then

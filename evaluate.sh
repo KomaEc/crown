@@ -35,7 +35,7 @@ if [ -f $SUMMARY ]; then
 fi
 touch $SUMMARY
 
-echo "Benchmark Name,#Unsafe Pointers,,,#Unsafe Mutable Non-Array Pointers,,,#Unsafe Usages,,,#Unsafe Mutable Non-Array Usages,,,#Functions" > $SUMMARY
+echo "Benchmark Name,#Unsafe Pointers,,,#Unsafe Mutable Non-Array Pointers,,,#Unsafe Usages,,,#Unsafe Mutable Non-Array Usages,," > $SUMMARY
 
 for f in $(find $1 -name "Cargo.toml"); do
     BENCH_DIR="$(dirname $f)"

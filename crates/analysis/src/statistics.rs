@@ -21,7 +21,6 @@ pub struct CrateStatistics {
     pub num_mut_unsafe_usages: usize,
     pub num_non_arr_mut_unsafe_usages: usize,
     pub num_owning_ptrs_detected: usize,
-    pub num_fns: usize,
 }
 
 impl CrateStatistics {
@@ -69,8 +68,6 @@ impl CrateStatistics {
                 statistics: &mut statistics,
             }
             .visit_body(&body);
-
-            statistics.num_fns += 1;
         }
 
         statistics

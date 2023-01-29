@@ -45,6 +45,8 @@ extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_target;
 
+extern crate either;
+
 #[derive(Parser)]
 struct Cli {
     rewritten: PathBuf,
@@ -138,8 +140,6 @@ fn mock_statistics(
             user_ident: &user_idents,
         }
         .visit_body(body);
-
-        statistics.num_fns += 1;
     }
 
     statistics
@@ -159,7 +159,7 @@ impl<'me, 'tcx> Visitor<'tcx> for MockCountUnsafeUsages<'me, 'tcx> {
         &mut self,
         place: &rustc_middle::mir::Place<'tcx>,
         context: PlaceContext,
-        _: rustc_middle::mir::Location,
+        _location: rustc_middle::mir::Location,
     ) {
         if matches!(context, PlaceContext::NonUse(..)) {
             return;
@@ -168,6 +168,15 @@ impl<'me, 'tcx> Visitor<'tcx> for MockCountUnsafeUsages<'me, 'tcx> {
             && place.is_indirect()
             && self.body.local_decls[place.local].ty.is_unsafe_ptr()
         {
+            // // verbose output
+            // {
+            //     let span = match self.body.stmt_at(location) {
+            //         either::Either::Left(stmt) => stmt.source_info.span,
+            //         either::Either::Right(term) => term.source_info.span,
+            //     };
+
+            //     println!("unsafe usage @ {:?}", span);
+            // }
             let def_path_str = self.tcx.def_path_str(self.body.source.def_id());
             let fn_name = &def_path_str;
             let local = place.local;
@@ -188,7 +197,7 @@ impl<'me, 'tcx> Visitor<'tcx> for MockCountUnsafeUsages<'me, 'tcx> {
     }
 }
 
-fn into_csv_row_data(original: CrateStatistics, new: CrateStatistics) -> ([[String; 3]; 4], usize) {
+fn into_csv_row_data(original: CrateStatistics, new: CrateStatistics) -> [[String; 3]; 4] {
     let original_ptrs_data = [
         original.num_unsafe_ptrs,
         original.num_non_arr_mut_unsafe_ptrs,
@@ -214,12 +223,7 @@ fn into_csv_row_data(original: CrateStatistics, new: CrateStatistics) -> ([[Stri
         .try_into()
         .unwrap();
 
-    let num_fns = if original.num_fns == new.num_fns {
-        original.num_fns
-    } else {
-        panic!("mismatch between number of functions!")
-    };
-    (comparison, num_fns)
+    comparison
 }
 
 fn main() -> Result<()> {
@@ -263,11 +267,7 @@ fn main() -> Result<()> {
 
     if let Some(output_path) = args.output_csv {
         let row = into_csv_row_data(original, new);
-        let row_iter = row
-            .0
-            .into_iter()
-            .flatten()
-            .chain(std::iter::once(row.1.to_string()));
+        let row_iter = row.into_iter().flatten();
         fs::write(output_path, row_iter.collect::<Vec<_>>().join(","))?;
     } else {
         let original = vec![
@@ -275,7 +275,6 @@ fn main() -> Result<()> {
             original.num_non_arr_mut_unsafe_ptrs,
             original.num_unsafe_usages,
             original.num_non_arr_mut_unsafe_usages,
-            original.num_fns,
         ];
 
         let new = vec![
@@ -283,21 +282,15 @@ fn main() -> Result<()> {
             new.num_non_arr_mut_unsafe_ptrs,
             new.num_unsafe_usages,
             new.num_non_arr_mut_unsafe_usages,
-            new.num_fns,
         ];
 
         let table = vec![original, new]
             .table()
             .title(vec![
                 "# Unsafe Ptrs".cell().bold(true),
-                // "# Unsafe Mut Ptrs".cell().bold(true),
-                // "# Unsafe Thin Ptrs".cell().bold(true),
                 "# Unsafe Mut && Thin Ptrs".cell().bold(true),
                 "# Unsafe Usages".cell().bold(true),
-                // "# Unsafe Mut Usages".cell().bold(true),
-                // "# Unsafe Thin Usages".cell().bold(true),
                 "# Unsafe Mut && Thin Usages".cell().bold(true),
-                "# Fns".cell().bold(true),
             ])
             .bold(true);
 
