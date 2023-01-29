@@ -112,8 +112,7 @@ pub fn refactor<'tcx>(
             crate_data,
             &fn_decision,
             &struct_decision,
-            options.type_only,
-            options.type_reconstruction,
+            &options,
             &mut rewriter,
         )?;
         rewriter.write(rewrite_mode);
@@ -124,8 +123,7 @@ pub fn refactor<'tcx>(
             crate_data,
             &fn_decision,
             &struct_decision,
-            options.type_only,
-            options.type_reconstruction,
+            &options,
             &mut rewriter,
         )?;
 
@@ -139,8 +137,9 @@ fn rewrite(
     crate_data: &CrateData,
     fn_decision: &FnLocals,
     struct_decision: &StructFields,
-    type_only: bool,
-    type_reconstruction: bool,
+    // type_only: bool,
+    // type_reconstruction: bool,
+    options: &RefactorOptions,
     rewriter: &mut impl Rewrite,
 ) -> anyhow::Result<()> {
     rewrite_structs(
@@ -148,7 +147,7 @@ fn rewrite(
         &struct_decision,
         rewriter,
         crate_data.tcx,
-        type_reconstruction,
+        options,
     )?;
 
     rewrite_fns(
@@ -157,8 +156,7 @@ fn rewrite(
         &struct_decision,
         rewriter,
         crate_data.tcx,
-        type_only,
-        type_reconstruction,
+        options,
     );
 
     Ok(())

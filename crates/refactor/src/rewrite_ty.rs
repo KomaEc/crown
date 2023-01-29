@@ -3,15 +3,19 @@ use rustc_hir::{def_id::DefId, Item, ItemKind};
 use rustc_middle::ty::TyCtxt;
 use smallvec::SmallVec;
 
-use crate::{HirTyExt, PointerKind, RawMeta, StructFields};
+use crate::{HirTyExt, PointerKind, RawMeta, RefactorOptions, StructFields};
 
 pub fn rewrite_structs(
     structs: &[DefId],
     struct_decision: &StructFields,
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt,
-    type_reconstruction: bool,
+    options: &RefactorOptions,
 ) -> anyhow::Result<()> {
+    let RefactorOptions {
+        type_reconstruction,
+        ..
+    } = *options;
     use std::fmt::Write;
 
     let mut erased_version = 0;
@@ -55,6 +59,8 @@ pub fn rewrite_structs(
                 item.ident
             )
             .unwrap();
+        }
+        if !options.no_box {
             rewriter.replace(tcx, struct_span.shrink_to_hi(), default_impl_block);
         }
     }

@@ -24,7 +24,9 @@ use rustc_type_ir::TyKind::FnDef;
 use smallvec::SmallVec;
 use syn::__private::ToTokens;
 
-use crate::{rewrite_ty::rewrite_hir_ty, FnLocals, PointerKind, RawMeta, StructFields};
+use crate::{
+    rewrite_ty::rewrite_hir_ty, FnLocals, PointerKind, RawMeta, RefactorOptions, StructFields,
+};
 
 pub fn rewrite_fns(
     fns: &[DefId],
@@ -32,9 +34,13 @@ pub fn rewrite_fns(
     struct_decision: &StructFields,
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt,
-    type_only: bool,
-    type_reconstruction: bool,
+    options: &RefactorOptions,
 ) {
+    let RefactorOptions {
+        type_only,
+        type_reconstruction,
+        ..
+    } = *options;
     for &did in fns {
         let local_data = fn_decision.local_data(&did);
         let body = tcx.optimized_mir(did);
