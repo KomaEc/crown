@@ -185,29 +185,29 @@ pub struct FnRewriteCtxt<'tcx, 'me> {
 
 /// Information of a lvalue/rvalue coming from a place
 #[derive(Clone, Copy, Debug)]
-enum PlaceValueType<'me> {
+enum PlaceCtxt<'me> {
     Ptr(&'me [PointerKind]),
     Struct(DefId),
     Irrelavent,
 }
 
-impl<'me> PlaceValueType<'me> {
+impl<'me> PlaceCtxt<'me> {
     fn from_ptr_ctxt(ty: Ty, ctxt: &'me [PointerKind]) -> Self {
         if ctxt.is_empty() {
             if let TyKind::Adt(adt_def, _) = ty.kind() {
                 if adt_def.is_struct() {
-                    return PlaceValueType::Struct(adt_def.did());
+                    return PlaceCtxt::Struct(adt_def.did());
                 }
             }
-            PlaceValueType::Irrelavent
+            PlaceCtxt::Irrelavent
         } else {
-            PlaceValueType::Ptr(ctxt)
+            PlaceCtxt::Ptr(ctxt)
         }
     }
 
     fn expect_ptr(self) -> &'me [PointerKind] {
         match self {
-            PlaceValueType::Ptr(ptr_kinds) => ptr_kinds,
+            PlaceCtxt::Ptr(ptr_kinds) => ptr_kinds,
             _ => unreachable!(),
         }
     }
@@ -218,22 +218,22 @@ impl<'me> PlaceValueType<'me> {
 
     fn is_move_obj<'tcx>(&self, rewrite_ctxt: &FnRewriteCtxt<'tcx, 'me>) -> bool {
         match self {
-            PlaceValueType::Ptr(ptr_kinds) => {
+            PlaceCtxt::Ptr(ptr_kinds) => {
                 matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_move() || ptr_kind.is_raw_move())
             }
-            PlaceValueType::Struct(did) => rewrite_ctxt
+            PlaceCtxt::Struct(did) => rewrite_ctxt
                 .struct_decision
                 .is_owning(rewrite_ctxt.tcx, did),
-            PlaceValueType::Irrelavent => false,
+            PlaceCtxt::Irrelavent => false,
         }
     }
 
     fn is_rustc_move_obj<'tcx>(&self, rewrite_ctxt: &FnRewriteCtxt<'tcx, 'me>) -> bool {
         match self {
-            PlaceValueType::Ptr(ptr_kinds) => {
+            PlaceCtxt::Ptr(ptr_kinds) => {
                 matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_move())
             }
-            PlaceValueType::Struct(did) => {
+            PlaceCtxt::Struct(did) => {
                 let fields_data = rewrite_ctxt.struct_decision.field_data(did);
                 fields_data.iter().any(|field| {
                     field
@@ -241,32 +241,32 @@ impl<'me> PlaceValueType<'me> {
                         .any(|ptr_kind| ptr_kind.is_move() || ptr_kind.is_raw_move())
                 })
             }
-            PlaceValueType::Irrelavent => false,
+            PlaceCtxt::Irrelavent => false,
         }
     }
 
     fn is_copy_obj<'tcx>(&self, rewrite_ctxt: &FnRewriteCtxt<'tcx, 'me>) -> bool {
         match self {
-            PlaceValueType::Ptr(ptr_kinds) => {
+            PlaceCtxt::Ptr(ptr_kinds) => {
                 matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_copy())
             }
-            PlaceValueType::Struct(_) => !self.is_move_obj(rewrite_ctxt),
-            PlaceValueType::Irrelavent => true,
+            PlaceCtxt::Struct(_) => !self.is_move_obj(rewrite_ctxt),
+            PlaceCtxt::Irrelavent => true,
         }
     }
 
     fn is_rustc_copy_obj<'tcx>(&self, rewrite_ctxt: &FnRewriteCtxt<'tcx, 'me>) -> bool {
         match self {
-            PlaceValueType::Ptr(ptr_kinds) => {
+            PlaceCtxt::Ptr(ptr_kinds) => {
                 matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_raw() || ptr_kind.is_const())
             }
-            PlaceValueType::Struct(_) => !self.is_rustc_move_obj(rewrite_ctxt),
-            PlaceValueType::Irrelavent => true,
+            PlaceCtxt::Struct(_) => !self.is_rustc_move_obj(rewrite_ctxt),
+            PlaceCtxt::Irrelavent => true,
         }
     }
 
     fn is_raw_ptr(self) -> bool {
-        matches!(self, PlaceValueType::Ptr(ptr_kinds) if matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_raw()))
+        matches!(self, PlaceCtxt::Ptr(ptr_kinds) if matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_raw()))
     }
 
     fn is_irrelavent(self) -> bool {
@@ -283,7 +283,7 @@ enum PlaceLoadMode {
 }
 
 impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
-    fn acquire_place_info(&self, place: &Place<'tcx>) -> PlaceValueType<'me> {
+    fn acquire_place_info(&self, place: &Place<'tcx>) -> PlaceCtxt<'me> {
         let FnRewriteCtxt {
             local_decision,
             struct_decision,
@@ -304,7 +304,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     assert_eq!(ptr_kinds_index, ptr_kinds.len());
                     let adt_def = ty.ty_adt_def().unwrap();
                     if adt_def.is_union() {
-                        return PlaceValueType::Irrelavent;
+                        return PlaceCtxt::Irrelavent;
                     }
                     ptr_kinds = &struct_decision.field_data(&adt_def.did())[f.index()][..];
                     ptr_kinds_index = 0;
@@ -317,7 +317,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         let ptr = &ptr_kinds[ptr_kinds_index..];
 
-        PlaceValueType::from_ptr_ctxt(ty, ptr)
+        PlaceCtxt::from_ptr_ctxt(ty, ptr)
     }
 
     /// [`expr_span`] is already rewritten
@@ -326,8 +326,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         expr_span: Span,
         ty: Ty,
         is_indirect: bool,
-        produced: PlaceValueType,
-        required: PlaceValueType,
+        produced: PlaceCtxt,
+        required: PlaceCtxt,
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt { tcx, .. } = *self;
@@ -557,7 +557,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     place,
                     location,
                     span,
-                    PlaceValueType::Irrelavent,
+                    PlaceCtxt::Irrelavent,
                     rewriter,
                 );
             }
@@ -582,7 +582,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             TerminatorKind::Return => {
                 // rewrite point: return
                 if !user_idents.contains_key(&RETURN_PLACE) {
-                    let return_ctxt = PlaceValueType::from_ptr_ctxt(
+                    let return_ctxt = PlaceCtxt::from_ptr_ctxt(
                         self.body.return_ty(),
                         &self.local_decision[0],
                     );
@@ -723,7 +723,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         place: Place<'tcx>,
         location: Location,
         span: Span,
-        required: PlaceValueType,
+        required: PlaceCtxt,
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt {
@@ -761,7 +761,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             self.rewrite_temporary(
                 resolved_place.local,
                 resolved_location,
-                PlaceValueType::Irrelavent,
+                PlaceCtxt::Irrelavent,
                 rewriter,
             );
             if resolved_location == location && place.is_indirect() && place.projection.len() == 1 {
@@ -934,7 +934,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         &self,
         local: Local,
         location: Location,
-        required: PlaceValueType,
+        required: PlaceCtxt,
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt {
@@ -981,7 +981,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     }
 
     fn rewrite_index_at(&self, index: Local, location: Location, rewriter: &mut impl Rewrite) {
-        self.rewrite_temporary(index, location, PlaceValueType::Irrelavent, rewriter)
+        self.rewrite_temporary(index, location, PlaceCtxt::Irrelavent, rewriter)
     }
 
     fn rewrite_operand_at(
@@ -989,7 +989,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         operand: &Operand<'tcx>,
         location: Location,
         span: Span,
-        required: PlaceValueType,
+        required: PlaceCtxt,
         rewriter: &mut impl Rewrite,
     ) {
         match operand {
@@ -1008,7 +1008,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         rvalue: &Rvalue<'tcx>,
         location: Location,
         span: Span,
-        required: PlaceValueType,
+        required: PlaceCtxt,
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt { tcx, .. } = *self;
@@ -1047,7 +1047,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         operand2,
                         location,
                         operand2_span,
-                        PlaceValueType::Irrelavent,
+                        PlaceCtxt::Irrelavent,
                         rewriter,
                     );
                     return;
@@ -1057,14 +1057,14 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     operand1,
                     location,
                     span,
-                    PlaceValueType::Irrelavent,
+                    PlaceCtxt::Irrelavent,
                     rewriter,
                 );
                 self.rewrite_operand_at(
                     operand2,
                     location,
                     span,
-                    PlaceValueType::Irrelavent,
+                    PlaceCtxt::Irrelavent,
                     rewriter,
                 );
             }
@@ -1072,7 +1072,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 operand,
                 location,
                 span,
-                PlaceValueType::Irrelavent,
+                PlaceCtxt::Irrelavent,
                 rewriter,
             ),
             Rvalue::CopyForDeref(_) => unreachable!("{:?}", span),
@@ -1175,7 +1175,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 let arg = arg.as_local().unwrap();
                 let ty = self.body.local_decls[arg].ty;
                 let ctxt = if ty.is_unsafe_ptr() {
-                    PlaceValueType::from_ptr_ctxt(
+                    PlaceCtxt::from_ptr_ctxt(
                         ty,
                         if ty.is_mutable_ptr() {
                             &[PointerKind::Raw(RawMeta::Mut)]
@@ -1184,7 +1184,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         },
                     )
                 } else if ty.is_region_ptr() {
-                    PlaceValueType::from_ptr_ctxt(
+                    PlaceCtxt::from_ptr_ctxt(
                         ty,
                         if ty.is_mutable_ptr() {
                             &[PointerKind::Mut]
@@ -1193,7 +1193,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         },
                     )
                 } else {
-                    PlaceValueType::Irrelavent
+                    PlaceCtxt::Irrelavent
                 };
                 self.rewrite_temporary(arg, location, ctxt, rewriter);
             }
@@ -1224,7 +1224,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 let ty = body.local_decls[local].ty;
 
                 let ctxt = if ty.is_unsafe_ptr() {
-                    PlaceValueType::from_ptr_ctxt(
+                    PlaceCtxt::from_ptr_ctxt(
                         ty,
                         if ty.is_mutable_ptr() {
                             &[PointerKind::Raw(RawMeta::Mut)]
@@ -1233,7 +1233,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         },
                     )
                 } else if ty.is_region_ptr() {
-                    PlaceValueType::from_ptr_ctxt(
+                    PlaceCtxt::from_ptr_ctxt(
                         ty,
                         if ty.is_mutable_ptr() {
                             &[PointerKind::Mut]
@@ -1242,7 +1242,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         },
                     )
                 } else {
-                    PlaceValueType::Irrelavent
+                    PlaceCtxt::Irrelavent
                 };
 
                 self.rewrite_temporary(local, location, ctxt, rewriter);
@@ -1254,7 +1254,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         &self,
         constant: &Constant<'tcx>,
         stmt_span: Span,
-        required: PlaceValueType,
+        required: PlaceCtxt,
         rewriter: &mut impl Rewrite,
     ) {
         let FnRewriteCtxt { tcx, .. } = *self;
@@ -1263,7 +1263,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             match scalar {
                 rustc_const_eval::interpret::Scalar::Int(scalar) => {
                     if scalar.is_null() {
-                        if let PlaceValueType::Ptr(ptr_kinds) = required {
+                        if let PlaceCtxt::Ptr(ptr_kinds) = required {
                             let ptr_kind = ptr_kinds[0];
                             let span = constant.span.until(stmt_span.shrink_to_hi());
                             if ptr_kind.is_safe() {

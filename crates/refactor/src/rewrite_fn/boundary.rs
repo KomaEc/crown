@@ -5,7 +5,7 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::mir::{Local, Location, Operand, Place};
 use rustc_span::Span;
 
-use super::{FnRewriteCtxt, PlaceValueType};
+use super::{FnRewriteCtxt, PlaceCtxt};
 use crate::FnLocals;
 
 impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
@@ -24,7 +24,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             if let Some(place) = operand.place() {
                 let Some(local) = place.as_local() else { panic!() };
                 let ty = self.body.local_decls[local].ty;
-                let required = PlaceValueType::from_ptr_ctxt(ty, ctxt);
+                let required = PlaceCtxt::from_ptr_ctxt(ty, ctxt);
                 // Hack! may not work is no-box is off
                 if required.is_ptr()
                     && required.expect_ptr()[0].is_mut()
@@ -39,7 +39,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         let ret_ty = destination.ty(self.body, self.tcx).ty;
         let required = self.acquire_place_info(&destination);
-        let produced = PlaceValueType::from_ptr_ctxt(ret_ty, &callee_decision[0]);
+        let produced = PlaceCtxt::from_ptr_ctxt(ret_ty, &callee_decision[0]);
         self.adapt_usage(
             fn_span,
             ret_ty,

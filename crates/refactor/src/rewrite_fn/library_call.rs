@@ -7,7 +7,7 @@ use rustc_span::Span;
 
 use super::FnRewriteCtxt;
 use crate::{
-    rewrite_fn::{PlaceLoadMode, PlaceValueType},
+    rewrite_fn::{PlaceLoadMode, PlaceCtxt},
     PointerKind, RawMeta,
 };
 
@@ -78,7 +78,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         &self,
         args: &Vec<Operand<'tcx>>,
         _destination: Place<'tcx>,
-        required: Option<PlaceValueType>,
+        required: Option<PlaceCtxt>,
         _fn_span: Span,
         location: Location,
         rewriter: &mut impl Rewrite,
@@ -86,7 +86,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         if let Some(arg) = args[0].place().and_then(|place| place.as_local()) {
             let ty = self.body.local_decls[arg].ty;
             let required = required.unwrap_or_else(|| {
-                PlaceValueType::from_ptr_ctxt(ty, &[PointerKind::Raw(RawMeta::Mut)])
+                PlaceCtxt::from_ptr_ctxt(ty, &[PointerKind::Raw(RawMeta::Mut)])
             });
             self.rewrite_temporary(arg, location, required, rewriter);
         }
@@ -122,7 +122,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             *place,
             def_loc,
             span,
-            PlaceValueType::Irrelavent,
+            PlaceCtxt::Irrelavent,
             rewriter,
         );
         rewriter.replace(tcx, span.shrink_to_hi(), ".".to_owned())
@@ -162,7 +162,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         rvalue,
                         def_loc,
                         stmt.source_info.span,
-                        PlaceValueType::Ptr(&[PointerKind::Const]),
+                        PlaceCtxt::Ptr(&[PointerKind::Const]),
                         rewriter,
                     );
                     return;
@@ -171,7 +171,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         }
 
         let ty = self.body.local_decls[arg].ty;
-        let required = PlaceValueType::from_ptr_ctxt(
+        let required = PlaceCtxt::from_ptr_ctxt(
             ty,
             if ty.is_mutable_ptr() {
                 &[PointerKind::Raw(RawMeta::Mut)]

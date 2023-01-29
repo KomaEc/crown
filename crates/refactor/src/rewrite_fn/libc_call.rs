@@ -6,7 +6,7 @@ use rustc_middle::mir::{Location, Operand, Place, StatementKind, TerminatorKind}
 use rustc_span::Span;
 use rustc_type_ir::TyKind::FnDef;
 
-use super::{FnRewriteCtxt, PlaceValueType};
+use super::{FnRewriteCtxt, PlaceCtxt};
 use crate::{PointerKind, RawMeta};
 
 impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
@@ -63,7 +63,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 rvalue,
                 def_loc,
                 stmt.source_info.span,
-                PlaceValueType::Ptr(&[PointerKind::Raw(RawMeta::Mut)]),
+                PlaceCtxt::Ptr(&[PointerKind::Raw(RawMeta::Mut)]),
                 rewriter,
             );
         }
@@ -80,9 +80,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 let Some(local) = place.as_local() else { panic!() };
                 let ty = self.body.local_decls[local].ty;
                 let required = if ty.is_unsafe_ptr() {
-                    PlaceValueType::Ptr(&[PointerKind::Raw(RawMeta::Const)])
+                    PlaceCtxt::Ptr(&[PointerKind::Raw(RawMeta::Const)])
                 } else {
-                    PlaceValueType::Irrelavent
+                    PlaceCtxt::Irrelavent
                 };
                 self.rewrite_temporary(local, location, required, rewriter);
             }
