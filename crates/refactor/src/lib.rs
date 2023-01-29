@@ -314,7 +314,7 @@ impl StructFields {
                 assert_eq!(ownership.len(), mutability.len());
                 assert_eq!(mutability.len(), fatness.len());
 
-                let field_ty = crate_data.tcx.type_of(field.did);
+                let mut field_ty = crate_data.tcx.type_of(field.did);
 
                 let aliasing_nonowning_field = aliases.iter().any(|&idx| {
                     fields_ownership[idx]
@@ -326,6 +326,10 @@ impl StructFields {
                 for (&ownership, &mutability, &fatness) in
                     itertools::izip!(ownership, mutability, fatness)
                 {
+                    while let Some(inner_ty) = field_ty.builtin_index() {
+                        field_ty = inner_ty;
+                    }
+
                     let pointer_kind = if ownership.is_owning() {
                         if fatness.is_arr() || aliasing_nonowning_field || options.no_box {
                             PointerKind::Raw(RawMeta::Move)
@@ -348,6 +352,8 @@ impl StructFields {
                         }
                     };
                     field.push(pointer_kind);
+
+                    field_ty = field_ty.builtin_deref(true).unwrap().ty;
                 }
                 struct_fields.push_inner(field);
             }
