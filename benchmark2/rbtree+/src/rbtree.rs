@@ -19,8 +19,8 @@ pub struct s_rbnode {
     pub right: *mut s_rbnode,
 }
 pub type t_rbnode = s_rbnode;
-#[no_mangle]
-pub static mut root_rbtree: *mut t_rbnode = 0 as *const t_rbnode as *mut t_rbnode;
+// #[no_mangle]
+// pub static mut root_rbtree: *mut t_rbnode = 0 as *const t_rbnode as *mut t_rbnode;
 #[inline]
 unsafe extern "C" fn is_red(mut node: *mut t_rbnode) -> libc::c_int {
     return if !node.is_null() {
@@ -58,10 +58,10 @@ unsafe extern "C" fn rotate_left(mut left: *mut t_rbnode) -> *mut t_rbnode {
     right = (*left).right;
     let ref mut fresh0 = (*left).right;
     *fresh0 = (*right).left;
-    let ref mut fresh1 = (*right).left;
-    *fresh1 = left;
     (*right).color = (*left).color;
     (*left).color = RED;
+    let ref mut fresh1 = (*right).left;
+    *fresh1 = left;
     return right;
 }
 unsafe extern "C" fn rotate_right(mut right: *mut t_rbnode) -> *mut t_rbnode {
@@ -72,10 +72,10 @@ unsafe extern "C" fn rotate_right(mut right: *mut t_rbnode) -> *mut t_rbnode {
     left = (*right).left;
     let ref mut fresh2 = (*right).left;
     *fresh2 = (*left).right;
-    let ref mut fresh3 = (*left).right;
-    *fresh3 = right;
     (*left).color = (*right).color;
     (*right).color = RED;
+    let ref mut fresh3 = (*left).right;
+    *fresh3 = right;
     return left;
 }
 #[no_mangle]
@@ -127,13 +127,13 @@ unsafe extern "C" fn insert_this(
     }
     return node;
 }
-#[no_mangle]
-pub unsafe extern "C" fn insert(mut key: t_key, mut value: t_value) {
-    root_rbtree = insert_this(root_rbtree, key, value);
-    if !root_rbtree.is_null() {
-        (*root_rbtree).color = BLACK;
-    }
-}
+// #[no_mangle]
+// pub unsafe extern "C" fn insert(mut key: t_key, mut value: t_value) {
+//     root_rbtree = insert_this(root_rbtree, key, value);
+//     if !root_rbtree.is_null() {
+//         (*root_rbtree).color = BLACK;
+//     }
+// }
 #[no_mangle]
 pub unsafe extern "C" fn get_key(mut node: *mut t_rbnode, mut key: t_key) -> t_value {
     let mut cmp: libc::c_int = 0;
