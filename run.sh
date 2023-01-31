@@ -1,3 +1,5 @@
+set -euf
+
 PROJ_DIR=$(dirname $0)
 
 source $PROJ_DIR/find_entry.sh
@@ -5,17 +7,18 @@ source $PROJ_DIR/find_entry.sh
 PREPROCESS="$PROJ_DIR/preprocess.sh"
 BENCHMARK="$PROJ_DIR/benchmark2"
 
-WORKSPACE=$1
-
+WORKSPACE=""
 if [ $# -eq 0 ]; then
     if [ -d "$PROJ_DIR/results" ]; then
         echo "Please provide a workspace dir. Tried $PROJ_DIR/results but exists"
         exit 1
     fi
     WORKSPACE="$PROJ_DIR/results"
-elif [ -d $WORKSPACE ]; then
-    echo "$WORKSPACE exists"
+elif [ -d $1 ]; then
+    echo "$1 exists"
     exit 1
+else
+    WORKSPACE=$1
 fi
 
 cp -r $BENCHMARK $WORKSPACE
@@ -28,13 +31,9 @@ RUSTC_PATH=$(rustc --print sysroot)/lib
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # add rustc lib to dyld path
-    if [ -d "$RUSTC_PATH" ] && [[ ":$DYLD_FALLBACK_LIBRARY_PATH:" != *":$RUSTC_PATH:"* ]]; then
-        export DYLD_FALLBACK_LIBRARY_PATH="${DYLD_FALLBACK_LIBRARY_PATH:+"$DYLD_FALLBACK_LIBRARY_PATH:"}$RUSTC_PATH"
-    fi
+    export DYLD_FALLBACK_LIBRARY_PATH=$RUSTC_PATH
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    if [ -d "$RUSTC_PATH" ] && [[ ":$LD_LIBRARY_PATH:" != *":$RUSTC_PATH:"* ]]; then
-        export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+"$LD_LIBRARY_PATH:"}$RUSTC_PATH"
-    fi
+    export LD_LIBRARY_PATH=$RUSTC_PATH
 else
     echo "platform $OSTYPE" not supported
     exit 1

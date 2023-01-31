@@ -28,13 +28,9 @@ RUSTC_PATH=$(rustc --print sysroot)/lib
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # add rustc lib to dyld path
-    if [ -d "$RUSTC_PATH" ] && [[ ":$DYLD_FALLBACK_LIBRARY_PATH:" != *":$RUSTC_PATH:"* ]]; then
-        export DYLD_FALLBACK_LIBRARY_PATH="${DYLD_FALLBACK_LIBRARY_PATH:+"$DYLD_FALLBACK_LIBRARY_PATH:"}$RUSTC_PATH"
-    fi
+    export DYLD_FALLBACK_LIBRARY_PATH=$RUSTC_PATH
 elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    if [ -d "$RUSTC_PATH" ] && [[ ":$LD_LIBRARY_PATH:" != *":$RUSTC_PATH:"* ]]; then
-        export LD_LIBRARY_PATH="${LD_LIBRARY_PATH:+"$LD_LIBRARY_PATH:"}$RUSTC_PATH"
-    fi
+    export LD_LIBRARY_PATH=$RUSTC_PATH
 else
     echo "platform $OSTYPE" not supported
     exit 1

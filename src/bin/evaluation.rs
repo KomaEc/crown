@@ -49,17 +49,18 @@ extern crate either;
 
 #[derive(Parser)]
 struct Cli {
-    rewritten: PathBuf,
-    stat_dir: PathBuf,
+    benchmark: PathBuf,
+    analysed: PathBuf,
+    results: PathBuf,
     #[clap(long)]
     output_csv: Option<PathBuf>,
 }
 
 fn mock_statistics(
     tcx: TyCtxt,
-    fatness: QualifierData<Fatness>,
-    mutability: QualifierData<Mutability>,
-    ownership: QualifierData<Ownership>,
+    fatness: &QualifierData<Fatness>,
+    mutability: &QualifierData<Mutability>,
+    ownership: &QualifierData<Ownership>,
 ) -> CrateStatistics {
     let mut fns = Vec::new();
     let mut structs = Vec::new();
@@ -229,15 +230,15 @@ fn into_csv_row_data(original: CrateStatistics, new: CrateStatistics) -> [[Strin
 fn main() -> Result<()> {
     let args = Cli::parse();
 
-    if !args.stat_dir.exists() {
+    if !args.analysed.exists() {
         bail!("expect analysis results")
     }
 
     let mut fatness: Option<QualifierData<Fatness>> = None;
     let mut mutability: Option<QualifierData<Mutability>> = None;
     let mut ownership: Option<QualifierData<Ownership>> = None;
-    let mut statistics: Option<CrateStatistics> = None;
-    for file in fs::read_dir(args.stat_dir.as_path()).context("expect dir")? {
+    // let mut statistics: Option<CrateStatistics> = None;
+    for file in fs::read_dir(args.analysed.as_path()).context("expect dir")? {
         let json_path = file.context("how")?.path();
 
         if json_path.ends_with("fatness.json") {
@@ -247,7 +248,7 @@ fn main() -> Result<()> {
         } else if json_path.ends_with("ownership.json") {
             ownership = Some(serde_json::from_str(&fs::read_to_string(json_path)?)?);
         } else if json_path.ends_with("statistics.json") {
-            statistics = Some(serde_json::from_str(&fs::read_to_string(json_path)?)?);
+            // statistics = Some(serde_json::from_str(&fs::read_to_string(json_path)?)?);
         } else {
             bail!("what is it? {}", json_path.to_string_lossy())
         }
@@ -256,14 +257,15 @@ fn main() -> Result<()> {
     let fatness = fatness.context("expect fatness.json")?;
     let mutability = mutability.context("expect mutability.json")?;
     let ownership = ownership.context("expect ownership.json")?;
-    let statistics = statistics.context("expect statistics.json")?;
+    // let statistics = statistics.context("expect statistics.json")?;
 
-    let mock_statistics = run_compiler(compiler_config(args.rewritten)?, move |tcx| {
-        mock_statistics(tcx, fatness, mutability, ownership)
+    let original = run_compiler(compiler_config(args.benchmark)?, |tcx| {
+        mock_statistics(tcx, &fatness, &mutability, &ownership)
     });
 
-    let original = statistics;
-    let new = mock_statistics;
+    let new = run_compiler(compiler_config(args.results)?, |tcx| {
+        mock_statistics(tcx, &fatness, &mutability, &ownership)
+    });
 
     if let Some(output_path) = args.output_csv {
         let row = into_csv_row_data(original, new);

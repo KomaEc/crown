@@ -17,11 +17,8 @@ else
     exit 1
 fi
 
-if [ $# -eq 0 ]; then
-    echo "Expect folder to the workspace"
-    exit 1
-elif [ $1 = "benchmark" ]; then
-    echo "Cannot preprocess directly on benchmark"
+if [ ! $# -eq 3 ]; then
+    echo "Expect folders that hold benchmark, analysis results and refactor results"
     exit 1
 fi
 
@@ -37,7 +34,7 @@ touch $SUMMARY
 
 echo "Benchmark Name,#Unsafe Pointers,,,#Unsafe Mutable Non-Array Pointers,,,#Unsafe Usages,,,#Unsafe Mutable Non-Array Usages,," > $SUMMARY
 
-for f in $(find $1 -name "Cargo.toml"); do
+for f in $(find $3 -name "Cargo.toml"); do
     BENCH_DIR="$(dirname $f)"
     BENCH_NAME="$(basename $BENCH_DIR)"
     ENTRY=$(find_entry $BENCH_DIR)
@@ -46,7 +43,11 @@ for f in $(find $1 -name "Cargo.toml"); do
         rm $BENCH_DIR/statistics.csv
     fi
     touch $BENCH_DIR/statistics.csv
-    $EVALUATION $ENTRY $BENCH_DIR/analysis_results --output-csv $BENCH_DIR/statistics.csv
+
+    ANALYSED=$(dirname $(find_entry $2/$BENCH_NAME))/analysis_results
+    ORIGINAL=$(find_entry $1/$BENCH_NAME)
+
+    $EVALUATION $ORIGINAL $ANALYSED $ENTRY  --output-csv $BENCH_DIR/statistics.csv
 
     (printf '%s' "$BENCH_NAME,"; cat $BENCH_DIR/statistics.csv; printf '\n') >> $SUMMARY
 done
