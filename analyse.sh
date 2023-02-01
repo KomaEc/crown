@@ -1,3 +1,5 @@
+set -euf
+
 PROJ_DIR=$(dirname $0)
 
 source $PROJ_DIR/find_entry.sh
@@ -25,17 +27,13 @@ fi
 echo "start building crown.."
 cargo build --release
 
-CROWN=target/release/crown
+CROWN=$PROJ_DIR/target/release/crown
 
 
 for f in $(find $1 -name "Cargo.toml"); do
     BENCH_DIR="$(dirname $f)"
     BENCH_NAME="$(basename $BENCH_DIR)"
     ENTRY=$(find_entry $BENCH_DIR)
-    if [ -d "$BENCH_DIR/analysis_results" ]; then
-        rm $BENCH_DIR/analysis_results/*
-    else
-        mkdir -p $BENCH_DIR/analysis_results
-    fi
+    mkdir -p $BENCH_DIR/analysis_results
     $CROWN $ENTRY analyse $BENCH_DIR/analysis_results
 done

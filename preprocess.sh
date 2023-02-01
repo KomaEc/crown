@@ -1,3 +1,5 @@
+set -euf
+
 PROJ_DIR=$(dirname $0)
 
 source $PROJ_DIR/find_entry.sh
@@ -25,7 +27,7 @@ fi
 echo "start building crown.."
 cargo build --release
 
-CROWN=target/release/crown
+CROWN=$PROJ_DIR/target/release/crown
 
 
 for f in $(find $1 -name "Cargo.toml"); do

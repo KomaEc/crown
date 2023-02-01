@@ -1,3 +1,5 @@
+# set -euf
+
 PROJ_DIR=$(dirname $0)
 
 source $PROJ_DIR/find_entry.sh
