@@ -582,10 +582,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             TerminatorKind::Return => {
                 // rewrite point: return
                 if !user_idents.contains_key(&RETURN_PLACE) {
-                    let return_ctxt = PlaceCtxt::from_ptr_ctxt(
-                        self.body.return_ty(),
-                        &self.local_decision[0],
-                    );
+                    let return_ctxt =
+                        PlaceCtxt::from_ptr_ctxt(self.body.return_ty(), &self.local_decision[0]);
                     if !matches!(
                         def_use_chain.def_loc(RETURN_PLACE, location),
                         RichLocation::Entry
@@ -1053,28 +1051,12 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     return;
                 }
 
-                self.rewrite_operand_at(
-                    operand1,
-                    location,
-                    span,
-                    PlaceCtxt::Irrelavent,
-                    rewriter,
-                );
-                self.rewrite_operand_at(
-                    operand2,
-                    location,
-                    span,
-                    PlaceCtxt::Irrelavent,
-                    rewriter,
-                );
+                self.rewrite_operand_at(operand1, location, span, PlaceCtxt::Irrelavent, rewriter);
+                self.rewrite_operand_at(operand2, location, span, PlaceCtxt::Irrelavent, rewriter);
             }
-            Rvalue::UnaryOp(_, operand) => self.rewrite_operand_at(
-                operand,
-                location,
-                span,
-                PlaceCtxt::Irrelavent,
-                rewriter,
-            ),
+            Rvalue::UnaryOp(_, operand) => {
+                self.rewrite_operand_at(operand, location, span, PlaceCtxt::Irrelavent, rewriter)
+            }
             Rvalue::CopyForDeref(_) => unreachable!("{:?}", span),
             Rvalue::Cast(_, operand, ty) => {
                 match self.try_rewrite_alloc_from_dest(

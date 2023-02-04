@@ -7,7 +7,7 @@ use rustc_span::Span;
 
 use super::FnRewriteCtxt;
 use crate::{
-    rewrite_fn::{PlaceLoadMode, PlaceCtxt},
+    rewrite_fn::{PlaceCtxt, PlaceLoadMode},
     PointerKind, RawMeta,
 };
 
@@ -85,9 +85,8 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     ) {
         if let Some(arg) = args[0].place().and_then(|place| place.as_local()) {
             let ty = self.body.local_decls[arg].ty;
-            let required = required.unwrap_or_else(|| {
-                PlaceCtxt::from_ptr_ctxt(ty, &[PointerKind::Raw(RawMeta::Mut)])
-            });
+            let required = required
+                .unwrap_or_else(|| PlaceCtxt::from_ptr_ctxt(ty, &[PointerKind::Raw(RawMeta::Mut)]));
             self.rewrite_temporary(arg, location, required, rewriter);
         }
     }

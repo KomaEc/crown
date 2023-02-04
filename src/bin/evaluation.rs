@@ -115,6 +115,9 @@ fn mock_statistics(
                 let is_owning = ownership.fn_data[fn_name][var_name.as_str()][0].is_owning();
                 let is_mutable = mutability.fn_data[fn_name][var_name.as_str()][0].is_mutable();
                 let is_thin = fatness.fn_data[fn_name][var_name.as_str()][0].is_ptr();
+                // let Some(is_owning) = ownership.fn_data.get(fn_name).and_then(|fn_result| fn_result.get(var_name.as_str())).map(|ownership| ownership[0].is_owning()) else { continue };
+                // let Some(is_mutable) = mutability.fn_data.get(fn_name).and_then(|fn_result| fn_result.get(var_name.as_str())).map(|mutability| mutability[0].is_mutable()) else { continue };
+                // let Some(is_thin) = fatness.fn_data.get(fn_name).and_then(|fn_result| fn_result.get(var_name.as_str())).map(|fatness| fatness[0].is_ptr()) else { continue };
                 if is_mutable && is_thin {
                     statistics.num_non_arr_mut_unsafe_ptrs += 1;
                     statistics.num_mut_unsafe_ptrs += 1;
@@ -184,6 +187,8 @@ impl<'me, 'tcx> Visitor<'tcx> for MockCountUnsafeUsages<'me, 'tcx> {
             let var_name = self.user_ident[&local];
             let is_mutable = self.mutability.fn_data[fn_name][var_name.as_str()][0].is_mutable();
             let is_thin = self.fatness.fn_data[fn_name][var_name.as_str()][0].is_ptr();
+            // let Some(is_mutable) = self.mutability.fn_data.get(fn_name).and_then(|fn_result| fn_result.get(var_name.as_str())).map(|mutability| mutability[0].is_mutable()) else { panic!("{var_name} @ {fn_name}") };
+            // let Some(is_thin) = self.fatness.fn_data.get(fn_name).and_then(|fn_result| fn_result.get(var_name.as_str())).map(|fatness| fatness[0].is_ptr()) else { return };
             if is_mutable && is_thin {
                 self.statistics.num_non_arr_mut_unsafe_usages += 1;
                 self.statistics.num_mut_unsafe_usages += 1;
