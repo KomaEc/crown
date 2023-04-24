@@ -44,7 +44,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             && produced.is_rustc_move_obj(self)
             && required.is_rustc_copy_obj(self)
         {
-            // leak the pointer is nothing is knew
+            // leak the pointer when nothing is knew
             required = PlaceCtxt::Ptr(&[crate::PointerKind::Raw(crate::RawMeta::Move)]);
         }
         self.adapt_usage(
