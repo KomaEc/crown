@@ -25,7 +25,8 @@ use smallvec::SmallVec;
 use syn::__private::ToTokens;
 
 use crate::{
-    rewrite_ty::rewrite_hir_ty, FnLocals, PointerKind, RawMeta, RefactorOptions, StructFields,
+    rewrite_ty::rewrite_hir_ty, Analysis, FnLocals, PointerKind, RawMeta, RefactorOptions,
+    StructFields,
 };
 
 pub fn rewrite_fns(
@@ -35,6 +36,7 @@ pub fn rewrite_fns(
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt,
     options: &RefactorOptions,
+    analysis: &Analysis,
 ) {
     let RefactorOptions {
         type_only,
@@ -49,6 +51,7 @@ pub fn rewrite_fns(
             rewrite_fn(
                 body,
                 fn_decision.local_data(&did),
+                analysis.ownership_schemes.precision(&did),
                 fn_decision,
                 struct_decision,
                 rewriter,
@@ -88,6 +91,7 @@ fn rewrite_fn_sig<'tcx>(
 fn rewrite_fn<'tcx>(
     body: &Body<'tcx>,
     local_decision: &[SmallVec<[PointerKind; 3]>],
+    precision: u8,
     fn_decision: &FnLocals,
     struct_decision: &StructFields,
     rewriter: &mut impl Rewrite,
@@ -119,6 +123,7 @@ fn rewrite_fn<'tcx>(
         def_use_chain: &def_use_chain,
         user_idents: &user_idents,
         tcx,
+        precision,
     };
 
     println!("Rewriting {}", tcx.def_path_str(body.source.def_id()));
@@ -174,6 +179,7 @@ fn accum_deref_copies<'tcx>(
 }
 
 pub struct FnRewriteCtxt<'tcx, 'me> {
+    precision: u8,
     local_decision: &'me [SmallVec<[PointerKind; 3]>],
     fn_decision: &'me FnLocals,
     struct_decision: &'me StructFields,

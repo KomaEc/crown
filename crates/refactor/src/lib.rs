@@ -113,6 +113,7 @@ pub fn refactor<'tcx>(
             &fn_decision,
             &struct_decision,
             &options,
+            analysis,
             &mut rewriter,
         )?;
         rewriter.write(rewrite_mode);
@@ -124,6 +125,7 @@ pub fn refactor<'tcx>(
             &fn_decision,
             &struct_decision,
             &options,
+            analysis,
             &mut rewriter,
         )?;
 
@@ -140,6 +142,7 @@ fn rewrite(
     // type_only: bool,
     // type_reconstruction: bool,
     options: &RefactorOptions,
+    analysis: &Analysis,
     rewriter: &mut impl Rewrite,
 ) -> anyhow::Result<()> {
     rewrite_structs(
@@ -157,6 +160,7 @@ fn rewrite(
         rewriter,
         crate_data.tcx,
         options,
+        analysis,
     );
 
     Ok(())

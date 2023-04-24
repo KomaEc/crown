@@ -38,8 +38,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         }
 
         let ret_ty = destination.ty(self.body, self.tcx).ty;
-        let required = self.acquire_place_info(&destination);
+        let mut required = self.acquire_place_info(&destination);
         let produced = PlaceCtxt::from_ptr_ctxt(ret_ty, &callee_decision[0]);
+        if self.precision == 0
+            && produced.is_rustc_move_obj(self)
+            && required.is_rustc_copy_obj(self)
+        {
+            // leak the pointer is nothing is knew
+            required = PlaceCtxt::Ptr(&[crate::PointerKind::Raw(crate::RawMeta::Move)]);
+        }
         self.adapt_usage(
             fn_span,
             ret_ty,
