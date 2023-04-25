@@ -1,10 +1,12 @@
 #![feature(rustc_private)]
+#![feature(array_windows)]
 
 mod char_array_transmute;
 mod explicit_addr;
 mod fold_let_ref_mut;
 mod linkage;
 mod signal_nullness;
+mod promote_argument;
 
 extern crate rustc_ast;
 extern crate rustc_hash;
@@ -20,6 +22,7 @@ use rustc_hir::{Item, OwnerNode};
 use rustc_middle::ty::TyCtxt;
 
 use crate::signal_nullness::signal_nullness;
+use crate::promote_argument::promote_argument;
 
 pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] = &[
     char_array_transmute,
@@ -28,6 +31,7 @@ pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] = &[
     link_incomplete_types,
     canonicalize_structs,
     link_functions,
+    promote_argument,
 ];
 
 pub use char_array_transmute::char_array_transmute;
