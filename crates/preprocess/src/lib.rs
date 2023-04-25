@@ -5,8 +5,8 @@ mod char_array_transmute;
 mod explicit_addr;
 mod fold_let_ref_mut;
 mod linkage;
-mod signal_nullness;
 mod promote_argument;
+mod signal_nullness;
 
 extern crate rustc_ast;
 extern crate rustc_hash;
@@ -21,8 +21,7 @@ use linkage::{canonicalize_structs, link_functions, link_incomplete_types};
 use rustc_hir::{Item, OwnerNode};
 use rustc_middle::ty::TyCtxt;
 
-use crate::signal_nullness::signal_nullness;
-use crate::promote_argument::promote_argument;
+use crate::{promote_argument::promote_argument, signal_nullness::signal_nullness};
 
 pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] = &[
     char_array_transmute,

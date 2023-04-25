@@ -87,7 +87,6 @@ enum Command {
         #[clap(long, short)]
         function: Option<String>,
     },
-    PostCheck,
 }
 
 fn run_compiler<R: Send>(
@@ -443,9 +442,6 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                 &alias_result,
                 &mutability_result,
             );
-        }
-        Command::PostCheck => {
-            check::post_check(tcx, RewriteMode::Diff);
         }
     }
     Ok(())
