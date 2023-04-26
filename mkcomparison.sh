@@ -9,13 +9,13 @@ function preprocess {
     cp -r comparison/$1/before comparison/$1/analysed
 }
 
-# preprocess laertes-crown
+preprocess laertes-crown
 preprocess laertes-laertes
 
-# ./preprocess.sh comparison/laertes-crown/analysed
-# ./analyse.sh comparison/laertes-crown/analysed
-# ./evaluate.sh comparison/laertes-crown/before comparison/laertes-crown/analysed comparison/laertes-crown/after
-# mv evaluation.csv comparison/laertes-crown
+./preprocess.sh comparison/laertes-crown/analysed
+./analyse.sh comparison/laertes-crown/analysed
+./evaluate.sh comparison/laertes-crown/before comparison/laertes-crown/analysed comparison/laertes-crown/after
+mv evaluation.csv comparison/laertes-crown
 
 
 

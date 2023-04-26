@@ -137,7 +137,7 @@ As claimed in the paper, libtree, rgba, quadtree, urlparser, genann, buffer are 
 ```shell
 # rm -r test # if test folder already exists
 mkdir test
-cp results/{libtree,rgba,quadtree,urlparser,genann,buffer} test
+cp -r results/{libtree,rgba,quadtree,urlparser,genann,buffer} test
 patch -s -p0 -f -r -< test.patch
 ```
 
