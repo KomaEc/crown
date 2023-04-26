@@ -56,7 +56,18 @@ __Check compile__
 `./check.sh` scripts will apply `cargo check` to check if `buffer` compiles (with all warnings suppressed). You can also go to the `buffer` folder and run `cargo check`.
 
 __Run the test case__
-TODO
+C2rust transforms C programs to Rust library. To make the `buffer` library executable, we need to apply a patch that adds a main entry and changes `Cargo.toml`.
+```shell
+# in crown folder
+mkdir test
+cp -r buffer test
+patch -s -p0 -f -r -< test.patch
+```
+Now `test/buffer` contains a copy of `buffer` that is testable. The following commands perform the test.
+```shell
+cd test/buffer
+cargo run
+```
 
 __Evaluate__
 ```shell
