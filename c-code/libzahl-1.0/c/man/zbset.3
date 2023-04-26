@@ -1,0 +1,39 @@
+.TH ZBSET 3 libzahl
+.SH NAME
+zbset - Set, clear, or flip a bit in a big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zbset(z_t \fIa\fP, z_t \fIb\fP, size_t \fIindex\fP, int \fIset\fP);
+.fi
+.SH DESCRIPTION
+.B zbset
+either sets, clears, or flips the bit with the selected
+.I index
+in
+.IR b ,
+and stores the result in
+.IR a .
+.P
+The bit is set if
+.IR "(set>0)" ,
+clear if
+.IR "(set==0)" ,
+and flipped if
+.IR "(set<0)" .
+.P
+It is safe to call
+.B zbset
+with non-unique parameters.
+.SH SEE ALSO
+.BR zbtest (3),
+.BR zand (3),
+.BR zor (3),
+.BR zxor (3),
+.BR znot (3),
+.BR zlsh (3),
+.BR zrsh (3),
+.BR zsplit (3),
+.BR zlsb (3),
+.BR zbits (3)

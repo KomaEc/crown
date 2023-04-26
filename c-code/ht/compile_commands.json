@@ -1,0 +1,11 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "ht.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/ht",
+        "file": "ht.c"
+    }
+]

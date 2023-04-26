@@ -1,0 +1,39 @@
+.TH ZPOW 3 libzahl
+.SH NAME
+zpow - Calculate a power of a big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zpow(z_t \fIpower\fP, z_t \fIbase\fP, z_t \fIexponent\fP);
+.fi
+.SH DESCRIPTION
+.B zpow
+calculates the
+.IR exponent :th
+power of a
+.IR base ,
+and stores the result in
+.IR power .
+That is,
+.I power
+gets
+.I base
+↑
+.IR exponent .
+.P
+It is safe to call
+.B zpow
+with non-unique parameters.
+.SH SEE ALSO
+.BR zpowu (3),
+.BR zmodpow (3),
+.BR zsqr (3),
+.BR zstr (3),
+.BR zadd (3),
+.BR zsub (3),
+.BR zmul (3),
+.BR zdiv (3),
+.BR zmod (3),
+.BR zneg (3),
+.BR zabs (3)

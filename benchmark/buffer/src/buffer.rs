@@ -181,39 +181,39 @@ pub unsafe extern "C" fn buffer_resize(
     *((*self_0).alloc).offset(n as isize) = '\0' as i32 as libc::c_char;
     return 0 as libc::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn buffer_appendf(
-    mut self_0: *mut buffer_t,
-    mut format: *const libc::c_char,
-    mut args: ...
-) -> libc::c_int {
-    let mut ap: ::std::ffi::VaListImpl;
-    let mut tmpa: ::std::ffi::VaListImpl;
-    let mut dst = 0 as *mut libc::c_char;
-    let mut length = 0 as libc::c_int;
-    let mut required = 0 as libc::c_int;
-    let mut bytes = 0 as libc::c_int;
-    ap = args.clone();
-    length = buffer_length(self_0) as libc::c_int;
-    tmpa = ap.clone();
-    required = vsnprintf(
-        0 as *mut libc::c_char,
-        0 as libc::c_int as libc::c_ulong,
-        format,
-        tmpa.as_va_list(),
-    );
-    if -(1 as libc::c_int) == buffer_resize(self_0, (length + required) as size_t) {
-        return -(1 as libc::c_int);
-    }
-    dst = ((*self_0).data).offset(length as isize);
-    bytes = vsnprintf(
-        dst,
-        (1 as libc::c_int + required) as libc::c_ulong,
-        format,
-        ap.as_va_list(),
-    );
-    return if bytes < 0 as libc::c_int { -(1 as libc::c_int) } else { 0 as libc::c_int };
-}
+// #[no_mangle]
+// pub unsafe extern "C" fn buffer_appendf(
+//     mut self_0: *mut buffer_t,
+//     mut format: *const libc::c_char,
+//     mut args: ...
+// ) -> libc::c_int {
+//     let mut ap: ::std::ffi::VaListImpl;
+//     let mut tmpa: ::std::ffi::VaListImpl;
+//     let mut dst = 0 as *mut libc::c_char;
+//     let mut length = 0 as libc::c_int;
+//     let mut required = 0 as libc::c_int;
+//     let mut bytes = 0 as libc::c_int;
+//     ap = args.clone();
+//     length = buffer_length(self_0) as libc::c_int;
+//     tmpa = ap.clone();
+//     required = vsnprintf(
+//         0 as *mut libc::c_char,
+//         0 as libc::c_int as libc::c_ulong,
+//         format,
+//         tmpa.as_va_list(),
+//     );
+//     if -(1 as libc::c_int) == buffer_resize(self_0, (length + required) as size_t) {
+//         return -(1 as libc::c_int);
+//     }
+//     dst = ((*self_0).data).offset(length as isize);
+//     bytes = vsnprintf(
+//         dst,
+//         (1 as libc::c_int + required) as libc::c_ulong,
+//         format,
+//         ap.as_va_list(),
+//     );
+//     return if bytes < 0 as libc::c_int { -(1 as libc::c_int) } else { 0 as libc::c_int };
+// }
 #[no_mangle]
 pub unsafe extern "C" fn buffer_append(
     mut self_0: *mut buffer_t,

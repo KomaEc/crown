@@ -1,0 +1,36 @@
+.TH ZSTR 3 libzahl
+.SH NAME
+zstr - Create a string representation of a big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+char *zstr(z_t \fIa\fP, char *\fIstr\fP);
+.fi
+.SH DESCRIPTION
+.B zstr
+writes the integer
+.I a
+in decimal form into
+.IR str .
+If
+.I str
+is is
+.BR 0 ,
+.B zstr
+create a new allocation.
+.SH RETURN VALUE
+.I str
+is returned unless
+.I str
+is
+.BR 0 .
+If
+.I str
+is
+.BR 0 ,
+the string allocated by the function is returned.
+.SH SEE ALSO
+.BR zstr_length (3),
+.BR zsets (3),
+.BR zload (3)

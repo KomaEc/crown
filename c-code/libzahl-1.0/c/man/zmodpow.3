@@ -1,0 +1,52 @@
+.TH ZMODPOW 3 libzahl
+.SH NAME
+zmodpow - Calculate a modular power of a big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zmodpow(z_t \fIpower\fP, z_t \fIbase\fP, z_t \fIexponent\fP, z_t \fImodulator\fP);
+.fi
+.SH DESCRIPTION
+.B zmodpow
+calculates the
+.IR exponent :th
+power of a
+.IR base ,
+modulus a
+.IR modulator ,
+and stores the result in
+.IR power .
+That is,
+.I power
+gets
+.RI ( base
+↑
+.IR exponent )
+Mod
+.IR modulator .
+.P
+It is safe to call
+.B zmodpow
+with non-unique parameters.
+.P
+See
+.BR zmod (3)
+for details on modulation.
+.SH RATIONALE
+It is possible to calculate the modular power
+with a faster algorithm than calculating the
+power and than the modulus of that power.
+.SH SEE ALSO
+.BR zmodpowu (3),
+.BR zmodsqr (3),
+.BR zmodmul (3),
+.BR zsqr (3),
+.BR zstr (3),
+.BR zadd (3),
+.BR zsub (3),
+.BR zmul (3),
+.BR zdiv (3),
+.BR zmod (3),
+.BR zneg (3),
+.BR zabs (3)

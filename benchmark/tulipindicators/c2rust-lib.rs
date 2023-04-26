@@ -5,13 +5,14 @@
 #![allow(non_upper_case_globals)]
 #![allow(unused_assignments)]
 #![allow(unused_mut)]
-#![feature(const_raw_ptr_to_usize_cast)]
 // #![feature(const_transmute)]
 #![feature(extern_types)]
-#![feature(main)]
 #![feature(ptr_offset_from)]
 #![feature(register_tool)]
 #![register_tool(c2rust)]
+#![feature(strict_provenance)]
+#![feature(core_intrinsics)]
+#![feature(raw_ref_op)]
 
 
 

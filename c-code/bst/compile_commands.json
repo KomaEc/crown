@@ -1,0 +1,14 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-std=c99",
+            "-o",
+            "all",
+            "bst.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/bst",
+        "file": "bst.c"
+    }
+]

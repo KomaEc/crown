@@ -1,0 +1,21 @@
+.TH ZFREE 3 libzahl
+.SH NAME
+zfree - Cache an allocation for reuse
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zfree(z_t \fIa\fP);
+.fi
+.SH DESCRIPTION
+.B zfree
+caches the memory stored in
+.I a
+for reuse.
+.I a
+must not be used again until
+.BR zinit (3),
+is called for it again.
+.SH SEE ALSO
+.BR zinit (3),
+.BR zswap (3)

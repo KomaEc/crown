@@ -1,0 +1,39 @@
+.TH ZBITS 3 libzahl
+.SH NAME
+zbits - Count used bits in a big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+size_t zbits(z_t \fIa\fP);
+.fi
+.SH DESCRIPTION
+.B zbits
+calculates the bit-size of
+.IR a .
+If
+.I a
+is zero the bit-size is 1.
+.SH RETURN VALUE
+.B zbits
+returns the number of bits requires
+to represent
+.I a
+\(em 1 plus the floored binary logarithm of the
+absolute value of
+.I a
+\(em or 1 if
+.I a
+is zero.
+.SH RATIONALE
+.B zbits
+returns 1 rather than 0 if
+.B a
+is zero, this is to avoid off-by-one errors
+and it is the number of digits requires to
+write the number in binary. You will see this
+in corresponding functions in other libraries.
+.SH SEE ALSO
+.BR zlsb (3),
+.BR zzero (3),
+.BR zstr_length (3)

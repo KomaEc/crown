@@ -1,0 +1,29 @@
+.TH ZODD_NONZERO 3 libzahl
+.SH NAME
+zodd_nonzero - Check whether a non-zero big integer is odd
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+int zodd_nonzero(z_t \fIa\fP);
+.fi
+.SH DESCRIPTION
+.B zodd_nonzero
+checks whether
+.I a
+is odd.
+.P
+Undefined behaviour is invoked if
+.I a
+is zero.
+.SH RETURN VALUE
+.B zodd_nonzero
+returns 1 if
+.I a
+is odd, and 0 otherwise.
+.SH SEE ALSO
+.BR zodd (3),
+.BR zeven_nonzero (3),
+.BR zzero (3),
+.BR zsignum (3),
+.BR zcmp (3)

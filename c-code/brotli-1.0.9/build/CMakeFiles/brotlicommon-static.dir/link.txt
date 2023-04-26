@@ -1,0 +1,2 @@
+/usr/bin/ar qc libbrotlicommon-static.a  CMakeFiles/brotlicommon-static.dir/c/common/constants.c.o CMakeFiles/brotlicommon-static.dir/c/common/context.c.o CMakeFiles/brotlicommon-static.dir/c/common/dictionary.c.o CMakeFiles/brotlicommon-static.dir/c/common/platform.c.o CMakeFiles/brotlicommon-static.dir/c/common/transform.c.o
+/usr/bin/ranlib libbrotlicommon-static.a

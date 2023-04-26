@@ -1,0 +1,58 @@
+.TH ZDIVMOD 3 libzahl
+.SH NAME
+zdivmod - Calculate the quotient and the remainder of two big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zdivmod(z_t \fIquotient\fP, z_t \fIremainder\fP, z_t \fIdividend\fP, z_t \fIdivisor\fP);
+.fi
+.SH DESCRIPTION
+.B zdivmod
+calculates the truncated quotient and the remainder of a
+.I dividend
+and a
+.IR divisor ,
+and stores the truncated quotient in
+.I quotient
+and the remainder in
+.IR remainder .
+That is,
+.I quotient
+gets
+.I dividend
+/
+.I divisor
+and
+.I remainder
+gets
+.I dividend
+Mod
+.IR divisor .
+.P
+It is safe to call
+.B zdivmod
+with non-unique parameters,
+except it is
+.I not
+safe to call
+.B zdivmod with
+.IR "(quotient==remainder)" .
+.P
+See
+.BR zmod (3)
+for details on modulation.
+.SH RATIONALE
+Calculating the remainder requires calculating division to
+be performed, and performing a division gives the remainder
+for free. It is often useful to calculate both.
+.SH SEE ALSO
+.BR zstr (3),
+.BR zadd (3),
+.BR zsub (3),
+.BR zmul (3),
+.BR zdiv (3),
+.BR zmod (3),
+.BR zneg (3),
+.BR zabs (3),
+.BR zpow (3)

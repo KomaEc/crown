@@ -1,0 +1,98 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Wshadow",
+            "-O3",
+            "-g",
+            "-march=native",
+            "-o",
+            "genann.o",
+            "genann.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/genann-1.0.0/c",
+        "file": "genann.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Wshadow",
+            "-O3",
+            "-g",
+            "-march=native",
+            "-o",
+            "example3.o",
+            "example3.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/genann-1.0.0/c",
+        "file": "example3.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Wshadow",
+            "-O3",
+            "-g",
+            "-march=native",
+            "-o",
+            "example2.o",
+            "example2.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/genann-1.0.0/c",
+        "file": "example2.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Wshadow",
+            "-O3",
+            "-g",
+            "-march=native",
+            "-o",
+            "example4.o",
+            "example4.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/genann-1.0.0/c",
+        "file": "example4.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Wshadow",
+            "-O3",
+            "-g",
+            "-march=native",
+            "-o",
+            "test.o",
+            "test.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/genann-1.0.0/c",
+        "file": "test.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Wshadow",
+            "-O3",
+            "-g",
+            "-march=native",
+            "-o",
+            "example1.o",
+            "example1.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/genann-1.0.0/c",
+        "file": "example1.c"
+    }
+]

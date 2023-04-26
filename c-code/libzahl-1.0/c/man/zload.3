@@ -1,0 +1,34 @@
+.TH ZLOAD 3 libzahl
+.SH NAME
+zload - Unmarshal a big integer from a buffer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+size_t zload(z_t \fIa\fP, const void *\fIbuf\fP);
+.fi
+.SH DESCRIPTION
+.B zload
+unmarshals a big integer from
+.I buf
+into
+.IR a .
+The big integer should have be saved using
+.BR zsave (3),
+with the same version of libzahl
+and on the processor architecture.
+.P
+.I a
+must have been initialized with
+.BR zinit (3).
+.SH RETURN VALUE
+The number of bytes read from
+.IR buf .
+On failure, 0 is returned.
+.SH ERRORS
+This function may failure for any reason specified for
+.BR realloc (3).
+.SH SEE ALSO
+.BR zinit (3),
+.BR zsave (3),
+.BR zsets (3)

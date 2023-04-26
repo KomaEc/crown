@@ -1,0 +1,20 @@
+.TH ZUNSETUP 3 libzahl
+.SH NAME
+zsetup - Release all memory used internally by libzahl.
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zunsetup(void);
+.fi
+.SH DESCRIPTION
+.B zunsetup
+release all memory used internally or cached by libzahl.
+You should run this function when you are done using libzahl.
+.P
+It is possible to call
+.B zunsetup
+directly followed by
+.BR zsetup (3).
+.SH SEE ALSO
+.BR zsetup (3)

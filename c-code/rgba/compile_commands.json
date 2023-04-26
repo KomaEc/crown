@@ -1,0 +1,26 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-std=c99",
+            "-o",
+            "test",
+            "src/rgba.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/rgba",
+        "file": "src/rgba.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-std=c99",
+            "-o",
+            "test",
+            "test.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/rgba",
+        "file": "test.c"
+    }
+]

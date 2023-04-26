@@ -52,3 +52,5 @@ for f in $(find $3 -name "Cargo.toml"); do
     (printf '%s' "$BENCH_NAME,"; cat $BENCH_DIR/statistics.csv; printf '\n') >> $SUMMARY
 done
 
+./sort.sh $SUMMARY
+

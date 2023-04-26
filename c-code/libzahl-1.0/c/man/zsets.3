@@ -1,0 +1,41 @@
+.TH ZSETS 3 libzahl
+.SH NAME
+zsets - Parses a string to a big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+int zsets(z_t \fIa\fP, const char *\fIstr\fP);
+.fi
+.SH DESCRIPTION
+.B zsets
+parses the string
+.I str
+and stores the value in
+.IR a .
+.I a
+must already be initialized with
+.BR zinit (3).
+.I b
+must be a decimal integer. It may be
+prefixed with at most one ASCII minus
+sign or plus sign.
+.SH RETURN VALUE
+Upon successful completion, 0 is returned.
+On error -1 is returned an errno is appropriately.
+.SH ERRORS
+This function fails if:
+.TP
+.B EINVAL
+.B str
+is not a valid decimal ASCII integer.
+.P
+On other errors, the function performs a long jump
+using the jump buffer provided via
+.BR zsetup (3).
+.SH SEE ALSO
+.BR zset (3),
+.BR zsetu (3),
+.BR zseti (3),
+.BR zsave (3),
+.BR zstr (3)

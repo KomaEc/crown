@@ -1,0 +1,26 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-std=c99",
+            "-o",
+            "test",
+            "test.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/buffer-0.4.0",
+        "file": "test.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-std=c99",
+            "-o",
+            "test",
+            "buffer.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/buffer-0.4.0",
+        "file": "buffer.c"
+    }
+]

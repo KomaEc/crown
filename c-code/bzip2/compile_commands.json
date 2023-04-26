@@ -1,0 +1,128 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Winline",
+            "-O2",
+            "-g",
+            "-D_FILE_OFFSET_BITS=64",
+            "bzip2.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/bzip2-laertes",
+        "file": "bzip2.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Winline",
+            "-O2",
+            "-g",
+            "-D_FILE_OFFSET_BITS=64",
+            "compress.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/bzip2-laertes",
+        "file": "compress.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Winline",
+            "-O2",
+            "-g",
+            "-D_FILE_OFFSET_BITS=64",
+            "huffman.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/bzip2-laertes",
+        "file": "huffman.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Winline",
+            "-O2",
+            "-g",
+            "-D_FILE_OFFSET_BITS=64",
+            "crctable.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/bzip2-laertes",
+        "file": "crctable.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Winline",
+            "-O2",
+            "-g",
+            "-D_FILE_OFFSET_BITS=64",
+            "decompress.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/bzip2-laertes",
+        "file": "decompress.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Winline",
+            "-O2",
+            "-g",
+            "-D_FILE_OFFSET_BITS=64",
+            "randtable.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/bzip2-laertes",
+        "file": "randtable.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Winline",
+            "-O2",
+            "-g",
+            "-D_FILE_OFFSET_BITS=64",
+            "blocksort.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/bzip2-laertes",
+        "file": "blocksort.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Winline",
+            "-O2",
+            "-g",
+            "-D_FILE_OFFSET_BITS=64",
+            "bzip2recover.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/bzip2-laertes",
+        "file": "bzip2recover.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-Winline",
+            "-O2",
+            "-g",
+            "-D_FILE_OFFSET_BITS=64",
+            "bzlib.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/bzip2-laertes",
+        "file": "bzlib.c"
+    }
+]

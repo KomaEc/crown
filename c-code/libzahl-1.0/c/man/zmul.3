@@ -1,0 +1,38 @@
+.TH ZMUL 3 libzahl
+.SH NAME
+zmul - Calculate the product of two big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zmul(z_t \fIproduct\fP, z_t \fImultiplier\fP, z_t \fImultiplicand\fP);
+.fi
+.SH DESCRIPTION
+.B zmul
+calculates the product of a
+.I multiplier
+and a
+.IR multiplicand ,
+and stores the result in
+.IR product .
+That is,
+.I product
+gets
+.I multiplier
+⋅
+.IR multiplicand .
+.P
+It is safe to call
+.B zmul
+with non-unique parameters.
+.SH SEE ALSO
+.BR zmodmul (3),
+.BR zsqr (3),
+.BR zstr (3),
+.BR zadd (3),
+.BR zsub (3),
+.BR zdiv (3),
+.BR zmod (3),
+.BR zneg (3),
+.BR zabs (3),
+.BR zpow (3)

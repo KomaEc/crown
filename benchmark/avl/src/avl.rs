@@ -107,62 +107,62 @@ pub unsafe extern "C" fn minValueNode(mut node: *mut Node) -> *mut Node {
     }
     return current;
 }
-#[no_mangle]
-pub unsafe extern "C" fn deleteNode(
-    mut root: *mut Node,
-    mut key: libc::c_int,
-) -> *mut Node {
-    if root.is_null() {
-        return root;
-    }
-    if key < (*root).key {
-        let ref mut fresh10 = (*root).left;
-        *fresh10 = deleteNode((*root).left, key);
-    } else if key > (*root).key {
-        let ref mut fresh11 = (*root).right;
-        *fresh11 = deleteNode((*root).right, key);
-    } else if ((*root).left).is_null() || ((*root).right).is_null() {
-        let mut temp = if !((*root).left).is_null() {
-            (*root).left
-        } else {
-            (*root).right
-        };
-        if temp.is_null() {
-            temp = root;
-            root = 0 as *mut Node;
-        } else {
-            *root = *temp;
-        }
-        free(temp as *mut libc::c_void);
-    } else {
-        let mut temp_0 = minValueNode((*root).right);
-        (*root).key = (*temp_0).key;
-        let ref mut fresh12 = (*root).right;
-        *fresh12 = deleteNode((*root).right, (*temp_0).key);
-    }
-    if root.is_null() {
-        return root;
-    }
-    (*root).height = 1 as libc::c_int + max(height((*root).left), height((*root).right));
-    let mut balance = getBalance(root);
-    if balance > 1 as libc::c_int && getBalance((*root).left) >= 0 as libc::c_int {
-        return rightRotate(root);
-    }
-    if balance > 1 as libc::c_int && getBalance((*root).left) < 0 as libc::c_int {
-        let ref mut fresh13 = (*root).left;
-        *fresh13 = leftRotate((*root).left);
-        return rightRotate(root);
-    }
-    if balance < -(1 as libc::c_int) && getBalance((*root).right) <= 0 as libc::c_int {
-        return leftRotate(root);
-    }
-    if balance < -(1 as libc::c_int) && getBalance((*root).right) > 0 as libc::c_int {
-        let ref mut fresh14 = (*root).right;
-        *fresh14 = rightRotate((*root).right);
-        return leftRotate(root);
-    }
-    return root;
-}
+// #[no_mangle]
+// pub unsafe extern "C" fn deleteNode(
+//     mut root: *mut Node,
+//     mut key: libc::c_int,
+// ) -> *mut Node {
+//     if root.is_null() {
+//         return root;
+//     }
+//     if key < (*root).key {
+//         let ref mut fresh10 = (*root).left;
+//         *fresh10 = deleteNode((*root).left, key);
+//     } else if key > (*root).key {
+//         let ref mut fresh11 = (*root).right;
+//         *fresh11 = deleteNode((*root).right, key);
+//     } else if ((*root).left).is_null() || ((*root).right).is_null() {
+//         let mut temp = if !((*root).left).is_null() {
+//             (*root).left
+//         } else {
+//             (*root).right
+//         };
+//         if temp.is_null() {
+//             temp = root;
+//             root = 0 as *mut Node;
+//         } else {
+//             *root = *temp;
+//         }
+//         free(temp as *mut libc::c_void);
+//     } else {
+//         let mut temp_0 = minValueNode((*root).right);
+//         (*root).key = (*temp_0).key;
+//         let ref mut fresh12 = (*root).right;
+//         *fresh12 = deleteNode((*root).right, (*temp_0).key);
+//     }
+//     if root.is_null() {
+//         return root;
+//     }
+//     (*root).height = 1 as libc::c_int + max(height((*root).left), height((*root).right));
+//     let mut balance = getBalance(root);
+//     if balance > 1 as libc::c_int && getBalance((*root).left) >= 0 as libc::c_int {
+//         return rightRotate(root);
+//     }
+//     if balance > 1 as libc::c_int && getBalance((*root).left) < 0 as libc::c_int {
+//         let ref mut fresh13 = (*root).left;
+//         *fresh13 = leftRotate((*root).left);
+//         return rightRotate(root);
+//     }
+//     if balance < -(1 as libc::c_int) && getBalance((*root).right) <= 0 as libc::c_int {
+//         return leftRotate(root);
+//     }
+//     if balance < -(1 as libc::c_int) && getBalance((*root).right) > 0 as libc::c_int {
+//         let ref mut fresh14 = (*root).right;
+//         *fresh14 = rightRotate((*root).right);
+//         return leftRotate(root);
+//     }
+//     return root;
+// }
 #[no_mangle]
 pub unsafe extern "C" fn preOrder(mut root: *mut Node) {
     if !root.is_null() {
@@ -171,30 +171,30 @@ pub unsafe extern "C" fn preOrder(mut root: *mut Node) {
         preOrder((*root).right);
     }
 }
-unsafe fn main_0() -> libc::c_int {
-    let mut root = 0 as *mut Node;
-    root = insert(root, 9 as libc::c_int);
-    root = insert(root, 5 as libc::c_int);
-    root = insert(root, 10 as libc::c_int);
-    root = insert(root, 0 as libc::c_int);
-    root = insert(root, 6 as libc::c_int);
-    root = insert(root, 11 as libc::c_int);
-    root = insert(root, -(1 as libc::c_int));
-    root = insert(root, 1 as libc::c_int);
-    root = insert(root, 2 as libc::c_int);
-    printf(
-        b"Preorder traversal of the constructed AVL tree is \n\0" as *const u8
-            as *const libc::c_char,
-    );
-    preOrder(root);
-    root = deleteNode(root, 10 as libc::c_int);
-    printf(
-        b"\nPreorder traversal after deletion of 10 \n\0" as *const u8
-            as *const libc::c_char,
-    );
-    preOrder(root);
-    return 0 as libc::c_int;
-}
-pub fn main() {
-    unsafe { ::std::process::exit(main_0() as i32) }
-}
+// unsafe fn main_0() -> libc::c_int {
+//     let mut root = 0 as *mut Node;
+//     root = insert(root, 9 as libc::c_int);
+//     root = insert(root, 5 as libc::c_int);
+//     root = insert(root, 10 as libc::c_int);
+//     root = insert(root, 0 as libc::c_int);
+//     root = insert(root, 6 as libc::c_int);
+//     root = insert(root, 11 as libc::c_int);
+//     root = insert(root, -(1 as libc::c_int));
+//     root = insert(root, 1 as libc::c_int);
+//     root = insert(root, 2 as libc::c_int);
+//     printf(
+//         b"Preorder traversal of the constructed AVL tree is \n\0" as *const u8
+//             as *const libc::c_char,
+//     );
+//     preOrder(root);
+//     root = deleteNode(root, 10 as libc::c_int);
+//     printf(
+//         b"\nPreorder traversal after deletion of 10 \n\0" as *const u8
+//             as *const libc::c_char,
+//     );
+//     preOrder(root);
+//     return 0 as libc::c_int;
+// }
+// pub fn main() {
+//     unsafe { ::std::process::exit(main_0() as i32) }
+// }

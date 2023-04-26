@@ -1,0 +1,22 @@
+.TH ZSWAP 3 libzahl
+.SH NAME
+zswap - Exchanges the value of two big integers
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zswap(z_t \fIa\fP, z_t \fIb\fP);
+.fi
+.SH DESCRIPTION
+.B zswap
+exchanges all information stored in
+.I a
+with the information stored in
+.IR b .
+.P
+It is safe to call
+.B zswap
+with
+.IR "(a==b)" .
+.SH SEE ALSO
+.BR zset (3)

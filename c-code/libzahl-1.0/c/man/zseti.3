@@ -1,0 +1,23 @@
+.TH ZSETI 3 libzahl
+.SH NAME
+zseti - Set the value of a big integer to a signed integer.
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zseti(z_t \fIa\fP, signed long long int \fIb\fP);
+.fi
+.SH DESCRIPTION
+.B zseti
+sets the value of
+.I a
+to
+.IR b .
+.I a
+must already be initialized with
+.BR zinit (3).
+.SH SEE ALSO
+.BR zset (3),
+.BR zsetu (3),
+.BR zsets (3),
+.BR zswap (3)

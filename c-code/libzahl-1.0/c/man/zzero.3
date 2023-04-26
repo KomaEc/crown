@@ -1,0 +1,24 @@
+.TH ZZERO 3 libzahl
+.SH NAME
+zzero - Check whether a big integer is zero
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+int zzero(z_t \fIa\fP);
+.fi
+.SH DESCRIPTION
+.B zzero
+checks whether
+.I a
+is zero.
+.SH RETURN VALUE
+.B zzero
+returns 1 if
+.I a
+is zero, and 0 otherwise.
+.SH SEE ALSO
+.BR zsignum (3),
+.BR zeven (3),
+.BR zodd (3),
+.BR zcmp (3)

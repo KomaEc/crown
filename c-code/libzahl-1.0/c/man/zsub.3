@@ -1,0 +1,36 @@
+.TH ZSUB 3 libzahl
+.SH NAME
+zsub - Calculate the difference of two big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zsub(z_t \fIdifference\fP, z_t \fIminuend\fP, z_t \fIsubtrahend\fP);
+.fi
+.SH DESCRIPTION
+.B zsub
+calculates the difference of a
+.I minuend
+and a
+.IR subtrahend ,
+and stores the result in
+.IR difference .
+That is,
+.I difference
+gets
+.I minuend
+-
+.IR subtrahend .
+.P
+It is safe to call
+.B zsub
+with non-unique parameters.
+.SH SEE ALSO
+.BR zstr (3),
+.BR zadd (3),
+.BR zmul (3),
+.BR zdiv (3),
+.BR zmod (3),
+.BR zneg (3),
+.BR zabs (3),
+.BR zpow (3)

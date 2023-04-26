@@ -1,0 +1,82 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-O3",
+            "-std=c99",
+            "-Wall",
+            "-g",
+            "-pedantic",
+            "-o",
+            "test.o",
+            "test.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/quadtree-0.1.0",
+        "file": "test.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-O3",
+            "-std=c99",
+            "-Wall",
+            "-g",
+            "-pedantic",
+            "-o",
+            "src/bounds.o",
+            "src/bounds.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/quadtree-0.1.0",
+        "file": "src/bounds.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-O3",
+            "-std=c99",
+            "-Wall",
+            "-g",
+            "-pedantic",
+            "-o",
+            "src/point.o",
+            "src/point.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/quadtree-0.1.0",
+        "file": "src/point.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-O3",
+            "-std=c99",
+            "-Wall",
+            "-g",
+            "-pedantic",
+            "-o",
+            "src/node.o",
+            "src/node.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/quadtree-0.1.0",
+        "file": "src/node.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-O3",
+            "-std=c99",
+            "-Wall",
+            "-g",
+            "-pedantic",
+            "-o",
+            "src/quadtree.o",
+            "src/quadtree.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/quadtree-0.1.0",
+        "file": "src/quadtree.c"
+    }
+]

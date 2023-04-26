@@ -1,0 +1,16 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-std=c99",
+            "-Wall",
+            "-I.",
+            "-o",
+            "url-test",
+            "test.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/urlparser",
+        "file": "test.c"
+    }
+]

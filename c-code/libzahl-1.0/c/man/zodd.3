@@ -1,0 +1,25 @@
+.TH ZODD 3 libzahl
+.SH NAME
+zodd - Check whether a big integer is odd
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+int zodd(z_t \fIa\fP);
+.fi
+.SH DESCRIPTION
+.B zodd
+checks whether
+.I a
+is odd.
+.SH RETURN VALUE
+.B zeven
+returns 1 if
+.I a
+is odd, and 0 otherwise.
+.SH SEE ALSO
+.BR zeven (3),
+.BR zodd_nonzero (3),
+.BR zzero (3),
+.BR zsignum (3),
+.BR zcmp (3)

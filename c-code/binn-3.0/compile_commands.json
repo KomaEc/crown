@@ -1,0 +1,13 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-Wall",
+            "-fPIC",
+            "src/binn.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/binn-3.0",
+        "file": "src/binn.c"
+    }
+]

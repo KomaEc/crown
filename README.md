@@ -1,60 +1,69 @@
-# ORC
-This is a wip research project on translating C to Rust. This is still under development and pre-release.
+# Artifact for Crown
+The artifact contains the source code our tool and all the benchmarks we looked into.
+This document covers:
+- File structure of the artifact
+- Instructions to run our tool on a single benchmark
+- Instructions to run out tool over all benchmarks and to produce the evaluation results
 
-## Usage
-Crown uses a specifc rust toolchain, which is specify in `rust-toolchain.toml`.
+### File structure
+We primarily work in the `/root/crown` folder. Inside the `crown` folder:
+- `crates, src, build.rs, Cargo.toml`, etc. are source codes of the tool (as a cargo project)
+- `benchmark` contains the set of benchmark in unsafe Rust code
+- `comparison` contains the data necessary for comparing our tool to previous work. It includes the benchmarks in [14] and evaluation results of the tool in [14] (folder `laertes-laertes`); benchmarks provided by us and evaluation results we obtained by emailing authors of [14] (`laertes-crown`).
+- `c-code` contains the original C code we started with. Our benchmarks are obtained by invoking `c2rust transpile --emit-modules --fail-on-error --reduce-type-annotations --emit-build-files PATH/TO/compile_commands.json`, where `compile_commands.json`s are obtained by `bear make` if applicable. We made some tiny changes to better work with them (like adding feature flags `#![feature(raw_ref_op)]`, removing wrappers of main entries, etc.). We omit these steps in this document. (The benchmark `tuplipindicator` can be found in [14]'s artifact).
 
-Crown uses rustc internals, so it is required that rustc libraries are added to system paths.
-For linux,
-`export LD_LIBRARY_PATH=$(rustc --print sysroot)/lib`
-For Mac,
-`export DYLD_FALLBACK_LIBRARY_PATH=$(rustc --print sysroot)/lib`
+### Instructions on a single benchmark
+We use the `buffer` benchmark as an example.
 
-### Compilation
-`cargo build -r`
-you can find the binary at `target/release/crown`
-
-### Some Hiden Preprocessing Steps
-Please compare `benchmark` and `benchmark2`.
-
-In general, it is required that the following directives be added in the `lib.rs`:
-```rust
-#![feature(strict_provenance)]
-#![feature(core_intrinsics)]
-#![feature(raw_ref_op)]
-```
-
-Also, main function shall be commented out (since there might be some constructs like `Vec` that is not handled in crown).
-
-### Preprocess
-`target/release/crown PATH/TO/lib.rs preprocess in-place`
-or
-`cargo run -r --bin crown -- PATH/TO/lib.rs preprocess in-place`
-
-then
-
-`target/release/crown PATH/TO/lib.rs explicit-addr in-place`
-or
-`cargo run -r --bin crown -- PATH/TO/lib.rs explicit-addr in-place`
-
-These two commands shall be merged into one in the future.
-
-### Ownership Analysis
-`target/release/crown PATH/TO/lib.rs ownership`
-or 
-`cargo run -r --bin crown -- PATH/TO/lib.rs ownership`
-this will print out the analysis results
-
-### Refactor
-`target/release/crown PATH/TO/lib.rs rewrite in-place`
-
-
-### Example
-In the crown directory,
+First make a copy of `buffer`:
 ```shell
-cp benchmark2/libtree .
-target/release/crown libtree/lib.rs preprocess in-place
-target/release/crown libtree/lib.rs explicit-addr in-place
-target/release/crown libtree/lib.rs analyse # this has no effects on the source code, just for printing analysis results
-target/release/crown libtree/lib.rs rewrite # perform refactor
+# in crown folder
+cp -r benchmark/buffer .
 ```
+
+__Run the preprocessing scripts__
+```shell
+# in crown folder
+./preprocess.sh buffer
+```
+The preprocesing scripts will perform preprocessing steps as described in Sec7.1. Also it will provides some extra steps like adding null assertions:
+```rust
+if (p.is_null()) {
+    assert!(p.is_null())
+}
+```
+changing `&mut` to `&raw mut`, etc. (source code can be found in `crates/preprocess`), which facilitate our analysis.
+
+__Analyse `buffer`__
+```shell
+# in crown folder
+./analyse.sh buffer
+```
+You can see a trace of log information. At the end, the function sigatures with respect to ownership are printed out. Also, inside the `buffer` folder, there is an `analysis_results` folder which contain the ownership/fatness/mutability information for all local variables in json files.
+
+__Perform rewrite__
+```shell
+# in crown folder
+./rewrite.sh buffer
+```
+Similarly, a trace of log information will be printed out.
+
+__Check compile__
+```shell
+# in crown folder
+./check.sh buffer
+```
+`./check.sh` scripts will apply `cargo check` to check if `buffer` compiles (with all warnings suppressed). You can also go to the `buffer` folder and run `cargo check`.
+
+__Run the test case__
+TODO
+
+__Evaluate__
+```shell
+# in crown folder
+./evaluate.sh benchmark/buffer . buffer
+```
+You can find the evaluation results in `evaluation.csv`.
+
+
+### Instructions for all benchmark

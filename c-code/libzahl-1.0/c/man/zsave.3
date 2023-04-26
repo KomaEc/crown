@@ -1,0 +1,65 @@
+.TH ZSAVE 3 libzahl
+.SH NAME
+zsave - Marshal a big integer into a buffer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+size_t zsave(z_t \fIa\fP, void *\fIbuf\fP);
+.fi
+.SH DESCRIPTION
+.B zsave
+marshals
+.I a
+into the buffer
+.IR buf
+unless
+.IR buf
+is
+.IR 0 .
+The data stored is not necessarily transferable
+between machines or between different versions
+of libzahl. For such use,
+use
+.BR zstr (3)
+instead.
+.P
+Upon successful completion,
+.I (*(int*)buf)
+will always be either -1, 0, or 1.
+.SH RETURN VALUE
+The number of bytes written to
+.IR buf ,
+or the number bytes that would have been written if
+.IR buf
+was not
+.IR 0 .
+.SH ERRORS
+This function cannot detect failure.
+.SH EXAMPLE
+.nf
+#include <zahl.h>
+#include <stdlib.h>
+
+int buffer_z(z_t num, char **buf, size_t *off) {
+	size_t n = zsave(num, 0);
+	char *new = realloc(*buf, *off + n);
+	if (!new) {
+		return -1;
+	}
+	*buf = new;
+	assert(zsave(num, *buf + *off) == n);
+	*off += n;
+	return 0;
+}
+.fi
+.SH RATIONALE
+This makes it possible to fork a process and send
+result between the parent and the child, as long as
+none of the process re-execute themself.
+.B zsave
+is much faster than
+.BR zstr (3).
+.SH SEE ALSO
+.BR zload (3),
+.BR zstr (3)

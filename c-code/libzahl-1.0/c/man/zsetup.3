@@ -1,0 +1,61 @@
+.TH ZSETUP 3 libzahl
+.SH NAME
+zsetup - Prepare libzahl for use
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zsetup(jmp_buf \fIenv\fP);
+.fi
+.SH DESCRIPTION
+.B zsetup
+initializes all memory that is used internally by
+libzahl.
+.B zsetup
+is also used to specify where to return in case
+an error occurs.
+You must call this function before using libzahl.
+.P
+.B zsetup
+can be used multiple times, the
+.I env
+from the last call is in effect.
+.SH EXAMPLE
+.nf
+#include <zahl.h>
+#include <setjmp.h>
+
+int
+main(void)
+{
+	jmp_buf env;
+
+	if (setjmp(env)) {
+		perror(0);
+		zunsetup();
+		return 1;
+	}
+	zsetup(env);
+
+	/* Use libzahl ... */
+
+	zunsetup();
+	return 0;
+}
+.fi
+.SH RATIONALE
+To increase the performance of libzahl, it uses
+dedicated memory for temporary storage.
+.PP
+libzahl performs checks internally, this is
+necessary. It would decrease the performance
+of the program that uses libzahl, if it had
+to check that libzahl's functions returned
+successfully, it would also produce cluttered
+code. Instead libzahl goes directly to the
+part of the program that handles the error.
+.SH SEE ALSO
+.BR zunsetup (3),
+.BR zinit (3),
+.BR zerror (3),
+.BR zperror (3)

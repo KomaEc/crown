@@ -1,0 +1,20 @@
+.TH ZGCD 3 libzahl
+.SH NAME
+zgcd - Calculates the greatest common divisor
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zgcd(z_t \fIgcd\fP, z_t \fIa\fP, z_t \fIb\fP);
+.fi
+.SH DESCRIPTION
+.B zgcd
+calculates the greatest common divisor
+between
+.I a
+and
+.I b
+and stores the result in
+.IR gcd .
+.SH SEE ALSO
+.BR zdiv (3)

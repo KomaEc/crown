@@ -1,0 +1,1062 @@
+[
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/backward_references.c.o",
+            "../c/enc/backward_references.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/backward_references.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/encode.c.o",
+            "../c/enc/encode.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/encode.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/backward_references_hq.c.o",
+            "../c/enc/backward_references_hq.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/backward_references_hq.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/encoder_dict.c.o",
+            "../c/enc/encoder_dict.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/encoder_dict.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/literal_cost.c.o",
+            "../c/enc/literal_cost.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/literal_cost.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/block_splitter.c.o",
+            "../c/enc/block_splitter.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/block_splitter.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/compress_fragment_two_pass.c.o",
+            "../c/enc/compress_fragment_two_pass.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/compress_fragment_two_pass.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/cluster.c.o",
+            "../c/enc/cluster.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/cluster.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLICOMMON_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlicommon.dir/c/common/transform.c.o",
+            "../c/common/transform.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/common/transform.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlicommon-static.dir/c/common/context.c.o",
+            "../c/common/context.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/common/context.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/block_splitter.c.o",
+            "../c/enc/block_splitter.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/block_splitter.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/histogram.c.o",
+            "../c/enc/histogram.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/histogram.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLICOMMON_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlicommon.dir/c/common/dictionary.c.o",
+            "../c/common/dictionary.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/common/dictionary.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/encode.c.o",
+            "../c/enc/encode.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/encode.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/utf8_util.c.o",
+            "../c/enc/utf8_util.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/utf8_util.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/fast_log.c.o",
+            "../c/enc/fast_log.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/fast_log.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/utf8_util.c.o",
+            "../c/enc/utf8_util.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/utf8_util.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlicommon-static.dir/c/common/constants.c.o",
+            "../c/common/constants.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/common/constants.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/entropy_encode.c.o",
+            "../c/enc/entropy_encode.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/entropy_encode.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/dictionary_hash.c.o",
+            "../c/enc/dictionary_hash.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/dictionary_hash.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/command.c.o",
+            "../c/enc/command.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/command.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/memory.c.o",
+            "../c/enc/memory.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/memory.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/static_dict.c.o",
+            "../c/enc/static_dict.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/static_dict.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlidec-static.dir/c/dec/state.c.o",
+            "../c/dec/state.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/dec/state.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIDEC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlidec.dir/c/dec/decode.c.o",
+            "../c/dec/decode.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/dec/decode.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLICOMMON_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlicommon.dir/c/common/constants.c.o",
+            "../c/common/constants.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/common/constants.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIDEC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlidec.dir/c/dec/state.c.o",
+            "../c/dec/state.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/dec/state.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/backward_references_hq.c.o",
+            "../c/enc/backward_references_hq.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/backward_references_hq.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/command.c.o",
+            "../c/enc/command.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/command.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLICOMMON_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlicommon.dir/c/common/platform.c.o",
+            "../c/common/platform.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/common/platform.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/metablock.c.o",
+            "../c/enc/metablock.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/metablock.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/backward_references.c.o",
+            "../c/enc/backward_references.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/backward_references.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/compress_fragment_two_pass.c.o",
+            "../c/enc/compress_fragment_two_pass.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/compress_fragment_two_pass.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlidec-static.dir/c/dec/decode.c.o",
+            "../c/dec/decode.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/dec/decode.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlicommon-static.dir/c/common/transform.c.o",
+            "../c/common/transform.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/common/transform.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-o",
+            "CMakeFiles/brotli.dir/c/tools/brotli.c.o",
+            "../c/tools/brotli.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/tools/brotli.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/memory.c.o",
+            "../c/enc/memory.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/memory.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIDEC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlidec.dir/c/dec/huffman.c.o",
+            "../c/dec/huffman.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/dec/huffman.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/literal_cost.c.o",
+            "../c/enc/literal_cost.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/literal_cost.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/brotli_bit_stream.c.o",
+            "../c/enc/brotli_bit_stream.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/brotli_bit_stream.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlicommon-static.dir/c/common/dictionary.c.o",
+            "../c/common/dictionary.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/common/dictionary.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlidec-static.dir/c/dec/bit_reader.c.o",
+            "../c/dec/bit_reader.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/dec/bit_reader.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/static_dict.c.o",
+            "../c/enc/static_dict.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/static_dict.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/fast_log.c.o",
+            "../c/enc/fast_log.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/fast_log.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/bit_cost.c.o",
+            "../c/enc/bit_cost.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/bit_cost.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/brotli_bit_stream.c.o",
+            "../c/enc/brotli_bit_stream.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/brotli_bit_stream.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLICOMMON_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlicommon.dir/c/common/context.c.o",
+            "../c/common/context.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/common/context.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlidec-static.dir/c/dec/huffman.c.o",
+            "../c/dec/huffman.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/dec/huffman.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/bit_cost.c.o",
+            "../c/enc/bit_cost.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/bit_cost.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/dictionary_hash.c.o",
+            "../c/enc/dictionary_hash.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/dictionary_hash.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/encoder_dict.c.o",
+            "../c/enc/encoder_dict.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/encoder_dict.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/histogram.c.o",
+            "../c/enc/histogram.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/histogram.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlicommon-static.dir/c/common/platform.c.o",
+            "../c/common/platform.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/common/platform.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc-static.dir/c/enc/compress_fragment.c.o",
+            "../c/enc/compress_fragment.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/compress_fragment.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/compress_fragment.c.o",
+            "../c/enc/compress_fragment.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/compress_fragment.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIDEC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlidec.dir/c/dec/bit_reader.c.o",
+            "../c/dec/bit_reader.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/dec/bit_reader.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/cluster.c.o",
+            "../c/enc/cluster.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/cluster.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/metablock.c.o",
+            "../c/enc/metablock.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/metablock.c"
+    },
+    {
+        "arguments": [
+            "/usr/bin/cc",
+            "-c",
+            "-DBROTLIENC_SHARED_COMPILATION",
+            "-DBROTLI_HAVE_LOG2=1",
+            "-DBROTLI_SHARED_COMPILATION",
+            "-DOS_LINUX",
+            "-I/home/vagrant/orc-benchmark/brotli-1.0.9/c/include",
+            "-O3",
+            "-DNDEBUG",
+            "-fPIC",
+            "-o",
+            "CMakeFiles/brotlienc.dir/c/enc/entropy_encode.c.o",
+            "../c/enc/entropy_encode.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/brotli-1.0.9/build",
+        "file": "../c/enc/entropy_encode.c"
+    }
+]

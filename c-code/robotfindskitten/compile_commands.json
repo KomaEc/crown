@@ -1,0 +1,18 @@
+[
+    {
+        "arguments": [
+            "gcc",
+            "-c",
+            "-DHAVE_CONFIG_H",
+            "-I.",
+            "-I..",
+            "-g",
+            "-O2",
+            "-o",
+            "robotfindskitten.o",
+            "robotfindskitten.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/robotfindskitten/src",
+        "file": "robotfindskitten.c"
+    }
+]

@@ -1,0 +1,38 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-g3",
+            "-std=c99",
+            "-pedantic",
+            "-Wall",
+            "-Wextra",
+            "-Wno-long-long",
+            "-Wno-unused-parameter",
+            "-o",
+            "lil.o",
+            "lil.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/lil",
+        "file": "lil.c"
+    },
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-g3",
+            "-std=c99",
+            "-pedantic",
+            "-Wall",
+            "-Wextra",
+            "-Wno-long-long",
+            "-Wno-unused-parameter",
+            "-o",
+            "main.o",
+            "main.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/lil",
+        "file": "main.c"
+    }
+]

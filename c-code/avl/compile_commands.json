@@ -1,0 +1,14 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-std=c99",
+            "-o",
+            "all",
+            "avl.c"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/avl",
+        "file": "avl.c"
+    }
+]

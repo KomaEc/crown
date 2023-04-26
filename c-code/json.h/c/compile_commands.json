@@ -1,0 +1,11 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "json.h"
+        ],
+        "directory": "/home/vagrant/orc-benchmark/json.h/c",
+        "file": "json.h"
+    }
+]

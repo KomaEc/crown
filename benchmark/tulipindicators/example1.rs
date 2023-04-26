@@ -111,5 +111,5 @@ unsafe fn main_0() -> std::os::raw::c_int {
     print_array(data_out, output_length);
     return 0 as std::os::raw::c_int;
 }
-#[main]
-pub fn main() { unsafe { ::std::process::exit(main_0() as i32) } }
+// #[main]
+// pub fn main() { unsafe { ::std::process::exit(main_0() as i32) } }

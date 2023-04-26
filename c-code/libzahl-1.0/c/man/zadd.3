@@ -1,0 +1,36 @@
+.TH ZADD 3 libzahl
+.SH NAME
+zadd - Calculate the sum of two big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zadd(z_t \fIsum\fP, z_t \fIaugend\fP, z_t \fIaddend\fP);
+.fi
+.SH DESCRIPTION
+.B zadd
+calculates the sum of a
+.I augend
+and a
+.IR addend ,
+and stores the result in
+.IR sum .
+That is,
+.I sum
+gets
+.I augend
++
+.IR addend .
+.P
+It is safe to call
+.B zadd
+with non-unique parameters.
+.SH SEE ALSO
+.BR zstr (3),
+.BR zsub (3),
+.BR zmul (3),
+.BR zdiv (3),
+.BR zmod (3),
+.BR zneg (3),
+.BR zabs (3),
+.BR zpow (3)

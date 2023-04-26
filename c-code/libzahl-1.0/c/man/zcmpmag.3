@@ -1,0 +1,33 @@
+.TH ZCMPMAG 3 libzahl
+.SH NAME
+zcmpmag - Compare the absolute values of two big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+int zcmpmag(z_t \fIa\fP, z_t \fIb\fP);
+.fi
+.SH DESCRIPTION
+.B zcmpmag
+compares the absolute value of
+.I a
+and the absolute value of
+.IR b .
+.SH RETURN VALUE
+.B zcmpmag
+returns -1 if
+.RI | a |
+is less than
+.RI | b |,
+0 if
+.RI | a |
+is equal to
+.RI | b |,
+and +1 qif
+.RI | a |
+is greater than
+.RI | b |.
+.SH SEE ALSO
+.BR zcmp (3),
+.BR zcmpi (3),
+.BR zcmpu (3)

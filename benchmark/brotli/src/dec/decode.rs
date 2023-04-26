@@ -10012,25 +10012,6 @@ unsafe extern "C" fn DetectTrivialLiteralBlockTypes(
         let mut j: size_t = 0;
         j = 0 as libc::c_int as size_t;
         while j < ((1 as libc::c_uint) << 6 as libc::c_int) as libc::c_ulong {
-            if 4 as libc::c_int & 1 as libc::c_int != 0 as libc::c_int {
-                let fresh36 = j;
-                j = j.wrapping_add(1);
-                error
-                    |= *((*s).context_map).offset(offset.wrapping_add(fresh36) as isize)
-                        as libc::c_ulong ^ sample;
-            }
-            if 4 as libc::c_int & 2 as libc::c_int != 0 as libc::c_int {
-                let fresh37 = j;
-                j = j.wrapping_add(1);
-                error
-                    |= *((*s).context_map).offset(offset.wrapping_add(fresh37) as isize)
-                        as libc::c_ulong ^ sample;
-                let fresh38 = j;
-                j = j.wrapping_add(1);
-                error
-                    |= *((*s).context_map).offset(offset.wrapping_add(fresh38) as isize)
-                        as libc::c_ulong ^ sample;
-            }
             if 4 as libc::c_int & 4 as libc::c_int != 0 as libc::c_int {
                 let fresh39 = j;
                 j = j.wrapping_add(1);

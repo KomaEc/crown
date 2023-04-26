@@ -1,0 +1,33 @@
+.TH ZABS 3 libzahl
+.SH NAME
+zabs - Calculate the absolute value of a big integer
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zabs(z_t \fIa\fP, z_t \fIb\fP);
+.fi
+.SH DESCRIPTION
+.B zabs
+calculates the absolute value of
+.I b
+and stores the result in
+.IR a .
+That is,
+.I a
+gets
+.RI | b |.
+.P
+It is safe to call
+.B zabs
+with non-unique parameters.
+.SH SEE ALSO
+.BR zset (3),
+.BR zstr (3),
+.BR zadd (3),
+.BR zsub (3),
+.BR zmul (3),
+.BR zdiv (3),
+.BR zmod (3),
+.BR zneg (3),
+.BR zpow (3)

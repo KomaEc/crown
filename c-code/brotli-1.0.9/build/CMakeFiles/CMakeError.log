@@ -1,0 +1,48 @@
+Performing C SOURCE FILE Test BROTLI_EMSCRIPTEN failed with the following output:
+Change Dir: /home/vagrant/orc-benchmark/brotli-1.0.9/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_e9ecd/fast && /usr/bin/make -f CMakeFiles/cmTC_e9ecd.dir/build.make CMakeFiles/cmTC_e9ecd.dir/build
+make[1]: Entering directory '/home/vagrant/orc-benchmark/brotli-1.0.9/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_e9ecd.dir/src.c.o
+/usr/bin/cc   -DBROTLI_EMSCRIPTEN   -o CMakeFiles/cmTC_e9ecd.dir/src.c.o   -c /home/vagrant/orc-benchmark/brotli-1.0.9/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_e9ecd
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_e9ecd.dir/link.txt --verbose=1
+/usr/bin/cc  -DBROTLI_EMSCRIPTEN    -rdynamic CMakeFiles/cmTC_e9ecd.dir/src.c.o  -o cmTC_e9ecd 
+/usr/bin/ld: /usr/lib/gcc/x86_64-linux-gnu/9/../../../x86_64-linux-gnu/Scrt1.o: in function `_start':
+(.text+0x24): undefined reference to `main'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_e9ecd.dir/build.make:87: cmTC_e9ecd] Error 1
+make[1]: Leaving directory '/home/vagrant/orc-benchmark/brotli-1.0.9/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_e9ecd/fast] Error 2
+
+
+Source file was:
+#if defined(__EMSCRIPTEN__)
+   int main() {return 0;}
+   #endif
+Determining if the function log2 exists failed with the following output:
+Change Dir: /home/vagrant/orc-benchmark/brotli-1.0.9/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_301c4/fast && /usr/bin/make -f CMakeFiles/cmTC_301c4.dir/build.make CMakeFiles/cmTC_301c4.dir/build
+make[1]: Entering directory '/home/vagrant/orc-benchmark/brotli-1.0.9/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_301c4.dir/CheckFunctionExists.c.o
+/usr/bin/cc   -DCHECK_FUNCTION_EXISTS=log2   -o CMakeFiles/cmTC_301c4.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.16/Modules/CheckFunctionExists.c
+<command-line>: warning: conflicting types for built-in function ‘log2’; expected ‘double(double)’ [-Wbuiltin-declaration-mismatch]
+/usr/share/cmake-3.16/Modules/CheckFunctionExists.c:7:3: note: in expansion of macro ‘CHECK_FUNCTION_EXISTS’
+    7 |   CHECK_FUNCTION_EXISTS(void);
+      |   ^~~~~~~~~~~~~~~~~~~~~
+/usr/share/cmake-3.16/Modules/CheckFunctionExists.c:1:1: note: ‘log2’ is declared in header ‘<math.h>’
+  +++ |+#include <math.h>
+    1 | #ifdef CHECK_FUNCTION_EXISTS
+Linking C executable cmTC_301c4
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_301c4.dir/link.txt --verbose=1
+/usr/bin/cc  -DCHECK_FUNCTION_EXISTS=log2    -rdynamic CMakeFiles/cmTC_301c4.dir/CheckFunctionExists.c.o  -o cmTC_301c4 
+/usr/bin/ld: CMakeFiles/cmTC_301c4.dir/CheckFunctionExists.c.o: in function `main':
+CheckFunctionExists.c:(.text+0x14): undefined reference to `log2'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_301c4.dir/build.make:87: cmTC_301c4] Error 1
+make[1]: Leaving directory '/home/vagrant/orc-benchmark/brotli-1.0.9/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_301c4/fast] Error 2
+
+
+

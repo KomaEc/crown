@@ -5,7 +5,7 @@ PROJ_DIR=$(dirname $0)
 source $PROJ_DIR/find_entry.sh
 
 PREPROCESS="$PROJ_DIR/preprocess.sh"
-BENCHMARK="$PROJ_DIR/benchmark2"
+BENCHMARK="$PROJ_DIR/benchmark"
 
 WORKSPACE=""
 if [ $# -eq 0 ]; then

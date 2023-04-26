@@ -229,6 +229,7 @@ pub unsafe extern "C" fn quadtree_new(
     let ref mut fresh10 = (*tree).root;
     *fresh10 = quadtree_node_with_bounds(minx, miny, maxx, maxy);
     if ((*tree).root).is_null() {
+        free(tree as *mut libc::c_void);
         return 0 as *mut quadtree_t;
     }
     let ref mut fresh11 = (*tree).key_free;

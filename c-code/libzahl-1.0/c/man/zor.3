@@ -1,0 +1,32 @@
+.TH ZOR 3 libzahl
+.SH NAME
+zor - Calculate the bitwise inclusive OR of two big integers
+.SH SYNOPSIS
+.nf
+#include <zahl.h>
+
+void zor(z_t \fIa\fP, z_t \fIb\fP, z_t \fIc\fP);
+.fi
+.SH DESCRIPTION
+.B zor
+calculates the bitwise OR of
+.I b
+and
+.IR c ,
+and stores the result in
+.IR a .
+.P
+It is safe to call
+.B zor
+with non-unique parameters.
+.SH SEE ALSO
+.BR zand (3),
+.BR zxor (3),
+.BR znot (3),
+.BR zlsh (3),
+.BR zrsh (3),
+.BR zsplit (3),
+.BR zbtest (3),
+.BR zbset (3),
+.BR zlsb (3),
+.BR zbits (3)
