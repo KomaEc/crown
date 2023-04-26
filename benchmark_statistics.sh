@@ -3,7 +3,7 @@ set -euf
 
 PROJ_DIR=$(dirname $0)
 
-BENCHMARK=$PROJ_DIR/benchmark2
+BENCHMARK=$PROJ_DIR/benchmark
 
 echo "Benchmark Name,#Files,#Structs,#Functions,LOC"
 for f in $(ls $BENCHMARK); do

@@ -5,6 +5,8 @@ This document covers:
 - Instructions to run our tool on a single benchmark
 - Instructions to run out tool over all benchmarks and to produce the evaluation results
 
+Note: due to the effect of some bug fixes, there are two tiny changes to the data for `buffer` in table 2: the #ptr goes from 38 to 37, and the #uses goes from 56 to 54. The percentage remains the same.
+
 ### File structure
 We primarily work in the `/root/crown` folder. Inside the `crown` folder:
 - `crates, src, build.rs, Cargo.toml`, etc. are source codes of the tool (as a cargo project)
@@ -74,7 +76,56 @@ __Evaluate__
 # in crown folder
 ./evaluate.sh benchmark/buffer . buffer
 ```
-You can find the evaluation results in `evaluation.csv`.
+You can find the evaluation results in `evaluation.csv`. The last columne corresponds to the pointer reduction rate.
 
 
 ### Instructions for all benchmark
+
+#### Producing Table 1
+```shell
+# in crown folder
+./benchmark_statistics.sh > size.csv
+./sort.sh size.csv
+```
+The `size.csv` corresponds to table 1.
+
+#### Producing Table 2
+We provide a scripts that replicpatch -s -p0 -f -r -< test.patchates the previous steps for all benchmarks. Before running it, make sure there is no `results` folder exists in `crown`.
+```shell
+# in crown folder
+./run.sh
+```
+Now all transformed programs will be in the `results` folder. To produce Table2, run
+```shell
+./evaluate.sh benchmark results results
+```
+The table could be found in `evaluation.csv`, which reproduces the 'crown' column in Table 2.
+
+We provide another script that evaluate the tool in [14]:
+```shell
+# in crown folder
+./mkcomparison.sh
+```
+The table could be found in `comparison/laertes-laertes/evaluation.csv` and `comparison/laertes-crown/evaluation.csv`. Together they reproduce the `laertes` column in Table 2.
+
+#### Test
+As claimed in the paper, libtree, rgba, quadtree, urlparser, genann, buffer are associated with unit tests, and the translated versions pass all these tests.
+```shell
+# rm -r test # if test folder already exists
+mkdir test
+cp results/{libtree,rgba,quadtree,urlparser,genann,buffer} test
+patch -s -p0 -f -r -< test.patch
+```
+
+Now for rgba, quadtree, urlparser, genann, buffer, go into the corresponding folder and run `cargo run`, the test results will be printed out.
+
+For libtree, the tests are provided in `libtree/tests`. For example,
+```shell
+# in crown folder
+cd test/libtree
+cargo build
+cp target/debug/libtree . # compile and copy the binary
+cd tests/03_direct_and_absolute_rpath
+make all
+```
+The behaviour is the same as specified in the `Makefile`, where the first call cannot find lib_f.so, and the second one should.
