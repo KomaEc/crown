@@ -27,7 +27,7 @@ pub fn char_array_transmute(tcx: TyCtxt, mode: RewriteMode) {
         let replacement = re
             .replace_all(&source, |captures: &regex::Captures| {
                 let chars = &captures["chars"];
-                chars.to_owned() + " as *const u8 as *const i8"
+                chars.to_owned() + " as *const u8 as *const libc::c_char"
             })
             .to_string();
 
