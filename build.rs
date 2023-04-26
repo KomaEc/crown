@@ -4,7 +4,7 @@ const C2RUST_DEPENDENCIES: &[(&str, &str)] = &[
     ("libc2rust_bitfields", "rlib"),
     (
         "libc2rust_bitfields_derive",
-        if cfg!(target_arch = "aarch64") {
+        if cfg!(target_os = "macos") {
             "dylib"
         } else {
             "so"
