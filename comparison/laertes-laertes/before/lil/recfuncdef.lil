@@ -1,0 +1,32 @@
+#
+# Recursive function definition error test
+#
+
+# This will fail: trying to use a function in its argument
+# list before the function is defined
+try {
+  func foo {[foo]} {}
+} {
+  print 1st test failed, as expected
+}
+
+# This will succeeed: trying to redefine a function while
+# using its previous version in its argument list
+func foo {} { return ole }
+print foo before redefinition: args=[reflect args foo] body=[reflect body foo]
+try {
+  func foo {[foo]} { print $ole }
+} {
+  print 2nd test failed, this shouldn't happen
+}
+print foo after redefinition: args=[reflect args foo] body=[reflect body foo]
+
+print done
+
+#
+# Expected output:
+# 1st test failed, as expected
+# foo before redefinition: args= body= return ole
+# foo after redefinition: args=ole body= print $ole
+# done
+# 

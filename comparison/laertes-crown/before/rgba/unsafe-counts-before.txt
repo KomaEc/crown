@@ -1,0 +1,52 @@
+environment variable flags: RwLockReadGuard { lock: RwLock { data: Flags { print_per_fn_stats: false, count_indirect: false, benchmark_name: "rgba", non_limit: true, config_file: None } } }
+Non-limit ptr: lib::src::src::rgba::rgba_to_string::buf ; poison: ({}, {ExternCallParam}) at benchmark/rgba/src/src/rgba.rs:1120:5: 1120:12 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_hex6_string::str ; poison: ({PtrArith, ExternCallReturn, MiscSource}, {ExternCallParam, MiscSink, PtrArithSink}) at benchmark/rgba/src/src/rgba.rs:1162:44: 1162:51 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_hex3_string::str ; poison: ({PtrArith, MiscSource, ExternCallReturn}, {MiscSink, PtrArithSink, ExternCallParam}) at benchmark/rgba/src/src/rgba.rs:1172:44: 1172:51 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_rgb_string::str ; poison: ({PtrArith, MiscSource, ExternCallReturn}, {MiscSink, PtrArithSink, ExternCallParam}) at benchmark/rgba/src/src/rgba.rs:1183:5: 1183:12 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_rgb_string::ok ; poison: ({}, {}) at benchmark/rgba/src/src/rgba.rs:1184:5: 1184:11 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_rgb_string::fresh0 ; poison: ({MiscSource, ExternCallReturn, PtrArith}, {ExternCallParam, MiscSink, PtrArithSink}) at benchmark/rgba/src/src/rgba.rs:1202:21: 1202:27 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_rgb_string::fresh1 ; poison: ({ExternCallReturn, MiscSource, PtrArith}, {ExternCallParam, MiscSink, PtrArithSink}) at benchmark/rgba/src/src/rgba.rs:1225:21: 1225:27 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_rgb_string::fresh2 ; poison: ({ExternCallReturn, PtrArith, MiscSource}, {PtrArithSink, MiscSink, ExternCallParam}) at benchmark/rgba/src/src/rgba.rs:1248:21: 1248:27 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_rgba_string::str ; poison: ({PtrArith, ExternCallReturn, MiscSource}, {PtrArithSink, ExternCallParam, MiscSink}) at benchmark/rgba/src/src/rgba.rs:1274:5: 1274:12 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_rgba_string::ok ; poison: ({}, {}) at benchmark/rgba/src/src/rgba.rs:1275:5: 1275:11 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_rgba_string::fresh3 ; poison: ({PtrArith, ExternCallReturn, MiscSource}, {ExternCallParam, PtrArithSink, MiscSink}) at benchmark/rgba/src/src/rgba.rs:1294:21: 1294:27 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_rgba_string::fresh4 ; poison: ({MiscSource, PtrArith, ExternCallReturn}, {MiscSink, PtrArithSink, ExternCallParam}) at benchmark/rgba/src/src/rgba.rs:1317:21: 1317:27 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_rgba_string::fresh5 ; poison: ({MiscSource, PtrArith, ExternCallReturn}, {PtrArithSink, ExternCallParam, MiscSink}) at benchmark/rgba/src/src/rgba.rs:1340:21: 1340:27 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_rgba_string::fresh6 ; poison: ({MiscSource, PtrArith, ExternCallReturn}, {MiscSink, PtrArithSink, ExternCallParam}) at benchmark/rgba/src/src/rgba.rs:1371:25: 1371:31 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_hex_string::str ; poison: ({ExternCallReturn, MiscSource, PtrArith}, {MiscSink, PtrArithSink, ExternCallParam}) at benchmark/rgba/src/src/rgba.rs:1390:5: 1390:12 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_hex_string::ok ; poison: ({}, {}) at benchmark/rgba/src/src/rgba.rs:1391:5: 1391:11 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_name_string::str ; poison: ({ExternCallReturn, MiscSource, PtrArith}, {PtrArithSink, ExternCallParam, MiscSink}) at benchmark/rgba/src/src/rgba.rs:1405:5: 1405:12 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_name_string::ok ; poison: ({}, {}) at benchmark/rgba/src/src/rgba.rs:1406:5: 1406:11 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_string::str ; poison: ({ExternCallReturn, MiscSource, PtrArith}, {MiscSink, PtrArithSink, ExternCallParam}) at benchmark/rgba/src/src/rgba.rs:1432:5: 1432:12 (#0)
+Non-limit ptr: lib::src::src::rgba::rgba_from_string::ok ; poison: ({}, {}) at benchmark/rgba/src/src/rgba.rs:1433:5: 1433:11 (#0)
+Non-limit ptr: lib::src::test::main_0::argv ; poison: ({ArgvSource}, {ArgvSink}) at benchmark/rgba/src/test.rs:330:5: 330:13 (#0)
+raw pointer CSV
+Benchmark,Statistic,{VoidPtr},{ExplicitRaw},{PtrArith},{Global},{Cast},{VoidPtr},{StringLit},{Extern},{}
+rgba,NonUniqueDecls,0,0,14,0,0,0,0,14,21
+rgba,DeclsExact,0,0,0,0,0,0,0,1,6
+rgba,NonUniqueDerefs,0,0,65,0,1,0,1,66,78
+rgba,DerefsExact,0,0,0,0,0,0,0,0,12
+non-empty pointer eq class sizes:
+1
+1
+1
+5
+14
+there are 5 non-empty eq classes
+PROFILING RESULTS
+call graph closure: 0 ms
+compute SCCs: 42 ms
+computing poison sets via equality-based analysis: 19 ms
+computing subsets for ownership/poison propagation: 2 ms
+constraint solving: 9 ms
+constraint solving (TODO: only compute eq classes): 15 ms
+constraint solving (addr_of_locs): 13 ms
+constraint solving (reborrow_map): 10 ms
+constructor constraints: 15 ms
+propagating compiler error-derived poisons via subset-based analysis: 0 ms
+propagating inline assembly poisons via subset-based analysis: 0 ms
+propagating ownership: 0 ms
+propagating refcell promotion: 2 ms
+propagating upper and lower sets: 16 ms
+set constraint solving: 61 ms
+transitive closure: 2 ms

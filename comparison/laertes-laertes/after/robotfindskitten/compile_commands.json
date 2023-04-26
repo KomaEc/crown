@@ -1,0 +1,18 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-DHAVE_CONFIG_H",
+            "-I.",
+            "-I..",
+            "-g",
+            "-O2",
+            "-o",
+            "robotfindskitten.o",
+            "robotfindskitten.c"
+        ],
+        "directory": "/Users/emre/lab/c2rust/examples/robotfindskitten/repo/src",
+        "file": "robotfindskitten.c"
+    }
+]

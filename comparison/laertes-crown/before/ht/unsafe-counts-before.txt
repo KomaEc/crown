@@ -1,0 +1,61 @@
+environment variable flags: RwLockReadGuard { lock: RwLock { data: Flags { print_per_fn_stats: false, count_indirect: false, benchmark_name: "ht", non_limit: true, config_file: None } } }
+Non-limit ptr: lib::src::ht::ht_create::table ; poison: ({VoidSource, CastSource, PtrArith, ExternCallReturn, MiscSource}, {PtrArithSink, CastSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/ht/src/ht.rs:41:9: 41:18 (#0)
+Non-limit ptr: lib::src::ht::ht_destroy::table ; poison: ({MiscSource, PtrArith, ExternCallReturn, CastSource, VoidSource}, {ExternCallParam, MiscSink, PtrArithSink, CastSink, VoidSink}) at benchmark/ht/src/ht.rs:59:37: 59:46 (#0)
+Non-limit ptr: lib::src::ht::hash_key::key ; poison: ({ExternCallReturn, CastSource, MiscSource, VoidSource, PtrArith}, {MiscSink, CastSink, ExternCallParam, PtrArithSink, VoidSink}) at benchmark/ht/src/ht.rs:68:31: 68:38 (#0)
+Non-limit ptr: lib::src::ht::hash_key::p ; poison: ({PtrArith, CastSource, ExternCallReturn, VoidSource, MiscSource}, {CastSink, MiscSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/ht/src/ht.rs:70:9: 70:14 (#0)
+Non-limit ptr: lib::src::ht::ht_get::table ; poison: ({}, {}) at benchmark/ht/src/ht.rs:81:5: 81:14 (#0)
+Non-limit ptr: lib::src::ht::ht_get::key ; poison: ({ExternCallReturn, MiscSource, CastSource, VoidSource, PtrArith}, {ExternCallParam, PtrArithSink, MiscSink, CastSink, VoidSink}) at benchmark/ht/src/ht.rs:82:5: 82:12 (#0)
+Non-limit ptr: lib::src::ht::ht_set_entry::entries ; poison: ({PtrArith, CastSource, ExternCallReturn, VoidSource, MiscSource}, {PtrArithSink, VoidSink, CastSink, ExternCallParam, MiscSink}) at benchmark/ht/src/ht.rs:101:5: 101:16 (#0)
+Non-limit ptr: lib::src::ht::ht_set_entry::key ; poison: ({MiscSource, CastSource, PtrArith, ExternCallReturn, VoidSource}, {MiscSink, PtrArithSink, VoidSink, CastSink, ExternCallParam}) at benchmark/ht/src/ht.rs:103:5: 103:12 (#0)
+Non-limit ptr: lib::src::ht::ht_set_entry::value ; poison: ({VoidSource}, {VoidSink}) at benchmark/ht/src/ht.rs:104:5: 104:14 (#0)
+Non-limit ptr: lib::src::ht::ht_set_entry::plength ; poison: ({}, {}) at benchmark/ht/src/ht.rs:105:5: 105:16 (#0)
+Non-limit ptr: lib::src::ht::ht_expand::table ; poison: ({}, {}) at benchmark/ht/src/ht.rs:133:32: 133:41 (#0)
+Non-limit ptr: lib::src::ht::ht_expand::new_entries ; poison: ({MiscSource, ExternCallReturn, VoidSource, PtrArith, CastSource}, {MiscSink, PtrArithSink, ExternCallParam, CastSink, VoidSink}) at benchmark/ht/src/ht.rs:139:9: 139:24 (#0)
+Non-limit ptr: lib::src::ht::ht_set::table ; poison: ({}, {}) at benchmark/ht/src/ht.rs:168:5: 168:14 (#0)
+Non-limit ptr: lib::src::ht::ht_set::key ; poison: ({PtrArith, MiscSource, VoidSource, ExternCallReturn, CastSource}, {PtrArithSink, ExternCallParam, CastSink, MiscSink, VoidSink}) at benchmark/ht/src/ht.rs:169:5: 169:12 (#0)
+Non-limit ptr: lib::src::ht::ht_set::value ; poison: ({VoidSource}, {VoidSink}) at benchmark/ht/src/ht.rs:170:5: 170:14 (#0)
+Non-limit ptr: lib::src::ht::ht_length::table ; poison: ({}, {}) at benchmark/ht/src/ht.rs:203:36: 203:45 (#0)
+Non-limit ptr: lib::src::ht::ht_iterator::table ; poison: ({}, {}) at benchmark/ht/src/ht.rs:207:38: 207:47 (#0)
+Non-limit ptr: lib::src::ht::ht_next::it ; poison: ({}, {}) at benchmark/ht/src/ht.rs:219:34: 219:40 (#0)
+Non-limit ptr: lib::src::ht::ht_next::table ; poison: ({}, {}) at benchmark/ht/src/ht.rs:220:9: 220:18 (#0)
+raw pointer CSV
+Benchmark,Statistic,{VoidPtr},{ExplicitRaw},{PtrArith},{Global},{Cast},{VoidPtr},{StringLit},{Extern},{}
+ht,NonUniqueDecls,9,0,9,0,9,9,0,9,19
+ht,DeclsExact,2,0,0,0,0,2,0,0,8
+ht,NonUniqueDerefs,23,0,23,0,23,23,0,23,52
+ht,DerefsExact,0,0,0,0,0,0,0,0,29
+non-empty pointer eq class sizes:
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+2
+2
+2
+9
+there are 16 non-empty eq classes
+PROFILING RESULTS
+call graph closure: 0 ms
+compute SCCs: 8 ms
+computing poison sets via equality-based analysis: 3 ms
+computing subsets for ownership/poison propagation: 0 ms
+constraint solving: 1 ms
+constraint solving (TODO: only compute eq classes): 2 ms
+constraint solving (addr_of_locs): 2 ms
+constraint solving (reborrow_map): 1 ms
+constructor constraints: 2 ms
+propagating compiler error-derived poisons via subset-based analysis: 0 ms
+propagating inline assembly poisons via subset-based analysis: 0 ms
+propagating ownership: 0 ms
+propagating refcell promotion: 0 ms
+propagating upper and lower sets: 2 ms
+set constraint solving: 11 ms
+transitive closure: 0 ms

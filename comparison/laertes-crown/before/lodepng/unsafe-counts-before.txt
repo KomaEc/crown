@@ -1,0 +1,865 @@
+environment variable flags: RwLockReadGuard { lock: RwLock { data: Flags { print_per_fn_stats: false, count_indirect: false, benchmark_name: "lodepng", non_limit: true, config_file: None } } }
+Non-limit ptr: lib::src::lodepng::lodepng_realloc::ptr ; poison: ({PtrArith, StringLitSource, MiscSource, CastSource, ExternCallReturn, VoidSource, GlobalSource, MixedRefSource}, {CastSink, GlobalSink, VoidSink, ExternCallParam, MiscSink, PtrArithSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:344:5: 344:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_free::ptr ; poison: ({VoidSource, MiscSource, ExternCallReturn, PtrArith, GlobalSource, CastSource, StringLitSource, MixedRefSource}, {CastSink, PtrArithSink, MiscSink, GlobalSink, VoidSink, MixedRefSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:349:35: 349:42 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_memcpy::dst ; poison: ({CastSource, MiscSource, GlobalSource, StringLitSource, PtrArith, MixedRefSource, ExternCallReturn, VoidSource}, {CastSink, MixedRefSink, GlobalSink, ExternCallParam, VoidSink, MiscSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:353:5: 353:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_memcpy::src ; poison: ({StringLitSource, GlobalSource, PtrArith, ExternCallReturn, MiscSource, CastSource, MixedRefSource, VoidSource}, {ExternCallParam, CastSink, GlobalSink, VoidSink, MiscSink, PtrArithSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:354:5: 354:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_memset::dst ; poison: ({MiscSource, CastSource, PtrArith, StringLitSource, GlobalSource, VoidSource, ExternCallReturn, MixedRefSource}, {VoidSink, PtrArithSink, MixedRefSink, CastSink, MiscSink, GlobalSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:366:5: 366:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_strlen::a ; poison: ({StringLitSource, GlobalSource, VoidSource, CastSource, MiscSource, MixedRefSource, ExternCallReturn, PtrArith}, {PtrArithSink, MiscSink, MixedRefSink, VoidSink, CastSink, GlobalSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:377:37: 377:42 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_strlen::orig ; poison: ({MiscSource, CastSource, PtrArith, MixedRefSource, ExternCallReturn, StringLitSource, GlobalSource, VoidSource}, {ExternCallParam, MiscSink, MixedRefSink, PtrArithSink, VoidSink, GlobalSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:378:9: 378:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_addofl::result ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:387:5: 387:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_mulofl::result ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:395:5: 395:15 (#0)
+Non-limit ptr: lib::src::lodepng::uivector_cleanup::p ; poison: ({VoidSource, CastSource}, {VoidSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:412:39: 412:44 (#0)
+Non-limit ptr: lib::src::lodepng::uivector_resize::p ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:421:5: 421:10 (#0)
+Non-limit ptr: lib::src::lodepng::uivector_resize::data ; poison: ({ExternCallReturn, VoidSource}, {VoidSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:428:13: 428:21 (#0)
+Non-limit ptr: lib::src::lodepng::uivector_init::p ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:440:36: 440:41 (#0)
+Non-limit ptr: lib::src::lodepng::uivector_push_back::p ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:448:5: 448:10 (#0)
+Non-limit ptr: lib::src::lodepng::ucvector_reserve::p ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:463:5: 463:10 (#0)
+Non-limit ptr: lib::src::lodepng::ucvector_reserve::data ; poison: ({VoidSource, ExternCallReturn}, {CastSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:468:13: 468:21 (#0)
+Non-limit ptr: lib::src::lodepng::ucvector_resize::p ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:480:5: 480:10 (#0)
+Non-limit ptr: lib::src::lodepng::ucvector_init::buffer ; poison: ({ExternCallReturn, VoidSource, MixedRefSource, GlobalSource, PtrArith, MiscSource, CastSource, StringLitSource}, {MiscSink, CastSink, PtrArithSink, VoidSink, GlobalSink, MixedRefSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:487:5: 487:15 (#0)
+Non-limit ptr: lib::src::lodepng::string_cleanup::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:500:37: 500:44 (#0)
+Non-limit ptr: lib::src::lodepng::alloc_string_sized::in_0 ; poison: ({StringLitSource, CastSource, VoidSource, MixedRefSource, ExternCallReturn, PtrArith, MiscSource, GlobalSource}, {MixedRefSink, VoidSink, PtrArithSink, CastSink, GlobalSink, MiscSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:505:5: 505:13 (#0)
+Non-limit ptr: lib::src::lodepng::alloc_string_sized::out ; poison: ({GlobalSource, CastSource, StringLitSource, VoidSource, ExternCallReturn, PtrArith, MiscSource, MixedRefSource}, {PtrArithSink, MiscSink, ExternCallParam, VoidSink, MixedRefSink, GlobalSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:508:9: 508:16 (#0)
+Non-limit ptr: lib::src::lodepng::alloc_string::in_0 ; poison: ({CastSource, StringLitSource, MiscSource, VoidSource, GlobalSource, MixedRefSource, PtrArith, ExternCallReturn}, {MixedRefSink, CastSink, GlobalSink, ExternCallParam, PtrArithSink, VoidSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:516:35: 516:43 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_read32bitInt::buffer ; poison: ({CastSource, GlobalSource, VoidSource, MixedRefSource, MiscSource, StringLitSource, PtrArith, ExternCallReturn}, {VoidSink, MiscSink, MixedRefSink, PtrArithSink, ExternCallParam, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:520:5: 520:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_set32bitInt::buffer ; poison: ({CastSource, StringLitSource, MixedRefSource, PtrArith, VoidSource, MiscSource, ExternCallReturn, GlobalSource}, {PtrArithSink, VoidSink, MiscSink, MixedRefSink, ExternCallParam, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:531:5: 531:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_filesize::filename ; poison: ({}, {ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:555:5: 555:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_filesize::file ; poison: ({ExternCallReturn}, {ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:557:9: 557:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_buffer_file::out ; poison: ({VoidSource, MixedRefSource, StringLitSource, CastSource, MiscSource, GlobalSource, PtrArith, ExternCallReturn}, {GlobalSink, MiscSink, PtrArithSink, CastSink, VoidSink, MixedRefSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:577:5: 577:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_buffer_file::filename ; poison: ({}, {ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:579:5: 579:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_buffer_file::file ; poison: ({ExternCallReturn}, {ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:581:9: 581:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_load_file::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:601:5: 601:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_load_file::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:602:5: 602:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_load_file::filename ; poison: ({}, {ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:603:5: 603:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_save_file::buffer ; poison: ({PtrArith, MiscSource, GlobalSource, MixedRefSource, StringLitSource, ExternCallReturn, VoidSource, CastSource}, {MiscSink, ExternCallParam, MixedRefSink, CastSink, VoidSink, GlobalSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:618:5: 618:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_save_file::filename ; poison: ({}, {ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:620:5: 620:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_save_file::file ; poison: ({ExternCallReturn}, {ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:622:9: 622:17 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGBitWriter_init::writer ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:637:5: 637:15 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGBitWriter_init::data ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:638:5: 638:13 (#0)
+Non-limit ptr: lib::src::lodepng::writeBits::writer ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:645:5: 645:15 (#0)
+Non-limit ptr: lib::src::lodepng::writeBitsReversed::writer ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:714:5: 714:15 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGBitReader_init::reader ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:753:5: 753:15 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGBitReader_init::data ; poison: ({ExternCallReturn, MiscSource, MixedRefSource, GlobalSource, CastSource, PtrArith, StringLitSource, VoidSource}, {CastSink, GlobalSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:754:5: 754:13 (#0)
+Non-limit ptr: lib::src::lodepng::ensureBits9::reader ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:771:34: 771:44 (#0)
+Non-limit ptr: lib::src::lodepng::ensureBits17::reader ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:794:35: 794:45 (#0)
+Non-limit ptr: lib::src::lodepng::ensureBits25::reader ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:828:35: 828:45 (#0)
+Non-limit ptr: lib::src::lodepng::ensureBits32::reader ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:872:35: 872:45 (#0)
+Non-limit ptr: lib::src::lodepng::peekBits::reader ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:930:5: 930:15 (#0)
+Non-limit ptr: lib::src::lodepng::advanceBits::reader ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:936:34: 936:44 (#0)
+Non-limit ptr: lib::src::lodepng::readBits::reader ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:942:5: 942:15 (#0)
+Non-limit ptr: lib::src::lodepng::HuffmanTree_init::tree ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1111:39: 1111:47 (#0)
+Non-limit ptr: lib::src::lodepng::HuffmanTree_cleanup::tree ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1121:42: 1121:50 (#0)
+Non-limit ptr: lib::src::lodepng::HuffmanTree_makeTable::tree ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1128:44: 1128:52 (#0)
+Non-limit ptr: lib::src::lodepng::HuffmanTree_makeTable::maxlens ; poison: ({PtrArith, GlobalSource, ExternCallReturn, MiscSource, MixedRefSource, CastSource, StringLitSource, VoidSource}, {GlobalSink, PtrArithSink, MixedRefSink, CastSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:1134:9: 1134:20 (#0)
+Non-limit ptr: lib::src::lodepng::HuffmanTree_makeFromLengths2::tree ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1302:5: 1302:13 (#0)
+Non-limit ptr: lib::src::lodepng::HuffmanTree_makeFromLengths2::blcount ; poison: ({MixedRefSource, ExternCallReturn, MiscSource, StringLitSource, CastSource, PtrArith, GlobalSource, VoidSource}, {MiscSink, PtrArithSink, CastSink, ExternCallParam, VoidSink, MixedRefSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:1304:9: 1304:20 (#0)
+Non-limit ptr: lib::src::lodepng::HuffmanTree_makeFromLengths2::nextcode ; poison: ({MiscSource, GlobalSource, MixedRefSource, CastSource, VoidSource, PtrArith, StringLitSource, ExternCallReturn}, {VoidSink, GlobalSink, ExternCallParam, PtrArithSink, MixedRefSink, MiscSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:1305:9: 1305:21 (#0)
+Non-limit ptr: lib::src::lodepng::HuffmanTree_makeFromLengths::tree ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1381:5: 1381:13 (#0)
+Non-limit ptr: lib::src::lodepng::HuffmanTree_makeFromLengths::bitlen ; poison: ({MixedRefSource, StringLitSource, PtrArith, CastSource, GlobalSource, MiscSource, ExternCallReturn, VoidSource}, {PtrArithSink, VoidSink, MiscSink, MixedRefSink, CastSink, GlobalSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:1382:5: 1382:15 (#0)
+Non-limit ptr: lib::src::lodepng::bpmnode_create::lists ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1404:5: 1404:14 (#0)
+Non-limit ptr: lib::src::lodepng::bpmnode_create::tail ; poison: ({StringLitSource, MiscSource, PtrArith, ExternCallReturn, MixedRefSource, CastSource, GlobalSource, VoidSource}, {PtrArithSink, MiscSink, MixedRefSink, GlobalSink, VoidSink, ExternCallParam, CastSink}) at benchmark/lodepng/src/lodepng.rs:1407:5: 1407:13 (#0)
+Non-limit ptr: lib::src::lodepng::bpmnode_create::result ; poison: ({MiscSource, VoidSource, StringLitSource, CastSource, MixedRefSource, PtrArith, ExternCallReturn, GlobalSource}, {CastSink, MiscSink, GlobalSink, ExternCallParam, PtrArithSink, VoidSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:1410:9: 1410:19 (#0)
+Non-limit ptr: lib::src::lodepng::bpmnode_create::node ; poison: ({CastSource, PtrArith, MixedRefSource, MiscSource, StringLitSource, ExternCallReturn, VoidSource, GlobalSource}, {ExternCallParam, GlobalSink, MixedRefSink, PtrArithSink, VoidSink, MiscSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:1419:17: 1419:25 (#0)
+Non-limit ptr: lib::src::lodepng::bpmnode_sort::leaves ; poison: ({StringLitSource, ExternCallReturn, MiscSource, PtrArith, VoidSource, MixedRefSource, CastSource, GlobalSource}, {ExternCallParam, MixedRefSink, VoidSink, GlobalSink, PtrArithSink, MiscSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:1456:35: 1456:45 (#0)
+Non-limit ptr: lib::src::lodepng::bpmnode_sort::mem ; poison: ({CastSource, MiscSource, ExternCallReturn, GlobalSource, VoidSource, PtrArith, StringLitSource, MixedRefSource}, {VoidSink, PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:1457:9: 1457:16 (#0)
+Non-limit ptr: lib::src::lodepng::bpmnode_sort::a ; poison: ({GlobalSource, ExternCallReturn, PtrArith, MixedRefSource, VoidSource, MiscSource, CastSource, StringLitSource}, {PtrArithSink, MiscSink, ExternCallParam, MixedRefSink, VoidSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:1464:13: 1464:18 (#0)
+Non-limit ptr: lib::src::lodepng::bpmnode_sort::b ; poison: ({StringLitSource, PtrArith, CastSource, MiscSource, ExternCallReturn, MixedRefSource, GlobalSource, VoidSource}, {PtrArithSink, MiscSink, CastSink, MixedRefSink, ExternCallParam, VoidSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:1469:13: 1469:18 (#0)
+Non-limit ptr: lib::src::lodepng::boundaryPM::lists ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1528:5: 1528:14 (#0)
+Non-limit ptr: lib::src::lodepng::boundaryPM::leaves ; poison: ({StringLitSource, PtrArith, ExternCallReturn, VoidSource, CastSource, MiscSource, MixedRefSource, GlobalSource}, {MiscSink, VoidSink, MixedRefSink, PtrArithSink, CastSink, GlobalSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:1529:5: 1529:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_huffman_code_lengths::lengths ; poison: ({MiscSource, StringLitSource, ExternCallReturn, VoidSource, PtrArith, CastSource, MixedRefSource, GlobalSource}, {MiscSink, MixedRefSink, CastSink, ExternCallParam, GlobalSink, PtrArithSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:1585:5: 1585:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_huffman_code_lengths::frequencies ; poison: ({MixedRefSource, MiscSource, GlobalSource, StringLitSource, PtrArith, CastSource, ExternCallReturn, VoidSource}, {MixedRefSink, ExternCallParam, VoidSink, CastSink, PtrArithSink, GlobalSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:1586:5: 1586:20 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_huffman_code_lengths::leaves ; poison: ({MiscSource, GlobalSource, ExternCallReturn, CastSource, PtrArith, VoidSource, StringLitSource, MixedRefSource}, {VoidSink, CastSink, PtrArithSink, ExternCallParam, MixedRefSink, GlobalSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:1593:9: 1593:19 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_huffman_code_lengths::node ; poison: ({MixedRefSource, CastSource, StringLitSource, PtrArith, MiscSource, VoidSource, GlobalSource, ExternCallReturn}, {MiscSink, CastSink, VoidSink, PtrArithSink, GlobalSink, MixedRefSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:1651:13: 1651:21 (#0)
+Non-limit ptr: lib::src::lodepng::HuffmanTree_makeFromFrequencies::tree ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1753:5: 1753:13 (#0)
+Non-limit ptr: lib::src::lodepng::HuffmanTree_makeFromFrequencies::frequencies ; poison: ({GlobalSource, PtrArith, StringLitSource, ExternCallReturn, MiscSource, VoidSource, CastSource, MixedRefSource}, {ExternCallParam, MiscSink, MixedRefSink, CastSink, PtrArithSink, VoidSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:1754:5: 1754:20 (#0)
+Non-limit ptr: lib::src::lodepng::generateFixedLitLenTree::tree ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1787:5: 1787:13 (#0)
+Non-limit ptr: lib::src::lodepng::generateFixedLitLenTree::bitlen ; poison: ({ExternCallReturn, PtrArith, GlobalSource, VoidSource, MiscSource, CastSource, StringLitSource, MixedRefSource}, {CastSink, ExternCallParam, GlobalSink, VoidSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:1791:9: 1791:19 (#0)
+Non-limit ptr: lib::src::lodepng::generateFixedDistanceTree::tree ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1828:5: 1828:13 (#0)
+Non-limit ptr: lib::src::lodepng::generateFixedDistanceTree::bitlen ; poison: ({ExternCallReturn, PtrArith, StringLitSource, VoidSource, MiscSource, CastSource, GlobalSource, MixedRefSource}, {PtrArithSink, ExternCallParam, MiscSink, CastSink, GlobalSink, VoidSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:1832:9: 1832:19 (#0)
+Non-limit ptr: lib::src::lodepng::huffmanDecodeSymbol::reader ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1854:5: 1854:15 (#0)
+Non-limit ptr: lib::src::lodepng::huffmanDecodeSymbol::codetree ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1855:5: 1855:17 (#0)
+Non-limit ptr: lib::src::lodepng::getTreeInflateFixed::tree_ll ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1881:5: 1881:16 (#0)
+Non-limit ptr: lib::src::lodepng::getTreeInflateFixed::tree_d ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1882:5: 1882:15 (#0)
+Non-limit ptr: lib::src::lodepng::getTreeInflateDynamic::tree_ll ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1891:5: 1891:16 (#0)
+Non-limit ptr: lib::src::lodepng::getTreeInflateDynamic::tree_d ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1892:5: 1892:15 (#0)
+Non-limit ptr: lib::src::lodepng::getTreeInflateDynamic::reader ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:1893:5: 1893:15 (#0)
+Non-limit ptr: lib::src::lodepng::getTreeInflateDynamic::bitlen_ll ; poison: ({MixedRefSource, MiscSource, ExternCallReturn, StringLitSource, VoidSource, GlobalSource, CastSource, PtrArith}, {CastSink, GlobalSink, VoidSink, PtrArithSink, MixedRefSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:1901:9: 1901:22 (#0)
+Non-limit ptr: lib::src::lodepng::getTreeInflateDynamic::bitlen_d ; poison: ({VoidSource, StringLitSource, GlobalSource, PtrArith, MiscSource, CastSource, ExternCallReturn, MixedRefSource}, {ExternCallParam, PtrArithSink, MiscSink, CastSink, VoidSink, GlobalSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:1902:9: 1902:21 (#0)
+Non-limit ptr: lib::src::lodepng::getTreeInflateDynamic::bitlen_cl ; poison: ({VoidSource, MixedRefSource, StringLitSource, GlobalSource, ExternCallReturn, MiscSource, PtrArith, CastSource}, {MixedRefSink, PtrArithSink, GlobalSink, CastSink, VoidSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:1903:9: 1903:22 (#0)
+Non-limit ptr: lib::src::lodepng::inflateHuffmanBlock::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2135:5: 2135:12 (#0)
+Non-limit ptr: lib::src::lodepng::inflateHuffmanBlock::reader ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2136:5: 2136:15 (#0)
+Non-limit ptr: lib::src::lodepng::inflateNoCompression::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2292:5: 2292:12 (#0)
+Non-limit ptr: lib::src::lodepng::inflateNoCompression::reader ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2293:5: 2293:15 (#0)
+Non-limit ptr: lib::src::lodepng::inflateNoCompression::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2294:5: 2294:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inflatev::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2347:5: 2347:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inflatev::in_0 ; poison: ({PtrArith, VoidSource, CastSource, MiscSource, ExternCallReturn, GlobalSource, StringLitSource, MixedRefSource}, {CastSink, VoidSink, MixedRefSink, ExternCallParam, PtrArithSink, MiscSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:2348:5: 2348:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inflatev::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2350:5: 2350:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inflate::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2399:5: 2399:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inflate::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2400:5: 2400:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inflate::in_0 ; poison: ({CastSource, StringLitSource, ExternCallReturn, PtrArith, MixedRefSource, GlobalSource, VoidSource, MiscSource}, {PtrArithSink, ExternCallParam, MixedRefSink, CastSink, MiscSink, VoidSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:2401:5: 2401:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inflate::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2403:5: 2403:17 (#0)
+Non-limit ptr: lib::src::lodepng::inflatev::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2412:5: 2412:12 (#0)
+Non-limit ptr: lib::src::lodepng::inflatev::in_0 ; poison: ({CastSource, StringLitSource, VoidSource, GlobalSource, MixedRefSource, ExternCallReturn, MiscSource, PtrArith}, {MiscSink, MixedRefSink, GlobalSink, PtrArithSink, CastSink, VoidSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:2413:5: 2413:13 (#0)
+Non-limit ptr: lib::src::lodepng::inflatev::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2415:5: 2415:17 (#0)
+Non-limit ptr: lib::src::lodepng::searchCodeIndex::array ; poison: ({GlobalSource, MiscSource, PtrArith}, {MiscSink, PtrArithSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:2438:5: 2438:14 (#0)
+Non-limit ptr: lib::src::lodepng::addLengthDistance::values ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2458:5: 2458:15 (#0)
+Non-limit ptr: lib::src::lodepng::hash_init::hash ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2503:5: 2503:13 (#0)
+Non-limit ptr: lib::src::lodepng::hash_cleanup::hash ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2573:35: 2573:43 (#0)
+Non-limit ptr: lib::src::lodepng::getHash::data ; poison: ({MiscSource, ExternCallReturn, CastSource, VoidSource, StringLitSource, GlobalSource, MixedRefSource, PtrArith}, {CastSink, GlobalSink, PtrArithSink, ExternCallParam, MixedRefSink, VoidSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:2582:5: 2582:13 (#0)
+Non-limit ptr: lib::src::lodepng::countZeros::data ; poison: ({MixedRefSource, VoidSource, MiscSource, GlobalSource, PtrArith, CastSource, ExternCallReturn, StringLitSource}, {MiscSink, VoidSink, MixedRefSink, CastSink, ExternCallParam, PtrArithSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:2618:5: 2618:13 (#0)
+Non-limit ptr: lib::src::lodepng::countZeros::start ; poison: ({CastSource, VoidSource, MiscSource, GlobalSource, ExternCallReturn, StringLitSource, MixedRefSource, PtrArith}, {GlobalSink, ExternCallParam, MixedRefSink, VoidSink, PtrArithSink, CastSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:2622:9: 2622:18 (#0)
+Non-limit ptr: lib::src::lodepng::countZeros::end ; poison: ({StringLitSource, ExternCallReturn, VoidSource, MixedRefSource, CastSource, GlobalSource, PtrArith, MiscSource}, {PtrArithSink, ExternCallParam, VoidSink, MixedRefSink, MiscSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:2623:9: 2623:16 (#0)
+Non-limit ptr: lib::src::lodepng::updateHashChain::hash ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2634:5: 2634:13 (#0)
+Non-limit ptr: lib::src::lodepng::encodeLZ77::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2657:5: 2657:12 (#0)
+Non-limit ptr: lib::src::lodepng::encodeLZ77::hash ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2658:5: 2658:13 (#0)
+Non-limit ptr: lib::src::lodepng::encodeLZ77::in_0 ; poison: ({GlobalSource, MiscSource, VoidSource, StringLitSource, CastSource, MixedRefSource, PtrArith, ExternCallReturn}, {CastSink, ExternCallParam, VoidSink, GlobalSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:2659:5: 2659:13 (#0)
+Non-limit ptr: lib::src::lodepng::encodeLZ77::lastptr ; poison: ({CastSource, GlobalSource, StringLitSource, MixedRefSource, ExternCallReturn, VoidSource, MiscSource, PtrArith}, {MiscSink, ExternCallParam, MixedRefSink, VoidSink, PtrArithSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:2691:9: 2691:20 (#0)
+Non-limit ptr: lib::src::lodepng::encodeLZ77::foreptr ; poison: ({MixedRefSource, MiscSource, CastSource, PtrArith, VoidSource, GlobalSource, StringLitSource, ExternCallReturn}, {ExternCallParam, PtrArithSink, VoidSink, MiscSink, MixedRefSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:2692:9: 2692:20 (#0)
+Non-limit ptr: lib::src::lodepng::encodeLZ77::backptr ; poison: ({StringLitSource, ExternCallReturn, MixedRefSource, GlobalSource, PtrArith, CastSource, VoidSource, MiscSource}, {ExternCallParam, PtrArithSink, GlobalSink, VoidSink, MiscSink, CastSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:2693:9: 2693:20 (#0)
+Non-limit ptr: lib::src::lodepng::deflateNoCompression::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2913:5: 2913:12 (#0)
+Non-limit ptr: lib::src::lodepng::deflateNoCompression::data ; poison: ({VoidSource, MixedRefSource, CastSource, PtrArith, GlobalSource, MiscSource, ExternCallReturn, StringLitSource}, {CastSink, ExternCallParam, GlobalSink, VoidSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:2914:5: 2914:13 (#0)
+Non-limit ptr: lib::src::lodepng::writeLZ77data::writer ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2985:5: 2985:15 (#0)
+Non-limit ptr: lib::src::lodepng::writeLZ77data::lz77_encoded ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2986:5: 2986:21 (#0)
+Non-limit ptr: lib::src::lodepng::writeLZ77data::tree_ll ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2987:5: 2987:16 (#0)
+Non-limit ptr: lib::src::lodepng::writeLZ77data::tree_d ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:2988:5: 2988:15 (#0)
+Non-limit ptr: lib::src::lodepng::deflateDynamic::writer ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3022:5: 3022:15 (#0)
+Non-limit ptr: lib::src::lodepng::deflateDynamic::hash ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3023:5: 3023:13 (#0)
+Non-limit ptr: lib::src::lodepng::deflateDynamic::data ; poison: ({MixedRefSource, StringLitSource, GlobalSource, VoidSource, ExternCallReturn, MiscSource, CastSource, PtrArith}, {MixedRefSink, PtrArithSink, GlobalSink, VoidSink, CastSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:3024:5: 3024:13 (#0)
+Non-limit ptr: lib::src::lodepng::deflateDynamic::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3027:5: 3027:17 (#0)
+Non-limit ptr: lib::src::lodepng::deflateDynamic::frequencies_ll ; poison: ({MiscSource, PtrArith, StringLitSource, ExternCallReturn, MixedRefSource, CastSource, GlobalSource, VoidSource}, {PtrArithSink, CastSink, MixedRefSink, VoidSink, GlobalSink, MiscSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:3060:9: 3060:27 (#0)
+Non-limit ptr: lib::src::lodepng::deflateDynamic::frequencies_d ; poison: ({VoidSource, CastSource, StringLitSource, MixedRefSource, MiscSource, GlobalSource, PtrArith, ExternCallReturn}, {MiscSink, PtrArithSink, ExternCallParam, VoidSink, MixedRefSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:3061:9: 3061:26 (#0)
+Non-limit ptr: lib::src::lodepng::deflateDynamic::frequencies_cl ; poison: ({VoidSource, CastSource, GlobalSource, MiscSource, MixedRefSource, ExternCallReturn, StringLitSource, PtrArith}, {PtrArithSink, MixedRefSink, ExternCallParam, VoidSink, MiscSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:3062:9: 3062:27 (#0)
+Non-limit ptr: lib::src::lodepng::deflateDynamic::bitlen_lld ; poison: ({MiscSource, CastSource, GlobalSource, ExternCallReturn, PtrArith, StringLitSource, MixedRefSource, VoidSource}, {MixedRefSink, PtrArithSink, ExternCallParam, CastSink, GlobalSink, VoidSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:3063:9: 3063:23 (#0)
+Non-limit ptr: lib::src::lodepng::deflateDynamic::bitlen_lld_e ; poison: ({StringLitSource, PtrArith, MixedRefSource, MiscSource, VoidSource, GlobalSource, CastSource, ExternCallReturn}, {MiscSink, MixedRefSink, CastSink, ExternCallParam, VoidSink, PtrArithSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:3064:9: 3064:25 (#0)
+Non-limit ptr: lib::src::lodepng::deflateFixed::writer ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3477:5: 3477:15 (#0)
+Non-limit ptr: lib::src::lodepng::deflateFixed::hash ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3478:5: 3478:13 (#0)
+Non-limit ptr: lib::src::lodepng::deflateFixed::data ; poison: ({GlobalSource, MiscSource, StringLitSource, PtrArith, VoidSource, MixedRefSource, ExternCallReturn, CastSource}, {PtrArithSink, MiscSink, CastSink, ExternCallParam, VoidSink, MixedRefSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:3479:5: 3479:13 (#0)
+Non-limit ptr: lib::src::lodepng::deflateFixed::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3482:5: 3482:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_deflatev::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3561:5: 3561:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_deflatev::in_0 ; poison: ({PtrArith, MixedRefSource, CastSource, MiscSource, VoidSource, GlobalSource, StringLitSource, ExternCallReturn}, {MixedRefSink, ExternCallParam, MiscSink, CastSink, VoidSink, GlobalSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:3562:5: 3562:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_deflatev::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3564:5: 3564:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_deflate::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3652:5: 3652:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_deflate::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3653:5: 3653:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_deflate::in_0 ; poison: ({StringLitSource, MixedRefSource, GlobalSource, ExternCallReturn, VoidSource, CastSource, PtrArith, MiscSource}, {VoidSink, PtrArithSink, ExternCallParam, MixedRefSink, GlobalSink, MiscSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:3654:5: 3654:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_deflate::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3656:5: 3656:17 (#0)
+Non-limit ptr: lib::src::lodepng::deflate::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3665:5: 3665:12 (#0)
+Non-limit ptr: lib::src::lodepng::deflate::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3666:5: 3666:16 (#0)
+Non-limit ptr: lib::src::lodepng::deflate::in_0 ; poison: ({CastSource, StringLitSource, ExternCallReturn, MiscSource, GlobalSource, VoidSource, PtrArith, MixedRefSource}, {MixedRefSink, VoidSink, PtrArithSink, ExternCallParam, CastSink, GlobalSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:3667:5: 3667:13 (#0)
+Non-limit ptr: lib::src::lodepng::deflate::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3669:5: 3669:17 (#0)
+Non-limit ptr: lib::src::lodepng::update_adler32::data ; poison: ({MixedRefSource, ExternCallReturn, CastSource, PtrArith, VoidSource, StringLitSource, GlobalSource, MiscSource}, {PtrArithSink, CastSink, GlobalSink, MixedRefSink, VoidSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:3682:5: 3682:13 (#0)
+Non-limit ptr: lib::src::lodepng::update_adler32::fresh73 ; poison: ({MiscSource, MixedRefSource, StringLitSource, VoidSource, GlobalSource, ExternCallReturn, CastSource, PtrArith}, {ExternCallParam, PtrArithSink, VoidSink, MiscSink, MixedRefSink, GlobalSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:3697:17: 3697:24 (#0)
+Non-limit ptr: lib::src::lodepng::adler32::data ; poison: ({MixedRefSource, VoidSource, MiscSource, StringLitSource, PtrArith, ExternCallReturn, GlobalSource, CastSource}, {MiscSink, CastSink, VoidSink, GlobalSink, ExternCallParam, MixedRefSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:3709:5: 3709:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_zlib_decompressv::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3715:5: 3715:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_zlib_decompressv::in_0 ; poison: ({VoidSource, CastSource, MixedRefSource, GlobalSource, ExternCallReturn, MiscSource, StringLitSource, PtrArith}, {CastSink, ExternCallParam, GlobalSink, PtrArithSink, VoidSink, MiscSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:3716:5: 3716:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_zlib_decompressv::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3718:5: 3718:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_zlib_decompress::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3769:5: 3769:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_zlib_decompress::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3770:5: 3770:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_zlib_decompress::in_0 ; poison: ({StringLitSource, CastSource, PtrArith, VoidSource, ExternCallReturn, GlobalSource, MixedRefSource, MiscSource}, {MiscSink, ExternCallParam, VoidSink, MixedRefSink, CastSink, GlobalSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:3771:5: 3771:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_zlib_decompress::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3773:5: 3773:17 (#0)
+Non-limit ptr: lib::src::lodepng::zlib_decompress::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3782:5: 3782:12 (#0)
+Non-limit ptr: lib::src::lodepng::zlib_decompress::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3783:5: 3783:16 (#0)
+Non-limit ptr: lib::src::lodepng::zlib_decompress::in_0 ; poison: ({MixedRefSource, MiscSource, CastSource, GlobalSource, StringLitSource, ExternCallReturn, PtrArith, VoidSource}, {CastSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:3785:5: 3785:13 (#0)
+Non-limit ptr: lib::src::lodepng::zlib_decompress::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3787:5: 3787:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_zlib_compress::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3814:5: 3814:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_zlib_compress::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3815:5: 3815:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_zlib_compress::in_0 ; poison: ({CastSource, StringLitSource, PtrArith, MiscSource, MixedRefSource, VoidSource, GlobalSource, ExternCallReturn}, {MixedRefSink, GlobalSink, CastSink, VoidSink, MiscSink, PtrArithSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:3816:5: 3816:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_zlib_compress::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3818:5: 3818:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_zlib_compress::deflatedata ; poison: ({ExternCallReturn, StringLitSource, GlobalSource, MiscSource, VoidSource, MixedRefSource, CastSource, PtrArith}, {MiscSink, CastSink, MixedRefSink, VoidSink, GlobalSink, PtrArithSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:3822:9: 3822:24 (#0)
+Non-limit ptr: lib::src::lodepng::zlib_compress::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3874:5: 3874:12 (#0)
+Non-limit ptr: lib::src::lodepng::zlib_compress::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3875:5: 3875:16 (#0)
+Non-limit ptr: lib::src::lodepng::zlib_compress::in_0 ; poison: ({GlobalSource, VoidSource, PtrArith, MixedRefSource, ExternCallReturn, CastSource, MiscSource, StringLitSource}, {ExternCallParam, MiscSink, CastSink, VoidSink, PtrArithSink, MixedRefSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:3876:5: 3876:13 (#0)
+Non-limit ptr: lib::src::lodepng::zlib_compress::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3878:5: 3878:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_compress_settings_init::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3891:5: 3891:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decompress_settings_init::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:3923:5: 3923:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_crc32::data ; poison: ({ExternCallReturn, GlobalSource, CastSource, MixedRefSource, PtrArith, MiscSource, VoidSource, StringLitSource}, {ExternCallParam, CastSink, GlobalSink, MiscSink, VoidSink, PtrArithSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:4207:5: 4207:13 (#0)
+Non-limit ptr: lib::src::lodepng::readBitFromReversedStream::bitpointer ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4221:5: 4221:19 (#0)
+Non-limit ptr: lib::src::lodepng::readBitFromReversedStream::bitstream ; poison: ({MiscSource, ExternCallReturn, GlobalSource, CastSource, StringLitSource, PtrArith, MixedRefSource, VoidSource}, {ExternCallParam, VoidSink, MiscSink, MixedRefSink, CastSink, GlobalSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:4222:5: 4222:18 (#0)
+Non-limit ptr: lib::src::lodepng::readBitsFromReversedStream::bitpointer ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4233:5: 4233:19 (#0)
+Non-limit ptr: lib::src::lodepng::readBitsFromReversedStream::bitstream ; poison: ({StringLitSource, CastSource, MixedRefSource, ExternCallReturn, VoidSource, PtrArith, GlobalSource, MiscSource}, {ExternCallParam, PtrArithSink, MixedRefSink, VoidSink, MiscSink, GlobalSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:4234:5: 4234:18 (#0)
+Non-limit ptr: lib::src::lodepng::setBitOfReversedStream::bitpointer ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4248:5: 4248:19 (#0)
+Non-limit ptr: lib::src::lodepng::setBitOfReversedStream::bitstream ; poison: ({PtrArith, VoidSource, StringLitSource, GlobalSource, CastSource, MixedRefSource, ExternCallReturn, MiscSource}, {GlobalSink, VoidSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:4249:5: 4249:18 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_length::chunk ; poison: ({PtrArith, MiscSource, MixedRefSource, ExternCallReturn, VoidSource, StringLitSource, CastSource, GlobalSource}, {ExternCallParam, MiscSink, MixedRefSink, CastSink, PtrArithSink, GlobalSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:4273:5: 4273:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_type::type_0 ; poison: ({PtrArith, MiscSource}, {PtrArithSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:4279:5: 4279:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_type::chunk ; poison: ({PtrArith, MiscSource}, {MiscSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:4280:5: 4280:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_type_equals::chunk ; poison: ({VoidSource, MixedRefSource, GlobalSource, ExternCallReturn, MiscSource, StringLitSource, PtrArith, CastSource}, {GlobalSink, MiscSink, CastSink, PtrArithSink, ExternCallParam, VoidSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:4297:5: 4297:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_type_equals::type_0 ; poison: ({ExternCallReturn, CastSource, MixedRefSource, GlobalSource, StringLitSource, PtrArith, VoidSource, MiscSource}, {PtrArithSink, MixedRefSink, VoidSink, GlobalSink, ExternCallParam, MiscSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:4298:5: 4298:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_ancillary::chunk ; poison: ({StringLitSource, GlobalSource, CastSource, VoidSource, MiscSource, MixedRefSource, ExternCallReturn, PtrArith}, {CastSink, ExternCallParam, PtrArithSink, MixedRefSink, VoidSink, MiscSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:4315:5: 4315:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_private::chunk ; poison: ({PtrArith, MiscSource}, {MiscSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:4322:5: 4322:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_safetocopy::chunk ; poison: ({MiscSource, PtrArith}, {PtrArithSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:4329:5: 4329:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_data::chunk ; poison: ({MiscSource, PtrArith}, {PtrArithSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:4336:5: 4336:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_data_const::chunk ; poison: ({MixedRefSource, GlobalSource, CastSource, StringLitSource, MiscSource, ExternCallReturn, PtrArith, VoidSource}, {PtrArithSink, CastSink, GlobalSink, VoidSink, MiscSink, ExternCallParam, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:4342:5: 4342:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_check_crc::chunk ; poison: ({StringLitSource, MixedRefSource, PtrArith, ExternCallReturn, MiscSource, GlobalSource, VoidSource, CastSource}, {PtrArithSink, ExternCallParam, VoidSink, MixedRefSink, CastSink, GlobalSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:4348:5: 4348:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_generate_crc::chunk ; poison: ({StringLitSource, ExternCallReturn, PtrArith, MiscSource, GlobalSource, CastSource, VoidSource, MixedRefSource}, {MixedRefSink, MiscSink, VoidSink, ExternCallParam, PtrArithSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:4365:53: 4365:62 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_next::chunk ; poison: ({MiscSource, VoidSource, PtrArith, GlobalSource, MixedRefSource, StringLitSource, ExternCallReturn, CastSource}, {ExternCallParam, PtrArithSink, VoidSink, MixedRefSink, GlobalSink, MiscSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:4378:5: 4378:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_next::end ; poison: ({MixedRefSource, PtrArith, CastSource, VoidSource, GlobalSource, ExternCallReturn, MiscSource, StringLitSource}, {VoidSink, CastSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:4379:5: 4379:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_next_const::chunk ; poison: ({GlobalSource, MiscSource, VoidSource, ExternCallReturn, StringLitSource, PtrArith, MixedRefSource, CastSource}, {ExternCallParam, MiscSink, CastSink, GlobalSink, PtrArithSink, MixedRefSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:4413:5: 4413:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_next_const::end ; poison: ({MiscSource, PtrArith, GlobalSource, CastSource, VoidSource, ExternCallReturn, StringLitSource, MixedRefSource}, {PtrArithSink, ExternCallParam, MixedRefSink, CastSink, MiscSink, GlobalSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:4414:5: 4414:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_find::chunk ; poison: ({PtrArith, MixedRefSource, VoidSource, StringLitSource, GlobalSource, MiscSource, ExternCallReturn, CastSource}, {ExternCallParam, MixedRefSink, CastSink, GlobalSink, VoidSink, PtrArithSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:4448:5: 4448:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_find::end ; poison: ({PtrArith, MiscSource, MixedRefSource, StringLitSource, ExternCallReturn, CastSource, GlobalSource, VoidSource}, {CastSink, GlobalSink, VoidSink, MixedRefSink, PtrArithSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:4449:5: 4449:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_find::type_0 ; poison: ({StringLitSource, MixedRefSource, GlobalSource, VoidSource, ExternCallReturn, PtrArith, MiscSource, CastSource}, {PtrArithSink, CastSink, MixedRefSink, VoidSink, GlobalSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:4450:5: 4450:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_find_const::chunk ; poison: ({ExternCallReturn, PtrArith, MiscSource, GlobalSource, VoidSource, MixedRefSource, CastSource, StringLitSource}, {PtrArithSink, MixedRefSink, CastSink, VoidSink, MiscSink, GlobalSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:4467:5: 4467:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_find_const::end ; poison: ({StringLitSource, PtrArith, MixedRefSource, VoidSource, ExternCallReturn, CastSource, MiscSource, GlobalSource}, {PtrArithSink, VoidSink, CastSink, GlobalSink, MiscSink, ExternCallParam, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:4468:5: 4468:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_find_const::type_0 ; poison: ({MiscSource, MixedRefSource, CastSource, VoidSource, ExternCallReturn, PtrArith, GlobalSource, StringLitSource}, {MiscSink, MixedRefSink, ExternCallParam, VoidSink, CastSink, GlobalSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:4469:5: 4469:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_append::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4486:5: 4486:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_append::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4487:5: 4487:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_append::chunk ; poison: ({StringLitSource, PtrArith, CastSource, MiscSource, GlobalSource, MixedRefSource, VoidSource, ExternCallReturn}, {MixedRefSink, PtrArithSink, MiscSink, ExternCallParam, CastSink, VoidSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:4488:5: 4488:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_append::chunk_start ; poison: ({StringLitSource, PtrArith, GlobalSource, VoidSource, ExternCallReturn, MiscSource, CastSource, MixedRefSource}, {ExternCallParam, MiscSink, VoidSink, MixedRefSink, PtrArithSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:4493:9: 4493:24 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_append::new_buffer ; poison: ({VoidSource, StringLitSource, MiscSource, CastSource, MixedRefSource, PtrArith, ExternCallReturn, GlobalSource}, {ExternCallParam, MixedRefSink, VoidSink, MiscSink, CastSink, GlobalSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:4494:9: 4494:23 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_init::chunk ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4524:5: 4524:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_init::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4525:5: 4525:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_init::type_0 ; poison: ({CastSource, GlobalSource, VoidSource, PtrArith, ExternCallReturn, MixedRefSource, StringLitSource, MiscSource}, {VoidSink, ExternCallParam, PtrArithSink, MiscSink, GlobalSink, MixedRefSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:4527:5: 4527:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_createv::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4552:5: 4552:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_createv::type_0 ; poison: ({MixedRefSource, PtrArith, VoidSource, CastSource, GlobalSource, ExternCallReturn, StringLitSource, MiscSource}, {GlobalSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:4554:5: 4554:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_createv::data ; poison: ({MiscSource, ExternCallReturn, GlobalSource, VoidSource, StringLitSource, PtrArith, MixedRefSource, CastSource}, {PtrArithSink, CastSink, ExternCallParam, MiscSink, MixedRefSink, GlobalSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:4555:5: 4555:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_createv::chunk ; poison: ({VoidSource, MiscSource, CastSource, ExternCallReturn, StringLitSource, PtrArith, GlobalSource, MixedRefSource}, {MixedRefSink, CastSink, GlobalSink, PtrArithSink, VoidSink, MiscSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:4557:9: 4557:18 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_create::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4572:5: 4572:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_create::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4573:5: 4573:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_create::type_0 ; poison: ({ExternCallReturn, MixedRefSource, StringLitSource, PtrArith, CastSource, VoidSource, MiscSource, GlobalSource}, {GlobalSink, VoidSink, MiscSink, MixedRefSink, PtrArithSink, ExternCallParam, CastSink}) at benchmark/lodepng/src/lodepng.rs:4575:5: 4575:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_chunk_create::data ; poison: ({GlobalSource, PtrArith, MixedRefSource, ExternCallReturn, CastSource, StringLitSource, VoidSource, MiscSource}, {GlobalSink, MixedRefSink, CastSink, ExternCallParam, VoidSink, MiscSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:4576:5: 4576:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_color_mode_init::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4654:50: 4654:58 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_color_mode_alloc_palette::info ; poison: ({CastSource, StringLitSource, MiscSource, MixedRefSource, GlobalSource, ExternCallReturn, PtrArith, VoidSource}, {VoidSink, ExternCallParam, MixedRefSink, PtrArithSink, CastSink, MiscSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:4667:55: 4667:63 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_color_mode_cleanup::info ; poison: ({PtrArith, MiscSource, VoidSource, StringLitSource, CastSource, GlobalSource, MixedRefSource, ExternCallReturn}, {MixedRefSink, ExternCallParam, PtrArithSink, VoidSink, CastSink, GlobalSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:4706:53: 4706:61 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_color_mode_copy::dest ; poison: ({MiscSource, PtrArith, VoidSource, CastSource, GlobalSource, MixedRefSource, ExternCallReturn, StringLitSource}, {CastSink, MixedRefSink, PtrArithSink, VoidSink, MiscSink, GlobalSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:4711:5: 4711:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_color_mode_copy::source ; poison: ({StringLitSource, GlobalSource, PtrArith, MixedRefSource, VoidSource, MiscSource, CastSource, ExternCallReturn}, {GlobalSink, MixedRefSink, VoidSink, CastSink, PtrArithSink, MiscSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:4712:5: 4712:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_color_mode_equal::a ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4755:5: 4755:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_color_mode_equal::b ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4756:5: 4756:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_palette_clear::info ; poison: ({PtrArith, VoidSource, MixedRefSource, CastSource, MiscSource, StringLitSource, GlobalSource, ExternCallReturn}, {MixedRefSink, ExternCallParam, PtrArithSink, MiscSink, CastSink, VoidSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:4794:48: 4794:56 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_palette_add::info ; poison: ({VoidSource, MiscSource, ExternCallReturn, CastSource, MixedRefSource, GlobalSource, StringLitSource, PtrArith}, {PtrArithSink, CastSink, GlobalSink, MiscSink, MixedRefSink, ExternCallParam, VoidSink}) at benchmark/lodepng/src/lodepng.rs:4804:5: 4804:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_get_bpp::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4849:5: 4849:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_get_channels::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4855:5: 4855:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_is_greyscale_type::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4861:5: 4861:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_is_alpha_type::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4870:5: 4870:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_is_palette_type::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4877:5: 4877:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_has_palette_alpha::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4884:5: 4884:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_can_have_alpha::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4904:5: 4904:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_get_raw_size::color ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4931:5: 4931:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_pixel_overflow::pngcolor ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4954:5: 4954:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_pixel_overflow::rawcolor ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:4955:5: 4955:17 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGUnknownChunks_init::info ; poison: ({StringLitSource, CastSource, VoidSource, MixedRefSource, PtrArith, GlobalSource, MiscSource, ExternCallReturn}, {GlobalSink, MixedRefSink, VoidSink, ExternCallParam, PtrArithSink, MiscSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:4993:48: 4993:56 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGUnknownChunks_cleanup::info ; poison: ({StringLitSource, VoidSource, GlobalSource, MixedRefSource, CastSource, ExternCallReturn, MiscSource, PtrArith}, {MixedRefSink, PtrArithSink, ExternCallParam, VoidSink, CastSink, GlobalSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:5007:51: 5007:59 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGUnknownChunks_copy::dest ; poison: ({PtrArith, MixedRefSource, StringLitSource, VoidSource, CastSource, ExternCallReturn, GlobalSource, MiscSource}, {PtrArithSink, GlobalSink, ExternCallParam, MixedRefSink, CastSink, VoidSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:5016:5: 5016:13 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGUnknownChunks_copy::src ; poison: ({MixedRefSource, PtrArith, ExternCallReturn, MiscSource, StringLitSource, GlobalSource, VoidSource, CastSource}, {GlobalSink, CastSink, VoidSink, ExternCallParam, MiscSink, MixedRefSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:5017:5: 5017:12 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGText_init::info ; poison: ({GlobalSource, PtrArith, CastSource, ExternCallReturn, VoidSource, MiscSource, StringLitSource, MixedRefSource}, {ExternCallParam, MixedRefSink, PtrArithSink, CastSink, MiscSink, VoidSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:5045:39: 5045:47 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGText_cleanup::info ; poison: ({MiscSource, CastSource, PtrArith, StringLitSource, MixedRefSource, GlobalSource, ExternCallReturn, VoidSource}, {CastSink, VoidSink, MiscSink, ExternCallParam, MixedRefSink, PtrArithSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:5052:42: 5052:50 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGText_copy::dest ; poison: ({VoidSource, GlobalSource, CastSource, ExternCallReturn, MiscSource, MixedRefSource, PtrArith, StringLitSource}, {MiscSink, PtrArithSink, ExternCallParam, GlobalSink, VoidSink, MixedRefSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:5064:5: 5064:13 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGText_copy::source ; poison: ({MiscSource, PtrArith, CastSource, StringLitSource, VoidSource, MixedRefSource, ExternCallReturn, GlobalSource}, {PtrArithSink, MiscSink, VoidSink, CastSink, ExternCallParam, MixedRefSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:5065:5: 5065:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_text_sized::info ; poison: ({ExternCallReturn, MiscSource, PtrArith, GlobalSource, VoidSource, CastSource, MixedRefSource, StringLitSource}, {CastSink, ExternCallParam, PtrArithSink, MiscSink, VoidSink, MixedRefSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:5088:5: 5088:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_text_sized::key ; poison: ({GlobalSource, ExternCallReturn, PtrArith, VoidSource, StringLitSource, MixedRefSource, MiscSource, CastSource}, {MixedRefSink, GlobalSink, MiscSink, CastSink, VoidSink, PtrArithSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:5089:5: 5089:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_text_sized::str ; poison: ({StringLitSource, CastSource, MixedRefSource, PtrArith, MiscSource, ExternCallReturn, GlobalSource, VoidSource}, {MiscSink, CastSink, PtrArithSink, MixedRefSink, GlobalSink, ExternCallParam, VoidSink}) at benchmark/lodepng/src/lodepng.rs:5090:5: 5090:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_text_sized::new_keys ; poison: ({StringLitSource, VoidSource, ExternCallReturn, GlobalSource, MiscSource, MixedRefSource, CastSource, PtrArith}, {CastSink, GlobalSink, VoidSink, PtrArithSink, MiscSink, ExternCallParam, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:5093:9: 5093:21 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_text_sized::new_strings ; poison: ({MiscSource, VoidSource, MixedRefSource, CastSource, ExternCallReturn, PtrArith, StringLitSource, GlobalSource}, {VoidSink, MixedRefSink, GlobalSink, MiscSink, ExternCallParam, CastSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:5100:9: 5100:24 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_text::info ; poison: ({VoidSource, CastSource, MixedRefSource, ExternCallReturn, MiscSource, StringLitSource, PtrArith, GlobalSource}, {MixedRefSink, GlobalSink, MiscSink, PtrArithSink, ExternCallParam, CastSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:5148:5: 5148:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_text::key ; poison: ({MixedRefSource, ExternCallReturn, GlobalSource, CastSource, VoidSource, StringLitSource, MiscSource, PtrArith}, {CastSink, PtrArithSink, MiscSink, GlobalSink, ExternCallParam, VoidSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:5149:5: 5149:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_text::str ; poison: ({CastSource, VoidSource, PtrArith, ExternCallReturn, MiscSource, MixedRefSource, GlobalSource, StringLitSource}, {ExternCallParam, MixedRefSink, CastSink, GlobalSink, VoidSink, MiscSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:5150:5: 5150:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_clear_text::info ; poison: ({MixedRefSource, MiscSource, CastSource, PtrArith, GlobalSource, StringLitSource, ExternCallReturn, VoidSource}, {MixedRefSink, CastSink, GlobalSink, ExternCallParam, PtrArithSink, VoidSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:5155:45: 5155:53 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGIText_init::info ; poison: ({MixedRefSource, VoidSource, StringLitSource, MiscSource, GlobalSource, ExternCallReturn, CastSource, PtrArith}, {ExternCallParam, MiscSink, VoidSink, MixedRefSink, CastSink, PtrArithSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:5158:40: 5158:48 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGIText_cleanup::info ; poison: ({StringLitSource, PtrArith, VoidSource, MiscSource, MixedRefSource, GlobalSource, ExternCallReturn, CastSource}, {ExternCallParam, MiscSink, CastSink, GlobalSink, MixedRefSink, PtrArithSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:5169:43: 5169:51 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGIText_copy::dest ; poison: ({ExternCallReturn, PtrArith, MiscSource, CastSource, MixedRefSource, VoidSource, GlobalSource, StringLitSource}, {PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, CastSink, GlobalSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:5185:5: 5185:13 (#0)
+Non-limit ptr: lib::src::lodepng::LodePNGIText_copy::source ; poison: ({PtrArith, MixedRefSource, GlobalSource, CastSource, VoidSource, StringLitSource, ExternCallReturn, MiscSource}, {GlobalSink, CastSink, VoidSink, PtrArithSink, MixedRefSink, MiscSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:5186:5: 5186:15 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_clear_itext::info ; poison: ({ExternCallReturn, VoidSource, MixedRefSource, StringLitSource, CastSource, PtrArith, MiscSource, GlobalSource}, {GlobalSink, MixedRefSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:5215:46: 5215:54 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext_sized::info ; poison: ({MiscSource, ExternCallReturn, CastSource, MixedRefSource, GlobalSource, StringLitSource, VoidSource, PtrArith}, {PtrArithSink, MiscSink, MixedRefSink, CastSink, ExternCallParam, VoidSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:5219:5: 5219:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext_sized::key ; poison: ({VoidSource, PtrArith, ExternCallReturn, MixedRefSource, CastSource, GlobalSource, StringLitSource, MiscSource}, {VoidSink, GlobalSink, MiscSink, PtrArithSink, ExternCallParam, MixedRefSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:5220:5: 5220:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext_sized::langtag ; poison: ({VoidSource, CastSource, GlobalSource, MixedRefSource, StringLitSource, ExternCallReturn, PtrArith, MiscSource}, {GlobalSink, ExternCallParam, MixedRefSink, MiscSink, PtrArithSink, VoidSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:5221:5: 5221:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext_sized::transkey ; poison: ({StringLitSource, ExternCallReturn, MiscSource, PtrArith, MixedRefSource, VoidSource, CastSource, GlobalSource}, {GlobalSink, CastSink, MixedRefSink, PtrArithSink, ExternCallParam, MiscSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:5222:5: 5222:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext_sized::str ; poison: ({VoidSource, CastSource, ExternCallReturn, MiscSource, StringLitSource, MixedRefSource, GlobalSource, PtrArith}, {GlobalSink, PtrArithSink, MiscSink, VoidSink, ExternCallParam, MixedRefSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:5223:5: 5223:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext_sized::new_keys ; poison: ({PtrArith, ExternCallReturn, StringLitSource, GlobalSource, MixedRefSource, CastSource, MiscSource, VoidSource}, {MiscSink, PtrArithSink, ExternCallParam, VoidSink, MixedRefSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:5226:9: 5226:21 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext_sized::new_langtags ; poison: ({MiscSource, PtrArith, CastSource, StringLitSource, MixedRefSource, ExternCallReturn, VoidSource, GlobalSource}, {CastSink, MiscSink, PtrArithSink, GlobalSink, VoidSink, MixedRefSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:5233:9: 5233:25 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext_sized::new_transkeys ; poison: ({StringLitSource, CastSource, MixedRefSource, PtrArith, MiscSource, GlobalSource, ExternCallReturn, VoidSource}, {GlobalSink, VoidSink, PtrArithSink, MiscSink, MixedRefSink, CastSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:5240:9: 5240:26 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext_sized::new_strings ; poison: ({PtrArith, VoidSource, MiscSource, ExternCallReturn, CastSource, StringLitSource, GlobalSource, MixedRefSource}, {PtrArithSink, CastSink, ExternCallParam, VoidSink, MixedRefSink, GlobalSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:5247:9: 5247:24 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext::info ; poison: ({StringLitSource, VoidSource, ExternCallReturn, GlobalSource, MixedRefSource, CastSource, MiscSource, PtrArith}, {PtrArithSink, CastSink, ExternCallParam, MiscSink, GlobalSink, VoidSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:5301:5: 5301:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext::key ; poison: ({CastSource, MiscSource, ExternCallReturn, VoidSource, PtrArith, MixedRefSource, StringLitSource, GlobalSource}, {PtrArithSink, ExternCallParam, VoidSink, MiscSink, MixedRefSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:5302:5: 5302:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext::langtag ; poison: ({GlobalSource, ExternCallReturn, VoidSource, PtrArith, MiscSource, CastSource, StringLitSource, MixedRefSource}, {CastSink, GlobalSink, PtrArithSink, MixedRefSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:5303:5: 5303:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext::transkey ; poison: ({StringLitSource, VoidSource, CastSource, ExternCallReturn, MixedRefSource, MiscSource, PtrArith, GlobalSource}, {ExternCallParam, VoidSink, MixedRefSink, MiscSink, CastSink, PtrArithSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:5304:5: 5304:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_add_itext::str ; poison: ({PtrArith, VoidSource, CastSource, MixedRefSource, GlobalSource, ExternCallReturn, MiscSource, StringLitSource}, {PtrArithSink, GlobalSink, VoidSink, MiscSink, MixedRefSink, CastSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:5305:5: 5305:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_assign_icc::info ; poison: ({PtrArith, MixedRefSource, ExternCallReturn, CastSource, GlobalSource, MiscSource, VoidSource, StringLitSource}, {CastSink, GlobalSink, MixedRefSink, PtrArithSink, VoidSink, MiscSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:5317:5: 5317:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_assign_icc::name ; poison: ({MiscSource, MixedRefSource, GlobalSource, ExternCallReturn, CastSource, VoidSource, PtrArith, StringLitSource}, {CastSink, ExternCallParam, PtrArithSink, VoidSink, GlobalSink, MixedRefSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:5318:5: 5318:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_assign_icc::profile ; poison: ({ExternCallReturn, StringLitSource, MixedRefSource, CastSource, MiscSource, GlobalSource, VoidSource, PtrArith}, {VoidSink, MixedRefSink, CastSink, ExternCallParam, PtrArithSink, GlobalSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:5319:5: 5319:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_set_icc::info ; poison: ({ExternCallReturn, MixedRefSource, GlobalSource, MiscSource, PtrArith, StringLitSource, VoidSource, CastSource}, {VoidSink, PtrArithSink, MixedRefSink, GlobalSink, CastSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:5342:5: 5342:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_set_icc::name ; poison: ({MiscSource, CastSource, VoidSource, StringLitSource, GlobalSource, ExternCallReturn, PtrArith, MixedRefSource}, {GlobalSink, MixedRefSink, VoidSink, PtrArithSink, ExternCallParam, MiscSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:5343:5: 5343:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_set_icc::profile ; poison: ({GlobalSource, VoidSource, CastSource, PtrArith, MixedRefSource, ExternCallReturn, MiscSource, StringLitSource}, {GlobalSink, MixedRefSink, ExternCallParam, PtrArithSink, MiscSink, VoidSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:5344:5: 5344:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_clear_icc::info ; poison: ({CastSource, PtrArith, MixedRefSource, StringLitSource, MiscSource, VoidSource, ExternCallReturn, GlobalSource}, {CastSink, GlobalSink, VoidSink, PtrArithSink, MixedRefSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:5354:44: 5354:52 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_info_init::info ; poison: ({MixedRefSource, CastSource, VoidSource, ExternCallReturn, PtrArith, StringLitSource, GlobalSource, MiscSource}, {GlobalSink, MiscSink, PtrArithSink, VoidSink, CastSink, ExternCallParam, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:5363:44: 5363:52 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_info_cleanup::info ; poison: ({PtrArith, ExternCallReturn, MixedRefSource, CastSource, GlobalSource, StringLitSource, MiscSource, VoidSource}, {PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, CastSink, GlobalSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:5397:47: 5397:55 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_info_copy::dest ; poison: ({VoidSource, ExternCallReturn, MixedRefSource, MiscSource, CastSource, StringLitSource, GlobalSource, PtrArith}, {MixedRefSink, GlobalSink, VoidSink, MiscSink, ExternCallParam, CastSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:5406:5: 5406:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_info_copy::source ; poison: ({VoidSource, MixedRefSource, CastSource, PtrArith, StringLitSource, ExternCallReturn, MiscSource, GlobalSource}, {VoidSink, ExternCallParam, GlobalSink, MiscSink, PtrArithSink, CastSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:5407:5: 5407:15 (#0)
+Non-limit ptr: lib::src::lodepng::addColorBits::out ; poison: ({VoidSource, StringLitSource, PtrArith, MixedRefSource, CastSource, MiscSource, ExternCallReturn, GlobalSource}, {MixedRefSink, GlobalSink, CastSink, VoidSink, PtrArithSink, MiscSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:5447:5: 5447:12 (#0)
+Non-limit ptr: lib::src::lodepng::color_tree_init::tree ; poison: ({PtrArith, CastSource, GlobalSource, VoidSource, StringLitSource, ExternCallReturn, MiscSource, MixedRefSource}, {MixedRefSink, CastSink, VoidSink, ExternCallParam, GlobalSink, PtrArithSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:5479:38: 5479:46 (#0)
+Non-limit ptr: lib::src::lodepng::color_tree_cleanup::tree ; poison: ({CastSource, VoidSource, StringLitSource, MiscSource, PtrArith, ExternCallReturn, GlobalSource, MixedRefSource}, {ExternCallParam, MixedRefSink, PtrArithSink, CastSink, GlobalSink, MiscSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:5488:41: 5488:49 (#0)
+Non-limit ptr: lib::src::lodepng::color_tree_get::tree ; poison: ({MiscSource, StringLitSource, ExternCallReturn, PtrArith, VoidSource, CastSource, GlobalSource, MixedRefSource}, {VoidSink, MixedRefSink, PtrArithSink, ExternCallParam, CastSink, MiscSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:5500:5: 5500:13 (#0)
+Non-limit ptr: lib::src::lodepng::color_tree_has::tree ; poison: ({StringLitSource, GlobalSource, CastSource, ExternCallReturn, MixedRefSource, MiscSource, PtrArith, VoidSource}, {GlobalSink, MixedRefSink, CastSink, PtrArithSink, VoidSink, MiscSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:5523:5: 5523:13 (#0)
+Non-limit ptr: lib::src::lodepng::color_tree_add::tree ; poison: ({StringLitSource, VoidSource, MiscSource, ExternCallReturn, GlobalSource, CastSource, PtrArith, MixedRefSource}, {MixedRefSink, CastSink, GlobalSink, PtrArithSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:5532:5: 5532:13 (#0)
+Non-limit ptr: lib::src::lodepng::rgba8ToPixel::out ; poison: ({CastSource, MixedRefSource, StringLitSource, VoidSource, ExternCallReturn, MiscSource, GlobalSource, PtrArith}, {CastSink, GlobalSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:5563:5: 5563:12 (#0)
+Non-limit ptr: lib::src::lodepng::rgba8ToPixel::mode ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:5565:5: 5565:13 (#0)
+Non-limit ptr: lib::src::lodepng::rgba8ToPixel::tree ; poison: ({MiscSource, MixedRefSource, ExternCallReturn, StringLitSource, CastSource, PtrArith, VoidSource, GlobalSource}, {MixedRefSink, GlobalSink, PtrArithSink, ExternCallParam, MiscSink, CastSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:5566:5: 5566:13 (#0)
+Non-limit ptr: lib::src::lodepng::rgba16ToPixel::out ; poison: ({VoidSource, CastSource, MixedRefSource, PtrArith, StringLitSource, GlobalSource, ExternCallReturn, MiscSource}, {MiscSink, ExternCallParam, VoidSink, MixedRefSink, GlobalSink, CastSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:5802:5: 5802:12 (#0)
+Non-limit ptr: lib::src::lodepng::rgba16ToPixel::mode ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:5804:5: 5804:13 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorRGBA8::r ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:5954:5: 5954:10 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorRGBA8::g ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:5955:5: 5955:10 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorRGBA8::b ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:5956:5: 5956:10 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorRGBA8::a ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:5957:5: 5957:10 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorRGBA8::in_0 ; poison: ({PtrArith, MixedRefSource, VoidSource, StringLitSource, CastSource, MiscSource, ExternCallReturn, GlobalSource}, {CastSink, PtrArithSink, MiscSink, GlobalSink, VoidSink, ExternCallParam, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:5958:5: 5958:13 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorRGBA8::mode ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:5960:5: 5960:13 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorsRGBA8::buffer ; poison: ({StringLitSource, PtrArith, MixedRefSource, GlobalSource, ExternCallReturn, CastSource, VoidSource, MiscSource}, {CastSink, MiscSink, GlobalSink, PtrArithSink, ExternCallParam, VoidSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:6259:5: 6259:15 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorsRGBA8::in_0 ; poison: ({MixedRefSource, GlobalSource, PtrArith, StringLitSource, VoidSource, ExternCallReturn, MiscSource, CastSource}, {MixedRefSink, ExternCallParam, CastSink, PtrArithSink, GlobalSink, VoidSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:6261:5: 6261:13 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorsRGBA8::mode ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:6262:5: 6262:13 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorsRGB8::buffer ; poison: ({PtrArith, GlobalSource, ExternCallReturn, VoidSource, CastSource, MiscSource, MixedRefSource, StringLitSource}, {PtrArithSink, MixedRefSink, VoidSink, CastSink, GlobalSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:6655:5: 6655:15 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorsRGB8::in_0 ; poison: ({MixedRefSource, StringLitSource, ExternCallReturn, GlobalSource, PtrArith, VoidSource, CastSource, MiscSource}, {MiscSink, MixedRefSink, GlobalSink, VoidSink, PtrArithSink, ExternCallParam, CastSink}) at benchmark/lodepng/src/lodepng.rs:6657:5: 6657:13 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorsRGB8::mode ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:6658:5: 6658:13 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorRGBA16::r ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:6880:5: 6880:10 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorRGBA16::g ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:6881:5: 6881:10 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorRGBA16::b ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:6882:5: 6882:10 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorRGBA16::a ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:6883:5: 6883:10 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorRGBA16::in_0 ; poison: ({MiscSource, GlobalSource, PtrArith, VoidSource, CastSource, MixedRefSource, StringLitSource, ExternCallReturn}, {PtrArithSink, MixedRefSink, CastSink, GlobalSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:6884:5: 6884:13 (#0)
+Non-limit ptr: lib::src::lodepng::getPixelColorRGBA16::mode ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:6886:5: 6886:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_convert::out ; poison: ({ExternCallReturn, CastSource, StringLitSource, PtrArith, GlobalSource, VoidSource, MixedRefSource, MiscSource}, {GlobalSink, PtrArithSink, VoidSink, MixedRefSink, CastSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:7151:5: 7151:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_convert::in_0 ; poison: ({ExternCallReturn, VoidSource, StringLitSource, MixedRefSource, PtrArith, GlobalSource, CastSource, MiscSource}, {VoidSink, PtrArithSink, MiscSink, MixedRefSink, ExternCallParam, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:7152:5: 7152:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_convert::mode_out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:7153:5: 7153:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_convert::mode_in ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:7154:5: 7154:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_convert::palette ; poison: ({CastSource, MiscSource, ExternCallReturn, VoidSource, PtrArith, MixedRefSource, StringLitSource, GlobalSource}, {MixedRefSink, CastSink, VoidSink, PtrArithSink, GlobalSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:7179:13: 7179:24 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_convert::p ; poison: ({MiscSource, ExternCallReturn, CastSource, GlobalSource, VoidSource, PtrArith, MixedRefSource, StringLitSource}, {MiscSink, ExternCallParam, CastSink, GlobalSink, MixedRefSink, PtrArithSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:7203:17: 7203:22 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_convert_rgb::r_out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:7277:5: 7277:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_convert_rgb::g_out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:7278:5: 7278:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_convert_rgb::b_out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:7279:5: 7279:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_convert_rgb::mode_out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:7283:5: 7283:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_convert_rgb::mode_in ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:7284:5: 7284:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_color_stats_init::stats ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:7393:51: 7393:60 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_compute_color_stats::stats ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:7425:5: 7425:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_compute_color_stats::in_0 ; poison: ({MiscSource, ExternCallReturn, StringLitSource, MixedRefSource, PtrArith, GlobalSource, VoidSource, CastSource}, {MiscSink, GlobalSink, PtrArithSink, CastSink, MixedRefSink, VoidSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:7426:5: 7426:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_compute_color_stats::mode_in ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:7429:5: 7429:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_compute_color_stats::color ; poison: ({MiscSource, PtrArith, MixedRefSource}, {MixedRefSink, PtrArithSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:7497:17: 7497:26 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_compute_color_stats::p ; poison: ({MiscSource, PtrArith, MixedRefSource}, {PtrArithSink, MiscSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:7724:37: 7724:42 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_color_stats_add::stats ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:7817:5: 7817:14 (#0)
+Non-limit ptr: lib::src::lodepng::auto_choose_color::mode_out ; poison: ({PtrArith, GlobalSource, StringLitSource, MiscSource, ExternCallReturn, VoidSource, MixedRefSource, CastSource}, {MiscSink, MixedRefSink, GlobalSink, PtrArithSink, ExternCallParam, CastSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:7857:5: 7857:17 (#0)
+Non-limit ptr: lib::src::lodepng::auto_choose_color::mode_in ; poison: ({StringLitSource, GlobalSource, PtrArith, VoidSource, ExternCallReturn, MixedRefSource, CastSource, MiscSource}, {PtrArithSink, VoidSink, MiscSink, MixedRefSink, GlobalSink, CastSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:7858:5: 7858:16 (#0)
+Non-limit ptr: lib::src::lodepng::auto_choose_color::stats ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:7859:5: 7859:14 (#0)
+Non-limit ptr: lib::src::lodepng::auto_choose_color::p ; poison: ({MiscSource, MixedRefSource, PtrArith}, {MixedRefSink, PtrArithSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:7909:13: 7909:18 (#0)
+Non-limit ptr: lib::src::lodepng::Adam7_getpassvalues::passw ; poison: ({MiscSource, PtrArith}, {PtrArithSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:8049:5: 8049:14 (#0)
+Non-limit ptr: lib::src::lodepng::Adam7_getpassvalues::passh ; poison: ({PtrArith, MiscSource}, {MiscSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:8050:5: 8050:14 (#0)
+Non-limit ptr: lib::src::lodepng::Adam7_getpassvalues::filter_passstart ; poison: ({PtrArith, MiscSource}, {MiscSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:8051:5: 8051:25 (#0)
+Non-limit ptr: lib::src::lodepng::Adam7_getpassvalues::padded_passstart ; poison: ({PtrArith, MiscSource}, {PtrArithSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:8052:5: 8052:25 (#0)
+Non-limit ptr: lib::src::lodepng::Adam7_getpassvalues::passstart ; poison: ({PtrArith, MiscSource}, {PtrArithSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:8053:5: 8053:18 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inspect::w ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:8141:5: 8141:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inspect::h ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:8142:5: 8142:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inspect::state ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:8143:5: 8143:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inspect::in_0 ; poison: ({PtrArith, CastSource, MiscSource, ExternCallReturn, VoidSource, StringLitSource, MixedRefSource, GlobalSource}, {CastSink, MixedRefSink, ExternCallParam, VoidSink, GlobalSink, PtrArithSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:8144:5: 8144:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inspect::info ; poison: ({GlobalSource, MixedRefSource, CastSource, MiscSource, PtrArith, VoidSource, StringLitSource, ExternCallReturn}, {VoidSink, PtrArithSink, MiscSink, MixedRefSink, CastSink, GlobalSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:8149:9: 8149:17 (#0)
+Non-limit ptr: lib::src::lodepng::unfilterScanline::recon ; poison: ({ExternCallReturn, StringLitSource, PtrArith, GlobalSource, MiscSource, VoidSource, MixedRefSource, CastSource}, {GlobalSink, CastSink, PtrArithSink, VoidSink, MiscSink, MixedRefSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:8238:5: 8238:14 (#0)
+Non-limit ptr: lib::src::lodepng::unfilterScanline::scanline ; poison: ({MiscSource, MixedRefSource, PtrArith, ExternCallReturn, GlobalSource, VoidSource, CastSource, StringLitSource}, {MiscSink, ExternCallParam, CastSink, GlobalSink, PtrArithSink, VoidSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:8239:5: 8239:17 (#0)
+Non-limit ptr: lib::src::lodepng::unfilterScanline::precon ; poison: ({MiscSource, GlobalSource, VoidSource, ExternCallReturn, StringLitSource, PtrArith, MixedRefSource, CastSource}, {PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, CastSink, VoidSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:8240:5: 8240:15 (#0)
+Non-limit ptr: lib::src::lodepng::unfilter::out ; poison: ({VoidSource, StringLitSource, ExternCallReturn, CastSource, MixedRefSource, PtrArith, MiscSource, GlobalSource}, {CastSink, VoidSink, GlobalSink, MiscSink, MixedRefSink, PtrArithSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:8828:5: 8828:12 (#0)
+Non-limit ptr: lib::src::lodepng::unfilter::in_0 ; poison: ({PtrArith, VoidSource, CastSource, GlobalSource, MiscSource, StringLitSource, ExternCallReturn, MixedRefSource}, {MixedRefSink, MiscSink, GlobalSink, CastSink, PtrArithSink, VoidSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:8829:5: 8829:13 (#0)
+Non-limit ptr: lib::src::lodepng::unfilter::prevline ; poison: ({GlobalSource, PtrArith, StringLitSource, ExternCallReturn, VoidSource, MixedRefSource, MiscSource, CastSource}, {PtrArithSink, ExternCallParam, MiscSink, CastSink, GlobalSink, VoidSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:8835:9: 8835:21 (#0)
+Non-limit ptr: lib::src::lodepng::Adam7_deinterlace::out ; poison: ({ExternCallReturn, CastSource, GlobalSource, PtrArith, MiscSource, VoidSource, StringLitSource, MixedRefSource}, {CastSink, ExternCallParam, GlobalSink, MiscSink, PtrArithSink, VoidSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:8872:5: 8872:12 (#0)
+Non-limit ptr: lib::src::lodepng::Adam7_deinterlace::in_0 ; poison: ({VoidSource, MiscSource, GlobalSource, ExternCallReturn, MixedRefSource, CastSource, StringLitSource, PtrArith}, {MiscSink, PtrArithSink, VoidSink, ExternCallParam, CastSink, MixedRefSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:8873:5: 8873:13 (#0)
+Non-limit ptr: lib::src::lodepng::removePaddingBits::out ; poison: ({CastSource, VoidSource, MiscSource, PtrArith, StringLitSource, MixedRefSource, ExternCallReturn, GlobalSource}, {GlobalSink, MiscSink, ExternCallParam, VoidSink, MixedRefSink, CastSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:8990:5: 8990:12 (#0)
+Non-limit ptr: lib::src::lodepng::removePaddingBits::in_0 ; poison: ({VoidSource, PtrArith, MiscSource, MixedRefSource, StringLitSource, GlobalSource, ExternCallReturn, CastSource}, {GlobalSink, CastSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:8991:5: 8991:13 (#0)
+Non-limit ptr: lib::src::lodepng::postProcessScanlines::out ; poison: ({MixedRefSource, MiscSource, PtrArith, CastSource, StringLitSource, GlobalSource, VoidSource, ExternCallReturn}, {GlobalSink, PtrArithSink, VoidSink, ExternCallParam, MixedRefSink, CastSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:9014:5: 9014:12 (#0)
+Non-limit ptr: lib::src::lodepng::postProcessScanlines::in_0 ; poison: ({PtrArith, StringLitSource, MiscSource, ExternCallReturn, MixedRefSource, CastSource, VoidSource, GlobalSource}, {ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:9015:5: 9015:13 (#0)
+Non-limit ptr: lib::src::lodepng::postProcessScanlines::info_png ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:9018:5: 9018:17 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_PLTE::color ; poison: ({StringLitSource, VoidSource, ExternCallReturn, MixedRefSource, PtrArith, CastSource, GlobalSource, MiscSource}, {MixedRefSink, CastSink, MiscSink, GlobalSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/lodepng/src/lodepng.rs:9109:5: 9109:14 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_PLTE::data ; poison: ({ExternCallReturn, CastSource, MiscSource, MixedRefSource, VoidSource, GlobalSource, PtrArith, StringLitSource}, {VoidSink, CastSink, PtrArithSink, GlobalSink, ExternCallParam, MiscSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:9110:5: 9110:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_tRNS::color ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:9163:5: 9163:14 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_tRNS::data ; poison: ({GlobalSource, PtrArith, MiscSource, ExternCallReturn, VoidSource, MixedRefSource, CastSource, StringLitSource}, {PtrArithSink, MiscSink, MixedRefSink, CastSink, GlobalSink, VoidSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:9164:5: 9164:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_bKGD::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:9221:5: 9221:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_bKGD::data ; poison: ({ExternCallReturn, PtrArith, VoidSource, GlobalSource, MiscSource, CastSource, StringLitSource, MixedRefSource}, {GlobalSink, CastSink, VoidSink, MiscSink, ExternCallParam, PtrArithSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:9222:5: 9222:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_tEXt::info ; poison: ({CastSource, MiscSource, StringLitSource, MixedRefSource, VoidSource, GlobalSource, ExternCallReturn, PtrArith}, {VoidSink, MiscSink, GlobalSink, CastSink, ExternCallParam, PtrArithSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:9283:5: 9283:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_tEXt::data ; poison: ({ExternCallReturn, VoidSource, CastSource, StringLitSource, GlobalSource, PtrArith, MixedRefSource, MiscSource}, {MiscSink, GlobalSink, PtrArithSink, CastSink, MixedRefSink, VoidSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:9284:5: 9284:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_tEXt::key ; poison: ({StringLitSource, PtrArith, GlobalSource, CastSource, ExternCallReturn, MixedRefSource, MiscSource, VoidSource}, {VoidSink, MiscSink, GlobalSink, PtrArithSink, ExternCallParam, MixedRefSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:9288:9: 9288:16 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_tEXt::str ; poison: ({PtrArith, VoidSource, MiscSource, CastSource, StringLitSource, MixedRefSource, GlobalSource, ExternCallReturn}, {VoidSink, ExternCallParam, GlobalSink, CastSink, MiscSink, MixedRefSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:9289:9: 9289:16 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_zTXt::info ; poison: ({ExternCallReturn, MiscSource, GlobalSource, CastSource, PtrArith, MixedRefSource, VoidSource, StringLitSource}, {VoidSink, MiscSink, MixedRefSink, ExternCallParam, CastSink, PtrArithSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:9344:5: 9344:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_zTXt::decoder ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:9345:5: 9345:16 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_zTXt::data ; poison: ({ExternCallReturn, CastSource, GlobalSource, StringLitSource, MixedRefSource, MiscSource, VoidSource, PtrArith}, {MiscSink, MixedRefSink, GlobalSink, PtrArithSink, ExternCallParam, VoidSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:9346:5: 9346:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_zTXt::key ; poison: ({VoidSource, CastSource, PtrArith, GlobalSource, ExternCallReturn, MixedRefSource, StringLitSource, MiscSource}, {GlobalSink, ExternCallParam, PtrArithSink, VoidSink, MiscSink, MixedRefSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:9353:9: 9353:16 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_zTXt::str ; poison: ({MixedRefSource, MiscSource, StringLitSource, VoidSource, PtrArith, ExternCallReturn, GlobalSource, CastSource}, {MixedRefSink, ExternCallParam, VoidSink, MiscSink, PtrArithSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:9354:9: 9354:16 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_iTXt::info ; poison: ({VoidSource, StringLitSource, PtrArith, MiscSource, CastSource, ExternCallReturn, GlobalSource, MixedRefSource}, {MiscSink, CastSink, VoidSink, PtrArithSink, MixedRefSink, GlobalSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:9428:5: 9428:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_iTXt::decoder ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:9429:5: 9429:16 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_iTXt::data ; poison: ({VoidSource, MixedRefSource, CastSource, PtrArith, ExternCallReturn, StringLitSource, MiscSource, GlobalSource}, {PtrArithSink, ExternCallParam, MiscSink, GlobalSink, CastSink, MixedRefSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:9430:5: 9430:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_iTXt::key ; poison: ({VoidSource, MixedRefSource, StringLitSource, ExternCallReturn, GlobalSource, CastSource, PtrArith, MiscSource}, {MixedRefSink, ExternCallParam, VoidSink, GlobalSink, PtrArithSink, CastSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:9439:9: 9439:16 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_iTXt::langtag ; poison: ({VoidSource, GlobalSource, CastSource, MiscSource, MixedRefSource, ExternCallReturn, PtrArith, StringLitSource}, {VoidSink, MiscSink, ExternCallParam, MixedRefSink, CastSink, GlobalSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:9440:9: 9440:20 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_iTXt::transkey ; poison: ({StringLitSource, PtrArith, GlobalSource, ExternCallReturn, MixedRefSource, MiscSource, VoidSource, CastSource}, {PtrArithSink, ExternCallParam, VoidSink, MiscSink, MixedRefSink, GlobalSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:9441:9: 9441:21 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_iTXt::str ; poison: ({ExternCallReturn, GlobalSource, MixedRefSource, VoidSource, CastSource, PtrArith, MiscSource, StringLitSource}, {CastSink, PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, VoidSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:9547:41: 9547:48 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_tIME::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:9595:5: 9595:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_tIME::data ; poison: ({VoidSource, GlobalSource, ExternCallReturn, CastSource, StringLitSource, PtrArith, MixedRefSource, MiscSource}, {MiscSink, MixedRefSink, CastSink, GlobalSink, VoidSink, ExternCallParam, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:9596:5: 9596:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_pHYs::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:9616:5: 9616:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_pHYs::data ; poison: ({StringLitSource, CastSource, GlobalSource, ExternCallReturn, PtrArith, MixedRefSource, VoidSource, MiscSource}, {CastSink, MiscSink, GlobalSink, ExternCallParam, MixedRefSink, PtrArithSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:9617:5: 9617:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_gAMA::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:9652:5: 9652:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_gAMA::data ; poison: ({PtrArith, VoidSource, MixedRefSource, CastSource, ExternCallReturn, MiscSource, StringLitSource, GlobalSource}, {CastSink, GlobalSink, PtrArithSink, ExternCallParam, MiscSink, VoidSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:9653:5: 9653:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_cHRM::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:9675:5: 9675:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_cHRM::data ; poison: ({VoidSource, PtrArith, StringLitSource, MixedRefSource, ExternCallReturn, MiscSource, GlobalSource, CastSource}, {MixedRefSink, GlobalSink, CastSink, ExternCallParam, VoidSink, MiscSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:9676:5: 9676:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_sRGB::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:9782:5: 9782:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_sRGB::data ; poison: ({ExternCallReturn, VoidSource, MixedRefSource, StringLitSource, GlobalSource, PtrArith, CastSource, MiscSource}, {ExternCallParam, PtrArithSink, MixedRefSink, CastSink, MiscSink, GlobalSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:9783:5: 9783:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_iCCP::info ; poison: ({CastSource, GlobalSource, ExternCallReturn, MixedRefSource, StringLitSource, MiscSource, VoidSource, PtrArith}, {VoidSink, MiscSink, PtrArithSink, ExternCallParam, MixedRefSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:9794:5: 9794:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_iCCP::decoder ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:9795:5: 9795:16 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_iCCP::data ; poison: ({ExternCallReturn, MixedRefSource, CastSource, VoidSource, GlobalSource, PtrArith, StringLitSource, MiscSource}, {MixedRefSink, CastSink, ExternCallParam, MiscSink, PtrArithSink, VoidSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:9796:5: 9796:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_sBIT::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:9868:5: 9868:13 (#0)
+Non-limit ptr: lib::src::lodepng::readChunk_sBIT::data ; poison: ({CastSource, MixedRefSource, StringLitSource, MiscSource, PtrArith, GlobalSource, VoidSource, ExternCallReturn}, {MixedRefSink, VoidSink, ExternCallParam, MiscSink, PtrArithSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:9869:5: 9869:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inspect_chunk::state ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:9972:5: 9972:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inspect_chunk::in_0 ; poison: ({MixedRefSource, PtrArith, CastSource, MiscSource, GlobalSource, StringLitSource, VoidSource, ExternCallReturn}, {CastSink, ExternCallParam, MiscSink, VoidSink, MixedRefSink, PtrArithSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:9974:5: 9974:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inspect_chunk::chunk ; poison: ({VoidSource, MixedRefSource, MiscSource, CastSource, PtrArith, ExternCallReturn, GlobalSource, StringLitSource}, {PtrArithSink, ExternCallParam, VoidSink, CastSink, MixedRefSink, GlobalSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:9977:9: 9977:18 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_inspect_chunk::data ; poison: ({ExternCallReturn, PtrArith, MixedRefSource, StringLitSource, GlobalSource, CastSource, MiscSource, VoidSource}, {PtrArithSink, ExternCallParam, VoidSink, MiscSink, CastSink, GlobalSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:9979:9: 9979:17 (#0)
+Non-limit ptr: lib::src::lodepng::decodeGeneric::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10105:5: 10105:12 (#0)
+Non-limit ptr: lib::src::lodepng::decodeGeneric::w ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10106:5: 10106:10 (#0)
+Non-limit ptr: lib::src::lodepng::decodeGeneric::h ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10107:5: 10107:10 (#0)
+Non-limit ptr: lib::src::lodepng::decodeGeneric::state ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10108:5: 10108:14 (#0)
+Non-limit ptr: lib::src::lodepng::decodeGeneric::in_0 ; poison: ({MiscSource, MixedRefSource, ExternCallReturn, GlobalSource, VoidSource, CastSource, StringLitSource, PtrArith}, {MixedRefSink, PtrArithSink, ExternCallParam, VoidSink, MiscSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:10109:5: 10109:13 (#0)
+Non-limit ptr: lib::src::lodepng::decodeGeneric::chunk ; poison: ({ExternCallReturn, PtrArith, MiscSource, CastSource, VoidSource, StringLitSource, MixedRefSource, GlobalSource}, {MiscSink, CastSink, GlobalSink, MixedRefSink, VoidSink, ExternCallParam, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:10113:9: 10113:18 (#0)
+Non-limit ptr: lib::src::lodepng::decodeGeneric::idat ; poison: ({VoidSource, GlobalSource, StringLitSource, MixedRefSource, PtrArith, MiscSource, CastSource, ExternCallReturn}, {MiscSink, MixedRefSink, CastSink, VoidSink, GlobalSink, PtrArithSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:10114:9: 10114:17 (#0)
+Non-limit ptr: lib::src::lodepng::decodeGeneric::scanlines ; poison: ({ExternCallReturn, PtrArith, MiscSource, StringLitSource, MixedRefSource, VoidSource, CastSource, GlobalSource}, {GlobalSink, PtrArithSink, MiscSink, ExternCallParam, VoidSink, MixedRefSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:10116:9: 10116:22 (#0)
+Non-limit ptr: lib::src::lodepng::decodeGeneric::data ; poison: ({CastSource, MixedRefSource, ExternCallReturn, StringLitSource, VoidSource, PtrArith, MiscSource, GlobalSource}, {VoidSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:10147:13: 10147:21 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10568:5: 10568:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode::w ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10569:5: 10569:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode::h ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10570:5: 10570:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode::state ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10571:5: 10571:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode::in_0 ; poison: ({PtrArith, CastSource, VoidSource, StringLitSource, ExternCallReturn, MiscSource, MixedRefSource, GlobalSource}, {VoidSink, MixedRefSink, GlobalSink, ExternCallParam, MiscSink, CastSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:10572:5: 10572:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode::data ; poison: ({ExternCallReturn, GlobalSource, MixedRefSource, PtrArith, CastSource, StringLitSource, VoidSource, MiscSource}, {ExternCallParam, MixedRefSink, CastSink, VoidSink, MiscSink, PtrArithSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:10595:13: 10595:21 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode_memory::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10626:5: 10626:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode_memory::w ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10627:5: 10627:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode_memory::h ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10628:5: 10628:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode_memory::in_0 ; poison: ({ExternCallReturn, VoidSource, MiscSource, MixedRefSource, GlobalSource, StringLitSource, CastSource, PtrArith}, {MiscSink, GlobalSink, CastSink, VoidSink, ExternCallParam, MixedRefSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:10629:5: 10629:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode32::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10761:5: 10761:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode32::w ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10762:5: 10762:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode32::h ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10763:5: 10763:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode32::in_0 ; poison: ({ExternCallReturn, MiscSource, VoidSource, StringLitSource, CastSource, GlobalSource, MixedRefSource, PtrArith}, {MixedRefSink, VoidSink, CastSink, GlobalSink, PtrArithSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:10764:5: 10764:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode24::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10779:5: 10779:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode24::w ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10780:5: 10780:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode24::h ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10781:5: 10781:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode24::in_0 ; poison: ({MiscSource, PtrArith, MixedRefSource, GlobalSource, ExternCallReturn, CastSource, VoidSource, StringLitSource}, {MixedRefSink, CastSink, GlobalSink, PtrArithSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:10782:5: 10782:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode_file::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10797:5: 10797:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode_file::w ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10798:5: 10798:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode_file::h ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10799:5: 10799:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode_file::filename ; poison: ({}, {ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:10800:5: 10800:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode_file::buffer ; poison: ({CastSource, MixedRefSource, StringLitSource, VoidSource, ExternCallReturn, PtrArith, GlobalSource, MiscSource}, {PtrArithSink, VoidSink, MixedRefSink, GlobalSink, CastSink, MiscSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:10804:9: 10804:19 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode32_file::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10827:5: 10827:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode32_file::w ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10828:5: 10828:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode32_file::h ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10829:5: 10829:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode32_file::filename ; poison: ({}, {ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:10830:5: 10830:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode24_file::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10843:5: 10843:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode24_file::w ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10844:5: 10844:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode24_file::h ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10845:5: 10845:10 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decode24_file::filename ; poison: ({}, {ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:10846:5: 10846:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_decoder_settings_init::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10859:5: 10859:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_state_init::state ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10872:45: 10872:54 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_state_cleanup::state ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10880:48: 10880:57 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_state_copy::dest ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10886:5: 10886:13 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_state_copy::source ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10887:5: 10887:15 (#0)
+Non-limit ptr: lib::src::lodepng::writeSignature::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10902:37: 10902:44 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_IHDR::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10929:5: 10929:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_IHDR::chunk ; poison: ({StringLitSource, PtrArith, ExternCallReturn, VoidSource, MiscSource, CastSource, GlobalSource, MixedRefSource}, {VoidSink, CastSink, PtrArithSink, GlobalSink, MixedRefSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:10936:9: 10936:18 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_IHDR::data ; poison: ({StringLitSource, CastSource, VoidSource, MixedRefSource, ExternCallReturn, PtrArith, MiscSource, GlobalSource}, {PtrArithSink, CastSink, GlobalSink, MiscSink, ExternCallParam, MixedRefSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:10937:9: 10937:17 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_PLTE::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10959:5: 10959:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_PLTE::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:10960:5: 10960:13 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_PLTE::chunk ; poison: ({ExternCallReturn, MixedRefSource, CastSource, PtrArith, StringLitSource, GlobalSource, MiscSource, VoidSource}, {GlobalSink, PtrArithSink, VoidSink, ExternCallParam, MiscSink, CastSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:10962:9: 10962:18 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_tRNS::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11021:5: 11021:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_tRNS::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11022:5: 11022:13 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_tRNS::chunk ; poison: ({ExternCallReturn, MiscSource, CastSource, MixedRefSource, StringLitSource, VoidSource, PtrArith, GlobalSource}, {PtrArithSink, MiscSink, MixedRefSink, GlobalSink, CastSink, ExternCallParam, VoidSink}) at benchmark/lodepng/src/lodepng.rs:11024:9: 11024:18 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_IDAT::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11136:5: 11136:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_IDAT::data ; poison: ({PtrArith, ExternCallReturn, VoidSource, MiscSource, GlobalSource, CastSource, StringLitSource, MixedRefSource}, {MiscSink, PtrArithSink, MixedRefSink, VoidSink, GlobalSink, CastSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:11137:5: 11137:13 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_IDAT::zlibsettings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11139:5: 11139:21 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_IDAT::zlib ; poison: ({MixedRefSource, PtrArith, GlobalSource, MiscSource, ExternCallReturn, StringLitSource, VoidSource, CastSource}, {ExternCallParam, CastSink, MiscSink, VoidSink, GlobalSink, PtrArithSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:11142:9: 11142:17 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_IEND::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11156:36: 11156:43 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_tEXt::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11165:5: 11165:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_tEXt::keyword ; poison: ({StringLitSource, GlobalSource, PtrArith, VoidSource, ExternCallReturn, MiscSource, CastSource, MixedRefSource}, {ExternCallParam, CastSink, GlobalSink, VoidSink, MiscSink, PtrArithSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:11166:5: 11166:16 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_tEXt::textstring ; poison: ({GlobalSource, MixedRefSource, MiscSource, CastSource, StringLitSource, PtrArith, ExternCallReturn, VoidSource}, {PtrArithSink, MiscSink, CastSink, VoidSink, MixedRefSink, GlobalSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:11167:5: 11167:19 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_tEXt::chunk ; poison: ({VoidSource, PtrArith, ExternCallReturn, MixedRefSource, GlobalSource, CastSource, MiscSource, StringLitSource}, {GlobalSink, MiscSink, VoidSink, ExternCallParam, PtrArithSink, MixedRefSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:11169:9: 11169:18 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_zTXt::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11208:5: 11208:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_zTXt::keyword ; poison: ({MixedRefSource, GlobalSource, ExternCallReturn, VoidSource, CastSource, PtrArith, MiscSource, StringLitSource}, {PtrArithSink, ExternCallParam, MiscSink, CastSink, GlobalSink, VoidSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:11209:5: 11209:16 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_zTXt::textstring ; poison: ({GlobalSource, CastSource, VoidSource, MixedRefSource, MiscSource, ExternCallReturn, PtrArith, StringLitSource}, {GlobalSink, MiscSink, MixedRefSink, PtrArithSink, ExternCallParam, VoidSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:11210:5: 11210:19 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_zTXt::zlibsettings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11211:5: 11211:21 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_zTXt::chunk ; poison: ({MiscSource, GlobalSource, MixedRefSource, PtrArith, CastSource, StringLitSource, VoidSource, ExternCallReturn}, {CastSink, VoidSink, GlobalSink, ExternCallParam, MixedRefSink, PtrArithSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:11214:9: 11214:18 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_zTXt::compressed ; poison: ({MiscSource, GlobalSource, StringLitSource, ExternCallReturn, CastSource, PtrArith, MixedRefSource, VoidSource}, {CastSink, PtrArithSink, MixedRefSink, GlobalSink, MiscSink, ExternCallParam, VoidSink}) at benchmark/lodepng/src/lodepng.rs:11215:9: 11215:23 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_iTXt::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11268:5: 11268:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_iTXt::keyword ; poison: ({PtrArith, VoidSource, MiscSource, MixedRefSource, StringLitSource, CastSource, ExternCallReturn, GlobalSource}, {PtrArithSink, VoidSink, MiscSink, ExternCallParam, CastSink, GlobalSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:11270:5: 11270:16 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_iTXt::langtag ; poison: ({ExternCallReturn, MiscSource, GlobalSource, MixedRefSource, VoidSource, StringLitSource, PtrArith, CastSource}, {GlobalSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:11271:5: 11271:16 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_iTXt::transkey ; poison: ({MixedRefSource, PtrArith, GlobalSource, CastSource, ExternCallReturn, MiscSource, StringLitSource, VoidSource}, {MiscSink, CastSink, GlobalSink, PtrArithSink, ExternCallParam, VoidSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:11272:5: 11272:17 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_iTXt::textstring ; poison: ({VoidSource, ExternCallReturn, StringLitSource, MiscSource, PtrArith, MixedRefSource, CastSource, GlobalSource}, {MiscSink, MixedRefSink, VoidSink, CastSink, GlobalSink, PtrArithSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:11273:5: 11273:19 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_iTXt::zlibsettings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11274:5: 11274:21 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_iTXt::chunk ; poison: ({PtrArith, VoidSource, CastSource, GlobalSource, StringLitSource, ExternCallReturn, MiscSource, MixedRefSource}, {CastSink, ExternCallParam, MixedRefSink, PtrArithSink, VoidSink, GlobalSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:11277:9: 11277:18 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_iTXt::compressed ; poison: ({MixedRefSource, MiscSource, GlobalSource, ExternCallReturn, PtrArith, VoidSource, CastSource, StringLitSource}, {CastSink, GlobalSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:11278:9: 11278:23 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_bKGD::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11371:5: 11371:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_bKGD::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11372:5: 11372:13 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_bKGD::chunk ; poison: ({PtrArith, ExternCallReturn, VoidSource, MiscSource, StringLitSource, CastSource, GlobalSource, MixedRefSource}, {MixedRefSink, VoidSink, ExternCallParam, CastSink, MiscSink, PtrArithSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:11374:9: 11374:18 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_tIME::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11462:5: 11462:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_tIME::time ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11463:5: 11463:13 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_tIME::chunk ; poison: ({CastSource, StringLitSource, PtrArith, ExternCallReturn, VoidSource, MiscSource, GlobalSource, MixedRefSource}, {MiscSink, PtrArithSink, ExternCallParam, VoidSink, MixedRefSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:11465:9: 11465:18 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_pHYs::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11492:5: 11492:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_pHYs::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11493:5: 11493:13 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_pHYs::chunk ; poison: ({VoidSource, ExternCallReturn, CastSource, StringLitSource, PtrArith, MixedRefSource, GlobalSource, MiscSource}, {MixedRefSink, PtrArithSink, ExternCallParam, CastSink, VoidSink, MiscSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:11495:9: 11495:18 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_gAMA::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11512:5: 11512:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_gAMA::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11513:5: 11513:13 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_gAMA::chunk ; poison: ({VoidSource, PtrArith, MixedRefSource, StringLitSource, ExternCallReturn, GlobalSource, CastSource, MiscSource}, {CastSink, VoidSink, MixedRefSink, MiscSink, GlobalSink, PtrArithSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:11515:9: 11515:18 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_cHRM::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11530:5: 11530:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_cHRM::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11531:5: 11531:13 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_cHRM::chunk ; poison: ({MixedRefSource, GlobalSource, MiscSource, ExternCallReturn, PtrArith, VoidSource, StringLitSource, CastSource}, {MixedRefSink, CastSink, MiscSink, GlobalSink, VoidSink, PtrArithSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:11533:9: 11533:18 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_sRGB::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11555:5: 11555:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_sRGB::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11556:5: 11556:13 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_iCCP::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11567:5: 11567:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_iCCP::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11568:5: 11568:13 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_iCCP::zlibsettings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11569:5: 11569:21 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_iCCP::chunk ; poison: ({StringLitSource, VoidSource, ExternCallReturn, GlobalSource, PtrArith, MiscSource, CastSource, MixedRefSource}, {GlobalSink, VoidSink, CastSink, MixedRefSink, ExternCallParam, PtrArithSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:11572:9: 11572:18 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_iCCP::compressed ; poison: ({StringLitSource, CastSource, MixedRefSource, PtrArith, VoidSource, MiscSource, ExternCallReturn, GlobalSource}, {MixedRefSink, PtrArithSink, ExternCallParam, MiscSink, CastSink, VoidSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:11573:9: 11573:23 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_sBIT::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11625:5: 11625:12 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_sBIT::info ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11626:5: 11626:13 (#0)
+Non-limit ptr: lib::src::lodepng::addChunk_sBIT::chunk ; poison: ({VoidSource, MixedRefSource, MiscSource, ExternCallReturn, GlobalSource, StringLitSource, PtrArith, CastSource}, {MixedRefSink, CastSink, PtrArithSink, MiscSink, VoidSink, GlobalSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:11635:9: 11635:18 (#0)
+Non-limit ptr: lib::src::lodepng::filterScanline::out ; poison: ({PtrArith, VoidSource, StringLitSource, ExternCallReturn, MixedRefSource, GlobalSource, MiscSource, CastSource}, {CastSink, GlobalSink, MixedRefSink, PtrArithSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/lodepng/src/lodepng.rs:11735:5: 11735:12 (#0)
+Non-limit ptr: lib::src::lodepng::filterScanline::scanline ; poison: ({GlobalSource, ExternCallReturn, PtrArith, CastSource, StringLitSource, MiscSource, MixedRefSource, VoidSource}, {PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, CastSink, GlobalSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:11736:5: 11736:17 (#0)
+Non-limit ptr: lib::src::lodepng::filterScanline::prevline ; poison: ({CastSource, MiscSource, MixedRefSource, GlobalSource, VoidSource, ExternCallReturn, StringLitSource, PtrArith}, {GlobalSink, MiscSink, ExternCallParam, VoidSink, PtrArithSink, MixedRefSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:11737:5: 11737:17 (#0)
+Non-limit ptr: lib::src::lodepng::filter::out ; poison: ({VoidSource, StringLitSource, CastSource, GlobalSource, MixedRefSource, ExternCallReturn, PtrArith, MiscSource}, {PtrArithSink, VoidSink, CastSink, ExternCallParam, MiscSink, GlobalSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:11917:5: 11917:12 (#0)
+Non-limit ptr: lib::src::lodepng::filter::in_0 ; poison: ({MiscSource, MixedRefSource, VoidSource, StringLitSource, GlobalSource, CastSource, ExternCallReturn, PtrArith}, {MixedRefSink, PtrArithSink, ExternCallParam, VoidSink, CastSink, MiscSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:11918:5: 11918:13 (#0)
+Non-limit ptr: lib::src::lodepng::filter::color ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11921:5: 11921:14 (#0)
+Non-limit ptr: lib::src::lodepng::filter::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:11922:5: 11922:17 (#0)
+Non-limit ptr: lib::src::lodepng::filter::prevline ; poison: ({VoidSource, MixedRefSource, CastSource, StringLitSource, GlobalSource, PtrArith, ExternCallReturn, MiscSource}, {VoidSink, PtrArithSink, CastSink, GlobalSink, MixedRefSink, MiscSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:11934:9: 11934:21 (#0)
+Non-limit ptr: lib::src::lodepng::filter::dummy ; poison: ({MiscSource, GlobalSource, ExternCallReturn, VoidSource, StringLitSource, MixedRefSource, PtrArith, CastSource}, {PtrArithSink, CastSink, ExternCallParam, MiscSink, MixedRefSink, VoidSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:12189:13: 12189:22 (#0)
+Non-limit ptr: lib::src::lodepng::addPaddingBits::out ; poison: ({MixedRefSource, PtrArith, StringLitSource, VoidSource, ExternCallReturn, CastSource, MiscSource, GlobalSource}, {VoidSink, PtrArithSink, MiscSink, ExternCallParam, MixedRefSink, GlobalSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:12290:5: 12290:12 (#0)
+Non-limit ptr: lib::src::lodepng::addPaddingBits::in_0 ; poison: ({GlobalSource, MixedRefSource, ExternCallReturn, PtrArith, MiscSource, StringLitSource, CastSource, VoidSource}, {MixedRefSink, PtrArithSink, GlobalSink, CastSink, VoidSink, MiscSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:12291:5: 12291:13 (#0)
+Non-limit ptr: lib::src::lodepng::Adam7_interlace::out ; poison: ({StringLitSource, GlobalSource, VoidSource, ExternCallReturn, MiscSource, MixedRefSource, PtrArith, CastSource}, {GlobalSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:12318:5: 12318:12 (#0)
+Non-limit ptr: lib::src::lodepng::Adam7_interlace::in_0 ; poison: ({GlobalSource, PtrArith, VoidSource, MixedRefSource, ExternCallReturn, MiscSource, CastSource, StringLitSource}, {ExternCallParam, CastSink, VoidSink, GlobalSink, MiscSink, PtrArithSink, MixedRefSink}) at benchmark/lodepng/src/lodepng.rs:12319:5: 12319:13 (#0)
+Non-limit ptr: lib::src::lodepng::preProcessScanlines::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:12425:5: 12425:12 (#0)
+Non-limit ptr: lib::src::lodepng::preProcessScanlines::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:12426:5: 12426:16 (#0)
+Non-limit ptr: lib::src::lodepng::preProcessScanlines::in_0 ; poison: ({PtrArith, GlobalSource, CastSource, MixedRefSource, VoidSource, MiscSource, ExternCallReturn, StringLitSource}, {GlobalSink, MiscSink, CastSink, MixedRefSink, PtrArithSink, VoidSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:12427:5: 12427:13 (#0)
+Non-limit ptr: lib::src::lodepng::preProcessScanlines::info_png ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:12430:5: 12430:17 (#0)
+Non-limit ptr: lib::src::lodepng::preProcessScanlines::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:12431:5: 12431:17 (#0)
+Non-limit ptr: lib::src::lodepng::preProcessScanlines::padded ; poison: ({VoidSource, ExternCallReturn, MiscSource, CastSource, StringLitSource, PtrArith, MixedRefSource, GlobalSource}, {CastSink, GlobalSink, MixedRefSink, ExternCallParam, MiscSink, VoidSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:12459:21: 12459:31 (#0)
+Non-limit ptr: lib::src::lodepng::preProcessScanlines::adam7 ; poison: ({MiscSource, StringLitSource, GlobalSource, ExternCallReturn, MixedRefSource, CastSource, VoidSource, PtrArith}, {ExternCallParam, CastSink, PtrArithSink, VoidSink, MiscSink, MixedRefSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:12496:13: 12496:22 (#0)
+Non-limit ptr: lib::src::lodepng::preProcessScanlines::padded_0 ; poison: ({CastSource, PtrArith, MiscSource, GlobalSource, ExternCallReturn, VoidSource, StringLitSource, MixedRefSource}, {PtrArithSink, ExternCallParam, VoidSink, MiscSink, CastSink, MixedRefSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:12523:25: 12523:37 (#0)
+Non-limit ptr: lib::src::lodepng::addUnknownChunks::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:12586:5: 12586:12 (#0)
+Non-limit ptr: lib::src::lodepng::addUnknownChunks::data ; poison: ({MiscSource, StringLitSource, ExternCallReturn, MixedRefSource, CastSource, GlobalSource, VoidSource, PtrArith}, {VoidSink, CastSink, MiscSink, GlobalSink, MixedRefSink, ExternCallParam, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:12587:5: 12587:13 (#0)
+Non-limit ptr: lib::src::lodepng::addUnknownChunks::inchunk ; poison: ({ExternCallReturn, CastSource, PtrArith, MiscSource, VoidSource, MixedRefSource, StringLitSource, GlobalSource}, {MiscSink, ExternCallParam, VoidSink, PtrArithSink, MixedRefSink, CastSink, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:12590:9: 12590:20 (#0)
+Non-limit ptr: lib::src::lodepng::isGrayICCProfile::profile ; poison: ({MixedRefSource, StringLitSource, PtrArith, VoidSource, CastSource, ExternCallReturn, MiscSource, GlobalSource}, {PtrArithSink, MixedRefSink, GlobalSink, MiscSink, CastSink, VoidSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:12606:5: 12606:16 (#0)
+Non-limit ptr: lib::src::lodepng::isRGBICCProfile::profile ; poison: ({GlobalSource, CastSource, StringLitSource, PtrArith, MixedRefSource, ExternCallReturn, MiscSource, VoidSource}, {MiscSink, MixedRefSink, ExternCallParam, CastSink, VoidSink, GlobalSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:12619:5: 12619:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:12633:5: 12633:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:12634:5: 12634:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode::image ; poison: ({PtrArith, MiscSource, ExternCallReturn, GlobalSource, MixedRefSource, CastSource, StringLitSource, VoidSource}, {GlobalSink, ExternCallParam, MixedRefSink, CastSink, VoidSink, MiscSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:12635:5: 12635:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode::state ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:12638:5: 12638:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode::data ; poison: ({MixedRefSource, MiscSource, ExternCallReturn, StringLitSource, GlobalSource, PtrArith, VoidSource, CastSource}, {CastSink, VoidSink, GlobalSink, MiscSink, MixedRefSink, PtrArithSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:12641:9: 12641:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode::info_png ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:12708:9: 12708:21 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode::converted ; poison: ({StringLitSource, PtrArith, ExternCallReturn, CastSource, MixedRefSource, MiscSource, VoidSource, GlobalSource}, {CastSink, VoidSink, MiscSink, MixedRefSink, PtrArithSink, ExternCallParam, GlobalSink}) at benchmark/lodepng/src/lodepng.rs:13014:41: 13014:54 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode::k ; poison: ({MiscSource, StringLitSource, MixedRefSource, PtrArith, ExternCallReturn, CastSource, VoidSource, GlobalSource}, {GlobalSink, CastSink, MixedRefSink, PtrArithSink, MiscSink, VoidSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:13333:173: 13333:178 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode_memory::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:13496:5: 13496:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode_memory::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:13497:5: 13497:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode_memory::image ; poison: ({GlobalSource, MixedRefSource, StringLitSource, VoidSource, CastSource, ExternCallReturn, PtrArith, MiscSource}, {MixedRefSink, ExternCallParam, PtrArithSink, CastSink, MiscSink, GlobalSink, VoidSink}) at benchmark/lodepng/src/lodepng.rs:13498:5: 13498:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode32::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:13632:5: 13632:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode32::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:13633:5: 13633:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode32::image ; poison: ({StringLitSource, PtrArith, MiscSource, GlobalSource, ExternCallReturn, MixedRefSource, CastSource, VoidSource}, {GlobalSink, VoidSink, PtrArithSink, MixedRefSink, CastSink, ExternCallParam, MiscSink}) at benchmark/lodepng/src/lodepng.rs:13634:5: 13634:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode24::out ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:13650:5: 13650:12 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode24::outsize ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:13651:5: 13651:16 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode24::image ; poison: ({MiscSource, MixedRefSource, ExternCallReturn, CastSource, PtrArith, StringLitSource, GlobalSource, VoidSource}, {ExternCallParam, MixedRefSink, VoidSink, PtrArithSink, GlobalSink, MiscSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:13652:5: 13652:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode_file::filename ; poison: ({}, {ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:13668:5: 13668:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode_file::image ; poison: ({MiscSource, GlobalSource, VoidSource, MixedRefSource, PtrArith, ExternCallReturn, StringLitSource, CastSource}, {MixedRefSink, CastSink, GlobalSink, MiscSink, PtrArithSink, VoidSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:13669:5: 13669:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode_file::buffer ; poison: ({MiscSource, ExternCallReturn, CastSource, VoidSource, StringLitSource, PtrArith, MixedRefSource, GlobalSource}, {GlobalSink, MiscSink, MixedRefSink, PtrArithSink, ExternCallParam, VoidSink, CastSink}) at benchmark/lodepng/src/lodepng.rs:13675:9: 13675:19 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode32_file::filename ; poison: ({}, {ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:13694:5: 13694:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode32_file::image ; poison: ({PtrArith, MixedRefSource, MiscSource, VoidSource, GlobalSource, ExternCallReturn, CastSource, StringLitSource}, {VoidSink, ExternCallParam, MiscSink, MixedRefSink, CastSink, GlobalSink, PtrArithSink}) at benchmark/lodepng/src/lodepng.rs:13695:5: 13695:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode24_file::filename ; poison: ({}, {ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:13710:5: 13710:17 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encode24_file::image ; poison: ({VoidSource, ExternCallReturn, CastSource, PtrArith, MiscSource, StringLitSource, MixedRefSource, GlobalSource}, {PtrArithSink, VoidSink, MixedRefSink, MiscSink, CastSink, GlobalSink, ExternCallParam}) at benchmark/lodepng/src/lodepng.rs:13711:5: 13711:14 (#0)
+Non-limit ptr: lib::src::lodepng::lodepng_encoder_settings_init::settings ; poison: ({}, {}) at benchmark/lodepng/src/lodepng.rs:13726:5: 13726:17 (#0)
+raw pointer CSV
+Benchmark,Statistic,{VoidPtr},{ExplicitRaw},{PtrArith},{Global},{Cast},{VoidPtr},{StringLit},{Extern},{}
+lodepng,NonUniqueDecls,288,0,286,286,288,288,285,287,552
+lodepng,DeclsExact,0,0,13,0,0,0,0,13,237
+lodepng,NonUniqueDerefs,1240,0,1238,1235,1240,1240,1233,1233,2730
+lodepng,DerefsExact,0,0,54,0,0,0,0,0,1434
+non-empty pointer eq class sizes:
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+3
+3
+3
+4
+4
+4
+4
+4
+5
+5
+5
+5
+5
+5
+7
+8
+9
+9
+10
+10
+10
+11
+16
+29
+288
+there are 287 non-empty eq classes
+PROFILING RESULTS
+call graph closure: 1 ms
+compute SCCs: 1336 ms
+computing poison sets via equality-based analysis: 146 ms
+computing subsets for ownership/poison propagation: 218 ms
+constraint solving: 287 ms
+constraint solving (TODO: only compute eq classes): 579 ms
+constraint solving (addr_of_locs): 292 ms
+constraint solving (reborrow_map): 560 ms
+constructor constraints: 740 ms
+propagating compiler error-derived poisons via subset-based analysis: 0 ms
+propagating inline assembly poisons via subset-based analysis: 0 ms
+propagating ownership: 0 ms
+propagating refcell promotion: 11 ms
+propagating upper and lower sets: 913 ms
+set constraint solving: 2567 ms
+transitive closure: 316 ms

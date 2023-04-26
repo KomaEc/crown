@@ -1,0 +1,15 @@
+[package]
+name = "robotfindskitten"
+version = "0.1.0"
+authors = ["Stuart Pernsteiner <spernsteiner@galois.com>"]
+links = "ncurses"
+
+[[bin]]
+name = "robotfindskitten"
+path = "src/robotfindskitten.rs"
+
+[dependencies]
+c2rust_runtime = { path = "../../../../c2rust/c2rust-refactor/runtime" }
+rand = "0.5.5"
+pancurses = "0.16.0"
+libc = "0.2"

@@ -1,0 +1,853 @@
+warning: associated function is never used: `mut_`
+   --> src/bin/resolve-lifetimes.rs:119:8
+    |
+119 |     fn mut_() -> Self {
+    |        ^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: associated function is never used: `move_`
+   --> src/bin/resolve-lifetimes.rs:131:8
+    |
+131 |     fn move_() -> Self {
+    |        ^^^^^
+
+warning: function is never used: `has_non_arith_poison`
+   --> src/bin/resolve-lifetimes.rs:157:4
+    |
+157 | fn has_non_arith_poison(locs: &HashSet<Loc<Name>>, provenance: &PtrProvenanceAnalysis) -> bool {
+    |    ^^^^^^^^^^^^^^^^^^^^
+
+warning: 3 warnings emitted
+
+    Finished release [optimized + debuginfo] target(s) in 0.03s
+     Running `target/release/resolve-lifetimes -f --emulate-lifetime-only -- benchmark/heman/lib.rs`
+poison sigs of fn ptrs? true
+Compiler arguments: 'create-initial-program' 'benchmark/heman/lib.rs'
+iteration 1
+running struct info pass
+Applying fixes
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:62:80: error[E0308]: `if` and `else` have incompatible types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:89:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:110:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:120:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:130:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:145:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:212:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:237:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb3.rs:73:80: error[E0308]: `if` and `else` have incompatible types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb3.rs:103:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb3.rs:122:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb3.rs:279:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:110:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:125:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:197:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat3.rs:213:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:257:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:319:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:340:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:362:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:378:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:416:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:427:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:438:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat3.rs:475:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:521:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:553:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:569:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:585:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:648:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:102:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:119:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat4.rs:369:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:417:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:538:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:564:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:584:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:632:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:655:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:678:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:701:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:718:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:771:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:790:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:812:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat4.rs:878:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:906:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:940:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:956:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:998:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:1115:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:95:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:107:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:127:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:147:16: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/plane.rs:153:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:167:16: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/plane.rs:178:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:286:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:116:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:139:16: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/quaternion.rs:145:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:180:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:216:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:416:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:513:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:538:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/ray3.rs:51:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/ray3.rs:61:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:80:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:99:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/vec2.rs:115:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:125:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:149:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:159:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:171:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:190:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:215:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:234:16: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/vec2.rs:238:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:258:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:303:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:314:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:119:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:220:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:233:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:257:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:320:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:344:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:369:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:393:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:440:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:469:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:511:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:36:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:48:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:77:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:117:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:129:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:143:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/src/ops.rs:1035:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:05:58Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/src/ops.rs:1104:12: error[E0308]: mismatched types
+    
+New configuration: Configuration { ptr_kind: {Synthetic(HirId { owner: DefId(0:11), local_id: 47 }): Raw, Synthetic(HirId { owner: DefId(0:34), local_id: 49 }): Raw}, move_flows: {}, bounds: {[Fn] lib::src::kazmath::vec2::kmVec2Div: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4RotationTranslation: {'a1: 'a4}, [Fn] lib::src::kazmath::quaternion::kmQuaternionInverse: {'a1: 'a2}, [Fn] lib::src::kazmath::vec4::kmVec4Add: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4PerspectiveProjection: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::vec3::kmVec3TransformCoord: {'a1: 'a4}, [Fn] lib::src::kazmath::vec2::kmVec2Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb2::kmAABB2Scale: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb2::kmAABB2Translate: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4Multiply: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4OrthographicProjection: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4Transpose: {'a1: 'a3}, [Fn] lib::src::kazmath::plane::kmPlaneFromNormalAndDistance: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2Normalize: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2Add: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3GetHorizontalAngle: {'a1: 'a3}, [Fn] lib::src::kazmath::vec4::kmVec4Subtract: {'a1: 'a4}, [Fn] lib::src::kazmath::aabb2::kmAABB2Centre: {'a2: 'a3}, [Fn] lib::src::kazmath::plane::kmPlaneIntersectLine: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb3::kmAABB3Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2Reflect: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3InverseTransformNormal: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3Adjugate: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4RotationAxisAngle: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2Subtract: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3Identity: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3RotationZ: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4AssignMat3: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3RotationX: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4Identity: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2Mul: {'a1: 'a4}, [Fn] lib::src::kazmath::vec2::kmVec2RotateBy: {'a1: 'a4}, [Fn] lib::src::kazmath::vec4::kmVec4Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::aabb3::kmAABB3Scale: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2Transform: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3AssignMat4: {'a1: 'a3}, [Fn] lib::src::kazmath::quaternion::kmQuaternionRotationPitchYawRoll: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4Inverse: {'a1: 'a3}, [Fn] lib::src::kazmath::vec3::kmVec3InverseTransform: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3Mul: {'a1: 'a4}, [Fn] lib::src::kazmath::vec2::kmVec2Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::vec3::kmVec3TransformNormal: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4RotationX: {'a1: 'a2}, [Fn] lib::src::kazmath::aabb2::kmAABB2ExpandToContain: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3Zero: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3Inverse: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4ExtractPlane: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3RotationY: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3RotationAxisAngle: {'a1: 'a3}, [Fn] lib::src::kazmath::quaternion::kmQuaternionMultiply: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3Translation: {'a1: 'a2}, [Fn] lib::src::kazmath::vec4::kmVec4Mul: {'a1: 'a4}, [Fn] lib::src::kazmath::ray3::kmRay3FromPointAndDirection: {'a1: 'a2}, [Fn] lib::src::kazmath::vec4::kmVec4Div: {'a1: 'a4}, [Fn] lib::src::kazmath::ray3::kmRay3Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::plane::kmPlaneFromPoints: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3LookAt: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3Transpose: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4RotationYawPitchRoll: {'a1: 'a2}, [Fn] lib::src::kazmath::quaternion::kmQuaternionLn: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2MidPointBetween: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::vec3::kmVec3MultiplyMat3: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3Scaling: {'a1: 'a2}, [Fn] lib::src::kazmath::plane::kmPlaneFill: {'a1: 'a2}, [Fn] lib::src::kazmath::vec3::kmVec3Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3ScalarMultiply: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4RotationZ: {'a1: 'a2}, [Fn] lib::src::src::ops::heman_ops_percentiles: {'a1: 'a3}, [Fn] lib::src::src::ops::heman_ops_stairstep: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::plane::kmPlaneNormalize: {'a1: 'a3}, [Fn] lib::src::kazmath::quaternion::kmQuaternionScale: {'a1: 'a3}, [Fn] lib::src::kazmath::vec4::kmVec4Lerp: {'a1: 'a4}, [Fn] lib::src::kazmath::aabb2::kmAABB2ScaleWithPivot: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3Multiply: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4Scaling: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3RotationQuaternion: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb3::kmAABB3ExpandToContain: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4LookAt: {'a1: 'a2}, [Fn] lib::src::kazmath::aabb2::kmAABB2Sanitize: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4Translation: {'a1: 'a2}, [Fn] lib::src::kazmath::quaternion::kmQuaternionSubtract: {'a1: 'a4}, [Fn] lib::src::kazmath::vec2::kmVec2Scale: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Rotation: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4RotationY: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4RotationQuaternion: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2Lerp: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3Div: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3RotationToDirection: {'a1: 'a4}, [Fn] lib::src::kazmath::plane::kmPlaneFromPointAndNormal: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4ExtractRotation: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb2::kmAABB2Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::quaternion::kmQuaternionExp: {'a1: 'a3}} }
+iteration 2
+running struct info pass
+Applying fixes
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/aabb2.rs:68:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:89:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:110:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:120:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:130:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:145:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:212:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:237:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/aabb3.rs:81:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb3.rs:103:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb3.rs:122:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb3.rs:279:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:110:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:125:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:197:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat3.rs:213:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:257:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:319:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:340:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:362:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:378:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:416:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:427:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:438:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat3.rs:475:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:521:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:553:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:569:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:585:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:648:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:102:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:119:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat4.rs:369:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:417:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:538:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:564:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:584:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:632:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:655:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:678:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:701:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:718:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:771:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:790:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:812:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat4.rs:878:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:906:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:940:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:956:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:998:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:1115:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:95:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:107:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:127:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:147:16: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/plane.rs:153:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:167:16: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/plane.rs:178:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:286:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:116:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:139:16: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/quaternion.rs:145:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:180:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:216:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:416:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:513:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:538:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/ray3.rs:51:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/ray3.rs:61:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:80:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:99:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/vec2.rs:115:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:125:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:149:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:159:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:171:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:190:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:215:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:234:16: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/vec2.rs:238:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:258:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:303:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:314:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:119:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:220:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:233:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:257:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:320:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:344:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:369:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:393:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:440:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:469:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:511:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:36:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:48:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:77:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:117:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:129:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:143:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/src/ops.rs:1035:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:16Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/src/ops.rs:1104:12: error[E0308]: mismatched types
+    
+New configuration: Configuration { ptr_kind: {}, move_flows: {}, bounds: {[Fn] lib::src::kazmath::mat3::kmMat3RotationZ: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4RotationYawPitchRoll: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2Transform: {'a1: 'a4}, [Fn] lib::src::kazmath::vec2::kmVec2Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::quaternion::kmQuaternionLn: {'a1: 'a3}, [Fn] lib::src::kazmath::vec4::kmVec4Lerp: {'a1: 'a4}, [Fn] lib::src::kazmath::vec2::kmVec2Lerp: {'a1: 'a4}, [Fn] lib::src::kazmath::aabb2::kmAABB2Centre: {'a2: 'a3}, [Fn] lib::src::kazmath::aabb3::kmAABB3Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3RotationX: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2Normalize: {'a1: 'a3}, [Fn] lib::src::kazmath::plane::kmPlaneIntersectLine: {'a1: 'a3}, [Fn] lib::src::kazmath::plane::kmPlaneFromNormalAndDistance: {'a1: 'a3}, [Fn] lib::src::kazmath::plane::kmPlaneFromPoints: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2Reflect: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3InverseTransform: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4Scaling: {'a1: 'a2}, [Fn] lib::src::kazmath::quaternion::kmQuaternionInverse: {'a1: 'a2}, [Fn] lib::src::kazmath::aabb2::kmAABB2Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4RotationZ: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4RotationQuaternion: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Identity: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4AssignMat3: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4ExtractPlane: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Adjugate: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3LookAt: {'a1: 'a2}, [Fn] lib::src::kazmath::quaternion::kmQuaternionExp: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Rotation: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4RotationX: {'a1: 'a2}, [Fn] lib::src::kazmath::quaternion::kmQuaternionMultiply: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2MidPointBetween: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3TransformCoord: {'a1: 'a4}, [Fn] lib::src::kazmath::aabb3::kmAABB3Scale: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::vec3::kmVec3InverseTransformNormal: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3RotationToDirection: {'a1: 'a4}, [Fn] lib::src::kazmath::plane::kmPlaneNormalize: {'a1: 'a3}, [Fn] lib::src::kazmath::vec4::kmVec4Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::vec4::kmVec4Add: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3AssignMat4: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb2::kmAABB2ScaleWithPivot: {'a1: 'a4}, [Fn] lib::src::kazmath::quaternion::kmQuaternionRotationPitchYawRoll: {'a1: 'a2}, [Fn] lib::src::kazmath::ray3::kmRay3Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::vec3::kmVec3Zero: {'a1: 'a2}, [Fn] lib::src::kazmath::aabb3::kmAABB3ExpandToContain: {'a1: 'a4}, [Fn] lib::src::kazmath::vec4::kmVec4Subtract: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4ExtractRotation: {'a1: 'a3}, [Fn] lib::src::kazmath::vec4::kmVec4Mul: {'a1: 'a4}, [Fn] lib::src::kazmath::aabb2::kmAABB2Initialize: {'a1: 'a2}, [Fn] lib::src::kazmath::aabb2::kmAABB2ExpandToContain: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::vec4::kmVec4Div: {'a1: 'a4}, [Fn] lib::src::kazmath::aabb2::kmAABB2Translate: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3RotationY: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2Subtract: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3Mul: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4LookAt: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4RotationY: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3RotationQuaternion: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4Transpose: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4RotationTranslation: {'a1: 'a4}, [Fn] lib::src::src::ops::heman_ops_stairstep: {'a1: 'a3}, [Fn] lib::src::kazmath::vec3::kmVec3GetHorizontalAngle: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Inverse: {'a1: 'a3}, [Fn] lib::src::kazmath::plane::kmPlaneFromPointAndNormal: {'a1: 'a2}, [Fn] lib::src::kazmath::ray3::kmRay3FromPointAndDirection: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3Transpose: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Multiply: {'a1: 'a4}, [Fn] lib::src::kazmath::vec2::kmVec2Scale: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2RotateBy: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3ScalarMultiply: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4RotationAxisAngle: {'a1: 'a3}, [Fn] lib::src::kazmath::quaternion::kmQuaternionScale: {'a1: 'a3}, [Fn] lib::src::kazmath::plane::kmPlaneFill: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4Translation: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2Add: {'a1: 'a4}, [Fn] lib::src::kazmath::aabb2::kmAABB2Sanitize: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Translation: {'a1: 'a2}, [Fn] lib::src::kazmath::aabb3::kmAABB3Initialize: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4Multiply: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4PerspectiveProjection: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4Identity: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2Div: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3Div: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3RotationAxisAngle: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4OrthographicProjection: {'a1: 'a2}, [Fn] lib::src::kazmath::vec3::kmVec3TransformNormal: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3MultiplyMat3: {'a1: 'a4}, [Fn] lib::src::src::ops::heman_ops_percentiles: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb2::kmAABB2Scale: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2Mul: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3Scaling: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4Inverse: {'a1: 'a3}, [Fn] lib::src::kazmath::quaternion::kmQuaternionSubtract: {'a1: 'a4}} }
+iteration 3
+The pointer kinds haven't changed, skipping analysis
+Applying fixes
+[2023-01-31T06:06:20Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/plane.rs:238:29: error[E0495]: cannot infer an appropriate lifetime for lifetime parameter `'a` due to conflicting requirements
+    
+New configuration: Configuration { ptr_kind: {}, move_flows: {}, bounds: {[Fn] lib::src::kazmath::plane::kmPlaneExtractFromMat4: {'a1: 'a3}} }
+iteration 4
+The pointer kinds haven't changed, skipping analysis
+Applying fixes
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/heman/src/kazmath/aabb2.rs:211:56: error[E0502]: cannot borrow `pOut` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/kazmath/mat3.rs:122:40: error[E0499]: cannot borrow `pOut` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/kazmath/mat4.rs:114:40: error[E0499]: cannot borrow `pOut` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/kazmath/mat4.rs:116:40: error[E0499]: cannot borrow `pOut` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/heman/src/kazmath/mat4.rs:717:82: error[E0502]: cannot borrow `pOut` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/heman/src/kazmath/mat4.rs:939:59: error[E0502]: cannot borrow `pOut` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0515] benchmark/heman/src/kazmath/plane.rs:238:12: error[E0515]: cannot return value referencing function parameter `pOut`
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/heman/src/kazmath/plane.rs:238:59: error[E0502]: cannot borrow `pOut` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/kazmath/quaternion.rs:435:58: error[E0499]: cannot borrow `diff` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/kazmath/quaternion.rs:454:70: error[E0499]: cannot borrow `tmp` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/kazmath/ray2.rs:174:52: error[E0499]: cannot borrow `edge` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/kazmath/ray2.rs:175:58: error[E0499]: cannot borrow `other_edge` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/heman/src/kazmath/ray2.rs:186:66: error[E0502]: cannot borrow `normal_out` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0515] benchmark/heman/src/kazmath/vec2.rs:107:16: error[E0515]: cannot return value referencing function parameter `pOut`
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0515] benchmark/heman/src/src/points.rs:81:12: error[E0515]: cannot return value referencing temporary value
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/src/points.rs:156:45: error[E0499]: cannot borrow `r` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/src/points.rs:157:43: error[E0499]: cannot borrow `r` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/src/points.rs:253:58: error[E0499]: cannot borrow `maxj` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/src/points.rs:254:63: error[E0499]: cannot borrow `minj` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/src/points.rs:255:60: error[E0499]: cannot borrow `minj` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/src/points.rs:256:60: error[E0499]: cannot borrow `maxj` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/src/points.rs:481:58: error[E0499]: cannot borrow `maxj` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/src/points.rs:482:63: error[E0499]: cannot borrow `minj` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/src/points.rs:483:60: error[E0499]: cannot borrow `minj` as mutable more than once at a time
+    
+[2023-01-31T06:06:25Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/heman/src/src/points.rs:484:60: error[E0499]: cannot borrow `maxj` as mutable more than once at a time
+    
+New configuration: Configuration { ptr_kind: {Param(lib::src::kazmath::mat4::kmMat4Multiply, 0): Raw, Param(lib::src::kazmath::vec2::kmVec2Add, 0): Raw, Param(lib::src::kazmath::vec2::kmVec2Subtract, 0): Raw, Var(lib::src::kazmath::mat4::kmMat4Identity::pOut): Raw, Param(lib::src::kazmath::quaternion::kmQuaternionSubtract, 0): Raw, Param(lib::src::kazmath::vec2::kmVec2Normalize, 0): Raw, Var(lib::src::kazmath::mat3::kmMat3Identity::pOut): Raw, Param(lib::src::kazmath::vec2::kmVec2Scale, 0): Raw, Param(lib::src::kazmath::quaternion::kmQuaternionScale, 0): Raw, Param(lib::src::kazmath::plane::kmPlaneNormalize, 0): Raw}, move_flows: {SerializableHirId(HirId { owner: DefId(0:208), local_id: 257 }), SerializableHirId(HirId { owner: DefId(0:208), local_id: 254 }), SerializableHirId(HirId { owner: DefId(0:350), local_id: 14 }), SerializableHirId(HirId { owner: DefId(0:350), local_id: 17 }), SerializableHirId(HirId { owner: DefId(0:909), local_id: 169 }), SerializableHirId(HirId { owner: DefId(0:909), local_id: 30 })}, bounds: {} }
+iteration 5
+running struct info pass
+Applying fixes
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/aabb2.rs:68:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:89:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:110:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:120:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:130:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:145:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:237:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/aabb3.rs:81:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb3.rs:103:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb3.rs:122:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb3.rs:279:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:110:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:197:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat3.rs:213:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:257:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:319:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:340:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:362:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:378:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:416:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat3.rs:475:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:521:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:553:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:569:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:585:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:648:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:102:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat4.rs:369:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:417:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:564:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:632:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:655:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:678:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:701:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:771:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:790:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:812:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:956:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:998:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:1115:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:95:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:107:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:127:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:147:16: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/plane.rs:153:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:286:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:116:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:139:16: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/quaternion.rs:145:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:180:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:216:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:416:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/ray3.rs:51:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/ray3.rs:61:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:80:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:99:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:159:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:171:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:190:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:258:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:303:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:119:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:220:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:233:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:257:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:320:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:344:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:369:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:393:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:440:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:469:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:511:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:36:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:48:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:77:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:117:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:129:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:143:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/src/ops.rs:1035:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/src/ops.rs:1104:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:06:44Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/src/points.rs:81:12: error[E0308]: mismatched types
+    
+New configuration: Configuration { ptr_kind: {RetVal(lib::src::src::points::heman_points_create): Owned}, move_flows: {}, bounds: {[Fn] lib::src::kazmath::mat4::kmMat4Inverse: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4Scaling: {'a1: 'a2}, [Fn] lib::src::kazmath::vec3::kmVec3Div: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::vec4::kmVec4Mul: {'a1: 'a4}, [Fn] lib::src::kazmath::vec4::kmVec4Div: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4ExtractRotation: {'a1: 'a3}, [Fn] lib::src::kazmath::plane::kmPlaneFromPoints: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4Transpose: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3RotationQuaternion: {'a1: 'a3}, [Fn] lib::src::kazmath::vec3::kmVec3Zero: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2Mul: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3RotationX: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3ScalarMultiply: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4Translation: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3Inverse: {'a1: 'a3}, [Fn] lib::src::kazmath::vec3::kmVec3MultiplyMat3: {'a1: 'a4}, [Fn] lib::src::kazmath::plane::kmPlaneFill: {'a1: 'a2}, [Fn] lib::src::kazmath::vec4::kmVec4Lerp: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3InverseTransformNormal: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3GetHorizontalAngle: {'a1: 'a3}, [Fn] lib::src::kazmath::vec4::kmVec4Subtract: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3RotationY: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4RotationX: {'a1: 'a2}, [Fn] lib::src::kazmath::aabb3::kmAABB3Initialize: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4RotationAxisAngle: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb2::kmAABB2ExpandToContain: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3Multiply: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Rotation: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4RotationY: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2MidPointBetween: {'a1: 'a4}, [Fn] lib::src::kazmath::vec2::kmVec2Div: {'a1: 'a4}, [Fn] lib::src::kazmath::vec2::kmVec2Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3AssignMat4: {'a1: 'a3}, [Fn] lib::src::kazmath::plane::kmPlaneFromPointAndNormal: {'a1: 'a2}, [Fn] lib::src::kazmath::plane::kmPlaneFromNormalAndDistance: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2RotateBy: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3RotationZ: {'a1: 'a2}, [Fn] lib::src::kazmath::vec3::kmVec3InverseTransform: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3RotationToDirection: {'a1: 'a4}, [Fn] lib::src::src::ops::heman_ops_percentiles: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb2::kmAABB2ScaleWithPivot: {'a1: 'a4}, [Fn] lib::src::kazmath::aabb3::kmAABB3Scale: {'a1: 'a3}, [Fn] lib::src::kazmath::vec3::kmVec3Mul: {'a1: 'a4}, [Fn] lib::src::src::ops::heman_ops_stairstep: {'a1: 'a3}, [Fn] lib::src::kazmath::quaternion::kmQuaternionMultiply: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4RotationZ: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3Transpose: {'a1: 'a3}, [Fn] lib::src::kazmath::quaternion::kmQuaternionExp: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3RotationAxisAngle: {'a1: 'a3}, [Fn] lib::src::kazmath::quaternion::kmQuaternionRotationPitchYawRoll: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4ExtractPlane: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3LookAt: {'a1: 'a2}, [Fn] lib::src::kazmath::aabb2::kmAABB2Scale: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4RotationTranslation: {'a1: 'a4}, [Fn] lib::src::kazmath::aabb3::kmAABB3ExpandToContain: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3TransformNormal: {'a1: 'a4}, [Fn] lib::src::kazmath::plane::kmPlaneIntersectLine: {'a1: 'a3}, [Fn] lib::src::kazmath::vec3::kmVec3TransformCoord: {'a1: 'a4}, [Fn] lib::src::kazmath::aabb2::kmAABB2Translate: {'a1: 'a4}, [Fn] lib::src::kazmath::quaternion::kmQuaternionInverse: {'a1: 'a2}, [Fn] lib::src::kazmath::ray3::kmRay3FromPointAndDirection: {'a1: 'a2}, [Fn] lib::src::kazmath::aabb3::kmAABB3Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Adjugate: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb2::kmAABB2Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4RotationQuaternion: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2Lerp: {'a1: 'a4}, [Fn] lib::src::kazmath::aabb2::kmAABB2Sanitize: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::ray3::kmRay3Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::quaternion::kmQuaternionLn: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb2::kmAABB2Initialize: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2Transform: {'a1: 'a4}, [Fn] lib::src::kazmath::vec4::kmVec4Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::vec4::kmVec4Add: {'a1: 'a4}} }
+iteration 6
+running struct info pass
+Applying fixes
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/aabb2.rs:68:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:89:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:110:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:120:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:130:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:145:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb2.rs:237:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/aabb3.rs:81:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb3.rs:103:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb3.rs:122:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/aabb3.rs:279:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:110:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:197:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat3.rs:213:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:257:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:319:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:340:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:362:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:378:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:416:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat3.rs:475:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:521:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:553:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:569:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:585:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat3.rs:648:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:102:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/mat4.rs:369:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:417:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:564:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:632:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:655:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:678:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:701:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:771:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:790:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:812:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:956:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:998:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/mat4.rs:1115:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:95:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:107:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:127:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:147:16: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/plane.rs:153:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/plane.rs:286:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:116:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:139:16: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0495] benchmark/heman/src/kazmath/quaternion.rs:145:12: error[E0495]: cannot infer an appropriate lifetime due to conflicting requirements
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:180:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:216:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/quaternion.rs:416:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/ray3.rs:51:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/ray3.rs:61:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:80:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:99:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:159:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:171:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:190:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:258:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec2.rs:303:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:119:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:220:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:233:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:257:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:320:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:344:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:369:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:393:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:440:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:469:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec3.rs:511:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:36:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:48:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:77:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:117:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:129:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/kazmath/vec4.rs:143:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/src/ops.rs:1035:12: error[E0308]: mismatched types
+    
+[2023-01-31T06:07:02Z ERROR laertes::compiler_interface::error_handling] processing[E0308] benchmark/heman/src/src/ops.rs:1104:12: error[E0308]: mismatched types
+    
+New configuration: Configuration { ptr_kind: {}, move_flows: {}, bounds: {[Fn] lib::src::kazmath::vec4::kmVec4Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4ExtractPlane: {'a1: 'a3}, [Fn] lib::src::kazmath::quaternion::kmQuaternionInverse: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3AssignMat4: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2Lerp: {'a1: 'a4}, [Fn] lib::src::kazmath::vec4::kmVec4Subtract: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4RotationZ: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3Adjugate: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4RotationAxisAngle: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb2::kmAABB2Initialize: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2Mul: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3ScalarMultiply: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Transpose: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4ExtractRotation: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb2::kmAABB2ExpandToContain: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4RotationTranslation: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4Scaling: {'a1: 'a2}, [Fn] lib::src::kazmath::aabb2::kmAABB2Scale: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb3::kmAABB3Scale: {'a1: 'a3}, [Fn] lib::src::kazmath::vec3::kmVec3TransformNormal: {'a1: 'a4}, [Fn] lib::src::kazmath::quaternion::kmQuaternionExp: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb2::kmAABB2Sanitize: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3RotationAxisAngle: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3Inverse: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb3::kmAABB3Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::aabb2::kmAABB2Translate: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3MultiplyMat3: {'a1: 'a4}, [Fn] lib::src::kazmath::plane::kmPlaneFromPoints: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4RotationX: {'a1: 'a2}, [Fn] lib::src::kazmath::quaternion::kmQuaternionLn: {'a1: 'a3}, [Fn] lib::src::kazmath::vec3::kmVec3TransformCoord: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4Translation: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3RotationY: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2RotateBy: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::plane::kmPlaneFromNormalAndDistance: {'a1: 'a3}, [Fn] lib::src::kazmath::vec4::kmVec4Div: {'a1: 'a4}, [Fn] lib::src::kazmath::plane::kmPlaneIntersectLine: {'a1: 'a3}, [Fn] lib::src::kazmath::quaternion::kmQuaternionRotationPitchYawRoll: {'a1: 'a2}, [Fn] lib::src::kazmath::vec3::kmVec3Mul: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3LookAt: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3Multiply: {'a1: 'a4}, [Fn] lib::src::kazmath::quaternion::kmQuaternionMultiply: {'a1: 'a2}, [Fn] lib::src::kazmath::aabb3::kmAABB3Initialize: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3RotationQuaternion: {'a1: 'a3}, [Fn] lib::src::kazmath::plane::kmPlaneFill: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2Div: {'a1: 'a4}, [Fn] lib::src::kazmath::aabb2::kmAABB2ScaleWithPivot: {'a1: 'a4}, [Fn] lib::src::kazmath::vec3::kmVec3GetHorizontalAngle: {'a1: 'a3}, [Fn] lib::src::kazmath::mat3::kmMat3RotationZ: {'a1: 'a2}, [Fn] lib::src::kazmath::plane::kmPlaneFromPointAndNormal: {'a1: 'a2}, [Fn] lib::src::kazmath::ray3::kmRay3FromPointAndDirection: {'a1: 'a2}, [Fn] lib::src::kazmath::vec3::kmVec3Div: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4Inverse: {'a1: 'a3}, [Fn] lib::src::kazmath::vec3::kmVec3RotationToDirection: {'a1: 'a4}, [Fn] lib::src::kazmath::vec4::kmVec4Mul: {'a1: 'a4}, [Fn] lib::src::kazmath::mat3::kmMat3Rotation: {'a1: 'a2}, [Fn] lib::src::src::ops::heman_ops_stairstep: {'a1: 'a3}, [Fn] lib::src::kazmath::ray3::kmRay3Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::mat4::kmMat4Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::aabb2::kmAABB2Assign: {'a1: 'a3}, [Fn] lib::src::kazmath::vec3::kmVec3InverseTransformNormal: {'a1: 'a4}, [Fn] lib::src::kazmath::vec2::kmVec2Transform: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4RotationQuaternion: {'a1: 'a3}, [Fn] lib::src::kazmath::vec4::kmVec4Add: {'a1: 'a4}, [Fn] lib::src::kazmath::vec4::kmVec4Lerp: {'a1: 'a4}, [Fn] lib::src::src::ops::heman_ops_percentiles: {'a1: 'a3}, [Fn] lib::src::kazmath::vec2::kmVec2Fill: {'a1: 'a2}, [Fn] lib::src::kazmath::vec3::kmVec3Zero: {'a1: 'a2}, [Fn] lib::src::kazmath::mat3::kmMat3RotationX: {'a1: 'a2}, [Fn] lib::src::kazmath::mat4::kmMat4RotationY: {'a1: 'a2}, [Fn] lib::src::kazmath::vec2::kmVec2MidPointBetween: {'a1: 'a4}, [Fn] lib::src::kazmath::aabb3::kmAABB3ExpandToContain: {'a1: 'a4}, [Fn] lib::src::kazmath::mat4::kmMat4Transpose: {'a1: 'a3}, [Fn] lib::src::kazmath::vec3::kmVec3InverseTransform: {'a1: 'a4}} }
+iteration 7
+The pointer kinds haven't changed, skipping analysis
+Applying fixes
+DONE: The compiler successfully compiles the code
+PROFILING RESULTS
+call graph closure: 2 ms
+compute SCCs: 22697 ms
+computing poison sets via equality-based analysis: 1118 ms
+computing subsets for ownership/poison propagation: 9915 ms
+constraint solving: 6345 ms
+constraint solving (TODO: only compute eq classes): 15047 ms
+constraint solving (addr_of_locs): 6499 ms
+constraint solving (reborrow_map): 9989 ms
+constructor constraints: 22421 ms
+propagating compiler error-derived poisons via subset-based analysis: 0 ms
+propagating inline assembly poisons via subset-based analysis: 0 ms
+propagating ownership: 0 ms
+propagating refcell promotion: 99 ms
+propagating upper and lower sets: 24744 ms
+set constraint solving: 53237 ms
+transitive closure: 5793 ms

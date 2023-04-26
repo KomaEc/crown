@@ -1,0 +1,185 @@
+warning: associated function is never used: `mut_`
+   --> src/bin/resolve-lifetimes.rs:119:8
+    |
+119 |     fn mut_() -> Self {
+    |        ^^^^
+    |
+    = note: `#[warn(dead_code)]` on by default
+
+warning: associated function is never used: `move_`
+   --> src/bin/resolve-lifetimes.rs:131:8
+    |
+131 |     fn move_() -> Self {
+    |        ^^^^^
+
+warning: function is never used: `has_non_arith_poison`
+   --> src/bin/resolve-lifetimes.rs:157:4
+    |
+157 | fn has_non_arith_poison(locs: &HashSet<Loc<Name>>, provenance: &PtrProvenanceAnalysis) -> bool {
+    |    ^^^^^^^^^^^^^^^^^^^^
+
+warning: 3 warnings emitted
+
+    Finished release [optimized + debuginfo] target(s) in 0.03s
+     Running `target/release/resolve-lifetimes -f --emulate-lifetime-only -- benchmark/lodepng/lib.rs`
+poison sigs of fn ptrs? true
+Compiler arguments: 'create-initial-program' 'benchmark/lodepng/lib.rs'
+iteration 1
+running struct info pass
+Applying fixes
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:806:55: error[E0502]: cannot borrow `p` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:2842:20: error[E0502]: cannot borrow `values` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:5026:41: error[E0499]: cannot borrow `info` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:7766:42: error[E0499]: cannot borrow `stats` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:8165:43: error[E0502]: cannot borrow `stats` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:8169:43: error[E0502]: cannot borrow `stats` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:8173:43: error[E0502]: cannot borrow `stats` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:9565:46: error[E0499]: cannot borrow `color` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:9611:46: error[E0499]: cannot borrow `info` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:9627:46: error[E0499]: cannot borrow `info` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:10264:46: error[E0499]: cannot borrow `info` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:10310:46: error[E0499]: cannot borrow `info` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:10505:33: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:10953:119: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:10987:41: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:12966:37: error[E0499]: cannot borrow `out` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13095:19: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13098:22: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13103:25: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13108:23: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13113:24: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13114:27: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13116:31: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13117:31: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13119:28: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13120:65: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13121:30: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13154:35: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13160:49: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13162:34: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13183:43: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13191:42: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13202:47: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13205:56: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13208:46: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13299:50: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13326:63: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13362:47: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13365:47: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13366:60: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13382:61: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13394:55: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13396:50: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13397:55: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13402:69: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13407:50: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13408:55: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13416:69: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13420:50: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13426:51: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13434:65: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13436:50: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13446:55: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13447:56: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13448:59: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13457:60: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13461:67: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13467:66: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13479:75: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13483:84: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13485:74: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13497:83: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13498:82: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13510:91: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13511:90: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0499] benchmark/lodepng/src/lodepng.rs:13523:99: error[E0499]: cannot borrow `state` as mutable more than once at a time
+    
+[2023-01-31T06:07:17Z ERROR laertes::compiler_interface::error_handling] processing[E0502] benchmark/lodepng/src/lodepng.rs:13524:98: error[E0502]: cannot borrow `state` as immutable because it is also borrowed as mutable
+    
+New configuration: Configuration { ptr_kind: {Var(lib::src::lodepng::lodepng_color_mode_init::info): Raw, Var(lib::src::lodepng::lodepng_decode::state): Raw, Var(lib::src::lodepng::readChunk_sBIT::info): Raw, Var(lib::src::lodepng::lodepng_encode::state): Raw, Var(lib::src::lodepng::readChunk_bKGD::info): Raw, Var(lib::src::lodepng::lodepng_color_stats_init::stats): Raw, Param(lib::src::lodepng::uivector_resize, 0): Raw, Var(lib::src::lodepng::lodepng_compute_color_stats::stats): Raw, Var(lib::src::lodepng::readChunk_tRNS::color): Raw, Var(lib::src::lodepng::addUnknownChunks::out): Raw, Var(lib::src::lodepng::decodeGeneric::state): Raw}, move_flows: {}, bounds: {} }
+iteration 2
+running struct info pass
+Applying fixes
+DONE: The compiler successfully compiles the code
+PROFILING RESULTS
+call graph closure: 3 ms
+compute SCCs: 2381 ms
+computing poison sets via equality-based analysis: 307 ms
+computing subsets for ownership/poison propagation: 417 ms
+constraint solving: 487 ms
+constraint solving (TODO: only compute eq classes): 1081 ms
+constraint solving (addr_of_locs): 512 ms
+constraint solving (reborrow_map): 1027 ms
+constructor constraints: 1492 ms
+propagating compiler error-derived poisons via subset-based analysis: 0 ms
+propagating inline assembly poisons via subset-based analysis: 0 ms
+propagating ownership: 0 ms
+propagating refcell promotion: 24 ms
+propagating upper and lower sets: 1935 ms
+set constraint solving: 5041 ms
+transitive closure: 724 ms

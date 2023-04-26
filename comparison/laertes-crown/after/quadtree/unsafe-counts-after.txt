@@ -1,0 +1,102 @@
+environment variable flags: RwLockReadGuard { lock: RwLock { data: Flags { print_per_fn_stats: false, count_indirect: false, benchmark_name: "quadtree", non_limit: true, config_file: None } } }
+Non-limit ptr: lib::src::src::bounds::quadtree_bounds_extend::bounds ; poison: ({VoidSource, CastSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/quadtree/src/src/bounds.rs:59:5: 59:15 (#0)
+Non-limit ptr: lib::src::src::bounds::quadtree_bounds_free::bounds ; poison: ({VoidSource, CastSource}, {ExternCallParam, CastSink, VoidSink}) at benchmark/quadtree/src/src/bounds.rs:71:47: 71:57 (#0)
+Non-limit ptr: lib::src::src::bounds::quadtree_bounds_new::bounds ; poison: ({VoidSource, CastSource}, {VoidSink, ExternCallParam, CastSink}) at benchmark/quadtree/src/src/bounds.rs:78:9: 78:19 (#0)
+Non-limit ptr: lib::src::src::node::quadtree_node_ispointer::node ; poison: ({CastSource, FnPtrSource, VoidSource}, {CastSink, ExternCallParam, VoidSink}) at benchmark/quadtree/src/src/node.rs:54:5: 54:13 (#0)
+Non-limit ptr: lib::src::src::node::quadtree_node_isempty::node ; poison: ({VoidSource, FnPtrSource, CastSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/quadtree/src/src/node.rs:61:5: 61:13 (#0)
+Non-limit ptr: lib::src::src::node::quadtree_node_isleaf::node ; poison: ({VoidSource, FnPtrSource, CastSource}, {CastSink, ExternCallParam, VoidSink}) at benchmark/quadtree/src/src/node.rs:68:5: 68:13 (#0)
+Non-limit ptr: lib::src::src::node::quadtree_node_reset::node ; poison: ({VoidSource, FnPtrSource, CastSource}, {CastSink, ExternCallParam, VoidSink}) at benchmark/quadtree/src/src/node.rs:75:5: 75:13 (#0)
+Non-limit ptr: lib::src::src::node::quadtree_node_new::node ; poison: ({FnPtrSource, VoidSource, CastSource}, {VoidSink, ExternCallParam, CastSink}) at benchmark/quadtree/src/src/node.rs:84:9: 84:17 (#0)
+Non-limit ptr: lib::src::src::node::quadtree_node_with_bounds::node ; poison: ({FnPtrSource, VoidSource, CastSource}, {CastSink, ExternCallParam, VoidSink}) at benchmark/quadtree/src/src/node.rs:113:9: 113:17 (#0)
+Non-limit ptr: lib::src::src::node::quadtree_node_free::node ; poison: ({VoidSource, CastSource, FnPtrSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/quadtree/src/src/node.rs:129:5: 129:13 (#0)
+Non-limit ptr: lib::src::src::point::quadtree_point_new::point ; poison: ({CastSource, VoidSource}, {CastSink, ExternCallParam, VoidSink}) at benchmark/quadtree/src/src/point.rs:15:9: 15:18 (#0)
+Non-limit ptr: lib::src::src::point::quadtree_point_free::point ; poison: ({VoidSource, CastSource}, {VoidSink, CastSink, ExternCallParam}) at benchmark/quadtree/src/src/point.rs:26:46: 26:55 (#0)
+Non-limit ptr: lib::src::src::quadtree::node_contains_::outer ; poison: ({FnPtrSource, VoidSource, CastSource}, {ExternCallParam, CastSink, VoidSink}) at benchmark/quadtree/src/src/quadtree.rs:55:5: 55:14 (#0)
+Non-limit ptr: lib::src::src::quadtree::node_contains_::it ; poison: ({CastSource, VoidSource}, {VoidSink, ExternCallParam, CastSink}) at benchmark/quadtree/src/src/quadtree.rs:56:5: 56:11 (#0)
+Non-limit ptr: lib::src::src::quadtree::elision_::key ; poison: ({FnPtrSource, VoidSource, CastSource}, {VoidSink, CastSink}) at benchmark/quadtree/src/src/quadtree.rs:62:25: 62:32 (#0)
+Non-limit ptr: lib::src::src::quadtree::reset_node_::tree ; poison: ({VoidSource, CastSource}, {CastSink, ExternCallParam, VoidSink}) at benchmark/quadtree/src/src/quadtree.rs:64:5: 64:13 (#0)
+Non-limit ptr: lib::src::src::quadtree::reset_node_::node ; poison: ({CastSource, VoidSource, FnPtrSource}, {VoidSink, CastSink, ExternCallParam}) at benchmark/quadtree/src/src/quadtree.rs:65:5: 65:13 (#0)
+Non-limit ptr: lib::src::src::quadtree::get_quadrant_::root ; poison: ({CastSource, VoidSource, FnPtrSource}, {CastSink, ExternCallParam, VoidSink}) at benchmark/quadtree/src/src/quadtree.rs:77:5: 77:13 (#0)
+Non-limit ptr: lib::src::src::quadtree::get_quadrant_::point ; poison: ({VoidSource, CastSource}, {ExternCallParam, CastSink, VoidSink}) at benchmark/quadtree/src/src/quadtree.rs:78:5: 78:14 (#0)
+Non-limit ptr: lib::src::src::quadtree::split_node_::tree ; poison: ({VoidSource, CastSource}, {CastSink, VoidSink, ExternCallParam}) at benchmark/quadtree/src/src/quadtree.rs:95:5: 95:13 (#0)
+Non-limit ptr: lib::src::src::quadtree::split_node_::node ; poison: ({FnPtrSource, CastSource, VoidSource}, {ExternCallParam, CastSink, VoidSink}) at benchmark/quadtree/src/src/quadtree.rs:96:5: 96:13 (#0)
+Non-limit ptr: lib::src::src::quadtree::split_node_::nw ; poison: ({FnPtrSource, CastSource, VoidSource}, {VoidSink, CastSink, ExternCallParam}) at benchmark/quadtree/src/src/quadtree.rs:98:9: 98:15 (#0)
+Non-limit ptr: lib::src::src::quadtree::split_node_::ne ; poison: ({VoidSource, FnPtrSource, CastSource}, {VoidSink, CastSink, ExternCallParam}) at benchmark/quadtree/src/src/quadtree.rs:99:9: 99:15 (#0)
+Non-limit ptr: lib::src::src::quadtree::split_node_::sw ; poison: ({VoidSource, FnPtrSource, CastSource}, {VoidSink, CastSink, ExternCallParam}) at benchmark/quadtree/src/src/quadtree.rs:100:9: 100:15 (#0)
+Non-limit ptr: lib::src::src::quadtree::split_node_::se ; poison: ({VoidSource, FnPtrSource, CastSource}, {ExternCallParam, CastSink, VoidSink}) at benchmark/quadtree/src/src/quadtree.rs:101:9: 101:15 (#0)
+Non-limit ptr: lib::src::src::quadtree::split_node_::old ; poison: ({VoidSource, CastSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/quadtree/src/src/quadtree.rs:145:9: 145:16 (#0)
+Non-limit ptr: lib::src::src::quadtree::split_node_::key ; poison: ({FnPtrSource, VoidSource, CastSource}, {CastSink, VoidSink}) at benchmark/quadtree/src/src/quadtree.rs:146:9: 146:16 (#0)
+Non-limit ptr: lib::src::src::quadtree::find_::node ; poison: ({CastSource, VoidSource, FnPtrSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/quadtree/src/src/quadtree.rs:154:5: 154:13 (#0)
+Non-limit ptr: lib::src::src::quadtree::insert_::tree ; poison: ({CastSource, VoidSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/quadtree/src/src/quadtree.rs:171:5: 171:13 (#0)
+Non-limit ptr: lib::src::src::quadtree::insert_::root ; poison: ({FnPtrSource, CastSource, VoidSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/quadtree/src/src/quadtree.rs:172:5: 172:13 (#0)
+Non-limit ptr: lib::src::src::quadtree::insert_::point ; poison: ({VoidSource, CastSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/quadtree/src/src/quadtree.rs:173:5: 173:14 (#0)
+Non-limit ptr: lib::src::src::quadtree::insert_::key ; poison: ({FnPtrSource, VoidSource, CastSource}, {CastSink, VoidSink}) at benchmark/quadtree/src/src/quadtree.rs:174:5: 174:12 (#0)
+Non-limit ptr: lib::src::src::quadtree::insert_::quadrant ; poison: ({CastSource, FnPtrSource, VoidSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/quadtree/src/src/quadtree.rs:199:21: 199:33 (#0)
+Non-limit ptr: lib::src::src::quadtree::quadtree_new::tree ; poison: ({CastSource, VoidSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/quadtree/src/src/quadtree.rs:217:9: 217:17 (#0)
+Non-limit ptr: lib::src::src::quadtree::quadtree_insert::tree ; poison: ({VoidSource, CastSource}, {ExternCallParam, CastSink, VoidSink}) at benchmark/quadtree/src/src/quadtree.rs:236:5: 236:13 (#0)
+Non-limit ptr: lib::src::src::quadtree::quadtree_insert::key ; poison: ({CastSource, VoidSource, FnPtrSource}, {VoidSink, CastSink}) at benchmark/quadtree/src/src/quadtree.rs:239:5: 239:12 (#0)
+Non-limit ptr: lib::src::src::quadtree::quadtree_insert::point ; poison: ({CastSource, VoidSource}, {ExternCallParam, CastSink, VoidSink}) at benchmark/quadtree/src/src/quadtree.rs:241:9: 241:18 (#0)
+Non-limit ptr: lib::src::src::quadtree::quadtree_search::tree ; poison: ({CastSource, VoidSource}, {ExternCallParam, CastSink, VoidSink}) at benchmark/quadtree/src/src/quadtree.rs:258:5: 258:13 (#0)
+Non-limit ptr: lib::src::src::quadtree::quadtree_free::tree ; poison: ({VoidSource, CastSource}, {VoidSink, CastSink, ExternCallParam}) at benchmark/quadtree/src/src/quadtree.rs:265:40: 265:48 (#0)
+Non-limit ptr: lib::src::src::quadtree::quadtree_walk::root ; poison: ({FnPtrSource, CastSource, VoidSource}, {VoidSink, ExternCallParam, CastSink}) at benchmark/quadtree/src/src/quadtree.rs:278:5: 278:13 (#0)
+Non-limit ptr: lib::src::test::descent::node ; poison: ({FnPtrSource, CastSource, VoidSource}, {CastSink, VoidSink, ExternCallParam}) at benchmark/quadtree/src/test.rs:57:34: 57:42 (#0)
+Non-limit ptr: lib::src::test::ascent::node ; poison: ({FnPtrSource, CastSource, VoidSource}, {VoidSink, CastSink, ExternCallParam}) at benchmark/quadtree/src/test.rs:70:33: 70:41 (#0)
+Non-limit ptr: lib::src::test::test_node::node ; poison: ({CastSource, VoidSource, FnPtrSource}, {CastSink, ExternCallParam, VoidSink}) at benchmark/quadtree/src/test.rs:74:9: 74:17 (#0)
+Non-limit ptr: lib::src::test::test_bounds::bounds ; poison: ({VoidSource, CastSource}, {VoidSink, CastSink, ExternCallParam}) at benchmark/quadtree/src/test.rs:104:9: 104:19 (#0)
+Non-limit ptr: lib::src::test::test_tree::tree ; poison: ({VoidSource, CastSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/quadtree/src/test.rs:210:9: 210:17 (#0)
+Non-limit ptr: lib::src::test::test_points::point ; poison: ({CastSource, VoidSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/quadtree/src/test.rs:436:9: 436:18 (#0)
+Non-limit ptr: lib::src::test::main_0::argv ; poison: ({ArgvSource}, {ArgvSink}) at benchmark/quadtree/src/test.rs:462:5: 462:13 (#0)
+raw pointer CSV
+Benchmark,Statistic,{VoidPtr},{ExplicitRaw},{PtrArith},{Global},{Cast},{VoidPtr},{StringLit},{Extern},{}
+quadtree,NonUniqueDecls,46,0,0,0,46,46,0,42,47
+quadtree,DeclsExact,0,0,0,0,0,0,0,0,1
+quadtree,NonUniqueDerefs,206,0,0,0,206,206,0,206,206
+quadtree,DerefsExact,0,0,0,0,0,0,0,0,0
+non-empty pointer eq class sizes:
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+4
+4
+8
+8
+22
+there are 29 non-empty eq classes
+PROFILING RESULTS
+call graph closure: 0 ms
+compute SCCs: 45 ms
+computing poison sets via equality-based analysis: 20 ms
+computing subsets for ownership/poison propagation: 1 ms
+constraint solving: 15 ms
+constraint solving (TODO: only compute eq classes): 26 ms
+constraint solving (addr_of_locs): 13 ms
+constraint solving (reborrow_map): 10 ms
+constructor constraints: 40 ms
+propagating compiler error-derived poisons via subset-based analysis: 0 ms
+propagating inline assembly poisons via subset-based analysis: 0 ms
+propagating ownership: 0 ms
+propagating refcell promotion: 2 ms
+propagating upper and lower sets: 42 ms
+set constraint solving: 89 ms
+transitive closure: 2 ms

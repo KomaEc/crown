@@ -1,0 +1,383 @@
+environment variable flags: RwLockReadGuard { lock: RwLock { data: Flags { print_per_fn_stats: false, count_indirect: false, benchmark_name: "json.h", non_limit: true, config_file: None } } }
+Non-limit ptr: lib::src::json::json_hexadecimal_value::c ; poison: ({VoidSource, PtrArith, CastSource, MiscSource, MixedRefSource}, {PtrArithSink, MixedRefSink, MiscSink}) at benchmark/json.h/src/json.rs:352:5: 352:10 (#0)
+Non-limit ptr: lib::src::json::json_hexadecimal_value::p ; poison: ({PtrArith, VoidSource, MixedRefSource, CastSource, MiscSource}, {MixedRefSink, MiscSink, PtrArithSink}) at benchmark/json.h/src/json.rs:356:9: 356:14 (#0)
+Non-limit ptr: lib::src::json::json_skip_whitespace::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:379:5: 379:14 (#0)
+Non-limit ptr: lib::src::json::json_skip_whitespace::src ; poison: ({CastSource, MixedRefSource, PtrArith, VoidSource, MiscSource}, {MixedRefSink, MiscSink, PtrArithSink}) at benchmark/json.h/src/json.rs:383:9: 383:12 (#0)
+Non-limit ptr: lib::src::json::json_skip_c_style_comments::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:414:5: 414:14 (#0)
+Non-limit ptr: lib::src::json::json_skip_all_skippables::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:500:5: 500:14 (#0)
+Non-limit ptr: lib::src::json::json_get_string_size::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:549:5: 549:14 (#0)
+Non-limit ptr: lib::src::json::json_get_string_size::src ; poison: ({CastSource, VoidSource, MiscSource, PtrArith, MixedRefSource}, {MixedRefSink, PtrArithSink, MiscSink}) at benchmark/json.h/src/json.rs:555:9: 555:12 (#0)
+Non-limit ptr: lib::src::json::json_get_key_size::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:752:5: 752:14 (#0)
+Non-limit ptr: lib::src::json::json_get_key_size::src ; poison: ({PtrArith, MixedRefSource, VoidSource, CastSource, MiscSource}, {PtrArithSink, MiscSink, MixedRefSink}) at benchmark/json.h/src/json.rs:760:13: 760:16 (#0)
+Non-limit ptr: lib::src::json::json_get_object_size::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:802:5: 802:14 (#0)
+Non-limit ptr: lib::src::json::json_get_object_size::src ; poison: ({PtrArith, MiscSource, CastSource, VoidSource, MixedRefSource}, {PtrArithSink, MiscSink, MixedRefSink}) at benchmark/json.h/src/json.rs:806:9: 806:12 (#0)
+Non-limit ptr: lib::src::json::json_get_array_size::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:954:5: 954:14 (#0)
+Non-limit ptr: lib::src::json::json_get_array_size::src ; poison: ({MiscSource, MixedRefSource, CastSource, VoidSource, PtrArith}, {MixedRefSink, MiscSink, PtrArithSink}) at benchmark/json.h/src/json.rs:959:9: 959:12 (#0)
+Non-limit ptr: lib::src::json::json_get_number_size::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:1025:5: 1025:14 (#0)
+Non-limit ptr: lib::src::json::json_get_number_size::src ; poison: ({VoidSource, CastSource, MixedRefSource, MiscSource, PtrArith}, {MiscSink, PtrArithSink, MixedRefSink}) at benchmark/json.h/src/json.rs:1031:9: 1031:12 (#0)
+Non-limit ptr: lib::src::json::json_get_value_size::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:1265:5: 1265:14 (#0)
+Non-limit ptr: lib::src::json::json_get_value_size::src ; poison: ({CastSource, MixedRefSource, VoidSource, MiscSource, PtrArith}, {PtrArithSink, MiscSink, MixedRefSink}) at benchmark/json.h/src/json.rs:1269:9: 1269:12 (#0)
+Non-limit ptr: lib::src::json::json_parse_string::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:1532:5: 1532:14 (#0)
+Non-limit ptr: lib::src::json::json_parse_string::string ; poison: ({MiscSource, PtrArith, MixedRefSource, VoidSource, CastSource}, {MiscSink, ExternCallParam, MixedRefSink, CastSink, PtrArithSink, VoidSink}) at benchmark/json.h/src/json.rs:1533:5: 1533:15 (#0)
+Non-limit ptr: lib::src::json::json_parse_string::src ; poison: ({PtrArith, MixedRefSource, VoidSource, CastSource, MiscSource}, {MiscSink, MixedRefSink, PtrArithSink}) at benchmark/json.h/src/json.rs:1537:9: 1537:12 (#0)
+Non-limit ptr: lib::src::json::json_parse_string::data ; poison: ({MixedRefSource, VoidSource, PtrArith, MiscSource, CastSource}, {ExternCallParam, CastSink, VoidSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/json.h/src/json.rs:1543:9: 1543:17 (#0)
+Non-limit ptr: lib::src::json::json_parse_key::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:1736:5: 1736:14 (#0)
+Non-limit ptr: lib::src::json::json_parse_key::string ; poison: ({MixedRefSource, CastSource, PtrArith, MiscSource, VoidSource}, {PtrArithSink, ExternCallParam, MiscSink, CastSink, MixedRefSink, VoidSink}) at benchmark/json.h/src/json.rs:1737:5: 1737:15 (#0)
+Non-limit ptr: lib::src::json::json_parse_key::src ; poison: ({MiscSource, CastSource, PtrArith, MixedRefSource, VoidSource}, {PtrArithSink, MiscSink, MixedRefSink}) at benchmark/json.h/src/json.rs:1742:13: 1742:16 (#0)
+Non-limit ptr: lib::src::json::json_parse_key::data ; poison: ({PtrArith, CastSource, VoidSource, MiscSource, MixedRefSource}, {MiscSink, VoidSink, ExternCallParam, PtrArithSink, MixedRefSink, CastSink}) at benchmark/json.h/src/json.rs:1743:13: 1743:17 (#0)
+Non-limit ptr: lib::src::json::json_parse_object::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:1774:5: 1774:14 (#0)
+Non-limit ptr: lib::src::json::json_parse_object::object ; poison: ({CastSource, VoidSource}, {}) at benchmark/json.h/src/json.rs:1776:5: 1776:15 (#0)
+Non-limit ptr: lib::src::json::json_parse_object::src ; poison: ({CastSource, MiscSource, MixedRefSource, PtrArith, VoidSource}, {MiscSink, PtrArithSink, MixedRefSink}) at benchmark/json.h/src/json.rs:1780:9: 1780:12 (#0)
+Non-limit ptr: lib::src::json::json_parse_object::previous ; poison: ({MiscSource, MixedRefSource, VoidSource, CastSource, PtrArith}, {ExternCallParam, MiscSink, MixedRefSink, CastSink, VoidSink, PtrArithSink}) at benchmark/json.h/src/json.rs:1783:9: 1783:21 (#0)
+Non-limit ptr: lib::src::json::json_parse_object::element ; poison: ({MiscSource, PtrArith, MixedRefSource, CastSource, VoidSource}, {PtrArithSink, VoidSink, ExternCallParam, MixedRefSink, MiscSink, CastSink}) at benchmark/json.h/src/json.rs:1796:13: 1796:24 (#0)
+Non-limit ptr: lib::src::json::json_parse_object::string ; poison: ({CastSource, PtrArith, MiscSource, MixedRefSource, VoidSource}, {VoidSink, MixedRefSink, MiscSink, CastSink, PtrArithSink, ExternCallParam}) at benchmark/json.h/src/json.rs:1797:13: 1797:23 (#0)
+Non-limit ptr: lib::src::json::json_parse_object::value ; poison: ({MixedRefSource, VoidSource, MiscSource, PtrArith, CastSource}, {ExternCallParam, CastSink, MiscSink, PtrArithSink, MixedRefSink, VoidSink}) at benchmark/json.h/src/json.rs:1798:13: 1798:22 (#0)
+Non-limit ptr: lib::src::json::json_parse_object::string_ex ; poison: ({MixedRefSource, PtrArith, VoidSource, MiscSource, CastSource}, {CastSink, MiscSink, PtrArithSink, MixedRefSink, ExternCallParam, VoidSink}) at benchmark/json.h/src/json.rs:1834:17: 1834:30 (#0)
+Non-limit ptr: lib::src::json::json_parse_object::value_ex ; poison: ({PtrArith, CastSource, VoidSource, MiscSource, MixedRefSource}, {PtrArithSink, ExternCallParam, MiscSink, CastSink, VoidSink, MixedRefSink}) at benchmark/json.h/src/json.rs:1862:17: 1862:29 (#0)
+Non-limit ptr: lib::src::json::json_parse_array::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:1896:5: 1896:14 (#0)
+Non-limit ptr: lib::src::json::json_parse_array::array ; poison: ({VoidSource, CastSource}, {}) at benchmark/json.h/src/json.rs:1897:5: 1897:14 (#0)
+Non-limit ptr: lib::src::json::json_parse_array::src ; poison: ({MixedRefSource, CastSource, VoidSource, PtrArith, MiscSource}, {MiscSink, PtrArithSink, MixedRefSink}) at benchmark/json.h/src/json.rs:1899:9: 1899:12 (#0)
+Non-limit ptr: lib::src::json::json_parse_array::previous ; poison: ({CastSource, VoidSource, PtrArith, MixedRefSource, MiscSource}, {ExternCallParam, PtrArithSink, VoidSink, MiscSink, MixedRefSink, CastSink}) at benchmark/json.h/src/json.rs:1903:9: 1903:21 (#0)
+Non-limit ptr: lib::src::json::json_parse_array::element ; poison: ({CastSource, VoidSource, PtrArith, MiscSource, MixedRefSource}, {VoidSink, MixedRefSink, CastSink, ExternCallParam, PtrArithSink, MiscSink}) at benchmark/json.h/src/json.rs:1910:13: 1910:24 (#0)
+Non-limit ptr: lib::src::json::json_parse_array::value ; poison: ({PtrArith, VoidSource, MiscSource, CastSource, MixedRefSource}, {PtrArithSink, CastSink, MixedRefSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/json.h/src/json.rs:1911:13: 1911:22 (#0)
+Non-limit ptr: lib::src::json::json_parse_array::value_ex ; poison: ({PtrArith, VoidSource, MixedRefSource, MiscSource, CastSource}, {MiscSink, PtrArithSink, ExternCallParam, MixedRefSink, VoidSink, CastSink}) at benchmark/json.h/src/json.rs:1950:29: 1950:41 (#0)
+Non-limit ptr: lib::src::json::json_parse_number::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:1997:5: 1997:14 (#0)
+Non-limit ptr: lib::src::json::json_parse_number::number ; poison: ({CastSource, VoidSource}, {}) at benchmark/json.h/src/json.rs:1998:5: 1998:15 (#0)
+Non-limit ptr: lib::src::json::json_parse_number::src ; poison: ({PtrArith, VoidSource, MixedRefSource, CastSource, MiscSource}, {PtrArithSink, MixedRefSink, MiscSink}) at benchmark/json.h/src/json.rs:2004:9: 2004:12 (#0)
+Non-limit ptr: lib::src::json::json_parse_number::data ; poison: ({PtrArith, MiscSource, VoidSource, MixedRefSource, CastSource}, {VoidSink, CastSink, ExternCallParam, MiscSink, PtrArithSink, MixedRefSink}) at benchmark/json.h/src/json.rs:2005:9: 2005:17 (#0)
+Non-limit ptr: lib::src::json::json_parse_value::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:2105:5: 2105:14 (#0)
+Non-limit ptr: lib::src::json::json_parse_value::value ; poison: ({CastSource, MiscSource, PtrArith, VoidSource, MixedRefSource}, {ExternCallParam, CastSink, PtrArithSink, VoidSink, MiscSink, MixedRefSink}) at benchmark/json.h/src/json.rs:2107:5: 2107:14 (#0)
+Non-limit ptr: lib::src::json::json_parse_value::src ; poison: ({CastSource, VoidSource, PtrArith, MiscSource, MixedRefSource}, {MiscSink, PtrArithSink, MixedRefSink}) at benchmark/json.h/src/json.rs:2110:9: 2110:12 (#0)
+Non-limit ptr: lib::src::json::json_parse_ex::src ; poison: ({VoidSource}, {VoidSink, CastSink}) at benchmark/json.h/src/json.rs:2384:5: 2384:12 (#0)
+Non-limit ptr: lib::src::json::json_parse_ex::user_data ; poison: ({VoidSource}, {VoidSink}) at benchmark/json.h/src/json.rs:2388:5: 2388:18 (#0)
+Non-limit ptr: lib::src::json::json_parse_ex::result ; poison: ({}, {}) at benchmark/json.h/src/json.rs:2389:5: 2389:15 (#0)
+Non-limit ptr: lib::src::json::json_parse_ex::allocation ; poison: ({ExternCallReturn, VoidSource}, {VoidSink, CastSink}) at benchmark/json.h/src/json.rs:2404:9: 2404:23 (#0)
+Non-limit ptr: lib::src::json::json_parse_ex::value ; poison: ({PtrArith, CastSource, MiscSource, MixedRefSource, VoidSource}, {MiscSink, CastSink, ExternCallParam, VoidSink, PtrArithSink, MixedRefSink}) at benchmark/json.h/src/json.rs:2405:9: 2405:18 (#0)
+Non-limit ptr: lib::src::json::json_parse_ex::value_ex ; poison: ({MiscSource, VoidSource, PtrArith, MixedRefSource, CastSource}, {MiscSink, MixedRefSink, ExternCallParam, VoidSink, CastSink, PtrArithSink}) at benchmark/json.h/src/json.rs:2473:13: 2473:25 (#0)
+Non-limit ptr: lib::src::json::json_parse::src ; poison: ({VoidSource}, {VoidSink, CastSink}) at benchmark/json.h/src/json.rs:2497:5: 2497:12 (#0)
+Non-limit ptr: lib::src::json::json_extract_value::value ; poison: ({MiscSource, PtrArith, VoidSource, MixedRefSource, CastSource}, {MixedRefSink, PtrArithSink, ExternCallParam, VoidSink, MiscSink, CastSink}) at benchmark/json.h/src/json.rs:2511:5: 2511:14 (#0)
+Non-limit ptr: lib::src::json::json_extract_get_number_size::number ; poison: ({CastSource, VoidSource}, {}) at benchmark/json.h/src/json.rs:2517:5: 2517:11 (#0)
+Non-limit ptr: lib::src::json::json_extract_get_string_size::string ; poison: ({CastSource, MiscSource, PtrArith, VoidSource, MixedRefSource}, {PtrArithSink, ExternCallParam, MixedRefSink, MiscSink, CastSink, VoidSink}) at benchmark/json.h/src/json.rs:2529:5: 2529:11 (#0)
+Non-limit ptr: lib::src::json::json_extract_get_object_size::object ; poison: ({VoidSource, CastSource}, {}) at benchmark/json.h/src/json.rs:2543:5: 2543:11 (#0)
+Non-limit ptr: lib::src::json::json_extract_get_object_size::element ; poison: ({PtrArith, MiscSource, VoidSource, CastSource, MixedRefSource}, {MixedRefSink, PtrArithSink, MiscSink, CastSink, VoidSink, ExternCallParam}) at benchmark/json.h/src/json.rs:2550:9: 2550:20 (#0)
+Non-limit ptr: lib::src::json::json_extract_get_array_size::array ; poison: ({VoidSource, CastSource}, {}) at benchmark/json.h/src/json.rs:2581:5: 2581:10 (#0)
+Non-limit ptr: lib::src::json::json_extract_get_array_size::element ; poison: ({MiscSource, PtrArith, VoidSource, CastSource, MixedRefSource}, {MixedRefSink, PtrArithSink, ExternCallParam, VoidSink, CastSink, MiscSink}) at benchmark/json.h/src/json.rs:2588:9: 2588:20 (#0)
+Non-limit ptr: lib::src::json::json_extract_get_value_size::value ; poison: ({CastSource, MixedRefSource, PtrArith, VoidSource, MiscSource}, {MiscSink, CastSink, MixedRefSink, VoidSink, ExternCallParam, PtrArithSink}) at benchmark/json.h/src/json.rs:2612:5: 2612:10 (#0)
+Non-limit ptr: lib::src::json::json_extract_copy_value::state ; poison: ({}, {}) at benchmark/json.h/src/json.rs:2652:5: 2652:14 (#0)
+Non-limit ptr: lib::src::json::json_extract_copy_value::value ; poison: ({VoidSource, MixedRefSource, MiscSource, CastSource, PtrArith}, {PtrArithSink, VoidSink, MiscSink, CastSink, MixedRefSink, ExternCallParam}) at benchmark/json.h/src/json.rs:2653:5: 2653:10 (#0)
+Non-limit ptr: lib::src::json::json_extract_copy_value::string ; poison: ({MiscSource, VoidSource, CastSource, PtrArith, MixedRefSource}, {CastSink, PtrArithSink, ExternCallParam, VoidSink, MiscSink, MixedRefSink}) at benchmark/json.h/src/json.rs:2655:9: 2655:19 (#0)
+Non-limit ptr: lib::src::json::json_extract_copy_value::number ; poison: ({CastSource, MixedRefSource, VoidSource, PtrArith, MiscSource}, {MiscSink, PtrArithSink, VoidSink, MixedRefSink, ExternCallParam, CastSink}) at benchmark/json.h/src/json.rs:2656:9: 2656:19 (#0)
+Non-limit ptr: lib::src::json::json_extract_copy_value::object ; poison: ({VoidSource, MiscSource, CastSource, PtrArith, MixedRefSource}, {CastSink, PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, VoidSink}) at benchmark/json.h/src/json.rs:2657:9: 2657:19 (#0)
+Non-limit ptr: lib::src::json::json_extract_copy_value::array ; poison: ({MixedRefSource, PtrArith, MiscSource, VoidSource, CastSource}, {ExternCallParam, MiscSink, CastSink, PtrArithSink, MixedRefSink, VoidSink}) at benchmark/json.h/src/json.rs:2658:9: 2658:18 (#0)
+Non-limit ptr: lib::src::json::json_extract_copy_value::new_value ; poison: ({CastSource, PtrArith, VoidSource, MixedRefSource, MiscSource}, {CastSink, PtrArithSink, ExternCallParam, VoidSink, MiscSink, MixedRefSink}) at benchmark/json.h/src/json.rs:2659:9: 2659:22 (#0)
+Non-limit ptr: lib::src::json::json_extract_copy_value::element ; poison: ({MixedRefSource, PtrArith, CastSource, VoidSource, MiscSource}, {PtrArithSink, VoidSink, MiscSink, ExternCallParam, MixedRefSink, CastSink}) at benchmark/json.h/src/json.rs:2714:13: 2714:24 (#0)
+Non-limit ptr: lib::src::json::json_extract_copy_value::previous_value ; poison: ({MixedRefSource, PtrArith, MiscSource, VoidSource, CastSource}, {CastSink, ExternCallParam, MiscSink, PtrArithSink, VoidSink, MixedRefSink}) at benchmark/json.h/src/json.rs:2730:17: 2730:35 (#0)
+Non-limit ptr: lib::src::json::json_extract_copy_value::previous_element ; poison: ({PtrArith, VoidSource, MixedRefSource, CastSource, MiscSource}, {PtrArithSink, VoidSink, MiscSink, MixedRefSink, CastSink, ExternCallParam}) at benchmark/json.h/src/json.rs:2731:17: 2731:37 (#0)
+Non-limit ptr: lib::src::json::json_extract_copy_value::element_0 ; poison: ({PtrArith, MiscSource, VoidSource, MixedRefSource, CastSource}, {VoidSink, MiscSink, MixedRefSink, CastSink, ExternCallParam, PtrArithSink}) at benchmark/json.h/src/json.rs:2784:13: 2784:26 (#0)
+Non-limit ptr: lib::src::json::json_extract_copy_value::previous_value_0 ; poison: ({VoidSource, CastSource, MixedRefSource, MiscSource, PtrArith}, {CastSink, PtrArithSink, VoidSink, MixedRefSink, ExternCallParam, MiscSink}) at benchmark/json.h/src/json.rs:2800:17: 2800:37 (#0)
+Non-limit ptr: lib::src::json::json_extract_copy_value::previous_element_0 ; poison: ({VoidSource, PtrArith, MiscSource, MixedRefSource, CastSource}, {VoidSink, MixedRefSink, MiscSink, PtrArithSink, ExternCallParam, CastSink}) at benchmark/json.h/src/json.rs:2801:17: 2801:39 (#0)
+Non-limit ptr: lib::src::json::json_extract_value_ex::value ; poison: ({MixedRefSource, CastSource, PtrArith, VoidSource, MiscSource}, {ExternCallParam, VoidSink, CastSink, PtrArithSink, MixedRefSink, MiscSink}) at benchmark/json.h/src/json.rs:2830:5: 2830:14 (#0)
+Non-limit ptr: lib::src::json::json_extract_value_ex::user_data ; poison: ({VoidSource}, {VoidSink}) at benchmark/json.h/src/json.rs:2832:5: 2832:18 (#0)
+Non-limit ptr: lib::src::json::json_extract_value_ex::allocation ; poison: ({ExternCallReturn, VoidSource}, {CastSink, VoidSink}) at benchmark/json.h/src/json.rs:2834:9: 2834:23 (#0)
+Non-limit ptr: lib::src::json::json_value_as_string::value ; poison: ({}, {}) at benchmark/json.h/src/json.rs:2862:5: 2862:10 (#0)
+Non-limit ptr: lib::src::json::json_value_as_number::value ; poison: ({}, {}) at benchmark/json.h/src/json.rs:2871:5: 2871:10 (#0)
+Non-limit ptr: lib::src::json::json_value_as_object::value ; poison: ({}, {}) at benchmark/json.h/src/json.rs:2880:5: 2880:10 (#0)
+Non-limit ptr: lib::src::json::json_value_as_array::value ; poison: ({}, {}) at benchmark/json.h/src/json.rs:2889:5: 2889:10 (#0)
+Non-limit ptr: lib::src::json::json_write_get_number_size::number ; poison: ({VoidSource, CastSource}, {}) at benchmark/json.h/src/json.rs:2913:5: 2913:15 (#0)
+Non-limit ptr: lib::src::json::json_write_get_number_size::size ; poison: ({}, {}) at benchmark/json.h/src/json.rs:2914:5: 2914:13 (#0)
+Non-limit ptr: lib::src::json::json_write_get_number_size::inf ; poison: ({StringLitSource, MiscSource, PtrArith}, {MiscSink, CastSink, PtrArithSink}) at benchmark/json.h/src/json.rs:2949:13: 2949:20 (#0)
+Non-limit ptr: lib::src::json::json_write_get_number_size::fresh147 ; poison: ({StringLitSource, PtrArith, MiscSource}, {CastSink, MiscSink, PtrArithSink}) at benchmark/json.h/src/json.rs:2953:17: 2953:29 (#0)
+Non-limit ptr: lib::src::json::json_write_get_number_size::nan ; poison: ({StringLitSource, MiscSource, PtrArith}, {MiscSink, CastSink, PtrArithSink}) at benchmark/json.h/src/json.rs:2980:13: 2980:20 (#0)
+Non-limit ptr: lib::src::json::json_write_get_number_size::fresh148 ; poison: ({PtrArith, MiscSource, StringLitSource}, {MiscSink, PtrArithSink, CastSink}) at benchmark/json.h/src/json.rs:2984:17: 2984:29 (#0)
+Non-limit ptr: lib::src::json::json_write_get_string_size::string ; poison: ({VoidSource, CastSource, PtrArith, MiscSource, MixedRefSource}, {CastSink, ExternCallParam, MixedRefSink, PtrArithSink, MiscSink, VoidSink}) at benchmark/json.h/src/json.rs:3034:5: 3034:15 (#0)
+Non-limit ptr: lib::src::json::json_write_get_string_size::size ; poison: ({}, {}) at benchmark/json.h/src/json.rs:3035:5: 3035:13 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_get_array_size::array ; poison: ({VoidSource, CastSource}, {}) at benchmark/json.h/src/json.rs:3058:5: 3058:14 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_get_array_size::size ; poison: ({}, {}) at benchmark/json.h/src/json.rs:3059:5: 3059:13 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_get_array_size::element ; poison: ({MiscSource, VoidSource, MixedRefSource, PtrArith, CastSource}, {MiscSink, VoidSink, ExternCallParam, MixedRefSink, PtrArithSink, CastSink}) at benchmark/json.h/src/json.rs:3061:9: 3061:20 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_get_object_size::object ; poison: ({VoidSource, CastSource}, {}) at benchmark/json.h/src/json.rs:3081:5: 3081:15 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_get_object_size::size ; poison: ({}, {}) at benchmark/json.h/src/json.rs:3082:5: 3082:13 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_get_object_size::element ; poison: ({MixedRefSource, CastSource, MiscSource, VoidSource, PtrArith}, {MixedRefSink, PtrArithSink, CastSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/json.h/src/json.rs:3084:9: 3084:20 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_get_value_size::value ; poison: ({MiscSource, VoidSource, CastSource, PtrArith, MixedRefSource}, {MiscSink, VoidSink, ExternCallParam, PtrArithSink, MixedRefSink, CastSink}) at benchmark/json.h/src/json.rs:3108:5: 3108:14 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_get_value_size::size ; poison: ({}, {}) at benchmark/json.h/src/json.rs:3109:5: 3109:13 (#0)
+Non-limit ptr: lib::src::json::json_write_number::number ; poison: ({VoidSource, CastSource}, {}) at benchmark/json.h/src/json.rs:3156:5: 3156:15 (#0)
+Non-limit ptr: lib::src::json::json_write_number::data ; poison: ({PtrArith, VoidSource, MiscSource, CastSource}, {CastSink, PtrArithSink, MiscSink, ExternCallParam, VoidSink}) at benchmark/json.h/src/json.rs:3157:5: 3157:13 (#0)
+Non-limit ptr: lib::src::json::json_write_number::inf ; poison: ({PtrArith, StringLitSource, MiscSource}, {PtrArithSink, MiscSink, CastSink}) at benchmark/json.h/src/json.rs:3212:13: 3212:20 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh149 ; poison: ({MiscSource, PtrArith, StringLitSource}, {MiscSink, PtrArithSink, CastSink}) at benchmark/json.h/src/json.rs:3216:17: 3216:29 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh150 ; poison: ({PtrArith, StringLitSource, MiscSource}, {MiscSink, CastSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3228:13: 3228:25 (#0)
+Non-limit ptr: lib::src::json::json_write_number::dbl_max ; poison: ({PtrArith, MiscSource, StringLitSource}, {PtrArithSink, CastSink, MiscSink}) at benchmark/json.h/src/json.rs:3231:17: 3231:28 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh151 ; poison: ({PtrArith, VoidSource, MiscSource, CastSource}, {PtrArithSink, ExternCallParam, VoidSink, MiscSink, CastSink}) at benchmark/json.h/src/json.rs:3235:21: 3235:33 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh152 ; poison: ({PtrArith, VoidSource, CastSource, MiscSource}, {VoidSink, ExternCallParam, MiscSink, CastSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3241:21: 3241:33 (#0)
+Non-limit ptr: lib::src::json::json_write_number::nan ; poison: ({MiscSource, StringLitSource, PtrArith}, {CastSink, PtrArithSink, MiscSink}) at benchmark/json.h/src/json.rs:3252:13: 3252:20 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh153 ; poison: ({PtrArith, MiscSource, StringLitSource}, {CastSink, PtrArithSink, MiscSink}) at benchmark/json.h/src/json.rs:3256:17: 3256:29 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh154 ; poison: ({MiscSource, StringLitSource, PtrArith}, {PtrArithSink, MiscSink, CastSink}) at benchmark/json.h/src/json.rs:3269:13: 3269:25 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh155 ; poison: ({PtrArith, MiscSource, VoidSource, CastSource}, {ExternCallParam, CastSink, MiscSink, PtrArithSink, VoidSink}) at benchmark/json.h/src/json.rs:3272:17: 3272:29 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh156 ; poison: ({PtrArith, VoidSource, CastSource, MiscSource}, {MiscSink, ExternCallParam, CastSink, PtrArithSink, VoidSink}) at benchmark/json.h/src/json.rs:3286:17: 3286:29 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh157 ; poison: ({VoidSource, CastSource, PtrArith, MiscSource}, {ExternCallParam, PtrArithSink, CastSink, MiscSink, VoidSink}) at benchmark/json.h/src/json.rs:3291:13: 3291:25 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh158 ; poison: ({VoidSource, CastSource, MiscSource, PtrArith}, {ExternCallParam, PtrArithSink, MiscSink, VoidSink, CastSink}) at benchmark/json.h/src/json.rs:3295:17: 3295:29 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh159 ; poison: ({PtrArith, VoidSource, MiscSource, CastSource}, {CastSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink}) at benchmark/json.h/src/json.rs:3317:17: 3317:29 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh160 ; poison: ({MiscSource, VoidSource, CastSource, PtrArith}, {MiscSink, VoidSink, CastSink, ExternCallParam, PtrArithSink}) at benchmark/json.h/src/json.rs:3323:17: 3323:29 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh161 ; poison: ({VoidSource, CastSource, PtrArith, MiscSource}, {VoidSink, CastSink, ExternCallParam, PtrArithSink, MiscSink}) at benchmark/json.h/src/json.rs:3328:13: 3328:25 (#0)
+Non-limit ptr: lib::src::json::json_write_number::fresh162 ; poison: ({CastSource, PtrArith, MiscSource, VoidSource}, {CastSink, VoidSink, ExternCallParam, PtrArithSink, MiscSink}) at benchmark/json.h/src/json.rs:3338:13: 3338:25 (#0)
+Non-limit ptr: lib::src::json::json_write_string::string ; poison: ({MiscSource, VoidSource, PtrArith, CastSource, MixedRefSource}, {VoidSink, MiscSink, ExternCallParam, PtrArithSink, MixedRefSink, CastSink}) at benchmark/json.h/src/json.rs:3347:5: 3347:15 (#0)
+Non-limit ptr: lib::src::json::json_write_string::data ; poison: ({PtrArith, CastSource, VoidSource, MiscSource}, {VoidSink, CastSink, ExternCallParam, MiscSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3348:5: 3348:13 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh163 ; poison: ({PtrArith, MiscSource, CastSource, VoidSource}, {CastSink, PtrArithSink, VoidSink, MiscSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3351:9: 3351:21 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh164 ; poison: ({VoidSource, MiscSource, PtrArith, CastSource}, {PtrArithSink, CastSink, VoidSink, ExternCallParam, MiscSink}) at benchmark/json.h/src/json.rs:3358:21: 3358:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh165 ; poison: ({PtrArith, CastSource, VoidSource, MiscSource}, {PtrArithSink, ExternCallParam, MiscSink, VoidSink, CastSink}) at benchmark/json.h/src/json.rs:3361:21: 3361:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh166 ; poison: ({PtrArith, MiscSource, CastSource, VoidSource}, {ExternCallParam, VoidSink, PtrArithSink, MiscSink, CastSink}) at benchmark/json.h/src/json.rs:3366:21: 3366:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh167 ; poison: ({PtrArith, MiscSource, VoidSource, CastSource}, {ExternCallParam, MiscSink, VoidSink, CastSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3369:21: 3369:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh168 ; poison: ({VoidSource, PtrArith, MiscSource, CastSource}, {VoidSink, PtrArithSink, ExternCallParam, MiscSink, CastSink}) at benchmark/json.h/src/json.rs:3374:21: 3374:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh169 ; poison: ({CastSource, PtrArith, VoidSource, MiscSource}, {ExternCallParam, CastSink, MiscSink, PtrArithSink, VoidSink}) at benchmark/json.h/src/json.rs:3377:21: 3377:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh170 ; poison: ({PtrArith, MiscSource, VoidSource, CastSource}, {PtrArithSink, CastSink, ExternCallParam, MiscSink, VoidSink}) at benchmark/json.h/src/json.rs:3382:21: 3382:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh171 ; poison: ({CastSource, MiscSource, PtrArith, VoidSource}, {ExternCallParam, VoidSink, PtrArithSink, MiscSink, CastSink}) at benchmark/json.h/src/json.rs:3385:21: 3385:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh172 ; poison: ({PtrArith, VoidSource, MiscSource, CastSource}, {MiscSink, CastSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/json.h/src/json.rs:3390:21: 3390:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh173 ; poison: ({PtrArith, VoidSource, MiscSource, CastSource}, {ExternCallParam, VoidSink, MiscSink, CastSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3393:21: 3393:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh174 ; poison: ({MiscSource, PtrArith, VoidSource, CastSource}, {MiscSink, PtrArithSink, ExternCallParam, VoidSink, CastSink}) at benchmark/json.h/src/json.rs:3398:21: 3398:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh175 ; poison: ({CastSource, VoidSource, MiscSource, PtrArith}, {VoidSink, MiscSink, PtrArithSink, CastSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3401:21: 3401:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh176 ; poison: ({PtrArith, VoidSource, MiscSource, CastSource}, {PtrArithSink, VoidSink, ExternCallParam, MiscSink, CastSink}) at benchmark/json.h/src/json.rs:3406:21: 3406:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh177 ; poison: ({MiscSource, VoidSource, CastSource, PtrArith}, {PtrArithSink, ExternCallParam, MiscSink, VoidSink, CastSink}) at benchmark/json.h/src/json.rs:3409:21: 3409:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh178 ; poison: ({MiscSource, VoidSource, PtrArith, CastSource}, {MiscSink, PtrArithSink, CastSink, ExternCallParam, VoidSink}) at benchmark/json.h/src/json.rs:3414:21: 3414:33 (#0)
+Non-limit ptr: lib::src::json::json_write_string::fresh179 ; poison: ({CastSource, PtrArith, MiscSource, VoidSource}, {PtrArithSink, MiscSink, CastSink, VoidSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3421:9: 3421:21 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_array::array ; poison: ({CastSource, VoidSource}, {}) at benchmark/json.h/src/json.rs:3428:5: 3428:14 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_array::data ; poison: ({PtrArith, CastSource, VoidSource, MiscSource}, {CastSink, ExternCallParam, PtrArithSink, VoidSink, MiscSink}) at benchmark/json.h/src/json.rs:3429:5: 3429:13 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_array::element ; poison: ({VoidSource, MixedRefSource, PtrArith, MiscSource, CastSource}, {PtrArithSink, ExternCallParam, VoidSink, MiscSink, MixedRefSink, CastSink}) at benchmark/json.h/src/json.rs:3431:9: 3431:20 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_array::fresh180 ; poison: ({VoidSource, CastSource, MiscSource, PtrArith}, {CastSink, PtrArithSink, ExternCallParam, MiscSink, VoidSink}) at benchmark/json.h/src/json.rs:3432:9: 3432:21 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_array::fresh181 ; poison: ({VoidSource, PtrArith, CastSource, MiscSource}, {PtrArithSink, MiscSink, CastSink, ExternCallParam, VoidSink}) at benchmark/json.h/src/json.rs:3438:17: 3438:29 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_array::fresh182 ; poison: ({MiscSource, PtrArith, VoidSource, CastSource}, {ExternCallParam, MiscSink, VoidSink, CastSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3448:9: 3448:21 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_object::object ; poison: ({CastSource, VoidSource}, {}) at benchmark/json.h/src/json.rs:3455:5: 3455:15 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_object::data ; poison: ({PtrArith, MiscSource, VoidSource, CastSource}, {CastSink, MiscSink, PtrArithSink, VoidSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3456:5: 3456:13 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_object::element ; poison: ({PtrArith, VoidSource, MiscSource, CastSource, MixedRefSource}, {CastSink, MiscSink, PtrArithSink, VoidSink, ExternCallParam, MixedRefSink}) at benchmark/json.h/src/json.rs:3458:9: 3458:20 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_object::fresh183 ; poison: ({MiscSource, PtrArith, VoidSource, CastSource}, {VoidSink, PtrArithSink, MiscSink, CastSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3459:9: 3459:21 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_object::fresh184 ; poison: ({VoidSource, PtrArith, CastSource, MiscSource}, {CastSink, VoidSink, PtrArithSink, ExternCallParam, MiscSink}) at benchmark/json.h/src/json.rs:3465:17: 3465:29 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_object::fresh185 ; poison: ({CastSource, PtrArith, VoidSource, MiscSource}, {PtrArithSink, MiscSink, ExternCallParam, VoidSink, CastSink}) at benchmark/json.h/src/json.rs:3473:13: 3473:25 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_object::fresh186 ; poison: ({CastSource, VoidSource, MiscSource, PtrArith}, {MiscSink, CastSink, ExternCallParam, PtrArithSink, VoidSink}) at benchmark/json.h/src/json.rs:3482:9: 3482:21 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_value::value ; poison: ({MiscSource, VoidSource, PtrArith, MixedRefSource, CastSource}, {ExternCallParam, CastSink, PtrArithSink, VoidSink, MiscSink, MixedRefSink}) at benchmark/json.h/src/json.rs:3489:5: 3489:14 (#0)
+Non-limit ptr: lib::src::json::json_write_minified_value::data ; poison: ({PtrArith, VoidSource, CastSource, MiscSource}, {VoidSink, MiscSink, CastSink, PtrArithSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3490:5: 3490:13 (#0)
+Non-limit ptr: lib::src::json::json_write_minified::value ; poison: ({PtrArith, CastSource, MiscSource, MixedRefSource, VoidSource}, {PtrArithSink, MiscSink, MixedRefSink, CastSink, VoidSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3531:5: 3531:14 (#0)
+Non-limit ptr: lib::src::json::json_write_minified::data ; poison: ({VoidSource, CastSource, PtrArith, MiscSource}, {PtrArithSink, VoidSink, MiscSink, CastSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3535:9: 3535:17 (#0)
+Non-limit ptr: lib::src::json::json_write_minified::data_end ; poison: ({VoidSource, MiscSource, PtrArith, CastSource}, {MiscSink, ExternCallParam, PtrArithSink, VoidSink, CastSink}) at benchmark/json.h/src/json.rs:3536:9: 3536:21 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_get_array_size::array ; poison: ({VoidSource, CastSource}, {}) at benchmark/json.h/src/json.rs:3562:5: 3562:14 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_get_array_size::size ; poison: ({}, {}) at benchmark/json.h/src/json.rs:3566:5: 3566:13 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_get_array_size::element ; poison: ({CastSource, VoidSource, PtrArith, MiscSource, MixedRefSource}, {MiscSink, MixedRefSink, PtrArithSink, CastSink, VoidSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3568:9: 3568:20 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_get_object_size::object ; poison: ({VoidSource, CastSource}, {}) at benchmark/json.h/src/json.rs:3608:5: 3608:15 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_get_object_size::size ; poison: ({}, {}) at benchmark/json.h/src/json.rs:3612:5: 3612:13 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_get_object_size::element ; poison: ({VoidSource, MixedRefSource, CastSource, PtrArith, MiscSource}, {PtrArithSink, CastSink, ExternCallParam, MixedRefSink, MiscSink, VoidSink}) at benchmark/json.h/src/json.rs:3614:9: 3614:20 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_get_value_size::value ; poison: ({PtrArith, CastSource, MixedRefSource, VoidSource, MiscSource}, {MiscSink, MixedRefSink, CastSink, ExternCallParam, VoidSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3659:5: 3659:14 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_get_value_size::size ; poison: ({}, {}) at benchmark/json.h/src/json.rs:3663:5: 3663:13 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_array::array ; poison: ({CastSource, VoidSource}, {}) at benchmark/json.h/src/json.rs:3716:5: 3716:14 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_array::indent ; poison: ({MiscSource, PtrArith, StringLitSource}, {PtrArithSink, MiscSink, CastSink}) at benchmark/json.h/src/json.rs:3718:5: 3718:15 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_array::newline ; poison: ({MiscSource, StringLitSource, PtrArith}, {PtrArithSink, MiscSink, CastSink}) at benchmark/json.h/src/json.rs:3719:5: 3719:16 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_array::data ; poison: ({VoidSource, PtrArith, MiscSource, CastSource}, {ExternCallParam, VoidSink, MiscSink, PtrArithSink, CastSink}) at benchmark/json.h/src/json.rs:3720:5: 3720:13 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_array::element ; poison: ({MixedRefSource, PtrArith, MiscSource, CastSource, VoidSource}, {ExternCallParam, CastSink, VoidSink, MiscSink, PtrArithSink, MixedRefSink}) at benchmark/json.h/src/json.rs:3724:9: 3724:20 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_array::fresh187 ; poison: ({MiscSource, PtrArith, VoidSource, CastSource}, {ExternCallParam, CastSink, VoidSink, MiscSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3725:9: 3725:21 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_array::fresh188 ; poison: ({VoidSource, CastSource, PtrArith, MiscSource}, {ExternCallParam, MiscSink, VoidSink, CastSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3731:17: 3731:29 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_array::fresh189 ; poison: ({PtrArith, CastSource, VoidSource, MiscSource}, {VoidSink, PtrArithSink, MiscSink, CastSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3739:21: 3739:33 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_array::fresh190 ; poison: ({CastSource, VoidSource, PtrArith, MiscSource}, {PtrArithSink, MiscSink, VoidSink, CastSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3744:25: 3744:37 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_array::fresh191 ; poison: ({MiscSource, PtrArith, CastSource, VoidSource}, {PtrArithSink, VoidSink, CastSink, ExternCallParam, MiscSink}) at benchmark/json.h/src/json.rs:3754:25: 3754:37 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_array::fresh192 ; poison: ({CastSource, VoidSource, MiscSource, PtrArith}, {ExternCallParam, VoidSink, MiscSink, PtrArithSink, CastSink}) at benchmark/json.h/src/json.rs:3775:17: 3775:29 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_array::fresh193 ; poison: ({VoidSource, CastSource, MiscSource, PtrArith}, {ExternCallParam, CastSink, VoidSink, PtrArithSink, MiscSink}) at benchmark/json.h/src/json.rs:3784:21: 3784:33 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_array::fresh194 ; poison: ({MiscSource, VoidSource, CastSource, PtrArith}, {PtrArithSink, MiscSink, ExternCallParam, VoidSink, CastSink}) at benchmark/json.h/src/json.rs:3792:9: 3792:21 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::object ; poison: ({CastSource, VoidSource}, {}) at benchmark/json.h/src/json.rs:3799:5: 3799:15 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::indent ; poison: ({StringLitSource, PtrArith, MiscSource}, {PtrArithSink, MiscSink, CastSink}) at benchmark/json.h/src/json.rs:3801:5: 3801:15 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::newline ; poison: ({MiscSource, StringLitSource, PtrArith}, {MiscSink, CastSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3802:5: 3802:16 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::data ; poison: ({VoidSource, PtrArith, MiscSource, CastSource}, {CastSink, ExternCallParam, MiscSink, PtrArithSink, VoidSink}) at benchmark/json.h/src/json.rs:3803:5: 3803:13 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::element ; poison: ({PtrArith, MixedRefSource, MiscSource, VoidSource, CastSource}, {CastSink, MixedRefSink, PtrArithSink, MiscSink, VoidSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3807:9: 3807:20 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::fresh195 ; poison: ({VoidSource, PtrArith, MiscSource, CastSource}, {MiscSink, ExternCallParam, CastSink, VoidSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3808:9: 3808:21 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::fresh196 ; poison: ({MiscSource, CastSource, VoidSource, PtrArith}, {PtrArithSink, CastSink, MiscSink, ExternCallParam, VoidSink}) at benchmark/json.h/src/json.rs:3814:17: 3814:29 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::fresh197 ; poison: ({VoidSource, CastSource, MiscSource, PtrArith}, {ExternCallParam, MiscSink, CastSink, VoidSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3822:21: 3822:33 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::fresh198 ; poison: ({MiscSource, PtrArith, VoidSource, CastSource}, {MiscSink, VoidSink, CastSink, PtrArithSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3827:25: 3827:37 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::fresh199 ; poison: ({PtrArith, MiscSource, VoidSource, CastSource}, {ExternCallParam, CastSink, VoidSink, PtrArithSink, MiscSink}) at benchmark/json.h/src/json.rs:3837:25: 3837:37 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::fresh200 ; poison: ({CastSource, PtrArith, VoidSource, MiscSource}, {CastSink, PtrArithSink, MiscSink, ExternCallParam, VoidSink}) at benchmark/json.h/src/json.rs:3848:17: 3848:29 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::fresh201 ; poison: ({PtrArith, CastSource, MiscSource, VoidSource}, {VoidSink, MiscSink, CastSink, ExternCallParam, PtrArithSink}) at benchmark/json.h/src/json.rs:3851:17: 3851:29 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::fresh202 ; poison: ({VoidSource, MiscSource, PtrArith, CastSource}, {PtrArithSink, MiscSink, CastSink, VoidSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3854:17: 3854:29 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::fresh203 ; poison: ({PtrArith, CastSource, VoidSource, MiscSource}, {PtrArithSink, MiscSink, VoidSink, CastSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3871:17: 3871:29 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::fresh204 ; poison: ({MiscSource, PtrArith, CastSource, VoidSource}, {CastSink, VoidSink, MiscSink, PtrArithSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3880:21: 3880:33 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_object::fresh205 ; poison: ({MiscSource, PtrArith, VoidSource, CastSource}, {CastSink, PtrArithSink, MiscSink, VoidSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3888:9: 3888:21 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_value::value ; poison: ({VoidSource, MiscSource, CastSource, PtrArith, MixedRefSource}, {ExternCallParam, VoidSink, MixedRefSink, CastSink, MiscSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3895:5: 3895:14 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_value::indent ; poison: ({PtrArith, MiscSource, StringLitSource}, {CastSink, PtrArithSink, MiscSink}) at benchmark/json.h/src/json.rs:3897:5: 3897:15 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_value::newline ; poison: ({StringLitSource, PtrArith, MiscSource}, {PtrArithSink, MiscSink, CastSink}) at benchmark/json.h/src/json.rs:3898:5: 3898:16 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty_value::data ; poison: ({VoidSource, CastSource, MiscSource, PtrArith}, {PtrArithSink, ExternCallParam, MiscSink, VoidSink, CastSink}) at benchmark/json.h/src/json.rs:3899:5: 3899:13 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty::value ; poison: ({CastSource, PtrArith, MixedRefSource, MiscSource, VoidSource}, {PtrArithSink, VoidSink, MixedRefSink, MiscSink, CastSink, ExternCallParam}) at benchmark/json.h/src/json.rs:3949:5: 3949:14 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty::indent ; poison: ({MiscSource, StringLitSource, PtrArith}, {MiscSink, CastSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3950:5: 3950:15 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty::newline ; poison: ({PtrArith, MiscSource, StringLitSource}, {MiscSink, CastSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3951:5: 3951:16 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty::data ; poison: ({VoidSource, PtrArith, MiscSource, CastSource}, {PtrArithSink, ExternCallParam, MiscSink, VoidSink, CastSink}) at benchmark/json.h/src/json.rs:3957:9: 3957:17 (#0)
+Non-limit ptr: lib::src::json::json_write_pretty::data_end ; poison: ({VoidSource, MiscSource, CastSource, PtrArith}, {ExternCallParam, VoidSink, MiscSink, CastSink, PtrArithSink}) at benchmark/json.h/src/json.rs:3958:9: 3958:21 (#0)
+raw pointer CSV
+Benchmark,Statistic,{VoidPtr},{ExplicitRaw},{PtrArith},{Global},{Cast},{VoidPtr},{StringLit},{Extern},{}
+json.h,NonUniqueDecls,152,0,151,0,171,152,19,119,202
+json.h,DeclsExact,2,0,0,0,0,2,0,0,29
+json.h,NonUniqueDerefs,539,0,478,0,571,539,32,293,973
+json.h,DerefsExact,0,0,0,0,0,0,0,0,402
+non-empty pointer eq class sizes:
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+2
+2
+2
+2
+2
+3
+3
+4
+4
+8
+15
+15
+52
+65
+there are 155 non-empty eq classes
+PROFILING RESULTS
+call graph closure: 0 ms
+compute SCCs: 77 ms
+computing poison sets via equality-based analysis: 19 ms
+computing subsets for ownership/poison propagation: 4 ms
+constraint solving: 26 ms
+constraint solving (TODO: only compute eq classes): 54 ms
+constraint solving (addr_of_locs): 22 ms
+constraint solving (reborrow_map): 38 ms
+constructor constraints: 91 ms
+propagating compiler error-derived poisons via subset-based analysis: 0 ms
+propagating inline assembly poisons via subset-based analysis: 0 ms
+propagating ownership: 0 ms
+propagating refcell promotion: 2 ms
+propagating upper and lower sets: 93 ms
+set constraint solving: 176 ms
+transitive closure: 5 ms

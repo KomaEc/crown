@@ -1,0 +1,952 @@
+environment variable flags: RwLockReadGuard { lock: RwLock { data: Flags { print_per_fn_stats: false, count_indirect: false, benchmark_name: "heman", non_limit: true, config_file: None } } }
+Non-limit ptr: lib::src::kazmath::aabb2::kmAABB2Initialize::centre ; poison: ({}, {}) at benchmark/heman/src/kazmath/aabb2.rs:53:5: 53:15 (#0)
+Non-limit ptr: lib::src::kazmath::aabb2::kmAABB2Initialize::point ; poison: ({}, {}) at benchmark/heman/src/kazmath/aabb2.rs:62:9: 62:18 (#0)
+Non-limit ptr: lib::src::kazmath::aabb2::kmAABB2Centre::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/aabb2.rs:208:5: 208:13 (#0)
+Non-limit ptr: lib::src::kazmath::aabb3::kmAABB3Initialize::centre ; poison: ({}, {}) at benchmark/heman/src/kazmath/aabb3.rs:64:5: 64:15 (#0)
+Non-limit ptr: lib::src::kazmath::aabb3::kmAABB3Initialize::point ; poison: ({}, {}) at benchmark/heman/src/kazmath/aabb3.rs:73:9: 73:18 (#0)
+Non-limit ptr: lib::src::kazmath::aabb3::kmAABB3Centre::pOut ; poison: ({CastSource, PtrArith, MiscSource, ExternCallReturn, VoidSource, MixedRefSource}, {ExternCallParam, PtrArithSink, MixedRefSink, CastSink, VoidSink, MiscSink}) at benchmark/heman/src/kazmath/aabb3.rs:244:5: 244:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat3::kmMat3Fill::pMat ; poison: ({ExternCallReturn, MiscSource, MixedRefSource, CastSource, GlobalSource, PtrArith, VoidSource}, {CastSink, GlobalSink, VoidSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/heman/src/kazmath/mat3.rs:102:5: 102:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat3::kmMat3Identity::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/mat3.rs:113:41: 113:49 (#0)
+Non-limit ptr: lib::src::kazmath::mat3::kmMat3Multiply::m1 ; poison: ({GlobalSource, VoidSource, ExternCallReturn, MiscSource, MixedRefSource, CastSource, PtrArith}, {PtrArithSink, MiscSink, CastSink, GlobalSink, MixedRefSink, ExternCallParam, VoidSink}) at benchmark/heman/src/kazmath/mat3.rs:266:9: 266:15 (#0)
+Non-limit ptr: lib::src::kazmath::mat3::kmMat3Multiply::m2 ; poison: ({PtrArith, MiscSource, ExternCallReturn, MixedRefSource, CastSource, GlobalSource, VoidSource}, {GlobalSink, VoidSink, CastSink, PtrArithSink, ExternCallParam, MixedRefSink, MiscSink}) at benchmark/heman/src/kazmath/mat3.rs:267:9: 267:15 (#0)
+Non-limit ptr: lib::src::kazmath::mat3::kmMat3Scaling::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/mat3.rs:420:5: 420:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat3::kmMat3Translation::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/mat3.rs:431:5: 431:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat3::kmMat3RotationToAxisAngle::pAxis ; poison: ({MixedRefSource, PtrArith, ExternCallReturn, CastSource, VoidSource, MiscSource}, {MiscSink, CastSink, MixedRefSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/heman/src/kazmath/mat3.rs:525:5: 525:14 (#0)
+Non-limit ptr: lib::src::kazmath::mat3::kmMat3GetUpVec3::pOut ; poison: ({PtrArith, MixedRefSource, VoidSource, CastSource, MiscSource, ExternCallReturn}, {CastSink, PtrArithSink, ExternCallParam, MixedRefSink, MiscSink, VoidSink}) at benchmark/heman/src/kazmath/mat3.rs:589:5: 589:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat3::kmMat3GetRightVec3::pOut ; poison: ({MixedRefSource, PtrArith, ExternCallReturn, VoidSource, MiscSource, CastSource}, {MiscSink, ExternCallParam, MixedRefSink, CastSink, VoidSink, PtrArithSink}) at benchmark/heman/src/kazmath/mat3.rs:600:5: 600:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat3::kmMat3GetForwardVec3::pOut ; poison: ({ExternCallReturn, PtrArith, MixedRefSource, VoidSource, MiscSource, CastSource}, {MixedRefSink, CastSink, MiscSink, ExternCallParam, PtrArithSink, VoidSink}) at benchmark/heman/src/kazmath/mat3.rs:611:5: 611:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat3::kmMat3LookAt::pEye ; poison: ({MixedRefSource, ExternCallReturn, PtrArith, MiscSource, CastSource, VoidSource}, {ExternCallParam, MiscSink, VoidSink, CastSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/kazmath/mat3.rs:623:5: 623:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat3::kmMat3LookAt::pCenter ; poison: ({PtrArith, MixedRefSource, MiscSource, CastSource, ExternCallReturn, VoidSource}, {MixedRefSink, PtrArithSink, ExternCallParam, VoidSink, CastSink, MiscSink}) at benchmark/heman/src/kazmath/mat3.rs:624:5: 624:16 (#0)
+Non-limit ptr: lib::src::kazmath::mat3::kmMat3LookAt::pUp ; poison: ({ExternCallReturn, CastSource, MiscSource, VoidSource, MixedRefSource, PtrArith}, {PtrArithSink, ExternCallParam, MixedRefSink, CastSink, VoidSink, MiscSink}) at benchmark/heman/src/kazmath/mat3.rs:625:5: 625:12 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4Fill::pMat ; poison: ({PtrArith, VoidSource, CastSource, MiscSource}, {ExternCallParam, PtrArithSink, VoidSink, MiscSink, CastSink}) at benchmark/heman/src/kazmath/mat4.rs:94:5: 94:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4Identity::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/mat4.rs:105:41: 105:49 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4Multiply::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/mat4.rs:421:5: 421:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4Multiply::pM1 ; poison: ({}, {}) at benchmark/heman/src/kazmath/mat4.rs:422:5: 422:12 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4Multiply::pM2 ; poison: ({}, {}) at benchmark/heman/src/kazmath/mat4.rs:423:5: 423:12 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4Multiply::m1 ; poison: ({PtrArith, MiscSource, CastSource, VoidSource}, {ExternCallParam, MiscSink, CastSink, VoidSink, PtrArithSink}) at benchmark/heman/src/kazmath/mat4.rs:426:9: 426:15 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4Multiply::m2 ; poison: ({PtrArith, CastSource, VoidSource, MiscSource}, {ExternCallParam, MiscSink, VoidSink, CastSink, PtrArithSink}) at benchmark/heman/src/kazmath/mat4.rs:427:9: 427:15 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4AssignMat3::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/mat4.rs:568:5: 568:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4RotationYawPitchRoll::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/mat4.rs:705:5: 705:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4GetUpVec3::pOut ; poison: ({ExternCallReturn, CastSource, MiscSource, PtrArith, MixedRefSource, VoidSource}, {PtrArithSink, MiscSink, MixedRefSink, CastSink, VoidSink, ExternCallParam}) at benchmark/heman/src/kazmath/mat4.rs:816:5: 816:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4GetRightVec3::pOut ; poison: ({MixedRefSource, VoidSource, ExternCallReturn, PtrArith, MiscSource, CastSource}, {VoidSink, MixedRefSink, MiscSink, CastSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/kazmath/mat4.rs:825:5: 825:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4GetForwardVec3RH::pOut ; poison: ({PtrArith, VoidSource, MixedRefSource, CastSource, ExternCallReturn, MiscSource}, {PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, VoidSink, CastSink}) at benchmark/heman/src/kazmath/mat4.rs:834:5: 834:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4GetForwardVec3LH::pOut ; poison: ({ExternCallReturn, PtrArith, MixedRefSource, MiscSource, CastSource, VoidSource}, {ExternCallParam, MiscSink, PtrArithSink, MixedRefSink, CastSink, VoidSink}) at benchmark/heman/src/kazmath/mat4.rs:843:5: 843:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4PerspectiveProjection::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/mat4.rs:852:5: 852:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4OrthographicProjection::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/mat4.rs:882:5: 882:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4LookAt::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/mat4.rs:910:5: 910:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4LookAt::pEye ; poison: ({ExternCallReturn, VoidSource, PtrArith, MiscSource, MixedRefSource, CastSource}, {VoidSink, ExternCallParam, CastSink, MiscSink, MixedRefSink, PtrArithSink}) at benchmark/heman/src/kazmath/mat4.rs:911:5: 911:13 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4LookAt::pCenter ; poison: ({CastSource, PtrArith, ExternCallReturn, MixedRefSource, MiscSource, VoidSource}, {ExternCallParam, MiscSink, CastSink, VoidSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/kazmath/mat4.rs:912:5: 912:16 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4LookAt::pUp ; poison: ({PtrArith, MixedRefSource, ExternCallReturn, VoidSource, CastSource, MiscSource}, {PtrArithSink, MixedRefSink, MiscSink, ExternCallParam, VoidSink, CastSink}) at benchmark/heman/src/kazmath/mat4.rs:913:5: 913:12 (#0)
+Non-limit ptr: lib::src::kazmath::mat4::kmMat4RotationToAxisAngle::pAxis ; poison: ({VoidSource, PtrArith, MiscSource, CastSource, MixedRefSource, ExternCallReturn}, {VoidSink, MiscSink, CastSink, ExternCallParam, PtrArithSink, MixedRefSink}) at benchmark/heman/src/kazmath/mat4.rs:960:5: 960:14 (#0)
+Non-limit ptr: lib::src::kazmath::plane::kmPlaneFromPointAndNormal::pPoint ; poison: ({ExternCallReturn, VoidSource, MixedRefSource, PtrArith, CastSource, MiscSource}, {CastSink, PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, VoidSink}) at benchmark/heman/src/kazmath/plane.rs:100:5: 100:15 (#0)
+Non-limit ptr: lib::src::kazmath::plane::kmPlaneFromPointAndNormal::pNormal ; poison: ({PtrArith, MixedRefSource, MiscSource, CastSource, ExternCallReturn, VoidSource}, {MiscSink, MixedRefSink, CastSink, VoidSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/kazmath/plane.rs:101:5: 101:16 (#0)
+Non-limit ptr: lib::src::kazmath::plane::kmPlaneFromPoints::p1 ; poison: ({CastSource, PtrArith, MixedRefSource, ExternCallReturn, VoidSource, MiscSource}, {MixedRefSink, VoidSink, PtrArithSink, CastSink, ExternCallParam, MiscSink}) at benchmark/heman/src/kazmath/plane.rs:112:5: 112:11 (#0)
+Non-limit ptr: lib::src::kazmath::plane::kmPlaneFromPoints::p2 ; poison: ({CastSource, VoidSource, ExternCallReturn, MixedRefSource, MiscSource, PtrArith}, {MiscSink, CastSink, ExternCallParam, PtrArithSink, MixedRefSink, VoidSink}) at benchmark/heman/src/kazmath/plane.rs:113:5: 113:11 (#0)
+Non-limit ptr: lib::src::kazmath::plane::kmPlaneFromPoints::p3 ; poison: ({MiscSource, CastSource, VoidSource, PtrArith, MixedRefSource, ExternCallReturn}, {MixedRefSink, MiscSink, VoidSink, ExternCallParam, PtrArithSink, CastSink}) at benchmark/heman/src/kazmath/plane.rs:114:5: 114:11 (#0)
+Non-limit ptr: lib::src::kazmath::plane::kmPlaneIntersectLine::pV1 ; poison: ({CastSource, VoidSource, PtrArith, MiscSource, ExternCallReturn, MixedRefSource}, {MixedRefSink, PtrArithSink, VoidSink, CastSink, MiscSink, ExternCallParam}) at benchmark/heman/src/kazmath/plane.rs:133:5: 133:12 (#0)
+Non-limit ptr: lib::src::kazmath::plane::kmPlaneIntersectLine::pV2 ; poison: ({VoidSource, MiscSource, ExternCallReturn, PtrArith, MixedRefSource, CastSource}, {ExternCallParam, PtrArithSink, VoidSink, MiscSink, CastSink, MixedRefSink}) at benchmark/heman/src/kazmath/plane.rs:134:5: 134:12 (#0)
+Non-limit ptr: lib::src::kazmath::plane::kmPlaneNormalize::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/plane.rs:157:5: 157:13 (#0)
+Non-limit ptr: lib::src::kazmath::plane::kmPlaneNormalize::pP ; poison: ({}, {}) at benchmark/heman/src/kazmath/plane.rs:158:5: 158:11 (#0)
+Non-limit ptr: lib::src::kazmath::plane::kmPlaneExtractFromMat4::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/plane.rs:216:5: 216:13 (#0)
+Non-limit ptr: lib::src::kazmath::plane::kmPlaneGetIntersection::pOut ; poison: ({VoidSource, MixedRefSource, CastSource, MiscSource, PtrArith, ExternCallReturn}, {CastSink, ExternCallParam, VoidSink, MixedRefSink, PtrArithSink, MiscSink}) at benchmark/heman/src/kazmath/plane.rs:242:5: 242:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionFill::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:85:5: 85:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionIdentity::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:120:5: 120:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionInverse::pIn ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:131:5: 131:12 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionLength::pIn ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:157:5: 157:12 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionLengthSq::pIn ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:163:5: 163:12 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionMultiply::qu1 ; poison: ({VoidSource, CastSource}, {ExternCallParam, CastSink, VoidSink}) at benchmark/heman/src/kazmath/quaternion.rs:185:5: 185:12 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionMultiply::qu2 ; poison: ({CastSource, VoidSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/heman/src/kazmath/quaternion.rs:186:5: 186:12 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionNormalize::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:220:5: 220:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionNormalize::pIn ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:221:5: 221:12 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionRotationAxisAngle::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:242:5: 242:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionRotationMatrix::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:257:5: 257:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionRotationMatrix::pMatrix ; poison: ({PtrArith, MiscSource, MixedRefSource}, {MiscSink, MixedRefSink, PtrArithSink}) at benchmark/heman/src/kazmath/quaternion.rs:264:9: 264:20 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionSlerp::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:420:5: 420:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionToAxisAngle::pAxis ; poison: ({MiscSource, MixedRefSource, VoidSource, CastSource, PtrArith, ExternCallReturn}, {MixedRefSink, PtrArithSink, CastSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/heman/src/kazmath/quaternion.rs:476:5: 476:14 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionScale::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:505:5: 505:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionAssign::pOut ; poison: ({VoidSource, CastSource}, {CastSink, VoidSink, ExternCallParam}) at benchmark/heman/src/kazmath/quaternion.rs:517:5: 517:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionAssign::pIn ; poison: ({CastSource, VoidSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/heman/src/kazmath/quaternion.rs:518:5: 518:12 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionSubtract::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:530:5: 530:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionAdd::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:542:5: 542:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionRotationBetweenVec3::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:554:5: 554:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionRotationBetweenVec3::vec1 ; poison: ({ExternCallReturn, MiscSource, MixedRefSource, PtrArith, VoidSource, CastSource}, {PtrArithSink, MiscSink, MixedRefSink, CastSink, ExternCallParam, VoidSink}) at benchmark/heman/src/kazmath/quaternion.rs:555:5: 555:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionRotationBetweenVec3::vec2 ; poison: ({PtrArith, CastSource, MixedRefSource, VoidSource, MiscSource, ExternCallReturn}, {PtrArithSink, MiscSink, CastSink, VoidSink, ExternCallParam, MixedRefSink}) at benchmark/heman/src/kazmath/quaternion.rs:556:5: 556:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionMultiplyVec3::pOut ; poison: ({PtrArith, ExternCallReturn, MixedRefSource, MiscSource, CastSource, VoidSource}, {ExternCallParam, CastSink, MiscSink, PtrArithSink, MixedRefSink, VoidSink}) at benchmark/heman/src/kazmath/quaternion.rs:608:5: 608:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionMultiplyVec3::v ; poison: ({MiscSource, VoidSource, CastSource, ExternCallReturn, MixedRefSource, PtrArith}, {ExternCallParam, PtrArithSink, MiscSink, MixedRefSink, CastSink, VoidSink}) at benchmark/heman/src/kazmath/quaternion.rs:610:5: 610:10 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionGetUpVec3::pOut ; poison: ({VoidSource, PtrArith, ExternCallReturn, MiscSource, MixedRefSource, CastSource}, {ExternCallParam, PtrArithSink, MixedRefSink, VoidSink, CastSink, MiscSink}) at benchmark/heman/src/kazmath/quaternion.rs:628:5: 628:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionGetRightVec3::pOut ; poison: ({MiscSource, MixedRefSource, ExternCallReturn, VoidSource, CastSource, PtrArith}, {ExternCallParam, VoidSink, MixedRefSink, CastSink, PtrArithSink, MiscSink}) at benchmark/heman/src/kazmath/quaternion.rs:635:5: 635:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionGetForwardVec3RH::pOut ; poison: ({PtrArith, ExternCallReturn, MixedRefSource, MiscSource, CastSource, VoidSource}, {MiscSink, MixedRefSink, VoidSink, PtrArithSink, CastSink, ExternCallParam}) at benchmark/heman/src/kazmath/quaternion.rs:642:5: 642:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionGetForwardVec3LH::pOut ; poison: ({MixedRefSource, CastSource, MiscSource, ExternCallReturn, VoidSource, PtrArith}, {ExternCallParam, MiscSink, MixedRefSink, PtrArithSink, CastSink, VoidSink}) at benchmark/heman/src/kazmath/quaternion.rs:649:5: 649:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionLookRotation::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/quaternion.rs:690:5: 690:13 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionLookRotation::direction ; poison: ({VoidSource, ExternCallReturn, PtrArith, MixedRefSource, MiscSource, CastSource}, {MiscSink, MixedRefSink, ExternCallParam, PtrArithSink, VoidSink, CastSink}) at benchmark/heman/src/kazmath/quaternion.rs:691:5: 691:18 (#0)
+Non-limit ptr: lib::src::kazmath::quaternion::kmQuaternionLookRotation::up ; poison: ({PtrArith, VoidSource, ExternCallReturn, MixedRefSource, CastSource, MiscSource}, {CastSink, VoidSink, PtrArithSink, MiscSink, MixedRefSink, ExternCallParam}) at benchmark/heman/src/kazmath/quaternion.rs:692:5: 692:11 (#0)
+Non-limit ptr: lib::src::kazmath::ray2::calculate_line_normal::normal_out ; poison: ({}, {}) at benchmark/heman/src/kazmath/ray2.rs:168:5: 168:19 (#0)
+Non-limit ptr: lib::src::kazmath::ray3::kmRay3FromPointAndDirection::point ; poison: ({CastSource, PtrArith, ExternCallReturn, VoidSource, MiscSource, MixedRefSource}, {VoidSink, MiscSink, MixedRefSink, CastSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/kazmath/ray3.rs:56:5: 56:14 (#0)
+Non-limit ptr: lib::src::kazmath::ray3::kmRay3FromPointAndDirection::direction ; poison: ({PtrArith, ExternCallReturn, MixedRefSource, VoidSource, CastSource, MiscSource}, {ExternCallParam, PtrArithSink, MixedRefSink, CastSink, VoidSink, MiscSink}) at benchmark/heman/src/kazmath/ray3.rs:57:5: 57:18 (#0)
+Non-limit ptr: lib::src::kazmath::ray3::kmRay3IntersectPlane::pOut ; poison: ({ExternCallReturn, PtrArith, VoidSource, MiscSource, CastSource, MixedRefSource}, {PtrArithSink, ExternCallParam, CastSink, MixedRefSink, MiscSink, VoidSink}) at benchmark/heman/src/kazmath/ray3.rs:65:5: 65:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2Length::pIn ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:83:39: 83:46 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2Normalize::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:103:5: 103:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2Normalize::pIn ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:104:5: 104:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2Add::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:119:5: 119:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2Dot::pV2 ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:130:5: 130:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2Subtract::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:143:5: 143:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2Scale::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:209:5: 209:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2Scale::pIn ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:210:5: 210:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2AreEqual::p1 ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:219:5: 219:11 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2AreEqual::p2 ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:220:5: 220:11 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2Assign::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:230:5: 230:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2Assign::pIn ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:231:5: 231:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2DegreesBetween::v1 ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:262:5: 262:11 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2DegreesBetween::v2 ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:263:5: 263:11 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2Reflect::pOut ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:307:5: 307:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec2::kmVec2Reflect::normal ; poison: ({}, {}) at benchmark/heman/src/kazmath/vec2.rs:309:5: 309:15 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Length::pIn ; poison: ({MiscSource, MixedRefSource, CastSource, PtrArith, ExternCallReturn, VoidSource}, {MiscSink, CastSink, PtrArithSink, ExternCallParam, VoidSink, MixedRefSink}) at benchmark/heman/src/kazmath/vec3.rs:122:39: 122:46 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Lerp::pOut ; poison: ({MiscSource, PtrArith, VoidSource, CastSource, MixedRefSource, ExternCallReturn}, {MiscSink, PtrArithSink, MixedRefSink, VoidSink, CastSink, ExternCallParam}) at benchmark/heman/src/kazmath/vec3.rs:131:5: 131:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Lerp::pV1 ; poison: ({VoidSource, MixedRefSource, MiscSource, CastSource, ExternCallReturn, PtrArith}, {ExternCallParam, PtrArithSink, MiscSink, MixedRefSink, CastSink, VoidSink}) at benchmark/heman/src/kazmath/vec3.rs:132:5: 132:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Normalize::pOut ; poison: ({PtrArith, VoidSource, ExternCallReturn, MiscSource, CastSource, MixedRefSource}, {MixedRefSink, MiscSink, CastSink, ExternCallParam, PtrArithSink, VoidSink}) at benchmark/heman/src/kazmath/vec3.rs:143:5: 143:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Normalize::pIn ; poison: ({VoidSource, CastSource, ExternCallReturn, PtrArith, MiscSource, MixedRefSource}, {MiscSink, PtrArithSink, ExternCallParam, VoidSink, CastSink, MixedRefSink}) at benchmark/heman/src/kazmath/vec3.rs:144:5: 144:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Cross::pOut ; poison: ({MixedRefSource, MiscSource, ExternCallReturn, PtrArith, VoidSource, CastSource}, {ExternCallParam, VoidSink, MiscSink, PtrArithSink, MixedRefSink, CastSink}) at benchmark/heman/src/kazmath/vec3.rs:161:5: 161:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Cross::pV2 ; poison: ({ExternCallReturn, VoidSource, PtrArith, MixedRefSource, MiscSource, CastSource}, {ExternCallParam, CastSink, PtrArithSink, MiscSink, MixedRefSink, VoidSink}) at benchmark/heman/src/kazmath/vec3.rs:163:5: 163:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Dot::pV1 ; poison: ({VoidSource, MixedRefSource, PtrArith, ExternCallReturn, CastSource, MiscSource}, {PtrArithSink, CastSink, MixedRefSink, ExternCallParam, MiscSink, VoidSink}) at benchmark/heman/src/kazmath/vec3.rs:176:5: 176:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Dot::pV2 ; poison: ({MixedRefSource, MiscSource, CastSource, PtrArith, ExternCallReturn, VoidSource}, {PtrArithSink, MiscSink, VoidSink, MixedRefSink, ExternCallParam, CastSink}) at benchmark/heman/src/kazmath/vec3.rs:177:5: 177:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Add::pOut ; poison: ({PtrArith, ExternCallReturn, MixedRefSource, CastSource, VoidSource, MiscSource}, {CastSink, ExternCallParam, PtrArithSink, VoidSink, MiscSink, MixedRefSink}) at benchmark/heman/src/kazmath/vec3.rs:183:5: 183:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Add::pV1 ; poison: ({ExternCallReturn, PtrArith, VoidSource, MiscSource, CastSource, MixedRefSource}, {MixedRefSink, CastSink, PtrArithSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/heman/src/kazmath/vec3.rs:184:5: 184:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Subtract::pOut ; poison: ({CastSource, VoidSource, ExternCallReturn, MiscSource, PtrArith, MixedRefSource}, {ExternCallParam, PtrArithSink, MixedRefSink, VoidSink, CastSink, MiscSink}) at benchmark/heman/src/kazmath/vec3.rs:198:5: 198:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Subtract::pV1 ; poison: ({MixedRefSource, CastSource, PtrArith, MiscSource, VoidSource, ExternCallReturn}, {MixedRefSink, CastSink, VoidSink, ExternCallParam, MiscSink, PtrArithSink}) at benchmark/heman/src/kazmath/vec3.rs:199:5: 199:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Subtract::pV2 ; poison: ({MiscSource, PtrArith, VoidSource, MixedRefSource, CastSource, ExternCallReturn}, {MiscSink, PtrArithSink, VoidSink, MixedRefSink, ExternCallParam, CastSink}) at benchmark/heman/src/kazmath/vec3.rs:200:5: 200:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3MultiplyMat4::pOut ; poison: ({PtrArith, CastSource, MixedRefSource, ExternCallReturn, MiscSource, VoidSource}, {PtrArithSink, MixedRefSink, CastSink, VoidSink, MiscSink, ExternCallParam}) at benchmark/heman/src/kazmath/vec3.rs:261:5: 261:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Transform::pOut ; poison: ({ExternCallReturn, PtrArith, VoidSource, MiscSource, MixedRefSource, CastSource}, {ExternCallParam, CastSink, MiscSink, PtrArithSink, VoidSink, MixedRefSink}) at benchmark/heman/src/kazmath/vec3.rs:288:5: 288:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Scale::pOut ; poison: ({CastSource, MiscSource, MixedRefSource, VoidSource, PtrArith, ExternCallReturn}, {CastSink, MixedRefSink, VoidSink, MiscSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/kazmath/vec3.rs:397:5: 397:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Scale::pIn ; poison: ({MiscSource, MixedRefSource, VoidSource, PtrArith, ExternCallReturn, CastSource}, {CastSink, VoidSink, MiscSink, PtrArithSink, ExternCallParam, MixedRefSink}) at benchmark/heman/src/kazmath/vec3.rs:398:5: 398:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Assign::pOut ; poison: ({PtrArith, CastSource, ExternCallReturn, VoidSource, MiscSource, MixedRefSource}, {PtrArithSink, VoidSink, MixedRefSink, CastSink, ExternCallParam, MiscSink}) at benchmark/heman/src/kazmath/vec3.rs:424:5: 424:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Assign::pIn ; poison: ({MiscSource, PtrArith, CastSource, VoidSource, ExternCallReturn, MixedRefSource}, {VoidSink, MixedRefSink, PtrArithSink, MiscSink, ExternCallParam, CastSink}) at benchmark/heman/src/kazmath/vec3.rs:425:5: 425:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3ProjectOnToPlane::pOut ; poison: ({CastSource, MixedRefSource, MiscSource, PtrArith, ExternCallReturn, VoidSource}, {PtrArithSink, ExternCallParam, MixedRefSink, VoidSink, CastSink, MiscSink}) at benchmark/heman/src/kazmath/vec3.rs:515:5: 515:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3ProjectOnToPlane::point ; poison: ({MiscSource, PtrArith, VoidSource, MixedRefSource, CastSource, ExternCallReturn}, {ExternCallParam, MixedRefSink, CastSink, PtrArithSink, VoidSink, MiscSink}) at benchmark/heman/src/kazmath/vec3.rs:516:5: 516:14 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Reflect::pOut ; poison: ({PtrArith, MiscSource, ExternCallReturn, VoidSource, MixedRefSource, CastSource}, {MixedRefSink, VoidSink, ExternCallParam, CastSink, PtrArithSink, MiscSink}) at benchmark/heman/src/kazmath/vec3.rs:532:5: 532:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Reflect::pIn ; poison: ({ExternCallReturn, MiscSource, PtrArith, MixedRefSource, CastSource, VoidSource}, {ExternCallParam, VoidSink, CastSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/heman/src/kazmath/vec3.rs:533:5: 533:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec3::kmVec3Reflect::normal ; poison: ({PtrArith, VoidSource, MiscSource, ExternCallReturn, MixedRefSource, CastSource}, {VoidSink, MiscSink, PtrArithSink, MixedRefSink, ExternCallParam, CastSink}) at benchmark/heman/src/kazmath/vec3.rs:534:5: 534:15 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4Length::pIn ; poison: ({CastSource, VoidSource}, {CastSink, VoidSink, ExternCallParam}) at benchmark/heman/src/kazmath/vec4.rs:59:39: 59:46 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4Normalize::pOut ; poison: ({CastSource, VoidSource}, {VoidSink, ExternCallParam, CastSink}) at benchmark/heman/src/kazmath/vec4.rs:81:5: 81:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4Normalize::pIn ; poison: ({VoidSource, CastSource}, {ExternCallParam, CastSink, VoidSink}) at benchmark/heman/src/kazmath/vec4.rs:82:5: 82:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4Scale::pOut ; poison: ({VoidSource, CastSource}, {CastSink, VoidSink, ExternCallParam}) at benchmark/heman/src/kazmath/vec4.rs:96:5: 96:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4Scale::pIn ; poison: ({VoidSource, CastSource}, {VoidSink, ExternCallParam, CastSink}) at benchmark/heman/src/kazmath/vec4.rs:97:5: 97:12 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4MultiplyMat4::pOut ; poison: ({MixedRefSource, MiscSource, PtrArith}, {MixedRefSink, PtrArithSink, MiscSink}) at benchmark/heman/src/kazmath/vec4.rs:147:5: 147:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4MultiplyMat4::pV ; poison: ({MixedRefSource, MiscSource, PtrArith}, {MixedRefSink, PtrArithSink, MiscSink}) at benchmark/heman/src/kazmath/vec4.rs:148:5: 148:11 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4Transform::pOut ; poison: ({MixedRefSource, PtrArith, MiscSource}, {MixedRefSink, PtrArithSink, MiscSink}) at benchmark/heman/src/kazmath/vec4.rs:175:5: 175:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4Transform::pV ; poison: ({MixedRefSource, PtrArith, MiscSource}, {PtrArithSink, MixedRefSink, MiscSink}) at benchmark/heman/src/kazmath/vec4.rs:176:5: 176:11 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4TransformArray::pOut ; poison: ({MixedRefSource, PtrArith, MiscSource}, {MiscSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/kazmath/vec4.rs:183:5: 183:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4TransformArray::pV ; poison: ({MixedRefSource, MiscSource, PtrArith}, {MiscSink, MixedRefSink, PtrArithSink}) at benchmark/heman/src/kazmath/vec4.rs:185:5: 185:11 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4TransformArray::in_0 ; poison: ({MixedRefSource, PtrArith, MiscSource}, {PtrArithSink, MiscSink, MixedRefSink}) at benchmark/heman/src/kazmath/vec4.rs:192:13: 192:21 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4TransformArray::out ; poison: ({MiscSource, MixedRefSource, PtrArith}, {MiscSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/kazmath/vec4.rs:193:13: 193:20 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4Assign::pOut ; poison: ({VoidSource, CastSource}, {CastSink, ExternCallParam, VoidSink}) at benchmark/heman/src/kazmath/vec4.rs:216:5: 216:13 (#0)
+Non-limit ptr: lib::src::kazmath::vec4::kmVec4Assign::pIn ; poison: ({CastSource, VoidSource}, {CastSink, ExternCallParam, VoidSink}) at benchmark/heman/src/kazmath/vec4.rs:217:5: 217:12 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::cp_locations ; poison: ({MiscSource, PtrArith}, {MiscSink, PtrArithSink}) at benchmark/heman/src/src/color.rs:55:5: 55:21 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::cp_values ; poison: ({PtrArith, MiscSource}, {MiscSink, PtrArithSink}) at benchmark/heman/src/src/color.rs:56:5: 56:18 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::f32colors ; poison: ({MiscSource, PtrArith, VoidSource, CastSource}, {PtrArithSink, VoidSink, MiscSink, CastSink, ExternCallParam}) at benchmark/heman/src/src/color.rs:94:9: 94:22 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::f32color ; poison: ({VoidSource, PtrArith, MiscSource, CastSource}, {PtrArithSink, ExternCallParam, VoidSink, MiscSink, CastSink}) at benchmark/heman/src/src/color.rs:100:9: 100:21 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::u32color ; poison: ({PtrArith, MiscSource}, {PtrArithSink, MiscSink}) at benchmark/heman/src/src/color.rs:101:9: 101:21 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::fresh0 ; poison: ({PtrArith, MiscSource}, {MiscSink, PtrArithSink}) at benchmark/heman/src/src/color.rs:104:13: 104:23 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::fresh1 ; poison: ({MiscSource, VoidSource, CastSource, PtrArith}, {MiscSink, VoidSink, ExternCallParam, PtrArithSink, CastSink}) at benchmark/heman/src/src/color.rs:111:13: 111:23 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::fresh2 ; poison: ({PtrArith, MiscSource, CastSource, VoidSource}, {MiscSink, CastSink, ExternCallParam, PtrArithSink, VoidSink}) at benchmark/heman/src/src/color.rs:114:13: 114:23 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::fresh3 ; poison: ({VoidSource, PtrArith, MiscSource, CastSource}, {PtrArithSink, ExternCallParam, MiscSink, VoidSink, CastSink}) at benchmark/heman/src/src/color.rs:117:13: 117:23 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::result ; poison: ({CastSource, MiscSource, ExternCallReturn, MixedRefSource, PtrArith, VoidSource}, {ExternCallParam, MiscSink, CastSink, MixedRefSink, VoidSink, PtrArithSink}) at benchmark/heman/src/src/color.rs:122:9: 122:19 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::dst ; poison: ({CastSource, MixedRefSource, MiscSource, ExternCallReturn, PtrArith, VoidSource}, {VoidSink, PtrArithSink, ExternCallParam, MixedRefSink, CastSink, MiscSink}) at benchmark/heman/src/src/color.rs:125:9: 125:16 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::fresh4 ; poison: ({CastSource, VoidSource, PtrArith, ExternCallReturn, MiscSource, MixedRefSource}, {CastSink, MixedRefSink, VoidSink, PtrArithSink, MiscSink, ExternCallParam}) at benchmark/heman/src/src/color.rs:167:21: 167:31 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::fresh5 ; poison: ({VoidSource, PtrArith, ExternCallReturn, MixedRefSource, CastSource, MiscSource}, {MiscSink, ExternCallParam, PtrArithSink, MixedRefSink, CastSink, VoidSink}) at benchmark/heman/src/src/color.rs:171:21: 171:31 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_create_gradient::fresh6 ; poison: ({PtrArith, VoidSource, MixedRefSource, ExternCallReturn, CastSource, MiscSource}, {PtrArithSink, VoidSink, MixedRefSink, CastSink, ExternCallParam, MiscSink}) at benchmark/heman/src/src/color.rs:175:21: 175:31 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_apply_gradient::gradient ; poison: ({ExternCallReturn, PtrArith, MiscSource, MixedRefSource, CastSource, VoidSource}, {VoidSink, PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/color.rs:192:5: 192:17 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_apply_gradient::result ; poison: ({MixedRefSource, PtrArith, MiscSource, ExternCallReturn, CastSource, VoidSource}, {PtrArithSink, MixedRefSink, ExternCallParam, MiscSink, CastSink, VoidSink}) at benchmark/heman/src/src/color.rs:229:9: 229:19 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_apply_gradient::dst ; poison: ({PtrArith, MiscSource, MixedRefSource, CastSource, VoidSource, ExternCallReturn}, {ExternCallParam, MixedRefSink, VoidSink, CastSink, MiscSink, PtrArithSink}) at benchmark/heman/src/src/color.rs:231:9: 231:16 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_apply_gradient::src ; poison: ({ExternCallReturn, VoidSource, MiscSource, MixedRefSource, PtrArith, CastSource}, {CastSink, PtrArithSink, ExternCallParam, VoidSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/color.rs:232:9: 232:16 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_grayscale::result ; poison: ({MiscSource, ExternCallReturn, MixedRefSource, CastSource, VoidSource, PtrArith}, {CastSink, ExternCallParam, MixedRefSink, VoidSink, MiscSink, PtrArithSink}) at benchmark/heman/src/src/color.rs:271:9: 271:19 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_grayscale::dst ; poison: ({CastSource, VoidSource, MiscSource, ExternCallReturn, PtrArith, MixedRefSource}, {CastSink, VoidSink, MiscSink, MixedRefSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/color.rs:273:9: 273:16 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_grayscale::src ; poison: ({PtrArith, ExternCallReturn, MiscSource, MixedRefSource, CastSource, VoidSource}, {PtrArithSink, ExternCallParam, MixedRefSink, CastSink, VoidSink, MiscSink}) at benchmark/heman/src/src/color.rs:274:9: 274:16 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_grayscale::fresh7 ; poison: ({MiscSource, VoidSource, MixedRefSource, ExternCallReturn, PtrArith, CastSource}, {PtrArithSink, MixedRefSink, VoidSink, MiscSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/color.rs:277:13: 277:23 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_grayscale::fresh8 ; poison: ({VoidSource, PtrArith, ExternCallReturn, MiscSource, MixedRefSource, CastSource}, {ExternCallParam, CastSink, MiscSink, PtrArithSink, VoidSink, MixedRefSink}) at benchmark/heman/src/src/color.rs:280:13: 280:23 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_grayscale::fresh9 ; poison: ({MiscSource, ExternCallReturn, PtrArith, MixedRefSource, CastSource, VoidSource}, {MiscSink, PtrArithSink, ExternCallParam, MixedRefSink, VoidSink, CastSink}) at benchmark/heman/src/src/color.rs:283:13: 283:23 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_grayscale::fresh10 ; poison: ({ExternCallReturn, MixedRefSource, CastSource, VoidSource, MiscSource, PtrArith}, {MiscSink, MixedRefSink, VoidSink, CastSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/color.rs:286:13: 286:24 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_to_grayscale::result ; poison: ({ExternCallReturn, MiscSource, MixedRefSource, VoidSource, PtrArith, CastSource}, {VoidSink, MiscSink, MixedRefSink, CastSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/color.rs:308:9: 308:19 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_to_grayscale::dst ; poison: ({MixedRefSource, CastSource, MiscSource, PtrArith, ExternCallReturn, VoidSource}, {ExternCallParam, VoidSink, MixedRefSink, CastSink, PtrArithSink, MiscSink}) at benchmark/heman/src/src/color.rs:310:9: 310:16 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_to_grayscale::src ; poison: ({VoidSource, MixedRefSource, MiscSource, CastSource, ExternCallReturn, PtrArith}, {CastSink, MiscSink, ExternCallParam, VoidSink, MixedRefSink, PtrArithSink}) at benchmark/heman/src/src/color.rs:311:9: 311:16 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_to_grayscale::fresh11 ; poison: ({CastSource, VoidSource, PtrArith, MixedRefSource, ExternCallReturn, MiscSource}, {ExternCallParam, MiscSink, PtrArithSink, MixedRefSink, CastSink, VoidSink}) at benchmark/heman/src/src/color.rs:314:13: 314:24 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_to_grayscale::fresh12 ; poison: ({MixedRefSource, CastSource, PtrArith, VoidSource, MiscSource, ExternCallReturn}, {MixedRefSink, CastSink, PtrArithSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/heman/src/src/color.rs:317:13: 317:24 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_to_grayscale::fresh13 ; poison: ({PtrArith, VoidSource, MiscSource, CastSource, ExternCallReturn, MixedRefSource}, {VoidSink, ExternCallParam, MiscSink, CastSink, MixedRefSink, PtrArithSink}) at benchmark/heman/src/src/color.rs:320:13: 320:24 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_to_grayscale::fresh14 ; poison: ({MiscSource, CastSource, VoidSource, PtrArith, MixedRefSource, ExternCallReturn}, {ExternCallParam, MixedRefSink, CastSink, PtrArithSink, VoidSink, MiscSink}) at benchmark/heman/src/src/color.rs:323:13: 323:24 (#0)
+Non-limit ptr: lib::src::src::color::heman_internal_rg::cfield ; poison: ({CastSource, ExternCallReturn, VoidSource, PtrArith, MiscSource, MixedRefSource}, {PtrArithSink, ExternCallParam, VoidSink, CastSink, MixedRefSink, MiscSink}) at benchmark/heman/src/src/color.rs:333:5: 333:15 (#0)
+Non-limit ptr: lib::src::src::color::heman_internal_rg::target ; poison: ({CastSource, ExternCallReturn, MiscSource, PtrArith, VoidSource, MixedRefSource}, {ExternCallParam, MiscSink, VoidSink, PtrArithSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/color.rs:346:9: 346:19 (#0)
+Non-limit ptr: lib::src::src::color::heman_internal_rg::dst ; poison: ({VoidSource, PtrArith, MiscSource, MixedRefSource, CastSource, ExternCallReturn}, {MixedRefSink, ExternCallParam, VoidSink, MiscSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/color.rs:347:9: 347:16 (#0)
+Non-limit ptr: lib::src::src::color::heman_internal_rg::src ; poison: ({ExternCallReturn, PtrArith, MixedRefSource, CastSource, MiscSource, VoidSource}, {VoidSink, MiscSink, PtrArithSink, ExternCallParam, MixedRefSink, CastSink}) at benchmark/heman/src/src/color.rs:348:9: 348:16 (#0)
+Non-limit ptr: lib::src::src::color::heman_internal_rg::fresh15 ; poison: ({CastSource, VoidSource, MiscSource, PtrArith, ExternCallReturn, MixedRefSource}, {VoidSink, ExternCallParam, MixedRefSink, MiscSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/color.rs:352:13: 352:24 (#0)
+Non-limit ptr: lib::src::src::color::heman_internal_rg::fresh16 ; poison: ({MixedRefSource, CastSource, PtrArith, MiscSource, VoidSource, ExternCallReturn}, {CastSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/color.rs:355:13: 355:24 (#0)
+Non-limit ptr: lib::src::src::color::heman_internal_rg::fresh17 ; poison: ({PtrArith, MiscSource, MixedRefSource, CastSource, ExternCallReturn, VoidSource}, {ExternCallParam, VoidSink, MixedRefSink, PtrArithSink, CastSink, MiscSink}) at benchmark/heman/src/src/color.rs:358:13: 358:24 (#0)
+Non-limit ptr: lib::src::src::color::heman_internal_rg::fresh18 ; poison: ({ExternCallReturn, VoidSource, MixedRefSource, CastSource, PtrArith, MiscSource}, {CastSink, VoidSink, PtrArithSink, MiscSink, MixedRefSink, ExternCallParam}) at benchmark/heman/src/src/color.rs:361:13: 361:24 (#0)
+Non-limit ptr: lib::src::src::color::heman_internal_rg::fresh19 ; poison: ({PtrArith, CastSource, VoidSource, ExternCallReturn, MiscSource, MixedRefSource}, {CastSink, ExternCallParam, MiscSink, VoidSink, MixedRefSink, PtrArithSink}) at benchmark/heman/src/src/color.rs:364:13: 364:24 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_cpcf::cfield ; poison: ({VoidSource, MixedRefSource, PtrArith, CastSource, ExternCallReturn, MiscSource}, {PtrArithSink, VoidSink, ExternCallParam, MiscSink, CastSink, MixedRefSink}) at benchmark/heman/src/src/color.rs:373:5: 373:15 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_cpcf::texture ; poison: ({PtrArith, ExternCallReturn, MiscSource, MixedRefSource, CastSource, VoidSource}, {ExternCallParam, MiscSink, PtrArithSink, MixedRefSink, CastSink, VoidSink}) at benchmark/heman/src/src/color.rs:374:5: 374:16 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_cpcf::target ; poison: ({CastSource, PtrArith, ExternCallReturn, VoidSource, MiscSource, MixedRefSource}, {MiscSink, MixedRefSink, CastSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/color.rs:419:9: 419:19 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_cpcf::dst ; poison: ({ExternCallReturn, MixedRefSource, VoidSource, PtrArith, MiscSource, CastSource}, {CastSink, MiscSink, PtrArithSink, VoidSink, MixedRefSink, ExternCallParam}) at benchmark/heman/src/src/color.rs:420:9: 420:16 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_cpcf::src ; poison: ({MixedRefSource, VoidSource, PtrArith, ExternCallReturn, CastSource, MiscSource}, {MixedRefSink, CastSink, PtrArithSink, MiscSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/color.rs:421:9: 421:16 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_cpcf::fresh20 ; poison: ({VoidSource, MixedRefSource, ExternCallReturn, PtrArith, MiscSource, CastSource}, {VoidSink, MiscSink, MixedRefSink, CastSink, ExternCallParam, PtrArithSink}) at benchmark/heman/src/src/color.rs:425:13: 425:24 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_cpcf::fresh21 ; poison: ({MiscSource, MixedRefSource, PtrArith, ExternCallReturn, VoidSource, CastSource}, {ExternCallParam, PtrArithSink, MixedRefSink, CastSink, MiscSink, VoidSink}) at benchmark/heman/src/src/color.rs:428:13: 428:24 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_cpcf::texel ; poison: ({MixedRefSource, PtrArith, VoidSource, CastSource, MiscSource, ExternCallReturn}, {CastSink, PtrArithSink, VoidSink, ExternCallParam, MiscSink, MixedRefSink}) at benchmark/heman/src/src/color.rs:431:13: 431:22 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_cpcf::fresh22 ; poison: ({PtrArith, CastSource, ExternCallReturn, MiscSource, MixedRefSource, VoidSource}, {PtrArithSink, ExternCallParam, VoidSink, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/color.rs:434:17: 434:28 (#0)
+Non-limit ptr: lib::src::src::color::heman_color_from_cpcf::fresh23 ; poison: ({MixedRefSource, CastSource, MiscSource, PtrArith, ExternCallReturn, VoidSource}, {PtrArithSink, MiscSink, VoidSink, ExternCallParam, MixedRefSink, CastSink}) at benchmark/heman/src/src/color.rs:436:17: 436:28 (#0)
+Non-limit ptr: lib::src::src::distance::edt::f ; poison: ({CastSource, PtrArith, VoidSource, MiscSource}, {VoidSink, PtrArithSink, ExternCallParam, CastSink, MiscSink}) at benchmark/heman/src/src/distance.rs:27:5: 27:10 (#0)
+Non-limit ptr: lib::src::src::distance::edt::d ; poison: ({VoidSource, PtrArith, CastSource, MiscSource}, {CastSink, VoidSink, ExternCallParam, MiscSink, PtrArithSink}) at benchmark/heman/src/src/distance.rs:28:5: 28:10 (#0)
+Non-limit ptr: lib::src::src::distance::edt::z ; poison: ({CastSource, MiscSource, PtrArith, VoidSource}, {CastSink, ExternCallParam, PtrArithSink, MiscSink, VoidSink}) at benchmark/heman/src/src/distance.rs:29:5: 29:10 (#0)
+Non-limit ptr: lib::src::src::distance::edt::w ; poison: ({MiscSource, VoidSource, CastSource, PtrArith}, {CastSink, VoidSink, MiscSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/distance.rs:30:5: 30:10 (#0)
+Non-limit ptr: lib::src::src::distance::edt_with_payload::f ; poison: ({PtrArith, MiscSource, VoidSource, CastSource}, {MiscSink, CastSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/distance.rs:79:5: 79:10 (#0)
+Non-limit ptr: lib::src::src::distance::edt_with_payload::d ; poison: ({MiscSource, PtrArith, CastSource, VoidSource}, {VoidSink, PtrArithSink, ExternCallParam, CastSink, MiscSink}) at benchmark/heman/src/src/distance.rs:80:5: 80:10 (#0)
+Non-limit ptr: lib::src::src::distance::edt_with_payload::z ; poison: ({CastSource, MiscSource, VoidSource, PtrArith}, {VoidSink, CastSink, PtrArithSink, MiscSink, ExternCallParam}) at benchmark/heman/src/src/distance.rs:81:5: 81:10 (#0)
+Non-limit ptr: lib::src::src::distance::edt_with_payload::w ; poison: ({CastSource, PtrArith, MiscSource, VoidSource}, {PtrArithSink, MiscSink, ExternCallParam, VoidSink, CastSink}) at benchmark/heman/src/src/distance.rs:82:5: 82:10 (#0)
+Non-limit ptr: lib::src::src::distance::edt_with_payload::payload_in ; poison: ({PtrArith, VoidSource, MiscSource, CastSource}, {PtrArithSink, ExternCallParam, VoidSink, MiscSink, CastSink}) at benchmark/heman/src/src/distance.rs:84:5: 84:19 (#0)
+Non-limit ptr: lib::src::src::distance::edt_with_payload::payload_out ; poison: ({PtrArith, VoidSource, CastSource, MiscSource}, {VoidSink, ExternCallParam, PtrArithSink, MiscSink, CastSink}) at benchmark/heman/src/src/distance.rs:85:5: 85:20 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_distance::sdf ; poison: ({MiscSource, PtrArith, ExternCallReturn, CastSource, MixedRefSource, VoidSource}, {VoidSink, MixedRefSink, ExternCallParam, MiscSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/distance.rs:145:44: 145:51 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_distance::ff ; poison: ({MiscSource, VoidSource, PtrArith, CastSource}, {MiscSink, VoidSink, PtrArithSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/distance.rs:149:9: 149:15 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_distance::dd ; poison: ({PtrArith, VoidSource, CastSource, MiscSource}, {CastSink, MiscSink, PtrArithSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/distance.rs:153:9: 153:15 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_distance::zz ; poison: ({CastSource, PtrArith, MiscSource, VoidSource}, {PtrArithSink, ExternCallParam, MiscSink, CastSink, VoidSink}) at benchmark/heman/src/src/distance.rs:157:9: 157:15 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_distance::ww ; poison: ({PtrArith, VoidSource, MiscSource, CastSource}, {PtrArithSink, VoidSink, MiscSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/distance.rs:161:9: 161:15 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_distance::f ; poison: ({CastSource, VoidSource, MiscSource, PtrArith}, {MiscSink, ExternCallParam, VoidSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/distance.rs:168:13: 168:18 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_distance::d ; poison: ({VoidSource, PtrArith, MiscSource, CastSource}, {ExternCallParam, PtrArithSink, MiscSink, VoidSink, CastSink}) at benchmark/heman/src/src/distance.rs:169:13: 169:18 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_distance::z ; poison: ({CastSource, PtrArith, VoidSource, MiscSource}, {MiscSink, ExternCallParam, PtrArithSink, CastSink, VoidSink}) at benchmark/heman/src/src/distance.rs:170:13: 170:18 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_distance::w ; poison: ({PtrArith, CastSource, VoidSource, MiscSource}, {VoidSink, PtrArithSink, CastSink, ExternCallParam, MiscSink}) at benchmark/heman/src/src/distance.rs:171:13: 171:18 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_distance::f_0 ; poison: ({CastSource, VoidSource, PtrArith, MiscSource}, {MiscSink, CastSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/distance.rs:193:13: 193:20 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_distance::d_0 ; poison: ({VoidSource, CastSource, PtrArith, MiscSource}, {ExternCallParam, PtrArithSink, VoidSink, MiscSink, CastSink}) at benchmark/heman/src/src/distance.rs:194:13: 194:20 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_distance::z_0 ; poison: ({PtrArith, MiscSource, VoidSource, CastSource}, {ExternCallParam, VoidSink, PtrArithSink, CastSink, MiscSink}) at benchmark/heman/src/src/distance.rs:195:13: 195:20 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_distance::w_0 ; poison: ({MiscSource, VoidSource, PtrArith, CastSource}, {VoidSink, PtrArithSink, MiscSink, CastSink, ExternCallParam}) at benchmark/heman/src/src/distance.rs:196:13: 196:20 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::sdf ; poison: ({MiscSource, CastSource, PtrArith, VoidSource, MixedRefSource, ExternCallReturn}, {MixedRefSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, CastSink}) at benchmark/heman/src/src/distance.rs:221:5: 221:12 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::cf ; poison: ({PtrArith, MiscSource, ExternCallReturn, CastSource, VoidSource, MixedRefSource}, {VoidSink, MixedRefSink, ExternCallParam, PtrArithSink, CastSink, MiscSink}) at benchmark/heman/src/src/distance.rs:222:5: 222:11 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::ff ; poison: ({PtrArith, VoidSource, MiscSource, CastSource}, {PtrArithSink, MiscSink, VoidSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/distance.rs:227:9: 227:15 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::dd ; poison: ({CastSource, MiscSource, PtrArith, VoidSource}, {ExternCallParam, PtrArithSink, VoidSink, MiscSink, CastSink}) at benchmark/heman/src/src/distance.rs:231:9: 231:15 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::zz ; poison: ({CastSource, PtrArith, VoidSource, MiscSource}, {VoidSink, MiscSink, ExternCallParam, PtrArithSink, CastSink}) at benchmark/heman/src/src/distance.rs:235:9: 235:15 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::ww ; poison: ({PtrArith, VoidSource, CastSource, MiscSource}, {VoidSink, CastSink, MiscSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/distance.rs:239:9: 239:15 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::pl1 ; poison: ({MiscSource, VoidSource, PtrArith, CastSource}, {CastSink, PtrArithSink, MiscSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/distance.rs:246:13: 246:20 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::pl2 ; poison: ({CastSource, PtrArith, MiscSource, VoidSource}, {PtrArithSink, MiscSink, VoidSink, CastSink, ExternCallParam}) at benchmark/heman/src/src/distance.rs:250:13: 250:20 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::f ; poison: ({CastSource, PtrArith, VoidSource, MiscSource}, {VoidSink, CastSink, PtrArithSink, ExternCallParam, MiscSink}) at benchmark/heman/src/src/distance.rs:254:13: 254:18 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::d ; poison: ({PtrArith, MiscSource, VoidSource, CastSource}, {MiscSink, ExternCallParam, CastSink, VoidSink, PtrArithSink}) at benchmark/heman/src/src/distance.rs:255:13: 255:18 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::z ; poison: ({MiscSource, PtrArith, VoidSource, CastSource}, {VoidSink, PtrArithSink, ExternCallParam, CastSink, MiscSink}) at benchmark/heman/src/src/distance.rs:256:13: 256:18 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::w ; poison: ({CastSource, VoidSource, MiscSource, PtrArith}, {CastSink, MiscSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/distance.rs:257:13: 257:18 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::pl1_0 ; poison: ({PtrArith, CastSource, VoidSource, MiscSource}, {PtrArithSink, VoidSink, ExternCallParam, MiscSink, CastSink}) at benchmark/heman/src/src/distance.rs:303:13: 303:22 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::pl2_0 ; poison: ({VoidSource, MiscSource, PtrArith, CastSource}, {ExternCallParam, CastSink, VoidSink, MiscSink, PtrArithSink}) at benchmark/heman/src/src/distance.rs:307:13: 307:22 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::f_0 ; poison: ({PtrArith, CastSource, VoidSource, MiscSource}, {PtrArithSink, ExternCallParam, VoidSink, CastSink, MiscSink}) at benchmark/heman/src/src/distance.rs:311:13: 311:20 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::d_0 ; poison: ({PtrArith, CastSource, VoidSource, MiscSource}, {PtrArithSink, ExternCallParam, VoidSink, CastSink, MiscSink}) at benchmark/heman/src/src/distance.rs:312:13: 312:20 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::z_0 ; poison: ({CastSource, MiscSource, PtrArith, VoidSource}, {CastSink, PtrArithSink, VoidSink, ExternCallParam, MiscSink}) at benchmark/heman/src/src/distance.rs:313:13: 313:20 (#0)
+Non-limit ptr: lib::src::src::distance::transform_to_coordfield::w_0 ; poison: ({VoidSource, CastSource, PtrArith, MiscSource}, {ExternCallParam, CastSink, VoidSink, MiscSink, PtrArithSink}) at benchmark/heman/src/src/distance.rs:314:13: 314:20 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_sdf::src ; poison: ({VoidSource, PtrArith, MiscSource, CastSource, MixedRefSource, ExternCallReturn}, {PtrArithSink, ExternCallParam, MixedRefSink, CastSink, MiscSink, VoidSink}) at benchmark/heman/src/src/distance.rs:364:5: 364:12 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_sdf::positive ; poison: ({MixedRefSource, CastSource, PtrArith, VoidSource, MiscSource, ExternCallReturn}, {MiscSink, MixedRefSink, CastSink, ExternCallParam, PtrArithSink, VoidSink}) at benchmark/heman/src/src/distance.rs:380:9: 380:21 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_sdf::negative ; poison: ({VoidSource, MixedRefSource, MiscSource, ExternCallReturn, PtrArith, CastSource}, {ExternCallParam, VoidSink, MixedRefSink, PtrArithSink, MiscSink, CastSink}) at benchmark/heman/src/src/distance.rs:381:9: 381:21 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_sdf::pptr ; poison: ({VoidSource, PtrArith, MiscSource, CastSource, ExternCallReturn, MixedRefSource}, {PtrArithSink, MixedRefSink, MiscSink, CastSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/distance.rs:383:9: 383:17 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_sdf::nptr ; poison: ({VoidSource, ExternCallReturn, PtrArith, MiscSource, CastSource, MixedRefSource}, {CastSink, ExternCallParam, MixedRefSink, PtrArithSink, VoidSink, MiscSink}) at benchmark/heman/src/src/distance.rs:384:9: 384:17 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_sdf::sptr ; poison: ({CastSource, MiscSource, PtrArith, MixedRefSource, VoidSource, ExternCallReturn}, {CastSink, ExternCallParam, VoidSink, MiscSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/src/distance.rs:385:9: 385:17 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_sdf::fresh0 ; poison: ({PtrArith, VoidSource, MixedRefSource, ExternCallReturn, MiscSource, CastSource}, {PtrArithSink, CastSink, MixedRefSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/heman/src/src/distance.rs:388:13: 388:23 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_sdf::fresh1 ; poison: ({PtrArith, MiscSource, ExternCallReturn, VoidSource, MixedRefSource, CastSource}, {MiscSink, ExternCallParam, CastSink, MixedRefSink, VoidSink, PtrArithSink}) at benchmark/heman/src/src/distance.rs:391:13: 391:23 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_df::positive ; poison: ({VoidSource, PtrArith, CastSource, ExternCallReturn, MiscSource, MixedRefSource}, {MixedRefSink, MiscSink, CastSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/distance.rs:431:9: 431:21 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_df::pptr ; poison: ({PtrArith, ExternCallReturn, VoidSource, MiscSource, MixedRefSource, CastSource}, {MixedRefSink, VoidSink, MiscSink, ExternCallParam, CastSink, PtrArithSink}) at benchmark/heman/src/src/distance.rs:433:9: 433:17 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_df::sptr ; poison: ({PtrArith, MixedRefSource, ExternCallReturn, MiscSource, CastSource, VoidSource}, {ExternCallParam, MixedRefSink, VoidSink, CastSink, PtrArithSink, MiscSink}) at benchmark/heman/src/src/distance.rs:434:9: 434:17 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_df::fresh2 ; poison: ({PtrArith, MixedRefSource, VoidSource, ExternCallReturn, MiscSource, CastSource}, {MixedRefSink, ExternCallParam, PtrArithSink, VoidSink, MiscSink, CastSink}) at benchmark/heman/src/src/distance.rs:437:13: 437:23 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_identity_cpcf::retval ; poison: ({PtrArith, MixedRefSource, CastSource, ExternCallReturn, MiscSource, VoidSource}, {MixedRefSink, VoidSink, MiscSink, PtrArithSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/distance.rs:459:9: 459:19 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_identity_cpcf::cdata ; poison: ({MiscSource, PtrArith, VoidSource, MixedRefSource, ExternCallReturn, CastSource}, {PtrArithSink, MixedRefSink, VoidSink, CastSink, MiscSink, ExternCallParam}) at benchmark/heman/src/src/distance.rs:460:9: 460:18 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_identity_cpcf::fresh3 ; poison: ({CastSource, MixedRefSource, MiscSource, PtrArith, VoidSource, ExternCallReturn}, {MixedRefSink, CastSink, MiscSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/distance.rs:465:17: 465:27 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_identity_cpcf::fresh4 ; poison: ({VoidSource, PtrArith, MiscSource, MixedRefSource, CastSource, ExternCallReturn}, {MixedRefSink, CastSink, ExternCallParam, PtrArithSink, VoidSink, MiscSink}) at benchmark/heman/src/src/distance.rs:468:17: 468:27 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_cpcf::src ; poison: ({ExternCallReturn, MixedRefSource, CastSource, MiscSource, PtrArith, VoidSource}, {VoidSink, MixedRefSink, ExternCallParam, CastSink, PtrArithSink, MiscSink}) at benchmark/heman/src/src/distance.rs:479:5: 479:12 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_cpcf::negative ; poison: ({PtrArith, ExternCallReturn, VoidSource, MixedRefSource, MiscSource, CastSource}, {MixedRefSink, VoidSink, PtrArithSink, MiscSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/distance.rs:481:9: 481:21 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_cpcf::nptr ; poison: ({ExternCallReturn, MiscSource, VoidSource, MixedRefSource, PtrArith, CastSource}, {PtrArithSink, MixedRefSink, VoidSink, ExternCallParam, MiscSink, CastSink}) at benchmark/heman/src/src/distance.rs:483:9: 483:17 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_cpcf::sptr ; poison: ({MixedRefSource, MiscSource, ExternCallReturn, CastSource, VoidSource, PtrArith}, {ExternCallParam, MixedRefSink, VoidSink, MiscSink, PtrArithSink, CastSink}) at benchmark/heman/src/src/distance.rs:484:9: 484:17 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_cpcf::fresh5 ; poison: ({VoidSource, ExternCallReturn, PtrArith, MiscSource, MixedRefSource, CastSource}, {CastSink, VoidSink, PtrArithSink, MiscSink, ExternCallParam, MixedRefSink}) at benchmark/heman/src/src/distance.rs:490:17: 490:27 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_cpcf::fresh6 ; poison: ({PtrArith, VoidSource, MiscSource, ExternCallReturn, CastSource, MixedRefSource}, {VoidSink, MiscSink, ExternCallParam, PtrArithSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/distance.rs:495:13: 495:23 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_create_cpcf::coordfield ; poison: ({MixedRefSource, CastSource, PtrArith, MiscSource, ExternCallReturn, VoidSource}, {MiscSink, ExternCallParam, MixedRefSink, VoidSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/distance.rs:500:9: 500:23 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_from_cpcf::udf ; poison: ({MixedRefSource, ExternCallReturn, MiscSource, VoidSource, CastSource, PtrArith}, {ExternCallParam, VoidSink, MixedRefSink, CastSink, PtrArithSink, MiscSink}) at benchmark/heman/src/src/distance.rs:523:9: 523:16 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_from_cpcf::dptr ; poison: ({MiscSource, ExternCallReturn, CastSource, VoidSource, PtrArith, MixedRefSource}, {PtrArithSink, VoidSink, MixedRefSink, CastSink, ExternCallParam, MiscSink}) at benchmark/heman/src/src/distance.rs:524:9: 524:17 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_from_cpcf::sptr ; poison: ({MixedRefSource, CastSource, PtrArith, VoidSource, ExternCallReturn, MiscSource}, {ExternCallParam, VoidSink, MiscSink, MixedRefSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/distance.rs:525:9: 525:17 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_from_cpcf::fresh7 ; poison: ({ExternCallReturn, VoidSource, PtrArith, CastSource, MixedRefSource, MiscSource}, {CastSink, PtrArithSink, MixedRefSink, MiscSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/distance.rs:534:17: 534:27 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_from_cpcf::fresh8 ; poison: ({CastSource, MiscSource, ExternCallReturn, PtrArith, VoidSource, MixedRefSource}, {CastSink, MiscSink, MixedRefSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/distance.rs:537:17: 537:27 (#0)
+Non-limit ptr: lib::src::src::distance::heman_distance_from_cpcf::fresh9 ; poison: ({VoidSource, MixedRefSource, CastSource, MiscSource, ExternCallReturn, PtrArith}, {VoidSink, MixedRefSink, PtrArithSink, ExternCallParam, MiscSink, CastSink}) at benchmark/heman/src/src/distance.rs:545:17: 545:27 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_points::target ; poison: ({ExternCallReturn, MixedRefSource, PtrArith, MiscSource, CastSource, VoidSource}, {ExternCallParam, VoidSink, MixedRefSink, PtrArithSink, MiscSink, CastSink}) at benchmark/heman/src/src/draw.rs:32:5: 32:15 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_points::src ; poison: ({CastSource, PtrArith, MiscSource, MixedRefSource, ExternCallReturn, VoidSource}, {MiscSink, MixedRefSink, VoidSink, CastSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/draw.rs:36:9: 36:16 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_points::texel ; poison: ({ExternCallReturn, PtrArith, MixedRefSource, CastSource, VoidSource, MiscSource}, {CastSink, PtrArithSink, VoidSink, MiscSink, ExternCallParam, MixedRefSink}) at benchmark/heman/src/src/draw.rs:47:17: 47:26 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_points::fresh0 ; poison: ({CastSource, PtrArith, MiscSource, ExternCallReturn, VoidSource, MixedRefSource}, {CastSink, VoidSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/draw.rs:50:21: 50:31 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_points::target ; poison: ({VoidSource, MixedRefSource, CastSource, MiscSource, PtrArith, ExternCallReturn}, {VoidSink, PtrArithSink, MiscSink, MixedRefSink, CastSink, ExternCallParam}) at benchmark/heman/src/src/draw.rs:61:5: 61:15 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_points::pts ; poison: ({}, {}) at benchmark/heman/src/src/draw.rs:62:5: 62:12 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_points::colors ; poison: ({MiscSource, PtrArith}, {MiscSink, PtrArithSink}) at benchmark/heman/src/src/draw.rs:63:5: 63:15 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_points::src ; poison: ({MiscSource, PtrArith, ExternCallReturn, VoidSource, CastSource, MixedRefSource}, {MiscSink, MixedRefSink, CastSink, PtrArithSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/draw.rs:78:9: 78:16 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_points::texel ; poison: ({CastSource, PtrArith, ExternCallReturn, MiscSource, MixedRefSource, VoidSource}, {MixedRefSink, CastSink, VoidSink, ExternCallParam, MiscSink, PtrArithSink}) at benchmark/heman/src/src/draw.rs:90:17: 90:26 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_points::fresh1 ; poison: ({VoidSource, MiscSource, CastSource, MixedRefSource, PtrArith, ExternCallReturn}, {ExternCallParam, MiscSink, CastSink, MixedRefSink, VoidSink, PtrArithSink}) at benchmark/heman/src/src/draw.rs:92:17: 92:27 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_points::fresh2 ; poison: ({CastSource, MiscSource, MixedRefSource, PtrArith, ExternCallReturn, VoidSource}, {MixedRefSink, CastSink, PtrArithSink, VoidSink, ExternCallParam, MiscSink}) at benchmark/heman/src/src/draw.rs:96:17: 96:27 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_points::fresh3 ; poison: ({ExternCallReturn, MixedRefSource, MiscSource, VoidSource, CastSource, PtrArith}, {MixedRefSink, CastSink, PtrArithSink, VoidSink, MiscSink, ExternCallParam}) at benchmark/heman/src/src/draw.rs:100:17: 100:27 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_circles::target ; poison: ({VoidSource, PtrArith, ExternCallReturn, MiscSource, CastSource, MixedRefSource}, {CastSink, PtrArithSink, MixedRefSink, ExternCallParam, MiscSink, VoidSink}) at benchmark/heman/src/src/draw.rs:112:5: 112:15 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_circles::colors ; poison: ({PtrArith, MiscSource}, {MiscSink, PtrArithSink}) at benchmark/heman/src/src/draw.rs:115:5: 115:15 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_circles::src ; poison: ({PtrArith, ExternCallReturn, VoidSource, CastSource, MixedRefSource, MiscSource}, {MiscSink, MixedRefSink, CastSink, ExternCallParam, VoidSink, PtrArithSink}) at benchmark/heman/src/src/draw.rs:119:9: 119:16 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_circles::texel ; poison: ({CastSource, ExternCallReturn, VoidSource, PtrArith, MixedRefSource, MiscSource}, {PtrArithSink, ExternCallParam, CastSink, MiscSink, VoidSink, MixedRefSink}) at benchmark/heman/src/src/draw.rs:141:25: 141:34 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_circles::fresh4 ; poison: ({ExternCallReturn, CastSource, PtrArith, VoidSource, MixedRefSource, MiscSource}, {ExternCallParam, CastSink, PtrArithSink, VoidSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/draw.rs:143:25: 143:35 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_colored_circles::fresh5 ; poison: ({VoidSource, CastSource, ExternCallReturn, MiscSource, PtrArith, MixedRefSource}, {ExternCallParam, VoidSink, MiscSink, CastSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/src/draw.rs:146:25: 146:35 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_splats::target ; poison: ({MiscSource, MixedRefSource, ExternCallReturn, PtrArith, CastSource, VoidSource}, {CastSink, MixedRefSink, VoidSink, ExternCallParam, MiscSink, PtrArithSink}) at benchmark/heman/src/src/draw.rs:162:5: 162:15 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_splats::gaussian_splat ; poison: ({PtrArith, VoidSource, MiscSource, CastSource}, {ExternCallParam, MiscSink, CastSink, VoidSink, PtrArithSink}) at benchmark/heman/src/src/draw.rs:168:9: 168:27 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_splats::src ; poison: ({PtrArith, MiscSource, ExternCallReturn, VoidSource, MixedRefSource, CastSource}, {ExternCallParam, PtrArithSink, VoidSink, CastSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/draw.rs:173:9: 173:16 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_splats::fresh6 ; poison: ({PtrArith, ExternCallReturn, MixedRefSource, VoidSource, MiscSource, CastSource}, {PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, VoidSink, CastSink}) at benchmark/heman/src/src/draw.rs:178:13: 178:23 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_splats::fresh7 ; poison: ({VoidSource, ExternCallReturn, PtrArith, MiscSource, MixedRefSource, CastSource}, {ExternCallParam, VoidSink, MiscSink, MixedRefSink, PtrArithSink, CastSink}) at benchmark/heman/src/src/draw.rs:181:13: 181:23 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_splats::texel ; poison: ({PtrArith, MiscSource, CastSource, VoidSource, ExternCallReturn, MixedRefSource}, {PtrArithSink, ExternCallParam, VoidSink, MiscSink, CastSink, MixedRefSink}) at benchmark/heman/src/src/draw.rs:195:25: 195:34 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_splats::fresh8 ; poison: ({MiscSource, MixedRefSource, CastSource, VoidSource, PtrArith, ExternCallReturn}, {MiscSink, VoidSink, PtrArithSink, ExternCallParam, MixedRefSink, CastSink}) at benchmark/heman/src/src/draw.rs:198:29: 198:39 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_contour_from_points::target ; poison: ({MiscSource, MixedRefSource, VoidSource, ExternCallReturn, CastSource, PtrArith}, {MiscSink, PtrArithSink, MixedRefSink, CastSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/draw.rs:214:5: 214:15 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_contour_from_points::coords ; poison: ({}, {}) at benchmark/heman/src/src/draw.rs:215:5: 215:15 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_contour_from_points::seed ; poison: ({PtrArith, VoidSource, MiscSource, MixedRefSource, CastSource, ExternCallReturn}, {ExternCallParam, VoidSink, MixedRefSink, CastSink, MiscSink, PtrArithSink}) at benchmark/heman/src/src/draw.rs:236:9: 236:17 (#0)
+Non-limit ptr: lib::src::src::draw::heman_draw_contour_from_points::dst ; poison: ({CastSource, PtrArith, MiscSource, MixedRefSource, ExternCallReturn, VoidSource}, {MiscSink, CastSink, VoidSink, MixedRefSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/draw.rs:252:13: 252:20 (#0)
+Non-limit ptr: lib::src::src::export::heman_export_ply::img ; poison: ({MiscSource, MixedRefSource, CastSource, PtrArith, ExternCallReturn, VoidSource}, {PtrArithSink, VoidSink, CastSink, ExternCallParam, MiscSink, MixedRefSink}) at benchmark/heman/src/src/export.rs:112:5: 112:12 (#0)
+Non-limit ptr: lib::src::src::export::heman_export_ply::filename ; poison: ({}, {ExternCallParam}) at benchmark/heman/src/src/export.rs:113:5: 113:17 (#0)
+Non-limit ptr: lib::src::src::export::heman_export_ply::fout ; poison: ({ExternCallReturn}, {ExternCallParam}) at benchmark/heman/src/src/export.rs:124:9: 124:17 (#0)
+Non-limit ptr: lib::src::src::export::heman_export_with_colors_ply::hmap ; poison: ({CastSource, ExternCallReturn, VoidSource, MiscSource, PtrArith, MixedRefSource}, {ExternCallParam, MiscSink, MixedRefSink, CastSink, PtrArithSink, VoidSink}) at benchmark/heman/src/src/export.rs:186:5: 186:13 (#0)
+Non-limit ptr: lib::src::src::export::heman_export_with_colors_ply::filename ; poison: ({}, {ExternCallParam}) at benchmark/heman/src/src/export.rs:188:5: 188:17 (#0)
+Non-limit ptr: lib::src::src::export::heman_export_with_colors_ply::fout ; poison: ({ExternCallReturn}, {ExternCallParam}) at benchmark/heman/src/src/export.rs:236:9: 236:17 (#0)
+Non-limit ptr: lib::src::src::export::heman_export_with_colors_ply::colordata ; poison: ({VoidSource, MiscSource, PtrArith, CastSource}, {MiscSink, VoidSink, ExternCallParam, PtrArithSink, CastSink}) at benchmark/heman/src/src/export.rs:241:9: 241:22 (#0)
+Non-limit ptr: lib::src::src::export::heman_export_with_colors_ply::pcolor ; poison: ({CastSource, VoidSource, MiscSource, PtrArith}, {VoidSink, CastSink, ExternCallParam, MiscSink, PtrArithSink}) at benchmark/heman/src/src/export.rs:253:9: 253:19 (#0)
+Non-limit ptr: lib::src::src::export::heman_export_u8::outp ; poison: ({MiscSource, PtrArith, VoidSource, CastSource}, {VoidSink, MiscSink, PtrArithSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/export.rs:314:5: 314:13 (#0)
+Non-limit ptr: lib::src::src::export::heman_export_u8::inp ; poison: ({VoidSource, MixedRefSource, PtrArith, MiscSource, ExternCallReturn, CastSource}, {MiscSink, ExternCallParam, VoidSink, MixedRefSink, PtrArithSink, CastSink}) at benchmark/heman/src/src/export.rs:316:9: 316:16 (#0)
+Non-limit ptr: lib::src::src::export::heman_export_u8::fresh0 ; poison: ({ExternCallReturn, CastSource, VoidSource, PtrArith, MixedRefSource, MiscSource}, {PtrArithSink, CastSink, MixedRefSink, MiscSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/export.rs:321:13: 321:23 (#0)
+Non-limit ptr: lib::src::src::export::heman_export_u8::fresh1 ; poison: ({CastSource, MiscSource, VoidSource, PtrArith}, {MiscSink, VoidSink, ExternCallParam, PtrArithSink, CastSink}) at benchmark/heman/src/src/export.rs:324:13: 324:23 (#0)
+Non-limit ptr: lib::src::src::gaussian::generate_gaussian_row::target ; poison: ({MiscSource, VoidSource, PtrArith, CastSource}, {ExternCallParam, CastSink, VoidSink, PtrArithSink, MiscSink}) at benchmark/heman/src/src/gaussian.rs:14:5: 14:15 (#0)
+Non-limit ptr: lib::src::src::gaussian::generate_gaussian_row::tmp ; poison: ({CastSource, MiscSource, PtrArith, VoidSource}, {CastSink, ExternCallParam, MiscSink, PtrArithSink, VoidSink}) at benchmark/heman/src/src/gaussian.rs:29:9: 29:16 (#0)
+Non-limit ptr: lib::src::src::gaussian::generate_gaussian_splat::target ; poison: ({MiscSource, VoidSource, PtrArith, CastSource}, {VoidSink, MiscSink, ExternCallParam, PtrArithSink, CastSink}) at benchmark/heman/src/src/gaussian.rs:61:5: 61:15 (#0)
+Non-limit ptr: lib::src::src::gaussian::generate_gaussian_splat::gaussian_row ; poison: ({VoidSource, MiscSource, PtrArith, CastSource}, {VoidSink, MiscSink, PtrArithSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/gaussian.rs:64:9: 64:25 (#0)
+Non-limit ptr: lib::src::src::gaussian::generate_gaussian_splat::gptr ; poison: ({VoidSource, MiscSource, CastSource, PtrArith}, {CastSink, ExternCallParam, MiscSink, PtrArithSink, VoidSink}) at benchmark/heman/src/src/gaussian.rs:71:9: 71:17 (#0)
+Non-limit ptr: lib::src::src::gaussian::generate_gaussian_splat::fresh1 ; poison: ({PtrArith, MiscSource, CastSource, VoidSource}, {PtrArithSink, ExternCallParam, VoidSink, MiscSink, CastSink}) at benchmark/heman/src/src/gaussian.rs:76:17: 76:27 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_generate_island_noise::ctx ; poison: ({PtrArith, GlobalSource, MiscSource, VoidSource, ExternCallReturn, MixedRefSource, CastSource}, {PtrArithSink, VoidSink, MiscSink, ExternCallParam, MixedRefSink, CastSink, GlobalSink}) at benchmark/heman/src/src/generate.rs:70:9: 70:16 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_generate_island_noise::img ; poison: ({MiscSource, PtrArith, VoidSource, MixedRefSource, ExternCallReturn, CastSource}, {MixedRefSink, ExternCallParam, CastSink, PtrArithSink, VoidSink, MiscSink}) at benchmark/heman/src/src/generate.rs:72:9: 72:16 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_generate_island_noise::data ; poison: ({ExternCallReturn, MiscSource, MixedRefSource, PtrArith, CastSource, VoidSource}, {PtrArithSink, MiscSink, MixedRefSink, CastSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/generate.rs:73:9: 73:17 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_generate_island_noise::dst ; poison: ({MixedRefSource, MiscSource, PtrArith, CastSource, VoidSource, ExternCallReturn}, {PtrArithSink, ExternCallParam, VoidSink, MixedRefSink, CastSink, MiscSink}) at benchmark/heman/src/src/generate.rs:96:13: 96:20 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_generate_island_noise::fresh0 ; poison: ({ExternCallReturn, MiscSource, VoidSource, MixedRefSource, CastSource, PtrArith}, {CastSink, PtrArithSink, VoidSink, ExternCallParam, MixedRefSink, MiscSink}) at benchmark/heman/src/src/generate.rs:100:17: 100:27 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_generate_island_noise::fresh1 ; poison: ({MixedRefSource, ExternCallReturn, PtrArith, CastSource, MiscSource, VoidSource}, {MiscSink, MixedRefSink, CastSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/generate.rs:120:17: 120:27 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_generate_island_noise::fresh2 ; poison: ({MixedRefSource, MiscSource, VoidSource, CastSource, PtrArith, ExternCallReturn}, {VoidSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/generate.rs:135:17: 135:27 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_generate_rock_noise::ctx ; poison: ({PtrArith, MiscSource, VoidSource, ExternCallReturn, MixedRefSource, GlobalSource, CastSource}, {VoidSink, CastSink, GlobalSink, MiscSink, ExternCallParam, PtrArithSink, MixedRefSink}) at benchmark/heman/src/src/generate.rs:162:9: 162:16 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_generate_rock_noise::img ; poison: ({MiscSource, MixedRefSource, ExternCallReturn, VoidSource, PtrArith, CastSource}, {ExternCallParam, VoidSink, PtrArithSink, CastSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/generate.rs:164:9: 164:16 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_generate_rock_noise::data ; poison: ({ExternCallReturn, PtrArith, VoidSource, MiscSource, CastSource, MixedRefSource}, {MiscSink, CastSink, ExternCallParam, PtrArithSink, VoidSink, MixedRefSink}) at benchmark/heman/src/src/generate.rs:165:9: 165:17 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_generate_rock_noise::dst ; poison: ({VoidSource, MiscSource, MixedRefSource, CastSource, ExternCallReturn, PtrArith}, {MixedRefSink, ExternCallParam, MiscSink, VoidSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/generate.rs:184:13: 184:20 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_generate_rock_noise::fresh3 ; poison: ({PtrArith, ExternCallReturn, CastSource, VoidSource, MiscSource, MixedRefSource}, {MixedRefSink, ExternCallParam, MiscSink, PtrArithSink, CastSink, VoidSink}) at benchmark/heman/src/src/generate.rs:188:17: 188:27 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_island_heightmap::noisetex ; poison: ({ExternCallReturn, CastSource, VoidSource, MiscSource, MixedRefSource, PtrArith}, {VoidSink, ExternCallParam, MixedRefSink, CastSink, PtrArithSink, MiscSink}) at benchmark/heman/src/src/generate.rs:221:9: 221:21 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_island_heightmap::coastmask ; poison: ({CastSource, PtrArith, ExternCallReturn, MiscSource, VoidSource, MixedRefSource}, {VoidSink, CastSink, ExternCallParam, MixedRefSink, PtrArithSink, MiscSink}) at benchmark/heman/src/src/generate.rs:222:9: 222:22 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_island_heightmap::data ; poison: ({PtrArith, VoidSource, MiscSource, MixedRefSource, ExternCallReturn, CastSource}, {MiscSink, CastSink, ExternCallParam, VoidSink, MixedRefSink, PtrArithSink}) at benchmark/heman/src/src/generate.rs:223:9: 223:17 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_island_heightmap::dst ; poison: ({ExternCallReturn, PtrArith, MiscSource, MixedRefSource, CastSource, VoidSource}, {VoidSink, MixedRefSink, ExternCallParam, PtrArithSink, MiscSink, CastSink}) at benchmark/heman/src/src/generate.rs:232:13: 232:20 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_island_heightmap::fresh4 ; poison: ({MixedRefSource, VoidSource, PtrArith, ExternCallReturn, MiscSource, CastSource}, {PtrArithSink, MixedRefSink, CastSink, VoidSink, MiscSink, ExternCallParam}) at benchmark/heman/src/src/generate.rs:246:17: 246:27 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_island_heightmap::heightmap ; poison: ({PtrArith, ExternCallReturn, MiscSource, VoidSource, MixedRefSource, CastSource}, {PtrArithSink, MiscSink, MixedRefSink, CastSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/generate.rs:254:9: 254:22 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_island_heightmap::result ; poison: ({MiscSource, VoidSource, MixedRefSource, CastSource, PtrArith, ExternCallReturn}, {MixedRefSink, MiscSink, ExternCallParam, VoidSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/generate.rs:256:9: 256:19 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_island_heightmap::dst_0 ; poison: ({CastSource, MiscSource, VoidSource, MixedRefSource, PtrArith, ExternCallReturn}, {ExternCallParam, MiscSink, MixedRefSink, VoidSink, PtrArithSink, CastSink}) at benchmark/heman/src/src/generate.rs:260:13: 260:22 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_island_heightmap::fresh5 ; poison: ({MiscSource, MixedRefSource, CastSource, ExternCallReturn, PtrArith, VoidSource}, {VoidSink, MixedRefSink, CastSink, PtrArithSink, MiscSink, ExternCallParam}) at benchmark/heman/src/src/generate.rs:278:17: 278:27 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_rock_heightmap::noisetex ; poison: ({PtrArith, MiscSource, ExternCallReturn, VoidSource, MixedRefSource, CastSource}, {VoidSink, CastSink, ExternCallParam, MiscSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/src/generate.rs:295:9: 295:21 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_rock_heightmap::heightmap ; poison: ({MiscSource, CastSource, PtrArith, MixedRefSource, VoidSource, ExternCallReturn}, {CastSink, MixedRefSink, ExternCallParam, PtrArithSink, VoidSink, MiscSink}) at benchmark/heman/src/src/generate.rs:296:9: 296:22 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_rock_heightmap::data ; poison: ({CastSource, ExternCallReturn, VoidSource, PtrArith, MiscSource, MixedRefSource}, {CastSink, MiscSink, VoidSink, PtrArithSink, MixedRefSink, ExternCallParam}) at benchmark/heman/src/src/generate.rs:297:9: 297:17 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_rock_heightmap::dst ; poison: ({PtrArith, VoidSource, ExternCallReturn, MiscSource, MixedRefSource, CastSource}, {MixedRefSink, ExternCallParam, CastSink, VoidSink, MiscSink, PtrArithSink}) at benchmark/heman/src/src/generate.rs:306:13: 306:20 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_rock_heightmap::fresh6 ; poison: ({CastSource, ExternCallReturn, VoidSource, PtrArith, MixedRefSource, MiscSource}, {ExternCallParam, PtrArithSink, MixedRefSink, VoidSink, MiscSink, CastSink}) at benchmark/heman/src/src/generate.rs:317:21: 317:31 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_rock_heightmap::fresh7 ; poison: ({MiscSource, VoidSource, ExternCallReturn, MixedRefSource, CastSource, PtrArith}, {VoidSink, PtrArithSink, MiscSink, MixedRefSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/generate.rs:323:21: 323:31 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_simplex_fbm::ctx ; poison: ({GlobalSource, VoidSource, PtrArith, MiscSource, ExternCallReturn, MixedRefSource, CastSource}, {MiscSink, MixedRefSink, ExternCallParam, CastSink, GlobalSink, VoidSink, PtrArithSink}) at benchmark/heman/src/src/generate.rs:345:9: 345:16 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_simplex_fbm::img ; poison: ({VoidSource, CastSource, MixedRefSource, PtrArith, ExternCallReturn, MiscSource}, {ExternCallParam, VoidSink, MiscSink, PtrArithSink, CastSink, MixedRefSink}) at benchmark/heman/src/src/generate.rs:347:9: 347:16 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_simplex_fbm::data ; poison: ({VoidSource, CastSource, PtrArith, ExternCallReturn, MiscSource, MixedRefSource}, {PtrArithSink, MiscSink, MixedRefSink, CastSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/generate.rs:348:9: 348:17 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_simplex_fbm::dst ; poison: ({ExternCallReturn, MiscSource, MixedRefSource, CastSource, VoidSource, PtrArith}, {ExternCallParam, MiscSink, MixedRefSink, PtrArithSink, CastSink, VoidSink}) at benchmark/heman/src/src/generate.rs:370:17: 370:24 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_simplex_fbm::fresh9 ; poison: ({MixedRefSource, VoidSource, PtrArith, ExternCallReturn, MiscSource, CastSource}, {ExternCallParam, VoidSink, PtrArithSink, MiscSink, CastSink, MixedRefSink}) at benchmark/heman/src/src/generate.rs:374:21: 374:31 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_planet_heightmap::ctx ; poison: ({PtrArith, CastSource, ExternCallReturn, GlobalSource, MixedRefSource, VoidSource, MiscSource}, {MiscSink, ExternCallParam, VoidSink, PtrArithSink, CastSink, GlobalSink, MixedRefSink}) at benchmark/heman/src/src/generate.rs:413:9: 413:16 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_planet_heightmap::result ; poison: ({CastSource, ExternCallReturn, VoidSource, PtrArith, MiscSource, MixedRefSource}, {MiscSink, MixedRefSink, PtrArithSink, CastSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/generate.rs:415:9: 415:19 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_planet_heightmap::dst ; poison: ({CastSource, PtrArith, MiscSource, ExternCallReturn, VoidSource, MixedRefSource}, {MixedRefSink, PtrArithSink, VoidSink, CastSink, ExternCallParam, MiscSink}) at benchmark/heman/src/src/generate.rs:423:13: 423:20 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_planet_heightmap::fresh10 ; poison: ({MiscSource, ExternCallReturn, MixedRefSource, CastSource, PtrArith, VoidSource}, {MixedRefSink, ExternCallParam, VoidSink, MiscSink, PtrArithSink, CastSink}) at benchmark/heman/src/src/generate.rs:459:17: 459:28 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_draw_seeds::target ; poison: ({ExternCallReturn, MixedRefSource, PtrArith, CastSource, VoidSource, MiscSource}, {ExternCallParam, VoidSink, MixedRefSink, PtrArithSink, CastSink, MiscSink}) at benchmark/heman/src/src/generate.rs:471:5: 471:15 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_draw_seeds::pts ; poison: ({}, {}) at benchmark/heman/src/src/generate.rs:472:5: 472:12 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_draw_seeds::src ; poison: ({PtrArith, CastSource, MiscSource, MixedRefSource, ExternCallReturn, VoidSource}, {ExternCallParam, MiscSink, MixedRefSink, CastSink, PtrArithSink, VoidSink}) at benchmark/heman/src/src/generate.rs:477:9: 477:16 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_draw_seeds::fresh11 ; poison: ({VoidSource, CastSource, ExternCallReturn, MiscSource, PtrArith, MixedRefSource}, {MixedRefSink, CastSink, MiscSink, VoidSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/generate.rs:482:13: 482:24 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_draw_seeds::fresh12 ; poison: ({ExternCallReturn, VoidSource, MixedRefSource, MiscSource, PtrArith, CastSource}, {VoidSink, ExternCallParam, MixedRefSink, CastSink, MiscSink, PtrArithSink}) at benchmark/heman/src/src/generate.rs:485:13: 485:24 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_draw_seeds::fresh13 ; poison: ({ExternCallReturn, PtrArith, MiscSource, MixedRefSource, CastSource, VoidSource}, {PtrArithSink, VoidSink, ExternCallParam, CastSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/generate.rs:490:17: 490:28 (#0)
+Non-limit ptr: lib::src::src::generate::heman_internal_draw_seeds::texel ; poison: ({MixedRefSource, ExternCallReturn, VoidSource, MiscSource, CastSource, PtrArith}, {MiscSink, MixedRefSink, CastSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/generate.rs:509:25: 509:34 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_heightmap::points ; poison: ({}, {}) at benchmark/heman/src/src/generate.rs:531:5: 531:15 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_heightmap::noisetex ; poison: ({VoidSource, MixedRefSource, CastSource, PtrArith, ExternCallReturn, MiscSource}, {PtrArithSink, MixedRefSink, VoidSink, MiscSink, CastSink, ExternCallParam}) at benchmark/heman/src/src/generate.rs:535:9: 535:21 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_heightmap::coastmask ; poison: ({MixedRefSource, ExternCallReturn, CastSource, VoidSource, PtrArith, MiscSource}, {PtrArithSink, MiscSink, MixedRefSink, CastSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/generate.rs:536:9: 536:22 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_heightmap::data ; poison: ({CastSource, ExternCallReturn, MiscSource, MixedRefSource, VoidSource, PtrArith}, {PtrArithSink, ExternCallParam, VoidSink, MixedRefSink, MiscSink, CastSink}) at benchmark/heman/src/src/generate.rs:539:9: 539:17 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_heightmap::dst ; poison: ({PtrArith, MixedRefSource, MiscSource, VoidSource, CastSource, ExternCallReturn}, {PtrArithSink, VoidSink, MiscSink, ExternCallParam, MixedRefSink, CastSink}) at benchmark/heman/src/src/generate.rs:548:13: 548:20 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_heightmap::fresh14 ; poison: ({MiscSource, CastSource, VoidSource, ExternCallReturn, PtrArith, MixedRefSource}, {MixedRefSink, VoidSink, PtrArithSink, ExternCallParam, MiscSink, CastSink}) at benchmark/heman/src/src/generate.rs:561:17: 561:28 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_heightmap::heightmap ; poison: ({MixedRefSource, CastSource, MiscSource, PtrArith, VoidSource, ExternCallReturn}, {VoidSink, PtrArithSink, ExternCallParam, CastSink, MixedRefSink, MiscSink}) at benchmark/heman/src/src/generate.rs:569:9: 569:22 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_heightmap::result ; poison: ({MiscSource, VoidSource, MixedRefSource, ExternCallReturn, PtrArith, CastSource}, {VoidSink, PtrArithSink, CastSink, ExternCallParam, MixedRefSink, MiscSink}) at benchmark/heman/src/src/generate.rs:571:9: 571:19 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_heightmap::dst_0 ; poison: ({MixedRefSource, PtrArith, MiscSource, ExternCallReturn, CastSource, VoidSource}, {CastSink, MixedRefSink, VoidSink, MiscSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/generate.rs:575:13: 575:22 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_heightmap::fresh15 ; poison: ({CastSource, ExternCallReturn, MiscSource, MixedRefSource, VoidSource, PtrArith}, {CastSink, MiscSink, VoidSink, PtrArithSink, ExternCallParam, MixedRefSink}) at benchmark/heman/src/src/generate.rs:593:17: 593:28 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_1::points ; poison: ({}, {}) at benchmark/heman/src/src/generate.rs:608:5: 608:15 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_1::colors ; poison: ({PtrArith, MiscSource}, {MiscSink, PtrArithSink}) at benchmark/heman/src/src/generate.rs:609:5: 609:15 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_1::contour ; poison: ({VoidSource, PtrArith, MixedRefSource, ExternCallReturn, MiscSource, CastSource}, {PtrArithSink, MixedRefSink, CastSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/heman/src/src/generate.rs:613:9: 613:20 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_1::cf ; poison: ({CastSource, MixedRefSource, ExternCallReturn, MiscSource, VoidSource, PtrArith}, {VoidSink, ExternCallParam, MixedRefSink, CastSink, MiscSink, PtrArithSink}) at benchmark/heman/src/src/generate.rs:624:9: 624:15 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_1::warped_cpcf ; poison: ({MiscSource, MixedRefSource, CastSource, ExternCallReturn, VoidSource, PtrArith}, {PtrArithSink, MixedRefSink, MiscSink, CastSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/generate.rs:625:9: 625:24 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_1::political ; poison: ({PtrArith, ExternCallReturn, MiscSource, MixedRefSource, CastSource, VoidSource}, {ExternCallParam, MixedRefSink, VoidSink, CastSink, MiscSink, PtrArithSink}) at benchmark/heman/src/src/generate.rs:626:9: 626:22 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_2::political ; poison: ({PtrArith, MixedRefSource, MiscSource, CastSource, VoidSource, ExternCallReturn}, {MiscSink, PtrArithSink, VoidSink, MixedRefSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/generate.rs:638:5: 638:18 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_2::coastmask ; poison: ({ExternCallReturn, MiscSource, PtrArith, MixedRefSource, VoidSource, CastSource}, {PtrArithSink, ExternCallParam, VoidSink, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/generate.rs:641:9: 641:22 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_2::sdf ; poison: ({VoidSource, MixedRefSource, PtrArith, CastSource, ExternCallReturn, MiscSource}, {ExternCallParam, VoidSink, MiscSink, MixedRefSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/generate.rs:642:9: 642:16 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_2::elevation ; poison: ({PtrArith, MixedRefSource, ExternCallReturn, MiscSource, CastSource, VoidSource}, {MiscSink, VoidSink, ExternCallParam, CastSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/src/generate.rs:644:9: 644:22 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_2::noisetex ; poison: ({PtrArith, ExternCallReturn, MixedRefSource, CastSource, VoidSource, MiscSource}, {PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, VoidSink, CastSink}) at benchmark/heman/src/src/generate.rs:645:9: 645:21 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_2::data ; poison: ({PtrArith, ExternCallReturn, MixedRefSource, VoidSource, CastSource, MiscSource}, {MiscSink, VoidSink, CastSink, MixedRefSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/generate.rs:646:9: 646:17 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_2::dst ; poison: ({ExternCallReturn, PtrArith, MiscSource, CastSource, MixedRefSource, VoidSource}, {CastSink, MiscSink, ExternCallParam, VoidSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/src/generate.rs:652:13: 652:20 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_2::fresh16 ; poison: ({MixedRefSource, CastSource, PtrArith, ExternCallReturn, VoidSource, MiscSource}, {MixedRefSink, CastSink, PtrArithSink, VoidSink, ExternCallParam, MiscSink}) at benchmark/heman/src/src/generate.rs:670:17: 670:28 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_3::colors ; poison: ({MiscSource, PtrArith}, {PtrArithSink, MiscSink}) at benchmark/heman/src/src/generate.rs:685:5: 685:15 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_3::political ; poison: ({PtrArith, VoidSource, MiscSource, CastSource, MixedRefSource, ExternCallReturn}, {CastSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/generate.rs:689:5: 689:18 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_3::elevations ; poison: ({MiscSource, CastSource, VoidSource, PtrArith}, {VoidSink, MiscSink, PtrArithSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/generate.rs:691:9: 691:23 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_3::elevation ; poison: ({PtrArith, ExternCallReturn, MixedRefSource, CastSource, MiscSource, VoidSource}, {CastSink, VoidSink, ExternCallParam, MiscSink, MixedRefSink, PtrArithSink}) at benchmark/heman/src/src/generate.rs:708:9: 708:22 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_3::dst ; poison: ({CastSource, MiscSource, VoidSource, ExternCallReturn, PtrArith, MixedRefSource}, {PtrArithSink, MixedRefSink, ExternCallParam, CastSink, MiscSink, VoidSink}) at benchmark/heman/src/src/generate.rs:715:17: 715:24 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_3::src ; poison: ({VoidSource, PtrArith, ExternCallReturn, MiscSource, CastSource, MixedRefSource}, {PtrArithSink, CastSink, MixedRefSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/heman/src/src/generate.rs:716:17: 716:24 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_3::ocean_elevation ; poison: ({ExternCallReturn, MixedRefSource, VoidSource, MiscSource, PtrArith, CastSource}, {ExternCallParam, MixedRefSink, VoidSink, MiscSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/generate.rs:731:9: 731:28 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_3::dst_0 ; poison: ({MiscSource, PtrArith, ExternCallReturn, MixedRefSource, CastSource, VoidSource}, {PtrArithSink, CastSink, MixedRefSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/heman/src/src/generate.rs:742:13: 742:22 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political_3::src_0 ; poison: ({PtrArith, VoidSource, CastSource, ExternCallReturn, MiscSource, MixedRefSource}, {CastSink, ExternCallParam, PtrArithSink, VoidSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/generate.rs:743:13: 743:22 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political::points ; poison: ({}, {}) at benchmark/heman/src/src/generate.rs:762:5: 762:15 (#0)
+Non-limit ptr: lib::src::src::generate::heman_generate_archipelago_political::colors ; poison: ({PtrArith, MiscSource}, {MiscSink, PtrArithSink}) at benchmark/heman/src/src/generate.rs:763:5: 763:15 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_texel::img ; poison: ({VoidSource, PtrArith, CastSource, MiscSource, MixedRefSource, ExternCallReturn}, {CastSink, VoidSink, PtrArithSink, MiscSink, MixedRefSink, ExternCallParam}) at benchmark/heman/src/src/image.rs:44:5: 44:12 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_create::img ; poison: ({ExternCallReturn, MiscSource, PtrArith, MixedRefSource, CastSource, VoidSource}, {PtrArithSink, CastSink, VoidSink, MixedRefSink, MiscSink, ExternCallParam}) at benchmark/heman/src/src/image.rs:58:9: 58:16 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_destroy::img ; poison: ({MixedRefSource, CastSource, PtrArith, ExternCallReturn, MiscSource, VoidSource}, {PtrArithSink, ExternCallParam, CastSink, VoidSink, MixedRefSink, MiscSink}) at benchmark/heman/src/src/image.rs:73:46: 73:53 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_sample::img ; poison: ({ExternCallReturn, PtrArith, MiscSource, MixedRefSource, CastSource, VoidSource}, {CastSink, VoidSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/image.rs:79:5: 79:12 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_sample::result ; poison: ({VoidSource, PtrArith, ExternCallReturn, MiscSource, MixedRefSource, CastSource}, {ExternCallParam, MixedRefSink, MiscSink, PtrArithSink, VoidSink, CastSink}) at benchmark/heman/src/src/image.rs:82:5: 82:15 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_sample::data ; poison: ({CastSource, VoidSource, MixedRefSource, ExternCallReturn, PtrArith, MiscSource}, {MiscSink, VoidSink, PtrArithSink, ExternCallParam, MixedRefSink, CastSink}) at benchmark/heman/src/src/image.rs:118:9: 118:17 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_sample::fresh1 ; poison: ({VoidSource, MixedRefSource, PtrArith, ExternCallReturn, MiscSource, CastSource}, {ExternCallParam, VoidSink, MixedRefSink, PtrArithSink, MiscSink, CastSink}) at benchmark/heman/src/src/image.rs:121:13: 121:23 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_sample::fresh2 ; poison: ({PtrArith, ExternCallReturn, VoidSource, MiscSource, MixedRefSource, CastSource}, {ExternCallParam, VoidSink, PtrArithSink, MixedRefSink, MiscSink, CastSink}) at benchmark/heman/src/src/image.rs:123:13: 123:23 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_clear::img ; poison: ({MiscSource, ExternCallReturn, MixedRefSource, VoidSource, CastSource, PtrArith}, {PtrArithSink, ExternCallParam, VoidSink, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/image.rs:131:5: 131:12 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_clear::dst ; poison: ({ExternCallReturn, PtrArith, MiscSource, MixedRefSource, CastSource, VoidSource}, {PtrArithSink, MiscSink, MixedRefSink, CastSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/image.rs:135:9: 135:16 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_clear::fresh4 ; poison: ({PtrArith, MixedRefSource, ExternCallReturn, MiscSource, VoidSource, CastSource}, {ExternCallParam, CastSink, VoidSink, MiscSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/src/image.rs:142:13: 142:23 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_alpha::retval ; poison: ({MiscSource, PtrArith, CastSource, ExternCallReturn, MixedRefSource, VoidSource}, {VoidSink, MiscSink, ExternCallParam, CastSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/src/image.rs:160:9: 160:19 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_alpha::src ; poison: ({CastSource, VoidSource, PtrArith, ExternCallReturn, MiscSource, MixedRefSource}, {VoidSink, MiscSink, CastSink, MixedRefSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/image.rs:162:9: 162:16 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_alpha::dst ; poison: ({VoidSource, ExternCallReturn, MixedRefSource, CastSource, MiscSource, PtrArith}, {ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/image.rs:163:9: 163:16 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_alpha::fresh6 ; poison: ({PtrArith, MiscSource, ExternCallReturn, MixedRefSource, CastSource, VoidSource}, {MiscSink, VoidSink, ExternCallParam, CastSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/src/image.rs:171:13: 171:23 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_alpha::fresh7 ; poison: ({MixedRefSource, CastSource, MiscSource, VoidSource, PtrArith, ExternCallReturn}, {PtrArithSink, VoidSink, MixedRefSink, MiscSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/image.rs:173:13: 173:23 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_rgb::retval ; poison: ({CastSource, MixedRefSource, MiscSource, PtrArith, ExternCallReturn, VoidSource}, {VoidSink, ExternCallParam, MixedRefSink, MiscSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/image.rs:192:9: 192:19 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_rgb::src ; poison: ({MixedRefSource, CastSource, VoidSource, ExternCallReturn, PtrArith, MiscSource}, {MiscSink, VoidSink, ExternCallParam, CastSink, MixedRefSink, PtrArithSink}) at benchmark/heman/src/src/image.rs:194:9: 194:16 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_rgb::dst ; poison: ({MixedRefSource, CastSource, VoidSource, MiscSource, ExternCallReturn, PtrArith}, {MixedRefSink, CastSink, MiscSink, VoidSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/image.rs:195:9: 195:16 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_rgb::fresh9 ; poison: ({VoidSource, PtrArith, CastSource, MixedRefSource, ExternCallReturn, MiscSource}, {MixedRefSink, MiscSink, CastSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/image.rs:202:13: 202:23 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_rgb::fresh10 ; poison: ({PtrArith, VoidSource, ExternCallReturn, MiscSource, MixedRefSource, CastSource}, {PtrArithSink, MiscSink, ExternCallParam, VoidSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/image.rs:204:13: 204:24 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_rgb::fresh11 ; poison: ({MixedRefSource, ExternCallReturn, VoidSource, PtrArith, CastSource, MiscSource}, {ExternCallParam, MixedRefSink, MiscSink, CastSink, PtrArithSink, VoidSink}) at benchmark/heman/src/src/image.rs:207:13: 207:24 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_rgb::fresh12 ; poison: ({CastSource, VoidSource, PtrArith, ExternCallReturn, MiscSource, MixedRefSource}, {PtrArithSink, VoidSink, MiscSink, CastSink, MixedRefSink, ExternCallParam}) at benchmark/heman/src/src/image.rs:209:13: 209:24 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_rgb::fresh13 ; poison: ({MixedRefSource, ExternCallReturn, VoidSource, PtrArith, MiscSource, CastSource}, {PtrArithSink, MixedRefSink, MiscSink, ExternCallParam, CastSink, VoidSink}) at benchmark/heman/src/src/image.rs:212:13: 212:24 (#0)
+Non-limit ptr: lib::src::src::image::heman_image_extract_rgb::fresh14 ; poison: ({PtrArith, ExternCallReturn, MiscSource, MixedRefSource, CastSource, VoidSource}, {VoidSink, MixedRefSink, PtrArithSink, MiscSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/image.rs:214:13: 214:24 (#0)
+Non-limit ptr: lib::src::src::import::heman_import_u8::source ; poison: ({MiscSource, PtrArith}, {PtrArithSink, MiscSink}) at benchmark/heman/src/src/import.rs:16:5: 16:15 (#0)
+Non-limit ptr: lib::src::src::import::heman_import_u8::result ; poison: ({MixedRefSource, MiscSource, VoidSource, CastSource, ExternCallReturn, PtrArith}, {ExternCallParam, MixedRefSink, VoidSink, MiscSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/import.rs:20:9: 20:19 (#0)
+Non-limit ptr: lib::src::src::import::heman_import_u8::inp ; poison: ({MiscSource, PtrArith}, {PtrArithSink, MiscSink}) at benchmark/heman/src/src/import.rs:21:9: 21:16 (#0)
+Non-limit ptr: lib::src::src::import::heman_import_u8::outp ; poison: ({VoidSource, PtrArith, ExternCallReturn, MiscSource, CastSource, MixedRefSource}, {PtrArithSink, VoidSink, MiscSink, MixedRefSink, CastSink, ExternCallParam}) at benchmark/heman/src/src/import.rs:22:9: 22:17 (#0)
+Non-limit ptr: lib::src::src::import::heman_import_u8::fresh0 ; poison: ({MiscSource, PtrArith}, {PtrArithSink, MiscSink}) at benchmark/heman/src/src/import.rs:27:13: 27:23 (#0)
+Non-limit ptr: lib::src::src::import::heman_import_u8::fresh1 ; poison: ({MixedRefSource, CastSource, ExternCallReturn, PtrArith, VoidSource, MiscSource}, {VoidSink, MiscSink, ExternCallParam, PtrArithSink, CastSink, MixedRefSink}) at benchmark/heman/src/src/import.rs:30:13: 30:23 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_compute_normals::heightmap ; poison: ({VoidSource, ExternCallReturn, PtrArith, MixedRefSource, CastSource, MiscSource}, {CastSink, PtrArithSink, VoidSink, MiscSink, ExternCallParam, MixedRefSink}) at benchmark/heman/src/src/lighting.rs:63:5: 63:18 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_compute_normals::result ; poison: ({PtrArith, VoidSource, ExternCallReturn, MiscSource, MixedRefSource, CastSource}, {VoidSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/lighting.rs:76:9: 76:19 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_compute_normals::normals ; poison: ({CastSource, ExternCallReturn, PtrArith, VoidSource, MiscSource, MixedRefSource}, {VoidSink, MiscSink, CastSink, MixedRefSink, ExternCallParam, PtrArithSink}) at benchmark/heman/src/src/lighting.rs:81:9: 81:20 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_compute_normals::n ; poison: ({PtrArith, ExternCallReturn, VoidSource, MiscSource, MixedRefSource, CastSource}, {VoidSink, MiscSink, ExternCallParam, MixedRefSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/lighting.rs:94:13: 94:18 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_apply::heightmap ; poison: ({CastSource, MiscSource, VoidSource, PtrArith, ExternCallReturn, MixedRefSource}, {PtrArithSink, ExternCallParam, MiscSink, VoidSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/lighting.rs:126:5: 126:18 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_apply::albedo ; poison: ({CastSource, VoidSource, PtrArith, ExternCallReturn, MiscSource, MixedRefSource}, {CastSink, VoidSink, PtrArithSink, ExternCallParam, MiscSink, MixedRefSink}) at benchmark/heman/src/src/lighting.rs:127:5: 127:15 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_apply::light_position ; poison: ({PtrArith, MiscSource, GlobalSource}, {MiscSink, GlobalSink, PtrArithSink}) at benchmark/heman/src/src/lighting.rs:131:5: 131:23 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_apply::final_0 ; poison: ({MiscSource, MixedRefSource, CastSource, PtrArith, ExternCallReturn, VoidSource}, {PtrArithSink, MiscSink, CastSink, MixedRefSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/lighting.rs:146:9: 146:20 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_apply::normals ; poison: ({CastSource, VoidSource, PtrArith, ExternCallReturn, MiscSource, MixedRefSource}, {CastSink, VoidSink, PtrArithSink, MiscSink, MixedRefSink, ExternCallParam}) at benchmark/heman/src/src/lighting.rs:147:9: 147:20 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_apply::occ ; poison: ({MixedRefSource, CastSource, PtrArith, ExternCallReturn, VoidSource, MiscSource}, {PtrArithSink, MiscSink, MixedRefSink, ExternCallParam, CastSink, VoidSink}) at benchmark/heman/src/src/lighting.rs:148:9: 148:16 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_apply::colors ; poison: ({MixedRefSource, PtrArith, MiscSource, ExternCallReturn, VoidSource, CastSource}, {ExternCallParam, PtrArithSink, MixedRefSink, MiscSink, VoidSink, CastSink}) at benchmark/heman/src/src/lighting.rs:189:9: 189:19 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_apply::color ; poison: ({MiscSource, MixedRefSource, CastSource, ExternCallReturn, PtrArith, VoidSource}, {PtrArithSink, VoidSink, MiscSink, ExternCallParam, MixedRefSink, CastSink}) at benchmark/heman/src/src/lighting.rs:199:13: 199:22 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_apply::N ; poison: ({CastSource, ExternCallReturn, PtrArith, MiscSource, VoidSource, MixedRefSource}, {MixedRefSink, VoidSink, CastSink, PtrArithSink, ExternCallParam, MiscSink}) at benchmark/heman/src/src/lighting.rs:202:17: 202:22 (#0)
+Non-limit ptr: lib::src::src::lighting::horizon_scan::heightmap ; poison: ({VoidSource, ExternCallReturn, PtrArith, MiscSource, MixedRefSource, CastSource}, {MixedRefSink, MiscSink, VoidSink, CastSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/lighting.rs:272:5: 272:18 (#0)
+Non-limit ptr: lib::src::src::lighting::horizon_scan::result ; poison: ({ExternCallReturn, VoidSource, MiscSource, PtrArith, MixedRefSource, CastSource}, {MiscSink, CastSink, PtrArithSink, MixedRefSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/lighting.rs:273:5: 273:15 (#0)
+Non-limit ptr: lib::src::src::lighting::horizon_scan::startpts ; poison: ({PtrArith, CastSource, VoidSource, MiscSource}, {VoidSink, CastSink, PtrArithSink, MiscSink, ExternCallParam}) at benchmark/heman/src/src/lighting.rs:274:5: 274:17 (#0)
+Non-limit ptr: lib::src::src::lighting::horizon_scan::p ; poison: ({VoidSource, MiscSource, PtrArith, CastSource}, {ExternCallParam, PtrArithSink, CastSink, VoidSink, MiscSink}) at benchmark/heman/src/src/lighting.rs:287:9: 287:14 (#0)
+Non-limit ptr: lib::src::src::lighting::horizon_scan::fresh2 ; poison: ({PtrArith, VoidSource, CastSource, MiscSource}, {CastSink, PtrArithSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/heman/src/src/lighting.rs:293:21: 293:31 (#0)
+Non-limit ptr: lib::src::src::lighting::horizon_scan::fresh3 ; poison: ({VoidSource, MiscSource, PtrArith, CastSource}, {VoidSink, ExternCallParam, PtrArithSink, CastSink, MiscSink}) at benchmark/heman/src/src/lighting.rs:300:21: 300:31 (#0)
+Non-limit ptr: lib::src::src::lighting::horizon_scan::hull_buffer ; poison: ({PtrArith, VoidSource, MiscSource, CastSource}, {PtrArithSink, ExternCallParam, MiscSink, CastSink, VoidSink}) at benchmark/heman/src/src/lighting.rs:336:9: 336:24 (#0)
+Non-limit ptr: lib::src::src::lighting::horizon_scan::convex_hull ; poison: ({MiscSource, CastSource, PtrArith, VoidSource}, {VoidSink, PtrArithSink, ExternCallParam, MiscSink, CastSink}) at benchmark/heman/src/src/lighting.rs:344:13: 344:28 (#0)
+Non-limit ptr: lib::src::src::lighting::horizon_scan::p_0 ; poison: ({PtrArith, CastSource, VoidSource, MiscSource}, {VoidSink, ExternCallParam, PtrArithSink, MiscSink, CastSink}) at benchmark/heman/src/src/lighting.rs:345:13: 345:20 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_compute_occlusion::heightmap ; poison: ({PtrArith, MixedRefSource, CastSource, ExternCallReturn, MiscSource, VoidSource}, {CastSink, ExternCallParam, MixedRefSink, MiscSink, PtrArithSink, VoidSink}) at benchmark/heman/src/src/lighting.rs:422:5: 422:18 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_compute_occlusion::result ; poison: ({PtrArith, ExternCallReturn, MixedRefSource, CastSource, VoidSource, MiscSource}, {VoidSink, PtrArithSink, ExternCallParam, MixedRefSink, CastSink, MiscSink}) at benchmark/heman/src/src/lighting.rs:435:9: 435:19 (#0)
+Non-limit ptr: lib::src::src::lighting::heman_lighting_compute_occlusion::startpts ; poison: ({MiscSource, CastSource, PtrArith, VoidSource}, {CastSink, PtrArithSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/heman/src/src/lighting.rs:477:9: 477:21 (#0)
+Non-limit ptr: lib::src::src::noise::extrapolate2::ctx ; poison: ({PtrArith, GlobalSource, VoidSource, ExternCallReturn, MiscSource, MixedRefSource, CastSource}, {CastSink, GlobalSink, MixedRefSink, VoidSink, MiscSink, ExternCallParam, PtrArithSink}) at benchmark/heman/src/src/noise.rs:390:5: 390:12 (#0)
+Non-limit ptr: lib::src::src::noise::extrapolate2::perm ; poison: ({MixedRefSource, ExternCallReturn, GlobalSource, CastSource, VoidSource, PtrArith, MiscSource}, {PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, CastSink, VoidSink, GlobalSink}) at benchmark/heman/src/src/noise.rs:396:9: 396:17 (#0)
+Non-limit ptr: lib::src::src::noise::extrapolate3::ctx ; poison: ({GlobalSource, MixedRefSource, ExternCallReturn, MiscSource, PtrArith, VoidSource, CastSource}, {VoidSink, MiscSink, MixedRefSink, PtrArithSink, GlobalSink, CastSink, ExternCallParam}) at benchmark/heman/src/src/noise.rs:407:5: 407:12 (#0)
+Non-limit ptr: lib::src::src::noise::extrapolate3::perm ; poison: ({MixedRefSource, CastSource, PtrArith, MiscSource, GlobalSource, VoidSource, ExternCallReturn}, {MiscSink, GlobalSink, MixedRefSink, CastSink, PtrArithSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/noise.rs:415:9: 415:17 (#0)
+Non-limit ptr: lib::src::src::noise::extrapolate3::permGradIndex3D ; poison: ({ExternCallReturn, MiscSource, PtrArith, CastSource, GlobalSource, MixedRefSource, VoidSource}, {ExternCallParam, MiscSink, CastSink, GlobalSink, PtrArithSink, VoidSink, MixedRefSink}) at benchmark/heman/src/src/noise.rs:416:9: 416:28 (#0)
+Non-limit ptr: lib::src::src::noise::extrapolate4::perm ; poison: ({ExternCallReturn, PtrArith, VoidSource, CastSource, MiscSource, GlobalSource, MixedRefSource}, {CastSink, GlobalSink, MixedRefSink, PtrArithSink, ExternCallParam, MiscSink, VoidSink}) at benchmark/heman/src/src/noise.rs:442:9: 442:17 (#0)
+Non-limit ptr: lib::src::src::noise::allocate_perm::ctx ; poison: ({GlobalSource, ExternCallReturn, VoidSource, MiscSource, PtrArith, MixedRefSource, CastSource}, {PtrArithSink, ExternCallParam, MixedRefSink, CastSink, MiscSink, GlobalSink, VoidSink}) at benchmark/heman/src/src/noise.rs:468:5: 468:12 (#0)
+Non-limit ptr: lib::src::src::noise::open_simplex_noise_init_perm::ctx ; poison: ({MixedRefSource, ExternCallReturn, CastSource, PtrArith, VoidSource, MiscSource, GlobalSource}, {VoidSink, GlobalSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/noise.rs:499:5: 499:12 (#0)
+Non-limit ptr: lib::src::src::noise::open_simplex_noise_init_perm::p ; poison: ({VoidSource, CastSource}, {VoidSink, CastSink, ExternCallParam}) at benchmark/heman/src/src/noise.rs:500:5: 500:10 (#0)
+Non-limit ptr: lib::src::src::noise::open_simplex_noise::perm ; poison: ({ExternCallReturn, VoidSource, MiscSource, PtrArith, MixedRefSource, CastSource, GlobalSource}, {ExternCallParam, MixedRefSink, VoidSink, MiscSink, PtrArithSink, CastSink, GlobalSink}) at benchmark/heman/src/src/noise.rs:541:9: 541:17 (#0)
+Non-limit ptr: lib::src::src::noise::open_simplex_noise::permGradIndex3D ; poison: ({MiscSource, ExternCallReturn, VoidSource, MixedRefSource, PtrArith, GlobalSource, CastSource}, {VoidSink, MixedRefSink, PtrArithSink, CastSink, GlobalSink, ExternCallParam, MiscSink}) at benchmark/heman/src/src/noise.rs:542:9: 542:28 (#0)
+Non-limit ptr: lib::src::src::noise::open_simplex_noise_free::ctx ; poison: ({ExternCallReturn, PtrArith, VoidSource, CastSource, GlobalSource, MiscSource, MixedRefSource}, {MixedRefSink, CastSink, ExternCallParam, PtrArithSink, GlobalSink, VoidSink, MiscSink}) at benchmark/heman/src/src/noise.rs:598:50: 598:57 (#0)
+Non-limit ptr: lib::src::src::noise::open_simplex_noise2::ctx ; poison: ({PtrArith, ExternCallReturn, CastSource, MiscSource, VoidSource, GlobalSource, MixedRefSource}, {VoidSink, MixedRefSink, CastSink, ExternCallParam, MiscSink, PtrArithSink, GlobalSink}) at benchmark/heman/src/src/noise.rs:616:5: 616:12 (#0)
+Non-limit ptr: lib::src::src::noise::open_simplex_noise3::ctx ; poison: ({PtrArith, CastSource, VoidSource, GlobalSource, MixedRefSource, MiscSource, ExternCallReturn}, {CastSink, ExternCallParam, VoidSink, GlobalSink, MiscSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/src/noise.rs:737:5: 737:12 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_step::result ; poison: ({VoidSource, MiscSource, PtrArith, CastSource, ExternCallReturn, MixedRefSource}, {PtrArithSink, MiscSink, MixedRefSink, CastSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/ops.rs:70:9: 70:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_step::src ; poison: ({ExternCallReturn, PtrArith, MixedRefSource, VoidSource, CastSource, MiscSource}, {MixedRefSink, VoidSink, CastSink, MiscSink, ExternCallParam, PtrArithSink}) at benchmark/heman/src/src/ops.rs:72:9: 72:16 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_step::dst ; poison: ({MiscSource, PtrArith, ExternCallReturn, VoidSource, MixedRefSource, CastSource}, {CastSink, PtrArithSink, MixedRefSink, ExternCallParam, MiscSink, VoidSink}) at benchmark/heman/src/src/ops.rs:73:9: 73:16 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_step::fresh0 ; poison: ({ExternCallReturn, CastSource, VoidSource, MiscSource, MixedRefSource, PtrArith}, {MixedRefSink, MiscSink, VoidSink, PtrArithSink, CastSink, ExternCallParam}) at benchmark/heman/src/src/ops.rs:76:13: 76:23 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_step::fresh1 ; poison: ({ExternCallReturn, VoidSource, CastSource, MiscSource, PtrArith, MixedRefSource}, {VoidSink, MiscSink, MixedRefSink, ExternCallParam, CastSink, PtrArithSink}) at benchmark/heman/src/src/ops.rs:78:13: 78:23 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_max::result ; poison: ({MiscSource, PtrArith, CastSource, ExternCallReturn, VoidSource, MixedRefSource}, {VoidSink, MiscSink, MixedRefSink, ExternCallParam, CastSink, PtrArithSink}) at benchmark/heman/src/src/ops.rs:121:9: 121:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_max::srca ; poison: ({MixedRefSource, PtrArith, ExternCallReturn, VoidSource, CastSource, MiscSource}, {ExternCallParam, PtrArithSink, VoidSink, MixedRefSink, MiscSink, CastSink}) at benchmark/heman/src/src/ops.rs:123:9: 123:17 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_max::srcb ; poison: ({MiscSource, MixedRefSource, CastSource, VoidSource, ExternCallReturn, PtrArith}, {CastSink, PtrArithSink, VoidSink, ExternCallParam, MiscSink, MixedRefSink}) at benchmark/heman/src/src/ops.rs:124:9: 124:17 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_max::dst ; poison: ({ExternCallReturn, MixedRefSource, PtrArith, CastSource, VoidSource, MiscSource}, {VoidSink, MixedRefSink, ExternCallParam, PtrArithSink, MiscSink, CastSink}) at benchmark/heman/src/src/ops.rs:125:9: 125:16 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_sweep::result ; poison: ({CastSource, PtrArith, MixedRefSource, VoidSource, MiscSource, ExternCallReturn}, {MiscSink, PtrArithSink, VoidSink, CastSink, ExternCallParam, MixedRefSink}) at benchmark/heman/src/src/ops.rs:149:9: 149:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_sweep::dst ; poison: ({ExternCallReturn, VoidSource, CastSource, PtrArith, MiscSource, MixedRefSource}, {ExternCallParam, CastSink, MixedRefSink, MiscSink, PtrArithSink, VoidSink}) at benchmark/heman/src/src/ops.rs:154:9: 154:16 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_sweep::src ; poison: ({CastSource, PtrArith, ExternCallReturn, VoidSource, MiscSource, MixedRefSource}, {VoidSink, MixedRefSink, PtrArithSink, ExternCallParam, MiscSink, CastSink}) at benchmark/heman/src/src/ops.rs:155:9: 155:16 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_sweep::fresh2 ; poison: ({MixedRefSource, ExternCallReturn, PtrArith, MiscSource, VoidSource, CastSource}, {CastSink, ExternCallParam, MiscSink, MixedRefSink, VoidSink, PtrArithSink}) at benchmark/heman/src/src/ops.rs:162:17: 162:27 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_sweep::fresh3 ; poison: ({ExternCallReturn, MiscSource, PtrArith, MixedRefSource, CastSource, VoidSource}, {PtrArithSink, ExternCallParam, MixedRefSink, CastSink, VoidSink, MiscSink}) at benchmark/heman/src/src/ops.rs:167:13: 167:23 (#0)
+Non-limit ptr: lib::src::src::ops::copy_row::src ; poison: ({MixedRefSource, MiscSource, VoidSource, PtrArith, CastSource, ExternCallReturn}, {CastSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/ops.rs:175:5: 175:12 (#0)
+Non-limit ptr: lib::src::src::ops::copy_row::dst ; poison: ({VoidSource, PtrArith, MiscSource, ExternCallReturn, MixedRefSource, CastSource}, {PtrArithSink, MiscSink, VoidSink, MixedRefSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/ops.rs:176:5: 176:12 (#0)
+Non-limit ptr: lib::src::src::ops::copy_row::srcp ; poison: ({MiscSource, ExternCallReturn, VoidSource, MixedRefSource, CastSource, PtrArith}, {ExternCallParam, MiscSink, MixedRefSink, PtrArithSink, VoidSink, CastSink}) at benchmark/heman/src/src/ops.rs:184:17: 184:25 (#0)
+Non-limit ptr: lib::src::src::ops::copy_row::dstp ; poison: ({MixedRefSource, MiscSource, ExternCallReturn, PtrArith, CastSource, VoidSource}, {VoidSink, MixedRefSink, PtrArithSink, MiscSink, CastSink, ExternCallParam}) at benchmark/heman/src/src/ops.rs:185:17: 185:25 (#0)
+Non-limit ptr: lib::src::src::ops::copy_row::srcp_0 ; poison: ({MixedRefSource, ExternCallReturn, PtrArith, CastSource, VoidSource, MiscSource}, {MiscSink, MixedRefSink, CastSink, PtrArithSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/ops.rs:193:13: 193:23 (#0)
+Non-limit ptr: lib::src::src::ops::copy_row::dstp_0 ; poison: ({CastSource, MiscSource, PtrArith, MixedRefSource, ExternCallReturn, VoidSource}, {CastSink, VoidSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/ops.rs:194:13: 194:23 (#0)
+Non-limit ptr: lib::src::src::ops::copy_row::fresh5 ; poison: ({CastSource, MixedRefSource, PtrArith, ExternCallReturn, VoidSource, MiscSource}, {MixedRefSink, PtrArithSink, ExternCallParam, MiscSink, VoidSink, CastSink}) at benchmark/heman/src/src/ops.rs:202:17: 202:27 (#0)
+Non-limit ptr: lib::src::src::ops::copy_row::fresh6 ; poison: ({VoidSource, MiscSource, ExternCallReturn, CastSource, MixedRefSource, PtrArith}, {PtrArithSink, VoidSink, ExternCallParam, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/ops.rs:204:17: 204:27 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_stitch_horizontal::images ; poison: ({MiscSource, PtrArith}, {MiscSink, PtrArithSink}) at benchmark/heman/src/src/ops.rs:213:5: 213:15 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_stitch_horizontal::result ; poison: ({PtrArith, MiscSource, ExternCallReturn, CastSource, VoidSource, MixedRefSource}, {ExternCallParam, PtrArithSink, VoidSink, MixedRefSink, MiscSink, CastSink}) at benchmark/heman/src/src/ops.rs:259:9: 259:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_stitch_vertical::images ; poison: ({MiscSource, PtrArith}, {PtrArithSink, MiscSink}) at benchmark/heman/src/src/ops.rs:274:5: 274:15 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_stitch_vertical::result ; poison: ({VoidSource, MiscSource, MixedRefSource, CastSource, PtrArith, ExternCallReturn}, {PtrArithSink, MiscSink, ExternCallParam, VoidSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/ops.rs:320:9: 320:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_stitch_vertical::dst ; poison: ({CastSource, VoidSource, PtrArith, MiscSource, MixedRefSource, ExternCallReturn}, {MiscSink, MixedRefSink, CastSink, PtrArithSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/ops.rs:322:9: 322:16 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_normalize_f32::result ; poison: ({MixedRefSource, MiscSource, ExternCallReturn, CastSource, PtrArith, VoidSource}, {MixedRefSink, VoidSink, CastSink, ExternCallParam, MiscSink, PtrArithSink}) at benchmark/heman/src/src/ops.rs:342:9: 342:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_normalize_f32::src ; poison: ({MixedRefSource, CastSource, PtrArith, ExternCallReturn, MiscSource, VoidSource}, {VoidSink, MixedRefSink, CastSink, MiscSink, ExternCallParam, PtrArithSink}) at benchmark/heman/src/src/ops.rs:347:9: 347:16 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_normalize_f32::dst ; poison: ({CastSource, MixedRefSource, ExternCallReturn, PtrArith, VoidSource, MiscSource}, {PtrArithSink, VoidSink, MiscSink, ExternCallParam, MixedRefSink, CastSink}) at benchmark/heman/src/src/ops.rs:348:9: 348:16 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_normalize_f32::fresh7 ; poison: ({CastSource, VoidSource, ExternCallReturn, MixedRefSource, PtrArith, MiscSource}, {CastSink, MiscSink, MixedRefSink, VoidSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/ops.rs:353:13: 353:23 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_normalize_f32::fresh8 ; poison: ({MiscSource, ExternCallReturn, VoidSource, MixedRefSource, CastSource, PtrArith}, {VoidSink, MiscSink, CastSink, ExternCallParam, MixedRefSink, PtrArithSink}) at benchmark/heman/src/src/ops.rs:356:13: 356:23 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_laplacian::heightmap ; poison: ({PtrArith, MixedRefSource, MiscSource, CastSource, ExternCallReturn, VoidSource}, {MixedRefSink, PtrArithSink, ExternCallParam, VoidSink, CastSink, MiscSink}) at benchmark/heman/src/src/ops.rs:377:5: 377:18 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_laplacian::result ; poison: ({ExternCallReturn, MiscSource, MixedRefSource, CastSource, VoidSource, PtrArith}, {PtrArithSink, CastSink, MixedRefSink, MiscSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/ops.rs:390:9: 390:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_laplacian::dst ; poison: ({MixedRefSource, VoidSource, MiscSource, PtrArith, CastSource, ExternCallReturn}, {ExternCallParam, VoidSink, MiscSink, MixedRefSink, PtrArithSink, CastSink}) at benchmark/heman/src/src/ops.rs:401:13: 401:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_laplacian::fresh9 ; poison: ({MiscSource, VoidSource, ExternCallReturn, PtrArith, MixedRefSource, CastSource}, {PtrArithSink, ExternCallParam, CastSink, MiscSink, VoidSink, MixedRefSink}) at benchmark/heman/src/src/ops.rs:412:17: 412:27 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_accumulate::sdata ; poison: ({ExternCallReturn, MixedRefSource, CastSource, MiscSource, VoidSource, PtrArith}, {MiscSink, MixedRefSink, CastSink, ExternCallParam, PtrArithSink, VoidSink}) at benchmark/heman/src/src/ops.rs:454:9: 454:18 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_accumulate::ddata ; poison: ({MixedRefSource, CastSource, PtrArith, MiscSource, ExternCallReturn, VoidSource}, {MixedRefSink, CastSink, PtrArithSink, ExternCallParam, VoidSink, MiscSink}) at benchmark/heman/src/src/ops.rs:455:9: 455:18 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_accumulate::fresh10 ; poison: ({VoidSource, CastSource, ExternCallReturn, MiscSource, PtrArith, MixedRefSource}, {ExternCallParam, MiscSink, CastSink, VoidSink, MixedRefSink, PtrArithSink}) at benchmark/heman/src/src/ops.rs:458:13: 458:24 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_accumulate::fresh11 ; poison: ({CastSource, MiscSource, PtrArith, ExternCallReturn, MixedRefSource, VoidSource}, {VoidSink, ExternCallParam, MixedRefSink, MiscSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/ops.rs:460:13: 460:24 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_sobel::result ; poison: ({MixedRefSource, MiscSource, CastSource, ExternCallReturn, VoidSource, PtrArith}, {MiscSink, MixedRefSink, VoidSink, CastSink, ExternCallParam, PtrArithSink}) at benchmark/heman/src/src/ops.rs:482:9: 482:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_sobel::gray ; poison: ({PtrArith, ExternCallReturn, MiscSource, MixedRefSource, VoidSource, CastSource}, {ExternCallParam, MixedRefSink, CastSink, MiscSink, PtrArithSink, VoidSink}) at benchmark/heman/src/src/ops.rs:483:9: 483:17 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_sobel::dst ; poison: ({ExternCallReturn, MiscSource, CastSource, PtrArith, VoidSource, MixedRefSource}, {MiscSink, PtrArithSink, ExternCallParam, VoidSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/ops.rs:494:13: 494:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_sobel::src ; poison: ({MixedRefSource, PtrArith, ExternCallReturn, VoidSource, CastSource, MiscSource}, {PtrArithSink, MixedRefSink, MiscSink, CastSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/ops.rs:495:13: 495:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_sobel::fresh12 ; poison: ({PtrArith, ExternCallReturn, MiscSource, CastSource, VoidSource, MixedRefSource}, {CastSink, MiscSink, ExternCallParam, PtrArithSink, VoidSink, MixedRefSink}) at benchmark/heman/src/src/ops.rs:537:17: 537:28 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_sobel::fresh13 ; poison: ({CastSource, MixedRefSource, PtrArith, ExternCallReturn, VoidSource, MiscSource}, {CastSink, PtrArithSink, ExternCallParam, VoidSink, MixedRefSink, MiscSink}) at benchmark/heman/src/src/ops.rs:539:17: 539:28 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_core::img ; poison: ({MiscSource, MixedRefSource, PtrArith, VoidSource, ExternCallReturn, CastSource}, {VoidSink, MiscSink, CastSink, MixedRefSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/ops.rs:551:5: 551:12 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_core::secondary ; poison: ({MiscSource, VoidSource, MixedRefSource, CastSource, PtrArith, ExternCallReturn}, {MixedRefSink, VoidSink, PtrArithSink, MiscSink, ExternCallParam, CastSink}) at benchmark/heman/src/src/ops.rs:552:5: 552:18 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_core::ctx ; poison: ({MixedRefSource, VoidSource, ExternCallReturn, MiscSource, CastSource, GlobalSource, PtrArith}, {MixedRefSink, CastSink, MiscSink, GlobalSink, ExternCallParam, PtrArithSink, VoidSink}) at benchmark/heman/src/src/ops.rs:556:9: 556:16 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_core::result ; poison: ({PtrArith, VoidSource, MiscSource, CastSource, MixedRefSource, ExternCallReturn}, {MiscSink, MixedRefSink, VoidSink, CastSink, ExternCallParam, PtrArithSink}) at benchmark/heman/src/src/ops.rs:561:9: 561:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_core::result2 ; poison: ({PtrArith, MixedRefSource, CastSource, VoidSource, MiscSource, ExternCallReturn}, {ExternCallParam, MixedRefSink, VoidSink, PtrArithSink, MiscSink, CastSink}) at benchmark/heman/src/src/ops.rs:562:9: 562:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_core::dst ; poison: ({CastSource, VoidSource, PtrArith, ExternCallReturn, MiscSource, MixedRefSource}, {MixedRefSink, ExternCallParam, CastSink, VoidSink, MiscSink, PtrArithSink}) at benchmark/heman/src/src/ops.rs:578:13: 578:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_core::src ; poison: ({ExternCallReturn, VoidSource, MiscSource, CastSource, MixedRefSource, PtrArith}, {ExternCallParam, MiscSink, VoidSink, MixedRefSink, PtrArithSink, CastSink}) at benchmark/heman/src/src/ops.rs:583:17: 583:24 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_core::fresh14 ; poison: ({VoidSource, ExternCallReturn, MiscSource, MixedRefSource, CastSource, PtrArith}, {PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, CastSink, VoidSink}) at benchmark/heman/src/src/ops.rs:654:21: 654:32 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_core::fresh15 ; poison: ({MixedRefSource, PtrArith, MiscSource, VoidSource, ExternCallReturn, CastSource}, {MiscSink, VoidSink, PtrArithSink, CastSink, MixedRefSink, ExternCallParam}) at benchmark/heman/src/src/ops.rs:656:21: 656:32 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_core::dst2 ; poison: ({MiscSource, VoidSource, PtrArith, ExternCallReturn, MixedRefSource, CastSource}, {MixedRefSink, CastSink, VoidSink, MiscSink, ExternCallParam, PtrArithSink}) at benchmark/heman/src/src/ops.rs:663:21: 663:29 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_core::fresh16 ; poison: ({CastSource, VoidSource, MixedRefSource, PtrArith, ExternCallReturn, MiscSource}, {MixedRefSink, CastSink, MiscSink, ExternCallParam, VoidSink, PtrArithSink}) at benchmark/heman/src/src/ops.rs:666:25: 666:36 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_core::fresh17 ; poison: ({PtrArith, ExternCallReturn, VoidSource, MiscSource, MixedRefSource, CastSource}, {PtrArithSink, ExternCallParam, MiscSink, VoidSink, CastSink, MixedRefSink}) at benchmark/heman/src/src/ops.rs:668:25: 668:36 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_points::img ; poison: ({VoidSource, MiscSource, MixedRefSource, PtrArith, ExternCallReturn, CastSource}, {MixedRefSink, VoidSink, PtrArithSink, MiscSink, CastSink, ExternCallParam}) at benchmark/heman/src/src/ops.rs:689:5: 689:12 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_points::mapping ; poison: ({MixedRefSource, CastSource, ExternCallReturn, VoidSource, MiscSource, PtrArith}, {MixedRefSink, CastSink, PtrArithSink, VoidSink, MiscSink, ExternCallParam}) at benchmark/heman/src/src/ops.rs:696:9: 696:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_points::retval ; poison: ({MixedRefSource, PtrArith, CastSource, VoidSource, MiscSource, ExternCallReturn}, {MixedRefSink, ExternCallParam, PtrArithSink, CastSink, VoidSink, MiscSink}) at benchmark/heman/src/src/ops.rs:697:9: 697:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_points::src ; poison: ({MixedRefSource, PtrArith, MiscSource, VoidSource, ExternCallReturn, CastSource}, {ExternCallParam, CastSink, VoidSink, MiscSink, MixedRefSink, PtrArithSink}) at benchmark/heman/src/src/ops.rs:698:9: 698:16 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp_points::texel ; poison: ({ExternCallReturn, VoidSource, PtrArith, MiscSource, MixedRefSource, CastSource}, {CastSink, MixedRefSink, VoidSink, ExternCallParam, PtrArithSink, MiscSink}) at benchmark/heman/src/src/ops.rs:708:17: 708:26 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_warp::img ; poison: ({VoidSource, MiscSource, CastSource, MixedRefSource, PtrArith, ExternCallReturn}, {ExternCallParam, MiscSink, VoidSink, MixedRefSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/ops.rs:728:5: 728:12 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_extract_mask::source ; poison: ({MiscSource, MixedRefSource, VoidSource, CastSource, PtrArith, ExternCallReturn}, {PtrArithSink, VoidSink, ExternCallParam, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/ops.rs:736:5: 736:15 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_extract_mask::result ; poison: ({CastSource, VoidSource, ExternCallReturn, MiscSource, PtrArith, MixedRefSource}, {CastSink, PtrArithSink, MiscSink, VoidSink, MixedRefSink, ExternCallParam}) at benchmark/heman/src/src/ops.rs:756:9: 756:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_extract_mask::dst ; poison: ({PtrArith, MiscSource, ExternCallReturn, VoidSource, MixedRefSource, CastSource}, {PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, CastSink, VoidSink}) at benchmark/heman/src/src/ops.rs:760:13: 760:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_extract_mask::src ; poison: ({VoidSource, MixedRefSource, CastSource, PtrArith, ExternCallReturn, MiscSource}, {PtrArithSink, ExternCallParam, MiscSink, VoidSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/ops.rs:761:13: 761:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_extract_mask::fresh19 ; poison: ({MixedRefSource, ExternCallReturn, PtrArith, VoidSource, CastSource, MiscSource}, {PtrArithSink, ExternCallParam, MiscSink, CastSink, MixedRefSink, VoidSink}) at benchmark/heman/src/src/ops.rs:771:17: 771:28 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_replace_color::result ; poison: ({ExternCallReturn, MixedRefSource, PtrArith, CastSource, VoidSource, MiscSource}, {MixedRefSink, ExternCallParam, MiscSink, PtrArithSink, VoidSink, CastSink}) at benchmark/heman/src/src/ops.rs:838:9: 838:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_replace_color::dst ; poison: ({CastSource, MixedRefSource, VoidSource, PtrArith, ExternCallReturn, MiscSource}, {MiscSink, PtrArithSink, ExternCallParam, MixedRefSink, CastSink, VoidSink}) at benchmark/heman/src/src/ops.rs:842:13: 842:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_replace_color::src ; poison: ({MixedRefSource, ExternCallReturn, MiscSource, PtrArith, CastSource, VoidSource}, {VoidSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/ops.rs:843:13: 843:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_replace_color::tex ; poison: ({MiscSource, CastSource, VoidSource, MixedRefSource, PtrArith, ExternCallReturn}, {MixedRefSink, CastSink, MiscSink, VoidSink, PtrArithSink, ExternCallParam}) at benchmark/heman/src/src/ops.rs:844:13: 844:20 (#0)
+Non-limit ptr: lib::src::src::ops::_match::mcolor ; poison: ({PtrArith, MixedRefSource, CastSource, ExternCallReturn, VoidSource, MiscSource}, {VoidSink, PtrArithSink, ExternCallParam, MiscSink, CastSink, MixedRefSink}) at benchmark/heman/src/src/ops.rs:892:9: 892:19 (#0)
+Non-limit ptr: lib::src::src::ops::qselect::v ; poison: ({ExternCallReturn, MiscSource, PtrArith, VoidSource, MixedRefSource, CastSource}, {PtrArithSink, MiscSink, MixedRefSink, ExternCallParam, VoidSink, CastSink}) at benchmark/heman/src/src/ops.rs:909:5: 909:10 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_percentiles::src ; poison: ({ExternCallReturn, VoidSource, CastSource, MixedRefSource, MiscSource, PtrArith}, {MiscSink, CastSink, PtrArithSink, ExternCallParam, MixedRefSink, VoidSink}) at benchmark/heman/src/src/ops.rs:969:9: 969:16 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_percentiles::vals ; poison: ({CastSource, PtrArith, MiscSource, ExternCallReturn, MixedRefSource, VoidSource}, {CastSink, ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/ops.rs:990:9: 990:17 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_percentiles::percentiles ; poison: ({VoidSource, CastSource, ExternCallReturn, PtrArith, MixedRefSource, MiscSource}, {PtrArithSink, VoidSink, MiscSink, CastSink, ExternCallParam, MixedRefSink}) at benchmark/heman/src/src/ops.rs:1004:9: 1004:24 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_percentiles::fresh21 ; poison: ({VoidSource, PtrArith, ExternCallReturn, MixedRefSource, MiscSource, CastSource}, {PtrArithSink, ExternCallParam, MixedRefSink, CastSink, VoidSink, MiscSink}) at benchmark/heman/src/src/ops.rs:1029:13: 1029:24 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_stairstep::src ; poison: ({MixedRefSource, CastSource, PtrArith, VoidSource, MiscSource, ExternCallReturn}, {MixedRefSink, VoidSink, ExternCallParam, MiscSink, PtrArithSink, CastSink}) at benchmark/heman/src/src/ops.rs:1069:9: 1069:16 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_stairstep::fresh22 ; poison: ({VoidSource, PtrArith, CastSource, MiscSource, MixedRefSource, ExternCallReturn}, {MixedRefSink, CastSink, MiscSink, VoidSink, ExternCallParam, PtrArithSink}) at benchmark/heman/src/src/ops.rs:1099:13: 1099:24 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::result ; poison: ({VoidSource, ExternCallReturn, MixedRefSource, MiscSource, CastSource, PtrArith}, {PtrArithSink, VoidSink, MiscSink, CastSink, ExternCallParam, MixedRefSink}) at benchmark/heman/src/src/ops.rs:1134:9: 1134:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::pheight ; poison: ({ExternCallReturn, MiscSource, MixedRefSource, VoidSource, PtrArith, CastSource}, {PtrArithSink, MixedRefSink, VoidSink, CastSink, MiscSink, ExternCallParam}) at benchmark/heman/src/src/ops.rs:1135:9: 1135:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::pcolour ; poison: ({CastSource, VoidSource, ExternCallReturn, MixedRefSource, MiscSource, PtrArith}, {MiscSink, ExternCallParam, CastSink, PtrArithSink, MixedRefSink, VoidSink}) at benchmark/heman/src/src/ops.rs:1136:9: 1136:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::pmerged ; poison: ({CastSource, VoidSource, MiscSource, MixedRefSource, ExternCallReturn, PtrArith}, {MiscSink, CastSink, ExternCallParam, MixedRefSink, PtrArithSink, VoidSink}) at benchmark/heman/src/src/ops.rs:1137:9: 1137:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::fresh23 ; poison: ({PtrArith, MixedRefSource, MiscSource, VoidSource, ExternCallReturn, CastSource}, {ExternCallParam, MiscSink, CastSink, VoidSink, PtrArithSink, MixedRefSink}) at benchmark/heman/src/src/ops.rs:1163:13: 1163:24 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::fresh24 ; poison: ({PtrArith, ExternCallReturn, MixedRefSource, CastSource, VoidSource, MiscSource}, {PtrArithSink, VoidSink, ExternCallParam, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/ops.rs:1167:17: 1167:28 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::fresh25 ; poison: ({PtrArith, MiscSource, VoidSource, MixedRefSource, CastSource, ExternCallReturn}, {MixedRefSink, VoidSink, ExternCallParam, CastSink, MiscSink, PtrArithSink}) at benchmark/heman/src/src/ops.rs:1170:17: 1170:28 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::fresh26 ; poison: ({ExternCallReturn, MiscSource, MixedRefSource, PtrArith, CastSource, VoidSource}, {ExternCallParam, MiscSink, PtrArithSink, MixedRefSink, VoidSink, CastSink}) at benchmark/heman/src/src/ops.rs:1173:17: 1173:28 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::fresh27 ; poison: ({PtrArith, VoidSource, MixedRefSource, CastSource, ExternCallReturn, MiscSource}, {PtrArithSink, CastSink, MixedRefSink, VoidSink, MiscSink, ExternCallParam}) at benchmark/heman/src/src/ops.rs:1178:17: 1178:28 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::fresh28 ; poison: ({MiscSource, CastSource, PtrArith, ExternCallReturn, VoidSource, MixedRefSource}, {ExternCallParam, CastSink, VoidSink, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/ops.rs:1180:17: 1180:28 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::fresh29 ; poison: ({ExternCallReturn, PtrArith, VoidSource, MiscSource, CastSource, MixedRefSource}, {MixedRefSink, VoidSink, CastSink, PtrArithSink, MiscSink, ExternCallParam}) at benchmark/heman/src/src/ops.rs:1183:17: 1183:28 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::fresh30 ; poison: ({MixedRefSource, ExternCallReturn, PtrArith, VoidSource, MiscSource, CastSource}, {MixedRefSink, VoidSink, MiscSink, ExternCallParam, PtrArithSink, CastSink}) at benchmark/heman/src/src/ops.rs:1185:17: 1185:28 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::fresh31 ; poison: ({VoidSource, MiscSource, ExternCallReturn, CastSource, PtrArith, MixedRefSource}, {ExternCallParam, MiscSink, VoidSink, MixedRefSink, PtrArithSink, CastSink}) at benchmark/heman/src/src/ops.rs:1188:17: 1188:28 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::fresh32 ; poison: ({ExternCallReturn, MixedRefSource, VoidSource, MiscSource, CastSource, PtrArith}, {VoidSink, MixedRefSink, ExternCallParam, PtrArithSink, MiscSink, CastSink}) at benchmark/heman/src/src/ops.rs:1190:17: 1190:28 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_merge_political::fresh33 ; poison: ({PtrArith, MixedRefSource, CastSource, VoidSource, MiscSource, ExternCallReturn}, {CastSink, PtrArithSink, ExternCallParam, MiscSink, MixedRefSink, VoidSink}) at benchmark/heman/src/src/ops.rs:1194:13: 1194:24 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_emboss::img ; poison: ({VoidSource, MiscSource, ExternCallReturn, PtrArith, CastSource, MixedRefSource}, {ExternCallParam, MiscSink, VoidSink, MixedRefSink, PtrArithSink, CastSink}) at benchmark/heman/src/src/ops.rs:1203:5: 1203:12 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_emboss::ctx ; poison: ({MiscSource, CastSource, VoidSource, ExternCallReturn, PtrArith, MixedRefSource, GlobalSource}, {VoidSink, GlobalSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/ops.rs:1208:9: 1208:16 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_emboss::result ; poison: ({PtrArith, MixedRefSource, CastSource, ExternCallReturn, VoidSource, MiscSource}, {MixedRefSink, CastSink, PtrArithSink, VoidSink, ExternCallParam, MiscSink}) at benchmark/heman/src/src/ops.rs:1221:9: 1221:19 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_emboss::dst ; poison: ({PtrArith, MixedRefSource, CastSource, MiscSource, ExternCallReturn, VoidSource}, {CastSink, MiscSink, PtrArithSink, ExternCallParam, VoidSink, MixedRefSink}) at benchmark/heman/src/src/ops.rs:1234:13: 1234:20 (#0)
+Non-limit ptr: lib::src::src::ops::heman_ops_emboss::fresh34 ; poison: ({MixedRefSource, CastSource, PtrArith, ExternCallReturn, VoidSource, MiscSource}, {PtrArithSink, ExternCallParam, CastSink, MixedRefSink, VoidSink, MiscSink}) at benchmark/heman/src/src/ops.rs:1284:17: 1284:28 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_create::xy ; poison: ({VoidSource, CastSource}, {CastSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/points.rs:63:5: 63:11 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_destroy::img ; poison: ({MiscSource, PtrArith, MixedRefSource, CastSource, VoidSource, ExternCallReturn}, {MiscSink, PtrArithSink, CastSink, MixedRefSink, ExternCallParam, VoidSink}) at benchmark/heman/src/src/points.rs:84:47: 84:54 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_grid::result ; poison: ({CastSource, MiscSource, MixedRefSource, VoidSource, ExternCallReturn, PtrArith}, {PtrArithSink, MiscSink, MixedRefSink, ExternCallParam, VoidSink, CastSink}) at benchmark/heman/src/src/points.rs:98:9: 98:19 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_grid::dst ; poison: ({ExternCallReturn, VoidSource, CastSource, MiscSource, PtrArith, MixedRefSource}, {CastSink, VoidSink, PtrArithSink, ExternCallParam, MixedRefSink, MiscSink}) at benchmark/heman/src/src/points.rs:104:13: 104:20 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_grid::fresh1 ; poison: ({ExternCallReturn, VoidSource, MiscSource, CastSource, MixedRefSource, PtrArith}, {MiscSink, ExternCallParam, VoidSink, MixedRefSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/points.rs:112:17: 112:27 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_grid::fresh2 ; poison: ({ExternCallReturn, PtrArith, CastSource, MiscSource, MixedRefSource, VoidSource}, {ExternCallParam, MiscSink, PtrArithSink, CastSink, VoidSink, MixedRefSink}) at benchmark/heman/src/src/points.rs:115:17: 115:27 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_poisson::grid ; poison: ({ExternCallReturn, VoidSource, CastSource, MiscSource, PtrArith, MixedRefSource}, {VoidSink, CastSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/points.rs:183:9: 183:17 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_poisson::actives ; poison: ({MiscSource, MixedRefSource, CastSource, PtrArith, VoidSource, ExternCallReturn}, {PtrArithSink, VoidSink, CastSink, ExternCallParam, MixedRefSink, MiscSink}) at benchmark/heman/src/src/points.rs:192:9: 192:20 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_poisson::result ; poison: ({ExternCallReturn, PtrArith, MiscSource, CastSource, VoidSource, MixedRefSource}, {MiscSink, PtrArithSink, VoidSink, ExternCallParam, MixedRefSink, CastSink}) at benchmark/heman/src/src/points.rs:197:9: 197:19 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_poisson::samples ; poison: ({CastSource, MixedRefSource, MiscSource, PtrArith, ExternCallReturn, VoidSource}, {CastSink, ExternCallParam, PtrArithSink, MiscSink, VoidSink, MixedRefSink}) at benchmark/heman/src/src/points.rs:198:9: 198:20 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_density::density ; poison: ({CastSource, MixedRefSource, VoidSource, ExternCallReturn, MiscSource, PtrArith}, {MiscSink, CastSink, PtrArithSink, VoidSink, MixedRefSink, ExternCallParam}) at benchmark/heman/src/src/points.rs:370:5: 370:16 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_density::grid ; poison: ({VoidSource, ExternCallReturn, MixedRefSource, CastSource, PtrArith, MiscSource}, {ExternCallParam, VoidSink, PtrArithSink, MiscSink, MixedRefSink, CastSink}) at benchmark/heman/src/src/points.rs:404:9: 404:17 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_density::ngrid ; poison: ({CastSource, PtrArith, MixedRefSource, ExternCallReturn, MiscSource, VoidSource}, {VoidSink, CastSink, ExternCallParam, PtrArithSink, MiscSink, MixedRefSink}) at benchmark/heman/src/src/points.rs:409:9: 409:18 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_density::actives ; poison: ({PtrArith, ExternCallReturn, CastSource, VoidSource, MixedRefSource, MiscSource}, {PtrArithSink, MixedRefSink, CastSink, MiscSink, VoidSink, ExternCallParam}) at benchmark/heman/src/src/points.rs:418:9: 418:20 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_density::result ; poison: ({MiscSource, CastSource, ExternCallReturn, PtrArith, VoidSource, MixedRefSource}, {ExternCallParam, MiscSink, VoidSink, MixedRefSink, CastSink, PtrArithSink}) at benchmark/heman/src/src/points.rs:424:9: 424:19 (#0)
+Non-limit ptr: lib::src::src::points::heman_points_from_density::samples ; poison: ({VoidSource, CastSource, PtrArith, MixedRefSource, ExternCallReturn, MiscSource}, {ExternCallParam, MiscSink, CastSink, MixedRefSink, PtrArithSink, VoidSink}) at benchmark/heman/src/src/points.rs:425:9: 425:20 (#0)
+raw pointer CSV
+Benchmark,Statistic,{VoidPtr},{ExplicitRaw},{PtrArith},{Global},{Cast},{VoidPtr},{StringLit},{Extern},{}
+heman,NonUniqueDecls,488,0,476,23,488,488,0,488,574
+heman,DeclsExact,0,0,23,0,0,0,0,4,58
+heman,NonUniqueDerefs,982,0,965,96,982,982,0,982,1261
+heman,DerefsExact,0,0,103,0,0,0,0,0,173
+non-empty pointer eq class sizes:
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+1
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+3
+4
+4
+4
+4
+4
+4
+4
+4
+4
+5
+5
+5
+6
+6
+6
+7
+8
+8
+9
+12
+13
+14
+33
+38
+395
+there are 352 non-empty eq classes
+PROFILING RESULTS
+call graph closure: 0 ms
+compute SCCs: 5217 ms
+computing poison sets via equality-based analysis: 223 ms
+computing subsets for ownership/poison propagation: 2160 ms
+constraint solving: 1487 ms
+constraint solving (TODO: only compute eq classes): 4420 ms
+constraint solving (addr_of_locs): 1580 ms
+constraint solving (reborrow_map): 2445 ms
+constructor constraints: 4647 ms
+propagating compiler error-derived poisons via subset-based analysis: 0 ms
+propagating inline assembly poisons via subset-based analysis: 0 ms
+propagating ownership: 0 ms
+propagating refcell promotion: 29 ms
+propagating upper and lower sets: 5457 ms
+set constraint solving: 12380 ms
+transitive closure: 1705 ms

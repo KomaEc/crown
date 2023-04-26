@@ -1,0 +1,16 @@
+[
+    {
+        "arguments": [
+            "cc",
+            "-c",
+            "-std=c99",
+            "-Wall",
+            "-I.",
+            "-o",
+            "url-test",
+            "test.c"
+        ],
+        "directory": "/Users/emre/lab/c2rust/examples/urlparser/repo",
+        "file": "test.c"
+    }
+]

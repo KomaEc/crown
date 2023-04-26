@@ -1,0 +1,43 @@
+environment variable flags: RwLockReadGuard { lock: RwLock { data: Flags { print_per_fn_stats: false, count_indirect: false, benchmark_name: "bst", non_limit: true, config_file: None } } }
+Non-limit ptr: lib::src::bst::newNode::temp ; poison: ({VoidSource, CastSource}, {VoidSink, ExternCallParam, CastSink}) at benchmark/bst/src/bst.rs:16:9: 16:17 (#0)
+Non-limit ptr: lib::src::bst::inorder::root ; poison: ({CastSource, VoidSource}, {VoidSink, CastSink, ExternCallParam}) at benchmark/bst/src/bst.rs:25:34: 25:42 (#0)
+Non-limit ptr: lib::src::bst::insert::node ; poison: ({VoidSource, CastSource}, {VoidSink, CastSink, ExternCallParam}) at benchmark/bst/src/bst.rs:33:33: 33:41 (#0)
+Non-limit ptr: lib::src::bst::minValueNode::node ; poison: ({VoidSource, CastSource}, {CastSink, ExternCallParam, VoidSink}) at benchmark/bst/src/bst.rs:47:39: 47:47 (#0)
+Non-limit ptr: lib::src::bst::minValueNode::current ; poison: ({VoidSource, CastSource}, {VoidSink, ExternCallParam, CastSink}) at benchmark/bst/src/bst.rs:48:9: 48:20 (#0)
+Non-limit ptr: lib::src::bst::deleteNode::root ; poison: ({CastSource, VoidSource}, {VoidSink, ExternCallParam, CastSink}) at benchmark/bst/src/bst.rs:56:5: 56:13 (#0)
+Non-limit ptr: lib::src::bst::deleteNode::temp ; poison: ({VoidSource, CastSource}, {VoidSink, ExternCallParam, CastSink}) at benchmark/bst/src/bst.rs:70:17: 70:25 (#0)
+Non-limit ptr: lib::src::bst::deleteNode::temp_0 ; poison: ({VoidSource, CastSource}, {ExternCallParam, VoidSink, CastSink}) at benchmark/bst/src/bst.rs:75:21: 75:31 (#0)
+Non-limit ptr: lib::src::bst::deleteNode::temp_1 ; poison: ({CastSource, VoidSource}, {CastSink, ExternCallParam, VoidSink}) at benchmark/bst/src/bst.rs:80:13: 80:23 (#0)
+raw pointer CSV
+Benchmark,Statistic,{VoidPtr},{ExplicitRaw},{PtrArith},{Global},{Cast},{VoidPtr},{StringLit},{Extern},{}
+bst,NonUniqueDecls,9,0,0,0,9,9,0,9,9
+bst,DeclsExact,0,0,0,0,0,0,0,0,0
+bst,NonUniqueDerefs,29,0,0,0,29,29,0,29,29
+bst,DerefsExact,0,0,0,0,0,0,0,0,0
+non-empty pointer eq class sizes:
+1
+1
+1
+1
+1
+1
+1
+9
+there are 8 non-empty eq classes
+PROFILING RESULTS
+call graph closure: 0 ms
+compute SCCs: 15 ms
+computing poison sets via equality-based analysis: 12 ms
+computing subsets for ownership/poison propagation: 0 ms
+constraint solving: 1 ms
+constraint solving (TODO: only compute eq classes): 1 ms
+constraint solving (addr_of_locs): 3 ms
+constraint solving (reborrow_map): 2 ms
+constructor constraints: 7 ms
+propagating compiler error-derived poisons via subset-based analysis: 0 ms
+propagating inline assembly poisons via subset-based analysis: 0 ms
+propagating ownership: 0 ms
+propagating refcell promotion: 1 ms
+propagating upper and lower sets: 8 ms
+set constraint solving: 24 ms
+transitive closure: 0 ms
