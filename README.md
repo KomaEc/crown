@@ -153,3 +153,10 @@ cd tests/03_direct_and_absolute_rpath
 make all
 ```
 The behaviour is the same as specified in the `Makefile`, where the first call cannot find lib_f.so, and the second one should.
+
+#### Runtime Performance
+We measure the runtime performance by using the command
+```shell
+time ./run.sh
+```
+In our machine, the above command terminates roughly within 1min.
