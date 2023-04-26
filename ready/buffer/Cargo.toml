@@ -12,5 +12,6 @@ autobins = false
 [[bin]]
 name = "test"
 path = "lib.rs"
+
 [dependencies]
 libc= "0.2"
