@@ -89,13 +89,37 @@ You can find the evaluation results in `evaluation.csv`. The last columne corres
 ```
 The `size.csv` corresponds to table 1.
 
-#### Producing Table 2
-We provide a scripts that replicpatch -s -p0 -f -r -< test.patchates the previous steps for all benchmarks. Before running it, make sure there is no `results` folder exists in `crown`.
+#### Run all benchmark
+We provide a scripts that replicates the previous steps for all benchmarks. Before running it, make sure there is no `results` folder exists in `crown`.
 ```shell
+# rm -r results # if already exists
 # in crown folder
 ./run.sh
 ```
-Now all transformed programs will be in the `results` folder. To produce Table2, run
+Now all transformed programs will be in the `results` folder.
+
+
+#### Check all benchmark
+Before checking all benchmark, we note that the benchmark 'heman' seems to trigger some Rust compiler internal bugs with our working version (nightly-2023-01-26). Here we need compile this program with another version. We already included a `rust-toolchain.toml` file in 'heman', so the following commands check that it compiles:
+```shell
+cd results/heman
+cargo check # or cargo build
+```
+
+To check all results, run
+```shell
+./check.sh results
+```
+Since `./check.sh` resides in the 'crown' folder, our working version of the Rust compiler will be used. As a consequence, the 'heman' benchmark triggers internal errors.
+
+#### Producing Table 2
+First run all benchmarks,
+```shell
+# rm -r results # if already exists
+# in crown folder
+./run.sh
+```
+To produce Table2, run
 ```shell
 ./evaluate.sh benchmark results results
 ```
