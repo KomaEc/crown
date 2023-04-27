@@ -1,23 +1,28 @@
 # Artifact for Crown
-The artifact contains the source code our tool and all the benchmarks we looked into.
+The artifact contains the source code of our tool and all the benchmarks we tried.
 This document covers:
 - File structure of the artifact
 - Instructions to run our tool on a single benchmark
-- Instructions to run out tool over all benchmarks and to produce the evaluation results
+- Instructions to run our tool over all benchmarks and to produce the evaluation results
 
-Note: due to the effect of some bug fixes, there are two tiny changes to the data for `buffer` in table 2: the #ptr goes from 38 to 37, and the #uses goes from 56 to 54. The percentage remains the same.
+Note: due to the effect of some bug fixes, there are two minimal changes compared to the data for `buffer` in table 2: the #ptr goes from 38 to 37, and the #uses goes from 56 to 54. The percentage remains the same.
 
 ### File structure
 We primarily work in the `/root/crown` folder. Inside the `crown` folder:
 - `crates, src, build.rs, Cargo.toml`, etc. are source codes of the tool (as a cargo project)
-- `benchmark` contains the set of benchmark in unsafe Rust code
-- `comparison` contains the data necessary for comparing our tool to previous work. It includes the benchmarks in [14] and evaluation results of the tool in [14] (folder `laertes-laertes`); benchmarks provided by us and evaluation results we obtained by emailing authors of [14] (`laertes-crown`).
-- `c-code` contains the original C code we started with. Our benchmarks are obtained by invoking `c2rust transpile --emit-modules --fail-on-error --reduce-type-annotations --emit-build-files PATH/TO/compile_commands.json`, where `compile_commands.json`s are obtained by `bear make` if applicable. We made some tiny changes to better work with them (like adding feature flags `#![feature(raw_ref_op)]`, removing wrappers of main entries, etc.). We omit these steps in this document. (The benchmark `tuplipindicator` can be found in [14]'s artifact).
+- `benchmark` contains the set of benchmarks in unsafe Rust code
+- `comparison` contains the data necessary for comparing our tool to previous work. It includes the benchmarks in [14] and evaluation results of the tool in [14] (folder `laertes-laertes`); benchmarks provided by us and evaluation results of [14] on our benchmarks, which we obtained by emailing the authors of [14] (`laertes-crown`).
+- `c-code` contains the original C code we started with (as explained in the paper, e.g. sec 4, our benchmarks are obtained by running c2rust on the original C code). Our benchmarks are obtained by invoking `c2rust transpile --emit-modules --fail-on-error --reduce-type-annotations --emit-build-files PATH/TO/compile_commands.json`.
 
 ### Instructions on a single benchmark
 We use the `buffer` benchmark as an example.
 
-First make a copy of `buffer`:
+First, change directory to `root/crown`
+```shell
+cd /root/crown/
+```
+
+Then, make a copy of `buffer`:
 ```shell
 # in crown folder
 cp -r benchmark/buffer .
