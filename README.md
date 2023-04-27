@@ -42,7 +42,7 @@ __Analyse (ownership, mutability and fatness as described in Sec 4) `buffer`__
 ```
 We print on the screen all the function signatures with respect to ownership information. Also, in the `buffer` folder, there is an `analysis_results` folder which contains the ownership/fatness/mutability information for all local variables in the json files.
 
-__Perform rewrite__
+__Perform translation__
 ```shell
 # in crown folder
 ./rewrite.sh buffer
@@ -58,7 +58,7 @@ The `./check.sh` scripts will apply `cargo check` to check if `buffer` compiles 
 
 __Run the test case__
 
-C2rust transforms C programs to a Rust library. To make the `buffer` library executable, we need to apply a patch that adds a main entry and changes `Cargo.toml`.
+C2rust transforms C programs to Rust libraries. To make the `buffer` library executable, we need to apply a patch that adds a main entry and changes `Cargo.toml`.
 ```shell
 # in crown folder
 mkdir test
