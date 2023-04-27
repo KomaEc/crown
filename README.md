@@ -76,7 +76,7 @@ __Evaluate__
 # change folder to crown
 cd ../..
 # in crown folder
-./evaluate.sh benchmark/buffer . buffer
+./evaluate.sh benchmark . buffer
 ```
 You can find the evaluation results in `evaluation.csv`. The last column corresponds to the pointer reduction rate.
 
