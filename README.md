@@ -129,9 +129,12 @@ The table could be found in `evaluation.csv`, which reproduces the 'crown' colum
 We provide another script that evaluate the tool in [14]:
 ```shell
 # in crown folder
+# rm -r test # if test exists, otherwise there will be naming conflicts
 ./mkcomparison.sh
 ```
 The table could be found in `comparison/laertes-laertes/evaluation.csv` and `comparison/laertes-crown/evaluation.csv`. Some error messages may appear. They are caused by the fact that we are using a more up-to-date compiler version. The last colume of these tables reproduce the `laertes` column in Table 2.
+
+Note that the table is missing an entry for `brotli`, because the tool in [14] crashes on this benchmark.
 
 #### Test
 As claimed in the paper, libtree, rgba, quadtree, urlparser, genann, buffer are associated with unit tests, and the translated versions pass all these tests.
