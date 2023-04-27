@@ -54,3 +54,15 @@ done
 
 ./sort.sh $SUMMARY
 
+
+CUT=""
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    CUT=gcut
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    CUT=cut
+fi
+
+TEMP=$(mktemp)
+cat $SUMMARY | $CUT --complement -d, -f 2-4,8-10 > $TEMP
+mv $TEMP $SUMMARY
+
