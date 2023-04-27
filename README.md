@@ -12,7 +12,7 @@ We primarily work in the `/root/crown` folder. Inside the `crown` folder:
 - `crates, src, build.rs, Cargo.toml`, etc. are source codes of the tool (as a cargo project)
 - `benchmark` contains the set of benchmarks in unsafe Rust code
 - `comparison` contains the data necessary for comparing our tool to previous work. It includes the benchmarks in [14] and evaluation results of the tool in [14] (folder `laertes-laertes`); benchmarks provided by us and evaluation results of [14] on our benchmarks, which we obtained by emailing the authors of [14] (`laertes-crown`).
-- `c-code` contains the original C code we started with (as explained in the paper, e.g. sec 4, our benchmarks are obtained by running c2rust on the original C code). Our benchmarks are obtained by invoking `c2rust transpile --emit-modules --fail-on-error --reduce-type-annotations --emit-build-files PATH/TO/compile_commands.json`.
+- `c-code` contains the original C code we started with (as explained in the paper, e.g. sec 4, our benchmarks are obtained by running c2rust on the original C code). Our benchmarks (from the folder `benchmark`) are obtained by invoking `c2rust transpile --emit-modules --fail-on-error --reduce-type-annotations --emit-build-files PATH/TO/compile_commands.json`.
 
 ### Instructions on a single benchmark
 We use the `buffer` benchmark as an example.
@@ -33,37 +33,32 @@ __Run the preprocessing scripts__
 # in crown folder
 ./preprocess.sh buffer
 ```
-The preprocesing scripts will perform preprocessing steps as described in Sec7.1. Also it will provides some extra steps like adding null assertions:
-```rust
-if (p.is_null()) {
-    assert!(p.is_null())
-}
-```
-changing `&mut` to `&raw mut`, etc. (source code can be found in `crates/preprocess`), which facilitate our analysis.
+The preprocesing scripts will perform the preprocessing steps described in Sec 7.1, under `Handling of null pointers` in Sec 3.2, as well as some additional small syntax-based steps like changing `&mut` to `&raw mut`, etc. (source code can be found in `crates/preprocess`).
 
-__Analyse `buffer`__
+__Analyse (ownership, mutability and fatness as described in Sec 4) `buffer`__
 ```shell
 # in crown folder
 ./analyse.sh buffer
 ```
-You can see a trace of log information. At the end, the function sigatures with respect to ownership are printed out. Also, inside the `buffer` folder, there is an `analysis_results` folder which contain the ownership/fatness/mutability information for all local variables in json files.
+We print on the screen all the function signatures with respect to ownership information. Also, in the `buffer` folder, there is an `analysis_results` folder which contains the ownership/fatness/mutability information for all local variables in the json files.
 
 __Perform rewrite__
 ```shell
 # in crown folder
 ./rewrite.sh buffer
 ```
-Similarly, a trace of log information will be printed out.
+Similarly, logging information will be printed out. The rewrite happens in-place, so you can look at the translated code in the `buffer` folder.
 
-__Check compile__
+__Check that the translated file compiles__
 ```shell
 # in crown folder
 ./check.sh buffer
 ```
-`./check.sh` scripts will apply `cargo check` to check if `buffer` compiles (with all warnings suppressed). You can also go to the `buffer` folder and run `cargo check`.
+The `./check.sh` scripts will apply `cargo check` to check if `buffer` compiles (with all warnings suppressed). You can also go to the `buffer` folder and run `cargo check`.
 
 __Run the test case__
-C2rust transforms C programs to Rust library. To make the `buffer` library executable, we need to apply a patch that adds a main entry and changes `Cargo.toml`.
+
+C2rust transforms C programs to a Rust library. To make the `buffer` library executable, we need to apply a patch that adds a main entry and changes `Cargo.toml`.
 ```shell
 # in crown folder
 mkdir test
@@ -78,10 +73,12 @@ cargo run
 
 __Evaluate__
 ```shell
+# change folder to crown
+cd ../..
 # in crown folder
 ./evaluate.sh benchmark/buffer . buffer
 ```
-You can find the evaluation results in `evaluation.csv`. The last columne corresponds to the pointer reduction rate.
+You can find the evaluation results in `evaluation.csv`. The last column corresponds to the pointer reduction rate.
 
 
 ### Instructions for all benchmark
