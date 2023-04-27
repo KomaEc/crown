@@ -78,10 +78,9 @@ cd ../..
 # in crown folder
 ./evaluate.sh benchmark . buffer
 ```
-You can find the evaluation results in `evaluation.csv`. The important columns, which will be used to produce Table 2 later on, are the two columns of percentages, which represent the reduction rate of unsafe pointers, the reduction rate of unsafe uses, respectively.
+You can find the evaluation results in `evaluation.csv`. The important columns, which will be used to produce Table 2 later on, are the two columns with 100%, which represent the reduction rate of unsafe (mutable, non-array) raw pointer declarations and the reduction rate of their uses, respectively.
 
-
-### Instructions for all benchmark
+### Instructions for all benchmarks
 
 #### Producing Table 1
 ```shell
