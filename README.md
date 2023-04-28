@@ -78,7 +78,11 @@ cd ../..
 # in crown folder
 ./evaluate.sh benchmark . buffer
 ```
-You can find the evaluation results in `evaluation.csv`. The important columns, which will be used to produce Table 2 later on, are the two columns with 100%, which represent the reduction rate of unsafe (mutable, non-array) raw pointer declarations and the reduction rate of their uses, respectively.
+You can find the evaluation results in `evaluation.csv`. The important columns, which will be used to produce Table 2 later on, are the two columns with 100%, which represent the reduction rate of unsafe (mutable, non-array) raw pointer declarations and the reduction rate of their uses, respectively. You can view `evaluation.csv` with:
+
+```shell
+cat evaluation.csv
+```
 
 ### Instructions for all benchmarks
 
@@ -88,10 +92,10 @@ You can find the evaluation results in `evaluation.csv`. The important columns, 
 ./benchmark_statistics.sh > size.csv
 ./sort.sh size.csv
 ```
-The `size.csv` corresponds to table 1.
+File `size.csv` corresponds to Table 1.
 
-#### Run all benchmark
-We provide a scripts that replicates the previous steps for all benchmarks. Before running it, make sure there is no `results` folder exists in `crown`.
+#### Run all the benchmarks
+We provide a script that replicates the steps we illustrated above for all benchmarks. Before running it, make sure no `results` folder exists in `crown`.
 ```shell
 # rm -r results # if already exists
 # in crown folder
@@ -100,8 +104,8 @@ We provide a scripts that replicates the previous steps for all benchmarks. Befo
 Now all transformed programs will be in the `results` folder.
 
 
-#### Check all benchmark
-Before checking all benchmark, we note that the benchmark 'heman' seems to trigger some Rust compiler internal bugs with our working version (nightly-2023-01-26). Here we need compile this program with another version. We already included a `rust-toolchain.toml` file in 'heman', so the following commands check that it compiles:
+#### Check all benchmarks
+Before checking all benchmarks, we note that the benchmark 'heman' seems to trigger some Rust compiler internal bugs with our working version (nightly-2023-01-26). Here we need compile this program with another version. We already included a `rust-toolchain.toml` file in 'heman', so the following commands check that it compiles:
 ```shell
 cd results/heman
 cargo check # or cargo build
@@ -114,30 +118,32 @@ To check all results, run
 Since `./check.sh` resides in the 'crown' folder, our working version of the Rust compiler will be used. As a consequence, the 'heman' benchmark triggers internal errors.
 
 #### Producing Table 2
-First run all benchmarks,
+First make sure you run all the benchmarks:
 ```shell
 # rm -r results # if already exists
 # in crown folder
 ./run.sh
 ```
-To produce Table2, run
+To produce Table 2, run:
 ```shell
 ./evaluate.sh benchmark results results
 ```
-The table could be found in `evaluation.csv`, which reproduces the 'crown' column in Table 2.
+The table can be found in `evaluation.csv`, where the first, second, fourth, fifth and seventh columns corresponds to the `Benchmark`,`#ptrs`, `Crown`, `#uses', `Crown` columns in Table 2, respectively.
 
-We provide another script that evaluate the tool in [14]:
+In order to obtain the results for Laertes [14] in Table 2, we provide the following script:
 ```shell
 # in crown folder
 # rm -r test # if test exists, otherwise there will be naming conflicts
 ./mkcomparison.sh
 ```
-The table could be found in `comparison/laertes-laertes/evaluation.csv` and `comparison/laertes-crown/evaluation.csv`. Some error messages may appear. They are caused by the fact that we are using a more up-to-date compiler version. The last colume of these tables reproduce the `laertes` column in Table 2.
+Two tables (corresponding to [14]'s benchmarks and our benchmarks, respectively) can be found in `comparison/laertes-laertes/evaluation.csv` and `comparison/laertes-crown/evaluation.csv`. Some error messages may appear due to the fact that we are using a more up-to-date compiler version. The seventh and last colums correspond to the two `Laertes' columns in Table 2.
 
 Note that the table is missing an entry for `brotli`, because the tool in [14] crashes on this benchmark.
 
 #### Test
-As claimed in the paper, libtree, rgba, quadtree, urlparser, genann, buffer are associated with unit tests, and the translated versions pass all these tests.
+As claimed in the paper, libtree, rgba, quadtree, urlparser, genann, buffer have associated unit tests, and the translated versions pass all these tests.
+
+First, if there is a test folder in `root/crown`, we remove it and create a new one:
 ```shell
 # rm -r test # if test folder already exists
 mkdir test
@@ -161,6 +167,8 @@ The behaviour is the same as specified in the `Makefile`, where the first call c
 #### Runtime Performance
 We measure the runtime performance by using the command
 ```shell
+# rm -r results # if already exists
+# in crown folder
 time ./run.sh
 ```
-In our machine, the above command terminates roughly within 1min.
+On our machine, the above command terminates roughly within 1 min.
