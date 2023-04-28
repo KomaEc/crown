@@ -6,4 +6,4 @@ benchmark suite. We also provide instructions that replicate the statistics show
 TODO
 
 ### SHA256 checksum
-TODO
+ff31b6ae18f51541b5a2d0774709953b56e5d405876d4df76b08eb608598523d
