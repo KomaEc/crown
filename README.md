@@ -7,6 +7,15 @@ This document covers:
 
 Note: due to the effect of some bug fixes, there are two minimal changes compared to the data for `buffer` in table 2: the #ptr goes from 38 to 37, and the #uses goes from 56 to 54. The percentage remains the same.
 
+
+### Setting up the docker image
+To load the image and start the container, use the following commands:
+```shell
+gunzip crown.tar.gz
+sudo docker load -i crown.tar
+sudo docker run -it crown:latest
+```
+
 ### File structure
 We primarily work in the `/root/crown` folder. Inside the `crown` folder:
 - `crates, src, build.rs, Cargo.toml`, etc. are source codes of the tool (as a cargo project)
@@ -105,17 +114,16 @@ Now all transformed programs will be in the `results` folder.
 
 
 #### Check all benchmarks
-Before checking all benchmarks, we note that the benchmark 'heman' seems to trigger some Rust compiler internal bugs with our working version (nightly-2023-01-26). Here we need compile this program with another version. We already included a `rust-toolchain.toml` file in 'heman', so the following commands check that it compiles:
-```shell
-cd results/heman
-cargo check # or cargo build
-```
-
-To check all results, run
+To check that all benchmarks compile with the newest Rust compiler version, use the following scripts:
 ```shell
 ./check.sh results
 ```
-Since `./check.sh` resides in the 'crown' folder, our working version of the Rust compiler will be used. As a consequence, the 'heman' benchmark triggers internal errors.
+You can also go into each individual directory and check. For example,
+```shell
+# in crown folder
+cd results/brotli
+cargo +nightly-2023-04-16 check
+```
 
 #### Producing Table 2
 First make sure you run all the benchmarks:

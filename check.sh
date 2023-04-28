@@ -14,6 +14,6 @@ for f in $(find $1 -name "Cargo.toml"); do
     BENCH_NAME="$(basename $BENCH_DIR)"
     ENTRY=$(find_entry $BENCH_DIR)
     echo "checking $BENCH_NAME"
-    RUSTFLAGS=-Awarnings cargo check --manifest-path "$f"
+    RUSTFLAGS=-Awarnings cargo +nightly-2023-04-16 check --manifest-path "$f"
     cargo clean --manifest-path "$f"
 done
