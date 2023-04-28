@@ -128,7 +128,7 @@ To produce Table 2, run:
 ```shell
 ./evaluate.sh benchmark results results
 ```
-The table can be found in `evaluation.csv`, where the first, second, fourth, fifth and seventh columns corresponds to the `Benchmark`,`#ptrs`, `Crown`, `#uses', `Crown` columns in Table 2, respectively.
+The table can be found in `evaluation.csv`, where the first, second, fourth, fifth and seventh columns corresponds to the `Benchmark`,`#ptrs`, `Crown`, `#uses`, `Crown` columns in Table 2, respectively.
 
 In order to obtain the results for Laertes [14] in Table 2, we provide the following script:
 ```shell
@@ -136,7 +136,7 @@ In order to obtain the results for Laertes [14] in Table 2, we provide the follo
 # rm -r test # if test exists, otherwise there will be naming conflicts
 ./mkcomparison.sh
 ```
-Two tables (corresponding to [14]'s benchmarks and our benchmarks, respectively) can be found in `comparison/laertes-laertes/evaluation.csv` and `comparison/laertes-crown/evaluation.csv`. Some error messages may appear due to the fact that we are using a more up-to-date compiler version. The seventh and last colums correspond to the two `Laertes' columns in Table 2.
+Two tables (corresponding to [14]'s benchmarks and our benchmarks, respectively) can be found in `comparison/laertes-laertes/evaluation.csv` and `comparison/laertes-crown/evaluation.csv`. Some error messages may appear due to the fact that we are using a more up-to-date compiler version. The seventh and last colums correspond to the two `Laertes` columns in Table 2.
 
 Note that the table is missing an entry for `brotli`, because the tool in [14] crashes on this benchmark.
 
