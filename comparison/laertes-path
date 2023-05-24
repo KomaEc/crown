@@ -5,3 +5,4 @@ lil/c2rust-lib.rs
 robotfindskitten/rust/c2rust-lib.rs
 tulipindicators/c2rust-lib.rs
 urlparser/test.rs
+libzahl/rust/c2rust-lib.rs

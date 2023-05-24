@@ -52,6 +52,9 @@ done < comparison/laertes-path
 
 EVALUATION=$PROJ_DIR/target/release/evaluation
 SUMMARY=comparison/laertes-laertes/evaluation.csv
+if [ -f $SUMMARY ]; then
+    rm $SUMMARY
+fi
 while IFS= read -r path; do
     BENCH=$(echo $path | cut -d "/" -f1)
     echo "evaluating $BENCH"
@@ -65,3 +68,13 @@ while IFS= read -r path; do
     (printf '%s' "$BENCH,"; cat $TEMP; printf '\n') >> $SUMMARY
     rm $TEMP
 done < comparison/laertes-path
+
+CUT=""
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    CUT=gcut
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    CUT=cut
+fi
+TEMP=$(mktemp)
+cat $SUMMARY | $CUT --complement -d, -f 2-4,8-10 > $TEMP
+mv $TEMP $SUMMARY
