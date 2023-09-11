@@ -253,7 +253,9 @@ impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
         {
             if let Some(func) = func.constant() {
                 let ty = func.ty();
-                let &FnDef(callee, _) = ty.kind() else { unreachable!() };
+                let &FnDef(callee, _) = ty.kind() else {
+                    unreachable!()
+                };
                 if let Some(local_did) = callee.as_local() {
                     match tcx.hir().find_by_def_id(local_did).unwrap() {
                         // this crate
@@ -290,7 +292,9 @@ impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
                             }
 
                             for (arg, param_vars) in args.iter().zip(callee_vars) {
-                                let Some(arg) = arg.place() else { continue; };
+                                let Some(arg) = arg.place() else {
+                                    continue;
+                                };
                                 let arg_vars = place_vars::<EnsureNoDeref>(
                                     &arg,
                                     local_decls,
@@ -468,7 +472,9 @@ pub(crate) fn conservative_call<'tcx, M: MutabilityLikeAnalysis>(
     }
 
     for arg in args {
-        let Some(arg) = arg.place() else { continue; };
+        let Some(arg) = arg.place() else {
+            continue;
+        };
         let arg_vars =
             place_vars::<EnsureNoDeref>(&arg, local_decls, locals, struct_fields, &mut ());
         for var in arg_vars {

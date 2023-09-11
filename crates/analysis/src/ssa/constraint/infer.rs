@@ -6,8 +6,8 @@ use rustc_index::IndexVec;
 use rustc_middle::{
     mir::{
         BasicBlock, BasicBlockData, Body, BorrowKind, CastKind, Local, Location,
-        NonDivergingIntrinsic, Operand, Place, ProjectionElem, Rvalue, Statement, StatementKind,
-        Terminator, TerminatorKind, RETURN_PLACE, NullOp,
+        NonDivergingIntrinsic, NullOp, Operand, Place, ProjectionElem, Rvalue, Statement,
+        StatementKind, Terminator, TerminatorKind, RETURN_PLACE,
     },
     ty::{Ty, TyCtxt},
 };
@@ -211,7 +211,9 @@ where
 {
     let consume = rn.state.try_consume_at(place.local, location);
     for elem in place.projection {
-        let ProjectionElem::Index(idx) = elem else { continue };
+        let ProjectionElem::Index(idx) = elem else {
+            continue;
+        };
         let _ = rn.state.try_consume_at(idx, location);
     }
     Infer::interpret_consume(infer_cx, body, place, consume)
@@ -364,7 +366,9 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
             }
             StatementKind::Intrinsic(box intrinsic) => {
                 // assert!(matches!(intrinsic, NonDivergingIntrinsic::Assume(..)))
-                let NonDivergingIntrinsic::Assume(operand) = intrinsic else { unreachable!() };
+                let NonDivergingIntrinsic::Assume(operand) = intrinsic else {
+                    unreachable!()
+                };
                 let place = operand.place().unwrap();
                 assert!(
                     consume_place_at::<Infer>(&place, self.body, location, self, infer_cx)
@@ -518,7 +522,19 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                     (None, None) => {}
                     (None, Some(rhs_consume)) => {
                         if self.state.consume_chain.call_arg_temps.contains(&lhs.local) {
-                            Infer::call_arg(infer_cx, lhs.as_local().unwrap(), rhs_consume, false)
+                            // Infer::call_arg(infer_cx, lhs.as_local().unwrap(), rhs_consume, false)
+                            Infer::call_arg(
+                                infer_cx,
+                                lhs.as_local().unwrap_or_else(|| {
+                                    panic!(
+                                        "{:?}: {:?}",
+                                        self.body.source.instance.def_id(),
+                                        location
+                                    )
+                                }),
+                                rhs_consume,
+                                false,
+                            )
                         } else {
                             Infer::unknown_sink(infer_cx, rhs_consume)
                         }

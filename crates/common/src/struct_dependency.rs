@@ -18,7 +18,9 @@ impl<Field> StructDependency<Field> {
             graph.add_node(*did);
         });
         for &did in structs.iter() {
-            let Adt(adt_def, subst_ref) = tcx.type_of(did).skip_binder().kind() else { unreachable!("impossible") };
+            let Adt(adt_def, subst_ref) = tcx.type_of(did).skip_binder().kind() else {
+                unreachable!("impossible")
+            };
             assert!(adt_def.is_struct());
             for field_def in adt_def.all_fields() {
                 let ty = field_def.ty(tcx, subst_ref);

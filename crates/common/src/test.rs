@@ -63,7 +63,10 @@ pub fn run_compiler_with(
         output_dir: None,
         output_file: None,
         file_loader: None,
-        crate_check_cfg: rustc_interface::interface::parse_check_cfg(&EarlyErrorHandler::new(Default::default()), vec![]),
+        crate_check_cfg: rustc_interface::interface::parse_check_cfg(
+            &EarlyErrorHandler::new(Default::default()),
+            vec![],
+        ),
         lint_caps: rustc_hash::FxHashMap::default(),
         parse_sess_created: None,
         register_lints: None,
@@ -81,8 +84,12 @@ pub fn run_compiler_with(
                 let mut functions = Vec::new();
                 let mut structs = Vec::new();
                 for maybe_owner in tcx.hir().krate().owners.iter() {
-                    let Some(owner) = maybe_owner.as_owner() else { continue };
-                    let OwnerNode::Item(item) = owner.node() else { continue };
+                    let Some(owner) = maybe_owner.as_owner() else {
+                        continue;
+                    };
+                    let OwnerNode::Item(item) = owner.node() else {
+                        continue;
+                    };
                     match item.kind {
                         ItemKind::Fn(..) => functions.push(item.owner_id.def_id.to_def_id()),
                         ItemKind::Struct(..) => structs.push(item.owner_id.def_id.to_def_id()),

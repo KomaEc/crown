@@ -63,7 +63,11 @@ impl<'tcx> EmpiricalStudy<'tcx> for common::CrateData<'tcx> {
                     "aliasing fields: {}",
                     aliasing_field_pairs
                         .iter()
-                        .map(|&(f, g)| format!("({}, {})", field_defs[f.into()].name, field_defs[g.into()].name))
+                        .map(|&(f, g)| format!(
+                            "({}, {})",
+                            field_defs[f.into()].name,
+                            field_defs[g.into()].name
+                        ))
                         .collect::<Vec<_>>()
                         .join(", ")
                 );

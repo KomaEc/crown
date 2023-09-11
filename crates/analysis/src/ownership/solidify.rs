@@ -10,7 +10,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_index::IndexVec;
 use rustc_middle::mir::{
     visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-    Body, Local, LocalInfo, Location, Operand, Place, Rvalue, StatementKind, TerminatorKind, ClearCrossCrate,
+    Body, ClearCrossCrate, Local, LocalInfo, Location, Operand, Place, Rvalue, StatementKind,
+    TerminatorKind,
 };
 
 use super::{whole_program::WholeProgramResults, Ownership};
@@ -89,7 +90,9 @@ impl<'tcx> WholeProgramResults<'tcx> {
 
             let mut proxy_temporaries = FxHashSet::default();
             for bb_data in body.basic_blocks.iter() {
-                let Some(terminator) = &bb_data.terminator else { continue; };
+                let Some(terminator) = &bb_data.terminator else {
+                    continue;
+                };
                 if let TerminatorKind::Call { args, .. } = &terminator.kind {
                     proxy_temporaries.extend(
                         args.iter()
@@ -98,7 +101,10 @@ impl<'tcx> WholeProgramResults<'tcx> {
                 }
             }
             for (local, local_decl) in body.local_decls.iter_enumerated() {
-                if matches!(local_decl.local_info, ClearCrossCrate::Set(box LocalInfo::DerefTemp)) {
+                if matches!(
+                    local_decl.local_info,
+                    ClearCrossCrate::Set(box LocalInfo::DerefTemp)
+                ) {
                     proxy_temporaries.insert(local);
                 }
             }
@@ -125,8 +131,12 @@ impl<'tcx> WholeProgramResults<'tcx> {
                         }
                     }
 
-                    let Left(stmt) = body.stmt_at(location) else { continue };
-                    let StatementKind::Assign(box (place, rvalue)) = &stmt.kind else { continue };
+                    let Left(stmt) = body.stmt_at(location) else {
+                        continue;
+                    };
+                    let StatementKind::Assign(box (place, rvalue)) = &stmt.kind else {
+                        continue;
+                    };
                     if matches!(place.as_local(), Some(local) if proxy_temporaries.contains(&local))
                     {
                         let mut by_ref = false;
@@ -162,7 +172,7 @@ impl<'tcx> WholeProgramResults<'tcx> {
                                     assert_eq!(index, ownership.len());
                                     let Some(adt_def) = ty.ty_adt_def() else {
                                         // tuple
-                                        continue
+                                        continue;
                                     };
                                     if adt_def.is_union() {
                                         // FIXME

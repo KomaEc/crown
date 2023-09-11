@@ -51,7 +51,9 @@ pub fn compute_dominance_frontier(body: &Body) -> DominanceFrontier {
                 while !dominators.dominates(runner, bb) {
                     df[runner].insert(bb);
                     // runner = dominators.immediate_dominator(runner)
-                    let Some(dom) = dominators.immediate_dominator(runner) else { break };
+                    let Some(dom) = dominators.immediate_dominator(runner) else {
+                        break;
+                    };
                     runner = dom;
                 }
             }

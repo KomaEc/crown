@@ -103,7 +103,9 @@ impl<Qualifier> TypeQualifiers<Qualifier> {
         for did in structs {
             let struct_results = self.struct_results(did);
             let struct_ty = tcx.type_of(*did).skip_binder();
-            let TyKind::Adt(adt_def, _) = struct_ty.kind() else { unreachable!() };
+            let TyKind::Adt(adt_def, _) = struct_ty.kind() else {
+                unreachable!()
+            };
             println!("{} {{", tcx.def_path_str(*did));
             for (field_def, qualifiers) in adt_def.all_fields().zip(struct_results) {
                 println!(
@@ -210,7 +212,9 @@ where
         for (idx, r#struct) in crate_data.structs.iter().enumerate() {
             did_idx.insert(*r#struct, idx);
             let struct_ty = tcx.type_of(*r#struct).skip_binder();
-            let TyKind::Adt(adt_def, substs) = struct_ty.kind() else { unreachable!() };
+            let TyKind::Adt(adt_def, substs) = struct_ty.kind() else {
+                unreachable!()
+            };
             for field_def in adt_def.all_fields() {
                 let field_ty = field_def.ty(tcx, substs);
                 let ptr_count = count_ptr(field_ty);

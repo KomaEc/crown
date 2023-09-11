@@ -34,7 +34,9 @@ impl DefUseChain {
     }
 
     pub fn def_loc(&self, local: Local, location: Location) -> RichLocation {
-        let Some(consume) = self.0.of_location(location).get_by_key(&local) else { panic!("{:?} @ {:?}", local, location) };
+        let Some(consume) = self.0.of_location(location).get_by_key(&local) else {
+            panic!("{:?} @ {:?}", local, location)
+        };
         assert!(consume.is_use());
 
         let ssa_idx = consume.r#use;
@@ -76,7 +78,9 @@ fn definitions<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Definitions {
 
     let mut call_arg_temps: SsoHashSet<Local> = SsoHashSet::default();
     for bb_data in body.basic_blocks.iter() {
-        let Some(terminator) = &bb_data.terminator else { continue; };
+        let Some(terminator) = &bb_data.terminator else {
+            continue;
+        };
         if let TerminatorKind::Call { args, .. } = &terminator.kind {
             call_arg_temps.extend(
                 args.iter()

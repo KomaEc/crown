@@ -3,7 +3,10 @@ use std::ops::Range;
 use common::data_structure::assoc::AssocExt;
 use rustc_index::IndexVec;
 use rustc_middle::{
-    mir::{Body, Local, LocalInfo, Location, Operand, Place, PlaceElem, ProjectionElem, ClearCrossCrate},
+    mir::{
+        Body, ClearCrossCrate, Local, LocalInfo, Location, Operand, Place, PlaceElem,
+        ProjectionElem,
+    },
     ty::{AdtDef, Ty, TyCtxt, TyKind},
 };
 use rustc_type_ir::TyKind::FnDef;
@@ -260,7 +263,9 @@ where
                     ptr_chased += 1;
                 }
                 ProjectionElem::Field(field, ty) => {
-                    let TyKind::Adt(adt_def, _) = base_ty.kind() else { unreachable!() };
+                    let TyKind::Adt(adt_def, _) = base_ty.kind() else {
+                        unreachable!()
+                    };
                     proj_start_offset +=
                         infer_cx
                             .struct_ctxt
@@ -556,7 +561,9 @@ where
 
         if let Some(func) = callee.constant() {
             let ty = func.ty();
-            let &FnDef(callee, _) = ty.kind() else { unreachable!() };
+            let &FnDef(callee, _) = ty.kind() else {
+                unreachable!()
+            };
             if let Some(local_did) = callee.as_local() {
                 match infer_cx.tcx.hir().find_by_def_id(local_did).unwrap() {
                     // this crate
@@ -602,7 +609,9 @@ where
 
         // finalize temporaries
         for vars in locals {
-            let Some(vars) = vars else { continue; };
+            let Some(vars) = vars else {
+                continue;
+            };
             for var in vars {
                 infer_cx
                     .database
@@ -642,7 +651,9 @@ fn fit<'tcx, T, U, DB>(
     let mut count = 0;
     for &(leaf_ext_ty, offset_to_be) in fitter_leaf_nodes {
         while count < offset_to_be {
-            let (Some(fitter), Some(fittee)) = (fitter.next(), fittee.next()) else { panic!() };
+            let (Some(fitter), Some(fittee)) = (fitter.next(), fittee.next()) else {
+                panic!()
+            };
             on_matched(fitter, fittee, database);
             count += 1;
         }

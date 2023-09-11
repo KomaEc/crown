@@ -8,8 +8,8 @@ extern crate rustc_middle;
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, PlaceContext, Visitor},
-        Body, Local, LocalInfo, LocalKind, Location, Operand, Place, Rvalue, Terminator,
-        TerminatorKind, ClearCrossCrate,
+        Body, ClearCrossCrate, Local, LocalInfo, LocalKind, Location, Operand, Place, Rvalue,
+        Terminator, TerminatorKind,
     },
     ty::TyCtxt,
 };
@@ -28,7 +28,9 @@ fn verify_shape_of_place(krate: &common::CrateData) {
     struct Vis;
     impl<'tcx> Visitor<'tcx> for Vis {
         fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, _location: Location) {
-            let (PlaceContext::MutatingUse(..) | PlaceContext::NonMutatingUse(..)) = context else { return };
+            let (PlaceContext::MutatingUse(..) | PlaceContext::NonMutatingUse(..)) = context else {
+                return;
+            };
 
             let mut derefed = false;
             let mut offsetted = false;
@@ -101,7 +103,9 @@ fn verify_place_regularity(krate: &common::CrateData) {
         }
 
         fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, _location: Location) {
-            let PlaceContext::MutatingUse(MutatingUseContext::Call) = context else { return };
+            let PlaceContext::MutatingUse(MutatingUseContext::Call) = context else {
+                return;
+            };
             assert!(place.as_local().is_some())
         }
     }
@@ -116,7 +120,12 @@ fn verify_args_are_all_locals(krate: &common::CrateData) {
     struct Vis;
     impl<'tcx> Visitor<'tcx> for Vis {
         fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _: Location) {
-            let TerminatorKind::Call { destination, args, .. } = &terminator.kind else { return };
+            let TerminatorKind::Call {
+                destination, args, ..
+            } = &terminator.kind
+            else {
+                return;
+            };
             for arg in args {
                 match arg {
                     Operand::Move(place) => assert!(place.as_local().is_some()),

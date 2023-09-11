@@ -66,8 +66,12 @@ fn mock_statistics(
     let mut structs = Vec::new();
 
     for maybe_owner in tcx.hir().krate().owners.iter() {
-        let Some(owner) = maybe_owner.as_owner() else { continue };
-        let OwnerNode::Item(item) = owner.node() else { continue };
+        let Some(owner) = maybe_owner.as_owner() else {
+            continue;
+        };
+        let OwnerNode::Item(item) = owner.node() else {
+            continue;
+        };
         match item.kind {
             ItemKind::Fn(..) => fns.push(item.owner_id.def_id.to_def_id()),
             ItemKind::Struct(..) => structs.push(item.owner_id.def_id.to_def_id()),

@@ -222,8 +222,12 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
     let mut structs = Vec::new();
 
     for maybe_owner in tcx.hir().krate().owners.iter() {
-        let Some(owner) = maybe_owner.as_owner() else { continue };
-        let OwnerNode::Item(item) = owner.node() else { continue };
+        let Some(owner) = maybe_owner.as_owner() else {
+            continue;
+        };
+        let OwnerNode::Item(item) = owner.node() else {
+            continue;
+        };
         match item.kind {
             ItemKind::Fn(..) => fns.push(item.owner_id.def_id.to_def_id()),
             ItemKind::Struct(..) => structs.push(item.owner_id.def_id.to_def_id()),
@@ -241,9 +245,9 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                     .fns
                     .iter()
                     .find(|did| input.tcx.def_path_str(**did).ends_with(fn_name))
-                    else {
-                        bail!("no such function!")
-                    };
+                else {
+                    bail!("no such function!")
+                };
 
                 let body = input.tcx.optimized_mir(did);
                 rustc_middle::mir::pretty::write_mir_fn(

@@ -16,9 +16,15 @@ fn signal_nullness_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     // let mut rewriter = Vec::new(); //Rewriter::default();
 
     for maybe_owner in tcx.hir().krate().owners.iter() {
-        let Some(owner) = maybe_owner.as_owner() else { continue };
-        let OwnerNode::Item(item) = owner.node() else { continue };
-        let ItemKind::Fn(_, _, body_id) = item.kind else { continue };
+        let Some(owner) = maybe_owner.as_owner() else {
+            continue;
+        };
+        let OwnerNode::Item(item) = owner.node() else {
+            continue;
+        };
+        let ItemKind::Fn(_, _, body_id) = item.kind else {
+            continue;
+        };
         let hir_body = tcx.hir().body(body_id);
         // println!("{}", rustc_hir_pretty::id_to_string(&tcx.hir(), item.hir_id()));
         // println!("body kind: {:?}", hir_body.value);

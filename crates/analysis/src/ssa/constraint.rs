@@ -4,7 +4,7 @@ use common::data_structure::vec_vec::VecVec;
 use rustc_hir::def_id::DefId;
 use rustc_index::IndexVec;
 use rustc_middle::{
-    mir::{LocalDecl, LocalInfo, ClearCrossCrate},
+    mir::{ClearCrossCrate, LocalDecl, LocalInfo},
     ty::TyKind,
 };
 
@@ -67,9 +67,12 @@ pub fn local_measure<'tcx>(
 ) -> Option<NonZeroU32> {
     let ty = local_decl.ty;
     let measure = measurable.measure(ty, 0);
-    (!matches!(local_decl.local_info, ClearCrossCrate::Set(box LocalInfo::DerefTemp)))
-        .then(|| NonZeroU32::new(measure))
-        .flatten()
+    (!matches!(
+        local_decl.local_info,
+        ClearCrossCrate::Set(box LocalInfo::DerefTemp)
+    ))
+    .then(|| NonZeroU32::new(measure))
+    .flatten()
 }
 
 #[inline]
@@ -101,7 +104,9 @@ impl GlobalAssumptions {
 
         for &did in &struct_ctxt.post_order {
             let ty = tcx.type_of(did).skip_binder();
-            let TyKind::Adt(adt_def, subst) = ty.kind() else { unreachable!() };
+            let TyKind::Adt(adt_def, subst) = ty.kind() else {
+                unreachable!()
+            };
             struct_fields.push_inner(gen.next());
             for field_def in adt_def.all_fields() {
                 let field_ty = field_def.ty(tcx, subst);

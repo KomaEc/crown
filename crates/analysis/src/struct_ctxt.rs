@@ -40,7 +40,9 @@ impl<'tcx> Measurable<'tcx> for StructCtxt<'tcx> {
         ptr_chased: u32,
     ) -> Measure {
         assert!(adt_def.is_struct());
-        let Some(field_offsets) = self.field_offsets(&adt_def.did(), ptr_chased) else { return 0 };
+        let Some(field_offsets) = self.field_offsets(&adt_def.did(), ptr_chased) else {
+            return 0;
+        };
         field_offsets[field]
     }
 
@@ -93,7 +95,9 @@ impl<'tcx> StructCtxt<'tcx> {
             graph.add_node(*did);
         });
         for did in structs.iter() {
-            let Adt(adt_def, subst_ref) = tcx.type_of(did).skip_binder().kind() else { unreachable!("impossible") };
+            let Adt(adt_def, subst_ref) = tcx.type_of(did).skip_binder().kind() else {
+                unreachable!("impossible")
+            };
             assert!(adt_def.is_struct());
             for field_def in adt_def.all_fields() {
                 let mut ty = field_def.ty(tcx, subst_ref);
@@ -121,7 +125,9 @@ impl<'tcx> StructCtxt<'tcx> {
         let mut leaf_nodes = VecVec::with_indices_capacity(post_order.len());
         for &did in &post_order {
             let ty = tcx.type_of(did).skip_binder();
-            let Adt(adt_def, _) = ty.kind() else { unreachable!("impossible") };
+            let Adt(adt_def, _) = ty.kind() else {
+                unreachable!("impossible")
+            };
             assert!(adt_def.is_struct());
 
             offset_of.push_inner(0);
@@ -163,7 +169,9 @@ impl<'tcx> StructCtxt<'tcx> {
 
     #[inline]
     pub fn struct_size(&self, did: &DefId, ptr_chased: u32) -> Measure {
-        let Some(idx) = self.did_idx.get(did).copied() else { return 0 };
+        let Some(idx) = self.did_idx.get(did).copied() else {
+            return 0;
+        };
         // assert!(ptr_chased as usize <= self.offset_of.len());
         let offset_of = &self.offset_of[self.offset_of.len() - 1 - ptr_chased as usize];
         offset_of[idx].last().copied().unwrap()
@@ -189,7 +197,9 @@ impl<'tcx> StructCtxt<'tcx> {
         let mut offset_of = VecVec::with_capacity(self.post_order.len(), data_capacity);
         let mut leaf_nodes = VecVec::with_capacity(self.post_order.len(), data_capacity);
         for &did in &self.post_order {
-            let Adt(adt_def, subst_ref) = tcx.type_of(did).skip_binder().kind() else { unreachable!("impossible") };
+            let Adt(adt_def, subst_ref) = tcx.type_of(did).skip_binder().kind() else {
+                unreachable!("impossible")
+            };
             assert!(adt_def.is_struct());
 
             let mut offset = 0;
@@ -416,7 +426,9 @@ mod tests {
                 .post_order
                 .iter()
                 .find(|&&did| {
-                    let "Node" = tcx.def_path_str(did).as_str() else { return false };
+                    let "Node" = tcx.def_path_str(did).as_str() else {
+                        return false;
+                    };
                     true
                 })
                 .unwrap();
@@ -453,7 +465,9 @@ mod tests {
                 .post_order
                 .iter()
                 .find(|&&did| {
-                    let "S" = tcx.def_path_str(did).as_str() else { return false };
+                    let "S" = tcx.def_path_str(did).as_str() else {
+                        return false;
+                    };
                     true
                 })
                 .unwrap();
@@ -498,7 +512,9 @@ mod tests {
                 .post_order
                 .iter()
                 .find(|&&did| {
-                    let "S" = tcx.def_path_str(did).as_str() else { return false };
+                    let "S" = tcx.def_path_str(did).as_str() else {
+                        return false;
+                    };
                     true
                 })
                 .unwrap();

@@ -140,13 +140,23 @@ type CallArgsMapping = FxHashMap<Local, (DefId, usize)>;
 fn collect_call_args_mapping(body: &Body, tcx: TyCtxt) -> CallArgsMapping {
     let mut call_args_mapping = FxHashMap::default();
     for bb_data in body.basic_blocks.iter() {
-        let Some(terminator) = &bb_data.terminator else { continue; };
+        let Some(terminator) = &bb_data.terminator else {
+            continue;
+        };
         if let TerminatorKind::Call { func, args, .. } = &terminator.kind {
-            let Some(func) = func.constant() else { continue };
+            let Some(func) = func.constant() else {
+                continue;
+            };
             let ty = func.ty();
-            let &FnDef(callee, _) = ty.kind() else { unreachable!() };
-            let Some(local_did) = callee.as_local() else { continue };
-            let rustc_hir::Node::Item(_) = tcx.hir().find_by_def_id(local_did).unwrap() else { continue };
+            let &FnDef(callee, _) = ty.kind() else {
+                unreachable!()
+            };
+            let Some(local_did) = callee.as_local() else {
+                continue;
+            };
+            let rustc_hir::Node::Item(_) = tcx.hir().find_by_def_id(local_did).unwrap() else {
+                continue;
+            };
 
             for (idx, arg) in args.iter().enumerate() {
                 let Some(arg) = arg.place() else { continue };

@@ -43,10 +43,18 @@ fn link_functions_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
 
     // (3) Adjust references to extern fns to refer to the `#[no_mangle]` definition instead.
     let mut vis = resolved_path_visitor(tcx, |path| {
-        let Res::Def(DefKind::Fn, did) = path.res else { return };
-        let Some(local_did) = did.as_local() else { return };
-        let Some(symbol) = extern_def_to_symbol.get(&local_did) else { return };
-        let Some(&did) = symbol_to_def.get(&symbol) else { return };
+        let Res::Def(DefKind::Fn, did) = path.res else {
+            return;
+        };
+        let Some(local_did) = did.as_local() else {
+            return;
+        };
+        let Some(symbol) = extern_def_to_symbol.get(&local_did) else {
+            return;
+        };
+        let Some(&did) = symbol_to_def.get(&symbol) else {
+            return;
+        };
 
         let span = path.span;
         let replacement = "crate::".to_owned() + &tcx.def_path_str(did.to_def_id());
@@ -128,7 +136,11 @@ fn link_incomplete_types_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         // incomplete might be an extern type
         match name_to_complete.entry(name) {
             std::collections::hash_map::Entry::Occupied(_) => {
-                let Node::ForeignItem(foreign_item) = tcx.hir().get_by_def_id(incomplete.expect_local()) else { unreachable!() };
+                let Node::ForeignItem(foreign_item) =
+                    tcx.hir().get_by_def_id(incomplete.expect_local())
+                else {
+                    unreachable!()
+                };
                 let span = foreign_item.span;
                 rewriter.erase(tcx, span);
 
@@ -147,7 +159,9 @@ fn link_incomplete_types_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
 
     // (4) Replace references to incomplete types with references to same-named complete types.
     let mut vis = resolved_path_visitor(tcx, |path| {
-        let Res::Def(_, maybe_incomplete) = path.res else { return };
+        let Res::Def(_, maybe_incomplete) = path.res else {
+            return;
+        };
 
         if let Some(&name) = incomplete_to_name.get(&maybe_incomplete) {
             if let Some(complete) = name_to_complete.get(&name) {
@@ -246,7 +260,9 @@ fn canonicalize_structs_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     // (4) Rewrite references to canonical one
     let mut vis = resolved_path_visitor(tcx, |path| {
         let Res::Def(_, did) = path.res else { return };
-        let Some(&struct_idx) = struct_idx.get(&did) else { return };
+        let Some(&struct_idx) = struct_idx.get(&did) else {
+            return;
+        };
         let rep_idx = equivalent_classes[struct_idx];
         if rep_idx == struct_idx {
             return;

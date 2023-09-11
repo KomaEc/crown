@@ -117,7 +117,9 @@ impl FieldStrategy for FieldFocused {
 
         if let Some((struct_place, ProjectionElem::Field(field, _))) = place.last_projection() {
             let struct_ty = struct_place.ty(body, tcx).ty;
-            let TyKind::Adt(adt_def, _) = struct_ty.kind() else { unreachable!() };
+            let TyKind::Adt(adt_def, _) = struct_ty.kind() else {
+                unreachable!()
+            };
             if !struct_fields.did_idx.contains_key(&adt_def.did()) {
                 return None;
             }
@@ -155,11 +157,17 @@ impl DeallocArgStrategy for MergeDeallocArg {
         cg: &mut ConstraintGeneration<'cg, 'tcx, F, Self, I>,
         dealloc_arg: &Operand<'tcx>,
     ) {
-        let Some(dealloc_arg) = dealloc_arg.place() else { return };
+        let Some(dealloc_arg) = dealloc_arg.place() else {
+            return;
+        };
         let ty = dealloc_arg.ty(cg.body, cg.tcx).ty;
         assert!(ty.is_unsafe_ptr() || ty.is_ref());
-        let Some(arg_loc) = cg.place_location(dealloc_arg) else { return };
-        let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
+        let Some(arg_loc) = cg.place_location(dealloc_arg) else {
+            return;
+        };
+        let PlaceLocation::Plain(arg_loc) = arg_loc else {
+            unreachable!("argument operand contains derefs")
+        };
         let param_loc = cg.steensgaard.dealloc_arg;
         let constraint_idx = cg.constraints.len();
         cg.constraints
@@ -188,8 +196,12 @@ pub trait InterProceduralStrategy: Sized {
         if !dest_ty.is_unsafe_ptr() && !dest_ty.is_ref() {
             return;
         }
-        let Some(dest_loc) = cg.place_location(*destination) else { return };
-        let PlaceLocation::Plain(dest_loc) = dest_loc else { unreachable!("destination place contains derefs") };
+        let Some(dest_loc) = cg.place_location(*destination) else {
+            return;
+        };
+        let PlaceLocation::Plain(dest_loc) = dest_loc else {
+            unreachable!("destination place contains derefs")
+        };
 
         for arg in args.iter() {
             let Some(place) = arg.place() else { continue };
@@ -197,8 +209,12 @@ pub trait InterProceduralStrategy: Sized {
             if !place_ty.is_unsafe_ptr() && !place_ty.is_ref() {
                 continue;
             }
-            let Some(arg_loc) = cg.place_location(place) else { continue };
-            let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
+            let Some(arg_loc) = cg.place_location(place) else {
+                continue;
+            };
+            let PlaceLocation::Plain(arg_loc) = arg_loc else {
+                unreachable!("argument operand contains derefs")
+            };
             let constraint_idx = cg.constraints.len();
             cg.constraints
                 .push(Constraint::new(ConstraintKind::Assign, dest_loc, arg_loc));
@@ -218,11 +234,15 @@ pub trait InterProceduralStrategy: Sized {
             if !place_ty.is_unsafe_ptr() && !place_ty.is_ref() {
                 continue;
             }
-            let Some(arg_loc) = cg.place_location(place) else { continue };
+            let Some(arg_loc) = cg.place_location(place) else {
+                continue;
+            };
             let param_loc = cg.steensgaard.fn_locals.locations
                 [cg.steensgaard.fn_locals.did_idx[&callee_did]][idx + 1];
 
-            let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
+            let PlaceLocation::Plain(arg_loc) = arg_loc else {
+                unreachable!("argument operand contains derefs")
+            };
             let constraint_idx = cg.constraints.len();
             cg.constraints
                 .push(Constraint::new(ConstraintKind::Assign, param_loc, arg_loc));
@@ -234,8 +254,12 @@ pub trait InterProceduralStrategy: Sized {
             return;
         }
 
-        let Some(dest_loc) = cg.place_location(*destination) else { return };
-        let PlaceLocation::Plain(dest_loc) = dest_loc else { unreachable!("destination place contains derefs") };
+        let Some(dest_loc) = cg.place_location(*destination) else {
+            return;
+        };
+        let PlaceLocation::Plain(dest_loc) = dest_loc else {
+            unreachable!("destination place contains derefs")
+        };
         let ret_loc =
             cg.steensgaard.fn_locals.locations[cg.steensgaard.fn_locals.did_idx[&callee_did]][0];
         let constraint_idx = cg.constraints.len();
@@ -805,11 +829,15 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy, I: InterProceduralStrat
 
         let (is_addr_of, rplace) = match rvalue {
             Rvalue::Use(operand) => {
-                let Some(rplace) = operand.place() else { return };
+                let Some(rplace) = operand.place() else {
+                    return;
+                };
                 (false, rplace)
             }
             Rvalue::Cast(_, operand, _) => {
-                let Some(rplace) = operand.place() else { return };
+                let Some(rplace) = operand.place() else {
+                    return;
+                };
                 (false, rplace)
             }
             Rvalue::CopyForDeref(rplace) => (false, *rplace),
@@ -817,11 +845,17 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy, I: InterProceduralStrat
             _ => return,
         };
 
-        let Some(l_loc) = self.place_location(*place) else { return };
-        let Some(r_loc) = self.place_location(rplace) else { return };
+        let Some(l_loc) = self.place_location(*place) else {
+            return;
+        };
+        let Some(r_loc) = self.place_location(rplace) else {
+            return;
+        };
 
         let constraint = if is_addr_of {
-            let PlaceLocation::Plain(p) = l_loc else { unreachable!() };
+            let PlaceLocation::Plain(p) = l_loc else {
+                unreachable!()
+            };
             match r_loc {
                 PlaceLocation::Plain(q) => Constraint::new(ConstraintKind::Addr, p, q),
                 PlaceLocation::Deref(q) => Constraint::new(ConstraintKind::Assign, p, q),
@@ -850,10 +884,15 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy, I: InterProceduralStrat
             args,
             destination,
             ..
-        } = &terminator.kind else { return };
+        } = &terminator.kind
+        else {
+            return;
+        };
 
         let Some(func) = func.constant() else { return };
-        let &FnDef(callee_did, _generic_args) = func.ty().kind() else { return };
+        let &FnDef(callee_did, _generic_args) = func.ty().kind() else {
+            return;
+        };
 
         if !self.steensgaard.fn_locals.did_idx.contains_key(&callee_did) {
             if let Some(local_did) = callee_did.as_local() {

@@ -7,9 +7,15 @@ use rustc_middle::ty::TyCtxt;
 
 pub fn explicit_addr(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     for maybe_owner in tcx.hir().krate().owners.iter() {
-        let Some(owner) = maybe_owner.as_owner() else { continue };
-        let OwnerNode::Item(item) = owner.node() else { continue };
-        let ItemKind::Fn(_, _, body_id) = item.kind else { continue };
+        let Some(owner) = maybe_owner.as_owner() else {
+            continue;
+        };
+        let OwnerNode::Item(item) = owner.node() else {
+            continue;
+        };
+        let ItemKind::Fn(_, _, body_id) = item.kind else {
+            continue;
+        };
         let hir_body = tcx.hir().body(body_id);
         ExplicitAddr { rewriter, tcx }.visit_expr(&hir_body.value);
     }

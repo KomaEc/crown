@@ -223,7 +223,9 @@ impl<'me, 'tcx> Infer<'tcx> for FatnessAnalysis<'me, 'tcx> {
         {
             if let Some(func) = func.constant() {
                 let ty = func.ty();
-                let &FnDef(callee, _) = ty.kind() else { unreachable!() };
+                let &FnDef(callee, _) = ty.kind() else {
+                    unreachable!()
+                };
                 if let Some(local_did) = callee.as_local() {
                     match tcx.hir().find_by_def_id(local_did).unwrap() {
                         // this crate
@@ -254,7 +256,9 @@ impl<'me, 'tcx> Infer<'tcx> for FatnessAnalysis<'me, 'tcx> {
                             }
 
                             for (arg, param_vars) in args.iter().zip(callee_vars) {
-                                let Some(arg) = arg.place() else { continue; };
+                                let Some(arg) = arg.place() else {
+                                    continue;
+                                };
                                 let arg_vars = place_vars(&arg, local_decls, locals, struct_fields);
 
                                 let mut param_arg = param_vars.zip(arg_vars);

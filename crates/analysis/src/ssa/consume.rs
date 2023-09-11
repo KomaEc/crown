@@ -4,8 +4,8 @@ use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-        BasicBlock, BasicBlockData, Body, CastKind, Local, LocalInfo, Location, Place,
-        ProjectionElem, Rvalue, TerminatorKind, ClearCrossCrate,
+        BasicBlock, BasicBlockData, Body, CastKind, ClearCrossCrate, Local, LocalInfo, Location,
+        Place, ProjectionElem, Rvalue, TerminatorKind,
     },
     ty::TyCtxt,
 };
@@ -222,7 +222,9 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
 
     let mut call_arg_temps: SsoHashSet<Local> = SsoHashSet::default();
     for bb_data in body.basic_blocks.iter() {
-        let Some(terminator) = &bb_data.terminator else { continue; };
+        let Some(terminator) = &bb_data.terminator else {
+            continue;
+        };
         if let TerminatorKind::Call { args, .. } = &terminator.kind {
             call_arg_temps.extend(
                 args.iter()

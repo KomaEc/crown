@@ -109,13 +109,19 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         assert_eq!(args.len(), 1);
         let arg = args[0].place().unwrap().as_local().unwrap();
         let def_loc = def_use_chain.def_loc(arg, location);
-        let RichLocation::Mir(def_loc) = def_loc else { panic!() };
+        let RichLocation::Mir(def_loc) = def_loc else {
+            panic!()
+        };
         let Left(stmt) = body.stmt_at(def_loc) else {
             // TODO correctness?
-            return
+            return;
         };
-        let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-        let Rvalue::Ref(_, _, place) = rvalue else { unreachable!() };
+        let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else {
+            panic!()
+        };
+        let Rvalue::Ref(_, _, place) = rvalue else {
+            unreachable!()
+        };
         let span = stmt.source_info.span.until(fn_span);
         self.rewrite_place_load_at::<{ PlaceLoadMode::ByValue as u8 }>(
             *place,
@@ -145,12 +151,16 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         assert_eq!(args.len(), 1);
         let arg = args[0].place().unwrap().as_local().unwrap();
         let def_loc = def_use_chain.def_loc(arg, location);
-        let RichLocation::Mir(def_loc) = def_loc else { panic!() };
+        let RichLocation::Mir(def_loc) = def_loc else {
+            panic!()
+        };
         let Left(stmt) = body.stmt_at(def_loc) else {
             // TODO correctness?
-            return
+            return;
         };
-        let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+        let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else {
+            panic!()
+        };
         if let Rvalue::Use(operand) = rvalue {
             if let Some(place) = operand.place() {
                 let produced = self.acquire_place_info(&place);

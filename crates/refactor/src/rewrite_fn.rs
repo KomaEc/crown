@@ -14,8 +14,9 @@ use rustc_hash::FxHashMap;
 use rustc_hir::{def_id::DefId, ItemKind};
 use rustc_middle::{
     mir::{
-        Body, Constant, Local, LocalInfo, Location, NonDivergingIntrinsic, Operand, Place, Rvalue,
-        Statement, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents, RETURN_PLACE, ClearCrossCrate,
+        Body, ClearCrossCrate, Constant, Local, LocalInfo, Location, NonDivergingIntrinsic,
+        Operand, Place, Rvalue, Statement, StatementKind, Terminator, TerminatorKind,
+        VarDebugInfoContents, RETURN_PLACE,
     },
     ty::{Ty, TyCtxt, TyKind},
 };
@@ -69,7 +70,9 @@ fn rewrite_fn_sig<'tcx>(
     type_reconstruction: bool,
 ) {
     let fn_item = tcx.hir().expect_item(body.source.def_id().expect_local());
-    let ItemKind::Fn(fn_sig, _, body_id) = &fn_item.kind else { unreachable!() };
+    let ItemKind::Fn(fn_sig, _, body_id) = &fn_item.kind else {
+        unreachable!()
+    };
 
     if let rustc_hir::FnRetTy::Return(ret_ty) = fn_sig.decl.output {
         rewrite_hir_ty(ret_ty, &decision[0], rewriter, tcx, type_reconstruction);
@@ -81,7 +84,9 @@ fn rewrite_fn_sig<'tcx>(
 
     let fn_body = tcx.hir().body(*body_id);
     for param in fn_body.params {
-        let rustc_hir::PatKind::Binding(annot, _, _, _) = param.pat.kind else { unreachable!() };
+        let rustc_hir::PatKind::Binding(annot, _, _, _) = param.pat.kind else {
+            unreachable!()
+        };
         if matches!(annot.1, rustc_hir::Mutability::Not) {
             rewriter.replace(tcx, param.span.shrink_to_lo(), "mut ".to_owned())
         }
@@ -166,10 +171,18 @@ fn accum_deref_copies<'tcx>(
         ClearCrossCrate::Set(box LocalInfo::DerefTemp)
     ) {
         let def_loc = def_use_chain.def_loc(local, location);
-        let RichLocation::Mir(def_loc) = def_loc else { panic!() };
-        let Left(stmt) = body.stmt_at(def_loc) else { panic!() };
-        let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
-        let Rvalue::CopyForDeref(rplace) = rvalue else { panic!() };
+        let RichLocation::Mir(def_loc) = def_loc else {
+            panic!()
+        };
+        let Left(stmt) = body.stmt_at(def_loc) else {
+            panic!()
+        };
+        let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else {
+            panic!()
+        };
+        let Rvalue::CopyForDeref(rplace) = rvalue else {
+            panic!()
+        };
         local = rplace.local;
         place = rplace.project_deeper(place.projection, tcx);
         location = def_loc;
@@ -639,7 +652,17 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         {
             replacement
         } else if is_static_ref {
-            let &LocalInfo::StaticRef { def_id, is_thread_local } = body.local_decls[place.local].local_info.as_ref().assert_crate_local().as_ref() else { unreachable!() };
+            let &LocalInfo::StaticRef {
+                def_id,
+                is_thread_local,
+            } = body.local_decls[place.local]
+                .local_info
+                .as_ref()
+                .assert_crate_local()
+                .as_ref()
+            else {
+                unreachable!()
+            };
             assert!(!is_thread_local, "thread local is not supported");
             let static_name = tcx.def_path_str(def_id);
             if static_name.starts_with(&tcx.def_path_str(body.source.def_id())) {
@@ -690,9 +713,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     assert!(ptr_kinds.next().is_none());
 
                     let adt_def = ty.ty_adt_def().unwrap();
-                    let field_name = &adt_def.variants()[0usize.into()].fields[f]
-                        .name
-                        .as_str();
+                    let field_name = &adt_def.variants()[0usize.into()].fields[f].name.as_str();
                     replacement = replacement + "." + field_name;
                     ty = field_ty;
 
@@ -752,7 +773,17 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         {
             replacement
         } else if is_static_ref {
-            let &LocalInfo::StaticRef { def_id, is_thread_local } = body.local_decls[place.local].local_info.as_ref().assert_crate_local().as_ref() else { unreachable!() };
+            let &LocalInfo::StaticRef {
+                def_id,
+                is_thread_local,
+            } = body.local_decls[place.local]
+                .local_info
+                .as_ref()
+                .assert_crate_local()
+                .as_ref()
+            else {
+                unreachable!()
+            };
             assert!(!is_thread_local, "thread local is not supported");
             let static_name = tcx.def_path_str(def_id);
             if static_name.starts_with(&tcx.def_path_str(body.source.def_id())) {
@@ -852,9 +883,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         // this happens in checked add. no rewrite for this case
                         return;
                     };
-                    let field_name = &adt_def.variants()[0usize.into()].fields[f]
-                        .name
-                        .as_str();
+                    let field_name = &adt_def.variants()[0usize.into()].fields[f].name.as_str();
                     replacement = replacement + "." + field_name;
                     ty = field_ty;
 
@@ -927,7 +956,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         assert!(!user_idents.contains_key(&local));
         let def_loc = def_use_chain.def_loc(local, location);
 
-        let RichLocation::Mir(def_loc) = def_loc else { unreachable!() };
+        let RichLocation::Mir(def_loc) = def_loc else {
+            unreachable!()
+        };
         match body.stmt_at(def_loc) {
             Left(stmt) => stmt.source_info.span,
             Right(term) => term.source_info.span,
@@ -955,9 +986,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             RichLocation::Phi(block) => {
                 // FIXME correctness? recursive?
                 for def_loc in def_use_chain.phi_def_locs(local, block) {
-                    let RichLocation::Mir(def_loc) = def_loc else { todo!() };
-                    let Left(stmt) = body.stmt_at(def_loc) else { continue };
-                    let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else { panic!() };
+                    let RichLocation::Mir(def_loc) = def_loc else {
+                        todo!()
+                    };
+                    let Left(stmt) = body.stmt_at(def_loc) else {
+                        continue;
+                    };
+                    let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else {
+                        panic!()
+                    };
                     self.rewrite_rvalue_at(
                         rvalue,
                         def_loc,
@@ -969,7 +1006,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 return;
             }
             RichLocation::Mir(def_loc) => {
-                let Left(stmt) = body.stmt_at(def_loc) else { return };
+                let Left(stmt) = body.stmt_at(def_loc) else {
+                    return;
+                };
                 let StatementKind::Assign(box (_, rvalue)) = &stmt.kind else {
                     if let StatementKind::Deinit(..) = &stmt.kind {
                         // happens only when S { f: T { g: .. } }
@@ -1121,7 +1160,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     ) {
         if let Some(func) = func.constant() {
             let ty = func.ty();
-            let &FnDef(callee, _) = ty.kind() else { unreachable!() };
+            let &FnDef(callee, _) = ty.kind() else {
+                unreachable!()
+            };
             if let Some(local_did) = callee.as_local() {
                 match self.tcx.hir().find_by_def_id(local_did).unwrap() {
                     // this crate
@@ -1207,7 +1248,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
 
         for arg in args {
             if let Some(place) = arg.place() {
-                let Some(local) = place.as_local() else { panic!() };
+                let Some(local) = place.as_local() else {
+                    panic!()
+                };
 
                 let ty = body.local_decls[local].ty;
 

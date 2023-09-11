@@ -58,7 +58,9 @@ where
 
     fn call_free(&mut self, args: &CallArgs) {
         assert_eq!(args.len(), 1);
-        let Some((arg, is_ref)) = args[0].clone() else { return };
+        let Some((arg, is_ref)) = args[0].clone() else {
+            return;
+        };
         assert!(!is_ref);
         <Analysis as InferMode>::sink(self, arg);
     }

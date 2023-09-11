@@ -18,9 +18,15 @@ pub fn promote_argument(tcx: TyCtxt, mode: RewriteMode) {
 
 fn promote_argument_impl(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     for maybe_owner in tcx.hir().krate().owners.iter() {
-        let Some(owner) = maybe_owner.as_owner() else { continue };
-        let OwnerNode::Item(item) = owner.node() else { continue };
-        let ItemKind::Fn(_, _, body_id) = item.kind else { continue };
+        let Some(owner) = maybe_owner.as_owner() else {
+            continue;
+        };
+        let OwnerNode::Item(item) = owner.node() else {
+            continue;
+        };
+        let ItemKind::Fn(_, _, body_id) = item.kind else {
+            continue;
+        };
         let hir_body = tcx.hir().body(body_id);
         let typeck = tcx.typeck(item.owner_id.def_id);
         let mut vis = Promote {
@@ -68,7 +74,9 @@ impl<'me, 'hir, R: Rewrite> Visitor<'hir> for Promote<'me, 'hir, R> {
                 }
             }
             ExprKind::Assign(lhs, _, _) if matches!(lhs.kind, ExprKind::Index(..)) => {
-                let ExprKind::Index(a, index, _) = lhs.kind else { unreachable!() };
+                let ExprKind::Index(a, index, _) = lhs.kind else {
+                    unreachable!()
+                };
                 if let Some(x) = find_base_ident(self.tcx, a) {
                     if is_present(self.tcx, x, index) {
                         let promoted_store = self.promoted_store();

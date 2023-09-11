@@ -77,7 +77,9 @@ pub fn rewrite_struct<'hir>(
 ) -> anyhow::Result<()> {
     use std::fmt::Write;
 
-    let ItemKind::Struct(variant_data, _generics) = &r#struct.kind else { panic!() };
+    let ItemKind::Struct(variant_data, _generics) = &r#struct.kind else {
+        panic!()
+    };
     for (field, decision) in itertools::izip!(variant_data.fields(), decision) {
         rewrite_hir_ty(field.ty, decision, rewriter, tcx, type_reconstruction);
         // let field_ty = try_dealias(field.ty, tcx).unwrap_or(field.ty);
@@ -106,7 +108,9 @@ pub fn rewrite_struct<'hir>(
                 ty: &rustc_hir::Ty,
                 array_len: &rustc_hir::ArrayLen,
             ) -> String {
-                let rustc_hir::ArrayLen::Body(constant) = array_len else { unreachable!()};
+                let rustc_hir::ArrayLen::Body(constant) = array_len else {
+                    unreachable!()
+                };
 
                 if let rustc_hir::TyKind::Array(inner_ty, inner_array_len) = &ty.kind {
                     let inner = array_ty_replacement(tcx, inner_ty, inner_array_len);
@@ -143,7 +147,9 @@ pub fn rewrite_outermost_ptr_ty(
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt,
 ) {
-    let rustc_hir::TyKind::Ptr(pointee) = &ty.kind else { unreachable!() };
+    let rustc_hir::TyKind::Ptr(pointee) = &ty.kind else {
+        unreachable!()
+    };
 
     match decision {
         PointerKind::Move => {
@@ -195,7 +201,9 @@ fn try_dealias<'hir>(
                     .as_owner()
                     .unwrap()
                     .expect_item();
-                let rustc_hir::ItemKind::TyAlias(aliased_ty, _) = &item.kind else { unreachable!() };
+                let rustc_hir::ItemKind::TyAlias(aliased_ty, _) = &item.kind else {
+                    unreachable!()
+                };
                 return Some(*aliased_ty);
             }
         }
@@ -230,7 +238,9 @@ fn retype<'hir>(ty: &rustc_hir::Ty<'hir>, decision: &[PointerKind], tcx: TyCtxt<
             }
         },
         hir::TyKind::Path(ref qpath) => {
-            let hir::QPath::Resolved(None, path) = qpath else { todo!("not supported") };
+            let hir::QPath::Resolved(None, path) = qpath else {
+                todo!("not supported")
+            };
             assert!(!path.segments.is_empty());
             if "Option" == path.segments[0].ident.as_str() {
                 // HACK
@@ -245,7 +255,9 @@ fn retype<'hir>(ty: &rustc_hir::Ty<'hir>, decision: &[PointerKind], tcx: TyCtxt<
             rustc_hir_pretty::qpath_to_string(qpath)
         }
         hir::TyKind::Array(ty, ref length) => {
-            let hir::ArrayLen::Body(constant) = length else { unreachable!()};
+            let hir::ArrayLen::Body(constant) = length else {
+                unreachable!()
+            };
             format!(
                 "[{}; {}]",
                 retype(ty, decision, tcx),

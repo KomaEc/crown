@@ -7,6 +7,7 @@
 #![feature(array_windows)]
 #![feature(allocator_api)]
 
+extern crate rustc_abi;
 extern crate rustc_error_codes;
 extern crate rustc_errors;
 extern crate rustc_hash;
@@ -17,7 +18,6 @@ extern crate rustc_middle;
 extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_type_ir;
-extern crate rustc_abi;
 
 pub mod captures;
 pub mod data_structure;
@@ -27,12 +27,12 @@ pub mod rewrite;
 pub mod struct_dependency;
 pub mod test;
 
+use rustc_abi::FieldIdx;
 use rustc_hir::def_id::{DefId, LocalDefId};
 use rustc_middle::{
     mir::{Body, Local, Location, PlaceRef, ProjectionElem},
     ty::TyCtxt,
 };
-use rustc_abi::FieldIdx;
 
 pub trait AnalysisResults {
     fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool>;

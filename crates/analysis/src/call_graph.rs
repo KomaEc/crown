@@ -74,11 +74,19 @@ struct MonotonicityChecker<'me, 'tcx> {
 
 impl<'me, 'tcx> Visitor<'tcx> for MonotonicityChecker<'me, 'tcx> {
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _: rustc_middle::mir::Location) {
-        let TerminatorKind::Call { func, .. } = &terminator.kind else { return; };
-        let Some(func) = func.constant() else { return; };
+        let TerminatorKind::Call { func, .. } = &terminator.kind else {
+            return;
+        };
+        let Some(func) = func.constant() else {
+            return;
+        };
         let ty = func.ty();
-        let &FnDef(callee, _) = ty.kind() else { unreachable!() };
-        let Some(local_did) = callee.as_local() else { return; };
+        let &FnDef(callee, _) = ty.kind() else {
+            unreachable!()
+        };
+        let Some(local_did) = callee.as_local() else {
+            return;
+        };
 
         match self.tcx.hir().find_by_def_id(local_did).unwrap() {
             rustc_hir::Node::ForeignItem(foreign_item) => match foreign_item.ident.as_str() {
@@ -135,10 +143,14 @@ impl CallGraph {
                     _: rustc_middle::mir::Location,
                 ) {
                     let tcx = self.0;
-                    let TerminatorKind::Call { func, .. } = &terminator.kind else { return };
+                    let TerminatorKind::Call { func, .. } = &terminator.kind else {
+                        return;
+                    };
                     if let Some(func) = func.constant() {
                         let ty = func.ty();
-                        let &FnDef(callee, _) = ty.kind() else { unreachable!() };
+                        let &FnDef(callee, _) = ty.kind() else {
+                            unreachable!()
+                        };
                         if let Some(local_did) = callee.as_local() {
                             if let rustc_hir::Node::ForeignItem(foreign_item) =
                                 tcx.hir().find_by_def_id(local_did).unwrap()
@@ -223,14 +235,11 @@ impl<'me, 'tcx> Visitor<'tcx> for CallGraphConstruction<'me> {
         terminator: &Terminator<'tcx>,
         _location: rustc_middle::mir::Location,
     ) {
-        let TerminatorKind::Call {
-            func,
-            ..
-        } = &terminator.kind else {
-            return
+        let TerminatorKind::Call { func, .. } = &terminator.kind else {
+            return;
         };
         let Some(func_constant) = func.constant() else {
-            return
+            return;
         };
         let ty = func_constant.ty();
         let &FnDef(callee, _generic_args) = ty.kind() else {

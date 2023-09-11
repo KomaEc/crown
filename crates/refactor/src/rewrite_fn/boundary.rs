@@ -22,7 +22,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let callee_decision = fn_decision.local_data(&callee);
         for (ctxt, operand) in itertools::izip!(&callee_decision[1..], args) {
             if let Some(place) = operand.place() {
-                let Some(local) = place.as_local() else { panic!() };
+                let Some(local) = place.as_local() else {
+                    panic!()
+                };
                 let ty = self.body.local_decls[local].ty;
                 let required = PlaceCtxt::from_ptr_ctxt(ty, ctxt);
                 // Hack! may not work is no-box is off
@@ -64,7 +66,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             ..
         } = *self;
         let def_loc = def_use_chain.def_loc(arg, location);
-        let RichLocation::Mir(def_loc) = def_loc else { return false };
+        let RichLocation::Mir(def_loc) = def_loc else {
+            return false;
+        };
         matches!(body.stmt_at(def_loc), Right(..))
     }
 }

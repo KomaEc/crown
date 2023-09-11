@@ -81,7 +81,9 @@ where
     /// a dereference, then this call is guaranteed to be a short-time borrow!!
     pub fn call_offset(&mut self, destination: Option<Consume<Range<Var>>>, args: &CallArgs) {
         let Some(dest) = destination else { return };
-        let Some((arg, is_ref)) = args[0].clone() else { return };
+        let Some((arg, is_ref)) = args[0].clone() else {
+            return;
+        };
         assert!(!is_ref, "offset(&mut x) is not supported");
 
         // let fn_sig = self.tcx.fn_sig(offset_did);
