@@ -63,7 +63,7 @@ impl<'tcx> EmpiricalStudy<'tcx> for common::CrateData<'tcx> {
                     "aliasing fields: {}",
                     aliasing_field_pairs
                         .iter()
-                        .map(|&(f, g)| format!("({}, {})", field_defs[f].name, field_defs[g].name))
+                        .map(|&(f, g)| format!("({}, {})", field_defs[f.into()].name, field_defs[g.into()].name))
                         .collect::<Vec<_>>()
                         .join(", ")
                 );
@@ -112,7 +112,7 @@ impl<'tcx> EmpiricalStudy<'tcx> for common::CrateData<'tcx> {
                     "maybe owning fields: {}",
                     maybe_owning_fields
                         .iter()
-                        .map(|&f| field_defs[f].name.as_str().to_owned())
+                        .map(|&f| field_defs[f.into()].name.as_str().to_owned())
                         .collect::<Vec<_>>()
                         .join(", ")
                 );

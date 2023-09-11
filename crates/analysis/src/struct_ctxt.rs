@@ -93,7 +93,7 @@ impl<'tcx> StructCtxt<'tcx> {
             graph.add_node(*did);
         });
         for did in structs.iter() {
-            let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };
+            let Adt(adt_def, subst_ref) = tcx.type_of(did).skip_binder().kind() else { unreachable!("impossible") };
             assert!(adt_def.is_struct());
             for field_def in adt_def.all_fields() {
                 let mut ty = field_def.ty(tcx, subst_ref);
@@ -120,7 +120,7 @@ impl<'tcx> StructCtxt<'tcx> {
         let mut offset_of = VecVec::with_indices_capacity(post_order.len());
         let mut leaf_nodes = VecVec::with_indices_capacity(post_order.len());
         for &did in &post_order {
-            let ty = tcx.type_of(did);
+            let ty = tcx.type_of(did).skip_binder();
             let Adt(adt_def, _) = ty.kind() else { unreachable!("impossible") };
             assert!(adt_def.is_struct());
 
@@ -189,7 +189,7 @@ impl<'tcx> StructCtxt<'tcx> {
         let mut offset_of = VecVec::with_capacity(self.post_order.len(), data_capacity);
         let mut leaf_nodes = VecVec::with_capacity(self.post_order.len(), data_capacity);
         for &did in &self.post_order {
-            let Adt(adt_def, subst_ref) = tcx.type_of(did).kind() else { unreachable!("impossible") };
+            let Adt(adt_def, subst_ref) = tcx.type_of(did).skip_binder().kind() else { unreachable!("impossible") };
             assert!(adt_def.is_struct());
 
             let mut offset = 0;

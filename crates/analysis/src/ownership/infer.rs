@@ -1,9 +1,9 @@
 use std::ops::Range;
 
 use common::data_structure::assoc::AssocExt;
-use rustc_index::vec::IndexVec;
+use rustc_index::IndexVec;
 use rustc_middle::{
-    mir::{Body, Local, LocalInfo, Location, Operand, Place, PlaceElem, ProjectionElem},
+    mir::{Body, Local, LocalInfo, Location, Operand, Place, PlaceElem, ProjectionElem, ClearCrossCrate},
     ty::{AdtDef, Ty, TyCtxt, TyKind},
 };
 use rustc_type_ir::TyKind::FnDef;
@@ -420,7 +420,7 @@ where
             Consume { r#use, def }
         } else if matches!(
             body.local_decls[base].local_info,
-            Some(box LocalInfo::DerefTemp)
+            ClearCrossCrate::Set(box LocalInfo::DerefTemp)
         ) {
             if let Some(consume) = infer_cx.deref_copy.take() {
                 consume
@@ -476,7 +476,7 @@ where
         lhs: Consume<Self::LocalSig>,
         rhs: Consume<Self::LocalSig>,
     ) {
-        if ty.is_unsafe_ptr() || ty.is_box() || ty.is_region_ptr() {
+        if ty.is_unsafe_ptr() || ty.is_box() || ty.is_ref() {
             let lhs = lhs.repack(|sigs| sigs.start..sigs.start + 1u32);
             let rhs = rhs.repack(|sigs| sigs.start..sigs.start + 1u32);
             Self::transfer::<ENSURE_MOVE>(infer_cx, ty, lhs, rhs)
@@ -556,7 +556,7 @@ where
 
         if let Some(func) = callee.constant() {
             let ty = func.ty();
-            let &FnDef(callee, substs) = ty.kind() else { unreachable!() };
+            let &FnDef(callee, _) = ty.kind() else { unreachable!() };
             if let Some(local_did) = callee.as_local() {
                 match infer_cx.tcx.hir().find_by_def_id(local_did).unwrap() {
                     // this crate
@@ -573,7 +573,7 @@ where
                 }
             } else {
                 // library
-                infer_cx.library_call(destination, &args, callee, substs)
+                infer_cx.library_call(destination, &args, callee)
             }
         } else {
             // closure or fn ptr

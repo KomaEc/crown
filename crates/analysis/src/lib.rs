@@ -7,6 +7,7 @@
 #![feature(array_windows)]
 #![feature(array_try_map)]
 #![feature(type_alias_impl_trait)]
+#![feature(impl_trait_in_assoc_type)]
 
 extern crate either;
 

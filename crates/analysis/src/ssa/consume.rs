@@ -1,11 +1,11 @@
 use common::data_structure::vec_vec::{VecVec, VecVecConstruction};
 use rustc_data_structures::sso::SsoHashSet;
-use rustc_index::{bit_set::BitSet, vec::IndexVec};
+use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
         BasicBlock, BasicBlockData, Body, CastKind, Local, LocalInfo, Location, Place,
-        ProjectionElem, Rvalue, TerminatorKind,
+        ProjectionElem, Rvalue, TerminatorKind, ClearCrossCrate,
     },
     ty::TyCtxt,
 };
@@ -328,14 +328,14 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
             }
 
             let ty = place.ty(self.body, self.tcx).ty;
-            let local_info = self.body.local_decls[place.local].local_info.as_deref();
+            let local_info = self.body.local_decls[place.local].local_info.as_ref();
 
             // generate consumes with base local non-empty
             if self
                 .crate_ctxt
                 .struct_ctxt
                 .contains_ptr(self.body.local_decls[place.local].ty)
-                && !matches!(local_info, Some(LocalInfo::DerefTemp))
+                && !matches!(local_info, ClearCrossCrate::Set(box LocalInfo::DerefTemp))
                 && !self.call_arg_temps.contains(&place.local)
             {
                 let consume = if self.crate_ctxt.struct_ctxt.contains_ptr(ty)

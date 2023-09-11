@@ -7,10 +7,10 @@ use common::{
 };
 use either::Either::Left;
 use rustc_hash::{FxHashMap, FxHashSet};
-use rustc_index::vec::IndexVec;
+use rustc_index::IndexVec;
 use rustc_middle::mir::{
     visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-    Body, Local, LocalInfo, Location, Operand, Place, Rvalue, StatementKind, TerminatorKind,
+    Body, Local, LocalInfo, Location, Operand, Place, Rvalue, StatementKind, TerminatorKind, ClearCrossCrate,
 };
 
 use super::{whole_program::WholeProgramResults, Ownership};
@@ -98,7 +98,7 @@ impl<'tcx> WholeProgramResults<'tcx> {
                 }
             }
             for (local, local_decl) in body.local_decls.iter_enumerated() {
-                if matches!(local_decl.local_info, Some(box LocalInfo::DerefTemp)) {
+                if matches!(local_decl.local_info, ClearCrossCrate::Set(box LocalInfo::DerefTemp)) {
                     proxy_temporaries.insert(local);
                 }
             }

@@ -100,7 +100,7 @@ where
         args: &CallArgs,
         callee: DefId,
     ) {
-        let fn_sig = infer_cx.tcx.fn_sig(callee);
+        let fn_sig = infer_cx.tcx.fn_sig(callee).skip_binder();
 
         let mut params = infer_cx.inter_ctxt[&callee].iter();
 

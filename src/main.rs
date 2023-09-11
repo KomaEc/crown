@@ -31,7 +31,7 @@ use rustc_errors::registry;
 use rustc_hir::{ItemKind, OwnerNode};
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
-use rustc_session::config;
+use rustc_session::{config, EarlyErrorHandler};
 use tracing_subscriber::EnvFilter;
 
 #[derive(Parser)]
@@ -179,8 +179,9 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
     args.push("--cap-lints".to_owned());
     args.push("allow".to_owned());
 
-    let matches = rustc_driver::handle_options(&args).context("what?")?;
-    let opts = rustc_session::config::build_session_options(&matches);
+    let mut early_error_handler = EarlyErrorHandler::new(Default::default());
+    let matches = rustc_driver::handle_options(&early_error_handler, &args).context("what?")?;
+    let opts = rustc_session::config::build_session_options(&mut early_error_handler, &matches);
 
     Ok(Config {
         opts: config::Options {
@@ -188,7 +189,7 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
             ..opts
         },
         crate_cfg: rustc_hash::FxHashSet::default(),
-        crate_check_cfg: rustc_interface::interface::parse_check_cfg(vec![]),
+        crate_check_cfg: rustc_interface::interface::parse_check_cfg(&early_error_handler, vec![]),
         input: config::Input::File(input_path),
         output_dir: None,
         output_file: None,
@@ -199,6 +200,9 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
         override_queries: None,
         make_codegen_backend: None,
         registry: registry::Registry::new(&rustc_error_codes::DIAGNOSTICS),
+        ice_file: None,
+        locale_resources: &[],
+        expanded_args: vec![],
     })
 }
 

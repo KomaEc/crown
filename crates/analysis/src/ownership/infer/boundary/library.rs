@@ -1,7 +1,6 @@
 use std::ops::Range;
 
 use rustc_hir::def_id::DefId;
-use rustc_middle::ty::SubstsRef;
 
 use crate::{
     ownership::{
@@ -24,7 +23,6 @@ where
         destination: Option<Consume<Range<Var>>>,
         args: &CallArgs,
         callee: DefId,
-        _substs: SubstsRef<'tcx>,
     ) {
         let def_path = self.tcx.def_path(callee);
         // if it is a library call in core::ptr

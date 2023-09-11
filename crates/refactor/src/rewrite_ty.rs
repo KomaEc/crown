@@ -187,7 +187,7 @@ fn try_dealias<'hir>(
 ) -> Option<&'hir rustc_hir::Ty<'hir>> {
     if let rustc_hir::TyKind::Path(rustc_hir::QPath::Resolved(_, path)) = ty.kind {
         let res = path.res;
-        if let rustc_hir::def::Res::Def(rustc_hir::def::DefKind::TyAlias, did) = res {
+        if let rustc_hir::def::Res::Def(rustc_hir::def::DefKind::TyAlias { .. }, did) = res {
             if let Some(local_did) = did.as_local() {
                 let item = tcx
                     .hir()

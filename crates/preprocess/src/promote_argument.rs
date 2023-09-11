@@ -68,7 +68,7 @@ impl<'me, 'hir, R: Rewrite> Visitor<'hir> for Promote<'me, 'hir, R> {
                 }
             }
             ExprKind::Assign(lhs, _, _) if matches!(lhs.kind, ExprKind::Index(..)) => {
-                let ExprKind::Index(a, index) = lhs.kind else { unreachable!() };
+                let ExprKind::Index(a, index, _) = lhs.kind else { unreachable!() };
                 if let Some(x) = find_base_ident(self.tcx, a) {
                     if is_present(self.tcx, x, index) {
                         let promoted_store = self.promoted_store();

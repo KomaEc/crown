@@ -5,7 +5,7 @@ use common::data_structure::{
     vec_vec::{VecVec, VecVecConstruction},
 };
 use rustc_data_structures::sso::SsoHashSet;
-use rustc_index::{bit_set::BitSet, vec::IndexVec};
+use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
@@ -264,7 +264,7 @@ impl DefUse {
                 | NonMutatingUseContext::Move
                 | NonMutatingUseContext::ShallowBorrow
                 | NonMutatingUseContext::SharedBorrow
-                | NonMutatingUseContext::UniqueBorrow,
+                | NonMutatingUseContext::PlaceMention,
             ) => Some(DefUse::Use),
 
             PlaceContext::MutatingUse(MutatingUseContext::Projection)

@@ -270,7 +270,7 @@ impl StructFields {
             .zip(fields)
             .any(|(field_data, field_def)| {
                 if field_data.is_empty() {
-                    let field_ty = tcx.type_of(field_def.did);
+                    let field_ty = tcx.type_of(field_def.did).skip_binder();
                     if let Some(adt_def) = field_ty.ty_adt_def() {
                         if self.0.did_idx.contains_key(&adt_def.did()) {
                             self.is_owning(tcx, &adt_def.did())
@@ -318,7 +318,7 @@ impl StructFields {
                 assert_eq!(ownership.len(), mutability.len());
                 assert_eq!(mutability.len(), fatness.len());
 
-                let mut field_ty = crate_data.tcx.type_of(field.did);
+                let mut field_ty = crate_data.tcx.type_of(field.did).skip_binder();
 
                 let aliasing_nonowning_field = aliases.iter().any(|&idx| {
                     fields_ownership[idx]

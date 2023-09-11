@@ -15,7 +15,7 @@ use rustc_hir::{def_id::DefId, ItemKind};
 use rustc_middle::{
     mir::{
         Body, Constant, Local, LocalInfo, Location, NonDivergingIntrinsic, Operand, Place, Rvalue,
-        Statement, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents, RETURN_PLACE,
+        Statement, StatementKind, Terminator, TerminatorKind, VarDebugInfoContents, RETURN_PLACE, ClearCrossCrate,
     },
     ty::{Ty, TyCtxt, TyKind},
 };
@@ -47,7 +47,7 @@ pub fn rewrite_fns(
         let local_data = fn_decision.local_data(&did);
         let body = tcx.optimized_mir(did);
         rewrite_fn_sig(body, local_data, rewriter, tcx, type_reconstruction);
-        if !type_only && !tcx.fn_sig(did).c_variadic() {
+        if !type_only && !tcx.fn_sig(did).skip_binder().c_variadic() {
             rewrite_fn(
                 body,
                 fn_decision.local_data(&did),
@@ -163,7 +163,7 @@ fn accum_deref_copies<'tcx>(
 
     while matches!(
         body.local_decls[local].local_info,
-        Some(box LocalInfo::DerefTemp)
+        ClearCrossCrate::Set(box LocalInfo::DerefTemp)
     ) {
         let def_loc = def_use_chain.def_loc(local, location);
         let RichLocation::Mir(def_loc) = def_loc else { panic!() };
@@ -484,7 +484,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 // this includes 1. place of which base local is a user defined variable
                 // 2. place of which base local is a deref tmp, and the rvalue is not another deref tmp
                 if user_idents.contains_key(&place.local)
-                    || matches!(body.local_decls[place.local].local_info, Some(box LocalInfo::DerefTemp) if !matches!(rvalue, Rvalue::CopyForDeref(..)))
+                    || matches!(body.local_decls[place.local].local_info, ClearCrossCrate::Set(box LocalInfo::DerefTemp) if !matches!(rvalue, Rvalue::CopyForDeref(..)))
                     || is_func_call_dest
                     || is_static_ref
                 {
@@ -639,7 +639,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         {
             replacement
         } else if is_static_ref {
-            let &LocalInfo::StaticRef { def_id, is_thread_local } = body.local_decls[place.local].local_info.as_deref().unwrap() else { unreachable!() };
+            let &LocalInfo::StaticRef { def_id, is_thread_local } = body.local_decls[place.local].local_info.as_ref().assert_crate_local().as_ref() else { unreachable!() };
             assert!(!is_thread_local, "thread local is not supported");
             let static_name = tcx.def_path_str(def_id);
             if static_name.starts_with(&tcx.def_path_str(body.source.def_id())) {
@@ -690,7 +690,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     assert!(ptr_kinds.next().is_none());
 
                     let adt_def = ty.ty_adt_def().unwrap();
-                    let field_name = &adt_def.variants()[0usize.into()].fields[f.index()]
+                    let field_name = &adt_def.variants()[0usize.into()].fields[f]
                         .name
                         .as_str();
                     replacement = replacement + "." + field_name;
@@ -752,7 +752,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         {
             replacement
         } else if is_static_ref {
-            let &LocalInfo::StaticRef { def_id, is_thread_local } = body.local_decls[place.local].local_info.as_deref().unwrap() else { unreachable!() };
+            let &LocalInfo::StaticRef { def_id, is_thread_local } = body.local_decls[place.local].local_info.as_ref().assert_crate_local().as_ref() else { unreachable!() };
             assert!(!is_thread_local, "thread local is not supported");
             let static_name = tcx.def_path_str(def_id);
             if static_name.starts_with(&tcx.def_path_str(body.source.def_id())) {
@@ -852,7 +852,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         // this happens in checked add. no rewrite for this case
                         return;
                     };
-                    let field_name = &adt_def.variants()[0usize.into()].fields[f.index()]
+                    let field_name = &adt_def.variants()[0usize.into()].fields[f]
                         .name
                         .as_str();
                     replacement = replacement + "." + field_name;
@@ -1171,7 +1171,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                             &[PointerKind::Raw(RawMeta::Const)]
                         },
                     )
-                } else if ty.is_region_ptr() {
+                } else if ty.is_ref() {
                     PlaceCtxt::from_ptr_ctxt(
                         ty,
                         if ty.is_mutable_ptr() {
@@ -1220,7 +1220,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                             &[PointerKind::Raw(RawMeta::Const)]
                         },
                     )
-                } else if ty.is_region_ptr() {
+                } else if ty.is_ref() {
                     PlaceCtxt::from_ptr_ctxt(
                         ty,
                         if ty.is_mutable_ptr() {

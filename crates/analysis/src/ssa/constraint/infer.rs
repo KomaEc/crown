@@ -2,12 +2,12 @@ use std::borrow::BorrowMut;
 
 use rustc_ast::Mutability;
 use rustc_data_structures::graph::WithSuccessors;
-use rustc_index::vec::IndexVec;
+use rustc_index::IndexVec;
 use rustc_middle::{
     mir::{
         BasicBlock, BasicBlockData, Body, BorrowKind, CastKind, Local, Location,
         NonDivergingIntrinsic, Operand, Place, ProjectionElem, Rvalue, Statement, StatementKind,
-        Terminator, TerminatorKind, RETURN_PLACE,
+        Terminator, TerminatorKind, RETURN_PLACE, NullOp,
     },
     ty::{Ty, TyCtxt},
 };
@@ -233,8 +233,13 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
         let mut root = BasicBlock::from_u32(0);
         self.body.basic_blocks.indices().for_each(|bb| {
             let dom = dominators.immediate_dominator(bb);
-            if dom != bb {
-                children[dom].push(bb)
+            // if dom != bb {
+            //     children[dom].push(bb)
+            // } else {
+            //     root = bb;
+            // }
+            if let Some(dom) = dom {
+                children[dom].push(bb);
             } else {
                 root = bb;
             }
@@ -366,7 +371,14 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                         .is_none()
                 );
             }
-            StatementKind::AscribeUserType(_, _)
+            StatementKind::PlaceMention(box place) => {
+                let result = consume_place_at::<Infer>(place, self.body, location, self, infer_cx);
+                if let Some(result) = result {
+                    Infer::sink(infer_cx, result);
+                }
+            }
+            StatementKind::ConstEvalCounter
+            | StatementKind::AscribeUserType(_, _)
             | StatementKind::StorageLive(_)
             | StatementKind::StorageDead(_)
             | StatementKind::Retag(_, _)
@@ -664,7 +676,10 @@ impl<'rn, 'tcx: 'rn> Renamer<'rn, 'tcx> {
                 assert!(lhs_consume.is_none());
                 let _ = consume_place_at::<Infer>(&rhs, self.body, location, self, infer_cx);
             }
-            Rvalue::NullaryOp(_, _)
+            Rvalue::NullaryOp(NullOp::AlignOf, _) => {
+                tracing::debug!("ignoring align_of")
+            }
+            Rvalue::NullaryOp(..)
             | Rvalue::Len(_)
             | Rvalue::ShallowInitBox(_, _)
             | Rvalue::ThreadLocalRef(_) => {

@@ -5,7 +5,7 @@ use rustc_errors::registry;
 use rustc_hir::{def_id::DefId, ItemKind, OwnerNode};
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
-use rustc_session::config;
+use rustc_session::{config, EarlyErrorHandler};
 
 static TRACING_SUB_FMT_SET: OnceCell<()> = OnceCell::new();
 
@@ -63,13 +63,16 @@ pub fn run_compiler_with(
         output_dir: None,
         output_file: None,
         file_loader: None,
-        crate_check_cfg: rustc_interface::interface::parse_check_cfg(vec![]),
+        crate_check_cfg: rustc_interface::interface::parse_check_cfg(&EarlyErrorHandler::new(Default::default()), vec![]),
         lint_caps: rustc_hash::FxHashMap::default(),
         parse_sess_created: None,
         register_lints: None,
         override_queries: None,
         make_codegen_backend: None,
         registry: registry::Registry::new(rustc_error_codes::DIAGNOSTICS),
+        ice_file: None,
+        locale_resources: &[],
+        expanded_args: vec![],
     };
 
     rustc_interface::run_compiler(config, |compiler| {

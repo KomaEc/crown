@@ -6,7 +6,7 @@ use common::data_structure::vec_vec::VecVec;
 use petgraph::unionfind::UnionFind;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_index::vec::IndexVec;
+use rustc_index::IndexVec;
 use rustc_middle::{
     mir::{
         visit::Visitor, Body, Operand, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind,
@@ -157,7 +157,7 @@ impl DeallocArgStrategy for MergeDeallocArg {
     ) {
         let Some(dealloc_arg) = dealloc_arg.place() else { return };
         let ty = dealloc_arg.ty(cg.body, cg.tcx).ty;
-        assert!(ty.is_unsafe_ptr() || ty.is_region_ptr());
+        assert!(ty.is_unsafe_ptr() || ty.is_ref());
         let Some(arg_loc) = cg.place_location(dealloc_arg) else { return };
         let PlaceLocation::Plain(arg_loc) = arg_loc else { unreachable!("argument operand contains derefs") };
         let param_loc = cg.steensgaard.dealloc_arg;
@@ -185,7 +185,7 @@ pub trait InterProceduralStrategy: Sized {
         args: &Vec<Operand<'tcx>>,
     ) {
         let dest_ty = destination.ty(cg.body, cg.tcx).ty;
-        if !dest_ty.is_unsafe_ptr() && !dest_ty.is_region_ptr() {
+        if !dest_ty.is_unsafe_ptr() && !dest_ty.is_ref() {
             return;
         }
         let Some(dest_loc) = cg.place_location(*destination) else { return };
@@ -194,7 +194,7 @@ pub trait InterProceduralStrategy: Sized {
         for arg in args.iter() {
             let Some(place) = arg.place() else { continue };
             let place_ty = place.ty(cg.body, cg.tcx).ty;
-            if !place_ty.is_unsafe_ptr() && !place_ty.is_region_ptr() {
+            if !place_ty.is_unsafe_ptr() && !place_ty.is_ref() {
                 continue;
             }
             let Some(arg_loc) = cg.place_location(place) else { continue };
@@ -215,7 +215,7 @@ pub trait InterProceduralStrategy: Sized {
         for (idx, arg) in args.iter().enumerate() {
             let Some(place) = arg.place() else { continue };
             let place_ty = place.ty(cg.body, cg.tcx).ty;
-            if !place_ty.is_unsafe_ptr() && !place_ty.is_region_ptr() {
+            if !place_ty.is_unsafe_ptr() && !place_ty.is_ref() {
                 continue;
             }
             let Some(arg_loc) = cg.place_location(place) else { continue };
@@ -230,7 +230,7 @@ pub trait InterProceduralStrategy: Sized {
         }
 
         let dest_ty = destination.ty(cg.body, cg.tcx).ty;
-        if !dest_ty.is_unsafe_ptr() && !dest_ty.is_region_ptr() {
+        if !dest_ty.is_unsafe_ptr() && !dest_ty.is_ref() {
             return;
         }
 
@@ -794,7 +794,7 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy, I: InterProceduralStrat
         _: rustc_middle::mir::Location,
     ) {
         let place_ty = place.ty(self.body, self.tcx).ty;
-        // if !place_ty.is_unsafe_ptr() && !place_ty.is_region_ptr() {
+        // if !place_ty.is_unsafe_ptr() && !place_ty.is_ref() {
         //     return;
         // }
         if place_ty.is_primitive_ty() {

@@ -1,7 +1,7 @@
 //! State for analysis steps
 
 use common::data_structure::assoc::AssocExt;
-use rustc_index::{bit_set::BitSet, vec::IndexVec};
+use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::mir::{Body, Local, Location};
 
 use super::consume::Voidable;

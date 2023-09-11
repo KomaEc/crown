@@ -6,7 +6,7 @@ use std::{
 };
 
 use derivative::Derivative;
-use rustc_index::{bit_set::BitSet, vec::IndexVec};
+use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::mir::{BasicBlock, Body, Local};
 use smallvec::SmallVec;
 

@@ -150,7 +150,7 @@ fn solve_body<'tcx>(
     if precision == 0 {
         return Ok((
             FnSummary {
-                fn_body_sig: rustc_index::vec::IndexVec::new(),
+                fn_body_sig: rustc_index::IndexVec::new(),
                 ssa_state: ssa_state.mk_dummy(),
             },
             precision,

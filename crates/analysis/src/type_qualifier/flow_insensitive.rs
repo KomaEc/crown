@@ -13,7 +13,7 @@ use common::{
 };
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_index::vec::IndexVec;
+use rustc_index::IndexVec;
 use rustc_middle::{
     mir::{
         BasicBlock, BasicBlockData, Body, HasLocalDecls, Local, Location, NonDivergingIntrinsic,
@@ -102,7 +102,7 @@ impl<Qualifier> TypeQualifiers<Qualifier> {
     {
         for did in structs {
             let struct_results = self.struct_results(did);
-            let struct_ty = tcx.type_of(*did);
+            let struct_ty = tcx.type_of(*did).skip_binder();
             let TyKind::Adt(adt_def, _) = struct_ty.kind() else { unreachable!() };
             println!("{} {{", tcx.def_path_str(*did));
             for (field_def, qualifiers) in adt_def.all_fields().zip(struct_results) {
@@ -209,7 +209,7 @@ where
             VecVec::with_capacity(crate_data.structs.len(), crate_data.structs.len() * 4);
         for (idx, r#struct) in crate_data.structs.iter().enumerate() {
             did_idx.insert(*r#struct, idx);
-            let struct_ty = tcx.type_of(*r#struct);
+            let struct_ty = tcx.type_of(*r#struct).skip_binder();
             let TyKind::Adt(adt_def, substs) = struct_ty.kind() else { unreachable!() };
             for field_def in adt_def.all_fields() {
                 let field_ty = field_def.ty(tcx, substs);
@@ -443,7 +443,11 @@ pub trait Infer<'tcx>: WithConstraintSystem {
             StatementKind::Intrinsic(box intrinsic) => {
                 assert!(matches!(intrinsic, NonDivergingIntrinsic::Assume(..)))
             }
-            StatementKind::AscribeUserType(_, _)
+            StatementKind::PlaceMention(..) => {
+                tracing::debug!("ignoring PlaceMention statement {:?}", statement)
+            }
+            StatementKind::ConstEvalCounter
+            | StatementKind::AscribeUserType(_, _)
             | StatementKind::StorageLive(_)
             | StatementKind::StorageDead(_)
             | StatementKind::Retag(_, _)

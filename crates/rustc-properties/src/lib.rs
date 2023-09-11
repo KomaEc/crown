@@ -9,7 +9,7 @@ use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, PlaceContext, Visitor},
         Body, Local, LocalInfo, LocalKind, Location, Operand, Place, Rvalue, Terminator,
-        TerminatorKind,
+        TerminatorKind, ClearCrossCrate,
     },
     ty::TyCtxt,
 };
@@ -134,7 +134,7 @@ fn verify_args_are_all_locals(krate: &common::CrateData) {
 }
 
 fn verify_temp_local_usage(krate: &common::CrateData) {
-    use rustc_index::vec::IndexVec;
+    use rustc_index::IndexVec;
     for did in &krate.fns {
         let body = krate.tcx.optimized_mir(did);
         let mut cnt = IndexVec::from_elem(0, &body.local_decls);
@@ -153,14 +153,14 @@ fn verify_temp_local_usage(krate: &common::CrateData) {
 
         for local in body.local_decls.indices() {
             match body.local_kind(local) {
-                LocalKind::Var => {
-                    // assert!(cnt[local] >= 1, "{}:{:?}", krate.tcx.def_path_str(body.source.def_id()), local)
-                }
+                // LocalKind::Var => {
+                //     // assert!(cnt[local] >= 1, "{}:{:?}", krate.tcx.def_path_str(body.source.def_id()), local)
+                // }
                 LocalKind::Temp => {
                     assert!(
                         !matches!(
                             body.local_decls[local].local_info,
-                            Some(box LocalInfo::DerefTemp)
+                            ClearCrossCrate::Set(box LocalInfo::DerefTemp)
                         ) || cnt[local] == 1,
                         "{:?}:{:?}",
                         body.source.def_id(),

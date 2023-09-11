@@ -1,6 +1,6 @@
 // use orc_common::data_structure::vec_array::VecArray;
 // use rustc_data_structures::graph::WithStartNode;
-// use rustc_index::vec::IndexVec;
+// use rustc_index::IndexVec;
 // use rustc_middle::mir::{BasicBlock, Body};
 
 // pub struct DomTree {
@@ -27,7 +27,7 @@
 //     }
 // }
 
-use rustc_index::{bit_set::HybridBitSet, vec::IndexVec};
+use rustc_index::{bit_set::HybridBitSet, IndexVec};
 use rustc_middle::mir::{BasicBlock, Body};
 use smallvec::SmallVec;
 
@@ -50,7 +50,9 @@ pub fn compute_dominance_frontier(body: &Body) -> DominanceFrontier {
                 let mut runner = bb_p;
                 while !dominators.dominates(runner, bb) {
                     df[runner].insert(bb);
-                    runner = dominators.immediate_dominator(runner)
+                    // runner = dominators.immediate_dominator(runner)
+                    let Some(dom) = dominators.immediate_dominator(runner) else { break };
+                    runner = dom;
                 }
             }
         }

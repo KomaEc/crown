@@ -5,7 +5,7 @@
 #[macro_export]
 macro_rules! petgraph_index {
     ($I:ident) => {
-        static_assertions::assert_impl_all!($I: rustc_index::vec::Idx, Default);
+        static_assertions::assert_impl_all!($I: rustc_index::Idx, Default);
 
         unsafe impl petgraph::graph::IndexType for $I {
             #[inline(always)]
@@ -15,7 +15,7 @@ macro_rules! petgraph_index {
 
             #[inline(always)]
             fn index(&self) -> usize {
-                <$I as rustc_index::vec::Idx>::index(*self)
+                <$I as rustc_index::Idx>::index(*self)
             }
 
             #[inline(always)]
@@ -148,7 +148,7 @@ macro_rules! newtype_index {
             }
         }
 
-        impl rustc_index::vec::Idx for $type {
+        impl rustc_index::Idx for $type {
             #[inline]
             fn new(value: usize) -> Self {
                 Self::from_usize(value)

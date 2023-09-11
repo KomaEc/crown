@@ -17,6 +17,7 @@ extern crate rustc_middle;
 extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_type_ir;
+extern crate rustc_abi;
 
 pub mod captures;
 pub mod data_structure;
@@ -28,9 +29,10 @@ pub mod test;
 
 use rustc_hir::def_id::{DefId, LocalDefId};
 use rustc_middle::{
-    mir::{Body, Field, Local, Location, PlaceRef, ProjectionElem},
+    mir::{Body, Local, Location, PlaceRef, ProjectionElem},
     ty::TyCtxt,
 };
+use rustc_abi::FieldIdx;
 
 pub trait AnalysisResults {
     fn local_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool>;
@@ -41,7 +43,7 @@ pub trait AnalysisResults {
         loc: Location,
         ptr_depth: usize,
     ) -> Option<bool>;
-    fn field_result(&self, def_id: LocalDefId, field: Field, ptr_depth: usize) -> Option<bool>;
+    fn field_result(&self, def_id: LocalDefId, field: FieldIdx, ptr_depth: usize) -> Option<bool>;
     fn sig_result(&self, func: LocalDefId, local: Local, ptr_depth: usize) -> Option<bool>;
 
     fn place_result<'tcx>(
@@ -73,7 +75,7 @@ pub fn get_struct_field<'tcx>(
     tcx: TyCtxt<'tcx>,
     body: &Body<'tcx>,
     place: PlaceRef<'tcx>,
-) -> Option<(LocalDefId, Field, usize)> {
+) -> Option<(LocalDefId, FieldIdx, usize)> {
     let field = place
         .iter_projections()
         .rev()
