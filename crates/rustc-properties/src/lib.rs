@@ -15,16 +15,16 @@ use rustc_middle::{
 };
 
 pub fn verify(krate: &common::CrateData) {
-    verify_shape_of_place(krate);
-    verify_place_regularity(krate);
+    verify_place_shape(krate);
+    verify_assign_shape(krate);
     verify_temp_local_usage(krate);
-    verify_args_are_all_locals(krate);
+    verify_func_args_shape(krate);
     verify_stmt_regularity(krate);
     verify_return_clause_unique(krate);
     verify_projection_elem_intern(krate);
 }
 
-fn verify_shape_of_place(krate: &common::CrateData) {
+fn verify_place_shape(krate: &common::CrateData) {
     struct Vis;
     impl<'tcx> Visitor<'tcx> for Vis {
         fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, _location: Location) {
@@ -60,7 +60,7 @@ fn verify_shape_of_place(krate: &common::CrateData) {
     }
 }
 
-fn verify_place_regularity(krate: &common::CrateData) {
+fn verify_assign_shape(krate: &common::CrateData) {
     struct Vis<'me, 'tcx>(&'me Body<'tcx>, TyCtxt<'tcx>);
     impl<'me, 'tcx> Visitor<'tcx> for Vis<'me, 'tcx> {
         fn visit_assign(
@@ -116,9 +116,9 @@ fn verify_place_regularity(krate: &common::CrateData) {
     }
 }
 
-fn verify_args_are_all_locals(krate: &common::CrateData) {
-    struct Vis;
-    impl<'tcx> Visitor<'tcx> for Vis {
+fn verify_func_args_shape(krate: &common::CrateData) {
+    struct Vis<'v, 'tcx>(&'v Body<'tcx>);
+    impl<'v, 'tcx> Visitor<'tcx> for Vis<'v, 'tcx> {
         fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _: Location) {
             let TerminatorKind::Call {
                 destination, args, ..
@@ -129,7 +129,11 @@ fn verify_args_are_all_locals(krate: &common::CrateData) {
             for arg in args {
                 match arg {
                     Operand::Move(place) => assert!(place.as_local().is_some()),
-                    Operand::Copy(..) => unreachable!(),
+                    Operand::Copy(place) => {
+                        let local = place.local;
+                        let body = self.0;
+                        assert!(!body.local_decls[local].internal)
+                    },
                     _ => {}
                 }
             }
@@ -138,7 +142,7 @@ fn verify_args_are_all_locals(krate: &common::CrateData) {
     }
     for did in &krate.fns {
         let body = krate.tcx.optimized_mir(did);
-        Vis.visit_body(body);
+        Vis(body).visit_body(body);
     }
 }
 
