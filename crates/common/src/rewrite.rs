@@ -4,7 +4,6 @@ use clap::ValueEnum;
 use rustc_middle::ty::TyCtxt;
 use rustc_span::{FileName, Span};
 use rustfix::{LinePosition, LineRange, Replacement, Snippet, Solution, Suggestion};
-// use std::path::PathBuf;
 
 pub trait Rewrite {
     #[inline]
@@ -26,56 +25,6 @@ pub trait Rewrite {
 
     fn write(self, mode: RewriteMode);
 }
-
-// Does not work
-// impl Rewrite for Option<Suggestion> {
-//     fn make_suggestion(&mut self, tcx: TyCtxt, span: Span, message: String, replacement: String) {
-//         let snippet = get_snippet(tcx, span);
-//         let solution = Solution {
-//             message,
-//             replacements: vec![Replacement {
-//                 snippet: snippet.clone(),
-//                 replacement,
-//             }],
-//         };
-//         if let Some(suggestion) = self {
-//             suggestion.solutions.push(solution)
-//         } else {
-//             *self = Some(Suggestion {
-//                 message: snippet.file_name,
-//                 snippets: vec![],
-//                 solutions: vec![solution],
-//             });
-//         }
-//     }
-
-//     fn write(self, mode: RewriteMode) {
-//         let mut files = HashMap::new();
-//         for suggestion in self {
-//             let file = suggestion.solutions[0].replacements[0]
-//                 .snippet
-//                 .file_name
-//                 .clone();
-//             files.entry(file).or_insert_with(Vec::new).push(suggestion);
-//         }
-
-//         for (source_file, suggestions) in &files {
-//             let source = fs::read_to_string(source_file).unwrap();
-//             let mut fix = rustfix::CodeFix::new(&source);
-//             for suggestion in suggestions.iter().rev() {
-//                 if let Err(e) = fix.apply(suggestion) {
-//                     eprintln!("Failed to apply suggestion to {}: {}", source_file, e);
-//                 }
-//             }
-//             let fixes = fix.finish().unwrap();
-//             match mode {
-//                 RewriteMode::InPlace => fs::write(source_file, fixes).unwrap(),
-//                 RewriteMode::Print => io::stdout().write_all(fixes.as_ref()).unwrap(),
-//                 RewriteMode::Alongside => todo!(),
-//             }
-//         }
-//     }
-// }
 
 impl Rewrite for Vec<Suggestion> {
     fn replace_with_msg(&mut self, tcx: TyCtxt, span: Span, message: String, replacement: String) {
