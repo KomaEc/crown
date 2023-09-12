@@ -318,7 +318,7 @@ pub struct Steensgaard<F: FieldStrategy, D: DeallocArgStrategy, I: InterProcedur
 }
 
 impl<I: InterProceduralStrategy> Steensgaard<FieldFocused, MergeDeallocArg, I> {
-    pub fn field_based(input: &common::CrateData) -> Self {
+    pub fn field_based(input: &common::compiler_interface::Program) -> Self {
         let n_struct_fields = input.structs.iter().fold(0usize, |acc, did| {
             acc + input.tcx.adt_def(*did).all_fields().count()
         });
@@ -436,7 +436,7 @@ impl<I: InterProceduralStrategy> Steensgaard<FieldFocused, MergeDeallocArg, I> {
 }
 
 impl<I: InterProceduralStrategy> Steensgaard<FieldInsensitive, NopDeallocArg, I> {
-    pub fn field_insensitive(input: &common::CrateData) -> Self {
+    pub fn field_insensitive(input: &common::compiler_interface::Program) -> Self {
         let n_fn_locals = input.fns.iter().fold(0usize, |acc, did| {
             acc + input.tcx.optimized_mir(*did).local_decls.len()
         });

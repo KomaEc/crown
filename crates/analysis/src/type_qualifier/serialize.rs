@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use common::CrateData;
+use common::compiler_interface::Program;
 use rustc_middle::mir::VarDebugInfoContents;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
@@ -17,7 +17,7 @@ impl<Qualifier> TypeQualifiers<Qualifier>
 where
     Qualifier: Copy,
 {
-    pub fn make_data(&self, crate_data: &CrateData) -> QualifierData<Qualifier> {
+    pub fn make_data(&self, crate_data: &Program) -> QualifierData<Qualifier> {
         let tcx = crate_data.tcx;
         let mut fn_data = HashMap::with_capacity(crate_data.fns.len());
         let mut struct_data = HashMap::with_capacity(crate_data.structs.len());

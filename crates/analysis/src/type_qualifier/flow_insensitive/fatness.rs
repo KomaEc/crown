@@ -24,7 +24,7 @@ use crate::{
 };
 
 pub fn fatness_analysis(
-    crate_data: &common::CrateData,
+    crate_data: &common::compiler_interface::Program,
     solidified: &SolidifiedOwnershipSchemes,
 ) -> FatnessResult {
     let mut result = FatnessResult::new_empty(crate_data);

@@ -255,7 +255,7 @@ impl<'me, 'tcx> Visitor<'tcx> for CallGraphConstruction<'me> {
 
 #[cfg(test)]
 mod test {
-    use common::test::init_logger;
+    use common::tracing_setup::init_logger;
 
     use super::*;
 
@@ -291,7 +291,9 @@ mod test {
     #[test]
     fn test() {
         init_logger();
-        common::test::run_compiler_with(TEST_PROGRAMS.into(), |tcx, functions, _| {
+        common::compiler_interface::run_compiler(TEST_PROGRAMS.into(), |program| {
+            let tcx = program.tcx;
+            let functions = &program.fns;
             let call_graph = CallGraph::new(tcx, &functions[..]);
 
             assert_eq!(call_graph.sccs().count(), 4);

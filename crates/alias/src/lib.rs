@@ -48,19 +48,19 @@ pub type TaintResult = Steensgaard<FieldFocused, MergeDeallocArg, InterProcedura
 pub type AliasResult = Steensgaard<FieldInsensitive, NopDeallocArg, InterProcedural>;
 pub type IntraAliasResult = Steensgaard<FieldInsensitive, NopDeallocArg, IntraProcedural>;
 
-pub fn taint_results(input: &common::CrateData) -> TaintResult {
+pub fn taint_results(input: &common::compiler_interface::Program) -> TaintResult {
     Steensgaard::field_based(input)
 }
 
-pub fn alias_results(input: &common::CrateData) -> AliasResult {
+pub fn alias_results(input: &common::compiler_interface::Program) -> AliasResult {
     Steensgaard::field_insensitive(input)
 }
 
-pub fn intra_alias_results(input: &common::CrateData) -> IntraAliasResult {
+pub fn intra_alias_results(input: &common::compiler_interface::Program) -> IntraAliasResult {
     Steensgaard::field_insensitive(input)
 }
 
-pub fn report_results(input: &common::CrateData) {
+pub fn report_results(input: &common::compiler_interface::Program) {
     Steensgaard::<FieldFocused, MergeDeallocArg, InterProcedural>::field_based(input)
         .print_results()
 }

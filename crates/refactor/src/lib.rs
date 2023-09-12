@@ -17,9 +17,9 @@ use analysis::{
 };
 use clap::{ArgGroup, Args};
 use common::{
+    compiler_interface::Program,
     data_structure::vec_vec::VecVec,
     rewrite::{Rewrite, RewriteMode},
-    CrateData,
 };
 use rewrite_fn::rewrite_fns;
 use rewrite_ty::rewrite_structs;
@@ -87,7 +87,7 @@ pub struct RefactorOptions {
 }
 
 pub fn refactor<'tcx>(
-    crate_data: &CrateData<'tcx>,
+    crate_data: &Program<'tcx>,
     analysis: &Analysis,
     rewrite_mode: RewriteMode,
     options: RefactorOptions,
@@ -136,7 +136,7 @@ pub fn refactor<'tcx>(
 }
 
 fn rewrite(
-    crate_data: &CrateData,
+    crate_data: &Program,
     fn_decision: &FnLocals,
     struct_decision: &StructFields,
     // type_only: bool,
@@ -286,7 +286,7 @@ impl StructFields {
             })
     }
 
-    pub fn new(crate_data: &CrateData, analysis: &Analysis, options: &RefactorOptions) -> Self {
+    pub fn new(crate_data: &Program, analysis: &Analysis, options: &RefactorOptions) -> Self {
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.structs.len());
         let mut struct_fields = VecVec::with_capacity(
@@ -405,7 +405,7 @@ impl FnLocals {
         &self.0.data[idx]
     }
 
-    pub fn new(crate_data: &CrateData, analysis: &Analysis, options: &RefactorOptions) -> Self {
+    pub fn new(crate_data: &Program, analysis: &Analysis, options: &RefactorOptions) -> Self {
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(crate_data.fns.len());
         let mut fn_locals = VecVec::with_capacity(

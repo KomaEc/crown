@@ -22,7 +22,7 @@ use crate::{
     type_qualifier::flow_insensitive::ConstraintSystem,
 };
 
-pub fn mutability_analysis(crate_data: &common::CrateData) -> MutabilityResult {
+pub fn mutability_analysis(crate_data: &common::compiler_interface::Program) -> MutabilityResult {
     let mut result = MutabilityResult::new_empty(crate_data);
     let mut database = BooleanSystem::new(&result.model);
     for r#fn in &crate_data.fns {

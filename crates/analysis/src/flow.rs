@@ -1,4 +1,4 @@
-use common::data_structure::vec_vec::{VecVec, VecVecBuilder};
+use common::data_structure::vec_vec::VecVec;
 use rustc_middle::mir::{BasicBlock, Location};
 
 mod dom;

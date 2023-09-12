@@ -14,7 +14,7 @@ use crate::call_graph::CallGraph;
 pub type OutputParams = FxHashMap<DefId, FxHashSet<Local>>;
 
 pub fn show_output_params(
-    crate_data: &common::CrateData,
+    crate_data: &common::compiler_interface::Program,
     alias_result: &AliasResult,
     mutability_result: &MutabilityResult,
 ) {
@@ -36,7 +36,7 @@ pub fn show_output_params(
 }
 
 pub fn compute_output_params(
-    crate_data: &common::CrateData,
+    crate_data: &common::compiler_interface::Program,
     alias_result: &AliasResult,
     mutability_result: &MutabilityResult,
 ) -> OutputParams {

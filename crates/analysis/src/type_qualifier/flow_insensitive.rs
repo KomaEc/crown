@@ -118,7 +118,7 @@ impl<Qualifier> TypeQualifiers<Qualifier> {
         }
     }
 
-    pub fn print_results(&self, crate_data: &common::CrateData)
+    pub fn print_results(&self, crate_data: &common::compiler_interface::Program)
     where
         Qualifier: std::fmt::Display,
     {
@@ -198,7 +198,7 @@ where
     Domain: BooleanLattice,
 {
     /// construct a new `TypeQualifiers` instance with no constraints added
-    pub fn new_empty(crate_data: &common::CrateData) -> Self {
+    pub fn new_empty(crate_data: &common::compiler_interface::Program) -> Self {
         let mut model = IndexVec::new();
         // not necessary, but need initialization anyway
         model.push(Domain::TOP);

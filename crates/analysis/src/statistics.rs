@@ -1,4 +1,4 @@
-use common::CrateData;
+use common::compiler_interface::Program;
 use rustc_middle::mir::{
     visit::{PlaceContext, Visitor},
     Body, Location,
@@ -25,7 +25,7 @@ pub struct CrateStatistics {
 
 impl CrateStatistics {
     pub fn new(
-        crate_data: &CrateData,
+        crate_data: &Program,
         fatness_result: &FatnessResult,
         mutability_result: &MutabilityResult,
         ownership_result: &SolidifiedOwnershipSchemes,

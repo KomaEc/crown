@@ -56,7 +56,7 @@ pub struct CrateCtxt<'tcx> {
 }
 
 impl<'tcx> CrateCtxt<'tcx> {
-    pub fn new(crate_data: &common::CrateData<'tcx>) -> Self {
+    pub fn new(crate_data: &common::compiler_interface::Program<'tcx>) -> Self {
         CrateCtxt {
             tcx: crate_data.tcx,
             fn_ctxt: CallGraph::new(crate_data.tcx, &crate_data.fns),

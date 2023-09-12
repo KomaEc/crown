@@ -13,8 +13,8 @@ fn test1() {
         (*s).g = q;
     }
     ";
-    common::test::run_compiler_with(PROGRAM.into(), |tcx, fns, structs| {
-        let input = common::CrateData::new(tcx, fns, structs);
+    common::compiler_interface::run_compiler(PROGRAM.into(), |program| {
+        let input = program;
         let steensgaard = TaintResult::field_based(&input);
         steensgaard.print_results();
         let s = input.structs[0];
@@ -35,8 +35,8 @@ fn test2() {
         let mut p = &local;
     }
     ";
-    common::test::run_compiler_with(PROGRAM.into(), |tcx, fns, structs| {
-        let input = common::CrateData::new(tcx, fns, structs);
+    common::compiler_interface::run_compiler(PROGRAM.into(), |program| {
+        let input = program;
         let steensgaard = TaintResult::field_based(&input);
         steensgaard.print_results();
         let pts = &steensgaard.pts;

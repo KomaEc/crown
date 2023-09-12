@@ -1,16 +1,37 @@
 use std::{path::PathBuf, process, str};
 
-use once_cell::sync::OnceCell;
 use rustc_errors::registry;
 use rustc_hir::{def_id::DefId, ItemKind, OwnerNode};
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::{config, EarlyErrorHandler};
 
-static TRACING_SUB_FMT_SET: OnceCell<()> = OnceCell::new();
+pub struct Program<'tcx> {
+    pub tcx: TyCtxt<'tcx>,
+    pub fns: Vec<DefId>,
+    pub structs: Vec<DefId>,
+}
 
-pub fn init_logger() {
-    TRACING_SUB_FMT_SET.get_or_init(tracing_subscriber::fmt::init);
+impl<'tcx> Program<'tcx> {
+    pub fn new(tcx: TyCtxt<'tcx>) -> Self {
+        let mut fns = Vec::new();
+        let mut structs = Vec::new();
+
+        for maybe_owner in tcx.hir().krate().owners.iter() {
+            let Some(owner) = maybe_owner.as_owner() else {
+                continue;
+            };
+            let OwnerNode::Item(item) = owner.node() else {
+                continue;
+            };
+            match item.kind {
+                ItemKind::Fn(..) => fns.push(item.owner_id.def_id.to_def_id()),
+                ItemKind::Struct(..) => structs.push(item.owner_id.def_id.to_def_id()),
+                _ => {}
+            };
+        }
+        Self { tcx, fns, structs }
+    }
 }
 
 /// A simpler input type than `rustc_session::config::Input`
@@ -43,10 +64,7 @@ impl From<Input> for rustc_session::config::Input {
     }
 }
 
-pub fn run_compiler_with(
-    input: Input,
-    f: impl for<'tcx> FnOnce(TyCtxt<'tcx>, Vec<DefId>, Vec<DefId>) + Send,
-) {
+pub fn run_compiler(input: Input, f: impl for<'tcx> FnOnce(Program<'tcx>) + Send) {
     let out = process::Command::new("rustc")
         .arg("--print=sysroot")
         .current_dir(".")
@@ -80,24 +98,10 @@ pub fn run_compiler_with(
 
     rustc_interface::run_compiler(config, |compiler| {
         compiler.enter(|queries| {
-            queries.global_ctxt().unwrap().enter(|tcx| {
-                let mut functions = Vec::new();
-                let mut structs = Vec::new();
-                for maybe_owner in tcx.hir().krate().owners.iter() {
-                    let Some(owner) = maybe_owner.as_owner() else {
-                        continue;
-                    };
-                    let OwnerNode::Item(item) = owner.node() else {
-                        continue;
-                    };
-                    match item.kind {
-                        ItemKind::Fn(..) => functions.push(item.owner_id.def_id.to_def_id()),
-                        ItemKind::Struct(..) => structs.push(item.owner_id.def_id.to_def_id()),
-                        _ => {}
-                    };
-                }
-                f(tcx, functions, structs)
-            })
+            queries
+                .global_ctxt()
+                .unwrap()
+                .enter(|tcx| f(Program::new(tcx)))
         })
     })
 }

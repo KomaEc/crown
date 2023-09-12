@@ -340,7 +340,6 @@ impl<'intra, 'tcx> Measurable<'tcx> for RestrictedStructCtxt<'intra, 'tcx> {
 
 #[cfg(test)]
 mod tests {
-    use common::CrateData;
 
     use super::StructCtxt;
     use crate::{ptr::Measurable, CrateCtxt};
@@ -371,8 +370,8 @@ mod tests {
 
     #[test]
     fn test1() {
-        common::test::run_compiler_with(TEXT1.into(), |tcx, functions, structs| {
-            let crate_data = CrateData::new(tcx, functions, structs);
+        common::compiler_interface::run_compiler(TEXT1.into(), |program| {
+            let crate_data = program;
             let program = CrateCtxt::new(&crate_data);
             macro_rules! define_structs {
                 ($( $x: ident ),*) => {
@@ -421,7 +420,9 @@ mod tests {
 
     #[test]
     fn test2() {
-        common::test::run_compiler_with(TEXT2.into(), |tcx, _, structs| {
+        common::compiler_interface::run_compiler(TEXT2.into(), |program| {
+            let tcx = program.tcx;
+            let structs = &program.structs;
             let mut struct_ctxt = StructCtxt::new(tcx, &structs);
             let &node = struct_ctxt
                 .post_order
@@ -460,7 +461,9 @@ mod tests {
     const TEXT3: &str = "struct S { f: *mut *mut S, g: *mut *mut S }";
     #[test]
     fn test3() {
-        common::test::run_compiler_with(TEXT3.into(), |tcx, _, structs| {
+        common::compiler_interface::run_compiler(TEXT3.into(), |program| {
+            let tcx = program.tcx;
+            let structs = &program.structs;
             let mut struct_ctxt = StructCtxt::new(tcx, &structs);
             let &node = struct_ctxt
                 .post_order
@@ -507,7 +510,9 @@ mod tests {
     const TEXT4: &str = "struct S { f: *mut S, g: *mut *mut S }";
     #[test]
     fn test4() {
-        common::test::run_compiler_with(TEXT4.into(), |tcx, _, structs| {
+        common::compiler_interface::run_compiler(TEXT4.into(), |program| {
+            let tcx = program.tcx;
+            let structs = &program.structs;
             let mut struct_ctxt = StructCtxt::new(tcx, &structs);
             let &node = struct_ctxt
                 .post_order
@@ -553,7 +558,7 @@ mod tests {
     // const TEXT5: &str = "struct S { f: *mut Data, g: *mut S } struct Data { f: i32 }";
     // #[test]
     // fn test5() {
-    //     common::test::run_compiler_with(TEXT5.into(), |tcx, _, structs| {
+    //     common::compiler_interface::run_compiler_with(TEXT5.into(), |tcx, _, structs| {
     //         let mut struct_ctxt = StructTopology::new(tcx, &structs);
     //         let &node = struct_ctxt
     //             .post_order

@@ -1,9 +1,9 @@
 use std::ops::Range;
 
 use common::{
+    compiler_interface::Program,
     data_structure::vec_vec::VecVec,
     discretization::{self, Discretization},
-    CrateData,
 };
 use either::Either::Left;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -23,7 +23,7 @@ use crate::{
 pub type SolidifiedOwnershipSchemes = TypeQualifiers<Ownership>;
 
 impl<'tcx> WholeProgramResults<'tcx> {
-    pub fn solidify(&self, crate_data: &CrateData<'tcx>) -> SolidifiedOwnershipSchemes {
+    pub fn solidify(&self, crate_data: &Program<'tcx>) -> SolidifiedOwnershipSchemes {
         let mut model = IndexVec::new();
         let mut next: Var = model.next_index();
         let mut did_idx = FxHashMap::default();
@@ -234,7 +234,7 @@ impl<'tcx> WholeProgramResults<'tcx> {
 fn sanity_check<'tcx>(
     ownership_schemes: &WholeProgramResults<'tcx>,
     solidifed_ownership_schemes: &SolidifiedOwnershipSchemes,
-    crate_data: &CrateData<'tcx>,
+    crate_data: &Program<'tcx>,
 ) {
     for r#fn in &crate_data.fns {
         let body = crate_data.tcx.optimized_mir(*r#fn);

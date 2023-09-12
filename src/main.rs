@@ -28,7 +28,6 @@ use common::rewrite::RewriteMode;
 use empirical_study::EmpiricalStudy;
 use refactor::RefactorOptions;
 use rustc_errors::registry;
-use rustc_hir::{ItemKind, OwnerNode};
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::{config, EarlyErrorHandler};
@@ -218,24 +217,7 @@ fn time<T>(label: &str, f: impl FnOnce() -> T) -> T {
 }
 
 fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
-    let mut fns = Vec::new();
-    let mut structs = Vec::new();
-
-    for maybe_owner in tcx.hir().krate().owners.iter() {
-        let Some(owner) = maybe_owner.as_owner() else {
-            continue;
-        };
-        let OwnerNode::Item(item) = owner.node() else {
-            continue;
-        };
-        match item.kind {
-            ItemKind::Fn(..) => fns.push(item.owner_id.def_id.to_def_id()),
-            ItemKind::Struct(..) => structs.push(item.owner_id.def_id.to_def_id()),
-            _ => {}
-        };
-    }
-
-    let input = common::CrateData { tcx, fns, structs };
+    let input = common::compiler_interface::Program::new(tcx);
 
     match cmd {
         Command::Preprocess { .. } => unreachable!(),
