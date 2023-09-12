@@ -32,6 +32,7 @@ extern crate rustc_target;
 extern crate rustc_type_ir;
 
 mod call_graph;
+pub mod flow;
 mod lattice;
 pub mod ownership;
 mod ptr;
