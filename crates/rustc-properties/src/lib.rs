@@ -19,8 +19,8 @@ pub fn verify(krate: &common::CrateData) {
     verify_assign_shape(krate);
     verify_temp_local_usage(krate);
     verify_func_args_shape(krate);
-    verify_stmt_regularity(krate);
-    verify_return_clause_unique(krate);
+    verify_stmt_shape(krate);
+    verify_return_clause_uniqueness(krate);
     verify_projection_elem_intern(krate);
 }
 
@@ -187,7 +187,7 @@ fn verify_temp_local_usage(krate: &common::CrateData) {
     }
 }
 
-fn verify_stmt_regularity(krate: &common::CrateData) {
+fn verify_stmt_shape(krate: &common::CrateData) {
     for did in krate.fns.iter().copied() {
         let body = krate.tcx.optimized_mir(did);
         for bb_data in body.basic_blocks.iter() {
@@ -214,7 +214,7 @@ fn verify_stmt_regularity(krate: &common::CrateData) {
     }
 }
 
-fn verify_return_clause_unique(krate: &common::CrateData) {
+fn verify_return_clause_uniqueness(krate: &common::CrateData) {
     for did in krate.fns.iter().copied() {
         let body = krate.tcx.optimized_mir(did);
         assert!(
