@@ -219,14 +219,14 @@ where
                 let field_ty = field_def.ty(tcx, substs);
                 let ptr_count = count_ptr(field_ty);
                 model.extend(std::iter::repeat(Domain::BOTTOM).take(ptr_count));
-                vars.push_inner(next);
+                vars.push_element(next);
                 next = next + ptr_count;
                 assert_eq!(model.next_index(), next);
             }
-            vars.push_inner(next);
-            vars.push();
+            vars.push_element(next);
+            vars.complete_cur_vec();
         }
-        let vars = vars.done();
+        let vars = vars.complete();
         let struct_fields = discretization::StructFields(Discretization {
             did_idx,
             contents: vars,
@@ -241,14 +241,14 @@ where
                 let ty = local_decl.ty;
                 let ptr_count = count_ptr(ty);
                 model.extend(std::iter::repeat(Domain::BOTTOM).take(ptr_count));
-                vars.push_inner(next);
+                vars.push_element(next);
                 next = next + ptr_count;
                 assert_eq!(model.next_index(), next);
             }
-            vars.push_inner(next);
-            vars.push();
+            vars.push_element(next);
+            vars.complete_cur_vec();
         }
-        let vars = vars.done();
+        let vars = vars.complete();
         let fn_locals = discretization::FnLocals(Discretization {
             did_idx,
             contents: vars,

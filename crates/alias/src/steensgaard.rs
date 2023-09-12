@@ -341,16 +341,16 @@ impl<I: InterProceduralStrategy> Steensgaard<FieldFocused, MergeDeallocArg, I> {
             let r#struct = input.tcx.adt_def(*did);
             for _ in r#struct.all_fields() {
                 let field = pts.next_index();
-                struct_fields.push_inner(field);
+                struct_fields.push_element(field);
                 let field_pt =
                     AbstractLocation::from_u32(field.as_u32() - (n_struct_fields as u32));
                 pts.push(field_pt);
             }
-            struct_fields.push_inner(pts.next_index());
-            struct_fields.push();
+            struct_fields.push_element(pts.next_index());
+            struct_fields.complete_cur_vec();
             struct_idx.insert(*did, idx);
         }
-        let struct_fields = struct_fields.done();
+        let struct_fields = struct_fields.complete();
 
         let mut fn_locals = VecVec::with_capacity(input.fns.len(), input.fns.len() * 20);
         let mut fn_idx = FxHashMap::default();
@@ -359,13 +359,13 @@ impl<I: InterProceduralStrategy> Steensgaard<FieldFocused, MergeDeallocArg, I> {
             let r#fn = input.tcx.optimized_mir(*did);
             for _ in &r#fn.local_decls {
                 let local = pts.next_index();
-                fn_locals.push_inner(local);
+                fn_locals.push_element(local);
                 assert_eq!(pts.push(AbstractLocation::NULL), local);
             }
-            fn_locals.push();
+            fn_locals.complete_cur_vec();
             fn_idx.insert(*did, idx);
         }
-        let fn_locals = fn_locals.done();
+        let fn_locals = fn_locals.complete();
 
         let arg_free = pts.push(AbstractLocation::NULL);
 
@@ -459,13 +459,13 @@ impl<I: InterProceduralStrategy> Steensgaard<FieldInsensitive, NopDeallocArg, I>
             for _ in &r#fn.local_decls {
                 let local: AbstractLocation = pts.next_index();
                 let local_pt = AbstractLocation::from_u32(local.as_u32() - n_fn_locals as u32);
-                fn_locals.push_inner(local);
+                fn_locals.push_element(local);
                 assert_eq!(pts.push(local_pt), local);
             }
-            fn_locals.push();
+            fn_locals.complete_cur_vec();
             fn_idx.insert(*did, idx);
         }
-        let fn_locals = fn_locals.done();
+        let fn_locals = fn_locals.complete();
 
         let pts_targets = UnionFind::new(pts.len());
 

@@ -1,6 +1,6 @@
 use std::alloc::{Allocator, Global};
 
-/// A vector of non-growable-after-construction vecs: `Vec<Vec<I>>`
+/// Memory-compact `Vec<Vec<I>>`
 #[derive(Clone, Debug)]
 pub struct VecVec<I, A: Allocator = Global> {
     indices: Vec<usize, A>,
@@ -28,36 +28,36 @@ impl<I, A: Allocator> std::ops::IndexMut<usize> for VecVec<I, A> {
 }
 
 impl<I> VecVec<I> {
-    pub fn with_capacity(indices_capacity: usize, data_capacity: usize) -> VecVecConstruction<I> {
+    pub fn with_capacity(indices_capacity: usize, data_capacity: usize) -> VecVecBuilder<I> {
         let mut indices = Vec::with_capacity(indices_capacity + 1);
         indices.push(0);
         let data = Vec::with_capacity(data_capacity);
         let vec_array = VecVec { indices, data };
-        VecVecConstruction {
+        VecVecBuilder {
             vec_vec: vec_array,
             start_index: 0,
             n_cur_items: 0,
         }
     }
 
-    pub fn with_indices_capacity(size: usize) -> VecVecConstruction<I> {
+    pub fn with_indices_capacity(size: usize) -> VecVecBuilder<I> {
         let mut indices = Vec::with_capacity(size + 1);
         indices.push(0);
         let data = Vec::new();
         let vec_array = VecVec { indices, data };
-        VecVecConstruction {
+        VecVecBuilder {
             vec_vec: vec_array,
             start_index: 0,
             n_cur_items: 0,
         }
     }
 
-    pub fn with_data_capacity(size: usize) -> VecVecConstruction<I> {
+    pub fn with_data_capacity(size: usize) -> VecVecBuilder<I> {
         let mut indices = Vec::new();
         indices.push(0);
         let data = Vec::with_capacity(size);
         let vec_array = VecVec { indices, data };
-        VecVecConstruction {
+        VecVecBuilder {
             vec_vec: vec_array,
             start_index: 0,
             n_cur_items: 0,
@@ -76,12 +76,12 @@ impl<I> VecVec<I> {
 }
 
 impl<I, A: Allocator + Copy> VecVec<I, A> {
-    pub fn new_in(len: usize, alloc: A) -> VecVecConstruction<I, A> {
+    pub fn new_in(len: usize, alloc: A) -> VecVecBuilder<I, A> {
         let mut indices = Vec::with_capacity_in(len + 1, alloc);
         indices.push(0);
         let data = Vec::new_in(alloc);
         let vec_array = VecVec { indices, data };
-        VecVecConstruction {
+        VecVecBuilder {
             vec_vec: vec_array,
             start_index: 0,
             n_cur_items: 0,
@@ -112,15 +112,15 @@ impl<I, A: Allocator + Copy> VecVec<I, A> {
 }
 
 #[derive(Debug)]
-pub struct VecVecConstruction<I, A: Allocator = Global> {
+pub struct VecVecBuilder<I, A: Allocator = Global> {
     vec_vec: VecVec<I, A>,
     start_index: usize,
     n_cur_items: usize,
 }
 
-impl<I, A: Allocator> VecVecConstruction<I, A> {
+impl<I, A: Allocator> VecVecBuilder<I, A> {
     #[inline]
-    pub fn push_inner(&mut self, item: I) {
+    pub fn push_element(&mut self, item: I) {
         self.vec_vec.data.push(item);
         self.n_cur_items += 1;
     }
@@ -135,21 +135,31 @@ impl<I, A: Allocator> VecVecConstruction<I, A> {
     }
 
     #[inline]
-    pub fn push(&mut self) {
+    pub fn complete_cur_vec(&mut self) {
         self.start_index += std::mem::take(&mut self.n_cur_items);
         self.vec_vec.indices.push(self.start_index);
     }
 
     #[inline]
-    pub fn done(self) -> VecVec<I, A> {
+    pub fn complete(self) -> VecVec<I, A> {
         self.vec_vec
     }
 
     #[inline]
-    pub fn get_constructed(&self, index: usize) -> &[I] {
+    pub fn get(&self, index: usize) -> &[I] {
         if index + 1 >= self.vec_vec.indices.len() {
             panic!("the entry for {index} is still under construction")
         }
         &self.vec_vec[index]
+    }
+}
+
+impl<I> From<Vec<Vec<I>>> for VecVec<I> {
+    fn from(value: Vec<Vec<I>>) -> Self {
+        let mut builder = VecVec::with_indices_capacity(value.len() + 1);
+        for vec in value {
+            builder.push_vec(vec.into_iter());
+        }
+        builder.complete()
     }
 }

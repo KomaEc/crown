@@ -130,7 +130,7 @@ impl CallGraph {
         let mut tarjan_scc = TarjanScc::new();
         let mut post_order = VecVec::with_indices_capacity(functions.len());
         tarjan_scc.run(&graph, |nodes| post_order.push_vec(nodes.iter().copied()));
-        let post_order = post_order.done();
+        let post_order = post_order.complete();
 
         let mut n_alloc_deallocs = rustc_hash::FxHashMap::default();
         n_alloc_deallocs.reserve(functions.len());

@@ -37,14 +37,14 @@ impl<'tcx> WholeProgramResults<'tcx> {
             let fields_ownership = self.fields(r#struct);
             for ownership in fields_ownership {
                 model.extend(ownership.iter().copied());
-                vars.push_inner(next);
+                vars.push_element(next);
                 next = next + ownership.len();
                 assert_eq!(model.next_index(), next);
             }
-            vars.push_inner(next);
-            vars.push();
+            vars.push_element(next);
+            vars.complete_cur_vec();
         }
-        let vars = vars.done();
+        let vars = vars.complete();
         let struct_fields = discretization::StructFields(Discretization {
             did_idx,
             contents: vars,
@@ -209,15 +209,15 @@ impl<'tcx> WholeProgramResults<'tcx> {
             }
 
             for local in locals {
-                vars.push_inner(next);
+                vars.push_element(next);
                 next = next + local.len();
                 model.extend(local.into_iter());
                 assert_eq!(model.next_index(), next);
             }
-            vars.push_inner(next);
-            vars.push();
+            vars.push_element(next);
+            vars.complete_cur_vec();
         }
-        let vars = vars.done();
+        let vars = vars.complete();
         let fn_locals = discretization::FnLocals(Discretization {
             did_idx,
             contents: vars,

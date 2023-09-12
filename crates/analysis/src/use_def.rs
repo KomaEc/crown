@@ -2,7 +2,7 @@
 
 use common::data_structure::{
     assoc::AssocExt,
-    vec_vec::{VecVec, VecVecConstruction},
+    vec_vec::{VecVec, VecVecBuilder},
 };
 use rustc_data_structures::sso::SsoHashSet;
 use rustc_index::{bit_set::BitSet, IndexVec};
@@ -95,7 +95,7 @@ fn definitions<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Definitions {
     struct Vis<'me, 'tcx> {
         // call_arg_temps: &'me SsoHashSet<Local>,
         def_sites: &'me mut IndexVec<Local, BitSet<BasicBlock>>,
-        consumes: &'me mut VecVecConstruction<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
+        consumes: &'me mut VecVecBuilder<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
         consumes_in_cur_stmt: SmallVec<[(Local, Consume<SSAIdx>); 2]>,
         body: &'me Body<'tcx>,
         tcx: TyCtxt<'tcx>,
@@ -123,7 +123,7 @@ fn definitions<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Definitions {
                 };
                 self.visit_statement(statement, location);
                 let defs_in_cur_stmt = std::mem::take(&mut self.consumes_in_cur_stmt);
-                self.consumes.push_inner(defs_in_cur_stmt);
+                self.consumes.push_element(defs_in_cur_stmt);
                 index += 1;
             }
 
@@ -134,9 +134,9 @@ fn definitions<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Definitions {
                 };
                 self.visit_terminator(terminator, location);
                 let defs_in_cur_stmt = std::mem::take(&mut self.consumes_in_cur_stmt);
-                self.consumes.push_inner(defs_in_cur_stmt);
+                self.consumes.push_element(defs_in_cur_stmt);
             }
-            self.consumes.push();
+            self.consumes.complete_cur_vec();
         }
 
         // for return terminator
@@ -209,7 +209,7 @@ fn definitions<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Definitions {
 
     let locals_with_defs = BitSet::new_filled(body.local_decls.len());
 
-    let consumes = consumes.done();
+    let consumes = consumes.complete();
 
     Definitions {
         consumes,

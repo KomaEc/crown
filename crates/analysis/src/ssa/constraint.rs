@@ -107,17 +107,17 @@ impl GlobalAssumptions {
             let TyKind::Adt(adt_def, subst) = ty.kind() else {
                 unreachable!()
             };
-            struct_fields.push_inner(gen.next());
+            struct_fields.push_element(gen.next());
             for field_def in adt_def.all_fields() {
                 let field_ty = field_def.ty(tcx, subst);
                 let ptr_depth = struct_ctxt.measure_ptr(field_ty);
                 database.new_vars(gen, ptr_depth);
-                struct_fields.push_inner(gen.next());
+                struct_fields.push_element(gen.next());
             }
-            struct_fields.push();
+            struct_fields.complete_cur_vec();
         }
 
-        let struct_fields = struct_fields.done();
+        let struct_fields = struct_fields.complete();
 
         GlobalAssumptions { struct_fields }
     }

@@ -130,17 +130,17 @@ impl<'tcx> StructCtxt<'tcx> {
             };
             assert!(adt_def.is_struct());
 
-            offset_of.push_inner(0);
+            offset_of.push_element(0);
             for _ in adt_def.all_fields() {
-                offset_of.push_inner(0);
+                offset_of.push_element(0);
             }
-            offset_of.push();
+            offset_of.complete_cur_vec();
 
-            leaf_nodes.push_inner((ty, 0));
-            leaf_nodes.push();
+            leaf_nodes.push_element((ty, 0));
+            leaf_nodes.complete_cur_vec();
         }
-        let offset_of = offset_of.done();
-        let leaf_nodes = leaf_nodes.done();
+        let offset_of = offset_of.complete();
+        let leaf_nodes = leaf_nodes.complete();
 
         let mut this = StructCtxt {
             post_order,
@@ -203,7 +203,7 @@ impl<'tcx> StructCtxt<'tcx> {
             assert!(adt_def.is_struct());
 
             let mut offset = 0;
-            offset_of.push_inner(offset);
+            offset_of.push_element(offset);
 
             for field_def in adt_def.all_fields() {
                 let field_ty = field_def.ty(tcx, subst_ref);
@@ -216,24 +216,25 @@ impl<'tcx> StructCtxt<'tcx> {
                         }
                         leaf_ext_ty = leaf_ext_ty.builtin_deref(true).unwrap().ty;
                     }
-                    leaf_nodes.push_inner((leaf_ext_ty, offset + max_ptr_depth));
+                    leaf_nodes.push_element((leaf_ext_ty, offset + max_ptr_depth));
                     offset += max_ptr_depth;
                 } else if let Some(&idx) = maybe_adt.and_then(|adt| self.did_idx.get(&adt.did())) {
                     if ptr_depth == 0 {
                         for (leaf_ext_ty, inner_offset) in leaf_nodes
-                            .get_constructed(idx)
+                            .get(idx)
                             .iter()
                             .copied()
                             .collect::<smallvec::SmallVec<[_; 4]>>()
                         {
-                            leaf_nodes.push_inner((leaf_ext_ty, offset + inner_offset));
+                            leaf_nodes.push_element((leaf_ext_ty, offset + inner_offset));
                         }
 
-                        offset += offset_of.get_constructed(idx).last().unwrap();
+                        offset += offset_of.get(idx).last().unwrap();
                     } else {
                         let leaves = &self.leaf_nodes[(max_ptr_depth - ptr_depth) as usize][idx];
                         for &(leaf_ext_ty, inner_offset) in leaves {
-                            leaf_nodes.push_inner((leaf_ext_ty, offset + ptr_depth + inner_offset));
+                            leaf_nodes
+                                .push_element((leaf_ext_ty, offset + ptr_depth + inner_offset));
                         }
 
                         offset += ptr_depth
@@ -244,14 +245,14 @@ impl<'tcx> StructCtxt<'tcx> {
                 } else {
                     offset += ptr_depth
                 }
-                offset_of.push_inner(offset);
+                offset_of.push_element(offset);
             }
-            offset_of.push();
-            leaf_nodes.push();
+            offset_of.complete_cur_vec();
+            leaf_nodes.complete_cur_vec();
         }
 
-        let offset_of = offset_of.done();
-        let leaf_nodes = leaf_nodes.done();
+        let offset_of = offset_of.complete();
+        let leaf_nodes = leaf_nodes.complete();
 
         self.leaf_nodes.push(leaf_nodes);
 

@@ -105,12 +105,12 @@ impl TaintResult {
                     continue;
                 }
                 if self.may_alias(f, g) {
-                    aliases.push_inner(g.index() - start.index());
+                    aliases.push_element(g.index() - start.index());
                 }
             }
-            aliases.push();
+            aliases.complete_cur_vec();
         }
-        aliases.done()
+        aliases.complete()
     }
 
     pub fn maybe_owning_fields(&self) -> FxHashMap<DefId, Vec<usize>> {

@@ -359,15 +359,15 @@ impl StructFields {
 
                     field_ty = field_ty.builtin_deref(true).unwrap().ty;
                 }
-                struct_fields.push_inner(field);
+                struct_fields.push_element(field);
             }
 
-            struct_fields.push();
+            struct_fields.complete_cur_vec();
 
             did_idx.insert(*did, idx);
         }
 
-        let struct_fields = struct_fields.done();
+        let struct_fields = struct_fields.complete();
         StructFields(Decision {
             did_idx,
             data: struct_fields,
@@ -506,15 +506,15 @@ impl FnLocals {
                         }
                     }
                 }
-                fn_locals.push_inner(local);
+                fn_locals.push_element(local);
             }
 
-            fn_locals.push();
+            fn_locals.complete_cur_vec();
 
             did_idx.insert(*did, idx);
         }
 
-        let fn_locals = fn_locals.done();
+        let fn_locals = fn_locals.complete();
         FnLocals(Decision {
             did_idx,
             data: fn_locals,

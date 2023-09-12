@@ -133,7 +133,7 @@ fn verify_func_args_shape(krate: &common::CrateData) {
                         let local = place.local;
                         let body = self.0;
                         assert!(!body.local_decls[local].internal)
-                    },
+                    }
                     _ => {}
                 }
             }

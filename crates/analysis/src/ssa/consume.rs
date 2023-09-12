@@ -1,4 +1,4 @@
-use common::data_structure::vec_vec::{VecVec, VecVecConstruction};
+use common::data_structure::vec_vec::{VecVec, VecVecBuilder};
 use rustc_data_structures::sso::SsoHashSet;
 use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::{
@@ -238,7 +238,7 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
     struct Vis<'me, 'tcx> {
         call_arg_temps: &'me SsoHashSet<Local>,
         maybe_consume_sites: &'me mut IndexVec<Local, BitSet<BasicBlock>>,
-        consumes: &'me mut VecVecConstruction<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
+        consumes: &'me mut VecVecBuilder<SmallVec<[(Local, Consume<SSAIdx>); 2]>>,
         consumes_in_cur_stmt: SmallVec<[(Local, Consume<SSAIdx>); 2]>,
         body: &'me Body<'tcx>,
         tcx: TyCtxt<'tcx>,
@@ -267,7 +267,7 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
                 };
                 self.visit_statement(statement, location);
                 let defs_in_cur_stmt = std::mem::take(&mut self.consumes_in_cur_stmt);
-                self.consumes.push_inner(defs_in_cur_stmt);
+                self.consumes.push_element(defs_in_cur_stmt);
                 index += 1;
             }
 
@@ -278,9 +278,9 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
                 };
                 self.visit_terminator(terminator, location);
                 let defs_in_cur_stmt = std::mem::take(&mut self.consumes_in_cur_stmt);
-                self.consumes.push_inner(defs_in_cur_stmt);
+                self.consumes.push_element(defs_in_cur_stmt);
             }
-            self.consumes.push();
+            self.consumes.complete_cur_vec();
         }
 
         fn visit_rvalue(&mut self, rvalue: &Rvalue<'tcx>, location: Location) {
@@ -374,7 +374,7 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
         }
     }
 
-    let consumes = consumes.done();
+    let consumes = consumes.complete();
 
     Definitions {
         consumes,

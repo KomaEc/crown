@@ -41,7 +41,7 @@ impl<Value: BooleanLattice> BooleanSystem<Value> {
             tarjan_scc.run(&self.constraint_graph, |nodes| {
                 vars.push_vec(nodes.iter().map(|node| Var::new(node.index())))
             });
-            vars.done()
+            vars.complete()
         })
     }
 }
