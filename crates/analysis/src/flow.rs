@@ -2,6 +2,7 @@ use common::data_structure::vec_vec::VecVec;
 use rustc_middle::mir::{BasicBlock, Location};
 
 mod dom;
+pub mod infer;
 mod join_points;
 pub mod ownership;
 mod state;
