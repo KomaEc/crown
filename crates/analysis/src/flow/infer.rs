@@ -17,8 +17,7 @@ pub trait Inference:
 }
 
 // leave it to `Engine` maybe?
-pub trait HasState {
-}
+pub trait HasState {}
 
 pub trait InferAssign {
     fn infer_use(&mut self, engine: &Engine, lhs: &Place, rhs: &Operand, location: Location);
@@ -83,12 +82,7 @@ pub trait InferReturn {
 }
 
 pub trait InferOperandMention {
-    fn infer_operand_mention(
-        &mut self,
-        engine: &Engine,
-        operand: &Operand,
-        location: Location,
-    );
+    fn infer_operand_mention(&mut self, engine: &Engine, operand: &Operand, location: Location);
 }
 
 /// The inference engine that walks over the procedure

@@ -1,13 +1,12 @@
 use common::data_structure::vec_vec::VecVec;
 use rustc_middle::mir::{BasicBlock, Location};
 
+pub mod def_use;
 mod dom;
 pub mod infer;
 mod join_points;
 pub mod ownership;
 mod state;
-mod update;
-pub mod use_def;
 
 common::macros::newtype_index! {
     #[debug_format = "{}"]
