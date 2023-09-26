@@ -17,11 +17,13 @@ pub struct Update<T> {
 pub enum UseKind<T> {
     Use(T),
     Def(Update<T>),
-    Peek(Update<T>),
+    /// Peek the definition of `T`
+    Peek(T),
 }
 use UseKind::*;
 
-const _: () = assert!(12 == std::mem::size_of::<UseKind<SSAIdx>>());
+#[cfg(not(debug_assertions))]
+const _: () = assert!(8 == std::mem::size_of::<UseKind<SSAIdx>>());
 
 pub struct DefUseChain {
     /// `Location -> Local -> UseKind<SSAIdx>`
