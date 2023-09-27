@@ -226,7 +226,7 @@ impl<'tcx> Engine<'_, 'tcx> {
             StatementKind::SetDiscriminant {
                 place,
                 variant_index,
-            } => todo!(),
+            } => todo!("set {:?} @ {:?}", place, variant_index),
             StatementKind::Deinit(_) => todo!(),
             StatementKind::PlaceMention(_) => todo!(),
             StatementKind::Intrinsic(_) => todo!(),

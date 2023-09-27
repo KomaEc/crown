@@ -5,7 +5,7 @@ use smallvec::SmallVec;
 
 use super::{
     join_points::{JoinPoints, PhiNode},
-    LocationMap, SSAIdx, RichLocation,
+    LocationMap, RichLocation, SSAIdx,
 };
 
 #[derive(Clone, Debug)]
