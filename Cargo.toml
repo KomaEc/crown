@@ -5,7 +5,6 @@ members = [
     "crates/analysis",
     "crates/alias",
     "crates/empirical-study",
-    "crates/refactor",
     "crates/rustc-properties",
 ]
 
@@ -23,7 +22,6 @@ common = { path = "crates/common" }
 preprocess = { path = "crates/preprocess" }
 analysis = { path = "crates/analysis" }
 alias = { path = "crates/alias" }
-refactor = { path = "crates/refactor" }
 rustc-properties = { path = "crates/rustc-properties" }
 empirical-study = { path = "crates/empirical-study" }
 serde = { version = "1.0", features = ["derive"] }

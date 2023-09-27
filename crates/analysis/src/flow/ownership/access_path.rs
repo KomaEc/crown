@@ -1,3 +1,1 @@
-pub struct AccessPaths {
-    
-}
+pub struct AccessPaths {}

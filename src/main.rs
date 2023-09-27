@@ -25,8 +25,6 @@ use analysis::{ownership::AnalysisKind, CrateCtxt};
 use anyhow::{bail, Context, Result};
 use clap::Parser;
 use common::rewrite::RewriteMode;
-use empirical_study::EmpiricalStudy;
-use refactor::RefactorOptions;
 use rustc_errors::registry;
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
@@ -48,19 +46,19 @@ enum Command {
         #[clap(value_enum, default_value_t = RewriteMode::Print)]
         rewrite_mode: RewriteMode,
     },
-    FoldLetRefMut {
-        #[clap(value_enum, default_value_t = RewriteMode::Diff)]
-        rewrite_mode: RewriteMode,
-    },
-    CharArrayTransmute {
-        #[clap(value_enum, default_value_t = RewriteMode::Diff)]
-        rewrite_mode: RewriteMode,
-    },
+    // FoldLetRefMut {
+    //     #[clap(value_enum, default_value_t = RewriteMode::Diff)]
+    //     rewrite_mode: RewriteMode,
+    // },
+    // CharArrayTransmute {
+    //     #[clap(value_enum, default_value_t = RewriteMode::Diff)]
+    //     rewrite_mode: RewriteMode,
+    // },
     ExplicitAddr {
         #[clap(value_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
     },
-    OutputParams,
+    // OutputParams,
     Analyse {
         results_path: Option<PathBuf>,
     },
@@ -70,17 +68,17 @@ enum Command {
     Mutability,
     Fatness,
     // Refactor,
-    Rewrite {
-        #[clap(long)]
-        results_path: Option<PathBuf>,
-        #[clap(value_enum, default_value_t = RewriteMode::Diff)]
-        rewrite_mode: RewriteMode,
-        #[command(flatten)]
-        options: RefactorOptions,
-    },
+    // Rewrite {
+    //     #[clap(long)]
+    //     results_path: Option<PathBuf>,
+    //     #[clap(value_enum, default_value_t = RewriteMode::Diff)]
+    //     rewrite_mode: RewriteMode,
+    //     #[command(flatten)]
+    //     options: RefactorOptions,
+    // },
     VerifyRustcProperties,
-    /// Perform empirical studies and show results.
-    EmpiricalStudy,
+    // /// Perform empirical studies and show results.
+    // EmpiricalStudy,
     /// Pretty print Mir despite compilation error
     ShowMir {
         #[clap(long, short)]
@@ -252,9 +250,9 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                 });
             }
         }
-        Command::EmpiricalStudy => {
-            time("empirical study", || input.perform_empirical_study());
-        }
+        // Command::EmpiricalStudy => {
+        //     time("empirical study", || input.perform_empirical_study());
+        // }
         Command::VerifyRustcProperties => {
             rustc_properties::verify(&input);
             println!("verification success");
@@ -362,77 +360,7 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                 fs::write(results_path.join("statistics.json"), statistics)?;
             }
         }
-        Command::Rewrite {
-            results_path,
-            rewrite_mode,
-            options,
-        } => {
-            let alias_result = alias::alias_results(&input);
-            let taint_result = alias::taint_results(&input);
-            let mutability_result =
-                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
-            let output_params = analysis::type_qualifier::output_params::compute_output_params(
-                &input,
-                &alias_result,
-                &mutability_result,
-            );
-            let crate_ctxt = CrateCtxt::new(&input);
-            let ownership_schemes =
-                analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
-                    crate_ctxt,
-                    &output_params,
-                )?;
-
-            let ownership_result = ownership_schemes.solidify(&input);
-
-            let fatness_result =
-                analysis::type_qualifier::flow_insensitive::fatness::fatness_analysis(
-                    &input,
-                    &ownership_result,
-                );
-
-            if let Some(results_path) = results_path {
-                let fatness_data = serde_json::to_string(&fatness_result.make_data(&input))?;
-                let mutability_data = serde_json::to_string(&mutability_result.make_data(&input))?;
-                let ownership_data = serde_json::to_string(&ownership_result.make_data(&input))?;
-                fs::write(results_path.join("fatness.json"), fatness_data)?;
-                fs::write(results_path.join("mutability.json"), mutability_data)?;
-                fs::write(results_path.join("ownership.json"), ownership_data)?;
-                let statistics =
-                    serde_json::to_string(&analysis::statistics::CrateStatistics::new(
-                        &input,
-                        &fatness_result,
-                        &mutability_result,
-                        &ownership_result,
-                    ))?;
-                fs::write(results_path.join("statistics.json"), statistics)?;
-            }
-
-            let analysis_results = refactor::Analysis::new(
-                taint_result,
-                ownership_schemes,
-                ownership_result,
-                mutability_result,
-                fatness_result,
-            );
-            let refactor_options = options;
-            refactor::refactor(&input, &analysis_results, rewrite_mode, refactor_options)?;
-        }
-        Command::FoldLetRefMut { rewrite_mode } => preprocess::fold_let_ref_mut(tcx, rewrite_mode),
-        Command::CharArrayTransmute { rewrite_mode } => {
-            preprocess::char_array_transmute(tcx, rewrite_mode)
-        }
         Command::ExplicitAddr { rewrite_mode } => preprocess::use_explicit_addr(tcx, rewrite_mode),
-        Command::OutputParams => {
-            let alias_result = alias::alias_results(&input);
-            let mutability_result =
-                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
-            analysis::type_qualifier::output_params::show_output_params(
-                &input,
-                &alias_result,
-                &mutability_result,
-            );
-        }
     }
     Ok(())
 }
