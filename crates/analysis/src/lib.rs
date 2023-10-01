@@ -8,6 +8,7 @@
 #![feature(array_try_map)]
 #![feature(type_alias_impl_trait)]
 #![feature(impl_trait_in_assoc_type)]
+#![feature(return_position_impl_trait_in_trait)]
 
 extern crate either;
 
@@ -31,6 +32,7 @@ extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
 
+pub mod body_ext;
 mod call_graph;
 pub mod flow;
 mod lattice;
