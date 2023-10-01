@@ -3,9 +3,7 @@ use rustc_middle::mir::{
 };
 
 use super::{
-    infer::{
-        Engine, InferAssign, InferCall, InferJoin, EnsureIrrelevant, InferReturn, Inference,
-    },
+    infer::{Engine, InferAssign, InferCall, InferIrrelevant, InferJoin, InferReturn, Inference},
     join_points::PhiNode,
     SSAIdx,
 };
@@ -169,14 +167,13 @@ impl InferReturn for Vanilla {
     }
 }
 
-impl EnsureIrrelevant for Vanilla {
-    fn irrelevant_operand(
-        &mut self,
-        engine: &mut Engine,
-        operand: &Operand,
-        location: Location,
-    ) {
+impl InferIrrelevant for Vanilla {
+    fn irrelevant_operand(&mut self, engine: &mut Engine, operand: &Operand, location: Location) {
         Vanilla::touch_operand(engine, operand, location)
+    }
+
+    fn infer_goto(&mut self, _: &Engine, _: BasicBlock, location: Location) {
+        tracing::debug!("Ignoring goto statement @ {:?}", location)
     }
 }
 

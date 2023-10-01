@@ -6,9 +6,9 @@ use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::IndexVec;
 use rustc_middle::{
     mir::{
-        AggregateKind, BasicBlock, BasicBlockData, BinOp, Body, BorrowKind, CastKind, Local,
-        Location, NullOp, Operand, Place, ProjectionElem, Rvalue, Statement, StatementKind,
-        Terminator, TerminatorKind, UnOp, AssertKind,
+        AggregateKind, AssertKind, BasicBlock, BasicBlockData, BinOp, Body, BorrowKind, CastKind,
+        Local, Location, NullOp, Operand, Place, ProjectionElem, Rvalue, Statement, StatementKind,
+        Terminator, TerminatorKind, UnOp,
     },
     ty::TyCtxt,
 };
@@ -17,10 +17,7 @@ use super::{def_use::DefUseChain, join_points::PhiNode, state::SSAState, SSAIdx}
 use crate::flow::{def_use::UseKind, RichLocation};
 
 /// The set of inference operations
-pub trait Inference:
-    InferAssign + InferCall + InferReturn + EnsureIrrelevant + InferJoin
-{
-}
+pub trait Inference: InferAssign + InferCall + InferReturn + InferIrrelevant + InferJoin {}
 
 pub trait InferAssign {
     fn infer_use(&mut self, engine: &mut Engine, lhs: &Place, rhs: &Operand, location: Location);
@@ -109,25 +106,16 @@ pub trait InferReturn {
     fn infer_return(&mut self, engine: &mut Engine, location: Location);
 }
 
-/// Guaranteed irrelevant operand uses in the program. Those uses are guaranteed to be
+/// Guaranteed irrelevant parts of the program. Uses of locals are guaranteed to be
 /// pure reads.
-pub trait EnsureIrrelevant {
+pub trait InferIrrelevant {
+    fn infer_goto(&mut self, engine: &Engine, target: BasicBlock, location: Location);
     fn irrelevant_operand(&mut self, engine: &mut Engine, operand: &Operand, location: Location);
 }
 
 pub trait InferJoin {
-    fn phi_node_output(
-        &mut self,
-        local: Local,
-        ssa_idx: SSAIdx,
-        block: BasicBlock,
-    );
-    fn phi_node_input(
-        &mut self,
-        local: Local,
-        ssa_idx: SSAIdx,
-        block: BasicBlock,
-    );
+    fn phi_node_output(&mut self, local: Local, ssa_idx: SSAIdx, block: BasicBlock);
+    fn phi_node_input(&mut self, local: Local, ssa_idx: SSAIdx, block: BasicBlock);
     fn infer_join(&mut self, engine: &Engine, local: Local, phi_node: &PhiNode, block: BasicBlock);
 }
 
@@ -272,8 +260,8 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
         location: Location,
     ) {
         match &terminator.kind {
-            TerminatorKind::Goto { .. } => {
-                tracing::debug!("Ignoring goto @ {:?}", location);
+            &TerminatorKind::Goto { target } => {
+                inference.infer_goto(self, target, location);
             }
             TerminatorKind::SwitchInt { discr, .. } => {
                 inference.irrelevant_operand(self, discr, location)
@@ -301,20 +289,26 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
                     AssertKind::BoundsCheck { len, index } => {
                         inference.irrelevant_operand(self, len, location);
                         inference.irrelevant_operand(self, index, location);
-                    },
+                    }
                     AssertKind::Overflow(_, left, right) => {
                         inference.irrelevant_operand(self, left, location);
                         inference.irrelevant_operand(self, right, location);
-                    },
-                    AssertKind::OverflowNeg(operand) => inference.irrelevant_operand(self, operand, location),
-                    AssertKind::DivisionByZero(operand) => inference.irrelevant_operand(self, operand, location),
-                    AssertKind::RemainderByZero(operand) => inference.irrelevant_operand(self, operand, location),
+                    }
+                    AssertKind::OverflowNeg(operand) => {
+                        inference.irrelevant_operand(self, operand, location)
+                    }
+                    AssertKind::DivisionByZero(operand) => {
+                        inference.irrelevant_operand(self, operand, location)
+                    }
+                    AssertKind::RemainderByZero(operand) => {
+                        inference.irrelevant_operand(self, operand, location)
+                    }
                     AssertKind::ResumedAfterReturn(_) => todo!(),
                     AssertKind::ResumedAfterPanic(_) => todo!(),
                     AssertKind::MisalignedPointerDereference { required, found } => {
                         inference.irrelevant_operand(self, required, location);
                         inference.irrelevant_operand(self, found, location);
-                    },
+                    }
                 }
             }
             TerminatorKind::Yield { .. }
