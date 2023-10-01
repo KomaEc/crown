@@ -1,12 +1,13 @@
 use rustc_middle::mir::{
-    BasicBlock, BinOp, CastKind, Local, Location, Operand, Place, UnOp, RETURN_PLACE,
+    BasicBlock, BinOp, CastKind, Local, Location, NullOp, Operand, Place, UnOp, RETURN_PLACE,
 };
 
 use super::{
     infer::{
-        Engine, InferAssign, InferCall, InferJoin, InferOperandMention, InferReturn, Inference,
+        Engine, InferAssign, InferCall, InferJoin, EnsureIrrelevant, InferReturn, Inference,
     },
     join_points::PhiNode,
+    SSAIdx,
 };
 
 /// Vanilla inference rules
@@ -139,6 +140,10 @@ impl InferAssign for Vanilla {
         Vanilla::touch_place(engine, lhs, location);
         Vanilla::touch_place(engine, rhs, location);
     }
+
+    fn infer_nullop(&mut self, engine: &mut Engine, lhs: &Place, _: NullOp, location: Location) {
+        Vanilla::touch_place(engine, lhs, location)
+    }
 }
 
 impl InferCall for Vanilla {
@@ -164,8 +169,8 @@ impl InferReturn for Vanilla {
     }
 }
 
-impl InferOperandMention for Vanilla {
-    fn infer_operand_mention(
+impl EnsureIrrelevant for Vanilla {
+    fn irrelevant_operand(
         &mut self,
         engine: &mut Engine,
         operand: &Operand,
@@ -177,4 +182,8 @@ impl InferOperandMention for Vanilla {
 
 impl InferJoin for Vanilla {
     fn infer_join(&mut self, _: &Engine, _: Local, _: &PhiNode, _: BasicBlock) {}
+
+    fn phi_node_output(&mut self, _: Local, _: SSAIdx, _: BasicBlock) {}
+
+    fn phi_node_input(&mut self, _: Local, _: SSAIdx, _: BasicBlock) {}
 }

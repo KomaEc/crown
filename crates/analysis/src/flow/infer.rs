@@ -8,7 +8,7 @@ use rustc_middle::{
     mir::{
         AggregateKind, BasicBlock, BasicBlockData, BinOp, Body, BorrowKind, CastKind, Local,
         Location, NullOp, Operand, Place, ProjectionElem, Rvalue, Statement, StatementKind,
-        Terminator, TerminatorKind, UnOp,
+        Terminator, TerminatorKind, UnOp, AssertKind,
     },
     ty::TyCtxt,
 };
@@ -18,7 +18,7 @@ use crate::flow::{def_use::UseKind, RichLocation};
 
 /// The set of inference operations
 pub trait Inference:
-    InferAssign + InferCall + InferReturn + InferOperandMention + InferJoin
+    InferAssign + InferCall + InferReturn + EnsureIrrelevant + InferJoin
 {
 }
 
@@ -71,6 +71,13 @@ pub trait InferAssign {
         unop: UnOp,
         location: Location,
     );
+    fn infer_nullop(
+        &mut self,
+        engine: &mut Engine,
+        lhs: &Place,
+        nullop: NullOp,
+        location: Location,
+    );
     fn infer_discriminant(
         &mut self,
         engine: &mut Engine,
@@ -102,11 +109,25 @@ pub trait InferReturn {
     fn infer_return(&mut self, engine: &mut Engine, location: Location);
 }
 
-pub trait InferOperandMention {
-    fn infer_operand_mention(&mut self, engine: &mut Engine, operand: &Operand, location: Location);
+/// Guaranteed irrelevant operand uses in the program. Those uses are guaranteed to be
+/// pure reads.
+pub trait EnsureIrrelevant {
+    fn irrelevant_operand(&mut self, engine: &mut Engine, operand: &Operand, location: Location);
 }
 
 pub trait InferJoin {
+    fn phi_node_output(
+        &mut self,
+        local: Local,
+        ssa_idx: SSAIdx,
+        block: BasicBlock,
+    );
+    fn phi_node_input(
+        &mut self,
+        local: Local,
+        ssa_idx: SSAIdx,
+        block: BasicBlock,
+    );
     fn infer_join(&mut self, engine: &Engine, local: Local, phi_node: &PhiNode, block: BasicBlock);
 }
 
@@ -210,7 +231,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
                 ssa_idx
             );
             tracing::debug!("defining {:?} at Phi({:?}), def: {:?}", local, bb, ssa_idx);
-            todo!("inference of phi node definition");
+            inference.phi_node_output(local, ssa_idx, bb);
         }
 
         let mut index = 0;
@@ -238,7 +259,8 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
             for (local, phi_node) in self.def_use_chain.join_points[succ].iter_enumerated_mut() {
                 let ssa_idx = self.ssa_state.get_name(local);
                 phi_node.rhs.push(ssa_idx);
-                tracing::debug!("using {:?} at Phi({:?}), use: {:?}", local, succ, ssa_idx)
+                tracing::debug!("using {:?} at Phi({:?}), use: {:?}", local, succ, ssa_idx);
+                inference.phi_node_input(local, ssa_idx, succ)
             }
         }
     }
@@ -254,7 +276,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
                 tracing::debug!("Ignoring goto @ {:?}", location);
             }
             TerminatorKind::SwitchInt { discr, .. } => {
-                inference.infer_operand_mention(self, discr, location)
+                inference.irrelevant_operand(self, discr, location)
             }
             TerminatorKind::UnwindResume => {
                 todo!("Ignoring unwind resume @ {:?}", location)
@@ -273,8 +295,27 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
                 destination,
                 ..
             } => inference.infer_call(self, func, args, destination, location),
-            TerminatorKind::Assert { cond, .. } => {
-                inference.infer_operand_mention(self, cond, location)
+            TerminatorKind::Assert { cond, box msg, .. } => {
+                inference.irrelevant_operand(self, cond, location);
+                match msg {
+                    AssertKind::BoundsCheck { len, index } => {
+                        inference.irrelevant_operand(self, len, location);
+                        inference.irrelevant_operand(self, index, location);
+                    },
+                    AssertKind::Overflow(_, left, right) => {
+                        inference.irrelevant_operand(self, left, location);
+                        inference.irrelevant_operand(self, right, location);
+                    },
+                    AssertKind::OverflowNeg(operand) => inference.irrelevant_operand(self, operand, location),
+                    AssertKind::DivisionByZero(operand) => inference.irrelevant_operand(self, operand, location),
+                    AssertKind::RemainderByZero(operand) => inference.irrelevant_operand(self, operand, location),
+                    AssertKind::ResumedAfterReturn(_) => todo!(),
+                    AssertKind::ResumedAfterPanic(_) => todo!(),
+                    AssertKind::MisalignedPointerDereference { required, found } => {
+                        inference.irrelevant_operand(self, required, location);
+                        inference.irrelevant_operand(self, found, location);
+                    },
+                }
             }
             TerminatorKind::Yield { .. }
             | TerminatorKind::GeneratorDrop
@@ -355,7 +396,9 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
                 unimplemented!("Rvalue::Aggregate @ {:?}", location)
             }
             Rvalue::CopyForDeref(rhs) => inference.infer_deref_copy(self, lhs, rhs, location),
-            Rvalue::NullaryOp(NullOp::AlignOf, _) => tracing::debug!("ignoring AlignOf"),
+            Rvalue::NullaryOp(NullOp::AlignOf, _) => {
+                inference.infer_nullop(self, lhs, NullOp::AlignOf, location)
+            }
             Rvalue::Ref(_, BorrowKind::Shallow, _)
             | Rvalue::ThreadLocalRef(_)
             | Rvalue::Len(_)

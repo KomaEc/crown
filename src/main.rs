@@ -84,6 +84,10 @@ enum Command {
         #[clap(long, short)]
         function: Option<String>,
     },
+    ShowDefUse {
+        #[clap(long, short)]
+        function: Option<String>,
+    },
 }
 
 fn run_compiler<R: Send>(
@@ -247,6 +251,27 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                         &mut std::io::stdout(),
                     )
                     .unwrap();
+                });
+            }
+        }
+        Command::ShowDefUse { ref function } => {
+            if let Some(fn_name) = function {
+                let Some(&did) = input
+                    .fns
+                    .iter()
+                    .find(|did| input.tcx.def_path_str(**did).ends_with(fn_name))
+                else {
+                    bail!("no such function!")
+                };
+
+                let body = input.tcx.optimized_mir(did);
+                let def_use_chain = analysis::flow::def_use::DefUseChain::new(body, tcx);
+                analysis::flow::def_use::show_def_use_chain(body, &def_use_chain);
+            } else {
+                input.fns.iter().for_each(|&fn_did| {
+                    let body = input.tcx.optimized_mir(fn_did);
+                    let def_use_chain = analysis::flow::def_use::DefUseChain::new(body, tcx);
+                    analysis::flow::def_use::show_def_use_chain(body, &def_use_chain);
                 });
             }
         }

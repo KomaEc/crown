@@ -6,8 +6,8 @@ mod dom;
 pub mod infer;
 mod join_points;
 pub mod ownership;
-pub mod vanilla;
 mod state;
+pub mod vanilla;
 
 common::macros::newtype_index! {
     #[debug_format = "{}"]

@@ -17,7 +17,8 @@ use super::{
     infer::Engine,
     join_points::{JoinPoints, PhiNode},
     state::SSAState,
-    LocationMap, RichLocation, SSAIdx, vanilla::Vanilla,
+    vanilla::Vanilla,
+    LocationMap, RichLocation, SSAIdx,
 };
 
 #[derive(Clone, Debug)]
@@ -56,6 +57,51 @@ pub struct DefUseChain {
     pub def_locs: IndexVec<Local, IndexVec<SSAIdx, RichLocation>>,
 
     pub join_points: JoinPoints<PhiNode>,
+}
+
+pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
+    println!("@{:?}", body.source.def_id());
+    for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
+        println!("{:?}:", bb);
+        let mut statement_index = 0;
+        for statement in bb_data.statements.iter() {
+            println!("  {:?}", statement);
+
+            let location = Location {
+                block: bb,
+                statement_index,
+            };
+            let uses = def_use_chain
+                .uses
+                .get_location(location)
+                .iter()
+                .filter(|(_, use_kind)| matches!(use_kind, Use(..)))
+                .map(|&(local, _)| (local, def_use_chain.def_loc(local, location)))
+                .map(|(local, loc)| format!("{:?}@{:?}", local, loc))
+                .collect::<Vec<_>>()
+                .join(", ");
+            println!("  using: {uses}");
+
+            statement_index += 1;
+        }
+        if let Some(terminator) = &bb_data.terminator {
+            println!("  {:?}", terminator.kind);
+            let location = Location {
+                block: bb,
+                statement_index,
+            };
+            let uses = def_use_chain
+                .uses
+                .get_location(location)
+                .iter()
+                .filter(|(_, use_kind)| matches!(use_kind, Use(..)))
+                .map(|&(local, _)| (local, def_use_chain.def_loc(local, location)))
+                .map(|(local, loc)| format!("{:?}@{:?}", local, loc))
+                .collect::<Vec<_>>()
+                .join(", ");
+            println!("  using: {uses}");
+        }
+    }
 }
 
 impl DefUseChain {
