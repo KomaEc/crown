@@ -28,6 +28,10 @@ impl<I, A: Allocator> std::ops::IndexMut<usize> for VecVec<I, A> {
 }
 
 impl<I> VecVec<I> {
+    pub fn new() -> VecVecBuilder<I> {
+        Self::with_capacity(0, 0)
+    }
+
     pub fn with_capacity(indices_capacity: usize, data_capacity: usize) -> VecVecBuilder<I> {
         let mut indices = Vec::with_capacity(indices_capacity + 1);
         indices.push(0);
