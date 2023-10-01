@@ -1,6 +1,7 @@
 use std::borrow::BorrowMut;
 
 use common::data_structure::assoc::AssocExt;
+use rustc_abi::FieldIdx;
 use rustc_ast::Mutability;
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::IndexVec;
@@ -10,7 +11,7 @@ use rustc_middle::{
         Local, Location, NullOp, Operand, Place, ProjectionElem, Rvalue, Statement, StatementKind,
         Terminator, TerminatorKind, UnOp,
     },
-    ty::TyCtxt,
+    ty::{Const, TyCtxt},
 };
 
 use super::{def_use::DefUseChain, join_points::PhiNode, state::SSAState, SSAIdx};
@@ -87,6 +88,28 @@ pub trait InferAssign {
         engine: &mut Engine,
         lhs: &Place,
         rhs: &Place,
+        location: Location,
+    );
+    fn infer_repeat(
+        &mut self,
+        engine: &mut Engine,
+        lhs: &Place,
+        operand: &Operand,
+        len: &Const,
+        location: Location,
+    );
+    fn infer_aggregate_array(
+        &mut self,
+        engine: &mut Engine,
+        lhs: &Place,
+        values: &IndexVec<FieldIdx, Operand>,
+        location: Location,
+    );
+    fn infer_aggregate_adt(
+        &mut self,
+        engine: &mut Engine,
+        lhs: &Place,
+        values: &IndexVec<FieldIdx, Operand>,
         location: Location,
     );
 }
@@ -361,7 +384,9 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
 
         match rvalue {
             Rvalue::Use(operand) => inference.infer_use(self, lhs, operand, location),
-            Rvalue::Repeat(_, _) => unimplemented!("Rvalue::Repeat @ {:?}", location),
+            Rvalue::Repeat(operand, len) => {
+                inference.infer_repeat(self, lhs, operand, len, location)
+            }
             Rvalue::Ref(_, BorrowKind::Mut { .. }, lender) => {
                 inference.infer_mut_borrow(self, lhs, lender, location)
             }
@@ -386,8 +411,11 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
                 inference.infer_unop(self, lhs, operand, *unop, location);
             }
             Rvalue::Discriminant(rhs) => inference.infer_discriminant(self, lhs, rhs, location),
-            Rvalue::Aggregate(box AggregateKind::Array(_), _) => {
-                unimplemented!("Rvalue::Aggregate @ {:?}", location)
+            Rvalue::Aggregate(box AggregateKind::Array(_), values) => {
+                inference.infer_aggregate_array(self, lhs, values, location)
+            }
+            Rvalue::Aggregate(box AggregateKind::Adt(..), values) => {
+                inference.infer_aggregate_adt(self, lhs, values, location)
             }
             Rvalue::CopyForDeref(rhs) => inference.infer_deref_copy(self, lhs, rhs, location),
             Rvalue::NullaryOp(NullOp::AlignOf, _) => {

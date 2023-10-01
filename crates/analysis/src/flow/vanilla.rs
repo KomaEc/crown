@@ -1,3 +1,5 @@
+use rustc_abi::FieldIdx;
+use rustc_index::IndexVec;
 use rustc_middle::mir::{
     BasicBlock, BinOp, CastKind, Local, Location, NullOp, Operand, Place, UnOp, RETURN_PLACE,
 };
@@ -141,6 +143,44 @@ impl InferAssign for Vanilla {
 
     fn infer_nullop(&mut self, engine: &mut Engine, lhs: &Place, _: NullOp, location: Location) {
         Vanilla::touch_place(engine, lhs, location)
+    }
+
+    fn infer_repeat(
+        &mut self,
+        engine: &mut Engine,
+        lhs: &Place,
+        operand: &Operand,
+        _: &rustc_middle::ty::Const,
+        location: Location,
+    ) {
+        Vanilla::touch_place(engine, lhs, location);
+        Vanilla::touch_operand(engine, operand, location)
+    }
+
+    fn infer_aggregate_array(
+        &mut self,
+        engine: &mut Engine,
+        lhs: &Place,
+        values: &IndexVec<FieldIdx, Operand>,
+        location: Location,
+    ) {
+        Vanilla::touch_place(engine, lhs, location);
+        for value in values {
+            Vanilla::touch_operand(engine, value, location)
+        }
+    }
+
+    fn infer_aggregate_adt(
+        &mut self,
+        engine: &mut Engine,
+        lhs: &Place,
+        values: &IndexVec<FieldIdx, Operand>,
+        location: Location,
+    ) {
+        Vanilla::touch_place(engine, lhs, location);
+        for value in values {
+            Vanilla::touch_operand(engine, value, location)
+        }
     }
 }
 
