@@ -6,6 +6,7 @@ mod dom;
 pub mod infer;
 mod join_points;
 pub mod ownership;
+pub mod vanilla;
 mod state;
 
 common::macros::newtype_index! {

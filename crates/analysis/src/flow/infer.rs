@@ -90,7 +90,7 @@ pub trait InferAssign {
 pub trait InferCall {
     fn infer_call(
         &mut self,
-        engine: &Engine,
+        engine: &mut Engine,
         func: &Operand,
         args: &Vec<Operand>,
         destination: &Place,
@@ -99,11 +99,11 @@ pub trait InferCall {
 }
 
 pub trait InferReturn {
-    fn infer_return(&mut self, engine: &Engine, location: Location);
+    fn infer_return(&mut self, engine: &mut Engine, location: Location);
 }
 
 pub trait InferOperandMention {
-    fn infer_operand_mention(&mut self, engine: &Engine, operand: &Operand, location: Location);
+    fn infer_operand_mention(&mut self, engine: &mut Engine, operand: &Operand, location: Location);
 }
 
 pub trait InferJoin {

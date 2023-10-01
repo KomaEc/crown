@@ -17,7 +17,7 @@ use super::{
     infer::Engine,
     join_points::{JoinPoints, PhiNode},
     state::SSAState,
-    LocationMap, RichLocation, SSAIdx,
+    LocationMap, RichLocation, SSAIdx, vanilla::Vanilla,
 };
 
 #[derive(Clone, Debug)]
@@ -66,7 +66,7 @@ impl DefUseChain {
         let mut def_use_chain = DefUseChain::initialise(body, liveness_builder);
         let ssa_state = SSAState::new(body.local_decls.len());
         let mut engine = Engine::new(tcx, body, &mut def_use_chain, ssa_state);
-        // engine.run(todo!());
+        engine.run(Vanilla);
 
         def_use_chain
     }
