@@ -341,13 +341,14 @@ pub fn initial_definitions<'tcx>(body: &Body<'tcx>, crate_ctxt: &CrateCtxt<'tcx>
                 let consume = if self.crate_ctxt.struct_ctxt.contains_ptr(ty)
                     && place_not_reachable_to_union(place, self.body)
                 {
+                    self.maybe_consume_sites[place.local].insert(location.block);
                     Consume::new()
                 } else {
                     // For places that do not contain pointer, we generate pure use. This is useful
                     // for sanity check
                     Consume::pure_use()
                 };
-                self.maybe_consume_sites[place.local].insert(location.block);
+                // self.maybe_consume_sites[place.local].insert(location.block);
                 self.consumes_in_cur_stmt.push((place.local, consume));
             }
         }

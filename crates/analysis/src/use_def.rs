@@ -145,7 +145,7 @@ fn definitions<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Definitions {
                 }
                 Some(DefUse::Use) => {
                     let consume = Consume::pure_use();
-                    self.def_sites[local].insert(location.block);
+                    // self.def_sites[local].insert(location.block);
                     self.consumes_in_cur_stmt.push((local, consume));
                 }
                 None => {}
@@ -161,7 +161,7 @@ fn definitions<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Definitions {
                 }
                 Some(DefUse::Use) => {
                     let consume = Consume::pure_use();
-                    self.def_sites[place.local].insert(location.block);
+                    // self.def_sites[place.local].insert(location.block);
                     self.consumes_in_cur_stmt.push((place.local, consume));
                 }
                 None => {}
