@@ -41,7 +41,7 @@ pub struct DefUseChain {
 }
 
 impl DefUseChain {
-    pub fn new<'tcx, L: LocationBuilder<'tcx>>(body: &Body<'tcx>, location_builder: L) -> Self {
+    pub fn initialise<'tcx, L: LocationBuilder<'tcx>>(body: &Body<'tcx>, location_builder: L) -> Self {
         let uses = DefUseBuilder::build(body, location_builder);
         let def_locs =
             IndexVec::from_elem(IndexVec::from([RichLocation::Entry]), &body.local_decls);
