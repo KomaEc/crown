@@ -108,8 +108,8 @@ impl DefUseChain {
     /// Construct a normal def use chain (Definition of def and use is similar to
     /// a liveness analysis)
     pub fn new<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
-        let liveness_builder = LivenessBuilder::default();
-        let mut def_use_chain = DefUseChain::initialise(body, liveness_builder);
+        let vanilla_builder = VanillaBuilder::default();
+        let mut def_use_chain = DefUseChain::initialise(body, vanilla_builder);
         let ssa_state = SSAState::new(body.local_decls.len());
         let mut engine = Engine::new(tcx, body, &mut def_use_chain, ssa_state);
         engine.run(Vanilla);
@@ -263,17 +263,17 @@ pub trait LocationBuilder<'tcx>: Visitor<'tcx> {
 }
 
 #[derive(Default)]
-pub struct LivenessBuilder {
+pub struct VanillaBuilder {
     location_data: SmallVec<[(Local, UseKind<SSAIdx>); 2]>,
 }
 
-impl LocationBuilder<'_> for LivenessBuilder {
+impl LocationBuilder<'_> for VanillaBuilder {
     fn retrieve(&mut self) -> SmallVec<[(Local, UseKind<SSAIdx>); 2]> {
         std::mem::take(&mut self.location_data)
     }
 }
 
-impl<'tcx> Visitor<'tcx> for LivenessBuilder {
+impl<'tcx> Visitor<'tcx> for VanillaBuilder {
     // for return terminator
     fn visit_local(&mut self, local: Local, context: PlaceContext, _: Location) {
         match LivenessDefUse::for_place(Place::from(local), context) {
