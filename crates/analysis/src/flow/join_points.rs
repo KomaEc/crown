@@ -31,7 +31,7 @@ impl JoinPoints<PhiNode> {
     pub fn new<'tcx>(
         body: &Body<'tcx>,
         dominance_frontier: &DominanceFrontier,
-        maybe_consume_sites: &IndexVec<Local, BitSet<BasicBlock>>,
+        def_sites: &IndexVec<Local, BitSet<BasicBlock>>,
     ) -> Self {
         // let live_range = &definitions.live_range;
         let mut join_points = JoinPoints::from_raw(IndexVec::from_elem(
@@ -40,7 +40,7 @@ impl JoinPoints<PhiNode> {
         ));
         let mut already_added = BitSet::new_empty(body.basic_blocks.len());
         let mut work_list = VecDeque::with_capacity(body.basic_blocks.len());
-        for (a, bbs) in maybe_consume_sites.iter_enumerated() {
+        for (a, bbs) in def_sites.iter_enumerated() {
             // let mut work_list = bbs.iter().collect::<VecDeque<_>>();
             work_list.extend(bbs.iter());
             while let Some(bb) = work_list.pop_front() {
@@ -48,7 +48,7 @@ impl JoinPoints<PhiNode> {
                     if !already_added.contains(bb_f) {
                         join_points[bb_f].data.push((a, PhiNode::default()));
                         already_added.insert(bb_f);
-                        if !maybe_consume_sites[a].contains(bb_f) {
+                        if !def_sites[a].contains(bb_f) {
                             work_list.push_back(bb_f);
                         }
                     }

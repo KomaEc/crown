@@ -59,4 +59,16 @@ impl<T> LocationMap<T> {
         } = location;
         &self.map[block.index()][statement_index]
     }
+
+    pub fn iter_enumerated(&self) -> impl Iterator<Item = (Location, &T)> {
+        self.map.iter().enumerate().flat_map(|(bb, bb_data)| {
+            bb_data.iter().enumerate().map(move |(index, data)| {
+                let location = Location {
+                    block: bb.into(),
+                    statement_index: index,
+                };
+                (location, data)
+            })
+        })
+    }
 }
