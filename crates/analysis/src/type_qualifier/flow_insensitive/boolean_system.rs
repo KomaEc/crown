@@ -1,4 +1,4 @@
-use common::data_structure::vec_vec::VecVec;
+use utils::data_structure::vec_vec::VecVec;
 use petgraph::{algo::TarjanScc, graph::NodeIndex};
 use rustc_index::{Idx, IndexVec};
 

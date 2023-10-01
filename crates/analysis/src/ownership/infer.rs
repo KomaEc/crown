@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use common::data_structure::assoc::AssocExt;
+use utils::data_structure::assoc::AssocExt;
 use rustc_index::IndexVec;
 use rustc_middle::{
     mir::{

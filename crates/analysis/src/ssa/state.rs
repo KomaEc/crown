@@ -1,6 +1,6 @@
 //! State for analysis steps
 
-use common::data_structure::assoc::AssocExt;
+use utils::data_structure::assoc::AssocExt;
 use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::mir::{Body, Local, Location};
 
@@ -11,7 +11,7 @@ use crate::ssa::{
     join_points::{JoinPoints, PhiNode},
 };
 
-common::macros::newtype_index! {
+utils::macros::newtype_index! {
     #[debug_format = "{}"]
     pub struct SSAIdx {
         // DEBUG_FORMAT = "{}"

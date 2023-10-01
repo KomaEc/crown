@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-use common::{
+use utils::{
     compiler_interface::Program,
     data_structure::vec_vec::VecVec,
     discretization::{self, Discretization},
@@ -259,7 +259,7 @@ fn sanity_check<'tcx>(
                 either::Either::Right(term) => term.source_info.span,
             };
 
-            let source_text = common::rewrite::get_snippet(crate_data.tcx, span).text.1;
+            let source_text = utils::rewrite::get_snippet(crate_data.tcx, span).text.1;
             tracing::error!("semantics changed: {source_text} @ {:?}", span)
         }
     }

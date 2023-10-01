@@ -1,4 +1,4 @@
-use common::data_structure::{
+use utils::data_structure::{
     assoc::AssocExt,
     vec_vec::{VecVec, VecVecBuilder},
 };

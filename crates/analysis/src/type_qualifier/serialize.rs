@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use common::compiler_interface::Program;
+use utils::compiler_interface::Program;
 use rustc_middle::mir::VarDebugInfoContents;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;

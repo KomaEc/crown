@@ -1,7 +1,7 @@
 //! Rust annoyingly forbids expressions like `f(&mut x, x.number)`. This preprocessing
 //! steps promotes the expression (e.g. `x.number`) to a local store: `{ let local = x.number; f(&mut x, local) }`
 
-use common::rewrite::{get_snippet, Rewrite, RewriteMode};
+use utils::rewrite::{get_snippet, Rewrite, RewriteMode};
 use rustc_hir::{
     def::Res,
     intravisit::{self, Visitor},

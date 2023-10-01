@@ -14,7 +14,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 
-pub fn verify(krate: &common::compiler_interface::Program) {
+pub fn verify(krate: &utils::compiler_interface::Program) {
     verify_place_shape(krate);
     verify_assign_shape(krate);
     verify_temp_local_usage(krate);
@@ -24,7 +24,7 @@ pub fn verify(krate: &common::compiler_interface::Program) {
     verify_projection_elem_intern(krate);
 }
 
-fn verify_place_shape(krate: &common::compiler_interface::Program) {
+fn verify_place_shape(krate: &utils::compiler_interface::Program) {
     struct Vis;
     impl<'tcx> Visitor<'tcx> for Vis {
         fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, _location: Location) {
@@ -60,7 +60,7 @@ fn verify_place_shape(krate: &common::compiler_interface::Program) {
     }
 }
 
-fn verify_assign_shape(krate: &common::compiler_interface::Program) {
+fn verify_assign_shape(krate: &utils::compiler_interface::Program) {
     struct Vis<'me, 'tcx>(&'me Body<'tcx>, TyCtxt<'tcx>);
     impl<'me, 'tcx> Visitor<'tcx> for Vis<'me, 'tcx> {
         fn visit_assign(
@@ -116,7 +116,7 @@ fn verify_assign_shape(krate: &common::compiler_interface::Program) {
     }
 }
 
-fn verify_func_args_shape(krate: &common::compiler_interface::Program) {
+fn verify_func_args_shape(krate: &utils::compiler_interface::Program) {
     struct Vis<'v, 'tcx>(&'v Body<'tcx>);
     impl<'v, 'tcx> Visitor<'tcx> for Vis<'v, 'tcx> {
         fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _: Location) {
@@ -146,7 +146,7 @@ fn verify_func_args_shape(krate: &common::compiler_interface::Program) {
     }
 }
 
-fn verify_temp_local_usage(krate: &common::compiler_interface::Program) {
+fn verify_temp_local_usage(krate: &utils::compiler_interface::Program) {
     use rustc_index::IndexVec;
     for did in &krate.fns {
         let body = krate.tcx.optimized_mir(did);
@@ -187,7 +187,7 @@ fn verify_temp_local_usage(krate: &common::compiler_interface::Program) {
     }
 }
 
-fn verify_stmt_shape(krate: &common::compiler_interface::Program) {
+fn verify_stmt_shape(krate: &utils::compiler_interface::Program) {
     for did in krate.fns.iter().copied() {
         let body = krate.tcx.optimized_mir(did);
         for bb_data in body.basic_blocks.iter() {
@@ -214,7 +214,7 @@ fn verify_stmt_shape(krate: &common::compiler_interface::Program) {
     }
 }
 
-fn verify_return_clause_uniqueness(krate: &common::compiler_interface::Program) {
+fn verify_return_clause_uniqueness(krate: &utils::compiler_interface::Program) {
     for did in krate.fns.iter().copied() {
         let body = krate.tcx.optimized_mir(did);
         assert!(
@@ -230,7 +230,7 @@ fn verify_return_clause_uniqueness(krate: &common::compiler_interface::Program) 
     }
 }
 
-fn verify_projection_elem_intern(krate: &common::compiler_interface::Program) {
+fn verify_projection_elem_intern(krate: &utils::compiler_interface::Program) {
     struct Vis<'tcx>(TyCtxt<'tcx>);
     impl<'tcx> Visitor<'tcx> for Vis<'tcx> {
         fn visit_place(&mut self, place: &Place<'tcx>, _: PlaceContext, _: Location) {

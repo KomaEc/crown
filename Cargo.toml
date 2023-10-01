@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "crates/common",
+    "crates/utils",
     "crates/preprocess",
     "crates/analysis",
     "crates/alias",
@@ -18,7 +18,7 @@ build = "build.rs"
 rustc_private = true
 
 [dependencies]
-common = { path = "crates/common" }
+utils = { path = "crates/utils" }
 preprocess = { path = "crates/preprocess" }
 analysis = { path = "crates/analysis" }
 alias = { path = "crates/alias" }

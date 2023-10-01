@@ -2,7 +2,7 @@ pub mod constraint;
 #[cfg(test)]
 mod test;
 
-use common::data_structure::vec_vec::VecVec;
+use utils::data_structure::vec_vec::VecVec;
 use petgraph::unionfind::UnionFind;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -17,8 +17,8 @@ use rustc_type_ir::TyKind::FnDef;
 
 use self::constraint::{Constraint, ConstraintKind};
 
-// common::macros::orc_index!(AbstractLocation);
-common::macros::newtype_index! {
+// utils::macros::orc_index!(AbstractLocation);
+utils::macros::newtype_index! {
     #[debug_format = "{}"]
     pub struct AbstractLocation {
 
@@ -29,7 +29,7 @@ impl Default for AbstractLocation {
         Self::from_u32(0)
     }
 }
-common::macros::petgraph_index!(AbstractLocation);
+utils::macros::petgraph_index!(AbstractLocation);
 
 impl AbstractLocation {
     pub const NULL: Self = AbstractLocation::from_u32(0);
@@ -290,7 +290,7 @@ impl InterProceduralStrategy for IntraProcedural {
     }
 }
 
-/// FIXME replace this with [`common::discretization::Descretization`]
+/// FIXME replace this with [`utils::discretization::Descretization`]
 #[derive(Debug)]
 pub struct MemoryLocationGroup {
     pub(crate) did_idx: FxHashMap<DefId, usize>,
@@ -318,7 +318,7 @@ pub struct Steensgaard<F: FieldStrategy, D: DeallocArgStrategy, I: InterProcedur
 }
 
 impl<I: InterProceduralStrategy> Steensgaard<FieldFocused, MergeDeallocArg, I> {
-    pub fn field_based(input: &common::compiler_interface::Program) -> Self {
+    pub fn field_based(input: &utils::compiler_interface::Program) -> Self {
         let n_struct_fields = input.structs.iter().fold(0usize, |acc, did| {
             acc + input.tcx.adt_def(*did).all_fields().count()
         });
@@ -436,7 +436,7 @@ impl<I: InterProceduralStrategy> Steensgaard<FieldFocused, MergeDeallocArg, I> {
 }
 
 impl<I: InterProceduralStrategy> Steensgaard<FieldInsensitive, NopDeallocArg, I> {
-    pub fn field_insensitive(input: &common::compiler_interface::Program) -> Self {
+    pub fn field_insensitive(input: &utils::compiler_interface::Program) -> Self {
         let n_fn_locals = input.fns.iter().fold(0usize, |acc, did| {
             acc + input.tcx.optimized_mir(*did).local_decls.len()
         });

@@ -6,7 +6,7 @@ use std::{
     io::{self, Write},
 };
 
-use common::rewrite::{get_snippet, RewriteMode};
+use utils::rewrite::{get_snippet, RewriteMode};
 use rustc_middle::ty::TyCtxt;
 
 use crate::owner_items;

@@ -13,7 +13,7 @@ fn test1() {
         (*s).g = q;
     }
     ";
-    common::compiler_interface::run_compiler(PROGRAM.into(), |program| {
+    utils::compiler_interface::run_compiler(PROGRAM.into(), |program| {
         let input = program;
         let steensgaard = TaintResult::field_based(&input);
         steensgaard.print_results();
@@ -35,7 +35,7 @@ fn test2() {
         let mut p = &local;
     }
     ";
-    common::compiler_interface::run_compiler(PROGRAM.into(), |program| {
+    utils::compiler_interface::run_compiler(PROGRAM.into(), |program| {
         let input = program;
         let steensgaard = TaintResult::field_based(&input);
         steensgaard.print_results();

@@ -29,6 +29,5 @@ anyhow = "1.0"
 cadical = "0.1"
 z3 = { version = "0.12.1", features = ["static-link-z3"] }
 itertools = "0.11"
-# bumpalo = { version = "3.9", features = ["allocator_api"] }
-common = { path = "../common" }
+utils = { path = "../utils" }
 alias = { path = "../alias" }

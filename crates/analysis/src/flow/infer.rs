@@ -1,6 +1,6 @@
 use std::borrow::BorrowMut;
 
-use common::data_structure::assoc::AssocExt;
+use utils::data_structure::assoc::AssocExt;
 use rustc_abi::FieldIdx;
 use rustc_ast::Mutability;
 use rustc_data_structures::graph::WithSuccessors;

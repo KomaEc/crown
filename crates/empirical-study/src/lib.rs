@@ -50,7 +50,7 @@ pub trait EmpiricalStudy<'tcx> {
 
 // impl<'tcx, Input: OrcInput<'tcx>> EmpiricalStudy<'tcx> for Input {
 
-impl<'tcx> EmpiricalStudy<'tcx> for common::compiler_interface::Program<'tcx> {
+impl<'tcx> EmpiricalStudy<'tcx> for utils::compiler_interface::Program<'tcx> {
     fn compute_percentage_of_non_self_referential_structs(&self) {
         let taint_results = taint_results(self);
         let aliasing_field_pairs = taint_results.aliasing_field_pairs();

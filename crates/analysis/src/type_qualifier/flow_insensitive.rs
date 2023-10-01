@@ -7,7 +7,7 @@ pub mod mutability;
 
 use std::ops::Range;
 
-use common::{
+use utils::{
     data_structure::vec_vec::VecVec,
     discretization::{self, Discretization},
 };
@@ -118,7 +118,7 @@ impl<Qualifier> TypeQualifiers<Qualifier> {
         }
     }
 
-    pub fn print_results(&self, crate_data: &common::compiler_interface::Program)
+    pub fn print_results(&self, crate_data: &utils::compiler_interface::Program)
     where
         Qualifier: std::fmt::Display,
     {
@@ -191,14 +191,14 @@ fn count_ptr(mut ty: Ty) -> usize {
     }
 }
 
-// pub fn infer(crate_data: &common::CrateData)
+// pub fn infer(crate_data: &utils::CrateData)
 
 impl<Domain> TypeQualifiers<Domain>
 where
     Domain: BooleanLattice,
 {
     /// construct a new `TypeQualifiers` instance with no constraints added
-    pub fn new_empty(crate_data: &common::compiler_interface::Program) -> Self {
+    pub fn new_empty(crate_data: &utils::compiler_interface::Program) -> Self {
         let mut model = IndexVec::new();
         // not necessary, but need initialization anyway
         model.push(Domain::TOP);
@@ -294,7 +294,7 @@ pub fn resolve_body<'tcx, I, Domain>(
 
 pub trait BooleanLattice: From<bool> + Into<bool> + Copy + Lattice {}
 
-common::macros::newtype_index! {
+utils::macros::newtype_index! {
     #[debug_format = "{}"]
     pub struct Var {
         // DEBUG_FORMAT = "{}"

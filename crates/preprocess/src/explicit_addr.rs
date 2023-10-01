@@ -1,4 +1,4 @@
-use common::rewrite::Rewrite;
+use utils::rewrite::Rewrite;
 use rustc_hir::{
     intravisit::{self, Visitor},
     BorrowKind, Expr, ExprKind, ItemKind, Mutability, OwnerNode,

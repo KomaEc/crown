@@ -1,4 +1,4 @@
-use common::data_structure::vec_vec::{VecVec, VecVecBuilder};
+use utils::data_structure::vec_vec::{VecVec, VecVecBuilder};
 use rustc_data_structures::sso::SsoHashSet;
 use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::{

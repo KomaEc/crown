@@ -1,4 +1,4 @@
-use common::data_structure::vec_vec::VecVec;
+use utils::data_structure::vec_vec::VecVec;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -255,7 +255,7 @@ impl<'me, 'tcx> Visitor<'tcx> for CallGraphConstruction<'me> {
 
 #[cfg(test)]
 mod test {
-    use common::tracing_setup::init_logger;
+    use utils::tracing_setup::init_logger;
 
     use super::*;
 
@@ -291,7 +291,7 @@ mod test {
     #[test]
     fn test() {
         init_logger();
-        common::compiler_interface::run_compiler(TEST_PROGRAMS.into(), |program| {
+        utils::compiler_interface::run_compiler(TEST_PROGRAMS.into(), |program| {
             let tcx = program.tcx;
             let functions = &program.fns;
             let call_graph = CallGraph::new(tcx, &functions[..]);

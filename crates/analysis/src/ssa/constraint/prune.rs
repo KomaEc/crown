@@ -2,7 +2,7 @@ use crate::analysis::{
     def::RichLocation,
     state::{SSAIdx, SSAState},
 };
-use orc_common::data_structure::assoc::AssocExt;
+use orc_utils::data_structure::assoc::AssocExt;
 use rustc_hash::FxHashSet;
 use rustc_index::IndexVec;
 use rustc_middle::mir::{BasicBlock, Body, Local, TerminatorKind, RETURN_PLACE};

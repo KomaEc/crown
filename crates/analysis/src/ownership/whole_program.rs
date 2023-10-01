@@ -92,7 +92,7 @@ impl<'tcx> WholeProgramResults<'tcx> {
     pub fn fields<'a>(
         &'a self,
         r#struct: &DefId,
-    ) -> impl Iterator<Item = &'a [Ownership]> + 'a + common::captures::Captures<'tcx> {
+    ) -> impl Iterator<Item = &'a [Ownership]> + 'a + utils::captures::Captures<'tcx> {
         self.struct_fields
             .fields(&self.struct_ctxt, r#struct)
             .map(|range| &self.model[range.start.index()..range.end.index()])

@@ -1,4 +1,4 @@
-use common::rewrite::{Rewrite, RewriteMode};
+use utils::rewrite::{Rewrite, RewriteMode};
 use petgraph::unionfind::UnionFind;
 use rustc_hash::FxHashMap;
 use rustc_hir::{

@@ -1,4 +1,4 @@
-use common::data_structure::vec_vec::VecVec;
+use utils::data_structure::vec_vec::VecVec;
 use rustc_middle::mir::{BasicBlock, Location};
 
 pub mod def_use;
@@ -9,7 +9,7 @@ pub mod ownership;
 mod state;
 pub mod vanilla;
 
-common::macros::newtype_index! {
+utils::macros::newtype_index! {
     #[debug_format = "{}"]
     pub struct SSAIdx {
     }

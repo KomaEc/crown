@@ -11,5 +11,5 @@ rustc_private = true
 [dependencies]
 # analysis = { path = "../analysis" }
 alias = { path = "../alias" }
-common = { path = "../common" }
+utils = { path = "../utils" }
 cli-table = "0.4"

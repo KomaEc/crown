@@ -11,6 +11,6 @@ rustc_private = true
 [dependencies]
 rustfix = "0.6"
 petgraph = "0.6"
-common = { path = "../common" }
+utils = { path = "../utils" }
 regex = "1.7"
 similar = "2.2"

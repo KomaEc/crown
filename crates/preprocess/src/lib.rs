@@ -15,7 +15,7 @@ extern crate rustc_hir_pretty;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use common::rewrite::{Rewrite, RewriteMode};
+use utils::rewrite::{Rewrite, RewriteMode};
 use explicit_addr::explicit_addr;
 use linkage::{canonicalize_structs, link_functions, link_incomplete_types};
 use rustc_hir::{Item, OwnerNode};

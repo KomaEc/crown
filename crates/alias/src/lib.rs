@@ -16,7 +16,7 @@
 #![feature(min_specialization)]
 #![feature(array_windows)]
 
-use common::data_structure::vec_vec::VecVec;
+use utils::data_structure::vec_vec::VecVec;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use steensgaard::{
@@ -48,19 +48,19 @@ pub type TaintResult = Steensgaard<FieldFocused, MergeDeallocArg, InterProcedura
 pub type AliasResult = Steensgaard<FieldInsensitive, NopDeallocArg, InterProcedural>;
 pub type IntraAliasResult = Steensgaard<FieldInsensitive, NopDeallocArg, IntraProcedural>;
 
-pub fn taint_results(input: &common::compiler_interface::Program) -> TaintResult {
+pub fn taint_results(input: &utils::compiler_interface::Program) -> TaintResult {
     Steensgaard::field_based(input)
 }
 
-pub fn alias_results(input: &common::compiler_interface::Program) -> AliasResult {
+pub fn alias_results(input: &utils::compiler_interface::Program) -> AliasResult {
     Steensgaard::field_insensitive(input)
 }
 
-pub fn intra_alias_results(input: &common::compiler_interface::Program) -> IntraAliasResult {
+pub fn intra_alias_results(input: &utils::compiler_interface::Program) -> IntraAliasResult {
     Steensgaard::field_insensitive(input)
 }
 
-pub fn report_results(input: &common::compiler_interface::Program) {
+pub fn report_results(input: &utils::compiler_interface::Program) {
     Steensgaard::<FieldFocused, MergeDeallocArg, InterProcedural>::field_based(input)
         .print_results()
 }

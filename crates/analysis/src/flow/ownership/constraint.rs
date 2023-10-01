@@ -1,6 +1,6 @@
 use std::ops::Range;
 
-common::macros::newtype_index! {
+utils::macros::newtype_index! {
     #[debug_format = "{}"]
     pub struct OwnershipToken {
     }

@@ -24,7 +24,7 @@ use std::{
 use analysis::{ownership::AnalysisKind, CrateCtxt};
 use anyhow::{bail, Context, Result};
 use clap::Parser;
-use common::rewrite::RewriteMode;
+use utils::rewrite::RewriteMode;
 use rustc_errors::registry;
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
@@ -219,7 +219,7 @@ fn time<T>(label: &str, f: impl FnOnce() -> T) -> T {
 }
 
 fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
-    let input = common::compiler_interface::Program::new(tcx);
+    let input = utils::compiler_interface::Program::new(tcx);
 
     match cmd {
         Command::Preprocess { .. } => unreachable!(),

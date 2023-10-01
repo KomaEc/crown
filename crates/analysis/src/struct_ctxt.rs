@@ -1,4 +1,4 @@
-use common::data_structure::vec_vec::VecVec;
+use utils::data_structure::vec_vec::VecVec;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -370,7 +370,7 @@ mod tests {
 
     #[test]
     fn test1() {
-        common::compiler_interface::run_compiler(TEXT1.into(), |program| {
+        utils::compiler_interface::run_compiler(TEXT1.into(), |program| {
             let crate_data = program;
             let program = CrateCtxt::new(&crate_data);
             macro_rules! define_structs {
@@ -420,7 +420,7 @@ mod tests {
 
     #[test]
     fn test2() {
-        common::compiler_interface::run_compiler(TEXT2.into(), |program| {
+        utils::compiler_interface::run_compiler(TEXT2.into(), |program| {
             let tcx = program.tcx;
             let structs = &program.structs;
             let mut struct_ctxt = StructCtxt::new(tcx, &structs);
@@ -461,7 +461,7 @@ mod tests {
     const TEXT3: &str = "struct S { f: *mut *mut S, g: *mut *mut S }";
     #[test]
     fn test3() {
-        common::compiler_interface::run_compiler(TEXT3.into(), |program| {
+        utils::compiler_interface::run_compiler(TEXT3.into(), |program| {
             let tcx = program.tcx;
             let structs = &program.structs;
             let mut struct_ctxt = StructCtxt::new(tcx, &structs);
@@ -510,7 +510,7 @@ mod tests {
     const TEXT4: &str = "struct S { f: *mut S, g: *mut *mut S }";
     #[test]
     fn test4() {
-        common::compiler_interface::run_compiler(TEXT4.into(), |program| {
+        utils::compiler_interface::run_compiler(TEXT4.into(), |program| {
             let tcx = program.tcx;
             let structs = &program.structs;
             let mut struct_ctxt = StructCtxt::new(tcx, &structs);
@@ -558,7 +558,7 @@ mod tests {
     // const TEXT5: &str = "struct S { f: *mut Data, g: *mut S } struct Data { f: i32 }";
     // #[test]
     // fn test5() {
-    //     common::compiler_interface::run_compiler_with(TEXT5.into(), |tcx, _, structs| {
+    //     utils::compiler_interface::run_compiler_with(TEXT5.into(), |tcx, _, structs| {
     //         let mut struct_ctxt = StructTopology::new(tcx, &structs);
     //         let &node = struct_ctxt
     //             .post_order

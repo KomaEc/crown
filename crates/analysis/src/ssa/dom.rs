@@ -1,4 +1,4 @@
-// use orc_common::data_structure::vec_array::VecArray;
+// use orc_utils::data_structure::vec_array::VecArray;
 // use rustc_data_structures::graph::WithStartNode;
 // use rustc_index::IndexVec;
 // use rustc_middle::mir::{BasicBlock, Body};

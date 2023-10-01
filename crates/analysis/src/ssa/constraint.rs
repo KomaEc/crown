@@ -1,6 +1,6 @@
 use std::{num::NonZeroU32, ops::Range};
 
-use common::data_structure::vec_vec::VecVec;
+use utils::data_structure::vec_vec::VecVec;
 use rustc_hir::def_id::DefId;
 use rustc_index::IndexVec;
 use rustc_middle::{
@@ -14,7 +14,7 @@ use crate::{ptr::Measurable, struct_ctxt::StructCtxt, CrateCtxt};
 pub mod infer;
 // pub mod prune;
 
-common::macros::newtype_index! {
+utils::macros::newtype_index! {
     #[debug_format = "{}"]
     pub struct Var {
         // DEBUG_FORMAT = "{}"// "𝕆({})"
