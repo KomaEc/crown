@@ -1,45 +1,54 @@
 use std::borrow::BorrowMut;
 
+use common::data_structure::assoc::AssocExt;
 use rustc_ast::Mutability;
+use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::IndexVec;
 use rustc_middle::{
     mir::{
-        AggregateKind, BasicBlock, BasicBlockData, BinOp, Body, BorrowKind, CastKind, Location,
-        NullOp, Operand, Place, Rvalue, Statement, StatementKind, Terminator, TerminatorKind, UnOp,
+        AggregateKind, BasicBlock, BasicBlockData, BinOp, Body, BorrowKind, CastKind, Local,
+        Location, NullOp, Operand, Place, ProjectionElem, Rvalue, Statement, StatementKind,
+        Terminator, TerminatorKind, UnOp,
     },
     ty::TyCtxt,
 };
 
+use super::{def_use::DefUseChain, join_points::PhiNode, state::SSAState, SSAIdx};
+use crate::flow::{def_use::UseKind, RichLocation};
+
 /// The set of inference operations
 pub trait Inference:
-    HasState + InferAssign + InferCall + InferReturn + InferOperandMention
+    InferAssign + InferCall + InferReturn + InferOperandMention + InferJoin
 {
 }
 
-// leave it to `Engine` maybe?
-pub trait HasState {}
-
 pub trait InferAssign {
-    fn infer_use(&mut self, engine: &Engine, lhs: &Place, rhs: &Operand, location: Location);
+    fn infer_use(&mut self, engine: &mut Engine, lhs: &Place, rhs: &Operand, location: Location);
     fn infer_mut_borrow(
         &mut self,
-        engine: &Engine,
+        engine: &mut Engine,
         lhs: &Place,
         lender: &Place,
         location: Location,
     );
     fn infer_shr_borrow(
         &mut self,
-        engine: &Engine,
+        engine: &mut Engine,
         lhs: &Place,
         lender: &Place,
         location: Location,
     );
-    fn infer_mut_addr(&mut self, engine: &Engine, lhs: &Place, rhs: &Place, location: Location);
-    fn infer_const_addr(&mut self, engine: &Engine, lhs: &Place, rhs: &Place, location: Location);
+    fn infer_mut_addr(&mut self, engine: &mut Engine, lhs: &Place, rhs: &Place, location: Location);
+    fn infer_const_addr(
+        &mut self,
+        engine: &mut Engine,
+        lhs: &Place,
+        rhs: &Place,
+        location: Location,
+    );
     fn infer_cast(
         &mut self,
-        engine: &Engine,
+        engine: &mut Engine,
         lhs: &Place,
         rhs: &Operand,
         cast_kind: CastKind,
@@ -47,7 +56,7 @@ pub trait InferAssign {
     );
     fn infer_binop(
         &mut self,
-        engine: &Engine,
+        engine: &mut Engine,
         lhs: &Place,
         left: &Operand,
         right: &Operand,
@@ -56,14 +65,26 @@ pub trait InferAssign {
     );
     fn infer_unop(
         &mut self,
-        engine: &Engine,
+        engine: &mut Engine,
         lhs: &Place,
         operand: &Operand,
         unop: UnOp,
         location: Location,
     );
-    fn infer_discriminant(&mut self, engine: &Engine, lhs: &Place, rhs: &Place, location: Location);
-    fn infer_deref_copy(&mut self, engine: &Engine, lhs: &Place, rhs: &Place, location: Location);
+    fn infer_discriminant(
+        &mut self,
+        engine: &mut Engine,
+        lhs: &Place,
+        rhs: &Place,
+        location: Location,
+    );
+    fn infer_deref_copy(
+        &mut self,
+        engine: &mut Engine,
+        lhs: &Place,
+        rhs: &Place,
+        location: Location,
+    );
 }
 
 pub trait InferCall {
@@ -85,14 +106,34 @@ pub trait InferOperandMention {
     fn infer_operand_mention(&mut self, engine: &Engine, operand: &Operand, location: Location);
 }
 
+pub trait InferJoin {
+    fn infer_join(&mut self, engine: &Engine, local: Local, phi_node: &PhiNode, block: BasicBlock);
+}
+
 /// The inference engine that walks over the procedure
 pub struct Engine<'engine, 'tcx> {
     tcx: TyCtxt<'tcx>,
     body: &'engine Body<'tcx>,
+    def_use_chain: &'engine mut DefUseChain,
+    ssa_state: SSAState,
 }
 
-impl<'tcx> Engine<'_, 'tcx> {
-    pub fn run<Infer: Inference>(&self, mut inference: impl BorrowMut<Infer>) {
+impl<'engine, 'tcx> Engine<'engine, 'tcx> {
+    pub fn new(
+        tcx: TyCtxt<'tcx>,
+        body: &'engine Body<'tcx>,
+        def_use_chain: &'engine mut DefUseChain,
+        ssa_state: SSAState,
+    ) -> Self {
+        Engine {
+            tcx,
+            body,
+            def_use_chain,
+            ssa_state,
+        }
+    }
+
+    pub fn run<Infer: Inference>(&mut self, mut inference: impl BorrowMut<Infer>) {
         tracing::debug!("Running {:?}", self.body.source.def_id());
         let dominators = self.body.basic_blocks.dominators();
         let mut children = IndexVec::from_elem(vec![], &self.body.basic_blocks);
@@ -121,14 +162,37 @@ impl<'tcx> Engine<'_, 'tcx> {
                     recursion.extend(children[bb].iter().rev().map(|&bb| (bb, State::ToVisit)));
                 }
                 State::ToPopNames => {
-                    // update numbering
-                    todo!()
+                    for local in self
+                        .def_use_chain
+                        .uses
+                        .get_block(bb)
+                        .iter()
+                        .flatten()
+                        .filter(|(_, use_kind)| matches!(use_kind, UseKind::Def(..)))
+                        .map(|(local, _)| *local)
+                        .chain(
+                            self.def_use_chain.join_points[bb]
+                                .iter()
+                                .map(|(local, _)| *local),
+                        )
+                    {
+                        let ssa_idx = self.ssa_state.pop(local);
+                        tracing::debug!("popping at {:?}: {:?}~{:?}", bb, local, ssa_idx);
+                    }
                 }
+            }
+        }
+
+        for (block, bb_data) in self.def_use_chain.join_points.iter_enumerated() {
+            for &(local, ref phi_node) in bb_data.iter() {
+                inference
+                    .borrow_mut()
+                    .infer_join(&self, local, phi_node, block);
             }
         }
     }
 
-    fn walk_basic_block<Infer: Inference>(&self, inference: &mut Infer, bb: BasicBlock) {
+    fn walk_basic_block<Infer: Inference>(&mut self, inference: &mut Infer, bb: BasicBlock) {
         tracing::debug!("Walking {:?}", bb);
 
         let BasicBlockData {
@@ -137,7 +201,17 @@ impl<'tcx> Engine<'_, 'tcx> {
             is_cleanup: _,
         } = &self.body.basic_blocks[bb];
 
-        // process phi-nodes
+        // process phi-node definition
+        for (local, phi_node) in self.def_use_chain.join_points[bb].iter_enumerated_mut() {
+            let ssa_idx = self.ssa_state.fresh_name(local);
+            phi_node.lhs = ssa_idx;
+            assert_eq!(
+                self.def_use_chain.def_locs[local].push(RichLocation::Phi(bb)),
+                ssa_idx
+            );
+            tracing::debug!("defining {:?} at Phi({:?}), def: {:?}", local, bb, ssa_idx);
+            todo!("inference of phi node definition");
+        }
 
         let mut index = 0;
         for statement in statements {
@@ -159,11 +233,18 @@ impl<'tcx> Engine<'_, 'tcx> {
             self.walk_terminator(inference, terminator, location)
         }
 
-        // process phi-nodes
+        // process phi-nodes uses
+        for succ in self.body.basic_blocks.successors(bb) {
+            for (local, phi_node) in self.def_use_chain.join_points[succ].iter_enumerated_mut() {
+                let ssa_idx = self.ssa_state.get_name(local);
+                phi_node.rhs.push(ssa_idx);
+                tracing::debug!("using {:?} at Phi({:?}), use: {:?}", local, succ, ssa_idx)
+            }
+        }
     }
 
     fn walk_terminator<Infer: Inference>(
-        &self,
+        &mut self,
         inference: &mut Infer,
         terminator: &Terminator<'tcx>,
         location: Location,
@@ -195,13 +276,6 @@ impl<'tcx> Engine<'_, 'tcx> {
             TerminatorKind::Assert { cond, .. } => {
                 inference.infer_operand_mention(self, cond, location)
             }
-            // TerminatorKind::Assert {
-            //     cond,
-            //     expected,
-            //     msg,
-            //     target,
-            //     unwind,
-            // } => todo!(),
             TerminatorKind::Yield { .. }
             | TerminatorKind::GeneratorDrop
             | TerminatorKind::FalseEdge { .. }
@@ -213,7 +287,7 @@ impl<'tcx> Engine<'_, 'tcx> {
     }
 
     fn walk_statement<Infer: Inference>(
-        &self,
+        &mut self,
         inference: &mut Infer,
         statement: &Statement<'tcx>,
         location: Location,
@@ -242,7 +316,7 @@ impl<'tcx> Engine<'_, 'tcx> {
     }
 
     fn walk_assign<Infer: Inference>(
-        &self,
+        &mut self,
         inference: &mut Infer,
         place: &Place<'tcx>,
         rvalue: &Rvalue<'tcx>,
@@ -289,5 +363,49 @@ impl<'tcx> Engine<'_, 'tcx> {
             | Rvalue::NullaryOp(_, _)
             | Rvalue::ShallowInitBox(_, _) => unreachable!("Rvalue type {:?}", rvalue),
         }
+    }
+
+    pub fn try_use_local(&mut self, local: Local, location: Location) -> Option<UseKind<SSAIdx>> {
+        let use_kind = self
+            .def_use_chain
+            .uses
+            .get_location_mut(location)
+            .get_by_key_mut(&local)?;
+        let r#use = self.ssa_state.get_name(local);
+        Some(match use_kind {
+            UseKind::Use(ssa_idx) | UseKind::LocalPeek(ssa_idx) => {
+                *ssa_idx = r#use;
+                use_kind.clone()
+            }
+            UseKind::Def(update) => {
+                let def = self.ssa_state.fresh_name(local);
+                tracing::debug!(
+                    "updating {:?} at {:?}, use: {:?}, def: {:?}",
+                    local,
+                    location,
+                    r#use,
+                    def
+                );
+                update.r#use = r#use;
+                update.def = def;
+                assert_eq!(
+                    def,
+                    self.def_use_chain.def_locs[local].push(location.into())
+                );
+                use_kind.clone()
+            }
+        })
+    }
+
+    /// indices are in-significant
+    pub fn try_use_place(&mut self, place: &Place, location: Location) -> Option<UseKind<SSAIdx>> {
+        let local_use = self.try_use_local(place.local, location);
+        for elem in place.projection {
+            let ProjectionElem::Index(idx) = elem else {
+                continue;
+            };
+            let _ = self.try_use_local(idx, location);
+        }
+        local_use
     }
 }

@@ -52,12 +52,24 @@ impl<T> LocationMap<T> {
         &self.map[block.index()]
     }
 
+    pub fn get_block_mut(&mut self, block: BasicBlock) -> &mut [T] {
+        &mut self.map[block.index()]
+    }
+
     pub fn get_location(&self, location: Location) -> &T {
         let Location {
             block,
             statement_index,
         } = location;
         &self.map[block.index()][statement_index]
+    }
+
+    pub fn get_location_mut(&mut self, location: Location) -> &mut T {
+        let Location {
+            block,
+            statement_index,
+        } = location;
+        &mut self.map[block.index()][statement_index]
     }
 
     pub fn iter_enumerated(&self) -> impl Iterator<Item = (Location, &T)> {

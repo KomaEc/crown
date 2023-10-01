@@ -3,12 +3,20 @@ use common::data_structure::{
     vec_vec::{VecVec, VecVecBuilder},
 };
 use rustc_index::{bit_set::BitSet, IndexVec};
-use rustc_middle::mir::{visit::Visitor, BasicBlock, BasicBlockData, Body, Local, Location};
+use rustc_middle::{
+    mir::{
+        visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
+        BasicBlock, BasicBlockData, Body, Local, Location, Place, Rvalue,
+    },
+    ty::TyCtxt,
+};
 use smallvec::SmallVec;
 
 use super::{
     dom::compute_dominance_frontier,
+    infer::Engine,
     join_points::{JoinPoints, PhiNode},
+    state::SSAState,
     LocationMap, RichLocation, SSAIdx,
 };
 
@@ -18,6 +26,16 @@ pub struct Update<T> {
     pub def: T,
 }
 
+impl Update<SSAIdx> {
+    pub fn new() -> Self {
+        Update {
+            r#use: SSAIdx::MAX,
+            def: SSAIdx::MAX,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub enum UseKind<T> {
     Use(T),
     Def(Update<T>),
@@ -41,7 +59,22 @@ pub struct DefUseChain {
 }
 
 impl DefUseChain {
-    pub fn initialise<'tcx, L: LocationBuilder<'tcx>>(body: &Body<'tcx>, location_builder: L) -> Self {
+    /// Construct a normal def use chain (Definition of def and use is similar to
+    /// a liveness analysis)
+    pub fn new<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
+        let liveness_builder = LivenessBuilder::default();
+        let mut def_use_chain = DefUseChain::initialise(body, liveness_builder);
+        let ssa_state = SSAState::new(body.local_decls.len());
+        let mut engine = Engine::new(tcx, body, &mut def_use_chain, ssa_state);
+        // engine.run(todo!());
+
+        def_use_chain
+    }
+
+    pub fn initialise<'tcx, L: LocationBuilder<'tcx>>(
+        body: &Body<'tcx>,
+        location_builder: L,
+    ) -> Self {
         let uses = DefUseBuilder::build(body, location_builder);
         let def_locs =
             IndexVec::from_elem(IndexVec::from([RichLocation::Entry]), &body.local_decls);
@@ -181,4 +214,123 @@ impl<'tcx, L: LocationBuilder<'tcx>> DefUseBuilder<L> {
 
 pub trait LocationBuilder<'tcx>: Visitor<'tcx> {
     fn retrieve(&mut self) -> SmallVec<[(Local, UseKind<SSAIdx>); 2]>;
+}
+
+#[derive(Default)]
+pub struct LivenessBuilder {
+    location_data: SmallVec<[(Local, UseKind<SSAIdx>); 2]>,
+}
+
+impl LocationBuilder<'_> for LivenessBuilder {
+    fn retrieve(&mut self) -> SmallVec<[(Local, UseKind<SSAIdx>); 2]> {
+        std::mem::take(&mut self.location_data)
+    }
+}
+
+impl<'tcx> Visitor<'tcx> for LivenessBuilder {
+    // for return terminator
+    fn visit_local(&mut self, local: Local, context: PlaceContext, _: Location) {
+        match LivenessDefUse::for_place(Place::from(local), context) {
+            Some(LivenessDefUse::Def) => {
+                self.location_data.push((local, Def(Update::new())));
+            }
+            Some(LivenessDefUse::Use) => self.location_data.push((local, Use(SSAIdx::MAX))),
+            None => {}
+        }
+    }
+
+    fn visit_place(&mut self, place: &Place, context: PlaceContext, location: Location) {
+        match LivenessDefUse::for_place(*place, context) {
+            Some(LivenessDefUse::Def) => {
+                self.location_data.push((place.local, Def(Update::new())));
+            }
+            Some(LivenessDefUse::Use) => self.location_data.push((place.local, Use(SSAIdx::MAX))),
+            None => {}
+        }
+
+        // call super_projection so that index operators are visited
+        self.super_projection(place.as_ref(), context, location);
+    }
+
+    // special casing statements like _1 = BitAnd(_1, _3)
+    // in this case, we do not generate usage for the right _1
+    fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
+        if let Rvalue::BinaryOp(_, box (operand1, operand2)) = rvalue {
+            if let Some((lhs, operand1)) = place
+                .as_local()
+                .zip(operand1.place().and_then(|place| place.as_local()))
+            {
+                if lhs == operand1 {
+                    self.visit_place(
+                        place,
+                        PlaceContext::MutatingUse(MutatingUseContext::Store),
+                        location,
+                    );
+                    self.visit_operand(operand2, location);
+                    return;
+                }
+            }
+        }
+        self.super_assign(place, rvalue, location);
+    }
+}
+
+/// This is to be regularly synced with `rustc_mir_dataflow::impls::liveness`
+enum LivenessDefUse {
+    Def,
+    Use,
+}
+
+impl LivenessDefUse {
+    fn for_place(place: Place<'_>, context: PlaceContext) -> Option<LivenessDefUse> {
+        match context {
+            PlaceContext::NonUse(_) => None,
+
+            PlaceContext::MutatingUse(
+                MutatingUseContext::Call
+                | MutatingUseContext::Yield
+                | MutatingUseContext::AsmOutput
+                | MutatingUseContext::Store
+                | MutatingUseContext::Deinit,
+            ) => {
+                if place.is_indirect() {
+                    // Treat derefs as a use of the base local. `*p = 4` is not a def of `p` but a
+                    // use.
+                    Some(LivenessDefUse::Use)
+                } else if place.projection.is_empty() {
+                    Some(LivenessDefUse::Def)
+                } else {
+                    None
+                }
+            }
+
+            // Setting the discriminant is not a use because it does no reading, but it is also not
+            // a def because it does not overwrite the whole place
+            PlaceContext::MutatingUse(MutatingUseContext::SetDiscriminant) => {
+                place.is_indirect().then_some(LivenessDefUse::Use)
+            }
+
+            // All other contexts are uses...
+            PlaceContext::MutatingUse(
+                MutatingUseContext::AddressOf
+                | MutatingUseContext::Borrow
+                | MutatingUseContext::Drop
+                | MutatingUseContext::Retag,
+            )
+            | PlaceContext::NonMutatingUse(
+                NonMutatingUseContext::AddressOf
+                | NonMutatingUseContext::Copy
+                | NonMutatingUseContext::Inspect
+                | NonMutatingUseContext::Move
+                | NonMutatingUseContext::PlaceMention
+                | NonMutatingUseContext::ShallowBorrow
+                | NonMutatingUseContext::SharedBorrow,
+            ) => Some(LivenessDefUse::Use),
+
+            PlaceContext::MutatingUse(MutatingUseContext::Projection)
+            | PlaceContext::NonMutatingUse(NonMutatingUseContext::Projection) => {
+                unreachable!("A projection could be a def or a use and must be handled separately")
+            }
+        }
+    }
 }
