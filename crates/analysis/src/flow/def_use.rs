@@ -276,21 +276,21 @@ impl LocationBuilder<'_> for VanillaBuilder {
 impl<'tcx> Visitor<'tcx> for VanillaBuilder {
     // for return terminator
     fn visit_local(&mut self, local: Local, context: PlaceContext, _: Location) {
-        match LivenessDefUse::for_place(Place::from(local), context) {
-            Some(LivenessDefUse::Def) => {
+        match VanillaDefUse::for_place(Place::from(local), context) {
+            Some(VanillaDefUse::Def) => {
                 self.location_data.push((local, Def(Update::new())));
             }
-            Some(LivenessDefUse::Use) => self.location_data.push((local, Use(SSAIdx::MAX))),
+            Some(VanillaDefUse::Use) => self.location_data.push((local, Use(SSAIdx::MAX))),
             None => {}
         }
     }
 
     fn visit_place(&mut self, place: &Place, context: PlaceContext, location: Location) {
-        match LivenessDefUse::for_place(*place, context) {
-            Some(LivenessDefUse::Def) => {
+        match VanillaDefUse::for_place(*place, context) {
+            Some(VanillaDefUse::Def) => {
                 self.location_data.push((place.local, Def(Update::new())));
             }
-            Some(LivenessDefUse::Use) => self.location_data.push((place.local, Use(SSAIdx::MAX))),
+            Some(VanillaDefUse::Use) => self.location_data.push((place.local, Use(SSAIdx::MAX))),
             None => {}
         }
 
@@ -322,13 +322,13 @@ impl<'tcx> Visitor<'tcx> for VanillaBuilder {
 }
 
 /// This is to be regularly synced with `rustc_mir_dataflow::impls::liveness`
-enum LivenessDefUse {
+enum VanillaDefUse {
     Def,
     Use,
 }
 
-impl LivenessDefUse {
-    fn for_place(place: Place<'_>, context: PlaceContext) -> Option<LivenessDefUse> {
+impl VanillaDefUse {
+    fn for_place(place: Place<'_>, context: PlaceContext) -> Option<VanillaDefUse> {
         match context {
             PlaceContext::NonUse(_) => None,
 
@@ -342,9 +342,9 @@ impl LivenessDefUse {
                 if place.is_indirect() {
                     // Treat derefs as a use of the base local. `*p = 4` is not a def of `p` but a
                     // use.
-                    Some(LivenessDefUse::Use)
+                    Some(VanillaDefUse::Use)
                 } else if place.projection.is_empty() {
-                    Some(LivenessDefUse::Def)
+                    Some(VanillaDefUse::Def)
                 } else {
                     None
                 }
@@ -353,7 +353,7 @@ impl LivenessDefUse {
             // Setting the discriminant is not a use because it does no reading, but it is also not
             // a def because it does not overwrite the whole place
             PlaceContext::MutatingUse(MutatingUseContext::SetDiscriminant) => {
-                place.is_indirect().then_some(LivenessDefUse::Use)
+                place.is_indirect().then_some(VanillaDefUse::Use)
             }
 
             // All other contexts are uses...
@@ -371,7 +371,7 @@ impl LivenessDefUse {
                 | NonMutatingUseContext::PlaceMention
                 | NonMutatingUseContext::ShallowBorrow
                 | NonMutatingUseContext::SharedBorrow,
-            ) => Some(LivenessDefUse::Use),
+            ) => Some(VanillaDefUse::Use),
 
             PlaceContext::MutatingUse(MutatingUseContext::Projection)
             | PlaceContext::NonMutatingUse(NonMutatingUseContext::Projection) => {
