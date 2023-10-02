@@ -1,8 +1,8 @@
 //! State for analysis steps
 
-use utils::data_structure::assoc::AssocExt;
 use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::mir::{Body, Local, Location};
+use utils::data_structure::assoc::AssocExt;
 
 use super::consume::Voidable;
 use crate::ssa::{

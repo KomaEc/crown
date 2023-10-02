@@ -1,12 +1,12 @@
 use std::{num::NonZeroU32, ops::Range};
 
-use utils::data_structure::vec_vec::VecVec;
 use rustc_hir::def_id::DefId;
 use rustc_index::IndexVec;
 use rustc_middle::{
     mir::{ClearCrossCrate, LocalDecl, LocalInfo},
     ty::TyKind,
 };
+use utils::data_structure::vec_vec::VecVec;
 
 use super::consume::Voidable;
 use crate::{ptr::Measurable, struct_ctxt::StructCtxt, CrateCtxt};

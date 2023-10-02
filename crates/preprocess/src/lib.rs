@@ -15,11 +15,11 @@ extern crate rustc_hir_pretty;
 extern crate rustc_middle;
 extern crate rustc_span;
 
-use utils::rewrite::{Rewrite, RewriteMode};
 use explicit_addr::explicit_addr;
 use linkage::{canonicalize_structs, link_functions, link_incomplete_types};
 use rustc_hir::{Item, OwnerNode};
 use rustc_middle::ty::TyCtxt;
+use utils::rewrite::{Rewrite, RewriteMode};
 
 use crate::{promote_argument::promote_argument, signal_nullness::signal_nullness};
 

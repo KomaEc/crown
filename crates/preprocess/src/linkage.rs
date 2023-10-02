@@ -1,4 +1,3 @@
-use utils::rewrite::{Rewrite, RewriteMode};
 use petgraph::unionfind::UnionFind;
 use rustc_hash::FxHashMap;
 use rustc_hir::{
@@ -9,6 +8,7 @@ use rustc_hir::{
 };
 use rustc_middle::{hir::nested_filter::OnlyBodies, ty::TyCtxt};
 use rustc_span::sym;
+use utils::rewrite::{Rewrite, RewriteMode};
 
 use crate::{owner_items, perform_rewrite};
 

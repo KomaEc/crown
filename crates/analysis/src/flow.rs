@@ -1,5 +1,5 @@
-use utils::data_structure::vec_vec::VecVec;
 use rustc_middle::mir::{BasicBlock, Location};
+use utils::data_structure::vec_vec::VecVec;
 
 pub mod def_use;
 mod dom;

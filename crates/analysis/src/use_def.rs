@@ -1,9 +1,5 @@
 //! Construct use-def chain via ssa
 
-use utils::data_structure::{
-    assoc::AssocExt,
-    vec_vec::{VecVec, VecVecBuilder},
-};
 use rustc_data_structures::sso::SsoHashSet;
 use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::{
@@ -14,6 +10,10 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use smallvec::SmallVec;
+use utils::data_structure::{
+    assoc::AssocExt,
+    vec_vec::{VecVec, VecVecBuilder},
+};
 
 use crate::ssa::{
     constraint::infer::{Pure, Renamer},

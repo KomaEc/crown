@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use utils::compiler_interface::Program;
 use rustc_middle::mir::VarDebugInfoContents;
 use serde::{Deserialize, Serialize};
 use smallvec::SmallVec;
+use utils::compiler_interface::Program;
 
 use super::flow_insensitive::TypeQualifiers;
 

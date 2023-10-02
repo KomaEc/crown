@@ -1,4 +1,3 @@
-use utils::data_structure::vec_vec::VecVec;
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -8,6 +7,7 @@ use rustc_middle::{
 };
 use rustc_type_ir::TyKind::FnDef;
 use smallvec::SmallVec;
+use utils::data_structure::vec_vec::VecVec;
 
 use crate::lattice::{FlatSet, Lattice};
 

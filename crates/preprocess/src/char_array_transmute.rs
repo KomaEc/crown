@@ -4,8 +4,8 @@ use std::{
     io::{self, Write},
 };
 
-use utils::rewrite::{get_snippet, RewriteMode};
 use rustc_middle::ty::TyCtxt;
+use utils::rewrite::{get_snippet, RewriteMode};
 
 use crate::owner_items;
 

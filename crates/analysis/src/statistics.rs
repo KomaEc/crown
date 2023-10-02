@@ -1,9 +1,9 @@
-use utils::compiler_interface::Program;
 use rustc_middle::mir::{
     visit::{PlaceContext, Visitor},
     Body, Location,
 };
 use serde::{Deserialize, Serialize};
+use utils::compiler_interface::Program;
 
 use crate::{
     ownership::solidify::SolidifiedOwnershipSchemes,

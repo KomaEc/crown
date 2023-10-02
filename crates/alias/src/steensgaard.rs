@@ -2,7 +2,6 @@ pub mod constraint;
 #[cfg(test)]
 mod test;
 
-use utils::data_structure::vec_vec::VecVec;
 use petgraph::unionfind::UnionFind;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
@@ -14,6 +13,7 @@ use rustc_middle::{
     ty::{TyCtxt, TyKind},
 };
 use rustc_type_ir::TyKind::FnDef;
+use utils::data_structure::vec_vec::VecVec;
 
 use self::constraint::{Constraint, ConstraintKind};
 

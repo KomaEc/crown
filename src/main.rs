@@ -24,12 +24,12 @@ use std::{
 use analysis::{ownership::AnalysisKind, CrateCtxt};
 use anyhow::{bail, Context, Result};
 use clap::Parser;
-use utils::rewrite::RewriteMode;
 use rustc_errors::registry;
 use rustc_interface::Config;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::{config, EarlyErrorHandler};
 use tracing_subscriber::EnvFilter;
+use utils::rewrite::RewriteMode;
 
 #[derive(Parser)]
 struct Cli {

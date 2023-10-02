@@ -1,10 +1,10 @@
-use utils::rewrite::{Rewrite, RewriteMode};
 use rustc_hir::{
     intravisit::{self, Visitor},
     Expr, ExprKind, ItemKind, LoopSource, OwnerNode, UnOp,
 };
 use rustc_middle::ty::TyCtxt;
 use rustc_span::BytePos;
+use utils::rewrite::{Rewrite, RewriteMode};
 
 use crate::perform_rewrite;
 

@@ -1,6 +1,5 @@
 use std::borrow::BorrowMut;
 
-use utils::data_structure::assoc::AssocExt;
 use rustc_abi::FieldIdx;
 use rustc_ast::Mutability;
 use rustc_data_structures::graph::WithSuccessors;
@@ -13,6 +12,7 @@ use rustc_middle::{
     },
     ty::{Const, TyCtxt},
 };
+use utils::data_structure::assoc::AssocExt;
 
 use super::{def_use::DefUseChain, join_points::PhiNode, state::SSAState, SSAIdx};
 use crate::flow::{def_use::UseKind, RichLocation};

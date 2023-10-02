@@ -1,9 +1,9 @@
-use utils::rewrite::Rewrite;
 use rustc_hir::{
     intravisit::{self, Visitor},
     BorrowKind, Expr, ExprKind, ItemKind, Mutability, OwnerNode,
 };
 use rustc_middle::ty::TyCtxt;
+use utils::rewrite::Rewrite;
 
 pub fn explicit_addr(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     for maybe_owner in tcx.hir().krate().owners.iter() {

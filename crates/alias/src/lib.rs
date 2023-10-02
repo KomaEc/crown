@@ -16,13 +16,13 @@
 #![feature(min_specialization)]
 #![feature(array_windows)]
 
-use utils::data_structure::vec_vec::VecVec;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use steensgaard::{
     FieldFocused, FieldInsensitive, InterProcedural, IntraProcedural, MergeDeallocArg,
     NopDeallocArg, Steensgaard,
 };
+use utils::data_structure::vec_vec::VecVec;
 
 extern crate rustc_arena;
 extern crate rustc_ast;

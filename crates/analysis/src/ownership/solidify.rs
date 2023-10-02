@@ -1,10 +1,5 @@
 use std::ops::Range;
 
-use utils::{
-    compiler_interface::Program,
-    data_structure::vec_vec::VecVec,
-    discretization::{self, Discretization},
-};
 use either::Either::Left;
 use rustc_hash::{FxHashMap, FxHashSet};
 use rustc_index::IndexVec;
@@ -12,6 +7,11 @@ use rustc_middle::mir::{
     visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
     Body, ClearCrossCrate, Local, LocalInfo, Location, Operand, Place, Rvalue, StatementKind,
     TerminatorKind,
+};
+use utils::{
+    compiler_interface::Program,
+    data_structure::vec_vec::VecVec,
+    discretization::{self, Discretization},
 };
 
 use super::{whole_program::WholeProgramResults, Ownership};

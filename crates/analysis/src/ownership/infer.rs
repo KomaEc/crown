@@ -1,6 +1,5 @@
 use std::ops::Range;
 
-use utils::data_structure::assoc::AssocExt;
 use rustc_index::IndexVec;
 use rustc_middle::{
     mir::{
@@ -11,6 +10,7 @@ use rustc_middle::{
 };
 use rustc_type_ir::TyKind::FnDef;
 use smallvec::SmallVec;
+use utils::data_structure::assoc::AssocExt;
 
 use self::boundary::Boundary;
 use super::{AnalysisKind, Precision};

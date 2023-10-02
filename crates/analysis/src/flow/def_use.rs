@@ -1,7 +1,3 @@
-use utils::data_structure::{
-    assoc::AssocExt,
-    vec_vec::{VecVec, VecVecBuilder},
-};
 use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::{
     mir::{
@@ -11,6 +7,10 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use smallvec::SmallVec;
+use utils::data_structure::{
+    assoc::AssocExt,
+    vec_vec::{VecVec, VecVecBuilder},
+};
 
 use super::{
     dom::compute_dominance_frontier,

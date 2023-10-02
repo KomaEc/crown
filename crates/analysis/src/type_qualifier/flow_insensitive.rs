@@ -7,10 +7,6 @@ pub mod mutability;
 
 use std::ops::Range;
 
-use utils::{
-    data_structure::vec_vec::VecVec,
-    discretization::{self, Discretization},
-};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::IndexVec;
@@ -22,6 +18,10 @@ use rustc_middle::{
     ty::{Ty, TyCtxt},
 };
 use rustc_type_ir::TyKind;
+use utils::{
+    data_structure::vec_vec::VecVec,
+    discretization::{self, Discretization},
+};
 
 use self::boolean_system::BooleanSystem;
 use crate::lattice::Lattice;
