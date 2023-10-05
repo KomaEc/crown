@@ -196,8 +196,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
                 State::ToPopNames => {
                     for local in self
                         .def_use_chain
-                        .uses
-                        .get_block(bb)
+                        .uses[bb]
                         .iter()
                         .flatten()
                         .filter(|(_, use_kind)| matches!(use_kind, UseKind::Def(..)))
@@ -433,8 +432,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
     pub fn try_use_local(&mut self, local: Local, location: Location) -> Option<UseKind<SSAIdx>> {
         let use_kind = self
             .def_use_chain
-            .uses
-            .get_location_mut(location)
+            .uses[location]
             .get_by_key_mut(&local)?;
         let r#use = self.ssa_state.get_name(local);
         Some(match use_kind {

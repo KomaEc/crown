@@ -72,8 +72,7 @@ pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
                 statement_index,
             };
             let uses = def_use_chain
-                .uses
-                .get_location(location)
+                .uses[location]
                 .iter()
                 .filter(|(_, use_kind)| matches!(use_kind, Use(..)))
                 .map(|&(local, _)| (local, def_use_chain.def_loc(local, location)))
@@ -91,8 +90,7 @@ pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
                 statement_index,
             };
             let uses = def_use_chain
-                .uses
-                .get_location(location)
+                .uses[location]
                 .iter()
                 .filter(|(_, use_kind)| matches!(use_kind, Use(..)))
                 .map(|&(local, _)| (local, def_use_chain.def_loc(local, location)))
@@ -146,8 +144,7 @@ impl DefUseChain {
     }
 
     pub fn pure_uses(&self, location: Location) -> impl Iterator<Item = Local> + '_ {
-        self.uses
-            .get_location(location)
+        self.uses[location]
             .iter()
             .filter_map(|(local, use_kind)| {
                 if let Use(..) = use_kind {
@@ -159,7 +156,7 @@ impl DefUseChain {
     }
 
     pub fn peeked_loc(&self, local: Local, location: Location) -> Location {
-        let Some(use_kind) = self.uses.get_location(location).get_by_key(&local) else {
+        let Some(use_kind) = self.uses[location].get_by_key(&local) else {
             panic!("nonexisting peek {:?} @ {:?}", local, location)
         };
         let LocalPeek(ssa_idx) = *use_kind else {
@@ -172,7 +169,7 @@ impl DefUseChain {
     }
 
     pub fn def_loc(&self, local: Local, location: Location) -> RichLocation {
-        let Some(use_kind) = self.uses.get_location(location).get_by_key(&local) else {
+        let Some(use_kind) = self.uses[location].get_by_key(&local) else {
             panic!("nonexisting use {:?} @ {:?}", local, location)
         };
         let Use(ssa_idx) = *use_kind else {

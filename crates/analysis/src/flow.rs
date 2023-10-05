@@ -1,3 +1,5 @@
+use std::ops::{Index, IndexMut};
+
 use rustc_middle::mir::{BasicBlock, Location};
 use utils::data_structure::vec_vec::VecVec;
 
@@ -48,31 +50,43 @@ pub struct LocationMap<T> {
     map: VecVec<T>,
 }
 
-impl<T> LocationMap<T> {
-    pub fn get_block(&self, block: BasicBlock) -> &[T] {
+impl<T> Index<BasicBlock> for LocationMap<T> {
+    type Output = [T];
+
+    fn index(&self, block: BasicBlock) -> &Self::Output {
         &self.map[block.index()]
     }
+}
 
-    pub fn get_block_mut(&mut self, block: BasicBlock) -> &mut [T] {
+impl<T> IndexMut<BasicBlock> for LocationMap<T> {
+    fn index_mut(&mut self, block: BasicBlock) -> &mut Self::Output {
         &mut self.map[block.index()]
     }
+}
 
-    pub fn get_location(&self, location: Location) -> &T {
+impl<T> Index<Location> for LocationMap<T> {
+    type Output = T;
+
+    fn index(&self, location: Location) -> &Self::Output {
         let Location {
             block,
             statement_index,
         } = location;
         &self.map[block.index()][statement_index]
     }
+}
 
-    pub fn get_location_mut(&mut self, location: Location) -> &mut T {
+impl<T> IndexMut<Location> for LocationMap<T> {
+    fn index_mut(&mut self, location: Location) -> &mut Self::Output {
         let Location {
             block,
             statement_index,
         } = location;
         &mut self.map[block.index()][statement_index]
     }
+}
 
+impl<T> LocationMap<T> {
     pub fn iter_enumerated(&self) -> impl Iterator<Item = (Location, &T)> {
         self.map.iter().enumerate().flat_map(|(bb, bb_data)| {
             bb_data.iter().enumerate().map(move |(index, data)| {
