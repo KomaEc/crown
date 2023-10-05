@@ -71,8 +71,7 @@ pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
                 block: bb,
                 statement_index,
             };
-            let uses = def_use_chain
-                .uses[location]
+            let uses = def_use_chain.uses[location]
                 .iter()
                 .filter(|(_, use_kind)| matches!(use_kind, Use(..)))
                 .map(|&(local, _)| (local, def_use_chain.def_loc(local, location)))
@@ -89,8 +88,7 @@ pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
                 block: bb,
                 statement_index,
             };
-            let uses = def_use_chain
-                .uses[location]
+            let uses = def_use_chain.uses[location]
                 .iter()
                 .filter(|(_, use_kind)| matches!(use_kind, Use(..)))
                 .map(|&(local, _)| (local, def_use_chain.def_loc(local, location)))
@@ -144,15 +142,13 @@ impl DefUseChain {
     }
 
     pub fn pure_uses(&self, location: Location) -> impl Iterator<Item = Local> + '_ {
-        self.uses[location]
-            .iter()
-            .filter_map(|(local, use_kind)| {
-                if let Use(..) = use_kind {
-                    Some(*local)
-                } else {
-                    None
-                }
-            })
+        self.uses[location].iter().filter_map(|(local, use_kind)| {
+            if let Use(..) = use_kind {
+                Some(*local)
+            } else {
+                None
+            }
+        })
     }
 
     pub fn peeked_loc(&self, local: Local, location: Location) -> Location {

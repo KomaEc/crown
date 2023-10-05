@@ -1,8 +1,10 @@
+use std::ops::Range;
+
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_abi::FieldIdx;
 use rustc_hash::FxHashMap;
 use rustc_index::IndexVec;
-use rustc_middle::ty::{Ty, TyCtxt, AdtDef};
+use rustc_middle::ty::{AdtDef, Ty, TyCtxt};
 use rustc_span::def_id::DefId;
 use rustc_type_ir::TyKind::{self, Adt};
 use utils::compiler_interface::Program;
@@ -22,7 +24,7 @@ pub struct AccessPaths<'tcx, const K_LIMIT: usize> {
     leaves: Leaves<'tcx, K_LIMIT>,
 }
 
-impl<const K_LIMIT: usize> AccessPaths<'_, K_LIMIT> {
+impl<'tcx, const K_LIMIT: usize> AccessPaths<'tcx, K_LIMIT> {
     pub fn new(program: &Program) -> Self {
         let &Program {
             tcx, ref structs, ..
@@ -65,6 +67,19 @@ impl<const K_LIMIT: usize> AccessPaths<'_, K_LIMIT> {
             leaves: todo!(),
         }
     }
+
+    /// Number of pointers reachable from `ty`
+    pub fn size_of(&self, depth: usize, ty: Ty<'tcx>) -> usize {
+        assert!(depth <= K_LIMIT);
+        let (levels, maybe_adt) = trim_pointers(ty);
+        if levels >= depth {
+            return depth;
+        } else if let Some(&struct_idx) = maybe_adt.and_then(|adt| self.struct_idx.get(&adt.did()))
+        {
+            return levels + self.offsets.size_of(depth - levels, struct_idx);
+        }
+        return levels;
+    }
 }
 
 /// A map of type: `depth -> struct_id -> IndexVec<field_idx, offset>`.
@@ -76,18 +91,18 @@ pub struct Offsets<const K_LIMIT: usize> {
 }
 
 impl<const K_LIMIT: usize> Offsets<K_LIMIT> {
-    fn get_offset(&self, depth: usize, struct_idx: StructIdx, field_idx: FieldIdx) -> usize {
+    fn offset_of(&self, depth: usize, struct_idx: StructIdx, field_idx: FieldIdx) -> usize {
         let start = self.structs_indices[struct_idx];
         self.offsets[self.one_level_size * depth + start + field_idx.as_usize()]
     }
 
-    fn get_offsets(&self, depth: usize, struct_idx: StructIdx) -> &[usize] {
+    fn offsets_of(&self, depth: usize, struct_idx: StructIdx) -> &[usize] {
         let start = self.structs_indices[struct_idx];
         let end = self.structs_indices[struct_idx + 1];
         &self.offsets[self.one_level_size * depth + start..self.one_level_size * depth + end]
     }
 
-    fn get_size(&self, depth: usize, struct_idx: StructIdx) -> usize {
+    fn size_of(&self, depth: usize, struct_idx: StructIdx) -> usize {
         let end = self.structs_indices[struct_idx + 1];
         self.offsets[self.one_level_size * depth + end]
     }
@@ -131,7 +146,6 @@ impl<const K_LIMIT: usize> Offsets<K_LIMIT> {
 
     fn construct(&mut self, post_order: &IndexVec<StructIdx, DefId>, tcx: TyCtxt) {
         for depth in 1..K_LIMIT + 1 {
-
             for (struct_idx, def_id) in post_order.iter_enumerated() {
                 let Adt(adt_def, subst_ref) = tcx.type_of(def_id).skip_binder().kind() else {
                     unreachable!("impossible")

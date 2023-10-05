@@ -194,9 +194,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
                     recursion.extend(children[bb].iter().rev().map(|&bb| (bb, State::ToVisit)));
                 }
                 State::ToPopNames => {
-                    for local in self
-                        .def_use_chain
-                        .uses[bb]
+                    for local in self.def_use_chain.uses[bb]
                         .iter()
                         .flatten()
                         .filter(|(_, use_kind)| matches!(use_kind, UseKind::Def(..)))
@@ -430,10 +428,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
     }
 
     pub fn try_use_local(&mut self, local: Local, location: Location) -> Option<UseKind<SSAIdx>> {
-        let use_kind = self
-            .def_use_chain
-            .uses[location]
-            .get_by_key_mut(&local)?;
+        let use_kind = self.def_use_chain.uses[location].get_by_key_mut(&local)?;
         let r#use = self.ssa_state.get_name(local);
         Some(match use_kind {
             UseKind::Use(ssa_idx) | UseKind::LocalPeek(ssa_idx) => {
