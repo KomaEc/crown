@@ -8,6 +8,7 @@
 #![feature(allocator_api)]
 
 extern crate rustc_abi;
+extern crate rustc_driver;
 extern crate rustc_error_codes;
 extern crate rustc_errors;
 extern crate rustc_hash;

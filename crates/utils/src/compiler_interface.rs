@@ -71,20 +71,27 @@ pub fn run_compiler(input: Input, f: impl for<'tcx> FnOnce(Program<'tcx>) + Send
         .output()
         .unwrap();
     let sysroot = str::from_utf8(&out.stdout).unwrap().trim();
+    let args = [
+        "rustc".to_owned(),
+        "--cap-lints".to_owned(),
+        "allow".to_owned(),
+    ]
+    .to_vec();
+    let mut early_error_handler = EarlyErrorHandler::new(Default::default());
+    let matches = rustc_driver::handle_options(&early_error_handler, &args).unwrap();
+    let opts = rustc_session::config::build_session_options(&mut early_error_handler, &matches);
+
     let config = Config {
         opts: config::Options {
             maybe_sysroot: Some(PathBuf::from(sysroot)),
-            ..config::Options::default()
+            ..opts
         },
         input: input.into(),
         crate_cfg: rustc_hash::FxHashSet::default(),
         output_dir: None,
         output_file: None,
         file_loader: None,
-        crate_check_cfg: rustc_interface::interface::parse_check_cfg(
-            &EarlyErrorHandler::new(Default::default()),
-            vec![],
-        ),
+        crate_check_cfg: rustc_interface::interface::parse_check_cfg(&early_error_handler, vec![]),
         lint_caps: rustc_hash::FxHashMap::default(),
         parse_sess_created: None,
         register_lints: None,
