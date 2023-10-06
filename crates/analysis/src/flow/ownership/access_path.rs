@@ -316,7 +316,7 @@ impl<const K_LIMIT: usize> Leaves<K_LIMIT> {
                             self.leaves.push((
                                 num_wrapping_pointers,
                                 maybe_struct_idx,
-                                offset + (depth - levels) + position,
+                                offset + levels + position,
                             ));
                         }
                     }
@@ -412,7 +412,9 @@ struct x;";
 
             for depth in 0..K_LIMIT + 1 {
                 for s in [s, t, u, v, w, x].map(|s| program.tcx.type_of(s).skip_binder()) {
-                    assert!(access_paths.patch_up(depth, 0, s).eq(0..access_paths.size_of(depth, s)))
+                    assert!(access_paths
+                        .patch_up(depth, 0, s)
+                        .eq(0..access_paths.size_of(depth, s)))
                 }
             }
         })
@@ -448,7 +450,7 @@ struct x;";
     fn bst_leaves() {
         const PROGRAM: &str = "struct Node { left: *mut Node, right: *mut Node } struct Data;";
         utils::compiler_interface::run_compiler(PROGRAM.into(), |program| {
-            const K_LIMIT: usize = 3;
+            const K_LIMIT: usize = 4;
             let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);
 
             let &node_def_id = access_paths
@@ -479,6 +481,10 @@ struct x;";
 
             assert!(access_paths.patch_up(1, 2, node_pointer).eq([0]));
             assert!(access_paths.patch_up(2, 1, node_pointer).eq([0, 1, 4]));
+            assert!(access_paths.patch_up(2, 2, node_pointer).eq([0, 1, 8]));
+            assert!(access_paths
+                .patch_up(3, 1, node_pointer)
+                .eq([0, 1, 2, 5, 8, 9, 12]));
             for depth in 0..K_LIMIT + 1 {
                 assert!(&access_paths
                     .patch_up(depth, 0, node)
