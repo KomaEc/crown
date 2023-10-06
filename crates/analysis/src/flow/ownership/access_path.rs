@@ -382,19 +382,19 @@ struct w {
 struct x;";
         utils::compiler_interface::run_compiler(PROGRAM.into(), |program| {
             macro_rules! define_structs {
-            ($( $x: ident ),*) => {
-                $(
-                    let &$x = program
-                        .structs
-                        .iter()
-                        .find(|&&did| {
-                        let stringify!($x) = program.tcx.def_path_str(did).as_str() else { return false };
-                        true
-                    })
-                    .unwrap();
-                )*
-            };
-        }
+                ($( $x: ident ),*) => {
+                    $(
+                        let &$x = program
+                            .structs
+                            .iter()
+                            .find(|&&did| {
+                            let stringify!($x) = program.tcx.def_path_str(did).as_str() else { return false };
+                            true
+                        })
+                        .unwrap();
+                    )*
+                };
+            }
             define_structs!(s, t, u, v, w, x);
 
             const K_LIMIT: usize = 3;
