@@ -260,33 +260,32 @@ mod test {
     use super::*;
 
     const TEST_PROGRAMS: &'static str = "
-        fn f() {
-            assert!(true);
-            if cond() {
-                g()
-            }
-        }
-        fn g() {
-            h()
-        }
-        fn h() {
-            if !cond() {
-                f();
-            }
-            if cond() {
-                g();
-            }
-            l()
-        }
-        fn m() {
-            g()
-        }
-        fn l() {}
-        #[inline(never)]
-        fn cond() -> bool {
-            true
-        }
-        ";
+fn f() {
+    assert!(true);
+    if cond() {
+        g()
+    }
+}
+fn g() {
+    h()
+}
+fn h() {
+    if !cond() {
+        f();
+    }
+    if cond() {
+        g();
+    }
+    l()
+}
+fn m() {
+    g()
+}
+fn l() {}
+#[inline(never)]
+fn cond() -> bool {
+    true
+}";
 
     #[test]
     fn test() {

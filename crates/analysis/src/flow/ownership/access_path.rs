@@ -328,14 +328,6 @@ impl<const K_LIMIT: usize> Leaves<K_LIMIT> {
     }
 }
 
-// /// Pick the `depth` subtree shaped by `ty` and `chased`
-// pub fn subtree(ty: Ty, chased: usize, depth: usize) -> impl Iterator<Item = usize> {
-//     // The depth of the current tree is `K_LIMIT - chased`
-//     if depth + chased == K_LIMIT {
-//         return tree(ty, chased);
-//     }
-// }
-
 /// Decompose a type into levels of outside pointers and a (possible) adt
 fn unwrap_pointers(ty: Ty) -> (usize, Option<AdtDef>) {
     let mut ty = ty;
