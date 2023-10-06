@@ -1,3 +1,4 @@
+use either::Either::{Left, Right};
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hash::FxHashMap;
 use rustc_index::IndexVec;
@@ -14,14 +15,14 @@ utils::macros::newtype_index! {
 
 /// All possible access paths w.r.t. pointers within a fixed depth of `K_LIMIT`.
 /// Paths are annotated with range of numbers that indicate the preorder travesals
-pub struct AccessPaths<'tcx, const K_LIMIT: usize> {
+pub struct AccessPaths<const K_LIMIT: usize> {
     post_order: IndexVec<StructIdx, DefId>,
     indices: FxHashMap<DefId, StructIdx>,
     offsets: Offsets<K_LIMIT>,
-    leaves: Leaves<'tcx, K_LIMIT>,
+    leaves: Leaves<K_LIMIT>,
 }
 
-impl<'tcx, const K_LIMIT: usize> AccessPaths<'tcx, K_LIMIT> {
+impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
     pub fn new(program: &Program) -> Self {
         let &Program {
             tcx, ref structs, ..
@@ -56,7 +57,7 @@ impl<'tcx, const K_LIMIT: usize> AccessPaths<'tcx, K_LIMIT> {
             .collect();
 
         let offsets = Offsets::new(&post_order, &indices, tcx);
-        let leaves = Leaves::new();
+        let leaves = Leaves::new(&post_order, &indices, tcx, &offsets);
 
         AccessPaths {
             post_order,
@@ -66,47 +67,104 @@ impl<'tcx, const K_LIMIT: usize> AccessPaths<'tcx, K_LIMIT> {
         }
     }
 
+    pub fn post_order(&self) -> &[DefId] {
+        &self.post_order.raw
+    }
+
     pub fn offsets_of(&self, depth: usize, did: DefId) -> &[usize] {
         assert!(depth <= K_LIMIT);
         self.offsets.offsets_of(depth, self.indices[&did])
     }
 
-    /// Number of pointers reachable from `ty`
-    pub fn size_of(&self, depth: usize, ty: Ty<'tcx>) -> usize {
-        assert!(depth <= K_LIMIT);
-        let (levels, maybe_adt) = trim_pointers(ty);
-        if levels >= depth {
+    fn size_of_inner(
+        &self,
+        depth: usize,
+        num_wrapping_pointers: usize,
+        maybe_struct_idx: Option<StructIdx>,
+    ) -> usize {
+        if num_wrapping_pointers >= depth {
             return depth;
-        } else if let Some(&struct_idx) = maybe_adt.and_then(|adt| self.indices.get(&adt.did())) {
-            return levels + self.offsets.size_of(depth - levels, struct_idx);
+        } else if let Some(struct_idx) = maybe_struct_idx {
+            return num_wrapping_pointers
+                + self
+                    .offsets
+                    .size_of(depth - num_wrapping_pointers, struct_idx);
         }
-        return levels;
+        return num_wrapping_pointers;
+    }
+
+    /// Number of pointers reachable from `ty`
+    pub fn size_of(&self, depth: usize, ty: Ty) -> usize {
+        assert!(depth <= K_LIMIT);
+        let (num_wrapping_pointers, maybe_adt) = unwrap_pointers(ty);
+        self.size_of_inner(
+            depth,
+            num_wrapping_pointers,
+            maybe_adt.and_then(|adt_def| self.indices.get(&adt_def.did()).copied()),
+        )
+    }
+
+    /// Patch up offsets of a type `ty` used with `depth` in a context `depth + delta`.
+    ///
+    /// `delta == 0` => `patch_up(depth, delta, ty) = 0..size_of(depth, ty)`
+    pub fn patch_up(&self, depth: usize, delta: usize, ty: Ty) -> impl Iterator<Item = usize> + '_ {
+        assert!(depth + delta <= K_LIMIT);
+        let (levels, maybe_adt) = unwrap_pointers(ty);
+        if levels >= depth {
+            Left(0..depth)
+        } else if let Some(&struct_idx) = maybe_adt.and_then(|adt| self.indices.get(&adt.did())) {
+            let mut leaves = self
+                .leaves
+                .leaves_of(depth, struct_idx)
+                .into_iter()
+                .map(
+                    move |&(num_wrapping_pointers, maybe_struct_idx, position)| {
+                        (
+                            position,
+                            self.size_of_inner(delta, num_wrapping_pointers, maybe_struct_idx),
+                        )
+                    },
+                )
+                .peekable();
+
+            Right(
+                (0..self.size_of_inner(depth, levels, Some(struct_idx)))
+                    .enumerate()
+                    .scan(0, move |state, (index, offset)| {
+                        let position = offset + *state;
+                        if let Some(&(position, size)) = leaves.peek() {
+                            if position == index {
+                                let _ = leaves.next();
+                                *state += size;
+                            }
+                        }
+                        Some(position)
+                    }),
+            )
+        } else {
+            Left(0..levels)
+        }
     }
 }
 
 /// A map of type: `depth -> struct_id -> IndexVec<field_idx, offset>`.
 pub struct Offsets<const K_LIMIT: usize> {
-    level_size: usize,
+    size_per_depth: usize,
     /// struct_idx -> offset_start..offset_end
     structs_indices: IndexVec<StructIdx, usize>,
     offsets: Vec<usize>,
 }
 
 impl<const K_LIMIT: usize> Offsets<K_LIMIT> {
-    // fn offset_of(&self, depth: usize, struct_idx: StructIdx, field_idx: FieldIdx) -> usize {
-    //     let start = self.structs_indices[struct_idx];
-    //     self.offsets[self.one_level_size * depth + start + field_idx.as_usize()]
-    // }
-
     fn offsets_of(&self, depth: usize, struct_idx: StructIdx) -> &[usize] {
         let start = self.structs_indices[struct_idx];
         let end = self.structs_indices[struct_idx + 1];
-        &self.offsets[self.level_size * depth + start..self.level_size * depth + end]
+        &self.offsets[self.size_per_depth * depth + start..self.size_per_depth * depth + end]
     }
 
     fn size_of(&self, depth: usize, struct_idx: StructIdx) -> usize {
         let end = self.structs_indices[struct_idx + 1] - 1;
-        self.offsets[self.level_size * depth + end]
+        self.offsets[self.size_per_depth * depth + end]
     }
 
     fn new(
@@ -132,10 +190,10 @@ impl<const K_LIMIT: usize> Offsets<K_LIMIT> {
 
             structs_indices.push(offsets.len());
         }
-        let level_size = offsets.len();
+        let size_per_depth = offsets.len();
 
         let mut offsets = Offsets {
-            level_size,
+            size_per_depth,
             structs_indices,
             offsets,
         };
@@ -162,7 +220,7 @@ impl<const K_LIMIT: usize> Offsets<K_LIMIT> {
                 self.offsets.push(offset);
                 for field_def in adt_def.all_fields() {
                     let field_ty = field_def.ty(tcx, subst_ref);
-                    let (levels, maybe_adt) = trim_pointers(field_ty);
+                    let (levels, maybe_adt) = unwrap_pointers(field_ty);
                     if levels >= depth {
                         offset += depth;
                     } else if let Some(&child_idx) =
@@ -182,18 +240,90 @@ impl<const K_LIMIT: usize> Offsets<K_LIMIT> {
 /// A map of type: `depth -> struct_id -> Vec<(ty, position)>`
 /// that records the type and position information of a leaf node in
 /// an access path
-pub struct Leaves<'tcx, const K_LIMIT: usize> {
-    depths_indices: Vec<usize>,
-    structs_indices: IndexVec<StructIdx, usize>,
-    leaves: Vec<(Ty<'tcx>, u32)>,
+pub struct Leaves<const K_LIMIT: usize> {
+    number_per_depth: usize,
+    structs_indices: Vec<usize>,
+    /// (num_wrapping_pointers, option_struct_idx, position)
+    leaves: Vec<(usize, Option<StructIdx>, usize)>,
 }
 
-impl<'tcx, const K_LIMIT: usize> Leaves<'tcx, K_LIMIT> {
-    fn new() -> Self {
-        Self {
-            depths_indices: vec![],
-            structs_indices: IndexVec::new(),
-            leaves: vec![],
+impl<const K_LIMIT: usize> Leaves<K_LIMIT> {
+    fn leaves_of(
+        &self,
+        depth: usize,
+        struct_idx: StructIdx,
+    ) -> &[(usize, Option<StructIdx>, usize)] {
+        &self.leaves[self.structs_indices[struct_idx.as_usize() + self.number_per_depth * depth]
+            ..self.structs_indices[struct_idx.as_usize() + self.number_per_depth * depth + 1]]
+    }
+
+    fn new(
+        post_order: &IndexVec<StructIdx, DefId>,
+        indices: &FxHashMap<DefId, StructIdx>,
+        tcx: TyCtxt,
+        offsets: &Offsets<K_LIMIT>,
+    ) -> Self {
+        let mut structs_indices = Vec::with_capacity(post_order.len() + 1);
+        let leaves = vec![];
+
+        structs_indices.push(leaves.len());
+        for _ in post_order {
+            structs_indices.push(leaves.len());
+        }
+
+        let mut leaves = Self {
+            number_per_depth: post_order.len() + 1,
+            structs_indices,
+            leaves,
+        };
+        leaves.construct(post_order, indices, tcx, offsets);
+        leaves
+    }
+
+    fn construct(
+        &mut self,
+        post_order: &IndexVec<StructIdx, DefId>,
+        indices: &FxHashMap<DefId, StructIdx>,
+        tcx: TyCtxt,
+        offsets: &Offsets<K_LIMIT>,
+    ) {
+        let mut buffer = vec![];
+        for depth in 1..K_LIMIT + 1 {
+            self.structs_indices.push(self.leaves.len());
+            for (struct_idx, def_id) in post_order.iter_enumerated() {
+                // compute leaves
+                let ty = tcx.type_of(def_id).skip_binder();
+                let Adt(adt_def, subst_ref) = ty.kind() else {
+                    unreachable!("impossible")
+                };
+                assert!(adt_def.is_struct());
+                for (field_def, &offset) in adt_def
+                    .all_fields()
+                    .zip(offsets.offsets_of(depth, struct_idx))
+                {
+                    let field_ty = field_def.ty(tcx, subst_ref);
+                    let (levels, maybe_adt) = unwrap_pointers(field_ty);
+                    let maybe_struct_idx =
+                        maybe_adt.and_then(|adt_def| indices.get(&adt_def.did()).copied());
+
+                    // what if no pointers? optimisation?
+                    if levels >= depth {
+                        self.leaves.push((levels - depth, maybe_struct_idx, offset))
+                    } else if let Some(child_idx) = maybe_struct_idx {
+                        buffer.extend_from_slice(self.leaves_of(depth - levels, child_idx));
+                        for (num_wrapping_pointers, maybe_struct_idx, position) in buffer.drain(0..)
+                        {
+                            self.leaves.push((
+                                num_wrapping_pointers,
+                                maybe_struct_idx,
+                                offset + (depth - levels) + position,
+                            ));
+                        }
+                    }
+                }
+
+                self.structs_indices.push(self.leaves.len());
+            }
         }
     }
 }
@@ -207,7 +337,7 @@ impl<'tcx, const K_LIMIT: usize> Leaves<'tcx, K_LIMIT> {
 // }
 
 /// Decompose a type into levels of outside pointers and a (possible) adt
-fn trim_pointers(ty: Ty) -> (usize, Option<AdtDef>) {
+fn unwrap_pointers(ty: Ty) -> (usize, Option<AdtDef>) {
     let mut ty = ty;
 
     let mut level_pointers = 0;
@@ -231,10 +361,12 @@ fn trim_pointers(ty: Ty) -> (usize, Option<AdtDef>) {
 
 #[cfg(test)]
 mod tests {
+    use rustc_middle::ty::Adt;
+
     use super::AccessPaths;
 
     #[test]
-    fn test_0() {
+    fn test_rng_structs() {
         const PROGRAM: &str = "struct s {
     f: t,
     g: *mut i32,
@@ -274,7 +406,7 @@ struct x;";
             define_structs!(s, t, u, v, w, x);
 
             const K_LIMIT: usize = 3;
-            let access_paths: AccessPaths<'_, K_LIMIT> = AccessPaths::new(&program);
+            let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);
 
             assert_eq!(access_paths.offsets_of(0, s), [0, 0, 0, 0]);
             assert_eq!(access_paths.offsets_of(1, s), [0, 2, 3, 4]);
@@ -285,16 +417,22 @@ struct x;";
             assert_eq!(access_paths.offsets_of(K_LIMIT, v), [0, 0]);
             assert_eq!(access_paths.offsets_of(K_LIMIT, w), [0, 1]);
             assert_eq!(access_paths.offsets_of(K_LIMIT, x), [0]);
+
+            for depth in 0..K_LIMIT + 1 {
+                for s in [s, t, u, v, w, x].map(|s| program.tcx.type_of(s).skip_binder()) {
+                    assert!(access_paths.patch_up(depth, 0, s).eq(0..access_paths.size_of(depth, s)))
+                }
+            }
         })
     }
 
     #[test]
-    fn test2() {
+    fn bst_offsets() {
         const PROGRAM: &str =
             "struct Node { data: Data, left: *mut Node, right: *mut Node } struct Data;";
         utils::compiler_interface::run_compiler(PROGRAM.into(), |program| {
             const K_LIMIT: usize = 3;
-            let access_paths: AccessPaths<'_, K_LIMIT> = AccessPaths::new(&program);
+            let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);
 
             let &node = access_paths
                 .post_order
@@ -311,6 +449,52 @@ struct x;";
             assert_eq!(access_paths.offsets_of(1, node), [0, 0, 1, 2]);
             assert_eq!(access_paths.offsets_of(2, node), [0, 0, 3, 6]);
             assert_eq!(access_paths.offsets_of(3, node), [0, 0, 7, 14]);
+        })
+    }
+
+    #[test]
+    fn bst_leaves() {
+        const PROGRAM: &str = "struct Node { left: *mut Node, right: *mut Node } struct Data;";
+        utils::compiler_interface::run_compiler(PROGRAM.into(), |program| {
+            const K_LIMIT: usize = 3;
+            let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);
+
+            let &node_def_id = access_paths
+                .post_order
+                .iter()
+                .find(|&&did| {
+                    let "Node" = program.tcx.def_path_str(did).as_str() else {
+                        return false;
+                    };
+                    true
+                })
+                .unwrap();
+
+            assert_eq!(access_paths.offsets_of(0, node_def_id), [0, 0, 0]);
+            assert_eq!(access_paths.offsets_of(1, node_def_id), [0, 1, 2]);
+            assert_eq!(access_paths.offsets_of(2, node_def_id), [0, 3, 6]);
+            assert_eq!(access_paths.offsets_of(3, node_def_id), [0, 7, 14]);
+
+            let node = program.tcx.type_of(node_def_id).skip_binder();
+            let Adt(adt_def, subst_ref) = node.kind() else {
+                unreachable!()
+            };
+            let node_pointer = adt_def
+                .all_fields()
+                .next()
+                .unwrap()
+                .ty(program.tcx, &subst_ref);
+
+            assert!(access_paths.patch_up(1, 2, node_pointer).eq([0]));
+            assert!(access_paths.patch_up(2, 1, node_pointer).eq([0, 1, 4]));
+            for depth in 0..K_LIMIT + 1 {
+                assert!(&access_paths
+                    .patch_up(depth, 0, node)
+                    .eq(0..access_paths.size_of(depth, node)));
+                assert!(&access_paths
+                    .patch_up(depth, 0, node_pointer)
+                    .eq(0..access_paths.size_of(depth, node_pointer)));
+            }
         })
     }
 }
