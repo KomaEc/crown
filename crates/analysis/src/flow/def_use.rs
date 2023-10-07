@@ -315,13 +315,13 @@ impl<'tcx> Visitor<'tcx> for VanillaBuilder {
 }
 
 /// This is to be regularly synced with `rustc_mir_dataflow::impls::liveness`
-pub(super) enum VanillaDefUse {
+enum VanillaDefUse {
     Def,
     Use,
 }
 
 impl VanillaDefUse {
-    pub(super) fn for_place(place: Place<'_>, context: PlaceContext) -> Option<VanillaDefUse> {
+    fn for_place(place: Place<'_>, context: PlaceContext) -> Option<VanillaDefUse> {
         match context {
             PlaceContext::NonUse(_) => None,
 
