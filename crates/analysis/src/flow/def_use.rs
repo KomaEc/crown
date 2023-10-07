@@ -44,7 +44,7 @@ pub enum UseKind<T> {
     /// located within the same basic block
     LocalPeek(T),
 }
-use UseKind::*;
+pub use UseKind::*;
 
 #[cfg(not(debug_assertions))]
 const _: () = assert!(8 == std::mem::size_of::<UseKind<SSAIdx>>());
@@ -315,13 +315,13 @@ impl<'tcx> Visitor<'tcx> for VanillaBuilder {
 }
 
 /// This is to be regularly synced with `rustc_mir_dataflow::impls::liveness`
-enum VanillaDefUse {
+pub(super) enum VanillaDefUse {
     Def,
     Use,
 }
 
 impl VanillaDefUse {
-    fn for_place(place: Place<'_>, context: PlaceContext) -> Option<VanillaDefUse> {
+    pub(super) fn for_place(place: Place<'_>, context: PlaceContext) -> Option<VanillaDefUse> {
         match context {
             PlaceContext::NonUse(_) => None,
 
