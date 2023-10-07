@@ -134,7 +134,7 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
                     if adt_def.is_union() {
                         return (offset, 0, 0);
                     }
-                    assert!(adt_def.is_struct(), "todo: handling unions in access paths");
+                    assert!(adt_def.is_struct());
                     offset +=
                         self.offsets_of(K_LIMIT - levels, adt_def.did())[field_idx.as_usize()];
                     ty = field_ty;
