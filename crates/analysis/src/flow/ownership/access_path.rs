@@ -2,7 +2,10 @@ use either::Either::{Left, Right};
 use petgraph::{algo::TarjanScc, prelude::DiGraphMap};
 use rustc_hash::FxHashMap;
 use rustc_index::IndexVec;
-use rustc_middle::ty::{AdtDef, Ty, TyCtxt};
+use rustc_middle::{
+    mir::{HasLocalDecls, Place, ProjectionElem},
+    ty::{AdtDef, Ty, TyCtxt},
+};
 use rustc_span::def_id::DefId;
 use rustc_type_ir::TyKind::{self, Adt};
 use utils::compiler_interface::Program;
@@ -71,7 +74,7 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
         &self.post_order.raw
     }
 
-    pub fn offsets_of(&self, depth: usize, did: DefId) -> &[usize] {
+    fn offsets_of(&self, depth: usize, did: DefId) -> &[usize] {
         assert!(depth <= K_LIMIT);
         self.offsets.offsets_of(depth, self.indices[&did])
     }
@@ -102,6 +105,48 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
             num_wrapping_pointers,
             maybe_adt.and_then(|adt_def| self.indices.get(&adt_def.did()).copied()),
         )
+    }
+
+    /// Get the `(offset, size, depth)` of an access_path
+    pub fn path<'tcx, D: HasLocalDecls<'tcx>>(
+        &self,
+        place: &Place<'tcx>,
+        local_decls: &D,
+    ) -> (usize, usize, usize) {
+        let mut offset = 0;
+        let mut ty = local_decls.local_decls()[place.local].ty;
+        let mut levels = 0;
+        for proj_elem in place.projection {
+            if levels == K_LIMIT {
+                return (offset, 0, 0);
+            }
+            match proj_elem {
+                ProjectionElem::Deref => {
+                    offset += 1;
+                    ty = ty.builtin_deref(true).unwrap().ty;
+                    levels += 1;
+                }
+                ProjectionElem::Field(field_idx, field_ty) => {
+                    let Adt(adt_def, _) = ty.kind() else {
+                        unreachable!()
+                    };
+                    // TODO unions???
+                    if adt_def.is_union() {
+                        return (offset, 0, 0);
+                    }
+                    assert!(adt_def.is_struct(), "todo: handling unions in access paths");
+                    offset +=
+                        self.offsets_of(K_LIMIT - levels, adt_def.did())[field_idx.as_usize()];
+                    ty = field_ty;
+                }
+                ProjectionElem::Index(_) => ty = ty.builtin_index().unwrap(),
+                ProjectionElem::ConstantIndex { .. }
+                | ProjectionElem::Subslice { .. }
+                | ProjectionElem::Downcast(_, _)
+                | ProjectionElem::OpaqueCast(_) => unreachable!(),
+            }
+        }
+        (offset, self.size_of(K_LIMIT - levels, ty), K_LIMIT - levels)
     }
 
     /// Patch up offsets of a type `ty` used with `depth` in a context `depth + delta`.
@@ -448,7 +493,7 @@ struct x;";
 
     #[test]
     fn bst_leaves() {
-        const PROGRAM: &str = "struct Node { left: *mut Node, right: *mut Node } struct Data;";
+        const PROGRAM: &str = "struct Node { left: *mut Node, right: *mut Node }";
         utils::compiler_interface::run_compiler(PROGRAM.into(), |program| {
             const K_LIMIT: usize = 4;
             let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);
@@ -493,6 +538,155 @@ struct x;";
                     .patch_up(depth, 0, node_pointer)
                     .eq(0..access_paths.size_of(depth, node_pointer)));
             }
+        })
+    }
+
+    #[test]
+    fn bst_paths() {
+        const PROGRAM: &str = "struct Node { left: *mut Node, right: *mut Node }
+fn f(input: *mut Node) {
+    (*input).left = core::ptr::null_mut();
+}";
+        utils::compiler_interface::run_compiler(PROGRAM.into(), |program| {
+            const K_LIMIT: usize = 3;
+            let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);
+
+            let &node_def_id = access_paths
+                .post_order
+                .iter()
+                .find(|&&did| {
+                    let "Node" = program.tcx.def_path_str(did).as_str() else {
+                        return false;
+                    };
+                    true
+                })
+                .unwrap();
+            let node = program.tcx.type_of(node_def_id).skip_binder();
+            let Adt(adt_def, subst_ref) = node.kind() else {
+                unreachable!()
+            };
+            let node_pointer = adt_def
+                .all_fields()
+                .next()
+                .unwrap()
+                .ty(program.tcx, &subst_ref);
+
+            use rustc_abi::FieldIdx;
+            use rustc_middle::mir::{Local, Place, ProjectionElem};
+
+            let body = program.tcx.optimized_mir(program.fns.first().unwrap());
+
+            // input
+            assert_eq!(
+                access_paths.path(&Place::from(Local::from_u32(1)), body),
+                (0, 7, 3)
+            );
+
+            // *input
+            assert_eq!(
+                access_paths.path(
+                    &Place::from(Local::from_u32(1))
+                        .project_deeper(&[ProjectionElem::Deref], program.tcx),
+                    body
+                ),
+                (1, 6, 2)
+            );
+
+            // (*input).left
+            assert_eq!(
+                access_paths.path(
+                    &Place::from(Local::from_u32(1)).project_deeper(
+                        &[
+                            ProjectionElem::Deref,
+                            ProjectionElem::Field(FieldIdx::from_u32(0), node_pointer),
+                        ],
+                        program.tcx
+                    ),
+                    body
+                ),
+                (1, 3, 2)
+            );
+
+            // *(*input).left
+            assert_eq!(
+                access_paths.path(
+                    &Place::from(Local::from_u32(1)).project_deeper(
+                        &[
+                            ProjectionElem::Deref,
+                            ProjectionElem::Field(FieldIdx::from_u32(0), node_pointer),
+                            ProjectionElem::Deref,
+                        ],
+                        program.tcx
+                    ),
+                    body
+                ),
+                (2, 2, 1)
+            );
+
+            // (*(*input).left).right
+            assert_eq!(
+                access_paths.path(
+                    &Place::from(Local::from_u32(1)).project_deeper(
+                        &[
+                            ProjectionElem::Deref,
+                            ProjectionElem::Field(FieldIdx::from_u32(0), node_pointer),
+                            ProjectionElem::Deref,
+                            ProjectionElem::Field(FieldIdx::from_u32(1), node_pointer),
+                        ],
+                        program.tcx
+                    ),
+                    body
+                ),
+                (3, 1, 1)
+            );
+
+            // (*input).right
+            assert_eq!(
+                access_paths.path(
+                    &Place::from(Local::from_u32(1)).project_deeper(
+                        &[
+                            ProjectionElem::Deref,
+                            ProjectionElem::Field(FieldIdx::from_u32(1), node_pointer),
+                        ],
+                        program.tcx
+                    ),
+                    body
+                ),
+                (4, 3, 2)
+            );
+
+            // *(*input).right
+            assert_eq!(
+                access_paths.path(
+                    &Place::from(Local::from_u32(1)).project_deeper(
+                        &[
+                            ProjectionElem::Deref,
+                            ProjectionElem::Field(FieldIdx::from_u32(1), node_pointer),
+                            ProjectionElem::Deref,
+                        ],
+                        program.tcx
+                    ),
+                    body
+                ),
+                (5, 2, 1)
+            );
+
+            // (*(*input).right).left
+            assert_eq!(
+                access_paths.path(
+                    &Place::from(Local::from_u32(1)).project_deeper(
+                        &[
+                            ProjectionElem::Deref,
+                            ProjectionElem::Field(FieldIdx::from_u32(1), node_pointer),
+                            ProjectionElem::Deref,
+                            ProjectionElem::Field(FieldIdx::from_u32(0), node_pointer),
+                        ],
+                        program.tcx
+                    ),
+                    body
+                ),
+                (5, 1, 1)
+            );
         })
     }
 }
