@@ -64,6 +64,8 @@ impl From<Input> for rustc_session::config::Input {
     }
 }
 
+pub const OPT_LEVEL: &str = "opt-level=0";
+
 pub fn run_compiler(input: Input, f: impl for<'tcx> FnOnce(Program<'tcx>) + Send) {
     let out = process::Command::new("rustc")
         .arg("--print=sysroot")
@@ -71,12 +73,9 @@ pub fn run_compiler(input: Input, f: impl for<'tcx> FnOnce(Program<'tcx>) + Send
         .output()
         .unwrap();
     let sysroot = str::from_utf8(&out.stdout).unwrap().trim();
-    let args = [
-        "rustc".to_owned(),
-        "--cap-lints".to_owned(),
-        "allow".to_owned(),
-    ]
-    .to_vec();
+    let args = ["rustc", "-C", OPT_LEVEL, "--cap-lints", "allow"]
+        .map(|s| s.to_owned())
+        .to_vec();
     let mut early_error_handler = EarlyErrorHandler::new(Default::default());
     let matches = rustc_driver::handle_options(&early_error_handler, &args).unwrap();
     let opts = rustc_session::config::build_session_options(&mut early_error_handler, &matches);

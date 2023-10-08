@@ -2,7 +2,6 @@ use utils::compiler_interface::run_compiler;
 
 use crate::flow::ownership::{access_path::AccessPaths, build_engine};
 
-
 #[test]
 /// Sanity check `build_engine`
 fn sanity_test_0() {
@@ -25,4 +24,3 @@ unsafe fn f() {
         let _ = build_engine(body, tcx, &access_paths);
     })
 }
-
