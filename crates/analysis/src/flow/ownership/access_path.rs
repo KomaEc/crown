@@ -25,6 +25,33 @@ pub struct AccessPaths<const K_LIMIT: usize> {
     leaves: Leaves<K_LIMIT>,
 }
 
+/// `(offset_relative_to_base, num_pointers_reachable, depth)`
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub struct Path(pub(super) usize, pub(super) usize, pub(super) usize);
+
+impl Path {
+    pub const fn offset(self) -> usize {
+        self.0
+    }
+
+    pub const fn size(self) -> usize {
+        self.1
+    }
+
+    pub const fn depth(self) -> usize {
+        self.2
+    }
+}
+
+impl std::fmt::Display for Path {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_fmt(format_args!(
+            "Path (offset: {}, size: {}, depth: {}",
+            self.0, self.1, self.2
+        ))
+    }
+}
+
 impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
     pub fn new(program: &Program) -> Self {
         let &Program {
@@ -110,17 +137,13 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
     /// Get the `(offset, size, depth)` of an access_path
     ///
     /// TODO replace `HasLocalDecls` with `HasPathCache`?
-    pub fn path<'tcx, D: HasLocalDecls<'tcx>>(
-        &self,
-        place: &Place<'tcx>,
-        local_decls: &D,
-    ) -> (usize, usize, usize) {
+    pub fn path<'tcx, D: HasLocalDecls<'tcx>>(&self, place: &Place<'tcx>, local_decls: &D) -> Path {
         let mut offset = 0;
         let mut ty = local_decls.local_decls()[place.local].ty;
         let mut levels = 0;
         for proj_elem in place.projection {
             if levels == K_LIMIT {
-                return (offset, 0, 0);
+                return Path(offset, 0, 0);
             }
             match proj_elem {
                 ProjectionElem::Deref => {
@@ -134,7 +157,7 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
                     };
                     // TODO unions???
                     if adt_def.is_union() {
-                        return (offset, 0, 0);
+                        return Path(offset, 0, 0);
                     }
                     assert!(adt_def.is_struct());
                     offset +=
@@ -148,7 +171,7 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
                 | ProjectionElem::OpaqueCast(_) => unreachable!(),
             }
         }
-        (offset, self.size_of(K_LIMIT - levels, ty), K_LIMIT - levels)
+        Path(offset, self.size_of(K_LIMIT - levels, ty), K_LIMIT - levels)
     }
 
     /// Patch up offsets of a type `ty` used with `depth` in a context `depth + delta`.
@@ -403,6 +426,7 @@ mod tests {
     use rustc_middle::ty::Adt;
 
     use super::AccessPaths;
+    use crate::flow::ownership::access_path::Path;
 
     #[test]
     fn test_rng_structs() {
@@ -581,7 +605,7 @@ fn f(input: *mut Node) {
             // input
             assert_eq!(
                 access_paths.path(&Place::from(Local::from_u32(1)), body),
-                (0, 7, 3)
+                Path(0, 7, 3)
             );
 
             // *input
@@ -591,7 +615,7 @@ fn f(input: *mut Node) {
                         .project_deeper(&[ProjectionElem::Deref], program.tcx),
                     body
                 ),
-                (1, 6, 2)
+                Path(1, 6, 2)
             );
 
             // (*input).left
@@ -606,7 +630,7 @@ fn f(input: *mut Node) {
                     ),
                     body
                 ),
-                (1, 3, 2)
+                Path(1, 3, 2)
             );
 
             // *(*input).left
@@ -622,7 +646,7 @@ fn f(input: *mut Node) {
                     ),
                     body
                 ),
-                (2, 2, 1)
+                Path(2, 2, 1)
             );
 
             // (*(*input).left).right
@@ -639,7 +663,7 @@ fn f(input: *mut Node) {
                     ),
                     body
                 ),
-                (3, 1, 1)
+                Path(3, 1, 1)
             );
 
             // (*input).right
@@ -654,7 +678,7 @@ fn f(input: *mut Node) {
                     ),
                     body
                 ),
-                (4, 3, 2)
+                Path(4, 3, 2)
             );
 
             // *(*input).right
@@ -670,7 +694,7 @@ fn f(input: *mut Node) {
                     ),
                     body
                 ),
-                (5, 2, 1)
+                Path(5, 2, 1)
             );
 
             // (*(*input).right).left
@@ -687,7 +711,7 @@ fn f(input: *mut Node) {
                     ),
                     body
                 ),
-                (5, 1, 1)
+                Path(5, 1, 1)
             );
         })
     }
