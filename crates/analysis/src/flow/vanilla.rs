@@ -5,7 +5,9 @@ use rustc_middle::mir::{
 };
 
 use super::{
-    infer::{Engine, InferAssign, InferCall, InferIrrelevant, InferJoin, InferReturn, Inference},
+    inference::{
+        Engine, InferAssign, InferCall, InferIrrelevant, InferJoin, InferReturn, Inference,
+    },
     join_points::PhiNode,
     SSAIdx,
 };

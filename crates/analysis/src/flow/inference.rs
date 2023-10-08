@@ -146,7 +146,7 @@ pub trait InferJoin {
 pub struct Engine<'engine, 'tcx> {
     tcx: TyCtxt<'tcx>,
     body: &'engine Body<'tcx>,
-    def_use_chain: &'engine mut DefUseChain,
+    pub(super) def_use_chain: DefUseChain,
     ssa_state: SSAState,
 }
 
@@ -154,7 +154,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
     pub fn new(
         tcx: TyCtxt<'tcx>,
         body: &'engine Body<'tcx>,
-        def_use_chain: &'engine mut DefUseChain,
+        def_use_chain: DefUseChain,
         ssa_state: SSAState,
     ) -> Self {
         Engine {

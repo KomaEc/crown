@@ -1,24 +1,49 @@
-use rustc_middle::mir::{
-    visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-    Body, Local, Location, Place, Rvalue,
+use rustc_middle::{
+    mir::{
+        visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
+        Body, Local, Location, Place, Rvalue,
+    },
+    ty::TyCtxt,
 };
 use smallvec::SmallVec;
 
 use self::access_path::AccessPaths;
 use super::{
-    def_use::{Def, Inspect, LocationBuilder, Update, UseKind},
+    def_use::{Def, DefUseChain, Inspect, LocationBuilder, Update, UseKind},
+    inference::Engine,
+    state::SSAState,
     SSAIdx,
 };
 use crate::call_graph::CallGraph;
 
 pub mod access_path;
 pub mod constraint;
+mod inference;
+// TODO re-export
 
 /// Ownership inference context
 pub struct Ctxt<const K_LIMIT: usize, DB> {
     pub database: DB,
     pub access_path: AccessPaths<K_LIMIT>,
     pub call_graph: CallGraph,
+}
+
+pub fn build_engine<'engine, 'access_paths, 'tcx, const K_LIMIT: usize>(
+    body: &'engine Body<'tcx>,
+    tcx: TyCtxt<'tcx>,
+    access_paths: &'access_paths AccessPaths<K_LIMIT>,
+) -> Engine<'engine, 'tcx>
+where
+    'engine: 'access_paths,
+{
+    let flow_builder = OwnershipFlowBuilder {
+        body,
+        access_paths,
+        location_data: Default::default(),
+    };
+    let flow_chain = DefUseChain::initialise(body, flow_builder);
+    let ssa_state = SSAState::new(body.local_decls.len());
+    Engine::new(tcx, body, flow_chain, ssa_state)
 }
 
 pub struct OwnershipFlowBuilder<'build, 'tcx, const K_LIMIT: usize> {

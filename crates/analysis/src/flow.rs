@@ -5,7 +5,7 @@ use utils::data_structure::vec_vec::VecVec;
 
 pub mod def_use;
 mod dom;
-pub mod infer;
+pub mod inference;
 mod join_points;
 pub mod ownership;
 mod state;

@@ -14,7 +14,7 @@ use utils::data_structure::{
 
 use super::{
     dom::compute_dominance_frontier,
-    infer::Engine,
+    inference::Engine,
     join_points::{JoinPoints, PhiNode},
     state::SSAState,
     vanilla::Vanilla,
@@ -105,12 +105,12 @@ impl DefUseChain {
     /// a liveness analysis)
     pub fn new<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
         let vanilla_builder = VanillaBuilder::default();
-        let mut def_use_chain = DefUseChain::initialise(body, vanilla_builder);
+        let def_use_chain = DefUseChain::initialise(body, vanilla_builder);
         let ssa_state = SSAState::new(body.local_decls.len());
-        let mut engine = Engine::new(tcx, body, &mut def_use_chain, ssa_state);
+        let mut engine = Engine::new(tcx, body, def_use_chain, ssa_state);
         engine.run(Vanilla);
 
-        def_use_chain
+        engine.def_use_chain
     }
 
     pub fn initialise<'tcx, L: LocationBuilder<'tcx>>(
