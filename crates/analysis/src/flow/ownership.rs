@@ -20,6 +20,8 @@ pub mod access_path;
 pub mod constraint;
 mod inference;
 // TODO re-export
+#[cfg(test)]
+mod tests;
 
 /// Ownership inference context
 pub struct Ctxt<const K_LIMIT: usize, DB> {
