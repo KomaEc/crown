@@ -64,7 +64,7 @@ impl From<Input> for rustc_session::config::Input {
     }
 }
 
-pub const OPT_LEVEL: &str = "opt-level=0";
+pub const OPT_LEVEL: &str = "opt-level=3";
 
 pub fn run_compiler(input: Input, f: impl for<'tcx> FnOnce(Program<'tcx>) + Send) {
     let out = process::Command::new("rustc")

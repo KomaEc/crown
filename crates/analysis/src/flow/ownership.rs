@@ -2,7 +2,7 @@ use rustc_index::bit_set::BitSet;
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor},
-        Body, Local, Location, Place, Rvalue,
+        Body, Local, Location, Operand, Place, Rvalue, Terminator, TerminatorKind,
     },
     ty::TyCtxt,
 };
@@ -161,6 +161,38 @@ impl<'build, 'tcx, const K_LIMIT: usize> Visitor<'tcx>
             return;
         }
         self.super_assign(place, rvalue, location);
+    }
+
+    fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
+        if let TerminatorKind::Call {
+            func,
+            args,
+            destination,
+            ..
+        } = &terminator.kind
+        {
+            self.visit_operand(func, location);
+            for arg in args {
+                match arg {
+                    Operand::Move(place) => {
+                        assert!(place.as_local().is_some());
+                        self.visit_place(
+                            place,
+                            PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect),
+                            location,
+                        )
+                    }
+                    _ => self.visit_operand(arg, location),
+                }
+            }
+            self.visit_place(
+                destination,
+                PlaceContext::MutatingUse(MutatingUseContext::Call),
+                location,
+            );
+            return;
+        }
+        self.super_terminator(terminator, location);
     }
 }
 
