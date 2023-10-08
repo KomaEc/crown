@@ -1,6 +1,6 @@
 use utils::compiler_interface::run_compiler;
 
-use crate::flow::ownership::{access_path::AccessPaths, build_engine};
+use crate::flow::{ownership::{access_path::AccessPaths, build_engine}, def_use::display_uses};
 
 #[test]
 /// Sanity check `build_engine`
@@ -12,8 +12,11 @@ fn sanity_test_0() {
 }
 
 unsafe fn f() {
-    let mut p = malloc(4u64) as *mut i32;
+    let mut p = malloc(8u64) as *mut *mut i32;
+    *p = malloc(4u64) as *mut i32;
+    **p = 1;
     let mut q = p;
+    free(*q as *mut _);
     free(q as *mut _);
 }";
     run_compiler(PROGRAM.into(), |program| {
@@ -21,6 +24,7 @@ unsafe fn f() {
         let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);
         let tcx = program.tcx;
         let body = tcx.optimized_mir(program.fns.first().unwrap());
-        let _ = build_engine(body, tcx, &access_paths);
+        let engine = build_engine(body, tcx, &access_paths);
+        display_uses(body, &engine.def_use_chain)
     })
 }
