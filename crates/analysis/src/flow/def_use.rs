@@ -1,7 +1,7 @@
 use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::{
     mir::{
-        visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
+        visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor},
         BasicBlock, BasicBlockData, Body, Local, Location, Place, Rvalue,
     },
     ty::TyCtxt,
@@ -378,6 +378,12 @@ enum VanillaDefUse {
 impl VanillaDefUse {
     fn for_place(place: Place<'_>, context: PlaceContext) -> Option<VanillaDefUse> {
         match context {
+            PlaceContext::NonUse(NonUseContext::StorageDead)
+            | PlaceContext::NonUse(NonUseContext::StorageLive) => {
+                tracing::error!("StorageLive, StorageDead");
+                None
+            }
+
             PlaceContext::NonUse(_) => None,
 
             PlaceContext::MutatingUse(

@@ -1,21 +1,27 @@
 use utils::compiler_interface::run_compiler;
 
-use crate::flow::{ownership::{access_path::AccessPaths, build_engine}, def_use::display_uses};
+use crate::flow::{
+    def_use::display_uses,
+    ownership::{access_path::AccessPaths, build_engine},
+};
 
 #[test]
 /// Sanity check `build_engine`
 fn sanity_test_0() {
+    utils::tracing_setup::init_logger();
     const PROGRAM: &str = "extern \"C\" {
     fn printf(_: *const i8, _: ...) -> i32;
     fn malloc(_: u64) -> *mut ();
     fn free(_: *mut ());
 }
 
-unsafe fn f() {
-    let mut p = malloc(8u64) as *mut *mut i32;
-    *p = malloc(4u64) as *mut i32;
-    **p = 1;
+unsafe fn f(r: *mut i32) {
+    let mut p = malloc(8u64) as *mut *mut *mut i32;
+    *p = malloc(8u64) as *mut *mut i32;
+    **p = r;
+    ***p = 1;
     let mut q = p;
+    free(*q as *mut _);
     free(*q as *mut _);
     free(q as *mut _);
 }";

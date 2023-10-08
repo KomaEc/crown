@@ -1,6 +1,7 @@
+use rustc_index::bit_set::BitSet;
 use rustc_middle::{
     mir::{
-        visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
+        visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor},
         Body, Local, Location, Place, Rvalue,
     },
     ty::TyCtxt,
@@ -42,16 +43,59 @@ where
         body,
         access_paths,
         location_data: Default::default(),
+        deref_copies: DerefCopiesCollector::collect(body),
     };
     let flow_chain = DefUseChain::initialise(body, flow_builder);
     let ssa_state = SSAState::new(body.local_decls.len());
     Engine::new(tcx, body, flow_chain, ssa_state)
 }
 
+struct DerefCopiesCollector(BitSet<Local>);
+
+impl DerefCopiesCollector {
+    fn collect(body: &Body) -> BitSet<Local> {
+        let mut vis = Self(BitSet::new_empty(body.local_decls.len()));
+        vis.visit_body(body);
+        vis.0
+    }
+}
+
+impl<'tcx> Visitor<'tcx> for DerefCopiesCollector {
+    fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, _: Location) {
+        if let Rvalue::CopyForDeref(..) = rvalue {
+            assert!(place.as_local().is_some());
+            let local = place.local;
+            self.0.insert(local);
+        }
+    }
+}
+
 pub struct OwnershipFlowBuilder<'build, 'tcx, const K_LIMIT: usize> {
     body: &'build Body<'tcx>,
     access_paths: &'build AccessPaths<K_LIMIT>,
     location_data: SmallVec<[(Local, UseKind<SSAIdx>); 2]>,
+    deref_copies: BitSet<Local>,
+}
+
+impl<'build, 'tcx, const K_LIMIT: usize> OwnershipFlowBuilder<'build, 'tcx, K_LIMIT> {
+    fn place_flow(&self, place: &Place<'tcx>, context: PlaceContext) -> Option<OwnershipFlow> {
+        OwnershipFlow::for_place(context).map(|flow| {
+            if self.deref_copies.contains(place.local) {
+                if place.as_local().is_some()
+                    && matches!(
+                        context,
+                        PlaceContext::MutatingUse(MutatingUseContext::Store)
+                    )
+                {
+                    OwnershipFlow::Flow
+                } else {
+                    OwnershipFlow::Inspect
+                }
+            } else {
+                flow
+            }
+        })
+    }
 }
 
 impl<'build, 'tcx, const K_LIMIT: usize> LocationBuilder<'tcx>
@@ -71,7 +115,7 @@ impl<'build, 'tcx, const K_LIMIT: usize> Visitor<'tcx>
     }
 
     fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
-        if let Some(flow) = OwnershipFlow::for_place(context) {
+        if let Some(flow) = self.place_flow(place, context) {
             let (_, num_pointers_reachable, _) = self.access_paths.path(place, self.body);
             if num_pointers_reachable > 0 && matches!(flow, OwnershipFlow::Flow) {
                 self.location_data.push((place.local, Def(Update::new())));
@@ -83,10 +127,10 @@ impl<'build, 'tcx, const K_LIMIT: usize> Visitor<'tcx>
         self.super_projection(place.as_ref(), context, location);
     }
 
-    // special casing statements like _1 = BitAnd(_1, _3)
-    // in this case, we do not generate usage for the right _1
     fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
         if let Rvalue::BinaryOp(_, box (operand1, operand2)) = rvalue {
+            // special casing statements like _1 = BitAnd(_1, _3)
+            // in this case, we do not generate usage for the right _1
             if let Some((lhs, operand1)) = place
                 .as_local()
                 .zip(operand1.place().and_then(|place| place.as_local()))
@@ -101,6 +145,20 @@ impl<'build, 'tcx, const K_LIMIT: usize> Visitor<'tcx>
                     return;
                 }
             }
+        } else if let Rvalue::CopyForDeref(rhs) = rvalue {
+            // special casing deref copies
+            assert!(place.as_local().is_some());
+            self.visit_place(
+                place,
+                PlaceContext::MutatingUse(MutatingUseContext::Store),
+                location,
+            );
+            self.visit_place(
+                rhs,
+                PlaceContext::NonMutatingUse(NonMutatingUseContext::Copy),
+                location,
+            );
+            return;
         }
         self.super_assign(place, rvalue, location);
     }
@@ -114,6 +172,12 @@ enum OwnershipFlow {
 impl OwnershipFlow {
     fn for_place(context: PlaceContext) -> Option<OwnershipFlow> {
         match context {
+            PlaceContext::NonUse(NonUseContext::StorageDead)
+            | PlaceContext::NonUse(NonUseContext::StorageLive) => {
+                tracing::error!("StorageLive, StorageDead");
+                None
+            }
+
             PlaceContext::NonUse(_) => None,
 
             // Ownership flows for all mutating uses
@@ -147,7 +211,7 @@ impl OwnershipFlow {
                 NonMutatingUseContext::Copy | NonMutatingUseContext::Move,
             ) => Some(OwnershipFlow::Flow),
 
-            // deref copy, len, etc.
+            // deref copy, len, discriminant, etc.
             PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect) => {
                 Some(OwnershipFlow::Inspect)
             }
