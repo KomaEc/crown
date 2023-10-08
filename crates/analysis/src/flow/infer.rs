@@ -431,7 +431,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
         let use_kind = self.def_use_chain.uses[location].get_by_key_mut(&local)?;
         let r#use = self.ssa_state.get_name(local);
         Some(match use_kind {
-            UseKind::Use(ssa_idx) | UseKind::LocalPeek(ssa_idx) => {
+            UseKind::Inspect(ssa_idx) /* | UseKind::LocalPeek(ssa_idx) */ => {
                 *ssa_idx = r#use;
                 use_kind.clone()
             }

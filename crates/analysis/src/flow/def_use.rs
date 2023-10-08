@@ -38,11 +38,11 @@ impl Update<SSAIdx> {
 
 #[derive(Clone, Debug)]
 pub enum UseKind<T> {
-    Use(T),
+    Inspect(T),
     Def(Update<T>),
-    /// Peek the definition of `T`, and the definition is guaranteed to be
-    /// located within the same basic block
-    LocalPeek(T),
+    // /// Peek the definition of `T`, and the definition is guaranteed to be
+    // /// located within the same basic block
+    // LocalPeek(T),
 }
 pub use UseKind::*;
 
@@ -73,7 +73,7 @@ pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
             };
             let uses = def_use_chain.uses[location]
                 .iter()
-                .filter(|(_, use_kind)| matches!(use_kind, Use(..)))
+                .filter(|(_, use_kind)| matches!(use_kind, Inspect(..)))
                 .map(|&(local, _)| (local, def_use_chain.def_loc(local, location)))
                 .map(|(local, loc)| format!("{:?}@{:?}", local, loc))
                 .collect::<Vec<_>>()
@@ -90,7 +90,7 @@ pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
             };
             let uses = def_use_chain.uses[location]
                 .iter()
-                .filter(|(_, use_kind)| matches!(use_kind, Use(..)))
+                .filter(|(_, use_kind)| matches!(use_kind, Inspect(..)))
                 .map(|&(local, _)| (local, def_use_chain.def_loc(local, location)))
                 .map(|(local, loc)| format!("{:?}@{:?}", local, loc))
                 .collect::<Vec<_>>()
@@ -141,9 +141,9 @@ impl DefUseChain {
         }
     }
 
-    pub fn pure_uses(&self, location: Location) -> impl Iterator<Item = Local> + '_ {
+    pub fn inspects(&self, location: Location) -> impl Iterator<Item = Local> + '_ {
         self.uses[location].iter().filter_map(|(local, use_kind)| {
-            if let Use(..) = use_kind {
+            if let Inspect(..) = use_kind {
                 Some(*local)
             } else {
                 None
@@ -151,24 +151,24 @@ impl DefUseChain {
         })
     }
 
-    pub fn peeked_loc(&self, local: Local, location: Location) -> Location {
-        let Some(use_kind) = self.uses[location].get_by_key(&local) else {
-            panic!("nonexisting peek {:?} @ {:?}", local, location)
-        };
-        let LocalPeek(ssa_idx) = *use_kind else {
-            panic!("nonexisting peek {:?} @ {:?}", local, location)
-        };
-        match self.def_locs[local][ssa_idx] {
-            RichLocation::Mir(loc) => loc,
-            _ => unreachable!(),
-        }
-    }
+    // pub fn peeked_loc(&self, local: Local, location: Location) -> Location {
+    //     let Some(use_kind) = self.uses[location].get_by_key(&local) else {
+    //         panic!("nonexisting peek {:?} @ {:?}", local, location)
+    //     };
+    //     let LocalPeek(ssa_idx) = *use_kind else {
+    //         panic!("nonexisting peek {:?} @ {:?}", local, location)
+    //     };
+    //     match self.def_locs[local][ssa_idx] {
+    //         RichLocation::Mir(loc) => loc,
+    //         _ => unreachable!(),
+    //     }
+    // }
 
     pub fn def_loc(&self, local: Local, location: Location) -> RichLocation {
         let Some(use_kind) = self.uses[location].get_by_key(&local) else {
             panic!("nonexisting use {:?} @ {:?}", local, location)
         };
-        let Use(ssa_idx) = *use_kind else {
+        let Inspect(ssa_idx) = *use_kind else {
             panic!("nonexisting use {:?} @ {:?}", local, location)
         };
         self.def_locs[local][ssa_idx]
@@ -267,13 +267,13 @@ impl LocationBuilder<'_> for VanillaBuilder {
 }
 
 impl<'tcx> Visitor<'tcx> for VanillaBuilder {
-    // for return terminator
+    // for return terminator and indices
     fn visit_local(&mut self, local: Local, context: PlaceContext, _: Location) {
         match VanillaDefUse::for_place(Place::from(local), context) {
             Some(VanillaDefUse::Def) => {
                 self.location_data.push((local, Def(Update::new())));
             }
-            Some(VanillaDefUse::Use) => self.location_data.push((local, Use(SSAIdx::MAX))),
+            Some(VanillaDefUse::Use) => self.location_data.push((local, Inspect(SSAIdx::MAX))),
             None => {}
         }
     }
@@ -283,7 +283,9 @@ impl<'tcx> Visitor<'tcx> for VanillaBuilder {
             Some(VanillaDefUse::Def) => {
                 self.location_data.push((place.local, Def(Update::new())));
             }
-            Some(VanillaDefUse::Use) => self.location_data.push((place.local, Use(SSAIdx::MAX))),
+            Some(VanillaDefUse::Use) => {
+                self.location_data.push((place.local, Inspect(SSAIdx::MAX)))
+            }
             None => {}
         }
 

@@ -1,15 +1,12 @@
-use rustc_middle::{
-    mir::{
-        visit::{MutatingUseContext, PlaceContext, Visitor},
-        Body, Local, Location, Place, Rvalue,
-    },
-    ty::TyCtxt,
+use rustc_middle::mir::{
+    visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
+    Body, Local, Location, Place, Rvalue,
 };
 use smallvec::SmallVec;
 
 use self::access_path::AccessPaths;
 use super::{
-    def_use::{Def, LocalPeek, LocationBuilder, Update, Use, UseKind},
+    def_use::{Def, Inspect, LocationBuilder, Update, UseKind},
     SSAIdx,
 };
 use crate::call_graph::CallGraph;
@@ -24,14 +21,14 @@ pub struct Ctxt<const K_LIMIT: usize, DB> {
     pub call_graph: CallGraph,
 }
 
-pub struct OwnershipTransferBuilder<'build, 'tcx, const K_LIMIT: usize> {
+pub struct OwnershipFlowBuilder<'build, 'tcx, const K_LIMIT: usize> {
     body: &'build Body<'tcx>,
     access_paths: &'build AccessPaths<K_LIMIT>,
     location_data: SmallVec<[(Local, UseKind<SSAIdx>); 2]>,
 }
 
 impl<'build, 'tcx, const K_LIMIT: usize> LocationBuilder<'tcx>
-    for OwnershipTransferBuilder<'build, 'tcx, K_LIMIT>
+    for OwnershipFlowBuilder<'build, 'tcx, K_LIMIT>
 {
     fn retrieve(&mut self) -> SmallVec<[(Local, UseKind<SSAIdx>); 2]> {
         std::mem::take(&mut self.location_data)
@@ -39,32 +36,22 @@ impl<'build, 'tcx, const K_LIMIT: usize> LocationBuilder<'tcx>
 }
 
 impl<'build, 'tcx, const K_LIMIT: usize> Visitor<'tcx>
-    for OwnershipTransferBuilder<'build, 'tcx, K_LIMIT>
+    for OwnershipFlowBuilder<'build, 'tcx, K_LIMIT>
 {
-    // for return terminator
-    fn visit_local(&mut self, local: Local, context: PlaceContext, _: Location) {
-        // if VanillaDefUse::for_place(Place::from(local), context).is_some() {
-        //     let (_, num_pointers_reachable, _) =
-        //         self.access_paths.path(&Place::from(local), self.body);
-        //     if num_pointers_reachable > 0 {
-        //         self.location_data.push((local, LocalPeek(SSAIdx::MAX)));
-        //     } else {
-        //         self.location_data.push((local, Use(SSAIdx::MAX)));
-        //     }
-        // }
+    // for return terminator and indices
+    fn visit_local(&mut self, local: Local, context: PlaceContext, location: Location) {
+        self.visit_place(&Place::from(local), context, location)
     }
 
     fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
-        // TODO unions??
-        // TODO peeks??
-        // if VanillaDefUse::for_place(*place, context).is_some() {
-        //     let (_, num_pointers_reachable, _) = self.access_paths.path(place, self.body);
-        //     if num_pointers_reachable > 0 {
-        //         self.location_data.push((place.local, Def(Update::new())));
-        //     } else {
-        //         self.location_data.push((place.local, Use(SSAIdx::MAX)));
-        //     }
-        // }
+        if let Some(flow) = OwnershipFlow::for_place(context) {
+            let (_, num_pointers_reachable, _) = self.access_paths.path(place, self.body);
+            if num_pointers_reachable > 0 && matches!(flow, OwnershipFlow::Flow) {
+                self.location_data.push((place.local, Def(Update::new())));
+            } else {
+                self.location_data.push((place.local, Inspect(SSAIdx::MAX)));
+            }
+        }
         // call super_projection so that index operators are visited
         self.super_projection(place.as_ref(), context, location);
     }
@@ -89,5 +76,67 @@ impl<'build, 'tcx, const K_LIMIT: usize> Visitor<'tcx>
             }
         }
         self.super_assign(place, rvalue, location);
+    }
+}
+
+enum OwnershipFlow {
+    Flow,
+    Inspect,
+}
+
+impl OwnershipFlow {
+    fn for_place(context: PlaceContext) -> Option<OwnershipFlow> {
+        match context {
+            PlaceContext::NonUse(_) => None,
+
+            // Ownership flows for all mutating uses
+            PlaceContext::MutatingUse(
+                MutatingUseContext::Call
+                | MutatingUseContext::Yield
+                | MutatingUseContext::AsmOutput
+                | MutatingUseContext::Store
+                | MutatingUseContext::Deinit,
+            ) => Some(OwnershipFlow::Flow),
+
+            PlaceContext::MutatingUse(MutatingUseContext::SetDiscriminant) => {
+                Some(OwnershipFlow::Inspect)
+            }
+
+            // Ownership flows for all kinds of borrows/address ofs
+            //
+            // Note that ownership flows for shared borrow as well, as it may be leaked to
+            // a const address, which is not guaranteed read-only
+            PlaceContext::MutatingUse(
+                MutatingUseContext::AddressOf | MutatingUseContext::Borrow,
+            )
+            | PlaceContext::NonMutatingUse(
+                NonMutatingUseContext::AddressOf
+                | NonMutatingUseContext::ShallowBorrow
+                | NonMutatingUseContext::SharedBorrow,
+            ) => Some(OwnershipFlow::Flow),
+
+            // Ownership flows for copy and move
+            PlaceContext::NonMutatingUse(
+                NonMutatingUseContext::Copy | NonMutatingUseContext::Move,
+            ) => Some(OwnershipFlow::Flow),
+
+            // deref copy, len, etc.
+            PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect) => {
+                Some(OwnershipFlow::Inspect)
+            }
+
+            // TODO place mention?
+            PlaceContext::NonMutatingUse(NonMutatingUseContext::PlaceMention) => todo!(),
+
+            // All other contexts are uses...
+            PlaceContext::MutatingUse(MutatingUseContext::Drop | MutatingUseContext::Retag) => {
+                unreachable!()
+            }
+
+            PlaceContext::MutatingUse(MutatingUseContext::Projection)
+            | PlaceContext::NonMutatingUse(NonMutatingUseContext::Projection) => {
+                unreachable!("A projection could be a def or a use and must be handled separately")
+            }
+        }
     }
 }
