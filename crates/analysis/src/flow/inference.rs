@@ -18,10 +18,19 @@ use super::{def_use::DefUseChain, join_points::PhiNode, state::SSAState, SSAIdx}
 use crate::flow::{def_use::UseKind, RichLocation};
 
 /// The set of inference operations
-pub trait Inference: InferAssign + InferCall + InferReturn + InferIrrelevant + InferJoin {}
+pub trait Inference<'tcx>:
+    InferAssign<'tcx> + InferCall<'tcx> + InferReturn<'tcx> + InferIrrelevant<'tcx> + InferJoin<'tcx>
+{
+}
 
-pub trait InferAssign {
-    fn infer_use(&mut self, engine: &mut Engine, lhs: &Place, rhs: &Operand, location: Location);
+pub trait InferAssign<'tcx> {
+    fn infer_use(
+        &mut self,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
+        rhs: &Operand<'tcx>,
+        location: Location,
+    );
     fn infer_mut_borrow(
         &mut self,
         engine: &mut Engine,
@@ -31,121 +40,138 @@ pub trait InferAssign {
     );
     fn infer_shr_borrow(
         &mut self,
-        engine: &mut Engine,
-        lhs: &Place,
-        lender: &Place,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
+        lender: &Place<'tcx>,
         location: Location,
     );
-    fn infer_mut_addr(&mut self, engine: &mut Engine, lhs: &Place, rhs: &Place, location: Location);
+    fn infer_mut_addr(
+        &mut self,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
+        rhs: &Place<'tcx>,
+        location: Location,
+    );
     fn infer_const_addr(
         &mut self,
-        engine: &mut Engine,
-        lhs: &Place,
-        rhs: &Place,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
+        rhs: &Place<'tcx>,
         location: Location,
     );
     fn infer_cast(
         &mut self,
-        engine: &mut Engine,
-        lhs: &Place,
-        rhs: &Operand,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
+        rhs: &Operand<'tcx>,
         cast_kind: CastKind,
         location: Location,
     );
     fn infer_binop(
         &mut self,
-        engine: &mut Engine,
-        lhs: &Place,
-        left: &Operand,
-        right: &Operand,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
+        left: &Operand<'tcx>,
+        right: &Operand<'tcx>,
         binop: BinOp,
         location: Location,
     );
     fn infer_unop(
         &mut self,
-        engine: &mut Engine,
-        lhs: &Place,
-        operand: &Operand,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
+        operand: &Operand<'tcx>,
         unop: UnOp,
         location: Location,
     );
     fn infer_nullop(
         &mut self,
-        engine: &mut Engine,
-        lhs: &Place,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
         nullop: NullOp,
         location: Location,
     );
     fn infer_discriminant(
         &mut self,
-        engine: &mut Engine,
-        lhs: &Place,
-        rhs: &Place,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
+        rhs: &Place<'tcx>,
         location: Location,
     );
     fn infer_deref_copy(
         &mut self,
-        engine: &mut Engine,
-        lhs: &Place,
-        rhs: &Place,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
+        rhs: &Place<'tcx>,
         location: Location,
     );
     fn infer_repeat(
         &mut self,
-        engine: &mut Engine,
-        lhs: &Place,
-        operand: &Operand,
-        len: &Const,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
+        operand: &Operand<'tcx>,
+        len: &Const<'tcx>,
         location: Location,
     );
     fn infer_aggregate_array(
         &mut self,
-        engine: &mut Engine,
-        lhs: &Place,
-        values: &IndexVec<FieldIdx, Operand>,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
+        values: &IndexVec<FieldIdx, Operand<'tcx>>,
         location: Location,
     );
     fn infer_aggregate_adt(
         &mut self,
-        engine: &mut Engine,
-        lhs: &Place,
-        values: &IndexVec<FieldIdx, Operand>,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
+        values: &IndexVec<FieldIdx, Operand<'tcx>>,
         location: Location,
     );
 }
 
-pub trait InferCall {
+pub trait InferCall<'tcx> {
     fn infer_call(
         &mut self,
-        engine: &mut Engine,
-        func: &Operand,
-        args: &Vec<Operand>,
-        destination: &Place,
+        engine: &mut Engine<'_, 'tcx>,
+        func: &Operand<'tcx>,
+        args: &Vec<Operand<'tcx>>,
+        destination: &Place<'tcx>,
         location: Location,
     );
 }
 
-pub trait InferReturn {
-    fn infer_return(&mut self, engine: &mut Engine, location: Location);
+pub trait InferReturn<'tcx> {
+    fn infer_return(&mut self, engine: &mut Engine<'_, 'tcx>, location: Location);
 }
 
 /// Guaranteed irrelevant parts of the program. Uses of locals are guaranteed to be
 /// pure reads.
-pub trait InferIrrelevant {
-    fn infer_goto(&mut self, engine: &Engine, target: BasicBlock, location: Location);
-    fn irrelevant_operand(&mut self, engine: &mut Engine, operand: &Operand, location: Location);
+pub trait InferIrrelevant<'tcx> {
+    fn infer_goto(&mut self, engine: &Engine<'_, 'tcx>, target: BasicBlock, location: Location);
+    fn irrelevant_operand(
+        &mut self,
+        engine: &mut Engine<'_, 'tcx>,
+        operand: &Operand<'tcx>,
+        location: Location,
+    );
 }
 
-pub trait InferJoin {
+pub trait InferJoin<'tcx> {
     fn phi_node_output(&mut self, local: Local, ssa_idx: SSAIdx, block: BasicBlock);
     fn phi_node_input(&mut self, local: Local, ssa_idx: SSAIdx, block: BasicBlock);
-    fn infer_join(&mut self, engine: &Engine, local: Local, phi_node: &PhiNode, block: BasicBlock);
+    fn infer_join(
+        &mut self,
+        engine: &Engine<'_, 'tcx>,
+        local: Local,
+        phi_node: &PhiNode,
+        block: BasicBlock,
+    );
 }
 
 /// The inference engine that walks over the procedure
 pub struct Engine<'engine, 'tcx> {
-    tcx: TyCtxt<'tcx>,
-    body: &'engine Body<'tcx>,
+    pub(super) tcx: TyCtxt<'tcx>,
+    pub(super) body: &'engine Body<'tcx>,
     pub(super) def_use_chain: DefUseChain,
     ssa_state: SSAState,
 }
@@ -165,7 +191,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
         }
     }
 
-    pub fn run<Infer: Inference>(&mut self, mut inference: impl BorrowMut<Infer>) {
+    pub fn run<Infer: Inference<'tcx>>(&mut self, mut inference: impl BorrowMut<Infer>) {
         tracing::debug!("Running {:?}", self.body.source.def_id());
         let dominators = self.body.basic_blocks.dominators();
         let mut children = IndexVec::from_elem(vec![], &self.body.basic_blocks);
@@ -221,7 +247,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
         }
     }
 
-    fn walk_basic_block<Infer: Inference>(&mut self, inference: &mut Infer, bb: BasicBlock) {
+    fn walk_basic_block<Infer: Inference<'tcx>>(&mut self, inference: &mut Infer, bb: BasicBlock) {
         tracing::debug!("Walking {:?}", bb);
 
         let BasicBlockData {
@@ -273,7 +299,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
         }
     }
 
-    fn walk_terminator<Infer: Inference>(
+    fn walk_terminator<Infer: Inference<'tcx>>(
         &mut self,
         inference: &mut Infer,
         terminator: &Terminator<'tcx>,
@@ -341,7 +367,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
         }
     }
 
-    fn walk_statement<Infer: Inference>(
+    fn walk_statement<Infer: Inference<'tcx>>(
         &mut self,
         inference: &mut Infer,
         statement: &Statement<'tcx>,
@@ -370,7 +396,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
         }
     }
 
-    fn walk_assign<Infer: Inference>(
+    fn walk_assign<Infer: Inference<'tcx>>(
         &mut self,
         inference: &mut Infer,
         place: &Place<'tcx>,
@@ -427,7 +453,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
         }
     }
 
-    pub fn try_use_local(&mut self, local: Local, location: Location) -> Option<UseKind<SSAIdx>> {
+    pub fn use_local(&mut self, local: Local, location: Location) -> Option<UseKind<SSAIdx>> {
         let use_kind = self.def_use_chain.uses[location].get_by_key_mut(&local)?;
         let r#use = self.ssa_state.get_name(local);
         Some(match use_kind {
@@ -456,13 +482,13 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
     }
 
     /// indices are in-significant
-    pub fn try_use_place(&mut self, place: &Place, location: Location) -> Option<UseKind<SSAIdx>> {
-        let local_use = self.try_use_local(place.local, location);
+    pub fn use_place(&mut self, place: &Place, location: Location) -> Option<UseKind<SSAIdx>> {
+        let local_use = self.use_local(place.local, location);
         for elem in place.projection {
             let ProjectionElem::Index(idx) = elem else {
                 continue;
             };
-            let _ = self.try_use_local(idx, location);
+            let _ = self.use_local(idx, location);
         }
         local_use
     }

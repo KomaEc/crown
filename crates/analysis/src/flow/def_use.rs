@@ -21,7 +21,7 @@ use super::{
     LocationMap, RichLocation, SSAIdx,
 };
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub struct Update<T> {
     pub r#use: T,
     pub def: T,
@@ -36,7 +36,7 @@ impl Update<SSAIdx> {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Copy)]
 pub enum UseKind<T> {
     Inspect(T),
     Def(Update<T>),
@@ -45,6 +45,16 @@ pub enum UseKind<T> {
     // LocalPeek(T),
 }
 pub use UseKind::*;
+
+impl<T> UseKind<T> {
+    pub fn update(self) -> Option<Update<T>> {
+        if let Def(update) = self {
+            Some(update)
+        } else {
+            None
+        }
+    }
+}
 
 #[cfg(not(debug_assertions))]
 const _: () = assert!(8 == std::mem::size_of::<UseKind<SSAIdx>>());

@@ -17,26 +17,26 @@ pub struct Vanilla;
 
 impl Vanilla {
     fn touch_local(engine: &mut Engine, local: Local, location: Location) {
-        let _ = engine.try_use_local(local, location);
+        let _ = engine.use_local(local, location);
     }
 
     fn touch_place(engine: &mut Engine, place: &Place, location: Location) {
-        let _ = engine.try_use_place(place, location);
+        let _ = engine.use_place(place, location);
     }
 
     fn touch_operand(engine: &mut Engine, operand: &Operand, location: Location) {
         match operand {
             Operand::Copy(place) | Operand::Move(place) => {
-                let _ = engine.try_use_place(place, location);
+                let _ = engine.use_place(place, location);
             }
             Operand::Constant(box _) => {}
         }
     }
 }
 
-impl Inference for Vanilla {}
+impl<'tcx> Inference<'tcx> for Vanilla {}
 
-impl InferAssign for Vanilla {
+impl InferAssign<'_> for Vanilla {
     fn infer_use(&mut self, engine: &mut Engine, lhs: &Place, rhs: &Operand, location: Location) {
         Vanilla::touch_place(engine, lhs, location);
         Vanilla::touch_operand(engine, rhs, location);
@@ -49,7 +49,9 @@ impl InferAssign for Vanilla {
         lender: &Place,
         location: Location,
     ) {
-        self.infer_shr_borrow(engine, lhs, lender, location)
+        // self.infer_shr_borrow(engine, lhs, lender, location)
+        Vanilla::touch_place(engine, lhs, location);
+        Vanilla::touch_place(engine, lender, location);
     }
 
     fn infer_shr_borrow(
@@ -70,7 +72,9 @@ impl InferAssign for Vanilla {
         rhs: &Place,
         location: Location,
     ) {
-        self.infer_const_addr(engine, lhs, rhs, location)
+        // self.infer_const_addr(engine, lhs, rhs, location)
+        Vanilla::touch_place(engine, lhs, location);
+        Vanilla::touch_place(engine, rhs, location);
     }
 
     fn infer_const_addr(
@@ -92,7 +96,9 @@ impl InferAssign for Vanilla {
         _: CastKind,
         location: Location,
     ) {
-        self.infer_use(engine, lhs, rhs, location);
+        // self.infer_use(engine, lhs, rhs, location);
+        Vanilla::touch_place(engine, lhs, location);
+        Vanilla::touch_operand(engine, rhs, location);
     }
 
     fn infer_binop(
@@ -186,7 +192,7 @@ impl InferAssign for Vanilla {
     }
 }
 
-impl InferCall for Vanilla {
+impl<'tcx> InferCall<'tcx> for Vanilla {
     fn infer_call(
         &mut self,
         engine: &mut Engine,
@@ -203,13 +209,13 @@ impl InferCall for Vanilla {
     }
 }
 
-impl InferReturn for Vanilla {
+impl<'tcx> InferReturn<'tcx> for Vanilla {
     fn infer_return(&mut self, engine: &mut Engine, location: Location) {
         Vanilla::touch_local(engine, RETURN_PLACE, location)
     }
 }
 
-impl InferIrrelevant for Vanilla {
+impl<'tcx> InferIrrelevant<'tcx> for Vanilla {
     fn irrelevant_operand(&mut self, engine: &mut Engine, operand: &Operand, location: Location) {
         Vanilla::touch_operand(engine, operand, location)
     }
@@ -219,7 +225,7 @@ impl InferIrrelevant for Vanilla {
     }
 }
 
-impl InferJoin for Vanilla {
+impl<'tcx> InferJoin<'tcx> for Vanilla {
     fn infer_join(&mut self, _: &Engine, _: Local, _: &PhiNode, _: BasicBlock) {}
 
     fn phi_node_output(&mut self, _: Local, _: SSAIdx, _: BasicBlock) {}
