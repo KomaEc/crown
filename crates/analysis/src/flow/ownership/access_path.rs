@@ -108,6 +108,8 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
     }
 
     /// Get the `(offset, size, depth)` of an access_path
+    /// 
+    /// TODO replace `HasLocalDecls` with `HasPathCache`?
     pub fn path<'tcx, D: HasLocalDecls<'tcx>>(
         &self,
         place: &Place<'tcx>,
