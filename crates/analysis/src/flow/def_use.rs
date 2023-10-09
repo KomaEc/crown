@@ -54,6 +54,19 @@ impl<T> UseKind<T> {
             None
         }
     }
+
+    pub fn map<U, F>(self, f: F) -> UseKind<U>
+    where
+        F: Fn(T) -> U,
+    {
+        match self {
+            Inspect(t) => Inspect(f(t)),
+            Def(Update { r#use, def }) => Def(Update {
+                r#use: f(r#use),
+                def: f(def),
+            }),
+        }
+    }
 }
 
 #[cfg(not(debug_assertions))]

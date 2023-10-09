@@ -27,7 +27,7 @@ mod tests;
 /// Ownership inference context
 pub struct Ctxt<const K_LIMIT: usize, DB> {
     pub database: DB,
-    pub access_path: AccessPaths<K_LIMIT>,
+    pub access_paths: AccessPaths<K_LIMIT>,
     pub call_graph: CallGraph,
 }
 
@@ -116,7 +116,7 @@ impl<'build, 'tcx, const K_LIMIT: usize> Visitor<'tcx>
 
     fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
         if let Some(flow) = self.place_flow(place, context) {
-            let num_pointers_reachable = self.access_paths.path(place, self.body).size();
+            let num_pointers_reachable = self.access_paths.projections(place, self.body).size();
             if num_pointers_reachable > 0 && matches!(flow, OwnershipFlow::Flow) {
                 self.location_data.push((place.local, Def(Update::new())));
             } else {

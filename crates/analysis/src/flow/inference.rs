@@ -33,9 +33,9 @@ pub trait InferAssign<'tcx> {
     );
     fn infer_mut_borrow(
         &mut self,
-        engine: &mut Engine,
-        lhs: &Place,
-        lender: &Place,
+        engine: &mut Engine<'_, 'tcx>,
+        lhs: &Place<'tcx>,
+        lender: &Place<'tcx>,
         location: Location,
     );
     fn infer_shr_borrow(
@@ -482,7 +482,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
     }
 
     /// indices are in-significant
-    pub fn use_place(&mut self, place: &Place, location: Location) -> Option<UseKind<SSAIdx>> {
+    pub fn use_base_of(&mut self, place: &Place, location: Location) -> Option<UseKind<SSAIdx>> {
         let local_use = self.use_local(place.local, location);
         for elem in place.projection {
             let ProjectionElem::Index(idx) = elem else {

@@ -25,11 +25,13 @@ pub struct AccessPaths<const K_LIMIT: usize> {
     leaves: Leaves<K_LIMIT>,
 }
 
+pub type Path<T> = (T, Projections);
+
 /// `(offset_relative_to_base, num_pointers_reachable, depth)`
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
-pub struct Path(pub(super) usize, pub(super) usize, pub(super) usize);
+pub struct Projections(pub(super) usize, pub(super) usize, pub(super) usize);
 
-impl Path {
+impl Projections {
     pub const fn offset(self) -> usize {
         self.0
     }
@@ -43,7 +45,7 @@ impl Path {
     }
 }
 
-impl std::fmt::Display for Path {
+impl std::fmt::Display for Projections {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!(
             "Path (offset: {}, size: {}, depth: {}",
@@ -137,13 +139,17 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
     /// Get the `(offset, size, depth)` of an access_path
     ///
     /// TODO replace `HasLocalDecls` with `HasPathCache`?
-    pub fn path<'tcx, D: HasLocalDecls<'tcx>>(&self, place: &Place<'tcx>, local_decls: &D) -> Path {
+    pub fn projections<'tcx, D: HasLocalDecls<'tcx>>(
+        &self,
+        place: &Place<'tcx>,
+        local_decls: &D,
+    ) -> Projections {
         let mut offset = 0;
         let mut ty = local_decls.local_decls()[place.local].ty;
         let mut levels = 0;
         for proj_elem in place.projection {
             if levels == K_LIMIT {
-                return Path(offset, 0, 0);
+                return Projections(offset, 0, 0);
             }
             match proj_elem {
                 ProjectionElem::Deref => {
@@ -157,7 +163,7 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
                     };
                     // TODO unions???
                     if adt_def.is_union() {
-                        return Path(offset, 0, 0);
+                        return Projections(offset, 0, 0);
                     }
                     assert!(adt_def.is_struct());
                     offset +=
@@ -171,7 +177,7 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
                 | ProjectionElem::OpaqueCast(_) => unreachable!(),
             }
         }
-        Path(offset, self.size_of(K_LIMIT - levels, ty), K_LIMIT - levels)
+        Projections(offset, self.size_of(K_LIMIT - levels, ty), K_LIMIT - levels)
     }
 
     /// Patch up offsets of a type `ty` used with `depth` in a context `depth + delta`.
@@ -426,7 +432,7 @@ mod tests {
     use rustc_middle::ty::Adt;
 
     use super::AccessPaths;
-    use crate::flow::ownership::access_path::Path;
+    use crate::flow::ownership::access_path::Projections;
 
     #[test]
     fn test_rng_structs() {
@@ -604,23 +610,23 @@ fn f(input: *mut Node) {
 
             // input
             assert_eq!(
-                access_paths.path(&Place::from(Local::from_u32(1)), body),
-                Path(0, 7, 3)
+                access_paths.projections(&Place::from(Local::from_u32(1)), body),
+                Projections(0, 7, 3)
             );
 
             // *input
             assert_eq!(
-                access_paths.path(
+                access_paths.projections(
                     &Place::from(Local::from_u32(1))
                         .project_deeper(&[ProjectionElem::Deref], program.tcx),
                     body
                 ),
-                Path(1, 6, 2)
+                Projections(1, 6, 2)
             );
 
             // (*input).left
             assert_eq!(
-                access_paths.path(
+                access_paths.projections(
                     &Place::from(Local::from_u32(1)).project_deeper(
                         &[
                             ProjectionElem::Deref,
@@ -630,12 +636,12 @@ fn f(input: *mut Node) {
                     ),
                     body
                 ),
-                Path(1, 3, 2)
+                Projections(1, 3, 2)
             );
 
             // *(*input).left
             assert_eq!(
-                access_paths.path(
+                access_paths.projections(
                     &Place::from(Local::from_u32(1)).project_deeper(
                         &[
                             ProjectionElem::Deref,
@@ -646,12 +652,12 @@ fn f(input: *mut Node) {
                     ),
                     body
                 ),
-                Path(2, 2, 1)
+                Projections(2, 2, 1)
             );
 
             // (*(*input).left).right
             assert_eq!(
-                access_paths.path(
+                access_paths.projections(
                     &Place::from(Local::from_u32(1)).project_deeper(
                         &[
                             ProjectionElem::Deref,
@@ -663,12 +669,12 @@ fn f(input: *mut Node) {
                     ),
                     body
                 ),
-                Path(3, 1, 1)
+                Projections(3, 1, 1)
             );
 
             // (*input).right
             assert_eq!(
-                access_paths.path(
+                access_paths.projections(
                     &Place::from(Local::from_u32(1)).project_deeper(
                         &[
                             ProjectionElem::Deref,
@@ -678,12 +684,12 @@ fn f(input: *mut Node) {
                     ),
                     body
                 ),
-                Path(4, 3, 2)
+                Projections(4, 3, 2)
             );
 
             // *(*input).right
             assert_eq!(
-                access_paths.path(
+                access_paths.projections(
                     &Place::from(Local::from_u32(1)).project_deeper(
                         &[
                             ProjectionElem::Deref,
@@ -694,12 +700,12 @@ fn f(input: *mut Node) {
                     ),
                     body
                 ),
-                Path(5, 2, 1)
+                Projections(5, 2, 1)
             );
 
             // (*(*input).right).left
             assert_eq!(
-                access_paths.path(
+                access_paths.projections(
                     &Place::from(Local::from_u32(1)).project_deeper(
                         &[
                             ProjectionElem::Deref,
@@ -711,7 +717,7 @@ fn f(input: *mut Node) {
                     ),
                     body
                 ),
-                Path(5, 1, 1)
+                Projections(5, 1, 1)
             );
         })
     }

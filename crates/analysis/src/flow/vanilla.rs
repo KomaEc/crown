@@ -21,13 +21,13 @@ impl Vanilla {
     }
 
     fn touch_place(engine: &mut Engine, place: &Place, location: Location) {
-        let _ = engine.use_place(place, location);
+        let _ = engine.use_base_of(place, location);
     }
 
     fn touch_operand(engine: &mut Engine, operand: &Operand, location: Location) {
         match operand {
             Operand::Copy(place) | Operand::Move(place) => {
-                let _ = engine.use_place(place, location);
+                let _ = engine.use_base_of(place, location);
             }
             Operand::Constant(box _) => {}
         }
