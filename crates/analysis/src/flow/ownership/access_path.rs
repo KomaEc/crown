@@ -25,23 +25,31 @@ pub struct AccessPaths<const K_LIMIT: usize> {
     leaves: Leaves<K_LIMIT>,
 }
 
-pub type Path<T> = (T, Projections);
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub struct Path<T> {
+    pub(super) base: T,
+    pub(super) projections: Projections,
+}
 
 /// `(offset_relative_to_base, num_pointers_reachable, depth)`
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct Projections(pub(super) usize, pub(super) usize, pub(super) usize);
 
-impl Projections {
-    pub const fn offset(self) -> usize {
-        self.0
+impl<T> Path<T> {
+    pub fn offset(&self) -> usize {
+        self.projections.0
     }
 
-    pub const fn size(self) -> usize {
-        self.1
+    pub fn num_pointers_reachable(&self) -> usize {
+        self.projections.1
     }
 
-    pub const fn depth(self) -> usize {
-        self.2
+    pub fn depth(&self) -> usize {
+        self.projections.2
+    }
+
+    pub fn new(base: T, projections: Projections) -> Self {
+        Self { base, projections }
     }
 }
 
@@ -139,17 +147,17 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
     /// Get the `(offset, size, depth)` of an access_path
     ///
     /// TODO replace `HasLocalDecls` with `HasPathCache`?
-    pub fn projections<'tcx, D: HasLocalDecls<'tcx>>(
+    pub fn path<'tcx, D: HasLocalDecls<'tcx>>(
         &self,
         place: &Place<'tcx>,
         local_decls: &D,
-    ) -> Projections {
+    ) -> Path<()> {
         let mut offset = 0;
         let mut ty = local_decls.local_decls()[place.local].ty;
         let mut levels = 0;
         for proj_elem in place.projection {
             if levels == K_LIMIT {
-                return Projections(offset, 0, 0);
+                return Path::new((), Projections(offset, 0, 0));
             }
             match proj_elem {
                 ProjectionElem::Deref => {
@@ -163,7 +171,7 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
                     };
                     // TODO unions???
                     if adt_def.is_union() {
-                        return Projections(offset, 0, 0);
+                        return Path::new((), Projections(offset, 0, 0));
                     }
                     assert!(adt_def.is_struct());
                     offset +=
@@ -177,7 +185,10 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
                 | ProjectionElem::OpaqueCast(_) => unreachable!(),
             }
         }
-        Projections(offset, self.size_of(K_LIMIT - levels, ty), K_LIMIT - levels)
+        Path::new(
+            (),
+            Projections(offset, self.size_of(K_LIMIT - levels, ty), K_LIMIT - levels),
+        )
     }
 
     /// Patch up offsets of a type `ty` used with `depth` in a context `depth + delta`.
@@ -610,113 +621,129 @@ fn f(input: *mut Node) {
 
             // input
             assert_eq!(
-                access_paths.projections(&Place::from(Local::from_u32(1)), body),
+                access_paths
+                    .path(&Place::from(Local::from_u32(1)), body)
+                    .projections,
                 Projections(0, 7, 3)
             );
 
             // *input
             assert_eq!(
-                access_paths.projections(
-                    &Place::from(Local::from_u32(1))
-                        .project_deeper(&[ProjectionElem::Deref], program.tcx),
-                    body
-                ),
+                access_paths
+                    .path(
+                        &Place::from(Local::from_u32(1))
+                            .project_deeper(&[ProjectionElem::Deref], program.tcx),
+                        body
+                    )
+                    .projections,
                 Projections(1, 6, 2)
             );
 
             // (*input).left
             assert_eq!(
-                access_paths.projections(
-                    &Place::from(Local::from_u32(1)).project_deeper(
-                        &[
-                            ProjectionElem::Deref,
-                            ProjectionElem::Field(FieldIdx::from_u32(0), node_pointer),
-                        ],
-                        program.tcx
-                    ),
-                    body
-                ),
+                access_paths
+                    .path(
+                        &Place::from(Local::from_u32(1)).project_deeper(
+                            &[
+                                ProjectionElem::Deref,
+                                ProjectionElem::Field(FieldIdx::from_u32(0), node_pointer),
+                            ],
+                            program.tcx
+                        ),
+                        body
+                    )
+                    .projections,
                 Projections(1, 3, 2)
             );
 
             // *(*input).left
             assert_eq!(
-                access_paths.projections(
-                    &Place::from(Local::from_u32(1)).project_deeper(
-                        &[
-                            ProjectionElem::Deref,
-                            ProjectionElem::Field(FieldIdx::from_u32(0), node_pointer),
-                            ProjectionElem::Deref,
-                        ],
-                        program.tcx
-                    ),
-                    body
-                ),
+                access_paths
+                    .path(
+                        &Place::from(Local::from_u32(1)).project_deeper(
+                            &[
+                                ProjectionElem::Deref,
+                                ProjectionElem::Field(FieldIdx::from_u32(0), node_pointer),
+                                ProjectionElem::Deref,
+                            ],
+                            program.tcx
+                        ),
+                        body
+                    )
+                    .projections,
                 Projections(2, 2, 1)
             );
 
             // (*(*input).left).right
             assert_eq!(
-                access_paths.projections(
-                    &Place::from(Local::from_u32(1)).project_deeper(
-                        &[
-                            ProjectionElem::Deref,
-                            ProjectionElem::Field(FieldIdx::from_u32(0), node_pointer),
-                            ProjectionElem::Deref,
-                            ProjectionElem::Field(FieldIdx::from_u32(1), node_pointer),
-                        ],
-                        program.tcx
-                    ),
-                    body
-                ),
+                access_paths
+                    .path(
+                        &Place::from(Local::from_u32(1)).project_deeper(
+                            &[
+                                ProjectionElem::Deref,
+                                ProjectionElem::Field(FieldIdx::from_u32(0), node_pointer),
+                                ProjectionElem::Deref,
+                                ProjectionElem::Field(FieldIdx::from_u32(1), node_pointer),
+                            ],
+                            program.tcx
+                        ),
+                        body
+                    )
+                    .projections,
                 Projections(3, 1, 1)
             );
 
             // (*input).right
             assert_eq!(
-                access_paths.projections(
-                    &Place::from(Local::from_u32(1)).project_deeper(
-                        &[
-                            ProjectionElem::Deref,
-                            ProjectionElem::Field(FieldIdx::from_u32(1), node_pointer),
-                        ],
-                        program.tcx
-                    ),
-                    body
-                ),
+                access_paths
+                    .path(
+                        &Place::from(Local::from_u32(1)).project_deeper(
+                            &[
+                                ProjectionElem::Deref,
+                                ProjectionElem::Field(FieldIdx::from_u32(1), node_pointer),
+                            ],
+                            program.tcx
+                        ),
+                        body
+                    )
+                    .projections,
                 Projections(4, 3, 2)
             );
 
             // *(*input).right
             assert_eq!(
-                access_paths.projections(
-                    &Place::from(Local::from_u32(1)).project_deeper(
-                        &[
-                            ProjectionElem::Deref,
-                            ProjectionElem::Field(FieldIdx::from_u32(1), node_pointer),
-                            ProjectionElem::Deref,
-                        ],
-                        program.tcx
-                    ),
-                    body
-                ),
+                access_paths
+                    .path(
+                        &Place::from(Local::from_u32(1)).project_deeper(
+                            &[
+                                ProjectionElem::Deref,
+                                ProjectionElem::Field(FieldIdx::from_u32(1), node_pointer),
+                                ProjectionElem::Deref,
+                            ],
+                            program.tcx
+                        ),
+                        body
+                    )
+                    .projections,
                 Projections(5, 2, 1)
             );
 
             // (*(*input).right).left
             assert_eq!(
-                access_paths.projections(
-                    &Place::from(Local::from_u32(1)).project_deeper(
-                        &[
-                            ProjectionElem::Deref,
-                            ProjectionElem::Field(FieldIdx::from_u32(1), node_pointer),
-                            ProjectionElem::Deref,
-                            ProjectionElem::Field(FieldIdx::from_u32(0), node_pointer),
-                        ],
-                        program.tcx
-                    ),
-                    body
-                ),
+                access_paths
+                    .path(
+                        &Place::from(Local::from_u32(1)).project_deeper(
+                            &[
+                                ProjectionElem::Deref,
+                                ProjectionElem::Field(FieldIdx::from_u32(1), node_pointer),
+                                ProjectionElem::Deref,
+                                ProjectionElem::Field(FieldIdx::from_u32(0), node_pointer),
+                            ],
+                            program.tcx
+                        ),
+                        body
+                    )
+                    .projections,
                 Projections(5, 1, 1)
             );
         })

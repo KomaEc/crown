@@ -1,4 +1,3 @@
-use either::Either::{Left, Right};
 use rustc_abi::FieldIdx;
 use rustc_index::IndexVec;
 use rustc_middle::{
@@ -26,28 +25,22 @@ pub struct Analysis<'analysis, const K_LIMIT: usize, DB> {
     tokens: &'analysis mut IndexVec<Local, IndexVec<SSAIdx, OwnershipToken>>,
 }
 
-type Base = Option<UseKind<OwnershipToken>>;
+type Base = UseKind<OwnershipToken>;
 #[cfg(not(debug_assertions))]
 const _: () = assert!(std::mem::size_of::<Base>() == 8);
 
-// fn path_tokens(path: &Path<Base>, expected_depth: usize) -> impl Iterator<Item = OwnershipToken> {
-//     if path.1.depth() == expected_depth {
-//         let base = path.0.unwrap().update().unwrap().def;
-//         Left(base + path.1.offset()..base + path.1.offset() + path.1.size())
-//     } else {
-//         Right(todo!())
-//     }
-// }
-
-fn min_depth(path1: &Path<Base>, path2: &Path<Base>) -> usize {
-    std::cmp::min(path1.1.depth(), path2.1.depth())
-}
-
 impl<'analysis, const K_LIMIT: usize, DB: Database> Analysis<'analysis, K_LIMIT, DB> {
-    // Cached? 
-    fn base<'tcx>(&mut self, engine: &Engine<'_, 'tcx>, local: Local) -> std::ops::Range<OwnershipToken> {
-
-        let size = self.ctxt.access_paths.projections(&Place::from(local), engine.body).size();
+    // Cached?
+    fn base<'tcx>(
+        &mut self,
+        engine: &Engine<'_, 'tcx>,
+        local: Local,
+    ) -> std::ops::Range<OwnershipToken> {
+        let size = self
+            .ctxt
+            .access_paths
+            .path(&Place::from(local), engine.body)
+            .num_pointers_reachable();
         let ownership_tokens = self.ctxt.database.new_tokens(size);
 
         // TODO monotonicity constraints
@@ -55,13 +48,14 @@ impl<'analysis, const K_LIMIT: usize, DB: Database> Analysis<'analysis, K_LIMIT,
         ownership_tokens
     }
 
+    /// If the path is a `Some`, then its size > 0
     fn path<'tcx>(
         &mut self,
         engine: &mut Engine<'_, 'tcx>,
         place: &Place<'tcx>,
         location: Location,
-    ) -> Path<Base> {
-        let projections = self.ctxt.access_paths.projections(place, engine.body);
+    ) -> Option<Path<Base>> {
+        let path = self.ctxt.access_paths.path(place, engine.body);
         let base = engine.use_base_of(place, location).map(|base| match base {
             Inspect(ssa_idx) => Inspect(self.tokens[place.local][ssa_idx]),
             Def(Update { r#use, def }) => {
@@ -73,49 +67,24 @@ impl<'analysis, const K_LIMIT: usize, DB: Database> Analysis<'analysis, K_LIMIT,
                 })
             }
         });
-        (base, projections)
+        base.and_then(|base| {
+            (path.num_pointers_reachable() > 0).then_some(Path::new(base, path.projections))
+        })
     }
 
     fn r#move<'tcx>(&mut self, engine: &Engine<'_, 'tcx>, lhs: &Path<Base>, rhs: &Path<Base>) {
-        if lhs.1.size() > 0 && rhs.1.size() > 0 {
-            let min_depth = min_depth(lhs, rhs);
+        todo!()
+    }
 
+    fn transfer<'tcx>(&mut self, engine: &Engine<'_, 'tcx>, lhs: &Path<Base>, rhs: &Path<Base>) {
+        todo!()
+    }
+
+    fn unconstrained<'tcx>(&mut self, path: Option<&Path<Base>>) {
+        if let Some(path) = path {
+            let _ = path;
         }
     }
-    // fn unconstrained<'tcx>(
-    //     &mut self,
-    //     engine: &Engine<'_, 'tcx>,
-    //     place: &Place<'tcx>,
-    //     update: Update<SSAIdx>,
-    // ) {
-    //         let path = self
-    //             .ctxt
-    //             .access_path
-    //             .path(&Place::from(place.local), engine.body);
-    //         let _ = self.ctxt.database.new_tokens(path.1);
-    // }
-
-    // fn r#move<'tcx>(
-    //     &mut self,
-    //     engine: &Engine<'_, 'tcx>,
-    //     lhs: &Place<'tcx>,
-    //     lhs_use: Option<UseKind<SSAIdx>>,
-    //     rhs: &Place<'tcx>,
-    //     rhs_use: Option<UseKind<SSAIdx>>,
-    // ) {
-    //     let lhs_use = lhs_use.and_then(UseKind::update);
-    //     let rhs_use = rhs_use.and_then(UseKind::update);
-    // }
-
-    // fn copy<'tcx>(
-    //     &mut self,
-    //     engine: &Engine<'_, 'tcx>,
-    //     lhs: &Place<'tcx>,
-    //     lhs_use: Option<UseKind<SSAIdx>>,
-    //     rhs: &Place<'tcx>,
-    //     rhs_use: Option<UseKind<SSAIdx>>,
-    // ) {
-    // }
 }
 
 impl<'analysis, 'tcx, const K_LIMIT: usize, DB: Database> Inference<'tcx>
@@ -135,14 +104,23 @@ impl<'analysis, 'tcx, const K_LIMIT: usize, DB: Database> InferAssign<'tcx>
     ) {
         let lhs = self.path(engine, lhs, location);
         match rhs {
-            Operand::Copy(_) => todo!(),
+            Operand::Copy(rhs) => {
+                let rhs = self.path(engine, rhs, location);
+                match (lhs, rhs) {
+                    (None, _) => self.unconstrained(rhs.as_ref()),
+                    (_, None) => self.unconstrained(lhs.as_ref()),
+                    (Some(lhs), Some(rhs)) => self.transfer(engine, &lhs, &rhs),
+                }
+            }
             Operand::Move(rhs) => {
                 let rhs = self.path(engine, rhs, location);
-                self.r#move(&engine, &lhs, &rhs);
+                match (lhs, rhs) {
+                    (None, _) => self.unconstrained(rhs.as_ref()),
+                    (_, None) => self.unconstrained(lhs.as_ref()),
+                    (Some(lhs), Some(rhs)) => self.r#move(engine, &lhs, &rhs),
+                }
             }
-            Operand::Constant(_) => {
-                // let r#use = engine.use_base_of(lhs, location);
-            }
+            Operand::Constant(_) => self.unconstrained(lhs.as_ref()),
         }
     }
 
@@ -191,9 +169,13 @@ impl<'analysis, 'tcx, const K_LIMIT: usize, DB: Database> InferAssign<'tcx>
         engine: &mut Engine<'_, 'tcx>,
         lhs: &Place<'tcx>,
         rhs: &Operand<'tcx>,
-        cast_kind: rustc_middle::mir::CastKind,
+        _: rustc_middle::mir::CastKind,
         location: Location,
     ) {
+        // FIXME might not be safe! Casting *mut S to *mut T?
+        //
+        // It is actually wrong. The path for `rhs` needs to be casted
+        // self.infer_use(engine, lhs, rhs, location);
         todo!()
     }
 

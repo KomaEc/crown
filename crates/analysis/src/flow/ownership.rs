@@ -116,7 +116,10 @@ impl<'build, 'tcx, const K_LIMIT: usize> Visitor<'tcx>
 
     fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
         if let Some(flow) = self.place_flow(place, context) {
-            let num_pointers_reachable = self.access_paths.projections(place, self.body).size();
+            let num_pointers_reachable = self
+                .access_paths
+                .path(place, self.body)
+                .num_pointers_reachable();
             if num_pointers_reachable > 0 && matches!(flow, OwnershipFlow::Flow) {
                 self.location_data.push((place.local, Def(Update::new())));
             } else {
