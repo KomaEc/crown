@@ -123,6 +123,7 @@ impl<'build, 'tcx, const K_LIMIT: usize> Visitor<'tcx>
             if num_pointers_reachable > 0 && matches!(flow, OwnershipFlow::Flow) {
                 self.location_data.push((place.local, Def(Update::new())));
             } else {
+                // TODO do we generate uses for non-pointer paths at all?
                 self.location_data.push((place.local, Inspect(SSAIdx::MAX)));
             }
         }

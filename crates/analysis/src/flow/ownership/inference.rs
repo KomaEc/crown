@@ -4,6 +4,7 @@ use rustc_middle::{
     mir::{BasicBlock, BinOp, Local, Location, NullOp, Operand, Place, UnOp},
     ty::Const,
 };
+use utils::data_structure::assoc::AssocExt;
 
 use super::{
     access_path::Path,
@@ -16,7 +17,7 @@ use crate::flow::{
         Engine, InferAssign, InferCall, InferIrrelevant, InferJoin, InferReturn, Inference,
     },
     join_points::PhiNode,
-    SSAIdx,
+    RichLocation, SSAIdx,
 };
 
 pub struct Analysis<'analysis, const K_LIMIT: usize, DB> {
@@ -25,9 +26,12 @@ pub struct Analysis<'analysis, const K_LIMIT: usize, DB> {
     tokens: &'analysis mut IndexVec<Local, IndexVec<SSAIdx, OwnershipToken>>,
 }
 
-type Base = UseKind<OwnershipToken>;
+type Base = (Local, UseKind<SSAIdx>);
 #[cfg(not(debug_assertions))]
-const _: () = assert!(std::mem::size_of::<Base>() == 8);
+const _: () = assert!(std::mem::size_of::<Base>() == 12);
+type ExpandedBase = Update<OwnershipToken>;
+#[cfg(not(debug_assertions))]
+const _: () = assert!(std::mem::size_of::<ExpandedBase>() == 8);
 
 impl<'analysis, const K_LIMIT: usize, DB: Database> Analysis<'analysis, K_LIMIT, DB> {
     // Cached?
@@ -56,34 +60,66 @@ impl<'analysis, const K_LIMIT: usize, DB: Database> Analysis<'analysis, K_LIMIT,
         location: Location,
     ) -> Option<Path<Base>> {
         let path = self.ctxt.access_paths.path(place, engine.body);
-        let base = engine.use_base_of(place, location).map(|base| match base {
-            Inspect(ssa_idx) => Inspect(self.tokens[place.local][ssa_idx]),
-            Def(Update { r#use, def }) => {
+        let base = engine.use_base_of(place, location)?;
+        let base = match base {
+            Inspect(_) => base,
+            Def(update @ Update { r#use, def }) => {
                 let new_tokens = self.base(engine, place.local);
                 assert_eq!(self.tokens[place.local].push(new_tokens.start), def);
-                Def(Update {
-                    r#use: self.tokens[place.local][r#use],
-                    def: new_tokens.start,
-                })
+                Def(update)
             }
-        });
-        base.and_then(|base| {
-            (path.num_pointers_reachable() > 0).then_some(Path::new(base, path.projections))
+        };
+        (path.num_pointers_reachable() > 0)
+            .then_some(Path::new((place.local, base), path.projections))
+    }
+
+    fn expand(&self, engine: &Engine, path: &Path<Base>) -> Path<ExpandedBase> {
+        path.map_base(|(local, base)| {
+            match base {
+                Inspect(ssa_idx) => {
+                    let def_loc = engine.def_use_chain.def_locs[local][ssa_idx];
+                    match def_loc {
+                        RichLocation::Entry => unreachable!("Inspecting entry definition. How?"),
+                        RichLocation::Phi(block) => {
+                            let phi_node = engine.def_use_chain.join_points[block]
+                                .get_by_key(&local)
+                                .expect("Definition location does not have phi node. How?");
+                            unimplemented!(
+                                "How to get the pre-state of {:?} at phi node {block:?}. Potentially, \
+                                store two sets of tokens when defining phi-node. The first set represents \
+                                the post-state, while the second set represents the pre-state and is to be \
+                                unified with rhs of a phi node.",
+                                phi_node.lhs
+                            );
+                        }
+                        RichLocation::Mir(location) => {
+                            let update = engine.def_use_chain.uses[location]
+                                .get_by_key(&local)
+                                .copied()
+                                .and_then(|use_kind| use_kind.update())
+                                .expect("Definition location does not define. How?");
+                            update
+                        }
+                    }
+                }
+                Def(update) => update,
+            }
+            .map(|ssa_idx| self.tokens[local][ssa_idx])
         })
     }
 
-    fn r#move<'tcx>(&mut self, engine: &Engine<'_, 'tcx>, lhs: &Path<Base>, rhs: &Path<Base>) {
+    fn r#move(&mut self, engine: &Engine, lhs: &Path<Base>, rhs: &Path<Base>) {
+        let (lhs, rhs) = (self.expand(engine, lhs), self.expand(engine, rhs));
+
         todo!()
     }
 
-    fn transfer<'tcx>(&mut self, engine: &Engine<'_, 'tcx>, lhs: &Path<Base>, rhs: &Path<Base>) {
+    fn transfer(&mut self, engine: &Engine, lhs: &Path<Base>, rhs: &Path<Base>) {
         todo!()
     }
 
-    fn unconstrained<'tcx>(&mut self, path: Option<&Path<Base>>) {
-        if let Some(path) = path {
-            let _ = path;
-        }
+    fn unconstrained(&self, path: Option<&Path<Base>>) {
+        let _ = path;
     }
 }
 

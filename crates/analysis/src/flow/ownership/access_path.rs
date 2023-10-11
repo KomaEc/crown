@@ -31,6 +31,16 @@ pub struct Path<T> {
     pub(super) projections: Projections,
 }
 
+impl<T> Path<T> {
+    pub fn map_base<U, F>(self, f: F) -> Path<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        let Path { base, projections } = self;
+        Path::new(f(base), projections)
+    }
+}
+
 /// `(offset_relative_to_base, num_pointers_reachable, depth)`
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct Projections(pub(super) usize, pub(super) usize, pub(super) usize);

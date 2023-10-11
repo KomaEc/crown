@@ -27,6 +27,18 @@ pub struct Update<T> {
     pub def: T,
 }
 
+impl<T> Update<T> {
+    pub fn map<U, F>(self, f: F) -> Update<U>
+    where
+        F: Fn(T) -> U,
+    {
+        Update {
+            r#use: f(self.r#use),
+            def: f(self.def),
+        }
+    }
+}
+
 impl Update<SSAIdx> {
     pub fn new() -> Self {
         Update {
@@ -61,10 +73,7 @@ impl<T> UseKind<T> {
     {
         match self {
             Inspect(t) => Inspect(f(t)),
-            Def(Update { r#use, def }) => Def(Update {
-                r#use: f(r#use),
-                def: f(def),
-            }),
+            Def(update) => Def(update.map(f)),
         }
     }
 }
