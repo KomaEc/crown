@@ -11,7 +11,7 @@ use smallvec::SmallVec;
 use self::access_path::AccessPaths;
 use super::{
     def_use::{Def, DefUseChain, Inspect, LocationBuilder, Update, UseKind},
-    inference::Engine,
+    // inference::Engine,
     state::SSAState,
     SSAIdx,
 };
@@ -31,24 +31,24 @@ pub struct Ctxt<const K_LIMIT: usize, DB> {
     pub call_graph: CallGraph,
 }
 
-pub fn build_engine<'engine, 'access_paths, 'tcx, const K_LIMIT: usize>(
-    body: &'engine Body<'tcx>,
-    tcx: TyCtxt<'tcx>,
-    access_paths: &'access_paths AccessPaths<K_LIMIT>,
-) -> Engine<'engine, 'tcx>
-where
-    'engine: 'access_paths,
-{
-    let flow_builder = OwnershipFlowBuilder {
-        body,
-        access_paths,
-        location_data: Default::default(),
-        deref_copies: DerefCopiesCollector::collect(body),
-    };
-    let flow_chain = DefUseChain::initialise(body, flow_builder);
-    let ssa_state = SSAState::new(body.local_decls.len());
-    Engine::new(tcx, body, flow_chain, ssa_state)
-}
+// pub fn build_engine<'engine, 'access_paths, 'tcx, const K_LIMIT: usize>(
+//     body: &'engine Body<'tcx>,
+//     tcx: TyCtxt<'tcx>,
+//     access_paths: &'access_paths AccessPaths<K_LIMIT>,
+// ) -> Engine<'engine, 'tcx>
+// where
+//     'engine: 'access_paths,
+// {
+//     let flow_builder = OwnershipFlowBuilder {
+//         body,
+//         access_paths,
+//         location_data: Default::default(),
+//         deref_copies: DerefCopiesCollector::collect(body),
+//     };
+//     let flow_chain = DefUseChain::new(body, flow_builder);
+//     let ssa_state = SSAState::new(body.local_decls.len());
+//     Engine::new(tcx, body, flow_chain, ssa_state)
+// }
 
 struct DerefCopiesCollector(BitSet<Local>);
 

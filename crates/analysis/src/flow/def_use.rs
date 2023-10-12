@@ -1,10 +1,9 @@
+pub mod builder;
+
 use rustc_index::{bit_set::BitSet, IndexVec};
-use rustc_middle::{
-    mir::{
-        visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor},
-        BasicBlock, BasicBlockData, Body, Local, Location, Place, Rvalue,
-    },
-    ty::TyCtxt,
+use rustc_middle::mir::{
+    visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor},
+    BasicBlock, BasicBlockData, Body, Local, Location, Place, Rvalue,
 };
 use smallvec::SmallVec;
 use utils::data_structure::{
@@ -12,12 +11,11 @@ use utils::data_structure::{
     vec_vec::{VecVec, VecVecBuilder},
 };
 
+use self::builder::DefUseChainBuilder;
 use super::{
     dom::compute_dominance_frontier,
-    inference::Engine,
     join_points::{JoinPoints, PhiNode},
     state::SSAState,
-    vanilla::Vanilla,
     LocationMap, RichLocation, SSAIdx,
 };
 
@@ -188,20 +186,19 @@ pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
 impl DefUseChain {
     /// Construct a normal def use chain (Definition of def and use is similar to
     /// a liveness analysis)
-    pub fn new<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
-        let vanilla_builder = VanillaBuilder::default();
-        let def_use_chain = DefUseChain::initialise(body, vanilla_builder);
-        let ssa_state = SSAState::new(body.local_decls.len());
-        let mut engine = Engine::new(tcx, body, def_use_chain, ssa_state);
-        engine.run(Vanilla);
-
-        engine.def_use_chain
+    pub fn vanilla<'tcx>(body: &Body<'tcx>) -> Self {
+        DefUseChain::new(body, VanillaBuilder::default())
     }
 
-    pub fn initialise<'tcx, L: LocationBuilder<'tcx>>(
-        body: &Body<'tcx>,
-        location_builder: L,
-    ) -> Self {
+    pub fn new<'tcx, L: LocationBuilder<'tcx>>(body: &Body<'tcx>, location_builder: L) -> Self {
+        let def_use_chain = DefUseChain::initialise(body, location_builder);
+        let ssa_state = SSAState::new(body.local_decls.len());
+        let mut builder = DefUseChainBuilder::new(body, def_use_chain, ssa_state);
+        builder.run();
+        builder.def_use_chain
+    }
+
+    fn initialise<'tcx, L: LocationBuilder<'tcx>>(body: &Body<'tcx>, location_builder: L) -> Self {
         let uses = DefUseBuilder::build(body, location_builder);
         let def_locs =
             IndexVec::from_elem(IndexVec::from([RichLocation::Entry]), &body.local_decls);

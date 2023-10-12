@@ -5,11 +5,9 @@ use utils::data_structure::vec_vec::VecVec;
 
 pub mod def_use;
 mod dom;
-pub mod inference;
 mod join_points;
 pub mod ownership;
 mod state;
-pub mod vanilla;
 
 utils::macros::newtype_index! {
     #[debug_format = "{}"]

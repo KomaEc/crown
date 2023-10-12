@@ -385,9 +385,10 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
             StatementKind::Deinit(_) => todo!(),
             StatementKind::PlaceMention(_) => todo!(),
             StatementKind::Intrinsic(_) => todo!(),
+            StatementKind::StorageDead(..) | StatementKind::StorageLive(..) => tracing::error!("StorageLive, StorageDead"),
             StatementKind::FakeRead(_)
-            | StatementKind::StorageLive(_)
-            | StatementKind::StorageDead(_)
+            // | StatementKind::StorageLive(_)
+            // | StatementKind::StorageDead(_)
             | StatementKind::Retag(_, _)
             | StatementKind::AscribeUserType(_, _)
             | StatementKind::Coverage(_)

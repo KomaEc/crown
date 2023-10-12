@@ -1,0 +1,4691 @@
+@DefId(0:41 ~ lib[f5c5]::src::buffer::buffer_new)
+bb0:
+  _2 = const 64_i32
+  using: 
+  _1 = move _2 as u64 (IntToInt)
+  using: _2@Mir(bb0[0])
+  _0 = src::buffer::buffer_new_with_size(move _1) -> [return: bb1, unwind continue]
+  using: _1@Mir(bb0[1])
+bb1:
+  return
+  using: _0@Mir(bb0[2])
+@DefId(0:42 ~ lib[f5c5]::src::buffer::buffer_new_with_size)
+bb0:
+  _5 = std::mem::size_of::<src::buffer::buffer_t>() -> [return: bb1, unwind continue]
+  using: 
+bb1:
+  _4 = move _5 as u64 (IntToInt)
+  using: _5@Mir(bb0[0])
+  _3 = src::buffer::malloc(move _4) -> [return: bb2, unwind continue]
+  using: _4@Mir(bb1[0])
+bb2:
+  _2 = move _3 as *mut src::buffer::buffer_t (PtrToPtr)
+  using: _3@Mir(bb1[1])
+  _6 = std::ptr::mut_ptr::<impl *mut src::buffer::buffer_t>::is_null(_2) -> [return: bb3, unwind continue]
+  using: _2@Mir(bb2[0])
+bb3:
+  switchInt(move _6) -> [0: bb5, otherwise: bb4]
+  using: _6@Mir(bb2[1])
+bb4:
+  _0 = const 0_usize as *mut src::buffer::buffer_t (PointerFromExposedAddress)
+  using: 
+  goto -> bb8
+  using: 
+bb5:
+  _28 = _2 as *const () (PtrToPtr)
+  using: _2@Mir(bb2[0])
+  _29 = _28 as usize (Transmute)
+  using: _28@Mir(bb5[0])
+  _30 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _31 = Sub(_30, const 1_usize)
+  using: _30@Mir(bb5[2])
+  _32 = BitAnd(_29, _31)
+  using: _29@Mir(bb5[1]), _31@Mir(bb5[3])
+  _33 = Eq(_32, const 0_usize)
+  using: _32@Mir(bb5[4])
+  assert(_33, "misaligned pointer dereference: address must be a multiple of {} but is {}", _30, _29) -> [success: bb11, unwind unreachable]
+  using: _33@Mir(bb5[5]), _30@Mir(bb5[2]), _29@Mir(bb5[1])
+bb6:
+  _13 = const 1_i32
+  using: 
+  _12 = move _13 as u64 (IntToInt)
+  using: _13@Mir(bb6[0])
+  _8 = src::buffer::calloc(move _9, move _12) -> [return: bb7, unwind continue]
+  using: _9@Mir(bb10[3]), _12@Mir(bb6[1])
+bb7:
+  (*_7) = move _8 as *mut i8 (PtrToPtr)
+  using: _7@Mir(bb10[0]), _8@Mir(bb6[2])
+  _16 = _2 as *const () (PtrToPtr)
+  using: _2@Mir(bb2[0])
+  _17 = _16 as usize (Transmute)
+  using: _16@Mir(bb7[1])
+  _18 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _19 = Sub(_18, const 1_usize)
+  using: _18@Mir(bb7[3])
+  _20 = BitAnd(_17, _19)
+  using: _17@Mir(bb7[2]), _19@Mir(bb7[4])
+  _21 = Eq(_20, const 0_usize)
+  using: _20@Mir(bb7[5])
+  assert(_21, "misaligned pointer dereference: address must be a multiple of {} but is {}", _18, _17) -> [success: bb9, unwind unreachable]
+  using: _21@Mir(bb7[6]), _18@Mir(bb7[3]), _17@Mir(bb7[2])
+bb8:
+  return
+  using: _0@Phi(bb8)
+bb9:
+  _14 = &mut ((*_2).2: *mut i8)
+  using: _2@Mir(bb2[0])
+  _15 = (*_7)
+  using: _7@Mir(bb10[0])
+  (*_14) = move _15
+  using: _14@Mir(bb9[0]), _15@Mir(bb9[1])
+  _0 = _2
+  using: _2@Mir(bb2[0])
+  goto -> bb8
+  using: 
+bb10:
+  _7 = &mut ((*_2).1: *mut i8)
+  using: _2@Mir(bb2[0])
+  _11 = const 1_i32
+  using: 
+  _10 = move _11 as u64 (IntToInt)
+  using: _11@Mir(bb10[1])
+  _9 = core::num::<impl u64>::wrapping_add(_1, move _10) -> [return: bb6, unwind continue]
+  using: _1@Entry, _10@Mir(bb10[2])
+bb11:
+  ((*_2).0: u64) = _1
+  using: _2@Mir(bb2[0]), _1@Entry
+  _22 = _2 as *const () (PtrToPtr)
+  using: _2@Mir(bb2[0])
+  _23 = _22 as usize (Transmute)
+  using: _22@Mir(bb11[1])
+  _24 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _25 = Sub(_24, const 1_usize)
+  using: _24@Mir(bb11[3])
+  _26 = BitAnd(_23, _25)
+  using: _23@Mir(bb11[2]), _25@Mir(bb11[4])
+  _27 = Eq(_26, const 0_usize)
+  using: _26@Mir(bb11[5])
+  assert(_27, "misaligned pointer dereference: address must be a multiple of {} but is {}", _24, _23) -> [success: bb10, unwind unreachable]
+  using: _27@Mir(bb11[6]), _24@Mir(bb11[3]), _23@Mir(bb11[2])
+@DefId(0:43 ~ lib[f5c5]::src::buffer::buffer_new_with_string)
+bb0:
+  _3 = _1 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _1@Entry
+  _2 = src::buffer::strlen(move _3) -> [return: bb1, unwind continue]
+  using: _3@Mir(bb0[0])
+bb1:
+  _0 = src::buffer::buffer_new_with_string_length(_1, move _2) -> [return: bb2, unwind continue]
+  using: _1@Entry, _2@Mir(bb0[1])
+bb2:
+  return
+  using: _0@Mir(bb1[0])
+@DefId(0:44 ~ lib[f5c5]::src::buffer::buffer_new_with_string_length)
+bb0:
+  _6 = std::mem::size_of::<src::buffer::buffer_t>() -> [return: bb1, unwind continue]
+  using: 
+bb1:
+  _5 = move _6 as u64 (IntToInt)
+  using: _6@Mir(bb0[0])
+  _4 = src::buffer::malloc(move _5) -> [return: bb2, unwind continue]
+  using: _5@Mir(bb1[0])
+bb2:
+  _3 = move _4 as *mut src::buffer::buffer_t (PtrToPtr)
+  using: _4@Mir(bb1[1])
+  _7 = std::ptr::mut_ptr::<impl *mut src::buffer::buffer_t>::is_null(_3) -> [return: bb3, unwind continue]
+  using: _3@Mir(bb2[0])
+bb3:
+  switchInt(move _7) -> [0: bb5, otherwise: bb4]
+  using: _7@Mir(bb2[1])
+bb4:
+  _0 = const 0_usize as *mut src::buffer::buffer_t (PointerFromExposedAddress)
+  using: 
+  goto -> bb6
+  using: 
+bb5:
+  _23 = _3 as *const () (PtrToPtr)
+  using: _3@Mir(bb2[0])
+  _24 = _23 as usize (Transmute)
+  using: _23@Mir(bb5[0])
+  _25 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _26 = Sub(_25, const 1_usize)
+  using: _25@Mir(bb5[2])
+  _27 = BitAnd(_24, _26)
+  using: _24@Mir(bb5[1]), _26@Mir(bb5[3])
+  _28 = Eq(_27, const 0_usize)
+  using: _27@Mir(bb5[4])
+  assert(_28, "misaligned pointer dereference: address must be a multiple of {} but is {}", _25, _24) -> [success: bb9, unwind unreachable]
+  using: _28@Mir(bb5[5]), _25@Mir(bb5[2]), _24@Mir(bb5[1])
+bb6:
+  return
+  using: _0@Phi(bb6)
+bb7:
+  _9 = &mut ((*_3).2: *mut i8)
+  using: _3@Mir(bb2[0])
+  _10 = (*_8)
+  using: _8@Mir(bb8[0])
+  (*_9) = move _10
+  using: _9@Mir(bb7[0]), _10@Mir(bb7[1])
+  _0 = _3
+  using: _3@Mir(bb2[0])
+  goto -> bb6
+  using: 
+bb8:
+  _8 = &mut ((*_3).1: *mut i8)
+  using: _3@Mir(bb2[0])
+  (*_8) = _1
+  using: _8@Mir(bb8[0]), _1@Entry
+  _11 = _3 as *const () (PtrToPtr)
+  using: _3@Mir(bb2[0])
+  _12 = _11 as usize (Transmute)
+  using: _11@Mir(bb8[2])
+  _13 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _14 = Sub(_13, const 1_usize)
+  using: _13@Mir(bb8[4])
+  _15 = BitAnd(_12, _14)
+  using: _12@Mir(bb8[3]), _14@Mir(bb8[5])
+  _16 = Eq(_15, const 0_usize)
+  using: _15@Mir(bb8[6])
+  assert(_16, "misaligned pointer dereference: address must be a multiple of {} but is {}", _13, _12) -> [success: bb7, unwind unreachable]
+  using: _16@Mir(bb8[7]), _13@Mir(bb8[4]), _12@Mir(bb8[3])
+bb9:
+  ((*_3).0: u64) = _2
+  using: _3@Mir(bb2[0]), _2@Entry
+  _17 = _3 as *const () (PtrToPtr)
+  using: _3@Mir(bb2[0])
+  _18 = _17 as usize (Transmute)
+  using: _17@Mir(bb9[1])
+  _19 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _20 = Sub(_19, const 1_usize)
+  using: _19@Mir(bb9[3])
+  _21 = BitAnd(_18, _20)
+  using: _18@Mir(bb9[2]), _20@Mir(bb9[4])
+  _22 = Eq(_21, const 0_usize)
+  using: _21@Mir(bb9[5])
+  assert(_22, "misaligned pointer dereference: address must be a multiple of {} but is {}", _19, _18) -> [success: bb8, unwind unreachable]
+  using: _22@Mir(bb9[6]), _19@Mir(bb9[3]), _18@Mir(bb9[2])
+@DefId(0:45 ~ lib[f5c5]::src::buffer::buffer_new_with_copy)
+bb0:
+  _3 = _1 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _1@Entry
+  _2 = src::buffer::strlen(move _3) -> [return: bb1, unwind continue]
+  using: _3@Mir(bb0[0])
+bb1:
+  _5 = _2
+  using: _2@Mir(bb0[1])
+  _4 = src::buffer::buffer_new_with_size(move _5) -> [return: bb2, unwind continue]
+  using: _5@Mir(bb1[0])
+bb2:
+  _7 = _4
+  using: _4@Mir(bb1[1])
+  _6 = std::ptr::mut_ptr::<impl *mut src::buffer::buffer_t>::is_null(move _7) -> [return: bb3, unwind continue]
+  using: _7@Mir(bb2[0])
+bb3:
+  switchInt(move _6) -> [0: bb5, otherwise: bb4]
+  using: _6@Mir(bb2[1])
+bb4:
+  _0 = const 0_usize as *mut src::buffer::buffer_t (PointerFromExposedAddress)
+  using: 
+  goto -> bb7
+  using: 
+bb5:
+  _27 = _4 as *const () (PtrToPtr)
+  using: _4@Mir(bb1[1])
+  _28 = _27 as usize (Transmute)
+  using: _27@Mir(bb5[0])
+  _29 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _30 = Sub(_29, const 1_usize)
+  using: _29@Mir(bb5[2])
+  _31 = BitAnd(_28, _30)
+  using: _28@Mir(bb5[1]), _30@Mir(bb5[3])
+  _32 = Eq(_31, const 0_usize)
+  using: _31@Mir(bb5[4])
+  assert(_32, "misaligned pointer dereference: address must be a multiple of {} but is {}", _29, _28) -> [success: bb10, unwind unreachable]
+  using: _32@Mir(bb5[5]), _29@Mir(bb5[2]), _28@Mir(bb5[1])
+bb6:
+  _21 = _4 as *const () (PtrToPtr)
+  using: _4@Mir(bb1[1])
+  _22 = _21 as usize (Transmute)
+  using: _21@Mir(bb6[0])
+  _23 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _24 = Sub(_23, const 1_usize)
+  using: _23@Mir(bb6[2])
+  _25 = BitAnd(_22, _24)
+  using: _22@Mir(bb6[1]), _24@Mir(bb6[3])
+  _26 = Eq(_25, const 0_usize)
+  using: _25@Mir(bb6[4])
+  assert(_26, "misaligned pointer dereference: address must be a multiple of {} but is {}", _23, _22) -> [success: bb9, unwind unreachable]
+  using: _26@Mir(bb6[5]), _23@Mir(bb6[2]), _22@Mir(bb6[1])
+bb7:
+  return
+  using: _0@Phi(bb7)
+bb8:
+  _14 = ((*_4).1: *mut i8)
+  using: _4@Mir(bb1[1])
+  (*_13) = move _14
+  using: _13@Mir(bb9[0]), _14@Mir(bb8[0])
+  _0 = _4
+  using: _4@Mir(bb1[1])
+  goto -> bb7
+  using: 
+bb9:
+  _13 = &mut ((*_4).2: *mut i8)
+  using: _4@Mir(bb1[1])
+  _15 = _4 as *const () (PtrToPtr)
+  using: _4@Mir(bb1[1])
+  _16 = _15 as usize (Transmute)
+  using: _15@Mir(bb9[1])
+  _17 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _18 = Sub(_17, const 1_usize)
+  using: _17@Mir(bb9[3])
+  _19 = BitAnd(_16, _18)
+  using: _16@Mir(bb9[2]), _18@Mir(bb9[4])
+  _20 = Eq(_19, const 0_usize)
+  using: _19@Mir(bb9[5])
+  assert(_20, "misaligned pointer dereference: address must be a multiple of {} but is {}", _17, _16) -> [success: bb8, unwind unreachable]
+  using: _20@Mir(bb9[6]), _17@Mir(bb9[3]), _16@Mir(bb9[2])
+bb10:
+  _10 = ((*_4).1: *mut i8)
+  using: _4@Mir(bb1[1])
+  _9 = move _10 as *mut libc::c_void (PtrToPtr)
+  using: _10@Mir(bb10[0])
+  _11 = _1 as *const libc::c_void (PtrToPtr)
+  using: _1@Entry
+  _12 = _2
+  using: _2@Mir(bb0[1])
+  _8 = src::buffer::memcpy(move _9, move _11, move _12) -> [return: bb6, unwind continue]
+  using: _9@Mir(bb10[1]), _11@Mir(bb10[2]), _12@Mir(bb10[3])
+@DefId(0:46 ~ lib[f5c5]::src::buffer::buffer_compact)
+bb0:
+  _2 = src::buffer::buffer_length(_1) -> [return: bb1, unwind continue]
+  using: _1@Entry
+bb1:
+  _61 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _62 = _61 as usize (Transmute)
+  using: _61@Mir(bb1[0])
+  _63 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _64 = Sub(_63, const 1_usize)
+  using: _63@Mir(bb1[2])
+  _65 = BitAnd(_62, _64)
+  using: _62@Mir(bb1[1]), _64@Mir(bb1[3])
+  _66 = Eq(_65, const 0_usize)
+  using: _65@Mir(bb1[4])
+  assert(_66, "misaligned pointer dereference: address must be a multiple of {} but is {}", _63, _62) -> [success: bb17, unwind unreachable]
+  using: _66@Mir(bb1[5]), _63@Mir(bb1[2]), _62@Mir(bb1[1])
+bb2:
+  _9 = _2
+  using: _2@Mir(bb0[0])
+  _11 = const 1_i32
+  using: 
+  _10 = move _11 as u64 (IntToInt)
+  using: _11@Mir(bb2[1])
+  _8 = core::num::<impl u64>::wrapping_add(move _9, move _10) -> [return: bb3, unwind continue]
+  using: _9@Mir(bb2[0]), _10@Mir(bb2[2])
+bb3:
+  _13 = const 1_i32
+  using: 
+  _12 = move _13 as u64 (IntToInt)
+  using: _13@Mir(bb3[0])
+  _7 = src::buffer::calloc(move _8, move _12) -> [return: bb4, unwind continue]
+  using: _8@Mir(bb2[3]), _12@Mir(bb3[1])
+bb4:
+  _6 = move _7 as *mut i8 (PtrToPtr)
+  using: _7@Mir(bb3[2])
+  _14 = std::ptr::mut_ptr::<impl *mut i8>::is_null(_6) -> [return: bb5, unwind continue]
+  using: _6@Mir(bb4[0])
+bb5:
+  switchInt(move _14) -> [0: bb8, otherwise: bb6]
+  using: _14@Mir(bb4[1])
+bb6:
+  _16 = const 1_i32
+  using: 
+  _17 = Eq(_16, const i32::MIN)
+  using: _16@Mir(bb6[0])
+  assert(!move _17, "attempt to negate `{}`, which would overflow", _16) -> [success: bb7, unwind continue]
+  using: _17@Mir(bb6[1]), _16@Mir(bb6[0])
+bb7:
+  _15 = Neg(move _16)
+  using: _16@Mir(bb6[0])
+  _0 = move _15 as i64 (IntToInt)
+  using: _15@Mir(bb7[0])
+  goto -> bb11
+  using: 
+bb8:
+  _19 = _6 as *mut libc::c_void (PtrToPtr)
+  using: _6@Mir(bb4[0])
+  _55 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _56 = _55 as usize (Transmute)
+  using: _55@Mir(bb8[1])
+  _57 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _58 = Sub(_57, const 1_usize)
+  using: _57@Mir(bb8[3])
+  _59 = BitAnd(_56, _58)
+  using: _56@Mir(bb8[2]), _58@Mir(bb8[4])
+  _60 = Eq(_59, const 0_usize)
+  using: _59@Mir(bb8[5])
+  assert(_60, "misaligned pointer dereference: address must be a multiple of {} but is {}", _57, _56) -> [success: bb16, unwind unreachable]
+  using: _60@Mir(bb8[6]), _57@Mir(bb8[3]), _56@Mir(bb8[2])
+bb9:
+  _49 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _50 = _49 as usize (Transmute)
+  using: _49@Mir(bb9[0])
+  _51 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _52 = Sub(_51, const 1_usize)
+  using: _51@Mir(bb9[2])
+  _53 = BitAnd(_50, _52)
+  using: _50@Mir(bb9[1]), _52@Mir(bb9[3])
+  _54 = Eq(_53, const 0_usize)
+  using: _53@Mir(bb9[4])
+  assert(_54, "misaligned pointer dereference: address must be a multiple of {} but is {}", _51, _50) -> [success: bb15, unwind unreachable]
+  using: _54@Mir(bb9[5]), _51@Mir(bb9[2]), _50@Mir(bb9[1])
+bb10:
+  _26 = _2
+  using: _2@Mir(bb0[0])
+  _43 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _44 = _43 as usize (Transmute)
+  using: _43@Mir(bb10[1])
+  _45 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _46 = Sub(_45, const 1_usize)
+  using: _45@Mir(bb10[3])
+  _47 = BitAnd(_44, _46)
+  using: _44@Mir(bb10[2]), _46@Mir(bb10[4])
+  _48 = Eq(_47, const 0_usize)
+  using: _47@Mir(bb10[5])
+  assert(_48, "misaligned pointer dereference: address must be a multiple of {} but is {}", _45, _44) -> [success: bb14, unwind unreachable]
+  using: _48@Mir(bb10[6]), _45@Mir(bb10[3]), _44@Mir(bb10[2])
+bb11:
+  return
+  using: _0@Phi(bb11)
+bb12:
+  _28 = &mut ((*_1).2: *mut i8)
+  using: _1@Entry
+  _29 = (*_27)
+  using: _27@Mir(bb13[0])
+  (*_28) = move _29
+  using: _28@Mir(bb12[0]), _29@Mir(bb12[1])
+  _30 = _3
+  using: _3@Mir(bb17[2])
+  _0 = move _30 as i64 (IntToInt)
+  using: _30@Mir(bb12[3])
+  goto -> bb11
+  using: 
+bb13:
+  _27 = &mut ((*_1).1: *mut i8)
+  using: _1@Entry
+  (*_27) = _6
+  using: _27@Mir(bb13[0]), _6@Mir(bb4[0])
+  _31 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _32 = _31 as usize (Transmute)
+  using: _31@Mir(bb13[2])
+  _33 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _34 = Sub(_33, const 1_usize)
+  using: _33@Mir(bb13[4])
+  _35 = BitAnd(_32, _34)
+  using: _32@Mir(bb13[3]), _34@Mir(bb13[5])
+  _36 = Eq(_35, const 0_usize)
+  using: _35@Mir(bb13[6])
+  assert(_36, "misaligned pointer dereference: address must be a multiple of {} but is {}", _33, _32) -> [success: bb12, unwind unreachable]
+  using: _36@Mir(bb13[7]), _33@Mir(bb13[4]), _32@Mir(bb13[3])
+bb14:
+  ((*_1).0: u64) = move _26
+  using: _1@Entry, _26@Mir(bb10[0])
+  _37 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _38 = _37 as usize (Transmute)
+  using: _37@Mir(bb14[1])
+  _39 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _40 = Sub(_39, const 1_usize)
+  using: _39@Mir(bb14[3])
+  _41 = BitAnd(_38, _40)
+  using: _38@Mir(bb14[2]), _40@Mir(bb14[4])
+  _42 = Eq(_41, const 0_usize)
+  using: _41@Mir(bb14[5])
+  assert(_42, "misaligned pointer dereference: address must be a multiple of {} but is {}", _39, _38) -> [success: bb13, unwind unreachable]
+  using: _42@Mir(bb14[6]), _39@Mir(bb14[3]), _38@Mir(bb14[2])
+bb15:
+  _25 = ((*_1).1: *mut i8)
+  using: _1@Entry
+  _24 = move _25 as *mut libc::c_void (PtrToPtr)
+  using: _25@Mir(bb15[0])
+  _23 = src::buffer::free(move _24) -> [return: bb10, unwind continue]
+  using: _24@Mir(bb15[1])
+bb16:
+  _21 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _20 = move _21 as *const libc::c_void (PtrToPtr)
+  using: _21@Mir(bb16[0])
+  _22 = _2
+  using: _2@Mir(bb0[0])
+  _18 = src::buffer::memcpy(move _19, move _20, move _22) -> [return: bb9, unwind continue]
+  using: _19@Mir(bb8[0]), _20@Mir(bb16[1]), _22@Mir(bb16[2])
+bb17:
+  _4 = ((*_1).0: u64)
+  using: _1@Entry
+  _5 = _2
+  using: _2@Mir(bb0[0])
+  _3 = core::num::<impl u64>::wrapping_sub(move _4, move _5) -> [return: bb2, unwind continue]
+  using: _4@Mir(bb17[0]), _5@Mir(bb17[1])
+@DefId(0:47 ~ lib[f5c5]::src::buffer::buffer_free)
+bb0:
+  _7 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _8 = _7 as usize (Transmute)
+  using: _7@Mir(bb0[0])
+  _9 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _10 = Sub(_9, const 1_usize)
+  using: _9@Mir(bb0[2])
+  _11 = BitAnd(_8, _10)
+  using: _8@Mir(bb0[1]), _10@Mir(bb0[3])
+  _12 = Eq(_11, const 0_usize)
+  using: _11@Mir(bb0[4])
+  assert(_12, "misaligned pointer dereference: address must be a multiple of {} but is {}", _9, _8) -> [success: bb3, unwind unreachable]
+  using: _12@Mir(bb0[5]), _9@Mir(bb0[2]), _8@Mir(bb0[1])
+bb1:
+  _6 = _1 as *mut libc::c_void (PtrToPtr)
+  using: _1@Entry
+  _5 = src::buffer::free(move _6) -> [return: bb2, unwind continue]
+  using: _6@Mir(bb1[0])
+bb2:
+  return
+  using: _0@Entry
+bb3:
+  _4 = ((*_1).1: *mut i8)
+  using: _1@Entry
+  _3 = move _4 as *mut libc::c_void (PtrToPtr)
+  using: _4@Mir(bb3[0])
+  _2 = src::buffer::free(move _3) -> [return: bb1, unwind continue]
+  using: _3@Mir(bb3[1])
+@DefId(0:48 ~ lib[f5c5]::src::buffer::buffer_size)
+bb0:
+  _2 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _3 = _2 as usize (Transmute)
+  using: _2@Mir(bb0[0])
+  _4 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _5 = Sub(_4, const 1_usize)
+  using: _4@Mir(bb0[2])
+  _6 = BitAnd(_3, _5)
+  using: _3@Mir(bb0[1]), _5@Mir(bb0[3])
+  _7 = Eq(_6, const 0_usize)
+  using: _6@Mir(bb0[4])
+  assert(_7, "misaligned pointer dereference: address must be a multiple of {} but is {}", _4, _3) -> [success: bb1, unwind unreachable]
+  using: _7@Mir(bb0[5]), _4@Mir(bb0[2]), _3@Mir(bb0[1])
+bb1:
+  _0 = ((*_1).0: u64)
+  using: _1@Entry
+  return
+  using: _0@Mir(bb1[0])
+@DefId(0:49 ~ lib[f5c5]::src::buffer::buffer_length)
+bb0:
+  _4 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _5 = _4 as usize (Transmute)
+  using: _4@Mir(bb0[0])
+  _6 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _7 = Sub(_6, const 1_usize)
+  using: _6@Mir(bb0[2])
+  _8 = BitAnd(_5, _7)
+  using: _5@Mir(bb0[1]), _7@Mir(bb0[3])
+  _9 = Eq(_8, const 0_usize)
+  using: _8@Mir(bb0[4])
+  assert(_9, "misaligned pointer dereference: address must be a multiple of {} but is {}", _6, _5) -> [success: bb2, unwind unreachable]
+  using: _9@Mir(bb0[5]), _6@Mir(bb0[2]), _5@Mir(bb0[1])
+bb1:
+  return
+  using: _0@Mir(bb2[2])
+bb2:
+  _3 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _2 = move _3 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _3@Mir(bb2[0])
+  _0 = src::buffer::strlen(move _2) -> [return: bb1, unwind continue]
+  using: _2@Mir(bb2[1])
+@DefId(0:50 ~ lib[f5c5]::src::buffer::buffer_resize)
+bb0:
+  _4 = _2
+  using: _2@Entry
+  _7 = const 1024_i32
+  using: 
+  _8 = const 1_i32
+  using: 
+  _9 = CheckedSub(_7, _8)
+  using: _7@Mir(bb0[1]), _8@Mir(bb0[2])
+  assert(!move (_9.1: bool), "attempt to compute `{} - {}`, which would overflow", move _7, move _8) -> [success: bb1, unwind continue]
+  using: _9@Mir(bb0[3]), _7@Mir(bb0[1]), _8@Mir(bb0[2])
+bb1:
+  _6 = move (_9.0: i32)
+  using: _9@Mir(bb0[3])
+  _5 = move _6 as u64 (IntToInt)
+  using: _6@Mir(bb1[0])
+  _3 = core::num::<impl u64>::wrapping_add(move _4, move _5) -> [return: bb2, unwind continue]
+  using: _4@Mir(bb0[0]), _5@Mir(bb1[1])
+bb2:
+  _13 = const 1024_i32
+  using: 
+  _14 = const 1_i32
+  using: 
+  _15 = CheckedSub(_13, _14)
+  using: _13@Mir(bb2[0]), _14@Mir(bb2[1])
+  assert(!move (_15.1: bool), "attempt to compute `{} - {}`, which would overflow", move _13, move _14) -> [success: bb3, unwind continue]
+  using: _15@Mir(bb2[2]), _13@Mir(bb2[0]), _14@Mir(bb2[1])
+bb3:
+  _12 = move (_15.0: i32)
+  using: _15@Mir(bb2[2])
+  _11 = Not(move _12)
+  using: _12@Mir(bb3[0])
+  _10 = move _11 as u64 (IntToInt)
+  using: _11@Mir(bb3[1])
+  _2 = BitAnd(move _3, move _10)
+  using: _3@Mir(bb1[2]), _10@Mir(bb3[2])
+  _16 = _2
+  using: _2@Mir(bb3[3])
+  _66 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _67 = _66 as usize (Transmute)
+  using: _66@Mir(bb3[5])
+  _68 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _69 = Sub(_68, const 1_usize)
+  using: _68@Mir(bb3[7])
+  _70 = BitAnd(_67, _69)
+  using: _67@Mir(bb3[6]), _69@Mir(bb3[8])
+  _71 = Eq(_70, const 0_usize)
+  using: _70@Mir(bb3[9])
+  assert(_71, "misaligned pointer dereference: address must be a multiple of {} but is {}", _68, _67) -> [success: bb17, unwind unreachable]
+  using: _71@Mir(bb3[10]), _68@Mir(bb3[7]), _67@Mir(bb3[6])
+bb4:
+  _18 = src::buffer::realloc(move _19, move _21) -> [return: bb5, unwind continue]
+  using: _19@Mir(bb15[1]), _21@Mir(bb15[5])
+bb5:
+  (*_17) = move _18 as *mut i8 (PtrToPtr)
+  using: _17@Mir(bb16[0]), _18@Mir(bb4[0])
+  _48 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _49 = _48 as usize (Transmute)
+  using: _48@Mir(bb5[1])
+  _50 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _51 = Sub(_50, const 1_usize)
+  using: _50@Mir(bb5[3])
+  _52 = BitAnd(_49, _51)
+  using: _49@Mir(bb5[2]), _51@Mir(bb5[4])
+  _53 = Eq(_52, const 0_usize)
+  using: _52@Mir(bb5[5])
+  assert(_53, "misaligned pointer dereference: address must be a multiple of {} but is {}", _50, _49) -> [success: bb14, unwind unreachable]
+  using: _53@Mir(bb5[6]), _50@Mir(bb5[3]), _49@Mir(bb5[2])
+bb6:
+  switchInt(move _27) -> [0: bb9, otherwise: bb7]
+  using: _27@Mir(bb13[1])
+bb7:
+  _29 = const 1_i32
+  using: 
+  _30 = Eq(_29, const i32::MIN)
+  using: _29@Mir(bb7[0])
+  assert(!move _30, "attempt to negate `{}`, which would overflow", _29) -> [success: bb8, unwind continue]
+  using: _30@Mir(bb7[1]), _29@Mir(bb7[0])
+bb8:
+  _0 = Neg(move _29)
+  using: _29@Mir(bb7[0])
+  goto -> bb11
+  using: 
+bb9:
+  _31 = const '\0' as i32 (IntToInt)
+  using: 
+  _36 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _37 = _36 as usize (Transmute)
+  using: _36@Mir(bb9[1])
+  _38 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _39 = Sub(_38, const 1_usize)
+  using: _38@Mir(bb9[3])
+  _40 = BitAnd(_37, _39)
+  using: _37@Mir(bb9[2]), _39@Mir(bb9[4])
+  _41 = Eq(_40, const 0_usize)
+  using: _40@Mir(bb9[5])
+  assert(_41, "misaligned pointer dereference: address must be a multiple of {} but is {}", _38, _37) -> [success: bb12, unwind unreachable]
+  using: _41@Mir(bb9[6]), _38@Mir(bb9[3]), _37@Mir(bb9[2])
+bb10:
+  (*_32) = move _31 as i8 (IntToInt)
+  using: _32@Mir(bb12[3]), _31@Mir(bb9[0])
+  _0 = const 0_i32
+  using: 
+  goto -> bb11
+  using: 
+bb11:
+  return
+  using: _0@Phi(bb11)
+bb12:
+  _33 = ((*_1).1: *mut i8)
+  using: _1@Entry
+  _35 = _2
+  using: _2@Mir(bb3[3])
+  _34 = move _35 as isize (IntToInt)
+  using: _35@Mir(bb12[1])
+  _32 = std::ptr::mut_ptr::<impl *mut i8>::offset(move _33, move _34) -> [return: bb10, unwind continue]
+  using: _33@Mir(bb12[0]), _34@Mir(bb12[2])
+bb13:
+  _28 = ((*_1).1: *mut i8)
+  using: _1@Entry
+  _27 = std::ptr::mut_ptr::<impl *mut i8>::is_null(move _28) -> [return: bb6, unwind continue]
+  using: _28@Mir(bb13[0])
+bb14:
+  _25 = &mut ((*_1).1: *mut i8)
+  using: _1@Entry
+  _26 = (*_17)
+  using: _17@Mir(bb16[0])
+  (*_25) = move _26
+  using: _25@Mir(bb14[0]), _26@Mir(bb14[1])
+  _42 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _43 = _42 as usize (Transmute)
+  using: _42@Mir(bb14[3])
+  _44 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _45 = Sub(_44, const 1_usize)
+  using: _44@Mir(bb14[5])
+  _46 = BitAnd(_43, _45)
+  using: _43@Mir(bb14[4]), _45@Mir(bb14[6])
+  _47 = Eq(_46, const 0_usize)
+  using: _46@Mir(bb14[7])
+  assert(_47, "misaligned pointer dereference: address must be a multiple of {} but is {}", _44, _43) -> [success: bb13, unwind unreachable]
+  using: _47@Mir(bb14[8]), _44@Mir(bb14[5]), _43@Mir(bb14[4])
+bb15:
+  _20 = ((*_1).1: *mut i8)
+  using: _1@Entry
+  _19 = move _20 as *mut libc::c_void (PtrToPtr)
+  using: _20@Mir(bb15[0])
+  _22 = _2
+  using: _2@Mir(bb3[3])
+  _24 = const 1_i32
+  using: 
+  _23 = move _24 as u64 (IntToInt)
+  using: _24@Mir(bb15[3])
+  _21 = core::num::<impl u64>::wrapping_add(move _22, move _23) -> [return: bb4, unwind continue]
+  using: _22@Mir(bb15[2]), _23@Mir(bb15[4])
+bb16:
+  _17 = &mut ((*_1).2: *mut i8)
+  using: _1@Entry
+  _54 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _55 = _54 as usize (Transmute)
+  using: _54@Mir(bb16[1])
+  _56 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _57 = Sub(_56, const 1_usize)
+  using: _56@Mir(bb16[3])
+  _58 = BitAnd(_55, _57)
+  using: _55@Mir(bb16[2]), _57@Mir(bb16[4])
+  _59 = Eq(_58, const 0_usize)
+  using: _58@Mir(bb16[5])
+  assert(_59, "misaligned pointer dereference: address must be a multiple of {} but is {}", _56, _55) -> [success: bb15, unwind unreachable]
+  using: _59@Mir(bb16[6]), _56@Mir(bb16[3]), _55@Mir(bb16[2])
+bb17:
+  ((*_1).0: u64) = move _16
+  using: _1@Entry, _16@Mir(bb3[4])
+  _60 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _61 = _60 as usize (Transmute)
+  using: _60@Mir(bb17[1])
+  _62 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _63 = Sub(_62, const 1_usize)
+  using: _62@Mir(bb17[3])
+  _64 = BitAnd(_61, _63)
+  using: _61@Mir(bb17[2]), _63@Mir(bb17[4])
+  _65 = Eq(_64, const 0_usize)
+  using: _64@Mir(bb17[5])
+  assert(_65, "misaligned pointer dereference: address must be a multiple of {} but is {}", _62, _61) -> [success: bb16, unwind unreachable]
+  using: _65@Mir(bb17[6]), _62@Mir(bb17[3]), _61@Mir(bb17[2])
+@DefId(0:51 ~ lib[f5c5]::src::buffer::buffer_append)
+bb0:
+  _3 = src::buffer::strlen(_2) -> [return: bb1, unwind continue]
+  using: _2@Entry
+bb1:
+  _0 = src::buffer::buffer_append_n(_1, _2, move _3) -> [return: bb2, unwind continue]
+  using: _1@Entry, _2@Entry, _3@Mir(bb0[0])
+bb2:
+  return
+  using: _0@Mir(bb1[0])
+@DefId(0:52 ~ lib[f5c5]::src::buffer::buffer_append_n)
+bb0:
+  _43 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _44 = _43 as usize (Transmute)
+  using: _43@Mir(bb0[0])
+  _45 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _46 = Sub(_45, const 1_usize)
+  using: _45@Mir(bb0[2])
+  _47 = BitAnd(_44, _46)
+  using: _44@Mir(bb0[1]), _46@Mir(bb0[3])
+  _48 = Eq(_47, const 0_usize)
+  using: _47@Mir(bb0[4])
+  assert(_48, "misaligned pointer dereference: address must be a multiple of {} but is {}", _45, _44) -> [success: bb16, unwind unreachable]
+  using: _48@Mir(bb0[5]), _45@Mir(bb0[2]), _44@Mir(bb0[1])
+bb1:
+  _8 = _4
+  using: _4@Mir(bb16[2])
+  _7 = core::num::<impl u64>::wrapping_add(_3, move _8) -> [return: bb2, unwind continue]
+  using: _3@Entry, _8@Mir(bb1[0])
+bb2:
+  _37 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _38 = _37 as usize (Transmute)
+  using: _37@Mir(bb2[0])
+  _39 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _40 = Sub(_39, const 1_usize)
+  using: _39@Mir(bb2[2])
+  _41 = BitAnd(_38, _40)
+  using: _38@Mir(bb2[1]), _40@Mir(bb2[3])
+  _42 = Eq(_41, const 0_usize)
+  using: _41@Mir(bb2[4])
+  assert(_42, "misaligned pointer dereference: address must be a multiple of {} but is {}", _39, _38) -> [success: bb15, unwind unreachable]
+  using: _42@Mir(bb2[5]), _39@Mir(bb2[2]), _38@Mir(bb2[1])
+bb3:
+  _31 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _32 = _31 as usize (Transmute)
+  using: _31@Mir(bb3[0])
+  _33 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _34 = Sub(_33, const 1_usize)
+  using: _33@Mir(bb3[2])
+  _35 = BitAnd(_32, _34)
+  using: _32@Mir(bb3[1]), _34@Mir(bb3[3])
+  _36 = Eq(_35, const 0_usize)
+  using: _35@Mir(bb3[4])
+  assert(_36, "misaligned pointer dereference: address must be a multiple of {} but is {}", _33, _32) -> [success: bb14, unwind unreachable]
+  using: _36@Mir(bb3[5]), _33@Mir(bb3[2]), _32@Mir(bb3[1])
+bb4:
+  _0 = const 0_i32
+  using: 
+  goto -> bb12
+  using: 
+bb5:
+  _15 = _7
+  using: _7@Mir(bb1[1])
+  _14 = src::buffer::buffer_resize(_1, move _15) -> [return: bb6, unwind continue]
+  using: _1@Entry, _15@Mir(bb5[0])
+bb6:
+  _18 = const 1_i32
+  using: 
+  _19 = Eq(_18, const i32::MIN)
+  using: _18@Mir(bb6[0])
+  assert(!move _19, "attempt to negate `{}`, which would overflow", _18) -> [success: bb7, unwind continue]
+  using: _19@Mir(bb6[1]), _18@Mir(bb6[0])
+bb7:
+  _17 = Neg(move _18)
+  using: _18@Mir(bb6[0])
+  _20 = _14
+  using: _14@Mir(bb5[1])
+  _16 = Eq(move _17, move _20)
+  using: _17@Mir(bb7[0]), _20@Mir(bb7[1])
+  switchInt(move _16) -> [0: bb10, otherwise: bb8]
+  using: _16@Mir(bb7[2])
+bb8:
+  _21 = const 1_i32
+  using: 
+  _22 = Eq(_21, const i32::MIN)
+  using: _21@Mir(bb8[0])
+  assert(!move _22, "attempt to negate `{}`, which would overflow", _21) -> [success: bb9, unwind continue]
+  using: _22@Mir(bb8[1]), _21@Mir(bb8[0])
+bb9:
+  _0 = Neg(move _21)
+  using: _21@Mir(bb8[0])
+  goto -> bb12
+  using: 
+bb10:
+  _25 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _26 = _25 as usize (Transmute)
+  using: _25@Mir(bb10[0])
+  _27 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _28 = Sub(_27, const 1_usize)
+  using: _27@Mir(bb10[2])
+  _29 = BitAnd(_26, _28)
+  using: _26@Mir(bb10[1]), _28@Mir(bb10[3])
+  _30 = Eq(_29, const 0_usize)
+  using: _29@Mir(bb10[4])
+  assert(_30, "misaligned pointer dereference: address must be a multiple of {} but is {}", _27, _26) -> [success: bb13, unwind unreachable]
+  using: _30@Mir(bb10[5]), _27@Mir(bb10[2]), _26@Mir(bb10[1])
+bb11:
+  _0 = const 0_i32
+  using: 
+  goto -> bb12
+  using: 
+bb12:
+  return
+  using: _0@Phi(bb12)
+bb13:
+  _24 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _23 = src::buffer::strncat(move _24, _2, _3) -> [return: bb11, unwind continue]
+  using: _24@Mir(bb13[0]), _2@Entry, _3@Entry
+bb14:
+  _13 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _12 = src::buffer::strncat(move _13, _2, _3) -> [return: bb4, unwind continue]
+  using: _13@Mir(bb14[0]), _2@Entry, _3@Entry
+bb15:
+  _10 = ((*_1).0: u64)
+  using: _1@Entry
+  _11 = _7
+  using: _7@Mir(bb1[1])
+  _9 = Gt(move _10, move _11)
+  using: _10@Mir(bb15[0]), _11@Mir(bb15[1])
+  switchInt(move _9) -> [0: bb5, otherwise: bb3]
+  using: _9@Mir(bb15[2])
+bb16:
+  _6 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _5 = move _6 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _6@Mir(bb16[0])
+  _4 = src::buffer::strlen(move _5) -> [return: bb1, unwind continue]
+  using: _5@Mir(bb16[1])
+@DefId(0:53 ~ lib[f5c5]::src::buffer::buffer_prepend)
+bb0:
+  _3 = const 0_i32
+  using: 
+  _5 = _2 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _2@Entry
+  _4 = src::buffer::strlen(move _5) -> [return: bb1, unwind continue]
+  using: _5@Mir(bb0[1])
+bb1:
+  _65 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _66 = _65 as usize (Transmute)
+  using: _65@Mir(bb1[0])
+  _67 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _68 = Sub(_67, const 1_usize)
+  using: _67@Mir(bb1[2])
+  _69 = BitAnd(_66, _68)
+  using: _66@Mir(bb1[1]), _68@Mir(bb1[3])
+  _70 = Eq(_69, const 0_usize)
+  using: _69@Mir(bb1[4])
+  assert(_70, "misaligned pointer dereference: address must be a multiple of {} but is {}", _67, _66) -> [success: bb19, unwind unreachable]
+  using: _70@Mir(bb1[5]), _67@Mir(bb1[2]), _66@Mir(bb1[1])
+bb2:
+  _10 = _4
+  using: _4@Mir(bb0[2])
+  _11 = _6
+  using: _6@Mir(bb19[2])
+  _9 = core::num::<impl u64>::wrapping_add(move _10, move _11) -> [return: bb3, unwind continue]
+  using: _10@Mir(bb2[0]), _11@Mir(bb2[1])
+bb3:
+  _59 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _60 = _59 as usize (Transmute)
+  using: _59@Mir(bb3[0])
+  _61 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _62 = Sub(_61, const 1_usize)
+  using: _61@Mir(bb3[2])
+  _63 = BitAnd(_60, _62)
+  using: _60@Mir(bb3[1]), _62@Mir(bb3[3])
+  _64 = Eq(_63, const 0_usize)
+  using: _63@Mir(bb3[4])
+  assert(_64, "misaligned pointer dereference: address must be a multiple of {} but is {}", _61, _60) -> [success: bb18, unwind unreachable]
+  using: _64@Mir(bb3[5]), _61@Mir(bb3[2]), _60@Mir(bb3[1])
+bb4:
+  _16 = _9
+  using: _9@Mir(bb2[2])
+  _15 = src::buffer::buffer_resize(_1, move _16) -> [return: bb5, unwind continue]
+  using: _1@Entry, _16@Mir(bb4[0])
+bb5:
+  _3 = move _15
+  using: _15@Mir(bb4[1])
+  _19 = const 1_i32
+  using: 
+  _20 = Eq(_19, const i32::MIN)
+  using: _19@Mir(bb5[1])
+  assert(!move _20, "attempt to negate `{}`, which would overflow", _19) -> [success: bb6, unwind continue]
+  using: _20@Mir(bb5[2]), _19@Mir(bb5[1])
+bb6:
+  _18 = Neg(move _19)
+  using: _19@Mir(bb5[1])
+  _21 = _3
+  using: _3@Mir(bb5[0])
+  _17 = Eq(move _18, move _21)
+  using: _18@Mir(bb6[0]), _21@Mir(bb6[1])
+  switchInt(move _17) -> [0: bb9, otherwise: bb7]
+  using: _17@Mir(bb6[2])
+bb7:
+  _22 = const 1_i32
+  using: 
+  _23 = Eq(_22, const i32::MIN)
+  using: _22@Mir(bb7[0])
+  assert(!move _23, "attempt to negate `{}`, which would overflow", _22) -> [success: bb8, unwind continue]
+  using: _23@Mir(bb7[1]), _22@Mir(bb7[0])
+bb8:
+  _0 = Neg(move _22)
+  using: _22@Mir(bb7[0])
+  goto -> bb14
+  using: 
+bb9:
+  _53 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _54 = _53 as usize (Transmute)
+  using: _53@Mir(bb9[0])
+  _55 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _56 = Sub(_55, const 1_usize)
+  using: _55@Mir(bb9[2])
+  _57 = BitAnd(_54, _56)
+  using: _54@Mir(bb9[1]), _56@Mir(bb9[3])
+  _58 = Eq(_57, const 0_usize)
+  using: _57@Mir(bb9[4])
+  assert(_58, "misaligned pointer dereference: address must be a multiple of {} but is {}", _55, _54) -> [success: bb17, unwind unreachable]
+  using: _58@Mir(bb9[5]), _55@Mir(bb9[2]), _54@Mir(bb9[1])
+bb10:
+  _25 = move _26 as *mut libc::c_void (PtrToPtr)
+  using: _26@Mir(bb17[3])
+  _47 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _48 = _47 as usize (Transmute)
+  using: _47@Mir(bb10[1])
+  _49 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _50 = Sub(_49, const 1_usize)
+  using: _49@Mir(bb10[3])
+  _51 = BitAnd(_48, _50)
+  using: _48@Mir(bb10[2]), _50@Mir(bb10[4])
+  _52 = Eq(_51, const 0_usize)
+  using: _51@Mir(bb10[5])
+  assert(_52, "misaligned pointer dereference: address must be a multiple of {} but is {}", _49, _48) -> [success: bb16, unwind unreachable]
+  using: _52@Mir(bb10[6]), _49@Mir(bb10[3]), _48@Mir(bb10[2])
+bb11:
+  _24 = src::buffer::memmove(move _25, move _30, move _32) -> [return: bb12, unwind continue]
+  using: _25@Mir(bb10[0]), _30@Mir(bb16[1]), _32@Mir(bb16[5])
+bb12:
+  _41 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _42 = _41 as usize (Transmute)
+  using: _41@Mir(bb12[0])
+  _43 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _44 = Sub(_43, const 1_usize)
+  using: _43@Mir(bb12[2])
+  _45 = BitAnd(_42, _44)
+  using: _42@Mir(bb12[1]), _44@Mir(bb12[3])
+  _46 = Eq(_45, const 0_usize)
+  using: _45@Mir(bb12[4])
+  assert(_46, "misaligned pointer dereference: address must be a multiple of {} but is {}", _43, _42) -> [success: bb15, unwind unreachable]
+  using: _46@Mir(bb12[5]), _43@Mir(bb12[2]), _42@Mir(bb12[1])
+bb13:
+  _0 = const 0_i32
+  using: 
+  goto -> bb14
+  using: 
+bb14:
+  return
+  using: _0@Phi(bb14)
+bb15:
+  _38 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _37 = move _38 as *mut libc::c_void (PtrToPtr)
+  using: _38@Mir(bb15[0])
+  _39 = _2 as *const libc::c_void (PtrToPtr)
+  using: _2@Entry
+  _40 = _4
+  using: _4@Mir(bb0[2])
+  _36 = src::buffer::memcpy(move _37, move _39, move _40) -> [return: bb13, unwind continue]
+  using: _37@Mir(bb15[1]), _39@Mir(bb15[2]), _40@Mir(bb15[3])
+bb16:
+  _31 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _30 = move _31 as *const libc::c_void (PtrToPtr)
+  using: _31@Mir(bb16[0])
+  _33 = _4
+  using: _4@Mir(bb0[2])
+  _35 = const 1_i32
+  using: 
+  _34 = move _35 as u64 (IntToInt)
+  using: _35@Mir(bb16[3])
+  _32 = core::num::<impl u64>::wrapping_add(move _33, move _34) -> [return: bb11, unwind continue]
+  using: _33@Mir(bb16[2]), _34@Mir(bb16[4])
+bb17:
+  _27 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _29 = _4
+  using: _4@Mir(bb0[2])
+  _28 = move _29 as isize (IntToInt)
+  using: _29@Mir(bb17[1])
+  _26 = std::ptr::mut_ptr::<impl *mut i8>::offset(move _27, move _28) -> [return: bb10, unwind continue]
+  using: _27@Mir(bb17[0]), _28@Mir(bb17[2])
+bb18:
+  _13 = ((*_1).0: u64)
+  using: _1@Entry
+  _14 = _9
+  using: _9@Mir(bb2[2])
+  _12 = Gt(move _13, move _14)
+  using: _13@Mir(bb18[0]), _14@Mir(bb18[1])
+  switchInt(move _12) -> [0: bb4, otherwise: bb9]
+  using: _12@Mir(bb18[2])
+bb19:
+  _8 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _7 = move _8 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _8@Mir(bb19[0])
+  _6 = src::buffer::strlen(move _7) -> [return: bb2, unwind continue]
+  using: _7@Mir(bb19[1])
+@DefId(0:54 ~ lib[f5c5]::src::buffer::buffer_slice)
+bb0:
+  _49 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _50 = _49 as usize (Transmute)
+  using: _49@Mir(bb0[0])
+  _51 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _52 = Sub(_51, const 1_usize)
+  using: _51@Mir(bb0[2])
+  _53 = BitAnd(_50, _52)
+  using: _50@Mir(bb0[1]), _52@Mir(bb0[3])
+  _54 = Eq(_53, const 0_usize)
+  using: _53@Mir(bb0[4])
+  assert(_54, "misaligned pointer dereference: address must be a multiple of {} but is {}", _51, _50) -> [success: bb16, unwind unreachable]
+  using: _54@Mir(bb0[5]), _51@Mir(bb0[2]), _50@Mir(bb0[1])
+bb1:
+  _9 = _3
+  using: _3@Entry
+  _8 = move _9 as u64 (IntToInt)
+  using: _9@Mir(bb1[0])
+  _7 = Lt(move _8, _2)
+  using: _8@Mir(bb1[1]), _2@Entry
+  switchInt(move _7) -> [0: bb3, otherwise: bb2]
+  using: _7@Mir(bb1[2])
+bb2:
+  _0 = const 0_usize as *mut src::buffer::buffer_t (PointerFromExposedAddress)
+  using: 
+  goto -> bb13
+  using: 
+bb3:
+  _11 = _3
+  using: _3@Entry
+  _13 = const 0_i32
+  using: 
+  _12 = move _13 as i64 (IntToInt)
+  using: _13@Mir(bb3[1])
+  _10 = Lt(move _11, move _12)
+  using: _11@Mir(bb3[0]), _12@Mir(bb3[2])
+  switchInt(move _10) -> [0: bb6, otherwise: bb4]
+  using: _10@Mir(bb3[3])
+bb4:
+  _15 = _4
+  using: _4@Mir(bb16[2])
+  _18 = _3
+  using: _3@Entry
+  _17 = Not(move _18)
+  using: _18@Mir(bb4[1])
+  _16 = move _17 as u64 (IntToInt)
+  using: _17@Mir(bb4[2])
+  _14 = core::num::<impl u64>::wrapping_sub(move _15, move _16) -> [return: bb5, unwind continue]
+  using: _15@Mir(bb4[0]), _16@Mir(bb4[3])
+bb5:
+  _3 = move _14 as i64 (IntToInt)
+  using: _14@Mir(bb4[4])
+  goto -> bb6
+  using: 
+bb6:
+  _21 = _3
+  using: _3@Phi(bb6)
+  _20 = move _21 as u64 (IntToInt)
+  using: _21@Mir(bb6[0])
+  _22 = _4
+  using: _4@Mir(bb16[2])
+  _19 = Gt(move _20, move _22)
+  using: _20@Mir(bb6[1]), _22@Mir(bb6[2])
+  switchInt(move _19) -> [0: bb8, otherwise: bb7]
+  using: _19@Mir(bb6[3])
+bb7:
+  _23 = _4
+  using: _4@Mir(bb16[2])
+  _3 = move _23 as i64 (IntToInt)
+  using: _23@Mir(bb7[0])
+  goto -> bb8
+  using: 
+bb8:
+  _26 = _3
+  using: _3@Phi(bb8)
+  _25 = move _26 as u64 (IntToInt)
+  using: _26@Mir(bb8[0])
+  _24 = core::num::<impl u64>::wrapping_sub(move _25, _2) -> [return: bb9, unwind continue]
+  using: _25@Mir(bb8[1]), _2@Entry
+bb9:
+  _28 = _24
+  using: _24@Mir(bb8[2])
+  _27 = src::buffer::buffer_new_with_size(move _28) -> [return: bb10, unwind continue]
+  using: _28@Mir(bb9[0])
+bb10:
+  _43 = _27 as *const () (PtrToPtr)
+  using: _27@Mir(bb9[1])
+  _44 = _43 as usize (Transmute)
+  using: _43@Mir(bb10[0])
+  _45 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _46 = Sub(_45, const 1_usize)
+  using: _45@Mir(bb10[2])
+  _47 = BitAnd(_44, _46)
+  using: _44@Mir(bb10[1]), _46@Mir(bb10[3])
+  _48 = Eq(_47, const 0_usize)
+  using: _47@Mir(bb10[4])
+  assert(_48, "misaligned pointer dereference: address must be a multiple of {} but is {}", _45, _44) -> [success: bb15, unwind unreachable]
+  using: _48@Mir(bb10[5]), _45@Mir(bb10[2]), _44@Mir(bb10[1])
+bb11:
+  _32 = move _33 as *const libc::c_void (PtrToPtr)
+  using: _33@Mir(bb14[2])
+  _36 = _24
+  using: _24@Mir(bb8[2])
+  _29 = src::buffer::memcpy(move _30, move _32, move _36) -> [return: bb12, unwind continue]
+  using: _30@Mir(bb15[1]), _32@Mir(bb11[0]), _36@Mir(bb11[1])
+bb12:
+  _0 = _27
+  using: _27@Mir(bb9[1])
+  goto -> bb13
+  using: 
+bb13:
+  return
+  using: _0@Phi(bb13)
+bb14:
+  _34 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _35 = _2 as isize (IntToInt)
+  using: _2@Entry
+  _33 = std::ptr::mut_ptr::<impl *mut i8>::offset(move _34, move _35) -> [return: bb11, unwind continue]
+  using: _34@Mir(bb14[0]), _35@Mir(bb14[1])
+bb15:
+  _31 = ((*_27).2: *mut i8)
+  using: _27@Mir(bb9[1])
+  _30 = move _31 as *mut libc::c_void (PtrToPtr)
+  using: _31@Mir(bb15[0])
+  _37 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _38 = _37 as usize (Transmute)
+  using: _37@Mir(bb15[2])
+  _39 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _40 = Sub(_39, const 1_usize)
+  using: _39@Mir(bb15[4])
+  _41 = BitAnd(_38, _40)
+  using: _38@Mir(bb15[3]), _40@Mir(bb15[5])
+  _42 = Eq(_41, const 0_usize)
+  using: _41@Mir(bb15[6])
+  assert(_42, "misaligned pointer dereference: address must be a multiple of {} but is {}", _39, _38) -> [success: bb14, unwind unreachable]
+  using: _42@Mir(bb15[7]), _39@Mir(bb15[4]), _38@Mir(bb15[3])
+bb16:
+  _6 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _5 = move _6 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _6@Mir(bb16[0])
+  _4 = src::buffer::strlen(move _5) -> [return: bb1, unwind continue]
+  using: _5@Mir(bb16[1])
+@DefId(0:55 ~ lib[f5c5]::src::buffer::buffer_equals)
+bb0:
+  _4 = const 0_i32
+  using: 
+  _16 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _17 = _16 as usize (Transmute)
+  using: _16@Mir(bb0[1])
+  _18 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _19 = Sub(_18, const 1_usize)
+  using: _18@Mir(bb0[3])
+  _20 = BitAnd(_17, _19)
+  using: _17@Mir(bb0[2]), _19@Mir(bb0[4])
+  _21 = Eq(_20, const 0_usize)
+  using: _20@Mir(bb0[5])
+  assert(_21, "misaligned pointer dereference: address must be a multiple of {} but is {}", _18, _17) -> [success: bb3, unwind unreachable]
+  using: _21@Mir(bb0[6]), _18@Mir(bb0[3]), _17@Mir(bb0[2])
+bb1:
+  _3 = Eq(move _4, move _5)
+  using: _4@Mir(bb0[0]), _5@Mir(bb2[2])
+  _0 = move _3 as i32 (IntToInt)
+  using: _3@Mir(bb1[0])
+  return
+  using: _0@Mir(bb1[1])
+bb2:
+  _9 = ((*_2).2: *mut i8)
+  using: _2@Entry
+  _8 = move _9 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _9@Mir(bb2[0])
+  _5 = src::buffer::strcmp(move _6, move _8) -> [return: bb1, unwind continue]
+  using: _6@Mir(bb3[1]), _8@Mir(bb2[1])
+bb3:
+  _7 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _6 = move _7 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _7@Mir(bb3[0])
+  _10 = _2 as *const () (PtrToPtr)
+  using: _2@Entry
+  _11 = _10 as usize (Transmute)
+  using: _10@Mir(bb3[2])
+  _12 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _13 = Sub(_12, const 1_usize)
+  using: _12@Mir(bb3[4])
+  _14 = BitAnd(_11, _13)
+  using: _11@Mir(bb3[3]), _13@Mir(bb3[5])
+  _15 = Eq(_14, const 0_usize)
+  using: _14@Mir(bb3[6])
+  assert(_15, "misaligned pointer dereference: address must be a multiple of {} but is {}", _12, _11) -> [success: bb2, unwind unreachable]
+  using: _15@Mir(bb3[7]), _12@Mir(bb3[4]), _11@Mir(bb3[3])
+@DefId(0:56 ~ lib[f5c5]::src::buffer::buffer_indexof)
+bb0:
+  _22 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _23 = _22 as usize (Transmute)
+  using: _22@Mir(bb0[0])
+  _24 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _25 = Sub(_24, const 1_usize)
+  using: _24@Mir(bb0[2])
+  _26 = BitAnd(_23, _25)
+  using: _23@Mir(bb0[1]), _25@Mir(bb0[3])
+  _27 = Eq(_26, const 0_usize)
+  using: _26@Mir(bb0[4])
+  assert(_27, "misaligned pointer dereference: address must be a multiple of {} but is {}", _24, _23) -> [success: bb9, unwind unreachable]
+  using: _27@Mir(bb0[5]), _24@Mir(bb0[2]), _23@Mir(bb0[1])
+bb1:
+  _8 = _3
+  using: _3@Mir(bb9[3])
+  _7 = std::ptr::mut_ptr::<impl *mut i8>::is_null(move _8) -> [return: bb2, unwind continue]
+  using: _8@Mir(bb1[0])
+bb2:
+  switchInt(move _7) -> [0: bb5, otherwise: bb3]
+  using: _7@Mir(bb1[1])
+bb3:
+  _10 = const 1_i32
+  using: 
+  _11 = Eq(_10, const i32::MIN)
+  using: _10@Mir(bb3[0])
+  assert(!move _11, "attempt to negate `{}`, which would overflow", _10) -> [success: bb4, unwind continue]
+  using: _11@Mir(bb3[1]), _10@Mir(bb3[0])
+bb4:
+  _9 = Neg(move _10)
+  using: _10@Mir(bb3[0])
+  _0 = move _9 as i64 (IntToInt)
+  using: _9@Mir(bb4[0])
+  goto -> bb7
+  using: 
+bb5:
+  _13 = _3
+  using: _3@Mir(bb9[3])
+  _16 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _17 = _16 as usize (Transmute)
+  using: _16@Mir(bb5[1])
+  _18 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _19 = Sub(_18, const 1_usize)
+  using: _18@Mir(bb5[3])
+  _20 = BitAnd(_17, _19)
+  using: _17@Mir(bb5[2]), _19@Mir(bb5[4])
+  _21 = Eq(_20, const 0_usize)
+  using: _20@Mir(bb5[5])
+  assert(_21, "misaligned pointer dereference: address must be a multiple of {} but is {}", _18, _17) -> [success: bb8, unwind unreachable]
+  using: _21@Mir(bb5[6]), _18@Mir(bb5[3]), _17@Mir(bb5[2])
+bb6:
+  _0 = move _12 as i64 (IntToInt)
+  using: _12@Mir(bb8[2])
+  goto -> bb7
+  using: 
+bb7:
+  return
+  using: _0@Phi(bb7)
+bb8:
+  _15 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _14 = move _15 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _15@Mir(bb8[0])
+  _12 = std::ptr::mut_ptr::<impl *mut i8>::offset_from(move _13, move _14) -> [return: bb6, unwind continue]
+  using: _13@Mir(bb5[0]), _14@Mir(bb8[1])
+bb9:
+  _5 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _4 = move _5 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _5@Mir(bb9[0])
+  _6 = _2 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _2@Entry
+  _3 = src::buffer::strstr(move _4, move _6) -> [return: bb1, unwind continue]
+  using: _4@Mir(bb9[1]), _6@Mir(bb9[2])
+@DefId(0:57 ~ lib[f5c5]::src::buffer::buffer_trim_left)
+bb0:
+  _2 = const 0_i32
+  using: 
+  goto -> bb1
+  using: 
+bb1:
+  _38 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _39 = _38 as usize (Transmute)
+  using: _38@Mir(bb1[0])
+  _40 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _41 = Sub(_40, const 1_usize)
+  using: _40@Mir(bb1[2])
+  _42 = BitAnd(_39, _41)
+  using: _39@Mir(bb1[1]), _41@Mir(bb1[3])
+  _43 = Eq(_42, const 0_usize)
+  using: _42@Mir(bb1[4])
+  assert(_43, "misaligned pointer dereference: address must be a multiple of {} but is {}", _40, _39) -> [success: bb11, unwind unreachable]
+  using: _43@Mir(bb1[5]), _40@Mir(bb1[2]), _39@Mir(bb1[1])
+bb2:
+  _10 = src::buffer::__ctype_b_loc() -> [return: bb3, unwind continue]
+  using: 
+bb3:
+  _32 = _10 as *const () (PtrToPtr)
+  using: _10@Mir(bb2[0])
+  _33 = _32 as usize (Transmute)
+  using: _32@Mir(bb3[0])
+  _34 = AlignOf(*const u16)
+  using: 
+  _35 = Sub(_34, const 1_usize)
+  using: _34@Mir(bb3[2])
+  _36 = BitAnd(_33, _35)
+  using: _33@Mir(bb3[1]), _35@Mir(bb3[3])
+  _37 = Eq(_36, const 0_usize)
+  using: _36@Mir(bb3[4])
+  assert(_37, "misaligned pointer dereference: address must be a multiple of {} but is {}", _34, _33) -> [success: bb10, unwind unreachable]
+  using: _37@Mir(bb3[5]), _34@Mir(bb3[2]), _33@Mir(bb3[1])
+bb4:
+  _26 = _8 as *const () (PtrToPtr)
+  using: _8@Mir(bb10[3])
+  _27 = _26 as usize (Transmute)
+  using: _26@Mir(bb4[0])
+  _28 = AlignOf(u16)
+  using: 
+  _29 = Sub(_28, const 1_usize)
+  using: _28@Mir(bb4[2])
+  _30 = BitAnd(_27, _29)
+  using: _27@Mir(bb4[1]), _29@Mir(bb4[3])
+  _31 = Eq(_30, const 0_usize)
+  using: _30@Mir(bb4[4])
+  assert(_31, "misaligned pointer dereference: address must be a multiple of {} but is {}", _28, _27) -> [success: bb9, unwind unreachable]
+  using: _31@Mir(bb4[5]), _28@Mir(bb4[2]), _27@Mir(bb4[1])
+bb5:
+  _20 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _21 = _20 as usize (Transmute)
+  using: _20@Mir(bb5[0])
+  _22 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _23 = Sub(_22, const 1_usize)
+  using: _22@Mir(bb5[2])
+  _24 = BitAnd(_21, _23)
+  using: _21@Mir(bb5[1]), _23@Mir(bb5[3])
+  _25 = Eq(_24, const 0_usize)
+  using: _24@Mir(bb5[4])
+  assert(_25, "misaligned pointer dereference: address must be a multiple of {} but is {}", _22, _21) -> [success: bb8, unwind unreachable]
+  using: _25@Mir(bb5[5]), _22@Mir(bb5[2]), _21@Mir(bb5[1])
+bb6:
+  return
+  using: _0@Entry
+bb7:
+  (*_16) = move _17
+  using: _16@Mir(bb8[0]), _17@Mir(bb8[2])
+  goto -> bb1
+  using: 
+bb8:
+  _16 = &mut ((*_1).2: *mut i8)
+  using: _1@Entry
+  _18 = (*_16)
+  using: _16@Mir(bb8[0])
+  _17 = std::ptr::mut_ptr::<impl *mut i8>::offset(move _18, const 1_isize) -> [return: bb7, unwind continue]
+  using: _18@Mir(bb8[1])
+bb9:
+  _7 = (*_8)
+  using: _8@Mir(bb10[3])
+  _6 = move _7 as i32 (IntToInt)
+  using: _7@Mir(bb9[0])
+  _15 = const _ as i32 (IntToInt)
+  using: 
+  _14 = move _15 as u16 (IntToInt)
+  using: _15@Mir(bb9[2])
+  _13 = move _14 as i32 (IntToInt)
+  using: _14@Mir(bb9[3])
+  _5 = BitAnd(move _6, move _13)
+  using: _6@Mir(bb9[1]), _13@Mir(bb9[4])
+  switchInt(move _5) -> [0: bb6, otherwise: bb5]
+  using: _5@Mir(bb9[5])
+bb10:
+  _9 = (*_10)
+  using: _10@Mir(bb2[0])
+  _12 = _2
+  using: _2@Mir(bb11[2])
+  _11 = move _12 as isize (IntToInt)
+  using: _12@Mir(bb10[1])
+  _8 = std::ptr::const_ptr::<impl *const u16>::offset(move _9, move _11) -> [return: bb4, unwind continue]
+  using: _9@Mir(bb10[0]), _11@Mir(bb10[2])
+bb11:
+  _19 = deref_copy ((*_1).2: *mut i8)
+  using: _1@Entry
+  _3 = (*_19)
+  using: _19@Mir(bb11[0])
+  _2 = move _3 as i32 (IntToInt)
+  using: _3@Mir(bb11[1])
+  _4 = _2
+  using: _2@Mir(bb11[2])
+  switchInt(move _4) -> [0: bb6, otherwise: bb2]
+  using: _4@Mir(bb11[3])
+@DefId(0:58 ~ lib[f5c5]::src::buffer::buffer_trim_right)
+bb0:
+  _2 = const 0_i32
+  using: 
+  _4 = src::buffer::buffer_length(_1) -> [return: bb1, unwind continue]
+  using: _1@Entry
+bb1:
+  _6 = const 1_i32
+  using: 
+  _5 = move _6 as u64 (IntToInt)
+  using: _6@Mir(bb1[0])
+  _3 = core::num::<impl u64>::wrapping_sub(move _4, move _5) -> [return: bb2, unwind continue]
+  using: _4@Mir(bb0[1]), _5@Mir(bb1[1])
+bb2:
+  _49 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _50 = _49 as usize (Transmute)
+  using: _49@Mir(bb2[0])
+  _51 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _52 = Sub(_51, const 1_usize)
+  using: _51@Mir(bb2[2])
+  _53 = BitAnd(_50, _52)
+  using: _50@Mir(bb2[1]), _52@Mir(bb2[3])
+  _54 = Eq(_53, const 0_usize)
+  using: _53@Mir(bb2[4])
+  assert(_54, "misaligned pointer dereference: address must be a multiple of {} but is {}", _51, _50) -> [success: bb14, unwind unreachable]
+  using: _54@Mir(bb2[5]), _51@Mir(bb2[2]), _50@Mir(bb2[1])
+bb3:
+  _7 = (*_8)
+  using: _8@Mir(bb14[3])
+  _2 = move _7 as i32 (IntToInt)
+  using: _7@Mir(bb3[0])
+  _12 = _2
+  using: _2@Mir(bb3[1])
+  switchInt(move _12) -> [0: bb8, otherwise: bb4]
+  using: _12@Mir(bb3[2])
+bb4:
+  _18 = src::buffer::__ctype_b_loc() -> [return: bb5, unwind continue]
+  using: 
+bb5:
+  _43 = _18 as *const () (PtrToPtr)
+  using: _18@Mir(bb4[0])
+  _44 = _43 as usize (Transmute)
+  using: _43@Mir(bb5[0])
+  _45 = AlignOf(*const u16)
+  using: 
+  _46 = Sub(_45, const 1_usize)
+  using: _45@Mir(bb5[2])
+  _47 = BitAnd(_44, _46)
+  using: _44@Mir(bb5[1]), _46@Mir(bb5[3])
+  _48 = Eq(_47, const 0_usize)
+  using: _47@Mir(bb5[4])
+  assert(_48, "misaligned pointer dereference: address must be a multiple of {} but is {}", _45, _44) -> [success: bb13, unwind unreachable]
+  using: _48@Mir(bb5[5]), _45@Mir(bb5[2]), _44@Mir(bb5[1])
+bb6:
+  _37 = _16 as *const () (PtrToPtr)
+  using: _16@Mir(bb13[3])
+  _38 = _37 as usize (Transmute)
+  using: _37@Mir(bb6[0])
+  _39 = AlignOf(u16)
+  using: 
+  _40 = Sub(_39, const 1_usize)
+  using: _39@Mir(bb6[2])
+  _41 = BitAnd(_38, _40)
+  using: _38@Mir(bb6[1]), _40@Mir(bb6[3])
+  _42 = Eq(_41, const 0_usize)
+  using: _41@Mir(bb6[4])
+  assert(_42, "misaligned pointer dereference: address must be a multiple of {} but is {}", _39, _38) -> [success: bb12, unwind unreachable]
+  using: _42@Mir(bb6[5]), _39@Mir(bb6[2]), _38@Mir(bb6[1])
+bb7:
+  _24 = _3
+  using: _3@Phi(bb2)
+  _26 = _3
+  using: _3@Phi(bb2)
+  _25 = core::num::<impl u64>::wrapping_sub(move _26, const 1_u64) -> [return: bb9, unwind continue]
+  using: _26@Mir(bb7[1])
+bb8:
+  return
+  using: _0@Entry
+bb9:
+  _3 = move _25
+  using: _25@Mir(bb7[2])
+  _27 = const 0_i32
+  using: 
+  _31 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _32 = _31 as usize (Transmute)
+  using: _31@Mir(bb9[2])
+  _33 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _34 = Sub(_33, const 1_usize)
+  using: _33@Mir(bb9[4])
+  _35 = BitAnd(_32, _34)
+  using: _32@Mir(bb9[3]), _34@Mir(bb9[5])
+  _36 = Eq(_35, const 0_usize)
+  using: _35@Mir(bb9[6])
+  assert(_36, "misaligned pointer dereference: address must be a multiple of {} but is {}", _33, _32) -> [success: bb11, unwind unreachable]
+  using: _36@Mir(bb9[7]), _33@Mir(bb9[4]), _32@Mir(bb9[3])
+bb10:
+  (*_28) = move _27 as i8 (IntToInt)
+  using: _28@Mir(bb11[2]), _27@Mir(bb9[1])
+  goto -> bb2
+  using: 
+bb11:
+  _29 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _30 = _24 as isize (IntToInt)
+  using: _24@Mir(bb7[0])
+  _28 = std::ptr::mut_ptr::<impl *mut i8>::offset(move _29, move _30) -> [return: bb10, unwind continue]
+  using: _29@Mir(bb11[0]), _30@Mir(bb11[1])
+bb12:
+  _15 = (*_16)
+  using: _16@Mir(bb13[3])
+  _14 = move _15 as i32 (IntToInt)
+  using: _15@Mir(bb12[0])
+  _23 = const _ as i32 (IntToInt)
+  using: 
+  _22 = move _23 as u16 (IntToInt)
+  using: _23@Mir(bb12[2])
+  _21 = move _22 as i32 (IntToInt)
+  using: _22@Mir(bb12[3])
+  _13 = BitAnd(move _14, move _21)
+  using: _14@Mir(bb12[1]), _21@Mir(bb12[4])
+  switchInt(move _13) -> [0: bb8, otherwise: bb7]
+  using: _13@Mir(bb12[5])
+bb13:
+  _17 = (*_18)
+  using: _18@Mir(bb4[0])
+  _20 = _2
+  using: _2@Mir(bb3[1])
+  _19 = move _20 as isize (IntToInt)
+  using: _20@Mir(bb13[1])
+  _16 = std::ptr::const_ptr::<impl *const u16>::offset(move _17, move _19) -> [return: bb6, unwind continue]
+  using: _17@Mir(bb13[0]), _19@Mir(bb13[2])
+bb14:
+  _9 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _11 = _3
+  using: _3@Phi(bb2)
+  _10 = move _11 as isize (IntToInt)
+  using: _11@Mir(bb14[1])
+  _8 = std::ptr::mut_ptr::<impl *mut i8>::offset(move _9, move _10) -> [return: bb3, unwind continue]
+  using: _9@Mir(bb14[0]), _10@Mir(bb14[2])
+@DefId(0:59 ~ lib[f5c5]::src::buffer::buffer_trim)
+bb0:
+  _2 = src::buffer::buffer_trim_left(_1) -> [return: bb1, unwind continue]
+  using: _1@Entry
+bb1:
+  _3 = src::buffer::buffer_trim_right(_1) -> [return: bb2, unwind continue]
+  using: _1@Entry
+bb2:
+  return
+  using: _0@Entry
+@DefId(0:60 ~ lib[f5c5]::src::buffer::buffer_fill)
+bb0:
+  _13 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _14 = _13 as usize (Transmute)
+  using: _13@Mir(bb0[0])
+  _15 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _16 = Sub(_15, const 1_usize)
+  using: _15@Mir(bb0[2])
+  _17 = BitAnd(_14, _16)
+  using: _14@Mir(bb0[1]), _16@Mir(bb0[3])
+  _18 = Eq(_17, const 0_usize)
+  using: _17@Mir(bb0[4])
+  assert(_18, "misaligned pointer dereference: address must be a multiple of {} but is {}", _15, _14) -> [success: bb3, unwind unreachable]
+  using: _18@Mir(bb0[5]), _15@Mir(bb0[2]), _14@Mir(bb0[1])
+bb1:
+  return
+  using: _0@Entry
+bb2:
+  _6 = ((*_1).0: u64)
+  using: _1@Entry
+  _3 = src::buffer::memset(move _4, _2, move _6) -> [return: bb1, unwind continue]
+  using: _4@Mir(bb3[1]), _2@Entry, _6@Mir(bb2[0])
+bb3:
+  _5 = ((*_1).2: *mut i8)
+  using: _1@Entry
+  _4 = move _5 as *mut libc::c_void (PtrToPtr)
+  using: _5@Mir(bb3[0])
+  _7 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _8 = _7 as usize (Transmute)
+  using: _7@Mir(bb3[2])
+  _9 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _10 = Sub(_9, const 1_usize)
+  using: _9@Mir(bb3[4])
+  _11 = BitAnd(_8, _10)
+  using: _8@Mir(bb3[3]), _10@Mir(bb3[5])
+  _12 = Eq(_11, const 0_usize)
+  using: _11@Mir(bb3[6])
+  assert(_12, "misaligned pointer dereference: address must be a multiple of {} but is {}", _9, _8) -> [success: bb2, unwind unreachable]
+  using: _12@Mir(bb3[7]), _9@Mir(bb3[4]), _8@Mir(bb3[3])
+@DefId(0:61 ~ lib[f5c5]::src::buffer::buffer_clear)
+bb0:
+  _3 = const 0_i32
+  using: 
+  _2 = src::buffer::buffer_fill(_1, move _3) -> [return: bb1, unwind continue]
+  using: _1@Entry, _3@Mir(bb0[0])
+bb1:
+  return
+  using: _0@Entry
+@DefId(0:62 ~ lib[f5c5]::src::buffer::buffer_print)
+bb0:
+  _52 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _53 = _52 as usize (Transmute)
+  using: _52@Mir(bb0[0])
+  _54 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _55 = Sub(_54, const 1_usize)
+  using: _54@Mir(bb0[2])
+  _56 = BitAnd(_53, _55)
+  using: _53@Mir(bb0[1]), _55@Mir(bb0[3])
+  _57 = Eq(_56, const 0_usize)
+  using: _56@Mir(bb0[4])
+  assert(_57, "misaligned pointer dereference: address must be a multiple of {} but is {}", _54, _53) -> [success: bb15, unwind unreachable]
+  using: _57@Mir(bb0[5]), _54@Mir(bb0[2]), _53@Mir(bb0[1])
+bb1:
+  _8 = const 0_i32
+  using: 
+  goto -> bb2
+  using: 
+bb2:
+  _11 = _8
+  using: _8@Phi(bb2)
+  _10 = move _11 as u64 (IntToInt)
+  using: _11@Mir(bb2[0])
+  _9 = Lt(move _10, _2)
+  using: _10@Mir(bb2[1]), _2@Mir(bb15[0])
+  switchInt(move _9) -> [0: bb12, otherwise: bb3]
+  using: _9@Mir(bb2[2])
+bb3:
+  _16 = const b" %02x\x00"
+  using: 
+  _15 = &raw const (*_16)
+  using: _16@Mir(bb3[0])
+  _14 = move _15 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _15@Mir(bb3[1])
+  _13 = move _14 as *const i8 (PtrToPtr)
+  using: _14@Mir(bb3[2])
+  _46 = _1 as *const () (PtrToPtr)
+  using: _1@Entry
+  _47 = _46 as usize (Transmute)
+  using: _46@Mir(bb3[4])
+  _48 = AlignOf(src::buffer::buffer_t)
+  using: 
+  _49 = Sub(_48, const 1_usize)
+  using: _48@Mir(bb3[6])
+  _50 = BitAnd(_47, _49)
+  using: _47@Mir(bb3[5]), _49@Mir(bb3[7])
+  _51 = Eq(_50, const 0_usize)
+  using: _50@Mir(bb3[8])
+  assert(_51, "misaligned pointer dereference: address must be a multiple of {} but is {}", _48, _47) -> [success: bb14, unwind unreachable]
+  using: _51@Mir(bb3[9]), _48@Mir(bb3[6]), _47@Mir(bb3[5])
+bb4:
+  _18 = (*_19)
+  using: _19@Mir(bb14[3])
+  _17 = move _18 as i32 (IntToInt)
+  using: _18@Mir(bb4[0])
+  _12 = src::buffer::printf(move _13, move _17) -> [return: bb5, unwind continue]
+  using: _13@Mir(bb3[3]), _17@Mir(bb4[1])
+bb5:
+  _26 = _8
+  using: _8@Phi(bb2)
+  _27 = const 1_i32
+  using: 
+  _28 = CheckedAdd(_26, _27)
+  using: _26@Mir(bb5[0]), _27@Mir(bb5[1])
+  assert(!move (_28.1: bool), "attempt to compute `{} + {}`, which would overflow", move _26, move _27) -> [success: bb6, unwind continue]
+  using: _28@Mir(bb5[2]), _26@Mir(bb5[0]), _27@Mir(bb5[1])
+bb6:
+  _25 = move (_28.0: i32)
+  using: _28@Mir(bb5[2])
+  _29 = const 8_i32
+  using: 
+  _30 = Eq(_29, const 0_i32)
+  using: _29@Mir(bb6[1])
+  assert(!move _30, "attempt to calculate the remainder of `{}` with a divisor of zero", _25) -> [success: bb7, unwind continue]
+  using: _30@Mir(bb6[2]), _25@Mir(bb6[0])
+bb7:
+  _31 = Eq(_29, const -1_i32)
+  using: _29@Mir(bb6[1])
+  _32 = Eq(_25, const i32::MIN)
+  using: _25@Mir(bb6[0])
+  _33 = BitAnd(move _31, move _32)
+  using: _31@Mir(bb7[0]), _32@Mir(bb7[1])
+  assert(!move _33, "attempt to compute the remainder of `{} % {}`, which would overflow", _25, _29) -> [success: bb8, unwind continue]
+  using: _33@Mir(bb7[2]), _25@Mir(bb6[0]), _29@Mir(bb6[1])
+bb8:
+  _24 = Rem(move _25, move _29)
+  using: _25@Mir(bb6[0]), _29@Mir(bb6[1])
+  _34 = const 0_i32
+  using: 
+  _23 = Eq(move _24, move _34)
+  using: _24@Mir(bb8[0]), _34@Mir(bb8[1])
+  switchInt(move _23) -> [0: bb10, otherwise: bb9]
+  using: _23@Mir(bb8[2])
+bb9:
+  _39 = const b"\n \x00"
+  using: 
+  _38 = &raw const (*_39)
+  using: _39@Mir(bb9[0])
+  _37 = move _38 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _38@Mir(bb9[1])
+  _36 = move _37 as *const i8 (PtrToPtr)
+  using: _37@Mir(bb9[2])
+  _35 = src::buffer::printf(move _36) -> [return: bb10, unwind continue]
+  using: _36@Mir(bb9[3])
+bb10:
+  _40 = CheckedAdd(_8, const 1_i32)
+  using: _8@Phi(bb2)
+  assert(!move (_40.1: bool), "attempt to compute `{} + {}`, which would overflow", _8, const 1_i32) -> [success: bb11, unwind continue]
+  using: _40@Mir(bb10[0]), _8@Phi(bb2)
+bb11:
+  _8 = move (_40.0: i32)
+  using: _40@Mir(bb10[0])
+  goto -> bb2
+  using: 
+bb12:
+  _45 = const b"\n\x00"
+  using: 
+  _44 = &raw const (*_45)
+  using: _45@Mir(bb12[0])
+  _43 = move _44 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _44@Mir(bb12[1])
+  _42 = move _43 as *const i8 (PtrToPtr)
+  using: _43@Mir(bb12[2])
+  _41 = src::buffer::printf(move _42) -> [return: bb13, unwind continue]
+  using: _42@Mir(bb12[3])
+bb13:
+  return
+  using: _0@Entry
+bb14:
+  _20 = ((*_1).1: *mut i8)
+  using: _1@Entry
+  _22 = _8
+  using: _8@Phi(bb2)
+  _21 = move _22 as isize (IntToInt)
+  using: _22@Mir(bb14[1])
+  _19 = std::ptr::mut_ptr::<impl *mut i8>::offset(move _20, move _21) -> [return: bb4, unwind continue]
+  using: _20@Mir(bb14[0]), _21@Mir(bb14[2])
+bb15:
+  _2 = ((*_1).0: u64)
+  using: _1@Entry
+  _7 = const b"\n \x00"
+  using: 
+  _6 = &raw const (*_7)
+  using: _7@Mir(bb15[1])
+  _5 = move _6 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _6@Mir(bb15[2])
+  _4 = move _5 as *const i8 (PtrToPtr)
+  using: _5@Mir(bb15[3])
+  _3 = src::buffer::printf(move _4) -> [return: bb1, unwind continue]
+  using: _4@Mir(bb15[4])
+@DefId(0:92 ~ lib[f5c5]::src::test::equal)
+bb0:
+  _4 = _1 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _1@Entry
+  _5 = _2 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _2@Entry
+  _3 = src::test::strcmp(move _4, move _5) -> [return: bb1, unwind continue]
+  using: _4@Mir(bb0[0]), _5@Mir(bb0[1])
+bb1:
+  switchInt(move _3) -> [0: bb7, otherwise: bb2]
+  using: _3@Mir(bb0[2])
+bb2:
+  _10 = const b"\n\x00"
+  using: 
+  _9 = &raw const (*_10)
+  using: _10@Mir(bb2[0])
+  _8 = move _9 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _9@Mir(bb2[1])
+  _7 = move _8 as *const i8 (PtrToPtr)
+  using: _8@Mir(bb2[2])
+  _6 = src::test::printf(move _7) -> [return: bb3, unwind continue]
+  using: _7@Mir(bb2[3])
+bb3:
+  _15 = const b"  expected: \'%s\'\n\x00"
+  using: 
+  _14 = &raw const (*_15)
+  using: _15@Mir(bb3[0])
+  _13 = move _14 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _14@Mir(bb3[1])
+  _12 = move _13 as *const i8 (PtrToPtr)
+  using: _13@Mir(bb3[2])
+  _11 = src::test::printf(move _12, _1) -> [return: bb4, unwind continue]
+  using: _12@Mir(bb3[3]), _1@Entry
+bb4:
+  _20 = const b"    actual: \'%s\'\n\x00"
+  using: 
+  _19 = &raw const (*_20)
+  using: _20@Mir(bb4[0])
+  _18 = move _19 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _19@Mir(bb4[1])
+  _17 = move _18 as *const i8 (PtrToPtr)
+  using: _18@Mir(bb4[2])
+  _16 = src::test::printf(move _17, _2) -> [return: bb5, unwind continue]
+  using: _17@Mir(bb4[3]), _2@Entry
+bb5:
+  _25 = const b"\n\x00"
+  using: 
+  _24 = &raw const (*_25)
+  using: _25@Mir(bb5[0])
+  _23 = move _24 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _24@Mir(bb5[1])
+  _22 = move _23 as *const i8 (PtrToPtr)
+  using: _23@Mir(bb5[2])
+  _21 = src::test::printf(move _22) -> [return: bb6, unwind continue]
+  using: _22@Mir(bb5[3])
+bb6:
+  _27 = const 1_i32
+  using: 
+  _26 = src::test::exit(move _27) -> unwind continue
+  using: _27@Mir(bb6[0])
+bb7:
+  return
+  using: _0@Entry
+@DefId(0:93 ~ lib[f5c5]::src::test::test_buffer_new)
+bb0:
+  _1 = src::test::buffer_new() -> [return: bb1, unwind continue]
+  using: 
+bb1:
+  _4 = const 64_i32
+  using: 
+  _3 = move _4 as u64 (IntToInt)
+  using: _4@Mir(bb1[0])
+  _6 = _1
+  using: _1@Mir(bb0[0])
+  _5 = src::test::buffer_size(move _6) -> [return: bb2, unwind continue]
+  using: _6@Mir(bb1[2])
+bb2:
+  _2 = Eq(move _3, move _5)
+  using: _3@Mir(bb1[1]), _5@Mir(bb1[3])
+  switchInt(move _2) -> [0: bb4, otherwise: bb3]
+  using: _2@Mir(bb2[0])
+bb3:
+  _24 = const 0_i32
+  using: 
+  _23 = move _24 as u64 (IntToInt)
+  using: _24@Mir(bb3[0])
+  _26 = _1
+  using: _1@Mir(bb0[0])
+  _25 = src::test::buffer_length(move _26) -> [return: bb6, unwind continue]
+  using: _26@Mir(bb3[2])
+bb4:
+  _11 = const b"BUFFER_DEFAULT_SIZE == buffer_size(buf)\x00"
+  using: 
+  _10 = &raw const (*_11)
+  using: _11@Mir(bb4[0])
+  _9 = move _10 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _10@Mir(bb4[1])
+  _8 = move _9 as *const i8 (PtrToPtr)
+  using: _9@Mir(bb4[2])
+  _15 = const b"test.c\x00"
+  using: 
+  _14 = &raw const (*_15)
+  using: _15@Mir(bb4[4])
+  _13 = move _14 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _14@Mir(bb4[5])
+  _12 = move _13 as *const i8 (PtrToPtr)
+  using: _13@Mir(bb4[6])
+  _17 = const 28_i32
+  using: 
+  _16 = move _17 as u32 (IntToInt)
+  using: _17@Mir(bb4[8])
+  _21 = const b"void test_buffer_new()\x00"
+  using: 
+  _20 = _21 as &[i8; 23] (Transmute)
+  using: _21@Mir(bb4[10])
+  _19 = _20 as &[i8] (PointerCoercion(Unsize))
+  using: _20@Mir(bb4[11])
+  _18 = core::slice::<impl [i8]>::as_ptr(move _19) -> [return: bb5, unwind continue]
+  using: _19@Mir(bb4[12])
+bb5:
+  _7 = src::test::__assert_fail(move _8, move _12, move _16, move _18) -> unwind continue
+  using: _8@Mir(bb4[3]), _12@Mir(bb4[7]), _16@Mir(bb4[9]), _18@Mir(bb4[13])
+bb6:
+  _22 = Eq(move _23, move _25)
+  using: _23@Mir(bb3[1]), _25@Mir(bb3[3])
+  switchInt(move _22) -> [0: bb8, otherwise: bb7]
+  using: _22@Mir(bb6[0])
+bb7:
+  _43 = _1
+  using: _1@Mir(bb0[0])
+  _42 = src::test::buffer_free(move _43) -> [return: bb10, unwind continue]
+  using: _43@Mir(bb7[0])
+bb8:
+  _31 = const b"0 == buffer_length(buf)\x00"
+  using: 
+  _30 = &raw const (*_31)
+  using: _31@Mir(bb8[0])
+  _29 = move _30 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _30@Mir(bb8[1])
+  _28 = move _29 as *const i8 (PtrToPtr)
+  using: _29@Mir(bb8[2])
+  _35 = const b"test.c\x00"
+  using: 
+  _34 = &raw const (*_35)
+  using: _35@Mir(bb8[4])
+  _33 = move _34 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _34@Mir(bb8[5])
+  _32 = move _33 as *const i8 (PtrToPtr)
+  using: _33@Mir(bb8[6])
+  _37 = const 29_i32
+  using: 
+  _36 = move _37 as u32 (IntToInt)
+  using: _37@Mir(bb8[8])
+  _41 = const b"void test_buffer_new()\x00"
+  using: 
+  _40 = _41 as &[i8; 23] (Transmute)
+  using: _41@Mir(bb8[10])
+  _39 = _40 as &[i8] (PointerCoercion(Unsize))
+  using: _40@Mir(bb8[11])
+  _38 = core::slice::<impl [i8]>::as_ptr(move _39) -> [return: bb9, unwind continue]
+  using: _39@Mir(bb8[12])
+bb9:
+  _27 = src::test::__assert_fail(move _28, move _32, move _36, move _38) -> unwind continue
+  using: _28@Mir(bb8[3]), _32@Mir(bb8[7]), _36@Mir(bb8[9]), _38@Mir(bb8[13])
+bb10:
+  return
+  using: _0@Entry
+@DefId(0:98 ~ lib[f5c5]::src::test::test_buffer_new_with_size)
+bb0:
+  _3 = const 1024_i32
+  using: 
+  _2 = move _3 as u64 (IntToInt)
+  using: _3@Mir(bb0[0])
+  _1 = src::test::buffer_new_with_size(move _2) -> [return: bb1, unwind continue]
+  using: _2@Mir(bb0[1])
+bb1:
+  _6 = const 1024_i32
+  using: 
+  _5 = move _6 as u64 (IntToInt)
+  using: _6@Mir(bb1[0])
+  _8 = _1
+  using: _1@Mir(bb0[2])
+  _7 = src::test::buffer_size(move _8) -> [return: bb2, unwind continue]
+  using: _8@Mir(bb1[2])
+bb2:
+  _4 = Eq(move _5, move _7)
+  using: _5@Mir(bb1[1]), _7@Mir(bb1[3])
+  switchInt(move _4) -> [0: bb4, otherwise: bb3]
+  using: _4@Mir(bb2[0])
+bb3:
+  _26 = const 0_i32
+  using: 
+  _25 = move _26 as u64 (IntToInt)
+  using: _26@Mir(bb3[0])
+  _28 = _1
+  using: _1@Mir(bb0[2])
+  _27 = src::test::buffer_length(move _28) -> [return: bb6, unwind continue]
+  using: _28@Mir(bb3[2])
+bb4:
+  _13 = const b"1024 == buffer_size(buf)\x00"
+  using: 
+  _12 = &raw const (*_13)
+  using: _13@Mir(bb4[0])
+  _11 = move _12 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _12@Mir(bb4[1])
+  _10 = move _11 as *const i8 (PtrToPtr)
+  using: _11@Mir(bb4[2])
+  _17 = const b"test.c\x00"
+  using: 
+  _16 = &raw const (*_17)
+  using: _17@Mir(bb4[4])
+  _15 = move _16 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _16@Mir(bb4[5])
+  _14 = move _15 as *const i8 (PtrToPtr)
+  using: _15@Mir(bb4[6])
+  _19 = const 36_i32
+  using: 
+  _18 = move _19 as u32 (IntToInt)
+  using: _19@Mir(bb4[8])
+  _23 = const b"void test_buffer_new_with_size()\x00"
+  using: 
+  _22 = _23 as &[i8; 33] (Transmute)
+  using: _23@Mir(bb4[10])
+  _21 = _22 as &[i8] (PointerCoercion(Unsize))
+  using: _22@Mir(bb4[11])
+  _20 = core::slice::<impl [i8]>::as_ptr(move _21) -> [return: bb5, unwind continue]
+  using: _21@Mir(bb4[12])
+bb5:
+  _9 = src::test::__assert_fail(move _10, move _14, move _18, move _20) -> unwind continue
+  using: _10@Mir(bb4[3]), _14@Mir(bb4[7]), _18@Mir(bb4[9]), _20@Mir(bb4[13])
+bb6:
+  _24 = Eq(move _25, move _27)
+  using: _25@Mir(bb3[1]), _27@Mir(bb3[3])
+  switchInt(move _24) -> [0: bb8, otherwise: bb7]
+  using: _24@Mir(bb6[0])
+bb7:
+  _45 = _1
+  using: _1@Mir(bb0[2])
+  _44 = src::test::buffer_free(move _45) -> [return: bb10, unwind continue]
+  using: _45@Mir(bb7[0])
+bb8:
+  _33 = const b"0 == buffer_length(buf)\x00"
+  using: 
+  _32 = &raw const (*_33)
+  using: _33@Mir(bb8[0])
+  _31 = move _32 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _32@Mir(bb8[1])
+  _30 = move _31 as *const i8 (PtrToPtr)
+  using: _31@Mir(bb8[2])
+  _37 = const b"test.c\x00"
+  using: 
+  _36 = &raw const (*_37)
+  using: _37@Mir(bb8[4])
+  _35 = move _36 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _36@Mir(bb8[5])
+  _34 = move _35 as *const i8 (PtrToPtr)
+  using: _35@Mir(bb8[6])
+  _39 = const 37_i32
+  using: 
+  _38 = move _39 as u32 (IntToInt)
+  using: _39@Mir(bb8[8])
+  _43 = const b"void test_buffer_new_with_size()\x00"
+  using: 
+  _42 = _43 as &[i8; 33] (Transmute)
+  using: _43@Mir(bb8[10])
+  _41 = _42 as &[i8] (PointerCoercion(Unsize))
+  using: _42@Mir(bb8[11])
+  _40 = core::slice::<impl [i8]>::as_ptr(move _41) -> [return: bb9, unwind continue]
+  using: _41@Mir(bb8[12])
+bb9:
+  _29 = src::test::__assert_fail(move _30, move _34, move _38, move _40) -> unwind continue
+  using: _30@Mir(bb8[3]), _34@Mir(bb8[7]), _38@Mir(bb8[9]), _40@Mir(bb8[13])
+bb10:
+  return
+  using: _0@Entry
+@DefId(0:103 ~ lib[f5c5]::src::test::test_buffer_append)
+bb0:
+  _1 = src::test::buffer_new() -> [return: bb1, unwind continue]
+  using: 
+bb1:
+  _3 = const 0_i32
+  using: 
+  _5 = _1
+  using: _1@Mir(bb0[0])
+  _9 = const b"Hello\x00"
+  using: 
+  _8 = &raw const (*_9)
+  using: _9@Mir(bb1[2])
+  _7 = move _8 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _8@Mir(bb1[3])
+  _6 = move _7 as *const i8 (PtrToPtr)
+  using: _7@Mir(bb1[4])
+  _4 = src::test::buffer_append(move _5, move _6) -> [return: bb2, unwind continue]
+  using: _5@Mir(bb1[1]), _6@Mir(bb1[5])
+bb2:
+  _2 = Eq(move _3, move _4)
+  using: _3@Mir(bb1[0]), _4@Mir(bb1[6])
+  switchInt(move _2) -> [0: bb4, otherwise: bb3]
+  using: _2@Mir(bb2[0])
+bb3:
+  _26 = const 0_i32
+  using: 
+  _28 = _1
+  using: _1@Mir(bb0[0])
+  _32 = const b" World\x00"
+  using: 
+  _31 = &raw const (*_32)
+  using: _32@Mir(bb3[2])
+  _30 = move _31 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _31@Mir(bb3[3])
+  _29 = move _30 as *const i8 (PtrToPtr)
+  using: _30@Mir(bb3[4])
+  _27 = src::test::buffer_append(move _28, move _29) -> [return: bb6, unwind continue]
+  using: _28@Mir(bb3[1]), _29@Mir(bb3[5])
+bb4:
+  _14 = const b"0 == buffer_append(buf, \"Hello\")\x00"
+  using: 
+  _13 = &raw const (*_14)
+  using: _14@Mir(bb4[0])
+  _12 = move _13 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _13@Mir(bb4[1])
+  _11 = move _12 as *const i8 (PtrToPtr)
+  using: _12@Mir(bb4[2])
+  _18 = const b"test.c\x00"
+  using: 
+  _17 = &raw const (*_18)
+  using: _18@Mir(bb4[4])
+  _16 = move _17 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _17@Mir(bb4[5])
+  _15 = move _16 as *const i8 (PtrToPtr)
+  using: _16@Mir(bb4[6])
+  _20 = const 44_i32
+  using: 
+  _19 = move _20 as u32 (IntToInt)
+  using: _20@Mir(bb4[8])
+  _24 = const b"void test_buffer_append()\x00"
+  using: 
+  _23 = _24 as &[i8; 26] (Transmute)
+  using: _24@Mir(bb4[10])
+  _22 = _23 as &[i8] (PointerCoercion(Unsize))
+  using: _23@Mir(bb4[11])
+  _21 = core::slice::<impl [i8]>::as_ptr(move _22) -> [return: bb5, unwind continue]
+  using: _22@Mir(bb4[12])
+bb5:
+  _10 = src::test::__assert_fail(move _11, move _15, move _19, move _21) -> unwind continue
+  using: _11@Mir(bb4[3]), _15@Mir(bb4[7]), _19@Mir(bb4[9]), _21@Mir(bb4[13])
+bb6:
+  _25 = Eq(move _26, move _27)
+  using: _26@Mir(bb3[0]), _27@Mir(bb3[6])
+  switchInt(move _25) -> [0: bb8, otherwise: bb7]
+  using: _25@Mir(bb6[0])
+bb7:
+  _53 = const b"Hello World\x00"
+  using: 
+  _52 = &raw const (*_53)
+  using: _53@Mir(bb7[0])
+  _51 = move _52 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _52@Mir(bb7[1])
+  _50 = move _51 as *const i8 (PtrToPtr)
+  using: _51@Mir(bb7[2])
+  _49 = src::test::strlen(move _50) -> [return: bb10, unwind continue]
+  using: _50@Mir(bb7[3])
+bb8:
+  _37 = const b"0 == buffer_append(buf, \" World\")\x00"
+  using: 
+  _36 = &raw const (*_37)
+  using: _37@Mir(bb8[0])
+  _35 = move _36 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _36@Mir(bb8[1])
+  _34 = move _35 as *const i8 (PtrToPtr)
+  using: _35@Mir(bb8[2])
+  _41 = const b"test.c\x00"
+  using: 
+  _40 = &raw const (*_41)
+  using: _41@Mir(bb8[4])
+  _39 = move _40 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _40@Mir(bb8[5])
+  _38 = move _39 as *const i8 (PtrToPtr)
+  using: _39@Mir(bb8[6])
+  _43 = const 45_i32
+  using: 
+  _42 = move _43 as u32 (IntToInt)
+  using: _43@Mir(bb8[8])
+  _47 = const b"void test_buffer_append()\x00"
+  using: 
+  _46 = _47 as &[i8; 26] (Transmute)
+  using: _47@Mir(bb8[10])
+  _45 = _46 as &[i8] (PointerCoercion(Unsize))
+  using: _46@Mir(bb8[11])
+  _44 = core::slice::<impl [i8]>::as_ptr(move _45) -> [return: bb9, unwind continue]
+  using: _45@Mir(bb8[12])
+bb9:
+  _33 = src::test::__assert_fail(move _34, move _38, move _42, move _44) -> unwind continue
+  using: _34@Mir(bb8[3]), _38@Mir(bb8[7]), _42@Mir(bb8[9]), _44@Mir(bb8[13])
+bb10:
+  _55 = _1
+  using: _1@Mir(bb0[0])
+  _54 = src::test::buffer_length(move _55) -> [return: bb11, unwind continue]
+  using: _55@Mir(bb10[0])
+bb11:
+  _48 = Eq(move _49, move _54)
+  using: _49@Mir(bb7[4]), _54@Mir(bb10[1])
+  switchInt(move _48) -> [0: bb13, otherwise: bb12]
+  using: _48@Mir(bb11[0])
+bb12:
+  _76 = const b"Hello World\x00"
+  using: 
+  _75 = &raw const (*_76)
+  using: _76@Mir(bb12[0])
+  _74 = move _75 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _75@Mir(bb12[1])
+  _73 = move _74 as *const i8 (PtrToPtr)
+  using: _74@Mir(bb12[2])
+  _72 = move _73 as *mut i8 (PtrToPtr)
+  using: _73@Mir(bb12[3])
+  _80 = _1 as *const () (PtrToPtr)
+  using: _1@Mir(bb0[0])
+  _81 = _80 as usize (Transmute)
+  using: _80@Mir(bb12[5])
+  _82 = AlignOf(src::test::buffer_t)
+  using: 
+  _83 = Sub(_82, const 1_usize)
+  using: _82@Mir(bb12[7])
+  _84 = BitAnd(_81, _83)
+  using: _81@Mir(bb12[6]), _83@Mir(bb12[8])
+  _85 = Eq(_84, const 0_usize)
+  using: _84@Mir(bb12[9])
+  assert(_85, "misaligned pointer dereference: address must be a multiple of {} but is {}", _82, _81) -> [success: bb17, unwind unreachable]
+  using: _85@Mir(bb12[10]), _82@Mir(bb12[7]), _81@Mir(bb12[6])
+bb13:
+  _60 = const b"strlen(\"Hello World\") == buffer_length(buf)\x00"
+  using: 
+  _59 = &raw const (*_60)
+  using: _60@Mir(bb13[0])
+  _58 = move _59 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _59@Mir(bb13[1])
+  _57 = move _58 as *const i8 (PtrToPtr)
+  using: _58@Mir(bb13[2])
+  _64 = const b"test.c\x00"
+  using: 
+  _63 = &raw const (*_64)
+  using: _64@Mir(bb13[4])
+  _62 = move _63 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _63@Mir(bb13[5])
+  _61 = move _62 as *const i8 (PtrToPtr)
+  using: _62@Mir(bb13[6])
+  _66 = const 46_i32
+  using: 
+  _65 = move _66 as u32 (IntToInt)
+  using: _66@Mir(bb13[8])
+  _70 = const b"void test_buffer_append()\x00"
+  using: 
+  _69 = _70 as &[i8; 26] (Transmute)
+  using: _70@Mir(bb13[10])
+  _68 = _69 as &[i8] (PointerCoercion(Unsize))
+  using: _69@Mir(bb13[11])
+  _67 = core::slice::<impl [i8]>::as_ptr(move _68) -> [return: bb14, unwind continue]
+  using: _68@Mir(bb13[12])
+bb14:
+  _56 = src::test::__assert_fail(move _57, move _61, move _65, move _67) -> unwind continue
+  using: _57@Mir(bb13[3]), _61@Mir(bb13[7]), _65@Mir(bb13[9]), _67@Mir(bb13[13])
+bb15:
+  _79 = _1
+  using: _1@Mir(bb0[0])
+  _78 = src::test::buffer_free(move _79) -> [return: bb16, unwind continue]
+  using: _79@Mir(bb15[0])
+bb16:
+  return
+  using: _0@Entry
+bb17:
+  _77 = ((*_1).2: *mut i8)
+  using: _1@Mir(bb0[0])
+  _71 = src::test::equal(move _72, move _77) -> [return: bb15, unwind continue]
+  using: _72@Mir(bb12[4]), _77@Mir(bb17[0])
+@DefId(0:110 ~ lib[f5c5]::src::test::test_buffer_append_n)
+bb0:
+  _1 = src::test::buffer_new() -> [return: bb1, unwind continue]
+  using: 
+bb1:
+  _3 = const 0_i32
+  using: 
+  _5 = _1
+  using: _1@Mir(bb0[0])
+  _9 = const b"subway\x00"
+  using: 
+  _8 = &raw const (*_9)
+  using: _9@Mir(bb1[2])
+  _7 = move _8 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _8@Mir(bb1[3])
+  _6 = move _7 as *const i8 (PtrToPtr)
+  using: _7@Mir(bb1[4])
+  _11 = const 3_i32
+  using: 
+  _10 = move _11 as u64 (IntToInt)
+  using: _11@Mir(bb1[6])
+  _4 = src::test::buffer_append_n(move _5, move _6, move _10) -> [return: bb2, unwind continue]
+  using: _5@Mir(bb1[1]), _6@Mir(bb1[5]), _10@Mir(bb1[7])
+bb2:
+  _2 = Eq(move _3, move _4)
+  using: _3@Mir(bb1[0]), _4@Mir(bb1[8])
+  switchInt(move _2) -> [0: bb4, otherwise: bb3]
+  using: _2@Mir(bb2[0])
+bb3:
+  _28 = const 0_i32
+  using: 
+  _30 = _1
+  using: _1@Mir(bb0[0])
+  _34 = const b"marines\x00"
+  using: 
+  _33 = &raw const (*_34)
+  using: _34@Mir(bb3[2])
+  _32 = move _33 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _33@Mir(bb3[3])
+  _31 = move _32 as *const i8 (PtrToPtr)
+  using: _32@Mir(bb3[4])
+  _36 = const 6_i32
+  using: 
+  _35 = move _36 as u64 (IntToInt)
+  using: _36@Mir(bb3[6])
+  _29 = src::test::buffer_append_n(move _30, move _31, move _35) -> [return: bb6, unwind continue]
+  using: _30@Mir(bb3[1]), _31@Mir(bb3[5]), _35@Mir(bb3[7])
+bb4:
+  _16 = const b"0 == buffer_append_n(buf, \"subway\", 3)\x00"
+  using: 
+  _15 = &raw const (*_16)
+  using: _16@Mir(bb4[0])
+  _14 = move _15 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _15@Mir(bb4[1])
+  _13 = move _14 as *const i8 (PtrToPtr)
+  using: _14@Mir(bb4[2])
+  _20 = const b"test.c\x00"
+  using: 
+  _19 = &raw const (*_20)
+  using: _20@Mir(bb4[4])
+  _18 = move _19 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _19@Mir(bb4[5])
+  _17 = move _18 as *const i8 (PtrToPtr)
+  using: _18@Mir(bb4[6])
+  _22 = const 54_i32
+  using: 
+  _21 = move _22 as u32 (IntToInt)
+  using: _22@Mir(bb4[8])
+  _26 = const b"void test_buffer_append_n()\x00"
+  using: 
+  _25 = _26 as &[i8; 28] (Transmute)
+  using: _26@Mir(bb4[10])
+  _24 = _25 as &[i8] (PointerCoercion(Unsize))
+  using: _25@Mir(bb4[11])
+  _23 = core::slice::<impl [i8]>::as_ptr(move _24) -> [return: bb5, unwind continue]
+  using: _24@Mir(bb4[12])
+bb5:
+  _12 = src::test::__assert_fail(move _13, move _17, move _21, move _23) -> unwind continue
+  using: _13@Mir(bb4[3]), _17@Mir(bb4[7]), _21@Mir(bb4[9]), _23@Mir(bb4[13])
+bb6:
+  _27 = Eq(move _28, move _29)
+  using: _28@Mir(bb3[0]), _29@Mir(bb3[8])
+  switchInt(move _27) -> [0: bb8, otherwise: bb7]
+  using: _27@Mir(bb6[0])
+bb7:
+  _57 = const b"submarine\x00"
+  using: 
+  _56 = &raw const (*_57)
+  using: _57@Mir(bb7[0])
+  _55 = move _56 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _56@Mir(bb7[1])
+  _54 = move _55 as *const i8 (PtrToPtr)
+  using: _55@Mir(bb7[2])
+  _53 = src::test::strlen(move _54) -> [return: bb10, unwind continue]
+  using: _54@Mir(bb7[3])
+bb8:
+  _41 = const b"0 == buffer_append_n(buf, \"marines\", 6)\x00"
+  using: 
+  _40 = &raw const (*_41)
+  using: _41@Mir(bb8[0])
+  _39 = move _40 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _40@Mir(bb8[1])
+  _38 = move _39 as *const i8 (PtrToPtr)
+  using: _39@Mir(bb8[2])
+  _45 = const b"test.c\x00"
+  using: 
+  _44 = &raw const (*_45)
+  using: _45@Mir(bb8[4])
+  _43 = move _44 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _44@Mir(bb8[5])
+  _42 = move _43 as *const i8 (PtrToPtr)
+  using: _43@Mir(bb8[6])
+  _47 = const 55_i32
+  using: 
+  _46 = move _47 as u32 (IntToInt)
+  using: _47@Mir(bb8[8])
+  _51 = const b"void test_buffer_append_n()\x00"
+  using: 
+  _50 = _51 as &[i8; 28] (Transmute)
+  using: _51@Mir(bb8[10])
+  _49 = _50 as &[i8] (PointerCoercion(Unsize))
+  using: _50@Mir(bb8[11])
+  _48 = core::slice::<impl [i8]>::as_ptr(move _49) -> [return: bb9, unwind continue]
+  using: _49@Mir(bb8[12])
+bb9:
+  _37 = src::test::__assert_fail(move _38, move _42, move _46, move _48) -> unwind continue
+  using: _38@Mir(bb8[3]), _42@Mir(bb8[7]), _46@Mir(bb8[9]), _48@Mir(bb8[13])
+bb10:
+  _59 = _1
+  using: _1@Mir(bb0[0])
+  _58 = src::test::buffer_length(move _59) -> [return: bb11, unwind continue]
+  using: _59@Mir(bb10[0])
+bb11:
+  _52 = Eq(move _53, move _58)
+  using: _53@Mir(bb7[4]), _58@Mir(bb10[1])
+  switchInt(move _52) -> [0: bb13, otherwise: bb12]
+  using: _52@Mir(bb11[0])
+bb12:
+  _80 = const b"submarine\x00"
+  using: 
+  _79 = &raw const (*_80)
+  using: _80@Mir(bb12[0])
+  _78 = move _79 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _79@Mir(bb12[1])
+  _77 = move _78 as *const i8 (PtrToPtr)
+  using: _78@Mir(bb12[2])
+  _76 = move _77 as *mut i8 (PtrToPtr)
+  using: _77@Mir(bb12[3])
+  _84 = _1 as *const () (PtrToPtr)
+  using: _1@Mir(bb0[0])
+  _85 = _84 as usize (Transmute)
+  using: _84@Mir(bb12[5])
+  _86 = AlignOf(src::test::buffer_t)
+  using: 
+  _87 = Sub(_86, const 1_usize)
+  using: _86@Mir(bb12[7])
+  _88 = BitAnd(_85, _87)
+  using: _85@Mir(bb12[6]), _87@Mir(bb12[8])
+  _89 = Eq(_88, const 0_usize)
+  using: _88@Mir(bb12[9])
+  assert(_89, "misaligned pointer dereference: address must be a multiple of {} but is {}", _86, _85) -> [success: bb17, unwind unreachable]
+  using: _89@Mir(bb12[10]), _86@Mir(bb12[7]), _85@Mir(bb12[6])
+bb13:
+  _64 = const b"strlen(\"submarine\") == buffer_length(buf)\x00"
+  using: 
+  _63 = &raw const (*_64)
+  using: _64@Mir(bb13[0])
+  _62 = move _63 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _63@Mir(bb13[1])
+  _61 = move _62 as *const i8 (PtrToPtr)
+  using: _62@Mir(bb13[2])
+  _68 = const b"test.c\x00"
+  using: 
+  _67 = &raw const (*_68)
+  using: _68@Mir(bb13[4])
+  _66 = move _67 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _67@Mir(bb13[5])
+  _65 = move _66 as *const i8 (PtrToPtr)
+  using: _66@Mir(bb13[6])
+  _70 = const 56_i32
+  using: 
+  _69 = move _70 as u32 (IntToInt)
+  using: _70@Mir(bb13[8])
+  _74 = const b"void test_buffer_append_n()\x00"
+  using: 
+  _73 = _74 as &[i8; 28] (Transmute)
+  using: _74@Mir(bb13[10])
+  _72 = _73 as &[i8] (PointerCoercion(Unsize))
+  using: _73@Mir(bb13[11])
+  _71 = core::slice::<impl [i8]>::as_ptr(move _72) -> [return: bb14, unwind continue]
+  using: _72@Mir(bb13[12])
+bb14:
+  _60 = src::test::__assert_fail(move _61, move _65, move _69, move _71) -> unwind continue
+  using: _61@Mir(bb13[3]), _65@Mir(bb13[7]), _69@Mir(bb13[9]), _71@Mir(bb13[13])
+bb15:
+  _83 = _1
+  using: _1@Mir(bb0[0])
+  _82 = src::test::buffer_free(move _83) -> [return: bb16, unwind continue]
+  using: _83@Mir(bb15[0])
+bb16:
+  return
+  using: _0@Entry
+bb17:
+  _81 = ((*_1).2: *mut i8)
+  using: _1@Mir(bb0[0])
+  _75 = src::test::equal(move _76, move _81) -> [return: bb15, unwind continue]
+  using: _76@Mir(bb12[4]), _81@Mir(bb17[0])
+@DefId(0:117 ~ lib[f5c5]::src::test::test_buffer_append__grow)
+bb0:
+  _3 = const 10_i32
+  using: 
+  _2 = move _3 as u64 (IntToInt)
+  using: _3@Mir(bb0[0])
+  _1 = src::test::buffer_new_with_size(move _2) -> [return: bb1, unwind continue]
+  using: _2@Mir(bb0[1])
+bb1:
+  _5 = const 0_i32
+  using: 
+  _7 = _1
+  using: _1@Mir(bb0[2])
+  _11 = const b"Hello\x00"
+  using: 
+  _10 = &raw const (*_11)
+  using: _11@Mir(bb1[2])
+  _9 = move _10 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _10@Mir(bb1[3])
+  _8 = move _9 as *const i8 (PtrToPtr)
+  using: _9@Mir(bb1[4])
+  _6 = src::test::buffer_append(move _7, move _8) -> [return: bb2, unwind continue]
+  using: _7@Mir(bb1[1]), _8@Mir(bb1[5])
+bb2:
+  _4 = Eq(move _5, move _6)
+  using: _5@Mir(bb1[0]), _6@Mir(bb1[6])
+  switchInt(move _4) -> [0: bb4, otherwise: bb3]
+  using: _4@Mir(bb2[0])
+bb3:
+  _28 = const 0_i32
+  using: 
+  _30 = _1
+  using: _1@Mir(bb0[2])
+  _34 = const b" tobi\x00"
+  using: 
+  _33 = &raw const (*_34)
+  using: _34@Mir(bb3[2])
+  _32 = move _33 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _33@Mir(bb3[3])
+  _31 = move _32 as *const i8 (PtrToPtr)
+  using: _32@Mir(bb3[4])
+  _29 = src::test::buffer_append(move _30, move _31) -> [return: bb6, unwind continue]
+  using: _30@Mir(bb3[1]), _31@Mir(bb3[5])
+bb4:
+  _16 = const b"0 == buffer_append(buf, \"Hello\")\x00"
+  using: 
+  _15 = &raw const (*_16)
+  using: _16@Mir(bb4[0])
+  _14 = move _15 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _15@Mir(bb4[1])
+  _13 = move _14 as *const i8 (PtrToPtr)
+  using: _14@Mir(bb4[2])
+  _20 = const b"test.c\x00"
+  using: 
+  _19 = &raw const (*_20)
+  using: _20@Mir(bb4[4])
+  _18 = move _19 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _19@Mir(bb4[5])
+  _17 = move _18 as *const i8 (PtrToPtr)
+  using: _18@Mir(bb4[6])
+  _22 = const 64_i32
+  using: 
+  _21 = move _22 as u32 (IntToInt)
+  using: _22@Mir(bb4[8])
+  _26 = const b"void test_buffer_append__grow()\x00"
+  using: 
+  _25 = _26 as &[i8; 32] (Transmute)
+  using: _26@Mir(bb4[10])
+  _24 = _25 as &[i8] (PointerCoercion(Unsize))
+  using: _25@Mir(bb4[11])
+  _23 = core::slice::<impl [i8]>::as_ptr(move _24) -> [return: bb5, unwind continue]
+  using: _24@Mir(bb4[12])
+bb5:
+  _12 = src::test::__assert_fail(move _13, move _17, move _21, move _23) -> unwind continue
+  using: _13@Mir(bb4[3]), _17@Mir(bb4[7]), _21@Mir(bb4[9]), _23@Mir(bb4[13])
+bb6:
+  _27 = Eq(move _28, move _29)
+  using: _28@Mir(bb3[0]), _29@Mir(bb3[6])
+  switchInt(move _27) -> [0: bb8, otherwise: bb7]
+  using: _27@Mir(bb6[0])
+bb7:
+  _51 = const 0_i32
+  using: 
+  _53 = _1
+  using: _1@Mir(bb0[2])
+  _57 = const b" was\x00"
+  using: 
+  _56 = &raw const (*_57)
+  using: _57@Mir(bb7[2])
+  _55 = move _56 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _56@Mir(bb7[3])
+  _54 = move _55 as *const i8 (PtrToPtr)
+  using: _55@Mir(bb7[4])
+  _52 = src::test::buffer_append(move _53, move _54) -> [return: bb10, unwind continue]
+  using: _53@Mir(bb7[1]), _54@Mir(bb7[5])
+bb8:
+  _39 = const b"0 == buffer_append(buf, \" tobi\")\x00"
+  using: 
+  _38 = &raw const (*_39)
+  using: _39@Mir(bb8[0])
+  _37 = move _38 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _38@Mir(bb8[1])
+  _36 = move _37 as *const i8 (PtrToPtr)
+  using: _37@Mir(bb8[2])
+  _43 = const b"test.c\x00"
+  using: 
+  _42 = &raw const (*_43)
+  using: _43@Mir(bb8[4])
+  _41 = move _42 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _42@Mir(bb8[5])
+  _40 = move _41 as *const i8 (PtrToPtr)
+  using: _41@Mir(bb8[6])
+  _45 = const 65_i32
+  using: 
+  _44 = move _45 as u32 (IntToInt)
+  using: _45@Mir(bb8[8])
+  _49 = const b"void test_buffer_append__grow()\x00"
+  using: 
+  _48 = _49 as &[i8; 32] (Transmute)
+  using: _49@Mir(bb8[10])
+  _47 = _48 as &[i8] (PointerCoercion(Unsize))
+  using: _48@Mir(bb8[11])
+  _46 = core::slice::<impl [i8]>::as_ptr(move _47) -> [return: bb9, unwind continue]
+  using: _47@Mir(bb8[12])
+bb9:
+  _35 = src::test::__assert_fail(move _36, move _40, move _44, move _46) -> unwind continue
+  using: _36@Mir(bb8[3]), _40@Mir(bb8[7]), _44@Mir(bb8[9]), _46@Mir(bb8[13])
+bb10:
+  _50 = Eq(move _51, move _52)
+  using: _51@Mir(bb7[0]), _52@Mir(bb7[6])
+  switchInt(move _50) -> [0: bb12, otherwise: bb11]
+  using: _50@Mir(bb10[0])
+bb11:
+  _74 = const 0_i32
+  using: 
+  _76 = _1
+  using: _1@Mir(bb0[2])
+  _80 = const b" here\x00"
+  using: 
+  _79 = &raw const (*_80)
+  using: _80@Mir(bb11[2])
+  _78 = move _79 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _79@Mir(bb11[3])
+  _77 = move _78 as *const i8 (PtrToPtr)
+  using: _78@Mir(bb11[4])
+  _75 = src::test::buffer_append(move _76, move _77) -> [return: bb14, unwind continue]
+  using: _76@Mir(bb11[1]), _77@Mir(bb11[5])
+bb12:
+  _62 = const b"0 == buffer_append(buf, \" was\")\x00"
+  using: 
+  _61 = &raw const (*_62)
+  using: _62@Mir(bb12[0])
+  _60 = move _61 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _61@Mir(bb12[1])
+  _59 = move _60 as *const i8 (PtrToPtr)
+  using: _60@Mir(bb12[2])
+  _66 = const b"test.c\x00"
+  using: 
+  _65 = &raw const (*_66)
+  using: _66@Mir(bb12[4])
+  _64 = move _65 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _65@Mir(bb12[5])
+  _63 = move _64 as *const i8 (PtrToPtr)
+  using: _64@Mir(bb12[6])
+  _68 = const 66_i32
+  using: 
+  _67 = move _68 as u32 (IntToInt)
+  using: _68@Mir(bb12[8])
+  _72 = const b"void test_buffer_append__grow()\x00"
+  using: 
+  _71 = _72 as &[i8; 32] (Transmute)
+  using: _72@Mir(bb12[10])
+  _70 = _71 as &[i8] (PointerCoercion(Unsize))
+  using: _71@Mir(bb12[11])
+  _69 = core::slice::<impl [i8]>::as_ptr(move _70) -> [return: bb13, unwind continue]
+  using: _70@Mir(bb12[12])
+bb13:
+  _58 = src::test::__assert_fail(move _59, move _63, move _67, move _69) -> unwind continue
+  using: _59@Mir(bb12[3]), _63@Mir(bb12[7]), _67@Mir(bb12[9]), _69@Mir(bb12[13])
+bb14:
+  _73 = Eq(move _74, move _75)
+  using: _74@Mir(bb11[0]), _75@Mir(bb11[6])
+  switchInt(move _73) -> [0: bb16, otherwise: bb15]
+  using: _73@Mir(bb14[0])
+bb15:
+  _100 = const b"Hello tobi was here\x00"
+  using: 
+  _99 = &raw const (*_100)
+  using: _100@Mir(bb15[0])
+  _98 = move _99 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _99@Mir(bb15[1])
+  _97 = move _98 as *const i8 (PtrToPtr)
+  using: _98@Mir(bb15[2])
+  _96 = move _97 as *mut i8 (PtrToPtr)
+  using: _97@Mir(bb15[3])
+  _145 = _1 as *const () (PtrToPtr)
+  using: _1@Mir(bb0[2])
+  _146 = _145 as usize (Transmute)
+  using: _145@Mir(bb15[5])
+  _147 = AlignOf(src::test::buffer_t)
+  using: 
+  _148 = Sub(_147, const 1_usize)
+  using: _147@Mir(bb15[7])
+  _149 = BitAnd(_146, _148)
+  using: _146@Mir(bb15[6]), _148@Mir(bb15[8])
+  _150 = Eq(_149, const 0_usize)
+  using: _149@Mir(bb15[9])
+  assert(_150, "misaligned pointer dereference: address must be a multiple of {} but is {}", _147, _146) -> [success: bb29, unwind unreachable]
+  using: _150@Mir(bb15[10]), _147@Mir(bb15[7]), _146@Mir(bb15[6])
+bb16:
+  _85 = const b"0 == buffer_append(buf, \" here\")\x00"
+  using: 
+  _84 = &raw const (*_85)
+  using: _85@Mir(bb16[0])
+  _83 = move _84 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _84@Mir(bb16[1])
+  _82 = move _83 as *const i8 (PtrToPtr)
+  using: _83@Mir(bb16[2])
+  _89 = const b"test.c\x00"
+  using: 
+  _88 = &raw const (*_89)
+  using: _89@Mir(bb16[4])
+  _87 = move _88 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _88@Mir(bb16[5])
+  _86 = move _87 as *const i8 (PtrToPtr)
+  using: _87@Mir(bb16[6])
+  _91 = const 67_i32
+  using: 
+  _90 = move _91 as u32 (IntToInt)
+  using: _91@Mir(bb16[8])
+  _95 = const b"void test_buffer_append__grow()\x00"
+  using: 
+  _94 = _95 as &[i8; 32] (Transmute)
+  using: _95@Mir(bb16[10])
+  _93 = _94 as &[i8] (PointerCoercion(Unsize))
+  using: _94@Mir(bb16[11])
+  _92 = core::slice::<impl [i8]>::as_ptr(move _93) -> [return: bb17, unwind continue]
+  using: _93@Mir(bb16[12])
+bb17:
+  _81 = src::test::__assert_fail(move _82, move _86, move _90, move _92) -> unwind continue
+  using: _82@Mir(bb16[3]), _86@Mir(bb16[7]), _90@Mir(bb16[9]), _92@Mir(bb16[13])
+bb18:
+  _105 = const 1024_i32
+  using: 
+  _104 = move _105 as u64 (IntToInt)
+  using: _105@Mir(bb18[0])
+  _107 = _1
+  using: _1@Mir(bb0[2])
+  _106 = src::test::buffer_size(move _107) -> [return: bb19, unwind continue]
+  using: _107@Mir(bb18[2])
+bb19:
+  _103 = Eq(move _104, move _106)
+  using: _104@Mir(bb18[1]), _106@Mir(bb18[3])
+  switchInt(move _103) -> [0: bb21, otherwise: bb20]
+  using: _103@Mir(bb19[0])
+bb20:
+  _125 = _96 as *const i8 (PointerCoercion(MutToConstPointer))
+  using: _96@Mir(bb15[4])
+  _124 = src::test::strlen(move _125) -> [return: bb23, unwind continue]
+  using: _125@Mir(bb20[0])
+bb21:
+  _112 = const b"1024 == buffer_size(buf)\x00"
+  using: 
+  _111 = &raw const (*_112)
+  using: _112@Mir(bb21[0])
+  _110 = move _111 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _111@Mir(bb21[1])
+  _109 = move _110 as *const i8 (PtrToPtr)
+  using: _110@Mir(bb21[2])
+  _116 = const b"test.c\x00"
+  using: 
+  _115 = &raw const (*_116)
+  using: _116@Mir(bb21[4])
+  _114 = move _115 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _115@Mir(bb21[5])
+  _113 = move _114 as *const i8 (PtrToPtr)
+  using: _114@Mir(bb21[6])
+  _118 = const 71_i32
+  using: 
+  _117 = move _118 as u32 (IntToInt)
+  using: _118@Mir(bb21[8])
+  _122 = const b"void test_buffer_append__grow()\x00"
+  using: 
+  _121 = _122 as &[i8; 32] (Transmute)
+  using: _122@Mir(bb21[10])
+  _120 = _121 as &[i8] (PointerCoercion(Unsize))
+  using: _121@Mir(bb21[11])
+  _119 = core::slice::<impl [i8]>::as_ptr(move _120) -> [return: bb22, unwind continue]
+  using: _120@Mir(bb21[12])
+bb22:
+  _108 = src::test::__assert_fail(move _109, move _113, move _117, move _119) -> unwind continue
+  using: _109@Mir(bb21[3]), _113@Mir(bb21[7]), _117@Mir(bb21[9]), _119@Mir(bb21[13])
+bb23:
+  _127 = _1
+  using: _1@Mir(bb0[2])
+  _126 = src::test::buffer_length(move _127) -> [return: bb24, unwind continue]
+  using: _127@Mir(bb23[0])
+bb24:
+  _123 = Eq(move _124, move _126)
+  using: _124@Mir(bb20[1]), _126@Mir(bb23[1])
+  switchInt(move _123) -> [0: bb26, otherwise: bb25]
+  using: _123@Mir(bb24[0])
+bb25:
+  _144 = _1
+  using: _1@Mir(bb0[2])
+  _143 = src::test::buffer_free(move _144) -> [return: bb28, unwind continue]
+  using: _144@Mir(bb25[0])
+bb26:
+  _132 = const b"strlen(str) == buffer_length(buf)\x00"
+  using: 
+  _131 = &raw const (*_132)
+  using: _132@Mir(bb26[0])
+  _130 = move _131 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _131@Mir(bb26[1])
+  _129 = move _130 as *const i8 (PtrToPtr)
+  using: _130@Mir(bb26[2])
+  _136 = const b"test.c\x00"
+  using: 
+  _135 = &raw const (*_136)
+  using: _136@Mir(bb26[4])
+  _134 = move _135 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _135@Mir(bb26[5])
+  _133 = move _134 as *const i8 (PtrToPtr)
+  using: _134@Mir(bb26[6])
+  _138 = const 72_i32
+  using: 
+  _137 = move _138 as u32 (IntToInt)
+  using: _138@Mir(bb26[8])
+  _142 = const b"void test_buffer_append__grow()\x00"
+  using: 
+  _141 = _142 as &[i8; 32] (Transmute)
+  using: _142@Mir(bb26[10])
+  _140 = _141 as &[i8] (PointerCoercion(Unsize))
+  using: _141@Mir(bb26[11])
+  _139 = core::slice::<impl [i8]>::as_ptr(move _140) -> [return: bb27, unwind continue]
+  using: _140@Mir(bb26[12])
+bb27:
+  _128 = src::test::__assert_fail(move _129, move _133, move _137, move _139) -> unwind continue
+  using: _129@Mir(bb26[3]), _133@Mir(bb26[7]), _137@Mir(bb26[9]), _139@Mir(bb26[13])
+bb28:
+  return
+  using: _0@Entry
+bb29:
+  _102 = ((*_1).2: *mut i8)
+  using: _1@Mir(bb0[2])
+  _101 = src::test::equal(_96, move _102) -> [return: bb18, unwind continue]
+  using: _96@Mir(bb15[4]), _102@Mir(bb29[0])
+@DefId(0:130 ~ lib[f5c5]::src::test::test_buffer_prepend)
+bb0:
+  _1 = src::test::buffer_new() -> [return: bb1, unwind continue]
+  using: 
+bb1:
+  _3 = const 0_i32
+  using: 
+  _5 = _1
+  using: _1@Mir(bb0[0])
+  _9 = const b" World\x00"
+  using: 
+  _8 = &raw const (*_9)
+  using: _9@Mir(bb1[2])
+  _7 = move _8 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _8@Mir(bb1[3])
+  _6 = move _7 as *const i8 (PtrToPtr)
+  using: _7@Mir(bb1[4])
+  _4 = src::test::buffer_append(move _5, move _6) -> [return: bb2, unwind continue]
+  using: _5@Mir(bb1[1]), _6@Mir(bb1[5])
+bb2:
+  _2 = Eq(move _3, move _4)
+  using: _3@Mir(bb1[0]), _4@Mir(bb1[6])
+  switchInt(move _2) -> [0: bb4, otherwise: bb3]
+  using: _2@Mir(bb2[0])
+bb3:
+  _26 = const 0_i32
+  using: 
+  _28 = _1
+  using: _1@Mir(bb0[0])
+  _33 = const b"Hello\x00"
+  using: 
+  _32 = &raw const (*_33)
+  using: _33@Mir(bb3[2])
+  _31 = move _32 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _32@Mir(bb3[3])
+  _30 = move _31 as *const i8 (PtrToPtr)
+  using: _31@Mir(bb3[4])
+  _29 = move _30 as *mut i8 (PtrToPtr)
+  using: _30@Mir(bb3[5])
+  _27 = src::test::buffer_prepend(move _28, move _29) -> [return: bb6, unwind continue]
+  using: _28@Mir(bb3[1]), _29@Mir(bb3[6])
+bb4:
+  _14 = const b"0 == buffer_append(buf, \" World\")\x00"
+  using: 
+  _13 = &raw const (*_14)
+  using: _14@Mir(bb4[0])
+  _12 = move _13 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _13@Mir(bb4[1])
+  _11 = move _12 as *const i8 (PtrToPtr)
+  using: _12@Mir(bb4[2])
+  _18 = const b"test.c\x00"
+  using: 
+  _17 = &raw const (*_18)
+  using: _18@Mir(bb4[4])
+  _16 = move _17 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _17@Mir(bb4[5])
+  _15 = move _16 as *const i8 (PtrToPtr)
+  using: _16@Mir(bb4[6])
+  _20 = const 79_i32
+  using: 
+  _19 = move _20 as u32 (IntToInt)
+  using: _20@Mir(bb4[8])
+  _24 = const b"void test_buffer_prepend()\x00"
+  using: 
+  _23 = _24 as &[i8; 27] (Transmute)
+  using: _24@Mir(bb4[10])
+  _22 = _23 as &[i8] (PointerCoercion(Unsize))
+  using: _23@Mir(bb4[11])
+  _21 = core::slice::<impl [i8]>::as_ptr(move _22) -> [return: bb5, unwind continue]
+  using: _22@Mir(bb4[12])
+bb5:
+  _10 = src::test::__assert_fail(move _11, move _15, move _19, move _21) -> unwind continue
+  using: _11@Mir(bb4[3]), _15@Mir(bb4[7]), _19@Mir(bb4[9]), _21@Mir(bb4[13])
+bb6:
+  _25 = Eq(move _26, move _27)
+  using: _26@Mir(bb3[0]), _27@Mir(bb3[7])
+  switchInt(move _25) -> [0: bb8, otherwise: bb7]
+  using: _25@Mir(bb6[0])
+bb7:
+  _54 = const b"Hello World\x00"
+  using: 
+  _53 = &raw const (*_54)
+  using: _54@Mir(bb7[0])
+  _52 = move _53 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _53@Mir(bb7[1])
+  _51 = move _52 as *const i8 (PtrToPtr)
+  using: _52@Mir(bb7[2])
+  _50 = src::test::strlen(move _51) -> [return: bb10, unwind continue]
+  using: _51@Mir(bb7[3])
+bb8:
+  _38 = const b"0 == buffer_prepend(buf, \"Hello\")\x00"
+  using: 
+  _37 = &raw const (*_38)
+  using: _38@Mir(bb8[0])
+  _36 = move _37 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _37@Mir(bb8[1])
+  _35 = move _36 as *const i8 (PtrToPtr)
+  using: _36@Mir(bb8[2])
+  _42 = const b"test.c\x00"
+  using: 
+  _41 = &raw const (*_42)
+  using: _42@Mir(bb8[4])
+  _40 = move _41 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _41@Mir(bb8[5])
+  _39 = move _40 as *const i8 (PtrToPtr)
+  using: _40@Mir(bb8[6])
+  _44 = const 80_i32
+  using: 
+  _43 = move _44 as u32 (IntToInt)
+  using: _44@Mir(bb8[8])
+  _48 = const b"void test_buffer_prepend()\x00"
+  using: 
+  _47 = _48 as &[i8; 27] (Transmute)
+  using: _48@Mir(bb8[10])
+  _46 = _47 as &[i8] (PointerCoercion(Unsize))
+  using: _47@Mir(bb8[11])
+  _45 = core::slice::<impl [i8]>::as_ptr(move _46) -> [return: bb9, unwind continue]
+  using: _46@Mir(bb8[12])
+bb9:
+  _34 = src::test::__assert_fail(move _35, move _39, move _43, move _45) -> unwind continue
+  using: _35@Mir(bb8[3]), _39@Mir(bb8[7]), _43@Mir(bb8[9]), _45@Mir(bb8[13])
+bb10:
+  _56 = _1
+  using: _1@Mir(bb0[0])
+  _55 = src::test::buffer_length(move _56) -> [return: bb11, unwind continue]
+  using: _56@Mir(bb10[0])
+bb11:
+  _49 = Eq(move _50, move _55)
+  using: _50@Mir(bb7[4]), _55@Mir(bb10[1])
+  switchInt(move _49) -> [0: bb13, otherwise: bb12]
+  using: _49@Mir(bb11[0])
+bb12:
+  _77 = const b"Hello World\x00"
+  using: 
+  _76 = &raw const (*_77)
+  using: _77@Mir(bb12[0])
+  _75 = move _76 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _76@Mir(bb12[1])
+  _74 = move _75 as *const i8 (PtrToPtr)
+  using: _75@Mir(bb12[2])
+  _73 = move _74 as *mut i8 (PtrToPtr)
+  using: _74@Mir(bb12[3])
+  _81 = _1 as *const () (PtrToPtr)
+  using: _1@Mir(bb0[0])
+  _82 = _81 as usize (Transmute)
+  using: _81@Mir(bb12[5])
+  _83 = AlignOf(src::test::buffer_t)
+  using: 
+  _84 = Sub(_83, const 1_usize)
+  using: _83@Mir(bb12[7])
+  _85 = BitAnd(_82, _84)
+  using: _82@Mir(bb12[6]), _84@Mir(bb12[8])
+  _86 = Eq(_85, const 0_usize)
+  using: _85@Mir(bb12[9])
+  assert(_86, "misaligned pointer dereference: address must be a multiple of {} but is {}", _83, _82) -> [success: bb17, unwind unreachable]
+  using: _86@Mir(bb12[10]), _83@Mir(bb12[7]), _82@Mir(bb12[6])
+bb13:
+  _61 = const b"strlen(\"Hello World\") == buffer_length(buf)\x00"
+  using: 
+  _60 = &raw const (*_61)
+  using: _61@Mir(bb13[0])
+  _59 = move _60 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _60@Mir(bb13[1])
+  _58 = move _59 as *const i8 (PtrToPtr)
+  using: _59@Mir(bb13[2])
+  _65 = const b"test.c\x00"
+  using: 
+  _64 = &raw const (*_65)
+  using: _65@Mir(bb13[4])
+  _63 = move _64 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _64@Mir(bb13[5])
+  _62 = move _63 as *const i8 (PtrToPtr)
+  using: _63@Mir(bb13[6])
+  _67 = const 81_i32
+  using: 
+  _66 = move _67 as u32 (IntToInt)
+  using: _67@Mir(bb13[8])
+  _71 = const b"void test_buffer_prepend()\x00"
+  using: 
+  _70 = _71 as &[i8; 27] (Transmute)
+  using: _71@Mir(bb13[10])
+  _69 = _70 as &[i8] (PointerCoercion(Unsize))
+  using: _70@Mir(bb13[11])
+  _68 = core::slice::<impl [i8]>::as_ptr(move _69) -> [return: bb14, unwind continue]
+  using: _69@Mir(bb13[12])
+bb14:
+  _57 = src::test::__assert_fail(move _58, move _62, move _66, move _68) -> unwind continue
+  using: _58@Mir(bb13[3]), _62@Mir(bb13[7]), _66@Mir(bb13[9]), _68@Mir(bb13[13])
+bb15:
+  _80 = _1
+  using: _1@Mir(bb0[0])
+  _79 = src::test::buffer_free(move _80) -> [return: bb16, unwind continue]
+  using: _80@Mir(bb15[0])
+bb16:
+  return
+  using: _0@Entry
+bb17:
+  _78 = ((*_1).2: *mut i8)
+  using: _1@Mir(bb0[0])
+  _72 = src::test::equal(move _73, move _78) -> [return: bb15, unwind continue]
+  using: _73@Mir(bb12[4]), _78@Mir(bb17[0])
+@DefId(0:137 ~ lib[f5c5]::src::test::test_buffer_slice)
+bb0:
+  _1 = src::test::buffer_new() -> [return: bb1, unwind continue]
+  using: 
+bb1:
+  _3 = _1
+  using: _1@Mir(bb0[0])
+  _7 = const b"Tobi Ferret\x00"
+  using: 
+  _6 = &raw const (*_7)
+  using: _7@Mir(bb1[1])
+  _5 = move _6 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _6@Mir(bb1[2])
+  _4 = move _5 as *const i8 (PtrToPtr)
+  using: _5@Mir(bb1[3])
+  _2 = src::test::buffer_append(move _3, move _4) -> [return: bb2, unwind continue]
+  using: _3@Mir(bb1[0]), _4@Mir(bb1[4])
+bb2:
+  _9 = _1
+  using: _1@Mir(bb0[0])
+  _11 = const 2_i32
+  using: 
+  _10 = move _11 as u64 (IntToInt)
+  using: _11@Mir(bb2[1])
+  _13 = const 8_i32
+  using: 
+  _12 = move _13 as i64 (IntToInt)
+  using: _13@Mir(bb2[3])
+  _8 = src::test::buffer_slice(move _9, move _10, move _12) -> [return: bb3, unwind continue]
+  using: _9@Mir(bb2[0]), _10@Mir(bb2[2]), _12@Mir(bb2[4])
+bb3:
+  _19 = const b"Tobi Ferret\x00"
+  using: 
+  _18 = &raw const (*_19)
+  using: _19@Mir(bb3[0])
+  _17 = move _18 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _18@Mir(bb3[1])
+  _16 = move _17 as *const i8 (PtrToPtr)
+  using: _17@Mir(bb3[2])
+  _15 = move _16 as *mut i8 (PtrToPtr)
+  using: _16@Mir(bb3[3])
+  _38 = _1 as *const () (PtrToPtr)
+  using: _1@Mir(bb0[0])
+  _39 = _38 as usize (Transmute)
+  using: _38@Mir(bb3[5])
+  _40 = AlignOf(src::test::buffer_t)
+  using: 
+  _41 = Sub(_40, const 1_usize)
+  using: _40@Mir(bb3[7])
+  _42 = BitAnd(_39, _41)
+  using: _39@Mir(bb3[6]), _41@Mir(bb3[8])
+  _43 = Eq(_42, const 0_usize)
+  using: _42@Mir(bb3[9])
+  assert(_43, "misaligned pointer dereference: address must be a multiple of {} but is {}", _40, _39) -> [success: bb9, unwind unreachable]
+  using: _43@Mir(bb3[10]), _40@Mir(bb3[7]), _39@Mir(bb3[6])
+bb4:
+  _26 = const b"bi Fer\x00"
+  using: 
+  _25 = &raw const (*_26)
+  using: _26@Mir(bb4[0])
+  _24 = move _25 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _25@Mir(bb4[1])
+  _23 = move _24 as *const i8 (PtrToPtr)
+  using: _24@Mir(bb4[2])
+  _22 = move _23 as *mut i8 (PtrToPtr)
+  using: _23@Mir(bb4[3])
+  _32 = _8 as *const () (PtrToPtr)
+  using: _8@Mir(bb2[5])
+  _33 = _32 as usize (Transmute)
+  using: _32@Mir(bb4[5])
+  _34 = AlignOf(src::test::buffer_t)
+  using: 
+  _35 = Sub(_34, const 1_usize)
+  using: _34@Mir(bb4[7])
+  _36 = BitAnd(_33, _35)
+  using: _33@Mir(bb4[6]), _35@Mir(bb4[8])
+  _37 = Eq(_36, const 0_usize)
+  using: _36@Mir(bb4[9])
+  assert(_37, "misaligned pointer dereference: address must be a multiple of {} but is {}", _34, _33) -> [success: bb8, unwind unreachable]
+  using: _37@Mir(bb4[10]), _34@Mir(bb4[7]), _33@Mir(bb4[6])
+bb5:
+  _29 = _1
+  using: _1@Mir(bb0[0])
+  _28 = src::test::buffer_free(move _29) -> [return: bb6, unwind continue]
+  using: _29@Mir(bb5[0])
+bb6:
+  _31 = _8
+  using: _8@Mir(bb2[5])
+  _30 = src::test::buffer_free(move _31) -> [return: bb7, unwind continue]
+  using: _31@Mir(bb6[0])
+bb7:
+  return
+  using: _0@Entry
+bb8:
+  _27 = ((*_8).2: *mut i8)
+  using: _8@Mir(bb2[5])
+  _21 = src::test::equal(move _22, move _27) -> [return: bb5, unwind continue]
+  using: _22@Mir(bb4[4]), _27@Mir(bb8[0])
+bb9:
+  _20 = ((*_1).2: *mut i8)
+  using: _1@Mir(bb0[0])
+  _14 = src::test::equal(move _15, move _20) -> [return: bb4, unwind continue]
+  using: _15@Mir(bb3[4]), _20@Mir(bb9[0])
+@DefId(0:138 ~ lib[f5c5]::src::test::test_buffer_slice__range_error)
+bb0:
+  _6 = const b"Tobi Ferret\x00"
+  using: 
+  _5 = &raw const (*_6)
+  using: _6@Mir(bb0[0])
+  _4 = move _5 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _5@Mir(bb0[1])
+  _3 = move _4 as *const i8 (PtrToPtr)
+  using: _4@Mir(bb0[2])
+  _2 = move _3 as *mut i8 (PtrToPtr)
+  using: _3@Mir(bb0[3])
+  _1 = src::test::buffer_new_with_copy(move _2) -> [return: bb1, unwind continue]
+  using: _2@Mir(bb0[4])
+bb1:
+  _8 = _1
+  using: _1@Mir(bb0[5])
+  _10 = const 10_i32
+  using: 
+  _9 = move _10 as u64 (IntToInt)
+  using: _10@Mir(bb1[1])
+  _12 = const 2_i32
+  using: 
+  _11 = move _12 as i64 (IntToInt)
+  using: _12@Mir(bb1[3])
+  _7 = src::test::buffer_slice(move _8, move _9, move _11) -> [return: bb2, unwind continue]
+  using: _8@Mir(bb1[0]), _9@Mir(bb1[2]), _11@Mir(bb1[4])
+bb2:
+  _14 = _7
+  using: _7@Mir(bb1[5])
+  _13 = std::ptr::mut_ptr::<impl *mut src::test::buffer_t>::is_null(move _14) -> [return: bb3, unwind continue]
+  using: _14@Mir(bb2[0])
+bb3:
+  switchInt(move _13) -> [0: bb5, otherwise: bb4]
+  using: _13@Mir(bb2[1])
+bb4:
+  _31 = _1
+  using: _1@Mir(bb0[5])
+  _30 = src::test::buffer_free(move _31) -> [return: bb7, unwind continue]
+  using: _31@Mir(bb4[0])
+bb5:
+  _19 = const b"NULL == a\x00"
+  using: 
+  _18 = &raw const (*_19)
+  using: _19@Mir(bb5[0])
+  _17 = move _18 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _18@Mir(bb5[1])
+  _16 = move _17 as *const i8 (PtrToPtr)
+  using: _17@Mir(bb5[2])
+  _23 = const b"test.c\x00"
+  using: 
+  _22 = &raw const (*_23)
+  using: _23@Mir(bb5[4])
+  _21 = move _22 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _22@Mir(bb5[5])
+  _20 = move _21 as *const i8 (PtrToPtr)
+  using: _21@Mir(bb5[6])
+  _25 = const 103_i32
+  using: 
+  _24 = move _25 as u32 (IntToInt)
+  using: _25@Mir(bb5[8])
+  _29 = const b"void test_buffer_slice__range_error()\x00"
+  using: 
+  _28 = _29 as &[i8; 38] (Transmute)
+  using: _29@Mir(bb5[10])
+  _27 = _28 as &[i8] (PointerCoercion(Unsize))
+  using: _28@Mir(bb5[11])
+  _26 = core::slice::<impl [i8]>::as_ptr(move _27) -> [return: bb6, unwind continue]
+  using: _27@Mir(bb5[12])
+bb6:
+  _15 = src::test::__assert_fail(move _16, move _20, move _24, move _26) -> unwind continue
+  using: _16@Mir(bb5[3]), _20@Mir(bb5[7]), _24@Mir(bb5[9]), _26@Mir(bb5[13])
+bb7:
+  return
+  using: _0@Entry
+@DefId(0:141 ~ lib[f5c5]::src::test::test_buffer_slice__end)
+bb0:
+  _6 = const b"Tobi Ferret\x00"
+  using: 
+  _5 = &raw const (*_6)
+  using: _6@Mir(bb0[0])
+  _4 = move _5 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _5@Mir(bb0[1])
+  _3 = move _4 as *const i8 (PtrToPtr)
+  using: _4@Mir(bb0[2])
+  _2 = move _3 as *mut i8 (PtrToPtr)
+  using: _3@Mir(bb0[3])
+  _1 = src::test::buffer_new_with_copy(move _2) -> [return: bb1, unwind continue]
+  using: _2@Mir(bb0[4])
+bb1:
+  _8 = _1
+  using: _1@Mir(bb0[5])
+  _10 = const 5_i32
+  using: 
+  _9 = move _10 as u64 (IntToInt)
+  using: _10@Mir(bb1[1])
+  _13 = const 1_i32
+  using: 
+  _14 = Eq(_13, const i32::MIN)
+  using: _13@Mir(bb1[3])
+  assert(!move _14, "attempt to negate `{}`, which would overflow", _13) -> [success: bb2, unwind continue]
+  using: _14@Mir(bb1[4]), _13@Mir(bb1[3])
+bb2:
+  _12 = Neg(move _13)
+  using: _13@Mir(bb1[3])
+  _11 = move _12 as i64 (IntToInt)
+  using: _12@Mir(bb2[0])
+  _7 = src::test::buffer_slice(move _8, move _9, move _11) -> [return: bb3, unwind continue]
+  using: _8@Mir(bb1[0]), _9@Mir(bb1[2]), _11@Mir(bb2[1])
+bb3:
+  _20 = const b"Tobi Ferret\x00"
+  using: 
+  _19 = &raw const (*_20)
+  using: _20@Mir(bb3[0])
+  _18 = move _19 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _19@Mir(bb3[1])
+  _17 = move _18 as *const i8 (PtrToPtr)
+  using: _18@Mir(bb3[2])
+  _16 = move _17 as *mut i8 (PtrToPtr)
+  using: _17@Mir(bb3[3])
+  _85 = _1 as *const () (PtrToPtr)
+  using: _1@Mir(bb0[5])
+  _86 = _85 as usize (Transmute)
+  using: _85@Mir(bb3[5])
+  _87 = AlignOf(src::test::buffer_t)
+  using: 
+  _88 = Sub(_87, const 1_usize)
+  using: _87@Mir(bb3[7])
+  _89 = BitAnd(_86, _88)
+  using: _86@Mir(bb3[6]), _88@Mir(bb3[8])
+  _90 = Eq(_89, const 0_usize)
+  using: _89@Mir(bb3[9])
+  assert(_90, "misaligned pointer dereference: address must be a multiple of {} but is {}", _87, _86) -> [success: bb19, unwind unreachable]
+  using: _90@Mir(bb3[10]), _87@Mir(bb3[7]), _86@Mir(bb3[6])
+bb4:
+  _27 = const b"Ferret\x00"
+  using: 
+  _26 = &raw const (*_27)
+  using: _27@Mir(bb4[0])
+  _25 = move _26 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _26@Mir(bb4[1])
+  _24 = move _25 as *const i8 (PtrToPtr)
+  using: _25@Mir(bb4[2])
+  _23 = move _24 as *mut i8 (PtrToPtr)
+  using: _24@Mir(bb4[3])
+  _79 = _7 as *const () (PtrToPtr)
+  using: _7@Mir(bb2[2])
+  _80 = _79 as usize (Transmute)
+  using: _79@Mir(bb4[5])
+  _81 = AlignOf(src::test::buffer_t)
+  using: 
+  _82 = Sub(_81, const 1_usize)
+  using: _81@Mir(bb4[7])
+  _83 = BitAnd(_80, _82)
+  using: _80@Mir(bb4[6]), _82@Mir(bb4[8])
+  _84 = Eq(_83, const 0_usize)
+  using: _83@Mir(bb4[9])
+  assert(_84, "misaligned pointer dereference: address must be a multiple of {} but is {}", _81, _80) -> [success: bb18, unwind unreachable]
+  using: _84@Mir(bb4[10]), _81@Mir(bb4[7]), _80@Mir(bb4[6])
+bb5:
+  _30 = _1
+  using: _1@Mir(bb0[5])
+  _32 = const 5_i32
+  using: 
+  _31 = move _32 as u64 (IntToInt)
+  using: _32@Mir(bb5[1])
+  _35 = const 3_i32
+  using: 
+  _36 = Eq(_35, const i32::MIN)
+  using: _35@Mir(bb5[3])
+  assert(!move _36, "attempt to negate `{}`, which would overflow", _35) -> [success: bb6, unwind continue]
+  using: _36@Mir(bb5[4]), _35@Mir(bb5[3])
+bb6:
+  _34 = Neg(move _35)
+  using: _35@Mir(bb5[3])
+  _33 = move _34 as i64 (IntToInt)
+  using: _34@Mir(bb6[0])
+  _29 = src::test::buffer_slice(move _30, move _31, move _33) -> [return: bb7, unwind continue]
+  using: _30@Mir(bb5[0]), _31@Mir(bb5[2]), _33@Mir(bb6[1])
+bb7:
+  _42 = const b"Ferr\x00"
+  using: 
+  _41 = &raw const (*_42)
+  using: _42@Mir(bb7[0])
+  _40 = move _41 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _41@Mir(bb7[1])
+  _39 = move _40 as *const i8 (PtrToPtr)
+  using: _40@Mir(bb7[2])
+  _38 = move _39 as *mut i8 (PtrToPtr)
+  using: _39@Mir(bb7[3])
+  _73 = _29 as *const () (PtrToPtr)
+  using: _29@Mir(bb6[2])
+  _74 = _73 as usize (Transmute)
+  using: _73@Mir(bb7[5])
+  _75 = AlignOf(src::test::buffer_t)
+  using: 
+  _76 = Sub(_75, const 1_usize)
+  using: _75@Mir(bb7[7])
+  _77 = BitAnd(_74, _76)
+  using: _74@Mir(bb7[6]), _76@Mir(bb7[8])
+  _78 = Eq(_77, const 0_usize)
+  using: _77@Mir(bb7[9])
+  assert(_78, "misaligned pointer dereference: address must be a multiple of {} but is {}", _75, _74) -> [success: bb17, unwind unreachable]
+  using: _78@Mir(bb7[10]), _75@Mir(bb7[7]), _74@Mir(bb7[6])
+bb8:
+  _45 = _1
+  using: _1@Mir(bb0[5])
+  _47 = const 8_i32
+  using: 
+  _46 = move _47 as u64 (IntToInt)
+  using: _47@Mir(bb8[1])
+  _50 = const 1_i32
+  using: 
+  _51 = Eq(_50, const i32::MIN)
+  using: _50@Mir(bb8[3])
+  assert(!move _51, "attempt to negate `{}`, which would overflow", _50) -> [success: bb9, unwind continue]
+  using: _51@Mir(bb8[4]), _50@Mir(bb8[3])
+bb9:
+  _49 = Neg(move _50)
+  using: _50@Mir(bb8[3])
+  _48 = move _49 as i64 (IntToInt)
+  using: _49@Mir(bb9[0])
+  _44 = src::test::buffer_slice(move _45, move _46, move _48) -> [return: bb10, unwind continue]
+  using: _45@Mir(bb8[0]), _46@Mir(bb8[2]), _48@Mir(bb9[1])
+bb10:
+  _57 = const b"ret\x00"
+  using: 
+  _56 = &raw const (*_57)
+  using: _57@Mir(bb10[0])
+  _55 = move _56 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _56@Mir(bb10[1])
+  _54 = move _55 as *const i8 (PtrToPtr)
+  using: _55@Mir(bb10[2])
+  _53 = move _54 as *mut i8 (PtrToPtr)
+  using: _54@Mir(bb10[3])
+  _67 = _44 as *const () (PtrToPtr)
+  using: _44@Mir(bb9[2])
+  _68 = _67 as usize (Transmute)
+  using: _67@Mir(bb10[5])
+  _69 = AlignOf(src::test::buffer_t)
+  using: 
+  _70 = Sub(_69, const 1_usize)
+  using: _69@Mir(bb10[7])
+  _71 = BitAnd(_68, _70)
+  using: _68@Mir(bb10[6]), _70@Mir(bb10[8])
+  _72 = Eq(_71, const 0_usize)
+  using: _71@Mir(bb10[9])
+  assert(_72, "misaligned pointer dereference: address must be a multiple of {} but is {}", _69, _68) -> [success: bb16, unwind unreachable]
+  using: _72@Mir(bb10[10]), _69@Mir(bb10[7]), _68@Mir(bb10[6])
+bb11:
+  _60 = _1
+  using: _1@Mir(bb0[5])
+  _59 = src::test::buffer_free(move _60) -> [return: bb12, unwind continue]
+  using: _60@Mir(bb11[0])
+bb12:
+  _62 = _7
+  using: _7@Mir(bb2[2])
+  _61 = src::test::buffer_free(move _62) -> [return: bb13, unwind continue]
+  using: _62@Mir(bb12[0])
+bb13:
+  _64 = _29
+  using: _29@Mir(bb6[2])
+  _63 = src::test::buffer_free(move _64) -> [return: bb14, unwind continue]
+  using: _64@Mir(bb13[0])
+bb14:
+  _66 = _44
+  using: _44@Mir(bb9[2])
+  _65 = src::test::buffer_free(move _66) -> [return: bb15, unwind continue]
+  using: _66@Mir(bb14[0])
+bb15:
+  return
+  using: _0@Entry
+bb16:
+  _58 = ((*_44).2: *mut i8)
+  using: _44@Mir(bb9[2])
+  _52 = src::test::equal(move _53, move _58) -> [return: bb11, unwind continue]
+  using: _53@Mir(bb10[4]), _58@Mir(bb16[0])
+bb17:
+  _43 = ((*_29).2: *mut i8)
+  using: _29@Mir(bb6[2])
+  _37 = src::test::equal(move _38, move _43) -> [return: bb8, unwind continue]
+  using: _38@Mir(bb7[4]), _43@Mir(bb17[0])
+bb18:
+  _28 = ((*_7).2: *mut i8)
+  using: _7@Mir(bb2[2])
+  _22 = src::test::equal(move _23, move _28) -> [return: bb5, unwind continue]
+  using: _23@Mir(bb4[4]), _28@Mir(bb18[0])
+bb19:
+  _21 = ((*_1).2: *mut i8)
+  using: _1@Mir(bb0[5])
+  _15 = src::test::equal(move _16, move _21) -> [return: bb4, unwind continue]
+  using: _16@Mir(bb3[4]), _21@Mir(bb19[0])
+@DefId(0:142 ~ lib[f5c5]::src::test::test_buffer_slice__end_overflow)
+bb0:
+  _6 = const b"Tobi Ferret\x00"
+  using: 
+  _5 = &raw const (*_6)
+  using: _6@Mir(bb0[0])
+  _4 = move _5 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _5@Mir(bb0[1])
+  _3 = move _4 as *const i8 (PtrToPtr)
+  using: _4@Mir(bb0[2])
+  _2 = move _3 as *mut i8 (PtrToPtr)
+  using: _3@Mir(bb0[3])
+  _1 = src::test::buffer_new_with_copy(move _2) -> [return: bb1, unwind continue]
+  using: _2@Mir(bb0[4])
+bb1:
+  _8 = _1
+  using: _1@Mir(bb0[5])
+  _10 = const 5_i32
+  using: 
+  _9 = move _10 as u64 (IntToInt)
+  using: _10@Mir(bb1[1])
+  _12 = const 1000_i32
+  using: 
+  _11 = move _12 as i64 (IntToInt)
+  using: _12@Mir(bb1[3])
+  _7 = src::test::buffer_slice(move _8, move _9, move _11) -> [return: bb2, unwind continue]
+  using: _8@Mir(bb1[0]), _9@Mir(bb1[2]), _11@Mir(bb1[4])
+bb2:
+  _18 = const b"Tobi Ferret\x00"
+  using: 
+  _17 = &raw const (*_18)
+  using: _18@Mir(bb2[0])
+  _16 = move _17 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _17@Mir(bb2[1])
+  _15 = move _16 as *const i8 (PtrToPtr)
+  using: _16@Mir(bb2[2])
+  _14 = move _15 as *mut i8 (PtrToPtr)
+  using: _15@Mir(bb2[3])
+  _37 = _1 as *const () (PtrToPtr)
+  using: _1@Mir(bb0[5])
+  _38 = _37 as usize (Transmute)
+  using: _37@Mir(bb2[5])
+  _39 = AlignOf(src::test::buffer_t)
+  using: 
+  _40 = Sub(_39, const 1_usize)
+  using: _39@Mir(bb2[7])
+  _41 = BitAnd(_38, _40)
+  using: _38@Mir(bb2[6]), _40@Mir(bb2[8])
+  _42 = Eq(_41, const 0_usize)
+  using: _41@Mir(bb2[9])
+  assert(_42, "misaligned pointer dereference: address must be a multiple of {} but is {}", _39, _38) -> [success: bb8, unwind unreachable]
+  using: _42@Mir(bb2[10]), _39@Mir(bb2[7]), _38@Mir(bb2[6])
+bb3:
+  _25 = const b"Ferret\x00"
+  using: 
+  _24 = &raw const (*_25)
+  using: _25@Mir(bb3[0])
+  _23 = move _24 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _24@Mir(bb3[1])
+  _22 = move _23 as *const i8 (PtrToPtr)
+  using: _23@Mir(bb3[2])
+  _21 = move _22 as *mut i8 (PtrToPtr)
+  using: _22@Mir(bb3[3])
+  _31 = _7 as *const () (PtrToPtr)
+  using: _7@Mir(bb1[5])
+  _32 = _31 as usize (Transmute)
+  using: _31@Mir(bb3[5])
+  _33 = AlignOf(src::test::buffer_t)
+  using: 
+  _34 = Sub(_33, const 1_usize)
+  using: _33@Mir(bb3[7])
+  _35 = BitAnd(_32, _34)
+  using: _32@Mir(bb3[6]), _34@Mir(bb3[8])
+  _36 = Eq(_35, const 0_usize)
+  using: _35@Mir(bb3[9])
+  assert(_36, "misaligned pointer dereference: address must be a multiple of {} but is {}", _33, _32) -> [success: bb7, unwind unreachable]
+  using: _36@Mir(bb3[10]), _33@Mir(bb3[7]), _32@Mir(bb3[6])
+bb4:
+  _28 = _7
+  using: _7@Mir(bb1[5])
+  _27 = src::test::buffer_free(move _28) -> [return: bb5, unwind continue]
+  using: _28@Mir(bb4[0])
+bb5:
+  _30 = _1
+  using: _1@Mir(bb0[5])
+  _29 = src::test::buffer_free(move _30) -> [return: bb6, unwind continue]
+  using: _30@Mir(bb5[0])
+bb6:
+  return
+  using: _0@Entry
+bb7:
+  _26 = ((*_7).2: *mut i8)
+  using: _7@Mir(bb1[5])
+  _20 = src::test::equal(move _21, move _26) -> [return: bb4, unwind continue]
+  using: _21@Mir(bb3[4]), _26@Mir(bb7[0])
+bb8:
+  _19 = ((*_1).2: *mut i8)
+  using: _1@Mir(bb0[5])
+  _13 = src::test::equal(move _14, move _19) -> [return: bb3, unwind continue]
+  using: _14@Mir(bb2[4]), _19@Mir(bb8[0])
+@DefId(0:143 ~ lib[f5c5]::src::test::test_buffer_equals)
+bb0:
+  _6 = const b"Hello\x00"
+  using: 
+  _5 = &raw const (*_6)
+  using: _6@Mir(bb0[0])
+  _4 = move _5 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _5@Mir(bb0[1])
+  _3 = move _4 as *const i8 (PtrToPtr)
+  using: _4@Mir(bb0[2])
+  _2 = move _3 as *mut i8 (PtrToPtr)
+  using: _3@Mir(bb0[3])
+  _1 = src::test::buffer_new_with_copy(move _2) -> [return: bb1, unwind continue]
+  using: _2@Mir(bb0[4])
+bb1:
+  _12 = const b"Hello\x00"
+  using: 
+  _11 = &raw const (*_12)
+  using: _12@Mir(bb1[0])
+  _10 = move _11 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _11@Mir(bb1[1])
+  _9 = move _10 as *const i8 (PtrToPtr)
+  using: _10@Mir(bb1[2])
+  _8 = move _9 as *mut i8 (PtrToPtr)
+  using: _9@Mir(bb1[3])
+  _7 = src::test::buffer_new_with_copy(move _8) -> [return: bb2, unwind continue]
+  using: _8@Mir(bb1[4])
+bb2:
+  _14 = const 1_i32
+  using: 
+  _16 = _1
+  using: _1@Mir(bb0[5])
+  _17 = _7
+  using: _7@Mir(bb1[5])
+  _15 = src::test::buffer_equals(move _16, move _17) -> [return: bb3, unwind continue]
+  using: _16@Mir(bb2[1]), _17@Mir(bb2[2])
+bb3:
+  _13 = Eq(move _14, move _15)
+  using: _14@Mir(bb2[0]), _15@Mir(bb2[3])
+  switchInt(move _13) -> [0: bb5, otherwise: bb4]
+  using: _13@Mir(bb3[0])
+bb4:
+  _34 = _7
+  using: _7@Mir(bb1[5])
+  _38 = const b" World\x00"
+  using: 
+  _37 = &raw const (*_38)
+  using: _38@Mir(bb4[1])
+  _36 = move _37 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _37@Mir(bb4[2])
+  _35 = move _36 as *const i8 (PtrToPtr)
+  using: _36@Mir(bb4[3])
+  _33 = src::test::buffer_append(move _34, move _35) -> [return: bb7, unwind continue]
+  using: _34@Mir(bb4[0]), _35@Mir(bb4[4])
+bb5:
+  _22 = const b"1 == buffer_equals(a, b)\x00"
+  using: 
+  _21 = &raw const (*_22)
+  using: _22@Mir(bb5[0])
+  _20 = move _21 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _21@Mir(bb5[1])
+  _19 = move _20 as *const i8 (PtrToPtr)
+  using: _20@Mir(bb5[2])
+  _26 = const b"test.c\x00"
+  using: 
+  _25 = &raw const (*_26)
+  using: _26@Mir(bb5[4])
+  _24 = move _25 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _25@Mir(bb5[5])
+  _23 = move _24 as *const i8 (PtrToPtr)
+  using: _24@Mir(bb5[6])
+  _28 = const 142_i32
+  using: 
+  _27 = move _28 as u32 (IntToInt)
+  using: _28@Mir(bb5[8])
+  _32 = const b"void test_buffer_equals()\x00"
+  using: 
+  _31 = _32 as &[i8; 26] (Transmute)
+  using: _32@Mir(bb5[10])
+  _30 = _31 as &[i8] (PointerCoercion(Unsize))
+  using: _31@Mir(bb5[11])
+  _29 = core::slice::<impl [i8]>::as_ptr(move _30) -> [return: bb6, unwind continue]
+  using: _30@Mir(bb5[12])
+bb6:
+  _18 = src::test::__assert_fail(move _19, move _23, move _27, move _29) -> unwind continue
+  using: _19@Mir(bb5[3]), _23@Mir(bb5[7]), _27@Mir(bb5[9]), _29@Mir(bb5[13])
+bb7:
+  _40 = const 0_i32
+  using: 
+  _42 = _1
+  using: _1@Mir(bb0[5])
+  _43 = _7
+  using: _7@Mir(bb1[5])
+  _41 = src::test::buffer_equals(move _42, move _43) -> [return: bb8, unwind continue]
+  using: _42@Mir(bb7[1]), _43@Mir(bb7[2])
+bb8:
+  _39 = Eq(move _40, move _41)
+  using: _40@Mir(bb7[0]), _41@Mir(bb7[3])
+  switchInt(move _39) -> [0: bb10, otherwise: bb9]
+  using: _39@Mir(bb8[0])
+bb9:
+  _60 = _1
+  using: _1@Mir(bb0[5])
+  _59 = src::test::buffer_free(move _60) -> [return: bb12, unwind continue]
+  using: _60@Mir(bb9[0])
+bb10:
+  _48 = const b"0 == buffer_equals(a, b)\x00"
+  using: 
+  _47 = &raw const (*_48)
+  using: _48@Mir(bb10[0])
+  _46 = move _47 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _47@Mir(bb10[1])
+  _45 = move _46 as *const i8 (PtrToPtr)
+  using: _46@Mir(bb10[2])
+  _52 = const b"test.c\x00"
+  using: 
+  _51 = &raw const (*_52)
+  using: _52@Mir(bb10[4])
+  _50 = move _51 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _51@Mir(bb10[5])
+  _49 = move _50 as *const i8 (PtrToPtr)
+  using: _50@Mir(bb10[6])
+  _54 = const 145_i32
+  using: 
+  _53 = move _54 as u32 (IntToInt)
+  using: _54@Mir(bb10[8])
+  _58 = const b"void test_buffer_equals()\x00"
+  using: 
+  _57 = _58 as &[i8; 26] (Transmute)
+  using: _58@Mir(bb10[10])
+  _56 = _57 as &[i8] (PointerCoercion(Unsize))
+  using: _57@Mir(bb10[11])
+  _55 = core::slice::<impl [i8]>::as_ptr(move _56) -> [return: bb11, unwind continue]
+  using: _56@Mir(bb10[12])
+bb11:
+  _44 = src::test::__assert_fail(move _45, move _49, move _53, move _55) -> unwind continue
+  using: _45@Mir(bb10[3]), _49@Mir(bb10[7]), _53@Mir(bb10[9]), _55@Mir(bb10[13])
+bb12:
+  _62 = _7
+  using: _7@Mir(bb1[5])
+  _61 = src::test::buffer_free(move _62) -> [return: bb13, unwind continue]
+  using: _62@Mir(bb12[0])
+bb13:
+  return
+  using: _0@Entry
+@DefId(0:148 ~ lib[f5c5]::src::test::test_buffer_indexof)
+bb0:
+  _6 = const b"Tobi is a ferret\x00"
+  using: 
+  _5 = &raw const (*_6)
+  using: _6@Mir(bb0[0])
+  _4 = move _5 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _5@Mir(bb0[1])
+  _3 = move _4 as *const i8 (PtrToPtr)
+  using: _4@Mir(bb0[2])
+  _2 = move _3 as *mut i8 (PtrToPtr)
+  using: _3@Mir(bb0[3])
+  _1 = src::test::buffer_new_with_copy(move _2) -> [return: bb1, unwind continue]
+  using: _2@Mir(bb0[4])
+bb1:
+  _8 = _1
+  using: _1@Mir(bb0[5])
+  _13 = const b"is\x00"
+  using: 
+  _12 = &raw const (*_13)
+  using: _13@Mir(bb1[1])
+  _11 = move _12 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _12@Mir(bb1[2])
+  _10 = move _11 as *const i8 (PtrToPtr)
+  using: _11@Mir(bb1[3])
+  _9 = move _10 as *mut i8 (PtrToPtr)
+  using: _10@Mir(bb1[4])
+  _7 = src::test::buffer_indexof(move _8, move _9) -> [return: bb2, unwind continue]
+  using: _8@Mir(bb1[0]), _9@Mir(bb1[5])
+bb2:
+  _16 = const 5_i32
+  using: 
+  _15 = move _16 as i64 (IntToInt)
+  using: _16@Mir(bb2[0])
+  _17 = _7
+  using: _7@Mir(bb1[6])
+  _14 = Eq(move _15, move _17)
+  using: _15@Mir(bb2[1]), _17@Mir(bb2[2])
+  switchInt(move _14) -> [0: bb4, otherwise: bb3]
+  using: _14@Mir(bb2[3])
+bb3:
+  _34 = _1
+  using: _1@Mir(bb0[5])
+  _39 = const b"a\x00"
+  using: 
+  _38 = &raw const (*_39)
+  using: _39@Mir(bb3[1])
+  _37 = move _38 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _38@Mir(bb3[2])
+  _36 = move _37 as *const i8 (PtrToPtr)
+  using: _37@Mir(bb3[3])
+  _35 = move _36 as *mut i8 (PtrToPtr)
+  using: _36@Mir(bb3[4])
+  _33 = src::test::buffer_indexof(move _34, move _35) -> [return: bb6, unwind continue]
+  using: _34@Mir(bb3[0]), _35@Mir(bb3[5])
+bb4:
+  _22 = const b"5 == i\x00"
+  using: 
+  _21 = &raw const (*_22)
+  using: _22@Mir(bb4[0])
+  _20 = move _21 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _21@Mir(bb4[1])
+  _19 = move _20 as *const i8 (PtrToPtr)
+  using: _20@Mir(bb4[2])
+  _26 = const b"test.c\x00"
+  using: 
+  _25 = &raw const (*_26)
+  using: _26@Mir(bb4[4])
+  _24 = move _25 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _25@Mir(bb4[5])
+  _23 = move _24 as *const i8 (PtrToPtr)
+  using: _24@Mir(bb4[6])
+  _28 = const 167_i32
+  using: 
+  _27 = move _28 as u32 (IntToInt)
+  using: _28@Mir(bb4[8])
+  _32 = const b"void test_buffer_indexof()\x00"
+  using: 
+  _31 = _32 as &[i8; 27] (Transmute)
+  using: _32@Mir(bb4[10])
+  _30 = _31 as &[i8] (PointerCoercion(Unsize))
+  using: _31@Mir(bb4[11])
+  _29 = core::slice::<impl [i8]>::as_ptr(move _30) -> [return: bb5, unwind continue]
+  using: _30@Mir(bb4[12])
+bb5:
+  _18 = src::test::__assert_fail(move _19, move _23, move _27, move _29) -> unwind continue
+  using: _19@Mir(bb4[3]), _23@Mir(bb4[7]), _27@Mir(bb4[9]), _29@Mir(bb4[13])
+bb6:
+  _7 = move _33
+  using: _33@Mir(bb3[6])
+  _42 = const 8_i32
+  using: 
+  _41 = move _42 as i64 (IntToInt)
+  using: _42@Mir(bb6[1])
+  _43 = _7
+  using: _7@Mir(bb6[0])
+  _40 = Eq(move _41, move _43)
+  using: _41@Mir(bb6[2]), _43@Mir(bb6[3])
+  switchInt(move _40) -> [0: bb8, otherwise: bb7]
+  using: _40@Mir(bb6[4])
+bb7:
+  _60 = _1
+  using: _1@Mir(bb0[5])
+  _65 = const b"something\x00"
+  using: 
+  _64 = &raw const (*_65)
+  using: _65@Mir(bb7[1])
+  _63 = move _64 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _64@Mir(bb7[2])
+  _62 = move _63 as *const i8 (PtrToPtr)
+  using: _63@Mir(bb7[3])
+  _61 = move _62 as *mut i8 (PtrToPtr)
+  using: _62@Mir(bb7[4])
+  _59 = src::test::buffer_indexof(move _60, move _61) -> [return: bb10, unwind continue]
+  using: _60@Mir(bb7[0]), _61@Mir(bb7[5])
+bb8:
+  _48 = const b"8 == i\x00"
+  using: 
+  _47 = &raw const (*_48)
+  using: _48@Mir(bb8[0])
+  _46 = move _47 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _47@Mir(bb8[1])
+  _45 = move _46 as *const i8 (PtrToPtr)
+  using: _46@Mir(bb8[2])
+  _52 = const b"test.c\x00"
+  using: 
+  _51 = &raw const (*_52)
+  using: _52@Mir(bb8[4])
+  _50 = move _51 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _51@Mir(bb8[5])
+  _49 = move _50 as *const i8 (PtrToPtr)
+  using: _50@Mir(bb8[6])
+  _54 = const 170_i32
+  using: 
+  _53 = move _54 as u32 (IntToInt)
+  using: _54@Mir(bb8[8])
+  _58 = const b"void test_buffer_indexof()\x00"
+  using: 
+  _57 = _58 as &[i8; 27] (Transmute)
+  using: _58@Mir(bb8[10])
+  _56 = _57 as &[i8] (PointerCoercion(Unsize))
+  using: _57@Mir(bb8[11])
+  _55 = core::slice::<impl [i8]>::as_ptr(move _56) -> [return: bb9, unwind continue]
+  using: _56@Mir(bb8[12])
+bb9:
+  _44 = src::test::__assert_fail(move _45, move _49, move _53, move _55) -> unwind continue
+  using: _45@Mir(bb8[3]), _49@Mir(bb8[7]), _53@Mir(bb8[9]), _55@Mir(bb8[13])
+bb10:
+  _7 = move _59
+  using: _59@Mir(bb7[6])
+  _69 = const 1_i32
+  using: 
+  _70 = Eq(_69, const i32::MIN)
+  using: _69@Mir(bb10[1])
+  assert(!move _70, "attempt to negate `{}`, which would overflow", _69) -> [success: bb11, unwind continue]
+  using: _70@Mir(bb10[2]), _69@Mir(bb10[1])
+bb11:
+  _68 = Neg(move _69)
+  using: _69@Mir(bb10[1])
+  _67 = move _68 as i64 (IntToInt)
+  using: _68@Mir(bb11[0])
+  _71 = _7
+  using: _7@Mir(bb10[0])
+  _66 = Eq(move _67, move _71)
+  using: _67@Mir(bb11[1]), _71@Mir(bb11[2])
+  switchInt(move _66) -> [0: bb13, otherwise: bb12]
+  using: _66@Mir(bb11[3])
+bb12:
+  _88 = _1
+  using: _1@Mir(bb0[5])
+  _87 = src::test::buffer_free(move _88) -> [return: bb15, unwind continue]
+  using: _88@Mir(bb12[0])
+bb13:
+  _76 = const b"-1 == i\x00"
+  using: 
+  _75 = &raw const (*_76)
+  using: _76@Mir(bb13[0])
+  _74 = move _75 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _75@Mir(bb13[1])
+  _73 = move _74 as *const i8 (PtrToPtr)
+  using: _74@Mir(bb13[2])
+  _80 = const b"test.c\x00"
+  using: 
+  _79 = &raw const (*_80)
+  using: _80@Mir(bb13[4])
+  _78 = move _79 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _79@Mir(bb13[5])
+  _77 = move _78 as *const i8 (PtrToPtr)
+  using: _78@Mir(bb13[6])
+  _82 = const 173_i32
+  using: 
+  _81 = move _82 as u32 (IntToInt)
+  using: _82@Mir(bb13[8])
+  _86 = const b"void test_buffer_indexof()\x00"
+  using: 
+  _85 = _86 as &[i8; 27] (Transmute)
+  using: _86@Mir(bb13[10])
+  _84 = _85 as &[i8] (PointerCoercion(Unsize))
+  using: _85@Mir(bb13[11])
+  _83 = core::slice::<impl [i8]>::as_ptr(move _84) -> [return: bb14, unwind continue]
+  using: _84@Mir(bb13[12])
+bb14:
+  _72 = src::test::__assert_fail(move _73, move _77, move _81, move _83) -> unwind continue
+  using: _73@Mir(bb13[3]), _77@Mir(bb13[7]), _81@Mir(bb13[9]), _83@Mir(bb13[13])
+bb15:
+  return
+  using: _0@Entry
+@DefId(0:155 ~ lib[f5c5]::src::test::test_buffer_fill)
+bb0:
+  _6 = const b"Hello\x00"
+  using: 
+  _5 = &raw const (*_6)
+  using: _6@Mir(bb0[0])
+  _4 = move _5 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _5@Mir(bb0[1])
+  _3 = move _4 as *const i8 (PtrToPtr)
+  using: _4@Mir(bb0[2])
+  _2 = move _3 as *mut i8 (PtrToPtr)
+  using: _3@Mir(bb0[3])
+  _1 = src::test::buffer_new_with_copy(move _2) -> [return: bb1, unwind continue]
+  using: _2@Mir(bb0[4])
+bb1:
+  _9 = const 5_i32
+  using: 
+  _8 = move _9 as u64 (IntToInt)
+  using: _9@Mir(bb1[0])
+  _11 = _1
+  using: _1@Mir(bb0[5])
+  _10 = src::test::buffer_length(move _11) -> [return: bb2, unwind continue]
+  using: _11@Mir(bb1[2])
+bb2:
+  _7 = Eq(move _8, move _10)
+  using: _8@Mir(bb1[1]), _10@Mir(bb1[3])
+  switchInt(move _7) -> [0: bb4, otherwise: bb3]
+  using: _7@Mir(bb2[0])
+bb3:
+  _28 = _1
+  using: _1@Mir(bb0[5])
+  _29 = const 0_i32
+  using: 
+  _27 = src::test::buffer_fill(move _28, move _29) -> [return: bb6, unwind continue]
+  using: _28@Mir(bb3[0]), _29@Mir(bb3[1])
+bb4:
+  _16 = const b"5 == buffer_length(buf)\x00"
+  using: 
+  _15 = &raw const (*_16)
+  using: _16@Mir(bb4[0])
+  _14 = move _15 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _15@Mir(bb4[1])
+  _13 = move _14 as *const i8 (PtrToPtr)
+  using: _14@Mir(bb4[2])
+  _20 = const b"test.c\x00"
+  using: 
+  _19 = &raw const (*_20)
+  using: _20@Mir(bb4[4])
+  _18 = move _19 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _19@Mir(bb4[5])
+  _17 = move _18 as *const i8 (PtrToPtr)
+  using: _18@Mir(bb4[6])
+  _22 = const 181_i32
+  using: 
+  _21 = move _22 as u32 (IntToInt)
+  using: _22@Mir(bb4[8])
+  _26 = const b"void test_buffer_fill()\x00"
+  using: 
+  _25 = _26 as &[i8; 24] (Transmute)
+  using: _26@Mir(bb4[10])
+  _24 = _25 as &[i8] (PointerCoercion(Unsize))
+  using: _25@Mir(bb4[11])
+  _23 = core::slice::<impl [i8]>::as_ptr(move _24) -> [return: bb5, unwind continue]
+  using: _24@Mir(bb4[12])
+bb5:
+  _12 = src::test::__assert_fail(move _13, move _17, move _21, move _23) -> unwind continue
+  using: _13@Mir(bb4[3]), _17@Mir(bb4[7]), _21@Mir(bb4[9]), _23@Mir(bb4[13])
+bb6:
+  _32 = const 0_i32
+  using: 
+  _31 = move _32 as u64 (IntToInt)
+  using: _32@Mir(bb6[0])
+  _34 = _1
+  using: _1@Mir(bb0[5])
+  _33 = src::test::buffer_length(move _34) -> [return: bb7, unwind continue]
+  using: _34@Mir(bb6[2])
+bb7:
+  _30 = Eq(move _31, move _33)
+  using: _31@Mir(bb6[1]), _33@Mir(bb6[3])
+  switchInt(move _30) -> [0: bb9, otherwise: bb8]
+  using: _30@Mir(bb7[0])
+bb8:
+  _51 = _1
+  using: _1@Mir(bb0[5])
+  _50 = src::test::buffer_free(move _51) -> [return: bb11, unwind continue]
+  using: _51@Mir(bb8[0])
+bb9:
+  _39 = const b"0 == buffer_length(buf)\x00"
+  using: 
+  _38 = &raw const (*_39)
+  using: _39@Mir(bb9[0])
+  _37 = move _38 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _38@Mir(bb9[1])
+  _36 = move _37 as *const i8 (PtrToPtr)
+  using: _37@Mir(bb9[2])
+  _43 = const b"test.c\x00"
+  using: 
+  _42 = &raw const (*_43)
+  using: _43@Mir(bb9[4])
+  _41 = move _42 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _42@Mir(bb9[5])
+  _40 = move _41 as *const i8 (PtrToPtr)
+  using: _41@Mir(bb9[6])
+  _45 = const 184_i32
+  using: 
+  _44 = move _45 as u32 (IntToInt)
+  using: _45@Mir(bb9[8])
+  _49 = const b"void test_buffer_fill()\x00"
+  using: 
+  _48 = _49 as &[i8; 24] (Transmute)
+  using: _49@Mir(bb9[10])
+  _47 = _48 as &[i8] (PointerCoercion(Unsize))
+  using: _48@Mir(bb9[11])
+  _46 = core::slice::<impl [i8]>::as_ptr(move _47) -> [return: bb10, unwind continue]
+  using: _47@Mir(bb9[12])
+bb10:
+  _35 = src::test::__assert_fail(move _36, move _40, move _44, move _46) -> unwind continue
+  using: _36@Mir(bb9[3]), _40@Mir(bb9[7]), _44@Mir(bb9[9]), _46@Mir(bb9[13])
+bb11:
+  return
+  using: _0@Entry
+@DefId(0:160 ~ lib[f5c5]::src::test::test_buffer_clear)
+bb0:
+  _6 = const b"Hello\x00"
+  using: 
+  _5 = &raw const (*_6)
+  using: _6@Mir(bb0[0])
+  _4 = move _5 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _5@Mir(bb0[1])
+  _3 = move _4 as *const i8 (PtrToPtr)
+  using: _4@Mir(bb0[2])
+  _2 = move _3 as *mut i8 (PtrToPtr)
+  using: _3@Mir(bb0[3])
+  _1 = src::test::buffer_new_with_copy(move _2) -> [return: bb1, unwind continue]
+  using: _2@Mir(bb0[4])
+bb1:
+  _9 = const 5_i32
+  using: 
+  _8 = move _9 as u64 (IntToInt)
+  using: _9@Mir(bb1[0])
+  _11 = _1
+  using: _1@Mir(bb0[5])
+  _10 = src::test::buffer_length(move _11) -> [return: bb2, unwind continue]
+  using: _11@Mir(bb1[2])
+bb2:
+  _7 = Eq(move _8, move _10)
+  using: _8@Mir(bb1[1]), _10@Mir(bb1[3])
+  switchInt(move _7) -> [0: bb4, otherwise: bb3]
+  using: _7@Mir(bb2[0])
+bb3:
+  _28 = _1
+  using: _1@Mir(bb0[5])
+  _27 = src::test::buffer_clear(move _28) -> [return: bb6, unwind continue]
+  using: _28@Mir(bb3[0])
+bb4:
+  _16 = const b"5 == buffer_length(buf)\x00"
+  using: 
+  _15 = &raw const (*_16)
+  using: _16@Mir(bb4[0])
+  _14 = move _15 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _15@Mir(bb4[1])
+  _13 = move _14 as *const i8 (PtrToPtr)
+  using: _14@Mir(bb4[2])
+  _20 = const b"test.c\x00"
+  using: 
+  _19 = &raw const (*_20)
+  using: _20@Mir(bb4[4])
+  _18 = move _19 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _19@Mir(bb4[5])
+  _17 = move _18 as *const i8 (PtrToPtr)
+  using: _18@Mir(bb4[6])
+  _22 = const 191_i32
+  using: 
+  _21 = move _22 as u32 (IntToInt)
+  using: _22@Mir(bb4[8])
+  _26 = const b"void test_buffer_clear()\x00"
+  using: 
+  _25 = _26 as &[i8; 25] (Transmute)
+  using: _26@Mir(bb4[10])
+  _24 = _25 as &[i8] (PointerCoercion(Unsize))
+  using: _25@Mir(bb4[11])
+  _23 = core::slice::<impl [i8]>::as_ptr(move _24) -> [return: bb5, unwind continue]
+  using: _24@Mir(bb4[12])
+bb5:
+  _12 = src::test::__assert_fail(move _13, move _17, move _21, move _23) -> unwind continue
+  using: _13@Mir(bb4[3]), _17@Mir(bb4[7]), _21@Mir(bb4[9]), _23@Mir(bb4[13])
+bb6:
+  _31 = const 0_i32
+  using: 
+  _30 = move _31 as u64 (IntToInt)
+  using: _31@Mir(bb6[0])
+  _33 = _1
+  using: _1@Mir(bb0[5])
+  _32 = src::test::buffer_length(move _33) -> [return: bb7, unwind continue]
+  using: _33@Mir(bb6[2])
+bb7:
+  _29 = Eq(move _30, move _32)
+  using: _30@Mir(bb6[1]), _32@Mir(bb6[3])
+  switchInt(move _29) -> [0: bb9, otherwise: bb8]
+  using: _29@Mir(bb7[0])
+bb8:
+  _50 = _1
+  using: _1@Mir(bb0[5])
+  _49 = src::test::buffer_free(move _50) -> [return: bb11, unwind continue]
+  using: _50@Mir(bb8[0])
+bb9:
+  _38 = const b"0 == buffer_length(buf)\x00"
+  using: 
+  _37 = &raw const (*_38)
+  using: _38@Mir(bb9[0])
+  _36 = move _37 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _37@Mir(bb9[1])
+  _35 = move _36 as *const i8 (PtrToPtr)
+  using: _36@Mir(bb9[2])
+  _42 = const b"test.c\x00"
+  using: 
+  _41 = &raw const (*_42)
+  using: _42@Mir(bb9[4])
+  _40 = move _41 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _41@Mir(bb9[5])
+  _39 = move _40 as *const i8 (PtrToPtr)
+  using: _40@Mir(bb9[6])
+  _44 = const 194_i32
+  using: 
+  _43 = move _44 as u32 (IntToInt)
+  using: _44@Mir(bb9[8])
+  _48 = const b"void test_buffer_clear()\x00"
+  using: 
+  _47 = _48 as &[i8; 25] (Transmute)
+  using: _48@Mir(bb9[10])
+  _46 = _47 as &[i8] (PointerCoercion(Unsize))
+  using: _47@Mir(bb9[11])
+  _45 = core::slice::<impl [i8]>::as_ptr(move _46) -> [return: bb10, unwind continue]
+  using: _46@Mir(bb9[12])
+bb10:
+  _34 = src::test::__assert_fail(move _35, move _39, move _43, move _45) -> unwind continue
+  using: _35@Mir(bb9[3]), _39@Mir(bb9[7]), _43@Mir(bb9[9]), _45@Mir(bb9[13])
+bb11:
+  return
+  using: _0@Entry
+@DefId(0:165 ~ lib[f5c5]::src::test::test_buffer_trim)
+bb0:
+  _6 = const b"  Hello\n\n \x00"
+  using: 
+  _5 = &raw const (*_6)
+  using: _6@Mir(bb0[0])
+  _4 = move _5 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _5@Mir(bb0[1])
+  _3 = move _4 as *const i8 (PtrToPtr)
+  using: _4@Mir(bb0[2])
+  _2 = move _3 as *mut i8 (PtrToPtr)
+  using: _3@Mir(bb0[3])
+  _1 = src::test::buffer_new_with_copy(move _2) -> [return: bb1, unwind continue]
+  using: _2@Mir(bb0[4])
+bb1:
+  _8 = _1
+  using: _1@Mir(bb0[5])
+  _7 = src::test::buffer_trim(move _8) -> [return: bb2, unwind continue]
+  using: _8@Mir(bb1[0])
+bb2:
+  _14 = const b"Hello\x00"
+  using: 
+  _13 = &raw const (*_14)
+  using: _14@Mir(bb2[0])
+  _12 = move _13 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _13@Mir(bb2[1])
+  _11 = move _12 as *const i8 (PtrToPtr)
+  using: _12@Mir(bb2[2])
+  _10 = move _11 as *mut i8 (PtrToPtr)
+  using: _11@Mir(bb2[3])
+  _64 = _1 as *const () (PtrToPtr)
+  using: _1@Mir(bb0[5])
+  _65 = _64 as usize (Transmute)
+  using: _64@Mir(bb2[5])
+  _66 = AlignOf(src::test::buffer_t)
+  using: 
+  _67 = Sub(_66, const 1_usize)
+  using: _66@Mir(bb2[7])
+  _68 = BitAnd(_65, _67)
+  using: _65@Mir(bb2[6]), _67@Mir(bb2[8])
+  _69 = Eq(_68, const 0_usize)
+  using: _68@Mir(bb2[9])
+  assert(_69, "misaligned pointer dereference: address must be a multiple of {} but is {}", _66, _65) -> [success: bb15, unwind unreachable]
+  using: _69@Mir(bb2[10]), _66@Mir(bb2[7]), _65@Mir(bb2[6])
+bb3:
+  _17 = _1
+  using: _1@Mir(bb0[5])
+  _16 = src::test::buffer_free(move _17) -> [return: bb4, unwind continue]
+  using: _17@Mir(bb3[0])
+bb4:
+  _23 = const b"  Hello\n\n \x00"
+  using: 
+  _22 = &raw const (*_23)
+  using: _23@Mir(bb4[0])
+  _21 = move _22 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _22@Mir(bb4[1])
+  _20 = move _21 as *const i8 (PtrToPtr)
+  using: _21@Mir(bb4[2])
+  _19 = move _20 as *mut i8 (PtrToPtr)
+  using: _20@Mir(bb4[3])
+  _18 = src::test::buffer_new_with_copy(move _19) -> [return: bb5, unwind continue]
+  using: _19@Mir(bb4[4])
+bb5:
+  _1 = move _18
+  using: _18@Mir(bb4[5])
+  _25 = _1
+  using: _1@Mir(bb5[0])
+  _24 = src::test::buffer_trim_left(move _25) -> [return: bb6, unwind continue]
+  using: _25@Mir(bb5[1])
+bb6:
+  _31 = const b"Hello\n\n \x00"
+  using: 
+  _30 = &raw const (*_31)
+  using: _31@Mir(bb6[0])
+  _29 = move _30 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _30@Mir(bb6[1])
+  _28 = move _29 as *const i8 (PtrToPtr)
+  using: _29@Mir(bb6[2])
+  _27 = move _28 as *mut i8 (PtrToPtr)
+  using: _28@Mir(bb6[3])
+  _58 = _1 as *const () (PtrToPtr)
+  using: _1@Mir(bb5[0])
+  _59 = _58 as usize (Transmute)
+  using: _58@Mir(bb6[5])
+  _60 = AlignOf(src::test::buffer_t)
+  using: 
+  _61 = Sub(_60, const 1_usize)
+  using: _60@Mir(bb6[7])
+  _62 = BitAnd(_59, _61)
+  using: _59@Mir(bb6[6]), _61@Mir(bb6[8])
+  _63 = Eq(_62, const 0_usize)
+  using: _62@Mir(bb6[9])
+  assert(_63, "misaligned pointer dereference: address must be a multiple of {} but is {}", _60, _59) -> [success: bb14, unwind unreachable]
+  using: _63@Mir(bb6[10]), _60@Mir(bb6[7]), _59@Mir(bb6[6])
+bb7:
+  _34 = _1
+  using: _1@Mir(bb5[0])
+  _33 = src::test::buffer_free(move _34) -> [return: bb8, unwind continue]
+  using: _34@Mir(bb7[0])
+bb8:
+  _40 = const b"  Hello\n\n \x00"
+  using: 
+  _39 = &raw const (*_40)
+  using: _40@Mir(bb8[0])
+  _38 = move _39 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _39@Mir(bb8[1])
+  _37 = move _38 as *const i8 (PtrToPtr)
+  using: _38@Mir(bb8[2])
+  _36 = move _37 as *mut i8 (PtrToPtr)
+  using: _37@Mir(bb8[3])
+  _35 = src::test::buffer_new_with_copy(move _36) -> [return: bb9, unwind continue]
+  using: _36@Mir(bb8[4])
+bb9:
+  _1 = move _35
+  using: _35@Mir(bb8[5])
+  _42 = _1
+  using: _1@Mir(bb9[0])
+  _41 = src::test::buffer_trim_right(move _42) -> [return: bb10, unwind continue]
+  using: _42@Mir(bb9[1])
+bb10:
+  _48 = const b"  Hello\x00"
+  using: 
+  _47 = &raw const (*_48)
+  using: _48@Mir(bb10[0])
+  _46 = move _47 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _47@Mir(bb10[1])
+  _45 = move _46 as *const i8 (PtrToPtr)
+  using: _46@Mir(bb10[2])
+  _44 = move _45 as *mut i8 (PtrToPtr)
+  using: _45@Mir(bb10[3])
+  _52 = _1 as *const () (PtrToPtr)
+  using: _1@Mir(bb9[0])
+  _53 = _52 as usize (Transmute)
+  using: _52@Mir(bb10[5])
+  _54 = AlignOf(src::test::buffer_t)
+  using: 
+  _55 = Sub(_54, const 1_usize)
+  using: _54@Mir(bb10[7])
+  _56 = BitAnd(_53, _55)
+  using: _53@Mir(bb10[6]), _55@Mir(bb10[8])
+  _57 = Eq(_56, const 0_usize)
+  using: _56@Mir(bb10[9])
+  assert(_57, "misaligned pointer dereference: address must be a multiple of {} but is {}", _54, _53) -> [success: bb13, unwind unreachable]
+  using: _57@Mir(bb10[10]), _54@Mir(bb10[7]), _53@Mir(bb10[6])
+bb11:
+  _51 = _1
+  using: _1@Mir(bb9[0])
+  _50 = src::test::buffer_free(move _51) -> [return: bb12, unwind continue]
+  using: _51@Mir(bb11[0])
+bb12:
+  return
+  using: _0@Entry
+bb13:
+  _49 = ((*_1).2: *mut i8)
+  using: _1@Mir(bb9[0])
+  _43 = src::test::equal(move _44, move _49) -> [return: bb11, unwind continue]
+  using: _44@Mir(bb10[4]), _49@Mir(bb13[0])
+bb14:
+  _32 = ((*_1).2: *mut i8)
+  using: _1@Mir(bb5[0])
+  _26 = src::test::equal(move _27, move _32) -> [return: bb7, unwind continue]
+  using: _27@Mir(bb6[4]), _32@Mir(bb14[0])
+bb15:
+  _15 = ((*_1).2: *mut i8)
+  using: _1@Mir(bb0[5])
+  _9 = src::test::equal(move _10, move _15) -> [return: bb3, unwind continue]
+  using: _10@Mir(bb2[4]), _15@Mir(bb15[0])
+@DefId(0:166 ~ lib[f5c5]::src::test::test_buffer_compact)
+bb0:
+  _6 = const b"  Hello\n\n \x00"
+  using: 
+  _5 = &raw const (*_6)
+  using: _6@Mir(bb0[0])
+  _4 = move _5 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _5@Mir(bb0[1])
+  _3 = move _4 as *const i8 (PtrToPtr)
+  using: _4@Mir(bb0[2])
+  _2 = move _3 as *mut i8 (PtrToPtr)
+  using: _3@Mir(bb0[3])
+  _1 = src::test::buffer_new_with_copy(move _2) -> [return: bb1, unwind continue]
+  using: _2@Mir(bb0[4])
+bb1:
+  _8 = _1
+  using: _1@Mir(bb0[5])
+  _7 = src::test::buffer_trim(move _8) -> [return: bb2, unwind continue]
+  using: _8@Mir(bb1[0])
+bb2:
+  _11 = const 5_i32
+  using: 
+  _10 = move _11 as u64 (IntToInt)
+  using: _11@Mir(bb2[0])
+  _13 = _1
+  using: _1@Mir(bb0[5])
+  _12 = src::test::buffer_length(move _13) -> [return: bb3, unwind continue]
+  using: _13@Mir(bb2[2])
+bb3:
+  _9 = Eq(move _10, move _12)
+  using: _10@Mir(bb2[1]), _12@Mir(bb2[3])
+  switchInt(move _9) -> [0: bb5, otherwise: bb4]
+  using: _9@Mir(bb3[0])
+bb4:
+  _31 = const 10_i32
+  using: 
+  _30 = move _31 as u64 (IntToInt)
+  using: _31@Mir(bb4[0])
+  _33 = _1
+  using: _1@Mir(bb0[5])
+  _32 = src::test::buffer_size(move _33) -> [return: bb7, unwind continue]
+  using: _33@Mir(bb4[2])
+bb5:
+  _18 = const b"5 == buffer_length(buf)\x00"
+  using: 
+  _17 = &raw const (*_18)
+  using: _18@Mir(bb5[0])
+  _16 = move _17 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _17@Mir(bb5[1])
+  _15 = move _16 as *const i8 (PtrToPtr)
+  using: _16@Mir(bb5[2])
+  _22 = const b"test.c\x00"
+  using: 
+  _21 = &raw const (*_22)
+  using: _22@Mir(bb5[4])
+  _20 = move _21 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _21@Mir(bb5[5])
+  _19 = move _20 as *const i8 (PtrToPtr)
+  using: _20@Mir(bb5[6])
+  _24 = const 220_i32
+  using: 
+  _23 = move _24 as u32 (IntToInt)
+  using: _24@Mir(bb5[8])
+  _28 = const b"void test_buffer_compact()\x00"
+  using: 
+  _27 = _28 as &[i8; 27] (Transmute)
+  using: _28@Mir(bb5[10])
+  _26 = _27 as &[i8] (PointerCoercion(Unsize))
+  using: _27@Mir(bb5[11])
+  _25 = core::slice::<impl [i8]>::as_ptr(move _26) -> [return: bb6, unwind continue]
+  using: _26@Mir(bb5[12])
+bb6:
+  _14 = src::test::__assert_fail(move _15, move _19, move _23, move _25) -> unwind continue
+  using: _15@Mir(bb5[3]), _19@Mir(bb5[7]), _23@Mir(bb5[9]), _25@Mir(bb5[13])
+bb7:
+  _29 = Eq(move _30, move _32)
+  using: _30@Mir(bb4[1]), _32@Mir(bb4[3])
+  switchInt(move _29) -> [0: bb9, otherwise: bb8]
+  using: _29@Mir(bb7[0])
+bb8:
+  _50 = _1
+  using: _1@Mir(bb0[5])
+  _49 = src::test::buffer_compact(move _50) -> [return: bb11, unwind continue]
+  using: _50@Mir(bb8[0])
+bb9:
+  _38 = const b"10 == buffer_size(buf)\x00"
+  using: 
+  _37 = &raw const (*_38)
+  using: _38@Mir(bb9[0])
+  _36 = move _37 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _37@Mir(bb9[1])
+  _35 = move _36 as *const i8 (PtrToPtr)
+  using: _36@Mir(bb9[2])
+  _42 = const b"test.c\x00"
+  using: 
+  _41 = &raw const (*_42)
+  using: _42@Mir(bb9[4])
+  _40 = move _41 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _41@Mir(bb9[5])
+  _39 = move _40 as *const i8 (PtrToPtr)
+  using: _40@Mir(bb9[6])
+  _44 = const 221_i32
+  using: 
+  _43 = move _44 as u32 (IntToInt)
+  using: _44@Mir(bb9[8])
+  _48 = const b"void test_buffer_compact()\x00"
+  using: 
+  _47 = _48 as &[i8; 27] (Transmute)
+  using: _48@Mir(bb9[10])
+  _46 = _47 as &[i8] (PointerCoercion(Unsize))
+  using: _47@Mir(bb9[11])
+  _45 = core::slice::<impl [i8]>::as_ptr(move _46) -> [return: bb10, unwind continue]
+  using: _46@Mir(bb9[12])
+bb10:
+  _34 = src::test::__assert_fail(move _35, move _39, move _43, move _45) -> unwind continue
+  using: _35@Mir(bb9[3]), _39@Mir(bb9[7]), _43@Mir(bb9[9]), _45@Mir(bb9[13])
+bb11:
+  _53 = const 5_i32
+  using: 
+  _52 = move _53 as i64 (IntToInt)
+  using: _53@Mir(bb11[0])
+  _54 = _49
+  using: _49@Mir(bb8[1])
+  _51 = Eq(move _52, move _54)
+  using: _52@Mir(bb11[1]), _54@Mir(bb11[2])
+  switchInt(move _51) -> [0: bb13, otherwise: bb12]
+  using: _51@Mir(bb11[3])
+bb12:
+  _72 = const 5_i32
+  using: 
+  _71 = move _72 as u64 (IntToInt)
+  using: _72@Mir(bb12[0])
+  _74 = _1
+  using: _1@Mir(bb0[5])
+  _73 = src::test::buffer_length(move _74) -> [return: bb15, unwind continue]
+  using: _74@Mir(bb12[2])
+bb13:
+  _59 = const b"5 == removed\x00"
+  using: 
+  _58 = &raw const (*_59)
+  using: _59@Mir(bb13[0])
+  _57 = move _58 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _58@Mir(bb13[1])
+  _56 = move _57 as *const i8 (PtrToPtr)
+  using: _57@Mir(bb13[2])
+  _63 = const b"test.c\x00"
+  using: 
+  _62 = &raw const (*_63)
+  using: _63@Mir(bb13[4])
+  _61 = move _62 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _62@Mir(bb13[5])
+  _60 = move _61 as *const i8 (PtrToPtr)
+  using: _61@Mir(bb13[6])
+  _65 = const 224_i32
+  using: 
+  _64 = move _65 as u32 (IntToInt)
+  using: _65@Mir(bb13[8])
+  _69 = const b"void test_buffer_compact()\x00"
+  using: 
+  _68 = _69 as &[i8; 27] (Transmute)
+  using: _69@Mir(bb13[10])
+  _67 = _68 as &[i8] (PointerCoercion(Unsize))
+  using: _68@Mir(bb13[11])
+  _66 = core::slice::<impl [i8]>::as_ptr(move _67) -> [return: bb14, unwind continue]
+  using: _67@Mir(bb13[12])
+bb14:
+  _55 = src::test::__assert_fail(move _56, move _60, move _64, move _66) -> unwind continue
+  using: _56@Mir(bb13[3]), _60@Mir(bb13[7]), _64@Mir(bb13[9]), _66@Mir(bb13[13])
+bb15:
+  _70 = Eq(move _71, move _73)
+  using: _71@Mir(bb12[1]), _73@Mir(bb12[3])
+  switchInt(move _70) -> [0: bb17, otherwise: bb16]
+  using: _70@Mir(bb15[0])
+bb16:
+  _92 = const 5_i32
+  using: 
+  _91 = move _92 as u64 (IntToInt)
+  using: _92@Mir(bb16[0])
+  _94 = _1
+  using: _1@Mir(bb0[5])
+  _93 = src::test::buffer_size(move _94) -> [return: bb19, unwind continue]
+  using: _94@Mir(bb16[2])
+bb17:
+  _79 = const b"5 == buffer_length(buf)\x00"
+  using: 
+  _78 = &raw const (*_79)
+  using: _79@Mir(bb17[0])
+  _77 = move _78 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _78@Mir(bb17[1])
+  _76 = move _77 as *const i8 (PtrToPtr)
+  using: _77@Mir(bb17[2])
+  _83 = const b"test.c\x00"
+  using: 
+  _82 = &raw const (*_83)
+  using: _83@Mir(bb17[4])
+  _81 = move _82 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _82@Mir(bb17[5])
+  _80 = move _81 as *const i8 (PtrToPtr)
+  using: _81@Mir(bb17[6])
+  _85 = const 225_i32
+  using: 
+  _84 = move _85 as u32 (IntToInt)
+  using: _85@Mir(bb17[8])
+  _89 = const b"void test_buffer_compact()\x00"
+  using: 
+  _88 = _89 as &[i8; 27] (Transmute)
+  using: _89@Mir(bb17[10])
+  _87 = _88 as &[i8] (PointerCoercion(Unsize))
+  using: _88@Mir(bb17[11])
+  _86 = core::slice::<impl [i8]>::as_ptr(move _87) -> [return: bb18, unwind continue]
+  using: _87@Mir(bb17[12])
+bb18:
+  _75 = src::test::__assert_fail(move _76, move _80, move _84, move _86) -> unwind continue
+  using: _76@Mir(bb17[3]), _80@Mir(bb17[7]), _84@Mir(bb17[9]), _86@Mir(bb17[13])
+bb19:
+  _90 = Eq(move _91, move _93)
+  using: _91@Mir(bb16[1]), _93@Mir(bb16[3])
+  switchInt(move _90) -> [0: bb21, otherwise: bb20]
+  using: _90@Mir(bb19[0])
+bb20:
+  _115 = const b"Hello\x00"
+  using: 
+  _114 = &raw const (*_115)
+  using: _115@Mir(bb20[0])
+  _113 = move _114 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _114@Mir(bb20[1])
+  _112 = move _113 as *const i8 (PtrToPtr)
+  using: _113@Mir(bb20[2])
+  _111 = move _112 as *mut i8 (PtrToPtr)
+  using: _112@Mir(bb20[3])
+  _119 = _1 as *const () (PtrToPtr)
+  using: _1@Mir(bb0[5])
+  _120 = _119 as usize (Transmute)
+  using: _119@Mir(bb20[5])
+  _121 = AlignOf(src::test::buffer_t)
+  using: 
+  _122 = Sub(_121, const 1_usize)
+  using: _121@Mir(bb20[7])
+  _123 = BitAnd(_120, _122)
+  using: _120@Mir(bb20[6]), _122@Mir(bb20[8])
+  _124 = Eq(_123, const 0_usize)
+  using: _123@Mir(bb20[9])
+  assert(_124, "misaligned pointer dereference: address must be a multiple of {} but is {}", _121, _120) -> [success: bb25, unwind unreachable]
+  using: _124@Mir(bb20[10]), _121@Mir(bb20[7]), _120@Mir(bb20[6])
+bb21:
+  _99 = const b"5 == buffer_size(buf)\x00"
+  using: 
+  _98 = &raw const (*_99)
+  using: _99@Mir(bb21[0])
+  _97 = move _98 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _98@Mir(bb21[1])
+  _96 = move _97 as *const i8 (PtrToPtr)
+  using: _97@Mir(bb21[2])
+  _103 = const b"test.c\x00"
+  using: 
+  _102 = &raw const (*_103)
+  using: _103@Mir(bb21[4])
+  _101 = move _102 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _102@Mir(bb21[5])
+  _100 = move _101 as *const i8 (PtrToPtr)
+  using: _101@Mir(bb21[6])
+  _105 = const 226_i32
+  using: 
+  _104 = move _105 as u32 (IntToInt)
+  using: _105@Mir(bb21[8])
+  _109 = const b"void test_buffer_compact()\x00"
+  using: 
+  _108 = _109 as &[i8; 27] (Transmute)
+  using: _109@Mir(bb21[10])
+  _107 = _108 as &[i8] (PointerCoercion(Unsize))
+  using: _108@Mir(bb21[11])
+  _106 = core::slice::<impl [i8]>::as_ptr(move _107) -> [return: bb22, unwind continue]
+  using: _107@Mir(bb21[12])
+bb22:
+  _95 = src::test::__assert_fail(move _96, move _100, move _104, move _106) -> unwind continue
+  using: _96@Mir(bb21[3]), _100@Mir(bb21[7]), _104@Mir(bb21[9]), _106@Mir(bb21[13])
+bb23:
+  _118 = _1
+  using: _1@Mir(bb0[5])
+  _117 = src::test::buffer_free(move _118) -> [return: bb24, unwind continue]
+  using: _118@Mir(bb23[0])
+bb24:
+  return
+  using: _0@Entry
+bb25:
+  _116 = ((*_1).2: *mut i8)
+  using: _1@Mir(bb0[5])
+  _110 = src::test::equal(move _111, move _116) -> [return: bb23, unwind continue]
+  using: _111@Mir(bb20[4]), _116@Mir(bb25[0])
+@DefId(0:177 ~ lib[f5c5]::src::test::main_0)
+bb0:
+  _1 = src::test::test_buffer_new() -> [return: bb1, unwind continue]
+  using: 
+bb1:
+  _2 = src::test::test_buffer_new_with_size() -> [return: bb2, unwind continue]
+  using: 
+bb2:
+  _3 = src::test::test_buffer_append() -> [return: bb3, unwind continue]
+  using: 
+bb3:
+  _4 = src::test::test_buffer_append__grow() -> [return: bb4, unwind continue]
+  using: 
+bb4:
+  _5 = src::test::test_buffer_append_n() -> [return: bb5, unwind continue]
+  using: 
+bb5:
+  _6 = src::test::test_buffer_prepend() -> [return: bb6, unwind continue]
+  using: 
+bb6:
+  _7 = src::test::test_buffer_slice() -> [return: bb7, unwind continue]
+  using: 
+bb7:
+  _8 = src::test::test_buffer_slice__range_error() -> [return: bb8, unwind continue]
+  using: 
+bb8:
+  _9 = src::test::test_buffer_slice__end() -> [return: bb9, unwind continue]
+  using: 
+bb9:
+  _10 = src::test::test_buffer_slice__end_overflow() -> [return: bb10, unwind continue]
+  using: 
+bb10:
+  _11 = src::test::test_buffer_equals() -> [return: bb11, unwind continue]
+  using: 
+bb11:
+  _12 = src::test::test_buffer_indexof() -> [return: bb12, unwind continue]
+  using: 
+bb12:
+  _13 = src::test::test_buffer_fill() -> [return: bb13, unwind continue]
+  using: 
+bb13:
+  _14 = src::test::test_buffer_clear() -> [return: bb14, unwind continue]
+  using: 
+bb14:
+  _15 = src::test::test_buffer_trim() -> [return: bb15, unwind continue]
+  using: 
+bb15:
+  _16 = src::test::test_buffer_compact() -> [return: bb16, unwind continue]
+  using: 
+bb16:
+  _21 = const b"\n  \x1b[32m\xe2\x9c\x93 \x1b[90mok\x1b[0m\n\n\x00"
+  using: 
+  _20 = &raw const (*_21)
+  using: _21@Mir(bb16[0])
+  _19 = move _20 as *const u8 (PointerCoercion(ArrayToPointer))
+  using: _20@Mir(bb16[1])
+  _18 = move _19 as *const i8 (PtrToPtr)
+  using: _19@Mir(bb16[2])
+  _17 = src::test::printf(move _18) -> [return: bb17, unwind continue]
+  using: _18@Mir(bb16[3])
+bb17:
+  _0 = const 0_i32
+  using: 
+  return
+  using: _0@Mir(bb17[0])
