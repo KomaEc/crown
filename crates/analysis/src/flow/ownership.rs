@@ -5,7 +5,7 @@ use rustc_middle::mir::{
 };
 use smallvec::SmallVec;
 
-use self::access_path::AccessPaths;
+use self::{access_path::AccessPaths, constraint::StorageMode};
 use super::{
     def_use::{Def, DefUseChain, Inspect, LocationBuilder, Update, UseKind},
     SSAIdx,
@@ -20,10 +20,11 @@ mod inference;
 mod tests;
 
 /// Ownership inference context
-pub struct Ctxt<const K_LIMIT: usize, DB> {
+pub struct Ctxt<const K_LIMIT: usize, Mode: StorageMode, DB> {
     pub database: DB,
     pub access_paths: AccessPaths<K_LIMIT>,
     pub call_graph: CallGraph,
+    pub storage: Mode::Storage,
 }
 
 pub fn flow_chain<'tcx, const K_LIMIT: usize>(

@@ -1,34 +1,27 @@
-use std::ops::Range;
-
 use either::Either::{Left, Right};
-use rustc_abi::FieldIdx;
 use rustc_index::IndexVec;
 use rustc_middle::{
     mir::{
-        visit::Visitor, BasicBlock, BasicBlockData, BinOp, Body, Local, Location, NullOp, Operand,
-        Place, Rvalue, Statement, Terminator, UnOp,
+        visit::Visitor, BasicBlock, BasicBlockData, Body, Local, Location, Operand, Place, Rvalue,
+        Statement, Terminator,
     },
-    ty::{Const, Ty, TyCtxt},
+    ty::{Ty, TyCtxt},
 };
 use utils::data_structure::assoc::AssocExt;
 
 use super::{
     access_path::{AccessPaths, Path},
-    constraint::{Constraint, Database, OwnershipToken},
+    constraint::{Constraint, Database, OwnershipToken, StorageMode},
     Ctxt,
 };
 use crate::flow::{
     def_use::{Def, DefUseChain, Inspect, Update, UseKind},
-    // inference::{
-    //     Engine, InferAssign, InferCall, InferIrrelevant, InferJoin, InferReturn, Inference,
-    // },
-    join_points::PhiNode,
     RichLocation,
     SSAIdx,
 };
 
-pub struct Analysis<'analysis, 'tcx, const K_LIMIT: usize, DB> {
-    ctxt: &'analysis mut Ctxt<K_LIMIT, DB>,
+pub struct Analysis<'analysis, 'tcx, const K_LIMIT: usize, Mode: StorageMode, DB> {
+    ctxt: &'analysis mut Ctxt<K_LIMIT, Mode, DB>,
     /// `Local -> SSAIdx -> first token`
     tokens: &'analysis IndexVec<Local, IndexVec<SSAIdx, OwnershipToken>>,
     flow_chain: &'analysis DefUseChain,
@@ -72,13 +65,11 @@ fn ownership_tokens<'a, const K_LIMIT: usize>(
     }
 }
 
-impl<'tcx, const K_LIMIT: usize, DB: Database> Analysis<'_, 'tcx, K_LIMIT, DB> {
-    // // Cached?
-    // fn base(&self, local: Local, ssa_idx: SSAIdx) -> OwnershipToken {
-    //     // monotonicity constraints assumed
-    //     self.tokens[local][ssa_idx]
-    // }
-
+impl<'tcx, const K_LIMIT: usize, Mode, DB> Analysis<'_, 'tcx, K_LIMIT, Mode, DB>
+where
+    Mode: StorageMode,
+    DB: Database<Mode>,
+{
     /// If the path is a `Some`, then its size > 0
     fn path(&self, place: &Place<'tcx>, location: Location) -> Option<Path<Base>> {
         let path = self.ctxt.access_paths.path(place, self.body);
@@ -131,19 +122,23 @@ impl<'tcx, const K_LIMIT: usize, DB: Database> Analysis<'_, 'tcx, K_LIMIT, DB> {
         let path2 = path2.transpose();
 
         for x in ownership_tokens(&path1.r#use, min_depth, &self.ctxt.access_paths, ty) {
-            self.ctxt
-                .database
-                .add(Constraint::Assume { x, sign: false }, &mut ())
+            self.ctxt.database.add(
+                Constraint::Assume { x, sign: false },
+                &mut self.ctxt.storage,
+            )
         }
         for (x, y) in ownership_tokens(&path1.def, min_depth, &self.ctxt.access_paths, ty).zip(
             ownership_tokens(&path2.r#use, min_depth, &self.ctxt.access_paths, ty),
         ) {
-            self.ctxt.database.add(Constraint::Equal { x, y }, &mut ())
-        }
-        for x in ownership_tokens(&path2.def, min_depth, &self.ctxt.access_paths, ty) {
             self.ctxt
                 .database
-                .add(Constraint::Assume { x, sign: false }, &mut ())
+                .add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
+        }
+        for x in ownership_tokens(&path2.def, min_depth, &self.ctxt.access_paths, ty) {
+            self.ctxt.database.add(
+                Constraint::Assume { x, sign: false },
+                &mut self.ctxt.storage,
+            )
         }
     }
 
@@ -152,9 +147,10 @@ impl<'tcx, const K_LIMIT: usize, DB: Database> Analysis<'_, 'tcx, K_LIMIT, DB> {
         let path1 = path1.transpose();
         let path2 = path2.transpose();
         for x in ownership_tokens(&path1.r#use, min_depth, &self.ctxt.access_paths, ty) {
-            self.ctxt
-                .database
-                .add(Constraint::Assume { x, sign: false }, &mut ())
+            self.ctxt.database.add(
+                Constraint::Assume { x, sign: false },
+                &mut self.ctxt.storage,
+            )
         }
 
         for (x, y, z) in itertools::izip!(
@@ -164,12 +160,16 @@ impl<'tcx, const K_LIMIT: usize, DB: Database> Analysis<'_, 'tcx, K_LIMIT, DB> {
         ) {
             self.ctxt
                 .database
-                .add(Constraint::Linear { x, y, z }, &mut ())
+                .add(Constraint::Linear { x, y, z }, &mut self.ctxt.storage)
         }
     }
 }
 
-impl<'tcx, const K_LIMIT: usize, DB: Database> Visitor<'tcx> for Analysis<'_, 'tcx, K_LIMIT, DB> {
+impl<'tcx, const K_LIMIT: usize, Mode, DB> Visitor<'tcx> for Analysis<'_, 'tcx, K_LIMIT, Mode, DB>
+where
+    Mode: StorageMode,
+    DB: Database<Mode>,
+{
     fn visit_basic_block_data(&mut self, block: BasicBlock, data: &BasicBlockData<'tcx>) {
         for &(local, ref phi_node) in self.flow_chain.join_points[block].iter() {
             // let def = phi_node.lhs;
