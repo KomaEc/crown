@@ -20,7 +20,7 @@ use crate::flow::{
     SSAIdx,
 };
 
-pub struct Analysis<'analysis, 'tcx, const K_LIMIT: usize, Mode: StorageMode, DB> {
+pub struct Intraprocedural<'analysis, 'tcx, const K_LIMIT: usize, Mode: StorageMode, DB> {
     ctxt: &'analysis mut Ctxt<K_LIMIT, Mode, DB>,
     /// `Local -> SSAIdx -> first token`
     tokens: &'analysis IndexVec<Local, IndexVec<SSAIdx, OwnershipToken>>,
@@ -65,7 +65,7 @@ fn ownership_tokens<'a, const K_LIMIT: usize>(
     }
 }
 
-impl<'tcx, const K_LIMIT: usize, Mode, DB> Analysis<'_, 'tcx, K_LIMIT, Mode, DB>
+impl<'tcx, const K_LIMIT: usize, Mode, DB> Intraprocedural<'_, 'tcx, K_LIMIT, Mode, DB>
 where
     Mode: StorageMode,
     DB: Database<Mode>,
@@ -165,7 +165,7 @@ where
     }
 }
 
-impl<'tcx, const K_LIMIT: usize, Mode, DB> Visitor<'tcx> for Analysis<'_, 'tcx, K_LIMIT, Mode, DB>
+impl<'tcx, const K_LIMIT: usize, Mode, DB> Visitor<'tcx> for Intraprocedural<'_, 'tcx, K_LIMIT, Mode, DB>
 where
     Mode: StorageMode,
     DB: Database<Mode>,
