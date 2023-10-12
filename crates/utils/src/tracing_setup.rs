@@ -1,7 +1,15 @@
 use once_cell::sync::OnceCell;
 
-static TRACING_SUB_FMT_SET: OnceCell<()> = OnceCell::new();
+static SET: OnceCell<()> = OnceCell::new();
+
+use tracing_subscriber::{filter, fmt, prelude::*};
 
 pub fn init_logger() {
-    TRACING_SUB_FMT_SET.get_or_init(tracing_subscriber::fmt::init);
+    let filter = filter::LevelFilter::DEBUG;
+    SET.get_or_init(|| {
+        tracing_subscriber::registry()
+            .with(filter)
+            .with(fmt::Layer::default())
+            .init()
+    });
 }
