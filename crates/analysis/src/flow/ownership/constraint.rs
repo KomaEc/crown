@@ -156,6 +156,16 @@ make_logging_mode!(Warn);
 make_logging_mode!(Error);
 make_logging_mode!(Print);
 
+impl<T, U> StorageMode for (T, U)
+where T: StorageMode, U: StorageMode {
+    type Storage = (T::Storage, U::Storage);
+
+    fn store(storage: &mut Self::Storage, constraint: Constraint) {
+        T::store(&mut storage.0, constraint);
+        U::store(&mut storage.1, constraint)
+    }
+}
+
 pub trait Database<Mode: StorageMode = Debug> {
     fn new_tokens(&mut self, size: usize) -> Range<OwnershipToken>;
 
