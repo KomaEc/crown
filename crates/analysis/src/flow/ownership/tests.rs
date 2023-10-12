@@ -1,8 +1,15 @@
 use utils::compiler_interface::run_compiler;
 
-use crate::flow::{
-    def_use::display_uses,
-    ownership::{access_path::AccessPaths, flow_chain},
+use crate::{
+    call_graph::CallGraph,
+    flow::{
+        def_use::display_uses,
+        ownership::{
+            access_path::AccessPaths,
+            constraint::{Debug, EmptyDatabase},
+            flow_chain, Ctxt,
+        },
+    },
 };
 
 #[test]
@@ -14,14 +21,13 @@ fn sanity_test_0() {
     fn malloc(_: u64) -> *mut ();
     fn free(_: *mut ());
 }
-
 unsafe fn f(r: *mut i32) {
     let mut p = malloc(8u64) as *mut *mut *mut i32;
     *p = malloc(8u64) as *mut *mut i32;
     **p = r;
     ***p = 1;
     let mut q = p;
-    free(*q as *mut _);
+    free(**q as *mut _);
     free(*q as *mut _);
     free(q as *mut _);
 }";
@@ -33,6 +39,11 @@ unsafe fn f(r: *mut i32) {
             let body = tcx.optimized_mir(did);
             display_uses(body, &flow_chain(body, &access_paths))
         }
+
+        let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
+            Ctxt::new(EmptyDatabase::new(), access_paths, ());
+        let call_graph = CallGraph::new(tcx, &program.fns);
+        infer_ctxt.run(&call_graph, tcx);
     })
 }
 
@@ -71,5 +82,10 @@ unsafe fn g() {
             let body = tcx.optimized_mir(did);
             display_uses(body, &flow_chain(body, &access_paths))
         }
+
+        let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
+            Ctxt::new(EmptyDatabase::new(), access_paths, ());
+        let call_graph = CallGraph::new(tcx, &program.fns);
+        infer_ctxt.run(&call_graph, tcx);
     })
 }

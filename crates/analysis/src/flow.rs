@@ -1,6 +1,7 @@
 use std::ops::{Index, IndexMut};
 
-use rustc_middle::mir::{BasicBlock, Location};
+use rustc_index::IndexSlice;
+use rustc_middle::mir::{BasicBlock, Local, Location};
 use utils::data_structure::vec_vec::VecVec;
 
 pub mod def_use;
@@ -95,5 +96,23 @@ impl<T> LocationMap<T> {
                 (location, data)
             })
         })
+    }
+}
+
+pub struct LocalMap<T> {
+    map: VecVec<T>,
+}
+
+impl<T> Index<Local> for LocalMap<T> {
+    type Output = IndexSlice<SSAIdx, T>;
+
+    fn index(&self, index: Local) -> &Self::Output {
+        IndexSlice::from_raw(&self.map[index.index()])
+    }
+}
+
+impl<T> IndexMut<Local> for LocalMap<T> {
+    fn index_mut(&mut self, index: Local) -> &mut Self::Output {
+        IndexSlice::from_raw_mut(&mut self.map[index.index()])
     }
 }

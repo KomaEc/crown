@@ -1,11 +1,18 @@
 use rustc_index::bit_set::BitSet;
-use rustc_middle::mir::{
-    visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor},
-    Body, Local, Location, Operand, Place, Rvalue, Terminator, TerminatorKind, RETURN_PLACE,
+use rustc_middle::{
+    mir::{
+        visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor},
+        Body, Local, Location, Operand, Place, Rvalue, Terminator, TerminatorKind, RETURN_PLACE,
+    },
+    ty::TyCtxt,
 };
 use smallvec::SmallVec;
 
-use self::{access_path::AccessPaths, constraint::StorageMode};
+use self::{
+    access_path::AccessPaths,
+    constraint::{Database, StorageMode},
+    inference::Intraprocedural,
+};
 use super::{
     def_use::{Def, DefUseChain, Inspect, LocationBuilder, Update, UseKind},
     SSAIdx,
@@ -23,8 +30,30 @@ mod tests;
 pub struct Ctxt<const K_LIMIT: usize, Mode: StorageMode, DB> {
     pub database: DB,
     pub access_paths: AccessPaths<K_LIMIT>,
-    pub call_graph: CallGraph,
     pub storage: Mode::Storage,
+}
+
+impl<const K_LIMIT: usize, Mode, DB> Ctxt<K_LIMIT, Mode, DB>
+where
+    Mode: StorageMode,
+    DB: Database<Mode>,
+{
+    pub fn new(database: DB, access_paths: AccessPaths<K_LIMIT>, storage: Mode::Storage) -> Self {
+        Self {
+            database,
+            access_paths,
+            storage,
+        }
+    }
+
+    // TODO maybe replace `call_graph` with inter-procedural context?
+    pub fn run(&mut self, call_graph: &CallGraph, tcx: TyCtxt) {
+        for &def_id in call_graph.fns() {
+            let body = tcx.optimized_mir(def_id);
+            let mut intra_inference = Intraprocedural::new(self, body, tcx);
+            intra_inference.visit_body(body);
+        }
+    }
 }
 
 pub fn flow_chain<'tcx, const K_LIMIT: usize>(

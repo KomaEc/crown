@@ -179,6 +179,26 @@ pub trait Database<Mode: StorageMode = Debug> {
     fn add_inner(&mut self, constraint: Constraint);
 }
 
+/// The empty database for debugging
+pub struct EmptyDatabase {
+    gen: OwnershipTokenGenerator,
+}
+impl EmptyDatabase {
+    pub fn new() -> Self {
+        Self {
+            gen: OwnershipTokenGenerator::new(),
+        }
+    }
+}
+
+impl<Mode: StorageMode> Database<Mode> for EmptyDatabase {
+    fn new_tokens(&mut self, size: usize) -> Range<OwnershipToken> {
+        self.gen.new_tokens(size)
+    }
+
+    fn add_inner(&mut self, _: Constraint) {}
+}
+
 pub struct CadicalDatabase {
     pub solver: cadical::Solver,
     pub gen: OwnershipTokenGenerator,

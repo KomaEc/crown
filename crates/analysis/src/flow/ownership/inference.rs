@@ -1,9 +1,8 @@
 use either::Either::{Left, Right};
-use rustc_index::IndexVec;
 use rustc_middle::{
     mir::{
-        visit::Visitor, BasicBlock, BasicBlockData, Body, Local, Location, Operand, Place, Rvalue,
-        Statement, Terminator,
+        visit::Visitor, AggregateKind, BasicBlock, BasicBlockData, BinOp, Body, BorrowKind, Local,
+        Location, Operand, Place, Rvalue, Statement, Terminator,
     },
     ty::{Ty, TyCtxt},
 };
@@ -12,19 +11,19 @@ use utils::data_structure::assoc::AssocExt;
 use super::{
     access_path::{AccessPaths, Path},
     constraint::{Constraint, Database, OwnershipToken, StorageMode},
-    Ctxt,
+    flow_chain, Ctxt,
 };
 use crate::flow::{
     def_use::{Def, DefUseChain, Inspect, Update, UseKind},
-    RichLocation,
-    SSAIdx,
+    LocalMap, RichLocation, SSAIdx,
 };
 
 pub struct Intraprocedural<'analysis, 'tcx, const K_LIMIT: usize, Mode: StorageMode, DB> {
     ctxt: &'analysis mut Ctxt<K_LIMIT, Mode, DB>,
     /// `Local -> SSAIdx -> first token`
-    tokens: &'analysis IndexVec<Local, IndexVec<SSAIdx, OwnershipToken>>,
-    flow_chain: &'analysis DefUseChain,
+    // tokens: IndexVec<Local, IndexVec<SSAIdx, OwnershipToken>>,
+    tokens: LocalMap<OwnershipToken>,
+    flow_chain: DefUseChain,
     body: &'analysis Body<'tcx>,
     tcx: TyCtxt<'tcx>,
 }
@@ -46,22 +45,64 @@ impl<T> Path<Update<T>> {
     }
 }
 
+/// The set of ownership tokens of `path` under `context`
 fn ownership_tokens<'a, const K_LIMIT: usize>(
     path: &Path<OwnershipToken>,
-    expected_depth: usize,
+    context: usize,
     access_paths: &'a AccessPaths<K_LIMIT>,
     ty: Ty,
 ) -> impl Iterator<Item = OwnershipToken> + 'a {
-    if expected_depth == path.depth() {
+    if context == path.depth() {
         Left(path.base..path.base + path.num_pointers_reachable())
     } else {
-        assert!(expected_depth < path.depth());
+        assert!(context > path.depth());
         let base = path.base;
         Right(
             access_paths
-                .patch_up(path.depth(), path.depth() - expected_depth, ty)
+                .patch_up(path.depth(), context - path.depth(), ty)
                 .map(move |offset| base + offset),
         )
+    }
+}
+
+impl<'analysis, 'tcx, const K_LIMIT: usize, Mode, DB>
+    Intraprocedural<'analysis, 'tcx, K_LIMIT, Mode, DB>
+where
+    Mode: StorageMode,
+    DB: Database<Mode>,
+{
+    pub fn new(
+        ctxt: &'analysis mut Ctxt<K_LIMIT, Mode, DB>,
+        body: &'analysis Body<'tcx>,
+        tcx: TyCtxt<'tcx>,
+    ) -> Self {
+        let flow_chain = flow_chain(body, &ctxt.access_paths);
+        use utils::data_structure::vec_vec::VecVec;
+        let mut map = VecVec::with_indices_capacity(body.local_decls.len() + 1);
+
+        // TODO monotonicity constraints!
+        for (local, def_locs) in flow_chain.def_locs.iter_enumerated() {
+            let size = ctxt
+                .access_paths
+                .path(&Place::from(local), body)
+                .num_pointers_reachable();
+            tracing::debug!("initialising {local:?} with {size} variables");
+            tracing::error!("monotonicity constraints");
+            for _ in def_locs.indices() {
+                map.push_element(ctxt.database.new_tokens(size).start);
+            }
+            map.complete_cur_vec();
+        }
+
+        let map = map.complete();
+        let tokens = LocalMap { map };
+        Self {
+            ctxt,
+            tokens,
+            flow_chain,
+            body,
+            tcx,
+        }
     }
 }
 
@@ -117,24 +158,23 @@ where
 
     /// path1 = move path2
     fn r#move(&mut self, path1: &Path<ExpandedBase>, path2: &Path<ExpandedBase>, ty: Ty<'tcx>) {
-        let min_depth = std::cmp::min(path1.depth(), path2.depth());
+        let max_depth = std::cmp::max(path1.depth(), path2.depth());
         let path1 = path1.transpose();
         let path2 = path2.transpose();
-
-        for x in ownership_tokens(&path1.r#use, min_depth, &self.ctxt.access_paths, ty) {
+        for x in ownership_tokens(&path1.r#use, max_depth, &self.ctxt.access_paths, ty) {
             self.ctxt.database.add(
                 Constraint::Assume { x, sign: false },
                 &mut self.ctxt.storage,
             )
         }
-        for (x, y) in ownership_tokens(&path1.def, min_depth, &self.ctxt.access_paths, ty).zip(
-            ownership_tokens(&path2.r#use, min_depth, &self.ctxt.access_paths, ty),
+        for (x, y) in ownership_tokens(&path1.def, max_depth, &self.ctxt.access_paths, ty).zip(
+            ownership_tokens(&path2.r#use, max_depth, &self.ctxt.access_paths, ty),
         ) {
             self.ctxt
                 .database
                 .add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
         }
-        for x in ownership_tokens(&path2.def, min_depth, &self.ctxt.access_paths, ty) {
+        for x in ownership_tokens(&path2.def, max_depth, &self.ctxt.access_paths, ty) {
             self.ctxt.database.add(
                 Constraint::Assume { x, sign: false },
                 &mut self.ctxt.storage,
@@ -143,10 +183,10 @@ where
     }
 
     fn transfer(&mut self, path1: &Path<ExpandedBase>, path2: &Path<ExpandedBase>, ty: Ty<'tcx>) {
-        let min_depth = std::cmp::min(path1.depth(), path2.depth());
+        let max_depth = std::cmp::max(path1.depth(), path2.depth());
         let path1 = path1.transpose();
         let path2 = path2.transpose();
-        for x in ownership_tokens(&path1.r#use, min_depth, &self.ctxt.access_paths, ty) {
+        for x in ownership_tokens(&path1.r#use, max_depth, &self.ctxt.access_paths, ty) {
             self.ctxt.database.add(
                 Constraint::Assume { x, sign: false },
                 &mut self.ctxt.storage,
@@ -154,9 +194,9 @@ where
         }
 
         for (x, y, z) in itertools::izip!(
-            ownership_tokens(&path1.def, min_depth, &self.ctxt.access_paths, ty),
-            ownership_tokens(&path2.def, min_depth, &self.ctxt.access_paths, ty),
-            ownership_tokens(&path2.r#use, min_depth, &self.ctxt.access_paths, ty)
+            ownership_tokens(&path1.def, max_depth, &self.ctxt.access_paths, ty),
+            ownership_tokens(&path2.def, max_depth, &self.ctxt.access_paths, ty),
+            ownership_tokens(&path2.r#use, max_depth, &self.ctxt.access_paths, ty)
         ) {
             self.ctxt
                 .database
@@ -165,18 +205,20 @@ where
     }
 }
 
-impl<'tcx, const K_LIMIT: usize, Mode, DB> Visitor<'tcx> for Intraprocedural<'_, 'tcx, K_LIMIT, Mode, DB>
+impl<'tcx, const K_LIMIT: usize, Mode, DB> Visitor<'tcx>
+    for Intraprocedural<'_, 'tcx, K_LIMIT, Mode, DB>
 where
     Mode: StorageMode,
     DB: Database<Mode>,
 {
     fn visit_basic_block_data(&mut self, block: BasicBlock, data: &BasicBlockData<'tcx>) {
+        tracing::debug!("inferring basicblock {block:?}");
         for &(local, ref phi_node) in self.flow_chain.join_points[block].iter() {
             // let def = phi_node.lhs;
             // for r#use in phi_node.rhs.iter().copied() {
 
             // }
-            todo!(
+            tracing::error!(
                 "Equate the ownership variables at phi-node {local:?}: {:?} = {}",
                 phi_node.lhs,
                 phi_node
@@ -198,7 +240,8 @@ where
         };
         let ty = place.ty(self.body, self.tcx).ty;
         match rvalue {
-            Rvalue::Use(operand) => match operand {
+            // cast is unsafe anyway
+            Rvalue::Use(operand) | Rvalue::Cast(_, operand, _) => match operand {
                 Operand::Copy(rhs) => {
                     let Some(rhs) = self.path(rhs, location).map(|path| self.expand(&path)) else {
                         // if `rhs` is not a pointer, then `lhs` is unconstrained
@@ -216,28 +259,50 @@ where
                 Operand::Constant(_) => return,
             },
             Rvalue::Repeat(_, _) => todo!(),
-            Rvalue::Ref(_, _, _) => todo!(),
-            Rvalue::ThreadLocalRef(_) => todo!(),
+            Rvalue::Ref(_, BorrowKind::Mut { .. }, lender) => {
+                todo!()
+            }
+            Rvalue::Ref(_, BorrowKind::Shared, lender) => {
+                todo!()
+            }
             Rvalue::AddressOf(_, _) => todo!(),
-            Rvalue::Len(_) => todo!(),
-            Rvalue::Cast(_, _, _) => todo!(),
-            Rvalue::BinaryOp(_, _) => todo!(),
-            Rvalue::CheckedBinaryOp(_, _) => todo!(),
-            Rvalue::NullaryOp(_, _) => todo!(),
-            Rvalue::UnaryOp(_, _) => todo!(),
-            Rvalue::Discriminant(_) => todo!(),
-            Rvalue::Aggregate(_, _) => todo!(),
-            Rvalue::ShallowInitBox(_, _) => todo!(),
+            Rvalue::BinaryOp(BinOp::Offset, box (operand1, operand2)) => todo!(),
+            Rvalue::BinaryOp(BinOp::Eq, _) => todo!(),
+            Rvalue::BinaryOp(_, _) => {
+                unreachable!("LHS of an arithmetic binary operation contains pointers. How?")
+            }
+            Rvalue::CheckedBinaryOp(_, _) => {
+                unreachable!("LHS of a checked arithmetic binary operation contains pointers. How?")
+            }
+            Rvalue::UnaryOp(_, _) => {
+                unreachable!("LHS of an unary operation contains pointers. How?")
+            }
+            Rvalue::Discriminant(_) => {
+                unreachable!("LHS of a discriminant expression contains pointers. How?")
+            }
+            Rvalue::Aggregate(box AggregateKind::Array(_), values) => {
+                todo!()
+            }
+            Rvalue::Aggregate(box AggregateKind::Adt(..), values) => {
+                todo!()
+            }
             Rvalue::CopyForDeref(_) => todo!(),
+            Rvalue::Ref(_, BorrowKind::Shallow, _)
+            | Rvalue::ThreadLocalRef(_)
+            | Rvalue::Len(_)
+            | Rvalue::Aggregate(..)
+            | Rvalue::NullaryOp(_, _)
+            | Rvalue::ShallowInitBox(_, _) => unimplemented!("Rvalue type {:?}", rvalue),
         }
-        todo!("infer assignment {place:?} = {rvalue:?} at {location:?}")
     }
 
     fn visit_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
+        tracing::debug!("infer statement {statement:?}");
         self.super_statement(statement, location)
     }
 
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
+        tracing::debug!("infer terminator {:?}", &terminator.kind);
         self.super_terminator(terminator, location)
     }
 }
