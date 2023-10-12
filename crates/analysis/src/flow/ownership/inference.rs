@@ -12,7 +12,7 @@ use super::{
     Ctxt,
 };
 use crate::flow::{
-    def_use::{Def, Inspect, Update, UseKind},
+    def_use::{Def, Inspect, Update, UseKind, DefUseChain},
     // inference::{
     //     Engine, InferAssign, InferCall, InferIrrelevant, InferJoin, InferReturn, Inference,
     // },
@@ -24,7 +24,8 @@ use crate::flow::{
 pub struct Analysis<'analysis, const K_LIMIT: usize, DB> {
     ctxt: &'analysis mut Ctxt<K_LIMIT, DB>,
     /// `Local -> SSAIdx -> first token`
-    tokens: &'analysis mut IndexVec<Local, IndexVec<SSAIdx, OwnershipToken>>,
+    tokens: &'analysis IndexVec<Local, IndexVec<SSAIdx, OwnershipToken>>,
+    flow_chain: &'analysis DefUseChain,
 }
 
 type Base = (Local, UseKind<SSAIdx>);
