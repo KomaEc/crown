@@ -14,7 +14,7 @@ use rustc_middle::{
 };
 use utils::data_structure::assoc::AssocExt;
 
-use super::{def_use::{DefUseChain, Initialised}, join_points::PhiNode, state::SSAState, SSAIdx};
+use super::{def_use::DefUseChain, join_points::PhiNode, state::SSAState, SSAIdx};
 use crate::flow::{def_use::UseKind, RichLocation};
 
 /// The set of inference operations
@@ -172,7 +172,7 @@ pub trait InferJoin<'tcx> {
 pub struct Engine<'engine, 'tcx> {
     pub(super) tcx: TyCtxt<'tcx>,
     pub(super) body: &'engine Body<'tcx>,
-    pub(super) def_use_chain: DefUseChain<Initialised>,
+    pub(super) def_use_chain: DefUseChain,
     ssa_state: SSAState,
 }
 
@@ -180,7 +180,7 @@ impl<'engine, 'tcx> Engine<'engine, 'tcx> {
     pub fn new(
         tcx: TyCtxt<'tcx>,
         body: &'engine Body<'tcx>,
-        def_use_chain: DefUseChain<Initialised>,
+        def_use_chain: DefUseChain,
         ssa_state: SSAState,
     ) -> Self {
         Engine {

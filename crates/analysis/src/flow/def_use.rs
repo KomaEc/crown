@@ -81,17 +81,7 @@ impl<T> UseKind<T> {
 #[cfg(not(debug_assertions))]
 const _: () = assert!(8 == std::mem::size_of::<UseKind<SSAIdx>>());
 
-pub trait DefUseChainState {}
-
-pub enum Initialised {}
-
-impl DefUseChainState for Initialised {}
-
-pub enum Ready {}
-
-impl DefUseChainState for Ready {}
-
-pub struct DefUseChain<State> {
+pub struct DefUseChain {
     /// `Location -> Local -> UseKind<SSAIdx>`
     pub uses: LocationMap<SmallVec<[(Local, UseKind<SSAIdx>); 2]>>,
 
@@ -99,11 +89,9 @@ pub struct DefUseChain<State> {
     pub def_locs: IndexVec<Local, IndexVec<SSAIdx, RichLocation>>,
 
     pub join_points: JoinPoints<PhiNode>,
-
-    _state: std::marker::PhantomData<*const State>,
 }
 
-pub fn display_uses(body: &Body, def_use_chain: &DefUseChain<Ready>) {
+pub fn display_uses(body: &Body, def_use_chain: &DefUseChain) {
     println!("@{:?}", body.source.def_id());
     for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
         println!("{:?}:", bb);
@@ -156,7 +144,7 @@ pub fn display_uses(body: &Body, def_use_chain: &DefUseChain<Ready>) {
     }
 }
 
-pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain<Ready>) {
+pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
     println!("@{:?}", body.source.def_id());
     for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
         println!("{:?}:", bb);
@@ -197,34 +185,17 @@ pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain<Ready>) {
     }
 }
 
-impl DefUseChain<Ready> {
+impl DefUseChain {
     /// Construct a normal def use chain (Definition of def and use is similar to
     /// a liveness analysis)
-    pub fn vanilla<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
+    pub fn new<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
         let vanilla_builder = VanillaBuilder::default();
         let def_use_chain = DefUseChain::initialise(body, vanilla_builder);
         let ssa_state = SSAState::new(body.local_decls.len());
         let mut engine = Engine::new(tcx, body, def_use_chain, ssa_state);
         engine.run(Vanilla);
 
-        engine.def_use_chain.build()
-    }
-}
-
-impl DefUseChain<Initialised> {
-    pub fn build(self) -> DefUseChain<Ready> {
-        let DefUseChain {
-            uses,
-            def_locs,
-            join_points,
-            ..
-        } = self;
-        DefUseChain {
-            uses,
-            def_locs,
-            join_points,
-            _state: std::marker::PhantomData,
-        }
+        engine.def_use_chain
     }
 
     pub fn initialise<'tcx, L: LocationBuilder<'tcx>>(
@@ -252,12 +223,9 @@ impl DefUseChain<Initialised> {
             uses,
             def_locs,
             join_points,
-            _state: std::marker::PhantomData,
         }
     }
-}
 
-impl DefUseChain<Ready> {
     pub fn inspects(&self, location: Location) -> impl Iterator<Item = Local> + '_ {
         self.uses[location].iter().filter_map(|(local, use_kind)| {
             if let Inspect(..) = use_kind {
