@@ -157,7 +157,10 @@ make_logging_mode!(Error);
 make_logging_mode!(Print);
 
 impl<T, U> StorageMode for (T, U)
-where T: StorageMode, U: StorageMode {
+where
+    T: StorageMode,
+    U: StorageMode,
+{
     type Storage = (T::Storage, U::Storage);
 
     fn store(storage: &mut Self::Storage, constraint: Constraint) {
