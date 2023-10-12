@@ -46,7 +46,7 @@ impl<T> Path<T> {
 pub struct Projections(pub(super) usize, pub(super) usize, pub(super) usize);
 
 impl<T> Path<T> {
-    pub fn offset(&self) -> usize {
+    pub fn projection_offset(&self) -> usize {
         self.projections.0
     }
 

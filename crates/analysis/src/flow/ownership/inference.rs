@@ -53,7 +53,7 @@ fn ownership_tokens<'a, const K_LIMIT: usize>(
     ty: Ty,
 ) -> impl Iterator<Item = OwnershipToken> + 'a {
     let base = path.base;
-    let projection_offset = path.offset();
+    let projection_offset = path.projection_offset();
     if context == path.depth() {
         Left(base + projection_offset..base + projection_offset + path.num_pointers_reachable())
     } else {
