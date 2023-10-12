@@ -32,7 +32,7 @@ unsafe fn f(r: *mut i32) {
         for did in &program.fns {
             let body = tcx.optimized_mir(did);
             let engine = build_engine(body, tcx, &access_paths);
-            display_uses(body, &engine.def_use_chain)
+            display_uses(body, &engine.def_use_chain.build())
         }
     })
 }
@@ -71,7 +71,7 @@ unsafe fn g() {
         for did in &program.fns {
             let body = tcx.optimized_mir(did);
             let engine = build_engine(body, tcx, &access_paths);
-            display_uses(body, &engine.def_use_chain)
+            display_uses(body, &engine.def_use_chain.build())
         }
     })
 }
