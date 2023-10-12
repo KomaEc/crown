@@ -52,15 +52,16 @@ fn ownership_tokens<'a, const K_LIMIT: usize>(
     access_paths: &'a AccessPaths<K_LIMIT>,
     ty: Ty,
 ) -> impl Iterator<Item = OwnershipToken> + 'a {
+    let base = path.base;
+    let projection_offset = path.offset();
     if context == path.depth() {
-        Left(path.base..path.base + path.num_pointers_reachable())
+        Left(base + projection_offset..base + projection_offset + path.num_pointers_reachable())
     } else {
         assert!(context > path.depth());
-        let base = path.base;
         Right(
             access_paths
                 .patch_up(path.depth(), context - path.depth(), ty)
-                .map(move |offset| base + offset),
+                .map(move |offset| base + projection_offset + offset),
         )
     }
 }
@@ -158,6 +159,7 @@ where
 
     /// path1 = move path2
     fn r#move(&mut self, path1: &Path<ExpandedBase>, path2: &Path<ExpandedBase>, ty: Ty<'tcx>) {
+        tracing::debug!("move constraint: {path1:?} = move {path2:?}");
         let max_depth = std::cmp::max(path1.depth(), path2.depth());
         let path1 = path1.transpose();
         let path2 = path2.transpose();
@@ -183,6 +185,7 @@ where
     }
 
     fn transfer(&mut self, path1: &Path<ExpandedBase>, path2: &Path<ExpandedBase>, ty: Ty<'tcx>) {
+        tracing::debug!("transfer constraint: {path1:?} = {path2:?}");
         let max_depth = std::cmp::max(path1.depth(), path2.depth());
         let path1 = path1.transpose();
         let path2 = path2.transpose();
@@ -247,7 +250,7 @@ where
                         // if `rhs` is not a pointer, then `lhs` is unconstrained
                         return;
                     };
-                    self.transfer(&lhs, &rhs, ty)
+                    self.transfer(&lhs, &rhs, ty);
                 }
                 Operand::Move(rhs) => {
                     let Some(rhs) = self.path(rhs, location).map(|path| self.expand(&path)) else {
@@ -286,7 +289,13 @@ where
             Rvalue::Aggregate(box AggregateKind::Adt(..), values) => {
                 todo!()
             }
-            Rvalue::CopyForDeref(_) => todo!(),
+            Rvalue::CopyForDeref(rhs) => {
+                let Some(rhs) = self.path(rhs, location).map(|path| self.expand(&path)) else {
+                    // if `rhs` is not a pointer, then `lhs` is unconstrained
+                    return;
+                };
+                self.r#move(&lhs, &rhs, ty);
+            }
             Rvalue::Ref(_, BorrowKind::Shallow, _)
             | Rvalue::ThreadLocalRef(_)
             | Rvalue::Len(_)
