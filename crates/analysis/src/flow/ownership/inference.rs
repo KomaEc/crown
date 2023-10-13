@@ -241,14 +241,10 @@ where
     DB: Database<Mode>,
 {
     fn visit_basic_block_data(&mut self, block: BasicBlock, data: &BasicBlockData<'tcx>) {
-        tracing::debug!("inferring basicblock {block:?}");
+        tracing::debug!("infering basicblock {block:?}");
         for &(local, ref phi_node) in self.flow_chain.join_points[block].iter() {
-            // let def = phi_node.lhs;
-            // for r#use in phi_node.rhs.iter().copied() {
-
-            // }
             tracing::error!(
-                "Equate the ownership variables at phi-node {local:?}: {:?} = {}",
+                "Equate the ownership variables at phi-node {local:?}: {:?} = phi({})",
                 phi_node.lhs,
                 phi_node
                     .rhs
@@ -256,7 +252,16 @@ where
                     .map(|ssa_idx| format!("{ssa_idx:?}"))
                     .collect::<Vec<_>>()
                     .join(", ")
-            )
+            );
+            let size = self.ctxt.access_paths.path(&Place::from(local), self.body).num_pointers_reachable();
+            let def = phi_node.lhs;
+            for r#use in phi_node.rhs.iter().copied() {
+                let def_tokens = self.tokens[local][def];
+                let use_tokens = self.tokens[local][r#use];
+                for (x, y) in (def_tokens..def_tokens + size).zip(use_tokens..use_tokens + size) {
+                    self.ctxt.database.add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
+                }
+            }
         }
         self.super_basic_block_data(block, data);
     }
