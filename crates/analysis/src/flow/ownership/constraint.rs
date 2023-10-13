@@ -179,32 +179,19 @@ pub trait Database<Mode: StorageMode = Debug> {
     fn add_inner(&mut self, constraint: Constraint);
 }
 
-/// The empty database for debugging
-pub struct EmptyDatabase {
-    gen: OwnershipTokenGenerator,
-}
-impl EmptyDatabase {
-    pub fn new() -> Self {
-        Self {
-            gen: OwnershipTokenGenerator::new(),
-        }
-    }
-}
-
-impl<Mode: StorageMode> Database<Mode> for EmptyDatabase {
-    fn new_tokens(&mut self, size: usize) -> Range<OwnershipToken> {
-        self.gen.new_tokens(size)
-    }
-
-    fn add_inner(&mut self, _: Constraint) {}
-}
-
 pub struct CadicalDatabase {
     pub solver: cadical::Solver,
     pub gen: OwnershipTokenGenerator,
 }
 
 impl CadicalDatabase {
+    pub fn new() -> Self {
+        CadicalDatabase {
+            solver: cadical::Solver::new(),
+            gen: OwnershipTokenGenerator::new()
+        }
+    }
+
     /// add `x <= y`
     fn add_le(&mut self, x: OwnershipToken, y: OwnershipToken) {
         self.solver
@@ -273,7 +260,16 @@ impl<'z3> Z3Database<'z3> {
 
 impl<'z3, Mode: StorageMode> Database<Mode> for Z3Database<'z3> {
     fn new_tokens(&mut self, size: usize) -> Range<OwnershipToken> {
-        self.gen.new_tokens(size)
+        let tokens = self.gen.new_tokens(size);
+        for token in tokens.clone() {
+            assert_eq!(
+                token,
+                self.z3_ast
+                    .push(z3::ast::Bool::new_const(self.ctx, token.as_u32()))
+            )
+        }
+
+        tokens
     }
 
     fn add_inner(&mut self, constraint: Constraint) {

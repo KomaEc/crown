@@ -207,7 +207,12 @@ where
         }
     }
 
-    fn copy_for_deref(&mut self, path1: &Path<ExpandedBase>, path2: &Path<ExpandedBase>, ty: Ty<'tcx>) {
+    fn copy_for_deref(
+        &mut self,
+        path1: &Path<ExpandedBase>,
+        path2: &Path<ExpandedBase>,
+        ty: Ty<'tcx>,
+    ) {
         tracing::debug!("copy constraint: {path1:?} = {path2:?}");
         let max_depth = std::cmp::max(path1.depth(), path2.depth());
         let path1 = path1.transpose();
@@ -283,15 +288,13 @@ where
                 Operand::Constant(_) => return,
             },
             Rvalue::Repeat(_, _) => todo!(),
-            Rvalue::Ref(_, BorrowKind::Mut { .. }, lender) => {
-                todo!()
+            Rvalue::Ref(_, BorrowKind::Mut { .. } | BorrowKind::Shared, pointee)
+            | Rvalue::AddressOf(_, pointee) => {
+                tracing::error!("not yet implemented: &{pointee:?}");
             }
-            Rvalue::Ref(_, BorrowKind::Shared, lender) => {
-                todo!()
+            Rvalue::BinaryOp(BinOp::Offset, box (operand1, operand2)) => {
+                unimplemented!("offset operation is not yet supported {place:?} = offset({operand1:?}, {operand2:?}")
             }
-            Rvalue::AddressOf(_, _) => todo!(),
-            Rvalue::BinaryOp(BinOp::Offset, box (operand1, operand2)) => todo!(),
-            Rvalue::BinaryOp(BinOp::Eq, _) => todo!(),
             Rvalue::BinaryOp(_, _) => {
                 unreachable!("LHS of an arithmetic binary operation contains pointers. How?")
             }

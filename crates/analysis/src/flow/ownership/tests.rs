@@ -6,7 +6,7 @@ use crate::{
         def_use::display_uses,
         ownership::{
             access_path::AccessPaths,
-            constraint::{Debug, EmptyDatabase},
+            constraint::{Debug, CadicalDatabase},
             flow_chain, Ctxt,
         },
     },
@@ -40,8 +40,14 @@ unsafe fn f(r: *mut i32) {
             display_uses(body, &flow_chain(body, &access_paths))
         }
 
+        // let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
+        //     Ctxt::new(EmptyDatabase::new(), access_paths, ());
+        // let config = z3::Config::new();
+        // let ctx = z3::Context::new(&config);
+        // let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
+        //     Ctxt::new(Z3Database::new(&ctx), access_paths, ());
         let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
-            Ctxt::new(EmptyDatabase::new(), access_paths, ());
+            Ctxt::new(CadicalDatabase::new(), access_paths, ());
         let call_graph = CallGraph::new(tcx, &program.fns);
         infer_ctxt.run(&call_graph, tcx);
     })
@@ -84,7 +90,7 @@ unsafe fn g() {
         }
 
         let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
-            Ctxt::new(EmptyDatabase::new(), access_paths, ());
+            Ctxt::new(CadicalDatabase::new(), access_paths, ());
         let call_graph = CallGraph::new(tcx, &program.fns);
         infer_ctxt.run(&call_graph, tcx);
     })
