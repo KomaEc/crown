@@ -206,6 +206,27 @@ where
                 .add(Constraint::Linear { x, y, z }, &mut self.ctxt.storage)
         }
     }
+
+    fn copy_for_deref(&mut self, path1: &Path<ExpandedBase>, path2: &Path<ExpandedBase>, ty: Ty<'tcx>) {
+        tracing::debug!("copy constraint: {path1:?} = {path2:?}");
+        let max_depth = std::cmp::max(path1.depth(), path2.depth());
+        let path1 = path1.transpose();
+        let path2 = path2.transpose();
+        for (x, y) in ownership_tokens(&path1.r#use, max_depth, &self.ctxt.access_paths, ty).zip(
+            ownership_tokens(&path2.r#use, max_depth, &self.ctxt.access_paths, ty),
+        ) {
+            self.ctxt
+                .database
+                .add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
+        }
+        for (x, y) in ownership_tokens(&path1.def, max_depth, &self.ctxt.access_paths, ty).zip(
+            ownership_tokens(&path2.def, max_depth, &self.ctxt.access_paths, ty),
+        ) {
+            self.ctxt
+                .database
+                .add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
+        }
+    }
 }
 
 impl<'tcx, const K_LIMIT: usize, Mode, DB> Visitor<'tcx>
@@ -294,7 +315,7 @@ where
                     // if `rhs` is not a pointer, then `lhs` is unconstrained
                     return;
                 };
-                self.r#move(&lhs, &rhs, ty);
+                self.copy_for_deref(&lhs, &rhs, ty);
             }
             Rvalue::Ref(_, BorrowKind::Shallow, _)
             | Rvalue::ThreadLocalRef(_)
