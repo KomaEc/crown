@@ -379,7 +379,6 @@ where
                         continue;
                     }
                     let ssa_idx = use_kind.inspect().unwrap();
-                    println!("{local:?}@{ssa_idx:?}");
                     let tokens = self.tokens[local][ssa_idx];
                     let size = self.ctxt.access_paths.path(&Place::from(local), self.body).num_pointers_reachable();
                     for x in tokens..tokens + size {

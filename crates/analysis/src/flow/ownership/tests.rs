@@ -3,7 +3,7 @@ use utils::compiler_interface::run_compiler;
 use crate::{
     call_graph::CallGraph,
     flow::{
-        def_use::{display_uses, show_def_use_chain},
+        def_use::display_def_use_chain,
         ownership::{
             access_path::AccessPaths,
             constraint::{CadicalDatabase, Debug},
@@ -37,7 +37,7 @@ unsafe fn f(r: *mut i32) {
         let tcx = program.tcx;
         for did in &program.fns {
             let body = tcx.optimized_mir(did);
-            show_def_use_chain(body, &flow_chain(body, &access_paths))
+            display_def_use_chain(body, &flow_chain(body, &access_paths))
         }
 
         // let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
@@ -77,7 +77,7 @@ unsafe fn f(r: *mut *mut *mut i32) {
         let tcx = program.tcx;
         for did in &program.fns {
             let body = tcx.optimized_mir(did);
-            display_uses(body, &flow_chain(body, &access_paths))
+            display_def_use_chain(body, &flow_chain(body, &access_paths))
         }
 
         let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =

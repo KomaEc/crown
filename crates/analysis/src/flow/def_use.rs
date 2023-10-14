@@ -97,60 +97,17 @@ pub struct DefUseChain {
     pub join_points: JoinPoints<PhiNode>,
 }
 
-pub fn display_uses(body: &Body, def_use_chain: &DefUseChain) {
-    println!("@{:?}", body.source.def_id());
-    for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
-        println!("{:?}:", bb);
-        let mut statement_index = 0;
-        for statement in bb_data.statements.iter() {
-            println!("  {:?}", statement);
-
-            let location = Location {
-                block: bb,
-                statement_index,
-            };
-            let uses = def_use_chain.uses[location]
-                .iter()
-                .map(|(local, use_kind)| {
-                    format!(
-                        "{} {local:?}",
-                        match use_kind {
-                            Inspect(_) => "inspect",
-                            Def(_) => "define",
-                        }
-                    )
-                })
-                .collect::<Vec<_>>()
-                .join(", ");
-            println!("  uses: {uses}");
-
-            statement_index += 1;
-        }
-        if let Some(terminator) = &bb_data.terminator {
-            println!("  {:?}", terminator.kind);
-            let location = Location {
-                block: bb,
-                statement_index,
-            };
-            let uses = def_use_chain.uses[location]
-                .iter()
-                .map(|(local, use_kind)| {
-                    format!(
-                        "{} {local:?}",
-                        match use_kind {
-                            Inspect(_) => "inspect",
-                            Def(_) => "define",
-                        }
-                    )
-                })
-                .collect::<Vec<_>>()
-                .join(", ");
-            println!("  uses: {uses}");
+pub fn display_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
+    fn use_str(local: Local, use_kind: UseKind<SSAIdx>, def_use_chain: &DefUseChain) -> String {
+        match use_kind {
+            Inspect(ssa_idx) => {
+                let loc = def_use_chain.def_locs[local][ssa_idx];
+                format!("inspect {local:?}@{loc:?}")
+            }
+            Def(..) => format!("define {local:?}"),
         }
     }
-}
 
-pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
     println!("@{:?}", body.source.def_id());
     for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
         println!("{:?}:", bb);
@@ -164,12 +121,10 @@ pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
             };
             let uses = def_use_chain.uses[location]
                 .iter()
-                .filter(|(_, use_kind)| matches!(use_kind, Inspect(..)))
-                .map(|&(local, _)| (local, def_use_chain.def_loc(local, location)))
-                .map(|(local, loc)| format!("{:?}@{:?}", local, loc))
+                .map(|&(local, use_kind)| use_str(local, use_kind, def_use_chain))
                 .collect::<Vec<_>>()
                 .join(", ");
-            println!("  using: {uses}");
+            println!("  uses: {uses}");
 
             statement_index += 1;
         }
@@ -181,12 +136,10 @@ pub fn show_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
             };
             let uses = def_use_chain.uses[location]
                 .iter()
-                .filter(|(_, use_kind)| matches!(use_kind, Inspect(..)))
-                .map(|&(local, _)| (local, def_use_chain.def_loc(local, location)))
-                .map(|(local, loc)| format!("{:?}@{:?}", local, loc))
+                .map(|&(local, use_kind)| use_str(local, use_kind, def_use_chain))
                 .collect::<Vec<_>>()
                 .join(", ");
-            println!("  using: {uses}");
+            println!("  uses: {uses}");
         }
     }
 }
