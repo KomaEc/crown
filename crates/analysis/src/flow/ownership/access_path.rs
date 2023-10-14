@@ -117,6 +117,14 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
         }
     }
 
+    pub fn restrict<const K_LIMIT1: usize>(self) -> AccessPaths<K_LIMIT1> {
+        assert!(K_LIMIT >= K_LIMIT1);
+        // TODO replace this with safe code
+        unsafe {
+            std::mem::transmute(self)
+        }
+    }
+
     pub fn post_order(&self) -> &[DefId] {
         &self.post_order.raw
     }
