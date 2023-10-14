@@ -3,10 +3,10 @@ use utils::compiler_interface::run_compiler;
 use crate::{
     call_graph::CallGraph,
     flow::{
-        def_use::display_uses,
+        def_use::{display_uses, show_def_use_chain},
         ownership::{
             access_path::AccessPaths,
-            constraint::{Debug, CadicalDatabase},
+            constraint::{CadicalDatabase, Debug},
             flow_chain, Ctxt,
         },
     },
@@ -37,7 +37,7 @@ unsafe fn f(r: *mut i32) {
         let tcx = program.tcx;
         for did in &program.fns {
             let body = tcx.optimized_mir(did);
-            display_uses(body, &flow_chain(body, &access_paths))
+            show_def_use_chain(body, &flow_chain(body, &access_paths))
         }
 
         // let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
@@ -63,11 +63,14 @@ fn sanity_test_1() {
     fn free(_: *mut ());
 }
 
-unsafe fn f(r: *mut i32) {
-    if !r.is_null() {
-        free(r as *mut ())
+unsafe fn f(r: *mut *mut *mut i32) {
+    if !(**r).is_null() {
+        free(**r as *mut ())
+    } else {
+        assert!((**r).is_null())
     }
-}";
+}
+";
     run_compiler(PROGRAM.into(), |program| {
         const K_LIMIT: usize = 3;
         let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);

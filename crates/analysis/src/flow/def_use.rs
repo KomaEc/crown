@@ -65,6 +65,14 @@ impl<T> UseKind<T> {
         }
     }
 
+    pub fn inspect(self) -> Option<T> {
+        if let Inspect(t) = self {
+            Some(t)
+        } else {
+            None
+        }
+    }
+
     pub fn map<U, F>(self, f: F) -> UseKind<U>
     where
         F: Fn(T) -> U,

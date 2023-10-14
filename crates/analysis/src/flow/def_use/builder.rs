@@ -1,10 +1,6 @@
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::IndexVec;
-use rustc_middle::mir::{
-    visit::{PlaceContext, Visitor},
-    BasicBlock, BasicBlockData, Body, Local, Location, Place, ProjectionElem,
-};
-use utils::data_structure::assoc::AssocExt;
+use rustc_middle::mir::{BasicBlock, BasicBlockData, Body, Location};
 
 use super::DefUseChain;
 use crate::flow::{def_use::UseKind, state::SSAState, RichLocation};
@@ -93,23 +89,23 @@ impl<'build, 'tcx> DefUseChainBuilder<'build, 'tcx> {
         }
 
         let mut index = 0;
-        for statement in statements {
+        for _ in statements {
             let location = Location {
                 block: bb,
                 statement_index: index,
             };
             index += 1;
 
-            self.visit_statement(statement, location);
+            self.build_location(location);
         }
 
-        if let Some(terminator) = terminator {
+        if let Some(..) = terminator {
             let location = Location {
                 block: bb,
                 statement_index: index,
             };
 
-            self.visit_terminator(terminator, location);
+            self.build_location(location);
         }
 
         // process phi-nodes uses
@@ -122,52 +118,30 @@ impl<'build, 'tcx> DefUseChainBuilder<'build, 'tcx> {
         }
     }
 
-    pub fn use_local(&mut self, local: Local, location: Location) {
-        let Some(use_kind) = self.def_use_chain.uses[location].get_by_key_mut(&local) else {
-            return;
-        };
-        let r#use = self.ssa_state.get_name(local);
-        match use_kind {
-            UseKind::Inspect(ssa_idx) /* | UseKind::LocalPeek(ssa_idx) */ => {
-                *ssa_idx = r#use;
-            }
-            UseKind::Def(update) => {
-                let def = self.ssa_state.fresh_name(local);
-                tracing::debug!(
-                    "updating {:?} at {:?}, use: {:?}, def: {:?}",
-                    local,
-                    location,
-                    r#use,
-                    def
-                );
-                update.r#use = r#use;
-                update.def = def;
-                assert_eq!(
-                    def,
-                    self.def_use_chain.def_locs[local].push(location.into())
-                );
+    pub fn build_location(&mut self, location: Location) {
+        for &mut (local, ref mut use_kind) in self.def_use_chain.uses[location].iter_mut() {
+            let r#use = self.ssa_state.get_name(local);
+            match use_kind {
+                UseKind::Inspect(ssa_idx) /* | UseKind::LocalPeek(ssa_idx) */ => {
+                    *ssa_idx = r#use;
+                }
+                UseKind::Def(update) => {
+                    let def = self.ssa_state.fresh_name(local);
+                    tracing::debug!(
+                        "updating {:?} at {:?}, use: {:?}, def: {:?}",
+                        local,
+                        location,
+                        r#use,
+                        def
+                    );
+                    update.r#use = r#use;
+                    update.def = def;
+                    assert_eq!(
+                        def,
+                        self.def_use_chain.def_locs[local].push(location.into())
+                    );
+                }
             }
         }
-    }
-
-    /// indices are in-significant
-    pub fn use_base_of(&mut self, place: &Place, location: Location) {
-        self.use_local(place.local, location);
-        for elem in place.projection {
-            let ProjectionElem::Index(idx) = elem else {
-                continue;
-            };
-            self.use_local(idx, location);
-        }
-    }
-}
-
-impl<'build, 'tcx> Visitor<'tcx> for DefUseChainBuilder<'build, 'tcx> {
-    fn visit_place(&mut self, place: &Place<'tcx>, _: PlaceContext, location: Location) {
-        self.use_base_of(place, location);
-    }
-
-    fn visit_local(&mut self, local: Local, _: PlaceContext, location: Location) {
-        self.use_local(local, location);
     }
 }

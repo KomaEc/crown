@@ -2,7 +2,8 @@ use either::Either::{Left, Right};
 use rustc_middle::{
     mir::{
         visit::Visitor, AggregateKind, BasicBlock, BasicBlockData, BinOp, Body, BorrowKind, Local,
-        Location, Operand, Place, Rvalue, Statement, Terminator,
+        Location, Operand, Place, Rvalue, Statement, StatementKind, Terminator, TerminatorKind,
+        RETURN_PLACE,
     },
     ty::{Ty, TyCtxt},
 };
@@ -241,7 +242,7 @@ where
     DB: Database<Mode>,
 {
     fn visit_basic_block_data(&mut self, block: BasicBlock, data: &BasicBlockData<'tcx>) {
-        tracing::debug!("infering basicblock {block:?}");
+        tracing::debug!("infer basicblock {block:?}");
         for &(local, ref phi_node) in self.flow_chain.join_points[block].iter() {
             tracing::error!(
                 "Equate the ownership variables at phi-node {local:?}: {:?} = phi({})",
@@ -253,13 +254,19 @@ where
                     .collect::<Vec<_>>()
                     .join(", ")
             );
-            let size = self.ctxt.access_paths.path(&Place::from(local), self.body).num_pointers_reachable();
+            let size = self
+                .ctxt
+                .access_paths
+                .path(&Place::from(local), self.body)
+                .num_pointers_reachable();
             let def = phi_node.lhs;
             for r#use in phi_node.rhs.iter().copied() {
                 let def_tokens = self.tokens[local][def];
                 let use_tokens = self.tokens[local][r#use];
                 for (x, y) in (def_tokens..def_tokens + size).zip(use_tokens..use_tokens + size) {
-                    self.ctxt.database.add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
+                    self.ctxt
+                        .database
+                        .add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
                 }
             }
         }
@@ -336,11 +343,51 @@ where
 
     fn visit_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
         tracing::debug!("infer statement {statement:?}");
-        self.super_statement(statement, location)
+        match &statement.kind {
+            StatementKind::Assign(box (place, rvalue)) => {
+                self.visit_assign(place, rvalue, location);
+            }
+            StatementKind::SetDiscriminant { .. }
+            | StatementKind::Deinit(_)
+            | StatementKind::PlaceMention(_)
+            | StatementKind::Intrinsic(_) => unimplemented!(),
+            StatementKind::StorageDead(..) | StatementKind::StorageLive(..) => {
+                tracing::debug!("ingoring StorageLive, StorageDead")
+            }
+            StatementKind::FakeRead(_)
+            | StatementKind::Retag(_, _)
+            | StatementKind::AscribeUserType(_, _)
+            | StatementKind::Coverage(_)
+            | StatementKind::ConstEvalCounter
+            | StatementKind::Nop => unreachable!("expect no such statements in optimised mir"),
+        }
     }
 
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
         tracing::debug!("infer terminator {:?}", &terminator.kind);
-        self.super_terminator(terminator, location)
+        match &terminator.kind {
+            TerminatorKind::Call {
+                // func,
+                // args,
+                // destination,
+                ..
+            } => {}
+            TerminatorKind::Return => {
+                // nullify all pointer temporaries except `_0`
+                for &(local, use_kind) in self.flow_chain.uses[location].iter() {
+                    if local == RETURN_PLACE {
+                        continue;
+                    }
+                    let ssa_idx = use_kind.inspect().unwrap();
+                    println!("{local:?}@{ssa_idx:?}");
+                    let tokens = self.tokens[local][ssa_idx];
+                    let size = self.ctxt.access_paths.path(&Place::from(local), self.body).num_pointers_reachable();
+                    for x in tokens..tokens + size {
+                        self.ctxt.database.add(Constraint::Assume { x, sign: false }, &mut self.ctxt.storage)
+                    }
+                }
+            }
+            _ => self.super_terminator(terminator, location),
+        }
     }
 }

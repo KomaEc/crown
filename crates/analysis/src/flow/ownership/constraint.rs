@@ -188,7 +188,7 @@ impl CadicalDatabase {
     pub fn new() -> Self {
         CadicalDatabase {
             solver: cadical::Solver::new(),
-            gen: OwnershipTokenGenerator::new()
+            gen: OwnershipTokenGenerator::new(),
         }
     }
 
