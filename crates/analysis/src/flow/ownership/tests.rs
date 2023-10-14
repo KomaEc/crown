@@ -39,13 +39,6 @@ unsafe fn f(r: *mut i32) {
             let body = tcx.optimized_mir(did);
             display_def_use_chain(body, &flow_chain(body, &access_paths))
         }
-
-        // let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
-        //     Ctxt::new(EmptyDatabase::new(), access_paths, ());
-        // let config = z3::Config::new();
-        // let ctx = z3::Context::new(&config);
-        // let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
-        //     Ctxt::new(Z3Database::new(&ctx), access_paths, ());
         let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
             Ctxt::new(CadicalDatabase::new(), access_paths, ());
         let call_graph = CallGraph::new(tcx, &program.fns);
@@ -63,7 +56,15 @@ fn sanity_test_1() {
     fn free(_: *mut ());
 }
 
-unsafe fn f(r: *mut *mut *mut i32) {
+unsafe fn h(mut r: ()) {
+    free(core::ptr::addr_of_mut!(r));
+}
+
+unsafe fn f(r: *mut ()) {
+    free(r);
+}
+
+unsafe fn g(r: *mut *mut *mut i32) {
     if !(**r).is_null() {
         free(**r as *mut ())
     } else {

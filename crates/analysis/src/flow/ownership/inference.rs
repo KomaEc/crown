@@ -1,3 +1,5 @@
+mod extern_call;
+
 use either::Either::{Left, Right};
 use rustc_middle::{
     mir::{
@@ -7,6 +9,7 @@ use rustc_middle::{
     },
     ty::{Ty, TyCtxt},
 };
+use rustc_type_ir::TyKind::FnDef;
 use utils::data_structure::assoc::AssocExt;
 
 use super::{
@@ -22,7 +25,6 @@ use crate::flow::{
 pub struct Intraprocedural<'analysis, 'tcx, const K_LIMIT: usize, Mode: StorageMode, DB> {
     ctxt: &'analysis mut Ctxt<K_LIMIT, Mode, DB>,
     /// `Local -> SSAIdx -> first token`
-    // tokens: IndexVec<Local, IndexVec<SSAIdx, OwnershipToken>>,
     tokens: LocalMap<OwnershipToken>,
     flow_chain: DefUseChain,
     body: &'analysis Body<'tcx>,
@@ -367,11 +369,36 @@ where
         tracing::debug!("infer terminator {:?}", &terminator.kind);
         match &terminator.kind {
             TerminatorKind::Call {
-                // func,
-                // args,
-                // destination,
+                func,
+                args,
+                destination,
                 ..
-            } => {}
+            } => {
+                if let Some(func) = func.constant() {
+                    let ty = func.ty();
+                    let &FnDef(callee, _) = ty.kind() else {
+                        unreachable!()
+                    };
+                    use rustc_hir::Node::*;
+                    if let Some(local_did) = callee.as_local() {
+                        match self.tcx.hir().find_by_def_id(local_did).unwrap() {
+                            // fn call
+                            Item(_) => {}
+                            // extern call
+                            ForeignItem(foreign_item) => {
+                                self.extern_call(foreign_item.ident, args, destination, location);
+                            }
+                            // impl fn call
+                            ImplItem(_) => { /* TODO */ }
+                            _ => unreachable!(),
+                        }
+                    } else {
+                        // TODO std prelude library
+                    }
+                } else {
+                    // TODO closure or fn ptr
+                }
+            }
             TerminatorKind::Return => {
                 // nullify all pointer temporaries except `_0`
                 for &(local, use_kind) in self.flow_chain.uses[location].iter() {
@@ -380,9 +407,16 @@ where
                     }
                     let ssa_idx = use_kind.inspect().unwrap();
                     let tokens = self.tokens[local][ssa_idx];
-                    let size = self.ctxt.access_paths.path(&Place::from(local), self.body).num_pointers_reachable();
+                    let size = self
+                        .ctxt
+                        .access_paths
+                        .path(&Place::from(local), self.body)
+                        .num_pointers_reachable();
                     for x in tokens..tokens + size {
-                        self.ctxt.database.add(Constraint::Assume { x, sign: false }, &mut self.ctxt.storage)
+                        self.ctxt.database.add(
+                            Constraint::Assume { x, sign: false },
+                            &mut self.ctxt.storage,
+                        )
                     }
                 }
             }
