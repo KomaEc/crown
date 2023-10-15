@@ -60,7 +60,9 @@ where
             Operand::Move(place) | Operand::Copy(place) => place,
             _ => unreachable!(),
         };
-        let arg = self.path(&arg, location).expect("Argument of free should be a pointer. Found non-pointer.");
+        let arg = self
+            .path(&arg, location)
+            .expect("Argument of free should be a pointer. Found non-pointer.");
         let arg = self.expand(&arg);
         assert_eq!(arg.num_pointers_reachable(), 1);
         self.ctxt.database.add(
