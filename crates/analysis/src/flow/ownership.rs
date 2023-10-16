@@ -2,7 +2,7 @@ use rustc_index::bit_set::BitSet;
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor},
-        Body, Local, Location, Operand, Place, Rvalue, Terminator, TerminatorKind, RETURN_PLACE,
+        Body, Local, Location, Place, Rvalue, Terminator, TerminatorKind, RETURN_PLACE,
     },
     ty::TyCtxt,
 };
@@ -11,6 +11,7 @@ use smallvec::SmallVec;
 use self::{
     access_path::AccessPaths,
     constraint::{Database, StorageMode},
+    copies::collect_copies,
     inference::Intraprocedural,
 };
 use super::{
@@ -23,6 +24,7 @@ pub mod access_path;
 pub mod constraint;
 mod inference;
 // TODO re-export
+mod copies;
 #[cfg(test)]
 mod tests;
 
@@ -64,36 +66,16 @@ pub fn flow_chain<'tcx, const K_LIMIT: usize>(
         body,
         access_paths,
         location_data: Default::default(),
-        deref_copies: DerefCopiesCollector::collect(body),
+        copies: &collect_copies(body),
     };
     DefUseChain::new(body, flow_builder)
-}
-
-struct DerefCopiesCollector(BitSet<Local>);
-
-impl DerefCopiesCollector {
-    fn collect(body: &Body) -> BitSet<Local> {
-        let mut vis = Self(BitSet::new_empty(body.local_decls.len()));
-        vis.visit_body(body);
-        vis.0
-    }
-}
-
-impl<'tcx> Visitor<'tcx> for DerefCopiesCollector {
-    fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, _: Location) {
-        if let Rvalue::CopyForDeref(..) = rvalue {
-            assert!(place.as_local().is_some());
-            let local = place.local;
-            self.0.insert(local);
-        }
-    }
 }
 
 pub struct OwnershipFlowBuilder<'build, 'tcx, const K_LIMIT: usize> {
     body: &'build Body<'tcx>,
     access_paths: &'build AccessPaths<K_LIMIT>,
     location_data: SmallVec<[(Local, UseKind<SSAIdx>); 2]>,
-    deref_copies: BitSet<Local>,
+    copies: &'build BitSet<Local>,
 }
 
 impl<'build, 'tcx, const K_LIMIT: usize> OwnershipFlowBuilder<'build, 'tcx, K_LIMIT> {
@@ -107,7 +89,7 @@ impl<'build, 'tcx, const K_LIMIT: usize> OwnershipFlowBuilder<'build, 'tcx, K_LI
             return None;
         }
         OwnershipFlow::for_place(context).map(|flow| {
-            if self.deref_copies.contains(place.local) {
+            if self.copies.contains(place.local) {
                 if place.as_local().is_some()
                     && matches!(
                         context,
@@ -190,34 +172,7 @@ impl<'build, 'tcx, const K_LIMIT: usize> Visitor<'tcx>
     }
 
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
-        if let TerminatorKind::Call {
-            func,
-            args,
-            destination,
-            ..
-        } = &terminator.kind
-        {
-            self.visit_operand(func, location);
-            for arg in args {
-                match arg {
-                    Operand::Move(place) => {
-                        assert!(place.as_local().is_some());
-                        self.visit_place(
-                            place,
-                            PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect),
-                            location,
-                        )
-                    }
-                    _ => self.visit_operand(arg, location),
-                }
-            }
-            self.visit_place(
-                destination,
-                PlaceContext::MutatingUse(MutatingUseContext::Call),
-                location,
-            );
-            return;
-        } else if let TerminatorKind::Return = &terminator.kind {
+        if let TerminatorKind::Return = &terminator.kind {
             self.visit_local(
                 RETURN_PLACE,
                 PlaceContext::NonMutatingUse(NonMutatingUseContext::Move),
