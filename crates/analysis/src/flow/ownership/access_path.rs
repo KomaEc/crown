@@ -73,6 +73,8 @@ impl std::fmt::Display for Projections {
 }
 
 impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
+    pub const K_LIMIT: usize = K_LIMIT;
+
     pub fn new(program: &Program) -> Self {
         let &Program {
             tcx, ref structs, ..
