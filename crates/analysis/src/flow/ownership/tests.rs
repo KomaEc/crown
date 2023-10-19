@@ -1,14 +1,11 @@
 use utils::compiler_interface::run_compiler;
 
-use crate::{
-    call_graph::CallGraph,
-    flow::{
-        def_use::display_def_use_chain,
-        ownership::{
-            access_path::AccessPaths,
-            constraint::{CadicalDatabase, Debug},
-            flow_chain, Ctxt,
-        },
+use crate::flow::{
+    def_use::display_def_use_chain,
+    ownership::{
+        access_path::AccessPaths,
+        constraint::{CadicalDatabase, Debug},
+        flow_chain, Interprocedural,
     },
 };
 
@@ -45,9 +42,9 @@ unsafe fn f() {
             let body = tcx.optimized_mir(did);
             display_def_use_chain(body, &flow_chain(body, &access_paths, K_LIMIT))
         }
-        let mut infer_ctxt: Ctxt<Debug, _> = Ctxt::new(CadicalDatabase::new(), access_paths, ());
-        let call_graph = CallGraph::new(tcx, &program.fns);
-        infer_ctxt.run(&call_graph, tcx);
+        let mut infer_ctxt: Interprocedural<Debug, _> =
+            Interprocedural::new(&program, CadicalDatabase::new(), ());
+        infer_ctxt.run(tcx);
     })
 }
 
@@ -77,9 +74,9 @@ unsafe fn g(r: *mut *mut *mut i32) {
             display_def_use_chain(body, &flow_chain(body, &access_paths, K_LIMIT))
         }
 
-        let mut infer_ctxt: Ctxt<Debug, _> = Ctxt::new(CadicalDatabase::new(), access_paths, ());
-        let call_graph = CallGraph::new(tcx, &program.fns);
-        infer_ctxt.run(&call_graph, tcx);
+        let mut infer_ctxt: Interprocedural<Debug, _> =
+            Interprocedural::new(&program, CadicalDatabase::new(), ());
+        infer_ctxt.run(tcx);
     })
 }
 
@@ -116,8 +113,8 @@ unsafe fn h(mut p: *mut *mut i32) {
             display_def_use_chain(body, &flow_chain(body, &access_paths, K_LIMIT))
         }
 
-        let mut infer_ctxt: Ctxt<Debug, _> = Ctxt::new(CadicalDatabase::new(), access_paths, ());
-        let call_graph = CallGraph::new(tcx, &program.fns);
-        infer_ctxt.run(&call_graph, tcx);
+        let mut infer_ctxt: Interprocedural<Debug, _> =
+            Interprocedural::new(&program, CadicalDatabase::new(), ());
+        infer_ctxt.run(tcx);
     })
 }

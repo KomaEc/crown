@@ -1,3 +1,4 @@
+use rustc_hash::FxHashMap;
 use rustc_index::bit_set::BitSet;
 use rustc_middle::{
     mir::{
@@ -6,17 +7,19 @@ use rustc_middle::{
     },
     ty::TyCtxt,
 };
+use rustc_span::def_id::DefId;
 use smallvec::SmallVec;
+use utils::compiler_interface::Program;
 
 use self::{
     access_path::AccessPaths,
-    constraint::{Database, StorageMode},
+    constraint::{Database, OwnershipToken, StorageMode},
     copies::collect_copies,
     inference::Intraprocedural,
 };
 use super::{
     def_use::{Def, DefUseChain, Inspect, LocationBuilder, Update, UseKind},
-    SSAIdx,
+    LocalMap, SSAIdx,
 };
 use crate::call_graph::CallGraph;
 
@@ -29,34 +32,110 @@ mod copies;
 mod tests;
 
 /// Ownership inference context
-pub struct Ctxt<Mode: StorageMode, DB> {
-    pub database: DB,
-    pub access_paths: AccessPaths,
-    pub storage: Mode::Storage,
+pub struct Interprocedural<Mode: StorageMode, DB> {
+    database: DB,
+    access_paths: AccessPaths,
+    storage: Mode::Storage,
+    call_graph: CallGraph,
+    fn_sigs: FnMap<FnSig<OwnershipToken>>,
 }
 
-impl<Mode, DB> Ctxt<Mode, DB>
+pub struct InterproceduralView<'intra, Mode: StorageMode, DB> {
+    database: &'intra mut DB,
+    storage: &'intra mut Mode::Storage,
+    access_paths: &'intra AccessPaths,
+    // call_graph: &'intra CallGraph,
+    fn_sigs: &'intra FnMap<FnSig<OwnershipToken>>,
+}
+
+macro_rules! into_view {
+    ($this: expr) => {
+        InterproceduralView {
+            database: &mut $this.database,
+            storage: &mut $this.storage,
+            access_paths: &$this.access_paths,
+            // call_graph: &$this.call_graph,
+            fn_sigs: &$this.fn_sigs,
+        }
+    };
+}
+
+impl<Mode, DB> Interprocedural<Mode, DB>
 where
     Mode: StorageMode,
     DB: Database<Mode>,
 {
-    pub fn new(database: DB, access_paths: AccessPaths, storage: Mode::Storage) -> Self {
+    pub fn new(program: &Program, database: DB, storage: Mode::Storage) -> Self {
+        let access_paths = AccessPaths::new(program);
+        let call_graph = CallGraph::new(program.tcx, &program.fns);
         Self {
             database,
             access_paths,
             storage,
+            call_graph,
+            fn_sigs: FxHashMap::default(),
+        }
+        .initialise_fn_sigs(&program.fns, program.tcx)
+    }
+
+    fn initialise_fn_sigs(mut self, fns: &[DefId], tcx: TyCtxt) -> Self {
+        let max_k_limit = self.access_paths.max_k_limit();
+        for def_id in fns {
+            let fn_sig = self.new_fn_sig(max_k_limit, def_id, tcx);
+            self.fn_sigs.insert(*def_id, fn_sig);
+        }
+        self
+    }
+
+    fn new_fn_sig(&mut self, k_limit: usize, def_id: &DefId, tcx: TyCtxt) -> FnSig<OwnershipToken> {
+        let fn_sig = tcx.fn_sig(def_id).skip_binder();
+        let inputs = fn_sig
+            .inputs()
+            .iter()
+            .map(|ty| {
+                let size = self.access_paths.size_of(k_limit, *ty.skip_binder());
+                self.database.new_tokens(size).start
+            })
+            .collect();
+        let output = self
+            .database
+            .new_tokens(
+                self.access_paths
+                    .size_of(k_limit, fn_sig.output().skip_binder()),
+            )
+            .start;
+
+        FnSig {
+            k_limit,
+            output,
+            inputs,
         }
     }
 
     // TODO maybe replace `call_graph` with inter-procedural context?
-    pub fn run(&mut self, call_graph: &CallGraph, tcx: TyCtxt) {
+    pub fn run(&mut self, tcx: TyCtxt) {
         let max_k_limit = self.access_paths.max_k_limit();
-        for &def_id in call_graph.fns() {
+        for &def_id in self.call_graph.fns() {
             let body = tcx.optimized_mir(def_id);
-            let mut intra_inference = Intraprocedural::new(self, body, tcx, max_k_limit);
+            let mut inter_view = into_view!(self);
+            let mut intra_inference = Intraprocedural::new(&mut inter_view, body, tcx, max_k_limit);
             intra_inference.visit_body(body);
         }
     }
+}
+
+pub type FnMap<T> = FxHashMap<DefId, T>;
+
+pub struct FnSig<T> {
+    k_limit: usize,
+    output: T,
+    inputs: SmallVec<[T; 3]>,
+}
+
+pub struct FnSummary {
+    fn_sig: FnSig<OwnershipToken>,
+    flow_chain: DefUseChain,
+    local_map: LocalMap<OwnershipToken>,
 }
 
 pub fn flow_chain<'tcx>(

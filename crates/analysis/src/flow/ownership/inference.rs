@@ -15,7 +15,7 @@ use utils::data_structure::assoc::AssocExt;
 use super::{
     access_path::{AccessPaths, Path},
     constraint::{Constraint, Database, OwnershipToken, StorageMode},
-    flow_chain, Ctxt,
+    flow_chain, InterproceduralView,
 };
 use crate::flow::{
     def_use::{Def, DefUseChain, Inspect, Update, UseKind},
@@ -23,7 +23,7 @@ use crate::flow::{
 };
 
 pub struct Intraprocedural<'analysis, 'tcx, Mode: StorageMode, DB> {
-    ctxt: &'analysis mut Ctxt<Mode, DB>,
+    ctxt: &'analysis mut InterproceduralView<'analysis, Mode, DB>,
     /// `Local -> SSAIdx -> first token`
     tokens: LocalMap<OwnershipToken>,
     flow_chain: DefUseChain,
@@ -76,7 +76,7 @@ where
     DB: Database<Mode>,
 {
     pub fn new(
-        ctxt: &'analysis mut Ctxt<Mode, DB>,
+        ctxt: &'analysis mut InterproceduralView<'analysis, Mode, DB>,
         body: &'analysis Body<'tcx>,
         tcx: TyCtxt<'tcx>,
         k_limit: usize,
