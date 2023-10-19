@@ -29,18 +29,18 @@ mod copies;
 mod tests;
 
 /// Ownership inference context
-pub struct Ctxt<const K_LIMIT: usize, Mode: StorageMode, DB> {
+pub struct Ctxt<Mode: StorageMode, DB> {
     pub database: DB,
-    pub access_paths: AccessPaths<K_LIMIT>,
+    pub access_paths: AccessPaths,
     pub storage: Mode::Storage,
 }
 
-impl<const K_LIMIT: usize, Mode, DB> Ctxt<K_LIMIT, Mode, DB>
+impl<Mode, DB> Ctxt<Mode, DB>
 where
     Mode: StorageMode,
     DB: Database<Mode>,
 {
-    pub fn new(database: DB, access_paths: AccessPaths<K_LIMIT>, storage: Mode::Storage) -> Self {
+    pub fn new(database: DB, access_paths: AccessPaths, storage: Mode::Storage) -> Self {
         Self {
             database,
             access_paths,
@@ -50,39 +50,43 @@ where
 
     // TODO maybe replace `call_graph` with inter-procedural context?
     pub fn run(&mut self, call_graph: &CallGraph, tcx: TyCtxt) {
+        let max_k_limit = self.access_paths.max_k_limit();
         for &def_id in call_graph.fns() {
             let body = tcx.optimized_mir(def_id);
-            let mut intra_inference = Intraprocedural::new(self, body, tcx);
+            let mut intra_inference = Intraprocedural::new(self, body, tcx, max_k_limit);
             intra_inference.visit_body(body);
         }
     }
 }
 
-pub fn flow_chain<'tcx, const K_LIMIT: usize>(
+pub fn flow_chain<'tcx>(
     body: &Body<'tcx>,
-    access_paths: &AccessPaths<K_LIMIT>,
+    access_paths: &AccessPaths,
+    k_limit: usize,
 ) -> DefUseChain {
     let flow_builder = OwnershipFlowBuilder {
         body,
         access_paths,
         location_data: Default::default(),
         copies: &collect_copies(body),
+        k_limit,
     };
     DefUseChain::new(body, flow_builder)
 }
 
-pub struct OwnershipFlowBuilder<'build, 'tcx, const K_LIMIT: usize> {
+pub struct OwnershipFlowBuilder<'build, 'tcx> {
     body: &'build Body<'tcx>,
-    access_paths: &'build AccessPaths<K_LIMIT>,
+    access_paths: &'build AccessPaths,
     location_data: SmallVec<[(Local, UseKind<SSAIdx>); 2]>,
     copies: &'build BitSet<Local>,
+    k_limit: usize,
 }
 
-impl<'build, 'tcx, const K_LIMIT: usize> OwnershipFlowBuilder<'build, 'tcx, K_LIMIT> {
+impl<'build, 'tcx> OwnershipFlowBuilder<'build, 'tcx> {
     fn place_flow(&self, place: &Place<'tcx>, context: PlaceContext) -> Option<OwnershipFlow> {
         if self
             .access_paths
-            .path(place, self.body)
+            .path(self.k_limit, place, self.body)
             .num_pointers_reachable()
             == 0
         {
@@ -107,17 +111,13 @@ impl<'build, 'tcx, const K_LIMIT: usize> OwnershipFlowBuilder<'build, 'tcx, K_LI
     }
 }
 
-impl<'build, 'tcx, const K_LIMIT: usize> LocationBuilder<'tcx>
-    for OwnershipFlowBuilder<'build, 'tcx, K_LIMIT>
-{
+impl<'build, 'tcx> LocationBuilder<'tcx> for OwnershipFlowBuilder<'build, 'tcx> {
     fn retrieve(&mut self) -> SmallVec<[(Local, UseKind<SSAIdx>); 2]> {
         std::mem::take(&mut self.location_data)
     }
 }
 
-impl<'build, 'tcx, const K_LIMIT: usize> Visitor<'tcx>
-    for OwnershipFlowBuilder<'build, 'tcx, K_LIMIT>
-{
+impl<'build, 'tcx> Visitor<'tcx> for OwnershipFlowBuilder<'build, 'tcx> {
     // for return terminator and indices
     fn visit_local(&mut self, local: Local, context: PlaceContext, location: Location) {
         self.visit_place(&Place::from(local), context, location)

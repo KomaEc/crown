@@ -43,10 +43,9 @@ unsafe fn f() {
         let tcx = program.tcx;
         for did in &program.fns {
             let body = tcx.optimized_mir(did);
-            display_def_use_chain(body, &flow_chain(body, &access_paths))
+            display_def_use_chain(body, &flow_chain(body, &access_paths, K_LIMIT))
         }
-        let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
-            Ctxt::new(CadicalDatabase::new(), access_paths, ());
+        let mut infer_ctxt: Ctxt<Debug, _> = Ctxt::new(CadicalDatabase::new(), access_paths, ());
         let call_graph = CallGraph::new(tcx, &program.fns);
         infer_ctxt.run(&call_graph, tcx);
     })
@@ -75,11 +74,10 @@ unsafe fn g(r: *mut *mut *mut i32) {
         let tcx = program.tcx;
         for did in &program.fns {
             let body = tcx.optimized_mir(did);
-            display_def_use_chain(body, &flow_chain(body, &access_paths))
+            display_def_use_chain(body, &flow_chain(body, &access_paths, K_LIMIT))
         }
 
-        let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
-            Ctxt::new(CadicalDatabase::new(), access_paths, ());
+        let mut infer_ctxt: Ctxt<Debug, _> = Ctxt::new(CadicalDatabase::new(), access_paths, ());
         let call_graph = CallGraph::new(tcx, &program.fns);
         infer_ctxt.run(&call_graph, tcx);
     })
@@ -115,11 +113,10 @@ unsafe fn h(mut p: *mut *mut i32) {
         let tcx = program.tcx;
         for did in &program.fns {
             let body = tcx.optimized_mir(did);
-            display_def_use_chain(body, &flow_chain(body, &access_paths))
+            display_def_use_chain(body, &flow_chain(body, &access_paths, K_LIMIT))
         }
 
-        let mut infer_ctxt: Ctxt<K_LIMIT, Debug, _> =
-            Ctxt::new(CadicalDatabase::new(), access_paths, ());
+        let mut infer_ctxt: Ctxt<Debug, _> = Ctxt::new(CadicalDatabase::new(), access_paths, ());
         let call_graph = CallGraph::new(tcx, &program.fns);
         infer_ctxt.run(&call_graph, tcx);
     })

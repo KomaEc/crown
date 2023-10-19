@@ -16,13 +16,15 @@ utils::macros::newtype_index! {
     }
 }
 
+pub const DEFAULT_K_LIMIT: usize = 3;
+
 /// All possible access paths w.r.t. pointers within a fixed depth of `K_LIMIT`.
 /// Paths are annotated with range of numbers that indicate the preorder travesals
-pub struct AccessPaths<const K_LIMIT: usize> {
+pub struct AccessPaths<const MAX_K_LIMIT: usize = DEFAULT_K_LIMIT> {
     post_order: IndexVec<StructIdx, DefId>,
     indices: FxHashMap<DefId, StructIdx>,
-    offsets: Offsets<K_LIMIT>,
-    leaves: Leaves<K_LIMIT>,
+    offsets: Offsets<MAX_K_LIMIT>,
+    leaves: Leaves<MAX_K_LIMIT>,
 }
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -72,8 +74,10 @@ impl std::fmt::Display for Projections {
     }
 }
 
-impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
-    pub const K_LIMIT: usize = K_LIMIT;
+impl<const MAX_K_LIMIT: usize> AccessPaths<MAX_K_LIMIT> {
+    pub fn max_k_limit(&self) -> usize {
+        MAX_K_LIMIT
+    }
 
     pub fn new(program: &Program) -> Self {
         let &Program {
@@ -119,18 +123,12 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
         }
     }
 
-    pub fn restrict<const K_LIMIT1: usize>(self) -> AccessPaths<K_LIMIT1> {
-        assert!(K_LIMIT >= K_LIMIT1);
-        // TODO replace this with safe code
-        unsafe { std::mem::transmute(self) }
-    }
-
     pub fn post_order(&self) -> &[DefId] {
         &self.post_order.raw
     }
 
     fn offsets_of(&self, depth: usize, did: DefId) -> &[usize] {
-        assert!(depth <= K_LIMIT);
+        assert!(depth <= MAX_K_LIMIT);
         self.offsets.offsets_of(depth, self.indices[&did])
     }
 
@@ -153,7 +151,7 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
 
     /// Number of pointers reachable from `ty`
     pub fn size_of(&self, depth: usize, ty: Ty) -> usize {
-        assert!(depth <= K_LIMIT);
+        assert!(depth <= MAX_K_LIMIT);
         let (num_wrapping_pointers, maybe_adt) = unwrap_pointers(ty);
         self.size_of_inner(
             depth,
@@ -162,11 +160,20 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
         )
     }
 
+    pub fn absolute_path<'tcx, D: HasLocalDecls<'tcx>>(
+        &self,
+        place: &Place<'tcx>,
+        local_decls: &D,
+    ) -> Path<()> {
+        self.path(MAX_K_LIMIT, place, local_decls)
+    }
+
     /// Get the `(offset, size, depth)` of an access_path
     ///
     /// TODO replace `HasLocalDecls` with `HasPathCache`?
     pub fn path<'tcx, D: HasLocalDecls<'tcx>>(
         &self,
+        depth: usize,
         place: &Place<'tcx>,
         local_decls: &D,
     ) -> Path<()> {
@@ -174,7 +181,7 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
         let mut ty = local_decls.local_decls()[place.local].ty;
         let mut levels = 0;
         for proj_elem in place.projection {
-            if levels == K_LIMIT {
+            if levels == depth {
                 return Path::new((), Projections(offset, 0, 0));
             }
             match proj_elem {
@@ -192,8 +199,7 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
                         return Path::new((), Projections(offset, 0, 0));
                     }
                     assert!(adt_def.is_struct());
-                    offset +=
-                        self.offsets_of(K_LIMIT - levels, adt_def.did())[field_idx.as_usize()];
+                    offset += self.offsets_of(depth - levels, adt_def.did())[field_idx.as_usize()];
                     ty = field_ty;
                 }
                 ProjectionElem::Index(_) => ty = ty.builtin_index().unwrap(),
@@ -205,7 +211,7 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
         }
         Path::new(
             (),
-            Projections(offset, self.size_of(K_LIMIT - levels, ty), K_LIMIT - levels),
+            Projections(offset, self.size_of(depth - levels, ty), depth - levels),
         )
     }
 
@@ -213,7 +219,7 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
     ///
     /// `delta == 0` => `patch_up(depth, delta, ty) = 0..size_of(depth, ty)`
     pub fn patch_up(&self, depth: usize, delta: usize, ty: Ty) -> impl Iterator<Item = usize> + '_ {
-        assert!(depth + delta <= K_LIMIT);
+        assert!(depth + delta <= MAX_K_LIMIT);
         let (levels, maybe_adt) = unwrap_pointers(ty);
         if levels >= depth {
             Left(0..depth)
@@ -253,14 +259,14 @@ impl<const K_LIMIT: usize> AccessPaths<K_LIMIT> {
 }
 
 /// A map of type: `depth -> struct_id -> IndexVec<field_idx, offset>`.
-pub struct Offsets<const K_LIMIT: usize> {
+pub struct Offsets<const MAX_K_LIMIT: usize> {
     size_per_depth: usize,
     /// struct_idx -> offset_start..offset_end
     structs_indices: IndexVec<StructIdx, usize>,
     offsets: Vec<usize>,
 }
 
-impl<const K_LIMIT: usize> Offsets<K_LIMIT> {
+impl<const MAX_K_LIMIT: usize> Offsets<MAX_K_LIMIT> {
     fn offsets_of(&self, depth: usize, struct_idx: StructIdx) -> &[usize] {
         let start = self.structs_indices[struct_idx];
         let end = self.structs_indices[struct_idx + 1];
@@ -314,7 +320,7 @@ impl<const K_LIMIT: usize> Offsets<K_LIMIT> {
         indices: &FxHashMap<DefId, StructIdx>,
         tcx: TyCtxt,
     ) {
-        for depth in 1..K_LIMIT + 1 {
+        for depth in 1..MAX_K_LIMIT + 1 {
             for def_id in post_order.iter() {
                 let Adt(adt_def, subst_ref) = tcx.type_of(def_id).skip_binder().kind() else {
                     unreachable!("impossible")
@@ -345,14 +351,14 @@ impl<const K_LIMIT: usize> Offsets<K_LIMIT> {
 /// A map of type: `depth -> struct_id -> Vec<(ty, position)>`
 /// that records the type and position information of a leaf node in
 /// an access path
-pub struct Leaves<const K_LIMIT: usize> {
+pub struct Leaves<const MAX_K_LIMIT: usize> {
     number_per_depth: usize,
     structs_indices: Vec<usize>,
     /// (num_wrapping_pointers, option_struct_idx, position)
     leaves: Vec<(usize, Option<StructIdx>, usize)>,
 }
 
-impl<const K_LIMIT: usize> Leaves<K_LIMIT> {
+impl<const MAX_K_LIMIT: usize> Leaves<MAX_K_LIMIT> {
     fn leaves_of(
         &self,
         depth: usize,
@@ -366,7 +372,7 @@ impl<const K_LIMIT: usize> Leaves<K_LIMIT> {
         post_order: &IndexVec<StructIdx, DefId>,
         indices: &FxHashMap<DefId, StructIdx>,
         tcx: TyCtxt,
-        offsets: &Offsets<K_LIMIT>,
+        offsets: &Offsets<MAX_K_LIMIT>,
     ) -> Self {
         let mut structs_indices = Vec::with_capacity(post_order.len() + 1);
         let leaves = vec![];
@@ -390,10 +396,10 @@ impl<const K_LIMIT: usize> Leaves<K_LIMIT> {
         post_order: &IndexVec<StructIdx, DefId>,
         indices: &FxHashMap<DefId, StructIdx>,
         tcx: TyCtxt,
-        offsets: &Offsets<K_LIMIT>,
+        offsets: &Offsets<MAX_K_LIMIT>,
     ) {
         let mut buffer = vec![];
-        for depth in 1..K_LIMIT + 1 {
+        for depth in 1..MAX_K_LIMIT + 1 {
             self.structs_indices.push(self.leaves.len());
             for (struct_idx, def_id) in post_order.iter_enumerated() {
                 // compute leaves
@@ -640,7 +646,7 @@ fn f(input: *mut Node) {
             // input
             assert_eq!(
                 access_paths
-                    .path(&Place::from(Local::from_u32(1)), body)
+                    .absolute_path(&Place::from(Local::from_u32(1)), body)
                     .projections,
                 Projections(0, 7, 3)
             );
@@ -648,7 +654,7 @@ fn f(input: *mut Node) {
             // *input
             assert_eq!(
                 access_paths
-                    .path(
+                    .absolute_path(
                         &Place::from(Local::from_u32(1))
                             .project_deeper(&[ProjectionElem::Deref], program.tcx),
                         body
@@ -660,7 +666,7 @@ fn f(input: *mut Node) {
             // (*input).left
             assert_eq!(
                 access_paths
-                    .path(
+                    .absolute_path(
                         &Place::from(Local::from_u32(1)).project_deeper(
                             &[
                                 ProjectionElem::Deref,
@@ -677,7 +683,7 @@ fn f(input: *mut Node) {
             // *(*input).left
             assert_eq!(
                 access_paths
-                    .path(
+                    .absolute_path(
                         &Place::from(Local::from_u32(1)).project_deeper(
                             &[
                                 ProjectionElem::Deref,
@@ -695,7 +701,7 @@ fn f(input: *mut Node) {
             // (*(*input).left).right
             assert_eq!(
                 access_paths
-                    .path(
+                    .absolute_path(
                         &Place::from(Local::from_u32(1)).project_deeper(
                             &[
                                 ProjectionElem::Deref,
@@ -714,7 +720,7 @@ fn f(input: *mut Node) {
             // (*input).right
             assert_eq!(
                 access_paths
-                    .path(
+                    .absolute_path(
                         &Place::from(Local::from_u32(1)).project_deeper(
                             &[
                                 ProjectionElem::Deref,
@@ -731,7 +737,7 @@ fn f(input: *mut Node) {
             // *(*input).right
             assert_eq!(
                 access_paths
-                    .path(
+                    .absolute_path(
                         &Place::from(Local::from_u32(1)).project_deeper(
                             &[
                                 ProjectionElem::Deref,
@@ -749,7 +755,7 @@ fn f(input: *mut Node) {
             // (*(*input).right).left
             assert_eq!(
                 access_paths
-                    .path(
+                    .absolute_path(
                         &Place::from(Local::from_u32(1)).project_deeper(
                             &[
                                 ProjectionElem::Deref,

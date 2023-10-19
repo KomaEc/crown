@@ -4,8 +4,7 @@ use rustc_span::symbol::Ident;
 use super::Intraprocedural;
 use crate::flow::ownership::constraint::{Constraint, Database, StorageMode};
 
-impl<'analysis, 'tcx, const K_LIMIT: usize, Mode, DB>
-    Intraprocedural<'analysis, 'tcx, K_LIMIT, Mode, DB>
+impl<'analysis, 'tcx, Mode, DB> Intraprocedural<'analysis, 'tcx, Mode, DB>
 where
     Mode: StorageMode,
     DB: Database<Mode>,

@@ -22,13 +22,14 @@ use crate::flow::{
     LocalMap, RichLocation, SSAIdx,
 };
 
-pub struct Intraprocedural<'analysis, 'tcx, const K_LIMIT: usize, Mode: StorageMode, DB> {
-    ctxt: &'analysis mut Ctxt<K_LIMIT, Mode, DB>,
+pub struct Intraprocedural<'analysis, 'tcx, Mode: StorageMode, DB> {
+    ctxt: &'analysis mut Ctxt<Mode, DB>,
     /// `Local -> SSAIdx -> first token`
     tokens: LocalMap<OwnershipToken>,
     flow_chain: DefUseChain,
     body: &'analysis Body<'tcx>,
     tcx: TyCtxt<'tcx>,
+    k_limit: usize,
 }
 
 type Base = (Local, UseKind<SSAIdx>);
@@ -69,18 +70,18 @@ fn ownership_tokens<'a, const K_LIMIT: usize>(
     }
 }
 
-impl<'analysis, 'tcx, const K_LIMIT: usize, Mode, DB>
-    Intraprocedural<'analysis, 'tcx, K_LIMIT, Mode, DB>
+impl<'analysis, 'tcx, Mode, DB> Intraprocedural<'analysis, 'tcx, Mode, DB>
 where
     Mode: StorageMode,
     DB: Database<Mode>,
 {
     pub fn new(
-        ctxt: &'analysis mut Ctxt<K_LIMIT, Mode, DB>,
+        ctxt: &'analysis mut Ctxt<Mode, DB>,
         body: &'analysis Body<'tcx>,
         tcx: TyCtxt<'tcx>,
+        k_limit: usize,
     ) -> Self {
-        let flow_chain = flow_chain(body, &ctxt.access_paths);
+        let flow_chain = flow_chain(body, &ctxt.access_paths, k_limit);
         use utils::data_structure::vec_vec::VecVec;
         let mut map = VecVec::with_indices_capacity(body.local_decls.len() + 1);
 
@@ -88,7 +89,7 @@ where
         for (local, def_locs) in flow_chain.def_locs.iter_enumerated() {
             let size = ctxt
                 .access_paths
-                .path(&Place::from(local), body)
+                .path(k_limit, &Place::from(local), body)
                 .num_pointers_reachable();
             tracing::debug!("initialising {local:?} with {size} variables");
             tracing::error!("monotonicity constraints");
@@ -106,18 +107,19 @@ where
             flow_chain,
             body,
             tcx,
+            k_limit,
         }
     }
 }
 
-impl<'tcx, const K_LIMIT: usize, Mode, DB> Intraprocedural<'_, 'tcx, K_LIMIT, Mode, DB>
+impl<'tcx, Mode, DB> Intraprocedural<'_, 'tcx, Mode, DB>
 where
     Mode: StorageMode,
     DB: Database<Mode>,
 {
     /// If the path is a `Some`, then its size > 0
     fn path(&self, place: &Place<'tcx>, location: Location) -> Option<Path<Base>> {
-        let path = self.ctxt.access_paths.path(place, self.body);
+        let path = self.ctxt.access_paths.path(self.k_limit, place, self.body);
         let base = self.flow_chain.uses[location]
             .get_by_key(&place.local)
             .copied()?;
@@ -237,8 +239,7 @@ where
     }
 }
 
-impl<'tcx, const K_LIMIT: usize, Mode, DB> Visitor<'tcx>
-    for Intraprocedural<'_, 'tcx, K_LIMIT, Mode, DB>
+impl<'tcx, Mode, DB> Visitor<'tcx> for Intraprocedural<'_, 'tcx, Mode, DB>
 where
     Mode: StorageMode,
     DB: Database<Mode>,
@@ -259,7 +260,7 @@ where
             let size = self
                 .ctxt
                 .access_paths
-                .path(&Place::from(local), self.body)
+                .path(self.k_limit, &Place::from(local), self.body)
                 .num_pointers_reachable();
             let def = phi_node.lhs;
             for r#use in phi_node.rhs.iter().copied() {
@@ -410,7 +411,7 @@ where
                     let size = self
                         .ctxt
                         .access_paths
-                        .path(&Place::from(local), self.body)
+                        .path(self.k_limit, &Place::from(local), self.body)
                         .num_pointers_reachable();
                     for x in tokens..tokens + size {
                         self.ctxt.database.add(
