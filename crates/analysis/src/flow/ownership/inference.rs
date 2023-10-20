@@ -408,7 +408,7 @@ where
                                 self.extern_call(foreign_item.ident, args, destination, location);
                             }
                             // impl fn call
-                            ImplItem(_) => { /* TODO */ }
+                            ImplItem(_) => unimplemented!(),
                             _ => unreachable!(),
                         }
                     } else {

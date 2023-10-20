@@ -50,9 +50,6 @@ impl Update<SSAIdx> {
 pub enum UseKind<T> {
     Inspect(T),
     Def(Update<T>),
-    // /// Peek the definition of `T`, and the definition is guaranteed to be
-    // /// located within the same basic block
-    // LocalPeek(T),
 }
 pub use UseKind::*;
 
@@ -193,19 +190,6 @@ impl DefUseChain {
             }
         })
     }
-
-    // pub fn peeked_loc(&self, local: Local, location: Location) -> Location {
-    //     let Some(use_kind) = self.uses[location].get_by_key(&local) else {
-    //         panic!("nonexisting peek {:?} @ {:?}", local, location)
-    //     };
-    //     let LocalPeek(ssa_idx) = *use_kind else {
-    //         panic!("nonexisting peek {:?} @ {:?}", local, location)
-    //     };
-    //     match self.def_locs[local][ssa_idx] {
-    //         RichLocation::Mir(loc) => loc,
-    //         _ => unreachable!(),
-    //     }
-    // }
 
     pub fn def_loc(&self, local: Local, location: Location) -> RichLocation {
         let Some(use_kind) = self.uses[location].get_by_key(&local) else {
