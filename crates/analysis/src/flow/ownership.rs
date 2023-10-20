@@ -68,8 +68,87 @@ impl<Mode: StorageMode, DB> AnalysisResult<Mode, DB> {
     }
 
     pub fn body_summary_str(&self, body: &Body) -> String {
-        
-        todo!()
+        let fn_sig = &self.interprocedural_result.fn_sigs[&body.source.def_id()];
+        let body_summary = &self.body_summaries[&body.source.def_id()];
+        let k_limit = fn_sig.k_limit;
+
+        use std::fmt::Write as _;
+        let mut ret = String::new();
+        for (bb, bb_data) in body.basic_blocks.iter_enumerated() {
+            writeln!(&mut ret, "{:?}:", bb).unwrap();
+            let mut statement_index = 0;
+            for statement in bb_data.statements.iter() {
+                writeln!(&mut ret, "  {:?}", statement).unwrap();
+
+                let location = Location {
+                    block: bb,
+                    statement_index,
+                };
+                let uses = body_summary.flow_chain.uses[location]
+                    .iter()
+                    .map(|&(local, use_kind)| {
+                        let ty = body.local_decls[local].ty;
+                        match use_kind {
+                            Inspect(ssa_idx) => {
+                                let start_token = body_summary.local_map[local][ssa_idx];
+                                format!(
+                                    "{local:?}: {}",
+                                    self.ownership_type_str(start_token, ty, k_limit)
+                                )
+                            }
+                            Def(update) => {
+                                let update =
+                                    update.map(|ssa_idx| body_summary.local_map[local][ssa_idx]);
+                                format!(
+                                    "{local:?}: {} \u{2193} {}",
+                                    self.ownership_type_str(update.r#use, ty, k_limit),
+                                    self.ownership_type_str(update.def, ty, k_limit)
+                                )
+                            }
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                writeln!(&mut ret, "  uses: {uses}").unwrap();
+
+                statement_index += 1;
+            }
+            if let Some(terminator) = &bb_data.terminator {
+                writeln!(&mut ret, "  {:?}", terminator.kind).unwrap();
+                let location = Location {
+                    block: bb,
+                    statement_index,
+                };
+                let uses = body_summary.flow_chain.uses[location]
+                    .iter()
+                    .map(|&(local, use_kind)| {
+                        let ty = body.local_decls[local].ty;
+                        match use_kind {
+                            Inspect(ssa_idx) => {
+                                let start_token = body_summary.local_map[local][ssa_idx];
+                                format!(
+                                    "{local:?}: {}",
+                                    self.ownership_type_str(start_token, ty, k_limit)
+                                )
+                            }
+                            Def(update) => {
+                                let update =
+                                    update.map(|ssa_idx| body_summary.local_map[local][ssa_idx]);
+                                format!(
+                                    "{local:?}: {} \u{2193} {}",
+                                    self.ownership_type_str(update.r#use, ty, k_limit),
+                                    self.ownership_type_str(update.def, ty, k_limit)
+                                )
+                            }
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                writeln!(&mut ret, "  uses: {uses}").unwrap();
+            }
+        }
+
+        ret
     }
 
     pub fn ownership_type_str(

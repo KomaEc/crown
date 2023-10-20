@@ -144,6 +144,10 @@ unsafe fn g() {
         let result = infer_ctxt.run(tcx);
         for body in program.bodies() {
             print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+            println!("{}", result.body_summary_str(body));
+        }
+        for body in program.bodies() {
+            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
             println!("{}", result.fn_sig_str(body));
         }
     })
