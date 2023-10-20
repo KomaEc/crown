@@ -1,5 +1,9 @@
-use std::{path::PathBuf, process, str};
+use std::{
+    path::{Path, PathBuf},
+    str,
+};
 
+use anyhow::{bail, Context, Result};
 use rustc_errors::registry;
 use rustc_hir::{def_id::DefId, ItemKind, OwnerNode};
 use rustc_interface::Config;
@@ -68,44 +72,68 @@ impl From<Input> for rustc_session::config::Input {
     }
 }
 
-pub const OPT_LEVEL: &str = "opt-level=3";
-
-pub fn run_compiler(input: Input, f: impl for<'tcx> FnOnce(Program<'tcx>) + Send) {
-    let out = process::Command::new("rustc")
-        .arg("--print=sysroot")
-        .current_dir(".")
+/// Returns where the given rustc stores its sysroot source code.
+fn rustc_sysroot() -> Result<PathBuf> {
+    let mut rustc = std::process::Command::new("rustc");
+    let output = rustc
+        .args(["--print", "sysroot"])
         .output()
-        .unwrap();
-    let sysroot = str::from_utf8(&out.stdout).unwrap().trim();
-    let args = ["rustc", "-C", OPT_LEVEL, "--cap-lints", "allow"]
-        .map(|s| s.to_owned())
-        .to_vec();
+        .context("failed to determine sysroot")?;
+    if !output.status.success() {
+        bail!(
+            "failed to determine sysroot; rustc said:\n{}",
+            String::from_utf8_lossy(&output.stderr).trim_end()
+        );
+    }
+
+    let sysroot =
+        std::str::from_utf8(&output.stdout).context("sysroot folder is not valid UTF-8")?;
+    let sysroot = Path::new(sysroot.trim_end_matches('\n'));
+    Ok(sysroot.to_path_buf())
+}
+
+pub fn compiler_config(input: Input, args: Vec<String>) -> Config {
+    let sysroot_path = SYSROOT_PATH
+        .get_or_try_init(|| rustc_sysroot())
+        .unwrap()
+        .to_owned();
     let mut early_error_handler = EarlyErrorHandler::new(Default::default());
-    let matches = rustc_driver::handle_options(&early_error_handler, &args).unwrap();
+    let matches = rustc_driver::handle_options(&early_error_handler, &args)
+        .context("what?")
+        .unwrap();
     let opts = rustc_session::config::build_session_options(&mut early_error_handler, &matches);
 
-    let config = Config {
+    Config {
         opts: config::Options {
-            maybe_sysroot: Some(PathBuf::from(sysroot)),
+            maybe_sysroot: Some(sysroot_path),
             ..opts
         },
-        input: input.into(),
         crate_cfg: rustc_hash::FxHashSet::default(),
+        crate_check_cfg: rustc_interface::interface::parse_check_cfg(&early_error_handler, vec![]),
+        input: input.into(),
         output_dir: None,
         output_file: None,
         file_loader: None,
-        crate_check_cfg: rustc_interface::interface::parse_check_cfg(&early_error_handler, vec![]),
         lint_caps: rustc_hash::FxHashMap::default(),
         parse_sess_created: None,
         register_lints: None,
         override_queries: None,
         make_codegen_backend: None,
-        registry: registry::Registry::new(rustc_error_codes::DIAGNOSTICS),
+        registry: registry::Registry::new(&rustc_error_codes::DIAGNOSTICS),
         ice_file: None,
         locale_resources: &[],
         expanded_args: vec![],
-    };
+    }
+}
 
+pub const OPT_LEVEL: &str = "opt-level=3";
+
+const SYSROOT_PATH: once_cell::unsync::OnceCell<PathBuf> = once_cell::unsync::OnceCell::new();
+
+pub fn run_compiler_with_config<R: Send>(
+    config: Config,
+    f: impl for<'tcx> FnOnce(Program<'tcx>) -> R + Send,
+) -> R {
     rustc_interface::run_compiler(config, |compiler| {
         compiler.enter(|queries| {
             queries
@@ -114,4 +142,15 @@ pub fn run_compiler(input: Input, f: impl for<'tcx> FnOnce(Program<'tcx>) + Send
                 .enter(|tcx| f(Program::new(tcx)))
         })
     })
+}
+
+pub fn run_compiler<R: Send>(
+    input: Input,
+    f: impl for<'tcx> FnOnce(Program<'tcx>) -> R + Send,
+) -> R {
+    let args = ["rustc", "-C", OPT_LEVEL, "--cap-lints", "allow"]
+        .map(|s| s.to_owned())
+        .to_vec();
+    let config = compiler_config(input, args);
+    run_compiler_with_config(config, f)
 }

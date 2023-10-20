@@ -15,21 +15,16 @@ extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 extern crate rustc_target;
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-    time::Instant,
-};
+use std::{fs, path::PathBuf, time::Instant};
 
 use analysis::{ownership::AnalysisKind, CrateCtxt};
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Result};
 use clap::Parser;
-use rustc_errors::registry;
-use rustc_interface::Config;
-use rustc_middle::ty::TyCtxt;
-use rustc_session::{config, EarlyErrorHandler};
 use tracing_subscriber::EnvFilter;
-use utils::rewrite::RewriteMode;
+use utils::{
+    compiler_interface::{compiler_config, run_compiler_with_config, Program},
+    rewrite::RewriteMode,
+};
 
 #[derive(Parser)]
 struct Cli {
@@ -46,19 +41,10 @@ enum Command {
         #[clap(value_enum, default_value_t = RewriteMode::Print)]
         rewrite_mode: RewriteMode,
     },
-    // FoldLetRefMut {
-    //     #[clap(value_enum, default_value_t = RewriteMode::Diff)]
-    //     rewrite_mode: RewriteMode,
-    // },
-    // CharArrayTransmute {
-    //     #[clap(value_enum, default_value_t = RewriteMode::Diff)]
-    //     rewrite_mode: RewriteMode,
-    // },
     ExplicitAddr {
         #[clap(value_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
     },
-    // OutputParams,
     Analyse {
         results_path: Option<PathBuf>,
     },
@@ -67,19 +53,7 @@ enum Command {
     Alias,
     Mutability,
     Fatness,
-    // Refactor,
-    // Rewrite {
-    //     #[clap(long)]
-    //     results_path: Option<PathBuf>,
-    //     #[clap(value_enum, default_value_t = RewriteMode::Diff)]
-    //     rewrite_mode: RewriteMode,
-    //     #[command(flatten)]
-    //     options: RefactorOptions,
-    // },
     VerifyRustcProperties,
-    // /// Perform empirical studies and show results.
-    // EmpiricalStudy,
-    /// Pretty print Mir despite compilation error
     ShowMir {
         #[clap(long, short)]
         function: Option<String>,
@@ -90,19 +64,10 @@ enum Command {
     },
 }
 
-fn run_compiler<R: Send>(
-    config: Config,
-    run: impl for<'tcx> FnOnce(TyCtxt<'tcx>) -> R + Send,
-) -> R {
-    rustc_interface::run_compiler(config, move |compiler| {
-        compiler.enter(|queries| queries.global_ctxt().unwrap().enter(|tcx| run(tcx)))
-    })
-}
-
 fn preprocess(path: &PathBuf, rewrite_mode: RewriteMode) -> Result<()> {
     for preprocess in preprocess::PREPROCESSES {
-        let config = compiler_config(path.clone())?;
-        run_compiler(config, |tcx| preprocess(tcx, rewrite_mode));
+        let config = compiler_config(path.clone().into(), compiler_args());
+        run_compiler_with_config(config, |program| preprocess(program.tcx, rewrite_mode));
         if !matches!(rewrite_mode, RewriteMode::InPlace) {
             println!("{rewrite_mode} mode does not support multi-phase rewrite");
             break;
@@ -122,39 +87,26 @@ fn main() -> Result<()> {
         preprocess(&args.path, rewrite_mode)?;
         return Ok(());
     }
-    run_compiler(compiler_config(args.path)?, |tcx| run(args.cmd, tcx))
+    run_compiler_with_config(
+        compiler_config(args.path.into(), compiler_args()),
+        |program| run(args.cmd, program),
+    )
 }
 
-/// Returns where the given rustc stores its sysroot source code.
-fn rustc_sysroot() -> Result<PathBuf> {
-    let mut rustc = std::process::Command::new("rustc");
-    let output = rustc
-        .args(["--print", "sysroot"])
-        .output()
-        .context("failed to determine sysroot")?;
-    if !output.status.success() {
-        bail!(
-            "failed to determine sysroot; rustc said:\n{}",
-            String::from_utf8_lossy(&output.stderr).trim_end()
-        );
-    }
-
-    let sysroot =
-        std::str::from_utf8(&output.stdout).context("sysroot folder is not valid UTF-8")?;
-    let sysroot = Path::new(sysroot.trim_end_matches('\n'));
-    Ok(sysroot.to_path_buf())
-}
-
-const SYSROOT_PATH: once_cell::unsync::OnceCell<PathBuf> = once_cell::unsync::OnceCell::new();
-
-fn compiler_config(input_path: PathBuf) -> Result<Config> {
-    let sysroot_path = SYSROOT_PATH.get_or_try_init(|| rustc_sysroot())?.to_owned();
-
+fn compiler_args() -> Vec<String> {
     let project_dir = PathBuf::from(std::env!("CARGO_MANIFEST_DIR"));
     let extra_deps_dir = project_dir.join("extra_deps");
-    let mut args = ["rustc", "-L", extra_deps_dir.to_str().unwrap()]
-        .map(|s| s.to_owned())
-        .to_vec();
+    let mut args = [
+        "rustc",
+        "-C",
+        "opt-level=3",
+        "--cap-lints",
+        "allow",
+        "-L",
+        extra_deps_dir.to_str().unwrap(),
+    ]
+    .map(|s| s.to_owned())
+    .to_vec();
     for file in fs::read_dir(&extra_deps_dir).expect("build script not working") {
         let absolute_path = file.unwrap().path();
         let lib_name = absolute_path.file_name().unwrap();
@@ -179,32 +131,7 @@ fn compiler_config(input_path: PathBuf) -> Result<Config> {
     }
     args.push("--cap-lints".to_owned());
     args.push("allow".to_owned());
-
-    let mut early_error_handler = EarlyErrorHandler::new(Default::default());
-    let matches = rustc_driver::handle_options(&early_error_handler, &args).context("what?")?;
-    let opts = rustc_session::config::build_session_options(&mut early_error_handler, &matches);
-
-    Ok(Config {
-        opts: config::Options {
-            maybe_sysroot: Some(sysroot_path),
-            ..opts
-        },
-        crate_cfg: rustc_hash::FxHashSet::default(),
-        crate_check_cfg: rustc_interface::interface::parse_check_cfg(&early_error_handler, vec![]),
-        input: config::Input::File(input_path),
-        output_dir: None,
-        output_file: None,
-        file_loader: None,
-        lint_caps: rustc_hash::FxHashMap::default(),
-        parse_sess_created: None,
-        register_lints: None,
-        override_queries: None,
-        make_codegen_backend: None,
-        registry: registry::Registry::new(&rustc_error_codes::DIAGNOSTICS),
-        ice_file: None,
-        locale_resources: &[],
-        expanded_args: vec![],
-    })
+    args
 }
 
 fn time<T>(label: &str, f: impl FnOnce() -> T) -> T {
@@ -218,8 +145,8 @@ fn time<T>(label: &str, f: impl FnOnce() -> T) -> T {
     ret
 }
 
-fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
-    let input = utils::compiler_interface::Program::new(tcx);
+fn run(cmd: Command, input: Program<'_>) -> Result<()> {
+    // let input = utils::compiler_interface::Program::new(tcx);
 
     match cmd {
         Command::Preprocess { .. } => unreachable!(),
@@ -275,9 +202,6 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                 });
             }
         }
-        // Command::EmpiricalStudy => {
-        //     time("empirical study", || input.perform_empirical_study());
-        // }
         Command::VerifyRustcProperties => {
             rustc_properties::verify(&input);
             println!("verification success");
@@ -311,7 +235,7 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                     &output_params,
                 )
             })?;
-            ownership_schemes.trace(tcx);
+            ownership_schemes.trace(input.tcx);
 
             let ownership_result = ownership_schemes.solidify(&input);
             ownership_result.print_results(&input);
@@ -333,26 +257,6 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                 print!("{}: ", input.tcx.def_path_str(body.source.def_id()));
                 println!("{}", analysis_result.fn_sig_str(body));
             }
-
-            // let alias_result = alias::alias_results(&input);
-            // let mutability_result =
-            //     analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
-            // let output_params = analysis::type_qualifier::output_params::compute_output_params(
-            //     &input,
-            //     &alias_result,
-            //     &mutability_result,
-            // );
-            // let crate_ctxt = CrateCtxt::new(&input);
-            // let ownership_schemes = time("construct ownership scheme", || {
-            //     analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
-            //         crate_ctxt,
-            //         &output_params,
-            //     )
-            // })?;
-            // ownership_schemes.trace(tcx);
-
-            // let ownership_result = ownership_schemes.solidify(&input);
-            // ownership_result.print_results(&input);
         }
         Command::Analyse { results_path } => {
             let alias_result = alias::alias_results(&input);
@@ -395,7 +299,9 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                 fs::write(results_path.join("statistics.json"), statistics)?;
             }
         }
-        Command::ExplicitAddr { rewrite_mode } => preprocess::use_explicit_addr(tcx, rewrite_mode),
+        Command::ExplicitAddr { rewrite_mode } => {
+            preprocess::use_explicit_addr(input.tcx, rewrite_mode)
+        }
     }
     Ok(())
 }
