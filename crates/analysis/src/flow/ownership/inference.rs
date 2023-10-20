@@ -1,5 +1,6 @@
 mod call;
 mod extern_call;
+mod preservation;
 
 use either::Either::{Left, Right};
 use rustc_middle::{
@@ -119,14 +120,16 @@ where
             }
         }
 
-        Self {
+        let mut intra = Self {
             ctxt,
             tokens,
             flow_chain,
             body,
             tcx,
             k_limit,
-        }
+        };
+        intra.enforce_preservation();
+        intra
     }
 }
 
