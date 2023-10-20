@@ -4,7 +4,7 @@ use crate::flow::{
     def_use::display_def_use_chain,
     ownership::{
         access_path::AccessPaths,
-        constraint::{CadicalDatabase, Debug},
+        constraint::{CadicalDatabase, Debug, Z3Database},
         flow_chain, Interprocedural,
     },
 };
@@ -33,7 +33,7 @@ unsafe fn f() {
         }
         let mut infer_ctxt: Interprocedural<Debug, _> =
             Interprocedural::new(&program, CadicalDatabase::new(), ());
-        infer_ctxt.run(tcx);
+        infer_ctxt.dry_run(tcx);
     })
 }
 
@@ -65,7 +65,7 @@ unsafe fn g(r: *mut *mut *mut i32) {
 
         let mut infer_ctxt: Interprocedural<Debug, _> =
             Interprocedural::new(&program, CadicalDatabase::new(), ());
-        infer_ctxt.run(tcx);
+        infer_ctxt.dry_run(tcx);
     })
 }
 
@@ -104,7 +104,7 @@ unsafe fn h(mut p: *mut *mut i32) {
 
         let mut infer_ctxt: Interprocedural<Debug, _> =
             Interprocedural::new(&program, CadicalDatabase::new(), ());
-        infer_ctxt.run(tcx);
+        infer_ctxt.dry_run(tcx);
     })
 }
 
@@ -136,8 +136,11 @@ unsafe fn g() {
             display_def_use_chain(body, &flow_chain(body, &access_paths, K_LIMIT))
         }
 
-        let mut infer_ctxt: Interprocedural<Debug, _> =
-            Interprocedural::new(&program, CadicalDatabase::new(), ());
+        let config = z3::Config::new();
+        let ctx = z3::Context::new(&config);
+
+        let infer_ctxt: Interprocedural<Debug, _> =
+            Interprocedural::new(&program, Z3Database::new(&ctx), ());
         infer_ctxt.run(tcx);
     })
 }

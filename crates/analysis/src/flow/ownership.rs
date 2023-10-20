@@ -13,7 +13,7 @@ use utils::compiler_interface::Program;
 
 use self::{
     access_path::AccessPaths,
-    constraint::{Database, OwnershipToken, StorageMode},
+    constraint::{Database, OwnershipToken, StorageMode, Z3Database},
     copies::collect_copies,
     inference::Intraprocedural,
 };
@@ -58,6 +58,49 @@ macro_rules! into_view {
             fn_sigs: &$this.fn_sigs,
         }
     };
+}
+
+impl<Mode: StorageMode> Interprocedural<Mode, Z3Database<'_>> {
+    pub fn run(mut self, tcx: TyCtxt) -> (FnMap<FnSig<OwnershipToken>>, FnMap<BodySummary>) {
+        let mut body_summaries = FnMap::default();
+        for &def_id in self.call_graph.fns() {
+            let body = tcx.optimized_mir(def_id);
+            let mut k_limit = self.access_paths.max_k_limit();
+            // Solving must succeed when k_limit == 0
+            loop {
+                tracing::debug!(
+                    "solving {} with k_limit {k_limit}",
+                    tcx.def_path_str(def_id)
+                );
+                self.database.solver.push();
+
+                let mut inter_view: InterproceduralView<'_, Mode, _> = into_view!(self);
+                let mut intra_inference = Intraprocedural::new(&mut inter_view, body, tcx, k_limit);
+                intra_inference.visit_body(body);
+
+                let body_summary = BodySummary {
+                    flow_chain: intra_inference.flow_chain,
+                    local_map: intra_inference.tokens,
+                };
+
+                match self.database.solver.check() {
+                    z3::SatResult::Unsat => {
+                        if k_limit == 0 {
+                            unreachable!();
+                        }
+                        self.database.solver.pop(1);
+                        k_limit -= 1;
+                    }
+                    z3::SatResult::Unknown => panic!("z3 timed out"),
+                    z3::SatResult::Sat => {
+                        body_summaries.insert(def_id, body_summary);
+                        break;
+                    }
+                }
+            }
+        }
+        (self.fn_sigs, body_summaries)
+    }
 }
 
 impl<Mode, DB> Interprocedural<Mode, DB>
@@ -114,8 +157,8 @@ where
         }
     }
 
-    // TODO maybe replace `call_graph` with inter-procedural context?
-    pub fn run(&mut self, tcx: TyCtxt) {
+    #[cfg(test)]
+    fn dry_run(&mut self, tcx: TyCtxt) {
         let max_k_limit = self.access_paths.max_k_limit();
         for &def_id in self.call_graph.fns() {
             let body = tcx.optimized_mir(def_id);
@@ -135,8 +178,7 @@ pub struct FnSig<T> {
     inputs: SmallVec<[T; 3]>,
 }
 
-pub struct FnSummary {
-    pub fn_sig: FnSig<OwnershipToken>,
+pub struct BodySummary {
     pub flow_chain: DefUseChain,
     pub local_map: LocalMap<OwnershipToken>,
 }

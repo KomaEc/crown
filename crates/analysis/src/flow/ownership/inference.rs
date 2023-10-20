@@ -26,8 +26,8 @@ use crate::flow::{
 pub struct Intraprocedural<'analysis, 'tcx, Mode: StorageMode, DB> {
     ctxt: &'analysis mut InterproceduralView<'analysis, Mode, DB>,
     /// `Local -> SSAIdx -> first token`
-    tokens: LocalMap<OwnershipToken>,
-    flow_chain: DefUseChain,
+    pub(super) tokens: LocalMap<OwnershipToken>,
+    pub(super) flow_chain: DefUseChain,
     body: &'analysis Body<'tcx>,
     tcx: TyCtxt<'tcx>,
     k_limit: usize,
@@ -265,8 +265,8 @@ where
     fn visit_basic_block_data(&mut self, block: BasicBlock, data: &BasicBlockData<'tcx>) {
         tracing::debug!("infer basicblock {block:?}");
         for &(local, ref phi_node) in self.flow_chain.join_points[block].iter() {
-            tracing::error!(
-                "Equate the ownership variables at phi-node {local:?}: {:?} = phi({})",
+            tracing::debug!(
+                "meet phi-node {local:?}: {:?} = phi({})",
                 phi_node.lhs,
                 phi_node
                     .rhs
