@@ -1,11 +1,11 @@
 use rustc_hash::FxHashMap;
-use rustc_index::bit_set::BitSet;
+use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor},
         Body, Local, Location, Place, Rvalue, Terminator, TerminatorKind,
     },
-    ty::TyCtxt,
+    ty::{Ty, TyCtxt},
 };
 use rustc_span::def_id::DefId;
 use smallvec::SmallVec;
@@ -30,6 +30,64 @@ mod inference;
 mod copies;
 #[cfg(test)]
 mod tests;
+
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+pub enum Ownership {
+    Owning,
+    Transient,
+}
+
+pub struct AnalysisResult<Mode: StorageMode, DB> {
+    model: IndexVec<OwnershipToken, Ownership>,
+    interprocedural_result: Interprocedural<Mode, DB>,
+    body_summaries: FnMap<BodySummary>,
+}
+
+impl<Mode: StorageMode, DB> AnalysisResult<Mode, DB> {
+    pub fn fn_sig_str(&self, body: &Body) -> String {
+        let fn_sig = &self.interprocedural_result.fn_sigs[&body.source.def_id()];
+        let k_limit = fn_sig.k_limit;
+        let inputs = fn_sig
+            .inputs
+            .iter()
+            .copied()
+            .zip(body.args_iter())
+            .map(|(token, local)| {
+                let ty = body.local_decls[local].ty;
+                self.ownership_type_str(token, ty, k_limit)
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        let output = {
+            let ty = body.bound_return_ty().skip_binder();
+            self.ownership_type_str(fn_sig.output, ty, k_limit)
+        };
+
+        format!("({inputs}) -> {output}")
+    }
+
+    pub fn body_summary_str(&self, body: &Body) -> String {
+        
+        todo!()
+    }
+
+    pub fn ownership_type_str(
+        &self,
+        start_token: OwnershipToken,
+        ty: Ty,
+        k_limit: usize,
+    ) -> String {
+        let size = self
+            .interprocedural_result
+            .access_paths
+            .size_of(k_limit, ty);
+        let ownership_type = (start_token..start_token + size)
+            .map(|token| self.model[token])
+            .collect::<Vec<_>>();
+        format!("{:?}", ownership_type)
+    }
+}
 
 /// Ownership inference context
 pub struct Interprocedural<Mode: StorageMode, DB> {
@@ -60,8 +118,8 @@ macro_rules! into_view {
     };
 }
 
-impl<Mode: StorageMode> Interprocedural<Mode, Z3Database<'_>> {
-    pub fn run(mut self, tcx: TyCtxt) -> (FnMap<FnSig<OwnershipToken>>, FnMap<BodySummary>) {
+impl<'z3, Mode: StorageMode> Interprocedural<Mode, Z3Database<'z3>> {
+    pub fn run(mut self, tcx: TyCtxt) -> AnalysisResult<Mode, Z3Database<'z3>> {
         let mut body_summaries = FnMap::default();
         for &def_id in self.call_graph.fns() {
             let body = tcx.optimized_mir(def_id);
@@ -99,7 +157,26 @@ impl<Mode: StorageMode> Interprocedural<Mode, Z3Database<'_>> {
                 }
             }
         }
-        (self.fn_sigs, body_summaries)
+        AnalysisResult {
+            model: self.extract_model(),
+            interprocedural_result: self,
+            body_summaries,
+        }
+    }
+
+    // TODO model completion?
+    fn extract_model(&self) -> IndexVec<OwnershipToken, Ownership> {
+        let z3_model = self.database.solver.get_model().unwrap();
+        let mut model = IndexVec::with_capacity(self.database.gen.next().index());
+        for ast_node in self.database.z3_ast.iter() {
+            let value = z3_model.eval(ast_node, false).unwrap().as_bool();
+            if matches!(value, Some(cond) if cond) {
+                model.push(Ownership::Owning);
+            } else {
+                model.push(Ownership::Transient);
+            }
+        }
+        model
     }
 }
 

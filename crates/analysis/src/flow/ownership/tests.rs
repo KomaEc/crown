@@ -141,6 +141,10 @@ unsafe fn g() {
 
         let infer_ctxt: Interprocedural<Debug, _> =
             Interprocedural::new(&program, Z3Database::new(&ctx), ());
-        infer_ctxt.run(tcx);
+        let result = infer_ctxt.run(tcx);
+        for body in program.bodies() {
+            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+            println!("{}", result.fn_sig_str(body));
+        }
     })
 }
