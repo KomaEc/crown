@@ -80,8 +80,8 @@ where
                             let ptr_name =
                                 rustc_hir_pretty::id_to_string(&self.tcx.hir(), ptr.hir_id);
                             let stmt_str =
-                                // format!("std::intrinsics::assume({ptr_name} as usize == 0);");
-                                format!("std::intrinsics::assume(({ptr_name}).addr() == 0);");
+                                // format!("std::intrinsics::assume(({ptr_name}).addr() == 0);");
+                                format!("assert!(({ptr_name}).is_null());");
 
                             if sign {
                                 self.insert_to_branch(stmt_str, truth_branch);
