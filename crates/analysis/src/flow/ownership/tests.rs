@@ -118,3 +118,31 @@ unsafe fn h(mut p: *mut *mut i32) {
         infer_ctxt.run(tcx);
     })
 }
+
+#[test]
+/// Sanity check `build_engine`
+fn sanity_test_3() {
+    utils::tracing_setup::init_logger();
+    const PROGRAM: &str = "extern \"C\" {
+    fn printf(_: *const i8, _: ...) -> i32;
+    fn malloc(_: u64) -> *mut ();
+    fn free(_: *mut ());
+}
+
+unsafe fn f(p: *mut i32) -> *mut i32 {
+    p
+}";
+    run_compiler(PROGRAM.into(), |program| {
+        const K_LIMIT: usize = 3;
+        let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);
+        let tcx = program.tcx;
+        for did in &program.fns {
+            let body = tcx.optimized_mir(did);
+            display_def_use_chain(body, &flow_chain(body, &access_paths, K_LIMIT))
+        }
+
+        let mut infer_ctxt: Interprocedural<Debug, _> =
+            Interprocedural::new(&program, CadicalDatabase::new(), ());
+        infer_ctxt.run(tcx);
+    })
+}

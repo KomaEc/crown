@@ -1,3 +1,4 @@
+mod call;
 mod extern_call;
 
 use either::Either::{Left, Right};
@@ -101,6 +102,23 @@ where
 
         let map = map.complete();
         let tokens = LocalMap { map };
+
+        for (local, param) in body
+            .args_iter()
+            .zip(ctxt.fn_sigs[&body.source.def_id()].inputs.iter().copied())
+        {
+            let size = ctxt
+                .access_paths
+                .path(k_limit, &Place::from(local), body)
+                .num_pointers_reachable();
+
+            let entry = tokens[local][SSAIdx::INIT];
+            for (param, entry) in (param..param + size).zip(entry..entry + size) {
+                ctxt.database
+                    .add(Constraint::Equal { x: param, y: entry }, &mut ctxt.storage);
+            }
+        }
+
         Self {
             ctxt,
             tokens,
@@ -384,7 +402,7 @@ where
                     if let Some(local_did) = callee.as_local() {
                         match self.tcx.hir().find_by_def_id(local_did).unwrap() {
                             // fn call
-                            Item(_) => {}
+                            Item(_) => self.call(callee, args, destination, location),
                             // extern call
                             ForeignItem(foreign_item) => {
                                 self.extern_call(foreign_item.ident, args, destination, location);
@@ -403,9 +421,6 @@ where
             TerminatorKind::Return => {
                 // nullify all pointer temporaries except `_0`
                 for &(local, use_kind) in self.flow_chain.uses[location].iter() {
-                    if local == RETURN_PLACE {
-                        continue;
-                    }
                     let ssa_idx = use_kind.inspect().unwrap();
                     let tokens = self.tokens[local][ssa_idx];
                     let size = self
@@ -413,11 +428,22 @@ where
                         .access_paths
                         .path(self.k_limit, &Place::from(local), self.body)
                         .num_pointers_reachable();
-                    for x in tokens..tokens + size {
-                        self.ctxt.database.add(
-                            Constraint::Assume { x, sign: false },
-                            &mut self.ctxt.storage,
-                        )
+                    // TODO output reference parameter
+                    if local == RETURN_PLACE {
+                        let output = self.ctxt.fn_sigs[&self.body.source.def_id()].output;
+                        for (ret, output) in (tokens..tokens + size).zip(output..output + size) {
+                            self.ctxt.database.add(
+                                Constraint::Equal { x: ret, y: output },
+                                &mut self.ctxt.storage,
+                            );
+                        }
+                    } else {
+                        for x in tokens..tokens + size {
+                            self.ctxt.database.add(
+                                Constraint::Assume { x, sign: false },
+                                &mut self.ctxt.storage,
+                            )
+                        }
                     }
                 }
             }

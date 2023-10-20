@@ -3,7 +3,7 @@ use rustc_index::bit_set::BitSet;
 use rustc_middle::{
     mir::{
         visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor},
-        Body, Local, Location, Place, Rvalue, Terminator, TerminatorKind, RETURN_PLACE,
+        Body, Local, Location, Place, Rvalue, Terminator, TerminatorKind,
     },
     ty::TyCtxt,
 };
@@ -40,7 +40,7 @@ pub struct Interprocedural<Mode: StorageMode, DB> {
     fn_sigs: FnMap<FnSig<OwnershipToken>>,
 }
 
-pub struct InterproceduralView<'intra, Mode: StorageMode, DB> {
+struct InterproceduralView<'intra, Mode: StorageMode, DB> {
     database: &'intra mut DB,
     storage: &'intra mut Mode::Storage,
     access_paths: &'intra AccessPaths,
@@ -68,27 +68,34 @@ where
     pub fn new(program: &Program, database: DB, storage: Mode::Storage) -> Self {
         let access_paths = AccessPaths::new(program);
         let call_graph = CallGraph::new(program.tcx, &program.fns);
-        Self {
+        let mut ctxt = Self {
             database,
             access_paths,
             storage,
             call_graph,
             fn_sigs: FxHashMap::default(),
-        }
-        .initialise_fn_sigs(&program.fns, program.tcx)
+        };
+        ctxt.initialise_fn_sigs(&program.fns, program.tcx);
+        ctxt
     }
 
-    fn initialise_fn_sigs(mut self, fns: &[DefId], tcx: TyCtxt) -> Self {
+    fn initialise_fn_sigs(&mut self, fns: &[DefId], tcx: TyCtxt) {
         let max_k_limit = self.access_paths.max_k_limit();
         for def_id in fns {
             let fn_sig = self.new_fn_sig(max_k_limit, def_id, tcx);
             self.fn_sigs.insert(*def_id, fn_sig);
         }
-        self
     }
 
     fn new_fn_sig(&mut self, k_limit: usize, def_id: &DefId, tcx: TyCtxt) -> FnSig<OwnershipToken> {
         let fn_sig = tcx.fn_sig(def_id).skip_binder();
+        let output = self
+            .database
+            .new_tokens(
+                self.access_paths
+                    .size_of(k_limit, fn_sig.output().skip_binder()),
+            )
+            .start;
         let inputs = fn_sig
             .inputs()
             .iter()
@@ -97,13 +104,8 @@ where
                 self.database.new_tokens(size).start
             })
             .collect();
-        let output = self
-            .database
-            .new_tokens(
-                self.access_paths
-                    .size_of(k_limit, fn_sig.output().skip_binder()),
-            )
-            .start;
+
+        tracing::debug!("generating signature with output = {output:?}, inputs = {inputs:?}");
 
         FnSig {
             k_limit,
@@ -126,6 +128,7 @@ where
 
 pub type FnMap<T> = FxHashMap<DefId, T>;
 
+#[derive(Clone, Debug)]
 pub struct FnSig<T> {
     k_limit: usize,
     output: T,
@@ -133,16 +136,12 @@ pub struct FnSig<T> {
 }
 
 pub struct FnSummary {
-    fn_sig: FnSig<OwnershipToken>,
-    flow_chain: DefUseChain,
-    local_map: LocalMap<OwnershipToken>,
+    pub fn_sig: FnSig<OwnershipToken>,
+    pub flow_chain: DefUseChain,
+    pub local_map: LocalMap<OwnershipToken>,
 }
 
-pub fn flow_chain<'tcx>(
-    body: &Body<'tcx>,
-    access_paths: &AccessPaths,
-    k_limit: usize,
-) -> DefUseChain {
+fn flow_chain<'tcx>(body: &Body<'tcx>, access_paths: &AccessPaths, k_limit: usize) -> DefUseChain {
     let flow_builder = OwnershipFlowBuilder {
         body,
         access_paths,
@@ -153,7 +152,7 @@ pub fn flow_chain<'tcx>(
     DefUseChain::new(body, flow_builder)
 }
 
-pub struct OwnershipFlowBuilder<'build, 'tcx> {
+struct OwnershipFlowBuilder<'build, 'tcx> {
     body: &'build Body<'tcx>,
     access_paths: &'build AccessPaths,
     location_data: SmallVec<[(Local, UseKind<SSAIdx>); 2]>,
@@ -252,12 +251,7 @@ impl<'build, 'tcx> Visitor<'tcx> for OwnershipFlowBuilder<'build, 'tcx> {
 
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
         if let TerminatorKind::Return = &terminator.kind {
-            self.visit_local(
-                RETURN_PLACE,
-                PlaceContext::NonMutatingUse(NonMutatingUseContext::Move),
-                location,
-            );
-            for local in self.body.local_decls.indices().skip(1) {
+            for local in self.body.local_decls.indices() {
                 self.visit_local(
                     local,
                     PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect),
