@@ -3,7 +3,7 @@ use std::{path::PathBuf, process, str};
 use rustc_errors::registry;
 use rustc_hir::{def_id::DefId, ItemKind, OwnerNode};
 use rustc_interface::Config;
-use rustc_middle::ty::TyCtxt;
+use rustc_middle::{mir::Body, ty::TyCtxt};
 use rustc_session::{config, EarlyErrorHandler};
 
 pub struct Program<'tcx> {
@@ -31,6 +31,10 @@ impl<'tcx> Program<'tcx> {
             };
         }
         Self { tcx, fns, structs }
+    }
+
+    pub fn bodies(&self) -> impl Iterator<Item = &Body<'tcx>> + '_ {
+        self.fns.iter().map(|def_id| self.tcx.optimized_mir(def_id))
     }
 }
 
