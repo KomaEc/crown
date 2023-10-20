@@ -1,5 +1,6 @@
 mod call;
 mod extern_call;
+mod monotonicity;
 mod preservation;
 
 use either::Either::{Left, Right};
@@ -94,7 +95,6 @@ where
                 .path(k_limit, &Place::from(local), body)
                 .num_pointers_reachable();
             tracing::debug!("initialising {local:?} with {size} variables");
-            tracing::error!("monotonicity constraints");
             for _ in def_locs.indices() {
                 map.push_element(ctxt.database.new_tokens(size).start);
             }
@@ -128,7 +128,16 @@ where
             tcx,
             k_limit,
         };
+        tracing::debug!("enforcing preservation constraints");
         intra.enforce_preservation();
+        tracing::debug!("enforcing monotonicity constraints");
+        for (local, _, &start_token) in intra.tokens.iter_enumerated() {
+            let ty = body.local_decls[local].ty;
+            let current_token = start_token;
+            intra
+                .ctxt
+                .enforce_monotonicity(ty, current_token, None, k_limit, tcx);
+        }
         intra
     }
 }

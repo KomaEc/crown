@@ -116,3 +116,14 @@ impl<T> IndexMut<Local> for LocalMap<T> {
         IndexSlice::from_raw_mut(&mut self.map[index.index()])
     }
 }
+
+impl<T> LocalMap<T> {
+    pub fn iter_enumerated(&self) -> impl Iterator<Item = (Local, SSAIdx, &T)> {
+        self.map.iter().enumerate().flat_map(|(local, bb_data)| {
+            bb_data
+                .iter()
+                .enumerate()
+                .map(move |(ssa_idx, data)| (local.into(), ssa_idx.into(), data))
+        })
+    }
+}
