@@ -52,6 +52,7 @@ where
     }
 
     fn visit_place(&mut self, place: &Place<'tcx>, _: PlaceContext, location: Location) {
+        // Note that variables that are inspecting are not enforced with preservation
         if let Some(path) = self
             .0
             .path(place, location)

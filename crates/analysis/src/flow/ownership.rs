@@ -170,9 +170,11 @@ impl AnalysisResult {
     ) -> String {
         let size = self.access_paths.size_of(k_limit, ty);
         let ownership_type = (start_token..start_token + size)
-            .map(|token| self.model[token])
-            .collect::<Vec<_>>();
-        format!("{:?}", ownership_type)
+            .map(|token| format!("{token} = {:?}", self.model[token]))
+            .collect::<Vec<_>>()
+            .join(", ");
+        format!("[{ownership_type}]")
+        // format!("{:?}", ownership_type)
     }
 }
 
@@ -235,6 +237,7 @@ impl<'z3, Mode: StorageMode> Interprocedural<Mode, Z3Database<'z3>> {
                         }
                         self.database.solver.pop(1);
                         k_limit -= 1;
+                        self.fn_sigs.get_mut(&def_id).unwrap().k_limit = k_limit;
                     }
                     z3::SatResult::Unknown => panic!("z3 timed out"),
                     z3::SatResult::Sat => {
@@ -458,7 +461,12 @@ impl<'build, 'tcx> Visitor<'tcx> for OwnershipFlowBuilder<'build, 'tcx> {
 
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
         if let TerminatorKind::Return = &terminator.kind {
-            for local in self.body.local_decls.indices() {
+            for local in self
+                .body
+                .local_decls
+                .indices()
+                .filter(|&local| !self.copies.contains(local))
+            {
                 self.visit_local(
                     local,
                     PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect),

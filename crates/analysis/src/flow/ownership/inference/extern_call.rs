@@ -31,9 +31,10 @@ where
 
     fn malloc(&mut self, args: &Vec<Operand<'tcx>>, destination: &Place<'tcx>, location: Location) {
         let _ = args;
-        let dest = self
-            .path(destination, location)
-            .expect("Destination of malloc should be a pointer. Found non-pointer.");
+        let Some(dest) = self.path(destination, location) else {
+            assert_eq!(self.k_limit, 0);
+            return;
+        };
         let dest = self.expand(&dest);
         assert_eq!(dest.num_pointers_reachable(), 1);
         self.ctxt.database.add(
@@ -59,9 +60,10 @@ where
             Operand::Move(place) | Operand::Copy(place) => place,
             _ => unreachable!(),
         };
-        let arg = self
-            .path(&arg, location)
-            .expect("Argument of free should be a pointer. Found non-pointer.");
+        let Some(arg) = self.path(&arg, location) else {
+            assert_eq!(self.k_limit, 0);
+            return;
+        };
         let arg = self.expand(&arg);
         assert_eq!(arg.num_pointers_reachable(), 1);
         self.ctxt.database.add(

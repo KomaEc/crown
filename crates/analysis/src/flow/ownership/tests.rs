@@ -15,15 +15,23 @@ fn sanity_test_0() {
     fn malloc(_: u64) -> *mut ();
     fn free(_: *mut ());
 }
-unsafe fn f() {
-    let mut p = malloc(4u64) as *mut i32;
-    let mut q = p;
-    free(q as *mut _);
-}";
+unsafe fn f(r: *mut *mut *mut i32) {
+    free(**r as *mut ());
+    free(*r as *mut ());
+    free(r as *mut ());
+}
+";
     run_compiler(PROGRAM.into(), |program| {
-        let mut infer_ctxt: Interprocedural<Debug, _> =
-            Interprocedural::new(&program, CadicalDatabase::new(), ());
-        infer_ctxt.dry_run(program.tcx);
+        let result = analyse(&program);
+        for body in program.bodies() {
+            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+            println!("{}", result.body_summary_str(body));
+        }
+        for body in program.bodies() {
+            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+            println!("{}", result.fn_sig_str(body));
+        }
+        assert_eq!(result.fn_sigs.into_values().next().unwrap().k_limit, 3);
     })
 }
 
@@ -37,17 +45,60 @@ fn sanity_test_1() {
     fn free(_: *mut ());
 }
 
-unsafe fn g(r: *mut *mut *mut i32) {
-    if !(**r).is_null() {
-        free(**r as *mut ())
+// unsafe fn f(r: *mut i32) {
+//     if !r.is_null() {
+//         free(r as *mut ());
+//     } else {
+//         assert!(r.is_null());
+//     }
+// }
+
+// unsafe fn g(r: *mut *mut i32) {
+//     if !(*r).is_null() {
+//         free(*r as *mut ());
+//     } else {
+//         assert!((*r).is_null());
+//     }
+//     free(r as *mut ());
+// }
+
+// unsafe fn h(r: *mut *mut *mut i32) -> *mut *mut *mut i32 {
+//     if !(**r).is_null() {
+//         free(**r as *mut ())
+//     } else {
+//         assert!((**r).is_null())
+//     }
+//     r
+// }
+
+#[inline(never)]
+fn cond() -> bool {
+    true
+}
+
+unsafe fn f(r: *mut *mut i32) {
+    if cond() {
+        free(*r as *mut ());
     } else {
-        assert!((**r).is_null())
+        free(*r as *mut ());
+        free(r as *mut ());
     }
-}";
+}
+";
     run_compiler(PROGRAM.into(), |program| {
-        let mut infer_ctxt: Interprocedural<Debug, _> =
-            Interprocedural::new(&program, CadicalDatabase::new(), ());
-        infer_ctxt.dry_run(program.tcx);
+        // let mut infer_ctxt: Interprocedural<Debug, _> =
+        //     Interprocedural::new(&program, CadicalDatabase::new(), ());
+        // infer_ctxt.dry_run(program.tcx);
+
+        let result = analyse(&program);
+        for body in program.bodies() {
+            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+            println!("{}", result.body_summary_str(body));
+        }
+        for body in program.bodies() {
+            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+            println!("{}", result.fn_sig_str(body));
+        }
     })
 }
 
@@ -100,6 +151,41 @@ unsafe fn g() {
     let p = malloc(4u64) as *mut _;
     let q = f(p);
     free(q as *mut ());
+}";
+    run_compiler(PROGRAM.into(), |program| {
+        let result = analyse(&program);
+        for body in program.bodies() {
+            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+            println!("{}", result.body_summary_str(body));
+        }
+        for body in program.bodies() {
+            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+            println!("{}", result.fn_sig_str(body));
+        }
+    })
+}
+
+#[test]
+/// Sanity check `build_engine`
+fn sanity_test_4() {
+    utils::tracing_setup::init_logger();
+    const PROGRAM: &str = "extern \"C\" {
+    fn printf(_: *const i8, _: ...) -> i32;
+    fn malloc(_: u64) -> *mut ();
+    fn free(_: *mut ());
+}
+
+#[inline(never)]
+unsafe fn f(p: *mut *mut i32) -> *mut *mut i32 {
+    p
+}
+
+unsafe fn g() {
+    let mut p = malloc(8u64) as *mut *mut _;
+    *p = malloc(4u64) as *mut i32;
+    let mut q = f(p);
+    free(*q as *mut ());
+    free(p as *mut ());
 }";
     run_compiler(PROGRAM.into(), |program| {
         let result = analyse(&program);
