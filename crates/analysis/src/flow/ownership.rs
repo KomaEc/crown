@@ -31,21 +31,32 @@ mod copies;
 #[cfg(test)]
 mod tests;
 
+pub fn analyse(program: &Program) -> AnalysisResult {
+    let config = z3::Config::new();
+    let ctx = z3::Context::new(&config);
+
+    use self::constraint::Debug;
+    let infer_ctxt: Interprocedural<Debug, _> =
+        Interprocedural::new(&program, Z3Database::new(&ctx), ());
+    infer_ctxt.run(program.tcx)
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
 pub enum Ownership {
     Owning,
     Transient,
 }
 
-pub struct AnalysisResult<Mode: StorageMode, DB> {
+pub struct AnalysisResult {
     model: IndexVec<OwnershipToken, Ownership>,
-    interprocedural_result: Interprocedural<Mode, DB>,
+    access_paths: AccessPaths,
+    fn_sigs: FnMap<FnSig<OwnershipToken>>,
     body_summaries: FnMap<BodySummary>,
 }
 
-impl<Mode: StorageMode, DB> AnalysisResult<Mode, DB> {
+impl AnalysisResult {
     pub fn fn_sig_str(&self, body: &Body) -> String {
-        let fn_sig = &self.interprocedural_result.fn_sigs[&body.source.def_id()];
+        let fn_sig = &self.fn_sigs[&body.source.def_id()];
         let k_limit = fn_sig.k_limit;
         let inputs = fn_sig
             .inputs
@@ -68,7 +79,7 @@ impl<Mode: StorageMode, DB> AnalysisResult<Mode, DB> {
     }
 
     pub fn body_summary_str(&self, body: &Body) -> String {
-        let fn_sig = &self.interprocedural_result.fn_sigs[&body.source.def_id()];
+        let fn_sig = &self.fn_sigs[&body.source.def_id()];
         let body_summary = &self.body_summaries[&body.source.def_id()];
         let k_limit = fn_sig.k_limit;
 
@@ -157,10 +168,7 @@ impl<Mode: StorageMode, DB> AnalysisResult<Mode, DB> {
         ty: Ty,
         k_limit: usize,
     ) -> String {
-        let size = self
-            .interprocedural_result
-            .access_paths
-            .size_of(k_limit, ty);
+        let size = self.access_paths.size_of(k_limit, ty);
         let ownership_type = (start_token..start_token + size)
             .map(|token| self.model[token])
             .collect::<Vec<_>>();
@@ -198,7 +206,7 @@ macro_rules! into_view {
 }
 
 impl<'z3, Mode: StorageMode> Interprocedural<Mode, Z3Database<'z3>> {
-    pub fn run(mut self, tcx: TyCtxt) -> AnalysisResult<Mode, Z3Database<'z3>> {
+    pub fn run(mut self, tcx: TyCtxt) -> AnalysisResult {
         let mut body_summaries = FnMap::default();
         for &def_id in self.call_graph.fns() {
             let body = tcx.optimized_mir(def_id);
@@ -238,7 +246,8 @@ impl<'z3, Mode: StorageMode> Interprocedural<Mode, Z3Database<'z3>> {
         }
         AnalysisResult {
             model: self.extract_model(),
-            interprocedural_result: self,
+            access_paths: self.access_paths,
+            fn_sigs: self.fn_sigs,
             body_summaries,
         }
     }

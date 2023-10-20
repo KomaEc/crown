@@ -1,12 +1,9 @@
 use utils::compiler_interface::run_compiler;
 
-use crate::flow::{
-    def_use::display_def_use_chain,
-    ownership::{
-        access_path::AccessPaths,
-        constraint::{CadicalDatabase, Debug, Z3Database},
-        flow_chain, Interprocedural,
-    },
+use crate::flow::ownership::{
+    analyse,
+    constraint::{CadicalDatabase, Debug},
+    Interprocedural,
 };
 
 #[test]
@@ -24,16 +21,9 @@ unsafe fn f() {
     free(q as *mut _);
 }";
     run_compiler(PROGRAM.into(), |program| {
-        const K_LIMIT: usize = 3;
-        let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);
-        let tcx = program.tcx;
-        for did in &program.fns {
-            let body = tcx.optimized_mir(did);
-            display_def_use_chain(body, &flow_chain(body, &access_paths, K_LIMIT))
-        }
         let mut infer_ctxt: Interprocedural<Debug, _> =
             Interprocedural::new(&program, CadicalDatabase::new(), ());
-        infer_ctxt.dry_run(tcx);
+        infer_ctxt.dry_run(program.tcx);
     })
 }
 
@@ -55,17 +45,9 @@ unsafe fn g(r: *mut *mut *mut i32) {
     }
 }";
     run_compiler(PROGRAM.into(), |program| {
-        const K_LIMIT: usize = 3;
-        let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);
-        let tcx = program.tcx;
-        for did in &program.fns {
-            let body = tcx.optimized_mir(did);
-            display_def_use_chain(body, &flow_chain(body, &access_paths, K_LIMIT))
-        }
-
         let mut infer_ctxt: Interprocedural<Debug, _> =
             Interprocedural::new(&program, CadicalDatabase::new(), ());
-        infer_ctxt.dry_run(tcx);
+        infer_ctxt.dry_run(program.tcx);
     })
 }
 
@@ -94,17 +76,9 @@ unsafe fn h(mut p: *mut *mut i32) {
 }
 ";
     run_compiler(PROGRAM.into(), |program| {
-        const K_LIMIT: usize = 3;
-        let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);
-        let tcx = program.tcx;
-        for did in &program.fns {
-            let body = tcx.optimized_mir(did);
-            display_def_use_chain(body, &flow_chain(body, &access_paths, K_LIMIT))
-        }
-
         let mut infer_ctxt: Interprocedural<Debug, _> =
             Interprocedural::new(&program, CadicalDatabase::new(), ());
-        infer_ctxt.dry_run(tcx);
+        infer_ctxt.dry_run(program.tcx);
     })
 }
 
@@ -128,20 +102,7 @@ unsafe fn g() {
     free(q as *mut ());
 }";
     run_compiler(PROGRAM.into(), |program| {
-        const K_LIMIT: usize = 3;
-        let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);
-        let tcx = program.tcx;
-        for did in &program.fns {
-            let body = tcx.optimized_mir(did);
-            display_def_use_chain(body, &flow_chain(body, &access_paths, K_LIMIT))
-        }
-
-        let config = z3::Config::new();
-        let ctx = z3::Context::new(&config);
-
-        let infer_ctxt: Interprocedural<Debug, _> =
-            Interprocedural::new(&program, Z3Database::new(&ctx), ());
-        let result = infer_ctxt.run(tcx);
+        let result = analyse(&program);
         for body in program.bodies() {
             print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
             println!("{}", result.body_summary_str(body));

@@ -324,25 +324,35 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
             fatness_result.print_results(&input)
         }
         Command::Ownership => {
-            let alias_result = alias::alias_results(&input);
-            let mutability_result =
-                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
-            let output_params = analysis::type_qualifier::output_params::compute_output_params(
-                &input,
-                &alias_result,
-                &mutability_result,
-            );
-            let crate_ctxt = CrateCtxt::new(&input);
-            let ownership_schemes = time("construct ownership scheme", || {
-                analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
-                    crate_ctxt,
-                    &output_params,
-                )
-            })?;
-            ownership_schemes.trace(tcx);
+            let analysis_result = analysis::flow::ownership::analyse(&input);
+            for body in input.bodies() {
+                print!("{}: ", input.tcx.def_path_str(body.source.def_id()));
+                println!("{}", analysis_result.body_summary_str(body));
+            }
+            for body in input.bodies() {
+                print!("{}: ", input.tcx.def_path_str(body.source.def_id()));
+                println!("{}", analysis_result.fn_sig_str(body));
+            }
 
-            let ownership_result = ownership_schemes.solidify(&input);
-            ownership_result.print_results(&input);
+            // let alias_result = alias::alias_results(&input);
+            // let mutability_result =
+            //     analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
+            // let output_params = analysis::type_qualifier::output_params::compute_output_params(
+            //     &input,
+            //     &alias_result,
+            //     &mutability_result,
+            // );
+            // let crate_ctxt = CrateCtxt::new(&input);
+            // let ownership_schemes = time("construct ownership scheme", || {
+            //     analysis::ownership::whole_program::WholeProgramAnalysis::analyze(
+            //         crate_ctxt,
+            //         &output_params,
+            //     )
+            // })?;
+            // ownership_schemes.trace(tcx);
+
+            // let ownership_result = ownership_schemes.solidify(&input);
+            // ownership_result.print_results(&input);
         }
         Command::Analyse { results_path } => {
             let alias_result = alias::alias_results(&input);
