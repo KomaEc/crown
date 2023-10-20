@@ -22,18 +22,7 @@ unsafe fn f() {
     let mut p = malloc(4u64) as *mut i32;
     let mut q = p;
     free(q as *mut _);
-}
-// unsafe fn f(r: *mut i32) {
-//     let mut p = malloc(8u64) as *mut *mut *mut i32;
-//     *p = malloc(8u64) as *mut *mut i32;
-//     **p = r;
-//     ***p = 1;
-//     let mut q = p;
-//     free(**q as *mut _);
-//     free(*q as *mut _);
-//     free(q as *mut _);
-// }
-";
+}";
     run_compiler(PROGRAM.into(), |program| {
         const K_LIMIT: usize = 3;
         let access_paths: AccessPaths<K_LIMIT> = AccessPaths::new(&program);
@@ -131,6 +120,12 @@ fn sanity_test_3() {
 
 unsafe fn f(p: *mut i32) -> *mut i32 {
     p
+}
+
+unsafe fn g() {
+    let p = malloc(4u64) as *mut _;
+    let q = f(p);
+    free(q as *mut ());
 }";
     run_compiler(PROGRAM.into(), |program| {
         const K_LIMIT: usize = 3;
