@@ -450,6 +450,7 @@ where
                             );
                         }
                     } else {
+                        tracing::debug!("nullify {local:?}");
                         for x in tokens..tokens + size {
                             self.ctxt.database.add(
                                 Constraint::Assume { x, sign: false },

@@ -76,29 +76,34 @@ fn cond() -> bool {
     true
 }
 
-unsafe fn f(r: *mut *mut i32) {
+// unsafe fn f(r: *mut *mut *mut i32) -> *mut *mut *mut i32 {
+//     free(**r as *mut ());
+//     r
+// }
+
+unsafe fn f(r: *mut *mut *mut i32) -> *mut *mut *mut i32 {
     if cond() {
-        free(*r as *mut ());
+        free(**r as *mut ());
     } else {
-        free(*r as *mut ());
-        free(r as *mut ());
+        free(**r as *mut ());
     }
+    r
 }
 ";
     run_compiler(PROGRAM.into(), |program| {
-        // let mut infer_ctxt: Interprocedural<Debug, _> =
-        //     Interprocedural::new(&program, CadicalDatabase::new(), ());
-        // infer_ctxt.dry_run(program.tcx);
-
-        let result = analyse(&program);
-        for body in program.bodies() {
-            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
-            println!("{}", result.body_summary_str(body));
-        }
-        for body in program.bodies() {
-            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
-            println!("{}", result.fn_sig_str(body));
-        }
+        let mut infer_ctxt: Interprocedural<Debug, _> =
+            Interprocedural::new(&program, CadicalDatabase::new(), ());
+        infer_ctxt.dry_run(program.tcx);
+        assert!(matches!(infer_ctxt.database.solver.solve(), Some(false)));
+        // let result = analyse(&program);
+        // for body in program.bodies() {
+        //     print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+        //     println!("{}", result.body_summary_str(body));
+        // }
+        // for body in program.bodies() {
+        //     print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+        //     println!("{}", result.fn_sig_str(body));
+        // }
     })
 }
 
