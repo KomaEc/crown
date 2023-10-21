@@ -351,7 +351,12 @@ pub struct BodySummary {
     pub local_map: LocalMap<OwnershipToken>,
 }
 
-fn flow_chain<'tcx>(body: &Body<'tcx>, access_paths: &AccessPaths, k_limit: usize) -> DefUseChain {
+fn flow_chain<'tcx>(
+    body: &Body<'tcx>,
+    tcx: TyCtxt<'tcx>,
+    access_paths: &AccessPaths,
+    k_limit: usize,
+) -> DefUseChain {
     let flow_builder = OwnershipFlowBuilder {
         body,
         access_paths,
@@ -359,7 +364,7 @@ fn flow_chain<'tcx>(body: &Body<'tcx>, access_paths: &AccessPaths, k_limit: usiz
         copies: &collect_copies(body),
         k_limit,
     };
-    DefUseChain::new(body, flow_builder)
+    DefUseChain::new(body, flow_builder, tcx)
 }
 
 struct OwnershipFlowBuilder<'build, 'tcx> {
@@ -380,7 +385,7 @@ impl<'build, 'tcx> OwnershipFlowBuilder<'build, 'tcx> {
         {
             return None;
         }
-        OwnershipFlow::for_place(context).map(|flow| {
+        OwnershipFlow::is_flow(context).then(|| {
             if self.copies.contains(place.local) {
                 if place.as_local().is_some()
                     && matches!(
@@ -393,9 +398,19 @@ impl<'build, 'tcx> OwnershipFlowBuilder<'build, 'tcx> {
                     OwnershipFlow::Inspect
                 }
             } else {
-                flow
+                OwnershipFlow::Flow
             }
         })
+    }
+
+    fn use_place(&mut self, place: &Place<'tcx>, flow: Option<OwnershipFlow>) {
+        if let Some(flow) = flow {
+            if matches!(flow, OwnershipFlow::Flow) {
+                self.location_data.push((place.local, Def(Update::new())));
+            } else {
+                self.location_data.push((place.local, Inspect(SSAIdx::MAX)));
+            }
+        }
     }
 }
 
@@ -412,13 +427,7 @@ impl<'build, 'tcx> Visitor<'tcx> for OwnershipFlowBuilder<'build, 'tcx> {
     }
 
     fn visit_place(&mut self, place: &Place<'tcx>, context: PlaceContext, location: Location) {
-        if let Some(flow) = self.place_flow(place, context) {
-            if matches!(flow, OwnershipFlow::Flow) {
-                self.location_data.push((place.local, Def(Update::new())));
-            } else {
-                self.location_data.push((place.local, Inspect(SSAIdx::MAX)));
-            }
-        }
+        self.use_place(place, self.place_flow(place, context));
         // call super_projection so that index operators are visited
         self.super_projection(place.as_ref(), context, location);
     }
@@ -461,17 +470,15 @@ impl<'build, 'tcx> Visitor<'tcx> for OwnershipFlowBuilder<'build, 'tcx> {
 
     fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
         if let TerminatorKind::Return = &terminator.kind {
-            for local in self
-                .body
-                .local_decls
-                .indices()
-                .filter(|&local| !self.copies.contains(local))
-            {
-                self.visit_local(
-                    local,
-                    PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect),
-                    location,
-                )
+            for local in self.body.local_decls.indices() {
+                if !self.copies.contains(local)
+                    && self
+                        .access_paths
+                        .size_of(self.k_limit, self.body.local_decls[local].ty)
+                        > 0
+                {
+                    self.use_place(&Place::from(local), Some(OwnershipFlow::Inspect))
+                }
             }
             return;
         }
@@ -485,15 +492,15 @@ enum OwnershipFlow {
 }
 
 impl OwnershipFlow {
-    fn for_place(context: PlaceContext) -> Option<OwnershipFlow> {
+    fn is_flow(context: PlaceContext) -> bool {
         match context {
             PlaceContext::NonUse(NonUseContext::StorageDead)
             | PlaceContext::NonUse(NonUseContext::StorageLive) => {
                 tracing::error!("StorageLive, StorageDead");
-                None
+                false
             }
 
-            PlaceContext::NonUse(_) => None,
+            PlaceContext::NonUse(_) => false,
 
             // Ownership flows for all mutating uses
             PlaceContext::MutatingUse(
@@ -502,11 +509,9 @@ impl OwnershipFlow {
                 | MutatingUseContext::AsmOutput
                 | MutatingUseContext::Store
                 | MutatingUseContext::Deinit,
-            ) => Some(OwnershipFlow::Flow),
+            ) => true,
 
-            PlaceContext::MutatingUse(MutatingUseContext::SetDiscriminant) => {
-                Some(OwnershipFlow::Inspect)
-            }
+            PlaceContext::MutatingUse(MutatingUseContext::SetDiscriminant) => false,
 
             // Ownership flows for all kinds of borrows/address ofs
             //
@@ -519,17 +524,15 @@ impl OwnershipFlow {
                 NonMutatingUseContext::AddressOf
                 | NonMutatingUseContext::ShallowBorrow
                 | NonMutatingUseContext::SharedBorrow,
-            ) => Some(OwnershipFlow::Flow),
+            ) => true,
 
             // Ownership flows for copy and move
             PlaceContext::NonMutatingUse(
                 NonMutatingUseContext::Copy | NonMutatingUseContext::Move,
-            ) => Some(OwnershipFlow::Flow),
+            ) => true,
 
             // deref copy, len, discriminant, etc.
-            PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect) => {
-                Some(OwnershipFlow::Inspect)
-            }
+            PlaceContext::NonMutatingUse(NonMutatingUseContext::Inspect) => false,
 
             // TODO place mention?
             PlaceContext::NonMutatingUse(NonMutatingUseContext::PlaceMention) => todo!(),

@@ -192,12 +192,13 @@ fn run(cmd: Command, input: Program<'_>) -> Result<()> {
                 };
 
                 let body = input.tcx.optimized_mir(did);
-                let def_use_chain = analysis::flow::def_use::DefUseChain::vanilla(body);
+                let def_use_chain = analysis::flow::def_use::DefUseChain::vanilla(body, input.tcx);
                 analysis::flow::def_use::display_def_use_chain(body, &def_use_chain);
             } else {
                 input.fns.iter().for_each(|&fn_did| {
                     let body = input.tcx.optimized_mir(fn_did);
-                    let def_use_chain = analysis::flow::def_use::DefUseChain::vanilla(body);
+                    let def_use_chain =
+                        analysis::flow::def_use::DefUseChain::vanilla(body, input.tcx);
                     analysis::flow::def_use::display_def_use_chain(body, &def_use_chain);
                 });
             }

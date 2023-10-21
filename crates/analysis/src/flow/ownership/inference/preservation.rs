@@ -2,17 +2,11 @@
 
 use rustc_middle::mir::{
     visit::{PlaceContext, Visitor},
-    Local, Location, Place,
+    Location, Place,
 };
 
-use super::{Base, Intraprocedural};
-use crate::flow::{
-    def_use::{Def, Update},
-    ownership::{
-        access_path::Path,
-        constraint::{Constraint, Database, OwnershipToken, StorageMode},
-    },
-};
+use super::Intraprocedural;
+use crate::flow::ownership::constraint::{Constraint, Database, StorageMode};
 
 impl<'analysis, 'tcx, Mode, DB> Intraprocedural<'analysis, 'tcx, Mode, DB>
 where
@@ -26,37 +20,22 @@ where
     }
 }
 
-type EnsureUpdatedBase = Update<OwnershipToken>;
-
 struct Wrapper<'p, 'analysis, 'tcx, Mode: StorageMode, DB>(
     &'p mut Intraprocedural<'analysis, 'tcx, Mode, DB>,
 );
-
-impl<'p, 'analysis, 'tcx, Mode: StorageMode, DB> Wrapper<'p, 'analysis, 'tcx, Mode, DB> {
-    fn ensure_updated(&self, path: &Path<Base>) -> Option<Path<EnsureUpdatedBase>> {
-        if let (local, Def(update)) = path.base {
-            Some(path.map_base(|_| update.map(|ssa_idx| self.0.tokens[local][ssa_idx])))
-        } else {
-            None
-        }
-    }
-}
 
 impl<'p, 'analysis, 'tcx, Mode, DB> Visitor<'tcx> for Wrapper<'p, 'analysis, 'tcx, Mode, DB>
 where
     Mode: StorageMode,
     DB: Database<Mode>,
 {
-    fn visit_local(&mut self, local: Local, context: PlaceContext, location: Location) {
-        self.visit_place(&Place::from(local), context, location)
-    }
-
+    // Note that we don't visit local here. Indices cannot be paths, so we can safely ignore them.
+    // In return locations, variables are inspected but not really used. So we just ignore them.
     fn visit_place(&mut self, place: &Place<'tcx>, _: PlaceContext, location: Location) {
-        // Note that variables that are inspecting are not enforced with preservation
         if let Some(path) = self
             .0
             .path(place, location)
-            .and_then(|path| self.ensure_updated(&path))
+            .map(|path| self.0.expand(&path))
         {
             let base_size = self
                 .0

@@ -84,7 +84,8 @@ where
         tcx: TyCtxt<'tcx>,
         k_limit: usize,
     ) -> Self {
-        let flow_chain = flow_chain(body, &ctxt.access_paths, k_limit);
+        let flow_chain = flow_chain(body, tcx, &ctxt.access_paths, k_limit);
+        crate::flow::def_use::display_def_use_chain(body, &flow_chain);
         use utils::data_structure::vec_vec::VecVec;
         let mut map = VecVec::with_indices_capacity(body.local_decls.len() + 1);
 
@@ -164,17 +165,8 @@ where
                     let def_loc = self.flow_chain.def_locs[local][ssa_idx];
                     match def_loc {
                         RichLocation::Entry => unreachable!("Inspecting entry definition. How?"),
-                        RichLocation::Phi(block) => {
-                            let phi_node = self.flow_chain.join_points[block]
-                                .get_by_key(&local)
-                                .expect("Definition location does not have phi node. How?");
-                            unimplemented!(
-                                "How to get the pre-state of {:?} at phi node {block:?}. Potentially, \
-                                store two sets of tokens when defining phi-node. The first set represents \
-                                the post-state, while the second set represents the pre-state and is to be \
-                                unified with rhs of a phi node.",
-                                phi_node.lhs
-                            );
+                        RichLocation::Phi(_) => {
+                            unreachable!("paths are expanded only for copy variables. How?")
                         }
                         RichLocation::Mir(location) => {
                             let update = self.flow_chain.uses[location]

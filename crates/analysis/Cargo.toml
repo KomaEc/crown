@@ -28,7 +28,7 @@ thiserror = "1.0"
 anyhow = "1.0"
 cadical = "0.1"
 z3 = { version = "0.12.1", features = ["static-link-z3"] }
-splr = { version = "^0.17", features = ["incremental_solver"] }
 itertools = "0.11"
 utils = { path = "../utils" }
 alias = { path = "../alias" }
+rustsat = "0.2.1"
