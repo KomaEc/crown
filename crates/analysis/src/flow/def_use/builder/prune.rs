@@ -8,6 +8,7 @@ use rustc_middle::mir::{BasicBlock, Body, Local};
 use super::DefUseChainBuilder;
 use crate::flow::{
     def_use::{Def, DefUseChain, Inspect},
+    join_points::PhiNode,
     state::SSAState,
     RichLocation,
 };
@@ -42,6 +43,7 @@ pub fn dead_code_elimination(body: &Body, def_use_chain: DefUseChain) -> DefUseC
         phi_nodes.data = replacement
             .into_iter()
             .filter(|&(local, _)| useful[bb].contains(local))
+            .map(|(local, _)| (local, PhiNode::default()))
             .collect();
     }
 

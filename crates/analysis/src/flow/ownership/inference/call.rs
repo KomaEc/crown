@@ -17,13 +17,13 @@ where
         location: Location,
     ) {
         let callee_sig = &self.ctxt.fn_sigs[&callee];
-        let max_k_limit = std::cmp::max(self.k_limit, callee_sig.k_limit);
+        let min_k_limit = std::cmp::min(self.k_limit, callee_sig.k_limit);
         if let Some(dest) = self.path(destination, location) {
             let dest_ty = destination.ty(self.body, self.tcx).ty;
             let dest = self
                 .expand(&dest)
                 .transpose()
-                .map(|path| ownership_tokens(&path, max_k_limit, self.ctxt.access_paths, dest_ty));
+                .map(|path| ownership_tokens(&path, min_k_limit, self.ctxt.access_paths, dest_ty));
             for x in dest.r#use {
                 self.ctxt.database.add(
                     Constraint::Assume { x, sign: false },
@@ -33,11 +33,7 @@ where
             let output = self
                 .ctxt
                 .access_paths
-                .patch_up(
-                    callee_sig.k_limit,
-                    max_k_limit - callee_sig.k_limit,
-                    dest_ty,
-                )
+                .patch_up(min_k_limit, callee_sig.k_limit - min_k_limit, dest_ty)
                 .map(|offset| callee_sig.output + offset);
             for (dest, output) in dest.def.zip(output) {
                 self.ctxt.database.add(
@@ -55,12 +51,12 @@ where
             let arg = self
                 .expand(&arg)
                 .transpose()
-                .map(|path| ownership_tokens(&path, max_k_limit, self.ctxt.access_paths, arg_ty));
+                .map(|path| ownership_tokens(&path, min_k_limit, self.ctxt.access_paths, arg_ty));
 
             let param = self
                 .ctxt
                 .access_paths
-                .patch_up(callee_sig.k_limit, max_k_limit - callee_sig.k_limit, arg_ty)
+                .patch_up(min_k_limit, callee_sig.k_limit - min_k_limit, arg_ty)
                 .map(|offset| param + offset);
 
             for (arg_use, arg_def, param) in itertools::izip!(arg.r#use, arg.def, param) {

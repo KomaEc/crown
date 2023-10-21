@@ -64,10 +64,10 @@ fn ownership_tokens<'a, const K_LIMIT: usize>(
     if context == path.depth() {
         Left(base + projection_offset..base + projection_offset + path.num_pointers_reachable())
     } else {
-        assert!(context > path.depth());
+        assert!(context < path.depth());
         Right(
             access_paths
-                .patch_up(path.depth(), context - path.depth(), ty)
+                .patch_up(context, path.depth() - context, ty)
                 .map(move |offset| base + projection_offset + offset),
         )
     }
@@ -187,23 +187,23 @@ where
     /// path1 = move path2
     fn r#move(&mut self, path1: &Path<ExpandedBase>, path2: &Path<ExpandedBase>, ty: Ty<'tcx>) {
         tracing::debug!("move constraint: {path1:?} = move {path2:?}");
-        let max_depth = std::cmp::max(path1.depth(), path2.depth());
+        let min_depth = std::cmp::min(path1.depth(), path2.depth());
         let path1 = path1.transpose();
         let path2 = path2.transpose();
-        for x in ownership_tokens(&path1.r#use, max_depth, &self.ctxt.access_paths, ty) {
+        for x in ownership_tokens(&path1.r#use, min_depth, &self.ctxt.access_paths, ty) {
             self.ctxt.database.add(
                 Constraint::Assume { x, sign: false },
                 &mut self.ctxt.storage,
             )
         }
-        for (x, y) in ownership_tokens(&path1.def, max_depth, &self.ctxt.access_paths, ty).zip(
-            ownership_tokens(&path2.r#use, max_depth, &self.ctxt.access_paths, ty),
+        for (x, y) in ownership_tokens(&path1.def, min_depth, &self.ctxt.access_paths, ty).zip(
+            ownership_tokens(&path2.r#use, min_depth, &self.ctxt.access_paths, ty),
         ) {
             self.ctxt
                 .database
                 .add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
         }
-        for x in ownership_tokens(&path2.def, max_depth, &self.ctxt.access_paths, ty) {
+        for x in ownership_tokens(&path2.def, min_depth, &self.ctxt.access_paths, ty) {
             self.ctxt.database.add(
                 Constraint::Assume { x, sign: false },
                 &mut self.ctxt.storage,
@@ -213,10 +213,10 @@ where
 
     fn transfer(&mut self, path1: &Path<ExpandedBase>, path2: &Path<ExpandedBase>, ty: Ty<'tcx>) {
         tracing::debug!("transfer constraint: {path1:?} = {path2:?}");
-        let max_depth = std::cmp::max(path1.depth(), path2.depth());
+        let min_depth = std::cmp::min(path1.depth(), path2.depth());
         let path1 = path1.transpose();
         let path2 = path2.transpose();
-        for x in ownership_tokens(&path1.r#use, max_depth, &self.ctxt.access_paths, ty) {
+        for x in ownership_tokens(&path1.r#use, min_depth, &self.ctxt.access_paths, ty) {
             self.ctxt.database.add(
                 Constraint::Assume { x, sign: false },
                 &mut self.ctxt.storage,
@@ -224,9 +224,9 @@ where
         }
 
         for (x, y, z) in itertools::izip!(
-            ownership_tokens(&path1.def, max_depth, &self.ctxt.access_paths, ty),
-            ownership_tokens(&path2.def, max_depth, &self.ctxt.access_paths, ty),
-            ownership_tokens(&path2.r#use, max_depth, &self.ctxt.access_paths, ty)
+            ownership_tokens(&path1.def, min_depth, &self.ctxt.access_paths, ty),
+            ownership_tokens(&path2.def, min_depth, &self.ctxt.access_paths, ty),
+            ownership_tokens(&path2.r#use, min_depth, &self.ctxt.access_paths, ty)
         ) {
             self.ctxt
                 .database
@@ -241,18 +241,18 @@ where
         ty: Ty<'tcx>,
     ) {
         tracing::debug!("copy constraint: {path1:?} = {path2:?}");
-        let max_depth = std::cmp::max(path1.depth(), path2.depth());
+        let min_depth = std::cmp::min(path1.depth(), path2.depth());
         let path1 = path1.transpose();
         let path2 = path2.transpose();
-        for (x, y) in ownership_tokens(&path1.r#use, max_depth, &self.ctxt.access_paths, ty).zip(
-            ownership_tokens(&path2.r#use, max_depth, &self.ctxt.access_paths, ty),
+        for (x, y) in ownership_tokens(&path1.r#use, min_depth, &self.ctxt.access_paths, ty).zip(
+            ownership_tokens(&path2.r#use, min_depth, &self.ctxt.access_paths, ty),
         ) {
             self.ctxt
                 .database
                 .add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
         }
-        for (x, y) in ownership_tokens(&path1.def, max_depth, &self.ctxt.access_paths, ty).zip(
-            ownership_tokens(&path2.def, max_depth, &self.ctxt.access_paths, ty),
+        for (x, y) in ownership_tokens(&path1.def, min_depth, &self.ctxt.access_paths, ty).zip(
+            ownership_tokens(&path2.def, min_depth, &self.ctxt.access_paths, ty),
         ) {
             self.ctxt
                 .database
