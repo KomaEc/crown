@@ -167,3 +167,43 @@ unsafe fn g() {
         }
     })
 }
+
+#[test]
+/// Sanity check `build_engine`
+fn sanity_test_5() {
+    utils::tracing_setup::init_logger();
+    const PROGRAM: &str = "extern \"C\" {
+    fn printf(_: *const i8, _: ...) -> i32;
+    fn malloc(_: u64) -> *mut ();
+    fn free(_: *mut ());
+}
+
+#[inline(never)]
+unsafe fn f() -> *mut i32 {
+    let r = malloc(4u64) as *mut _;
+    r
+}
+
+unsafe fn g(p: *mut i32) -> *mut i32 {
+    if p.is_null() {
+        assert!(p.is_null());
+        return f();
+    }
+    p
+}";
+    run_compiler(PROGRAM.into(), |program| {
+        // let mut infer_ctxt: Interprocedural<Debug, _> =
+        //     Interprocedural::new(&program, CadicalDatabase::new(), ());
+        // infer_ctxt.dry_run(program.tcx);
+        // assert!(matches!(infer_ctxt.database.solver.solve(), Some(true)));
+        let result = analyse(&program);
+        for body in program.bodies() {
+            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+            println!("{}", result.body_summary_str(body));
+        }
+        for body in program.bodies() {
+            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+            println!("{}", result.fn_sig_str(body));
+        }
+    })
+}

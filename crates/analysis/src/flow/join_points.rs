@@ -6,11 +6,7 @@ use std::{
 };
 
 use rustc_index::{bit_set::BitSet, IndexVec};
-use rustc_middle::{
-    mir::{BasicBlock, Body, Local},
-    ty::TyCtxt,
-};
-use rustc_mir_dataflow::{impls::MaybeLiveLocals, Analysis};
+use rustc_middle::mir::{BasicBlock, Body, Local};
 use smallvec::SmallVec;
 
 use super::{dom::DominanceFrontier, SSAIdx};
@@ -36,12 +32,7 @@ impl JoinPoints<PhiNode> {
         body: &Body<'tcx>,
         dominance_frontier: &DominanceFrontier,
         def_sites: &IndexVec<Local, BitSet<BasicBlock>>,
-        tcx: TyCtxt<'tcx>,
     ) -> Self {
-        let mut liveness = MaybeLiveLocals
-            .into_engine(tcx, body)
-            .iterate_to_fixpoint()
-            .into_results_cursor(body);
         let mut join_points = JoinPoints::from_raw(IndexVec::from_elem(
             BasicBlockNodes::new(),
             &body.basic_blocks,
@@ -52,11 +43,7 @@ impl JoinPoints<PhiNode> {
             work_list.extend(bbs.iter());
             while let Some(bb) = work_list.pop_front() {
                 for &bb_f in &dominance_frontier[bb] {
-                    liveness.seek_to_block_start(bb_f);
-                    // The liveness checking here is necessary! The reason is that we have a set of
-                    // copy locals during ownership analysis, which are guaranteed to have short live-range.
-                    // Since they are copies, they should not be joined with any variables (e.g. entry)!
-                    if !already_added.contains(bb_f) && liveness.get().contains(a) {
+                    if !already_added.contains(bb_f) {
                         join_points[bb_f].data.push((a, PhiNode::default()));
                         already_added.insert(bb_f);
                         if !def_sites[a].contains(bb_f) {

@@ -1,12 +1,9 @@
 pub mod builder;
 
 use rustc_index::{bit_set::BitSet, IndexVec};
-use rustc_middle::{
-    mir::{
-        visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor},
-        BasicBlock, BasicBlockData, Body, Local, Location, Place, Rvalue,
-    },
-    ty::TyCtxt,
+use rustc_middle::mir::{
+    visit::{MutatingUseContext, NonMutatingUseContext, NonUseContext, PlaceContext, Visitor},
+    BasicBlock, BasicBlockData, Body, Local, Location, Place, Rvalue,
 };
 use smallvec::SmallVec;
 use utils::data_structure::{
@@ -157,27 +154,19 @@ pub fn display_def_use_chain(body: &Body, def_use_chain: &DefUseChain) {
 impl DefUseChain {
     /// Construct a normal def use chain (Definition of def and use is similar to
     /// a liveness analysis)
-    pub fn vanilla<'tcx>(body: &Body<'tcx>, tcx: TyCtxt<'tcx>) -> Self {
-        DefUseChain::new(body, VanillaBuilder::default(), tcx)
+    pub fn vanilla<'tcx>(body: &Body<'tcx>) -> Self {
+        DefUseChain::new(body, VanillaBuilder::default())
     }
 
-    pub fn new<'tcx, L: LocationBuilder<'tcx>>(
-        body: &Body<'tcx>,
-        location_builder: L,
-        tcx: TyCtxt<'tcx>,
-    ) -> Self {
-        let def_use_chain = DefUseChain::initialise(body, location_builder, tcx);
+    pub fn new<'tcx, L: LocationBuilder<'tcx>>(body: &Body<'tcx>, location_builder: L) -> Self {
+        let def_use_chain = DefUseChain::initialise(body, location_builder);
         let ssa_state = SSAState::new(body.local_decls.len());
         let mut builder = DefUseChainBuilder::new(body, def_use_chain, ssa_state);
         builder.run();
         builder.def_use_chain
     }
 
-    fn initialise<'tcx, L: LocationBuilder<'tcx>>(
-        body: &Body<'tcx>,
-        location_builder: L,
-        tcx: TyCtxt<'tcx>,
-    ) -> Self {
+    fn initialise<'tcx, L: LocationBuilder<'tcx>>(body: &Body<'tcx>, location_builder: L) -> Self {
         let uses = DefUseBuilder::build(body, location_builder);
         let def_locs =
             IndexVec::from_elem(IndexVec::from([RichLocation::Entry]), &body.local_decls);
@@ -193,7 +182,7 @@ impl DefUseChain {
                 }
             }
         }
-        let join_points = JoinPoints::new(body, &dominance_frontier, &def_sites, tcx);
+        let join_points = JoinPoints::new(body, &dominance_frontier, &def_sites);
 
         DefUseChain {
             uses,

@@ -18,7 +18,10 @@ use self::{
     inference::Intraprocedural,
 };
 use super::{
-    def_use::{Def, DefUseChain, Inspect, LocationBuilder, Update, UseKind},
+    def_use::{
+        builder::prune::dead_code_elimination, Def, DefUseChain, Inspect, LocationBuilder, Update,
+        UseKind,
+    },
     LocalMap, SSAIdx,
 };
 use crate::call_graph::CallGraph;
@@ -351,12 +354,7 @@ pub struct BodySummary {
     pub local_map: LocalMap<OwnershipToken>,
 }
 
-fn flow_chain<'tcx>(
-    body: &Body<'tcx>,
-    tcx: TyCtxt<'tcx>,
-    access_paths: &AccessPaths,
-    k_limit: usize,
-) -> DefUseChain {
+fn flow_chain<'tcx>(body: &Body<'tcx>, access_paths: &AccessPaths, k_limit: usize) -> DefUseChain {
     let flow_builder = OwnershipFlowBuilder {
         body,
         access_paths,
@@ -364,7 +362,8 @@ fn flow_chain<'tcx>(
         copies: &collect_copies(body),
         k_limit,
     };
-    DefUseChain::new(body, flow_builder, tcx)
+    let flow_chain = DefUseChain::new(body, flow_builder);
+    dead_code_elimination(body, flow_chain)
 }
 
 struct OwnershipFlowBuilder<'build, 'tcx> {

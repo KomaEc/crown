@@ -1,3 +1,5 @@
+pub mod prune;
+
 use rustc_data_structures::graph::WithSuccessors;
 use rustc_index::IndexVec;
 use rustc_middle::mir::{BasicBlock, BasicBlockData, Body, Location};

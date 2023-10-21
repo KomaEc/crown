@@ -84,7 +84,7 @@ where
         tcx: TyCtxt<'tcx>,
         k_limit: usize,
     ) -> Self {
-        let flow_chain = flow_chain(body, tcx, &ctxt.access_paths, k_limit);
+        let flow_chain = flow_chain(body, &ctxt.access_paths, k_limit);
         crate::flow::def_use::display_def_use_chain(body, &flow_chain);
         use utils::data_structure::vec_vec::VecVec;
         let mut map = VecVec::with_indices_capacity(body.local_decls.len() + 1);
