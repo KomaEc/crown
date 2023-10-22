@@ -116,6 +116,7 @@ fn compiler_args() -> Vec<String> {
         let lib_name = lib_name.to_str().unwrap().split("-").next().unwrap();
         args.push("--extern".to_owned());
         args.push(match lib_name {
+            "libcrown_annotation" => format!("crown_annotation={}", absolute_path.to_str().unwrap()),
             "liblibc" => format!("libc={}", absolute_path.to_str().unwrap()),
             "libc2rust_bitfields" => {
                 format!("c2rust_bitfields={}", absolute_path.to_str().unwrap())
