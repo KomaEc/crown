@@ -24,7 +24,7 @@ use super::{
     },
     LocalMap, SSAIdx,
 };
-use crate::call_graph::CallGraph;
+use crate::{call_graph::CallGraph, type_qualifier::output_params::OutputParams};
 
 pub mod access_path;
 pub mod constraint;
@@ -34,13 +34,13 @@ mod copies;
 #[cfg(test)]
 mod tests;
 
-pub fn analyse(program: &Program) -> AnalysisResult {
+pub fn analyse(program: &Program, output_params: &OutputParams) -> AnalysisResult {
     let config = z3::Config::new();
     let ctx = z3::Context::new(&config);
 
     use self::constraint::Debug;
     let infer_ctxt: Interprocedural<Debug, _> =
-        Interprocedural::new(&program, Z3Database::new(&ctx), ());
+        Interprocedural::new(&program, output_params, Z3Database::new(&ctx), ());
     infer_ctxt.run(program.tcx)
 }
 
@@ -66,9 +66,16 @@ impl AnalysisResult {
             .iter()
             .copied()
             .zip(body.args_iter())
-            .map(|(token, local)| {
+            .map(|(param, local)| {
                 let ty = body.local_decls[local].ty;
-                self.ownership_type_str(token, ty, k_limit)
+                match param {
+                    Param::Normal(token) => self.ownership_type_str(token, ty, k_limit),
+                    Param::Output(Update { r#use, def }) => format!(
+                        "{} \u{2193} {}",
+                        self.ownership_type_str(r#use, ty, k_limit),
+                        self.ownership_type_str(def, ty, k_limit)
+                    ),
+                }
             })
             .collect::<Vec<_>>()
             .join(", ");
@@ -284,52 +291,37 @@ where
     Mode: StorageMode,
     DB: Database<Mode>,
 {
-    pub fn new(program: &Program, database: DB, storage: Mode::Storage) -> Self {
+    pub fn new(
+        program: &Program,
+        output_params: &OutputParams,
+        mut database: DB,
+        storage: Mode::Storage,
+    ) -> Self {
         let access_paths = AccessPaths::new(program);
         let call_graph = CallGraph::new(program.tcx, &program.fns);
-        let mut ctxt = Self {
+        let fn_sigs = program
+            .fns
+            .iter()
+            .map(|&def_id| {
+                let body = program.tcx.optimized_mir(def_id);
+                (
+                    def_id,
+                    FnSig::new(
+                        body,
+                        output_params.get(&body.source.def_id()).unwrap(),
+                        &mut database,
+                        &access_paths,
+                        access_paths.max_k_limit(),
+                    ),
+                )
+            })
+            .collect();
+        Self {
             database,
             access_paths,
             storage,
             call_graph,
-            fn_sigs: FxHashMap::default(),
-        };
-        ctxt.initialise_fn_sigs(&program.fns, program.tcx);
-        ctxt
-    }
-
-    fn initialise_fn_sigs(&mut self, fns: &[DefId], tcx: TyCtxt) {
-        let max_k_limit = self.access_paths.max_k_limit();
-        for def_id in fns {
-            let fn_sig = self.new_fn_sig(max_k_limit, def_id, tcx);
-            self.fn_sigs.insert(*def_id, fn_sig);
-        }
-    }
-
-    fn new_fn_sig(&mut self, k_limit: usize, def_id: &DefId, tcx: TyCtxt) -> FnSig<OwnershipToken> {
-        let fn_sig = tcx.fn_sig(def_id).skip_binder();
-        let output = self
-            .database
-            .new_tokens(
-                self.access_paths
-                    .size_of(k_limit, fn_sig.output().skip_binder()),
-            )
-            .start;
-        let inputs = fn_sig
-            .inputs()
-            .iter()
-            .map(|ty| {
-                let size = self.access_paths.size_of(k_limit, *ty.skip_binder());
-                self.database.new_tokens(size).start
-            })
-            .collect();
-
-        tracing::debug!("generating signature with output = {output:?}, inputs = {inputs:?}");
-
-        FnSig {
-            k_limit,
-            output,
-            inputs,
+            fn_sigs,
         }
     }
 
@@ -351,7 +343,44 @@ pub type FnMap<T> = FxHashMap<DefId, T>;
 pub struct FnSig<T> {
     k_limit: usize,
     output: T,
-    inputs: SmallVec<[T; 3]>,
+    inputs: SmallVec<[Param<T>; 3]>,
+}
+
+impl FnSig<OwnershipToken> {
+    fn new<Mode: StorageMode, DB: Database<Mode>>(
+        body: &Body,
+        output_params: &BitSet<Local>,
+        database: &mut DB,
+        access_paths: &AccessPaths,
+        k_limit: usize,
+    ) -> Self {
+        let output = database
+            .new_tokens(access_paths.size_of(k_limit, body.return_ty()))
+            .start;
+        let inputs = body
+            .args_iter()
+            .map(|local| {
+                let ty = body.local_decls[local].ty;
+                let size = access_paths.size_of(k_limit, ty);
+                if output_params.contains(local) {
+                    Param::Output(Update {
+                        r#use: database.new_tokens(size).start,
+                        def: database.new_tokens(size).start,
+                    })
+                } else {
+                    Param::Normal(database.new_tokens(size).start)
+                }
+            })
+            .collect();
+
+        tracing::debug!("generating signature with output = {output:?}, inputs = {inputs:?}");
+
+        FnSig {
+            k_limit,
+            output,
+            inputs,
+        }
+    }
 }
 
 pub struct BodySummary {
@@ -359,7 +388,34 @@ pub struct BodySummary {
     pub local_map: LocalMap<OwnershipToken>,
 }
 
-fn flow_chain<'tcx>(body: &Body<'tcx>, copies: &Copies, access_paths: &AccessPaths, k_limit: usize) -> DefUseChain {
+#[derive(Clone, Copy, Debug)]
+pub enum Param<T> {
+    Normal(T),
+    Output(Update<T>),
+}
+
+impl<T> Param<T> {
+    fn input(self) -> T {
+        match self {
+            Param::Normal(t) => t,
+            Param::Output(update) => update.r#use,
+        }
+    }
+
+    fn output(self) -> Option<T> {
+        match self {
+            Param::Normal(_) => None,
+            Param::Output(update) => Some(update.def),
+        }
+    }
+}
+
+fn flow_chain<'tcx>(
+    body: &Body<'tcx>,
+    copies: &Copies,
+    access_paths: &AccessPaths,
+    k_limit: usize,
+) -> DefUseChain {
     let flow_builder = OwnershipFlowBuilder {
         body,
         access_paths,

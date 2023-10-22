@@ -202,7 +202,9 @@ impl<const MAX_K_LIMIT: usize> AccessPaths<MAX_K_LIMIT> {
                     offset += self.offsets_of(depth - levels, adt_def.did())[field_idx.as_usize()];
                     ty = field_ty;
                 }
-                ProjectionElem::Index(_) | ProjectionElem::ConstantIndex { .. } => ty = ty.builtin_index().unwrap(),
+                ProjectionElem::Index(_) | ProjectionElem::ConstantIndex { .. } => {
+                    ty = ty.builtin_index().unwrap()
+                }
                 ProjectionElem::Subslice { .. }
                 | ProjectionElem::Downcast(_, _)
                 | ProjectionElem::OpaqueCast(_) => unreachable!(),

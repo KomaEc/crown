@@ -22,7 +22,15 @@ unsafe fn f(r: *mut *mut *mut i32) {
 }
 ";
     run_compiler(PROGRAM.into(), |program| {
-        let result = analyse(&program);
+        let alias = alias::alias_results(&program);
+        let mutability_result =
+            crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
+        let output_params = crate::type_qualifier::output_params::compute_output_params(
+            &program,
+            &alias,
+            &mutability_result,
+        );
+        let result = analyse(&program, &output_params);
         for body in program.bodies() {
             print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
             println!("{}", result.body_summary_str(body));
@@ -54,11 +62,19 @@ unsafe fn h(r: *mut *mut *mut i32) -> *mut *mut *mut i32 {
     r
 }";
     run_compiler(PROGRAM.into(), |program| {
+        let alias = alias::alias_results(&program);
+        let mutability_result =
+            crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
+        let output_params = crate::type_qualifier::output_params::compute_output_params(
+            &program,
+            &alias,
+            &mutability_result,
+        );
         let mut infer_ctxt: Interprocedural<Debug, _> =
-            Interprocedural::new(&program, CadicalDatabase::new(), ());
+            Interprocedural::new(&program, &output_params, CadicalDatabase::new(), ());
         infer_ctxt.dry_run(program.tcx);
         assert!(matches!(infer_ctxt.database.solver.solve(), Some(true)));
-        let result = analyse(&program);
+        let result = analyse(&program, &output_params);
         for body in program.bodies() {
             print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
             println!("{}", result.body_summary_str(body));
@@ -95,9 +111,26 @@ unsafe fn h(mut p: *mut *mut i32) {
 }
 ";
     run_compiler(PROGRAM.into(), |program| {
-        let mut infer_ctxt: Interprocedural<Debug, _> =
-            Interprocedural::new(&program, CadicalDatabase::new(), ());
-        infer_ctxt.dry_run(program.tcx);
+        let alias = alias::alias_results(&program);
+        let mutability_result =
+            crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
+        let output_params = crate::type_qualifier::output_params::compute_output_params(
+            &program,
+            &alias,
+            &mutability_result,
+        );
+        // let mut infer_ctxt: Interprocedural<Debug, _> =
+        //     Interprocedural::new(&program, &output_params, CadicalDatabase::new(), ());
+        // infer_ctxt.dry_run(program.tcx);
+        let result = analyse(&program, &output_params);
+        for body in program.bodies() {
+            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+            println!("{}", result.body_summary_str(body));
+        }
+        for body in program.bodies() {
+            print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+            println!("{}", result.fn_sig_str(body));
+        }
     })
 }
 
@@ -121,7 +154,15 @@ unsafe fn g() {
     free(q as *mut ());
 }";
     run_compiler(PROGRAM.into(), |program| {
-        let result = analyse(&program);
+        let alias = alias::alias_results(&program);
+        let mutability_result =
+            crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
+        let output_params = crate::type_qualifier::output_params::compute_output_params(
+            &program,
+            &alias,
+            &mutability_result,
+        );
+        let result = analyse(&program, &output_params);
         for body in program.bodies() {
             print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
             println!("{}", result.body_summary_str(body));
@@ -156,7 +197,15 @@ unsafe fn g() {
     free(p as *mut ());
 }";
     run_compiler(PROGRAM.into(), |program| {
-        let result = analyse(&program);
+        let alias = alias::alias_results(&program);
+        let mutability_result =
+            crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
+        let output_params = crate::type_qualifier::output_params::compute_output_params(
+            &program,
+            &alias,
+            &mutability_result,
+        );
+        let result = analyse(&program, &output_params);
         for body in program.bodies() {
             print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
             println!("{}", result.body_summary_str(body));
@@ -192,11 +241,19 @@ unsafe fn g(p: *mut i32) -> *mut i32 {
     p
 }";
     run_compiler(PROGRAM.into(), |program| {
+        let alias = alias::alias_results(&program);
+        let mutability_result =
+            crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
+        let output_params = crate::type_qualifier::output_params::compute_output_params(
+            &program,
+            &alias,
+            &mutability_result,
+        );
         // let mut infer_ctxt: Interprocedural<Debug, _> =
-        //     Interprocedural::new(&program, CadicalDatabase::new(), ());
+        //     Interprocedural::new(&program, &output_params, CadicalDatabase::new(), ());
         // infer_ctxt.dry_run(program.tcx);
         // assert!(matches!(infer_ctxt.database.solver.solve(), Some(true)));
-        let result = analyse(&program);
+        let result = analyse(&program, &output_params);
         for body in program.bodies() {
             print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
             println!("{}", result.body_summary_str(body));
@@ -239,11 +296,19 @@ fn insert(node: *mut Node) -> *mut Node {
     node
 }";
     run_compiler(PROGRAM.into(), |program| {
+        let alias = alias::alias_results(&program);
+        let mutability_result =
+            crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
+        let output_params = crate::type_qualifier::output_params::compute_output_params(
+            &program,
+            &alias,
+            &mutability_result,
+        );
         // let mut infer_ctxt: Interprocedural<Debug, _> =
-        //     Interprocedural::new(&program, CadicalDatabase::new(), ());
+        //     Interprocedural::new(&program, &output_params, CadicalDatabase::new(), ());
         // infer_ctxt.dry_run(program.tcx);
         // assert!(matches!(infer_ctxt.database.solver.solve(), Some(true)));
-        let result = analyse(&program);
+        let result = analyse(&program, &output_params);
         for body in program.bodies() {
             print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
             println!("{}", result.body_summary_str(body));
@@ -294,11 +359,19 @@ unsafe fn driver() {
 }
 ";
     run_compiler(PROGRAM.into(), |program| {
+        let alias = alias::alias_results(&program);
+        let mutability_result =
+            crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
+        let output_params = crate::type_qualifier::output_params::compute_output_params(
+            &program,
+            &alias,
+            &mutability_result,
+        );
         // let mut infer_ctxt: Interprocedural<Debug, _> =
-        //     Interprocedural::new(&program, CadicalDatabase::new(), ());
+        //     Interprocedural::new(&program, &output_params, CadicalDatabase::new(), ());
         // infer_ctxt.dry_run(program.tcx);
         // assert!(matches!(infer_ctxt.database.solver.solve(), Some(true)));
-        let result = analyse(&program);
+        let result = analyse(&program, &output_params);
         for body in program.bodies() {
             print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
             println!("{}", result.body_summary_str(body));
@@ -353,11 +426,19 @@ unsafe fn insert(mut node: *mut Node) -> *mut Node {
     return node;
 }";
     run_compiler(PROGRAM.into(), |program| {
+        let alias = alias::alias_results(&program);
+        let mutability_result =
+            crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
+        let output_params = crate::type_qualifier::output_params::compute_output_params(
+            &program,
+            &alias,
+            &mutability_result,
+        );
         let mut infer_ctxt: Interprocedural<Debug, _> =
-            Interprocedural::new(&program, CadicalDatabase::new(), ());
+            Interprocedural::new(&program, &output_params, CadicalDatabase::new(), ());
         infer_ctxt.dry_run(program.tcx);
         assert!(matches!(infer_ctxt.database.solver.solve(), Some(true)));
-        // let result = analyse(&program);
+        // let result = analyse(&program, &output_params);
         // for body in program.bodies() {
         //     print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
         //     println!("{}", result.body_summary_str(body));

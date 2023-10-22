@@ -18,11 +18,13 @@ use utils::data_structure::assoc::AssocExt;
 use super::{
     access_path::{AccessPaths, Path},
     constraint::{Constraint, Database, OwnershipToken, StorageMode},
-    flow_chain, InterproceduralView, copies::Copies,
+    copies::Copies,
+    flow_chain, InterproceduralView,
 };
 use crate::flow::{
     def_use::{Def, DefUseChain, Inspect, Update, UseKind},
-    LocalMap, RichLocation, SSAIdx, ownership::copies::collect_copies,
+    ownership::copies::collect_copies,
+    LocalMap, RichLocation, SSAIdx,
 };
 
 pub struct Intraprocedural<'analysis, 'tcx, Mode: StorageMode, DB> {
@@ -115,13 +117,23 @@ where
             .args_iter()
             .zip(ctxt.fn_sigs[&body.source.def_id()].inputs.iter().copied())
         {
+            let param = param.input();
             let size = ctxt
                 .access_paths
                 .path(k_limit, &Place::from(local), body)
                 .num_pointers_reachable();
 
             let entry = tokens[local][SSAIdx::INIT];
-            for (param, entry) in (param..param + size).zip(entry..entry + size) {
+            let entry = entry..entry + size;
+            let param = ctxt
+                .access_paths
+                .patch_up(
+                    k_limit,
+                    ctxt.access_paths.max_k_limit() - k_limit,
+                    body.local_decls[local].ty,
+                )
+                .map(|offset| param + offset);
+            for (param, entry) in param.zip(entry) {
                 ctxt.database
                     .add(Constraint::Equal { x: param, y: entry }, &mut ctxt.storage);
             }
@@ -241,12 +253,7 @@ where
         }
     }
 
-    fn copy(
-        &mut self,
-        path1: &Path<ExpandedBase>,
-        path2: &Path<ExpandedBase>,
-        ty: Ty<'tcx>,
-    ) {
+    fn copy(&mut self, path1: &Path<ExpandedBase>, path2: &Path<ExpandedBase>, ty: Ty<'tcx>) {
         tracing::debug!("copy constraint: {path1:?} = {path2:?}");
         let min_depth = std::cmp::min(path1.depth(), path2.depth());
         let path1 = path1.transpose();
@@ -320,7 +327,10 @@ where
                         // if `rhs` is not a pointer, then `lhs` is unconstrained
                         return;
                     };
-                    if place.as_local().is_some_and(|local| self.copies.contains(local)) {
+                    if place
+                        .as_local()
+                        .is_some_and(|local| self.copies.contains(local))
+                    {
                         self.copy(&lhs, &rhs, ty);
                     } else {
                         self.transfer(&lhs, &rhs, ty);
@@ -331,7 +341,10 @@ where
                         // if `rhs` is not a pointer, then `lhs` is unconstrained
                         return;
                     };
-                    if place.as_local().is_some_and(|local| self.copies.contains(local)) {
+                    if place
+                        .as_local()
+                        .is_some_and(|local| self.copies.contains(local))
+                    {
                         self.copy(&lhs, &rhs, ty);
                     } else {
                         self.r#move(&lhs, &rhs, ty);
@@ -366,7 +379,9 @@ where
                 todo!()
             }
             Rvalue::CopyForDeref(rhs) => {
-                assert!(place.as_local().is_some_and(|local| self.copies.contains(local)));
+                assert!(place
+                    .as_local()
+                    .is_some_and(|local| self.copies.contains(local)));
                 let Some(rhs) = self.path(rhs, location).map(|path| self.expand(&path)) else {
                     // if `rhs` is not a pointer, then `lhs` is unconstrained
                     return;
@@ -440,7 +455,11 @@ where
             }
             TerminatorKind::Return => {
                 // nullify all pointer temporaries except `_0`
-                for &(local, use_kind) in self.flow_chain.uses[location].iter() {
+                for (&(local, use_kind), local_decl) in self.flow_chain.uses[location]
+                    .iter()
+                    .zip(self.body.local_decls.iter())
+                {
+                    let ty = local_decl.ty;
                     let ssa_idx = use_kind.inspect().unwrap();
                     let tokens = self.tokens[local][ssa_idx];
                     let size = self
@@ -451,20 +470,53 @@ where
                     // TODO output reference parameter
                     if local == RETURN_PLACE {
                         let output = self.ctxt.fn_sigs[&self.body.source.def_id()].output;
-                        for (ret, output) in (tokens..tokens + size).zip(output..output + size) {
+                        let output = self
+                            .ctxt
+                            .access_paths
+                            .patch_up(
+                                self.k_limit,
+                                self.ctxt.access_paths.max_k_limit() - self.k_limit,
+                                ty,
+                            )
+                            .map(|offset| output + offset);
+                        let ret = tokens..tokens + size;
+                        for (ret, output) in ret.zip(output) {
                             self.ctxt.database.add(
                                 Constraint::Equal { x: ret, y: output },
                                 &mut self.ctxt.storage,
                             );
                         }
-                    } else {
-                        tracing::debug!("nullify {local:?}");
-                        for x in tokens..tokens + size {
-                            self.ctxt.database.add(
-                                Constraint::Assume { x, sign: false },
-                                &mut self.ctxt.storage,
-                            )
+                        continue;
+                    } else if local.index() < 1 + self.body.arg_count {
+                        if let Some(output) = self.ctxt.fn_sigs[&self.body.source.def_id()].inputs
+                            [local.index() - 1]
+                            .output()
+                        {
+                            let output = self
+                                .ctxt
+                                .access_paths
+                                .patch_up(
+                                    self.k_limit,
+                                    self.ctxt.access_paths.max_k_limit() - self.k_limit,
+                                    ty,
+                                )
+                                .map(|offset| output + offset);
+                            let ret = tokens..tokens + size;
+                            for (ret, output) in ret.zip(output) {
+                                self.ctxt.database.add(
+                                    Constraint::Equal { x: ret, y: output },
+                                    &mut self.ctxt.storage,
+                                );
+                            }
+                            continue;
                         }
+                    }
+                    tracing::debug!("nullify {local:?}");
+                    for x in tokens..tokens + size {
+                        self.ctxt.database.add(
+                            Constraint::Assume { x, sign: false },
+                            &mut self.ctxt.storage,
+                        )
                     }
                 }
             }

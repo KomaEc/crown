@@ -1,7 +1,7 @@
 use alias::AliasResult;
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_index::Idx;
+use rustc_index::bit_set::BitSet;
 use rustc_middle::{
     mir::{Body, Local, TerminatorKind},
     ty::TyCtxt,
@@ -11,7 +11,7 @@ use rustc_type_ir::TyKind::FnDef;
 use super::flow_insensitive::mutability::{Mutability, MutabilityResult};
 use crate::call_graph::CallGraph;
 
-pub type OutputParams = FxHashMap<DefId, FxHashSet<Local>>;
+pub type OutputParams = FxHashMap<DefId, BitSet<Local>>;
 
 pub fn show_output_params(
     crate_data: &utils::compiler_interface::Program,
@@ -27,7 +27,7 @@ pub fn show_output_params(
     let output_params = compute_output_params(crate_data, alias_result, mutability_result);
 
     for (did, noalias_params) in output_params {
-        let noalias_params_str = show_set(noalias_params.into_iter());
+        let noalias_params_str = show_set(noalias_params.iter());
         println!(
             "@{}: {noalias_params_str}",
             crate_data.tcx.def_path_str(did)
@@ -69,40 +69,36 @@ fn conservative_output_params(
     let location_of = alias_result.local_locations(&body.source.def_id());
     let fn_result = mutability_result.fn_results(&body.source.def_id());
 
-    let mut this_output_params = body
-        .args_iter()
-        .filter(|&arg| {
-            // !body.local_decls[arg].ty.is_primitive_ty()
-            // &&
-            matches!(fn_result
-                .local_result(arg)
-                .first(),
-                Some(&mutability)
-                if mutability == Mutability::Mut
-            )
-        })
-        .collect::<FxHashSet<Local>>();
+    let mut this_output_params = BitSet::new_empty(body.local_decls.len());
+    for local in body.args_iter().filter(|&arg| {
+        matches!(fn_result
+            .local_result(arg)
+            .first(),
+            Some(&mutability)
+            if mutability == Mutability::Mut
+        )
+    }) {
+        this_output_params.insert(local);
+    }
 
     let call_args_mapping = collect_call_args_mapping(body, tcx);
 
-    for arg1 in body.args_iter().map(|arg| arg.index()) {
-        for arg2 in body.args_iter().map(|arg| arg.index()) {
+    for arg1 in body.args_iter() {
+        for arg2 in body.args_iter() {
             if arg1 == arg2 {
                 continue;
             };
-            if alias_result.may_alias(location_of[arg1], location_of[arg2]) {
+            if alias_result.may_alias(location_of[arg1.index()], location_of[arg2.index()]) {
                 tracing::debug!(
-                    "@{:?}: {:?} removed because it aliases another argument {:?}",
+                    "@{:?}: {arg1:?} removed because it aliases another argument {arg2:?}",
                     body.source.def_id(),
-                    &Local::new(arg1),
-                    &Local::new(arg2)
                 );
-                this_output_params.remove(&Local::new(arg1));
+                this_output_params.remove(arg1);
             }
         }
     }
 
-    for arg in body.args_iter().map(|arg| arg.index()) {
+    for arg in body.args_iter() {
         for (local, local_decl) in body.local_decls.iter_enumerated() {
             if local_decl.ty.is_primitive_ty() {
                 continue;
@@ -110,23 +106,20 @@ fn conservative_output_params(
             if let Some(&(_callee, _idx)) = call_args_mapping.get(&local) {
                 continue;
             }
-            let local = local.index();
             if local == arg {
                 continue;
             }
-            if alias_result.may_alias(location_of[arg], location_of[local])
+            if alias_result.may_alias(location_of[arg.index()], location_of[local.index()])
                 && matches!(fn_result
-                    .local_result(Local::new(local))
+                    .local_result(local)
                     .first(),
                     Some(&mutability) if mutability == Mutability::Mut)
             {
                 tracing::debug!(
-                    "@{:?}: {:?} removed because it aliases {:?}, which is mutable",
-                    body.source.def_id(),
-                    &Local::new(arg),
-                    &Local::new(local)
+                    "@{:?}: {arg:?} removed because it aliases {local:?}, which is mutable",
+                    body.source.def_id()
                 );
-                this_output_params.remove(&Local::new(arg));
+                this_output_params.remove(arg);
             }
         }
     }

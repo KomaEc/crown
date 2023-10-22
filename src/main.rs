@@ -257,7 +257,15 @@ fn run(cmd: Command, input: Program<'_>) -> Result<()> {
             fatness_result.print_results(&input)
         }
         Command::Ownership => {
-            let analysis_result = analysis::flow::ownership::analyse(&input);
+            let alias = alias::alias_results(&input);
+            let mutability_result =
+                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
+            let output_params = analysis::type_qualifier::output_params::compute_output_params(
+                &input,
+                &alias,
+                &mutability_result,
+            );
+            let analysis_result = analysis::flow::ownership::analyse(&input, &output_params);
             for body in input.bodies() {
                 print!("{}: ", input.tcx.def_path_str(body.source.def_id()));
                 println!("{}", analysis_result.body_summary_str(body));

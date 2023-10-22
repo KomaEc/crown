@@ -42,7 +42,7 @@ pub(super) fn initial_inter_ctxt(
             let args = local_decls
                 .take(body.arg_count)
                 .map(|(local, local_decl)| {
-                    if output_params.contains(&local) {
+                    if output_params.contains(local) {
                         let r#use = initialize_local(
                             local_decl,
                             gen,
