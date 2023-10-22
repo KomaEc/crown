@@ -309,3 +309,62 @@ unsafe fn driver() {
         }
     })
 }
+
+#[test]
+/// Sanity check `build_engine`
+fn sanity_test_8() {
+    utils::tracing_setup::init_logger();
+    const PROGRAM: &str = "extern \"C\" {
+    fn printf(_: *const i8, _: ...) -> i32;
+    fn malloc(_: u64) -> *mut ();
+    fn free(_: *mut ());
+}
+
+struct Node {
+    left: *mut Node,
+    right: *mut Node,
+}
+
+unsafe fn newNode() -> *mut Node {
+    let mut temp = malloc(8u64) as *mut Node;
+    (*temp).left = 0 as *mut Node;
+    (*temp).right = 0 as *mut Node;
+    return temp;
+}
+
+#[inline(never)]
+fn cond() -> bool {
+    true
+}
+
+#[inline(never)]
+fn balance(node: *mut Node) -> usize {
+    3
+}
+
+unsafe fn insert(mut node: *mut Node) -> *mut Node {
+    if node.is_null() {assert!((node).is_null());
+        return newNode();
+    }
+    let balance = balance(node);
+    if balance > 1 {
+        return node;
+    }
+    return node;
+}";
+    run_compiler(PROGRAM.into(), |program| {
+        let mut infer_ctxt: Interprocedural<Debug, _> =
+            Interprocedural::new(&program, CadicalDatabase::new(), ());
+        infer_ctxt.dry_run(program.tcx);
+        assert!(matches!(infer_ctxt.database.solver.solve(), Some(true)));
+        // let result = analyse(&program);
+        // for body in program.bodies() {
+        //     print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+        //     println!("{}", result.body_summary_str(body));
+        // }
+        // for body in program.bodies() {
+        //     print!("{}: ", program.tcx.def_path_str(body.source.def_id()));
+        //     println!("{}", result.fn_sig_str(body));
+        // }
+    })
+}

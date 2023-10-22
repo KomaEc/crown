@@ -4,6 +4,7 @@
 
 use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::mir::{BasicBlock, Body, Local};
+use utils::data_structure::assoc::AssocExt;
 
 use super::DefUseChainBuilder;
 use crate::flow::{
@@ -25,15 +26,27 @@ pub fn dead_code_elimination(body: &Body, def_use_chain: DefUseChain) -> DefUseC
         body.basic_blocks.len(),
     );
 
-    for (_, uses) in uses.iter_enumerated() {
-        for &(local, use_kind) in uses.iter() {
-            let r#use = match use_kind {
-                Inspect(ssa_idx) => ssa_idx,
-                Def(update) => update.r#use,
-            };
-            let def_loc = def_locs[local][r#use];
-            if let RichLocation::Phi(bb) = def_loc {
-                useful[bb].insert(local);
+    use std::collections::VecDeque;
+    let mut queue = uses.iter_enumerated().flat_map(|(_, uses)| {
+        uses.iter().copied().map(|(local, use_kind)| {
+            (
+                local,
+                match use_kind {
+                    Inspect(ssa_idx) => ssa_idx,
+                    Def(update) => update.r#use,
+                },
+            )
+        })
+    }).collect::<VecDeque<_>>();
+
+    while let Some((local, ssa_idx)) = queue.pop_front() {
+        let def_loc = def_locs[local][ssa_idx];
+        if let RichLocation::Phi(bb) = def_loc {
+            if useful[bb].insert(local) {
+                let phi_node = join_points[bb].get_by_key(&local).unwrap();
+                for ssa_idx in phi_node.rhs.iter().copied() {
+                    queue.push_back((local, ssa_idx));
+                }
             }
         }
     }
