@@ -10,7 +10,7 @@ use rustc_middle::mir::{
 
 pub type Copies = BitSet<Local>;
 
-struct DerefCopiesCollector<'this>(&'this mut BitSet<Local>);
+pub struct DerefCopiesCollector<'this>(pub &'this mut BitSet<Local>);
 
 pub fn collect_copies(body: &Body) -> Copies {
     let mut deref_copies = BitSet::new_empty(body.local_decls.len());
