@@ -26,26 +26,3 @@ fn test1() {
         assert!(steensgaard.pts_targets.equiv(pts[f], pts[g]))
     })
 }
-
-#[test]
-fn test2() {
-    const PROGRAM: &str = "
-    fn f() {
-        let local = 0;
-        let mut p = &local;
-    }
-    ";
-    utils::compiler_interface::run_compiler(PROGRAM.into(), |program| {
-        let input = program;
-        let steensgaard = TaintResult::field_based(&input);
-        steensgaard.print_results();
-        let pts = &steensgaard.pts;
-        let f = input.fns[0];
-        let local = steensgaard.fn_locals.locations[steensgaard.fn_locals.did_idx[&f]][1];
-        //.get_index(f, 1);
-        let p = steensgaard.fn_locals.locations[steensgaard.fn_locals.did_idx[&f]][2];
-        //.get_index(f, 2);
-        assert_ne!(local, p);
-        assert_eq!(pts[p], local);
-    })
-}

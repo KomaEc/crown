@@ -17,7 +17,9 @@ extern crate rustc_target;
 
 use std::{fs, path::PathBuf, time::Instant};
 
-use analysis::{ownership::AnalysisKind, CrateCtxt};
+use analysis::{
+    ownership::AnalysisKind, type_qualifier::output_params::show_output_params, CrateCtxt,
+};
 use anyhow::{bail, Result};
 use clap::Parser;
 use tracing_subscriber::EnvFilter;
@@ -51,6 +53,7 @@ enum Command {
     Ownership,
     Taint,
     Alias,
+    OutputParams,
     Mutability,
     Fatness,
     VerifyRustcProperties,
@@ -213,6 +216,12 @@ fn run(cmd: Command, input: Program<'_>) -> Result<()> {
         Command::Alias => {
             let alias = alias::alias_results(&input);
             alias.print_results();
+        }
+        Command::OutputParams => {
+            let alias = alias::alias_results(&input);
+            let mutability_result =
+                analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
+            show_output_params(&input, &alias, &mutability_result)
         }
         Command::Mutability => {
             let mutability_result =

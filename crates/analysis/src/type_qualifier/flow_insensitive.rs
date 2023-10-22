@@ -450,10 +450,11 @@ pub trait Infer<'tcx>: WithConstraintSystem {
             StatementKind::PlaceMention(..) => {
                 tracing::debug!("ignoring PlaceMention statement {:?}", statement)
             }
+            StatementKind::StorageLive(_) | StatementKind::StorageDead(_) => {
+                tracing::debug!("ignoring storage statement {:?}", statement)
+            }
             StatementKind::ConstEvalCounter
             | StatementKind::AscribeUserType(_, _)
-            | StatementKind::StorageLive(_)
-            | StatementKind::StorageDead(_)
             | StatementKind::Retag(_, _)
             | StatementKind::FakeRead(_)
             | StatementKind::Coverage(_)

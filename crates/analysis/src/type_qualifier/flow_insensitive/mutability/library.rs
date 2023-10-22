@@ -91,14 +91,7 @@ pub fn library_call<'tcx, M: MutabilityLikeAnalysis>(
                         )
                     }
                     "offset" => {
-                        return call_offset::<M>(
-                            destination,
-                            args,
-                            local_decls,
-                            locals,
-                            struct_fields,
-                            database,
-                        )
+                        unreachable!("deprecated")
                     }
                     "offset_from" => {
                         return call_offset_from::<M>(
@@ -143,31 +136,6 @@ fn call_is_null<'tcx, M: MutabilityLikeAnalysis>(
     assert!(dest_vars.is_empty());
     // no constraint on args
     let _ = args;
-}
-
-fn call_offset<'tcx, M: MutabilityLikeAnalysis>(
-    destination: &Place<'tcx>,
-    args: &Vec<Operand<'tcx>>,
-    local_decls: &impl HasLocalDecls<'tcx>,
-    locals: &[Var],
-    struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
-) {
-    let dest_vars =
-        place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
-    if let Some(arg) = args[0].place() {
-        let arg_vars =
-            place_vars::<EnsureNoDeref>(&arg, local_decls, locals, struct_fields, &mut ());
-        let mut dest_arg = dest_vars.zip(arg_vars);
-
-        if let Some((dest, arg)) = dest_arg.next() {
-            database.guard(dest, arg)
-        }
-        for (dest, arg) in dest_arg {
-            database.guard(arg, dest);
-            database.guard(dest, arg);
-        }
-    }
 }
 
 fn call_offset_from<'tcx, M: MutabilityLikeAnalysis>(

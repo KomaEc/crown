@@ -5,7 +5,8 @@ use std::ops::Range;
 
 use rustc_middle::{
     mir::{
-        HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator, TerminatorKind,
+        BinOp, HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator,
+        TerminatorKind,
     },
     ty::TyCtxt,
 };
@@ -207,6 +208,28 @@ impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
             //         database.guard(rhs, lhs);
             //     }
             // }
+            Rvalue::BinaryOp(BinOp::Offset, box (ptr, _)) => {
+                let dest_vars =
+                    place_vars::<MutCtxt>(lhs, local_decls, locals, struct_fields, database);
+                if let Some(arg) = ptr.place() {
+                    let arg_vars = place_vars::<EnsureNoDeref>(
+                        &arg,
+                        local_decls,
+                        locals,
+                        struct_fields,
+                        &mut (),
+                    );
+                    let mut dest_arg = dest_vars.zip(arg_vars);
+
+                    if let Some((dest, arg)) = dest_arg.next() {
+                        database.guard(dest, arg)
+                    }
+                    for (dest, arg) in dest_arg {
+                        database.guard(arg, dest);
+                        database.guard(dest, arg);
+                    }
+                }
+            }
             Rvalue::Ref(_, _, rhs) | Rvalue::AddressOf(_, rhs) => {
                 let mut lhs =
                     place_vars::<EnsureNoDeref>(lhs, local_decls, locals, struct_fields, &mut ());
@@ -440,10 +463,9 @@ fn place_vars<'tcx, Ctxt: PlaceContext>(
                     _ => unreachable!(),
                 }
             }
-            ProjectionElem::Index(_) => {
+            ProjectionElem::Index(_) | ProjectionElem::ConstantIndex { .. } => {
                 base_ty = base_ty.builtin_index().unwrap();
             }
-            ProjectionElem::ConstantIndex { .. } => unreachable!("unexpected constant index"),
             ProjectionElem::Subslice { .. } => unreachable!("unexpected subslicing"),
             ProjectionElem::OpaqueCast(_) => unreachable!("unexpected opaque cast"),
             ProjectionElem::Downcast(..) => {
