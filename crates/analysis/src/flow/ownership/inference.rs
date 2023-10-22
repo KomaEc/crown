@@ -329,8 +329,8 @@ where
             | Rvalue::AddressOf(_, pointee) => {
                 tracing::error!("not yet implemented: &{pointee:?}");
             }
-            Rvalue::BinaryOp(BinOp::Offset, box (operand1, operand2)) => {
-                unimplemented!("offset operation is not yet supported {place:?} = offset({operand1:?}, {operand2:?}")
+            Rvalue::BinaryOp(BinOp::Offset, _) => {
+                tracing::debug!("offsets are unconstrained!")
             }
             Rvalue::BinaryOp(_, _) => {
                 unreachable!("LHS of an arithmetic binary operation contains pointers. How?")
@@ -344,10 +344,10 @@ where
             Rvalue::Discriminant(_) => {
                 unreachable!("LHS of a discriminant expression contains pointers. How?")
             }
-            Rvalue::Aggregate(box AggregateKind::Array(_), values) => {
+            Rvalue::Aggregate(box AggregateKind::Array(_), _) => {
                 todo!()
             }
-            Rvalue::Aggregate(box AggregateKind::Adt(..), values) => {
+            Rvalue::Aggregate(box AggregateKind::Adt(..), _) => {
                 todo!()
             }
             Rvalue::CopyForDeref(rhs) => {
