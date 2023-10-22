@@ -18,6 +18,7 @@ where
     ) {
         match name.as_str() {
             "malloc" => self.malloc(args, destination, location),
+            "calloc" => self.malloc(args, destination, location),
             "free" => self.free(args, destination, location),
             _ => tracing::debug!(
                 "ignoring extern call {destination:?} = {name}({})",
