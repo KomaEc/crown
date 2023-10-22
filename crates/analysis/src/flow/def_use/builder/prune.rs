@@ -27,17 +27,20 @@ pub fn dead_code_elimination(body: &Body, def_use_chain: DefUseChain) -> DefUseC
     );
 
     use std::collections::VecDeque;
-    let mut queue = uses.iter_enumerated().flat_map(|(_, uses)| {
-        uses.iter().copied().map(|(local, use_kind)| {
-            (
-                local,
-                match use_kind {
-                    Inspect(ssa_idx) => ssa_idx,
-                    Def(update) => update.r#use,
-                },
-            )
+    let mut queue = uses
+        .iter_enumerated()
+        .flat_map(|(_, uses)| {
+            uses.iter().copied().map(|(local, use_kind)| {
+                (
+                    local,
+                    match use_kind {
+                        Inspect(ssa_idx) => ssa_idx,
+                        Def(update) => update.r#use,
+                    },
+                )
+            })
         })
-    }).collect::<VecDeque<_>>();
+        .collect::<VecDeque<_>>();
 
     while let Some((local, ssa_idx)) = queue.pop_front() {
         let def_loc = def_locs[local][ssa_idx];
