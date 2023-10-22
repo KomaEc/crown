@@ -14,7 +14,7 @@ use utils::compiler_interface::Program;
 use self::{
     access_path::AccessPaths,
     constraint::{Database, OwnershipToken, StorageMode, Z3Database},
-    copies::collect_copies,
+    copies::Copies,
     inference::Intraprocedural,
 };
 use super::{
@@ -359,12 +359,12 @@ pub struct BodySummary {
     pub local_map: LocalMap<OwnershipToken>,
 }
 
-fn flow_chain<'tcx>(body: &Body<'tcx>, access_paths: &AccessPaths, k_limit: usize) -> DefUseChain {
+fn flow_chain<'tcx>(body: &Body<'tcx>, copies: &Copies, access_paths: &AccessPaths, k_limit: usize) -> DefUseChain {
     let flow_builder = OwnershipFlowBuilder {
         body,
         access_paths,
         location_data: Default::default(),
-        copies: &collect_copies(body),
+        copies,
         k_limit,
     };
     let flow_chain = DefUseChain::new(body, flow_builder);

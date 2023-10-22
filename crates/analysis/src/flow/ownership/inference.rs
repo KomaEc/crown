@@ -18,11 +18,11 @@ use utils::data_structure::assoc::AssocExt;
 use super::{
     access_path::{AccessPaths, Path},
     constraint::{Constraint, Database, OwnershipToken, StorageMode},
-    flow_chain, InterproceduralView,
+    flow_chain, InterproceduralView, copies::Copies,
 };
 use crate::flow::{
     def_use::{Def, DefUseChain, Inspect, Update, UseKind},
-    LocalMap, RichLocation, SSAIdx,
+    LocalMap, RichLocation, SSAIdx, ownership::copies::collect_copies,
 };
 
 pub struct Intraprocedural<'analysis, 'tcx, Mode: StorageMode, DB> {
@@ -31,6 +31,7 @@ pub struct Intraprocedural<'analysis, 'tcx, Mode: StorageMode, DB> {
     pub(super) tokens: LocalMap<OwnershipToken>,
     pub(super) flow_chain: DefUseChain,
     body: &'analysis Body<'tcx>,
+    copies: Copies,
     tcx: TyCtxt<'tcx>,
     k_limit: usize,
 }
@@ -84,8 +85,13 @@ where
         tcx: TyCtxt<'tcx>,
         k_limit: usize,
     ) -> Self {
-        let flow_chain = flow_chain(body, &ctxt.access_paths, k_limit);
+        let copies = collect_copies(body);
+        let flow_chain = flow_chain(body, &copies, &ctxt.access_paths, k_limit);
         crate::flow::def_use::display_def_use_chain(body, &flow_chain);
+        // println!("set of copies: {copies:?}");
+        // for &(local, _) in flow_chain.join_points.iter().flat_map(|bb_data| bb_data.iter()) {
+        //     assert!(!copies.contains(local), "copy variable {local:?} appears in a phi node");
+        // }
         use utils::data_structure::vec_vec::VecVec;
         let mut map = VecVec::with_indices_capacity(body.local_decls.len() + 1);
 
@@ -126,6 +132,7 @@ where
             tokens,
             flow_chain,
             body,
+            copies,
             tcx,
             k_limit,
         };
@@ -234,7 +241,7 @@ where
         }
     }
 
-    fn copy_for_deref(
+    fn copy(
         &mut self,
         path1: &Path<ExpandedBase>,
         path2: &Path<ExpandedBase>,
@@ -313,14 +320,22 @@ where
                         // if `rhs` is not a pointer, then `lhs` is unconstrained
                         return;
                     };
-                    self.transfer(&lhs, &rhs, ty);
+                    if place.as_local().is_some_and(|local| self.copies.contains(local)) {
+                        self.copy(&lhs, &rhs, ty);
+                    } else {
+                        self.transfer(&lhs, &rhs, ty);
+                    }
                 }
                 Operand::Move(rhs) => {
                     let Some(rhs) = self.path(rhs, location).map(|path| self.expand(&path)) else {
                         // if `rhs` is not a pointer, then `lhs` is unconstrained
                         return;
                     };
-                    self.r#move(&lhs, &rhs, ty);
+                    if place.as_local().is_some_and(|local| self.copies.contains(local)) {
+                        self.copy(&lhs, &rhs, ty);
+                    } else {
+                        self.r#move(&lhs, &rhs, ty);
+                    }
                 }
                 Operand::Constant(_) => return,
             },
@@ -351,11 +366,12 @@ where
                 todo!()
             }
             Rvalue::CopyForDeref(rhs) => {
+                assert!(place.as_local().is_some_and(|local| self.copies.contains(local)));
                 let Some(rhs) = self.path(rhs, location).map(|path| self.expand(&path)) else {
                     // if `rhs` is not a pointer, then `lhs` is unconstrained
                     return;
                 };
-                self.copy_for_deref(&lhs, &rhs, ty);
+                self.copy(&lhs, &rhs, ty);
             }
             Rvalue::Ref(_, BorrowKind::Shallow, _)
             | Rvalue::ThreadLocalRef(_)
