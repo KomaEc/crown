@@ -1,4 +1,4 @@
-use alias::AliasResult;
+use alias::{alias_results, AliasResult};
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_index::bit_set::BitSet;
@@ -7,69 +7,78 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use rustc_type_ir::TyKind::FnDef;
+use utils::compiler_interface::Program;
 
 use super::flow_insensitive::mutability::{Mutability, MutabilityResult};
-use crate::call_graph::CallGraph;
+use crate::{call_graph::CallGraph, flow::ownership::copies::collect_copies};
 
 pub type OutputParams = FxHashMap<DefId, BitSet<Local>>;
 
-pub fn show_output_params(
-    crate_data: &utils::compiler_interface::Program,
-    alias_result: &AliasResult,
-    mutability_result: &MutabilityResult,
-) {
+pub fn show_output_params(program: &Program, mutability_result: &MutabilityResult) {
     fn show_set<T: std::fmt::Debug>(set: impl Iterator<Item = T>) -> String {
         set.map(|x| format!("{:?}", x))
             .collect::<Vec<_>>()
             .join(", ")
     }
-
-    let output_params = compute_output_params(crate_data, alias_result, mutability_result);
+    let output_params = compute_output_params(program, mutability_result);
 
     for (did, noalias_params) in output_params {
         let noalias_params_str = show_set(noalias_params.iter());
-        println!(
-            "@{}: {noalias_params_str}",
-            crate_data.tcx.def_path_str(did)
-        );
+        println!("@{}: {noalias_params_str}", program.tcx.def_path_str(did));
     }
 }
 
 pub fn compute_output_params(
-    crate_data: &utils::compiler_interface::Program,
-    alias_result: &AliasResult,
+    program: &Program,
     mutability_result: &MutabilityResult,
 ) -> OutputParams {
     let mut output_params = FxHashMap::default();
-    output_params.reserve(crate_data.fns.len());
+    output_params.reserve(program.fns.len());
+    let mut copies = FxHashMap::default();
+    copies.reserve(program.fns.len());
 
-    let call_graph = CallGraph::new(crate_data.tcx, &crate_data.fns);
+    let alias_result = alias_results(program);
 
-    for &did in call_graph.sccs().flatten() {
-        let body = crate_data.tcx.optimized_mir(did);
-        conservative_output_params(
-            body,
-            alias_result,
-            mutability_result,
-            &mut output_params,
-            crate_data.tcx,
-        )
+    for &did in program.fns.iter() {
+        let body = program.tcx.optimized_mir(did);
+        output_params.insert(did, conservative(body, &alias_result, mutability_result));
+        copies.insert(did, collect_copies(body));
+    }
+
+    let tcx = program.tcx;
+    for scc in CallGraph::new(program.tcx, &program.fns).sccs() {
+        loop {
+            let mut changed = false;
+            for &def_id in scc {
+                let body = tcx.optimized_mir(def_id);
+                changed = changed
+                    || iterate(
+                        body,
+                        copies.get(&def_id).unwrap(),
+                        &alias_result,
+                        mutability_result,
+                        &mut output_params,
+                        tcx,
+                    );
+            }
+            if !changed {
+                break;
+            }
+        }
     }
 
     output_params
 }
 
-fn conservative_output_params(
+fn conservative(
     body: &Body,
     alias_result: &AliasResult,
     mutability_result: &MutabilityResult,
-    known_facts: &mut OutputParams,
-    tcx: TyCtxt,
-) {
+) -> BitSet<Local> {
     let location_of = alias_result.local_locations(&body.source.def_id());
     let fn_result = mutability_result.fn_results(&body.source.def_id());
 
-    let mut this_output_params = BitSet::new_empty(body.local_decls.len());
+    let mut output_params = BitSet::new_empty(body.local_decls.len());
     for local in body.args_iter().filter(|&arg| {
         matches!(fn_result
             .local_result(arg)
@@ -78,60 +87,76 @@ fn conservative_output_params(
             if mutability == Mutability::Mut
         )
     }) {
-        this_output_params.insert(local);
-    }
-
-    let call_args_mapping = collect_call_args_mapping(body, tcx);
-
-    for arg1 in body.args_iter() {
-        for arg2 in body.args_iter() {
-            if arg1 == arg2 {
-                continue;
-            };
-            if alias_result.may_alias(location_of[arg1.index()], location_of[arg2.index()]) {
-                tracing::debug!(
-                    "@{:?}: {arg1:?} removed because it aliases another argument {arg2:?}",
-                    body.source.def_id(),
-                );
-                this_output_params.remove(arg1);
-            }
-        }
+        output_params.insert(local);
     }
 
     for arg in body.args_iter() {
-        for (local, local_decl) in body.local_decls.iter_enumerated() {
-            if local_decl.ty.is_primitive_ty() {
+        for local in body.local_decls.indices() {
+            if arg == local {
                 continue;
             }
-            if let Some(&(_callee, _idx)) = call_args_mapping.get(&local) {
-                continue;
-            }
-            if local == arg {
-                continue;
-            }
-            if alias_result.may_alias(location_of[arg.index()], location_of[local.index()])
-                && matches!(fn_result
-                    .local_result(local)
-                    .first(),
-                    Some(&mutability) if mutability == Mutability::Mut)
-            {
+            if alias_result.may_alias(location_of[arg.index()], location_of[local.index()]) {
                 tracing::debug!(
-                    "@{:?}: {arg:?} removed because it aliases {local:?}, which is mutable",
+                    "@{:?}: {arg:?} removed because it aliases another pointer {local:?}",
                     body.source.def_id()
                 );
-                this_output_params.remove(arg);
+                output_params.remove(arg);
             }
         }
     }
-
-    known_facts.insert(body.source.def_id(), this_output_params);
+    output_params
 }
 
-/// mapping call arg temp to callee and index of parameter
-type CallArgsMapping = FxHashMap<Local, (DefId, usize)>;
+fn iterate(
+    body: &Body,
+    copies: &BitSet<Local>,
+    alias_result: &AliasResult,
+    mutability_result: &MutabilityResult,
+    known_facts: &mut OutputParams,
+    tcx: TyCtxt,
+) -> bool {
+    let location_of = alias_result.local_locations(&body.source.def_id());
+    let fn_result = mutability_result.fn_results(&body.source.def_id());
+    let transitive_output_position_temporaries =
+        transitive_output_position_temporaries(known_facts, copies, body, tcx);
+    let output_params = known_facts.get_mut(&body.source.def_id()).unwrap();
 
-fn collect_call_args_mapping(body: &Body, tcx: TyCtxt) -> CallArgsMapping {
-    let mut call_args_mapping = FxHashMap::default();
+    let mut changed = false;
+    for arg in body.args_iter().filter(|&arg| {
+        matches!(fn_result
+            .local_result(arg)
+            .first(),
+            Some(&mutability)
+            if mutability == Mutability::Mut
+        )
+    }) {
+        if body
+            .local_decls
+            .indices()
+            .filter(|&local| arg != local)
+            .filter(|&local| !transitive_output_position_temporaries.contains(local))
+            .all(|local| {
+                !alias_result.may_alias(location_of[arg.index()], location_of[local.index()])
+            })
+        {
+            tracing::debug!(
+                "@{:?}: {arg:?} added because it aliases a transitive output position temporary",
+                body.source.def_id()
+            );
+            changed = changed || output_params.insert(arg);
+        }
+    }
+
+    changed
+}
+
+fn transitive_output_position_temporaries(
+    known_facts: &OutputParams,
+    copies: &BitSet<Local>,
+    body: &Body,
+    tcx: TyCtxt,
+) -> BitSet<Local> {
+    let mut transitive_output_temporaries = BitSet::new_empty(body.local_decls.len());
     for bb_data in body.basic_blocks.iter() {
         let Some(terminator) = &bb_data.terminator else {
             continue;
@@ -151,13 +176,18 @@ fn collect_call_args_mapping(body: &Body, tcx: TyCtxt) -> CallArgsMapping {
                 continue;
             };
 
-            for (idx, arg) in args.iter().enumerate() {
-                let Some(arg) = arg.place() else { continue };
-                let arg = arg.as_local().unwrap();
-                call_args_mapping.insert(arg, (callee, idx));
+            for arg in known_facts
+                .get(&callee)
+                .unwrap()
+                .iter()
+                .map(|local| local.index() - 1)
+                .map(|index| &args[index])
+                .filter_map(|arg| arg.place().and_then(|place| place.as_local()))
+                .filter(|&arg| copies.contains(arg))
+            {
+                transitive_output_temporaries.insert(arg);
             }
         }
     }
-
-    call_args_mapping
+    transitive_output_temporaries
 }

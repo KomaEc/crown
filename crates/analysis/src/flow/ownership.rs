@@ -30,7 +30,7 @@ pub mod access_path;
 pub mod constraint;
 mod inference;
 // TODO re-export
-mod copies;
+pub mod copies;
 #[cfg(test)]
 mod tests;
 

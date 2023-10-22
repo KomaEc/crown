@@ -218,10 +218,9 @@ fn run(cmd: Command, input: Program<'_>) -> Result<()> {
             alias.print_results();
         }
         Command::OutputParams => {
-            let alias = alias::alias_results(&input);
             let mutability_result =
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
-            show_output_params(&input, &alias, &mutability_result)
+            show_output_params(&input, &mutability_result)
         }
         Command::Mutability => {
             let mutability_result =
@@ -229,12 +228,10 @@ fn run(cmd: Command, input: Program<'_>) -> Result<()> {
             mutability_result.print_results(&input)
         }
         Command::Fatness => {
-            let alias_result = alias::alias_results(&input);
             let mutability_result =
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
             let output_params = analysis::type_qualifier::output_params::compute_output_params(
                 &input,
-                &alias_result,
                 &mutability_result,
             );
             let crate_ctxt = CrateCtxt::new(&input);
@@ -257,12 +254,10 @@ fn run(cmd: Command, input: Program<'_>) -> Result<()> {
             fatness_result.print_results(&input)
         }
         Command::Ownership => {
-            let alias = alias::alias_results(&input);
             let mutability_result =
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
             let output_params = analysis::type_qualifier::output_params::compute_output_params(
                 &input,
-                &alias,
                 &mutability_result,
             );
             let analysis_result = analysis::flow::ownership::analyse(&input, &output_params);
@@ -276,12 +271,10 @@ fn run(cmd: Command, input: Program<'_>) -> Result<()> {
             }
         }
         Command::Analyse { results_path } => {
-            let alias_result = alias::alias_results(&input);
             let mutability_result =
                 analysis::type_qualifier::flow_insensitive::mutability::mutability_analysis(&input);
             let output_params = analysis::type_qualifier::output_params::compute_output_params(
                 &input,
-                &alias_result,
                 &mutability_result,
             );
             let crate_ctxt = CrateCtxt::new(&input);

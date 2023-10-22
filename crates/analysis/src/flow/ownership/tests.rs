@@ -22,12 +22,10 @@ unsafe fn f(r: *mut *mut *mut i32) {
 }
 ";
     run_compiler(PROGRAM.into(), |program| {
-        let alias = alias::alias_results(&program);
         let mutability_result =
             crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
         let output_params = crate::type_qualifier::output_params::compute_output_params(
             &program,
-            &alias,
             &mutability_result,
         );
         let result = analyse(&program, &output_params);
@@ -62,12 +60,10 @@ unsafe fn h(r: *mut *mut *mut i32) -> *mut *mut *mut i32 {
     r
 }";
     run_compiler(PROGRAM.into(), |program| {
-        let alias = alias::alias_results(&program);
         let mutability_result =
             crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
         let output_params = crate::type_qualifier::output_params::compute_output_params(
             &program,
-            &alias,
             &mutability_result,
         );
         let mut infer_ctxt: Interprocedural<Debug, _> =
@@ -100,23 +96,22 @@ unsafe fn f(r: *mut *mut i32) {
     free(*r as *mut ());
 }
 
-unsafe fn g(mut p: *mut i32) {
-    f(core::ptr::addr_of_mut!(p))
-}
+// unsafe fn g(mut p: *mut i32) {
+//     f(core::ptr::addr_of_mut!(p))
+// }
 
 unsafe fn h(mut p: *mut *mut i32) {
     **p = 1;
     f(p);
-    g(*p);
+    free(p as *mut ());
+    // g(*p);
 }
 ";
     run_compiler(PROGRAM.into(), |program| {
-        let alias = alias::alias_results(&program);
         let mutability_result =
             crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
         let output_params = crate::type_qualifier::output_params::compute_output_params(
             &program,
-            &alias,
             &mutability_result,
         );
         // let mut infer_ctxt: Interprocedural<Debug, _> =
@@ -154,12 +149,10 @@ unsafe fn g() {
     free(q as *mut ());
 }";
     run_compiler(PROGRAM.into(), |program| {
-        let alias = alias::alias_results(&program);
         let mutability_result =
             crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
         let output_params = crate::type_qualifier::output_params::compute_output_params(
             &program,
-            &alias,
             &mutability_result,
         );
         let result = analyse(&program, &output_params);
@@ -197,12 +190,10 @@ unsafe fn g() {
     free(p as *mut ());
 }";
     run_compiler(PROGRAM.into(), |program| {
-        let alias = alias::alias_results(&program);
         let mutability_result =
             crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
         let output_params = crate::type_qualifier::output_params::compute_output_params(
             &program,
-            &alias,
             &mutability_result,
         );
         let result = analyse(&program, &output_params);
@@ -241,12 +232,10 @@ unsafe fn g(p: *mut i32) -> *mut i32 {
     p
 }";
     run_compiler(PROGRAM.into(), |program| {
-        let alias = alias::alias_results(&program);
         let mutability_result =
             crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
         let output_params = crate::type_qualifier::output_params::compute_output_params(
             &program,
-            &alias,
             &mutability_result,
         );
         // let mut infer_ctxt: Interprocedural<Debug, _> =
@@ -296,12 +285,10 @@ fn insert(node: *mut Node) -> *mut Node {
     node
 }";
     run_compiler(PROGRAM.into(), |program| {
-        let alias = alias::alias_results(&program);
         let mutability_result =
             crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
         let output_params = crate::type_qualifier::output_params::compute_output_params(
             &program,
-            &alias,
             &mutability_result,
         );
         // let mut infer_ctxt: Interprocedural<Debug, _> =
@@ -359,12 +346,10 @@ unsafe fn driver() {
 }
 ";
     run_compiler(PROGRAM.into(), |program| {
-        let alias = alias::alias_results(&program);
         let mutability_result =
             crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
         let output_params = crate::type_qualifier::output_params::compute_output_params(
             &program,
-            &alias,
             &mutability_result,
         );
         // let mut infer_ctxt: Interprocedural<Debug, _> =
@@ -426,12 +411,10 @@ unsafe fn insert(mut node: *mut Node) -> *mut Node {
     return node;
 }";
     run_compiler(PROGRAM.into(), |program| {
-        let alias = alias::alias_results(&program);
         let mutability_result =
             crate::type_qualifier::flow_insensitive::mutability::mutability_analysis(&program);
         let output_params = crate::type_qualifier::output_params::compute_output_params(
             &program,
-            &alias,
             &mutability_result,
         );
         let mut infer_ctxt: Interprocedural<Debug, _> =
