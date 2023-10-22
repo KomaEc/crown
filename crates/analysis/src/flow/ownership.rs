@@ -24,7 +24,10 @@ use super::{
     },
     LocalMap, SSAIdx,
 };
-use crate::{call_graph::CallGraph, type_qualifier::output_params::OutputParams};
+use crate::{
+    call_graph::CallGraph, flow::ownership::constraint::Constraint,
+    type_qualifier::output_params::OutputParams,
+};
 
 pub mod access_path;
 pub mod constraint;
@@ -295,7 +298,7 @@ where
         program: &Program,
         output_params: &OutputParams,
         mut database: DB,
-        storage: Mode::Storage,
+        mut storage: Mode::Storage,
     ) -> Self {
         let access_paths = AccessPaths::new(program);
         let call_graph = CallGraph::new(program.tcx, &program.fns);
@@ -310,6 +313,7 @@ where
                         body,
                         output_params.get(&body.source.def_id()).unwrap(),
                         &mut database,
+                        &mut storage,
                         &access_paths,
                         access_paths.max_k_limit(),
                     ),
@@ -351,6 +355,7 @@ impl FnSig<OwnershipToken> {
         body: &Body,
         output_params: &BitSet<Local>,
         database: &mut DB,
+        storage: &mut Mode::Storage,
         access_paths: &AccessPaths,
         k_limit: usize,
     ) -> Self {
@@ -363,10 +368,17 @@ impl FnSig<OwnershipToken> {
                 let ty = body.local_decls[local].ty;
                 let size = access_paths.size_of(k_limit, ty);
                 if output_params.contains(local) {
-                    Param::Output(Update {
-                        r#use: database.new_tokens(size).start,
-                        def: database.new_tokens(size).start,
-                    })
+                    let r#use = database.new_tokens(size).start;
+                    let def = database.new_tokens(size).start;
+                    database.add(
+                        Constraint::Assume {
+                            x: r#use,
+                            sign: true,
+                        },
+                        storage,
+                    );
+                    database.add(Constraint::Assume { x: def, sign: true }, storage);
+                    Param::Output(Update { r#use, def })
                 } else {
                     Param::Normal(database.new_tokens(size).start)
                 }
