@@ -218,10 +218,6 @@ impl<'z3, Mode: StorageMode> Interprocedural<Mode, Z3Database<'z3>> {
             let mut k_limit = self.access_paths.max_k_limit();
             // Solving must succeed when k_limit == 0
             loop {
-                tracing::debug!(
-                    "solving {} with k_limit {k_limit}",
-                    tcx.def_path_str(def_id)
-                );
                 self.database.solver.push();
 
                 let mut inter_view: InterproceduralView<'_, Mode, _> = into_view!(self);
@@ -239,11 +235,20 @@ impl<'z3, Mode: StorageMode> Interprocedural<Mode, Z3Database<'z3>> {
                             unreachable!();
                         }
                         self.database.solver.pop(1);
+                        tracing::debug!(
+                            "\u{274C} {} failed with k_limit {k_limit}",
+                            tcx.def_path_str(def_id)
+                        );
                         k_limit -= 1;
+                        // FIXME: generate new signature, and equate the previous with current!!
                         self.fn_sigs.get_mut(&def_id).unwrap().k_limit = k_limit;
                     }
                     z3::SatResult::Unknown => panic!("z3 timed out"),
                     z3::SatResult::Sat => {
+                        tracing::debug!(
+                            "\u{2705} solved {} with k_limit {k_limit}",
+                            tcx.def_path_str(def_id)
+                        );
                         body_summaries.insert(def_id, body_summary);
                         break;
                     }
