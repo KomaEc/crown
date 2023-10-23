@@ -14,7 +14,7 @@ const C2RUST_DEPENDENCIES: &[(&str, &str)] = &[
     ("libf128_internal", "rlib"),
     ("libf128", "rlib"),
     ("libnum_traits", "rlib"),
-    ("libcrown_annotation", "rlib")
+    ("libcrown_annotation", "rlib"),
 ];
 
 fn main() {

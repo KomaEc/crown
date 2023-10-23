@@ -1,0 +1,3 @@
+[submodule "crown-annotation"]
+	path = crown-annotation
+	url = https://github.com/KomaEc/crown-annotation

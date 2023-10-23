@@ -6,6 +6,7 @@ members = [
     "crates/alias",
     "crates/empirical-study",
     "crates/rustc-properties",
+    "crown-annotation",
 ]
 
 [package]
@@ -38,7 +39,7 @@ libc = "0.2"
 c2rust-bitfields-derive = "0.2"
 c2rust-bitfields = "0.3.0"
 num-traits = "0.2"
-crown-annotation = "0.1.0"
+crown-annotation = { path = "crown-annotation" }
 
 
 [target.'cfg(target_arch = "x86_64")'.build-dependencies]
