@@ -65,53 +65,41 @@ where
                     ExprKind::MethodCall(path, receiver, _, _)
                         if path.ident.as_str() == "is_null" =>
                     {
-                        // let ptr = args.first().unwrap();
                         let ptr = receiver;
+                        // rewrite is ensured, explicitly recurse into two branches
+                        intravisit::walk_expr(self, truth_branch);
+                        false_branch.map(|false_branch| intravisit::walk_expr(self, false_branch));
 
-                        // currently we only rewrite variables not complex expressions
-                        if
-                        /* let ExprKind::Path(..) = ptr.kind */
-                        true {
-                            // rewrite is ensured, explicitly recurse into two branches
-                            intravisit::walk_expr(self, truth_branch);
-                            false_branch
-                                .map(|false_branch| intravisit::walk_expr(self, false_branch));
-
-                            let ptr_name =
-                                rustc_hir_pretty::id_to_string(&self.tcx.hir(), ptr.hir_id);
-                            let stmt_str =
-                                // format!("std::intrinsics::assume(({ptr_name}).addr() == 0);");
-                                // format!("assert!(({ptr_name}).is_null());");
+                        let ptr_name = rustc_hir_pretty::id_to_string(&self.tcx.hir(), ptr.hir_id);
+                        let stmt_str =
                                 format!("crown_annotation::unconstrained({ptr_name});");
 
-                            if sign {
-                                self.insert_to_branch(stmt_str, truth_branch);
-                            } else if !is_while_loop_cond {
-                                // normal if { } else { }
-                                if let Some(false_branch) = false_branch {
-                                    // give up if { } else if { } ..
-                                    if !matches!(false_branch.kind, ExprKind::If(..)) {
-                                        self.insert_to_branch(stmt_str, false_branch);
-                                    }
-                                } else {
-                                    let empty_span_after_curly_brace =
-                                        truth_branch.span.shrink_to_hi();
-                                    self.rewriter.replace(
-                                        self.tcx,
-                                        empty_span_after_curly_brace,
-                                        "else { ".to_string() + &stmt_str + " }",
-                                    )
+                        if sign {
+                            self.insert_to_branch(stmt_str, truth_branch);
+                        } else if !is_while_loop_cond {
+                            // normal if { } else { }
+                            if let Some(false_branch) = false_branch {
+                                // give up if { } else if { } ..
+                                if !matches!(false_branch.kind, ExprKind::If(..)) {
+                                    self.insert_to_branch(stmt_str, false_branch);
                                 }
                             } else {
-                                // while !p.is_null() {}
-                                // while loop always has false branch, to hold { break; }
-                                // its span for some reason is the whole loop expression
-                                let span = false_branch.unwrap().span.shrink_to_hi();
-                                self.rewriter.replace(self.tcx, span, stmt_str);
+                                let empty_span_after_curly_brace = truth_branch.span.shrink_to_hi();
+                                self.rewriter.replace(
+                                    self.tcx,
+                                    empty_span_after_curly_brace,
+                                    "else { ".to_string() + &stmt_str + " }",
+                                )
                             }
-
-                            return;
+                        } else {
+                            // while !p.is_null() {}
+                            // while loop always has false branch, to hold { break; }
+                            // its span for some reason is the whole loop expression
+                            let span = false_branch.unwrap().span.shrink_to_hi();
+                            self.rewriter.replace(self.tcx, span, stmt_str);
                         }
+
+                        return;
                     }
                     _ => {}
                 }
