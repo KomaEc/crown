@@ -187,7 +187,7 @@ unsafe fn g() {
     *p = malloc(4u64) as *mut i32;
     let mut q = f(p);
     free(*q as *mut ());
-    free(p as *mut ());
+    free(q as *mut ());
 }";
     run_compiler(PROGRAM.into(), |program| {
         let mutability_result =

@@ -4,8 +4,8 @@
 
 use rustc_index::{bit_set::BitSet, IndexVec};
 use rustc_middle::mir::{
-    visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor},
-    Body, Local, Location, Place, Rvalue,
+    visit::{MutatingUseContext, PlaceContext, Visitor},
+    Body, Local, Location, Place, Rvalue, Statement, StatementKind,
 };
 
 pub type Copies = BitSet<Local>;
@@ -18,15 +18,15 @@ pub fn collect_copies(body: &Body) -> Copies {
 
     let mut unique_def = IndexVec::from_elem_n(None, body.local_decls.len());
     UniqueDef(&mut unique_def).visit_body(body);
-    let mut unique_simple_use = IndexVec::from_elem_n(None, body.local_decls.len());
-    UniqueSimpleUse(&mut unique_simple_use).visit_body(body);
+    let mut mentioned = IndexVec::from_elem_n(0, body.local_decls.len());
+    Mentioned(&mut mentioned).visit_body(body);
     let mut simple_copies = BitSet::new_empty(body.local_decls.len());
-    for ((local, def), simple_use) in unique_def
+    for ((local, def), count) in unique_def
         .into_iter_enumerated()
-        .zip(unique_simple_use.into_iter())
+        .zip(mentioned.into_iter())
         .skip(body.arg_count + 1)
     {
-        if let (Some(true), Some(true)) = (def, simple_use) {
+        if let (Some(true), 2) = (def, count) {
             simple_copies.insert(local);
         }
     }
@@ -70,32 +70,21 @@ impl Visitor<'_> for UniqueDef<'_> {
     }
 }
 
-struct UniqueSimpleUse<'this>(&'this mut IndexVec<Local, Option<bool>>);
+struct Mentioned<'this>(&'this mut IndexVec<Local, usize>);
 
-impl Visitor<'_> for UniqueSimpleUse<'_> {
-    fn visit_local(&mut self, local: Local, context: PlaceContext, location: Location) {
-        if let PlaceContext::NonMutatingUse(
-            NonMutatingUseContext::Move | NonMutatingUseContext::Copy,
-        ) = context
-        {
-            self.visit_place(&Place::from(local), context, location)
-        }
+impl Visitor<'_> for Mentioned<'_> {
+    fn visit_local(&mut self, local: Local, _: PlaceContext, _: Location) {
+        self.0[local] += 1;
     }
 
-    fn visit_place(&mut self, place: &Place<'_>, context: PlaceContext, _: Location) {
-        if place.as_local().is_some()
-            && matches!(
-                context,
-                PlaceContext::NonMutatingUse(
-                    NonMutatingUseContext::Move | NonMutatingUseContext::Copy
-                )
-            )
-        {
-            match self.0[place.local] {
-                Some(true) => self.0[place.local] = Some(false),
-                Some(false) => {}
-                None => self.0[place.local] = Some(true),
-            }
+    fn visit_place(&mut self, place: &Place<'_>, _: PlaceContext, _: Location) {
+        self.0[place.local] += 1;
+    }
+
+    fn visit_statement(&mut self, statement: &Statement<'_>, location: Location) {
+        if let StatementKind::StorageDead(..) | StatementKind::StorageLive(..) = statement.kind {
+            return;
         }
+        self.super_statement(statement, location);
     }
 }

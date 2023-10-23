@@ -230,7 +230,7 @@ where
         }
     }
 
-    fn readonly_borrow(&mut self, path: &Path<ExpandedBase>, ty: Ty<'tcx>) {
+    fn unknown_sink(&mut self, path: &Path<ExpandedBase>, ty: Ty<'tcx>) {
         let depth = path.depth();
         let path = path.transpose();
         let use_tokens = ownership_tokens(&path.r#use, depth, &self.ctxt.access_paths, ty);
@@ -238,9 +238,21 @@ where
         for (x, y) in use_tokens.zip(def_tokens) {
             self.ctxt
                 .database
-                .add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
+                .add(Constraint::LessEqual { x: y, y: x }, &mut self.ctxt.storage);
         }
     }
+
+    // fn unknown_sink(&mut self, path: &Path<ExpandedBase>, ty: Ty<'tcx>) {
+    //     let depth = path.depth();
+    //     let path = path.transpose();
+    //     let use_tokens = ownership_tokens(&path.r#use, depth, &self.ctxt.access_paths, ty);
+    //     let def_tokens = ownership_tokens(&path.def, depth, &self.ctxt.access_paths, ty);
+    //     for (x, y) in use_tokens.zip(def_tokens) {
+    //         self.ctxt
+    //             .database
+    //             .add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
+    //     }
+    // }
 
     fn transfer(&mut self, path1: &Path<ExpandedBase>, path2: &Path<ExpandedBase>, ty: Ty<'tcx>) {
         tracing::debug!("transfer constraint: {path1:?} = {path2:?}");
@@ -340,7 +352,7 @@ where
                     .and_then(|place| self.path(&place, location))
                     .map(|path| self.expand(&path))
                 {
-                    self.readonly_borrow(&rhs, operand.ty(self.body, self.tcx));
+                    self.unknown_sink(&rhs, operand.ty(self.body, self.tcx));
                 }
             }
             return;
