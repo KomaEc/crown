@@ -71,8 +71,7 @@ where
                         false_branch.map(|false_branch| intravisit::walk_expr(self, false_branch));
 
                         let ptr_name = rustc_hir_pretty::id_to_string(&self.tcx.hir(), ptr.hir_id);
-                        let stmt_str =
-                                format!("crown_annotation::unconstrained({ptr_name});");
+                        let stmt_str = format!("crown_annotation::unconstrained({ptr_name});");
 
                         if sign {
                             self.insert_to_branch(stmt_str, truth_branch);
