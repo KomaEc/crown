@@ -230,6 +230,18 @@ where
         }
     }
 
+    fn readonly_borrow(&mut self, path: &Path<ExpandedBase>, ty: Ty<'tcx>) {
+        let depth = path.depth();
+        let path = path.transpose();
+        let use_tokens = ownership_tokens(&path.r#use, depth, &self.ctxt.access_paths, ty);
+        let def_tokens = ownership_tokens(&path.def, depth, &self.ctxt.access_paths, ty);
+        for (x, y) in use_tokens.zip(def_tokens) {
+            self.ctxt
+                .database
+                .add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
+        }
+    }
+
     fn transfer(&mut self, path1: &Path<ExpandedBase>, path2: &Path<ExpandedBase>, ty: Ty<'tcx>) {
         tracing::debug!("transfer constraint: {path1:?} = {path2:?}");
         let min_depth = std::cmp::min(path1.depth(), path2.depth());
@@ -313,9 +325,24 @@ where
     }
 
     fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, location: Location) {
+        let lhs = self.path(place, location).map(|path| self.expand(&path));
+
         // expand the path directly as it must be a definition
-        let Some(lhs) = self.path(place, location).map(|path| self.expand(&path)) else {
-            // if `lhs` is not a pointer, then `rhs` is unconstrained
+        let Some(lhs) = lhs else {
+            let ty = place.ty(self.body, self.tcx).ty;
+            if ty.is_any_ptr() {
+                return;
+            }
+            // `lhs` is not a pointer
+            if let Rvalue::Cast(_, operand, _) = rvalue {
+                if let Some(rhs) = operand
+                    .place()
+                    .and_then(|place| self.path(&place, location))
+                    .map(|path| self.expand(&path))
+                {
+                    self.readonly_borrow(&rhs, operand.ty(self.body, self.tcx));
+                }
+            }
             return;
         };
         let ty = place.ty(self.body, self.tcx).ty;
