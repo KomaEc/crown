@@ -8,6 +8,7 @@ use rustc_middle::{
     ty::{Ty, TyCtxt},
 };
 use rustc_span::def_id::DefId;
+use rustc_type_ir::TyKind;
 use smallvec::SmallVec;
 use utils::compiler_interface::Program;
 
@@ -16,6 +17,7 @@ use self::{
     constraint::{Database, OwnershipToken, StorageMode, Z3Database},
     copies::Copies,
     inference::Intraprocedural,
+    ty_summary::TySummary,
 };
 use super::{
     def_use::{
@@ -25,7 +27,8 @@ use super::{
     LocalMap, SSAIdx,
 };
 use crate::{
-    call_graph::CallGraph, flow::ownership::constraint::Constraint,
+    call_graph::CallGraph,
+    flow::ownership::{constraint::Constraint, ty_summary::unwrap_pointers},
     type_qualifier::output_params::OutputParams,
 };
 
@@ -36,6 +39,7 @@ mod inference;
 pub mod copies;
 #[cfg(test)]
 mod tests;
+mod ty_summary;
 
 pub fn analyse(program: &Program, output_params: &OutputParams) -> AnalysisResult {
     let config = z3::Config::new();
@@ -58,12 +62,16 @@ pub struct AnalysisResult {
     access_paths: AccessPaths,
     fn_sigs: FnMap<FnSig<OwnershipToken>>,
     body_summaries: FnMap<BodySummary>,
+    ty_summaries: StructMap<TySummary>,
 }
 
 impl AnalysisResult {
     pub fn fn_sig_str(&self, body: &Body) -> String {
         let fn_sig = &self.fn_sigs[&body.source.def_id()];
         let k_limit = fn_sig.k_limit;
+        if k_limit == 0 {
+            return "() ->".to_owned();
+        }
         let inputs = fn_sig
             .inputs
             .iter()
@@ -74,9 +82,17 @@ impl AnalysisResult {
                 match param {
                     Param::Normal(token) => self.ownership_type_str(token, ty, k_limit),
                     Param::Output(Update { r#use, def }) => format!(
-                        "{} \u{2193} {}",
-                        self.ownership_type_str(r#use, ty, k_limit),
-                        self.ownership_type_str(def, ty, k_limit)
+                        "&mut {} \u{2193} &mut {}",
+                        self.ownership_type_str(
+                            r#use + 1u32,
+                            ty.builtin_deref(true).unwrap().ty,
+                            k_limit - 1
+                        ),
+                        self.ownership_type_str(
+                            def + 1u32,
+                            ty.builtin_deref(true).unwrap().ty,
+                            k_limit - 1
+                        )
                     ),
                 }
             })
@@ -175,6 +191,32 @@ impl AnalysisResult {
         ret
     }
 
+    pub fn ty_summary_str(&self, def_id: DefId, tcx: TyCtxt) -> String {
+        use std::fmt::Write as _;
+        let mut ret = String::new();
+
+        writeln!(&mut ret, "{} {{", tcx.def_path_str(def_id)).unwrap();
+        let ty_summary = self.ty_summaries.get(&def_id).unwrap();
+        let TyKind::Adt(adt_def, arg) = tcx.type_of(def_id).skip_binder().kind() else {
+            unreachable!()
+        };
+        for (field_def, field_summary) in
+            adt_def.all_fields().zip(ty_summary.fields.iter().copied())
+        {
+            let field_ty = field_def.ty(tcx, arg);
+            let (num_wrapping_pointers, _) = unwrap_pointers(field_ty);
+            writeln!(
+                &mut ret,
+                "    {}: {}",
+                field_def.ident(tcx),
+                self.ownership_type_str(field_summary, field_ty, num_wrapping_pointers)
+            )
+            .unwrap();
+        }
+        writeln!(&mut ret, "}}").unwrap();
+        ret
+    }
+
     pub fn ownership_type_str(
         &self,
         start_token: OwnershipToken,
@@ -184,10 +226,16 @@ impl AnalysisResult {
         let size = self.access_paths.size_of(k_limit, ty);
         let ownership_type = (start_token..start_token + size)
             // .map(|token| format!("{token} = {:?}", self.model[token]))
-            .map(|token| format!("{:?}", self.model[token]))
+            .map(|token| {
+                match self.model[token] {
+                    Ownership::Owning => "&move",
+                    Ownership::Transient => "&",
+                }
+                .to_owned()
+            })
             .collect::<Vec<_>>()
-            .join(", ");
-        format!("[{ownership_type}]")
+            .join(" ");
+        format!("{ownership_type}")
         // format!("{:?}", ownership_type)
     }
 }
@@ -223,6 +271,15 @@ macro_rules! into_view {
 
 impl<'z3, Mode: StorageMode> Interprocedural<Mode, Z3Database<'z3>> {
     pub fn run(mut self, tcx: TyCtxt) -> AnalysisResult {
+        let mut ty_summaries = StructMap::default();
+        for &def_id in self.access_paths.post_order() {
+            ty_summaries.insert(
+                def_id,
+                TySummary::new::<Mode, _>(def_id, &mut self.database, tcx),
+            );
+        }
+        let mut inter_view: InterproceduralView<'_, Mode, _> = into_view!(self);
+        inter_view.summarise_types(&ty_summaries, &self.call_graph, tcx);
         let mut body_summaries = FnMap::default();
         for &def_id in self.call_graph.fns() {
             let body = tcx.optimized_mir(def_id);
@@ -271,6 +328,7 @@ impl<'z3, Mode: StorageMode> Interprocedural<Mode, Z3Database<'z3>> {
             access_paths: self.access_paths,
             fn_sigs: self.fn_sigs,
             body_summaries,
+            ty_summaries,
         }
     }
 
@@ -422,6 +480,8 @@ impl<T> Param<T> {
         }
     }
 }
+
+pub type StructMap<T> = FxHashMap<DefId, T>;
 
 fn flow_chain<'tcx>(
     body: &Body<'tcx>,

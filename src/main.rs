@@ -264,10 +264,13 @@ fn run(cmd: Command, input: Program<'_>) -> Result<()> {
                 &mutability_result,
             );
             let analysis_result = analysis::flow::ownership::analyse(&input, &output_params);
-            for body in input.bodies() {
-                print!("{}: ", input.tcx.def_path_str(body.source.def_id()));
-                println!("{}", analysis_result.body_summary_str(body));
+            for &def_id in &input.structs {
+                println!("{}", analysis_result.ty_summary_str(def_id, input.tcx));
             }
+            // for body in input.bodies() {
+            //     print!("{}: ", input.tcx.def_path_str(body.source.def_id()));
+            //     println!("{}", analysis_result.body_summary_str(body));
+            // }
             for body in input.bodies() {
                 print!("{}: ", input.tcx.def_path_str(body.source.def_id()));
                 println!("{}", analysis_result.fn_sig_str(body));

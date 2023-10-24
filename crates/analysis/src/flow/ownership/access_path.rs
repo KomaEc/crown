@@ -127,7 +127,7 @@ impl<const MAX_K_LIMIT: usize> AccessPaths<MAX_K_LIMIT> {
         &self.post_order.raw
     }
 
-    fn offsets_of(&self, depth: usize, did: DefId) -> &[usize] {
+    pub fn offsets_of(&self, depth: usize, did: DefId) -> &[usize] {
         assert!(depth <= MAX_K_LIMIT);
         self.offsets.offsets_of(depth, self.indices[&did])
     }
