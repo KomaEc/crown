@@ -7,7 +7,7 @@ use either::Either::{Left, Right};
 use rustc_middle::{
     mir::{
         visit::Visitor, AggregateKind, BasicBlock, BasicBlockData, BinOp, Body, BorrowKind, Local,
-        Location, Operand, Place, Rvalue, Statement, StatementKind, Terminator, TerminatorKind,
+        Location, Place, Rvalue, Statement, StatementKind, Terminator, TerminatorKind,
         RETURN_PLACE,
     },
     ty::{Ty, TyCtxt},
@@ -203,33 +203,6 @@ where
         })
     }
 
-    /// path1 = move path2
-    fn r#move(&mut self, path1: &Path<ExpandedBase>, path2: &Path<ExpandedBase>, ty: Ty<'tcx>) {
-        tracing::debug!("move constraint: {path1:?} = move {path2:?}");
-        let min_depth = std::cmp::min(path1.depth(), path2.depth());
-        let path1 = path1.transpose();
-        let path2 = path2.transpose();
-        for x in ownership_tokens(&path1.r#use, min_depth, &self.ctxt.access_paths, ty) {
-            self.ctxt.database.add(
-                Constraint::Assume { x, sign: false },
-                &mut self.ctxt.storage,
-            )
-        }
-        for (x, y) in ownership_tokens(&path1.def, min_depth, &self.ctxt.access_paths, ty).zip(
-            ownership_tokens(&path2.r#use, min_depth, &self.ctxt.access_paths, ty),
-        ) {
-            self.ctxt
-                .database
-                .add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
-        }
-        for x in ownership_tokens(&path2.def, min_depth, &self.ctxt.access_paths, ty) {
-            self.ctxt.database.add(
-                Constraint::Assume { x, sign: false },
-                &mut self.ctxt.storage,
-            )
-        }
-    }
-
     fn unknown_sink(&mut self, path: &Path<ExpandedBase>, ty: Ty<'tcx>) {
         let depth = path.depth();
         let path = path.transpose();
@@ -241,18 +214,6 @@ where
                 .add(Constraint::LessEqual { x: y, y: x }, &mut self.ctxt.storage);
         }
     }
-
-    // fn unknown_sink(&mut self, path: &Path<ExpandedBase>, ty: Ty<'tcx>) {
-    //     let depth = path.depth();
-    //     let path = path.transpose();
-    //     let use_tokens = ownership_tokens(&path.r#use, depth, &self.ctxt.access_paths, ty);
-    //     let def_tokens = ownership_tokens(&path.def, depth, &self.ctxt.access_paths, ty);
-    //     for (x, y) in use_tokens.zip(def_tokens) {
-    //         self.ctxt
-    //             .database
-    //             .add(Constraint::Equal { x, y }, &mut self.ctxt.storage)
-    //     }
-    // }
 
     fn transfer(&mut self, path1: &Path<ExpandedBase>, path2: &Path<ExpandedBase>, ty: Ty<'tcx>) {
         tracing::debug!("transfer constraint: {path1:?} = {path2:?}");
@@ -360,37 +321,22 @@ where
         let ty = place.ty(self.body, self.tcx).ty;
         match rvalue {
             // cast is unsafe anyway
-            Rvalue::Use(operand) | Rvalue::Cast(_, operand, _) => match operand {
-                Operand::Copy(rhs) => {
-                    let Some(rhs) = self.path(rhs, location).map(|path| self.expand(&path)) else {
-                        // if `rhs` is not a pointer, then `lhs` is unconstrained
-                        return;
-                    };
-                    if place
-                        .as_local()
-                        .is_some_and(|local| self.copies.contains(local))
-                    {
-                        self.copy(&lhs, &rhs, ty);
-                    } else {
-                        self.transfer(&lhs, &rhs, ty);
-                    }
+            Rvalue::Use(operand) | Rvalue::Cast(_, operand, _) => {
+                let Some(rhs) = operand
+                    .place()
+                    .and_then(|rhs| self.path(&rhs, location).map(|path| self.expand(&path)))
+                else {
+                    return;
+                };
+                if place
+                    .as_local()
+                    .is_some_and(|local| self.copies.contains(local))
+                {
+                    self.copy(&lhs, &rhs, ty);
+                } else {
+                    self.transfer(&lhs, &rhs, ty);
                 }
-                Operand::Move(rhs) => {
-                    let Some(rhs) = self.path(rhs, location).map(|path| self.expand(&path)) else {
-                        // if `rhs` is not a pointer, then `lhs` is unconstrained
-                        return;
-                    };
-                    if place
-                        .as_local()
-                        .is_some_and(|local| self.copies.contains(local))
-                    {
-                        self.copy(&lhs, &rhs, ty);
-                    } else {
-                        self.r#move(&lhs, &rhs, ty);
-                    }
-                }
-                Operand::Constant(_) => return,
-            },
+            }
             Rvalue::Repeat(_, _) => todo!(),
             Rvalue::Ref(_, BorrowKind::Mut { .. } | BorrowKind::Shared, pointee)
             | Rvalue::AddressOf(_, pointee) => {
@@ -494,11 +440,8 @@ where
             }
             TerminatorKind::Return => {
                 // nullify all pointer temporaries except `_0`
-                for (&(local, use_kind), local_decl) in self.flow_chain.uses[location]
-                    .iter()
-                    .zip(self.body.local_decls.iter())
-                {
-                    let ty = local_decl.ty;
+                for &(local, use_kind) in self.flow_chain.uses[location].iter() {
+                    let ty = self.body.local_decls[local].ty;
                     let ssa_idx = use_kind.inspect().unwrap();
                     let tokens = self.tokens[local][ssa_idx];
                     let size = self

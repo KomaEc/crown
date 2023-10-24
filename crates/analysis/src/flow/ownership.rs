@@ -183,7 +183,8 @@ impl AnalysisResult {
     ) -> String {
         let size = self.access_paths.size_of(k_limit, ty);
         let ownership_type = (start_token..start_token + size)
-            .map(|token| format!("{token} = {:?}", self.model[token]))
+            // .map(|token| format!("{token} = {:?}", self.model[token]))
+            .map(|token| format!("{:?}", self.model[token]))
             .collect::<Vec<_>>()
             .join(", ");
         format!("[{ownership_type}]")
