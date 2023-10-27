@@ -1,11 +1,12 @@
-use rustc_hir::TyKind;
+use rustc_hir::{Ty, TyKind};
 use rustc_lint::{LateContext, LateLintPass, LintContext};
+use rustc_lint_defs::Applicability;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::{declare_tool_lint, impl_lint_pass};
 use utils::compiler_interface::Program;
 
 use crate::{
-    flow::ownership::{analyse, AnalysisResult, Ownership},
+    flow::ownership::{analyse, constraint::OwnershipToken, AnalysisResult, Ownership},
     type_qualifier::{
         flow_insensitive::mutability::mutability_analysis, output_params::compute_output_params,
     },
@@ -31,6 +32,17 @@ impl RawPointerPermission {
         let analysis_result = analyse(&program, &output_params);
         Self { analysis_result }
     }
+
+    fn ownership_type(&self, start_token: OwnershipToken, mut ty: &Ty) -> Vec<Ownership> {
+        let mut ownership = vec![];
+        let mut token = start_token;
+        while let TyKind::Ptr(mut_ty) = ty.kind {
+            ownership.push(self.analysis_result.model[token]);
+            token += 1;
+            ty = mut_ty.ty;
+        }
+        ownership
+    }
 }
 
 impl LateLintPass<'_> for RawPointerPermission {
@@ -54,25 +66,45 @@ impl LateLintPass<'_> for RawPointerPermission {
                     .iter()
                     .zip(field_summaries.fields.iter().copied())
                 {
-                    let mut token = field_summary;
-                    let mut ownership = vec![];
-                    let mut ty = field_def.ty;
-                    while let TyKind::Ptr(mut_ty) = ty.kind {
-                        ownership.push(self.analysis_result.model[token]);
-                        token += 1;
-                        ty = mut_ty.ty;
-                    }
-
+                    let ownership = self.ownership_type(field_summary, field_def.ty);
                     if !ownership.is_empty()
                         && ownership
                             .iter()
                             .any(|&ownership| ownership == Ownership::Owning)
                     {
+                        let mut suggestions = vec![];
+                        let inner_span = {
+                            let mut ty = field_def.ty;
+                            loop {
+                                let TyKind::Ptr(mut_ty) = ty.kind else {
+                                    break ty.span;
+                                };
+                                ty = mut_ty.ty;
+                            }
+                        };
+                        let inner_repr = cx.tcx.sess.source_map().span_to_snippet(inner_span).unwrap();
+
+                        let mut type_str = inner_repr;
+                        for ownership in ownership.into_iter().rev() {
+                            type_str = match ownership {
+                                Ownership::Owning => format!("Option<Box<{}>>", type_str),
+                                Ownership::Transient => format!("*mut {}", type_str),
+                            }
+                        }
+
+                        suggestions.push((field_def.ty.span, type_str));
+
                         cx.struct_span_lint(
                             RAW_POINTER_PERMISSION,
                             field_def.span,
-                            format!("The permissions of this field are {:?}", ownership),
-                            |diag| diag,
+                            "pointer permissions".to_owned(),
+                            |diag| {
+                                diag.multipart_suggestion(
+                                    "try using a better type",
+                                    suggestions,
+                                    Applicability::MaybeIncorrect,
+                                )
+                            },
                         );
                     }
                 }

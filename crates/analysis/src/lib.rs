@@ -34,6 +34,7 @@ extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
+extern crate rustc_lint_defs;
 
 pub mod body_ext;
 mod call_graph;
