@@ -89,11 +89,6 @@ where
     ) -> Self {
         let copies = collect_copies(body);
         let flow_chain = flow_chain(body, &copies, &ctxt.access_paths, k_limit);
-        crate::flow::def_use::display_def_use_chain(body, &flow_chain);
-        // println!("set of copies: {copies:?}");
-        // for &(local, _) in flow_chain.join_points.iter().flat_map(|bb_data| bb_data.iter()) {
-        //     assert!(!copies.contains(local), "copy variable {local:?} appears in a phi node");
-        // }
         use utils::data_structure::vec_vec::VecVec;
         let mut map = VecVec::with_indices_capacity(body.local_decls.len() + 1);
 

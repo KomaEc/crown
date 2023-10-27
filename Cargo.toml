@@ -32,6 +32,7 @@ tracing = "0.1.32"
 tracing-subscriber = { version = "0.3.10", features = ["env-filter"] }
 anyhow = "1.0"
 cli-table = "0.4"
+rustc-tools = "0.3.0"
 
 
 [build-dependencies]

@@ -18,7 +18,7 @@ use crate::{
 };
 
 pub struct TySummary {
-    pub(super) fields: IndexVec<FieldIdx, OwnershipToken>,
+    pub fields: IndexVec<FieldIdx, OwnershipToken>,
 }
 
 impl TySummary {

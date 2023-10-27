@@ -135,8 +135,6 @@ fn compiler_args() -> Vec<String> {
             _ => continue,
         })
     }
-    args.push("--cap-lints".to_owned());
-    args.push("allow".to_owned());
     args
 }
 

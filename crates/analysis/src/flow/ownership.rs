@@ -58,11 +58,11 @@ pub enum Ownership {
 }
 
 pub struct AnalysisResult {
-    model: IndexVec<OwnershipToken, Ownership>,
+    pub model: IndexVec<OwnershipToken, Ownership>,
     access_paths: AccessPaths,
-    fn_sigs: FnMap<FnSig<OwnershipToken>>,
+    pub fn_sigs: FnMap<FnSig<OwnershipToken>>,
     body_summaries: FnMap<BodySummary>,
-    ty_summaries: StructMap<TySummary>,
+    pub ty_summaries: StructMap<TySummary>,
 }
 
 impl AnalysisResult {
