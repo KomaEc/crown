@@ -404,9 +404,9 @@ pub type FnMap<T> = FxHashMap<DefId, T>;
 
 #[derive(Clone, Debug)]
 pub struct FnSig<T> {
-    k_limit: usize,
-    output: T,
-    inputs: SmallVec<[Param<T>; 3]>,
+    pub k_limit: usize,
+    pub output: T,
+    pub inputs: SmallVec<[Param<T>; 3]>,
 }
 
 impl FnSig<OwnershipToken> {
@@ -466,14 +466,14 @@ pub enum Param<T> {
 }
 
 impl<T> Param<T> {
-    fn input(self) -> T {
+    pub fn input(self) -> T {
         match self {
             Param::Normal(t) => t,
             Param::Output(update) => update.r#use,
         }
     }
 
-    fn output(self) -> Option<T> {
+    pub fn output(self) -> Option<T> {
         match self {
             Param::Normal(_) => None,
             Param::Output(update) => Some(update.def),
