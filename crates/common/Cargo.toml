@@ -9,7 +9,7 @@ edition = "2021"
 rustc_private = true
 
 [dependencies]
-clap = { version = "4.1", features = ["derive"] }
+clap = { version = "<=4.1.14", features = ["derive"] }
 smallvec = { version = "1.9.0", features = ["union", "const_generics"] }
 petgraph = "0.6"
 static_assertions = "1.1.0"
