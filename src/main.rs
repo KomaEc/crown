@@ -18,7 +18,7 @@ extern crate rustc_target;
 use std::{
     fs,
     path::{Path, PathBuf},
-    time::Instant,
+    time::Instant, collections::HashMap,
 };
 
 use analysis::{ownership::AnalysisKind, CrateCtxt};
@@ -86,6 +86,10 @@ enum Command {
     ShowMir {
         #[clap(long, short)]
         function: Option<String>,
+    },
+    Summarise {
+        #[clap(long)]
+        results_path: Option<PathBuf>,
     },
 }
 
@@ -443,6 +447,46 @@ fn run(cmd: Command, tcx: TyCtxt<'_>) -> Result<()> {
                 &mutability_result,
             );
         }
+        Command::Summarise {
+            results_path,
+        } => {
+            #[derive(serde::Serialize, Default)]
+            struct TranslationSummary {
+                fn_data: HashMap<String, String>,
+                struct_data: HashMap<String, String>,
+            }
+
+            let mut summary = TranslationSummary::default();
+
+            for maybe_owner in tcx.hir().krate().owners.iter() {
+                let Some(owner) = maybe_owner.as_owner() else { continue };
+                let OwnerNode::Item(item) = owner.node() else { continue };
+                match item.kind {
+                    ItemKind::Fn(..) => {
+                        let def_id = item.owner_id.def_id.to_def_id();
+                        let name = tcx.def_path_str(def_id);
+                        let span = item.span;
+                        let translation = common::rewrite::get_snippet(tcx, span).text.1;
+                        summary.fn_data.insert(name, translation);
+                    }
+                    ItemKind::Struct(..) => {
+                        let def_id = item.owner_id.def_id.to_def_id();
+                        let name = tcx.def_path_str(def_id);
+                        let span = item.span;
+                        let translation = common::rewrite::get_snippet(tcx, span).text.1;
+                        summary.struct_data.insert(name, translation);
+                    }
+                    _ => {}
+                };
+            }
+
+            let summary = serde_json::to_string(&summary)?;
+
+            if let Some(results_path) = results_path {
+                fs::write(results_path.join("translation.json"), summary)?;
+            }
+
+        },
     }
     Ok(())
 }

@@ -27,7 +27,7 @@ cp -r $BENCHMARK $WORKSPACE
 
 CROWN="$PROJ_DIR/target/release/crown"
 
-RUSTC_PATH=$(rustc --print sysroot)/lib
+RUSTC_PATH=$(rustc +nightly-2023-01-26 --print sysroot)/lib
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     # add rustc lib to dyld path
@@ -63,4 +63,5 @@ for f in $(find $WORKSPACE -name "Cargo.toml"); do
         mkdir -p $BENCH_DIR/analysis_results
     fi
     $CROWN $ENTRY rewrite --results-path $BENCH_DIR/analysis_results $OPTIONS in-place || { echo "rewrite $f crashed" ; exit 1; }
+    $CROWN $ENTRY summarise --results-path $BENCH_DIR/analysis_results
 done
