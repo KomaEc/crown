@@ -5,3 +5,5 @@ __Crown__ serves as an ownership analysis tool dedicated for unsafe Rust code (t
 ```shell
 brew install pkg-config openssl cmake
 ```
+
+For an old version with full instructions on how to build/use the tool, please check out the [__artifact__ branch](https://github.com/KomaEc/crown/tree/artifact)
