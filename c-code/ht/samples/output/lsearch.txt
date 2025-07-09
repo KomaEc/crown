@@ -1,1 +1,0 @@
-linear_search: value of 'bob' is 11

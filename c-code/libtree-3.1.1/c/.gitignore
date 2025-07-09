@@ -1,6 +1,0 @@
-*.o
-*.so
-exe*
-libtree
-*.swp
-Make.user

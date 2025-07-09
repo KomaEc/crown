@@ -1,10 +1,5 @@
-[workspace]
-members = [ "crates/analyses",
-    "crates/utils",
-]
-
 [package]
-name = "crown"
+name = "analyses"
 version = "0.1.0"
 edition = "2024"
 
@@ -12,3 +7,4 @@ edition = "2024"
 rustc_private = true
 
 [dependencies]
+utils = { path = "../utils" }
