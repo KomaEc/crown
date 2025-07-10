@@ -2,7 +2,7 @@ use rustc_middle::mir::{HasLocalDecls, Operand, Place};
 use rustc_span::{source_map::Spanned, symbol::Ident};
 
 use super::{EnsureNoDeref, MutabilityLikeAnalysis, conservative_call};
-use crate::pointer_qualifier::foster::{
+use crate::type_qualifier::foster::{
     ConstraintSystem, StructFields, Var, WithConstraintSystem,
     mutability::{MutCtxt, place_vars},
 };

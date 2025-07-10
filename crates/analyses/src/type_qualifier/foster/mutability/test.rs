@@ -1,12 +1,29 @@
-#![feature(rustc_private)]
-
-use std::path::PathBuf;
-
-use analyses::type_qualifier::mutability_analysis;
 use utils::similar;
 
-extern crate rustc_driver;
+use crate::type_qualifier::mutability_analysis;
 
+#[test]
+fn regression_mutability_libtree() {
+    utils::rustc::run_compiler(
+        utils::rustc::SourceCode::Libtree,
+        |program| {
+            let mutability_result = mutability_analysis(&program);
+            let pretty = mutability_result.pretty(program.tcx);
+
+            let diff = similar::TextDiff::from_lines(GROUND_TRUTH, &pretty);
+
+            for change in diff.iter_all_changes() {
+                match change.tag() {
+                    similar::ChangeTag::Delete => assert!(false),
+                    similar::ChangeTag::Insert => assert!(false),
+                    similar::ChangeTag::Equal => continue,
+                };
+            }
+        },
+    )
+}
+
+/// This is the ground truth obtained by the previous version of crown
 const GROUND_TRUTH: &str = "src::libtree::apply_exclude_list: (&read_write, &read_write, &read) -> 
 src::libtree::check_absolute_paths: (&read_write, &read_write, , &read_write, ) -> 
 src::libtree::check_search_paths: (, , &read_write, &read_write, , &read_write, ) -> 
@@ -219,25 +236,3 @@ src::libtree::visited_file_t {
   st_dev: ,
   st_ino: ,
 }";
-
-fn main() {
-    utils::rustc::run_compiler(
-        PathBuf::from("/Users/pd21541/Research/crown-dev/crown/workspace/libtree/lib.rs"),
-        |program| {
-            let mutability_result = mutability_analysis(&program);
-            let pretty = mutability_result.pretty(program.tcx);
-            // println!("{}", mutability_result.pretty(program.tcx));
-
-            let diff = similar::TextDiff::from_lines(GROUND_TRUTH, &pretty);
-
-            for change in diff.iter_all_changes() {
-                let sign = match change.tag() {
-                    similar::ChangeTag::Delete => "-",
-                    similar::ChangeTag::Insert => "+",
-                    similar::ChangeTag::Equal => continue,
-                };
-                print!("{}{}", sign, change);
-            }
-        },
-    )
-}

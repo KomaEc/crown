@@ -14,8 +14,10 @@ pub use anyhow;
 pub use itertools;
 pub use petgraph;
 pub use rustc_hash;
+pub use similar;
 pub use smallvec;
 pub use tracing;
 
 pub mod dsa;
+pub mod libtree;
 pub mod rustc;

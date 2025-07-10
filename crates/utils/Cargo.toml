@@ -11,5 +11,6 @@ anyhow = "1.0.98"
 itertools = "0.14.0"
 petgraph = "0.8.2"
 rustc-hash = "2.1.1"
+similar = "2.7.0"
 smallvec = { version = "1.15.1", features = ["union", "const_generics", "const_new", "arbitrary", "specialization", "serde"] }
 tracing = "0.1.41"

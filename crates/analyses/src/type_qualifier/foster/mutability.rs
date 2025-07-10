@@ -1,5 +1,7 @@
 mod libc;
 mod library;
+#[cfg(test)]
+mod test;
 
 use std::ops::Range;
 
@@ -16,7 +18,7 @@ use utils::rustc::{CallKind, RustProgram};
 
 use crate::{
     lattice::Lattice,
-    pointer_qualifier::foster::{
+    type_qualifier::foster::{
         BooleanLattice, FnLocals, Infer, StructFields, TypeQualifiers, Var, WithConstraintSystem,
         constraint_system::BooleanSystem,
         mutability::{libc::libc_call, library::library_call},
@@ -25,7 +27,7 @@ use crate::{
 };
 use crate::{
     lattice::{HasBottom, HasTop},
-    pointer_qualifier::foster::constraint_system::ConstraintSystem,
+    type_qualifier::foster::constraint_system::ConstraintSystem,
 };
 
 pub fn mutability_analysis(rust_program: &RustProgram) -> MutabilityResult {

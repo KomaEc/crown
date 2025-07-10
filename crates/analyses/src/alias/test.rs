@@ -1,7 +1,7 @@
 use crate::alias::TaintResult;
 
 #[test]
-fn test1() {
+fn test_alias_simple_program() {
     const PROGRAM: &str = "
     struct S {
         f: *mut i32,
@@ -14,7 +14,7 @@ fn test1() {
     }
     fn main() {}
     ";
-    utils::rustc::run_compiler(PROGRAM.into(), |program| {
+    utils::rustc::run_compiler(PROGRAM, |program| {
         let input = program;
         let steensgaard = TaintResult::field_based(&input);
         // steensgaard.print_results();

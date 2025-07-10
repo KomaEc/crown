@@ -12,3 +12,5 @@ edition = "2024"
 rustc_private = true
 
 [dependencies]
+utils = { path = "crates/utils" }
+analyses = { path = "crates/analyses" }

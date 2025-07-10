@@ -13,4 +13,4 @@ extern crate rustc_type_ir;
 pub mod alias;
 mod encoding;
 pub mod lattice;
-pub mod pointer_qualifier;
+pub mod type_qualifier;

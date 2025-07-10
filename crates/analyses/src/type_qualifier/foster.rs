@@ -1,12 +1,14 @@
-//! Foster style type qualifier inference algorithm
+//! Foster style flow-insensitive type qualifier inference algorithm
 
 mod constraint_system;
 pub mod mutability;
+pub mod pp;
 
 use crate::encoding::{encode_fns, encode_structs};
-use crate::pointer_qualifier::foster::constraint_system::{
+use crate::type_qualifier::foster::constraint_system::{
     BooleanLattice, BooleanSystem, ConstraintSystem, Var,
 };
+use rustc_hir::def_id::DefId;
 use rustc_index::IndexVec;
 use rustc_middle::{
     mir::{
@@ -79,6 +81,20 @@ where
     }
 }
 
+impl<Qualifier: std::fmt::Display> TypeQualifiers<Qualifier> {
+    pub fn function_facts(&self, did: &DefId, tcx: TyCtxt) -> impl Iterator<Item = &[Qualifier]> {
+        let body = tcx.optimized_mir(*did);
+        self.fn_locals
+            .locals(did)
+            .take(body.arg_count + 1)
+            .map(|vars| &self.model[vars])
+    }
+
+    pub fn struct_facts(&self, did: &DefId) -> impl Iterator<Item = &[Qualifier]> {
+        self.struct_fields.fields(did).map(|vars| &self.model[vars])
+    }
+}
+
 pub fn resolve_body<'tcx, I, Domain>(
     database: &mut I::DB,
     result: &mut TypeQualifiers<Domain>,
@@ -107,6 +123,18 @@ pub fn resolve_body<'tcx, I, Domain>(
 pub trait WithConstraintSystem {
     type DB: ConstraintSystem;
 }
+
+// pub struct InferCtxt<'infer, D> {
+//     local_decls: &'infer D,
+//     locals: &'infer [Var],
+//     fn_locals: &'infer FnLocals,
+//     struct_fields: &'infer StructFields,
+// }
+
+// pub struct Analysis<'analysis, C: WithConstraintSystem, D> {
+//     database: &'analysis mut C::DB,
+//     ctxt: InferCtxt<'analysis, D>
+// }
 
 /// Why didn't I use a `mir::Visitor`?
 pub trait Infer<'tcx>: WithConstraintSystem {

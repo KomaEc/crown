@@ -46,7 +46,9 @@ impl CallKind {
 use rustc_driver::Callbacks;
 use rustc_interface::Config;
 use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+use crate::libtree::LibtreeCompiler;
 
 struct Text(String);
 
@@ -133,11 +135,55 @@ where
     }
 }
 
-pub fn run_compiler<F>(program: String, callback: F)
+pub enum SourceCode {
+    Text(String),
+    AbsolutePath(PathBuf),
+    Libtree,
+}
+
+impl From<PathBuf> for SourceCode {
+    fn from(value: PathBuf) -> Self {
+        SourceCode::AbsolutePath(value)
+    }
+}
+
+impl From<String> for SourceCode {
+    fn from(value: String) -> Self {
+        SourceCode::Text(value)
+    }
+}
+
+impl From<&str> for SourceCode {
+    fn from(value: &str) -> Self {
+        SourceCode::Text(value.to_string())
+    }
+}
+
+pub fn run_compiler<P, F>(program: P, callback: F)
 where
+    P: Into<SourceCode>,
     F: FnMut(RustProgram) + Send,
 {
-    compile_text(program, &mut WithRustProgram(callback));
+    match program.into() {
+        SourceCode::Text(text) => compile_text(text, &mut WithRustProgram(callback)),
+        SourceCode::AbsolutePath(path) => {
+            compile_absolute_path(path, &mut WithRustProgram(callback))
+        }
+        SourceCode::Libtree => compile_libtree(&mut WithRustProgram(callback)),
+    }
+}
+
+pub fn compile_libtree(callbacks: &mut (dyn Callbacks + Send)) {
+    rustc_driver::run_compiler(
+        &[
+            // The first argument, which in practice contains the name of the binary being executed
+            // (i.e. "rustc") is ignored by rustc.
+            "ignored".to_string(),
+            "--crate-type=lib".to_string(),
+            "lib.rs".to_string(),
+        ],
+        &mut LibtreeCompiler(callbacks),
+    );
 }
 
 pub fn compile_text(program: String, callbacks: &mut (dyn Callbacks + Send)) {
@@ -150,5 +196,19 @@ pub fn compile_text(program: String, callbacks: &mut (dyn Callbacks + Send)) {
             "lib.rs".to_string(),
         ],
         &mut TextCompiler(callbacks, program),
+    );
+}
+
+pub fn compile_absolute_path(program: PathBuf, callbacks: &mut (dyn Callbacks + Send)) {
+    rustc_driver::run_compiler(
+        &[
+            // The first argument, which in practice contains the name of the binary being executed
+            // (i.e. "rustc") is ignored by rustc.
+            "ignored".to_string(),
+            "--crate-type=lib".to_string(),
+            program.to_str().unwrap().to_string(),
+            "-Awarnings".to_string(),
+        ],
+        callbacks,
     );
 }
