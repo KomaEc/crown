@@ -43,7 +43,7 @@ pub fn mutability_analysis(rust_program: &RustProgram) -> MutabilityResult {
             tcx: rust_program.tcx,
         };
 
-        let mut analysis = MutabilityAnalysis2 {
+        let mut analysis = MutabilityAnalysis {
             ctxt,
             database: &mut database,
         };
@@ -130,12 +130,12 @@ impl Lattice for Mutability {
 
 impl BooleanLattice for Mutability {}
 
-pub struct MutabilityAnalysis2<'infer, 'tcx, D> {
+pub struct MutabilityAnalysis<'infer, 'tcx, D> {
     ctxt: InferCtxt<'infer, 'tcx, D>,
     database: &'infer mut BooleanSystem<Mutability>,
 }
 
-impl<'infer, 'tcx, D: HasLocalDecls<'tcx>> Visitor<'tcx> for MutabilityAnalysis2<'infer, 'tcx, D> {
+impl<'infer, 'tcx, D: HasLocalDecls<'tcx>> Visitor<'tcx> for MutabilityAnalysis<'infer, 'tcx, D> {
     fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, _location: Location) {
         let lhs = place;
         let rhs = rvalue;
