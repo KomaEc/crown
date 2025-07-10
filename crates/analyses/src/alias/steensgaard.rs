@@ -1,5 +1,6 @@
 mod constraint;
 pub mod location;
+pub mod pp;
 pub mod strategies;
 
 pub use location::AbstractLocation;
@@ -13,7 +14,9 @@ impl MemoryLocations {
     }
 
     pub(crate) fn memory_locations(&self, did: &DefId) -> &[AbstractLocation] {
-        &self.0.contents[self.0.did_idx[did]]
+        let locations = &self.0.contents[self.0.did_idx[did]];
+        &locations[..locations.len() - 1]
+        // &self.0.contents[self.0.did_idx[did]]
     }
 }
 

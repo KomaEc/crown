@@ -181,6 +181,7 @@ pub fn compile_libtree(callbacks: &mut (dyn Callbacks + Send)) {
             "ignored".to_string(),
             "--crate-type=lib".to_string(),
             "lib.rs".to_string(),
+            "-Awarnings".to_string(),
         ],
         &mut LibtreeCompiler(callbacks),
     );
@@ -194,6 +195,7 @@ pub fn compile_text(program: String, callbacks: &mut (dyn Callbacks + Send)) {
             "ignored".to_string(),
             "--crate-type=lib".to_string(),
             "lib.rs".to_string(),
+            "-Awarnings".to_string(),
         ],
         &mut TextCompiler(callbacks, program),
     );

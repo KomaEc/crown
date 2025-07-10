@@ -4,23 +4,20 @@ use crate::type_qualifier::mutability_analysis;
 
 #[test]
 fn regression_mutability_libtree() {
-    utils::rustc::run_compiler(
-        utils::rustc::SourceCode::Libtree,
-        |program| {
-            let mutability_result = mutability_analysis(&program);
-            let pretty = mutability_result.pretty(program.tcx);
+    utils::rustc::run_compiler(utils::rustc::SourceCode::Libtree, |program| {
+        let mutability_result = mutability_analysis(&program);
+        let pretty = mutability_result.pretty(program.tcx);
 
-            let diff = similar::TextDiff::from_lines(GROUND_TRUTH, &pretty);
+        let diff = similar::TextDiff::from_lines(GROUND_TRUTH, &pretty);
 
-            for change in diff.iter_all_changes() {
-                match change.tag() {
-                    similar::ChangeTag::Delete => assert!(false),
-                    similar::ChangeTag::Insert => assert!(false),
-                    similar::ChangeTag::Equal => continue,
-                };
-            }
-        },
-    )
+        for change in diff.iter_all_changes() {
+            match change.tag() {
+                similar::ChangeTag::Delete => assert!(false),
+                similar::ChangeTag::Insert => assert!(false),
+                similar::ChangeTag::Equal => continue,
+            };
+        }
+    })
 }
 
 /// This is the ground truth obtained by the previous version of crown

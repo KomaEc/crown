@@ -1,4 +1,4 @@
-use crate::alias::TaintResult;
+use crate::alias::{AliasResult, TaintResult};
 
 #[test]
 fn test_alias_simple_program() {
@@ -23,5 +23,14 @@ fn test_alias_simple_program() {
         let f = steensgaard.struct_fields.memory_location(&s, 0);
         let g = steensgaard.struct_fields.memory_location(&s, 1);
         assert!(steensgaard.pts_targets.equiv(pts[f], pts[g]))
+    })
+}
+
+/// TODO add some property based testing for libtree
+#[test]
+fn regression_alias_libtree_dont_crash() {
+    utils::rustc::run_compiler(utils::rustc::SourceCode::Libtree, |program| {
+        let _steensgaard = AliasResult::field_insensitive(&program);
+        // println!("{}", steensgaard.pretty(program.tcx));
     })
 }
