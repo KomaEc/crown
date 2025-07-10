@@ -18,6 +18,7 @@ rustc_index::newtype_index! {
 pub trait ConstraintSystem {
     type Domain: Lattice;
 
+    #[allow(dead_code)]
     fn top(&mut self, var: Var);
 
     fn bottom(&mut self, var: Var);

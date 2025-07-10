@@ -5,12 +5,9 @@ mod test;
 
 use std::ops::Range;
 
-use rustc_middle::{
-    mir::{
-        BinOp, HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator,
-        TerminatorKind,
-    },
-    ty::TyCtxt,
+use rustc_middle::mir::{
+    BinOp, HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator,
+    TerminatorKind, visit::Visitor,
 };
 use rustc_span::source_map::Spanned;
 use rustc_type_ir::TyKind;
@@ -19,10 +16,9 @@ use utils::rustc::{CallKind, RustProgram};
 use crate::{
     lattice::Lattice,
     type_qualifier::foster::{
-        BooleanLattice, FnLocals, Infer, StructFields, TypeQualifiers, Var, WithConstraintSystem,
+        BooleanLattice, InferCtxt, StructFields, TypeQualifiers, Var,
         constraint_system::BooleanSystem,
         mutability::{libc::libc_call, library::library_call},
-        resolve_body,
     },
 };
 use crate::{
@@ -35,13 +31,24 @@ pub fn mutability_analysis(rust_program: &RustProgram) -> MutabilityResult {
     let mut database = BooleanSystem::new(&result.model);
     for r#fn in &rust_program.functions {
         let body = rust_program.tcx.optimized_mir(*r#fn);
-        resolve_body(
-            &mut database,
-            &mut result,
-            MutabilityAnalysis,
-            body,
-            rust_program.tcx,
-        );
+        let locals = {
+            let idx = result.fn_locals.0.did_idx[&body.source.def_id()];
+            &result.fn_locals.0.contents[idx]
+        };
+        let ctxt = InferCtxt {
+            local_decls: body,
+            locals,
+            fn_locals: &result.fn_locals,
+            struct_fields: &result.struct_fields,
+            tcx: rust_program.tcx,
+        };
+
+        let mut analysis = MutabilityAnalysis2 {
+            ctxt,
+            database: &mut database,
+        };
+
+        analysis.visit_body(body);
     }
     database.greatest_model(&mut result.model);
     result
@@ -123,29 +130,24 @@ impl Lattice for Mutability {
 
 impl BooleanLattice for Mutability {}
 
-pub struct MutabilityAnalysis;
-
-pub trait MutabilityLikeAnalysis {}
-
-impl MutabilityLikeAnalysis for MutabilityAnalysis {}
-
-impl<M: MutabilityLikeAnalysis> WithConstraintSystem for M {
-    type DB = BooleanSystem<Mutability>;
+pub struct MutabilityAnalysis2<'infer, 'tcx, D> {
+    ctxt: InferCtxt<'infer, 'tcx, D>,
+    database: &'infer mut BooleanSystem<Mutability>,
 }
 
-impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
-    default fn infer_assign(
-        &mut self,
-        place: &Place<'tcx>,
-        rvalue: &Rvalue<'tcx>,
-        _location: Location,
-        local_decls: &impl HasLocalDecls<'tcx>,
-        locals: &[Var],
-        struct_fields: &StructFields,
-        database: &mut Self::DB,
-    ) {
+impl<'infer, 'tcx, D: HasLocalDecls<'tcx>> Visitor<'tcx> for MutabilityAnalysis2<'infer, 'tcx, D> {
+    fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, _location: Location) {
         let lhs = place;
         let rhs = rvalue;
+
+        let InferCtxt {
+            local_decls,
+            locals,
+            fn_locals: _,
+            struct_fields,
+            tcx: _,
+        } = self.ctxt;
+        let database = &mut self.database;
 
         match rhs {
             Rvalue::Use(Operand::Copy(rhs) | Operand::Move(rhs)) | Rvalue::CopyForDeref(rhs) => {
@@ -259,17 +261,16 @@ impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
         }
     }
 
-    default fn infer_terminator(
-        &mut self,
-        terminator: &Terminator<'tcx>,
-        _location: Location,
-        local_decls: &impl HasLocalDecls<'tcx>,
-        locals: &[Var],
-        fn_locals: &FnLocals,
-        struct_fields: &StructFields,
-        database: &mut Self::DB,
-        tcx: TyCtxt<'tcx>,
-    ) {
+    fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _location: Location) {
+        let InferCtxt {
+            local_decls,
+            locals,
+            fn_locals,
+            struct_fields,
+            tcx,
+        } = self.ctxt;
+        let database = &mut self.database;
+
         if let TerminatorKind::Call {
             func,
             args,
@@ -333,7 +334,7 @@ impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
                     }
                 }
                 CallKind::Extern(ident) => {
-                    libc_call::<Self>(
+                    libc_call(
                         destination,
                         args,
                         ident,
@@ -344,7 +345,7 @@ impl<'tcx, M: MutabilityLikeAnalysis> Infer<'tcx> for M {
                     );
                 }
                 CallKind::Library(callee) => {
-                    library_call::<Self>(
+                    library_call(
                         destination,
                         args,
                         callee,
@@ -460,13 +461,13 @@ fn place_vars<'tcx, Ctxt: PlaceContext>(
     place_vars
 }
 
-pub(crate) fn conservative_call<'tcx, M: MutabilityLikeAnalysis>(
+pub(crate) fn conservative_call<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
     let dest_var = place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
 

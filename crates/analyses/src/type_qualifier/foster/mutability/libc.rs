@@ -1,24 +1,25 @@
 use rustc_middle::mir::{HasLocalDecls, Operand, Place};
 use rustc_span::{source_map::Spanned, symbol::Ident};
 
-use super::{EnsureNoDeref, MutabilityLikeAnalysis, conservative_call};
+use super::{EnsureNoDeref, conservative_call};
 use crate::type_qualifier::foster::{
-    ConstraintSystem, StructFields, Var, WithConstraintSystem,
-    mutability::{MutCtxt, place_vars},
+    ConstraintSystem, StructFields, Var,
+    constraint_system::BooleanSystem,
+    mutability::{MutCtxt, Mutability, place_vars},
 };
 
-pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
+pub fn libc_call<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     callee: Ident,
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
     match callee.as_str() {
         "strlen" => {
-            return call_strlen::<M>(
+            return call_strlen(
                 destination,
                 args,
                 local_decls,
@@ -28,7 +29,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "strstr" => {
-            return call_strstr::<M>(
+            return call_strstr(
                 destination,
                 args,
                 local_decls,
@@ -38,7 +39,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "strcmp" | "strcasecmp" => {
-            return call_strcmp::<M>(
+            return call_strcmp(
                 destination,
                 args,
                 local_decls,
@@ -48,7 +49,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "strcat" => {
-            return call_strcat::<M>(
+            return call_strcat(
                 destination,
                 args,
                 local_decls,
@@ -58,7 +59,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "strncat" => {
-            return call_strncat::<M>(
+            return call_strncat(
                 destination,
                 args,
                 local_decls,
@@ -68,7 +69,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "memcpy" => {
-            return call_memcpy::<M>(
+            return call_memcpy(
                 destination,
                 args,
                 local_decls,
@@ -78,7 +79,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "memmove" => {
-            return call_memmove::<M>(
+            return call_memmove(
                 destination,
                 args,
                 local_decls,
@@ -88,7 +89,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "memset" => {
-            return call_memset::<M>(
+            return call_memset(
                 destination,
                 args,
                 local_decls,
@@ -98,7 +99,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "strchr" => {
-            return call_strchr::<M>(
+            return call_strchr(
                 destination,
                 args,
                 local_decls,
@@ -108,7 +109,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "strrchr" => {
-            return call_strrchr::<M>(
+            return call_strrchr(
                 destination,
                 args,
                 local_decls,
@@ -118,7 +119,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "strncmp" | "strncasecmp" => {
-            return call_strncmp::<M>(
+            return call_strncmp(
                 destination,
                 args,
                 local_decls,
@@ -128,7 +129,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "printf" | "fprintf" | "sprintf" => {
-            return call_printf::<M>(
+            return call_printf(
                 destination,
                 args,
                 local_decls,
@@ -138,7 +139,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "scanf" => {
-            return call_scanf::<1, M>(
+            return call_scanf::<1>(
                 destination,
                 args,
                 local_decls,
@@ -148,7 +149,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "fscanf" | "sscanf" => {
-            return call_scanf::<2, M>(
+            return call_scanf::<2>(
                 destination,
                 args,
                 local_decls,
@@ -158,7 +159,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
             );
         }
         "strdup" => {
-            return call_strdup::<M>(
+            return call_strdup(
                 destination,
                 args,
                 local_decls,
@@ -171,7 +172,7 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
         _ => {}
     }
 
-    conservative_call::<M>(
+    conservative_call(
         destination,
         args,
         local_decls,
@@ -181,13 +182,13 @@ pub fn libc_call<'tcx, M: MutabilityLikeAnalysis>(
     );
 }
 
-fn call_strlen<'tcx, M: MutabilityLikeAnalysis>(
+fn call_strlen<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -196,13 +197,13 @@ fn call_strlen<'tcx, M: MutabilityLikeAnalysis>(
     let _ = args;
 }
 
-fn call_strcmp<'tcx, M: MutabilityLikeAnalysis>(
+fn call_strcmp<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -211,13 +212,13 @@ fn call_strcmp<'tcx, M: MutabilityLikeAnalysis>(
     let _ = args;
 }
 
-fn call_strcat<'tcx, M: MutabilityLikeAnalysis>(
+fn call_strcat<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -243,15 +244,15 @@ fn call_strcat<'tcx, M: MutabilityLikeAnalysis>(
     }
 }
 
-fn call_strncat<'tcx, M: MutabilityLikeAnalysis>(
+fn call_strncat<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
-    call_memcpy::<M>(
+    call_memcpy(
         destination,
         args,
         local_decls,
@@ -261,13 +262,13 @@ fn call_strncat<'tcx, M: MutabilityLikeAnalysis>(
     );
 }
 
-fn call_strstr<'tcx, M: MutabilityLikeAnalysis>(
+fn call_strstr<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -295,13 +296,13 @@ fn call_strstr<'tcx, M: MutabilityLikeAnalysis>(
     }
 }
 
-fn call_memcpy<'tcx, M: MutabilityLikeAnalysis>(
+fn call_memcpy<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -327,15 +328,15 @@ fn call_memcpy<'tcx, M: MutabilityLikeAnalysis>(
     }
 }
 
-fn call_memmove<'tcx, M: MutabilityLikeAnalysis>(
+fn call_memmove<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
-    call_memcpy::<M>(
+    call_memcpy(
         destination,
         args,
         local_decls,
@@ -345,15 +346,15 @@ fn call_memmove<'tcx, M: MutabilityLikeAnalysis>(
     )
 }
 
-fn call_memset<'tcx, M: MutabilityLikeAnalysis>(
+fn call_memset<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
-    call_memcpy::<M>(
+    call_memcpy(
         destination,
         args,
         local_decls,
@@ -363,15 +364,15 @@ fn call_memset<'tcx, M: MutabilityLikeAnalysis>(
     )
 }
 
-fn call_strchr<'tcx, M: MutabilityLikeAnalysis>(
+fn call_strchr<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
-    call_strrchr::<M>(
+    call_strrchr(
         destination,
         args,
         local_decls,
@@ -381,13 +382,13 @@ fn call_strchr<'tcx, M: MutabilityLikeAnalysis>(
     )
 }
 
-fn call_strrchr<'tcx, M: MutabilityLikeAnalysis>(
+fn call_strrchr<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -407,13 +408,13 @@ fn call_strrchr<'tcx, M: MutabilityLikeAnalysis>(
     }
 }
 
-fn call_strncmp<'tcx, M: MutabilityLikeAnalysis>(
+fn call_strncmp<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -422,13 +423,13 @@ fn call_strncmp<'tcx, M: MutabilityLikeAnalysis>(
     let _ = args;
 }
 
-fn call_printf<'tcx, M: MutabilityLikeAnalysis>(
+fn call_printf<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -437,13 +438,13 @@ fn call_printf<'tcx, M: MutabilityLikeAnalysis>(
     let _ = args;
 }
 
-fn call_scanf<'tcx, const MUT_START: usize, M: MutabilityLikeAnalysis>(
+fn call_scanf<'tcx, const MUT_START: usize>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
@@ -460,13 +461,13 @@ fn call_scanf<'tcx, const MUT_START: usize, M: MutabilityLikeAnalysis>(
     }
 }
 
-fn call_strdup<'tcx, M: MutabilityLikeAnalysis>(
+fn call_strdup<'tcx>(
     destination: &Place<'tcx>,
     args: &[Spanned<Operand<'tcx>>],
     local_decls: &impl HasLocalDecls<'tcx>,
     locals: &[Var],
     struct_fields: &StructFields,
-    database: &mut <M as WithConstraintSystem>::DB,
+    database: &mut BooleanSystem<Mutability>,
 ) {
     let dest_vars =
         place_vars::<MutCtxt>(destination, local_decls, locals, struct_fields, database);
