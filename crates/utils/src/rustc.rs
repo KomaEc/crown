@@ -1,46 +1,13 @@
 use rustc_hir::def_id::DefId;
-use rustc_middle::{mir::Operand, ty::TyCtxt};
-use rustc_span::Ident;
-use rustc_type_ir::TyKind::FnDef;
+use rustc_middle::ty::TyCtxt;
 
+/// [`RustProgram`] contains constructs we care about in the
+/// Rust program. Right now, we only care about user defined
+/// struct type and free-standing functions.
 pub struct RustProgram<'tcx> {
     pub tcx: TyCtxt<'tcx>,
     pub functions: Vec<DefId>,
     pub structs: Vec<DefId>,
-}
-
-pub enum CallKind {
-    FreeStanding(DefId),
-    Extern(Ident),
-    Library(DefId),
-    Impl(DefId),
-    Closure,
-}
-
-impl CallKind {
-    pub fn new<'tcx>(tcx: TyCtxt<'tcx>, func: &Operand<'tcx>) -> CallKind {
-        if let Some(func) = func.constant() {
-            let ty = func.ty();
-            let &FnDef(callee, _) = ty.kind() else {
-                unreachable!()
-            };
-
-            if let Some(local_did) = callee.as_local() {
-                match tcx.hir_node_by_def_id(local_did) {
-                    rustc_hir::Node::Item(_) => return CallKind::FreeStanding(callee),
-                    rustc_hir::Node::ForeignItem(foreign_item) => {
-                        return CallKind::Extern(foreign_item.ident);
-                    }
-                    rustc_hir::Node::ImplItem(_) => return CallKind::Impl(callee),
-                    _ => unreachable!(),
-                }
-            } else {
-                return CallKind::Library(callee);
-            }
-        } else {
-            return CallKind::Closure;
-        }
-    }
 }
 
 use rustc_driver::Callbacks;

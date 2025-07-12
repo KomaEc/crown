@@ -7,14 +7,15 @@ use std::ops::Range;
 
 use rustc_middle::mir::{
     BinOp, HasLocalDecls, Location, Operand, Place, ProjectionElem, Rvalue, Terminator,
-    TerminatorKind, visit::Visitor,
+    visit::Visitor,
 };
 use rustc_span::source_map::Spanned;
 use rustc_type_ir::TyKind;
-use utils::rustc::{CallKind, RustProgram};
+use utils::rustc::RustProgram;
 
 use crate::{
     lattice::Lattice,
+    mir::{CallKind, TerminatorExt},
     type_qualifier::foster::{
         BooleanLattice, InferCtxt, StructFields, TypeQualifiers, Var,
         constraint_system::BooleanSystem,
@@ -271,13 +272,7 @@ impl<'infer, 'tcx, D: HasLocalDecls<'tcx>> Visitor<'tcx> for MutabilityAnalysis<
         } = self.ctxt;
         let database = &mut self.database;
 
-        if let TerminatorKind::Call {
-            func,
-            args,
-            destination,
-            ..
-        } = &terminator.kind
-        {
+        if let Some((func, args, ref destination)) = terminator.call() {
             match CallKind::new(tcx, func) {
                 CallKind::FreeStanding(callee) => {
                     let callee_body = tcx.optimized_mir(callee);
@@ -358,6 +353,7 @@ impl<'infer, 'tcx, D: HasLocalDecls<'tcx>> Visitor<'tcx> for MutabilityAnalysis<
                 }
                 CallKind::Impl(..) => unimplemented!("impl method is not yet supported"),
                 CallKind::Closure => unimplemented!("closure is not yet supported"),
+                CallKind::Dynamic => unimplemented!("dynamic call is not yet supported"),
             }
         }
     }
