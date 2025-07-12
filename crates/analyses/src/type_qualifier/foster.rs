@@ -72,7 +72,7 @@ where
     }
 }
 
-impl<Qualifier: std::fmt::Display> TypeQualifiers<Qualifier> {
+impl<Qualifier> TypeQualifiers<Qualifier> {
     pub fn function_facts(&self, did: &DefId, tcx: TyCtxt) -> impl Iterator<Item = &[Qualifier]> {
         let body = tcx.optimized_mir(*did);
         self.fn_locals
