@@ -10,13 +10,18 @@ fn regression_mutability_libtree() {
 
         let diff = similar::TextDiff::from_lines(GROUND_TRUTH, &pretty);
 
+        let mut any_difference = false;
+
         for change in diff.iter_all_changes() {
             match change.tag() {
-                similar::ChangeTag::Delete => assert!(false),
-                similar::ChangeTag::Insert => assert!(false),
+                similar::ChangeTag::Delete => print!("- {}", change),
+                similar::ChangeTag::Insert => print!("+ {}", change),
                 similar::ChangeTag::Equal => continue,
             };
+            any_difference = true
         }
+
+        assert!(!any_difference)
     })
 }
 

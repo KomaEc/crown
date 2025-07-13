@@ -79,6 +79,19 @@ pub fn library_call<'tcx>(
         }
     }
 
+    let def_path_str = tcx.def_path_str(callee);
+
+    if def_path_str.ends_with("::ptr_offset_from") {
+        return call_offset_from(
+            destination,
+            args,
+            local_decls,
+            locals,
+            struct_fields,
+            database,
+        );
+    }
+
     // if it is a library call in core::ptr
     if def_path
         .data
