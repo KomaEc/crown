@@ -14,3 +14,9 @@ rustc-hash = "2.1.1"
 similar = "2.7.0"
 smallvec = { version = "1.15.1", features = ["union", "const_generics", "const_new", "arbitrary", "specialization", "serde"] }
 tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
+ctor = { version = "0.4.2", optional = true }
+
+
+[features]
+test-utils = ["dep:ctor"]
