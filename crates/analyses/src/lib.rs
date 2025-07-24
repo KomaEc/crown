@@ -10,7 +10,7 @@ extern crate rustc_middle;
 extern crate rustc_span;
 extern crate rustc_type_ir;
 
-mod access_path;
+pub mod access_path;
 pub mod alias;
 mod encoding;
 pub mod lattice;

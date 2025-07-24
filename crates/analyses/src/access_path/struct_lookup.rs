@@ -17,13 +17,33 @@ rustc_index::newtype_index! {
     }
 }
 
-pub struct TyPostOrder {
+pub struct StructLookup {
     /// structs in post order
     post_order: IndexVec<StructIndex, DefId>,
     rev_lookup: FxHashMap<DefId, StructIndex>,
 }
 
-impl TyPostOrder {
+impl StructLookup {
+    pub fn try_index(&self, did: DefId) -> Option<StructIndex> {
+        self.rev_lookup.get(&did).copied()
+    }
+
+    pub fn index(&self, did: DefId) -> StructIndex {
+        self.rev_lookup[&did]
+    }
+
+    pub fn did(&self, struct_index: StructIndex) -> DefId {
+        self.post_order[struct_index]
+    }
+
+    pub fn post_order(&self) -> impl Iterator<Item = (StructIndex, &DefId)> {
+        self.post_order.iter_enumerated()
+    }
+
+    pub fn num_structs(&self) -> usize {
+        self.post_order.len()
+    }
+
     pub fn new(program: &RustProgram) -> Self {
         let &RustProgram {
             tcx, ref structs, ..
@@ -67,7 +87,7 @@ impl TyPostOrder {
             .map(|(idx, &did)| (did, idx))
             .collect();
 
-        TyPostOrder {
+        StructLookup {
             post_order,
             rev_lookup: rev_map,
         }

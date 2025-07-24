@@ -108,13 +108,13 @@ impl CallGraphPostOrder {
 /// FIXME: Hmmmm does it make sense at all?
 /// Is it possible that two [`DefId`] can have the same name?
 #[derive(Clone, Copy)]
-struct CxDefId<'tcx> {
+pub(crate) struct CxDefId<'tcx> {
     tcx: TyCtxt<'tcx>,
-    did: DefId,
+    pub(crate) did: DefId,
 }
 
 impl<'tcx> CxDefId<'tcx> {
-    fn new(tcx: TyCtxt<'tcx>, did: DefId) -> Self {
+    pub fn new(tcx: TyCtxt<'tcx>, did: DefId) -> Self {
         CxDefId { tcx, did }
     }
 }

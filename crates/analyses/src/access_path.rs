@@ -1,19 +1,38 @@
-//! The Access Path data structure
+//! An access path encode the entire set of pointers reachable from
+//! an expression through a sequence of projection operations (dereferences
+//! and field selections). An access path needs to be k-limited where
+//! recursive data structures exist.
+//!
+//! # Examples
+//!
+//! ```
+//! struct S {
+//!     f: *mut i32,
+//!     g: *mut f64,
+//! }
+//! let mut x: *mut *mut S;
+//! ```
+//! The access path `*x` encode `*x`, `(**x).f` and `(**x).g`.
+//!
 
-#![allow(unused)]
+// #![allow(unused)]
 
-mod size_of;
-mod ty_post_order;
+pub mod ctxt;
+mod matcher;
+mod sizeofable;
+mod struct_lookup;
+#[cfg(test)]
+mod test;
 
-use std::ops::Range;
+use std::{borrow::Borrow, ops::Range};
 
-use rustc_hir::def_id::DefId;
-use rustc_index::IndexVec;
 use rustc_middle::{
-    mir::{HasLocalDecls, Local, Place, ProjectionElem},
-    ty::{AdtDef, Ty, TyCtxt},
+    mir::{HasLocalDecls, Place, ProjectionElem},
+    ty::{Ty, TyCtxt},
 };
-use utils::{rustc::RustProgram, rustc_hash::FxHashMap, smallvec::SmallVec, smallvec::smallvec};
+use utils::smallvec::SmallVec;
+
+use crate::access_path::{ctxt::AccessPathsCx, sizeofable::SizeOfable, struct_lookup::StructIndex};
 
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub struct Path<B, P> {
@@ -30,34 +49,19 @@ impl<B, P> Path<B, P> {
     where
         F: FnOnce(B) -> C,
     {
-        let Path { base, projections } = self;
+        let Path {
+            base, projections, ..
+        } = self;
         Path::new(f(base), projections)
     }
 }
 
 /// We erase all other projection kinds except for field
 /// selections and dereferences.
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
 pub enum CanonicalProjectionElem {
-    Field(usize),
+    Select(StructIndex, usize),
     Deref,
-}
-
-impl CanonicalProjectionElem {
-    pub fn try_from_projection_elem<V, T>(projection: ProjectionElem<V, T>) -> Option<Self> {
-        match projection {
-            ProjectionElem::Deref => Some(CanonicalProjectionElem::Deref),
-            ProjectionElem::Field(field_idx, _) => {
-                Some(CanonicalProjectionElem::Field(field_idx.index()))
-            }
-            ProjectionElem::Index(_) => None,
-            ProjectionElem::ConstantIndex { .. } => None,
-            ProjectionElem::Subslice { .. } => None,
-            ProjectionElem::Downcast(..) => None,
-            ProjectionElem::OpaqueCast(_) => None,
-            ProjectionElem::UnwrapUnsafeBinder(_) => None,
-            ProjectionElem::Subtype(_) => None,
-        }
-    }
 }
 
 pub type CanonicalProjections = SmallVec<[CanonicalProjectionElem; 2]>;
@@ -68,23 +72,67 @@ pub type CanonicalProjections = SmallVec<[CanonicalProjectionElem; 2]>;
 /// [`CanonicalProjectionElem`])
 pub type CanonicalAccessPath<B> = Path<B, CanonicalProjections>;
 
-pub type EncodedProjections = Range<usize>;
+/// We define our own type so as to derive [`Copy`].
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub struct EncodedProjections {
+    start_offset: usize,
+    end_offset: usize,
+}
+
+impl EncodedProjections {
+    #[inline]
+    pub fn size(&self) -> usize {
+        self.end_offset - self.start_offset
+    }
+}
+
+impl From<Range<usize>> for EncodedProjections {
+    fn from(value: Range<usize>) -> Self {
+        EncodedProjections {
+            start_offset: value.start,
+            end_offset: value.end,
+        }
+    }
+}
+
+impl From<EncodedProjections> for Range<usize> {
+    fn from(value: EncodedProjections) -> Self {
+        value.start_offset..value.end_offset
+    }
+}
 
 /// An [`EncodedAccessPath`] has the same semantics as a
 /// [`CanonicalAccessPath`], but has its concrete projections
 /// replaced with `(start_offset, end_offset)`. This pair of
-/// offsets reflect the pre-order travesals of all postfix
-/// pointers.
-pub type EncodedAccessPath<B> = Path<B, EncodedProjections>;
+/// offsets (represented by [`EncodedProjections`]) reflect
+/// the pre-order travesals of all postfix pointers.
+///
+/// [`EncodedProjections`] is k-limited where recursive data
+/// structures exist.
+pub type EncodedAccessPath<B> = Path<B, KLimited<EncodedProjections>>;
 
-fn encode<'tcx>(
-    path: &CanonicalAccessPath<Ty<'tcx>>,
-    tcx: TyCtxt<'tcx>,
-) -> EncodedAccessPath<Ty<'tcx>> {
-    let mut start_offset = 0;
-    let mut end_offset = 0; // FIXME: get the size of `path.base`
+#[derive(PartialEq, Eq, Clone, Copy, Debug)]
+pub struct KLimited<T> {
+    pub(crate) k_limit: usize,
+    pub(crate) data: T,
+}
 
-    todo!()
+impl<T> KLimited<T> {
+    pub fn map<U, F>(self, f: F) -> KLimited<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        KLimited {
+            k_limit: self.k_limit,
+            data: f(self.data),
+        }
+    }
+}
+
+impl<T> KLimited<T> {
+    pub fn new(k_limit: usize, data: T) -> Self {
+        KLimited { k_limit, data }
+    }
 }
 
 /// Decompose a type into levels of outside pointers and a (possible) adt
@@ -110,15 +158,104 @@ fn peel_pointers(ty: Ty) -> (usize, Ty) {
     (num_pointers, ty)
 }
 
-fn canonicalize<'tcx, P: AsRef<Place<'tcx>>>(place: P) -> CanonicalAccessPath<Local> {
-    let canonical_projections = place
-        .as_ref()
-        .iter_projections()
-        .filter_map(|(_, projection)| CanonicalProjectionElem::try_from_projection_elem(projection))
-        .collect::<SmallVec<_>>();
+impl<SizeOf: SizeOfable> AccessPathsCx<SizeOf> {
+    pub fn canonicalize<'tcx, P, D>(
+        &self,
+        path: P,
+        local_decls: &D,
+        tcx: TyCtxt<'tcx>,
+    ) -> CanonicalAccessPath<Ty<'tcx>>
+    where
+        P: Borrow<Place<'tcx>>,
+        D: HasLocalDecls<'tcx>,
+    {
+        let place = path.borrow();
+        let canonical_projections = place
+            .iter_projections()
+            .filter_map(|(place, projection)| match projection {
+                ProjectionElem::Deref => Some(CanonicalProjectionElem::Deref),
+                ProjectionElem::Field(field_idx, _) => {
+                    let base_ty = place.ty(local_decls, tcx).ty;
 
-    Path {
-        base: place.as_ref().local,
-        projections: canonical_projections,
+                    // FIXME: what about tuple structs?
+
+                    base_ty
+                        .ty_adt_def()
+                        .and_then(|adt_def| self.struct_lookup.try_index(adt_def.did()))
+                        .map(|struct_index| {
+                            CanonicalProjectionElem::Select(struct_index, field_idx.index())
+                        })
+                }
+                ProjectionElem::Index(_) => None,
+                ProjectionElem::ConstantIndex { .. } => None,
+                ProjectionElem::Subslice { .. } => None,
+                ProjectionElem::Downcast(..) => None,
+                ProjectionElem::OpaqueCast(_) => None,
+                ProjectionElem::UnwrapUnsafeBinder(_) => None,
+                ProjectionElem::Subtype(_) => None,
+            })
+            .collect::<SmallVec<_>>();
+
+        Path::new(
+            local_decls.local_decls()[place.local].ty,
+            canonical_projections,
+        )
+    }
+
+    pub fn encode<'tcx, P, D>(
+        &self,
+        path: KLimited<P>,
+        local_decls: &D,
+        tcx: TyCtxt<'tcx>,
+    ) -> EncodedAccessPath<Ty<'tcx>>
+    where
+        P: Borrow<Place<'tcx>>,
+        D: HasLocalDecls<'tcx>,
+    {
+        let place = path.data.borrow();
+
+        let canonical_access_path = self.canonicalize(place, local_decls, tcx);
+
+        let mut start_offset = 0;
+        let mut num_indirections = 0;
+
+        for &projection_elem in &canonical_access_path.projections {
+            if num_indirections == path.k_limit {
+                return EncodedAccessPath {
+                    base: local_decls.local_decls()[place.local].ty,
+                    projections: KLimited::new(0, (start_offset..start_offset).into()),
+                };
+            }
+
+            match projection_elem {
+                CanonicalProjectionElem::Select(struct_index, field_idx) => {
+                    start_offset += self.size_of.start_offset(
+                        KLimited {
+                            k_limit: path.k_limit - num_indirections,
+                            data: struct_index,
+                        },
+                        field_idx,
+                    )
+                }
+                CanonicalProjectionElem::Deref => {
+                    start_offset += 1;
+                    num_indirections += 1;
+                }
+            }
+        }
+
+        let end_offset = start_offset
+            + self.size_of(KLimited::new(
+                path.k_limit - num_indirections,
+                place.ty(local_decls, tcx).ty,
+            ));
+
+        EncodedAccessPath {
+            base: local_decls.local_decls()[place.local].ty,
+            projections: KLimited::new(
+                path.k_limit - num_indirections,
+                (start_offset..end_offset).into(),
+            ),
+        }
     }
 }
