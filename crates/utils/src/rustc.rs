@@ -140,44 +140,38 @@ where
     }
 }
 
+const RUSTC_OPTIONS: &str = "--crate-type=lib -Awarnings -C opt-level=3";
+// const RUSTC_OPTIONS: &str = "--crate-type=lib -Awarnings";
+
 pub fn compile_libtree(callbacks: &mut (dyn Callbacks + Send)) {
-    rustc_driver::run_compiler(
-        &[
-            // The first argument, which in practice contains the name of the binary being executed
-            // (i.e. "rustc") is ignored by rustc.
-            "ignored".to_string(),
-            "--crate-type=lib".to_string(),
-            "lib.rs".to_string(),
-            "-Awarnings".to_string(),
-        ],
-        &mut LibtreeCompiler(callbacks),
-    );
+    let mut args = vec!["ignored", "lib.rs"];
+    args.extend(RUSTC_OPTIONS.split(" "));
+    let args = args
+        .into_iter()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>();
+
+    rustc_driver::run_compiler(&args, &mut LibtreeCompiler(callbacks));
 }
 
 pub fn compile_text(program: String, callbacks: &mut (dyn Callbacks + Send)) {
-    rustc_driver::run_compiler(
-        &[
-            // The first argument, which in practice contains the name of the binary being executed
-            // (i.e. "rustc") is ignored by rustc.
-            "ignored".to_string(),
-            "--crate-type=lib".to_string(),
-            "lib.rs".to_string(),
-            "-Awarnings".to_string(),
-        ],
-        &mut TextCompiler(callbacks, program),
-    );
+    let mut args = vec!["ignored", "lib.rs"];
+    args.extend(RUSTC_OPTIONS.split(" "));
+    let args = args
+        .into_iter()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>();
+
+    rustc_driver::run_compiler(&args, &mut TextCompiler(callbacks, program));
 }
 
 pub fn compile_absolute_path(program: PathBuf, callbacks: &mut (dyn Callbacks + Send)) {
-    rustc_driver::run_compiler(
-        &[
-            // The first argument, which in practice contains the name of the binary being executed
-            // (i.e. "rustc") is ignored by rustc.
-            "ignored".to_string(),
-            "--crate-type=lib".to_string(),
-            program.to_str().unwrap().to_string(),
-            "-Awarnings".to_string(),
-        ],
-        callbacks,
-    );
+    let mut args = vec!["ignored", program.to_str().unwrap()];
+    args.extend(RUSTC_OPTIONS.split(" "));
+    let args = args
+        .into_iter()
+        .map(ToString::to_string)
+        .collect::<Vec<_>>();
+
+    rustc_driver::run_compiler(&args, callbacks);
 }
