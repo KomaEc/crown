@@ -25,7 +25,7 @@ pub struct StartOffsetData {
 
 impl SizeOfable for StartOffset {
     fn size_of(&self, struct_index: KLimited<StructIndex>) -> usize {
-        while self.k_limit() <= struct_index.k_limit {
+        while self.next_k_limit() <= struct_index.k_limit {
             self.induce();
         }
 
@@ -33,7 +33,7 @@ impl SizeOfable for StartOffset {
     }
 
     fn start_offset(&self, struct_index: KLimited<StructIndex>, field_idx: usize) -> usize {
-        while self.k_limit() <= struct_index.k_limit {
+        while self.next_k_limit() <= struct_index.k_limit {
             self.induce();
         }
 
@@ -44,7 +44,7 @@ impl SizeOfable for StartOffset {
         &self,
         struct_index: KLimited<StructIndex>,
     ) -> impl IntoIterator<Item = usize> {
-        while self.k_limit() <= struct_index.k_limit {
+        while self.next_k_limit() <= struct_index.k_limit {
             self.induce();
         }
 
@@ -87,7 +87,7 @@ impl StartOffset {
         })
     }
 
-    fn k_limit(&self) -> usize {
+    fn next_k_limit(&self) -> usize {
         let cache = self.cache.borrow();
         assert_eq!(cache.offsets.len() % cache.offsets_size, 0);
         let k_limit = cache.offsets.len() / cache.offsets_size;
@@ -152,7 +152,7 @@ impl StartOffset {
     }
 
     pub fn induce(&self) {
-        let k_limit = self.k_limit();
+        let k_limit = self.next_k_limit();
 
         for fields in self.indirection_graph.iter() {
             let mut offset = 0;

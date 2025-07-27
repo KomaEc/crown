@@ -11,6 +11,7 @@ extern crate rustc_span;
 extern crate rustc_type_ir;
 
 pub use anyhow;
+pub use either;
 pub use itertools;
 pub use petgraph;
 pub use rustc_hash;

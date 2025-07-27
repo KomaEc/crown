@@ -6,7 +6,9 @@ use rustc_middle::ty::Ty;
 use utils::rustc::RustProgram;
 
 use crate::access_path::{
-    KLimited, peel_pointers,
+    KLimited,
+    matcher::nth_indirection::NthIndirectionGraph,
+    peel_pointers,
     sizeofable::{SizeOfable, size_of::SizeOf, start_offset::StartOffset},
     struct_lookup::StructLookup,
 };
@@ -14,6 +16,7 @@ use crate::access_path::{
 pub struct AccessPathsCx<SizeOf = StartOffset> {
     pub(crate) struct_lookup: StructLookup,
     pub(crate) size_of: SizeOf,
+    pub(crate) nth_indirection: NthIndirectionGraph,
 }
 
 type InefficientAccessPathsCx = AccessPathsCx<SizeOf>;
@@ -22,10 +25,12 @@ impl InefficientAccessPathsCx {
     pub fn new_inefficient(program: &RustProgram) -> Self {
         let struct_lookup = StructLookup::new(program);
         let size_of = SizeOf::new(&struct_lookup, program.tcx);
+        let nth_indirection = NthIndirectionGraph::new(&struct_lookup, program.tcx);
 
         Self {
             struct_lookup,
             size_of,
+            nth_indirection,
         }
     }
 }
@@ -34,10 +39,12 @@ impl AccessPathsCx {
     pub fn new(program: &RustProgram) -> Self {
         let struct_lookup = StructLookup::new(program);
         let start_offset = StartOffset::new(program, &struct_lookup);
+        let nth_indirection = NthIndirectionGraph::new(&struct_lookup, program.tcx);
 
         Self {
             struct_lookup,
             size_of: start_offset,
+            nth_indirection,
         }
     }
 }

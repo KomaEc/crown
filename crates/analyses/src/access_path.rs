@@ -27,7 +27,7 @@ mod test;
 use std::{borrow::Borrow, ops::Range};
 
 use rustc_middle::{
-    mir::{HasLocalDecls, Place, ProjectionElem},
+    mir::{HasLocalDecls, Local, Place, ProjectionElem},
     ty::{Ty, TyCtxt},
 };
 use utils::smallvec::SmallVec;
@@ -164,7 +164,7 @@ impl<SizeOf: SizeOfable> AccessPathsCx<SizeOf> {
         path: P,
         local_decls: &D,
         tcx: TyCtxt<'tcx>,
-    ) -> CanonicalAccessPath<Ty<'tcx>>
+    ) -> CanonicalAccessPath<Local>
     where
         P: Borrow<Place<'tcx>>,
         D: HasLocalDecls<'tcx>,
@@ -196,10 +196,7 @@ impl<SizeOf: SizeOfable> AccessPathsCx<SizeOf> {
             })
             .collect::<SmallVec<_>>();
 
-        Path::new(
-            local_decls.local_decls()[place.local].ty,
-            canonical_projections,
-        )
+        Path::new(place.local, canonical_projections)
     }
 
     pub fn encode<'tcx, P, D>(
@@ -207,7 +204,7 @@ impl<SizeOf: SizeOfable> AccessPathsCx<SizeOf> {
         path: KLimited<P>,
         local_decls: &D,
         tcx: TyCtxt<'tcx>,
-    ) -> EncodedAccessPath<Ty<'tcx>>
+    ) -> EncodedAccessPath<Local>
     where
         P: Borrow<Place<'tcx>>,
         D: HasLocalDecls<'tcx>,
@@ -222,7 +219,7 @@ impl<SizeOf: SizeOfable> AccessPathsCx<SizeOf> {
         for &projection_elem in &canonical_access_path.projections {
             if num_indirections == path.k_limit {
                 return EncodedAccessPath {
-                    base: local_decls.local_decls()[place.local].ty,
+                    base: place.local,
                     projections: KLimited::new(0, (start_offset..start_offset).into()),
                 };
             }
@@ -251,7 +248,7 @@ impl<SizeOf: SizeOfable> AccessPathsCx<SizeOf> {
             ));
 
         EncodedAccessPath {
-            base: local_decls.local_decls()[place.local].ty,
+            base: place.local,
             projections: KLimited::new(
                 path.k_limit - num_indirections,
                 (start_offset..end_offset).into(),

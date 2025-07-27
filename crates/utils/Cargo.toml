@@ -16,6 +16,7 @@ smallvec = { version = "1.15.1", features = ["union", "const_generics", "const_n
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["json", "env-filter"] }
 ctor = { version = "0.4.2", optional = true }
+either = "1.15.0"
 
 
 [features]

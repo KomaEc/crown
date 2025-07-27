@@ -1,6 +1,7 @@
 use rustc_abi::FieldIdx;
 use rustc_hir::def_id::DefId;
 use rustc_middle::mir::{Local, Place, ProjectionElem};
+use rustc_type_ir::TyKind::Adt;
 
 use crate::access_path::{KLimited, ctxt::AccessPathsCx};
 
@@ -169,6 +170,187 @@ fn test_bst_encode() {
             )
             .projections,
             KLimited::new(2, (4..7).into()),
+        );
+    })
+}
+
+#[test]
+fn test_bst_matcher() {
+    const PROGRAM: &str = "
+        struct Node { left: *mut Node, right: *mut Node }";
+    utils::rustc::run_compiler(PROGRAM, |program| {
+        let apcx = AccessPathsCx::new(&program);
+
+        let &node_did = program
+            .structs
+            .iter()
+            .find(|&&did| {
+                let "Node" = program.tcx.def_path_str(did).as_str() else {
+                    return false;
+                };
+                true
+            })
+            .unwrap();
+        let node = program.tcx.type_of(node_did).skip_binder();
+        let Adt(adt_def, subst_ref) = node.kind() else {
+            unreachable!()
+        };
+        let ty_star_node = adt_def
+            .all_fields()
+            .next()
+            .unwrap()
+            .ty(program.tcx, &subst_ref);
+
+        // let node_struct_index = StructIndex::from_u32(0);
+
+        assert_eq!(
+            apcx.lift(KLimited::new(2, ty_star_node), 0)
+                .collect::<Vec<_>>(),
+            [0, 1, 2]
+        );
+
+        assert_eq!(
+            apcx.lift(KLimited::new(2, ty_star_node), 1)
+                .collect::<Vec<_>>(),
+            [0, 1, 4]
+        );
+
+        assert_eq!(
+            apcx.lift(KLimited::new(2, ty_star_node), 2)
+                .collect::<Vec<_>>(),
+            [0, 1, 8]
+        );
+
+        assert_eq!(
+            apcx.lift(KLimited::new(3, ty_star_node), 1)
+                .collect::<Vec<_>>(),
+            [0, 1, 2, 5, 8, 9, 12]
+        );
+    })
+}
+
+#[test]
+fn test_weird_bst_matcher() {
+    const PROGRAM: &str = "
+        struct Node { left: *mut *mut Node, right: *mut *mut Node }";
+    utils::rustc::run_compiler(PROGRAM, |program| {
+        let apcx = AccessPathsCx::new(&program);
+
+        let &node_did = program
+            .structs
+            .iter()
+            .find(|&&did| {
+                let "Node" = program.tcx.def_path_str(did).as_str() else {
+                    return false;
+                };
+                true
+            })
+            .unwrap();
+        let node = program.tcx.type_of(node_did).skip_binder();
+        let Adt(adt_def, subst_ref) = node.kind() else {
+            unreachable!()
+        };
+        let ty_star_node = adt_def
+            .all_fields()
+            .next()
+            .unwrap()
+            .ty(program.tcx, &subst_ref)
+            .builtin_deref(true)
+            .unwrap();
+
+        assert_eq!(
+            apcx.lift(KLimited::new(2, ty_star_node), 0)
+                .collect::<Vec<_>>(),
+            [0, 1, 2]
+        );
+
+        assert_eq!(
+            apcx.lift(KLimited::new(2, ty_star_node), 1)
+                .collect::<Vec<_>>(),
+            [0, 1, 3]
+        );
+
+        assert_eq!(
+            apcx.lift(KLimited::new(1, ty_star_node), 3)
+                .collect::<Vec<_>>(),
+            [0]
+        );
+
+        assert_eq!(
+            apcx.lift(KLimited::new(3, ty_star_node), 1)
+                .collect::<Vec<_>>(),
+            [0, 1, 2, 5, 6]
+        );
+
+        assert_eq!(
+            apcx.lift(KLimited::new(2, ty_star_node), 2)
+                .collect::<Vec<_>>(),
+            [0, 1, 5]
+        );
+    })
+}
+
+#[test]
+fn test_weirder_bst_matcher() {
+    const PROGRAM: &str = "
+        struct Node { left: *mut Node, right: *mut *mut Node }";
+    utils::rustc::run_compiler(PROGRAM, |program| {
+        let apcx = AccessPathsCx::new(&program);
+
+        let &node_did = program
+            .structs
+            .iter()
+            .find(|&&did| {
+                let "Node" = program.tcx.def_path_str(did).as_str() else {
+                    return false;
+                };
+                true
+            })
+            .unwrap();
+        let node = program.tcx.type_of(node_did).skip_binder();
+        let Adt(adt_def, subst_ref) = node.kind() else {
+            unreachable!()
+        };
+        let ty_star_node = adt_def
+            .all_fields()
+            .next()
+            .unwrap()
+            .ty(program.tcx, &subst_ref);
+
+        assert_eq!(
+            apcx.lift(KLimited::new(2, ty_star_node), 0)
+                .collect::<Vec<_>>(),
+            [0, 1, 2]
+        );
+
+        assert_eq!(
+            apcx.lift(KLimited::new(3, ty_star_node), 0)
+                .collect::<Vec<_>>(),
+            [0, 1, 2, 3, 4, 5]
+        );
+
+        assert_eq!(
+            apcx.lift(KLimited::new(2, ty_star_node), 1)
+                .collect::<Vec<_>>(),
+            [0, 1, 4]
+        );
+
+        assert_eq!(
+            apcx.lift(KLimited::new(1, ty_star_node), 3)
+                .collect::<Vec<_>>(),
+            [0]
+        );
+
+        assert_eq!(
+            apcx.lift(KLimited::new(3, ty_star_node), 1)
+                .collect::<Vec<_>>(),
+            [0, 1, 2, 5, 7, 8]
+        );
+
+        assert_eq!(
+            apcx.lift(KLimited::new(2, ty_star_node), 2)
+                .collect::<Vec<_>>(),
+            [0, 1, 7]
         );
     })
 }
