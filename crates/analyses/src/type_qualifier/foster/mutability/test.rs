@@ -3,7 +3,7 @@ use utils::similar;
 use crate::type_qualifier::mutability_analysis;
 
 #[test]
-fn regression_mutability_libtree() {
+fn regression_libtree() {
     utils::rustc::run_compiler(utils::rustc::SourceCode::Libtree, |program| {
         let mutability_result = mutability_analysis(&program);
         let pretty = mutability_result.pretty(program.tcx);

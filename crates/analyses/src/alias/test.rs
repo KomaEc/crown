@@ -1,7 +1,7 @@
 use crate::alias::{AliasResult, TaintResult};
 
 #[test]
-fn test_alias_simple_program() {
+fn test_simple_program() {
     const PROGRAM: &str = "
     struct S {
         f: *mut i32,
@@ -28,7 +28,7 @@ fn test_alias_simple_program() {
 
 /// TODO add some property based testing for libtree
 #[test]
-fn regression_alias_libtree_dont_crash() {
+fn smoke_test_libtree() {
     utils::rustc::run_compiler(utils::rustc::SourceCode::Libtree, |program| {
         let _steensgaard = AliasResult::field_insensitive(&program);
         // println!("{}", steensgaard.pretty(program.tcx));
