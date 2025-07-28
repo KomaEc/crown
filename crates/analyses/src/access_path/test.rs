@@ -1,6 +1,9 @@
 use rustc_abi::FieldIdx;
 use rustc_hir::def_id::DefId;
-use rustc_middle::mir::{Local, Place, ProjectionElem};
+use rustc_middle::{
+    mir::{Local, Place, ProjectionElem},
+    ty::TyCtxt,
+};
 use rustc_type_ir::TyKind::Adt;
 
 use crate::access_path::{KLimited, ctxt::AccessPathsCx};
@@ -352,5 +355,65 @@ fn test_weirder_bst_matcher() {
                 .collect::<Vec<_>>(),
             [0, 1, 7]
         );
+    })
+}
+
+#[test]
+fn smoke_test_libtree() {
+    utils::rustc::run_compiler(utils::rustc::SourceCode::Libtree, |program| {
+        let apcx = AccessPathsCx::new(&program);
+        let tcx = program.tcx;
+
+        use rustc_middle::mir::{
+            HasLocalDecls, Location,
+            visit::{PlaceContext, Visitor},
+        };
+        struct Vis<'tcx, 'this, D: HasLocalDecls<'tcx>> {
+            tcx: TyCtxt<'tcx>,
+            apcx: &'this AccessPathsCx,
+            local_decls: &'this D,
+        }
+        const K_LIMIT: usize = 3;
+        impl<'tcx, 'apcx, D: HasLocalDecls<'tcx>> Visitor<'tcx> for Vis<'tcx, 'apcx, D> {
+            fn visit_place(
+                &mut self,
+                place: &Place<'tcx>,
+                _context: PlaceContext,
+                _location: Location,
+            ) {
+                let encoded =
+                    self.apcx
+                        .encode(KLimited::new(K_LIMIT, place), self.local_decls, self.tcx);
+
+                if encoded.projections.k_limit < K_LIMIT {
+                    let lifted = self
+                        .apcx
+                        .lift(
+                            encoded
+                                .projections
+                                .map(|_| place.ty(self.local_decls, self.tcx).ty),
+                            3 - encoded.projections.k_limit,
+                        )
+                        .collect::<Vec<_>>();
+                    assert_eq!(
+                        lifted.len(),
+                        self.apcx.size_of(KLimited::new(
+                            encoded.projections.k_limit,
+                            place.ty(self.local_decls, self.tcx).ty
+                        ))
+                    );
+                }
+            }
+        }
+
+        for did in &program.functions {
+            let body = tcx.optimized_mir(did);
+            Vis {
+                tcx,
+                apcx: &apcx,
+                local_decls: body,
+            }
+            .visit_body(body)
+        }
     })
 }
