@@ -1,6 +1,7 @@
 [workspace]
 members = [ "crates/analyses",
     "crates/utils",
+    "crates/preprocess",
 ]
 
 [package]
@@ -14,3 +15,4 @@ rustc_private = true
 [dependencies]
 utils = { path = "crates/utils" }
 analyses = { path = "crates/analyses" }
+preprocess = { path = "crates/preprocess" }
