@@ -1,13 +1,12 @@
 use std::cell::{Ref, RefCell};
 
-use rustc_index::IndexVec;
 use rustc_middle::ty::TyCtxt;
 use rustc_type_ir::TyKind::Adt;
 
 use crate::access_path::{
     KLimited, peel_pointers,
-    sizeofable::{IndirectionGraph, SizeOfable},
-    struct_lookup::{StructIndex, StructLookup},
+    sizeofable::SizeOfable,
+    struct_lookup::{IndirectionGraph, IsIndirectionGraph, StructIndex, StructLookup},
 };
 
 /// Expanding access path starting from an expression of type
@@ -68,15 +67,14 @@ impl NthIndirectionGraph {
         for _ in struct_lookup.post_order() {
             structs_indices.push(leaves.len());
         }
-        let mut graph = IndexVec::new();
+
+        let graph = IndirectionGraph::new_indirection_graph(struct_lookup, tcx);
 
         for (_, did) in struct_lookup.post_order() {
             let Adt(adt_def, subst_ref) = tcx.type_of(did).skip_binder().kind() else {
                 unreachable!("impossible")
             };
             assert!(adt_def.is_struct());
-
-            let mut fields = vec![];
 
             for field_def in adt_def.all_fields() {
                 let ty = field_def.ty(tcx, subst_ref);
@@ -87,10 +85,8 @@ impl NthIndirectionGraph {
                         .is_struct()
                         .then(|| struct_lookup.index(adt_def.did()))
                 });
-                fields.push((num_pointers, struct_index));
                 leaves.push((num_pointers, struct_index, 0));
             }
-            graph.push(fields);
         }
 
         let leaves_data = NthIndirectionGraphData {

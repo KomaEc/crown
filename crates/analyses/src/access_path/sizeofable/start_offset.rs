@@ -1,13 +1,12 @@
 use std::cell::{Ref, RefCell};
 
 use rustc_index::IndexVec;
-use rustc_type_ir::TyKind::Adt;
 use utils::rustc::RustProgram;
 
 use crate::access_path::{
-    KLimited, peel_pointers,
-    sizeofable::{IndirectionGraph, SizeOfable},
-    struct_lookup::{StructIndex, StructLookup},
+    KLimited,
+    sizeofable::SizeOfable,
+    struct_lookup::{IndirectionGraph, IsIndirectionGraph, StructIndex, StructLookup},
 };
 
 pub struct StartOffset {
@@ -96,31 +95,7 @@ impl StartOffset {
     }
 
     pub fn new(program: &RustProgram, struct_lookup: &StructLookup) -> Self {
-        let mut graph = IndexVec::new();
-
-        for (_, did) in struct_lookup.post_order() {
-            let Adt(adt_def, subst_ref) = program.tcx.type_of(did).skip_binder().kind() else {
-                unreachable!("impossible")
-            };
-            assert!(adt_def.is_struct());
-
-            let mut fields = vec![];
-
-            for field_def in adt_def.all_fields() {
-                let ty = field_def.ty(program.tcx, subst_ref);
-                let (num_pointers, ty) = peel_pointers(ty);
-                fields.push((
-                    num_pointers,
-                    ty.ty_adt_def().and_then(|adt_def| {
-                        adt_def
-                            .is_struct()
-                            .then(|| struct_lookup.index(adt_def.did()))
-                    }),
-                ));
-            }
-
-            graph.push(fields);
-        }
+        let graph = IndirectionGraph::new_indirection_graph(struct_lookup, program.tcx);
 
         let mut structs_indices = IndexVec::with_capacity(struct_lookup.num_structs() + 1);
         let mut offsets = Vec::new();

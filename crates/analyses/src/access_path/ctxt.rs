@@ -2,15 +2,18 @@
 //! access path construction, matching, etc.
 
 use rustc_hir::def_id::DefId;
-use rustc_middle::ty::Ty;
+use rustc_middle::ty::{Ty, TyCtxt};
 use utils::rustc::RustProgram;
 
-use crate::access_path::{
-    KLimited,
-    matcher::nth_indirection::NthIndirectionGraph,
-    peel_pointers,
-    sizeofable::{SizeOfable, size_of::SizeOf, start_offset::StartOffset},
-    struct_lookup::StructLookup,
+use crate::{
+    access_path::{
+        KLimited,
+        matcher::nth_indirection::NthIndirectionGraph,
+        peel_pointers,
+        sizeofable::{SizeOfable, size_of::SizeOf, start_offset::StartOffset},
+        struct_lookup::StructLookup,
+    },
+    mir::TyGate,
 };
 
 pub struct AccessPathsCx<SizeOf = StartOffset> {
@@ -50,12 +53,15 @@ impl AccessPathsCx {
 }
 
 impl<SizeOf: SizeOfable> AccessPathsCx<SizeOf> {
-    pub fn size_of(&self, ty: KLimited<Ty>) -> usize {
+    pub fn size_of(&self, ty: KLimited<Ty>, tcx: TyCtxt) -> usize {
         let (num_pointers, inner_ty) = peel_pointers(ty.data);
 
         if ty.k_limit <= num_pointers {
             return ty.k_limit;
         }
+
+        // defensive programming
+        inner_ty.gated(tcx);
 
         let Some(struct_index) = inner_ty
             .ty_adt_def()

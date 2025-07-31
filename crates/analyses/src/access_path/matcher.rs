@@ -2,7 +2,7 @@ pub(crate) mod nth_indirection;
 
 use std::cell::Ref;
 
-use rustc_middle::ty::Ty;
+use rustc_middle::ty::{Ty, TyCtxt};
 use utils::either::Either::{Left, Right};
 
 use crate::access_path::{
@@ -35,7 +35,7 @@ impl<SizeOf: SizeOfable> AccessPathsCx<SizeOf> {
             .nth_indirections(struct_index, &self.size_of)
     }
 
-    pub fn lift(&self, ty: KLimited<Ty>, delta: usize) -> impl Iterator<Item = usize> {
+    pub fn lift(&self, ty: KLimited<Ty>, delta: usize, tcx: TyCtxt) -> impl Iterator<Item = usize> {
         let target_k_limit = ty.k_limit + delta;
         let (num_pointers, inner_ty) = peel_pointers(ty.data);
 
@@ -65,7 +65,7 @@ impl<SizeOf: SizeOfable> AccessPathsCx<SizeOf> {
         let mut leaves = leaves.into_iter().peekable();
 
         Right(
-            (0..self.size_of(ty))
+            (0..self.size_of(ty, tcx))
                 .enumerate()
                 .scan(0, move |state, (index, offset)| {
                     let position = offset + *state;

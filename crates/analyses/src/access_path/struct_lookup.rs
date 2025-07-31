@@ -1,6 +1,6 @@
 use rustc_hir::def_id::DefId;
 use rustc_index::IndexVec;
-use rustc_middle::ty::TyKind;
+use rustc_middle::ty::{TyCtxt, TyKind};
 use rustc_type_ir::TyKind::Adt;
 use utils::{
     petgraph::{algo::TarjanScc, prelude::DiGraphMap},
@@ -8,7 +8,10 @@ use utils::{
     rustc_hash::FxHashMap,
 };
 
-use crate::mir::CxDefId;
+use crate::{
+    access_path::peel_pointers,
+    mir::{CxDefId, TyGate},
+};
 
 rustc_index::newtype_index! {
     #[orderable]
@@ -91,5 +94,44 @@ impl StructLookup {
             post_order,
             rev_lookup: rev_map,
         }
+    }
+}
+
+pub type IndirectionGraph = IndexVec<StructIndex, Vec<(usize, Option<StructIndex>)>>;
+
+pub trait IsIndirectionGraph {
+    fn new_indirection_graph(struct_lookup: &StructLookup, tcx: TyCtxt) -> Self;
+}
+
+impl IsIndirectionGraph for IndirectionGraph {
+    fn new_indirection_graph(struct_lookup: &StructLookup, tcx: TyCtxt) -> Self {
+        let mut graph = IndexVec::new();
+
+        for (_, did) in struct_lookup.post_order() {
+            let Adt(adt_def, subst_ref) = tcx.type_of(did).skip_binder().kind() else {
+                unreachable!("impossible")
+            };
+            assert!(adt_def.is_struct());
+
+            let mut fields = vec![];
+
+            for field_def in adt_def.all_fields() {
+                let ty = field_def.ty(tcx, subst_ref);
+                let (num_pointers, ty) = peel_pointers(ty);
+
+                // defensive programming
+                ty.gated(tcx);
+
+                let struct_index = ty.ty_adt_def().and_then(|adt_def| {
+                    adt_def
+                        .is_struct()
+                        .then(|| struct_lookup.index(adt_def.did()))
+                });
+                fields.push((num_pointers, struct_index));
+            }
+            graph.push(fields);
+        }
+
+        graph
     }
 }

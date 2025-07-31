@@ -189,7 +189,10 @@ impl<SizeOf: SizeOfable> AccessPathsCx<SizeOf> {
                 ProjectionElem::Index(_) => None,
                 ProjectionElem::ConstantIndex { .. } => None,
                 ProjectionElem::Subslice { .. } => None,
-                ProjectionElem::Downcast(..) => None,
+                // defensive programming
+                ProjectionElem::Downcast(..) => {
+                    unimplemented!("we have not considered downcast of enums yet")
+                }
                 ProjectionElem::OpaqueCast(_) => None,
                 ProjectionElem::UnwrapUnsafeBinder(_) => None,
                 ProjectionElem::Subtype(_) => None,
@@ -242,10 +245,13 @@ impl<SizeOf: SizeOfable> AccessPathsCx<SizeOf> {
         }
 
         let end_offset = start_offset
-            + self.size_of(KLimited::new(
-                path.k_limit - num_indirections,
-                place.ty(local_decls, tcx).ty,
-            ));
+            + self.size_of(
+                KLimited::new(
+                    path.k_limit - num_indirections,
+                    place.ty(local_decls, tcx).ty,
+                ),
+                tcx,
+            );
 
         EncodedAccessPath {
             base: place.local,

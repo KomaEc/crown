@@ -182,6 +182,7 @@ fn test_bst_matcher() {
     const PROGRAM: &str = "
         struct Node { left: *mut Node, right: *mut Node }";
     utils::rustc::run_compiler(PROGRAM, |program| {
+        let tcx = program.tcx;
         let apcx = AccessPathsCx::new(&program);
 
         let &node_did = program
@@ -207,25 +208,25 @@ fn test_bst_matcher() {
         // let node_struct_index = StructIndex::from_u32(0);
 
         assert_eq!(
-            apcx.lift(KLimited::new(2, ty_star_node), 0)
+            apcx.lift(KLimited::new(2, ty_star_node), 0, tcx)
                 .collect::<Vec<_>>(),
             [0, 1, 2]
         );
 
         assert_eq!(
-            apcx.lift(KLimited::new(2, ty_star_node), 1)
+            apcx.lift(KLimited::new(2, ty_star_node), 1, tcx)
                 .collect::<Vec<_>>(),
             [0, 1, 4]
         );
 
         assert_eq!(
-            apcx.lift(KLimited::new(2, ty_star_node), 2)
+            apcx.lift(KLimited::new(2, ty_star_node), 2, tcx)
                 .collect::<Vec<_>>(),
             [0, 1, 8]
         );
 
         assert_eq!(
-            apcx.lift(KLimited::new(3, ty_star_node), 1)
+            apcx.lift(KLimited::new(3, ty_star_node), 1, tcx)
                 .collect::<Vec<_>>(),
             [0, 1, 2, 5, 8, 9, 12]
         );
@@ -237,6 +238,7 @@ fn test_weird_bst_matcher() {
     const PROGRAM: &str = "
         struct Node { left: *mut *mut Node, right: *mut *mut Node }";
     utils::rustc::run_compiler(PROGRAM, |program| {
+        let tcx = program.tcx;
         let apcx = AccessPathsCx::new(&program);
 
         let &node_did = program
@@ -262,31 +264,31 @@ fn test_weird_bst_matcher() {
             .unwrap();
 
         assert_eq!(
-            apcx.lift(KLimited::new(2, ty_star_node), 0)
+            apcx.lift(KLimited::new(2, ty_star_node), 0, tcx)
                 .collect::<Vec<_>>(),
             [0, 1, 2]
         );
 
         assert_eq!(
-            apcx.lift(KLimited::new(2, ty_star_node), 1)
+            apcx.lift(KLimited::new(2, ty_star_node), 1, tcx)
                 .collect::<Vec<_>>(),
             [0, 1, 3]
         );
 
         assert_eq!(
-            apcx.lift(KLimited::new(1, ty_star_node), 3)
+            apcx.lift(KLimited::new(1, ty_star_node), 3, tcx)
                 .collect::<Vec<_>>(),
             [0]
         );
 
         assert_eq!(
-            apcx.lift(KLimited::new(3, ty_star_node), 1)
+            apcx.lift(KLimited::new(3, ty_star_node), 1, tcx)
                 .collect::<Vec<_>>(),
             [0, 1, 2, 5, 6]
         );
 
         assert_eq!(
-            apcx.lift(KLimited::new(2, ty_star_node), 2)
+            apcx.lift(KLimited::new(2, ty_star_node), 2, tcx)
                 .collect::<Vec<_>>(),
             [0, 1, 5]
         );
@@ -298,6 +300,7 @@ fn test_weirder_bst_matcher() {
     const PROGRAM: &str = "
         struct Node { left: *mut Node, right: *mut *mut Node }";
     utils::rustc::run_compiler(PROGRAM, |program| {
+        let tcx = program.tcx;
         let apcx = AccessPathsCx::new(&program);
 
         let &node_did = program
@@ -321,37 +324,37 @@ fn test_weirder_bst_matcher() {
             .ty(program.tcx, &subst_ref);
 
         assert_eq!(
-            apcx.lift(KLimited::new(2, ty_star_node), 0)
+            apcx.lift(KLimited::new(2, ty_star_node), 0, tcx)
                 .collect::<Vec<_>>(),
             [0, 1, 2]
         );
 
         assert_eq!(
-            apcx.lift(KLimited::new(3, ty_star_node), 0)
+            apcx.lift(KLimited::new(3, ty_star_node), 0, tcx)
                 .collect::<Vec<_>>(),
             [0, 1, 2, 3, 4, 5]
         );
 
         assert_eq!(
-            apcx.lift(KLimited::new(2, ty_star_node), 1)
+            apcx.lift(KLimited::new(2, ty_star_node), 1, tcx)
                 .collect::<Vec<_>>(),
             [0, 1, 4]
         );
 
         assert_eq!(
-            apcx.lift(KLimited::new(1, ty_star_node), 3)
+            apcx.lift(KLimited::new(1, ty_star_node), 3, tcx)
                 .collect::<Vec<_>>(),
             [0]
         );
 
         assert_eq!(
-            apcx.lift(KLimited::new(3, ty_star_node), 1)
+            apcx.lift(KLimited::new(3, ty_star_node), 1, tcx)
                 .collect::<Vec<_>>(),
             [0, 1, 2, 5, 7, 8]
         );
 
         assert_eq!(
-            apcx.lift(KLimited::new(2, ty_star_node), 2)
+            apcx.lift(KLimited::new(2, ty_star_node), 2, tcx)
                 .collect::<Vec<_>>(),
             [0, 1, 7]
         );
@@ -393,14 +396,18 @@ fn smoke_test_libtree() {
                                 .projections
                                 .map(|_| place.ty(self.local_decls, self.tcx).ty),
                             3 - encoded.projections.k_limit,
+                            self.tcx,
                         )
                         .collect::<Vec<_>>();
                     assert_eq!(
                         lifted.len(),
-                        self.apcx.size_of(KLimited::new(
-                            encoded.projections.k_limit,
-                            place.ty(self.local_decls, self.tcx).ty
-                        ))
+                        self.apcx.size_of(
+                            KLimited::new(
+                                encoded.projections.k_limit,
+                                place.ty(self.local_decls, self.tcx).ty
+                            ),
+                            self.tcx
+                        )
                     );
                 }
             }
