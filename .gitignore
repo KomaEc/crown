@@ -3,3 +3,14 @@
 .vscode
 Cargo.lock
 test.log
+extra_deps
+
+benchmark-new
+benchmark-old
+benchmark-old-preprocessed-artifact
+benchmark-old-preprocessed-dev
+results
+
+check_diff.zsh
+rustfmt_diff.toml
+c-code

@@ -6,17 +6,17 @@ use rustc_middle::ty::TyCtxt;
 use utils::rewrite::Rewrite;
 
 pub fn explicit_addr(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
-    for maybe_owner in tcx.hir().krate().owners.iter() {
+    for maybe_owner in tcx.hir_crate(()).owners.iter() {
         let Some(owner) = maybe_owner.as_owner() else {
             continue;
         };
         let OwnerNode::Item(item) = owner.node() else {
             continue;
         };
-        let ItemKind::Fn(_, _, body_id) = item.kind else {
+        let ItemKind::Fn { body, .. } = item.kind else {
             continue;
         };
-        let hir_body = tcx.hir().body(body_id);
+        let hir_body = tcx.hir_body(body);
         ExplicitAddr { rewriter, tcx }.visit_expr(&hir_body.value);
     }
 }

@@ -9,6 +9,7 @@ mod promote_argument;
 mod signal_nullness;
 
 extern crate rustc_ast;
+extern crate rustc_attr_data_structures;
 extern crate rustc_hash;
 extern crate rustc_hir;
 extern crate rustc_hir_pretty;
@@ -31,6 +32,7 @@ pub const PREPROCESSES: &[for<'r> fn(TyCtxt<'r>, RewriteMode)] = &[
     canonicalize_structs,
     link_functions,
     promote_argument,
+    use_explicit_addr, // Added
 ];
 
 pub use char_array_transmute::char_array_transmute;
@@ -51,9 +53,8 @@ where
     rewriter.write(mode)
 }
 
-fn owner_items(tcx: TyCtxt) -> impl Iterator<Item = &'_ Item<'_>> {
-    tcx.hir()
-        .krate()
+fn owner_items(tcx: TyCtxt<'_>) -> impl Iterator<Item = &'_ Item<'_>> {
+    tcx.hir_crate(())
         .owners
         .iter()
         .filter_map(|maybe_owner| maybe_owner.as_owner())

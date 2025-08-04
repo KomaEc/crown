@@ -21,6 +21,7 @@ pub use tracing;
 
 pub mod dsa;
 pub mod libtree;
+pub mod rewrite;
 pub mod rustc;
 #[cfg(feature = "test-utils")]
 pub mod test;

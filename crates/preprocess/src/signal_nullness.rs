@@ -15,17 +15,17 @@ pub fn signal_nullness(tcx: TyCtxt, mode: RewriteMode) {
 fn signal_nullness_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     // let mut rewriter = Vec::new(); //Rewriter::default();
 
-    for maybe_owner in tcx.hir().krate().owners.iter() {
+    for maybe_owner in tcx.hir_crate(()).owners.iter() {
         let Some(owner) = maybe_owner.as_owner() else {
             continue;
         };
         let OwnerNode::Item(item) = owner.node() else {
             continue;
         };
-        let ItemKind::Fn(_, _, body_id) = item.kind else {
+        let ItemKind::Fn { body, .. } = item.kind else {
             continue;
         };
-        let hir_body = tcx.hir().body(body_id);
+        let hir_body = tcx.hir_body(body);
         // println!("{}", rustc_hir_pretty::id_to_string(&tcx.hir(), item.hir_id()));
         // println!("body kind: {:?}", hir_body.value);
         SignalNullness {
@@ -65,40 +65,51 @@ where
                     ExprKind::MethodCall(path, receiver, _, _)
                         if path.ident.as_str() == "is_null" =>
                     {
+                        // let ptr = args.first().unwrap();
                         let ptr = receiver;
-                        // rewrite is ensured, explicitly recurse into two branches
-                        intravisit::walk_expr(self, truth_branch);
-                        false_branch.map(|false_branch| intravisit::walk_expr(self, false_branch));
 
-                        let ptr_name = rustc_hir_pretty::id_to_string(&self.tcx.hir(), ptr.hir_id);
-                        let stmt_str = format!("crown_annotation::unconstrained({ptr_name});");
+                        // currently we only rewrite variables not complex expressions
+                        if
+                        /* let ExprKind::Path(..) = ptr.kind */
+                        true {
+                            // rewrite is ensured, explicitly recurse into two branches
+                            intravisit::walk_expr(self, truth_branch);
+                            false_branch
+                                .map(|false_branch| intravisit::walk_expr(self, false_branch));
 
-                        if sign {
-                            self.insert_to_branch(stmt_str, truth_branch);
-                        } else if !is_while_loop_cond {
-                            // normal if { } else { }
-                            if let Some(false_branch) = false_branch {
-                                // give up if { } else if { } ..
-                                if !matches!(false_branch.kind, ExprKind::If(..)) {
-                                    self.insert_to_branch(stmt_str, false_branch);
+                            let ptr_name = rustc_hir_pretty::id_to_string(&self.tcx, ptr.hir_id);
+                            let stmt_str =
+                                // format!("std::intrinsics::assume({ptr_name} as usize == 0);");
+                                format!("std::intrinsics::assume(({ptr_name}).addr() == 0);");
+
+                            if sign {
+                                self.insert_to_branch(stmt_str, truth_branch);
+                            } else if !is_while_loop_cond {
+                                // normal if { } else { }
+                                if let Some(false_branch) = false_branch {
+                                    // give up if { } else if { } ..
+                                    if !matches!(false_branch.kind, ExprKind::If(..)) {
+                                        self.insert_to_branch(stmt_str, false_branch);
+                                    }
+                                } else {
+                                    let empty_span_after_curly_brace =
+                                        truth_branch.span.shrink_to_hi();
+                                    self.rewriter.replace(
+                                        self.tcx,
+                                        empty_span_after_curly_brace,
+                                        "else { ".to_string() + &stmt_str + " }",
+                                    )
                                 }
                             } else {
-                                let empty_span_after_curly_brace = truth_branch.span.shrink_to_hi();
-                                self.rewriter.replace(
-                                    self.tcx,
-                                    empty_span_after_curly_brace,
-                                    "else { ".to_string() + &stmt_str + " }",
-                                )
+                                // while !p.is_null() {}
+                                // while loop always has false branch, to hold { break; }
+                                // its span for some reason is the whole loop expression
+                                let span = false_branch.unwrap().span.shrink_to_hi();
+                                self.rewriter.replace(self.tcx, span, stmt_str);
                             }
-                        } else {
-                            // while !p.is_null() {}
-                            // while loop always has false branch, to hold { break; }
-                            // its span for some reason is the whole loop expression
-                            let span = false_branch.unwrap().span.shrink_to_hi();
-                            self.rewriter.replace(self.tcx, span, stmt_str);
-                        }
 
-                        return;
+                            return;
+                        }
                     }
                     _ => {}
                 }

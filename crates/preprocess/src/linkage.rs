@@ -1,4 +1,5 @@
 use petgraph::unionfind::UnionFind;
+use rustc_attr_data_structures::AttributeKind;
 use rustc_hash::FxHashMap;
 use rustc_hir::{
     Expr, ExprKind, ForeignItem, ForeignItemKind, ItemKind, Node, OwnerNode, Pat, PatKind, Path,
@@ -19,11 +20,11 @@ pub fn link_functions(tcx: TyCtxt, mode: RewriteMode) {
 fn link_functions_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     // (1) Find all `#[no_mangle]` or `#[export_name=...]` functions, and index them by symbol.
     let mut symbol_to_def = FxHashMap::default();
-    for item in owner_items(tcx).filter(|item| matches!(item.kind, ItemKind::Fn(..))) {
+    for item in owner_items(tcx).filter(|item| matches!(item.kind, ItemKind::Fn { .. })) {
         let hir_id = item.hir_id();
-        let attrs = tcx.hir().attrs(hir_id);
+        let attrs = tcx.hir_attrs(hir_id);
         if attrs.iter().any(|attr| attr.has_name(sym::no_mangle)) {
-            symbol_to_def.insert(item.ident.name, item.owner_id.def_id);
+            symbol_to_def.insert(item.kind.ident().unwrap().name, item.owner_id.def_id);
         } else if let Some(name) = attrs
             .iter()
             .find(|attr| attr.has_name(sym::export_name))
@@ -77,10 +78,11 @@ fn link_functions_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
                 rewriter.erase(tcx, span);
 
                 let hir_id = foreign_item.hir_id();
-                let attrs = tcx.hir().attrs(hir_id);
+                let attrs = tcx.hir_attrs(hir_id);
                 for attr in attrs {
-                    let span = attr.span;
-                    rewriter.erase(tcx, span)
+                    if let Some(span) = attr_span_extend_to_line(tcx, &attr) {
+                        rewriter.erase(tcx, span);
+                    }
                 }
             }
         }
@@ -110,7 +112,7 @@ fn link_incomplete_types_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         if complete {
             let def_id = item.owner_id.def_id.to_def_id();
             name_to_complete
-                .entry(item.ident.name)
+                .entry(item.kind.ident().unwrap().name)
                 .or_insert_with(Vec::new)
                 .push(def_id);
         }
@@ -137,7 +139,7 @@ fn link_incomplete_types_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         match name_to_complete.entry(name) {
             std::collections::hash_map::Entry::Occupied(_) => {
                 let Node::ForeignItem(foreign_item) =
-                    tcx.hir().get_by_def_id(incomplete.expect_local())
+                    tcx.hir_node_by_def_id(incomplete.expect_local())
                 else {
                     unreachable!()
                 };
@@ -145,10 +147,11 @@ fn link_incomplete_types_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
                 rewriter.erase(tcx, span);
 
                 let hir_id = foreign_item.hir_id();
-                let attrs = tcx.hir().attrs(hir_id);
+                let attrs = tcx.hir_attrs(hir_id);
                 for attr in attrs {
-                    let span = attr.span;
-                    rewriter.erase(tcx, span)
+                    if let Some(span) = attr_span_extend_to_line(tcx, &attr) {
+                        rewriter.erase(tcx, span);
+                    }
                 }
             }
             std::collections::hash_map::Entry::Vacant(v) => {
@@ -250,10 +253,11 @@ fn canonicalize_structs_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
         version += 1;
 
         let hir_id = item.hir_id();
-        let attrs = tcx.hir().attrs(hir_id);
+        let attrs = tcx.hir_attrs(hir_id);
         for attr in attrs {
-            let span = attr.span;
-            rewriter.erase(tcx, span)
+            if let Some(span) = attr_span_extend_to_line(tcx, &attr) {
+                rewriter.erase(tcx, span);
+            }
         }
     }
 
@@ -277,7 +281,7 @@ fn canonicalize_structs_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     for item in owner_items(tcx) {
         // skip automatically derived items
         let hir_id = item.hir_id();
-        let attrs = tcx.hir().attrs(hir_id);
+        let attrs = tcx.hir_attrs(hir_id);
         if attrs
             .iter()
             .any(|attr| attr.has_name(sym::automatically_derived))
@@ -299,9 +303,8 @@ fn canonicalize_structs_internal(tcx: TyCtxt, rewriter: &mut impl Rewrite) {
     }
 }
 
-fn foreign_items(tcx: TyCtxt) -> impl Iterator<Item = &'_ ForeignItem<'_>> {
-    tcx.hir()
-        .krate()
+fn foreign_items(tcx: TyCtxt<'_>) -> impl Iterator<Item = &'_ ForeignItem<'_>> {
+    tcx.hir_crate(())
         .owners
         .iter()
         .filter_map(|maybe_owner| maybe_owner.as_owner())
@@ -314,6 +317,43 @@ fn foreign_items(tcx: TyCtxt) -> impl Iterator<Item = &'_ ForeignItem<'_>> {
         })
 }
 
+fn attr_span_extend_to_line(
+    tcx: TyCtxt<'_>,
+    attr: &rustc_hir::Attribute,
+) -> Option<rustc_span::Span> {
+    use rustc_hir::Attribute;
+
+    let span = match attr {
+        Attribute::Unparsed(_) => Some(attr.span()),
+
+        Attribute::Parsed(kind) => match kind {
+            AttributeKind::Align { span, .. }
+            | AttributeKind::AsPtr(span)
+            | AttributeKind::BodyStability { span, .. }
+            | AttributeKind::Cold(span)
+            | AttributeKind::Confusables {
+                first_span: span, ..
+            }
+            | AttributeKind::ConstStability { span, .. }
+            | AttributeKind::Deprecation { span, .. }
+            | AttributeKind::DocComment { span, .. }
+            | AttributeKind::Inline(_, span)
+            | AttributeKind::MayDangle(span)
+            | AttributeKind::MustUse { span, .. }
+            | AttributeKind::Optimize(_, span)
+            | AttributeKind::PubTransparent(span)
+            | AttributeKind::Stability { span, .. } => Some(*span),
+
+            AttributeKind::AllowInternalUnstable(span_vec) => span_vec.first().map(|(_, s)| *s),
+            AttributeKind::Repr(span_vec) => span_vec.first().map(|(_, s)| *s),
+
+            _ => None,
+        },
+    }?;
+
+    Some(tcx.sess.source_map().span_extend_to_line(span))
+}
+
 // fn visit_resolved_paths(tcx: TyCtxt, callback: impl FnMut(&Path)) {
 
 //     let mut vis = Vis { tcx, callback };
@@ -322,7 +362,7 @@ fn foreign_items(tcx: TyCtxt) -> impl Iterator<Item = &'_ ForeignItem<'_>> {
 //     }
 // }
 
-fn resolved_path_visitor<'tcx, F>(tcx: TyCtxt, callback: F) -> ResolvedPathVisitor<'_, F>
+fn resolved_path_visitor<'tcx, F>(tcx: TyCtxt<'_>, callback: F) -> ResolvedPathVisitor<'_, F>
 where
     F: FnMut(&Path),
 {
@@ -339,8 +379,8 @@ where
 {
     type NestedFilter = OnlyBodies;
 
-    fn nested_visit_map(&mut self) -> Self::Map {
-        self.tcx.hir()
+    fn maybe_tcx(&mut self) -> Self::MaybeTyCtxt {
+        self.tcx
     }
 
     fn visit_expr(&mut self, expr: &'hir Expr<'hir>) {
@@ -362,7 +402,7 @@ where
         intravisit::walk_expr(self, expr)
     }
 
-    fn visit_ty(&mut self, ty: &'hir Ty<'hir>) {
+    fn visit_ty(&mut self, ty: &'hir Ty<'hir, rustc_hir::AmbigArg>) {
         if let rustc_hir::TyKind::Path(path) = &ty.kind {
             if let QPath::Resolved(_, path) = path {
                 (self.callback)(path)
@@ -373,10 +413,13 @@ where
     }
 
     fn visit_pat(&mut self, p: &'hir Pat<'hir>) {
-        if let PatKind::Path(path) = &p.kind {
-            if let QPath::Resolved(_, path) = path {
-                (self.callback)(path)
+        match &p.kind {
+            PatKind::TupleStruct(path, ..) | PatKind::Struct(path, ..) => {
+                if let QPath::Resolved(_, path) = path {
+                    (self.callback)(path)
+                }
             }
+            _ => {}
         }
 
         intravisit::walk_pat(self, p)

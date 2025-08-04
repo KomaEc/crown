@@ -16,3 +16,4 @@ rustc_private = true
 utils = { path = "crates/utils" }
 analyses = { path = "crates/analyses" }
 preprocess = { path = "crates/preprocess" }
+clap = { version = "4.5.42", features = ["derive"] }
