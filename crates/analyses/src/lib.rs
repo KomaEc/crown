@@ -15,4 +15,6 @@ pub mod alias;
 mod encoding;
 pub mod lattice;
 pub mod mir;
+#[allow(unused)]
+mod ssa;
 pub mod type_qualifier;
