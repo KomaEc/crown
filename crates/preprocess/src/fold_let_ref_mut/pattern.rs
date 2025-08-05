@@ -494,11 +494,12 @@ fn dangerous_stmt(caps: &regex::Captures<'_>) -> String {
     let val = &caps["val"];
     let stmt = &caps["stmt"];
 
-    let fresh = r"\*fresh".to_owned() + version1;
+    let fresh_regex = regex::Regex::new(&(r"\*fresh".to_owned() + version1)).unwrap();
 
-    let stmt = regex::Regex::new(&fresh).unwrap().replace_all(stmt, x);
+    let stmt = fresh_regex.replace_all(stmt, x);
+    let val = fresh_regex.replace_all(val, x);
 
-    x.to_owned() + " " + assignop + " " + val + "; " + &stmt + ";"
+    x.to_owned() + " " + assignop + " " + &val + "; " + &stmt + ";"
 }
 
 const DANGEROUS_IF: Pattern = Pattern {

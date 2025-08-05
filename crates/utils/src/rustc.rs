@@ -190,24 +190,6 @@ fn compiler_args(input_path: &Path) -> Vec<String> {
         args.push(extern_arg);
     }
 
-    args.push("--sysroot".to_owned());
-    args.push(
-        "/home/p51lee/.rustup/toolchains/nightly-2025-06-23-x86_64-unknown-linux-gnu".to_owned(),
-    );
-    // args.push(std::env::var("SYSROOT").unwrap_or_else(|_| {
-    //     use std::process::Command;
-    //     String::from_utf8(
-    //         Command::new("rustc")
-    //             .arg("--print=sysroot")
-    //             .output()
-    //             .expect("failed to get sysroot")
-    //             .stdout,
-    //     )
-    //     .expect("non-utf8 sysroot")
-    //     .trim()
-    //     .to_string()
-    // }));
-
     args
 }
 
