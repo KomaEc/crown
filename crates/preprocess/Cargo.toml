@@ -1,0 +1,16 @@
+[package]
+name = "preprocess"
+version = "0.1.0"
+edition = "2024"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[package.metadata.rust-analyzer]
+rustc_private = true
+
+[dependencies]
+rustfix = "0.6"
+petgraph = "0.8.2"
+utils = { path = "../utils" }
+regex = "1.11.1"
+similar = "2.7.0"

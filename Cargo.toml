@@ -1,6 +1,7 @@
 [workspace]
 members = [ "crates/analyses",
     "crates/utils",
+    "crates/preprocess",
 ]
 
 [package]
@@ -14,3 +15,9 @@ rustc_private = true
 [dependencies]
 utils = { path = "crates/utils" }
 analyses = { path = "crates/analyses" }
+preprocess = { path = "crates/preprocess" }
+clap = { version = "4.5.42", features = ["derive"] }
+
+[build-dependencies]
+c2rust-bitfields = "0.20.0"
+c2rust-bitfields-derive = "0.20.0"

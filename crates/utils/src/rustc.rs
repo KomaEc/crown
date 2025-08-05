@@ -12,6 +12,7 @@ pub struct RustProgram<'tcx> {
 
 use rustc_driver::Callbacks;
 use rustc_interface::Config;
+use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
@@ -140,38 +141,69 @@ where
     }
 }
 
-const RUSTC_OPTIONS: &str = "--crate-type=lib -Awarnings -C opt-level=3";
+// const RUSTC_OPTIONS: &str = "--crate-type=lib -Awarnings -C opt-level=3";
 // const RUSTC_OPTIONS: &str = "--crate-type=lib -Awarnings";
 
-pub fn compile_libtree(callbacks: &mut (dyn Callbacks + Send)) {
-    let mut args = vec!["ignored", "lib.rs"];
-    args.extend(RUSTC_OPTIONS.split(" "));
-    let args = args
-        .into_iter()
-        .map(ToString::to_string)
-        .collect::<Vec<_>>();
+/// Builds rustc argument list based on prebuilt dependencies.
+fn compiler_args(input_path: &Path) -> Vec<String> {
+    let crate_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    let extra_deps_dir = crate_dir
+        .ancestors()
+        .nth(2)
+        .expect("crate_dir has no grandparent")
+        .join("extra_deps");
 
+    let mut args = vec![
+        "rustc".to_owned(),
+        input_path.to_str().unwrap().to_owned(),
+        "--crate-type=lib".to_owned(),
+        "-C".to_owned(),
+        "opt-level=3".to_owned(),
+        "--cap-lints".to_owned(),
+        "allow".to_owned(),
+        "-Awarnings".to_owned(),
+        "-L".to_owned(),
+        extra_deps_dir.to_str().unwrap().to_owned(),
+    ];
+
+    for entry in fs::read_dir(&extra_deps_dir).expect("missing extra_deps dir") {
+        let path = entry.unwrap().path();
+        let filename = path.file_name().unwrap().to_str().unwrap();
+        let lib_prefix = filename.strip_prefix("lib").unwrap_or(filename);
+        let crate_name = lib_prefix.split('-').next().unwrap();
+
+        let extern_arg = match crate_name {
+            "libc" => format!("libc={}", path.to_str().unwrap()),
+            "c2rust_bitfields" => format!("c2rust_bitfields={}", path.to_str().unwrap()),
+            "c2rust_bitfields_derive" => {
+                format!("c2rust_bitfields_derive={}", path.to_str().unwrap())
+            }
+            #[cfg(target_arch = "x86_64")]
+            "f128" => format!("f128={}", path.to_str().unwrap()),
+            #[cfg(target_arch = "x86_64")]
+            "f128_internal" => format!("f128_internal={}", path.to_str().unwrap()),
+            "num_traits" => format!("num_traits={}", path.to_str().unwrap()),
+            _ => continue,
+        };
+
+        args.push("--extern".to_owned());
+        args.push(extern_arg);
+    }
+
+    args
+}
+
+pub fn compile_libtree(callbacks: &mut (dyn Callbacks + Send)) {
+    let args = compiler_args(Path::new("lib.rs"));
     rustc_driver::run_compiler(&args, &mut LibtreeCompiler(callbacks));
 }
 
 pub fn compile_text(program: String, callbacks: &mut (dyn Callbacks + Send)) {
-    let mut args = vec!["ignored", "lib.rs"];
-    args.extend(RUSTC_OPTIONS.split(" "));
-    let args = args
-        .into_iter()
-        .map(ToString::to_string)
-        .collect::<Vec<_>>();
-
+    let args = compiler_args(Path::new("lib.rs"));
     rustc_driver::run_compiler(&args, &mut TextCompiler(callbacks, program));
 }
 
 pub fn compile_absolute_path(program: PathBuf, callbacks: &mut (dyn Callbacks + Send)) {
-    let mut args = vec!["ignored", program.to_str().unwrap()];
-    args.extend(RUSTC_OPTIONS.split(" "));
-    let args = args
-        .into_iter()
-        .map(ToString::to_string)
-        .collect::<Vec<_>>();
-
+    let args = compiler_args(&program);
     rustc_driver::run_compiler(&args, callbacks);
 }

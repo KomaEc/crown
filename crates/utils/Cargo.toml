@@ -17,6 +17,8 @@ tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["json", "env-filter"] }
 ctor = { version = "0.4.2", optional = true }
 either = "1.15.0"
+rustfix = "0.6"
+clap = { version = "4.1", features = ["derive"] }
 
 
 [features]
