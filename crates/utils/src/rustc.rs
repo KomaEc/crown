@@ -62,7 +62,13 @@ impl rustc_driver::Callbacks for TextCompiler<'_> {
     }
 }
 
-pub struct WithRustProgram<F>(pub F);
+struct WithRustProgram<F>(F);
+
+impl<F> WithRustProgram<F> {
+    fn new(f: F) -> Self {
+        Self(f)
+    }
+}
 
 impl<F> rustc_driver::Callbacks for WithRustProgram<F>
 where
@@ -133,11 +139,11 @@ where
     F: FnMut(RustProgram) + Send,
 {
     match program.into() {
-        SourceCode::Text(text) => compile_text(text, &mut WithRustProgram(callback)),
+        SourceCode::Text(text) => compile_text(text, &mut WithRustProgram::new(callback)),
         SourceCode::AbsolutePath(path) => {
-            compile_absolute_path(path, &mut WithRustProgram(callback))
+            compile_absolute_path(path, &mut WithRustProgram::new(callback))
         }
-        SourceCode::Libtree => compile_libtree(&mut WithRustProgram(callback)),
+        SourceCode::Libtree => compile_libtree(&mut WithRustProgram::new(callback)),
     }
 }
 

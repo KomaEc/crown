@@ -1,12 +1,14 @@
 use crate::alias::steensgaard::{
-    FieldFocused, FieldInsensitive, InterProcedural, MergeDeallocArg, NopDeallocArg, Steensgaard,
+    FieldBased, FieldInsensitive, InterProcedural, MergeDeallocArg, NopDeallocArg, Steensgaard,
 };
 
+pub mod andersen;
+pub mod constraint;
 pub mod steensgaard;
 #[cfg(test)]
 mod test;
 
-pub type TaintResult = Steensgaard<FieldFocused, MergeDeallocArg, InterProcedural>;
+pub type TaintResult = Steensgaard<FieldBased, MergeDeallocArg, InterProcedural>;
 pub type AliasResult = Steensgaard<FieldInsensitive, NopDeallocArg, InterProcedural>;
 pub type IntraAliasResult = Steensgaard<FieldInsensitive, NopDeallocArg, InterProcedural>;
 
@@ -23,6 +25,6 @@ pub fn intra_alias_results(rust_program: &utils::rustc::RustProgram) -> IntraAli
 }
 
 pub fn report_results(rust_program: &utils::rustc::RustProgram) {
-    Steensgaard::<FieldFocused, MergeDeallocArg, InterProcedural>::field_based(rust_program)
+    Steensgaard::<FieldBased, MergeDeallocArg, InterProcedural>::field_based(rust_program)
         .print_results()
 }

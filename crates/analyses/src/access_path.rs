@@ -84,6 +84,13 @@ impl EncodedProjections {
     pub fn size(&self) -> usize {
         self.end_offset - self.start_offset
     }
+
+    pub fn new(range: Range<usize>) -> Self {
+        Self {
+            start_offset: range.start,
+            end_offset: range.end,
+        }
+    }
 }
 
 impl From<Range<usize>> for EncodedProjections {
@@ -117,6 +124,19 @@ pub struct KLimited<T> {
     pub(crate) data: T,
 }
 
+pub trait WithKLimit: Sized {
+    fn with_k_limit(self, k_limit: usize) -> KLimited<Self>;
+}
+
+impl<T> WithKLimit for T {
+    fn with_k_limit(self, k_limit: usize) -> KLimited<Self> {
+        KLimited {
+            k_limit: k_limit,
+            data: self,
+        }
+    }
+}
+
 impl<T> KLimited<T> {
     pub fn map<U, F>(self, f: F) -> KLimited<U>
     where
@@ -127,9 +147,7 @@ impl<T> KLimited<T> {
             data: f(self.data),
         }
     }
-}
 
-impl<T> KLimited<T> {
     pub fn new(k_limit: usize, data: T) -> Self {
         KLimited { k_limit, data }
     }

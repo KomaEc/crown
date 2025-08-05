@@ -6,8 +6,7 @@ use rustc_middle::{
 use rustc_span::source_map::Spanned;
 
 use crate::alias::steensgaard::{
-    AbstractLocation, ConstraintGeneration, FnLocals, StructFields,
-    constraint::{Constraint, ConstraintKind},
+    AbstractLocation, ConstraintGeneration, FnLocals, StructFields, constraint::Constraint,
     location::PlaceLocation,
 };
 
@@ -45,9 +44,9 @@ impl FieldStrategy for FieldInsensitive {
 }
 
 /// Field-based strategy with pointer fields as the only source of points-to target
-pub enum FieldFocused {}
+pub enum FieldBased {}
 
-impl FieldStrategy for FieldFocused {
+impl FieldStrategy for FieldBased {
     type StructFields = StructFields;
 
     fn place_location<'tcx>(
@@ -124,8 +123,7 @@ impl DeallocArgStrategy for MergeDeallocArg {
         };
         let param_loc = cg.steensgaard.dealloc_arg;
         let constraint_idx = cg.constraints.len();
-        cg.constraints
-            .push(Constraint::new(ConstraintKind::Assign, param_loc, arg_loc));
+        cg.constraints.push(Constraint::assign(param_loc, arg_loc));
         cg.resolve_assign(param_loc, arg_loc, constraint_idx)
     }
 }
@@ -172,8 +170,7 @@ pub trait InterProceduralStrategy: Sized {
                 unreachable!("argument operand contains derefs")
             };
             let constraint_idx = cg.constraints.len();
-            cg.constraints
-                .push(Constraint::new(ConstraintKind::Assign, dest_loc, arg_loc));
+            cg.constraints.push(Constraint::assign(dest_loc, arg_loc));
             cg.resolve_assign(dest_loc, arg_loc, constraint_idx)
         }
     }
@@ -206,8 +203,7 @@ pub trait InterProceduralStrategy: Sized {
                 unreachable!("argument operand contains derefs")
             };
             let constraint_idx = cg.constraints.len();
-            cg.constraints
-                .push(Constraint::new(ConstraintKind::Assign, param_loc, arg_loc));
+            cg.constraints.push(Constraint::assign(param_loc, arg_loc));
             cg.resolve_assign(param_loc, arg_loc, constraint_idx)
         }
 
@@ -226,8 +222,7 @@ pub trait InterProceduralStrategy: Sized {
         //     cg.steensgaard.fn_locals.locations[cg.steensgaard.fn_locals.did_idx[&callee_did]][0];
         let ret_loc = cg.steensgaard.fn_locals.memory_location(&callee_did, 0);
         let constraint_idx = cg.constraints.len();
-        cg.constraints
-            .push(Constraint::new(ConstraintKind::Assign, dest_loc, ret_loc));
+        cg.constraints.push(Constraint::assign(dest_loc, ret_loc));
         cg.resolve_assign(dest_loc, ret_loc, constraint_idx);
     }
 }

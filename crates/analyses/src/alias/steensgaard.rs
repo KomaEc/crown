@@ -50,7 +50,7 @@ pub struct Steensgaard<F: FieldStrategy, D: DeallocArgStrategy, I: InterProcedur
     pub(crate) _interprocedural_strategy: std::marker::PhantomData<*const I>,
 }
 
-impl<I: InterProceduralStrategy> Steensgaard<FieldFocused, MergeDeallocArg, I> {
+impl<I: InterProceduralStrategy> Steensgaard<FieldBased, MergeDeallocArg, I> {
     pub fn field_based(rust_program: &utils::rustc::RustProgram) -> Self {
         let n_struct_fields = rust_program.structs.iter().fold(0usize, |acc, did| {
             acc + rust_program.tcx.adt_def(*did).all_fields().count()

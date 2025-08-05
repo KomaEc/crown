@@ -4,11 +4,14 @@ use rustc_middle::{
 };
 use rustc_type_ir::TyKind::FnDef;
 
-use crate::alias::steensgaard::{
-    AbstractLocation, Steensgaard,
-    constraint::{Constraint, ConstraintKind, watcher::WatcherLists},
-    location::PlaceLocation,
-    strategies::*,
+use crate::alias::{
+    constraint::{BasicConstraintKind, ComplexConstraintKind, ConstraintKind, GenericConstraint},
+    steensgaard::{
+        AbstractLocation, Steensgaard,
+        constraint::{Constraint, watcher::WatcherLists},
+        location::PlaceLocation,
+        strategies::*,
+    },
 };
 use utils::tracing;
 
@@ -36,11 +39,11 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy, I: InterProceduralStrat
         buffer.extend(self.watchers.get_list(p).iter());
 
         for &constraint_idx in &*buffer {
-            match self.constraints[constraint_idx].0 {
-                ConstraintKind::Assign => {
+            match self.constraints[constraint_idx].kind {
+                ConstraintKind::Basic(BasicConstraintKind::Assign) => {
                     let q = AbstractLocation::from_u32(
-                        self.constraints[constraint_idx].1.as_u32()
-                            + self.constraints[constraint_idx].2.as_u32()
+                        self.constraints[constraint_idx].lhs.as_u32()
+                            + self.constraints[constraint_idx].rhs.as_u32()
                             - p.as_u32(),
                     );
                     if self.steensgaard.pts[q].is_null() {
@@ -51,22 +54,20 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy, I: InterProceduralStrat
                         self.steensgaard.join(pts_p, pts_q)
                     }
                 }
-                ConstraintKind::Store => {
+                ConstraintKind::Complex(ComplexConstraintKind::Store) => {
                     // *p = q
-                    assert_eq!(self.constraints[constraint_idx].1, p);
-                    let q = self.constraints[constraint_idx].2;
+                    assert_eq!(self.constraints[constraint_idx].lhs, p);
+                    let q = self.constraints[constraint_idx].rhs;
                     let pts_p = self.steensgaard.pts[p];
-                    self.constraints[constraint_idx] =
-                        Constraint::new(ConstraintKind::Assign, pts_p, q);
+                    self.constraints[constraint_idx] = Constraint::assign(pts_p, q);
                     self.resolve_assign(pts_p, q, constraint_idx)
                 }
-                ConstraintKind::Load => {
+                ConstraintKind::Complex(ComplexConstraintKind::Load) => {
                     // q = *p
-                    assert_eq!(self.constraints[constraint_idx].2, p);
-                    let q = self.constraints[constraint_idx].1;
+                    assert_eq!(self.constraints[constraint_idx].rhs, p);
+                    let q = self.constraints[constraint_idx].lhs;
                     let pts_p = self.steensgaard.pts[p];
-                    self.constraints[constraint_idx] =
-                        Constraint::new(ConstraintKind::Assign, q, pts_p);
+                    self.constraints[constraint_idx] = Constraint::assign(q, pts_p);
                     self.resolve_assign(q, pts_p, constraint_idx)
                 }
                 _ => {
@@ -118,12 +119,19 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy, I: InterProceduralStrat
 
     /// resolves the constraint (joins abstract locations), add constraint to
     /// constraint sets and watcher list if fails
-    pub fn resolve(&mut self, constraint @ Constraint(kind, mut p, mut q): Constraint) {
+    pub fn resolve(
+        &mut self,
+        constraint @ GenericConstraint {
+            kind,
+            lhs: mut p,
+            rhs: mut q,
+        }: Constraint,
+    ) {
         assert!(!p.is_null() && !q.is_null());
 
         let pts = &mut self.steensgaard.pts;
         match kind {
-            ConstraintKind::Addr => {
+            ConstraintKind::Basic(BasicConstraintKind::Addr) => {
                 if pts[p].is_null() {
                     // pts[p] = q;
                     self.set_pts(p, q)
@@ -133,8 +141,8 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy, I: InterProceduralStrat
                 }
                 return;
             }
-            ConstraintKind::Assign => {}
-            ConstraintKind::Store => {
+            ConstraintKind::Basic(BasicConstraintKind::Assign) => {}
+            ConstraintKind::Complex(ComplexConstraintKind::Store) => {
                 if pts[p].is_null() {
                     let constraint_idx = self.constraints.len();
                     self.constraints.push(constraint);
@@ -144,7 +152,7 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy, I: InterProceduralStrat
                     p = pts[p];
                 }
             }
-            ConstraintKind::Load => {
+            ConstraintKind::Complex(ComplexConstraintKind::Load) => {
                 if pts[q].is_null() {
                     let constraint_idx = self.constraints.len();
                     self.constraints.push(constraint);
@@ -158,9 +166,8 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy, I: InterProceduralStrat
 
         // process assign(p, q)
         let constraint_idx = self.constraints.len();
-        self.constraints
-            .push(Constraint(ConstraintKind::Assign, p, q));
-        // .push(Constraint::new(ConstraintKind::Assign, p, q));
+        self.constraints.push(Constraint::assign(p, q));
+        // .push(Constraint::new(ConstraintKind::Basic(BasicConstraintKind::Assign), p, q));
         self.resolve_assign(p, q, constraint_idx)
     }
 
@@ -225,19 +232,23 @@ impl<'me, 'tcx, F: FieldStrategy, D: DeallocArgStrategy, I: InterProceduralStrat
                 unreachable!()
             };
             match r_loc {
-                PlaceLocation::Plain(q) => Constraint::new(ConstraintKind::Addr, p, q),
-                PlaceLocation::Deref(q) => Constraint::new(ConstraintKind::Assign, p, q),
+                PlaceLocation::Plain(q) => {
+                    Constraint::new(ConstraintKind::Basic(BasicConstraintKind::Addr), p, q)
+                }
+                PlaceLocation::Deref(q) => {
+                    Constraint::new(ConstraintKind::Basic(BasicConstraintKind::Assign), p, q)
+                }
             }
         } else {
             match (l_loc, r_loc) {
                 (PlaceLocation::Plain(p), PlaceLocation::Plain(q)) => {
-                    Constraint::new(ConstraintKind::Assign, p, q)
+                    Constraint::new(ConstraintKind::Basic(BasicConstraintKind::Assign), p, q)
                 }
                 (PlaceLocation::Plain(p), PlaceLocation::Deref(q)) => {
-                    Constraint::new(ConstraintKind::Load, p, q)
+                    Constraint::new(ConstraintKind::Complex(ComplexConstraintKind::Load), p, q)
                 }
                 (PlaceLocation::Deref(p), PlaceLocation::Plain(q)) => {
-                    Constraint::new(ConstraintKind::Store, p, q)
+                    Constraint::new(ConstraintKind::Complex(ComplexConstraintKind::Store), p, q)
                 }
                 _ => unreachable!(),
             }
