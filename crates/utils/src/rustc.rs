@@ -62,7 +62,7 @@ impl rustc_driver::Callbacks for TextCompiler<'_> {
     }
 }
 
-struct WithRustProgram<F>(F);
+pub struct WithRustProgram<F>(pub F);
 
 impl<F> WithRustProgram<F> {
     fn new(f: F) -> Self {
