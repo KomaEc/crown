@@ -66,11 +66,12 @@ for f in $(find $1 -name "Cargo.toml"); do
     fi
     
     # Replace core:: with std:: in all .rs files
-    find "$BENCH_DIR" -name "*.rs" -type f -exec sed -i 's/core::mem/std::mem/g' {} +
-    find "$BENCH_DIR" -name "*.rs" -type f -exec sed -i 's/core::ptr/std::ptr/g' {} +
-    find "$BENCH_DIR" -name "*.rs" -type f -exec sed -i 's/core::ffi/std::ffi/g' {} +
-    find "$BENCH_DIR" -name "*.rs" -type f -exec sed -i 's/core::f32/std::f32/g' {} +
-    find "$BENCH_DIR" -name "*.rs" -type f -exec sed -i 's/core::f64/std::f64/g' {} +
+    find "$BENCH_DIR" -name "*.rs" -type f -exec sed -i \
+        -e 's/core::mem/std::mem/g' \
+        -e 's/core::ptr/std::ptr/g' \
+        -e 's/core::ffi/std::ffi/g' \
+        -e 's/core::f32/std::f32/g' \
+        -e 's/core::f64/std::f64/g' {} +
     
     echo "preprocessing $BENCH_NAME"
     RUST_BACKTRACE=full $CROWN $ENTRY preprocess in-place
