@@ -15,6 +15,7 @@ pub mod alias;
 mod encoding;
 pub mod lattice;
 pub mod mir;
+mod output_params;
 #[allow(unused)]
 mod ssa;
 pub mod type_qualifier;

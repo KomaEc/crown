@@ -1,0 +1,98 @@
+//! Collect certain temporaries in MIR
+//! 1. deref copies
+//! 2. locals that are defined once and used once (calling arguments, etc.)
+//!
+//! These temporaries are trivially eliminable, and thus should not affect
+//! analysis results (e.g. alias analysis)
+
+#![allow(dead_code)]
+
+use rustc_index::{IndexVec, bit_set::MixedBitSet};
+use rustc_middle::mir::{
+    Body, Local, Location, Place, Rvalue, Statement, StatementKind,
+    visit::{MutatingUseContext, PlaceContext, Visitor},
+};
+
+pub struct DerefCopiesCollector<'this>(pub &'this mut MixedBitSet<Local>);
+
+pub fn deref_copies(body: &Body) -> MixedBitSet<Local> {
+    let mut deref_copies = MixedBitSet::new_empty(body.local_decls.len());
+    DerefCopiesCollector(&mut deref_copies).visit_body(body);
+    deref_copies
+}
+
+pub fn eliminable_temporaries(body: &Body) -> MixedBitSet<Local> {
+    let deref_copies = deref_copies(body);
+
+    let mut unique_def = IndexVec::from_elem_n(None, body.local_decls.len());
+    UniqueDef(&mut unique_def).visit_body(body);
+    let mut mentioned = IndexVec::from_elem_n(0, body.local_decls.len());
+    Mentioned(&mut mentioned).visit_body(body);
+    let mut eliminable_temporaries = MixedBitSet::new_empty(body.local_decls.len());
+    for ((local, def), count) in unique_def
+        .into_iter_enumerated()
+        .zip(mentioned.into_iter())
+        .skip(body.arg_count + 1)
+    {
+        if let (Some(true), 2) = (def, count) {
+            eliminable_temporaries.insert(local);
+        }
+    }
+    // assert!({ simple_copies.intersect(&deref_copies); simple_copies.is_empty()});
+    eliminable_temporaries.union(&deref_copies);
+    eliminable_temporaries
+}
+
+impl<'tcx> Visitor<'tcx> for DerefCopiesCollector<'_> {
+    fn visit_assign(&mut self, place: &Place<'tcx>, rvalue: &Rvalue<'tcx>, _: Location) {
+        if let Rvalue::CopyForDeref(..) = rvalue {
+            assert!(place.as_local().is_some());
+            let local = place.local;
+            self.0.insert(local);
+        }
+    }
+}
+
+struct UniqueDef<'this>(&'this mut IndexVec<Local, Option<bool>>);
+
+impl Visitor<'_> for UniqueDef<'_> {
+    fn visit_local(&mut self, local: Local, context: PlaceContext, location: Location) {
+        if let PlaceContext::MutatingUse(MutatingUseContext::Store) = context {
+            self.visit_place(&Place::from(local), context, location)
+        }
+    }
+
+    fn visit_place(&mut self, place: &Place<'_>, context: PlaceContext, _: Location) {
+        if place.as_local().is_some()
+            && matches!(
+                context,
+                PlaceContext::MutatingUse(MutatingUseContext::Store)
+            )
+        {
+            match self.0[place.local] {
+                Some(true) => self.0[place.local] = Some(false),
+                Some(false) => {}
+                None => self.0[place.local] = Some(true),
+            }
+        }
+    }
+}
+
+struct Mentioned<'this>(&'this mut IndexVec<Local, usize>);
+
+impl Visitor<'_> for Mentioned<'_> {
+    fn visit_local(&mut self, local: Local, _: PlaceContext, _: Location) {
+        self.0[local] += 1;
+    }
+
+    fn visit_place(&mut self, place: &Place<'_>, _: PlaceContext, _: Location) {
+        self.0[place.local] += 1;
+    }
+
+    fn visit_statement(&mut self, statement: &Statement<'_>, location: Location) {
+        if let StatementKind::StorageDead(..) | StatementKind::StorageLive(..) = statement.kind {
+            return;
+        }
+        self.super_statement(statement, location);
+    }
+}
