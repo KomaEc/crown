@@ -23,6 +23,6 @@ pub mod mir;
 mod output_params;
 pub(crate) mod reaching_definitions;
 #[allow(unused)]
-mod ssa;
+pub mod ssa;
 pub mod type_qualifier;
 pub mod use_def;
