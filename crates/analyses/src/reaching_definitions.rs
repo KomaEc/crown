@@ -4,7 +4,7 @@ use rustc_middle::mir::{
     visit::{PlaceContext, Visitor},
 };
 use rustc_mir_dataflow::{Analysis, Forward, fmt::DebugWithContext};
-use utils::{rustc_hash::FxHashMap, smallvec::SmallVec};
+use utils::rustc_hash::FxHashMap;
 
 use crate::liveness::DefUse;
 
@@ -26,7 +26,6 @@ pub struct DefinitionSet {
     pub(crate) definitions: IndexVec<DefIndex, Definition>,
     location_map: FxHashMap<Location, DefIndex>,
     local_map: IndexVec<Local, MixedBitSet<DefIndex>>,
-    uses: FxHashMap<Location, SmallVec<[Local; 2]>>,
 }
 
 pub fn compute_definition_set(body: &Body) -> DefinitionSet {
@@ -42,12 +41,6 @@ pub fn compute_definition_set(body: &Body) -> DefinitionSet {
                     });
                     self.0.location_map.insert(location, def_index);
                 }
-                Some(DefUse::Use) => {
-                    let uses = self.0.uses.entry(location).or_default();
-                    if !uses.contains(&place.local) {
-                        uses.push(place.local);
-                    }
-                }
                 _ => {}
             }
         }
@@ -60,7 +53,6 @@ pub fn compute_definition_set(body: &Body) -> DefinitionSet {
         definitions: IndexVec::new(),
         location_map: FxHashMap::default(),
         local_map: IndexVec::new(),
-        uses: FxHashMap::default(),
     });
     vis.visit_body(body);
 
