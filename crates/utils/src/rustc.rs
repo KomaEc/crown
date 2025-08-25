@@ -167,6 +167,14 @@ where
     rustc_driver::run_compiler(&args, callbacks);
 }
 
+pub fn run_compiler_without_opt<P, F>(program: P, callbacks: F)
+where
+    P: Into<SourceCode>,
+    F: FnMut(RustProgram) + Send,
+{
+    run_compiler_with_opt_level::<_, _, NoOpt>(program, callbacks);
+}
+
 pub fn run_compiler<P, F>(program: P, callbacks: F)
 where
     P: Into<SourceCode>,
