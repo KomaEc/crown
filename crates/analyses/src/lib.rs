@@ -14,6 +14,8 @@ extern crate rustc_type_ir;
 
 pub mod access_path;
 pub mod alias;
+#[allow(unused)]
+mod borrow;
 mod encoding;
 pub mod lattice;
 #[allow(unused)]
