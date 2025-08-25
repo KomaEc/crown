@@ -133,25 +133,50 @@ impl From<&str> for SourceCode {
     }
 }
 
-pub fn run_compiler<P, F>(program: P, callback: F)
+pub trait OptLevel {
+    const CMDLINE: &[&str];
+}
+pub enum Opt3 {}
+impl OptLevel for Opt3 {
+    const CMDLINE: &[&str] = &["-C", "opt-level=3"];
+}
+pub enum NoOpt {}
+impl OptLevel for NoOpt {
+    const CMDLINE: &[&str] = &[];
+}
+
+pub fn run_compiler_with_opt_level<P, F, O>(program: P, callbacks: F)
+where
+    P: Into<SourceCode>,
+    F: FnMut(RustProgram) + Send,
+    O: OptLevel,
+{
+    let mut callbacks = WithRustProgram::new(callbacks);
+    let (path, callbacks): (_, &mut (dyn Callbacks + Send)) = match program.into() {
+        SourceCode::Text(program) => (
+            Path::new("lib.rs").to_path_buf(),
+            &mut TextCompiler(&mut callbacks, program),
+        ),
+        SourceCode::AbsolutePath(path_buf) => (path_buf, &mut callbacks),
+        SourceCode::Libtree => (
+            Path::new("lib.rs").to_path_buf(),
+            &mut LibtreeCompiler(&mut callbacks),
+        ),
+    };
+    let args = compiler_args::<O>(&path);
+    rustc_driver::run_compiler(&args, callbacks);
+}
+
+pub fn run_compiler<P, F>(program: P, callbacks: F)
 where
     P: Into<SourceCode>,
     F: FnMut(RustProgram) + Send,
 {
-    match program.into() {
-        SourceCode::Text(text) => compile_text(text, &mut WithRustProgram::new(callback)),
-        SourceCode::AbsolutePath(path) => {
-            compile_absolute_path(path, &mut WithRustProgram::new(callback))
-        }
-        SourceCode::Libtree => compile_libtree(&mut WithRustProgram::new(callback)),
-    }
+    run_compiler_with_opt_level::<_, _, Opt3>(program, callbacks);
 }
 
-// const RUSTC_OPTIONS: &str = "--crate-type=lib -Awarnings -C opt-level=3";
-// const RUSTC_OPTIONS: &str = "--crate-type=lib -Awarnings";
-
 /// Builds rustc argument list based on prebuilt dependencies.
-fn compiler_args(input_path: &Path) -> Vec<String> {
+fn compiler_args<O: OptLevel>(input_path: &Path) -> Vec<String> {
     let crate_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let extra_deps_dir = crate_dir
         .ancestors()
@@ -160,17 +185,19 @@ fn compiler_args(input_path: &Path) -> Vec<String> {
         .join("extra_deps");
 
     let mut args = vec![
-        "rustc".to_owned(),
-        input_path.to_str().unwrap().to_owned(),
-        "--crate-type=lib".to_owned(),
-        "-C".to_owned(),
-        "opt-level=3".to_owned(),
-        "--cap-lints".to_owned(),
-        "allow".to_owned(),
-        "-Awarnings".to_owned(),
-        "-L".to_owned(),
-        extra_deps_dir.to_str().unwrap().to_owned(),
+        "rustc",
+        input_path.to_str().unwrap(),
+        "--crate-type=lib",
+        "--cap-lints",
+        "allow",
+        "-Awarnings",
+        "-L",
+        extra_deps_dir.to_str().unwrap(),
     ];
+
+    args.extend_from_slice(O::CMDLINE);
+
+    let mut args: Vec<String> = args.into_iter().map(|s| s.to_string()).collect();
 
     for entry in fs::read_dir(&extra_deps_dir).expect("missing extra_deps dir") {
         let path = entry.unwrap().path();
@@ -197,19 +224,4 @@ fn compiler_args(input_path: &Path) -> Vec<String> {
     }
 
     args
-}
-
-pub fn compile_libtree(callbacks: &mut (dyn Callbacks + Send)) {
-    let args = compiler_args(Path::new("lib.rs"));
-    rustc_driver::run_compiler(&args, &mut LibtreeCompiler(callbacks));
-}
-
-pub fn compile_text(program: String, callbacks: &mut (dyn Callbacks + Send)) {
-    let args = compiler_args(Path::new("lib.rs"));
-    rustc_driver::run_compiler(&args, &mut TextCompiler(callbacks, program));
-}
-
-pub fn compile_absolute_path(program: PathBuf, callbacks: &mut (dyn Callbacks + Send)) {
-    let args = compiler_args(&program);
-    rustc_driver::run_compiler(&args, callbacks);
 }

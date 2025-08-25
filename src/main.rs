@@ -17,10 +17,7 @@ extern crate rustc_target;
 
 use clap::Parser;
 use std::path::PathBuf;
-use utils::{
-    rewrite::RewriteMode,
-    rustc::{RustProgram, WithRustProgram, compile_absolute_path},
-};
+use utils::{rewrite::RewriteMode, rustc::run_compiler};
 
 #[derive(Parser, Debug)]
 struct Cli {
@@ -41,12 +38,9 @@ enum Command {
 
 fn preprocess(path: &PathBuf, rewrite_mode: RewriteMode) -> Result<(), ()> {
     for preprocess in preprocess::PREPROCESSES {
-        compile_absolute_path(
-            path.clone(),
-            &mut WithRustProgram(|program: RustProgram| {
-                preprocess(program.tcx, rewrite_mode);
-            }),
-        );
+        run_compiler(path.clone(), |program| {
+            preprocess(program.tcx, rewrite_mode)
+        });
     }
     Ok(())
 }
