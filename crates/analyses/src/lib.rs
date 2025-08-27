@@ -4,7 +4,7 @@
 #![feature(min_specialization)]
 
 extern crate rustc_abi;
-extern crate rustc_borrowck;
+// extern crate rustc_borrowck;
 extern crate rustc_hir;
 extern crate rustc_index;
 extern crate rustc_middle;
@@ -14,8 +14,8 @@ extern crate rustc_type_ir;
 
 pub mod access_path;
 pub mod alias;
-#[allow(unused)]
-mod borrow;
+// #[allow(unused)]
+pub mod borrow;
 mod encoding;
 pub mod lattice;
 #[allow(unused)]

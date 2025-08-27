@@ -1,4 +1,3 @@
-use rustc_borrowck::consumers::{PlaceConflictBias, places_conflict};
 use rustc_index::bit_set::SparseBitMatrix;
 use rustc_middle::{
     mir::{
@@ -9,7 +8,10 @@ use rustc_middle::{
 };
 use rustc_mir_dataflow::points::{DenseLocationMap, PointIndex};
 
-use crate::borrow::{BorrowSet, Loan};
+use crate::borrow::{
+    BorrowSet, Loan,
+    places_conflict::{PlaceConflictBias, places_conflict},
+};
 
 pub(crate) type Invalidates = SparseBitMatrix<PointIndex, Loan>;
 
@@ -55,10 +57,18 @@ impl<'g, 'tcx> LoanInvalidatesGenerator<'g, 'tcx> {
 
         for loan in borrows_for_place_base.iter() {
             let borrow_data = &self.borrow_set.loans[loan];
+            // println!(
+            //     "borrowed {:?}: {}, accessed {:?}: {}",
+            //     borrow_data.borrowed,
+            //     borrow_data.borrowed.ty(self.body, self.tcx).ty,
+            //     place,
+            //     place.ty(self.body, self.tcx).ty
+            // );
+
             if places_conflict(
                 self.tcx,
                 self.body,
-                borrow_data.path,
+                borrow_data.borrowed,
                 place,
                 PlaceConflictBias::Overlap,
             ) {
@@ -83,11 +93,11 @@ impl<'g, 'tcx> LoanInvalidatesGenerator<'g, 'tcx> {
     // Simulates consumption of an rvalue
     fn consume_rvalue(&mut self, location: Location, rvalue: &Rvalue<'tcx>) {
         match rvalue {
-            &Rvalue::Ref(_ /*rgn*/, bk, place) => {
+            &Rvalue::Ref(_ /*rgn*/, _, place) => {
                 self.access_place(location, place);
             }
 
-            &Rvalue::RawPtr(kind, place) => {
+            &Rvalue::RawPtr(_, place) => {
                 self.access_place(location, place);
             }
 
@@ -189,7 +199,7 @@ impl<'g, 'tcx> Visitor<'tcx> for LoanInvalidatesGenerator<'g, 'tcx> {
                 place: drop_place,
                 target: _,
                 unwind: _,
-                replace,
+                replace: _,
                 drop: _,
                 async_fut: _,
             } => {
@@ -230,12 +240,7 @@ impl<'g, 'tcx> Visitor<'tcx> for LoanInvalidatesGenerator<'g, 'tcx> {
                     self.consume_operand(location, index);
                 }
             }
-            TerminatorKind::Yield {
-                value,
-                resume,
-                resume_arg,
-                drop: _,
-            } => {
+            TerminatorKind::Yield { .. } => {
                 unimplemented!()
             }
             TerminatorKind::UnwindResume
@@ -245,7 +250,7 @@ impl<'g, 'tcx> Visitor<'tcx> for LoanInvalidatesGenerator<'g, 'tcx> {
                 let borrow_set = self.borrow_set;
                 let point_index = self.location_map.point_from_location(location);
                 for (i, data) in borrow_set.loans.iter_enumerated() {
-                    if !data.path.is_indirect() {
+                    if !data.borrowed.is_indirect() {
                         self.facts.insert(point_index, i);
                     }
                 }

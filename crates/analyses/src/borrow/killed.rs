@@ -1,4 +1,3 @@
-use rustc_borrowck::consumers::{PlaceConflictBias, places_conflict};
 use rustc_index::{IndexVec, bit_set::DenseBitSet};
 use rustc_middle::{
     mir::{
@@ -9,7 +8,10 @@ use rustc_middle::{
 };
 use rustc_mir_dataflow::points::{DenseLocationMap, PointIndex};
 
-use crate::borrow::{BorrowSet, Loan};
+use crate::borrow::{
+    BorrowSet, Loan,
+    places_conflict::{PlaceConflictBias, places_conflict},
+};
 
 pub(crate) type Killed = IndexVec<PointIndex, DenseBitSet<Loan>>;
 
@@ -74,7 +76,7 @@ impl<'kill, 'tcx> KillsCollector<'kill, 'tcx, Place<'tcx>> {
             places_conflict(
                 self.tcx,
                 self.body,
-                self.borrow_set.loans[i].path,
+                self.borrow_set.loans[i].borrowed,
                 place,
                 PlaceConflictBias::NoOverlap,
             )

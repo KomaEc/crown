@@ -74,11 +74,18 @@ where
 
 impl<Qualifier> TypeQualifiers<Qualifier> {
     pub fn function_facts(&self, did: &DefId, tcx: TyCtxt) -> impl Iterator<Item = &[Qualifier]> {
-        let body = tcx.optimized_mir(*did);
+        // let body = tcx.optimized_mir(*did);
+        let body = &*tcx
+            .mir_drops_elaborated_and_const_checked(did.expect_local())
+            .borrow();
         self.fn_locals
             .locals(did)
             .take(body.arg_count + 1)
             .map(|vars| &self.model[vars])
+    }
+
+    pub fn function_body_facts(&self, did: &DefId) -> impl Iterator<Item = &[Qualifier]> {
+        self.fn_locals.locals(did).map(|vars| &self.model[vars])
     }
 
     pub fn struct_facts(&self, did: &DefId) -> impl Iterator<Item = &[Qualifier]> {

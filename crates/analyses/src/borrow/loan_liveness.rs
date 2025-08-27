@@ -9,7 +9,7 @@ use rustc_mir_dataflow::{
 };
 
 use crate::borrow::{
-    BorrowSet, Loan, ProvenanceSet, killed::Killed, provenance_liveness::ProvenanceLiveness,
+    BorrowSet, Loan, killed::Killed, provenance_liveness::ProvenanceLiveness,
     requires::ProvenanceRequiresLoan,
 };
 
@@ -20,7 +20,6 @@ pub fn compute_loan_liveness<'tcx>(
     tcx: TyCtxt<'tcx>,
     body: &Body<'tcx>,
     borrow_set: &BorrowSet<Place<'tcx>>,
-    provenance_set: &ProvenanceSet,
     location_map: &DenseLocationMap,
     provenance_liveness: &ProvenanceLiveness,
     requires: &ProvenanceRequiresLoan,
@@ -30,7 +29,6 @@ pub fn compute_loan_liveness<'tcx>(
 
     let mut loan_live_at = LoanLiveAt {
         borrow_set,
-        provenance_set,
         location_map,
         provenance_liveness,
         requires,
@@ -63,8 +61,6 @@ pub fn compute_loan_liveness<'tcx>(
 
 pub struct LoanLiveAt<'analysis, 'tcx> {
     borrow_set: &'analysis BorrowSet<Place<'tcx>>,
-    provenance_set: &'analysis ProvenanceSet,
-
     location_map: &'analysis DenseLocationMap,
     provenance_liveness: &'analysis ProvenanceLiveness,
     requires: &'analysis ProvenanceRequiresLoan,
@@ -76,12 +72,6 @@ impl<'analysis, 'tcx> LoanLiveAt<'analysis, 'tcx> {
         let point_index = self.location_map.point_from_location(location);
 
         let killed = &self.killed[point_index];
-
-        let live_provenances = self
-            .provenance_liveness
-            .row(point_index)
-            .into_iter()
-            .flat_map(|bit_set| bit_set.iter());
 
         let mut requires = DenseBitSet::new_empty(killed.domain_size());
 
@@ -112,7 +102,7 @@ impl<'analysis, 'tcx> Analysis<'tcx> for LoanLiveAt<'analysis, 'tcx> {
 
     const NAME: &'static str = "loan_live_at";
 
-    fn bottom_value(&self, body: &Body<'tcx>) -> Self::Domain {
+    fn bottom_value(&self, _body: &Body<'tcx>) -> Self::Domain {
         DenseBitSet::new_empty(self.borrow_set.loans.len())
     }
 
