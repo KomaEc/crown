@@ -3,11 +3,10 @@
 use rustc_index::bit_set::DenseBitSet;
 use rustc_middle::mir::visit::{MutatingUseContext, NonMutatingUseContext, PlaceContext, Visitor};
 use rustc_middle::mir::{
-    self, Body, CallReturnPlaces, Local, Location, Place, StatementKind, TerminatorEdges,
+    self, CallReturnPlaces, Local, Location, Place, StatementKind, TerminatorEdges,
 };
 
-use rustc_middle::ty::TyCtxt;
-use rustc_mir_dataflow::{Analysis, Backward, GenKill, ResultsCursor, ResultsVisitor};
+use rustc_mir_dataflow::{Analysis, Backward, GenKill};
 
 /// A [live-variable dataflow analysis][liveness].
 ///

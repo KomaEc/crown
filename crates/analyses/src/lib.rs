@@ -18,8 +18,7 @@ pub mod alias;
 pub mod borrow;
 mod encoding;
 pub mod lattice;
-#[allow(unused)]
-pub(crate) mod liveness;
+pub mod liveness;
 pub mod mir;
 mod output_params;
 pub(crate) mod reaching_definitions;
