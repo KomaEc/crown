@@ -17,14 +17,17 @@ use utils::{rustc::RustProgram, rustc_hash::FxHashMap};
 
 use crate::{
     borrow::{
-        errors::compute_errors, invalidates::compute_invalidates, killed::compute_killed,
-        loan_liveness::compute_loan_liveness, provenance_liveness::compute_provenance_liveness,
-        requires::compute_requires,
+        errors::{Errors, compute_errors},
+        invalidates::{Invalidates, compute_invalidates},
+        killed::{Killed, compute_killed},
+        loan_liveness::{LoanLiveness, compute_loan_liveness},
+        provenance_liveness::{ProvenanceLiveness, compute_provenance_liveness},
+        requires::{ProvenanceRequiresLoan, compute_requires},
     },
     type_qualifier::mutability_analysis,
 };
 
-const INTERPROCEDURAL: bool = true;
+const ALLOW_INTERPROCEDURAL: bool = true;
 
 mod errors;
 mod invalidates;
@@ -191,7 +194,8 @@ impl<'tcx> HasBorrowSet<'tcx, Place<'tcx>> for Body<'tcx> {
             }
 
             fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _location: Location) {
-                if matches!(terminator.kind, TerminatorKind::Call { .. }) && !INTERPROCEDURAL {
+                if matches!(terminator.kind, TerminatorKind::Call { .. }) && !ALLOW_INTERPROCEDURAL
+                {
                     unimplemented!("calculate borrow set for calls")
                 }
             }
@@ -298,7 +302,8 @@ impl ProvenanceConstraintGraph {
             }
 
             fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _location: Location) {
-                if matches!(terminator.kind, TerminatorKind::Call { .. }) && !INTERPROCEDURAL {
+                if matches!(terminator.kind, TerminatorKind::Call { .. }) && !ALLOW_INTERPROCEDURAL
+                {
                     unimplemented!("infer provenance constraints for calls")
                 }
             }
@@ -320,6 +325,157 @@ impl ProvenanceConstraintGraph {
     }
 }
 
+pub struct BorrowInferenceResults<'tcx> {
+    pub provenance_set: ProvenanceSet,
+    pub borrow_set: BorrowSet<Place<'tcx>>,
+    pub location_map: DenseLocationMap,
+    pub provenance_liveness: ProvenanceLiveness,
+    pub killed: Killed,
+    pub requires: ProvenanceRequiresLoan,
+    pub loan_liveness: LoanLiveness,
+    pub invalidates: Invalidates,
+    pub errors: Errors,
+}
+
+pub fn borrow_inference<'tcx, I>(
+    tcx: TyCtxt<'tcx>,
+    def_id: DefId,
+    is_candidate: I,
+) -> BorrowInferenceResults<'tcx>
+where
+    I: Fn(Local) -> bool,
+{
+    let tcx = tcx;
+    let f = def_id;
+
+    let body = &*tcx
+        .mir_drops_elaborated_and_const_checked(f.expect_local())
+        .borrow();
+
+    let provenance_set = body.provenance_set(is_candidate);
+    let borrow_set = body.borrow_set(tcx, &provenance_set);
+    let location_map = DenseLocationMap::new(body);
+    let provenance_liveness =
+        compute_provenance_liveness(&location_map, tcx, body, &provenance_set);
+    let killed = compute_killed(body, tcx, &location_map, &borrow_set);
+    let requires = compute_requires(body, &borrow_set, &provenance_set);
+    let loan_liveness = compute_loan_liveness(
+        tcx,
+        body,
+        &borrow_set,
+        &location_map,
+        &provenance_liveness,
+        &requires,
+        &killed,
+    );
+    let invalidates = compute_invalidates(tcx, body, &borrow_set, &location_map);
+    let errors = compute_errors(&borrow_set, &loan_liveness, &invalidates);
+
+    BorrowInferenceResults {
+        provenance_set,
+        borrow_set,
+        location_map,
+        provenance_liveness,
+        killed,
+        requires,
+        loan_liveness,
+        invalidates,
+        errors,
+    }
+}
+
+pub fn dump_borrow_inference_mir<'tcx>(
+    tcx: TyCtxt<'tcx>,
+    body: &Body<'tcx>,
+    inference: &BorrowInferenceResults<'tcx>,
+    w: &mut dyn std::io::Write,
+) -> std::io::Result<()> {
+    let BorrowInferenceResults {
+        provenance_set,
+        borrow_set,
+        location_map,
+        provenance_liveness,
+        killed: _killed,
+        requires: _requires,
+        loan_liveness,
+        invalidates: _invalidates,
+        errors,
+    } = inference;
+
+    use rustc_middle::mir::{PassWhere, pretty::PrettyPrintMirOptions};
+    use utils::itertools::Itertools as _;
+
+    rustc_middle::mir::pretty::write_mir_fn(
+        tcx,
+        body,
+        &mut |pass_where, w| match pass_where {
+            PassWhere::BeforeLocation(location) => {
+                let point_index = location_map.point_from_location(location);
+                let live_loans = loan_liveness
+                    .row(point_index)
+                    .iter()
+                    .flat_map(|loans| loans.iter())
+                    .map(|loan| format!("{:?}", &borrow_set.loans[loan]))
+                    .join(", ");
+
+                w.write_fmt(format_args!("\t// live loans: [{live_loans}]\n",))?;
+
+                Ok(())
+            }
+            PassWhere::AfterLocation(location) => {
+                let point_index = location_map.point_from_location(location);
+                let errors = errors
+                    .row(point_index)
+                    .iter()
+                    .flat_map(|loans| loans.iter())
+                    .map(|loan| format!("{:?}", &borrow_set.loans[loan]))
+                    .join(", ");
+
+                w.write_fmt(format_args!("\t// errors: [{errors}]\n",))?;
+
+                let live_provenances = provenance_liveness
+                    .row(point_index)
+                    .iter()
+                    .flat_map(|provenances| provenances.iter())
+                    .map(|provenance| format!("{:?}", provenance_set.provenance_data[provenance]))
+                    .join(", ");
+
+                w.write_fmt(format_args!(
+                    "\t// live provenances: [{live_provenances}]\n",
+                ))?;
+
+                Ok(())
+            }
+            _ => Ok(()),
+        },
+        w,
+        PrettyPrintMirOptions {
+            include_extra_comments: false,
+        },
+    )?;
+
+    for point_index in errors.rows() {
+        let illegal_accesses = errors
+            .row(point_index)
+            .iter()
+            .flat_map(|loans| loans.iter())
+            .map(|loan| format!("{:?}", &borrow_set.loans[loan]))
+            .join(", ");
+
+        if illegal_accesses == "" {
+            continue;
+        }
+
+        writeln!(
+            w,
+            "illegal accesses: [{illegal_accesses}] @ {:?}",
+            location_map.to_location(point_index)
+        )?;
+    }
+
+    Ok(())
+}
+
 pub fn demote_pointers(program: &RustProgram) -> FxHashMap<DefId, DenseBitSet<Local>> {
     let mut demoted = FxHashMap::default();
 
@@ -337,28 +493,13 @@ pub fn demote_pointers(program: &RustProgram) -> FxHashMap<DefId, DenseBitSet<Lo
             .function_body_facts(f)
             .collect::<IndexVec<Local, _>>();
 
-        let provenance_set = body.provenance_set(|local| {
+        let BorrowInferenceResults {
+            borrow_set, errors, ..
+        } = borrow_inference(tcx, *f, |local| {
             mutability_results[local]
                 .first()
                 .is_some_and(|mutability| mutability.is_mutable())
         });
-        let borrow_set = body.borrow_set(program.tcx, &provenance_set);
-        let location_map = DenseLocationMap::new(body);
-        let provenance_liveness =
-            compute_provenance_liveness(&location_map, program.tcx, body, &provenance_set);
-        let killed = compute_killed(body, tcx, &location_map, &borrow_set);
-        let requires = compute_requires(body, &borrow_set, &provenance_set);
-        let loan_liveness = compute_loan_liveness(
-            tcx,
-            body,
-            &borrow_set,
-            &location_map,
-            &provenance_liveness,
-            &requires,
-            &killed,
-        );
-        let invalidates = compute_invalidates(tcx, body, &borrow_set, &location_map);
-        let errors = compute_errors(&borrow_set, &loan_liveness, &invalidates);
 
         let mut invalid_loans = DenseBitSet::new_empty(borrow_set.loans.len());
         for row in errors.rows() {
@@ -382,19 +523,12 @@ pub fn demote_pointers(program: &RustProgram) -> FxHashMap<DefId, DenseBitSet<Lo
 
 #[cfg(test)]
 mod test {
-    use rustc_middle::mir::{PassWhere, VarDebugInfoContents, pretty::PrettyPrintMirOptions};
-    use rustc_mir_dataflow::points::DenseLocationMap;
-    use utils::itertools::Itertools;
+    use rustc_middle::mir::VarDebugInfoContents;
 
-    use crate::borrow::{
-        HasBorrowSet, HasProvenanceSet, ProvenanceConstraintGraph, demote_pointers,
-        errors::compute_errors, invalidates::compute_invalidates, killed::compute_killed,
-        loan_liveness::compute_loan_liveness, provenance_liveness::compute_provenance_liveness,
-        requires::compute_requires,
-    };
+    use crate::borrow::{borrow_inference, demote_pointers, dump_borrow_inference_mir};
 
     #[test]
-    fn play() {
+    fn test_proof_of_concept() {
         const PROGRAM: &str = "
         unsafe fn f(mut p: *mut i32) -> i32 {
             let mut r1 = p;
@@ -414,96 +548,9 @@ mod test {
                 .mir_drops_elaborated_and_const_checked(f.expect_local())
                 .borrow();
 
-            let provenance_set = body.provenance_set(|_| true);
-            let borrow_set = body.borrow_set(program.tcx, &provenance_set);
+            let inference = borrow_inference(tcx, f, |_| true);
 
-            let _ = ProvenanceConstraintGraph::new(body, &borrow_set, &provenance_set);
-            let location_map = DenseLocationMap::new(body);
-            let provenance_liveness =
-                compute_provenance_liveness(&location_map, tcx, body, &provenance_set);
-            let killed = compute_killed(body, tcx, &location_map, &borrow_set);
-            let requires = compute_requires(body, &borrow_set, &provenance_set);
-            let loan_liveness = compute_loan_liveness(
-                tcx,
-                body,
-                &borrow_set,
-                &location_map,
-                &provenance_liveness,
-                &requires,
-                &killed,
-            );
-            let invalidates = compute_invalidates(tcx, body, &borrow_set, &location_map);
-            let errors = compute_errors(&borrow_set, &loan_liveness, &invalidates);
-
-            rustc_middle::mir::pretty::write_mir_fn(
-                tcx,
-                body,
-                &mut |pass_where, w| match pass_where {
-                    PassWhere::BeforeLocation(location) => {
-                        let point_index = location_map.point_from_location(location);
-                        let live_loans = loan_liveness
-                            .row(point_index)
-                            .iter()
-                            .flat_map(|loans| loans.iter())
-                            .map(|loan| format!("{:?}", &borrow_set.loans[loan]))
-                            .join(", ");
-
-                        w.write_fmt(format_args!("\t// live loans: [{live_loans}]\n",))?;
-
-                        Ok(())
-                    }
-                    PassWhere::AfterLocation(location) => {
-                        let point_index = location_map.point_from_location(location);
-                        let errors = errors
-                            .row(point_index)
-                            .iter()
-                            .flat_map(|loans| loans.iter())
-                            .map(|loan| format!("{:?}", &borrow_set.loans[loan]))
-                            .join(", ");
-
-                        w.write_fmt(format_args!("\t// errors: [{errors}]\n",))?;
-
-                        let live_provenances = provenance_liveness
-                            .row(point_index)
-                            .iter()
-                            .flat_map(|provenances| provenances.iter())
-                            .map(|provenance| {
-                                format!("{:?}", provenance_set.provenance_data[provenance])
-                            })
-                            .join(", ");
-
-                        w.write_fmt(format_args!(
-                            "\t// live provenances: [{live_provenances}]\n",
-                        ))?;
-
-                        Ok(())
-                    }
-                    _ => Ok(()),
-                },
-                &mut std::io::stdout(),
-                PrettyPrintMirOptions {
-                    include_extra_comments: false,
-                },
-            )
-            .unwrap();
-
-            for point_index in errors.rows() {
-                let illegal_accesses = errors
-                    .row(point_index)
-                    .iter()
-                    .flat_map(|loans| loans.iter())
-                    .map(|loan| format!("{:?}", &borrow_set.loans[loan]))
-                    .join(", ");
-
-                if illegal_accesses == "" {
-                    continue;
-                }
-
-                println!(
-                    "illegal accesses: [{illegal_accesses}] @ {:?}",
-                    location_map.to_location(point_index)
-                );
-            }
+            dump_borrow_inference_mir(tcx, body, &inference, &mut std::io::stdout()).unwrap();
         })
     }
 
@@ -511,6 +558,16 @@ mod test {
     fn smoke_test_libtree() {
         utils::rustc::run_compiler(utils::rustc::SourceCode::Libtree, |program| {
             let tcx = program.tcx;
+            // for f in program.functions.iter().copied() {
+            //     if tcx.def_path_str(f) == "src::libtree::parse_ld_so_conf" {
+            //         let body = &*tcx
+            //             .mir_drops_elaborated_and_const_checked(f.expect_local())
+            //             .borrow();
+            //         let inference = borrow_inference(tcx, f, |_| true);
+            //         dump_borrow_inference_mir(tcx, body, &inference, &mut std::io::stdout())
+            //             .unwrap();
+            //     }
+            // }
             let demoted = demote_pointers(&program);
             for f in program.functions.iter() {
                 let body = &*tcx

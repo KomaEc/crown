@@ -10,7 +10,7 @@ use rustc_mir_dataflow::points::{DenseLocationMap, PointIndex};
 
 use crate::borrow::{
     BorrowSet, Loan,
-    places_conflict::{PlaceConflictBias, places_conflict},
+    places_conflict::{AccessDepth, PlaceConflictBias, places_conflict},
 };
 
 pub(crate) type Invalidates = SparseBitMatrix<PointIndex, Loan>;
@@ -44,11 +44,20 @@ struct LoanInvalidatesGenerator<'g, 'tcx> {
 }
 
 impl<'g, 'tcx> LoanInvalidatesGenerator<'g, 'tcx> {
-    fn access_place(&mut self, location: Location, place: Place<'tcx>) {
-        self.check_access_for_conflict(location, place);
+    fn deeply_access_place(&mut self, location: Location, place: Place<'tcx>) {
+        self.check_access_for_conflict(location, place, AccessDepth::Deep);
     }
 
-    fn check_access_for_conflict(&mut self, location: Location, place: Place<'tcx>) {
+    fn shallowly_access_place(&mut self, location: Location, place: Place<'tcx>) {
+        self.check_access_for_conflict(location, place, AccessDepth::Shallow);
+    }
+
+    fn check_access_for_conflict(
+        &mut self,
+        location: Location,
+        place: Place<'tcx>,
+        access_depth: AccessDepth,
+    ) {
         let Some(borrows_for_place_base) = self.borrow_set.local_map.row(place.local) else {
             return;
         };
@@ -70,6 +79,7 @@ impl<'g, 'tcx> LoanInvalidatesGenerator<'g, 'tcx> {
                 self.body,
                 borrow_data.borrowed,
                 place,
+                access_depth,
                 PlaceConflictBias::Overlap,
             ) {
                 self.facts.insert(point_index, loan);
@@ -81,10 +91,10 @@ impl<'g, 'tcx> LoanInvalidatesGenerator<'g, 'tcx> {
     fn consume_operand(&mut self, location: Location, operand: &Operand<'tcx>) {
         match *operand {
             Operand::Copy(place) => {
-                self.access_place(location, place);
+                self.deeply_access_place(location, place);
             }
             Operand::Move(place) => {
-                self.access_place(location, place);
+                self.deeply_access_place(location, place);
             }
             Operand::Constant(_) => {}
         }
@@ -94,11 +104,11 @@ impl<'g, 'tcx> LoanInvalidatesGenerator<'g, 'tcx> {
     fn consume_rvalue(&mut self, location: Location, rvalue: &Rvalue<'tcx>) {
         match rvalue {
             &Rvalue::Ref(_ /*rgn*/, _, place) => {
-                self.access_place(location, place);
+                self.deeply_access_place(location, place);
             }
 
             &Rvalue::RawPtr(_, place) => {
-                self.access_place(location, place);
+                self.deeply_access_place(location, place);
             }
 
             Rvalue::ThreadLocalRef(_) => {}
@@ -115,7 +125,7 @@ impl<'g, 'tcx> LoanInvalidatesGenerator<'g, 'tcx> {
             }
 
             &(Rvalue::Len(place) | Rvalue::Discriminant(place)) => {
-                self.access_place(location, place);
+                self.deeply_access_place(location, place);
             }
 
             Rvalue::BinaryOp(_bin_op, box (operand1, operand2)) => {
@@ -146,7 +156,7 @@ impl<'g, 'tcx> Visitor<'tcx> for LoanInvalidatesGenerator<'g, 'tcx> {
             StatementKind::Assign(box (lhs, rhs)) => {
                 self.consume_rvalue(location, rhs);
 
-                self.access_place(location, *lhs);
+                self.shallowly_access_place(location, *lhs);
             }
             StatementKind::FakeRead(box (_, _)) => {
                 // Only relevant for initialized/liveness/safety checks.
@@ -172,7 +182,7 @@ impl<'g, 'tcx> Visitor<'tcx> for LoanInvalidatesGenerator<'g, 'tcx> {
             // Does not actually affect borrowck
             | StatementKind::StorageLive(..) => {}
             StatementKind::StorageDead(local) => {
-                self.access_place(
+                self.shallowly_access_place(
                     location,
                     Place::from(*local),
                 );
@@ -203,7 +213,7 @@ impl<'g, 'tcx> Visitor<'tcx> for LoanInvalidatesGenerator<'g, 'tcx> {
                 drop: _,
                 async_fut: _,
             } => {
-                self.access_place(location, *drop_place);
+                self.deeply_access_place(location, *drop_place);
             }
             TerminatorKind::Call {
                 func,
@@ -218,7 +228,7 @@ impl<'g, 'tcx> Visitor<'tcx> for LoanInvalidatesGenerator<'g, 'tcx> {
                 for arg in args {
                     self.consume_operand(location, &arg.node);
                 }
-                self.access_place(location, *destination);
+                self.deeply_access_place(location, *destination);
             }
             TerminatorKind::TailCall { func, args, .. } => {
                 self.consume_operand(location, func);
@@ -276,7 +286,7 @@ impl<'g, 'tcx> Visitor<'tcx> for LoanInvalidatesGenerator<'g, 'tcx> {
                             ..
                         } => {
                             if let &Some(place) = place {
-                                self.access_place(location, place);
+                                self.deeply_access_place(location, place);
                             }
                         }
                         InlineAsmOperand::InOut {
@@ -287,7 +297,7 @@ impl<'g, 'tcx> Visitor<'tcx> for LoanInvalidatesGenerator<'g, 'tcx> {
                         } => {
                             self.consume_operand(location, in_value);
                             if let &Some(out_place) = out_place {
-                                self.access_place(location, out_place);
+                                self.deeply_access_place(location, out_place);
                             }
                         }
                         InlineAsmOperand::Const { value: _ }

@@ -10,7 +10,7 @@ use rustc_mir_dataflow::points::{DenseLocationMap, PointIndex};
 
 use crate::borrow::{
     BorrowSet, Loan,
-    places_conflict::{PlaceConflictBias, places_conflict},
+    places_conflict::{AccessDepth, PlaceConflictBias, places_conflict},
 };
 
 pub(crate) type Killed = IndexVec<PointIndex, DenseBitSet<Loan>>;
@@ -78,6 +78,7 @@ impl<'kill, 'tcx> KillsCollector<'kill, 'tcx, Place<'tcx>> {
                 self.body,
                 self.borrow_set.loans[i].borrowed,
                 place,
+                AccessDepth::Deep,
                 PlaceConflictBias::NoOverlap,
             )
         });

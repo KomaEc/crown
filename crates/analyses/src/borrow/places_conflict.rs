@@ -18,8 +18,9 @@ pub enum PlaceConflictBias {
     NoOverlap,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 /// The degree of overlap between 2 places for borrow-checking.
-enum Overlap {
+pub(crate) enum Overlap {
     /// The places might partially overlap - in this case, we give
     /// up and say that they might conflict. This occurs when
     /// different fields of a union are borrowed. For example,
@@ -36,11 +37,18 @@ enum Overlap {
     Disjoint,
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum AccessDepth {
+    Shallow,
+    Deep,
+}
+
 pub fn places_conflict<'tcx>(
     tcx: TyCtxt<'tcx>,
     body: &Body<'tcx>,
     borrow_place: Place<'tcx>,
     access_place: Place<'tcx>,
+    access_detph: AccessDepth,
     bias: PlaceConflictBias,
 ) -> bool {
     let borrow_local = borrow_place.local;
@@ -57,7 +65,14 @@ pub fn places_conflict<'tcx>(
         return true;
     }
 
-    place_components_conflict(tcx, body, borrow_place, access_place.as_ref(), bias)
+    place_components_conflict(
+        tcx,
+        body,
+        borrow_place,
+        access_place.as_ref(),
+        access_detph,
+        bias,
+    )
 }
 
 fn place_components_conflict<'tcx>(
@@ -65,6 +80,7 @@ fn place_components_conflict<'tcx>(
     body: &Body<'tcx>,
     borrow_place: Place<'tcx>,
     access_place: PlaceRef<'tcx>,
+    access_detph: AccessDepth,
     bias: PlaceConflictBias,
 ) -> bool {
     let borrow_local = borrow_place.local;
@@ -111,6 +127,28 @@ fn place_components_conflict<'tcx>(
             Overlap::Disjoint => {
                 // We have proven the borrow disjoint - further
                 // projections will remain disjoint.
+                return false;
+            }
+        }
+    }
+
+    if borrow_place.projection.len() > access_place.projection.len() {
+        for (_, elem) in borrow_place
+            .iter_projections()
+            .skip(access_place.projection.len())
+        {
+            // Borrow path is longer than the access path. Examples:
+            //
+            // - borrow of `a.b.c`, access to `a.b`
+            //
+            // Here, we know that the borrow can access a part of
+            // our place. This is a conflict if that is a part our
+            // access cares about.
+
+            if matches!(
+                (elem, access_detph),
+                (ProjectionElem::Deref, AccessDepth::Shallow)
+            ) {
                 return false;
             }
         }
