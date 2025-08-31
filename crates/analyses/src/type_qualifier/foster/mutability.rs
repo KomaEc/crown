@@ -276,8 +276,13 @@ impl<'infer, 'tcx, D: HasLocalDecls<'tcx>> Visitor<'tcx> for MutabilityAnalysis<
         } = self.ctxt;
         let database = &mut self.database;
 
-        if let Some((func, args, ref destination)) = terminator.call() {
-            match CallKind::new(tcx, func) {
+        if let Some(crate::mir::MirFunctionCall {
+            func,
+            args,
+            ref destination,
+        }) = terminator.as_call(tcx)
+        {
+            match func {
                 CallKind::FreeStanding(callee) => {
                     // let callee_body = tcx.optimized_mir(callee);
                     let callee_body = &*tcx
@@ -335,7 +340,7 @@ impl<'infer, 'tcx, D: HasLocalDecls<'tcx>> Visitor<'tcx> for MutabilityAnalysis<
                         }
                     }
                 }
-                CallKind::Extern(ident) => {
+                CallKind::LibC(ident) => {
                     libc_call(
                         destination,
                         args,
@@ -346,7 +351,7 @@ impl<'infer, 'tcx, D: HasLocalDecls<'tcx>> Visitor<'tcx> for MutabilityAnalysis<
                         database,
                     );
                 }
-                CallKind::Library(callee) => {
+                CallKind::RustLib(callee) => {
                     library_call(
                         destination,
                         args,

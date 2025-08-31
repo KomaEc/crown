@@ -3,7 +3,7 @@
 
 use crate::{
     alias::{AliasResult, alias_results},
-    mir::{CallGraphPostOrder, CallKind, TerminatorExt},
+    mir::{CallGraphPostOrder, CallKind, MirFunctionCall, TerminatorExt},
     output_params::eliminable_temporaries::eliminable_temporaries,
 };
 use rustc_hir::def_id::DefId;
@@ -185,11 +185,11 @@ fn transitive_output_position_temporaries<'tcx>(
             continue;
         };
 
-        let Some((func, args, _)) = terminator.call() else {
+        let Some(MirFunctionCall { func, args, .. }) = terminator.as_call(tcx) else {
             continue;
         };
 
-        let CallKind::FreeStanding(callee) = CallKind::new(tcx, func) else {
+        let CallKind::FreeStanding(callee) = func else {
             continue;
         };
 

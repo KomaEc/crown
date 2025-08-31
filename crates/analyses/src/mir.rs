@@ -7,7 +7,6 @@ use rustc_middle::{
     mir::{Terminator, visit::Visitor},
     ty::TyCtxt,
 };
-use rustc_type_ir::TyKind::FnDef;
 use utils::{
     dsa::fixed_shape::VecVec,
     petgraph::{algo::TarjanScc, prelude::DiGraphMap},
@@ -110,15 +109,11 @@ impl<'me, 'tcx> Visitor<'tcx> for StaticCallGraphBuilder<'me, 'tcx> {
         terminator: &Terminator<'tcx>,
         _location: rustc_middle::mir::Location,
     ) {
-        let Some((func, ..)) = terminator.call() else {
+        let Some(MirFunctionCall { func, .. }) = terminator.as_call(self.tcx) else {
             return;
         };
-        let Some(func_constant) = func.constant() else {
+        let Some(callee) = func.did() else {
             return;
-        };
-        let ty = func_constant.ty();
-        let &FnDef(callee, _generic_args) = ty.kind() else {
-            unreachable!("what could it be? {}", ty)
         };
         if !self.graph.contains_node(CxDefId::new(self.tcx, callee)) {
             return;
