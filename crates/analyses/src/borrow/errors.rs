@@ -1,5 +1,4 @@
 use rustc_index::bit_set::SparseBitMatrix;
-use rustc_middle::mir::Place;
 use rustc_mir_dataflow::points::PointIndex;
 
 use crate::borrow::{BorrowSet, Loan, invalidates::Invalidates, loan_liveness::LoanLiveness};
@@ -7,7 +6,7 @@ use crate::borrow::{BorrowSet, Loan, invalidates::Invalidates, loan_liveness::Lo
 pub(crate) type Errors = SparseBitMatrix<PointIndex, Loan>;
 
 pub fn compute_errors(
-    borrow_set: &BorrowSet<Place>,
+    borrow_set: &BorrowSet,
     loan_liveness: &LoanLiveness,
     invalidates: &Invalidates,
 ) -> Errors {

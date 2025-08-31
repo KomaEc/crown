@@ -18,7 +18,7 @@ pub(crate) type Invalidates = SparseBitMatrix<PointIndex, Loan>;
 pub fn compute_invalidates<'tcx>(
     tcx: TyCtxt<'tcx>,
     body: &Body<'tcx>,
-    borrow_set: &BorrowSet<Place<'tcx>>,
+    borrow_set: &BorrowSet<'tcx>,
     location_map: &DenseLocationMap,
 ) -> Invalidates {
     let mut invalidates = SparseBitMatrix::new(borrow_set.loans.len());
@@ -39,7 +39,7 @@ struct LoanInvalidatesGenerator<'g, 'tcx> {
     facts: &'g mut Invalidates,
     tcx: TyCtxt<'tcx>,
     body: &'g Body<'tcx>,
-    borrow_set: &'g BorrowSet<Place<'tcx>>,
+    borrow_set: &'g BorrowSet<'tcx>,
     location_map: &'g DenseLocationMap,
 }
 

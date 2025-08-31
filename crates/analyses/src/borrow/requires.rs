@@ -2,7 +2,7 @@ use rustc_index::{
     IndexVec,
     bit_set::{DenseBitSet, SparseBitMatrix},
 };
-use rustc_middle::mir::{Body, Place};
+use rustc_middle::mir::Body;
 use utils::smallvec::{SmallVec, smallvec};
 
 use crate::borrow::{
@@ -14,7 +14,7 @@ pub(crate) type ProvenanceRequiresLoan = SparseBitMatrix<Provenance, Loan>;
 
 pub fn compute_requires<'tcx>(
     body: &Body<'tcx>,
-    borrow_set: &BorrowSet<Place<'tcx>>,
+    borrow_set: &BorrowSet<'tcx>,
     provenance_set: &ProvenanceSet,
 ) -> ProvenanceRequiresLoan {
     let constraint_graph = ProvenanceConstraintGraph::new(body, borrow_set, provenance_set);
@@ -24,7 +24,7 @@ pub fn compute_requires<'tcx>(
 impl ProvenanceConstraintGraph {
     fn solve(
         &self,
-        borrow_set: &BorrowSet<Place>,
+        borrow_set: &BorrowSet,
         provenance_set: &ProvenanceSet,
     ) -> ProvenanceRequiresLoan {
         let mut subset_graph = IndexVec::<Provenance, SmallVec<[Provenance; 4]>>::from_elem(

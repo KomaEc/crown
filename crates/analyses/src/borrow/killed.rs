@@ -19,7 +19,7 @@ pub fn compute_killed<'tcx>(
     body: &Body<'tcx>,
     tcx: TyCtxt<'tcx>,
     location_map: &DenseLocationMap,
-    borrow_set: &BorrowSet<Place<'tcx>>,
+    borrow_set: &BorrowSet<'tcx>,
 ) -> Killed {
     let mut killed = IndexVec::from_elem_n(
         DenseBitSet::new_empty(borrow_set.loans.len()),
@@ -39,15 +39,15 @@ pub fn compute_killed<'tcx>(
 }
 
 /// Copy-paste of https://doc.rust-lang.org/beta/nightly-rustc/src/rustc_borrowck/polonius/loan_liveness.rs.html#197-207
-struct KillsCollector<'kill, 'tcx, P> {
+struct KillsCollector<'kill, 'tcx> {
     killed: &'kill mut Killed,
-    borrow_set: &'kill BorrowSet<P>,
+    borrow_set: &'kill BorrowSet<'tcx>,
     tcx: TyCtxt<'tcx>,
     body: &'kill Body<'tcx>,
     location_map: &'kill DenseLocationMap,
 }
 
-impl<'kill, 'tcx> KillsCollector<'kill, 'tcx, Place<'tcx>> {
+impl<'kill, 'tcx> KillsCollector<'kill, 'tcx> {
     fn record_killed_borrows_for_place(&mut self, place: Place<'tcx>, location: Location) {
         let other_borrows_of_local = self
             .borrow_set
@@ -104,7 +104,7 @@ impl<'kill, 'tcx> KillsCollector<'kill, 'tcx, Place<'tcx>> {
     }
 }
 
-impl<'kill, 'tcx> Visitor<'tcx> for KillsCollector<'kill, 'tcx, Place<'tcx>> {
+impl<'kill, 'tcx> Visitor<'tcx> for KillsCollector<'kill, 'tcx> {
     fn visit_statement(&mut self, statement: &Statement<'tcx>, location: Location) {
         // Make sure there are no remaining borrows for locals that have gone out of scope.
         if let StatementKind::StorageDead(local) = statement.kind {

@@ -1,6 +1,6 @@
 use rustc_index::bit_set::{DenseBitSet, SparseBitMatrix};
 use rustc_middle::{
-    mir::{Body, Location, Place, Statement, Terminator, TerminatorEdges},
+    mir::{Body, Location, Statement, Terminator, TerminatorEdges},
     ty::TyCtxt,
 };
 use rustc_mir_dataflow::{
@@ -19,7 +19,7 @@ pub(crate) type LoanLiveness = SparseBitMatrix<PointIndex, Loan>;
 pub fn compute_loan_liveness<'tcx>(
     tcx: TyCtxt<'tcx>,
     body: &Body<'tcx>,
-    borrow_set: &BorrowSet<Place<'tcx>>,
+    borrow_set: &BorrowSet<'tcx>,
     location_map: &DenseLocationMap,
     provenance_liveness: &ProvenanceLiveness,
     requires: &ProvenanceRequiresLoan,
@@ -60,7 +60,7 @@ pub fn compute_loan_liveness<'tcx>(
 }
 
 pub struct LoanLiveAt<'analysis, 'tcx> {
-    borrow_set: &'analysis BorrowSet<Place<'tcx>>,
+    borrow_set: &'analysis BorrowSet<'tcx>,
     location_map: &'analysis DenseLocationMap,
     provenance_liveness: &'analysis ProvenanceLiveness,
     requires: &'analysis ProvenanceRequiresLoan,

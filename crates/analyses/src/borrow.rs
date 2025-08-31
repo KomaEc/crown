@@ -116,39 +116,32 @@ rustc_index::newtype_index! {
 
 impl<C> DebugWithContext<C> for Loan {}
 
-pub struct BorrowData<P> {
+pub struct BorrowData<'tcx> {
     location: Location,
-    borrowed: P,
-    assigned: P,
+    borrowed: Place<'tcx>,
+    assigned: Place<'tcx>,
 }
 
-impl<P> std::fmt::Debug for BorrowData<P>
-where
-    P: std::fmt::Debug,
-{
+impl std::fmt::Debug for BorrowData<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_fmt(format_args!("{:?} @ {:?}", self.borrowed, self.location))
     }
 }
 
-pub struct BorrowSet<P> {
-    loans: IndexVec<Loan, BorrowData<P>>,
+pub struct BorrowSet<'tcx> {
+    loans: IndexVec<Loan, BorrowData<'tcx>>,
     location_map: FxHashMap<Location, Loan>,
     local_map: SparseBitMatrix<Local, Loan>,
 }
 
-pub trait HasBorrowSet<'tcx, P> {
-    fn borrow_set(&self, tcx: TyCtxt<'tcx>, provenance_set: &ProvenanceSet) -> BorrowSet<P>;
+pub trait HasBorrowSet<'tcx> {
+    fn borrow_set(&self, tcx: TyCtxt<'tcx>, provenance_set: &ProvenanceSet) -> BorrowSet<'tcx>;
 }
 
-impl<'tcx> HasBorrowSet<'tcx, Place<'tcx>> for Body<'tcx> {
-    fn borrow_set(
-        &self,
-        tcx: TyCtxt<'tcx>,
-        provenance_set: &ProvenanceSet,
-    ) -> BorrowSet<Place<'tcx>> {
+impl<'tcx> HasBorrowSet<'tcx> for Body<'tcx> {
+    fn borrow_set(&self, tcx: TyCtxt<'tcx>, provenance_set: &ProvenanceSet) -> BorrowSet<'tcx> {
         struct Vis<'tcx, 'this, D> {
-            loans: IndexVec<Loan, BorrowData<Place<'tcx>>>,
+            loans: IndexVec<Loan, BorrowData<'tcx>>,
             location_map: FxHashMap<Location, Loan>,
             local_decl: &'this D,
             tcx: TyCtxt<'tcx>,
@@ -251,12 +244,12 @@ pub struct ProvenanceConstraintGraph {
 impl ProvenanceConstraintGraph {
     pub fn new<'tcx>(
         body: &Body<'tcx>,
-        borrow_set: &BorrowSet<Place<'tcx>>,
+        borrow_set: &BorrowSet<'tcx>,
         provenance_set: &ProvenanceSet,
     ) -> Self {
         struct Vis<'this, 'tcx> {
             graph: &'this mut ProvenanceConstraintGraph,
-            borrow_set: &'this BorrowSet<Place<'tcx>>,
+            borrow_set: &'this BorrowSet<'tcx>,
             provenance_set: &'this ProvenanceSet,
         }
 
@@ -327,7 +320,7 @@ impl ProvenanceConstraintGraph {
 
 pub struct BorrowInferenceResults<'tcx> {
     pub provenance_set: ProvenanceSet,
-    pub borrow_set: BorrowSet<Place<'tcx>>,
+    pub borrow_set: BorrowSet<'tcx>,
     pub location_map: DenseLocationMap,
     pub provenance_liveness: ProvenanceLiveness,
     pub killed: Killed,
