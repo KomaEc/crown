@@ -110,7 +110,10 @@ impl<I: InterProceduralStrategy> Steensgaard<FieldBased, MergeDeallocArg, I> {
         let mut buffer = Vec::with_capacity(steensgaard.node_count());
 
         for &did in &rust_program.functions {
-            let body = rust_program.tcx.optimized_mir(did);
+            let body = &*rust_program
+                .tcx
+                .mir_drops_elaborated_and_const_checked(did.expect_local())
+                .borrow();
             let mut cg = ConstraintGeneration {
                 steensgaard: &mut steensgaard,
                 body,
@@ -161,7 +164,12 @@ impl<I: InterProceduralStrategy> Steensgaard<FieldBased, MergeDeallocArg, I> {
 impl<I: InterProceduralStrategy> Steensgaard<FieldInsensitive, NopDeallocArg, I> {
     pub fn field_insensitive(rust_program: &utils::rustc::RustProgram) -> Self {
         let n_fn_locals = rust_program.functions.iter().fold(0usize, |acc, did| {
-            acc + rust_program.tcx.optimized_mir(*did).local_decls.len()
+            acc + rust_program
+                .tcx
+                .mir_drops_elaborated_and_const_checked(did.expect_local())
+                .borrow()
+                .local_decls
+                .len()
         });
 
         let mut pts = IndexVec::with_capacity(2 * n_fn_locals + 1);
@@ -203,7 +211,10 @@ impl<I: InterProceduralStrategy> Steensgaard<FieldInsensitive, NopDeallocArg, I>
         let mut buffer = Vec::with_capacity(steensgaard.node_count());
 
         for &did in &rust_program.functions {
-            let body = rust_program.tcx.optimized_mir(did);
+            let body = &*rust_program
+                .tcx
+                .mir_drops_elaborated_and_const_checked(did.expect_local())
+                .borrow();
             let mut cg = ConstraintGeneration {
                 steensgaard: &mut steensgaard,
                 body,
