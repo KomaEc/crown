@@ -77,7 +77,6 @@ where
 
     for (idx, r#fn) in fns.iter().enumerate() {
         did_idx.insert(*r#fn, idx);
-        // let body = tcx.optimized_mir(*r#fn);
         let body = &*tcx
             .mir_drops_elaborated_and_const_checked(r#fn.expect_local())
             .borrow();

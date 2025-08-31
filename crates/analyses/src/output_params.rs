@@ -45,7 +45,10 @@ pub fn compute_output_params(
     let alias_result = alias_results(program);
 
     for &did in program.functions.iter() {
-        let body = program.tcx.optimized_mir(did);
+        let body = &*program
+            .tcx
+            .mir_drops_elaborated_and_const_checked(did.expect_local())
+            .borrow();
         output_params.insert(
             did,
             conservative(program.tcx, body, &alias_result, mutability_result),
@@ -58,7 +61,9 @@ pub fn compute_output_params(
         loop {
             let mut changed = false;
             for &def_id in scc {
-                let body = tcx.optimized_mir(def_id);
+                let body = &*tcx
+                    .mir_drops_elaborated_and_const_checked(def_id.expect_local())
+                    .borrow();
                 changed = changed
                     || iterate(
                         body,

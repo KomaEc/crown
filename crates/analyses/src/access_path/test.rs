@@ -110,9 +110,12 @@ fn test_bst_encode() {
     utils::rustc::run_compiler(PROGRAM, |program| {
         let apcx = AccessPathsCx::new(&program);
 
-        let body = program
+        let body = &*program
             .tcx
-            .optimized_mir(program.functions.first().unwrap());
+            .mir_drops_elaborated_and_const_checked(
+                program.functions.first().unwrap().expect_local(),
+            )
+            .borrow();
         let tcx = program.tcx;
 
         let input = Place::from(Local::from_u32(1));
@@ -414,7 +417,9 @@ fn smoke_test_libtree() {
         }
 
         for did in &program.functions {
-            let body = tcx.optimized_mir(did);
+            let body = &*tcx
+                .mir_drops_elaborated_and_const_checked(did.expect_local())
+                .borrow();
             Vis {
                 tcx,
                 apcx: &apcx,

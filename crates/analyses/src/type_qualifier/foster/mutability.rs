@@ -31,7 +31,6 @@ pub fn mutability_analysis(rust_program: &RustProgram) -> MutabilityResult {
     let mut result = MutabilityResult::new_empty(rust_program);
     let mut database = BooleanSystem::new(&result.model);
     for r#fn in &rust_program.functions {
-        // let body = rust_program.tcx.optimized_mir(*r#fn);
         let body = &*rust_program
             .tcx
             .mir_drops_elaborated_and_const_checked(r#fn.expect_local())
@@ -284,7 +283,6 @@ impl<'infer, 'tcx, D: HasLocalDecls<'tcx>> Visitor<'tcx> for MutabilityAnalysis<
         {
             match func {
                 CallKind::FreeStanding(callee) => {
-                    // let callee_body = tcx.optimized_mir(callee);
                     let callee_body = &*tcx
                         .mir_drops_elaborated_and_const_checked(callee.expect_local())
                         .borrow();

@@ -34,7 +34,12 @@ impl CallGraphPostOrder {
                 caller: did,
                 graph: &mut graph,
             }
-            .visit_body(program.tcx.optimized_mir(did));
+            .visit_body(
+                &*program
+                    .tcx
+                    .mir_drops_elaborated_and_const_checked(did.expect_local())
+                    .borrow(),
+            );
         }
 
         let mut tarjan_scc = TarjanScc::new();

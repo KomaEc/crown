@@ -74,7 +74,6 @@ where
 
 impl<Qualifier> TypeQualifiers<Qualifier> {
     pub fn function_facts(&self, did: &DefId, tcx: TyCtxt) -> impl Iterator<Item = &[Qualifier]> {
-        // let body = tcx.optimized_mir(*did);
         let body = &*tcx
             .mir_drops_elaborated_and_const_checked(did.expect_local())
             .borrow();
