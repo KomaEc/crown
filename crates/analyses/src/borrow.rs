@@ -136,6 +136,22 @@ impl GBorrowInferCtxt {
 
         GBorrowInferCtxt { provenances }
     }
+
+    pub fn mutable_pointers_only(program: &RustProgram) -> Self {
+        let mutability_results = mutability_analysis(program);
+
+        GBorrowInferCtxt::new(program, |f| {
+            let mutability_results = mutability_results
+                .function_body_facts(&f)
+                .collect::<IndexVec<Local, _>>();
+
+            move |local| {
+                mutability_results[local]
+                    .first()
+                    .is_some_and(|mutability| mutability.is_mutable())
+            }
+        })
+    }
 }
 
 rustc_index::newtype_index! {
@@ -568,22 +584,8 @@ pub fn dump_borrow_inference_mir<'tcx>(
     Ok(())
 }
 
-pub fn dump_coarse_inferred_bounds(program: &RustProgram) {
+pub fn dump_coarse_inferred_bounds(program: &RustProgram, global_borrow_ctxt: &GBorrowInferCtxt) {
     let tcx = program.tcx;
-
-    let mutability_results = mutability_analysis(program);
-
-    let global_borrow_ctxt = GBorrowInferCtxt::new(program, |f| {
-        let mutability_results = mutability_results
-            .function_body_facts(&f)
-            .collect::<IndexVec<Local, _>>();
-
-        move |local| {
-            mutability_results[local]
-                .first()
-                .is_some_and(|mutability| mutability.is_mutable())
-        }
-    });
 
     for f in program.functions.iter() {
         let body = &*program
@@ -617,24 +619,13 @@ pub fn dump_coarse_inferred_bounds(program: &RustProgram) {
     }
 }
 
-pub fn demote_pointers(program: &RustProgram) -> FxHashMap<DefId, DenseBitSet<Local>> {
+pub fn demote_pointers(
+    program: &RustProgram,
+    global_borrow_ctxt: &GBorrowInferCtxt,
+) -> FxHashMap<DefId, DenseBitSet<Local>> {
     let mut demoted = FxHashMap::default();
 
     let tcx = program.tcx;
-
-    let mutability_results = mutability_analysis(program);
-
-    let global_borrow_ctxt = GBorrowInferCtxt::new(program, |f| {
-        let mutability_results = mutability_results
-            .function_body_facts(&f)
-            .collect::<IndexVec<Local, _>>();
-
-        move |local| {
-            mutability_results[local]
-                .first()
-                .is_some_and(|mutability| mutability.is_mutable())
-        }
-    });
 
     for f in program.functions.iter() {
         let body = &*program
@@ -671,13 +662,41 @@ pub fn demote_pointers(program: &RustProgram) -> FxHashMap<DefId, DenseBitSet<Lo
     demoted
 }
 
+/// Analyse which raw pointer locals within a function can potentially be a mutable references.
+/// Currently there is no safety guarantee, as we need to
+/// 1. study what formal guarantee can we obtain from our demoting strategy;
+/// 2. implement the necessary fixpoint iteration to compute inferred bounds.
+pub fn mutable_references_no_guarantee(
+    program: &RustProgram,
+) -> FxHashMap<DefId, DenseBitSet<Local>> {
+    let mut mutabla_references = FxHashMap::default();
+
+    let global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(program);
+    let demoted = demote_pointers(program, &global_borrow_ctxt);
+
+    for (&f, demoted) in demoted.iter() {
+        let provenance_set = &global_borrow_ctxt.provenances[&f];
+        let mut promoted = DenseBitSet::new_empty(demoted.domain_size());
+        for (local, local_data) in provenance_set.local_data.iter_enumerated() {
+            if local_data.is_some() {
+                promoted.insert(local);
+            }
+        }
+        promoted.subtract(demoted);
+
+        mutabla_references.insert(f, promoted);
+    }
+
+    mutabla_references
+}
+
 #[cfg(test)]
 mod test {
     use rustc_middle::mir::VarDebugInfoContents;
 
     use crate::borrow::{
-        GBorrowInferCtxt, borrow_inference, demote_pointers, dump_borrow_inference_mir,
-        dump_coarse_inferred_bounds,
+        GBorrowInferCtxt, borrow_inference, dump_borrow_inference_mir, dump_coarse_inferred_bounds,
+        mutable_references_no_guarantee,
     };
 
     #[test]
@@ -734,7 +753,8 @@ mod test {
         ";
 
         utils::rustc::run_compiler(PROGRAM, |program| {
-            dump_coarse_inferred_bounds(&program);
+            let global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
+            dump_coarse_inferred_bounds(&program, &global_borrow_ctxt);
         })
     }
 
@@ -742,35 +762,31 @@ mod test {
     fn smoke_test_libtree() {
         utils::rustc::run_compiler(utils::rustc::SourceCode::Libtree, |program| {
             let tcx = program.tcx;
-            let demoted = demote_pointers(&program);
-            for f in program.functions.iter() {
+            let potential_mutable_references = mutable_references_no_guarantee(&program);
+            for (f, ok_locals) in potential_mutable_references.into_iter() {
                 let body = &*tcx
                     .mir_drops_elaborated_and_const_checked(f.expect_local())
                     .borrow();
 
-                let demoted_locals = &demoted[f];
-
-                let mut demoted_user_vars = vec![];
+                let mut mutable_references_user_vars = vec![];
 
                 for var_debug_info in body.var_debug_info.iter() {
                     if let VarDebugInfoContents::Place(place) = &var_debug_info.value {
                         if let Some(local) = place.as_local()
-                            && demoted_locals.contains(local)
+                            && ok_locals.contains(local)
                         {
-                            demoted_user_vars.push(var_debug_info.name.as_str().to_string());
+                            mutable_references_user_vars
+                                .push(var_debug_info.name.as_str().to_string());
                         }
                     }
                 }
 
-                use utils::itertools::Itertools as _;
                 println!(
                     "{}: [{}]",
                     tcx.def_path_str(f),
-                    demoted_user_vars.into_iter().join(", ")
-                )
+                    mutable_references_user_vars.join(", ")
+                );
             }
-
-            dump_coarse_inferred_bounds(&program);
         });
     }
 }
