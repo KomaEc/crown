@@ -16,6 +16,7 @@ use crate::{
 /// The set of program points that a [`Provenance`] is live on exit
 pub(crate) type ProvenanceLiveness = SparseBitMatrix<PointIndex, Provenance>;
 
+/// FIXME place holder provenance should be live throughout the fn body
 pub fn compute_provenance_liveness<'tcx>(
     location_map: &DenseLocationMap,
     tcx: TyCtxt<'tcx>,

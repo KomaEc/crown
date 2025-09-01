@@ -7,8 +7,8 @@ use rustc_index::{
 };
 use rustc_middle::{
     mir::{
-        Body, HasLocalDecls, Local, Location, Operand, Place, PlaceElem, Rvalue, Terminator,
-        TerminatorKind, visit::Visitor,
+        Body, HasLocalDecls, Local, Location, Operand, Place, PlaceElem, RETURN_PLACE, Rvalue,
+        Terminator, visit::Visitor,
     },
     ty::TyCtxt,
 };
@@ -23,11 +23,17 @@ use crate::{
         loan_liveness::{LoanLiveness, compute_loan_liveness},
         provenance_liveness::{ProvenanceLiveness, compute_provenance_liveness},
         requires::{ProvenanceRequiresLoan, compute_requires},
+        subset_closure::{SubSetClosure, compute_subset_closure},
     },
+    mir::TerminatorExt,
     type_qualifier::mutability_analysis,
 };
 
-const ALLOW_INTERPROCEDURAL: bool = true;
+macro_rules! disallow_interprocedural {
+    () => {
+        // panic!()
+    };
+}
 
 mod errors;
 mod invalidates;
@@ -36,6 +42,7 @@ mod loan_liveness;
 mod places_conflict;
 mod provenance_liveness;
 mod requires;
+mod subset_closure;
 
 rustc_index::newtype_index! {
     #[orderable]
@@ -107,6 +114,30 @@ impl HasProvenanceSet for Body<'_> {
     }
 }
 
+pub struct GBorrowInferCtxt {
+    pub provenances: FxHashMap<DefId, ProvenanceSet>,
+}
+
+impl GBorrowInferCtxt {
+    pub fn new<I, J>(program: &RustProgram, is_candidate: I) -> Self
+    where
+        I: Fn(DefId) -> J,
+        J: Fn(Local) -> bool,
+    {
+        let mut provenances = FxHashMap::default();
+        for f in program.functions.iter().copied() {
+            let body = program
+                .tcx
+                .mir_drops_elaborated_and_const_checked(f.expect_local())
+                .borrow();
+            let is_candidate = is_candidate(f);
+            provenances.insert(f, body.provenance_set(|local| is_candidate(local)));
+        }
+
+        GBorrowInferCtxt { provenances }
+    }
+}
+
 rustc_index::newtype_index! {
     #[orderable]
     #[debug_format = "L_({})"]
@@ -119,7 +150,13 @@ impl<C> DebugWithContext<C> for Loan {}
 pub struct BorrowData<'tcx> {
     location: Location,
     borrowed: Place<'tcx>,
-    assigned: Place<'tcx>,
+    assigned: Borrower<'tcx>,
+}
+
+#[derive(Clone, Copy, Debug)]
+pub enum Borrower<'tcx> {
+    AssignStmt(Place<'tcx>),
+    CallArg(DefId, usize),
 }
 
 impl std::fmt::Debug for BorrowData<'_> {
@@ -135,17 +172,28 @@ pub struct BorrowSet<'tcx> {
 }
 
 pub trait HasBorrowSet<'tcx> {
-    fn borrow_set(&self, tcx: TyCtxt<'tcx>, provenance_set: &ProvenanceSet) -> BorrowSet<'tcx>;
+    fn borrow_set<'local, 'global: 'local>(
+        &self,
+        tcx: TyCtxt<'tcx>,
+        provenance_set: &'local ProvenanceSet,
+        global_borrow_ctxt: &'global GBorrowInferCtxt,
+    ) -> BorrowSet<'tcx>;
 }
 
 impl<'tcx> HasBorrowSet<'tcx> for Body<'tcx> {
-    fn borrow_set(&self, tcx: TyCtxt<'tcx>, provenance_set: &ProvenanceSet) -> BorrowSet<'tcx> {
+    fn borrow_set<'local, 'global: 'local>(
+        &self,
+        tcx: TyCtxt<'tcx>,
+        provenance_set: &'local ProvenanceSet,
+        global_borrow_ctxt: &'global GBorrowInferCtxt,
+    ) -> BorrowSet<'tcx> {
         struct Vis<'tcx, 'this, D> {
             loans: IndexVec<Loan, BorrowData<'tcx>>,
             location_map: FxHashMap<Location, Loan>,
             local_decl: &'this D,
             tcx: TyCtxt<'tcx>,
             provenance_set: &'this ProvenanceSet,
+            global_borrow_ctxt: &'this GBorrowInferCtxt,
         }
         impl<'tcx, 'this, D: HasLocalDecls<'tcx>> Visitor<'tcx> for Vis<'tcx, 'this, D> {
             fn visit_assign(
@@ -169,7 +217,7 @@ impl<'tcx> HasBorrowSet<'tcx> for Body<'tcx> {
                         let loan = self.loans.push(BorrowData {
                             location,
                             borrowed: *place,
-                            assigned: *lhs,
+                            assigned: Borrower::AssignStmt(*lhs),
                         });
                         self.location_map.insert(location, loan);
                     }
@@ -178,7 +226,7 @@ impl<'tcx> HasBorrowSet<'tcx> for Body<'tcx> {
                         let loan = self.loans.push(BorrowData {
                             location,
                             borrowed: place.project_deeper(&[PlaceElem::Deref], self.tcx),
-                            assigned: *lhs,
+                            assigned: Borrower::AssignStmt(*lhs),
                         });
                         self.location_map.insert(location, loan);
                     }
@@ -186,11 +234,32 @@ impl<'tcx> HasBorrowSet<'tcx> for Body<'tcx> {
                 }
             }
 
-            fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _location: Location) {
-                if matches!(terminator.kind, TerminatorKind::Call { .. }) && !ALLOW_INTERPROCEDURAL
+            fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
+                let Some(mir_call) = terminator.as_call(self.tcx) else {
+                    return self.super_terminator(terminator, location);
+                };
+                disallow_interprocedural!();
+
+                if let Some(callee) = mir_call.func.did()
+                    && let Some(callee_provenance_set) =
+                        self.global_borrow_ctxt.provenances.get(&callee)
                 {
-                    unimplemented!("calculate borrow set for calls")
-                }
+                    for (arg_index, arg) in mir_call.args.iter().enumerate() {
+                        let arg = &arg.node;
+                        if let Some(arg) = arg.place() {
+                            let callee_local = Local::from_usize(arg_index + 1);
+                            if callee_provenance_set.local_data[callee_local].is_some() {
+                                let loan = self.loans.push(BorrowData {
+                                    location,
+                                    borrowed: arg.project_deeper(&[PlaceElem::Deref], self.tcx),
+                                    assigned: Borrower::CallArg(callee, arg_index),
+                                });
+                                self.location_map.insert(location, loan);
+                            }
+                        }
+                    }
+                };
+                return self.super_terminator(terminator, location);
             }
         }
 
@@ -200,6 +269,7 @@ impl<'tcx> HasBorrowSet<'tcx> for Body<'tcx> {
             local_decl: self,
             tcx,
             provenance_set,
+            global_borrow_ctxt,
         };
         vis.visit_body(self);
 
@@ -242,15 +312,19 @@ pub struct ProvenanceConstraintGraph {
 }
 
 impl ProvenanceConstraintGraph {
-    pub fn new<'tcx>(
+    pub fn new<'tcx, 'local, 'global: 'local>(
+        tcx: TyCtxt<'tcx>,
         body: &Body<'tcx>,
         borrow_set: &BorrowSet<'tcx>,
-        provenance_set: &ProvenanceSet,
+        provenance_set: &'local ProvenanceSet,
+        global_borrow_ctxt: &'global GBorrowInferCtxt,
     ) -> Self {
         struct Vis<'this, 'tcx> {
+            tcx: TyCtxt<'tcx>,
             graph: &'this mut ProvenanceConstraintGraph,
             borrow_set: &'this BorrowSet<'tcx>,
             provenance_set: &'this ProvenanceSet,
+            global_borrow_ctxt: &'this GBorrowInferCtxt,
         }
 
         impl<'tcx> Visitor<'tcx> for Vis<'_, 'tcx> {
@@ -294,11 +368,25 @@ impl ProvenanceConstraintGraph {
                 }
             }
 
-            fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, _location: Location) {
-                if matches!(terminator.kind, TerminatorKind::Call { .. }) && !ALLOW_INTERPROCEDURAL
+            fn visit_terminator(&mut self, terminator: &Terminator<'tcx>, location: Location) {
+                let Some(mir_call) = terminator.as_call(self.tcx) else {
+                    return self.super_terminator(terminator, location);
+                };
+                disallow_interprocedural!();
+                if let Some(callee) = mir_call.func.did()
+                    && let Some(callee_provenance_set) =
+                        self.global_borrow_ctxt.provenances.get(&callee)
                 {
-                    unimplemented!("infer provenance constraints for calls")
-                }
+                    for (arg_index, arg) in mir_call.args.iter().enumerate() {
+                        let arg = &arg.node;
+                        if let Some(_arg) = arg.place() {
+                            let callee_local = Local::from_usize(arg_index + 1);
+                            if callee_provenance_set.local_data[callee_local].is_some() {
+                                // TODO incorporating interprocedural constraints
+                            }
+                        }
+                    }
+                };
             }
         }
 
@@ -308,9 +396,11 @@ impl ProvenanceConstraintGraph {
         };
 
         Vis {
+            tcx,
             graph: &mut graph,
             borrow_set,
             provenance_set,
+            global_borrow_ctxt,
         }
         .visit_body(body);
 
@@ -319,25 +409,24 @@ impl ProvenanceConstraintGraph {
 }
 
 pub struct BorrowInferenceResults<'tcx> {
-    pub provenance_set: ProvenanceSet,
+    // pub provenance_set: ProvenanceSet,
     pub borrow_set: BorrowSet<'tcx>,
+    pub constraint_graph: ProvenanceConstraintGraph,
     pub location_map: DenseLocationMap,
     pub provenance_liveness: ProvenanceLiveness,
     pub killed: Killed,
+    pub subset_closure: SubSetClosure,
     pub requires: ProvenanceRequiresLoan,
     pub loan_liveness: LoanLiveness,
     pub invalidates: Invalidates,
     pub errors: Errors,
 }
 
-pub fn borrow_inference<'tcx, I>(
+pub fn borrow_inference<'tcx>(
     tcx: TyCtxt<'tcx>,
     def_id: DefId,
-    is_candidate: I,
-) -> BorrowInferenceResults<'tcx>
-where
-    I: Fn(Local) -> bool,
-{
+    global_borrow_ctxt: &GBorrowInferCtxt,
+) -> BorrowInferenceResults<'tcx> {
     let tcx = tcx;
     let f = def_id;
 
@@ -345,13 +434,16 @@ where
         .mir_drops_elaborated_and_const_checked(f.expect_local())
         .borrow();
 
-    let provenance_set = body.provenance_set(is_candidate);
-    let borrow_set = body.borrow_set(tcx, &provenance_set);
+    let provenance_set = global_borrow_ctxt.provenances.get(&f).unwrap();
+    let borrow_set = body.borrow_set(tcx, &provenance_set, global_borrow_ctxt);
     let location_map = DenseLocationMap::new(body);
     let provenance_liveness =
         compute_provenance_liveness(&location_map, tcx, body, &provenance_set);
     let killed = compute_killed(body, tcx, &location_map, &borrow_set);
-    let requires = compute_requires(body, &borrow_set, &provenance_set);
+    let constraint_graph =
+        ProvenanceConstraintGraph::new(tcx, body, &borrow_set, provenance_set, global_borrow_ctxt);
+    let subset_closure = compute_subset_closure(provenance_set, &constraint_graph);
+    let requires = compute_requires(&borrow_set, &provenance_set, &constraint_graph);
     let loan_liveness = compute_loan_liveness(
         tcx,
         body,
@@ -365,11 +457,12 @@ where
     let errors = compute_errors(&borrow_set, &loan_liveness, &invalidates);
 
     BorrowInferenceResults {
-        provenance_set,
         borrow_set,
         location_map,
         provenance_liveness,
         killed,
+        constraint_graph,
+        subset_closure,
         requires,
         loan_liveness,
         invalidates,
@@ -381,19 +474,25 @@ pub fn dump_borrow_inference_mir<'tcx>(
     tcx: TyCtxt<'tcx>,
     body: &Body<'tcx>,
     inference: &BorrowInferenceResults<'tcx>,
+    global_borrow_ctxt: &GBorrowInferCtxt,
     w: &mut dyn std::io::Write,
 ) -> std::io::Result<()> {
     let BorrowInferenceResults {
-        provenance_set,
         borrow_set,
         location_map,
         provenance_liveness,
         killed: _killed,
+        constraint_graph: _constraint_graph,
+        subset_closure: _subset_closure,
         requires: _requires,
         loan_liveness,
         invalidates: _invalidates,
         errors,
     } = inference;
+    let provenance_set = global_borrow_ctxt
+        .provenances
+        .get(&body.source.def_id())
+        .unwrap();
 
     use rustc_middle::mir::{PassWhere, pretty::PrettyPrintMirOptions};
     use utils::itertools::Itertools as _;
@@ -469,12 +568,22 @@ pub fn dump_borrow_inference_mir<'tcx>(
     Ok(())
 }
 
-pub fn demote_pointers(program: &RustProgram) -> FxHashMap<DefId, DenseBitSet<Local>> {
-    let mut demoted = FxHashMap::default();
-
+pub fn dump_coarse_inferred_bounds(program: &RustProgram) {
     let tcx = program.tcx;
 
     let mutability_results = mutability_analysis(program);
+
+    let global_borrow_ctxt = GBorrowInferCtxt::new(program, |f| {
+        let mutability_results = mutability_results
+            .function_body_facts(&f)
+            .collect::<IndexVec<Local, _>>();
+
+        move |local| {
+            mutability_results[local]
+                .first()
+                .is_some_and(|mutability| mutability.is_mutable())
+        }
+    });
 
     for f in program.functions.iter() {
         let body = &*program
@@ -482,17 +591,60 @@ pub fn demote_pointers(program: &RustProgram) -> FxHashMap<DefId, DenseBitSet<Lo
             .mir_drops_elaborated_and_const_checked(f.expect_local())
             .borrow();
 
+        let provenance_set = &global_borrow_ctxt.provenances[f];
+        let return_place = RETURN_PLACE;
+        let Some(return_provenance) = provenance_set.local_data[return_place] else {
+            continue;
+        };
+        println!("{} inferred bounds:", program.tcx.def_path_str(f));
+        let BorrowInferenceResults { subset_closure, .. } =
+            borrow_inference(tcx, *f, &global_borrow_ctxt);
+
+        for arg in body.args_iter() {
+            if let Some(arg_provenance) = provenance_set.local_data[arg]
+                && subset_closure.contains(arg_provenance, return_provenance)
+            {
+                for var_debug_info in body.var_debug_info.iter() {
+                    if var_debug_info
+                        .argument_index
+                        .is_some_and(|arg_index| arg_index == arg.as_u32() as u16)
+                    {
+                        println!("'{}: 'return", var_debug_info.name);
+                    }
+                }
+            }
+        }
+    }
+}
+
+pub fn demote_pointers(program: &RustProgram) -> FxHashMap<DefId, DenseBitSet<Local>> {
+    let mut demoted = FxHashMap::default();
+
+    let tcx = program.tcx;
+
+    let mutability_results = mutability_analysis(program);
+
+    let global_borrow_ctxt = GBorrowInferCtxt::new(program, |f| {
         let mutability_results = mutability_results
-            .function_body_facts(f)
+            .function_body_facts(&f)
             .collect::<IndexVec<Local, _>>();
 
-        let BorrowInferenceResults {
-            borrow_set, errors, ..
-        } = borrow_inference(tcx, *f, |local| {
+        move |local| {
             mutability_results[local]
                 .first()
                 .is_some_and(|mutability| mutability.is_mutable())
-        });
+        }
+    });
+
+    for f in program.functions.iter() {
+        let body = &*program
+            .tcx
+            .mir_drops_elaborated_and_const_checked(f.expect_local())
+            .borrow();
+
+        let BorrowInferenceResults {
+            borrow_set, errors, ..
+        } = borrow_inference(tcx, *f, &global_borrow_ctxt);
 
         let mut invalid_loans = DenseBitSet::new_empty(borrow_set.loans.len());
         for row in errors.rows() {
@@ -505,7 +657,12 @@ pub fn demote_pointers(program: &RustProgram) -> FxHashMap<DefId, DenseBitSet<Lo
 
         for loan in invalid_loans.iter() {
             let borrow_data = &borrow_set.loans[loan];
-            demoted_locals.insert(borrow_data.assigned.local);
+            match borrow_data.assigned {
+                Borrower::AssignStmt(assigned) => {
+                    demoted_locals.insert(assigned.local);
+                }
+                Borrower::CallArg(..) => unimplemented!(),
+            }
         }
 
         demoted.insert(*f, demoted_locals);
@@ -518,7 +675,10 @@ pub fn demote_pointers(program: &RustProgram) -> FxHashMap<DefId, DenseBitSet<Lo
 mod test {
     use rustc_middle::mir::VarDebugInfoContents;
 
-    use crate::borrow::{borrow_inference, demote_pointers, dump_borrow_inference_mir};
+    use crate::borrow::{
+        GBorrowInferCtxt, borrow_inference, demote_pointers, dump_borrow_inference_mir,
+        dump_coarse_inferred_bounds,
+    };
 
     #[test]
     fn test_proof_of_concept() {
@@ -541,9 +701,40 @@ mod test {
                 .mir_drops_elaborated_and_const_checked(f.expect_local())
                 .borrow();
 
-            let inference = borrow_inference(tcx, f, |_| true);
+            let global_borrow_ctxt = GBorrowInferCtxt::new(&program, |_| |_| true);
 
-            dump_borrow_inference_mir(tcx, body, &inference, &mut std::io::stdout()).unwrap();
+            let inference = borrow_inference(tcx, f, &global_borrow_ctxt);
+
+            dump_borrow_inference_mir(
+                tcx,
+                body,
+                &inference,
+                &global_borrow_ctxt,
+                &mut std::io::stdout(),
+            )
+            .unwrap();
+        })
+    }
+
+    #[test]
+    fn test_inferred_bounds() {
+        const PROGRAM: &str = "
+        unsafe fn f(mut p: *mut i32, mut q: *mut i32) -> *mut i32 {
+            *p = 3;
+            return &raw mut *q;
+        }
+
+        unsafe fn g() {
+            let mut local1 = 0;
+            let mut local2 = 1;
+            let mut r = f(&raw mut local1, &raw mut local2);
+            *r = 2;
+            println!(\"{}\", *r);
+        }
+        ";
+
+        utils::rustc::run_compiler(PROGRAM, |program| {
+            dump_coarse_inferred_bounds(&program);
         })
     }
 
@@ -551,16 +742,6 @@ mod test {
     fn smoke_test_libtree() {
         utils::rustc::run_compiler(utils::rustc::SourceCode::Libtree, |program| {
             let tcx = program.tcx;
-            // for f in program.functions.iter().copied() {
-            //     if tcx.def_path_str(f) == "src::libtree::parse_ld_so_conf" {
-            //         let body = &*tcx
-            //             .mir_drops_elaborated_and_const_checked(f.expect_local())
-            //             .borrow();
-            //         let inference = borrow_inference(tcx, f, |_| true);
-            //         dump_borrow_inference_mir(tcx, body, &inference, &mut std::io::stdout())
-            //             .unwrap();
-            //     }
-            // }
             let demoted = demote_pointers(&program);
             for f in program.functions.iter() {
                 let body = &*tcx
@@ -588,6 +769,8 @@ mod test {
                     demoted_user_vars.into_iter().join(", ")
                 )
             }
+
+            dump_coarse_inferred_bounds(&program);
         });
     }
 }

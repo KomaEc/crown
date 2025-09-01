@@ -66,14 +66,6 @@ impl<'g, 'tcx> LoanInvalidatesGenerator<'g, 'tcx> {
 
         for loan in borrows_for_place_base.iter() {
             let borrow_data = &self.borrow_set.loans[loan];
-            // println!(
-            //     "borrowed {:?}: {}, accessed {:?}: {}",
-            //     borrow_data.borrowed,
-            //     borrow_data.borrowed.ty(self.body, self.tcx).ty,
-            //     place,
-            //     place.ty(self.body, self.tcx).ty
-            // );
-
             if places_conflict(
                 self.tcx,
                 self.body,
