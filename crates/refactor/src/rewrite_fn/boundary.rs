@@ -1,4 +1,4 @@
-use analyses::ssa::RichLocation;
+use analyses::use_def::UseDefLocation;
 use either::Either::Right;
 use rustc_hir::def_id::DefId;
 use rustc_middle::mir::{Local, Location, Operand, Place};
@@ -66,7 +66,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             ..
         } = *self;
         let def_loc = def_use_chain.def_loc(arg, location);
-        let RichLocation::Mir(def_loc) = def_loc else {
+        let UseDefLocation::Single(def_loc) = def_loc else {
             return false;
         };
         matches!(body.stmt_at(def_loc), Right(..))

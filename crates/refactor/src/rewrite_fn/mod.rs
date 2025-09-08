@@ -4,11 +4,9 @@ mod library_call;
 
 use std::str::FromStr;
 
-use analyses::{
-    ssa::RichLocation,
-    use_def::{DefUseChain, def_use_chain},
-};
+use analyses::use_def::{UseDef, UseDefLocation};
 use either::Either::{Left, Right};
+use rustc_abi::VariantIdx;
 use rustc_hash::FxHashMap;
 use rustc_hir::{ItemKind, def_id::DefId};
 use rustc_middle::{
@@ -121,7 +119,7 @@ fn rewrite_fn<'tcx>(
         })
         .collect::<FxHashMap<_, _>>();
 
-    let def_use_chain = def_use_chain(body, tcx);
+    let def_use_chain = UseDef::new(tcx, body);
 
     // analysis::use_def::show_def_use_chain(body, &def_use_chain);
 
@@ -165,7 +163,7 @@ fn rewrite_fn<'tcx>(
 fn accum_deref_copies<'tcx>(
     mut place: Place<'tcx>,
     mut location: Location,
-    def_use_chain: &DefUseChain,
+    def_use_chain: &UseDef,
     body: &Body<'tcx>,
     tcx: TyCtxt<'tcx>,
 ) -> (Place<'tcx>, Location) {
@@ -176,7 +174,7 @@ fn accum_deref_copies<'tcx>(
         ClearCrossCrate::Set(box LocalInfo::DerefTemp)
     ) {
         let def_loc = def_use_chain.def_loc(local, location);
-        let RichLocation::Mir(def_loc) = def_loc else {
+        let UseDefLocation::Single(def_loc) = def_loc else {
             panic!()
         };
         let Left(stmt) = body.stmt_at(def_loc) else {
@@ -202,7 +200,7 @@ pub struct FnRewriteCtxt<'tcx, 'me> {
     fn_decision: &'me FnLocals,
     struct_decision: &'me StructFields,
     body: &'me Body<'tcx>,
-    def_use_chain: &'me DefUseChain,
+    def_use_chain: &'me UseDef,
     user_idents: &'me FxHashMap<Local, Symbol>,
     tcx: TyCtxt<'tcx>,
 }
@@ -488,9 +486,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 // TODO constant immediate_lvalue
                 let is_func_call_dest = place.is_indirect() && {
                     match def_use_chain.def_loc(place.local, location) {
-                        RichLocation::Entry => false,
-                        RichLocation::Phi(_) => false,
-                        RichLocation::Mir(def_loc) => {
+                        UseDefLocation::Argument => false,
+                        UseDefLocation::Multiple(_) => false,
+                        UseDefLocation::Single(def_loc) => {
                             matches!(body.stmt_at(def_loc), Right(..))
                         }
                     }
@@ -595,7 +593,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 // rewrite point: call
                 self.rewrite_call(
                     func,
-                    &args.iter().map(|op| op.node).collect(),
+                    &args.iter().map(|op| op.node.clone()).collect(),
                     *destination,
                     *fn_span,
                     location,
@@ -610,7 +608,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         PlaceCtxt::from_ptr_ctxt(self.body.return_ty(), &self.local_decision[0]);
                     if !matches!(
                         def_use_chain.def_loc(RETURN_PLACE, location),
-                        RichLocation::Entry
+                        UseDefLocation::Argument
                     ) {
                         self.rewrite_temporary(RETURN_PLACE, location, return_ctxt, rewriter);
                     }
@@ -662,6 +660,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 is_thread_local,
             } = body.local_decls[place.local]
                 .local_info
+                .as_ref()
                 .unwrap_crate_local()
             else {
                 unreachable!()
@@ -716,7 +715,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     assert!(ptr_kinds.next().is_none());
 
                     let adt_def = ty.ty_adt_def().unwrap();
-                    let field_name = &adt_def.variants()[0usize.into()].fields[f.index()]
+                    let field_name = &adt_def.variants()[VariantIdx::from_u32(0)].fields[f]
                         .name
                         .as_str();
                     replacement = replacement + "." + field_name;
@@ -778,13 +777,13 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         {
             replacement
         } else if is_static_ref {
-            let &LocalInfo::StaticRef {
+            let box LocalInfo::StaticRef {
                 def_id,
                 is_thread_local,
             } = body.local_decls[place.local]
                 .local_info
-                .unwrap_crate_local()
                 .as_ref()
+                .unwrap_crate_local()
             else {
                 unreachable!()
             };
@@ -887,7 +886,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         // this happens in checked add. no rewrite for this case
                         return;
                     };
-                    let field_name = &adt_def.variants()[0usize.into()].fields[f.index()]
+                    let field_name = &adt_def.variants()[VariantIdx::from_u32(0)].fields[f]
                         .name
                         .as_str();
                     replacement = replacement + "." + field_name;
@@ -962,7 +961,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         assert!(!user_idents.contains_key(&local));
         let def_loc = def_use_chain.def_loc(local, location);
 
-        let RichLocation::Mir(def_loc) = def_loc else {
+        let UseDefLocation::Single(def_loc) = def_loc else {
             unreachable!()
         };
         match body.stmt_at(def_loc) {
@@ -988,13 +987,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let def_loc = def_use_chain.def_loc(local, location);
 
         match def_loc {
-            RichLocation::Entry => todo!(),
-            RichLocation::Phi(block) => {
+            UseDefLocation::Argument => todo!(),
+            UseDefLocation::Multiple(def_loc_vec) => {
                 // FIXME correctness? recursive?
-                for def_loc in def_use_chain.phi_def_locs(local, block) {
-                    let RichLocation::Mir(def_loc) = def_loc else {
-                        todo!()
-                    };
+                for def_loc in def_loc_vec {
                     let Left(stmt) = body.stmt_at(def_loc) else {
                         continue;
                     };
@@ -1011,7 +1007,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                 }
                 return;
             }
-            RichLocation::Mir(def_loc) => {
+            UseDefLocation::Single(def_loc) => {
                 let Left(stmt) = body.stmt_at(def_loc) else {
                     return;
                 };

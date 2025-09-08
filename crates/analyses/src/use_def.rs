@@ -10,13 +10,31 @@ use crate::reaching_definitions::{
     DefIndex, DefinitionSet, ReachingDefinitions, compute_definition_set,
 };
 
+pub enum UseDefLocation {
+    /// Function Parameter (defined at entry)
+    Argument,
+    /// Single Definition at a specific location
+    Single(Location),
+    /// Multiple definitions (phi-node like situation)
+    Multiple(Vec<Location>),
+}
+
 pub struct UseDef {
     definition_set: DefinitionSet,
     reaching_definitions: FxHashMap<Location, MixedBitSet<DefIndex>>,
 }
 
 impl UseDef {
-    pub fn def_loc(&self, local: Local, location: Location) -> impl Iterator<Item = Location> {
+    pub fn def_loc(&self, local: Local, location: Location) -> UseDefLocation {
+        let iter = self._def_loc(local, location);
+        match iter.collect::<Vec<_>>().as_slice() {
+            [] => UseDefLocation::Argument,
+            [single] => UseDefLocation::Single(*single),
+            multiple => UseDefLocation::Multiple(multiple.to_vec()),
+        }
+    }
+
+    fn _def_loc(&self, local: Local, location: Location) -> impl Iterator<Item = Location> {
         self.reaching_definitions
             .get(&location)
             .into_iter()

@@ -8,6 +8,7 @@ rustc_private = true
 
 [dependencies]
 utils = { path = "../utils" }
+smallvec = { version = "1.15.1", features = ["union", "const_generics"] }
 
 [dev-dependencies]
 utils = { path = "../utils", features = ["test-utils"] }

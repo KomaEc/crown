@@ -1,4 +1,4 @@
-use analyses::ssa::RichLocation;
+use analyses::use_def::UseDefLocation;
 use either::Either::Left;
 use rustc_hir::{def_id::DefId, definitions::DefPathData};
 use rustc_middle::mir::{Location, Operand, Place, Rvalue, StatementKind};
@@ -114,7 +114,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         assert_eq!(args.len(), 1);
         let arg = args[0].place().unwrap().as_local().unwrap();
         let def_loc = def_use_chain.def_loc(arg, location);
-        let RichLocation::Mir(def_loc) = def_loc else {
+        let UseDefLocation::Single(def_loc) = def_loc else {
             panic!()
         };
         let Left(stmt) = body.stmt_at(def_loc) else {
@@ -156,7 +156,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         assert_eq!(args.len(), 1);
         let arg = args[0].place().unwrap().as_local().unwrap();
         let def_loc = def_use_chain.def_loc(arg, location);
-        let RichLocation::Mir(def_loc) = def_loc else {
+        let UseDefLocation::Single(def_loc) = def_loc else {
             panic!()
         };
         let Left(stmt) = body.stmt_at(def_loc) else {

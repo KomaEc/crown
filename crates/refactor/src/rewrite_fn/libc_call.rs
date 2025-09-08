@@ -1,4 +1,4 @@
-use analyses::ssa::RichLocation;
+use analyses::use_def::UseDefLocation;
 use either::Either::{Left, Right};
 use rustc_hir::ForeignItem;
 use rustc_middle::mir::{Location, Operand, Place, StatementKind, TerminatorKind};
@@ -56,7 +56,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             rewriter.replace(self.tcx, fn_span, "()".to_owned())
         } else {
             let def_loc = def_use_chain.def_loc(arg, location);
-            let RichLocation::Mir(def_loc) = def_loc else {
+            let UseDefLocation::Single(def_loc) = def_loc else {
                 panic!()
             };
             let Left(stmt) = body.stmt_at(def_loc) else {
@@ -116,7 +116,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             .and_then(|place| place.as_local())
             .ok_or(())?;
         let def_loc = def_use_chain.def_loc(local, location);
-        let RichLocation::Mir(def_loc) = def_loc else {
+        let UseDefLocation::Single(def_loc) = def_loc else {
             return Err(());
         };
         let Right(terminator) = body.stmt_at(def_loc) else {
@@ -151,7 +151,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             } else {
                 self.rewrite_call_default(
                     callee,
-                    &args.iter().map(|arg| arg.node).collect(),
+                    &args.iter().map(|arg| arg.node.clone()).collect(),
                     *destination,
                     *fn_span,
                     def_loc,

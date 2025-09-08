@@ -10,10 +10,9 @@ mod rewrite_fn;
 mod rewrite_ty;
 
 use analyses::{
-    alias::TaintResult,
-    ownership::{solidify::SolidifiedOwnershipSchemes, whole_program::WholeProgramResults},
-    ssa::AnalysisResults,
-    type_qualifier::flow_insensitive::{fatness::FatnessResult, mutability::MutabilityResult},
+    output_params::OutputParams,
+    // ownership::{solidify::SolidifiedOwnershipSchemes, whole_program::WholeProgramResults},
+    // type_qualifier::flow_insensitive::{fatness::FatnessResult, mutability::MutabilityResult},
 };
 use clap::{ArgGroup, Args};
 use rewrite_fn::rewrite_fns;
@@ -23,11 +22,12 @@ use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
 use smallvec::SmallVec;
 use utils::{
-    CrateData,
-    data_structure::vec_vec::VecVec,
+    dsa::fixed_shape::VecVec,
     rewrite::{Rewrite, RewriteMode},
+    rustc::RustProgram,
 };
 
+extern crate rustc_abi;
 extern crate rustc_ast;
 extern crate rustc_ast_pretty;
 extern crate rustc_const_eval;
@@ -87,13 +87,13 @@ pub struct RefactorOptions {
 }
 
 pub fn refactor<'tcx>(
-    crate_data: &CrateData<'tcx>,
+    rust_program: &RustProgram<'tcx>,
     analysis: &Analysis,
     rewrite_mode: RewriteMode,
     options: RefactorOptions,
 ) -> anyhow::Result<()> {
     let mut options = options;
-    for did in &crate_data.fns {
+    for did in &rust_program.functions {
         if analysis.ownership_schemes.precision(did) == 0 {
             options.no_box = true;
         }
@@ -103,13 +103,13 @@ pub fn refactor<'tcx>(
     }
     let options = options;
 
-    let struct_decision = StructFields::new(crate_data, analysis, &options);
-    let fn_decision = FnLocals::new(crate_data, analysis, &options);
+    let struct_decision = StructFields::new(rust_program, analysis, &options);
+    let fn_decision = FnLocals::new(rust_program, analysis, &options);
 
     if options.verbose {
         let mut rewriter = VerboseRewriter { rewriter: vec![] };
         rewrite(
-            crate_data,
+            rust_program,
             &fn_decision,
             &struct_decision,
             &options,
@@ -121,7 +121,7 @@ pub fn refactor<'tcx>(
         let mut rewriter = vec![];
 
         rewrite(
-            crate_data,
+            rust_program,
             &fn_decision,
             &struct_decision,
             &options,
@@ -136,7 +136,7 @@ pub fn refactor<'tcx>(
 }
 
 fn rewrite(
-    crate_data: &CrateData,
+    rust_program: &RustProgram,
     fn_decision: &FnLocals,
     struct_decision: &StructFields,
     // type_only: bool,
@@ -146,19 +146,19 @@ fn rewrite(
     rewriter: &mut impl Rewrite,
 ) -> anyhow::Result<()> {
     rewrite_structs(
-        &crate_data.structs,
+        &rust_program.structs,
         &struct_decision,
         rewriter,
-        crate_data.tcx,
+        rust_program.tcx,
         options,
     )?;
 
     rewrite_fns(
-        &crate_data.fns,
+        &rust_program.functions,
         &fn_decision,
         &struct_decision,
         rewriter,
-        crate_data.tcx,
+        rust_program.tcx,
         options,
         analysis,
     );
@@ -286,18 +286,18 @@ impl StructFields {
             })
     }
 
-    pub fn new(crate_data: &CrateData, analysis: &Analysis, options: &RefactorOptions) -> Self {
+    pub fn new(rust_program: &RustProgram, analysis: &Analysis, options: &RefactorOptions) -> Self {
         let mut did_idx = FxHashMap::default();
-        did_idx.reserve(crate_data.structs.len());
+        did_idx.reserve(rust_program.structs.len());
         let mut struct_fields = VecVec::with_capacity(
-            crate_data.structs.len(),
-            crate_data.structs.iter().fold(0, |acc, did| {
-                let adt_def = crate_data.tcx.adt_def(*did);
+            rust_program.structs.len(),
+            rust_program.structs.iter().fold(0, |acc, did| {
+                let adt_def = rust_program.tcx.adt_def(*did);
                 acc + adt_def.all_fields().count()
             }),
         );
 
-        for (idx, did) in crate_data.structs.iter().enumerate() {
+        for (idx, did) in rust_program.structs.iter().enumerate() {
             let fields_ownership = analysis
                 .ownership_result
                 .struct_results(did)
@@ -306,7 +306,7 @@ impl StructFields {
             let fields_fatness = analysis.fatness_result.struct_results(did);
             let fields_aliases = analysis.taint_result.fields_aliases(did);
 
-            let adt_def = crate_data.tcx.adt_def(*did);
+            let adt_def = rust_program.tcx.adt_def(*did);
 
             for (field, ownership, mutability, fatness, aliases) in itertools::izip!(
                 adt_def.all_fields(),
@@ -318,7 +318,7 @@ impl StructFields {
                 assert_eq!(ownership.len(), mutability.len());
                 assert_eq!(mutability.len(), fatness.len());
 
-                let mut field_ty = crate_data.tcx.type_of(field.did);
+                let mut field_ty = rust_program.tcx.type_of(field.did).skip_binder();
 
                 let aliasing_nonowning_field = aliases.iter().any(|&idx| {
                     fields_ownership[idx]
@@ -357,17 +357,17 @@ impl StructFields {
                     };
                     field.push(pointer_kind);
 
-                    field_ty = field_ty.builtin_deref(true).unwrap().ty;
+                    field_ty = field_ty.builtin_deref(true).unwrap();
                 }
-                struct_fields.push_inner(field);
+                struct_fields.push_element(field);
             }
 
-            struct_fields.push();
+            struct_fields.complete_cur_vec();
 
             did_idx.insert(*did, idx);
         }
 
-        let struct_fields = struct_fields.done();
+        let struct_fields = struct_fields.complete();
         StructFields(Decision {
             did_idx,
             data: struct_fields,
@@ -405,13 +405,13 @@ impl FnLocals {
         &self.0.data[idx]
     }
 
-    pub fn new(crate_data: &CrateData, analysis: &Analysis, options: &RefactorOptions) -> Self {
+    pub fn new(rust_program: &RustProgram, analysis: &Analysis, options: &RefactorOptions) -> Self {
         let mut did_idx = FxHashMap::default();
-        did_idx.reserve(crate_data.fns.len());
+        did_idx.reserve(rust_program.functions.len());
         let mut fn_locals = VecVec::with_capacity(
-            crate_data.fns.len(),
-            crate_data.fns.iter().fold(0, |acc, did| {
-                let r#fn = crate_data.tcx.optimized_mir(*did);
+            rust_program.functions.len(),
+            rust_program.functions.iter().fold(0, |acc, did| {
+                let r#fn = rust_program.tcx.optimized_mir(*did);
                 acc + r#fn.local_decls.len()
             }),
         );
@@ -421,7 +421,7 @@ impl FnLocals {
             .as_deref()
             .map(|pattern| regex::Regex::new(pattern).expect("bad fn name patterns"));
 
-        for (idx, did) in crate_data.fns.iter().enumerate() {
+        for (idx, did) in rust_program.functions.iter().enumerate() {
             let ownership = analysis.ownership_result.fn_results(did).results();
             let mutability = analysis.mutability_result.fn_results(did).results();
             let fatness = analysis.fatness_result.fn_results(did).results();
@@ -431,9 +431,9 @@ impl FnLocals {
                 .map(|param| matches!(param, Some(param) if param.is_output()))
                 .chain(std::iter::repeat(false));
 
-            let body = crate_data.tcx.optimized_mir(did);
+            let body = rust_program.tcx.optimized_mir(did);
 
-            let no_attempt = matches!(no_attempt.as_ref().map(|regex| regex.is_match(&crate_data.tcx.def_path_str(*did))), Some(matched) if matched);
+            let no_attempt = matches!(no_attempt.as_ref().map(|regex| regex.is_match(&rust_program.tcx.def_path_str(*did))), Some(matched) if matched);
 
             for (local_decl, is_output_param, ownership, mutability, fatness) in itertools::izip!(
                 body.local_decls.iter(),
@@ -506,15 +506,15 @@ impl FnLocals {
                         }
                     }
                 }
-                fn_locals.push_inner(local);
+                fn_locals.push_element(local);
             }
 
-            fn_locals.push();
+            fn_locals.complete_cur_vec();
 
             did_idx.insert(*did, idx);
         }
 
-        let fn_locals = fn_locals.done();
+        let fn_locals = fn_locals.complete();
         FnLocals(Decision {
             did_idx,
             data: fn_locals,
