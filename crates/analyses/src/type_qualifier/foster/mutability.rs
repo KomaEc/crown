@@ -362,8 +362,14 @@ impl<'infer, 'tcx, D: HasLocalDecls<'tcx>> Visitor<'tcx> for MutabilityAnalysis<
                     );
                 }
                 CallKind::Impl(..) => unimplemented!("impl method is not yet supported"),
-                CallKind::Closure => unimplemented!("closure is not yet supported"),
-                CallKind::Dynamic => unimplemented!("dynamic call is not yet supported"),
+                CallKind::Closure | CallKind::Dynamic => conservative_call(
+                    destination,
+                    args,
+                    local_decls,
+                    locals,
+                    struct_fields,
+                    database,
+                ),
             }
         }
     }
