@@ -9,14 +9,11 @@
 mod rewrite_fn;
 mod rewrite_ty;
 
-use analyses::{
-    output_params::OutputParams,
-    // ownership::{solidify::SolidifiedOwnershipSchemes, whole_program::WholeProgramResults},
-    // type_qualifier::flow_insensitive::{fatness::FatnessResult, mutability::MutabilityResult},
-};
+use analyses::borrow::PromotedMutRefs as PromotedMutRefResult;
+use analyses::output_params::OutputParams as OutputParamResult;
 use clap::{ArgGroup, Args};
 use rewrite_fn::rewrite_fns;
-use rewrite_ty::rewrite_structs;
+use rustc_const_eval::interpret::Pointer;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use rustc_middle::ty::TyCtxt;
@@ -59,6 +56,7 @@ extern crate either;
     ArgGroup::new("mutability")
         .args(["const_reference", "raw_mutability"]),
 ))]
+#[derive(Clone, Debug)]
 pub struct RefactorOptions {
     /// rewrite struct definitions and function signatures only
     #[clap(long)]
@@ -92,18 +90,6 @@ pub fn refactor<'tcx>(
     rewrite_mode: RewriteMode,
     options: RefactorOptions,
 ) -> anyhow::Result<()> {
-    let mut options = options;
-    for did in &rust_program.functions {
-        if analysis.ownership_schemes.precision(did) == 0 {
-            options.no_box = true;
-        }
-    }
-    if options.force_box {
-        options.no_box = false;
-    }
-    let options = options;
-
-    let struct_decision = StructFields::new(rust_program, analysis, &options);
     let fn_decision = FnLocals::new(rust_program, analysis, &options);
 
     if options.verbose {
@@ -111,7 +97,6 @@ pub fn refactor<'tcx>(
         rewrite(
             rust_program,
             &fn_decision,
-            &struct_decision,
             &options,
             analysis,
             &mut rewriter,
@@ -123,7 +108,6 @@ pub fn refactor<'tcx>(
         rewrite(
             rust_program,
             &fn_decision,
-            &struct_decision,
             &options,
             analysis,
             &mut rewriter,
@@ -138,25 +122,13 @@ pub fn refactor<'tcx>(
 fn rewrite(
     rust_program: &RustProgram,
     fn_decision: &FnLocals,
-    struct_decision: &StructFields,
-    // type_only: bool,
-    // type_reconstruction: bool,
     options: &RefactorOptions,
     analysis: &Analysis,
     rewriter: &mut impl Rewrite,
 ) -> anyhow::Result<()> {
-    rewrite_structs(
-        &rust_program.structs,
-        &struct_decision,
-        rewriter,
-        rust_program.tcx,
-        options,
-    )?;
-
     rewrite_fns(
         &rust_program.functions,
         &fn_decision,
-        &struct_decision,
         rewriter,
         rust_program.tcx,
         options,
@@ -166,28 +138,19 @@ fn rewrite(
     Ok(())
 }
 
-pub struct Analysis<'tcx> {
-    taint_result: TaintResult,
-    ownership_schemes: WholeProgramResults<'tcx>,
-    ownership_result: SolidifiedOwnershipSchemes,
-    mutability_result: MutabilityResult,
-    fatness_result: FatnessResult,
+pub struct Analysis {
+    output_param_result: OutputParamResult,
+    promoted_mut_ref_result: PromotedMutRefResult,
 }
 
-impl<'tcx> Analysis<'tcx> {
+impl Analysis {
     pub fn new(
-        taint_result: TaintResult,
-        ownership_schemes: WholeProgramResults<'tcx>,
-        ownership_result: SolidifiedOwnershipSchemes,
-        mutability_result: MutabilityResult,
-        fatness_result: FatnessResult,
+        output_param_result: OutputParamResult,
+        promoted_mut_ref_result: PromotedMutRefResult,
     ) -> Self {
         Analysis {
-            taint_result,
-            ownership_schemes,
-            ownership_result,
-            mutability_result,
-            fatness_result,
+            output_param_result,
+            promoted_mut_ref_result,
         }
     }
 }
@@ -233,6 +196,10 @@ impl PointerKind {
         matches!(*self, PointerKind::Raw(RawMeta::Const))
     }
 
+    fn is_as_is(&self) -> bool {
+        matches!(*self, PointerKind::Raw(RawMeta::AsIs))
+    }
+
     fn is_copy(&self) -> bool {
         matches!(
             *self,
@@ -246,6 +213,7 @@ pub enum RawMeta {
     Move,
     Const,
     Mut,
+    AsIs,
 }
 
 /// TODO use [`common::discretization::Descretization`]
@@ -286,92 +254,12 @@ impl StructFields {
             })
     }
 
-    pub fn new(rust_program: &RustProgram, analysis: &Analysis, options: &RefactorOptions) -> Self {
-        let mut did_idx = FxHashMap::default();
-        did_idx.reserve(rust_program.structs.len());
-        let mut struct_fields = VecVec::with_capacity(
-            rust_program.structs.len(),
-            rust_program.structs.iter().fold(0, |acc, did| {
-                let adt_def = rust_program.tcx.adt_def(*did);
-                acc + adt_def.all_fields().count()
-            }),
-        );
-
-        for (idx, did) in rust_program.structs.iter().enumerate() {
-            let fields_ownership = analysis
-                .ownership_result
-                .struct_results(did)
-                .collect::<Vec<_>>();
-            let fields_mutability = analysis.mutability_result.struct_results(did);
-            let fields_fatness = analysis.fatness_result.struct_results(did);
-            let fields_aliases = analysis.taint_result.fields_aliases(did);
-
-            let adt_def = rust_program.tcx.adt_def(*did);
-
-            for (field, ownership, mutability, fatness, aliases) in itertools::izip!(
-                adt_def.all_fields(),
-                fields_ownership.iter().copied(),
-                fields_mutability,
-                fields_fatness,
-                fields_aliases.iter()
-            ) {
-                assert_eq!(ownership.len(), mutability.len());
-                assert_eq!(mutability.len(), fatness.len());
-
-                let mut field_ty = rust_program.tcx.type_of(field.did).skip_binder();
-
-                let aliasing_nonowning_field = aliases.iter().any(|&idx| {
-                    fields_ownership[idx]
-                        .iter()
-                        .all(|ownership| !ownership.is_owning())
-                });
-                let mut field = SmallVec::with_capacity(ownership.len());
-
-                for (&ownership, &mutability, &fatness) in
-                    itertools::izip!(ownership, mutability, fatness)
-                {
-                    while let Some(inner_ty) = field_ty.builtin_index() {
-                        field_ty = inner_ty;
-                    }
-
-                    let pointer_kind = if ownership.is_owning() {
-                        if fatness.is_arr() || aliasing_nonowning_field || options.no_box {
-                            PointerKind::Raw(RawMeta::Move)
-                        } else {
-                            PointerKind::Move
-                        }
-                    } else {
-                        if options.raw_mutability {
-                            if mutability.is_immutable() && !field_ty.is_mutable_ptr() {
-                                PointerKind::Raw(RawMeta::Const)
-                            } else {
-                                PointerKind::Raw(RawMeta::Mut)
-                            }
-                        } else {
-                            if !field_ty.is_mutable_ptr() {
-                                PointerKind::Raw(RawMeta::Const)
-                            } else {
-                                PointerKind::Raw(RawMeta::Mut)
-                            }
-                        }
-                    };
-                    field.push(pointer_kind);
-
-                    field_ty = field_ty.builtin_deref(true).unwrap();
-                }
-                struct_fields.push_element(field);
-            }
-
-            struct_fields.complete_cur_vec();
-
-            did_idx.insert(*did, idx);
-        }
-
-        let struct_fields = struct_fields.complete();
-        StructFields(Decision {
-            did_idx,
-            data: struct_fields,
-        })
+    pub fn new(
+        _rust_program: &RustProgram,
+        _analysis: &Analysis,
+        _options: &RefactorOptions,
+    ) -> Self {
+        todo!();
     }
 }
 
@@ -411,7 +299,10 @@ impl FnLocals {
         let mut fn_locals = VecVec::with_capacity(
             rust_program.functions.len(),
             rust_program.functions.iter().fold(0, |acc, did| {
-                let r#fn = rust_program.tcx.optimized_mir(*did);
+                let r#fn = &*rust_program
+                    .tcx
+                    .mir_drops_elaborated_and_const_checked(did.expect_local())
+                    .borrow();
                 acc + r#fn.local_decls.len()
             }),
         );
@@ -421,92 +312,57 @@ impl FnLocals {
             .as_deref()
             .map(|pattern| regex::Regex::new(pattern).expect("bad fn name patterns"));
 
-        for (idx, did) in rust_program.functions.iter().enumerate() {
-            let ownership = analysis.ownership_result.fn_results(did).results();
-            let mutability = analysis.mutability_result.fn_results(did).results();
-            let fatness = analysis.fatness_result.fn_results(did).results();
-            let local_kind = analysis
-                .ownership_schemes
-                .fn_sig(*did)
-                .map(|param| matches!(param, Some(param) if param.is_output()))
-                .chain(std::iter::repeat(false));
+        let output_param_total_num = analysis
+            .output_param_result
+            .values()
+            .map(|params| params.iter().count())
+            .sum::<usize>();
+        let promoted_mut_ref_total_num = analysis
+            .promoted_mut_ref_result
+            .values()
+            .map(|params| params.iter().count())
+            .sum::<usize>();
+        println!(
+            "output params: {output_param_total_num}, promoted mut refs: {promoted_mut_ref_total_num}"
+        );
 
-            let body = rust_program.tcx.optimized_mir(did);
+        for (idx, did) in rust_program.functions.iter().enumerate() {
+            let output_params = analysis.output_param_result.get(did).unwrap();
+            let promoted_mut_refs = analysis.promoted_mut_ref_result.get(did).unwrap();
+
+            let body = &*rust_program
+                .tcx
+                .mir_drops_elaborated_and_const_checked(did.expect_local())
+                .borrow();
 
             let no_attempt = matches!(no_attempt.as_ref().map(|regex| regex.is_match(&rust_program.tcx.def_path_str(*did))), Some(matched) if matched);
 
-            for (local_decl, is_output_param, ownership, mutability, fatness) in itertools::izip!(
-                body.local_decls.iter(),
-                local_kind,
-                ownership,
-                mutability,
-                fatness
-            ) {
-                let mut ty = local_decl.ty;
-                let mut local: SmallVec<[PointerKind; 3]> =
-                    SmallVec::with_capacity(ownership.len());
-                for (&ownership, &mutability, &fatness) in
-                    itertools::izip!(ownership, mutability, fatness)
-                {
-                    while let Some(inner_ty) = ty.builtin_index() {
-                        ty = inner_ty;
-                    }
-                    let pointer_kind = if ownership.is_owning() {
-                        if fatness.is_arr() {
-                            PointerKind::Raw(RawMeta::Move)
-                        } else {
-                            PointerKind::Move
-                        }
-                    } else {
-                        if options.raw_mutability {
-                            if mutability.is_immutable() && !ty.is_mutable_ptr() {
-                                PointerKind::Raw(RawMeta::Const)
-                            } else {
-                                PointerKind::Raw(RawMeta::Mut)
-                            }
-                        } else if options.const_reference {
-                            if mutability.is_immutable() && !fatness.is_arr() {
-                                PointerKind::Const
-                            } else if !ty.is_mutable_ptr() {
-                                PointerKind::Raw(RawMeta::Const)
-                            } else {
-                                PointerKind::Raw(RawMeta::Mut)
-                            }
-                        } else {
-                            if !ty.is_mutable_ptr() {
-                                PointerKind::Raw(RawMeta::Const)
-                            } else {
-                                PointerKind::Raw(RawMeta::Mut)
-                            }
-                        }
-                    };
-                    local.push(pointer_kind);
+            for (local, _local_decl) in body.local_decls.iter_enumerated() {
+                let mut local_decision: SmallVec<[PointerKind; 3]> = SmallVec::with_capacity(1);
+                let is_output_param = output_params.contains(local);
+                let is_promoted_mut_ref = promoted_mut_refs.contains(local);
 
-                    // update type
-                    ty = ty.builtin_deref(true).unwrap().ty;
+                // is_output_param -> is_promoted_mut_ref
+                assert!(!is_output_param || is_promoted_mut_ref);
+
+                if is_output_param || is_promoted_mut_ref {
+                    // if is_output_param {
+                    // if is_promoted_mut_ref {
+                    local_decision.push(PointerKind::Mut);
+                } else {
+                    local_decision.push(PointerKind::Raw(RawMeta::AsIs));
                 }
-                if is_output_param {
-                    if local[0].is_move() && !no_attempt {
-                        local[0] = PointerKind::Mut
-                    } else if local[0].is_raw_move() || no_attempt {
-                        ty = local_decl.ty;
-                        local[0] = if !ty.is_mutable_ptr() {
-                            PointerKind::Raw(RawMeta::Const)
-                        } else {
-                            PointerKind::Raw(RawMeta::Mut)
-                        }
-                    } else {
-                        unreachable!()
-                    }
-                }
+                local_decision.push(PointerKind::Raw(RawMeta::AsIs));
+                local_decision.push(PointerKind::Raw(RawMeta::AsIs));
+
                 if options.no_box || no_attempt {
-                    for pointer_kind in &mut local {
+                    for pointer_kind in &mut local_decision {
                         if pointer_kind.is_move() {
                             *pointer_kind = PointerKind::Raw(RawMeta::Move)
                         }
                     }
                 }
-                fn_locals.push_element(local);
+                fn_locals.push_element(local_decision);
             }
 
             fn_locals.complete_cur_vec();

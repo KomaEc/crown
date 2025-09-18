@@ -235,6 +235,10 @@ fn retype<'hir>(ty: &rustc_hir::Ty<'hir>, decision: &[PointerKind], tcx: TyCtxt<
             PointerKind::Raw(RawMeta::Mut) => {
                 format!("*mut {}", retype(mt.ty, &decision[1..], tcx))
             }
+            PointerKind::Raw(RawMeta::AsIs) => {
+                rustc_hir_pretty::ty_to_string(&tcx, ty)
+                // unreachable!("should not happen")
+            }
         },
         hir::TyKind::Path(ref qpath) => {
             let hir::QPath::Resolved(None, path) = qpath else {
@@ -280,6 +284,12 @@ pub fn rewrite_hir_ty<'hir>(
     tcx: TyCtxt<'hir>,
     type_reconstruction: bool,
 ) {
+    // if decision.is_empty() {
+    //     return;
+    // }
+    if decision[0].is_as_is() {
+        return;
+    }
     if type_reconstruction {
         rewriter.replace(tcx, ty.span, retype(ty, decision, tcx))
     } else {

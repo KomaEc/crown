@@ -361,8 +361,7 @@ impl<'infer, 'tcx, D: HasLocalDecls<'tcx>> Visitor<'tcx> for MutabilityAnalysis<
                         tcx,
                     );
                 }
-                CallKind::Impl(..) => unimplemented!("impl method is not yet supported"),
-                CallKind::Closure | CallKind::Dynamic => conservative_call(
+                CallKind::Impl(..) | CallKind::Closure | CallKind::Dynamic => conservative_call(
                     destination,
                     args,
                     local_decls,

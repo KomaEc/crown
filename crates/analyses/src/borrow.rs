@@ -50,6 +50,8 @@ rustc_index::newtype_index! {
     }
 }
 
+pub type PromotedMutRefs = FxHashMap<DefId, DenseBitSet<Local>>;
+
 pub enum ProvenanceData {
     PlaceHolder(Local),
     Local(Local),

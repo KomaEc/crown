@@ -11,31 +11,31 @@ use rustc_hash::FxHashMap;
 use rustc_hir::{ItemKind, def_id::DefId};
 use rustc_middle::{
     mir::{
-        Body, ClearCrossCrate, ConstOperand, Local, LocalInfo, Location, NonDivergingIntrinsic,
-        Operand, Place, RETURN_PLACE, RawPtrKind, Rvalue, Statement, StatementKind, Terminator,
-        TerminatorKind, VarDebugInfoContents,
+        Body, ClearCrossCrate, ConstOperand, Local, LocalDecl, LocalInfo, Location,
+        NonDivergingIntrinsic, Operand, Place, RETURN_PLACE, RawPtrKind, Rvalue, Statement,
+        StatementKind, Terminator, TerminatorKind, VarDebugInfoContents,
     },
     ty::{Ty, TyCtxt, TyKind},
 };
-use rustc_span::{Span, Symbol};
+use rustc_span::{Span, Symbol, source_map};
 use rustc_type_ir::TyKind::FnDef;
 use smallvec::SmallVec;
 use syn::__private::ToTokens;
 use utils::rewrite::Rewrite;
 
 use crate::{
-    Analysis, FnLocals, PointerKind, RawMeta, RefactorOptions, StructFields,
-    rewrite_ty::rewrite_hir_ty,
+    Analysis, FnLocals, PointerKind, RawMeta, RefactorOptions, rewrite_ty::rewrite_hir_ty,
 };
+
+const PRECISION: u8 = 1;
 
 pub fn rewrite_fns(
     fns: &[DefId],
     fn_decision: &FnLocals,
-    struct_decision: &StructFields,
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt,
     options: &RefactorOptions,
-    analysis: &Analysis,
+    _analysis: &Analysis,
 ) {
     let RefactorOptions {
         type_only,
@@ -44,15 +44,16 @@ pub fn rewrite_fns(
     } = *options;
     for &did in fns {
         let local_data = fn_decision.local_data(&did);
-        let body = tcx.optimized_mir(did);
+        let body = &*tcx
+            .mir_drops_elaborated_and_const_checked(did.expect_local())
+            .borrow();
         rewrite_fn_sig(body, local_data, rewriter, tcx, type_reconstruction);
         if !type_only && !tcx.fn_sig(did).skip_binder().c_variadic() {
             rewrite_fn(
                 body,
                 fn_decision.local_data(&did),
-                analysis.ownership_schemes.precision(&did),
+                PRECISION,
                 fn_decision,
-                struct_decision,
                 rewriter,
                 tcx,
             );
@@ -101,7 +102,6 @@ fn rewrite_fn<'tcx>(
     local_decision: &[SmallVec<[PointerKind; 3]>],
     precision: u8,
     fn_decision: &FnLocals,
-    struct_decision: &StructFields,
     rewriter: &mut impl Rewrite,
     tcx: TyCtxt<'tcx>,
 ) {
@@ -126,7 +126,6 @@ fn rewrite_fn<'tcx>(
     let rewrite_ctxt = FnRewriteCtxt {
         local_decision,
         fn_decision,
-        struct_decision,
         body,
         def_use_chain: &def_use_chain,
         user_idents: &user_idents,
@@ -198,7 +197,6 @@ pub struct FnRewriteCtxt<'tcx, 'me> {
     precision: u8,
     local_decision: &'me [SmallVec<[PointerKind; 3]>],
     fn_decision: &'me FnLocals,
-    struct_decision: &'me StructFields,
     body: &'me Body<'tcx>,
     def_use_chain: &'me UseDef,
     user_idents: &'me FxHashMap<Local, Symbol>,
@@ -230,7 +228,10 @@ impl<'me> PlaceCtxt<'me> {
     fn expect_ptr(self) -> &'me [PointerKind] {
         match self {
             PlaceCtxt::Ptr(ptr_kinds) => ptr_kinds,
-            _ => unreachable!(),
+            _ => {
+                println!("Error: expected Ptr, got {:?}", self);
+                unreachable!()
+            }
         }
     }
 
@@ -243,9 +244,7 @@ impl<'me> PlaceCtxt<'me> {
             PlaceCtxt::Ptr(ptr_kinds) => {
                 matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_move() || ptr_kind.is_raw_move())
             }
-            PlaceCtxt::Struct(did) => rewrite_ctxt
-                .struct_decision
-                .is_owning(rewrite_ctxt.tcx, did),
+            PlaceCtxt::Struct(_did) => false, // TODO
             PlaceCtxt::Irrelavent => false,
         }
     }
@@ -255,14 +254,7 @@ impl<'me> PlaceCtxt<'me> {
             PlaceCtxt::Ptr(ptr_kinds) => {
                 matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_move())
             }
-            PlaceCtxt::Struct(did) => {
-                let fields_data = rewrite_ctxt.struct_decision.field_data(did);
-                fields_data.iter().any(|field| {
-                    field
-                        .iter()
-                        .any(|ptr_kind| ptr_kind.is_move() || ptr_kind.is_raw_move())
-                })
-            }
+            PlaceCtxt::Struct(did) => true, // TODO
             PlaceCtxt::Irrelavent => false,
         }
     }
@@ -294,6 +286,10 @@ impl<'me> PlaceCtxt<'me> {
     fn is_irrelavent(self) -> bool {
         matches!(self, Self::Irrelavent)
     }
+
+    fn is_as_is(self) -> bool {
+        matches!(self, Self::Ptr(ptr_kinds) if matches!(ptr_kinds.first(), Some(ptr_kind) if ptr_kind.is_as_is()))
+    }
 }
 
 #[derive(PartialEq, Eq)]
@@ -308,13 +304,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     fn acquire_place_info(&self, place: &Place<'tcx>) -> PlaceCtxt<'me> {
         let FnRewriteCtxt {
             local_decision,
-            struct_decision,
             body,
             ..
         } = *self;
 
         let mut ptr_kinds = &local_decision[place.local.as_usize()][..];
         let mut ptr_kinds_index = 0;
+        if ptr_kinds.first().is_some_and(|k| k.is_as_is()) {
+            return PlaceCtxt::Ptr(&[PointerKind::Raw(RawMeta::AsIs)]);
+        }
         let mut ty = body.local_decls[place.local].ty;
         for proj in place.projection {
             match proj {
@@ -322,21 +320,27 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     ptr_kinds_index += 1;
                     ty = ty.builtin_deref(true).unwrap();
                 }
-                rustc_middle::mir::ProjectionElem::Field(f, field_ty) => {
-                    assert_eq!(ptr_kinds_index, ptr_kinds.len());
+                rustc_middle::mir::ProjectionElem::Field(_f, _field_ty) => {
+                    // assert_eq!(ptr_kinds_index, ptr_kinds.len());
                     let adt_def = ty.ty_adt_def().unwrap();
                     if adt_def.is_union() {
                         return PlaceCtxt::Irrelavent;
+                    } else {
+                        return PlaceCtxt::Ptr(&[PointerKind::Raw(RawMeta::AsIs)]);
                     }
-                    ptr_kinds = &struct_decision.field_data(&adt_def.did())[f.index()][..];
-                    ptr_kinds_index = 0;
-                    ty = field_ty;
+                    // ptr_kinds = &struct_decision.field_data(&adt_def.did())[f.index()][..];
+                    // ptr_kinds_index = 0;
+                    // ty = field_ty;
                 }
                 rustc_middle::mir::ProjectionElem::Index(_) => ty = ty.builtin_index().unwrap(),
                 _ => unreachable!(),
             }
         }
 
+        println!(
+            "acquire_place_info: place: {:?}, ty: {:?}, ptr_kinds: {:?}, ptr_kinds_index: {}",
+            place, ty, ptr_kinds, ptr_kinds_index
+        );
         let ptr = &ptr_kinds[ptr_kinds_index..];
 
         PlaceCtxt::from_ptr_ctxt(ty, ptr)
@@ -352,6 +356,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         required: PlaceCtxt,
         rewriter: &mut impl Rewrite,
     ) {
+        if produced.is_as_is() || produced.is_irrelavent() {
+            return;
+        }
         let FnRewriteCtxt { tcx, .. } = *self;
 
         if required.is_rustc_move_obj(self) {
@@ -386,13 +393,27 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         ".map(|b| Box::into_raw(b)).unwrap_or(std::ptr::null_mut())".to_owned(),
                     )
                 } else {
-                    assert!(produced.is_raw_ptr());
+                    // println!(
+                    //     "Warning: imprecise analysis, cannot convert copy to raw move: ty: {:?}, produced: {:?}, required: {:?}",
+                    //     ty, produced, required
+                    // );
+                    // assert!(produced.is_raw_ptr());
                     // nothing to be done here
                 }
             } else if required.is_raw_ptr() {
                 // raw mut or raw const
-                assert!(produced.is_ptr());
-                let pointee_ty = ty.builtin_deref(true).unwrap();
+                assert!(
+                    produced.is_ptr(),
+                    "produced: {:?}, required: {:?}, ty: {:?}",
+                    produced,
+                    required,
+                    ty
+                );
+                let pointee_ty = ty.builtin_deref(true).unwrap_or_else(|| {
+                    panic!(
+                        "required raw pointer, but the type is not a pointer: {ty:?}, produced: {produced:?}, required: {required:?}"
+                    )
+                });
                 let mut pointee_ty_str = format!("{pointee_ty}");
                 if pointee_ty_str.starts_with("src::") || pointee_ty_str.starts_with("bin::") {
                     pointee_ty_str = "crate::".to_owned() + &pointee_ty_str
@@ -427,10 +448,11 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     && produced.expect_ptr()[0].is_raw_mut()
                 {
                     // raw mut to raw const
+                    rewriter.replace(tcx, expr_span.shrink_to_lo(), format!("("));
                     rewriter.replace(
                         tcx,
                         expr_span.shrink_to_hi(),
-                        format!(" as *const {pointee_ty_str}"),
+                        format!(" as *const {pointee_ty_str})"),
                     )
                 }
             } else if required.is_ptr() {
@@ -481,6 +503,13 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             ..
         } = *self;
 
+        let stmt_span = statement.source_info.span;
+        let stmt_text = tcx.sess.source_map().span_to_snippet(stmt_span).unwrap();
+        // println!(
+        //     "Rewriting statement {:?}: source: {} ",
+        //     statement, stmt_text
+        // );
+
         match &statement.kind {
             StatementKind::Assign(box (place, rvalue)) => {
                 // TODO constant immediate_lvalue
@@ -494,7 +523,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     }
                 };
 
-                let is_static_ref = body.local_decls[place.local].is_ref_to_static();
+                let is_static_ref = is_ref_to_static_safe(&body.local_decls[place.local]);
 
                 // rewrite point: non-temporary place
                 // this includes 1. place of which base local is a user defined variable
@@ -535,6 +564,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     }
 
                     let ctxt = self.acquire_place_info(&place);
+                    println!(
+                        "Rewriting Assignment: place: {:?}, ctxt: {:?}, rvalue: {:?}, text: {}",
+                        place, ctxt, rvalue, source_text
+                    );
+
+                    // println!(
+                    //     "Assign: place: {:?}, ctxt: {:?}, rvalue: {:?}, span {:?}",
+                    //     place, ctxt, rvalue, span
+                    // );
 
                     self.rewrite_rvalue_at(rvalue, location, span, ctxt, rewriter);
                 }
@@ -636,7 +674,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     ) {
         let FnRewriteCtxt {
             local_decision,
-            struct_decision,
             body,
             def_use_chain,
             user_idents,
@@ -647,7 +684,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let (resolved_place, _) = accum_deref_copies(place, location, def_use_chain, body, tcx);
         let place = resolved_place;
 
-        let is_static_ref = body.local_decls[place.local].is_ref_to_static();
+        let is_static_ref = is_ref_to_static_safe(&body.local_decls[place.local]);
 
         let mut replacement = if let Some(replacement) = user_idents
             .get(&place.local)
@@ -680,6 +717,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let mut index_spans: SmallVec<[Span; 1]> = smallvec::smallvec![];
 
         let mut ptr_kinds = local_decision[place.local.as_usize()].iter().copied();
+        if ptr_kinds.clone().next().is_none() {
+            return;
+        }
         let mut ty = body.local_decls[place.local].ty;
         let mut need_paren = false;
 
@@ -712,7 +752,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     ty = ty.builtin_deref(true).unwrap();
                 }
                 rustc_middle::mir::ProjectionElem::Field(f, field_ty) => {
-                    assert!(ptr_kinds.next().is_none());
+                    // assert!(ptr_kinds.next().is_none());
 
                     let adt_def = ty.ty_adt_def().unwrap();
                     let field_name = &adt_def.variants()[VariantIdx::from_u32(0)].fields[f]
@@ -727,9 +767,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         continue;
                     }
 
-                    ptr_kinds = struct_decision.field_data(&adt_def.did())[f.index()]
-                        .iter()
-                        .copied();
+                    ptr_kinds = [PointerKind::Raw(RawMeta::Mut); 3].iter().copied();
                 }
                 rustc_middle::mir::ProjectionElem::Index(index) => {
                     replacement = replacement + "[" + INDEX_SEPARATOR + "]";
@@ -757,7 +795,6 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
     ) {
         let FnRewriteCtxt {
             local_decision,
-            struct_decision,
             body,
             user_idents,
             tcx,
@@ -769,7 +806,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let (resolved_place, resolved_location) =
             accum_deref_copies(place, location, def_use_chain, body, tcx);
 
-        let is_static_ref = body.local_decls[place.local].is_ref_to_static();
+        let is_static_ref = is_ref_to_static_safe(&body.local_decls[place.local]);
 
         let mut replacement = if let Some(replacement) = user_idents
             .get(&resolved_place.local)
@@ -836,6 +873,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         let produced = self.acquire_place_info(&place);
 
         let mut ptr_kinds = local_decision[place.local.as_usize()].iter().copied();
+        if ptr_kinds.clone().next().is_none() {
+            return;
+        }
         let mut ty = body.local_decls[place.local].ty;
         let mut need_paren = false;
 
@@ -880,7 +920,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     ty = ty.builtin_deref(true).unwrap();
                 }
                 rustc_middle::mir::ProjectionElem::Field(f, field_ty) => {
-                    assert!(ptr_kinds.next().is_none());
+                    // assert!(ptr_kinds.next().is_none());
 
                     let Some(adt_def) = ty.ty_adt_def() else {
                         // this happens in checked add. no rewrite for this case
@@ -898,9 +938,7 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                         continue;
                     }
 
-                    ptr_kinds = struct_decision.field_data(&adt_def.did())[f.index()]
-                        .iter()
-                        .copied();
+                    ptr_kinds = [PointerKind::Raw(RawMeta::AsIs); 3].iter().copied();
                 }
                 rustc_middle::mir::ProjectionElem::Index(index) => {
                     replacement = replacement + "[" + INDEX_SEPARATOR + "]";
@@ -918,6 +956,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         }
 
         if PLACE_LOAD_MODE == PlaceLoadMode::ByRef as u8 {
+            let source_map = tcx.sess.source_map();
+            let span = source_map.span_extend_while_whitespace(span);
+            let span = span.with_hi(span.hi() + rustc_span::BytePos(13)); // for .as_mut_ptr() or .as_va_list()
             let source_text = utils::rewrite::get_snippet(tcx, span).text.1;
             if source_text.contains("as_mut_ptr()") {
                 replacement += ".as_mut_ptr()";
@@ -1081,8 +1122,15 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                             + rustc_span::BytePos(assign_op_pos as u32)
                             + rustc_span::BytePos(assign_op_str.len() as u32),
                     );
+                    println!(
+                        "special case: binary op as assign: {:?}, {:?}, {:?}",
+                        source_text, operand1_span, operand2_span
+                    );
+                    // MAYBE BUG HERE? operand1 is assignee and operand2 is operand1 and operand2
                     self.rewrite_place_store(
-                        operand1.place().unwrap(),
+                        operand1
+                            .place()
+                            .unwrap_or_else(|| operand2.place().unwrap()),
                         location,
                         operand1_span,
                         rewriter,
@@ -1103,8 +1151,14 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
             Rvalue::UnaryOp(_, operand) => {
                 self.rewrite_operand_at(operand, location, span, PlaceCtxt::Irrelavent, rewriter)
             }
-            Rvalue::CopyForDeref(_) => unreachable!("{:?}", span),
+            Rvalue::CopyForDeref(_place) => {
+                self.rewrite_place_load_at::<{ PlaceLoadMode::ByValue as u8 }>(
+                    *_place, location, span, required, rewriter,
+                );
+            }
             Rvalue::Cast(_, operand, ty) => {
+                let cast_text = tcx.sess.source_map().span_to_snippet(span).unwrap();
+                println!("cast to {} @ {}", ty, cast_text);
                 match self.try_rewrite_alloc_from_dest(
                     operand,
                     location,
@@ -1335,6 +1389,13 @@ fn rewrite_place(
                 }
             }
         }
+    }
+}
+
+fn is_ref_to_static_safe(local_decl: &LocalDecl) -> bool {
+    match local_decl.local_info {
+        ClearCrossCrate::Set(_) => local_decl.is_ref_to_static(),
+        ClearCrossCrate::Clear => false,
     }
 }
 

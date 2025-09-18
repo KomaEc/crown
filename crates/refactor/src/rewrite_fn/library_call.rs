@@ -169,6 +169,9 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
         if let Rvalue::Use(operand) = rvalue {
             if let Some(place) = operand.place() {
                 let produced = self.acquire_place_info(&place);
+                if produced.is_as_is() || produced.is_irrelavent() {
+                    return;
+                }
                 assert!(produced.is_ptr());
                 if !produced.is_raw_ptr() {
                     rewriter.replace(tcx, fn_span, "is_none()".to_string());

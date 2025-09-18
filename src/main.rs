@@ -16,8 +16,14 @@ extern crate rustc_session;
 extern crate rustc_target;
 
 use clap::Parser;
+use refactor::RefactorOptions;
 use std::path::PathBuf;
-use utils::{rewrite::RewriteMode, rustc::run_compiler};
+use utils::{
+    rewrite::RewriteMode,
+    rustc::{RustProgram, run_compiler},
+};
+
+use rustc_hir::{ItemKind, OwnerNode};
 
 #[derive(Parser, Debug)]
 struct Cli {
@@ -28,11 +34,19 @@ struct Cli {
     path: PathBuf,
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 enum Command {
     Preprocess {
         #[clap(value_enum, default_value_t = RewriteMode::Print)]
         rewrite_mode: RewriteMode,
+    },
+    Rewrite {
+        #[clap(long)]
+        results_path: Option<PathBuf>,
+        #[clap(value_enum, default_value_t = RewriteMode::Diff)]
+        rewrite_mode: RewriteMode,
+        #[command(flatten)]
+        options: RefactorOptions,
     },
 }
 
@@ -45,10 +59,61 @@ fn preprocess(path: &PathBuf, rewrite_mode: RewriteMode) -> Result<(), ()> {
     Ok(())
 }
 
+fn run(cmd: Command, rust_program: RustProgram<'_>) -> Result<(), ()> {
+    let tcx = rust_program.tcx;
+    let mut functions = Vec::new();
+    let mut structs = Vec::new();
+
+    for maybe_owner in tcx.hir_crate(()).owners.iter() {
+        let Some(owner) = maybe_owner.as_owner() else {
+            continue;
+        };
+        let OwnerNode::Item(item) = owner.node() else {
+            continue;
+        };
+        match item.kind {
+            ItemKind::Fn { .. } => functions.push(item.owner_id.def_id.to_def_id()),
+            ItemKind::Struct(..) => structs.push(item.owner_id.def_id.to_def_id()),
+            _ => {}
+        };
+    }
+
+    let input = RustProgram {
+        tcx,
+        functions,
+        structs,
+    };
+
+    match cmd {
+        Command::Preprocess { .. } => unreachable!(),
+        Command::Rewrite {
+            results_path,
+            rewrite_mode,
+            options,
+        } => {
+            let mutability_result =
+                analyses::type_qualifier::foster::mutability::mutability_analysis(&input);
+            let output_params =
+                analyses::output_params::compute_output_params(&input, &mutability_result);
+            let promoted_mut_refs = analyses::borrow::mutable_references_no_guarantee(&input);
+
+            let analysis_results = refactor::Analysis::new(output_params, promoted_mut_refs);
+            let refactor_options = options;
+            let _ = refactor::refactor(&input, &analysis_results, rewrite_mode, refactor_options);
+        }
+    }
+    Ok(())
+}
+
 fn main() -> Result<(), ()> {
     let args = Cli::parse();
 
-    let Command::Preprocess { rewrite_mode } = args.cmd;
-    preprocess(&args.path, rewrite_mode)?;
-    return Ok(());
+    if let Command::Preprocess { rewrite_mode } = args.cmd {
+        preprocess(&args.path, rewrite_mode)?;
+        return Ok(());
+    }
+    run_compiler(args.path, |rust_program| {
+        run(args.cmd.clone(), rust_program).unwrap()
+    });
+    Ok(())
 }
