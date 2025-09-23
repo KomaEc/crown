@@ -19,6 +19,7 @@ ctor = { version = "0.4.2", optional = true }
 either = "1.15.0"
 rustfix = "0.6"
 clap = { version = "4.1", features = ["derive"] }
+etrace = { version = "1.1.1" }
 
 
 [features]

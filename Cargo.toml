@@ -17,6 +17,7 @@ utils = { path = "crates/utils" }
 analyses = { path = "crates/analyses" }
 preprocess = { path = "crates/preprocess" }
 refactor = { path = "crates/refactor" }
+rewrite = { path = "crates/rewrite" }
 clap = { version = "4.5.42", features = ["derive"] }
 
 [build-dependencies]

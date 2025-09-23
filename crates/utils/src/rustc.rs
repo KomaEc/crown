@@ -10,12 +10,31 @@ pub struct RustProgram<'tcx> {
     pub structs: Vec<DefId>,
 }
 
+/// Extended version that also contains the AST
+pub struct RustProgramWithMappings<'tcx> {
+    pub tcx: TyCtxt<'tcx>,
+    pub functions: Vec<DefId>,
+    pub structs: Vec<DefId>,
+    pub ir_mappings: IrMappings,
+}
+
+impl<'tcx> Into<RustProgram<'tcx>> for RustProgramWithMappings<'tcx> {
+    fn into(self) -> RustProgram<'tcx> {
+        RustProgram {
+            tcx: self.tcx,
+            functions: self.functions,
+            structs: self.structs,
+        }
+    }
+}
+
 use rustc_driver::Callbacks;
 use rustc_interface::Config;
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
+use crate::ir_util::IrMappings;
 use crate::libtree::LibtreeCompiler;
 
 struct Text(String);
@@ -109,6 +128,77 @@ where
     }
 }
 
+pub struct WithRustProgramAndMappings<'a, F> {
+    callback: F,
+    dir: &'a Path,
+    ir_mappings: Option<IrMappings>,
+}
+
+impl<'a, F> WithRustProgramAndMappings<'a, F> {
+    pub fn new(f: F, dir: &'a Path) -> Self {
+        Self {
+            callback: f,
+            dir,
+            ir_mappings: None,
+        }
+    }
+}
+
+impl<F> rustc_driver::Callbacks for WithRustProgramAndMappings<'_, F>
+where
+    F: FnMut(RustProgramWithMappings),
+{
+    fn after_expansion<'tcx>(
+        &mut self,
+        _compiler: &rustc_interface::interface::Compiler,
+        tcx: TyCtxt<'tcx>,
+    ) -> rustc_driver::Compilation {
+        self.ir_mappings = Some(IrMappings::new(self.dir, tcx));
+
+        rustc_driver::Compilation::Continue
+    }
+
+    fn after_analysis<'tcx>(
+        &mut self,
+        _compiler: &rustc_interface::interface::Compiler,
+        tcx: TyCtxt<'tcx>,
+    ) -> rustc_driver::Compilation {
+        let mut functions = Vec::new();
+        let mut structs = Vec::new();
+
+        for id in tcx.hir_free_items() {
+            let item = tcx.hir_item(id);
+
+            // Use pattern-matching to find a specific node inside the main function.
+            match item.kind {
+                rustc_hir::ItemKind::Fn { .. } => {
+                    let def_id = item.hir_id().owner.def_id.to_def_id();
+                    functions.push(def_id);
+                }
+                rustc_hir::ItemKind::Struct(..) => {
+                    let def_id = item.hir_id().owner.def_id.to_def_id();
+                    structs.push(def_id);
+                }
+                _ => {}
+            }
+        }
+
+        let ir_mappings = self
+            .ir_mappings
+            .take()
+            .expect("IR mappings should have been captured");
+
+        (self.callback)(RustProgramWithMappings {
+            tcx,
+            functions,
+            structs,
+            ir_mappings,
+        });
+
+        rustc_driver::Compilation::Stop
+    }
+}
+
 pub enum SourceCode {
     Text(String),
     AbsolutePath(PathBuf),
@@ -181,6 +271,28 @@ where
     F: FnMut(RustProgram) + Send,
 {
     run_compiler_with_opt_level::<_, _, Opt3>(program, callbacks);
+}
+
+pub fn run_compiler_with_mappings<P, F>(program: P, callbacks: F)
+where
+    P: Into<SourceCode>,
+    F: FnMut(RustProgramWithMappings) + Send,
+{
+    let program: SourceCode = program.into();
+    let path = match &program {
+        SourceCode::Text(_) => PathBuf::from("lib.rs"),
+        SourceCode::AbsolutePath(p) => p.clone(),
+        SourceCode::Libtree => PathBuf::from("lib.rs"),
+    };
+    let mut callbacks =
+        WithRustProgramAndMappings::new(callbacks, path.parent().unwrap_or(Path::new(".")));
+    let callbacks: &mut (dyn Callbacks + Send) = match program {
+        SourceCode::Text(program) => &mut TextCompiler(&mut callbacks, program),
+        SourceCode::AbsolutePath(_) => &mut callbacks,
+        SourceCode::Libtree => &mut LibtreeCompiler(&mut callbacks),
+    };
+    let args = compiler_args::<Opt3>(&path.to_path_buf());
+    rustc_driver::run_compiler(&args, callbacks);
 }
 
 /// Builds rustc argument list based on prebuilt dependencies.

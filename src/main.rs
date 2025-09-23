@@ -18,9 +18,10 @@ extern crate rustc_target;
 use clap::Parser;
 use refactor::RefactorOptions;
 use std::path::PathBuf;
+use utils::ir_util::IrMappings;
 use utils::{
     rewrite::RewriteMode,
-    rustc::{RustProgram, run_compiler},
+    rustc::{RustProgram, RustProgramWithMappings, run_compiler, run_compiler_with_mappings},
 };
 
 use rustc_hir::{ItemKind, OwnerNode};
@@ -59,7 +60,7 @@ fn preprocess(path: &PathBuf, rewrite_mode: RewriteMode) -> Result<(), ()> {
     Ok(())
 }
 
-fn run(cmd: Command, rust_program: RustProgram<'_>) -> Result<(), ()> {
+fn run(cmd: Command, rust_program: RustProgramWithMappings<'_>) -> Result<(), ()> {
     let tcx = rust_program.tcx;
     let mut functions = Vec::new();
     let mut structs = Vec::new();
@@ -97,9 +98,17 @@ fn run(cmd: Command, rust_program: RustProgram<'_>) -> Result<(), ()> {
                 analyses::output_params::compute_output_params(&input, &mutability_result);
             let promoted_mut_refs = analyses::borrow::mutable_references_no_guarantee(&input);
 
-            let analysis_results = refactor::Analysis::new(output_params, promoted_mut_refs);
-            let refactor_options = options;
-            let _ = refactor::refactor(&input, &analysis_results, rewrite_mode, refactor_options);
+            // let analysis_results = refactor::Analysis::new(output_params, promoted_mut_refs);
+            let analysis_results = rewrite::Analysis::new(output_params, promoted_mut_refs);
+            // let refactor_options = options;
+            // let _ = refactor::refactor(&input, &analysis_results, rewrite_mode, refactor_options);
+            let input_with_mappings = RustProgramWithMappings {
+                tcx: input.tcx,
+                functions: input.functions,
+                structs: input.structs,
+                ir_mappings: rust_program.ir_mappings,
+            };
+            let _ = rewrite::rewrite(&input_with_mappings, &analysis_results);
         }
     }
     Ok(())
@@ -112,7 +121,7 @@ fn main() -> Result<(), ()> {
         preprocess(&args.path, rewrite_mode)?;
         return Ok(());
     }
-    run_compiler(args.path, |rust_program| {
+    run_compiler_with_mappings(args.path.clone(), |rust_program| {
         run(args.cmd.clone(), rust_program).unwrap()
     });
     Ok(())
