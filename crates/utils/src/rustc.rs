@@ -10,22 +10,9 @@ pub struct RustProgram<'tcx> {
     pub structs: Vec<DefId>,
 }
 
-/// Extended version that also contains the AST
-pub struct RustProgramWithMappings<'tcx> {
-    pub tcx: TyCtxt<'tcx>,
-    pub functions: Vec<DefId>,
-    pub structs: Vec<DefId>,
-    pub ir_mappings: IrMappings,
-}
-
-impl<'tcx> Into<RustProgram<'tcx>> for RustProgramWithMappings<'tcx> {
-    fn into(self) -> RustProgram<'tcx> {
-        RustProgram {
-            tcx: self.tcx,
-            functions: self.functions,
-            structs: self.structs,
-        }
-    }
+pub struct RustProgramMapped<'tcx> {
+    pub rust_program: RustProgram<'tcx>,
+    pub hir_to_thir: HirToThir,
 }
 
 use rustc_driver::Callbacks;
@@ -34,7 +21,8 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use crate::ir_util::IrMappings;
+use crate::ir_util::HirToThir;
+use crate::ir_util::map_hir_to_thir;
 use crate::libtree::LibtreeCompiler;
 
 struct Text(String);
@@ -128,32 +116,30 @@ where
     }
 }
 
-pub struct WithRustProgramAndMappings<'a, F> {
+pub struct WithRustProgramMapped<F> {
     callback: F,
-    dir: &'a Path,
-    ir_mappings: Option<IrMappings>,
+    hir_to_thir: Option<HirToThir>,
 }
 
-impl<'a, F> WithRustProgramAndMappings<'a, F> {
-    pub fn new(f: F, dir: &'a Path) -> Self {
+impl<F> WithRustProgramMapped<F> {
+    pub fn new(f: F) -> Self {
         Self {
             callback: f,
-            dir,
-            ir_mappings: None,
+            hir_to_thir: None,
         }
     }
 }
 
-impl<F> rustc_driver::Callbacks for WithRustProgramAndMappings<'_, F>
+impl<F> rustc_driver::Callbacks for WithRustProgramMapped<F>
 where
-    F: FnMut(RustProgramWithMappings),
+    F: FnMut(RustProgramMapped),
 {
     fn after_expansion<'tcx>(
         &mut self,
         _compiler: &rustc_interface::interface::Compiler,
         tcx: TyCtxt<'tcx>,
     ) -> rustc_driver::Compilation {
-        self.ir_mappings = Some(IrMappings::new(self.dir, tcx));
+        self.hir_to_thir = Some(map_hir_to_thir(tcx));
 
         rustc_driver::Compilation::Continue
     }
@@ -183,16 +169,18 @@ where
             }
         }
 
-        let ir_mappings = self
-            .ir_mappings
+        let hir_to_thir = self
+            .hir_to_thir
             .take()
-            .expect("IR mappings should have been captured");
+            .expect("Hir to Thir mappings should have been captured");
 
-        (self.callback)(RustProgramWithMappings {
-            tcx,
-            functions,
-            structs,
-            ir_mappings,
+        (self.callback)(RustProgramMapped {
+            rust_program: RustProgram {
+                tcx,
+                functions,
+                structs,
+            },
+            hir_to_thir,
         });
 
         rustc_driver::Compilation::Stop
@@ -273,10 +261,10 @@ where
     run_compiler_with_opt_level::<_, _, Opt3>(program, callbacks);
 }
 
-pub fn run_compiler_with_mappings<P, F>(program: P, callbacks: F)
+pub fn run_compiler_with_mapping<P, F>(program: P, callbacks: F)
 where
     P: Into<SourceCode>,
-    F: FnMut(RustProgramWithMappings) + Send,
+    F: FnMut(RustProgramMapped) + Send,
 {
     let program: SourceCode = program.into();
     let path = match &program {
@@ -284,8 +272,7 @@ where
         SourceCode::AbsolutePath(p) => p.clone(),
         SourceCode::Libtree => PathBuf::from("lib.rs"),
     };
-    let mut callbacks =
-        WithRustProgramAndMappings::new(callbacks, path.parent().unwrap_or(Path::new(".")));
+    let mut callbacks = WithRustProgramMapped::new(callbacks);
     let callbacks: &mut (dyn Callbacks + Send) = match program {
         SourceCode::Text(program) => &mut TextCompiler(&mut callbacks, program),
         SourceCode::AbsolutePath(_) => &mut callbacks,

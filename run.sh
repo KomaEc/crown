@@ -9,7 +9,7 @@ source $PROJ_DIR/find_entry.sh
 PREPROCESS="$PROJ_DIR/preprocess.sh"
 # BENCHMARK="$PROJ_DIR/benchmark-old"
 # BENCHMARK="$PROJ_DIR/benchmark-old"
-BENCHMARK_PREPROCESSED="$PROJ_DIR/benchmark-0.20.0-preprocessed"
+BENCHMARK_PREPROCESSED="$PROJ_DIR/benchmark-0.20.0-preprocessed-pp"
 
 # Parse command line arguments
 WORKSPACE=""
@@ -162,15 +162,16 @@ for f in $(find $WORKSPACE -name "Cargo.toml"); do
     echo "rewriting $BENCH_NAME"
     OPTIONS=""
     if [ $BENCH_NAME = "lil" ]; then
-        OPTIONS="--type-reconstruction --no-attempt .*fnc_.*|do_exit|lil_find_var|lil_to_double"
-    elif [ $BENCH_NAME = "libsamplerate" ]; then
-        OPTIONS="--no-attempt .*_vari_process|.*_reset"
-    elif [ $BENCH_NAME = "lodepng" ]; then
-        OPTIONS="--no-attempt bpmnode_create|uivector_resize"
-    elif [ $BENCH_NAME = "quadtree" ]; then
-        OPTIONS="--force-box"
-    elif [ $BENCH_NAME = "genann" ]; then
-        OPTIONS="--raw-mutability"
+        continue  # TODO: Type alias not supported yet
+        # OPTIONS="--type-reconstruction --no-attempt .*fnc_.*|do_exit|lil_find_var|lil_to_double"
+    # elif [ $BENCH_NAME = "libsamplerate" ]; then
+    #     OPTIONS="--no-attempt .*_vari_process|.*_reset"
+    # elif [ $BENCH_NAME = "lodepng" ]; then
+    #     OPTIONS="--no-attempt bpmnode_create|uivector_resize"
+    # elif [ $BENCH_NAME = "quadtree" ]; then
+    #     OPTIONS="--force-box"
+    # elif [ $BENCH_NAME = "genann" ]; then
+    #     OPTIONS="--raw-mutability"
     fi
 
     if [ -d "$BENCH_DIR/analysis_results" ]; then

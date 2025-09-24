@@ -10,8 +10,8 @@ use analyses::output_params::OutputParams as OutputParamResult;
 use clap::Args;
 use rustc_ast::mut_visit::MutVisitor;
 use utils::ast_util::{TransformationResult, transform_ast};
-use utils::ir_util::IrMappings;
-use utils::rustc::{RustProgram, RustProgramWithMappings};
+use utils::ir_util::{HirToThir, IrMappings};
+use utils::rustc::RustProgram;
 
 use crate::decision::FnLocalDecisions;
 use crate::visitor::TransformVisitor;
@@ -61,16 +61,25 @@ impl Analysis {
 }
 
 pub fn rewrite<'tcx>(
-    rust_program: &RustProgramWithMappings<'tcx>,
+    dir: &std::path::Path,
+    rust_program: &RustProgram<'tcx>,
+    hir_to_thir: HirToThir,
     analysis: &Analysis,
 ) -> TransformationResult {
     transform_ast(
-        |krate| {
+        move |krate, ast_to_hir| {
             let fn_loc_decs = FnLocalDecisions::new(rust_program, analysis);
-            let mut transform_visitor = TransformVisitor::new(rust_program, &fn_loc_decs);
+            // let my_hir2thir = &hir_to_thir;
+            let ir_mappings = IrMappings {
+                ast_to_hir: &ast_to_hir,
+                hir_to_thir: &hir_to_thir,
+            };
+            let mut transform_visitor =
+                TransformVisitor::new(rust_program, &fn_loc_decs, ir_mappings);
             transform_visitor.visit_crate(krate);
             transform_visitor.updated
         },
+        dir,
         rust_program.tcx,
     )
 }

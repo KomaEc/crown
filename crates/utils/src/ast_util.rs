@@ -11,7 +11,7 @@ use rustc_session::parse::ParseSess;
 use rustc_span::{FileName, RealFileName};
 use thin_vec::ThinVec;
 
-use crate::ir_util::IrMappings;
+use crate::ir_util::{AstToHir, AstToHirMapper};
 
 #[derive(Debug)]
 pub struct TransformationResult(pub Vec<(PathBuf, String)>);
@@ -49,7 +49,7 @@ pub fn foreach_crate<F: std::ops::FnMut(Crate)>(mut f: F, tcx: TyCtxt<'_>) {
     }
 }
 
-pub fn transform_ast_with_mappings<F: std::ops::FnMut(&mut Crate, IrMappings) -> bool>(
+pub fn transform_ast<F: std::ops::FnMut(&mut Crate, AstToHir) -> bool>(
     mut f: F,
     dir: &std::path::Path,
     tcx: TyCtxt<'_>,
@@ -81,38 +81,10 @@ pub fn transform_ast_with_mappings<F: std::ops::FnMut(&mut Crate, IrMappings) ->
             _ => continue,
         };
         let src = some_or!(file.src.as_ref(), continue);
-        let mut parser = rustc_parse::new_parser_from_source_str(
-            &parse_sess,
-            file.name.clone(),
-            src.to_string(),
-        )
-        .unwrap();
-        let mut krate = parser.parse_crate_mod().unwrap();
-        if f(&mut krate, todo!()) {
-            let s = pprust::crate_to_string_for_macros(&krate);
-            v.push((p, s));
+        let _name = p.file_name().unwrap().to_str().unwrap();
+        if _name == "c2rust-lib.rs" || _name == "lib.rs" {
+            continue;
         }
-    }
-    TransformationResult(v)
-}
-
-pub fn transform_ast<F: std::ops::FnMut(&mut Crate) -> bool>(
-    mut f: F,
-    tcx: TyCtxt<'_>,
-) -> TransformationResult {
-    tcx.resolver_for_lowering();
-
-    let source_map = tcx.sess.source_map();
-    let parse_sess = new_parse_sess();
-
-    let mut v = vec![];
-    for file in source_map.files().iter() {
-        let p = match &file.name {
-            FileName::Real(RealFileName::LocalPath(p)) => p.clone(),
-            FileName::Custom(p) => PathBuf::from(p),
-            _ => continue,
-        };
-        let src = some_or!(file.src.as_ref(), continue);
         let mut parser = rustc_parse::new_parser_from_source_str(
             &parse_sess,
             file.name.clone(),
@@ -120,7 +92,12 @@ pub fn transform_ast<F: std::ops::FnMut(&mut Crate) -> bool>(
         )
         .unwrap();
         let mut krate = parser.parse_crate_mod().unwrap();
-        if f(&mut krate) {
+        // println!("Krate: {:#?}", krate);
+        let mod_id = path_to_mod_id[&p];
+        let (module, _, _) = tcx.hir_get_module(mod_id);
+        let mut mapper = AstToHirMapper::new(tcx);
+        mapper.map_crate_to_mod(&mut krate, module, false);
+        if f(&mut krate, mapper.ast_to_hir) {
             let s = pprust::crate_to_string_for_macros(&krate);
             v.push((p, s));
         }

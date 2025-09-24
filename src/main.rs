@@ -16,12 +16,11 @@ extern crate rustc_session;
 extern crate rustc_target;
 
 use clap::Parser;
-use refactor::RefactorOptions;
+// use refactor::RefactorOptions;
 use std::path::PathBuf;
-use utils::ir_util::IrMappings;
 use utils::{
     rewrite::RewriteMode,
-    rustc::{RustProgram, RustProgramWithMappings, run_compiler, run_compiler_with_mappings},
+    rustc::{RustProgram, RustProgramMapped, run_compiler, run_compiler_with_mapping},
 };
 
 use rustc_hir::{ItemKind, OwnerNode};
@@ -46,8 +45,8 @@ enum Command {
         results_path: Option<PathBuf>,
         #[clap(value_enum, default_value_t = RewriteMode::Diff)]
         rewrite_mode: RewriteMode,
-        #[command(flatten)]
-        options: RefactorOptions,
+        // #[command(flatten)]
+        // options: RefactorOptions,
     },
 }
 
@@ -60,7 +59,12 @@ fn preprocess(path: &PathBuf, rewrite_mode: RewriteMode) -> Result<(), ()> {
     Ok(())
 }
 
-fn run(cmd: Command, rust_program: RustProgramWithMappings<'_>) -> Result<(), ()> {
+fn run(
+    dir: &std::path::Path,
+    cmd: Command,
+    rust_program_mapped: RustProgramMapped<'_>,
+) -> Result<(), ()> {
+    let rust_program = rust_program_mapped.rust_program;
     let tcx = rust_program.tcx;
     let mut functions = Vec::new();
     let mut structs = Vec::new();
@@ -88,9 +92,9 @@ fn run(cmd: Command, rust_program: RustProgramWithMappings<'_>) -> Result<(), ()
     match cmd {
         Command::Preprocess { .. } => unreachable!(),
         Command::Rewrite {
-            results_path,
-            rewrite_mode,
-            options,
+            results_path: _,
+            rewrite_mode: _,
+            // options,
         } => {
             let mutability_result =
                 analyses::type_qualifier::foster::mutability::mutability_analysis(&input);
@@ -102,13 +106,18 @@ fn run(cmd: Command, rust_program: RustProgramWithMappings<'_>) -> Result<(), ()
             let analysis_results = rewrite::Analysis::new(output_params, promoted_mut_refs);
             // let refactor_options = options;
             // let _ = refactor::refactor(&input, &analysis_results, rewrite_mode, refactor_options);
-            let input_with_mappings = RustProgramWithMappings {
+            let input = RustProgram {
                 tcx: input.tcx,
                 functions: input.functions,
                 structs: input.structs,
-                ir_mappings: rust_program.ir_mappings,
             };
-            let _ = rewrite::rewrite(&input_with_mappings, &analysis_results);
+            let res = rewrite::rewrite(
+                dir,
+                &input,
+                rust_program_mapped.hir_to_thir,
+                &analysis_results,
+            );
+            res.apply();
         }
     }
     Ok(())
@@ -121,8 +130,9 @@ fn main() -> Result<(), ()> {
         preprocess(&args.path, rewrite_mode)?;
         return Ok(());
     }
-    run_compiler_with_mappings(args.path.clone(), |rust_program| {
-        run(args.cmd.clone(), rust_program).unwrap()
+    let dir = args.path.parent().unwrap();
+    run_compiler_with_mapping(args.path.clone(), |rust_program| {
+        run(dir, args.cmd.clone(), rust_program).unwrap()
     });
     Ok(())
 }

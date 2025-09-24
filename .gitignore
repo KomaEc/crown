@@ -11,4 +11,4 @@ results
 
 check_diff.zsh
 rustfmt_diff.toml
-c-code
+c-code*/

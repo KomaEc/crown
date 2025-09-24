@@ -1,17 +1,8 @@
 use crate::Analysis;
-use analyses::borrow::PromotedMutRefs as PromotedMutRefResult;
-use analyses::output_params::OutputParams as OutputParamResult;
-use clap::{ArgGroup, Args};
-use rustc_const_eval::interpret::Pointer;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
-use rustc_middle::ty::TyCtxt;
 use smallvec::SmallVec;
-use utils::{
-    dsa::fixed_shape::VecVec,
-    rewrite::{Rewrite, RewriteMode},
-    rustc::{RustProgram, RustProgramWithMappings},
-};
+use utils::{dsa::fixed_shape::VecVec, rustc::RustProgram};
 
 const MAX_PTR_PRECISION: usize = 1; // Max precision is 3 for pointer analysis
 
@@ -41,7 +32,7 @@ impl FnLocalDecisions {
         &self.0.data[idx]
     }
 
-    pub fn new(rust_program: &RustProgramWithMappings, analysis: &Analysis) -> Self {
+    pub fn new(rust_program: &RustProgram, analysis: &Analysis) -> Self {
         let mut did_idx = FxHashMap::default();
         did_idx.reserve(rust_program.functions.len());
         let mut fn_local_decs = VecVec::with_capacity(
