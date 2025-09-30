@@ -293,6 +293,7 @@ fn compiler_args<O: OptLevel>(input_path: &Path) -> Vec<String> {
 
     let mut args = vec![
         "rustc",
+        "-Zno-steal-thir",
         input_path.to_str().unwrap(),
         "--crate-type=lib",
         "--cap-lints",

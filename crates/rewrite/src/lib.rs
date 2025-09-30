@@ -13,7 +13,6 @@ use utils::ast_util::{TransformationResult, transform_ast};
 use utils::ir_util::{HirToThir, IrMappings};
 use utils::rustc::RustProgram;
 
-use crate::decision::FnLocalDecisions;
 use crate::visitor::TransformVisitor;
 
 extern crate rustc_abi;
@@ -39,6 +38,7 @@ extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_target;
 extern crate rustc_type_ir;
+extern crate smallvec;
 extern crate thin_vec;
 
 #[derive(Args, Clone, Debug)]
@@ -69,14 +69,11 @@ pub fn rewrite<'tcx>(
 ) -> TransformationResult {
     transform_ast(
         move |krate, ast_to_hir| {
-            let fn_loc_decs = FnLocalDecisions::new(rust_program, analysis);
-            // let my_hir2thir = &hir_to_thir;
             let ir_mappings = IrMappings {
                 ast_to_hir: &ast_to_hir,
                 hir_to_thir: &hir_to_thir,
             };
-            let mut transform_visitor =
-                TransformVisitor::new(rust_program, &fn_loc_decs, ir_mappings);
+            let mut transform_visitor = TransformVisitor::new(rust_program, analysis, ir_mappings);
             transform_visitor.visit_crate(krate);
             transform_visitor.updated
         },

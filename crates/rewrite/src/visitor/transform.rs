@@ -5,18 +5,32 @@ use rustc_ast::{
     mut_visit::{self, MutVisitor},
     ptr::P,
 };
-use rustc_hir::def_id::DefId;
-use rustc_middle::ty::{Ty as MirTy, TyKind as MirTyKind};
+use rustc_ast_pretty::pprust;
+use rustc_hash::FxHashMap;
+use rustc_hir::{
+    Expr as HirExpr, ExprKind as HirExprKind, HirId, Node as HirNode, PatKind as HirPatKind,
+    Path as HirPath, QPath, StmtKind as HirStmtKind, def::Res, def_id::DefId,
+};
+use rustc_middle::{
+    hir,
+    ty::{Ty as MirTy, TyKind as MirTyKind},
+};
 use rustc_span::{sym::expect, symbol::Ident};
+use smallvec::SmallVec;
 use utils::{ir_util::map_thir_to_mir, rustc::RustProgram};
 
-use crate::decision::{FnLocalDecisions, PtrKind};
-use utils::ast_util;
+use crate::{
+    Analysis,
+    decision::{PtrKind, PtrKindDiff, SigDecisions},
+    visitor::collect_diffs,
+};
+use thin_vec::thin_vec;
 use utils::ir_util::IrMappings;
 
 pub(crate) struct TransformVisitor<'tcx, 'a> {
     rust_program: &'a RustProgram<'tcx>,
-    fn_local_decs: &'a FnLocalDecisions,
+    sig_decs: SigDecisions,
+    ptr_diffs: FxHashMap<HirId, PtrKindDiff>,
     ir_mappings: IrMappings<'a>,
     pub updated: bool,
 }
@@ -40,36 +54,448 @@ impl MutVisitor for TransformVisitor<'_, '_> {
             .mir_drops_elaborated_and_const_checked(local_def_id)
             .borrow();
 
-        // 1. Rewrite function signature
+        // Rewrite function signature
         let local_input_decls = mir_body
             .args_iter()
             .map(|local| mir_body.local_decls[local].clone())
             .collect::<Vec<_>>();
 
-        let fn_dec = self.fn_local_decs.local_data(&def_id);
+        let input_len = self.sig_input_len(def_id); // exclude variadic arguments
+        let sig_dec = self.sig_decs.expect(&def_id);
 
         // Currently intra-procedural borrow inference: skip return type, only consider parameters
         for (idx, (local_decl, param)) in
-            izip!(local_input_decls, fn_item.sig.decl.inputs.iter_mut()).enumerate()
+            izip!(local_input_decls, fn_item.sig.decl.inputs.iter_mut())
+                .take(input_len)
+                .enumerate()
         {
-            let local_idx = idx + 1;
-            let ty_res = utils::ty!("{}", local_decl.ty.to_string()); // resolved type (no type alias)
-            self.rewrite_ty(&mut param.ty, ty_res, &fn_dec[local_idx][0]);
+            let ty_res = mir_ty_to_ty(&local_decl.ty); // resolved type (no type alias)
+            self.rewrite_ty(&mut param.ty, ty_res, &sig_dec.input_decs[idx]);
         }
+        mut_visit::walk_item(self, item);
+    }
+
+    fn visit_expr(&mut self, expr: &mut Expr) -> Self::Result {
+        let _expr = expr.clone();
+        // visit children first; we can assume that the function arguments have been rewritten
+        mut_visit::walk_expr(self, expr);
+        let hir_expr_opt = self.get_hir_expr(expr);
+        match &mut expr.kind {
+            ExprKind::Assign(box lhs, box rhs, _) => {
+                // assignment to dereferenced pointer
+                if let HirExprKind::Assign(hir_lhs, _, _) = hir_expr_opt.unwrap().kind
+                    && let HirExprKind::Unary(UnOp::Deref, hir_lhs_deref) = hir_lhs.kind
+                    && let HirExprKind::Path(qpath) = &hir_lhs_deref.kind  // TODO: support multiple deref
+                    && let QPath::Resolved(_, path) = qpath
+                    && let Res::Local(local_id) = path.res
+                    && let Some(ptr_diff) = self.ptr_diffs.get(&local_id)
+                {
+                    match ptr_diff {
+                        PtrKindDiff {
+                            before: PtrKind::MutRaw,
+                            after: PtrKind::OptMutRef,
+                        } => {
+                            let ExprKind::Unary(UnOp::Deref, lhs_deref) = &mut lhs.kind else {
+                                unreachable!("Expected deref expression on LHS: {:?}", expr.span);
+                            };
+                            println!(
+                                "Rewriting assignment to dereferenced output parameter to Opt<&mut T>: {:?}",
+                                expr.span
+                            );
+                            **lhs_deref = self.append_as_deref_mut_raw((**lhs_deref).clone());
+                        }
+                        PtrKindDiff {
+                            before: PtrKind::MutRaw,
+                            after: PtrKind::MutRef,
+                        } => {
+                            // *lhs = rhs;
+                            // Nothing to rewrite
+                        }
+                        _ => (),
+                    }
+                }
+                // direct assignment
+                if let HirExprKind::Assign(lhs, _rhs, _) = hir_expr_opt.unwrap().kind
+                    && let HirExprKind::Path(qpath) = &lhs.kind
+                    && let QPath::Resolved(_, path) = qpath
+                    && let Res::Local(local_id) = path.res
+                    && let Some(ptr_diff) = self.ptr_diffs.get(&local_id)
+                {
+                    match ptr_diff {
+                        PtrKindDiff {
+                            before: PtrKind::MutRaw,
+                            after: PtrKind::OptMutRef,
+                        } => {
+                            unreachable!(
+                                "Output parameters cannot be introduced in direct assignments: {:?}",
+                                expr.span
+                            );
+                        }
+                        PtrKindDiff {
+                            before: PtrKind::MutRaw,
+                            after: PtrKind::MutRef,
+                        } => {
+                            // lhs = rhs as &mut _;
+                            // println!("Rewriting assignment to &mut T: {:?}", expr.span);
+                            *rhs = prepend_mut_ref_deref(rhs.clone());
+                        }
+                        _ => (),
+                    }
+                }
+            }
+            ExprKind::Path(..) => {
+                // usage site
+                let hir_expr = hir_expr_opt.unwrap();
+                if let HirExprKind::Path(qpath) = &hir_expr.kind
+                    && let QPath::Resolved(_, path) = qpath
+                    && let Res::Local(local_id) = path.res
+                    && let Some(ptr_diff) = self.ptr_diffs.get(&local_id).cloned()
+                {
+                    // if self.is_function_arg(hir_expr.hir_id) {
+                    //     // function argument, handled in ExprKind::Call below
+                    //     return;
+                    // }
+                    // let outer_expr = self.get_outer_expr(hir_expr.hir_id).unwrap_or(hir_expr);
+                    let parent_node = self.expect_parent_node(hir_expr.hir_id);
+                    if let HirNode::Expr(parent_expr) = parent_node {
+                        match parent_expr.kind {
+                            // HirExprKind::Call(..) => return, // handled in ExprKind::Call below
+                            HirExprKind::Assign(lhs, _, _) => {
+                                if lhs.hir_id == hir_expr.hir_id {
+                                    // assignment to this variable, handled in ExprKind::Assign above
+                                    return;
+                                }
+                            }
+                            _ => {
+                                let grandparent_node = self.expect_parent_node(parent_expr.hir_id);
+                                if let HirNode::Expr(grandparent_expr) = grandparent_node
+                                    && let HirExprKind::Assign(lhs, _, _) = grandparent_expr.kind
+                                    && let HirExprKind::Unary(UnOp::Deref, lhs_deref) = &lhs.kind
+                                {
+                                    if lhs_deref.hir_id == hir_expr.hir_id {
+                                        // assignment to dereferenced pointer, handled in ExprKind::Assign above
+                                        return;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    match ptr_diff {
+                        PtrKindDiff {
+                            before: PtrKind::MutRaw,
+                            after: PtrKind::OptMutRef,
+                        } => {
+                            println!(
+                                "Rewriting usage of output parameter to Option<&mut T>: {:?}",
+                                expr.span
+                            );
+                            *expr = self.append_as_deref_mut_raw(expr.clone());
+                        }
+                        PtrKindDiff {
+                            before: PtrKind::MutRaw,
+                            after: PtrKind::MutRef,
+                        } => {
+                            // expr as *mut _
+                            // TODO: if parent expr is unary deref, skip casting
+                            *expr = self.cast_to_mut_raw(expr.clone());
+                        }
+                        PtrKindDiff {
+                            before: PtrKind::MutRef,
+                            after: PtrKind::MutRaw,
+                        } => {
+                            *expr = prepend_mut_ref_deref(expr.clone());
+                        }
+                        _ => (),
+                    }
+                }
+            }
+            ExprKind::Call(box _func_expr, args) => {
+                // function call
+                let hir_expr = hir_expr_opt.unwrap();
+                if let HirExprKind::Call(hir_func_expr, hir_args) = hir_expr.kind
+                    && let HirExprKind::Path(func_qpath) = &hir_func_expr.kind
+                    && let QPath::Resolved(_, func_path) = func_qpath
+                    && let Res::Def(_, func_did) = func_path.res
+                    && let Some(sig_dec) = self.sig_decs.get(&func_did)
+                {
+                    let input_len = self.sig_input_len(func_did); // exclude variadic arguments
+                    for (i, (arg, hir_arg)) in izip!(args.iter_mut(), hir_args.iter())
+                        .take(input_len)
+                        .enumerate()
+                    {
+                        // Note: the arguments have been visited and rewritten to *mut T
+                        // Hir arguments stays the same, so may not match the AST arguments
+                        match &mut arg.kind {
+                            ExprKind::Path(..) => { // path expression was handled above
+                                println!(
+                                    "Rewriting function call argument {:?} in call to {}",
+                                    pprust::expr_to_string(&arg),
+                                    self.rust_program.tcx.def_path_str(func_did)
+                                );
+                                // check if this argument is a local variable with changed pointer kind
+                                if let HirExprKind::Path(arg_qpath) = &hir_arg.kind
+                                    && let QPath::Resolved(_, arg_path) = arg_qpath
+                                    && let Res::Local(arg_local_id) = arg_path.res
+                                {
+                                    let mut arg_ptr_diff = self
+                                        .ptr_diffs
+                                        .get(&arg_local_id)
+                                        .cloned()
+                                        .unwrap_or_default();
+                                    arg_ptr_diff.before =
+                                        sig_dec.input_decs[i].unwrap_or(PtrKind::MutRaw);
+                                    match arg_ptr_diff {
+                                        PtrKindDiff {
+                                            before: PtrKind::MutRaw,
+                                            after: PtrKind::OptMutRef,
+                                        } => {
+                                                //  let outer_node =  self.get_outer_expr(hir_expr.hir_id);
+                                        }
+                                        PtrKindDiff {
+                                            before: PtrKind::MutRaw,
+                                            after: PtrKind::MutRef,
+                                        } => {
+                                            // expr as *mut _
+                                            // **arg = self.cast_to_mut_raw(*arg.clone());
+                                        }
+                                        PtrKindDiff {
+                                            before: PtrKind::MutRef,
+                                            after: PtrKind::MutRaw,
+                                        } => {
+                                            // expr as &mut _
+                                            // **arg = prepend_mut_ref_deref(*arg.clone());
+                                        }
+                                        PtrKindDiff {
+                                            before: PtrKind::OptMutRef,
+                                            after: PtrKind::MutRef,
+                                        } => {
+                                            // Some(expr)
+                                            // **arg = wrap_in_some(*arg.clone());
+                                        }
+                                        PtrKindDiff {
+                                            before: PtrKind::OptMutRef,
+                                            after: PtrKind::OptMutRef,
+                                        } => {
+                                            **arg = reborrow_mut_opt(*arg.clone());
+                                        }
+                                        _ => (),
+                                    }
+                                }
+                            }
+                            _ => match &sig_dec.input_decs.get(i).unwrap_or_else(|| {
+                                panic!(
+                                    "Function call argument index out of bounds: {} in {:?}, function: {:?}",
+                                    i, expr.span, self.rust_program.tcx.def_path_str(func_did)
+                                )
+                            }) {
+                                Some(PtrKind::OptMutRef) => {
+                                    // arg.as_mut()
+                                    // **arg = append_opt_as_mut(*arg.clone());
+                                    if let ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, box inner) = &arg.kind {
+                                        **arg = wrap_in_some_mut_ref((*inner).clone());
+                                    } else {
+                                        // arg.as_mut()
+                                        **arg = append_opt_as_mut(*arg.clone());
+                                    }
+                                }
+                                Some(PtrKind::MutRef) => {
+                                    // arg as &mut _
+                                    **arg = prepend_mut_ref_deref(*arg.clone());
+                                }
+                                _ => (),
+                            },
+                        }
+                    }
+                }
+            }
+            _ => (),
+        }
+    }
+
+    fn flat_map_stmt(&mut self, mut stmt: Stmt) -> SmallVec<[Stmt; 1]> {
+        let hir_stmt_opt = self.get_hir_stmt(&stmt);
+        match &mut stmt.kind {
+            StmtKind::Let(box local) => {
+                if let HirStmtKind::Let(hir_let) = hir_stmt_opt.unwrap().kind
+                    && let HirPatKind::Binding(_, binding_hir_id, _, _) = hir_let.pat.kind
+                    && let Some(ptr_diff) = self.ptr_diffs.get(&binding_hir_id)
+                {
+                    match ptr_diff {
+                        PtrKindDiff {
+                            before: PtrKind::MutRaw,
+                            after: PtrKind::OptMutRef,
+                        } => {
+                            unreachable!(
+                                "Output parameters cannot be introduced in let statements: {:?}",
+                                stmt.span
+                            );
+                        }
+                        PtrKindDiff {
+                            before: PtrKind::MutRaw,
+                            after: PtrKind::MutRef,
+                        } => {
+                            // println!("Rewriting let statement to &mut T: {:?}", stmt.span);
+                            if let Some(ty) = &mut local.ty {
+                                let hir_ty = hir_let.ty.unwrap();
+                                let typeck = self.rust_program.tcx.typeck(hir_ty.hir_id.owner);
+                                let hir_ty_res = typeck.node_type(hir_ty.hir_id);
+                                let ty_res = mir_ty_to_ty(&hir_ty_res);
+                                self.rewrite_ty(ty, ty_res, &Some(PtrKind::MutRef));
+                            }
+                            match &mut local.kind {
+                                LocalKind::Init(box rhs) | LocalKind::InitElse(box rhs, _) => {
+                                    *rhs = prepend_mut_ref_deref(rhs.clone());
+                                }
+                                LocalKind::Decl => {
+                                    // No initializer, do nothing
+                                }
+                            }
+                        }
+                        _ => (),
+                    }
+                }
+            }
+            _ => (),
+        }
+        mut_visit::walk_flat_map_stmt(self, stmt)
     }
 }
 
-impl TransformVisitor<'_, '_> {
-    pub fn new<'tcx, 'a>(
+impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
+    pub fn new(
         rust_program: &'a RustProgram<'tcx>,
-        fn_local_decs: &'a FnLocalDecisions,
+        analysis: &Analysis,
         ir_mappings: IrMappings<'a>,
     ) -> TransformVisitor<'tcx, 'a> {
+        let sig_decs = SigDecisions::new(rust_program, analysis);
+        let ptr_diffs = collect_diffs(rust_program, analysis);
         TransformVisitor {
             rust_program,
-            fn_local_decs,
+            sig_decs,
+            ptr_diffs,
             ir_mappings,
             updated: false,
+        }
+    }
+
+    fn expect_parent_node(&self, hir_id: HirId) -> HirNode<'tcx> {
+        let (_, parent_node) = self
+            .rust_program
+            .tcx
+            .hir_parent_iter(hir_id)
+            .next()
+            .unwrap();
+        parent_node
+    }
+
+    fn is_function_arg(&self, hir_id: HirId) -> bool {
+        if let Some(outer_expr) = self.get_outer_expr(hir_id)
+            && let HirNode::Expr(parent_expr) = self.expect_parent_node(outer_expr.hir_id)
+            && let HirExprKind::Call(func, args) = parent_expr.kind
+            && let Some(_) = args.iter().position(|arg| arg.hir_id == outer_expr.hir_id)
+        {
+            true
+        } else {
+            false
+        }
+    }
+
+    // Get the outermost expression that contains casting and dereferencing
+    fn get_outer_expr(&self, hir_id: HirId) -> Option<&HirExpr<'tcx>> {
+        let mut out_expr = None;
+        for (_, parent_node) in self.rust_program.tcx.hir_parent_iter(hir_id) {
+            match parent_node {
+                HirNode::Expr(parent_expr) => match parent_expr.kind {
+                    HirExprKind::Cast(..)
+                    | HirExprKind::AddrOf(..)
+                    | HirExprKind::Unary(UnOp::Deref, _) => out_expr = Some(parent_expr),
+                    _ => break,
+                },
+                _ => break,
+            }
+        }
+        out_expr
+    }
+
+    fn sig_input_len(&self, def_id: DefId) -> usize {
+        self.rust_program
+            .tcx
+            .fn_sig(def_id)
+            .skip_binder()
+            .inputs()
+            .skip_binder()
+            .len()
+    }
+
+    fn get_hir_expr(&self, expr: &Expr) -> Option<&rustc_hir::Expr<'tcx>> {
+        self.ir_mappings
+            .ast_to_hir
+            .get_expr(expr.node_id(), self.rust_program.tcx)
+    }
+
+    fn get_hir_stmt(&self, stmt: &Stmt) -> Option<&rustc_hir::Stmt<'tcx>> {
+        self.ir_mappings
+            .ast_to_hir
+            .get_stmt(stmt.node_id(), self.rust_program.tcx)
+    }
+
+    fn expr_ty(&self, expr: &Expr) -> Ty {
+        println!("Getting type of expr: {:?}", expr.span);
+        let hir_expr = self
+            .get_hir_expr(expr)
+            .unwrap_or_else(|| panic!("Failed to find HIR expr for Expr {:?}", expr.span));
+        let typeck = self.rust_program.tcx.typeck(hir_expr.hir_id.owner);
+        let mir_ty = typeck.expr_ty(hir_expr);
+        let ty_res = mir_ty_to_ty(&mir_ty);
+        ty_res
+    }
+
+    // Get the inner type if the expr is a pointer
+    fn expr_ptr_ty(&self, expr: &Expr) -> Ty {
+        let ty = self.expr_ty(expr);
+        match &ty.kind {
+            TyKind::Ptr(mut_ty) => (*mut_ty.ty).clone(),
+            _ => panic!("Expected pointer type for type {:#?}", ty),
+        }
+    }
+
+    // expr -> expr.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()
+    fn append_as_deref_mut_raw(&self, orig: Expr) -> Expr {
+        println!(
+            "Appending as_deref_mut to expr: {:?}",
+            pprust::expr_to_string(&orig)
+        );
+        let ptr_ty = self.expr_ptr_ty(&orig);
+        utils::expr!(
+            "{}.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut::<{}>())",
+            pprust::expr_to_string(&orig),
+            pprust::ty_to_string(&ptr_ty)
+        )
+    }
+
+    // expr -> &raw mut *expr
+    fn cast_to_mut_raw(&self, orig: Expr) -> Expr {
+        // check if expr is already casted to *mut _ by parent expr
+        // if let Some(hir_expr) = self.get_hir_expr(&orig)
+        //     && let HirNode::Expr(parent_expr) = self.expect_parent_node(hir_expr.hir_id)
+        //     && let HirExprKind::AddrOf(..) = parent_expr.kind
+        // {
+        //     return orig;
+        // }
+
+        let deref = Expr {
+            id: rustc_ast::DUMMY_NODE_ID,
+            kind: ExprKind::Unary(UnOp::Deref, P(orig.clone())),
+            span: rustc_span::DUMMY_SP,
+            attrs: thin_vec![],
+            tokens: None,
+        };
+        Expr {
+            id: rustc_ast::DUMMY_NODE_ID,
+            kind: ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, P(deref)),
+            span: rustc_span::DUMMY_SP,
+            attrs: thin_vec![],
+            tokens: None,
         }
     }
 
@@ -125,4 +551,98 @@ fn expect_ptr(ty: &mut Ty, ty_res: Ty) -> MutTy {
             _ => panic!("Expected pointer type for type {:#?}", ty),
         },
     }
+}
+
+fn mir_ty_to_ty(mir_ty: &MirTy) -> Ty {
+    let ty_str = mir_ty
+        .to_string()
+        .replace("src::", "crate::src::")
+        .replace("bin::", "crate::bin::");
+    utils::ty!("{}", ty_str)
+}
+
+// expr -> expr.as_mut()
+fn append_opt_as_mut(orig: Expr) -> Expr {
+    Expr {
+        id: rustc_ast::DUMMY_NODE_ID,
+        kind: ExprKind::MethodCall(Box::new(MethodCall {
+            seg: PathSegment {
+                ident: Ident::from_str("as_mut"),
+                id: rustc_ast::DUMMY_NODE_ID,
+                args: None,
+            },
+            receiver: P(orig),
+            args: thin_vec![],
+            span: rustc_span::DUMMY_SP,
+        })),
+        span: rustc_span::DUMMY_SP,
+        attrs: thin_vec![],
+        tokens: None,
+    }
+}
+
+fn append_opt_as_raw(orig: Expr) -> Expr {
+    utils::expr!("{}.as_deref().unwrap()", pprust::expr_to_string(&orig))
+}
+
+// expr -> &mut *expr
+fn prepend_mut_ref_deref(orig: Expr) -> Expr {
+    // *expr
+    let deref_expr = Expr {
+        id: rustc_ast::DUMMY_NODE_ID,
+        kind: ExprKind::Unary(UnOp::Deref, P(orig)),
+        span: rustc_span::DUMMY_SP,
+        attrs: thin_vec![],
+        tokens: None,
+    };
+    // &mut *expr
+    Expr {
+        id: rustc_ast::DUMMY_NODE_ID,
+        kind: ExprKind::AddrOf(BorrowKind::Ref, Mutability::Mut, P(deref_expr)),
+        span: rustc_span::DUMMY_SP,
+        attrs: thin_vec![],
+        tokens: None,
+    }
+}
+
+// expr -> Some(&mut expr)
+fn wrap_in_some_mut_ref(orig: Expr) -> Expr {
+    utils::expr!("Some(&mut {})", pprust::expr_to_string(&orig))
+}
+
+// expr -> Some(expr)
+fn wrap_in_some(orig: Expr) -> Expr {
+    let some_path = Path {
+        span: rustc_span::DUMMY_SP,
+        segments: vec![PathSegment {
+            ident: Ident::from_str("Some"),
+            id: rustc_ast::DUMMY_NODE_ID,
+            args: None,
+        }]
+        .into(),
+        tokens: None,
+    };
+    Expr {
+        id: rustc_ast::DUMMY_NODE_ID,
+        kind: ExprKind::Call(
+            P(Expr {
+                id: rustc_ast::DUMMY_NODE_ID,
+                kind: ExprKind::Path(None, some_path),
+                span: rustc_span::DUMMY_SP,
+                attrs: thin_vec![],
+                tokens: None,
+            }),
+            thin_vec![P(orig)],
+        ),
+        span: rustc_span::DUMMY_SP,
+        attrs: thin_vec![],
+        tokens: None,
+    }
+}
+
+fn reborrow_mut_opt(orig: Expr) -> Expr {
+    utils::expr!(
+        "{}.as_mut().map(|x| &mut **x)",
+        pprust::expr_to_string(&orig)
+    )
 }

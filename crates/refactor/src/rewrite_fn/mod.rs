@@ -564,10 +564,10 @@ impl<'tcx, 'me> FnRewriteCtxt<'tcx, 'me> {
                     }
 
                     let ctxt = self.acquire_place_info(&place);
-                    println!(
-                        "Rewriting Assignment: place: {:?}, ctxt: {:?}, rvalue: {:?}, text: {}",
-                        place, ctxt, rvalue, source_text
-                    );
+                    // println!(
+                    //     "Rewriting Assignment: place: {:?}, ctxt: {:?}, rvalue: {:?}, text: {}",
+                    //     place, ctxt, rvalue, source_text
+                    // );
 
                     // println!(
                     //     "Assign: place: {:?}, ctxt: {:?}, rvalue: {:?}, span {:?}",

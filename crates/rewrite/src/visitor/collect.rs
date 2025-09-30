@@ -15,8 +15,8 @@ use utils::{ir_util::map_thir_to_mir, rustc::RustProgram};
 // 5. collect each HIR variable's usage sites as HirID
 // 5-1. collect is_null checks for Option<&mut T>
 
-pub fn collect_diffs<'tcx, 'a>(
-    rust_program: &'tcx RustProgram<'tcx>,
+pub fn collect_diffs<'tcx>(
+    rust_program: &RustProgram<'tcx>,
     analysis: &Analysis,
 ) -> FxHashMap<HirId, PtrKindDiff> {
     // Res::Local(id) -> (PtrKind before rewrite, PtrKind after rewrite)
@@ -48,6 +48,9 @@ pub fn collect_diffs<'tcx, 'a>(
                 continue;
             };
             if let Some(hir_id) = local_to_binding.get(&local) {
+                // if ptr_kind == PtrKind::OptMutRef {
+                //     println!("Output param detected, HIR id: {:?}", hir_id);
+                // }
                 let ty = decl.ty;
                 // Ensure output parameters and promoted mutable references are raw pointers
                 assert!(
@@ -109,8 +112,8 @@ pub fn collect_diffs<'tcx, 'a>(
 //     }
 // }
 
-#[derive(Clone, PartialEq, Eq, Debug)]
-pub struct CollectorResult {
-    pub fn_sig_decs: SigDecisions,
-    pub ptr_kind_diffs: FxHashMap<HirId, PtrKindDiff>, // Res::Local(id) -> (PtrKind before rewrite, PtrKind after rewrite)
-}
+// #[derive(Clone, PartialEq, Eq, Debug)]
+// pub struct CollectorResult {
+//     pub fn_sig_decs: SigDecisions,
+//     pub ptr_kind_diffs: FxHashMap<HirId, PtrKindDiff>, // Res::Local(id) -> (PtrKind before rewrite, PtrKind after rewrite)
+// }
