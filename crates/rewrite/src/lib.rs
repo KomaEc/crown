@@ -2,8 +2,9 @@
 #![feature(box_patterns)]
 #![feature(if_let_guard)]
 
+mod collect;
 mod decision;
-mod visitor;
+mod transform;
 
 use analyses::borrow::PromotedMutRefs as PromotedMutRefResult;
 use analyses::output_params::OutputParams as OutputParamResult;
@@ -13,7 +14,7 @@ use utils::ast_util::{TransformationResult, transform_ast};
 use utils::ir_util::{HirToThir, IrMappings};
 use utils::rustc::RustProgram;
 
-use crate::visitor::TransformVisitor;
+use crate::transform::TransformVisitor;
 
 extern crate rustc_abi;
 extern crate rustc_ast;

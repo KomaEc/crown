@@ -8,21 +8,18 @@ use rustc_ast::{
 use rustc_ast_pretty::pprust;
 use rustc_hash::FxHashMap;
 use rustc_hir::{
-    Expr as HirExpr, ExprKind as HirExprKind, HirId, Node as HirNode, PatKind as HirPatKind,
-    Path as HirPath, QPath, StmtKind as HirStmtKind, def::Res, def_id::DefId,
+    Expr as HirExpr, ExprKind as HirExprKind, HirId, Node as HirNode, PatKind as HirPatKind, QPath,
+    StmtKind as HirStmtKind, def::Res, def_id::DefId,
 };
-use rustc_middle::{
-    hir,
-    ty::{Ty as MirTy, TyKind as MirTyKind},
-};
-use rustc_span::{sym::expect, symbol::Ident};
+use rustc_middle::ty::{Ty as MirTy, TyKind as MirTyKind};
+use rustc_span::symbol::Ident;
 use smallvec::SmallVec;
 use utils::{ir_util::map_thir_to_mir, rustc::RustProgram};
 
 use crate::{
     Analysis,
+    collect::collect_diffs,
     decision::{PtrKind, PtrKindDiff, SigDecisions},
-    visitor::collect_diffs,
 };
 use thin_vec::thin_vec;
 use utils::ir_util::IrMappings;
@@ -98,10 +95,6 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             let ExprKind::Unary(UnOp::Deref, lhs_deref) = &mut lhs.kind else {
                                 unreachable!("Expected deref expression on LHS: {:?}", expr.span);
                             };
-                            println!(
-                                "Rewriting assignment to dereferenced output parameter to Opt<&mut T>: {:?}",
-                                expr.span
-                            );
                             **lhs_deref = self.append_as_deref_mut_raw((**lhs_deref).clone());
                         }
                         PtrKindDiff {
@@ -136,7 +129,6 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             after: PtrKind::MutRef,
                         } => {
                             // lhs = rhs as &mut _;
-                            // println!("Rewriting assignment to &mut T: {:?}", expr.span);
                             *rhs = prepend_mut_ref_deref(rhs.clone());
                         }
                         _ => (),
@@ -151,11 +143,6 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                     && let Res::Local(local_id) = path.res
                     && let Some(ptr_diff) = self.ptr_diffs.get(&local_id).cloned()
                 {
-                    // if self.is_function_arg(hir_expr.hir_id) {
-                    //     // function argument, handled in ExprKind::Call below
-                    //     return;
-                    // }
-                    // let outer_expr = self.get_outer_expr(hir_expr.hir_id).unwrap_or(hir_expr);
                     let parent_node = self.expect_parent_node(hir_expr.hir_id);
                     if let HirNode::Expr(parent_expr) = parent_node {
                         match parent_expr.kind {
@@ -185,10 +172,6 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             before: PtrKind::MutRaw,
                             after: PtrKind::OptMutRef,
                         } => {
-                            println!(
-                                "Rewriting usage of output parameter to Option<&mut T>: {:?}",
-                                expr.span
-                            );
                             *expr = self.append_as_deref_mut_raw(expr.clone());
                         }
                         PtrKindDiff {
@@ -219,69 +202,14 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                     && let Some(sig_dec) = self.sig_decs.get(&func_did)
                 {
                     let input_len = self.sig_input_len(func_did); // exclude variadic arguments
-                    for (i, (arg, hir_arg)) in izip!(args.iter_mut(), hir_args.iter())
+                    for (i, (arg, _hir_arg)) in izip!(args.iter_mut(), hir_args.iter())
                         .take(input_len)
                         .enumerate()
                     {
                         // Note: the arguments have been visited and rewritten to *mut T
                         // Hir arguments stays the same, so may not match the AST arguments
                         match &mut arg.kind {
-                            ExprKind::Path(..) => { // path expression was handled above
-                                println!(
-                                    "Rewriting function call argument {:?} in call to {}",
-                                    pprust::expr_to_string(&arg),
-                                    self.rust_program.tcx.def_path_str(func_did)
-                                );
-                                // check if this argument is a local variable with changed pointer kind
-                                if let HirExprKind::Path(arg_qpath) = &hir_arg.kind
-                                    && let QPath::Resolved(_, arg_path) = arg_qpath
-                                    && let Res::Local(arg_local_id) = arg_path.res
-                                {
-                                    let mut arg_ptr_diff = self
-                                        .ptr_diffs
-                                        .get(&arg_local_id)
-                                        .cloned()
-                                        .unwrap_or_default();
-                                    arg_ptr_diff.before =
-                                        sig_dec.input_decs[i].unwrap_or(PtrKind::MutRaw);
-                                    match arg_ptr_diff {
-                                        PtrKindDiff {
-                                            before: PtrKind::MutRaw,
-                                            after: PtrKind::OptMutRef,
-                                        } => {
-                                                //  let outer_node =  self.get_outer_expr(hir_expr.hir_id);
-                                        }
-                                        PtrKindDiff {
-                                            before: PtrKind::MutRaw,
-                                            after: PtrKind::MutRef,
-                                        } => {
-                                            // expr as *mut _
-                                            // **arg = self.cast_to_mut_raw(*arg.clone());
-                                        }
-                                        PtrKindDiff {
-                                            before: PtrKind::MutRef,
-                                            after: PtrKind::MutRaw,
-                                        } => {
-                                            // expr as &mut _
-                                            // **arg = prepend_mut_ref_deref(*arg.clone());
-                                        }
-                                        PtrKindDiff {
-                                            before: PtrKind::OptMutRef,
-                                            after: PtrKind::MutRef,
-                                        } => {
-                                            // Some(expr)
-                                            // **arg = wrap_in_some(*arg.clone());
-                                        }
-                                        PtrKindDiff {
-                                            before: PtrKind::OptMutRef,
-                                            after: PtrKind::OptMutRef,
-                                        } => {
-                                            **arg = reborrow_mut_opt(*arg.clone());
-                                        }
-                                        _ => (),
-                                    }
-                                }
-                            }
+                            ExprKind::Path(..) => (), // path expression was handled above
                             _ => match &sig_dec.input_decs.get(i).unwrap_or_else(|| {
                                 panic!(
                                     "Function call argument index out of bounds: {} in {:?}, function: {:?}",
@@ -391,7 +319,7 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
     fn is_function_arg(&self, hir_id: HirId) -> bool {
         if let Some(outer_expr) = self.get_outer_expr(hir_id)
             && let HirNode::Expr(parent_expr) = self.expect_parent_node(outer_expr.hir_id)
-            && let HirExprKind::Call(func, args) = parent_expr.kind
+            && let HirExprKind::Call(_func, args) = parent_expr.kind
             && let Some(_) = args.iter().position(|arg| arg.hir_id == outer_expr.hir_id)
         {
             true
@@ -440,7 +368,6 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
     }
 
     fn expr_ty(&self, expr: &Expr) -> Ty {
-        println!("Getting type of expr: {:?}", expr.span);
         let hir_expr = self
             .get_hir_expr(expr)
             .unwrap_or_else(|| panic!("Failed to find HIR expr for Expr {:?}", expr.span));
@@ -461,10 +388,6 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
 
     // expr -> expr.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()
     fn append_as_deref_mut_raw(&self, orig: Expr) -> Expr {
-        println!(
-            "Appending as_deref_mut to expr: {:?}",
-            pprust::expr_to_string(&orig)
-        );
         let ptr_ty = self.expr_ptr_ty(&orig);
         utils::expr!(
             "{}.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut::<{}>())",
@@ -532,7 +455,8 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
                 self.updated = true;
             }
             Some(PtrKind::MutRef) => {
-                let ptr_mut_ty = expect_ptr(ty, ty_res);
+                let mut ptr_mut_ty = expect_ptr(ty, ty_res);
+                ptr_mut_ty.mutbl = rustc_ast::Mutability::Mut; // TODO: use original mutability
                 ty.kind = TyKind::Ref(None, ptr_mut_ty);
                 self.updated = true;
                 // Not necessarily; TODO: immutable reference for immutable raw pointers
