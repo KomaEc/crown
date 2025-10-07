@@ -76,6 +76,8 @@ pub fn rewrite<'tcx>(
             };
             let mut transform_visitor = TransformVisitor::new(rust_program, analysis, ir_mappings);
             transform_visitor.visit_crate(krate);
+            let mut post_transform_visitor = transform::post::UnnecessaryDerefRemover;
+            post_transform_visitor.visit_crate(krate);
             transform_visitor.updated
         },
         dir,

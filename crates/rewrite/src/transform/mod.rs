@@ -1,3 +1,4 @@
+use analyses::type_qualifier::foster::mutability;
 use itertools::izip;
 use rustc_ast::{
     HasNodeId, ItemKind,
@@ -23,6 +24,8 @@ use crate::{
 };
 use thin_vec::thin_vec;
 use utils::ir_util::IrMappings;
+
+pub mod post;
 
 pub(crate) struct TransformVisitor<'tcx, 'a> {
     rust_program: &'a RustProgram<'tcx>,
@@ -68,6 +71,9 @@ impl MutVisitor for TransformVisitor<'_, '_> {
         {
             let ty_res = mir_ty_to_ty(&local_decl.ty); // resolved type (no type alias)
             self.rewrite_ty(&mut param.ty, ty_res, &sig_dec.input_decs[idx]);
+            if let PatKind::Ident(binding_mode, ..) = &mut param.pat.kind {
+                *binding_mode = BindingMode::MUT;
+            }
         }
         mut_visit::walk_item(self, item);
     }
@@ -89,7 +95,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                 {
                     match ptr_diff {
                         PtrKindDiff {
-                            before: PtrKind::MutRaw,
+                            before: PtrKind::Raw(_),
                             after: PtrKind::OptMutRef,
                         } => {
                             let ExprKind::Unary(UnOp::Deref, lhs_deref) = &mut lhs.kind else {
@@ -98,8 +104,8 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             **lhs_deref = self.append_as_deref_mut_raw((**lhs_deref).clone());
                         }
                         PtrKindDiff {
-                            before: PtrKind::MutRaw,
-                            after: PtrKind::MutRef,
+                            before: PtrKind::Raw(_),
+                            after: PtrKind::Ref(_),
                         } => {
                             // *lhs = rhs;
                             // Nothing to rewrite
@@ -116,7 +122,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                 {
                     match ptr_diff {
                         PtrKindDiff {
-                            before: PtrKind::MutRaw,
+                            before: PtrKind::Raw(_),
                             after: PtrKind::OptMutRef,
                         } => {
                             unreachable!(
@@ -125,11 +131,12 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             );
                         }
                         PtrKindDiff {
-                            before: PtrKind::MutRaw,
-                            after: PtrKind::MutRef,
+                            before: PtrKind::Raw(mutability),
+                            after: PtrKind::Ref(_mutability),
                         } => {
-                            // lhs = rhs as &mut _;
-                            *rhs = prepend_mut_ref_deref(rhs.clone());
+                            // lhs = &(mut) *rhs;
+                            assert!(mutability == _mutability);
+                            *rhs = prepend_ref_deref(rhs.clone(), *mutability);
                         }
                         _ => (),
                     }
@@ -169,24 +176,25 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                     }
                     match ptr_diff {
                         PtrKindDiff {
-                            before: PtrKind::MutRaw,
+                            before: PtrKind::Raw(_mutability),
                             after: PtrKind::OptMutRef,
                         } => {
                             *expr = self.append_as_deref_mut_raw(expr.clone());
                         }
                         PtrKindDiff {
-                            before: PtrKind::MutRaw,
-                            after: PtrKind::MutRef,
+                            before: PtrKind::Raw(mutability),
+                            after: PtrKind::Ref(_mutability),
                         } => {
-                            // expr as *mut _
+                            // expr -> &raw (mut) *expr
+                            assert!(mutability == _mutability);
                             // TODO: if parent expr is unary deref, skip casting
-                            *expr = self.cast_to_mut_raw(expr.clone());
+                            *expr = self.cast_to_mut_raw(expr.clone(), mutability);
                         }
                         PtrKindDiff {
-                            before: PtrKind::MutRef,
-                            after: PtrKind::MutRaw,
+                            before: PtrKind::Ref(_),
+                            after: PtrKind::Raw(_),
                         } => {
-                            *expr = prepend_mut_ref_deref(expr.clone());
+                            unreachable!("Raw pointers adapting to references: {:?}", expr.span);
                         }
                         _ => (),
                     }
@@ -208,31 +216,51 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                     {
                         // Note: the arguments have been visited and rewritten to *mut T
                         // Hir arguments stays the same, so may not match the AST arguments
-                        match &mut arg.kind {
-                            ExprKind::Path(..) => (), // path expression was handled above
-                            _ => match &sig_dec.input_decs.get(i).unwrap_or_else(|| {
+                        match &sig_dec.input_decs.get(i).unwrap_or_else(|| {
                                 panic!(
                                     "Function call argument index out of bounds: {} in {:?}, function: {:?}",
                                     i, expr.span, self.rust_program.tcx.def_path_str(func_did)
                                 )
                             }) {
                                 Some(PtrKind::OptMutRef) => {
-                                    // arg.as_mut()
-                                    // **arg = append_opt_as_mut(*arg.clone());
                                     if let ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, box inner) = &arg.kind {
+                                        // Some(&mut arg)
                                         **arg = wrap_in_some_mut_ref((*inner).clone());
                                     } else {
                                         // arg.as_mut()
-                                        **arg = append_opt_as_mut(*arg.clone());
+                                        **arg = append_as_mut(*arg.clone());
                                     }
                                 }
-                                Some(PtrKind::MutRef) => {
-                                    // arg as &mut _
-                                    **arg = prepend_mut_ref_deref(*arg.clone());
+                                Some(PtrKind::Ref(mutability)) => {
+                                    if let ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, box inner) = &arg.kind &&
+                                    let ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, _) = &inner.kind {
+                                        // &raw mut &raw mut _ -> &mut (&raw mut _)
+                                        **arg = prepend_ref((*inner).clone(), *mutability);
+                                    } else {
+                                        if *mutability {
+                                            **arg = append_as_mut_unwrap(*arg.clone());
+                                        } else {
+                                            **arg = append_as_ref_unwrap(*arg.clone());
+                                        }
+                                    }
+                                    // if let ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, box inner) = &arg.kind {
+                                    //     // arg is &raw mut arg_inner
+                                    //     // &(mut) arg_inner
+                                    //     **arg = prepend_ref((*inner).clone(), *mutability);
+                                    // } else {
+                                    //     // &(mut) *arg
+                                    //     // **arg = prepend_ref_deref(*arg.clone(), *mutability);
+
+                                    //     // arg.as_mut().unwrap()
+                                    //     if *mutability {
+                                    //         **arg = append_as_mut_unwrap(*arg.clone());
+                                    //     } else {
+                                    //         **arg = append_as_ref_unwrap(*arg.clone());
+                                    //     }
+                                    // }
                                 }
                                 _ => (),
-                            },
-                        }
+                            }
                     }
                 }
             }
@@ -250,7 +278,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                 {
                     match ptr_diff {
                         PtrKindDiff {
-                            before: PtrKind::MutRaw,
+                            before: PtrKind::Raw(_),
                             after: PtrKind::OptMutRef,
                         } => {
                             unreachable!(
@@ -259,20 +287,21 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             );
                         }
                         PtrKindDiff {
-                            before: PtrKind::MutRaw,
-                            after: PtrKind::MutRef,
+                            before: PtrKind::Raw(mutability),
+                            after: PtrKind::Ref(_mutability),
                         } => {
-                            // println!("Rewriting let statement to &mut T: {:?}", stmt.span);
+                            assert!(mutability == _mutability);
+                            let mutability = *mutability;
                             if let Some(ty) = &mut local.ty {
                                 let hir_ty = hir_let.ty.unwrap();
                                 let typeck = self.rust_program.tcx.typeck(hir_ty.hir_id.owner);
                                 let hir_ty_res = typeck.node_type(hir_ty.hir_id);
                                 let ty_res = mir_ty_to_ty(&hir_ty_res);
-                                self.rewrite_ty(ty, ty_res, &Some(PtrKind::MutRef));
+                                self.rewrite_ty(ty, ty_res, &Some(PtrKind::Ref(mutability)));
                             }
                             match &mut local.kind {
                                 LocalKind::Init(box rhs) | LocalKind::InitElse(box rhs, _) => {
-                                    *rhs = prepend_mut_ref_deref(rhs.clone());
+                                    *rhs = prepend_ref_deref(rhs.clone(), mutability);
                                 }
                                 LocalKind::Decl => {
                                     // No initializer, do nothing
@@ -386,26 +415,27 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
         }
     }
 
+    // fn map_raw_unwrap(&self, orig: Expr) -> Expr {
+    //     let ptr_ty = self.expr_ptr_ty(&orig);
+    //     utils::expr!(
+    //         "{}.map(|r| r as *mut _).unwrap_or(std::ptr::null_mut::<{}>())",
+    //         pprust::expr_to_string(&orig),
+    //         pprust::ty_to_string(&ptr_ty)
+    //     )
+    // }
+
     // expr -> expr.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut()
     fn append_as_deref_mut_raw(&self, orig: Expr) -> Expr {
         let ptr_ty = self.expr_ptr_ty(&orig);
         utils::expr!(
-            "{}.as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut::<{}>())",
+            "({}).as_deref_mut().map(|r| r as *mut _).unwrap_or(std::ptr::null_mut::<{}>())",
             pprust::expr_to_string(&orig),
             pprust::ty_to_string(&ptr_ty)
         )
     }
 
-    // expr -> &raw mut *expr
-    fn cast_to_mut_raw(&self, orig: Expr) -> Expr {
-        // check if expr is already casted to *mut _ by parent expr
-        // if let Some(hir_expr) = self.get_hir_expr(&orig)
-        //     && let HirNode::Expr(parent_expr) = self.expect_parent_node(hir_expr.hir_id)
-        //     && let HirExprKind::AddrOf(..) = parent_expr.kind
-        // {
-        //     return orig;
-        // }
-
+    // expr -> &raw (mut) *expr
+    fn cast_to_mut_raw(&self, orig: Expr, mutability: bool) -> Expr {
         let deref = Expr {
             id: rustc_ast::DUMMY_NODE_ID,
             kind: ExprKind::Unary(UnOp::Deref, P(orig.clone())),
@@ -415,7 +445,15 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
         };
         Expr {
             id: rustc_ast::DUMMY_NODE_ID,
-            kind: ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, P(deref)),
+            kind: ExprKind::AddrOf(
+                BorrowKind::Raw,
+                if mutability {
+                    Mutability::Mut
+                } else {
+                    Mutability::Not
+                },
+                P(deref),
+            ),
             span: rustc_span::DUMMY_SP,
             attrs: thin_vec![],
             tokens: None,
@@ -454,15 +492,17 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
                 ty.kind = TyKind::Path(None, option_path);
                 self.updated = true;
             }
-            Some(PtrKind::MutRef) => {
+            Some(PtrKind::Ref(mutability)) => {
                 let mut ptr_mut_ty = expect_ptr(ty, ty_res);
-                ptr_mut_ty.mutbl = rustc_ast::Mutability::Mut; // TODO: use original mutability
+                ptr_mut_ty.mutbl = if *mutability {
+                    rustc_ast::Mutability::Mut
+                } else {
+                    rustc_ast::Mutability::Not
+                };
                 ty.kind = TyKind::Ref(None, ptr_mut_ty);
                 self.updated = true;
-                // Not necessarily; TODO: immutable reference for immutable raw pointers
-                // assert!(ptr_mut_ty.mutbl == rustc_ast::Mutability::Mut);
             }
-            None | Some(PtrKind::MutRaw) => {}
+            _ => {}
         }
     }
 }
@@ -486,7 +526,7 @@ fn mir_ty_to_ty(mir_ty: &MirTy) -> Ty {
 }
 
 // expr -> expr.as_mut()
-fn append_opt_as_mut(orig: Expr) -> Expr {
+fn append_as_mut(orig: Expr) -> Expr {
     Expr {
         id: rustc_ast::DUMMY_NODE_ID,
         kind: ExprKind::MethodCall(Box::new(MethodCall {
@@ -505,12 +545,38 @@ fn append_opt_as_mut(orig: Expr) -> Expr {
     }
 }
 
-fn append_opt_as_raw(orig: Expr) -> Expr {
-    utils::expr!("{}.as_deref().unwrap()", pprust::expr_to_string(&orig))
+fn append_as_mut_unwrap(orig: Expr) -> Expr {
+    utils::expr!("({}).as_mut().unwrap()", pprust::expr_to_string(&orig))
 }
 
-// expr -> &mut *expr
-fn prepend_mut_ref_deref(orig: Expr) -> Expr {
+fn append_as_ref_unwrap(orig: Expr) -> Expr {
+    utils::expr!("({}).as_ref().unwrap()", pprust::expr_to_string(&orig))
+}
+
+// fn append_opt_as_raw(orig: Expr) -> Expr {
+//     utils::expr!("{}.as_deref().unwrap()", pprust::expr_to_string(&orig))
+// }
+
+fn prepend_ref(orig: Expr, mutability: bool) -> Expr {
+    Expr {
+        id: rustc_ast::DUMMY_NODE_ID,
+        kind: ExprKind::AddrOf(
+            BorrowKind::Ref,
+            if mutability {
+                Mutability::Mut
+            } else {
+                Mutability::Not
+            },
+            P(orig),
+        ),
+        span: rustc_span::DUMMY_SP,
+        attrs: thin_vec![],
+        tokens: None,
+    }
+}
+
+// expr -> &(mut) *expr
+fn prepend_ref_deref(orig: Expr, mutability: bool) -> Expr {
     // *expr
     let deref_expr = Expr {
         id: rustc_ast::DUMMY_NODE_ID,
@@ -520,13 +586,7 @@ fn prepend_mut_ref_deref(orig: Expr) -> Expr {
         tokens: None,
     };
     // &mut *expr
-    Expr {
-        id: rustc_ast::DUMMY_NODE_ID,
-        kind: ExprKind::AddrOf(BorrowKind::Ref, Mutability::Mut, P(deref_expr)),
-        span: rustc_span::DUMMY_SP,
-        attrs: thin_vec![],
-        tokens: None,
-    }
+    prepend_ref(deref_expr, mutability)
 }
 
 // expr -> Some(&mut expr)
@@ -566,7 +626,7 @@ fn wrap_in_some(orig: Expr) -> Expr {
 
 fn reborrow_mut_opt(orig: Expr) -> Expr {
     utils::expr!(
-        "{}.as_mut().map(|x| &mut **x)",
+        "({}).as_mut().map(|x| &mut **x)",
         pprust::expr_to_string(&orig)
     )
 }

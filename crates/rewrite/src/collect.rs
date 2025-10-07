@@ -2,6 +2,7 @@ use crate::{
     Analysis,
     decision::{PtrKind, PtrKindDiff},
 };
+use analyses::type_qualifier::foster::mutability;
 use rustc_hash::FxHashMap;
 use rustc_hir::HirId;
 use rustc_middle::mir::Local;
@@ -32,10 +33,11 @@ pub fn collect_diffs<'tcx>(
             .borrow();
 
         for (local, decl) in body.local_decls.iter_enumerated() {
+            let mutability = decl.ty.is_mutable_ptr();
             let ptr_kind = if output_params.contains(local) {
                 PtrKind::OptMutRef
             } else if promoted_mut_refs.contains(local) {
-                PtrKind::MutRef
+                PtrKind::Ref(mutability)
             } else {
                 continue;
             };
@@ -51,7 +53,7 @@ pub fn collect_diffs<'tcx>(
                 ptr_kind_diffs.insert(
                     *hir_id,
                     PtrKindDiff {
-                        before: PtrKind::MutRaw,
+                        before: PtrKind::Raw(mutability),
                         after: ptr_kind,
                     },
                 );

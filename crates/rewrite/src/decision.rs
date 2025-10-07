@@ -1,4 +1,5 @@
 use crate::Analysis;
+use analyses::type_qualifier::foster::mutability;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use utils::rustc::RustProgram;
@@ -6,8 +7,9 @@ use utils::rustc::RustProgram;
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum PtrKind {
     OptMutRef, // output parameter: Option<&mut T>
-    MutRef,    // mutable reference: &mut T
-    MutRaw,    // mutable raw pointer: *mut T
+    Ref(bool), // reference: &mut T for Ref(true), or &T for Ref(false)
+    Raw(bool), // raw pointer: *mut T for Raw(true), or *const T for Raw(false)
+    ConstRaw,  // const raw pointer: *const T
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -19,8 +21,8 @@ pub struct PtrKindDiff {
 impl Default for PtrKindDiff {
     fn default() -> Self {
         PtrKindDiff {
-            before: PtrKind::MutRaw,
-            after: PtrKind::MutRaw,
+            before: PtrKind::Raw(true),
+            after: PtrKind::Raw(true),
         }
     }
 }
@@ -65,10 +67,11 @@ impl SigDecisions {
                 .args_iter()
                 .take(input_len) // exclude variadic arguments
                 .map(|param| {
+                    let mutability = body.local_decls[param].ty.is_mutable_ptr();
                     if output_params.contains(param) {
                         Some(PtrKind::OptMutRef)
                     } else if promoted_mut_refs.contains(param) {
-                        Some(PtrKind::MutRef)
+                        Some(PtrKind::Ref(mutability))
                     } else {
                         None
                     }
