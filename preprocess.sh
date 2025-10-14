@@ -31,7 +31,7 @@ cargo build --release
 # RUSTFLAGS="-C opt-level=0" cargo build
 
 CROWN=$PROJ_DIR/target/release/crown
-CROWN=$PROJ_DIR/target/debug/crown
+# CROWN=$PROJ_DIR/target/debug/crown
 
 
 for f in $(find $1 -name "Cargo.toml"); do

@@ -104,8 +104,8 @@ if [ ${#SELECTED_BENCHMARKS[@]} -gt 0 ]; then
     echo ""
 fi
 
-# CROWN="$PROJ_DIR/target/release/crown"
-CROWN="$PROJ_DIR/target/debug/crown"
+CROWN="$PROJ_DIR/target/release/crown"
+# CROWN="$PROJ_DIR/target/debug/crown"
 
 RUSTC_PATH=$(rustc +nightly-2025-06-23 --print sysroot)/lib
 
