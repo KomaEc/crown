@@ -21,6 +21,7 @@ use crate::{
     collect::collect_diffs,
     decision::{PtrKind, PtrKindDiff, SigDecisions},
 };
+use regex::Regex;
 use thin_vec::thin_vec;
 use utils::ir_util::IrMappings;
 
@@ -524,10 +525,11 @@ fn expect_ptr(ty: &mut Ty, ty_res: Ty) -> MutTy {
 }
 
 fn mir_ty_to_ty(mir_ty: &MirTy) -> Ty {
-    let ty_str = mir_ty
-        .to_string()
-        .replace("src::", "crate::src::")
-        .replace("bin::", "crate::bin::");
+    let mut ty_str = mir_ty.to_string();
+    let re = Regex::new(r"(?P<prefix>(^|<|\s|,\s))(src|bin)::").unwrap();
+    ty_str = re
+        .replace_all(&ty_str, "${prefix}crate::${3}::")
+        .to_string();
     utils::ty!("{}", ty_str)
 }
 
