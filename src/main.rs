@@ -15,6 +15,7 @@ extern crate rustc_mir_dataflow;
 extern crate rustc_session;
 extern crate rustc_target;
 
+use analyses::mir_variable_grouping::SourceVarGroups;
 use clap::Parser;
 // use refactor::RefactorOptions;
 use std::path::PathBuf;
@@ -100,7 +101,11 @@ fn run(
                 analyses::type_qualifier::foster::mutability::mutability_analysis(&input);
             let output_params =
                 analyses::output_params::compute_output_params(&input, &mutability_result);
-            let promoted_mut_refs = analyses::borrow::mutable_references_no_guarantee(&input);
+
+            let source_var_groups = SourceVarGroups::new(&input);
+            let promoted_mut_refs = source_var_groups.postprocess_promoted_mut_refs(
+                analyses::borrow::mutable_references_no_guarantee(&input),
+            );
 
             // let analysis_results = refactor::Analysis::new(output_params, promoted_mut_refs);
             let analysis_results = rewrite::Analysis::new(output_params, promoted_mut_refs);

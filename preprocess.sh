@@ -31,6 +31,7 @@ echo "start building crown.."
 RUSTFLAGS="-C opt-level=0" cargo build
 
 CROWN=$PROJ_DIR/target/release/crown
+CROWN=$PROJ_DIR/target/debug/crown
 
 
 for f in $(find $1 -name "Cargo.toml"); do
@@ -42,14 +43,24 @@ for f in $(find $1 -name "Cargo.toml"); do
     if ! grep -q "#!\[feature(rustc_private)\]" "$ENTRY"; then
         # echo "Adding #![feature(rustc_private)] to $BENCH_NAME entry point"
         # Insert at the beginning of the file
-        sed -i '1i#![feature(rustc_private)]' "$ENTRY"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' '1i\
+#![feature(rustc_private)]' "$ENTRY"
+        else
+            sed -i '1i#![feature(rustc_private)]' "$ENTRY"
+        fi
     fi
     
     # Check if core_intrinsics feature is already present
     if ! grep -q "#!\[feature(core_intrinsics)\]" "$ENTRY"; then
         # echo "Adding #![feature(core_intrinsics)] to $BENCH_NAME entry point"
         # Insert at the beginning of the file (after any existing features)
-        sed -i '1i#![feature(core_intrinsics)]' "$ENTRY"
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            sed -i '' '1i\
+#![feature(core_intrinsics)]' "$ENTRY"
+        else
+            sed -i '1i#![feature(core_intrinsics)]' "$ENTRY"
+        fi
     fi
     
     # Check if extern crate libc is already present
@@ -59,20 +70,39 @@ for f in $(find $1 -name "Cargo.toml"); do
         LAST_FEATURE_LINE=$(grep -n "^#!\[feature" "$ENTRY" | tail -1 | cut -d: -f1)
         if [ -n "$LAST_FEATURE_LINE" ]; then
             # Insert after the last feature line
-            sed -i "${LAST_FEATURE_LINE}a\\extern crate libc;" "$ENTRY"
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' "${LAST_FEATURE_LINE}a\\
+extern crate libc;" "$ENTRY"
+            else
+                sed -i "${LAST_FEATURE_LINE}a\\extern crate libc;" "$ENTRY"
+            fi
         else
             # No feature lines found, insert at the beginning
-            sed -i '1i\extern crate libc;' "$ENTRY"
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                sed -i '' '1i\
+extern crate libc;' "$ENTRY"
+            else
+                sed -i '1i\extern crate libc;' "$ENTRY"
+            fi
         fi
     fi
     
     # Replace core:: with std:: in all .rs files
-    find "$BENCH_DIR" -name "*.rs" -type f -exec sed -i \
-        -e 's/core::mem/std::mem/g' \
-        -e 's/core::ptr/std::ptr/g' \
-        -e 's/core::ffi/std::ffi/g' \
-        -e 's/core::f32/std::f32/g' \
-        -e 's/core::f64/std::f64/g' {} +
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        find "$BENCH_DIR" -name "*.rs" -type f -exec sed -i '' \
+            -e 's/core::mem/std::mem/g' \
+            -e 's/core::ptr/std::ptr/g' \
+            -e 's/core::ffi/std::ffi/g' \
+            -e 's/core::f32/std::f32/g' \
+            -e 's/core::f64/std::f64/g' {} +
+    else
+        find "$BENCH_DIR" -name "*.rs" -type f -exec sed -i \
+            -e 's/core::mem/std::mem/g' \
+            -e 's/core::ptr/std::ptr/g' \
+            -e 's/core::ffi/std::ffi/g' \
+            -e 's/core::f32/std::f32/g' \
+            -e 's/core::f64/std::f64/g' {} +
+    fi
     
     echo "preprocessing $BENCH_NAME"
     RUST_BACKTRACE=full $CROWN $ENTRY preprocess in-place

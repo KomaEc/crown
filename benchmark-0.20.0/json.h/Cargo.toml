@@ -2,7 +2,7 @@
 members = [
 ]
 [package]
-name = "json.h"
+name = "json_h"
 authors = ["C2Rust"]
 version = "0.0.0"
 publish = false
@@ -10,7 +10,7 @@ edition = "2021"
 autobins = false
 
 [lib]
-name = "json.h"
+name = "json_h"
 path = "lib.rs"
 crate-type = ["staticlib", "rlib"]
 [dependencies]

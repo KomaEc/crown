@@ -101,6 +101,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                                 unreachable!("Expected deref expression on LHS: {:?}", expr.span);
                             };
                             **lhs_deref = self.append_as_deref_mut_raw((**lhs_deref).clone());
+                            self.updated = true;
                         }
                         PtrKindDiff {
                             before: PtrKind::Raw(_),
@@ -136,6 +137,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             // lhs = &(mut) *rhs;
                             assert!(mutability == _mutability);
                             *rhs = prepend_ref_deref(rhs.clone(), *mutability);
+                            self.updated = true;
                         }
                         _ => (),
                     }
@@ -179,6 +181,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             after: PtrKind::OptMutRef,
                         } => {
                             *expr = self.append_as_deref_mut_raw(expr.clone());
+                            self.updated = true;
                         }
                         PtrKindDiff {
                             before: PtrKind::Raw(mutability),
@@ -188,6 +191,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             assert!(mutability == _mutability);
                             // TODO: if parent expr is unary deref, skip casting
                             *expr = self.cast_to_mut_raw(expr.clone(), mutability);
+                            self.updated = true;
                         }
                         PtrKindDiff {
                             before: PtrKind::Ref(_),
@@ -202,10 +206,21 @@ impl MutVisitor for TransformVisitor<'_, '_> {
             ExprKind::Call(box _func_expr, args) => {
                 // function call
                 let hir_expr = hir_expr_opt.unwrap();
+                let typeck_res = self.rust_program.tcx.typeck(hir_expr.hir_id.owner); // ensure typeck is available
+                // println!(
+                //     "BEFORE Rewriting function call: span: {:?}, snippet: {:?}",
+                //     expr.span,
+                //     pprust::expr_to_string(&_expr.clone())
+                // );
                 if let HirExprKind::Call(hir_func_expr, hir_args) = hir_expr.kind
                     && let HirExprKind::Path(func_qpath) = &hir_func_expr.kind
                     && let QPath::Resolved(_, func_path) = func_qpath
-                    && let Res::Def(_, func_did) = func_path.res
+                    && let Res::Def(_, func_did) =
+                        typeck_res.qpath_res(func_qpath, hir_func_expr.hir_id)
+                    // && let _ = println!(
+                    //     "Resolved function path: {:?}",
+                    //     typeck_res.qpath_res(func_qpath, hir_func_expr.hir_id)
+                    // )
                     && let Some(sig_dec) = self.sig_decs.get(&func_did)
                 {
                     let input_len = self.sig_input_len(func_did); // exclude variadic arguments
@@ -229,12 +244,16 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                                         // arg.as_mut()
                                         **arg = append_as_mut(*arg.clone());
                                     }
+                                    self.updated = true;
                                 }
                                 Some(PtrKind::Ref(mutability)) => {
-                                    if let ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, box inner) = &arg.kind &&
-                                    let ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, _) = &inner.kind {
+                                    if let ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, box inner) = &arg.kind
+                                    && let ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, _) = &inner.kind {
                                         // &raw mut &raw mut _ -> &mut (&raw mut _)
                                         **arg = prepend_ref((*inner).clone(), *mutability);
+                                    } else if let ExprKind::AddrOf(BorrowKind::Ref, _, box inner) = &arg.kind
+                                           && let ExprKind::Unary(UnOp::Deref, _) = &inner.kind {
+                                        // c2rust is using automatic casting for &mut T to *mut T
                                     } else {
                                         if *mutability {
                                             **arg = append_as_mut_unwrap(*arg.clone());
@@ -242,21 +261,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                                             **arg = append_as_ref_unwrap(*arg.clone());
                                         }
                                     }
-                                    // if let ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, box inner) = &arg.kind {
-                                    //     // arg is &raw mut arg_inner
-                                    //     // &(mut) arg_inner
-                                    //     **arg = prepend_ref((*inner).clone(), *mutability);
-                                    // } else {
-                                    //     // &(mut) *arg
-                                    //     // **arg = prepend_ref_deref(*arg.clone(), *mutability);
-
-                                    //     // arg.as_mut().unwrap()
-                                    //     if *mutability {
-                                    //         **arg = append_as_mut_unwrap(*arg.clone());
-                                    //     } else {
-                                    //         **arg = append_as_ref_unwrap(*arg.clone());
-                                    //     }
-                                    // }
+                                    self.updated = true;
                                 }
                                 _ => (),
                             }
@@ -301,6 +306,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             match &mut local.kind {
                                 LocalKind::Init(box rhs) | LocalKind::InitElse(box rhs, _) => {
                                     *rhs = prepend_ref_deref(rhs.clone(), mutability);
+                                    self.updated = true;
                                 }
                                 LocalKind::Decl => {
                                     // No initializer, do nothing
@@ -323,8 +329,8 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
         analysis: &Analysis,
         ir_mappings: IrMappings<'a>,
     ) -> TransformVisitor<'tcx, 'a> {
-        let sig_decs = SigDecisions::new(rust_program, analysis);
-        let ptr_diffs = collect_diffs(rust_program, analysis);
+        let sig_decs = SigDecisions::new(rust_program, analysis); // TODO: Move outside
+        let ptr_diffs = collect_diffs(rust_program, analysis); // TODO: Move outside
         TransformVisitor {
             rust_program,
             sig_decs,
@@ -383,10 +389,11 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
             .len()
     }
 
-    fn get_hir_expr(&self, expr: &Expr) -> Option<&rustc_hir::Expr<'tcx>> {
+    fn get_hir_expr(&self, expr: &Expr) -> Option<rustc_hir::Expr<'tcx>> {
         self.ir_mappings
             .ast_to_hir
             .get_expr(expr.node_id(), self.rust_program.tcx)
+            .cloned()
     }
 
     fn get_hir_stmt(&self, stmt: &Stmt) -> Option<&rustc_hir::Stmt<'tcx>> {
@@ -400,7 +407,7 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
             .get_hir_expr(expr)
             .unwrap_or_else(|| panic!("Failed to find HIR expr for Expr {:?}", expr.span));
         let typeck = self.rust_program.tcx.typeck(hir_expr.hir_id.owner);
-        let mir_ty = typeck.expr_ty(hir_expr);
+        let mir_ty = typeck.expr_ty(&hir_expr);
         let ty_res = mir_ty_to_ty(&mir_ty);
         ty_res
     }

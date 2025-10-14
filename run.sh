@@ -7,9 +7,10 @@ PROJ_DIR=$(dirname $0)
 source $PROJ_DIR/find_entry.sh
 
 PREPROCESS="$PROJ_DIR/preprocess.sh"
+BENCHMARK="$PROJ_DIR/benchmark-0.20.0"
 # BENCHMARK="$PROJ_DIR/benchmark-old"
-# BENCHMARK="$PROJ_DIR/benchmark-old"
-BENCHMARK_PREPROCESSED="$PROJ_DIR/benchmark-0.20.0-preprocessed-pp"
+BENCHMARK_PREPROCESSED="$PROJ_DIR/benchmark-0.20.0-preprocessed"
+# BENCHMARK_PREPROCESSED="$PROJ_DIR/benchmark-0.20.0-preprocessed-pp"
 
 # Parse command line arguments
 WORKSPACE=""
@@ -74,6 +75,7 @@ if [ -d "$WORKSPACE" ]; then
 fi
 
 cp -r $BENCHMARK_PREPROCESSED $WORKSPACE
+# cp -r $BENCHMARK $WORKSPACE
 
 # "$PREPROCESS" $WORKSPACE
 echo "start building crown.."
@@ -161,8 +163,8 @@ for f in $(find $WORKSPACE -name "Cargo.toml"); do
     ENTRY=$(find_entry $BENCH_DIR)
     echo "rewriting $BENCH_NAME"
     OPTIONS=""
-    if [ $BENCH_NAME = "lil" ]; then
-        continue  # TODO: Type alias not supported yet
+    # if [ $BENCH_NAME = "lil" ]; then
+    #     continue  # TODO: Type alias not supported yet
         # OPTIONS="--type-reconstruction --no-attempt .*fnc_.*|do_exit|lil_find_var|lil_to_double"
     # elif [ $BENCH_NAME = "libsamplerate" ]; then
     #     OPTIONS="--no-attempt .*_vari_process|.*_reset"
@@ -172,7 +174,7 @@ for f in $(find $WORKSPACE -name "Cargo.toml"); do
     #     OPTIONS="--force-box"
     # elif [ $BENCH_NAME = "genann" ]; then
     #     OPTIONS="--raw-mutability"
-    fi
+    # fi
 
     if [ -d "$BENCH_DIR/analysis_results" ]; then
         rm $BENCH_DIR/analysis_results/*
