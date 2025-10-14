@@ -1,4 +1,3 @@
-use analyses::type_qualifier::foster::mutability;
 use itertools::izip;
 use rustc_ast::{
     HasNodeId, ItemKind,
@@ -629,4 +628,8 @@ fn reborrow_mut_opt(orig: Expr) -> Expr {
         "({}).as_mut().map(|x| &mut **x)",
         pprust::expr_to_string(&orig)
     )
+}
+
+fn reborrow_mut_ref(orig: Expr) -> Expr {
+    utils::expr!("(&mut *{})", pprust::expr_to_string(&orig))
 }

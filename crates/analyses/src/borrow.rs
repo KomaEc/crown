@@ -13,6 +13,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use rustc_mir_dataflow::{fmt::DebugWithContext, points::DenseLocationMap};
+use rustc_span::sym::optimize;
 use utils::{rustc::RustProgram, rustc_hash::FxHashMap};
 
 use crate::{
@@ -696,9 +697,12 @@ pub fn mutable_references_no_guarantee(
 mod test {
     use rustc_middle::mir::VarDebugInfoContents;
 
-    use crate::borrow::{
-        GBorrowInferCtxt, borrow_inference, dump_borrow_inference_mir, dump_coarse_inferred_bounds,
-        mutable_references_no_guarantee,
+    use crate::{
+        borrow::{
+            GBorrowInferCtxt, borrow_inference, dump_borrow_inference_mir,
+            dump_coarse_inferred_bounds, mutable_references_no_guarantee,
+        },
+        mir_variable_grouping::SourceVarGroups,
     };
 
     #[test]
@@ -790,5 +794,71 @@ mod test {
                 );
             }
         });
+    }
+
+    #[test]
+    fn test_is_null() {
+        const PROGRAM: &str = "
+        pub struct object {
+            pub name: usize,
+        }
+        unsafe fn json_parse_object() {
+            let mut previous = 0 as *mut object;
+            let mut element = 0 as *mut object;
+            previous = element;
+            (*element).name = 0;
+            if !previous.is_null() {
+                (*previous).name = 0;
+            }
+        }
+        ";
+        utils::rustc::run_compiler(PROGRAM, |program| {
+            let tcx = program.tcx;
+            let f = program.functions[0];
+            let body = &*tcx
+                .mir_drops_elaborated_and_const_checked(f.expect_local())
+                .borrow();
+
+            // use rustc_middle::mir::pretty::{PrettyPrintMirOptions, write_mir_fn};
+            // write_mir_fn(
+            //     tcx,
+            //     body,
+            //     &mut |_, _| Ok(()),
+            //     &mut std::io::stdout(),
+            //     PrettyPrintMirOptions::from_cli(tcx),
+            // )
+            // .unwrap();
+
+            let global_borrow_ctxt = GBorrowInferCtxt::new(&program, |_| |_| true);
+
+            let inference = borrow_inference(tcx, f, &global_borrow_ctxt);
+
+            dump_borrow_inference_mir(
+                tcx,
+                body,
+                &inference,
+                &global_borrow_ctxt,
+                &mut std::io::stdout(),
+            )
+            .unwrap();
+
+            let source_var_groups = SourceVarGroups::new(&program);
+            let infer_res = mutable_references_no_guarantee(&program);
+            for (f, ok_locals) in infer_res.clone().into_iter() {
+                println!(
+                    "Before {}: {:?}",
+                    program.tcx.def_path_str(f),
+                    ok_locals.iter().collect::<Vec<_>>()
+                );
+            }
+            let infer_res_post = source_var_groups.postprocess_promoted_mut_refs(infer_res);
+            for (f, ok_locals) in infer_res_post.into_iter() {
+                println!(
+                    "After {}: {:?}",
+                    program.tcx.def_path_str(f),
+                    ok_locals.iter().collect::<Vec<_>>()
+                );
+            }
+        })
     }
 }

@@ -21,6 +21,7 @@ mod encoding;
 pub mod lattice;
 pub mod liveness;
 pub mod mir;
+pub mod mir_variable_grouping;
 pub mod output_params;
 pub(crate) mod reaching_definitions;
 #[allow(unused)]
