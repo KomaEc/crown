@@ -160,7 +160,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             // lhs = &(mut) *rhs;
                             assert!(mutability == _mutability);
                             *rhs = prepend_ref_deref(rhs.clone(), *mutability);
-                            self.updated = true;
+                            self.stats.writes += 1;
                         }
                         _ => (),
                     }
@@ -204,7 +204,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             after: PtrKind::OptMutRef,
                         } => {
                             *expr = self.append_as_deref_mut_raw(expr.clone());
-                            self.updated = true;
+                            self.stats.usages += 1;
                         }
                         PtrKindDiff {
                             before: PtrKind::Raw(mutability),
@@ -214,7 +214,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             assert!(mutability == _mutability);
                             // TODO: if parent expr is unary deref, skip casting
                             *expr = self.cast_to_mut_raw(expr.clone(), mutability);
-                            self.updated = true;
+                            self.stats.usages += 1;
                         }
                         PtrKindDiff {
                             before: PtrKind::Ref(_),
@@ -257,7 +257,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                                         // arg.as_mut()
                                         **arg = append_as_mut(*arg.clone());
                                     }
-                                    self.updated = true;
+                                    self.stats.usages += 1;
                                 }
                                 Some(PtrKind::Ref(mutability)) => {
                                     if let ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, box inner) = &arg.kind
@@ -274,7 +274,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                                             **arg = append_as_ref_unwrap(*arg.clone());
                                         }
                                     }
-                                    self.updated = true;
+                                    self.stats.usages += 1;
                                 }
                                 _ => (),
                             }
@@ -319,7 +319,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                             match &mut local.kind {
                                 LocalKind::Init(box rhs) | LocalKind::InitElse(box rhs, _) => {
                                     *rhs = prepend_ref_deref(rhs.clone(), mutability);
-                                    self.updated = true;
+                                    self.stats.defs += 1;
                                 }
                                 LocalKind::Decl => {
                                     // No initializer, do nothing
@@ -354,7 +354,7 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
     }
 
     pub fn updated(&self) -> bool {
-        self.stats.usages > 0 || self.stats.defs > 0
+        self.stats.usages + self.stats.writes + self.stats.defs + self.stats.params > 0
     }
 
     fn expect_parent_node(&self, hir_id: HirId) -> HirNode<'tcx> {

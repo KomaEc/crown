@@ -44,6 +44,7 @@ impl SourceVarGroups {
                 let mut new_promoted = DenseBitSet::new_empty(promoted.domain_size());
                 for locals in groups.values() {
                     if locals.iter().all(|local| promoted.contains(*local)) {
+                        // if promoted.contains(*locals.iter().max().unwrap()) { // alternative: only promote the largest local in the group (wrong)
                         for local in locals {
                             new_promoted.insert(*local);
                         }

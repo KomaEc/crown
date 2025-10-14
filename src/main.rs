@@ -17,6 +17,7 @@ extern crate rustc_target;
 
 use analyses::mir_variable_grouping::SourceVarGroups;
 use clap::Parser;
+use rewrite::collect::collect_fn_ptrs;
 // use refactor::RefactorOptions;
 use std::path::PathBuf;
 use utils::{
@@ -106,6 +107,38 @@ fn run(
             let promoted_mut_refs = source_var_groups.postprocess_promoted_mut_refs(
                 analyses::borrow::mutable_references_no_guarantee(&input),
             );
+
+            // for statistics purposes
+            //
+            // let fn_ptrs = collect_fn_ptrs(&input);
+            // let mut output_param_count = 0;
+            // for (def_id, params) in output_params.iter() {
+            //     if fn_ptrs.contains(def_id) {
+            //         continue;
+            //     }
+            //     output_param_count += params.iter().count();
+            // }
+            // let mut promoted_mut_ref_count = 0;
+            // for (def_id, promoted) in promoted_mut_refs.iter() {
+            //     let param_len = tcx
+            //         .fn_sig(*def_id)
+            //         .skip_binder()
+            //         .inputs()
+            //         .skip_binder()
+            //         .len();
+            //     if fn_ptrs.contains(def_id) {
+            //         promoted_mut_ref_count += promoted
+            //             .iter()
+            //             .filter(|local| local.as_usize() >= param_len)
+            //             .count();
+            //     } else {
+            //         promoted_mut_ref_count += promoted.iter().count();
+            //     }
+            // }
+            // println!(
+            //     "Promoted mutable references: {}, output parameters: {}",
+            //     promoted_mut_ref_count, output_param_count
+            // );
 
             // let analysis_results = refactor::Analysis::new(output_params, promoted_mut_refs);
             let analysis_results = rewrite::Analysis::new(output_params, promoted_mut_refs);

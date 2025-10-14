@@ -2,7 +2,7 @@
 #![feature(box_patterns)]
 #![feature(if_let_guard)]
 
-mod collect;
+pub mod collect;
 mod decision;
 mod transform;
 
@@ -78,7 +78,7 @@ pub fn rewrite<'tcx>(
             transform_visitor.visit_crate(krate);
             let mut post_transform_visitor = transform::post::UnnecessaryDerefRemover;
             post_transform_visitor.visit_crate(krate);
-            transform_visitor.updated
+            transform_visitor.updated()
         },
         dir,
         rust_program.tcx,
