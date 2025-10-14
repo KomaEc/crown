@@ -1,6 +1,4 @@
 use crate::{Analysis, collect::collect_fn_ptrs};
-use analyses::type_qualifier::foster::mutability;
-use rustc_data_structures::fx::FxHashSet;
 use rustc_hash::FxHashMap;
 use rustc_hir::def_id::DefId;
 use utils::rustc::RustProgram;
@@ -10,7 +8,6 @@ pub enum PtrKind {
     OptMutRef, // output parameter: Option<&mut T>
     Ref(bool), // reference: &mut T for Ref(true), or &T for Ref(false)
     Raw(bool), // raw pointer: *mut T for Raw(true), or *const T for Raw(false)
-    ConstRaw,  // const raw pointer: *const T
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]

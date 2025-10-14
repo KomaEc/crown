@@ -2,16 +2,15 @@ use crate::{
     Analysis,
     decision::{PtrKind, PtrKindDiff},
 };
-use analyses::type_qualifier::foster::mutability;
 use rustc_data_structures::fx::FxHashSet;
 use rustc_hash::FxHashMap;
 use rustc_hir::{
     ExprKind, HirId, QPath, TyKind,
     def::{DefKind, Res},
-    def_id::{self, DefId},
+    def_id::DefId,
     intravisit::{Visitor, walk_expr},
 };
-use rustc_middle::{mir::Local, ty::TyCtxt};
+use rustc_middle::mir::Local;
 use utils::{ir_util::map_thir_to_mir, rustc::RustProgram};
 
 pub fn collect_diffs<'tcx>(

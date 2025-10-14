@@ -14,7 +14,7 @@ use rustc_hir::{
 use rustc_middle::ty::{Ty as MirTy, TyKind as MirTyKind};
 use rustc_span::symbol::Ident;
 use smallvec::SmallVec;
-use utils::{ir_util::map_thir_to_mir, rustc::RustProgram};
+use utils::rustc::RustProgram;
 
 use crate::{
     Analysis,
@@ -27,12 +27,33 @@ use utils::ir_util::IrMappings;
 
 pub mod post;
 
+#[derive(Clone, Copy, Debug, Default)]
+pub struct RewriteStats {
+    pub params: usize, // number of function parameters changed
+    pub defs: usize,   // number of variable definitions changed
+    pub writes: usize, // number of variable writes changed
+    pub usages: usize, // number of variable usages changed
+}
+
+impl std::ops::Add for RewriteStats {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        RewriteStats {
+            params: self.params + other.params,
+            defs: self.defs + other.defs,
+            writes: self.writes + other.writes,
+            usages: self.usages + other.usages,
+        }
+    }
+}
+
 pub(crate) struct TransformVisitor<'tcx, 'a> {
     rust_program: &'a RustProgram<'tcx>,
     sig_decs: SigDecisions,
     ptr_diffs: FxHashMap<HirId, PtrKindDiff>,
     ir_mappings: IrMappings<'a>,
-    pub updated: bool,
+    pub stats: RewriteStats,
 }
 
 impl MutVisitor for TransformVisitor<'_, '_> {
@@ -71,6 +92,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
         {
             let ty_res = mir_ty_to_ty(&local_decl.ty); // resolved type (no type alias)
             self.rewrite_ty(&mut param.ty, ty_res, &sig_dec.input_decs[idx]);
+            self.stats.params += 1;
             if let PatKind::Ident(binding_mode, ..) = &mut param.pat.kind {
                 *binding_mode = BindingMode::MUT;
             }
@@ -102,7 +124,7 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                                 unreachable!("Expected deref expression on LHS: {:?}", expr.span);
                             };
                             **lhs_deref = self.append_as_deref_mut_raw((**lhs_deref).clone());
-                            self.updated = true;
+                            self.stats.writes += 1;
                         }
                         PtrKindDiff {
                             before: PtrKind::Raw(_),
@@ -208,20 +230,10 @@ impl MutVisitor for TransformVisitor<'_, '_> {
                 // function call
                 let hir_expr = hir_expr_opt.unwrap();
                 let typeck_res = self.rust_program.tcx.typeck(hir_expr.hir_id.owner); // ensure typeck is available
-                // println!(
-                //     "BEFORE Rewriting function call: span: {:?}, snippet: {:?}",
-                //     expr.span,
-                //     pprust::expr_to_string(&_expr.clone())
-                // );
                 if let HirExprKind::Call(hir_func_expr, hir_args) = hir_expr.kind
                     && let HirExprKind::Path(func_qpath) = &hir_func_expr.kind
-                    && let QPath::Resolved(_, func_path) = func_qpath
                     && let Res::Def(_, func_did) =
                         typeck_res.qpath_res(func_qpath, hir_func_expr.hir_id)
-                    // && let _ = println!(
-                    //     "Resolved function path: {:?}",
-                    //     typeck_res.qpath_res(func_qpath, hir_func_expr.hir_id)
-                    // )
                     && let Some(sig_dec) = self.sig_decs.get(&func_did)
                 {
                     let input_len = self.sig_input_len(func_did); // exclude variadic arguments
@@ -337,8 +349,12 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
             sig_decs,
             ptr_diffs,
             ir_mappings,
-            updated: false,
+            stats: RewriteStats::default(),
         }
+    }
+
+    pub fn updated(&self) -> bool {
+        self.stats.usages > 0 || self.stats.defs > 0
     }
 
     fn expect_parent_node(&self, hir_id: HirId) -> HirNode<'tcx> {
@@ -497,7 +513,6 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
                 };
 
                 ty.kind = TyKind::Path(None, option_path);
-                self.updated = true;
             }
             Some(PtrKind::Ref(mutability)) => {
                 let mut ptr_mut_ty = expect_ptr(ty, ty_res);
@@ -507,7 +522,6 @@ impl<'tcx, 'a> TransformVisitor<'tcx, 'a> {
                     rustc_ast::Mutability::Not
                 };
                 ty.kind = TyKind::Ref(None, ptr_mut_ty);
-                self.updated = true;
             }
             _ => {}
         }

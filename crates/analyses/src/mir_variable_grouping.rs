@@ -14,7 +14,7 @@ use utils::{rustc::RustProgram, rustc_hash::FxHashMap};
 /// Group MIR locals by their corresponding source variable names.
 /// This includes both locals with debug info and temporaries that are copies.
 pub struct SourceVarGroups {
-    inner: FxHashMap<DefId, FxHashMap<String, Vec<Local>>>,
+    inner: FxHashMap<DefId, FxHashMap<Local, Vec<Local>>>,
 }
 
 impl SourceVarGroups {
@@ -62,20 +62,16 @@ impl SourceVarGroups {
 fn group_locals_by_source_variable<'tcx>(
     body: &Body<'tcx>,
     _tcx: TyCtxt<'tcx>,
-) -> FxHashMap<String, Vec<Local>> {
+) -> FxHashMap<Local, Vec<Local>> {
     // First, collect all locals that have direct debug info
-    let mut source_to_locals: FxHashMap<String, Vec<Local>> = FxHashMap::default();
-    let mut local_to_source: FxHashMap<Local, String> = FxHashMap::default();
+    let mut src_local_to_locals: FxHashMap<Local, Vec<Local>> = FxHashMap::default();
+    let mut local_to_src_local: FxHashMap<Local, Local> = FxHashMap::default();
 
     for debug_info in &body.var_debug_info {
         if let VarDebugInfoContents::Place(place) = &debug_info.value {
             if let Some(local) = place.as_local() {
-                let var_name = debug_info.name.as_str().to_string();
-                source_to_locals
-                    .entry(var_name.clone())
-                    .or_default()
-                    .push(local);
-                local_to_source.insert(local, var_name);
+                src_local_to_locals.entry(local).or_default().push(local);
+                local_to_src_local.insert(local, local);
             }
         }
     }
@@ -86,18 +82,18 @@ fn group_locals_by_source_variable<'tcx>(
     // Propagate source variable names to temporaries
     // Caveat: the order of copy_relationships should be chronological
     for (dest, src) in copy_relationships {
-        if let Some(src_var) = local_to_source.get(&src).cloned() {
-            if !local_to_source.contains_key(&dest) {
-                source_to_locals
-                    .entry(src_var.clone())
+        if let Some(src_local) = local_to_src_local.get(&src).cloned() {
+            if !local_to_src_local.contains_key(&dest) {
+                src_local_to_locals
+                    .entry(src_local.clone())
                     .or_default()
                     .push(dest);
-                local_to_source.insert(dest, src_var);
+                local_to_src_local.insert(dest, src_local);
             }
         }
     }
 
-    source_to_locals
+    src_local_to_locals
 }
 
 /// Find copy relationships between locals (dest = copy src or dest = move src)
@@ -159,20 +155,8 @@ mod tests {
             let groups = group_locals_by_source_variable(body, tcx);
 
             println!("Source variable groups:");
-            for (var, locals) in &groups {
-                println!("  {}: {:?}", var, locals);
-            }
-
-            // Verify that element group contains both _1 and _3
-            if let Some(element_locals) = groups.get("element") {
-                println!("Element locals: {:?}", element_locals);
-                // Should contain at least _1 (original) and potentially _3 (copy)
-                assert!(element_locals.len() >= 1);
-            }
-
-            if let Some(previous_locals) = groups.get("previous") {
-                println!("Previous locals: {:?}", previous_locals);
-                assert!(previous_locals.len() >= 1);
+            for (src_local, locals) in &groups {
+                println!("  {:?}: {:?}", src_local, locals);
             }
         });
     }
