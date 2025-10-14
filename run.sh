@@ -74,13 +74,13 @@ if [ -d "$WORKSPACE" ]; then
     exit 1
 fi
 
-cp -r $BENCHMARK_PREPROCESSED $WORKSPACE
-# cp -r $BENCHMARK $WORKSPACE
+# cp -r $BENCHMARK_PREPROCESSED $WORKSPACE
+cp -r $BENCHMARK $WORKSPACE
 
-# "$PREPROCESS" $WORKSPACE
+"$PREPROCESS" $WORKSPACE
 echo "start building crown.."
-# cargo build --release
-RUSTFLAGS="-C opt-level=0" cargo build
+cargo build --release
+# RUSTFLAGS="-C opt-level=0" cargo build
 
 # Validate selected benchmarks exist
 if [ ${#SELECTED_BENCHMARKS[@]} -gt 0 ]; then
