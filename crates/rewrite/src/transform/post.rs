@@ -5,9 +5,9 @@ use rustc_ast::{
 
 use rustc_ast_pretty::pprust;
 
-pub(crate) struct UnnecessaryDerefRemover;
+pub(crate) struct UnnecessaryRawMutRemover;
 
-impl MutVisitor for UnnecessaryDerefRemover {
+impl MutVisitor for UnnecessaryRawMutRemover {
     fn visit_expr(&mut self, ex: &mut Expr) -> Self::Result {
         mut_visit::walk_expr(self, ex);
 
@@ -24,9 +24,19 @@ impl MutVisitor for UnnecessaryDerefRemover {
             && let ExprKind::Unary(UnOp::Deref, inner) = &inner.kind
         {
             *ex = utils::expr!(
-              "&raw mut ({}) as *mut *mut _",
-              pprust::expr_to_string(&inner)
+                "&raw mut ({}) as *mut *mut _",
+                pprust::expr_to_string(&inner)
             );
+        }
+
+        // * f(&raw mut x) -> f(&mut x)
+        if let ExprKind::Call(box _func_expr, args) = &mut ex.kind {
+            for arg in args.iter_mut() {
+                if let ExprKind::AddrOf(BorrowKind::Raw, Mutability::Mut, inner) = arg.clone().kind
+                {
+                    arg.kind = ExprKind::AddrOf(BorrowKind::Ref, Mutability::Mut, inner);
+                }
+            }
         }
     }
 }

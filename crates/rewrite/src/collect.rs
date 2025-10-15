@@ -57,9 +57,10 @@ pub fn collect_diffs<'tcx>(
         {
             let mutability = decl.ty.is_mutable_ptr();
             let ptr_kind = if output_params.contains(local) {
-                PtrKind::OptMutRef
+                assert!(mutability == true); // output parameters are always &mut T
+                PtrKind::OptRef(true)
             } else if promoted_mut_refs.contains(local) {
-                PtrKind::Ref(mutability)
+                PtrKind::OptRef(mutability)
             } else {
                 continue;
             };

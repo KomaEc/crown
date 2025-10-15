@@ -5,9 +5,8 @@ use utils::rustc::RustProgram;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum PtrKind {
-    OptMutRef, // output parameter: Option<&mut T>
-    Ref(bool), // reference: &mut T for Ref(true), or &T for Ref(false)
-    Raw(bool), // raw pointer: *mut T for Raw(true), or *const T for Raw(false)
+    OptRef(bool), // reference: &mut T for Ref(true), or &T for Ref(false)
+    Raw(bool),    // raw pointer: *mut T for Raw(true), or *const T for Raw(false)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -89,9 +88,9 @@ impl SigDecisions {
                 .map(|param| {
                     let mutability = body.local_decls[param].ty.is_mutable_ptr();
                     if output_params.contains(param) {
-                        Some(PtrKind::OptMutRef)
+                        Some(PtrKind::OptRef(true))
                     } else if promoted_mut_refs.contains(param) {
-                        Some(PtrKind::Ref(mutability))
+                        Some(PtrKind::OptRef(mutability))
                     } else {
                         None
                     }

@@ -74,10 +74,13 @@ pub fn rewrite<'tcx>(
                 ast_to_hir: &ast_to_hir,
                 hir_to_thir: &hir_to_thir,
             };
+
             let mut transform_visitor = TransformVisitor::new(rust_program, analysis, ir_mappings);
             transform_visitor.visit_crate(krate);
-            let mut post_transform_visitor = transform::post::UnnecessaryDerefRemover;
-            post_transform_visitor.visit_crate(krate);
+
+            let mut deref_remover = transform::post::UnnecessaryRawMutRemover;
+            deref_remover.visit_crate(krate);
+
             transform_visitor.updated()
         },
         dir,

@@ -43,6 +43,9 @@ impl SourceVarGroups {
             let promoted = if let Some(groups) = self.inner.get(&did) {
                 let mut new_promoted = DenseBitSet::new_empty(promoted.domain_size());
                 for locals in groups.values() {
+                    // let first_local = locals.iter().min().unwrap();
+                    // let last_local = locals.iter().max().unwrap();
+                    // if promoted.contains(*first_local) && promoted.contains(*last_local) {
                     if locals.iter().all(|local| promoted.contains(*local)) {
                         // if promoted.contains(*locals.iter().max().unwrap()) { // alternative: only promote the largest local in the group (wrong)
                         for local in locals {
