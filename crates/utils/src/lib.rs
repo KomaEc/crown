@@ -19,8 +19,8 @@ pub use similar;
 pub use smallvec;
 pub use tracing;
 
+pub mod code_examples;
 pub mod dsa;
-pub mod libtree;
 pub mod rewrite;
 pub mod rustc;
 #[cfg(feature = "test-utils")]

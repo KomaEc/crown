@@ -16,7 +16,8 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use crate::libtree::LibtreeCompiler;
+use crate::code_examples::buffer::BufferCompiler;
+use crate::code_examples::libtree::LibtreeCompiler;
 
 struct Text(String);
 
@@ -113,6 +114,7 @@ pub enum SourceCode {
     Text(String),
     AbsolutePath(PathBuf),
     Libtree,
+    Buffer,
 }
 
 impl From<PathBuf> for SourceCode {
@@ -161,6 +163,10 @@ where
         SourceCode::Libtree => (
             Path::new("lib.rs").to_path_buf(),
             &mut LibtreeCompiler(&mut callbacks),
+        ),
+        SourceCode::Buffer => (
+            Path::new("lib.rs").to_path_buf(),
+            &mut BufferCompiler(&mut callbacks),
         ),
     };
     let args = compiler_args::<O>(&path);

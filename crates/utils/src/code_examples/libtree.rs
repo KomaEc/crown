@@ -14,9 +14,9 @@ impl rustc_span::source_map::FileLoader for Libtree {
 
     fn read_file(&self, path: &Path) -> std::io::Result<String> {
         if path == Path::new("lib.rs") {
-            Ok(LIBRS.to_string())
+            Ok(LIB_RS.to_string())
         } else if path == Path::new("src/libtree.rs") {
-            Ok(LIBTREERS.to_string())
+            Ok(LIBTREE_RS.to_string())
         } else {
             Err(io::Error::other("oops"))
         }
@@ -51,7 +51,7 @@ impl rustc_driver::Callbacks for LibtreeCompiler<'_> {
     }
 }
 
-const LIBRS: &str = r#"#![allow(dead_code)]
+const LIB_RS: &str = r#"#![allow(dead_code)]
 #![allow(mutable_transmutes)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
@@ -72,7 +72,7 @@ pub mod libtree;
 } // mod src
 "#;
 
-const LIBTREERS: &str = r#"use ::libc;
+const LIBTREE_RS: &str = r#"use ::libc;
 extern "C" {
     static mut stdout: *mut _IO_FILE;
     static mut stderr: *mut _IO_FILE;
