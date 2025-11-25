@@ -1,5 +1,6 @@
 //! Borrow inference
 
+use colored::Colorize;
 use rustc_hir::def_id::DefId;
 use rustc_index::{
     IndexVec,
@@ -14,7 +15,6 @@ use rustc_middle::{
 };
 use rustc_mir_dataflow::{fmt::DebugWithContext, points::DenseLocationMap};
 use utils::{rustc::RustProgram, rustc_hash::FxHashMap};
-use colored::Colorize;
 
 use crate::{
     borrow::{
@@ -184,7 +184,7 @@ impl std::fmt::Debug for BorrowData<'_> {
 
 pub struct BorrowSet<'tcx> {
     loans: IndexVec<Loan, BorrowData<'tcx>>,
-    location_map: FxHashMap<Location, Loan>,
+    location_map: FxHashMap<Location, Vec<Loan>>, // one location can hold multiple loans
     local_map: SparseBitMatrix<Local, Loan>,
 }
 
@@ -206,7 +206,7 @@ impl<'tcx> HasBorrowSet<'tcx> for Body<'tcx> {
     ) -> BorrowSet<'tcx> {
         struct Vis<'tcx, 'this, D> {
             loans: IndexVec<Loan, BorrowData<'tcx>>,
-            location_map: FxHashMap<Location, Loan>,
+            location_map: FxHashMap<Location, Vec<Loan>>,
             local_decl: &'this D,
             tcx: TyCtxt<'tcx>,
             provenance_set: &'this ProvenanceSet,
@@ -236,7 +236,9 @@ impl<'tcx> HasBorrowSet<'tcx> for Body<'tcx> {
                             borrowed: *place,
                             assigned: Borrower::AssignStmt(*lhs),
                         });
-                        self.location_map.insert(location, loan);
+                        self.location_map.insert(location, vec![loan]);
+                        // self.location_map.entry(location).and_modify(|loans| loans.push(loan))
+                        //     .or_default().push(loan);
                     }
                     Rvalue::CopyForDeref(place)
                     | Rvalue::Use(Operand::Copy(place) | Operand::Move(place)) => {
@@ -245,7 +247,9 @@ impl<'tcx> HasBorrowSet<'tcx> for Body<'tcx> {
                             borrowed: place.project_deeper(&[PlaceElem::Deref], self.tcx),
                             assigned: Borrower::AssignStmt(*lhs),
                         });
-                        self.location_map.insert(location, loan);
+                        self.location_map.insert(location, vec![loan]);
+                        // self.location_map.entry(location).and_modify(|loans| loans.push(loan))
+                        //     .or_default().push(loan);
                     }
                     _ => {}
                 }
@@ -271,7 +275,12 @@ impl<'tcx> HasBorrowSet<'tcx> for Body<'tcx> {
                                     borrowed: arg.project_deeper(&[PlaceElem::Deref], self.tcx),
                                     assigned: Borrower::CallArg(callee, arg_index),
                                 });
-                                self.location_map.insert(location, loan);
+                                // self.location_map.insert(location, loan);
+                                self.location_map
+                                    .entry(location)
+                                    .and_modify(|loans| loans.push(loan))
+                                    .or_default()
+                                    .push(loan);
                             }
                         }
                     }
@@ -351,37 +360,39 @@ impl ProvenanceConstraintGraph {
                 rvalue: &Rvalue<'tcx>,
                 location: Location,
             ) {
-                let Some(&loan) = self.borrow_set.location_map.get(&location) else {
+                let Some(loans) = self.borrow_set.location_map.get(&location) else {
                     return self.super_assign(place, rvalue, location);
                 };
-                let BorrowData {
-                    location: _,
-                    borrowed: rhs,
-                    ..
-                } = &self.borrow_set.loans[loan];
+                for &loan in loans {
+                    let BorrowData {
+                        location: _,
+                        borrowed: rhs,
+                        ..
+                    } = &self.borrow_set.loans[loan];
 
-                let Some(lhs) = place.as_local() else {
-                    return self.super_assign(place, rvalue, location);
-                };
-                let lhs_provenance = self.provenance_set.local_data[lhs].unwrap();
+                    let Some(lhs) = place.as_local() else {
+                        return self.super_assign(place, rvalue, location);
+                    };
+                    let lhs_provenance = self.provenance_set.local_data[lhs].unwrap();
 
-                self.graph.membership.push(MembershipConstraint {
-                    loan,
-                    provenance: lhs_provenance,
-                });
-
-                if !rhs.projection.is_empty()
-                    && rhs
-                        .projection
-                        .iter()
-                        .all(|projection| matches!(projection, PlaceElem::Deref))
-                {
-                    let rhs_provenance = self.provenance_set.local_data[rhs.local].unwrap();
-                    self.graph.subset.push(SubsetConstraint {
-                        sup: lhs_provenance,
-                        sub: rhs_provenance,
-                        _location: location,
+                    self.graph.membership.push(MembershipConstraint {
+                        loan,
+                        provenance: lhs_provenance,
                     });
+
+                    if !rhs.projection.is_empty()
+                        && rhs
+                            .projection
+                            .iter()
+                            .all(|projection| matches!(projection, PlaceElem::Deref))
+                    {
+                        let rhs_provenance = self.provenance_set.local_data[rhs.local].unwrap();
+                        self.graph.subset.push(SubsetConstraint {
+                            sup: lhs_provenance,
+                            sub: rhs_provenance,
+                            _location: location,
+                        });
+                    }
                 }
             }
 
@@ -819,7 +830,6 @@ mod test {
         })
     }
 
-
     #[test]
     fn test_demote_strategy_optimality() {
         const PROGRAM: &str = "
@@ -854,11 +864,8 @@ mod test {
         })
     }
 
-
-
     #[test]
     fn test_callee_bad() {
-
         const PROGRAM: &str = r#"
 #[no_mangle]
 pub unsafe extern "C" fn bar(mut p: *mut i32) {}
@@ -870,7 +877,7 @@ pub unsafe extern "C" fn foo() {
     bar(p);
 }
         "#;
-    
+
         utils::rustc::run_compiler(PROGRAM, |program| {
             let tcx = program.tcx;
             let potential_mutable_references = mutable_references_no_guarantee(&program);
@@ -894,7 +901,6 @@ pub unsafe extern "C" fn foo() {
 
     #[test]
     fn test_is_null_bad() {
-
         const PROGRAM: &str = r#"
 #[no_mangle]
 pub unsafe extern "C" fn foo(mut p: *mut i32) {
@@ -903,7 +909,7 @@ pub unsafe extern "C" fn foo(mut p: *mut i32) {
     }
 }
         "#;
-    
+
         utils::rustc::run_compiler(PROGRAM, |program| {
             let tcx = program.tcx;
             let potential_mutable_references = mutable_references_no_guarantee(&program);

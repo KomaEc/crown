@@ -89,8 +89,10 @@ impl<'analysis, 'tcx> LoanLiveAt<'analysis, 'tcx> {
         state.intersect(&requires);
         state.subtract(killed);
 
-        if let Some(&loan) = self.borrow_set.location_map.get(&location) {
-            state.insert(loan);
+        if let Some(loans) = self.borrow_set.location_map.get(&location) {
+            for &loan in loans {
+                state.insert(loan);
+            }
         }
     }
 }
