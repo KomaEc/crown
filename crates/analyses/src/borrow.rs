@@ -14,6 +14,7 @@ use rustc_middle::{
 };
 use rustc_mir_dataflow::{fmt::DebugWithContext, points::DenseLocationMap};
 use utils::{rustc::RustProgram, rustc_hash::FxHashMap};
+use colored::Colorize;
 
 use crate::{
     borrow::{
@@ -539,7 +540,10 @@ pub fn dump_borrow_inference_mir<'tcx>(
                     .map(|loan| format!("{:?}", &borrow_set.loans[loan]))
                     .join(", ");
 
-                w.write_fmt(format_args!("\t// errors: [{errors}]\n",))?;
+                if !errors.is_empty() {
+                    let error_notification = format!("errors: [{}]", errors);
+                    w.write_fmt(format_args!("\t// {}\n", error_notification.red()))?;
+                }
 
                 let live_provenances = provenance_liveness
                     .row(point_index)
