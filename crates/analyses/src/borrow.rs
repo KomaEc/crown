@@ -692,12 +692,35 @@ pub fn mutable_references_no_guarantee(
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use rustc_middle::mir::VarDebugInfoContents;
 
-    use crate::borrow::{
-        GBorrowInferCtxt, borrow_inference, dump_borrow_inference_mir, dump_coarse_inferred_bounds,
-        mutable_references_no_guarantee,
-    };
+    fn filter_results_for_user_vars(
+        tcx: TyCtxt,
+        results: FxHashMap<DefId, DenseBitSet<Local>>,
+    ) -> FxHashMap<DefId, Vec<String>> {
+        results
+            .into_iter()
+            .map(|(f, results)| {
+                let body = &*tcx
+                    .mir_drops_elaborated_and_const_checked(f.expect_local())
+                    .borrow();
+
+                let mut results_for_user_vars = vec![];
+
+                for var_debug_info in body.var_debug_info.iter() {
+                    if let VarDebugInfoContents::Place(place) = &var_debug_info.value {
+                        if let Some(local) = place.as_local()
+                            && results.contains(local)
+                        {
+                            results_for_user_vars.push(var_debug_info.name.as_str().to_string());
+                        }
+                    }
+                }
+                (f, results_for_user_vars)
+            })
+            .collect()
+    }
 
     #[test]
     fn test_proof_of_concept() {
@@ -720,7 +743,7 @@ mod test {
                 .mir_drops_elaborated_and_const_checked(f.expect_local())
                 .borrow();
 
-            let global_borrow_ctxt = GBorrowInferCtxt::new(&program, |_| |_| true);
+            let global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
 
             let inference = borrow_inference(tcx, f, &global_borrow_ctxt);
 
@@ -759,32 +782,257 @@ mod test {
     }
 
     #[test]
+    fn test_demote_strategy_no_ub() {
+        const PROGRAM: &str = "
+        unsafe fn f() {
+            let mut local = 0i32;
+            let x = &mut local as *mut _;
+            let y = &mut local as *mut _;
+            *x = 1;
+            *y = 2;
+        }
+        ";
+
+        utils::rustc::run_compiler(PROGRAM, |program| {
+            let tcx = program.tcx;
+            let f = program.functions[0];
+            let body = &*tcx
+                .mir_drops_elaborated_and_const_checked(f.expect_local())
+                .borrow();
+
+            let global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
+
+            let inference = borrow_inference(tcx, f, &global_borrow_ctxt);
+
+            dump_borrow_inference_mir(
+                tcx,
+                body,
+                &inference,
+                &global_borrow_ctxt,
+                &mut std::io::stdout(),
+            )
+            .unwrap();
+        })
+    }
+
+
+    #[test]
+    fn test_demote_strategy_optimality() {
+        const PROGRAM: &str = "
+        unsafe fn f() {
+            let mut local = 0i32;
+            let x = &raw mut local;
+            let y = &raw mut local;
+            *y = 2;
+            *x = 1;
+        }
+        ";
+
+        utils::rustc::run_compiler(PROGRAM, |program| {
+            let tcx = program.tcx;
+            let f = program.functions[0];
+            let body = &*tcx
+                .mir_drops_elaborated_and_const_checked(f.expect_local())
+                .borrow();
+
+            let global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
+
+            let inference = borrow_inference(tcx, f, &global_borrow_ctxt);
+
+            dump_borrow_inference_mir(
+                tcx,
+                body,
+                &inference,
+                &global_borrow_ctxt,
+                &mut std::io::stdout(),
+            )
+            .unwrap();
+        })
+    }
+
+
+
+    #[test]
+    fn test_callee_bad() {
+
+        const PROGRAM: &str = r#"
+#[no_mangle]
+pub unsafe extern "C" fn bar(mut p: *mut i32) {}
+#[no_mangle]
+pub unsafe extern "C" fn foo() {
+    let mut x: i32 = 0 as i32;
+    let mut p: *mut i32 = &mut x;
+    *p = 1 as i32;
+    bar(p);
+}
+        "#;
+    
+        utils::rustc::run_compiler(PROGRAM, |program| {
+            let tcx = program.tcx;
+            let potential_mutable_references = mutable_references_no_guarantee(&program);
+            let potential_mutable_references =
+                filter_results_for_user_vars(tcx, potential_mutable_references);
+            let global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
+            let demoted_pointers = demote_pointers(&program, &global_borrow_ctxt);
+            let demoted_pointers = filter_results_for_user_vars(tcx, demoted_pointers);
+
+            for (f, ok_user_vars) in potential_mutable_references.into_iter() {
+                let demoted = &demoted_pointers[&f];
+                println!(
+                    "{}: mut refs = [{}], demoted = [{}]",
+                    tcx.def_path_str(f),
+                    ok_user_vars.join(", "),
+                    demoted.join(", ")
+                );
+            }
+        });
+    }
+
+    #[test]
+    fn test_is_null_bad() {
+
+        const PROGRAM: &str = r#"
+#[no_mangle]
+pub unsafe extern "C" fn foo(mut p: *mut i32) {
+    if !p.is_null() {
+        *p = 1 as i32;
+    }
+}
+        "#;
+    
+        utils::rustc::run_compiler(PROGRAM, |program| {
+            let tcx = program.tcx;
+            let potential_mutable_references = mutable_references_no_guarantee(&program);
+            let potential_mutable_references =
+                filter_results_for_user_vars(tcx, potential_mutable_references);
+            let global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
+            let demoted_pointers = demote_pointers(&program, &global_borrow_ctxt);
+            let demoted_pointers = filter_results_for_user_vars(tcx, demoted_pointers);
+
+            for (f, ok_user_vars) in potential_mutable_references.into_iter() {
+                let demoted = &demoted_pointers[&f];
+                println!(
+                    "{}: mut refs = [{}], demoted = [{}]",
+                    tcx.def_path_str(f),
+                    ok_user_vars.join(", "),
+                    demoted.join(", ")
+                );
+            }
+        });
+    }
+
+    #[test]
+    fn test_ownership_transfer_like() {
+        const PROGRAM: &str = "
+        unsafe fn f() {
+            let mut local = 0i32;
+            let mut p = &raw mut local;
+            let q = &raw mut *p;
+            *q = 1;
+            p = &raw mut *q;
+            *p = 2;
+        }
+        ";
+
+        utils::rustc::run_compiler(PROGRAM, |program| {
+            let tcx = program.tcx;
+            let f = program.functions[0];
+            let body = &*tcx
+                .mir_drops_elaborated_and_const_checked(f.expect_local())
+                .borrow();
+
+            let global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
+
+            let inference = borrow_inference(tcx, f, &global_borrow_ctxt);
+
+            dump_borrow_inference_mir(
+                tcx,
+                body,
+                &inference,
+                &global_borrow_ctxt,
+                &mut std::io::stdout(),
+            )
+            .unwrap();
+        })
+    }
+
+    #[test]
+    fn test_json_c() {
+        const PROGRAM: &str = r#"
+        unsafe fn json_parse_object() {
+            let previous = 0 as *mut usize;
+
+            {
+                let element = previous;
+                (*element) = 0;
+            }
+
+            previous.is_null();
+        }"#;
+
+        utils::rustc::run_compiler(PROGRAM, |program| {
+            let tcx = program.tcx;
+            let f = program.functions[0];
+            let body = &*tcx
+                .mir_drops_elaborated_and_const_checked(f.expect_local())
+                .borrow();
+
+            let global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
+
+            let inference = borrow_inference(tcx, f, &global_borrow_ctxt);
+
+            dump_borrow_inference_mir(
+                tcx,
+                body,
+                &inference,
+                &global_borrow_ctxt,
+                &mut std::io::stdout(),
+            )
+            .unwrap();
+        })
+    }
+
+    #[test]
     fn smoke_test_libtree() {
         utils::rustc::run_compiler(utils::rustc::SourceCode::Libtree, |program| {
             let tcx = program.tcx;
             let potential_mutable_references = mutable_references_no_guarantee(&program);
-            for (f, ok_locals) in potential_mutable_references.into_iter() {
-                let body = &*tcx
-                    .mir_drops_elaborated_and_const_checked(f.expect_local())
-                    .borrow();
+            let potential_mutable_references =
+                filter_results_for_user_vars(tcx, potential_mutable_references);
+            let global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
+            let demoted_pointers = demote_pointers(&program, &global_borrow_ctxt);
+            let demoted_pointers = filter_results_for_user_vars(tcx, demoted_pointers);
 
-                let mut mutable_references_user_vars = vec![];
-
-                for var_debug_info in body.var_debug_info.iter() {
-                    if let VarDebugInfoContents::Place(place) = &var_debug_info.value {
-                        if let Some(local) = place.as_local()
-                            && ok_locals.contains(local)
-                        {
-                            mutable_references_user_vars
-                                .push(var_debug_info.name.as_str().to_string());
-                        }
-                    }
-                }
-
+            for (f, ok_user_vars) in potential_mutable_references.into_iter() {
+                let demoted = &demoted_pointers[&f];
                 println!(
-                    "{}: [{}]",
+                    "{}: mut refs = [{}], demoted = [{}]",
                     tcx.def_path_str(f),
-                    mutable_references_user_vars.join(", ")
+                    ok_user_vars.join(", "),
+                    demoted.join(", ")
+                );
+            }
+        });
+    }
+
+    #[test]
+    fn smoke_test_buffer() {
+        utils::rustc::run_compiler(utils::rustc::SourceCode::Buffer, |program| {
+            let tcx = program.tcx;
+            let potential_mutable_references = mutable_references_no_guarantee(&program);
+            let potential_mutable_references =
+                filter_results_for_user_vars(tcx, potential_mutable_references);
+            let global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
+            let demoted_pointers = demote_pointers(&program, &global_borrow_ctxt);
+            let demoted_pointers = filter_results_for_user_vars(tcx, demoted_pointers);
+
+            for (f, ok_user_vars) in potential_mutable_references.into_iter() {
+                let demoted = &demoted_pointers[&f];
+                println!(
+                    "{}: mut refs = [{}], demoted = [{}]",
+                    tcx.def_path_str(f),
+                    ok_user_vars.join(", "),
+                    demoted.join(", ")
                 );
             }
         });
