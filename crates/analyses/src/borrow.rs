@@ -1,5 +1,7 @@
 //! Borrow inference
 
+use std::cell::RefCell;
+
 use colored::Colorize;
 use rustc_hir::def_id::DefId;
 use rustc_index::{
@@ -14,7 +16,7 @@ use rustc_middle::{
     ty::TyCtxt,
 };
 use rustc_mir_dataflow::{fmt::DebugWithContext, points::DenseLocationMap};
-use utils::{rustc::RustProgram, rustc_hash::FxHashMap};
+use utils::{dsa::union_find::UnionFind, rustc::RustProgram, rustc_hash::FxHashMap};
 
 use crate::{
     borrow::{
@@ -77,6 +79,7 @@ impl std::fmt::Debug for ProvenanceData {
 pub struct ProvenanceSet {
     local_data: IndexVec<Local, Option<Provenance>>,
     provenance_data: IndexVec<Provenance, ProvenanceData>,
+    tree_borrow_local: RefCell<UnionFind<Local>>,
 }
 
 pub trait HasProvenanceSet {
@@ -111,6 +114,7 @@ impl HasProvenanceSet for Body<'_> {
         ProvenanceSet {
             local_data,
             provenance_data,
+            tree_borrow_local: RefCell::new(UnionFind::new(body.local_decls.len())),
         }
     }
 }
@@ -231,25 +235,60 @@ impl<'tcx> HasBorrowSet<'tcx> for Body<'tcx> {
 
                 match rvalue {
                     Rvalue::Ref(_, _, place) | Rvalue::RawPtr(_, place) => {
+                        let mut loans = vec![];
                         let loan = self.loans.push(BorrowData {
                             location,
                             borrowed: *place,
                             assigned: Borrower::AssignStmt(*lhs),
                         });
-                        self.location_map.insert(location, vec![loan]);
-                        // self.location_map.entry(location).and_modify(|loans| loans.push(loan))
-                        //     .or_default().push(loan);
+                        loans.push(loan);
+
+                        for other_local in self
+                            .provenance_set
+                            .tree_borrow_local
+                            .borrow_mut()
+                            .group(place.local)
+                        {
+                            if place.local == other_local {
+                                continue;
+                            }
+                            let loan = self.loans.push(BorrowData {
+                                location,
+                                borrowed: Place::from(other_local),
+                                assigned: Borrower::AssignStmt(*lhs),
+                            });
+                            loans.push(loan);
+                        }
+
+                        self.location_map.insert(location, loans);
                     }
                     Rvalue::CopyForDeref(place)
                     | Rvalue::Use(Operand::Copy(place) | Operand::Move(place)) => {
+                        let mut loans = vec![];
                         let loan = self.loans.push(BorrowData {
                             location,
                             borrowed: place.project_deeper(&[PlaceElem::Deref], self.tcx),
                             assigned: Borrower::AssignStmt(*lhs),
                         });
-                        self.location_map.insert(location, vec![loan]);
-                        // self.location_map.entry(location).and_modify(|loans| loans.push(loan))
-                        //     .or_default().push(loan);
+                        loans.push(loan);
+
+                        for other_local in self
+                            .provenance_set
+                            .tree_borrow_local
+                            .borrow_mut()
+                            .group(place.local)
+                        {
+                            if place.local == other_local {
+                                continue;
+                            }
+                            let loan = self.loans.push(BorrowData {
+                                location,
+                                borrowed: Place::from(other_local),
+                                assigned: Borrower::AssignStmt(*lhs),
+                            });
+                            loans.push(loan);
+                        }
+                        self.location_map.insert(location, loans);
                     }
                     _ => {}
                 }
@@ -385,6 +424,8 @@ impl ProvenanceConstraintGraph {
                             .projection
                             .iter()
                             .all(|projection| matches!(projection, PlaceElem::Deref))
+                            // rhs provenance might have been disabled by previous iteration, so need a guard here
+                        && self.provenance_set.local_data[rhs.local].is_some()
                     {
                         let rhs_provenance = self.provenance_set.local_data[rhs.local].unwrap();
                         self.graph.subset.push(SubsetConstraint {
@@ -677,6 +718,79 @@ pub fn demote_pointers(
     demoted
 }
 
+pub fn demote_pointers_iterative(
+    program: &RustProgram,
+    global_borrow_ctxt: &mut GBorrowInferCtxt,
+) -> FxHashMap<DefId, DenseBitSet<Local>> {
+    let mut demoted = FxHashMap::default();
+
+    let tcx = program.tcx;
+
+    // TODO: super dumb fixed pointer iteration. Need to switch to worklist
+    let mut any_func_changed = true;
+    while any_func_changed {
+        any_func_changed = false;
+        for f in program.functions.iter() {
+            let body = &*program
+                .tcx
+                .mir_drops_elaborated_and_const_checked(f.expect_local())
+                .borrow();
+
+            let BorrowInferenceResults {
+                borrow_set, errors, ..
+            } = borrow_inference(tcx, *f, &global_borrow_ctxt);
+
+            let mut invalid_loans = DenseBitSet::new_empty(borrow_set.loans.len());
+            for row in errors.rows() {
+                if let Some(loans) = errors.row(row) {
+                    invalid_loans.union(loans);
+                }
+            }
+
+            let mut demoted_locals = DenseBitSet::new_empty(body.local_decls.len());
+
+            // for demoted locals
+            // Step 1. merge it with the local of the invalidated loan
+            // Step 2. disable their provenance in the next iteration
+
+            let provenance_set = global_borrow_ctxt.provenances.get_mut(f).unwrap();
+
+            // Step 1
+            for loan in invalid_loans.iter() {
+                let borrow_data = &borrow_set.loans[loan];
+                match borrow_data.assigned {
+                    Borrower::AssignStmt(assigned) => {
+                        demoted_locals.insert(assigned.local);
+                        provenance_set
+                            .tree_borrow_local
+                            .get_mut()
+                            .union(assigned.local, borrow_data.borrowed.local);
+                    }
+                    Borrower::CallArg(..) => unimplemented!(),
+                }
+            }
+
+            // Step 2
+            for (local, provenance) in provenance_set.local_data.iter_enumerated_mut() {
+                if demoted_locals.contains(local) && provenance.is_some() {
+                    any_func_changed = true;
+                    *provenance = None;
+                }
+            }
+
+            // demoted.insert(*f, demoted_locals);
+            demoted
+                .entry(*f)
+                .and_modify(|d: &mut DenseBitSet<Local>| {
+                    d.union(&demoted_locals);
+                })
+                .or_insert(demoted_locals);
+        }
+    }
+
+    demoted
+}
+
 /// Analyse which raw pointer locals within a function can potentially be a mutable references.
 /// Currently there is no safety guarantee, as we need to
 /// 1. study what formal guarantee can we obtain from our demoting strategy;
@@ -827,6 +941,18 @@ mod test {
                 &mut std::io::stdout(),
             )
             .unwrap();
+
+            let mut global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
+
+            let demoted = demote_pointers_iterative(&program, &mut global_borrow_ctxt);
+            println!(
+                "{}",
+                demoted[&f]
+                    .iter()
+                    .map(|local| format!("{local:?}"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
         })
     }
 
@@ -861,6 +987,17 @@ mod test {
                 &mut std::io::stdout(),
             )
             .unwrap();
+
+            let mut global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
+            let demoted = demote_pointers_iterative(&program, &mut global_borrow_ctxt);
+            println!(
+                "{}",
+                demoted[&f]
+                    .iter()
+                    .map(|local| format!("{local:?}"))
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
         })
     }
 
@@ -1009,8 +1146,8 @@ pub unsafe extern "C" fn foo(mut p: *mut i32) {
             let potential_mutable_references = mutable_references_no_guarantee(&program);
             let potential_mutable_references =
                 filter_results_for_user_vars(tcx, potential_mutable_references);
-            let global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
-            let demoted_pointers = demote_pointers(&program, &global_borrow_ctxt);
+            let mut global_borrow_ctxt = GBorrowInferCtxt::mutable_pointers_only(&program);
+            let demoted_pointers = demote_pointers_iterative(&program, &mut global_borrow_ctxt);
             let demoted_pointers = filter_results_for_user_vars(tcx, demoted_pointers);
 
             for (f, ok_user_vars) in potential_mutable_references.into_iter() {
